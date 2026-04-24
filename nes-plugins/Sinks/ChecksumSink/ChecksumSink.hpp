@@ -61,15 +61,14 @@ private:
 
 struct ConfigParametersChecksum
 {
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
+    static constexpr auto OUTPUT_FORMAT = DescriptorConfig::makeConfigParameter<std::string>(
+        "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); });
 
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
+    static constexpr auto FILE_PATH = DescriptorConfig::makeConfigParameter<std::string>(
         "file_path",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("file_path", config); });
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);

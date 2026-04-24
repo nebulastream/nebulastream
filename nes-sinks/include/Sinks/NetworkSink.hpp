@@ -102,47 +102,51 @@ private:
     std::atomic_bool closed;
 };
 
-/// NOLINTBEGIN(cert-err58-cpp)
 struct ConfigParametersNetworkSink
 {
-    static inline const DescriptorConfig::ConfigParameter<std::string> DATA_ENDPOINT{
+    static constexpr auto DATA_ENDPOINT = DescriptorConfig::makeConfigParameter<std::string>(
         "data_endpoint",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DATA_ENDPOINT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("data_endpoint", config); });
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
+    static constexpr auto BIND = DescriptorConfig::makeConfigParameter<std::string>(
         "bind",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(BIND, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("bind", config); });
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
+    static constexpr auto CHANNEL = DescriptorConfig::makeConfigParameter<std::string>(
         "channel",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("channel", config); });
 
-    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_UPPER_THRESHOLD{
+    static constexpr auto BACKPRESSURE_UPPER_THRESHOLD = DescriptorConfig::makeConfigParameter<size_t>(
         "backpressure_upper_threshold",
-        1000,
+        size_t{1000},
         [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(BACKPRESSURE_UPPER_THRESHOLD, config); }};
+        { return DescriptorConfig::tryGetByName<size_t>("backpressure_upper_threshold", config); });
 
-    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_LOWER_THRESHOLD{
+    static constexpr auto BACKPRESSURE_LOWER_THRESHOLD = DescriptorConfig::makeConfigParameter<size_t>(
         "backpressure_lower_threshold",
-        200,
+        size_t{200},
         [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(BACKPRESSURE_LOWER_THRESHOLD, config); }};
+        { return DescriptorConfig::tryGetByName<size_t>("backpressure_lower_threshold", config); });
 
     /// Per-channel sender queue size override. 0 means use the worker-level default.
-    static inline const DescriptorConfig::ConfigParameter<size_t> SENDER_QUEUE_SIZE{
+    static constexpr auto SENDER_QUEUE_SIZE = DescriptorConfig::makeConfigParameter<size_t>(
         "sender_queue_size",
         size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SENDER_QUEUE_SIZE, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<size_t>("sender_queue_size", config); });
 
     /// Per-channel max pending acks override. 0 means use the worker-level default.
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_PENDING_ACKS{
+    static constexpr auto MAX_PENDING_ACKS = DescriptorConfig::makeConfigParameter<size_t>(
         "max_pending_acks",
         size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_PENDING_ACKS, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<size_t>("max_pending_acks", config); });
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
