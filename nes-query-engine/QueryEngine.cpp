@@ -890,12 +890,92 @@ __itt_string_handle* taskLabel(const Task& task)
 
 void addProfilingMetadataToTask(const Task& task)
 {
-    std::visit(
-        Overloaded{[](auto&)
-                   {
-                       static __itt_string_handle* operation_format = __itt_string_handle_create("Operation: [%s] on file %s");
-                       __itt_formatted_metadata_add(taskExecutionDomain, operation_format, "data_transform", "afile.txt");
-                   }},
+    return std::visit(
+        Overloaded{
+            [](const WorkTask& wt)
+            {
+                std::string logcal_query = wt.queryId.getLocalQueryId().getRawValue();
+                auto pipelineId = PipelineId::INVALID;
+                if (auto lock = wt.pipeline.lock())
+                {
+                    pipelineId = lock->id.getRawValue();
+                }
+
+                static __itt_string_handle* operation_format
+                    = __itt_string_handle_create("Query:%s, Pipeline:[%llu], Sequence:(%llu-%llu-%llu)");
+                __itt_formatted_metadata_add(
+                    taskExecutionDomain,
+                    operation_format,
+                    logcal_query.c_str(),
+                    pipelineId,
+                    wt.buf.getSequenceNumber().getRawValue(),
+                    wt.buf.getChunkNumber().getRawValue(),
+                    wt.buf.isLastChunk());
+            },
+            [](const StopQueryTask& stopQueryTask)
+            {
+                auto [idhigh, idlow] = serialize_uuid(stopQueryTask.queryId);
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Query:%llu-%llu");
+                __itt_formatted_metadata_add(taskExecutionDomain, operation_format, idhigh, idlow);
+            },
+            [](const StartQueryTask& startQueryTask)
+            {
+                auto [idhigh, idlow] = serialize_uuid(startQueryTask.queryId);
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Query:%llu-%llu");
+                __itt_formatted_metadata_add(taskExecutionDomain, operation_format, idhigh, idlow);
+            },
+            [](const FailSourceTask& failSourceTask)
+            {
+                auto [idhigh, idlow] = serialize_uuid(failSourceTask.queryId);
+                auto sourceId = OriginId::INVALID;
+                if (auto lock = failSourceTask.target.lock())
+                {
+                    sourceId = lock->getOriginId().getRawValue();
+                }
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Query:%llu-%llu, Source:%llu");
+                __itt_formatted_metadata_add(taskExecutionDomain, operation_format, idhigh, idlow, sourceId);
+            },
+            [](const StopSourceTask& stopSourceTask)
+            {
+                auto [idhigh, idlow] = serialize_uuid(stopSourceTask.queryId);
+                auto sourceId = OriginId::INVALID;
+                if (auto lock = stopSourceTask.target.lock())
+                {
+                    sourceId = lock->getOriginId().getRawValue();
+                }
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Query:%llu-%llu, Source:%llu");
+                __itt_formatted_metadata_add(taskExecutionDomain, operation_format, idhigh, idlow, sourceId);
+            },
+            [](const PendingPipelineStopTask& pendingPipelineStopTask)
+            {
+                auto [idhigh, idlow] = serialize_uuid(pendingPipelineStopTask.queryId);
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Query:%llu-%llu, Pipeline:%llu, Attempts: %llu");
+                __itt_formatted_metadata_add(
+                    taskExecutionDomain,
+                    operation_format,
+                    idhigh,
+                    idlow,
+                    pendingPipelineStopTask.pipeline->id,
+                    pendingPipelineStopTask.attempts);
+            },
+            [](const StopPipelineTask& stopPipelineTask)
+            {
+                auto [idhigh, idlow] = serialize_uuid(stopPipelineTask.queryId);
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Query:%llu-%llu, Pipeline:%llu");
+                __itt_formatted_metadata_add(taskExecutionDomain, operation_format, idhigh, idlow, stopPipelineTask.pipeline->id);
+            },
+            [](const StartPipelineTask& startPipelineTask)
+            {
+                auto [idhigh, idlow] = serialize_uuid(startPipelineTask.queryId);
+                auto pipelineId = PipelineId::INVALID;
+                if (auto lock = startPipelineTask.pipeline.lock())
+                {
+                    pipelineId = lock->id.getRawValue();
+                }
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Query:%llu-%llu, Pipeline:%llu");
+                __itt_formatted_metadata_add(taskExecutionDomain, operation_format, idhigh, idlow, pipelineId);
+            },
+        },
         task);
 }
 
@@ -1014,7 +1094,6 @@ void QueryCatalog::start(
 
         void onFailure(Exception exception) override
         {
-            ENGINE_LOG_DEBUG("Query {} onFailure", queryId);
             const auto timestamp = std::chrono::system_clock::now();
             if (const auto locked = state.lock())
             {

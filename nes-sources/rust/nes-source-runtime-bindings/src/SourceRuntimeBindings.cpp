@@ -14,11 +14,10 @@ AsyncFunctionResult source_on_error(
 AsyncFunctionResult source_on_data(
     SourceContext& context,
     NES::detail::MemorySegment* segment,
-    size_t size,
     rust::Fn<void(rust::Box<AsyncCompletionContext> ctx, ::AsyncCompletionResult ret)> done,
     rust::Box<AsyncCompletionContext> ctx)
 {
-    return context.emitter->onData(NES::fromRust(segment), size, AsyncCompletionToken{done, std::move(ctx)});
+    return context.emitter->onData(NES::fromRust(segment), AsyncCompletionToken{done, std::move(ctx)});
 }
 
 AsyncFunctionResult source_on_eos(

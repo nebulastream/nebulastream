@@ -7,7 +7,7 @@ use nes_sink_validation::ConfigOptions;
 use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc::Receiver;
-use tracing::Instrument;
+use tracing::{Instrument, debug, info};
 
 pub type Result<T> = core::result::Result<T, String>;
 pub type Controller = tokio::sync::mpsc::Sender<SinkCommand>;
@@ -44,12 +44,15 @@ async fn run_sink(
         select! {
             command = commands.recv() => {
                 let Some(command) = command else {
+                    info!("Sink sender was dropped, terminating the sink");
                     break 'run;
                 };
                 match command {
                     SinkCommand::Flush(epoch) => {(context.on_flush)(epoch)},
                     SinkCommand::Data(buffer) => {sink.execute(buffer).await?},
-                    SinkCommand::Close => {break 'run;}
+                    SinkCommand::Close => {
+                    info!("Sink was requested to close, terminating the sink.");
+                        break 'run;}
                 }
             }
         }
@@ -71,18 +74,24 @@ pub fn start_sink(
     config: &ConfigOptions,
     runtime: Arc<IORuntime>,
     context: SinkContext,
-) -> Result<Controller> {
+) -> Result<(Controller, tokio::task::JoinHandle<()>)> {
     let (controller, rx) = tokio::sync::mpsc::channel(16);
     let sink = construct_sink(name, config);
-    runtime.runtime.spawn(
+    let task = runtime.runtime.spawn(
         async move {
+            let log_on_source_drop = scopeguard::guard((), |_| {
+                debug!("Sink Task was aborted.");
+            });
             match run_sink(sink, rx, &context).await {
                 Ok(()) => {}
                 Err(error_message) => (context.on_error)(error_message),
             }
+
+            // sink stops itself, it can no longer be aborted
+            scopeguard::ScopeGuard::into_inner(log_on_source_drop);
         }
         .in_current_span(),
     );
 
-    Ok(controller)
+    Ok((controller, task))
 }

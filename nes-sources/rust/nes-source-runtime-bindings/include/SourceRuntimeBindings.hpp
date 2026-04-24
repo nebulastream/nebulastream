@@ -22,7 +22,7 @@ struct DataEmitter
 {
     virtual ~DataEmitter() = default;
 
-    virtual AsyncFunctionResult onData(NES::TupleBuffer, size_t size, AsyncCompletionToken) = 0;
+    virtual AsyncFunctionResult onData(NES::TupleBuffer, AsyncCompletionToken) = 0;
     virtual AsyncFunctionResult onError(std::string errorMessage,  AsyncCompletionToken) = 0;
     virtual AsyncFunctionResult onEoS(AsyncCompletionToken) = 0;
 };
@@ -40,7 +40,6 @@ AsyncFunctionResult source_on_error(
 AsyncFunctionResult source_on_data(
     SourceContext& context,
     NES::detail::MemorySegment* segment,
-    size_t size,
     rust::Fn<void(rust::Box<AsyncCompletionContext> ctx, AsyncCompletionResult ret)> done,
     rust::Box<AsyncCompletionContext> ctx);
 

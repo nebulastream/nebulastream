@@ -8,7 +8,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
-use tracing::{Instrument, info};
+use tracing::{Instrument, debug, info};
 
 type BoxFuture<T> = Pin<Box<dyn Future<Output = T> + Send>>;
 pub type Result<T> = core::result::Result<T, String>;
@@ -19,7 +19,7 @@ pub type EmitFunction = Box<dyn Fn(SourceResult) -> BoxFuture<Result<()>> + Send
 pub trait AsyncEmitter {
     async fn eos(&mut self);
     async fn error(&mut self, error_message: String);
-    async fn data(&mut self, result: TupleBuffer, size: usize) -> Result<()>;
+    async fn data(&mut self, result: TupleBuffer) -> Result<()>;
 }
 
 pub enum SourceResult {
@@ -75,7 +75,7 @@ async fn run_source(
                             buffer.set_last_chunk(true);
                             buffer.set_number_of_tuples(size);
                         }
-                        emit.data(buffer, size).await.expect("Bridge thread should remain alive");
+                        emit.data(buffer).await.expect("Bridge thread should remain alive");
                     },
                     SourceResult::EoS => {
                         info!("EoS received, stopping source");
@@ -85,11 +85,10 @@ async fn run_source(
                 }
             }
             command = commands.recv() => {
-                let Some(command) = command else {
-                    break 'run;
-                };
-                match command {
-                    SourceCommand::Stop => {break 'run;}
+                match command.expect("Controller should outlive the source task") {
+                    SourceCommand::Stop => {
+                        debug!("Source was requested to stop");
+                        break 'run;}
                 }
             }
         }
@@ -119,6 +118,10 @@ pub fn start_source<T: AsyncEmitter + Send + 'static>(
     let source = construct_source(name, config);
     runtime.runtime.spawn(
         async move {
+            let log_on_source_drop = scopeguard::guard((), |_| {
+                panic!("Source Task was aborted.");
+            });
+
             match run_source(source, origin_id, &mut rx, &mut emit, buffer_provider).await {
                 Ok(()) => {}
                 Err(error_message) => {
@@ -127,6 +130,9 @@ pub fn start_source<T: AsyncEmitter + Send + 'static>(
             }
             let _ = stop_sender.send(emit);
             rx.close();
+
+            // source stops itself, it can no longer be aborted
+            scopeguard::ScopeGuard::into_inner(log_on_source_drop);
         }
         .in_current_span(),
     );

@@ -313,7 +313,6 @@ RunningQueryPlan::~RunningQueryPlan()
     auto lock = this->internal.lock();
     auto& internal = *lock;
 
-
     /// CRITICAL: Disable pipeline setup callback during destruction to prevent race condition.
     ///
     /// This prevents any pending pipeline setup callbacks from executing after the

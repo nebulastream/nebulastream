@@ -23,6 +23,7 @@ members = [
     "nes-sources/rust/nes-source-runtime-bindings",
     "nes-sources/rust/nes-source-runtime",
     "nes-plugins/Sinks/PrintSink",
+    "nes-plugins/Sinks/VoidSink",
     "nes-plugins/Sinks/FileSink",
     "nes-plugins/Sinks/NetworkSink",
     "nes-plugins/Sources/FileSource",
@@ -57,3 +58,4 @@ cxx = "1.0.194"
 linkme = "0.3.35"
 tracing = "0.1.44"
 io-uring = "0.7.11"
+scopeguard = "1.2.0"

@@ -125,9 +125,6 @@ pub struct TupleBuffer {
     pub chunk_number: u64,
     pub number_of_tuples: u64,
     pub last_chunk: bool,
-    /// Zero-copy on the sender side: the plugin constructs this directly from a
-    /// retain-counted `nes_buffer_runtime::TupleBuffer` via `Bytes::from_owner`.
-    /// On the receiver side this is allocated by serde during decode.
     pub data: Bytes,
     pub child_buffers: Vec<Bytes>,
 }

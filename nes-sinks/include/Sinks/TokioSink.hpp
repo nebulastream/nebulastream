@@ -36,64 +36,14 @@
 namespace NES
 {
 
-/// Backpressure handler for TokioSink.
-/// Duplicated from NetworkSink's BackpressureHandler to avoid cross-module dependency.
-/// Buffers TupleBuffers internally when the Rust channel is full, applying/releasing
-/// upstream backpressure at configurable hysteresis thresholds.
-class SinkBackpressureHandler
-{
-    struct State
-    {
-        bool hasBackpressure = false;
-        std::deque<TupleBuffer> buffered;
-        SequenceNumber pendingSequenceNumber = INVALID<SequenceNumber>;
-        ChunkNumber pendingChunkNumber = INVALID<ChunkNumber>;
-    };
 
-    folly::Synchronized<State> stateLock;
-    size_t upperThreshold;
-    size_t lowerThreshold;
-
-public:
-    /// @param upperThreshold Number of buffered items at which backpressure is applied.
-    /// @param lowerThreshold Number of buffered items at which backpressure is released.
-    explicit SinkBackpressureHandler(size_t upperThreshold = 1, size_t lowerThreshold = 0);
-
-    /// Called when sink_send_buffer returns Full.
-    /// Buffers the TupleBuffer internally. Applies backpressure if threshold exceeded.
-    /// Returns a buffer to retry via repeatTask, or nullopt if one is already pending.
-    std::optional<TupleBuffer> onFull(TupleBuffer buffer, BackpressureController& bpc);
-
-    /// Called when sink_send_buffer returns Success.
-    /// Clears pending state, releases backpressure if below threshold.
-    /// Returns next buffered item to send, or nullopt if backlog is empty.
-    std::optional<TupleBuffer> onSuccess(BackpressureController& bpc);
-
-    /// Returns true if internal backlog is empty.
-    bool empty() const;
-
-    /// Pop front item from backlog for drain during stop().
-    /// Returns nullopt if empty.
-    std::optional<TupleBuffer> popFront();
-};
 
 struct TokioSinkContext;
+class SinkBackpressureHandler;
 
-/// C++ sink operator that bridges pipeline execution to a Rust AsyncSink via CXX FFI.
-///
-/// Lifecycle:
-///   1. Constructed with BackpressureController, SpawnFn, channel capacity, hysteresis thresholds
-///   2. start() calls SpawnFn to spawn the Rust sink task via CXX bridge
-///   3. execute() sends buffers via sink_send_buffer FFI, with backpressure hysteresis
-///   4. stop() drains backlog, sends Close, polls is_sink_done via repeatTask
-///
-/// The 3-phase stop state machine:
-///   RUNNING -> DRAINING (drain backlog) -> CLOSING (send Close) -> WAITING_DONE (poll completion)
 class TokioSink final : public Sink
 {
 public:
-    /// Retry interval for repeatTask when channel is full (matches NetworkSink)
-    static constexpr auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
 
     TokioSink(
         BackpressureController backpressureController,
@@ -118,7 +68,7 @@ protected:
 private:
     SinkDescriptor descriptor;
     std::unique_ptr<TokioSinkContext> context;
-    SinkBackpressureHandler backpressureHandler;
+    std::unique_ptr<SinkBackpressureHandler> backpressureHandler;
     std::atomic<bool> stopInitiated{false};
     uint64_t sinkId{0}; /// Assigned in start() from pipeline context
 };

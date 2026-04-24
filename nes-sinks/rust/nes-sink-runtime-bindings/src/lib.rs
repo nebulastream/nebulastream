@@ -53,8 +53,16 @@ unsafe impl Send for ffi::SinkContext {}
 unsafe impl Sync for ffi::SinkContext {}
 
 struct SinkHandle {
-    channel: nes_sink_runtime::Controller,
+    controller: nes_sink_runtime::Controller,
+    task: tokio::task::JoinHandle<()>,
 }
+
+impl Drop for SinkHandle {
+    fn drop(&mut self) {
+        self.task.abort();
+    }
+}
+
 fn create_handle(
     query_context: ffi::QueryContext,
     runtime_idx: usize,
@@ -67,7 +75,7 @@ fn create_handle(
     validate(&query_context.sink_type, &config).map_err(|e| e.to_string())?;
     let c1 = context.clone();
     let c2 = context.clone();
-    let controller = {
+    let (controller, task) = {
         let span = span!(Level::INFO, "Source",  distributed_query_id = %query_context.distributed_query_id, query_id = %query_context.query_id, sink_type = %query_context.sink_type, sink_id = %query_context.sink_id);
         let entered_ = span.enter();
         nes_sink_runtime::start_sink(
@@ -80,14 +88,12 @@ fn create_handle(
             },
         )?
     };
-    Ok(Box::new(SinkHandle {
-        channel: controller,
-    }))
+    Ok(Box::new(SinkHandle { controller, task }))
 }
 
 unsafe fn try_write(handle: &SinkHandle, buffer: *mut ffi::MemorySegment) -> WriteResult {
     let buffer = unsafe { TupleBuffer::from_raw(buffer) };
-    match handle.channel.try_send(SinkCommand::Data(buffer)) {
+    match handle.controller.try_send(SinkCommand::Data(buffer)) {
         Ok(_) => WriteResult::Ok,
         Err(TrySendError::Full(_)) => WriteResult::Full,
         Err(TrySendError::Closed(_)) => panic!("Channel should not be closed"),
@@ -97,7 +103,7 @@ unsafe fn try_write(handle: &SinkHandle, buffer: *mut ffi::MemorySegment) -> Wri
 static EPOCH_COUNTER: AtomicUsize = AtomicUsize::new(1);
 unsafe fn flush(handle: &SinkHandle) -> usize {
     let epoch = EPOCH_COUNTER.fetch_add(1, SeqCst);
-    match handle.channel.try_send(SinkCommand::Flush(epoch)) {
+    match handle.controller.try_send(SinkCommand::Flush(epoch)) {
         Ok(_) => epoch,
         Err(TrySendError::Full(_)) => 0,
         Err(TrySendError::Closed(_)) => panic!("Channel should not be closed"),

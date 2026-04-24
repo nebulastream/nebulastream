@@ -6,17 +6,31 @@ edition = "2024"
 [lib]
 crate-type = ["rlib"]
 
+[features]
+default = ["runtime"]
+validation = []
+runtime = [
+    "validation",
+    "dep:tokio",
+    "dep:async-trait",
+    "dep:nes_source_runtime",
+    "dep:nes_buffer_runtime",
+    "dep:nes_buffer_bindings",
+    "dep:nes_io_runtime",
+]
+
 [dependencies]
-nes_buffer_bindings.workspace = true
-nes_buffer_runtime.workspace = true
-tracing = "0.1"
-linkme = "0.3"
 nes_source_validation.workspace = true
-nes_source_runtime.workspace = true
-nes_io_runtime.workspace = true
-tokio = { features = ["time", "macros"], workspace = true }
-async-trait = { workspace = true }
+linkme = "0.3"
 rand = "0.8"
 rand_distr = "0.4"
-duration-str = "0.21.0"
 serde_json.workspace = true
+duration-str = "0.21.0"
+tracing = "0.1"
+
+tokio = { features = ["time", "macros"], workspace = true, optional = true }
+async-trait = { workspace = true, optional = true }
+nes_source_runtime = { workspace = true, optional = true }
+nes_buffer_runtime = { workspace = true, optional = true }
+nes_buffer_bindings = { workspace = true, optional = true }
+nes_io_runtime = { workspace = true, optional = true }

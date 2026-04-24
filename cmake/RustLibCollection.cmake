@@ -100,9 +100,29 @@ endfunction()
 
 # Declare that a C++ target requires a Rust crate at link time.
 # This propagates transitively through target_link_libraries chains via INTERFACE properties.
+#
+# Usage:
+#   target_link_rust_lib(<cpp_target> <rust_crate>
+#                        [NO_DEFAULT_FEATURES]
+#                        [FEATURES <feat1> <feat2> ...])
+#
+# When FEATURES or NO_DEFAULT_FEATURES is used, the entry is encoded as
+# "crate|ndf|feat1,feat2" so the umbrella generator can emit the feature list
+# into its generated Cargo.toml. Consumers that request different feature sets
+# of the same crate get separate umbrellas (the hash includes feature config).
 function(target_link_rust_lib cpp_target rust_crate)
+    cmake_parse_arguments(PARSE_ARGV 2 ARG "NO_DEFAULT_FEATURES" "" "FEATURES")
+    set(_entry "${rust_crate}")
+    if (ARG_NO_DEFAULT_FEATURES OR ARG_FEATURES)
+        set(_ndf "0")
+        if (ARG_NO_DEFAULT_FEATURES)
+            set(_ndf "1")
+        endif ()
+        string(JOIN "," _feats ${ARG_FEATURES})
+        set(_entry "${rust_crate}|${_ndf}|${_feats}")
+    endif ()
     set_property(TARGET ${cpp_target} APPEND PROPERTY
-            INTERFACE_NES_RUST_LIBS "${rust_crate}")
+            INTERFACE_NES_RUST_LIBS "${_entry}")
 endfunction()
 
 # Remove Corrosion's automatic link from a CXX bridge target to its Rust crate.
@@ -208,33 +228,79 @@ function(_target_link_rust_impl exe_target)
 
     set_target_properties(${exe_target} PROPERTIES _NES_RUST_LINKED TRUE)
 
-    # Deduplicate umbrella builds by crate-set hash.
-    # Executables that need the exact same set of Rust crates share a single umbrella
-    # staticlib, avoiding redundant Cargo builds and saving disk space.
-    list(SORT rust_libs)
-    string(JOIN "_" _crate_key ${rust_libs})
+    # Parse encoded entries ("crate" or "crate|ndf|feat1,feat2") into a unique
+    # crate list plus per-crate merged feature config. Multiple entries for the
+    # same crate union their features and OR their no-default-features flag,
+    # matching how cargo unifies features across a dep graph.
+    set(_crates "")
+    foreach (entry IN LISTS rust_libs)
+        string(REPLACE "|" ";" _parts "${entry}")
+        list(LENGTH _parts _n)
+        list(GET _parts 0 _crate)
+        list(APPEND _crates "${_crate}")
+        if (_n GREATER_EQUAL 3)
+            list(GET _parts 1 _ndf)
+            list(GET _parts 2 _feats_str)
+            get_property(_existing GLOBAL PROPERTY _NES_UMB_${exe_target}_${_crate}_FEATS)
+            if (_feats_str)
+                string(REPLACE "," ";" _feats "${_feats_str}")
+                list(APPEND _existing ${_feats})
+                list(REMOVE_DUPLICATES _existing)
+            endif ()
+            set_property(GLOBAL PROPERTY _NES_UMB_${exe_target}_${_crate}_FEATS "${_existing}")
+            if (_ndf STREQUAL "1")
+                set_property(GLOBAL PROPERTY _NES_UMB_${exe_target}_${_crate}_NDF 1)
+            endif ()
+        endif ()
+    endforeach ()
+    list(REMOVE_DUPLICATES _crates)
+    list(SORT _crates)
+
+    # Fold per-crate feature config into the umbrella hash so consumers picking
+    # different feature sets of the same crate get distinct umbrella staticlibs.
+    set(_crate_key "")
+    foreach (crate IN LISTS _crates)
+        get_property(_f GLOBAL PROPERTY _NES_UMB_${exe_target}_${crate}_FEATS)
+        get_property(_ndf GLOBAL PROPERTY _NES_UMB_${exe_target}_${crate}_NDF)
+        if (_f)
+            list(SORT _f)
+        endif ()
+        string(APPEND _crate_key "${crate}@${_ndf}:${_f};")
+    endforeach ()
     string(MD5 _crate_hash "${_crate_key}")
     string(SUBSTRING "${_crate_hash}" 0 12 _crate_hash_short)
 
     set(umbrella_name "nes_umbrella_${_crate_hash_short}")
     set(umbrella_dir "${CMAKE_BINARY_DIR}/rust-umbrellas/${_crate_hash_short}")
 
-    # If an umbrella for this exact crate set already exists, just link it.
+    # If an umbrella for this exact crate+features set already exists, just link it.
     if (TARGET ${umbrella_name})
-        _link_umbrella_with_bridges(${exe_target} ${umbrella_name} "${rust_libs}")
+        _link_umbrella_with_bridges(${exe_target} ${umbrella_name} "${_crates}")
         return()
     endif ()
 
     set(dep_lines "")
     set(extern_lines "")
-    foreach (crate ${rust_libs})
+    foreach (crate IN LISTS _crates)
         get_property(crate_path GLOBAL PROPERTY NES_RUST_CRATE_${crate}_PATH)
         if (NOT crate_path)
             message(FATAL_ERROR
                     "Rust crate '${crate}' required by ${exe_target} was not registered "
                     "with register_rust_crate(). Add a register_rust_crate() call in EnableRust.cmake.")
         endif ()
-        string(APPEND dep_lines "${crate} = { path = \"${crate_path}\" }\n")
+        get_property(_f GLOBAL PROPERTY _NES_UMB_${exe_target}_${crate}_FEATS)
+        get_property(_ndf GLOBAL PROPERTY _NES_UMB_${exe_target}_${crate}_NDF)
+        set(_line "${crate} = { path = \"${crate_path}\"")
+        if (_ndf)
+            string(APPEND _line ", default-features = false")
+        endif ()
+        if (_f)
+            list(SORT _f)
+            string(JOIN "\", \"" _fj ${_f})
+            string(APPEND _line ", features = [\"${_fj}\"]")
+        endif ()
+        string(APPEND _line " }\n")
+        string(APPEND dep_lines "${_line}")
         string(APPEND extern_lines "extern crate ${crate};\n")
     endforeach ()
 
@@ -275,7 +341,7 @@ ${dep_lines}")
                 PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${NES_RUST_ENV_VARS})
     endif ()
 
-    _link_umbrella_with_bridges(${exe_target} ${umbrella_name} "${rust_libs}")
+    _link_umbrella_with_bridges(${exe_target} ${umbrella_name} "${_crates}")
 endfunction()
 
 # Link the umbrella in a sandwich: umbrella → bridges → umbrella.

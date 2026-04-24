@@ -58,7 +58,47 @@ namespace NES
 {
 class QueryId;
 
-// ---- SinkBackpressureHandler implementation ----
+
+/// Retry interval for repeatTask when channel is full
+static constexpr auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
+
+/// Backpressure handler for TokioSink.
+class SinkBackpressureHandler
+{
+    struct State
+    {
+        bool hasBackpressure = false;
+        std::deque<TupleBuffer> buffered;
+        SequenceNumber pendingSequenceNumber = INVALID<SequenceNumber>;
+        ChunkNumber pendingChunkNumber = INVALID<ChunkNumber>;
+    };
+
+    folly::Synchronized<State> stateLock;
+    size_t upperThreshold;
+    size_t lowerThreshold;
+
+public:
+    /// @param upperThreshold Number of buffered items at which backpressure is applied.
+    /// @param lowerThreshold Number of buffered items at which backpressure is released.
+    explicit SinkBackpressureHandler(size_t upperThreshold = 1, size_t lowerThreshold = 0);
+
+    /// Called when sink_send_buffer returns Full.
+    /// Buffers the TupleBuffer internally. Applies backpressure if threshold exceeded.
+    /// Returns a buffer to retry via repeatTask, or nullopt if one is already pending.
+    std::optional<TupleBuffer> onFull(TupleBuffer buffer, BackpressureController& bpc);
+
+    /// Called when sink_send_buffer returns Success.
+    /// Clears pending state, releases backpressure if below threshold.
+    /// Returns next buffered item to send, or nullopt if backlog is empty.
+    std::optional<TupleBuffer> onSuccess(BackpressureController& bpc);
+
+    /// Returns true if internal backlog is empty.
+    bool empty() const;
+
+    /// Pop front item from backlog for drain during stop().
+    /// Returns nullopt if empty.
+    std::optional<TupleBuffer> popFront();
+};
 
 SinkBackpressureHandler::SinkBackpressureHandler(size_t upperThreshold, size_t lowerThreshold)
     : upperThreshold(upperThreshold), lowerThreshold(lowerThreshold)
@@ -162,14 +202,16 @@ static DescriptorConfig::Config addHeader(DescriptorConfig::Config config, std::
 struct TokioSinkContext
 {
     std::optional<size_t> stopEpoch;
-    std::atomic_size_t epochCounter;
+    std::atomic_size_t epochCounter{0};
+    std::atomic_bool gracefulStop{false};
+
     folly::Synchronized<std::optional<std::string>> asyncError;
+
     std::shared_ptr<SinkContext> context;
     rust::Box<SinkHandle> handle;
 
     TokioSinkContext(const QueryId& queryId, PipelineId pipelineId, const std::string& sinkType, const SinkDescriptor& descriptor)
-        : epochCounter(0)
-        , context(std::make_shared<SinkContext>(
+        : context(std::make_shared<SinkContext>(
               [this](std::string_view error)
               {
                   NES_ERROR("Sink Failed: {}", error);
@@ -177,7 +219,7 @@ struct TokioSinkContext
               },
               [this](size_t epoch)
               {
-                  NES_INFO("Sink Flushed: {}", epoch);
+                  NES_DEBUG("Sink Flushed: {}", epoch);
                   update_maximum(this->epochCounter, epoch);
               }))
         , handle(create_handle(
@@ -201,19 +243,44 @@ struct TokioSinkContext
         }
     }
 
-    ~TokioSinkContext() { NES_DEBUG("TokioSink::~Context()"); }
+    ~TokioSinkContext()
+    {
+        if (gracefulStop)
+        {
+            NES_DEBUG("Sink closed gracefully");
+        }
+        else
+        {
+            NES_WARNING("Sink forced termination");
+        }
+    }
 };
 
 TokioSink::TokioSink(BackpressureController backpressureController, SinkDescriptor descriptor, size_t upperThreshold, size_t lowerThreshold)
-    : Sink(std::move(backpressureController)), descriptor(descriptor), context(nullptr), backpressureHandler(upperThreshold, lowerThreshold)
+    : Sink(std::move(backpressureController))
+    , descriptor(descriptor)
+    , context(nullptr)
+    , backpressureHandler(std::make_unique<SinkBackpressureHandler>(upperThreshold, lowerThreshold))
 {
 }
 
-TokioSink::~TokioSink()
-{
-    // rustHandle (rust::Box<SinkHandle>) dropped automatically by unique_ptr destructor.
-    // If stop was never called, Rust sink sees broken channel -> implicit close (Phase 4).
-}
+/// Sink Termination:
+/// Sink Termination is tied to how Pipeline Termination works in the nebulastreams query engine.
+/// A pipeline may be gracefully stopped if the query is terminated due to a stop request from a user or all sources have completed.
+/// If a query fails, the pipeline stop is **not** invoked. The pipeline is simply destructed.
+/// So a pipeline can differentiate between graceful termination and forceful termination by setting a flag in the stop method.
+/// stop is guaranteed:
+///     - to be called once from a single thread without any concurrent access to the sink. (no more pending tasks)
+///
+/// stop is also guaranteed to be called only if not a single pending (including delayed-repeated) tasks are in the queue. stop will be called without any concurrent modification to the sink
+///
+/// A graceful stop allows the sink to flush its content before stopping the query. The c++ side of the Tokio sink is connected via an
+/// mpsc queue. Before starting the stop protocol the sink will attempt to write all backpressure buffers to the sink.
+/// since the stop is executed on a single thread we send a flush signal with an epoch number attached to the sink.
+/// once we receive the epoch we know this sink has written everything up to the epoch and we can stop the sink without losing data.
+///
+/// A forceful stop will drop the SinkHandle which will (in the rust code) abort the Sink Task
+TokioSink::~TokioSink() = default;
 
 void TokioSink::start(PipelineExecutionContext& pec)
 {
@@ -229,11 +296,11 @@ void TokioSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
         switch (try_write(*context->handle, toRust(*currentBuffer)))
         {
             case ::WriteResult::Ok:
-                currentBuffer = backpressureHandler.onSuccess(backpressureController);
+                currentBuffer = backpressureHandler->onSuccess(backpressureController);
                 break;
 
             case ::WriteResult::Full:
-                if (auto retry = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                if (auto retry = backpressureHandler->onFull(*currentBuffer, backpressureController))
                 {
                     pec.repeatTask(*retry, BACKPRESSURE_RETRY_INTERVAL);
                 }
@@ -245,17 +312,17 @@ void TokioSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
 void TokioSink::stop(PipelineExecutionContext& pec)
 {
     context->throwIfAsyncError();
-    auto currentBuffer = backpressureHandler.popFront();
+    auto currentBuffer = backpressureHandler->popFront();
     while (currentBuffer)
     {
         switch (try_write(*context->handle, toRust(*currentBuffer)))
         {
             case ::WriteResult::Ok:
-                currentBuffer = backpressureHandler.onSuccess(backpressureController);
+                currentBuffer = backpressureHandler->onSuccess(backpressureController);
                 break;
 
             case ::WriteResult::Full:
-                if (auto retry = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                if (auto retry = backpressureHandler->onFull(*currentBuffer, backpressureController))
                 {
                     pec.repeatTask(*retry, BACKPRESSURE_RETRY_INTERVAL);
                 }
@@ -283,6 +350,7 @@ void TokioSink::stop(PipelineExecutionContext& pec)
     }
     else
     {
+        context->gracefulStop = true;
         NES_INFO("Sink Closed successfully");
     }
 }

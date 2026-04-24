@@ -194,6 +194,7 @@ RunningSource::~RunningSource()
 {
     if (source)
     {
+        LogContext logContext("Source", source->getSourceId());
         ENGINE_LOG_DEBUG("Stopping Running Source");
         if (source->tryStop(std::chrono::milliseconds(0)) == SourceReturnType::TryStopResult::TIMEOUT)
         {

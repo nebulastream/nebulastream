@@ -785,6 +785,7 @@ dependencies = [
  "nes_buffer_runtime",
  "nes_io_runtime",
  "nes_sink_validation",
+ "scopeguard",
  "tokio",
  "tracing",
 ]
@@ -831,6 +832,7 @@ dependencies = [
  "nes_buffer_runtime",
  "nes_io_runtime",
  "nes_source_validation",
+ "scopeguard",
  "tokio",
  "tracing",
 ]
@@ -1118,6 +1120,12 @@ dependencies = [
  "arrayvec",
  "num-traits",
 ]
+
+[[package]]
+name = "scopeguard"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scratch"
@@ -1496,6 +1504,22 @@ name = "valuable"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
+
+[[package]]
+name = "void_sink"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "duration-str",
+ "linkme",
+ "nes_buffer_bindings",
+ "nes_buffer_runtime",
+ "nes_io_runtime",
+ "nes_sink_runtime",
+ "nes_sink_validation",
+ "tokio",
+ "tracing",
+]
 
 [[package]]
 name = "wasi"

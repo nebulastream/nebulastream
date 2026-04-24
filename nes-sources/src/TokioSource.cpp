@@ -151,54 +151,47 @@ struct DataHandler final : DataEmitter
     {
     }
 
-    AsyncFunctionResult runAsync(coro::task<void> task, AsyncCompletionToken&& token)
+    AsyncFunctionResult onData(TupleBuffer buffer, AsyncCompletionToken token) override
     {
-        [](coro::task<void> t,
-           AsyncCompletionToken tok,
-           BackpressureListener backpressure,
-           std::shared_ptr<AsyncSemaphore> semaphore) mutable -> DetachedTask
-        {
-            try
-            {
-                co_await semaphore->acquire();
-                co_await backpressure.waitAsync();
-                co_await std::move(t);
-                std::move(tok)(AsyncCompletionResult::Success);
-            }
-            catch (const std::exception& e)
-            {
-                NES_ERROR("TokioSource: Exception in async emit: {}", e.what());
-                std::move(tok)(AsyncCompletionResult::Success);
-            }
-        }(std::move(task), std::move(token), this->backpressureListener, this->semaphore);
-        return AsyncFunctionResult::CallbackRegistered;
-    }
+        auto emitTask = emitFunction(
+            originId,
+            NES::SourceReturnType::Data{
+                .buffer = std::move(buffer),
+                .onComplete = std::function([semaphore = this->semaphore]() mutable { semaphore->release(); })});
 
-    AsyncFunctionResult onData(TupleBuffer buffer, size_t /*size*/, AsyncCompletionToken token) override
-    {
-        /// Metadata (origin_id, sequence_number, chunk_number, last_chunk, number_of_tuples)
-        /// is populated in Rust `run_source` before the buffer is handed to us, so we do
-        /// not touch it here. This preserves wire-level metadata for sources like NetworkSource
-        /// that set their own.
-        return runAsync(
-            emitFunction(
-                originId,
-                NES::SourceReturnType::Data{
-                    .buffer = std::move(buffer),
-                    .onComplete = std::function([semaphore = this->semaphore]() mutable { semaphore->release(); })}),
-            std::move(token));
+        [](AsyncCompletionToken tok,
+           BackpressureListener backpressure,
+           std::shared_ptr<AsyncSemaphore> semaphore,
+           coro::task<void> emitTask) mutable -> DetachedTask
+        {
+            co_await semaphore->acquire();
+            co_await backpressure.waitAsync();
+            co_await emitTask;
+            std::move(tok)(AsyncCompletionResult::Success);
+        }(std::move(token), backpressureListener, semaphore, std::move(emitTask));
+        return AsyncFunctionResult::CallbackRegistered;
     }
 
     AsyncFunctionResult onError(std::string errorMessage, AsyncCompletionToken token) override
     {
-        auto response = emitFunction(originId, NES::SourceReturnType::Error{CannotOpenSource("Source Failure: {}", errorMessage)});
-        return runAsync(std::move(response), std::move(token));
+        auto emitTask = emitFunction(originId, NES::SourceReturnType::Error{CannotOpenSource("Source Failure: {}", errorMessage)});
+        [](AsyncCompletionToken tok, coro::task<void> emitTask) mutable -> DetachedTask
+        {
+            co_await emitTask;
+            std::move(tok)(AsyncCompletionResult::Success);
+        }(std::move(token), std::move(emitTask));
+        return AsyncFunctionResult::CallbackRegistered;
     }
 
     AsyncFunctionResult onEoS(AsyncCompletionToken token) override
     {
-        auto response = emitFunction(originId, NES::SourceReturnType::EoS{});
-        return runAsync(std::move(response), std::move(token));
+        auto emitTask = emitFunction(originId, NES::SourceReturnType::EoS{});
+        [](AsyncCompletionToken tok, coro::task<void> emitTask) mutable -> DetachedTask
+        {
+            co_await emitTask;
+            std::move(tok)(AsyncCompletionResult::Success);
+        }(std::move(token), std::move(emitTask));
+        return AsyncFunctionResult::CallbackRegistered;
     }
 };
 

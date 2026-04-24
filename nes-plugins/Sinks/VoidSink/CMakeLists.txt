@@ -10,13 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(Void Sink nes-sinks-registry void_sink_plugin VoidSink.cpp)
-add_plugin_as_library(Void SinkValidation nes-sinks-registry void_sink_validation_plugin VoidSink.cpp)
-
-target_include_directories(void_sink_plugin
-        PUBLIC .
-)
-target_include_directories(void_sink_validation_plugin
-        PUBLIC .
-)
+target_link_rust_lib(nes-sinks void_sink)

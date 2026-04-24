@@ -54,7 +54,6 @@ pub mod ffi {
         unsafe fn source_on_data(
             context: Pin<&mut SourceContext>,
             buffer: *mut MemorySegment,
-            size: usize,
             done: fn(Box<AsyncCompletionContext>, ret: AsyncCompletionResult),
             ctx: Box<AsyncCompletionContext>,
         ) -> AsyncFunctionResult;
@@ -132,12 +131,11 @@ impl AsyncEmitter for Emitter {
         .await
     }
 
-    async fn data(&mut self, data: TupleBuffer, size: usize) -> nes_source_runtime::Result<()> {
+    async fn data(&mut self, data: TupleBuffer) -> nes_source_runtime::Result<()> {
         async_operation(move |done, ctx| unsafe {
             ffi::source_on_data(
                 self.context.pin_mut_unchecked(),
                 data.leak(),
-                size,
                 done,
                 ctx,
             )
