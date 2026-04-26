@@ -143,8 +143,7 @@ grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQuery
         [&]()
         {
             const auto queryId = QueryPlanSerializationUtil::deserializeQueryId(request->queryid());
-            const auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
-            getValueOrThrow(delegate.stopQuery(queryId, terminationType));
+            getValueOrThrow(delegate.stopQuery(queryId));
             return grpc::Status::OK;
         });
 }
