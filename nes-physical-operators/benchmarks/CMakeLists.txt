@@ -17,7 +17,24 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-find_package(benchmark REQUIRED)
+# Pull a release build of Google Benchmark via FetchContent. The Debian/Ubuntu
+# package ships a CMAKE_BUILD_TYPE=None build with NDEBUG undefined, which
+# trips libbenchmark's "***WARNING*** Library was built as DEBUG" diagnostic
+# and leaves assertions live in the timing loop. Building from source here
+# guarantees an honest release configuration.
+include(FetchContent)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
+set(BENCHMARK_INSTALL_DOCS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    googlebenchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG v1.9.1
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(googlebenchmark)
+
 find_package(Threads REQUIRED)
 
 add_executable(slice-store-benchmark SliceStoreBenchmark.cpp)
