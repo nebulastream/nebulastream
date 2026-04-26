@@ -60,7 +60,7 @@ BenchmarkSource::~BenchmarkSource()
 
 void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
-    // NOLINTNEXTLINE(concurrency-mt-unsafe)
+    /// NOLINTNEXTLINE(concurrency-mt-unsafe)
     const auto realPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
     if (!realPath)
     {
@@ -181,7 +181,7 @@ SourceValidationRegistryReturnType RegisterBenchmarkSourceValidation(SourceValid
     return BenchmarkSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-// NOLINTNEXTLINE(performance-unnecessary-value-param) - registry interface requires pass-by-value
+/// NOLINTNEXTLINE(performance-unnecessary-value-param) - registry interface requires pass-by-value
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBenchmarkSource(SourceRegistryArguments args)
 {
     return std::make_unique<BenchmarkSource>(args.sourceDescriptor);
