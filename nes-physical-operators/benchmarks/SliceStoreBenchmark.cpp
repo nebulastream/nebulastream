@@ -149,99 +149,76 @@ private:
 /// ---------------------------------------------------------------------------
 /// Workload
 /// ---------------------------------------------------------------------------
+///
+/// Generation pipeline (matches the engine's invariants):
+///   1. Produce one global, monotonically-increasing event stream.
+///   2. Chunk it into buffers of random size (Uniform[min,max], non-empty).
+///      Each buffer gets a contiguous sequence number in chunking order.
+///      Within a buffer, event timestamps are strictly monotonic.
+///   3. Each buffer's advisory watermark is its LAST event's timestamp - the
+///      source guarantees it will not emit any further event below that ts.
+///   4. Shuffle the arrival order of buffers within a sliding window of
+///      `bufferOutOfOrderSpan` to model out-of-order delivery to the operator.
+///      Sequence numbers stay attached to their buffers; only arrival changes.
+///   5. (Done in BM_SliceStore_Concurrent) Round-robin the shuffled buffers
+///      across N worker threads.
 
-struct Tuple
+struct Event
 {
-    Timestamp sliceEnd; ///< Pre-assigned by a SliceAssigner-equivalent.
+    Timestamp ts;
     std::uint64_t value;
 };
 
-/// A buffer as it arrives at the operator: monotonic seq, advisory watermark,
-/// and a batch of tuples. Buffers may arrive out of order; the operator's
-/// effective watermark only advances over the contiguous prefix of seen seqs.
+/// A buffer as it arrives at the operator: monotonic seq, advisory watermark
+/// equal to its last event's timestamp, and a strictly ts-monotonic batch.
 struct Buffer
 {
     SequenceNumber seq;
     Timestamp watermark;
-    std::vector<Tuple> tuples;
+    std::vector<Event> events;
 };
 
-/// Workload configuration. Defaults give a moderately out-of-order stream:
-/// 10 % of tuples are late by up to 5 windows, watermark trails 8 windows
-/// behind, sliding window of size 4 * slide -> tens of live slices at a time.
 struct WorkloadConfig
 {
-    std::uint64_t windowSlide = 1000;        ///< Slice width (== window size for tumbling).
-    std::uint64_t windowSize = 4000;         ///< Window size; if > slide -> sliding window.
+    std::uint64_t windowSlide = 1000;        ///< Slice width.
+    std::uint64_t windowSize = 4000;         ///< Window size; > slide => sliding window.
     std::size_t numBuffers = 4096;           ///< Total buffers per iteration.
-    std::size_t tuplesPerBuffer = 256;       ///< Batch size.
-    std::size_t bufferOutOfOrderSpan = 4;    ///< Reorder window over arriving buffers.
-    std::uint64_t timestampStride = 200;     ///< Mean event-time advance per buffer.
-    double lateTupleFraction = 0.10;         ///< Fraction of tuples emitted late.
-    std::uint64_t maxTupleLateness = 5000;   ///< Max event-time lateness for late tuples.
-    std::uint64_t watermarkLag = 8000;       ///< buffer.watermark = clock - lag.
+    std::size_t minBufferSize = 128;         ///< Lower bound of Uniform[min,max] events/buffer.
+    std::size_t maxBufferSize = 384;         ///< Upper bound; mean ~ 256.
+    std::size_t bufferOutOfOrderSpan = 4;    ///< Sliding shuffle window over arrivals.
+    std::uint64_t eventInterArrival = 1;     ///< ts increment between consecutive events.
     unsigned seed = 0xC0FFEEu;
 };
 
-/// Generate an out-of-order stream:
-///   - Each buffer's `clock` advances monotonically by `timestampStride`.
-///   - In-order tuples have event time near the buffer's clock.
-///   - A configurable fraction of tuples are LATE: their event time is up to
-///     `maxTupleLateness` behind the clock, so they land in older slices that
-///     the watermark hasn't passed yet (bounded by `watermarkLag`).
-///   - Tuples within a buffer are then shuffled so the late ones aren't all at
-///     the head; the operator sees lookups jumping backwards in slice end.
-///   - Buffers themselves are shuffled within a window of `bufferOutOfOrderSpan`
-///     so their seq numbers arrive non-monotonically (forces the WatermarkTracker
-///     to hold pending advisories).
-///   - Sliding window: each tuple is fanned out into `windowSize / windowSlide`
-///     consecutive slice ends, matching how a build operator inserts a tuple
-///     into every slice the tuple participates in.
 std::vector<Buffer> generateWorkload(const WorkloadConfig& cfg)
 {
     std::mt19937_64 rng(cfg.seed);
-    std::uniform_real_distribution<double> coin(0.0, 1.0);
-    std::uniform_int_distribution<std::uint64_t> latenessDist(0, cfg.maxTupleLateness);
-    std::uniform_int_distribution<std::uint64_t> inOrderJitter(0, cfg.timestampStride);
+    std::uniform_int_distribution<std::size_t> sizeDist(
+        std::max<std::size_t>(1, cfg.minBufferSize), std::max<std::size_t>(1, cfg.maxBufferSize));
 
-    const std::uint64_t slicesPerWindow = std::max<std::uint64_t>(1, cfg.windowSize / cfg.windowSlide);
-
+    /// Steps 1 + 2: emit a monotonic event stream and chunk it into buffers.
+    /// Done in one pass since each buffer's events are a contiguous slice of
+    /// the global stream.
+    Timestamp ts = cfg.windowSlide; ///< Start past the first slice boundary.
+    std::uint64_t valueCounter = 0;
     std::vector<Buffer> buffers;
     buffers.reserve(cfg.numBuffers);
-
-    Timestamp clock = cfg.windowSize;
-    std::uint64_t valueCounter = 0;
     for (std::size_t s = 0; s < cfg.numBuffers; ++s)
     {
         Buffer b;
         b.seq = s;
-        b.tuples.reserve(cfg.tuplesPerBuffer * slicesPerWindow);
-        for (std::size_t t = 0; t < cfg.tuplesPerBuffer; ++t)
+        const std::size_t sz = sizeDist(rng);
+        b.events.reserve(sz);
+        for (std::size_t e = 0; e < sz; ++e)
         {
-            Timestamp eventTime;
-            if (coin(rng) < cfg.lateTupleFraction)
-            {
-                const std::uint64_t lateness = latenessDist(rng);
-                eventTime = clock > lateness ? clock - lateness : 0;
-            }
-            else
-            {
-                eventTime = clock + inOrderJitter(rng);
-            }
-            /// Fan out across all slices this tuple belongs to. For tumbling
-            /// (slicesPerWindow == 1) this is a single insert.
-            const Timestamp firstSliceEnd = ((eventTime / cfg.windowSlide) + 1) * cfg.windowSlide;
-            for (std::uint64_t k = 0; k < slicesPerWindow; ++k)
-            {
-                b.tuples.push_back({firstSliceEnd + k * cfg.windowSlide, valueCounter++});
-            }
+            b.events.push_back({ts, valueCounter++});
+            ts += cfg.eventInterArrival;
         }
-        std::shuffle(b.tuples.begin(), b.tuples.end(), rng);
-        b.watermark = clock > cfg.watermarkLag ? clock - cfg.watermarkLag : 0;
-        clock += cfg.timestampStride;
+        b.watermark = b.events.back().ts;
         buffers.push_back(std::move(b));
     }
 
+    /// Step 4: shuffle arrival order within a sliding window.
     if (cfg.bufferOutOfOrderSpan > 0)
     {
         for (std::size_t i = 0; i + 1 < buffers.size(); ++i)
@@ -291,25 +268,32 @@ private:
     std::unordered_map<SequenceNumber, Timestamp> pending;
 };
 
+/// Helper: compute the slice end for an event timestamp under a tumbling
+/// model (slice width == windowSlide).
+inline Timestamp sliceEndFor(Timestamp ts, std::uint64_t windowSlide)
+{
+    return ((ts / windowSlide) + 1) * windowSlide;
+}
+
 /// Inspect a generated workload: counts what the slice store will actually
-/// see. Useful both for sanity checks during development and for emitting
-/// counters alongside benchmark results.
+/// see. Slice fan-out (windowSize / windowSlide) is applied here so the
+/// reported counters match what the runtime executes.
 struct WorkloadStats
 {
-    std::size_t totalTuples = 0;          ///< Sum of tuples across all buffers.
+    std::size_t totalEvents = 0;          ///< Total events across all buffers.
+    std::size_t totalLookups = 0;         ///< getOrCreate calls (= events * slicesPerWindow).
     std::size_t uniqueSliceEnds = 0;      ///< Number of distinct slice ends across the run.
     std::size_t peakLiveSlices = 0;       ///< Max concurrent live slices (after each buffer).
-    std::size_t backwardLookups = 0;      ///< Lookups whose sliceEnd < the previous lookup's end.
     std::size_t outOfOrderBuffers = 0;    ///< Buffers whose seq arrives below the running max.
 };
 
-WorkloadStats analyzeWorkload(const std::vector<Buffer>& buffers)
+WorkloadStats analyzeWorkload(const std::vector<Buffer>& buffers, const WorkloadConfig& cfg)
 {
+    const std::uint64_t slicesPerWindow = std::max<std::uint64_t>(1, cfg.windowSize / cfg.windowSlide);
     WorkloadStats stats;
     std::unordered_set<Timestamp> allEnds;
     std::set<Timestamp> live;
     WatermarkTracker wm;
-    Timestamp prevSliceEnd = 0;
     SequenceNumber maxSeq = 0;
     bool firstBuffer = true;
     for (const auto& b : buffers)
@@ -321,16 +305,17 @@ WorkloadStats analyzeWorkload(const std::vector<Buffer>& buffers)
         firstBuffer = false;
         maxSeq = std::max(maxSeq, b.seq);
 
-        for (const auto& t : b.tuples)
+        for (const auto& e : b.events)
         {
-            ++stats.totalTuples;
-            if (t.sliceEnd < prevSliceEnd)
+            ++stats.totalEvents;
+            const Timestamp first = sliceEndFor(e.ts, cfg.windowSlide);
+            for (std::uint64_t k = 0; k < slicesPerWindow; ++k)
             {
-                ++stats.backwardLookups;
+                const Timestamp se = first + k * cfg.windowSlide;
+                ++stats.totalLookups;
+                allEnds.insert(se);
+                live.insert(se);
             }
-            prevSliceEnd = t.sliceEnd;
-            allEnds.insert(t.sliceEnd);
-            live.insert(t.sliceEnd);
         }
         const Timestamp newWm = wm.ack(b.seq, b.watermark);
         for (auto it = live.begin(); it != live.end();)
@@ -350,21 +335,27 @@ WorkloadStats analyzeWorkload(const std::vector<Buffer>& buffers)
     return stats;
 }
 
-/// One pass of the workload through a store. Touches the per-thread slot of
-/// each returned slice so the build path is realistic.
+/// One pass of the workload through a store. Each event fans out to
+/// `windowSize / windowSlide` consecutive slice ends to model sliding
+/// windows; for tumbling (slide == size) this is one getOrCreate per event.
 template <typename Store>
-std::uint64_t runWorkload(Store& store, const std::vector<Buffer>& buffers, WorkerThreadId tid)
+std::uint64_t runWorkload(Store& store, const std::vector<Buffer>& buffers, const WorkloadConfig& cfg, WorkerThreadId tid)
 {
+    const std::uint64_t slicesPerWindow = std::max<std::uint64_t>(1, cfg.windowSize / cfg.windowSlide);
     WatermarkTracker wm;
     std::uint64_t sink = 0;
     for (const auto& b : buffers)
     {
-        for (const auto& t : b.tuples)
+        for (const auto& e : b.events)
         {
-            auto slice = store.getOrCreate(t.sliceEnd);
-            auto& slot = slice->perThread[tid];
-            slot.count += 1;
-            slot.sum += t.value;
+            const Timestamp first = sliceEndFor(e.ts, cfg.windowSlide);
+            for (std::uint64_t k = 0; k < slicesPerWindow; ++k)
+            {
+                auto slice = store.getOrCreate(first + k * cfg.windowSlide);
+                auto& slot = slice->perThread[tid];
+                slot.count += 1;
+                slot.sum += e.value;
+            }
         }
         const Timestamp newWm = wm.ack(b.seq, b.watermark);
         auto drained = store.drainUpTo(newWm);
@@ -385,100 +376,70 @@ std::uint64_t runWorkload(Store& store, const std::vector<Buffer>& buffers, Work
 
 void attachStatsCounters(benchmark::State& state, const WorkloadStats& s)
 {
-    state.counters["totalTuples"] = static_cast<double>(s.totalTuples);
+    state.counters["events"] = static_cast<double>(s.totalEvents);
+    state.counters["lookups"] = static_cast<double>(s.totalLookups);
     state.counters["uniqSlices"] = static_cast<double>(s.uniqueSliceEnds);
     state.counters["peakLive"] = static_cast<double>(s.peakLiveSlices);
-    state.counters["backwardLookups"] = static_cast<double>(s.backwardLookups);
     state.counters["ooBuffers"] = static_cast<double>(s.outOfOrderBuffers);
 }
 
-/// Sweep the per-tuple lateness. state.range(0) = maxTupleLateness in timestamp
-/// units. 0 means in-order tuples; larger values fan lookups across older slices
-/// that haven't been drained yet.
-template <class Store>
-void BM_SliceStore_TupleLateness(benchmark::State& state)
-{
-    WorkloadConfig cfg;
-    cfg.maxTupleLateness = static_cast<std::uint64_t>(state.range(0));
-    /// Make sure the watermark trails at least the max lateness so late tuples
-    /// have a slice to land in.
-    cfg.watermarkLag = std::max<std::uint64_t>(cfg.watermarkLag, cfg.maxTupleLateness + 2 * cfg.windowSlide);
-    const auto buffers = generateWorkload(cfg);
-    const auto stats = analyzeWorkload(buffers);
-
-    for (auto _ : state)
-    {
-        Store store(cfg.windowSlide, /*numThreads=*/1);
-        std::uint64_t sink = runWorkload(store, buffers, /*tid=*/0);
-        benchmark::DoNotOptimize(sink);
-        benchmark::ClobberMemory();
-    }
-    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalTuples));
-    attachStatsCounters(state, stats);
-}
-
-/// Sweep how many slices are live at the same time, by varying watermarkLag.
-/// state.range(0) = watermarkLag in timestamp units.
-template <class Store>
-void BM_SliceStore_LiveSlices(benchmark::State& state)
-{
-    WorkloadConfig cfg;
-    cfg.watermarkLag = static_cast<std::uint64_t>(state.range(0));
-    cfg.maxTupleLateness = std::min(cfg.maxTupleLateness, cfg.watermarkLag);
-    const auto buffers = generateWorkload(cfg);
-    const auto stats = analyzeWorkload(buffers);
-
-    for (auto _ : state)
-    {
-        Store store(cfg.windowSlide, /*numThreads=*/1);
-        std::uint64_t sink = runWorkload(store, buffers, /*tid=*/0);
-        benchmark::DoNotOptimize(sink);
-        benchmark::ClobberMemory();
-    }
-    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalTuples));
-    attachStatsCounters(state, stats);
-}
-
-/// Sweep the buffer-level out-of-order span: how far apart in seq number can
-/// two adjacent arrivals be?
+/// Sweep the buffer-level out-of-order span. With the new model this is the
+/// only source of out-of-orderness: a larger span means buffers arrive in a
+/// more scrambled seq order, the WatermarkTracker pending set grows, and more
+/// slices stay live at once.
 template <class Store>
 void BM_SliceStore_BufferOOO(benchmark::State& state)
 {
     WorkloadConfig cfg;
     cfg.bufferOutOfOrderSpan = static_cast<std::size_t>(state.range(0));
     const auto buffers = generateWorkload(cfg);
-    const auto stats = analyzeWorkload(buffers);
+    const auto stats = analyzeWorkload(buffers, cfg);
 
     for (auto _ : state)
     {
         Store store(cfg.windowSlide, /*numThreads=*/1);
-        std::uint64_t sink = runWorkload(store, buffers, /*tid=*/0);
+        std::uint64_t sink = runWorkload(store, buffers, cfg, /*tid=*/0);
         benchmark::DoNotOptimize(sink);
         benchmark::ClobberMemory();
     }
-    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalTuples));
+    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalLookups));
     attachStatsCounters(state, stats);
 }
 
-BENCHMARK_TEMPLATE(BM_SliceStore_TupleLateness, LockingHashMapSliceStore)
-    ->Arg(0)
-    ->Arg(1000)
-    ->Arg(5000)
-    ->Arg(20000)
-    ->Unit(benchmark::kMillisecond);
+/// Sweep the sliding-window fan-out (windowSize / windowSlide). 1 = tumbling.
+/// Higher = each event hits more slices, increasing both lookup volume and
+/// the live-slice working set.
+template <class Store>
+void BM_SliceStore_SliceFanout(benchmark::State& state)
+{
+    WorkloadConfig cfg;
+    cfg.windowSize = cfg.windowSlide * static_cast<std::uint64_t>(state.range(0));
+    const auto buffers = generateWorkload(cfg);
+    const auto stats = analyzeWorkload(buffers, cfg);
 
-BENCHMARK_TEMPLATE(BM_SliceStore_LiveSlices, LockingHashMapSliceStore)
-    ->Arg(2000)
-    ->Arg(8000)
-    ->Arg(32000)
-    ->Arg(128000)
-    ->Unit(benchmark::kMillisecond);
+    for (auto _ : state)
+    {
+        Store store(cfg.windowSlide, /*numThreads=*/1);
+        std::uint64_t sink = runWorkload(store, buffers, cfg, /*tid=*/0);
+        benchmark::DoNotOptimize(sink);
+        benchmark::ClobberMemory();
+    }
+    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalLookups));
+    attachStatsCounters(state, stats);
+}
 
 BENCHMARK_TEMPLATE(BM_SliceStore_BufferOOO, LockingHashMapSliceStore)
     ->Arg(0)
     ->Arg(2)
     ->Arg(8)
     ->Arg(32)
+    ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_SliceStore_SliceFanout, LockingHashMapSliceStore)
+    ->Arg(1)
+    ->Arg(4)
+    ->Arg(16)
+    ->Arg(64)
     ->Unit(benchmark::kMillisecond);
 
 /// Pre-partition buffers round-robin across N worker threads. Each thread
@@ -520,8 +481,9 @@ void BM_SliceStore_Concurrent(benchmark::State& state)
     const auto numThreads = static_cast<std::size_t>(state.range(0));
     WorkloadConfig cfg;
     const auto buffers = generateWorkload(cfg);
-    const auto stats = analyzeWorkload(buffers);
+    const auto stats = analyzeWorkload(buffers, cfg);
     const auto partitions = partitionBuffers(buffers, numThreads);
+    const std::uint64_t slicesPerWindow = std::max<std::uint64_t>(1, cfg.windowSize / cfg.windowSlide);
 
     /// Per-iteration shared state. Populated by the controller before each
     /// startBarrier; workers consume it; controller resets between iterations.
@@ -552,12 +514,16 @@ void BM_SliceStore_Concurrent(benchmark::State& state)
                     for (const std::size_t idx : partitions[tid].bufferIndices)
                     {
                         const auto& b = buffers[idx];
-                        for (const auto& t : b.tuples)
+                        for (const auto& e : b.events)
                         {
-                            auto slice = store->getOrCreate(t.sliceEnd);
-                            auto& slot = slice->perThread[tid];
-                            slot.count += 1;
-                            slot.sum += t.value;
+                            const Timestamp first = sliceEndFor(e.ts, cfg.windowSlide);
+                            for (std::uint64_t k = 0; k < slicesPerWindow; ++k)
+                            {
+                                auto slice = store->getOrCreate(first + k * cfg.windowSlide);
+                                auto& slot = slice->perThread[tid];
+                                slot.count += 1;
+                                slot.sum += e.value;
+                            }
                         }
                         const Timestamp newWm = wm->ack(b.seq, b.watermark);
                         auto drained = store->drainUpTo(newWm);
@@ -594,7 +560,7 @@ void BM_SliceStore_Concurrent(benchmark::State& state)
         t.join();
     }
 
-    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalTuples));
+    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalLookups));
     attachStatsCounters(state, stats);
     state.counters["threads"] = static_cast<double>(numThreads);
 }
