@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <barrier>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -37,6 +38,7 @@
 #include <mutex>
 #include <random>
 #include <set>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -257,12 +259,15 @@ std::vector<Buffer> generateWorkload(const WorkloadConfig& cfg)
 
 /// Tracks the global watermark: it only advances once all seq numbers up to
 /// the current one have been acknowledged (matches MultiOriginWatermarkProcessor
-/// semantics for a single origin).
+/// semantics for a single origin). Thread-safe: build threads ack their own
+/// partition's seqs; whichever thread closes the next contiguous prefix gets
+/// to observe the advance and trigger a drain.
 class WatermarkTracker
 {
 public:
     Timestamp ack(SequenceNumber seq, Timestamp advisory)
     {
+        std::lock_guard<std::mutex> lock(mutex);
         pending.emplace(seq, advisory);
         for (auto it = pending.find(nextSeq); it != pending.end(); it = pending.find(nextSeq))
         {
@@ -273,9 +278,14 @@ public:
         return global;
     }
 
-    [[nodiscard]] Timestamp current() const { return global; }
+    [[nodiscard]] Timestamp current() const
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        return global;
+    }
 
 private:
+    mutable std::mutex mutex;
     SequenceNumber nextSeq = 0;
     Timestamp global = 0;
     std::unordered_map<SequenceNumber, Timestamp> pending;
@@ -469,6 +479,131 @@ BENCHMARK_TEMPLATE(BM_SliceStore_BufferOOO, LockingHashMapSliceStore)
     ->Arg(2)
     ->Arg(8)
     ->Arg(32)
+    ->Unit(benchmark::kMillisecond);
+
+/// Pre-partition buffers round-robin across N worker threads. Each thread
+/// owns a fixed list of buffer indices for the lifetime of the benchmark.
+struct ThreadPartition
+{
+    std::vector<std::size_t> bufferIndices;
+};
+
+std::vector<ThreadPartition> partitionBuffers(const std::vector<Buffer>& buffers, std::size_t numThreads)
+{
+    std::vector<ThreadPartition> parts(numThreads);
+    for (auto& p : parts)
+    {
+        p.bufferIndices.reserve((buffers.size() / numThreads) + 1);
+    }
+    for (std::size_t i = 0; i < buffers.size(); ++i)
+    {
+        parts[i % numThreads].bufferIndices.push_back(i);
+    }
+    return parts;
+}
+
+/// Multi-threaded build phase. state.range(0) = number of worker threads.
+///
+/// Workers are spawned once for the whole benchmark and synchronised with two
+/// barriers, so per-iteration thread spawn/join is not on the timing path.
+/// All threads share one store and one WatermarkTracker - getOrCreate
+/// contends on the store's mutex; ack() contends on the tracker's. Whichever
+/// thread closes the next contiguous prefix of seqs observes the watermark
+/// advance and triggers a drain.
+///
+/// UseRealTime() is set on the registration so throughput is computed against
+/// wall-clock; without it Google Benchmark only counts the controlling
+/// thread's CPU time and reports nonsense items/s for spawned-thread work.
+template <class Store>
+void BM_SliceStore_Concurrent(benchmark::State& state)
+{
+    const auto numThreads = static_cast<std::size_t>(state.range(0));
+    WorkloadConfig cfg;
+    const auto buffers = generateWorkload(cfg);
+    const auto stats = analyzeWorkload(buffers);
+    const auto partitions = partitionBuffers(buffers, numThreads);
+
+    /// Per-iteration shared state. Populated by the controller before each
+    /// startBarrier; workers consume it; controller resets between iterations.
+    std::unique_ptr<Store> store;
+    std::unique_ptr<WatermarkTracker> wm;
+    std::atomic<std::uint64_t> sink{0};
+    std::atomic<bool> stop{false};
+
+    /// numThreads + 1: workers + controller (the benchmark thread).
+    std::barrier startBarrier(static_cast<std::ptrdiff_t>(numThreads + 1));
+    std::barrier doneBarrier(static_cast<std::ptrdiff_t>(numThreads + 1));
+
+    std::vector<std::thread> workers;
+    workers.reserve(numThreads);
+    for (std::size_t tid = 0; tid < numThreads; ++tid)
+    {
+        workers.emplace_back(
+            [&, tid]()
+            {
+                for (;;)
+                {
+                    startBarrier.arrive_and_wait();
+                    if (stop.load(std::memory_order_acquire))
+                    {
+                        return;
+                    }
+                    std::uint64_t local = 0;
+                    for (const std::size_t idx : partitions[tid].bufferIndices)
+                    {
+                        const auto& b = buffers[idx];
+                        for (const auto& t : b.tuples)
+                        {
+                            auto slice = store->getOrCreate(t.sliceEnd);
+                            auto& slot = slice->perThread[tid];
+                            slot.count += 1;
+                            slot.sum += t.value;
+                        }
+                        const Timestamp newWm = wm->ack(b.seq, b.watermark);
+                        auto drained = store->drainUpTo(newWm);
+                        for (auto& d : drained)
+                        {
+                            for (auto& slot : d->perThread)
+                            {
+                                local ^= slot.count + slot.sum;
+                            }
+                        }
+                    }
+                    sink.fetch_xor(local, std::memory_order_relaxed);
+                    doneBarrier.arrive_and_wait();
+                }
+            });
+    }
+
+    for (auto _ : state)
+    {
+        store = std::make_unique<Store>(cfg.windowSlide, numThreads);
+        wm = std::make_unique<WatermarkTracker>();
+        sink.store(0, std::memory_order_relaxed);
+        startBarrier.arrive_and_wait();
+        doneBarrier.arrive_and_wait();
+        std::uint64_t observed = sink.load(std::memory_order_relaxed);
+        benchmark::DoNotOptimize(observed);
+        benchmark::ClobberMemory();
+    }
+
+    stop.store(true, std::memory_order_release);
+    startBarrier.arrive_and_wait();
+    for (auto& t : workers)
+    {
+        t.join();
+    }
+
+    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalTuples));
+    attachStatsCounters(state, stats);
+    state.counters["threads"] = static_cast<double>(numThreads);
+}
+
+BENCHMARK_TEMPLATE(BM_SliceStore_Concurrent, LockingHashMapSliceStore)
+    ->Arg(1)
+    ->Arg(2)
+    ->Arg(4)
+    ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
 
 }
