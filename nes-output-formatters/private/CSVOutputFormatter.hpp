@@ -70,20 +70,23 @@ namespace NES::OutputFormatterConfig
 {
 struct ConfigParametersCSV
 {
-    static inline const DescriptorConfig::ConfigParameter<bool> QUOTE_STRINGS{
+    static constexpr auto QUOTE_STRINGS = DescriptorConfig::makeConfigParameter<bool>(
         "quote_strings",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(QUOTE_STRINGS, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<bool>("quote_strings", config); });
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_DELIMITER{
+    static constexpr auto FIELD_DELIMITER = DescriptorConfig::makeConfigParameter<std::string>(
         "field_delimiter",
         ",",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_DELIMITER, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("field_delimiter", config); });
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> TUPLE_DELIMITER{
+    static constexpr auto TUPLE_DELIMITER = DescriptorConfig::makeConfigParameter<std::string>(
         "tuple_delimiter",
         "\n",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("tuple_delimiter", config); });
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
