@@ -36,7 +36,9 @@
 #include <memory>
 #include <mutex>
 #include <random>
+#include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -162,53 +164,87 @@ struct Buffer
     std::vector<Tuple> tuples;
 };
 
+/// Workload configuration. Defaults give a moderately out-of-order stream:
+/// 10 % of tuples are late by up to 5 windows, watermark trails 8 windows
+/// behind, sliding window of size 4 * slide -> tens of live slices at a time.
 struct WorkloadConfig
 {
-    std::uint64_t windowSize = 1000;     ///< Tumbling window size (timestamp units).
-    std::size_t numBuffers = 4096;       ///< Total buffers per benchmark iteration.
-    std::size_t tuplesPerBuffer = 256;   ///< Batch size.
-    std::size_t outOfOrderSpan = 4;      ///< Reorder window over arriving buffers.
-    std::uint64_t timestampStride = 50;  ///< Mean ts increment per buffer.
-    std::uint64_t timestampJitter = 200; ///< Per-tuple jitter -> tuples land in nearby slices.
-    std::uint64_t watermarkLag = 2000;   ///< wm = clock - lag; controls number of live slices.
+    std::uint64_t windowSlide = 1000;        ///< Slice width (== window size for tumbling).
+    std::uint64_t windowSize = 4000;         ///< Window size; if > slide -> sliding window.
+    std::size_t numBuffers = 4096;           ///< Total buffers per iteration.
+    std::size_t tuplesPerBuffer = 256;       ///< Batch size.
+    std::size_t bufferOutOfOrderSpan = 4;    ///< Reorder window over arriving buffers.
+    std::uint64_t timestampStride = 200;     ///< Mean event-time advance per buffer.
+    double lateTupleFraction = 0.10;         ///< Fraction of tuples emitted late.
+    std::uint64_t maxTupleLateness = 5000;   ///< Max event-time lateness for late tuples.
+    std::uint64_t watermarkLag = 8000;       ///< buffer.watermark = clock - lag.
     unsigned seed = 0xC0FFEEu;
 };
 
-/// Generate buffers in seq order with monotonic advisory watermarks, then
-/// shuffle within a sliding window of `outOfOrderSpan + 1` to model out-of-order
-/// arrival at the operator. All randomness is seeded for reproducibility.
+/// Generate an out-of-order stream:
+///   - Each buffer's `clock` advances monotonically by `timestampStride`.
+///   - In-order tuples have event time near the buffer's clock.
+///   - A configurable fraction of tuples are LATE: their event time is up to
+///     `maxTupleLateness` behind the clock, so they land in older slices that
+///     the watermark hasn't passed yet (bounded by `watermarkLag`).
+///   - Tuples within a buffer are then shuffled so the late ones aren't all at
+///     the head; the operator sees lookups jumping backwards in slice end.
+///   - Buffers themselves are shuffled within a window of `bufferOutOfOrderSpan`
+///     so their seq numbers arrive non-monotonically (forces the WatermarkTracker
+///     to hold pending advisories).
+///   - Sliding window: each tuple is fanned out into `windowSize / windowSlide`
+///     consecutive slice ends, matching how a build operator inserts a tuple
+///     into every slice the tuple participates in.
 std::vector<Buffer> generateWorkload(const WorkloadConfig& cfg)
 {
     std::mt19937_64 rng(cfg.seed);
-    std::uniform_int_distribution<std::uint64_t> jitter(0, cfg.timestampJitter);
+    std::uniform_real_distribution<double> coin(0.0, 1.0);
+    std::uniform_int_distribution<std::uint64_t> latenessDist(0, cfg.maxTupleLateness);
+    std::uniform_int_distribution<std::uint64_t> inOrderJitter(0, cfg.timestampStride);
+
+    const std::uint64_t slicesPerWindow = std::max<std::uint64_t>(1, cfg.windowSize / cfg.windowSlide);
 
     std::vector<Buffer> buffers;
     buffers.reserve(cfg.numBuffers);
 
     Timestamp clock = cfg.windowSize;
+    std::uint64_t valueCounter = 0;
     for (std::size_t s = 0; s < cfg.numBuffers; ++s)
     {
         Buffer b;
         b.seq = s;
-        b.tuples.reserve(cfg.tuplesPerBuffer);
+        b.tuples.reserve(cfg.tuplesPerBuffer * slicesPerWindow);
         for (std::size_t t = 0; t < cfg.tuplesPerBuffer; ++t)
         {
-            const Timestamp base = clock + (t * cfg.timestampStride) / std::max<std::size_t>(1, cfg.tuplesPerBuffer);
-            const std::int64_t signedJitter = static_cast<std::int64_t>(jitter(rng)) - static_cast<std::int64_t>(cfg.timestampJitter / 2);
-            const Timestamp ts = (signedJitter < 0 && static_cast<Timestamp>(-signedJitter) > base) ? 0 : base + signedJitter;
-            const Timestamp sliceEnd = ((ts / cfg.windowSize) + 1) * cfg.windowSize;
-            b.tuples.push_back({sliceEnd, ts});
+            Timestamp eventTime;
+            if (coin(rng) < cfg.lateTupleFraction)
+            {
+                const std::uint64_t lateness = latenessDist(rng);
+                eventTime = clock > lateness ? clock - lateness : 0;
+            }
+            else
+            {
+                eventTime = clock + inOrderJitter(rng);
+            }
+            /// Fan out across all slices this tuple belongs to. For tumbling
+            /// (slicesPerWindow == 1) this is a single insert.
+            const Timestamp firstSliceEnd = ((eventTime / cfg.windowSlide) + 1) * cfg.windowSlide;
+            for (std::uint64_t k = 0; k < slicesPerWindow; ++k)
+            {
+                b.tuples.push_back({firstSliceEnd + k * cfg.windowSlide, valueCounter++});
+            }
         }
+        std::shuffle(b.tuples.begin(), b.tuples.end(), rng);
         b.watermark = clock > cfg.watermarkLag ? clock - cfg.watermarkLag : 0;
         clock += cfg.timestampStride;
         buffers.push_back(std::move(b));
     }
 
-    if (cfg.outOfOrderSpan > 0)
+    if (cfg.bufferOutOfOrderSpan > 0)
     {
         for (std::size_t i = 0; i + 1 < buffers.size(); ++i)
         {
-            const std::size_t hi = std::min(i + cfg.outOfOrderSpan + 1, buffers.size());
+            const std::size_t hi = std::min(i + cfg.bufferOutOfOrderSpan + 1, buffers.size());
             const std::size_t pick = std::uniform_int_distribution<std::size_t>(i, hi - 1)(rng);
             if (pick != i)
             {
@@ -245,6 +281,65 @@ private:
     std::unordered_map<SequenceNumber, Timestamp> pending;
 };
 
+/// Inspect a generated workload: counts what the slice store will actually
+/// see. Useful both for sanity checks during development and for emitting
+/// counters alongside benchmark results.
+struct WorkloadStats
+{
+    std::size_t totalTuples = 0;          ///< Sum of tuples across all buffers.
+    std::size_t uniqueSliceEnds = 0;      ///< Number of distinct slice ends across the run.
+    std::size_t peakLiveSlices = 0;       ///< Max concurrent live slices (after each buffer).
+    std::size_t backwardLookups = 0;      ///< Lookups whose sliceEnd < the previous lookup's end.
+    std::size_t outOfOrderBuffers = 0;    ///< Buffers whose seq arrives below the running max.
+};
+
+WorkloadStats analyzeWorkload(const std::vector<Buffer>& buffers)
+{
+    WorkloadStats stats;
+    std::unordered_set<Timestamp> allEnds;
+    std::set<Timestamp> live;
+    WatermarkTracker wm;
+    Timestamp prevSliceEnd = 0;
+    SequenceNumber maxSeq = 0;
+    bool firstBuffer = true;
+    for (const auto& b : buffers)
+    {
+        if (!firstBuffer && b.seq < maxSeq)
+        {
+            ++stats.outOfOrderBuffers;
+        }
+        firstBuffer = false;
+        maxSeq = std::max(maxSeq, b.seq);
+
+        for (const auto& t : b.tuples)
+        {
+            ++stats.totalTuples;
+            if (t.sliceEnd < prevSliceEnd)
+            {
+                ++stats.backwardLookups;
+            }
+            prevSliceEnd = t.sliceEnd;
+            allEnds.insert(t.sliceEnd);
+            live.insert(t.sliceEnd);
+        }
+        const Timestamp newWm = wm.ack(b.seq, b.watermark);
+        for (auto it = live.begin(); it != live.end();)
+        {
+            if (*it <= newWm)
+            {
+                it = live.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+        stats.peakLiveSlices = std::max(stats.peakLiveSlices, live.size());
+    }
+    stats.uniqueSliceEnds = allEnds.size();
+    return stats;
+}
+
 /// One pass of the workload through a store. Touches the per-thread slot of
 /// each returned slice so the build path is realistic.
 template <typename Store>
@@ -278,67 +373,102 @@ std::uint64_t runWorkload(Store& store, const std::vector<Buffer>& buffers, Work
 /// Benchmarks
 /// ---------------------------------------------------------------------------
 
-/// Single-threaded baseline. Out-of-order span varied via state.range(0).
+void attachStatsCounters(benchmark::State& state, const WorkloadStats& s)
+{
+    state.counters["totalTuples"] = static_cast<double>(s.totalTuples);
+    state.counters["uniqSlices"] = static_cast<double>(s.uniqueSliceEnds);
+    state.counters["peakLive"] = static_cast<double>(s.peakLiveSlices);
+    state.counters["backwardLookups"] = static_cast<double>(s.backwardLookups);
+    state.counters["ooBuffers"] = static_cast<double>(s.outOfOrderBuffers);
+}
+
+/// Sweep the per-tuple lateness. state.range(0) = maxTupleLateness in timestamp
+/// units. 0 means in-order tuples; larger values fan lookups across older slices
+/// that haven't been drained yet.
 template <class Store>
-void BM_SliceStore_Single(benchmark::State& state)
+void BM_SliceStore_TupleLateness(benchmark::State& state)
 {
     WorkloadConfig cfg;
-    cfg.outOfOrderSpan = static_cast<std::size_t>(state.range(0));
+    cfg.maxTupleLateness = static_cast<std::uint64_t>(state.range(0));
+    /// Make sure the watermark trails at least the max lateness so late tuples
+    /// have a slice to land in.
+    cfg.watermarkLag = std::max<std::uint64_t>(cfg.watermarkLag, cfg.maxTupleLateness + 2 * cfg.windowSlide);
     const auto buffers = generateWorkload(cfg);
-    std::size_t totalTuples = 0;
-    for (const auto& b : buffers)
-    {
-        totalTuples += b.tuples.size();
-    }
+    const auto stats = analyzeWorkload(buffers);
 
     for (auto _ : state)
     {
-        Store store(cfg.windowSize, /*numThreads=*/1);
+        Store store(cfg.windowSlide, /*numThreads=*/1);
         std::uint64_t sink = runWorkload(store, buffers, /*tid=*/0);
         benchmark::DoNotOptimize(sink);
         benchmark::ClobberMemory();
     }
-    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * totalTuples));
-    state.counters["tuples/buf"] = static_cast<double>(cfg.tuplesPerBuffer);
-    state.counters["buffers"] = static_cast<double>(cfg.numBuffers);
+    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalTuples));
+    attachStatsCounters(state, stats);
 }
 
-/// Sweep window size to see how the live-slice count interacts with the layout.
-/// state.range(0) = window size; outOfOrderSpan held at 4.
+/// Sweep how many slices are live at the same time, by varying watermarkLag.
+/// state.range(0) = watermarkLag in timestamp units.
 template <class Store>
-void BM_SliceStore_WindowSize(benchmark::State& state)
+void BM_SliceStore_LiveSlices(benchmark::State& state)
 {
     WorkloadConfig cfg;
-    cfg.windowSize = static_cast<std::uint64_t>(state.range(0));
-    cfg.watermarkLag = cfg.windowSize * 2;
+    cfg.watermarkLag = static_cast<std::uint64_t>(state.range(0));
+    cfg.maxTupleLateness = std::min(cfg.maxTupleLateness, cfg.watermarkLag);
     const auto buffers = generateWorkload(cfg);
-    std::size_t totalTuples = 0;
-    for (const auto& b : buffers)
-    {
-        totalTuples += b.tuples.size();
-    }
+    const auto stats = analyzeWorkload(buffers);
 
     for (auto _ : state)
     {
-        Store store(cfg.windowSize, /*numThreads=*/1);
+        Store store(cfg.windowSlide, /*numThreads=*/1);
         std::uint64_t sink = runWorkload(store, buffers, /*tid=*/0);
         benchmark::DoNotOptimize(sink);
         benchmark::ClobberMemory();
     }
-    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * totalTuples));
+    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalTuples));
+    attachStatsCounters(state, stats);
 }
 
-BENCHMARK_TEMPLATE(BM_SliceStore_Single, LockingHashMapSliceStore)
+/// Sweep the buffer-level out-of-order span: how far apart in seq number can
+/// two adjacent arrivals be?
+template <class Store>
+void BM_SliceStore_BufferOOO(benchmark::State& state)
+{
+    WorkloadConfig cfg;
+    cfg.bufferOutOfOrderSpan = static_cast<std::size_t>(state.range(0));
+    const auto buffers = generateWorkload(cfg);
+    const auto stats = analyzeWorkload(buffers);
+
+    for (auto _ : state)
+    {
+        Store store(cfg.windowSlide, /*numThreads=*/1);
+        std::uint64_t sink = runWorkload(store, buffers, /*tid=*/0);
+        benchmark::DoNotOptimize(sink);
+        benchmark::ClobberMemory();
+    }
+    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * stats.totalTuples));
+    attachStatsCounters(state, stats);
+}
+
+BENCHMARK_TEMPLATE(BM_SliceStore_TupleLateness, LockingHashMapSliceStore)
+    ->Arg(0)
+    ->Arg(1000)
+    ->Arg(5000)
+    ->Arg(20000)
+    ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_SliceStore_LiveSlices, LockingHashMapSliceStore)
+    ->Arg(2000)
+    ->Arg(8000)
+    ->Arg(32000)
+    ->Arg(128000)
+    ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_SliceStore_BufferOOO, LockingHashMapSliceStore)
     ->Arg(0)
     ->Arg(2)
     ->Arg(8)
     ->Arg(32)
-    ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_SliceStore_WindowSize, LockingHashMapSliceStore)
-    ->Arg(100)
-    ->Arg(1000)
-    ->Arg(10000)
     ->Unit(benchmark::kMillisecond);
 
 }
