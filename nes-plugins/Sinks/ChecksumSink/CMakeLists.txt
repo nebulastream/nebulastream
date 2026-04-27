@@ -12,7 +12,7 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_plugin_as_library(Checksum Sink nes-sinks-registry checksum_sink_plugin ChecksumSink.cpp)
-add_plugin_as_library(Checksum SinkValidation nes-sinks-validation checksum_sink_validation_plugin ChecksumSinkValidation.cpp)
+add_plugin_as_library(Checksum SinkValidation nes-sinks-validation-registry checksum_sink_validation_plugin ChecksumSinkValidation.cpp)
 
 target_include_directories(checksum_sink_plugin
         PUBLIC .

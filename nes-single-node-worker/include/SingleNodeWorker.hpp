@@ -25,6 +25,7 @@
 #include <Util/Pointers.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
+#include <IORuntime.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryStatus.hpp>
 #include <QueryTerminationType.hpp>
@@ -40,6 +41,9 @@ namespace NES
 /// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
+    /// Constructed first so the WorkerLocalSingleton hook is registered before
+    /// any worker threads are spawned via NES::Thread.
+    std::unique_ptr<IORuntime> ioRuntime;
     SharedPtr<CompositeStatisticListener> listener;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;

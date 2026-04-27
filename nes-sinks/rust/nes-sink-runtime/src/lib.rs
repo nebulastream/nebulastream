@@ -16,6 +16,7 @@ pub type Controller = tokio::sync::mpsc::Sender<SinkCommand>;
 pub trait AsyncSink {
     async fn start(&mut self) -> Result<()>;
     async fn execute(&mut self, buffer: TupleBuffer) -> Result<()>;
+    async fn flush(&mut self) -> Result<()>;
     async fn stop(&mut self) -> Result<()>;
 }
 
@@ -48,7 +49,7 @@ async fn run_sink(
                     break 'run;
                 };
                 match command {
-                    SinkCommand::Flush(epoch) => {(context.on_flush)(epoch)},
+                    SinkCommand::Flush(epoch) => {sink.flush().await?; (context.on_flush)(epoch)},
                     SinkCommand::Data(buffer) => {sink.execute(buffer).await?},
                     SinkCommand::Close => {
                     info!("Sink was requested to close, terminating the sink.");

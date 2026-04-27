@@ -66,6 +66,10 @@ mod runtime {
             Ok(())
         }
 
+        async fn flush(&mut self) -> Result<()> {
+            Ok(())
+        }
+
         async fn stop(&mut self) -> Result<()> {
             //noop
             Ok(())

@@ -28,6 +28,10 @@ add_nes_test(nes-thread-test
         "ThreadTest.cpp"
 )
 
+add_nes_test(nes-worker-local-singleton-test
+        "WorkerLocalSingletonTest.cpp"
+)
+
 add_nes_test(chunk-collector-test
         "ChunkCollectorTest.cpp"
 )

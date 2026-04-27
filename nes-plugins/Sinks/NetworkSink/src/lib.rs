@@ -21,6 +21,7 @@ const SENDER_QUEUE_SIZE: &str = "SENDER_QUEUE_SIZE";
 const MAX_PENDING_ACKS: &str = "MAX_PENDING_ACKS";
 const BACKPRESSURE_UPPER_THRESHOLD: &str = "BACKPRESSURE_UPPER_THRESHOLD";
 const BACKPRESSURE_LOWER_THRESHOLD: &str = "BACKPRESSURE_LOWER_THRESHOLD";
+#[cfg(feature = "runtime")]
 const TUPLE_SIZE: &str = "TUPLE_SIZE";
 
 #[cfg(feature = "validation")]
@@ -40,8 +41,14 @@ mod validation {
             ConfigDefinition::with_type(CHANNEL, ConfigOptionsTypeTag::Text),
             ConfigDefinition::with_default(SENDER_QUEUE_SIZE, ConfigOptionsType::Number(0)),
             ConfigDefinition::with_default(MAX_PENDING_ACKS, ConfigOptionsType::Number(0)),
-            ConfigDefinition::with_default(BACKPRESSURE_UPPER_THRESHOLD, ConfigOptionsType::Number(1000)),
-            ConfigDefinition::with_default(BACKPRESSURE_LOWER_THRESHOLD, ConfigOptionsType::Number(200)),
+            ConfigDefinition::with_default(
+                BACKPRESSURE_UPPER_THRESHOLD,
+                ConfigOptionsType::Number(1000),
+            ),
+            ConfigDefinition::with_default(
+                BACKPRESSURE_LOWER_THRESHOLD,
+                ConfigOptionsType::Number(200),
+            ),
         ],
     );
 }
@@ -123,11 +130,19 @@ mod runtime {
                 .map_err(|_| "NetworkSink was closed by the downstream receiver".to_string())
         }
 
+        async fn flush(&mut self) -> Result<()> {
+            self.channel
+                .as_ref()
+                .unwrap()
+                .flush()
+                .await
+                .map_err(|e| e.to_string())
+        }
+
         async fn stop(&mut self) -> Result<()> {
             let Some(channel) = self.channel.take() else {
                 return Ok(());
             };
-            channel.flush_async().await.map_err(|e| e.to_string())?;
             channel.close();
             Ok(())
         }
@@ -146,10 +161,7 @@ mod runtime {
             .map(|i| {
                 let child = buffer.load_child(ChildBufferIndex(i));
                 let len = child.get_data().len();
-                Bytes::from_owner(TupleBufferSlice {
-                    buffer: child,
-                    len,
-                })
+                Bytes::from_owner(TupleBufferSlice { buffer: child, len })
             })
             .collect();
 

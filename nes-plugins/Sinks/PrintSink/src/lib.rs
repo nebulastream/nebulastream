@@ -42,10 +42,13 @@ mod runtime {
     use nes_buffer_runtime::{ChildBufferIndex, TupleBuffer};
     use nes_sink_runtime::{AsyncSink, Result, SINK_CREATION_FUNCTIONS, SinkCreateFn};
     use nes_sink_validation::ConfigOptions;
+    use std::io::Write;
+    use tokio::io::AsyncWriteExt;
 
     struct PrintSink {
         last_write: std::time::Instant,
         ingestion: std::time::Duration,
+        out: tokio::io::Stdout,
         header: String,
     }
 
@@ -53,7 +56,10 @@ mod runtime {
     impl AsyncSink for PrintSink {
         async fn start(&mut self) -> Result<()> {
             if !self.header.is_empty() {
-                println!("{}", self.header);
+                self.out
+                    .write_all(format!("{}", self.header).as_bytes())
+                    .await
+                    .map_err(|e| format!("Could not write to stdout: {}", e))?;
             }
             self.last_write = std::time::Instant::now();
             Ok(())
@@ -66,20 +72,34 @@ mod runtime {
             }
             self.last_write = now;
 
-            println!(
-                "{}",
-                str::from_utf8(&buffer.get_data()[..buffer.get_number_of_tuples()])
-                    .map_err(|_| "Invalid UTF-8")?
-            );
+            self.out
+                .write_all(
+                    str::from_utf8(&buffer.get_data()[..buffer.get_number_of_tuples()])
+                        .map_err(|_| "Invalid UTF-8")?
+                        .as_bytes(),
+                )
+                .await
+                .map_err(|e| format!("Could not write to stdout: {}", e))?;
+
             for index in 0..buffer.num_children() {
                 let child = buffer.load_child(ChildBufferIndex(index));
-                println!(
-                    "{}",
-                    str::from_utf8(&child.get_data()[..child.get_number_of_tuples()])
-                        .map_err(|_| "Invalid UTF-8")?
-                );
+                self.out
+                    .write_all(
+                        str::from_utf8(&child.get_data()[..buffer.get_number_of_tuples()])
+                            .map_err(|_| "Invalid UTF-8")?
+                            .as_bytes(),
+                    )
+                    .await
+                    .map_err(|e| format!("Could not write to stdout: {}", e))?;
             }
             Ok(())
+        }
+
+        async fn flush(&mut self) -> Result<()> {
+            self.out
+                .flush()
+                .await
+                .map_err(|e| format!("Could not flush stdout: {}", e))
         }
 
         async fn stop(&mut self) -> Result<()> {
@@ -99,6 +119,7 @@ mod runtime {
                 header,
                 ingestion: ingestion.unwrap_or_default(),
                 last_write: std::time::Instant::now(),
+                out: tokio::io::stdout(),
             }
         }
     }

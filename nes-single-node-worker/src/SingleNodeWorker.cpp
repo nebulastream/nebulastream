@@ -40,14 +40,13 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
+#include <IORuntime.hpp>
 #include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryStatus.hpp>
 #include <QueryTerminationType.hpp>
-
-#include "../../nes-io-runtime/include/IORuntime.hpp"
-
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <Thread.hpp>
 #include <WorkerStatus.hpp>
 
 namespace
@@ -69,7 +68,9 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
-    : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
+    : ioRuntime(std::make_unique<IORuntime>())
+    , listener(std::make_shared<CompositeStatisticListener>())
+    , configuration(configuration)
 {
     {
         std::stringstream configStr;
@@ -85,9 +86,9 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
+    NES_INFO("Using IORuntime: {}", IORuntime::instance().id());
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
-    Thread thread("node-init", host, []() { NES_INFO("Using IORuntime: {}", IORuntime::get().id()); });
 
     if (!configuration.dataAddress.getValue().empty())
     {
@@ -100,7 +101,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
                 .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
                 .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
             },
-            IORuntime::get().id());
+            IORuntime::instance().id());
     }
 }
 

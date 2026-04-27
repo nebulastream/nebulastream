@@ -61,8 +61,26 @@ impl SenderChannel {
         }
     }
 
-    /// Flushes the network writer and waits for all pending data to be acknowledged.
-    pub async fn flush_async(&self) -> Result<bool> {
+    /// Drains the channel and resolves once the receiver has acknowledged
+    /// every buffer submitted before this call.
+    ///
+    /// Sends a `Flush` command to the channel handler. While the flush is
+    /// pending, the handler stops reading further commands from the queue and
+    /// only resumes once both `pending_writes` and `wait_for_ack` are empty —
+    /// i.e. once every preceding buffer has been delivered and acked.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(())`: every buffer submitted before this call has been acked.
+    /// - `Err(_)`: the channel handler is no longer running (network service
+    ///   shut down, handler terminated due to a network error, cancellation,
+    ///   or remote close). Delivery of the in-flight buffers could not be
+    ///   confirmed.
+    ///
+    /// Concurrent callers are serialised by the FIFO command queue: each
+    /// `flush` resolves only after every buffer that was already in the queue
+    /// at the time its own `Flush` command was dequeued has been acked.
+    pub async fn flush(&self) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         self.queue
             .send(ChannelCommand::Flush(tx))

@@ -12,33 +12,22 @@
     limitations under the License.
 */
 
-#include <Thread.hpp>
+// Validation-only TU for the Print sink. See FileSinkValidation.cpp.
 
-#include <functional>
 #include <string>
-#include <typeindex>
 #include <unordered_map>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
+
+#include <Configurations/Descriptor.hpp>
+#include <Sinks/PrintSinkConfig.hpp>
+#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
-thread_local Host Thread::WorkerNodeId = Host("Not A Worker");
-thread_local std::string Thread::ThreadName = "unnamed";
 
-namespace detail
+SinkValidationRegistryReturnType RegisterPrintSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
-thread_local std::unordered_map<std::type_index, std::function<void()>> threadInitHooks;
-thread_local bool isNESThread = false;
-
-void applyThreadInitHooks(std::unordered_map<std::type_index, std::function<void()>> hooks)
-{
-    threadInitHooks = std::move(hooks);
-    for (const auto& [key, hook] : threadInitHooks)
-    {
-        hook();
-    }
-}
+    return DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(sinkConfig.config), std::string(PrintSinkName::NAME));
 }
 
 }

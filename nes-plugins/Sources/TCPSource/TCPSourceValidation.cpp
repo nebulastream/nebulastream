@@ -12,33 +12,25 @@
     limitations under the License.
 */
 
-#include <Thread.hpp>
+// Validation-only translation unit for the TCP source plugin. It owns the
+// RegisterTCPSourceValidation symbol consumed by nes-sources-validation's
+// generated registrar. The runtime source class and Register factory live in
+// TCPSource.cpp.
 
-#include <functional>
 #include <string>
-#include <typeindex>
 #include <unordered_map>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
+
+#include <Configurations/Descriptor.hpp>
+#include <SourceValidationRegistry.hpp>
+#include <TCPSourceConfig.hpp>
 
 namespace NES
 {
-thread_local Host Thread::WorkerNodeId = Host("Not A Worker");
-thread_local std::string Thread::ThreadName = "unnamed";
 
-namespace detail
+SourceValidationRegistryReturnType RegisterTCPSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
-thread_local std::unordered_map<std::type_index, std::function<void()>> threadInitHooks;
-thread_local bool isNESThread = false;
-
-void applyThreadInitHooks(std::unordered_map<std::type_index, std::function<void()>> hooks)
-{
-    threadInitHooks = std::move(hooks);
-    for (const auto& [key, hook] : threadInitHooks)
-    {
-        hook();
-    }
-}
+    return DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(sourceConfig.config), TCPSourceName::name());
 }
 
 }

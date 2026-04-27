@@ -227,7 +227,7 @@ struct TokioSinkContext
                   .sink_id = pipelineId.getRawValue(),
                   .sink_type = sinkType,
                   .sink_config = configToFlatJson(addHeader(descriptor.getConfig(), descriptor.getSchema()))},
-              IORuntime::get().id(),
+              IORuntime::instance().id(),
               context))
     {
     }

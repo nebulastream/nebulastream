@@ -71,6 +71,15 @@ mod runtime {
             Ok(())
         }
 
+        async fn flush(&mut self) -> Result<()> {
+            self.file
+                .as_mut()
+                .unwrap()
+                .flush()
+                .await
+                .map_err(|e| e.to_string())
+        }
+
         async fn stop(&mut self) -> Result<()> {
             //noop
             Ok(())

@@ -14,32 +14,40 @@
 
 #pragma once
 
-#include <optional>
+// Validation-only surface for the Print sink plugin. See FileSinkConfig.hpp for
+// the rationale — parameters / sink name kept outside the runtime header so the
+// validation TU doesn't pull PipelineExecutionContext, BackpressureChannel etc.
+
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <Configurations/Descriptor.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 
 namespace NES
 {
 
-static constexpr std::string_view NAME = "Checksum";
-
-struct ConfigParametersChecksum
+struct PrintSinkName
 {
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format", "CSV", [](const std::unordered_map<UppercaseString, std::string>&) { return std::optional("CSV"); }};
+    static constexpr std::string_view NAME = "Print";
+};
 
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
-        "file_path",
+struct ConfigParametersPrint
+{
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
+        "ingestion",
+        0,
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(INGESTION, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
+        "output_format",
         std::nullopt,
-        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 
     static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(INGESTION, OUTPUT_FORMAT);
 };
 
 }

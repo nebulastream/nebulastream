@@ -95,10 +95,11 @@ async fn create_channel<C: Communication>(
 pub(super) enum ChannelCommand {
     /// Send a data buffer through the channel.
     Data(TupleBuffer),
-    /// Flush the network writer and report whether all data has been acknowledged.
-    /// The boolean sent through the oneshot indicates: true if both pending and
-    /// in-flight queues are empty, false otherwise.
-    Flush(oneshot::Sender<bool>),
+    /// Drain the channel: resolves once every buffer submitted before this
+    /// command has been delivered and acknowledged. While a `Flush` is pending,
+    /// the handler stops reading further commands from the queue and only
+    /// resumes once both `pending_writes` and `wait_for_ack` are empty.
+    Flush(oneshot::Sender<()>),
 }
 pub(super) type ChannelCommandQueue = async_channel::Sender<ChannelCommand>;
 pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCommand>;
@@ -138,6 +139,10 @@ pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
     cancellation_token: CancellationToken,
     pending_writes: VecDeque<TupleBuffer>,
     wait_for_ack: HashMap<OriginSequenceNumber, TupleBuffer>,
+    /// When `Some`, a flush is in progress: command-queue reads are paused
+    /// until both `pending_writes` and `wait_for_ack` drain, at which point
+    /// the waker is signalled and reads resume.
+    pending_flush: Option<oneshot::Sender<()>>,
     writer: DataChannelSenderWriter<W>,
     reader: DataChannelSenderReader<R>,
     queue: ChannelCommandQueueListener,
@@ -162,6 +167,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             cancellation_token,
             pending_writes: Default::default(),
             wait_for_ack: Default::default(),
+            pending_flush: None,
             reader,
             writer,
             queue,
@@ -172,8 +178,10 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     ///
     /// # Commands
     ///
-    /// - `Data`: Queues the buffer in `pending_writes` for transmission
-    /// - `Flush`: Flushes the network writer and reports queue status
+    /// - `Data`: Queues the buffer in `pending_writes` for transmission.
+    /// - `Flush`: Stores the waker in `pending_flush`. The main loop stops
+    ///   reading further commands until `pending_writes` and `wait_for_ack`
+    ///   are both empty, at which point the waker is signalled.
     async fn handle_request(
         &mut self,
         channel_control_message: ChannelCommand,
@@ -181,10 +189,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         match channel_control_message {
             ChannelCommand::Data(data) => self.pending_writes.push_back(data),
             ChannelCommand::Flush(done) => {
-                Self::cancellable(&self.cancellation_token, self.writer.flush())
-                    .await?
-                    .map_err(|e| ErrorOrStatus::Error(e.into()))?;
-                let _ = done.send(self.pending_writes.is_empty() && self.wait_for_ack.is_empty());
+                debug_assert!(
+                    self.pending_flush.is_none(),
+                    "BUG: received Flush while another flush is pending — \
+                     command-queue reads should be paused while flushing",
+                );
+                self.pending_flush = Some(done);
             }
         }
         Ok(())
@@ -356,13 +366,32 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     ///
     /// - `should_send_pending`: Sends buffered data when `pending_writes` is non-empty
     /// - `should_read_from_software`: Accepts new commands when `wait_for_ack` < `max_pending_acks`
+    ///   AND no flush is pending
     /// - `should_read_from_other_side`: Reads acks when `wait_for_ack` is non-empty
     ///
     /// When there is no pending data to send, the codec buffer is flushed before
     /// entering `select!` so the receiver can see previously fed data and send acks.
+    ///
+    /// # Flush handling
+    ///
+    /// When a `Flush` command is received, the waker is stashed in `pending_flush`
+    /// and command-queue reads are paused. The loop continues to drain
+    /// `pending_writes` (via `send_pending`) and `wait_for_ack` (via incoming
+    /// acks). Once both are empty, the waker is signalled at the top of the
+    /// next iteration and command-queue reads resume.
     async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
         loop {
-            let should_read_from_software = self.wait_for_ack.len() < self.max_pending_acks;
+            // Resolve any pending flush as soon as the channel is fully drained.
+            if self.pending_flush.is_some()
+                && self.pending_writes.is_empty()
+                && self.wait_for_ack.is_empty()
+            {
+                let _ = self.pending_flush.take().unwrap().send(());
+            }
+
+            let flushing = self.pending_flush.is_some();
+            let should_read_from_software =
+                !flushing && self.wait_for_ack.len() < self.max_pending_acks;
             let should_read_from_other_side = !self.wait_for_ack.is_empty();
             let should_send_pending = !self.pending_writes.is_empty();
 
@@ -383,8 +412,8 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     send_result?;
                 },
                 _ = tokio::time::sleep(Duration::from_secs(10)) => {
-                    warn!("No progress for 10 seconds (pending: {}, wait_for_ack: {})",
-                        self.pending_writes.len(), self.wait_for_ack.len());
+                    warn!("No progress for 10 seconds (pending: {}, wait_for_ack: {}, flushing: {})",
+                        self.pending_writes.len(), self.wait_for_ack.len(), flushing);
                 },
             }
         }

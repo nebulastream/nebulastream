@@ -40,7 +40,6 @@ namespace NES
 class ChecksumSink : public Sink
 {
 public:
-    static constexpr std::string_view NAME = "Checksum";
     explicit ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
 
     /// Opens file and writes schema to file, if the file is empty.

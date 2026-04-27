@@ -67,27 +67,27 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::registerQuery(const
 {
     /// Make sure the queryplan is passed through serialization logic.
     std::unordered_map<Host, std::vector<std::string>> serializationErrorsPerWorker;
-    // for (const auto& [grpc, localPlans] : plan)
-    // {
-    //     for (const auto& localPlan : localPlans)
-    //     {
-    //         const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(localPlan);
-    //         const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
-    //         if (deserialized != localPlan)
-    //         {
-    //             serializationErrorsPerWorker[grpc].emplace_back(fmt::format(
-    //                 "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and "
-    //                 "deserialize(serialize(plan)):\n{}",
-    //                 explain(localPlan, ExplainVerbosity::Debug),
-    //                 explain(deserialized, ExplainVerbosity::Debug)));
-    //         }
-    //     }
-    // }
-    //
-    // if (serializationErrorsPerWorker.empty())
-    // {
-    return queryManager->registerQuery(plan);
-    // }
+    for (const auto& [grpc, localPlans] : plan)
+    {
+        for (const auto& localPlan : localPlans)
+        {
+            const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(localPlan);
+            const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
+            if (deserialized != localPlan)
+            {
+                serializationErrorsPerWorker[grpc].emplace_back(fmt::format(
+                    "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and "
+                    "deserialize(serialize(plan)):\n{}",
+                    explain(localPlan, ExplainVerbosity::Debug),
+                    explain(deserialized, ExplainVerbosity::Debug)));
+            }
+        }
+    }
+
+    if (serializationErrorsPerWorker.empty())
+    {
+        return queryManager->registerQuery(plan);
+    }
 
     const auto exception = CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker);
     return std::unexpected(exception);

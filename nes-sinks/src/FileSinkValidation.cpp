@@ -12,33 +12,24 @@
     limitations under the License.
 */
 
-#include <Thread.hpp>
+// Validation-only TU for the File sink. Mirrors FileSourceValidation.cpp on
+// the sources side — owns the RegisterFileSinkValidation symbol consumed by
+// nes-sinks-validation's generated registrar.
 
-#include <functional>
 #include <string>
-#include <typeindex>
 #include <unordered_map>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
+
+#include <Configurations/Descriptor.hpp>
+#include <Sinks/FileSinkConfig.hpp>
+#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
-thread_local Host Thread::WorkerNodeId = Host("Not A Worker");
-thread_local std::string Thread::ThreadName = "unnamed";
 
-namespace detail
+SinkValidationRegistryReturnType RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
-thread_local std::unordered_map<std::type_index, std::function<void()>> threadInitHooks;
-thread_local bool isNESThread = false;
-
-void applyThreadInitHooks(std::unordered_map<std::type_index, std::function<void()>> hooks)
-{
-    threadInitHooks = std::move(hooks);
-    for (const auto& [key, hook] : threadInitHooks)
-    {
-        hook();
-    }
-}
+    return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(sinkConfig.config), std::string(FileSinkName::NAME));
 }
 
 }

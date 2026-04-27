@@ -14,32 +14,42 @@
 
 #pragma once
 
+// Validation-only surface for the File sink plugin. Keeps the config parameters
+// and the sink name constant away from the runtime header (which pulls
+// PipelineExecutionContext, TupleBuffer, etc.) so FileSinkValidation.cpp can
+// compile into nes-sinks-validation without dragging the runtime in.
+
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <Configurations/Descriptor.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 
 namespace NES
 {
 
-static constexpr std::string_view NAME = "Checksum";
-
-struct ConfigParametersChecksum
+struct FileSinkName
 {
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format", "CSV", [](const std::unordered_map<UppercaseString, std::string>&) { return std::optional("CSV"); }};
+    static constexpr std::string_view NAME = "File";
+};
 
+struct ConfigParametersFile
+{
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
         "file_path",
         std::nullopt,
         [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<bool> APPEND{
+        "append",
+        false,
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
+
     static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, FILE_PATH, APPEND);
 };
 
 }

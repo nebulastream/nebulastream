@@ -6,12 +6,6 @@
 namespace NES
 {
 
-IORuntime& IORuntime::get()
-{
-    static IORuntime instance;
-    return instance;
-}
-
 IORuntime::IORuntime()
 {
     auto context = std::make_shared<ThreadInitializationContext>(0, NES::Thread::getThisWorkerNodeId());

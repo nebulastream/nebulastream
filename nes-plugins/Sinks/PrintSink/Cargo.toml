@@ -30,4 +30,4 @@ nes_buffer_bindings = { workspace = true, optional = true }
 nes_buffer_runtime = { workspace = true, optional = true }
 nes_io_runtime = { workspace = true, optional = true }
 nes_sink_runtime = { workspace = true, optional = true }
-tokio = { features = ["time", "fs", "io-util", "macros"], workspace = true, optional = true }
+tokio = { features = ["time", "fs", "io-util", "macros", "io-std"], workspace = true, optional = true }

@@ -13,18 +13,19 @@
 */
 
 #include <ChecksumSinkValidation.hpp>
+#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
 
-DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
+DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
 }
 
 SinkValidationRegistryReturnType RegisterChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
-    return ChecksumSink::validateAndFormat(std::move(sinkConfig.config));
+    return validateAndFormat(std::move(sinkConfig.config));
 }
 
 }
