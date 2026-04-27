@@ -15,7 +15,6 @@
 const SINK_NAME: &str = "NETWORK";
 
 const DATA_ENDPOINT: &str = "DATA_ENDPOINT";
-const BIND: &str = "BIND";
 const CHANNEL: &str = "CHANNEL";
 const SENDER_QUEUE_SIZE: &str = "SENDER_QUEUE_SIZE";
 const MAX_PENDING_ACKS: &str = "MAX_PENDING_ACKS";
@@ -37,7 +36,6 @@ mod validation {
         SINK_NAME,
         &[
             ConfigDefinition::with_type(DATA_ENDPOINT, ConfigOptionsTypeTag::Text),
-            ConfigDefinition::with_type(BIND, ConfigOptionsTypeTag::Text),
             ConfigDefinition::with_type(CHANNEL, ConfigOptionsTypeTag::Text),
             ConfigDefinition::with_default(SENDER_QUEUE_SIZE, ConfigOptionsType::Number(0)),
             ConfigDefinition::with_default(MAX_PENDING_ACKS, ConfigOptionsType::Number(0)),
@@ -60,12 +58,14 @@ mod runtime {
     use bytes::Bytes;
     use linkme::distributed_slice;
     use nes_buffer_runtime::{ChildBufferIndex, TupleBuffer};
+    use nes_io_runtime::current_io_runtime;
     use nes_network::protocol::{ConnectionIdentifier, TupleBuffer as NetworkBuffer};
-    use nes_network::registry::{self, SenderService};
+    use nes_network::registry::{self, SharedSenderService};
     use nes_network::sender::{SenderChannel, SenderConfig};
     use nes_sink_runtime::{AsyncSink, Result, SINK_CREATION_FUNCTIONS, SinkCreateFn};
     use nes_sink_validation::ConfigOptions;
     use std::str::FromStr;
+    use std::sync::Arc;
 
     /// Owns a retain-counted `TupleBuffer` alongside the number of valid bytes,
     /// and exposes the valid slice as `&[u8]` so `bytes::Bytes::from_owner` can
@@ -83,37 +83,38 @@ mod runtime {
     }
 
     struct NetworkSink {
-        bind: String,
         data_endpoint: String,
         channel_id: String,
         config_override: SenderConfig,
         tuple_size: usize,
-        service: Option<SenderService>,
+        service: Option<Arc<SharedSenderService>>,
         channel: Option<SenderChannel>,
     }
 
     #[async_trait]
     impl AsyncSink for NetworkSink {
         async fn start(&mut self) -> Result<()> {
-            let (service, default_config) = registry::sender_service(&self.bind)?;
+            let runtime = current_io_runtime();
+            let shared = registry::sender_service(&runtime)?;
             let config = SenderConfig {
                 sender_queue_size: if self.config_override.sender_queue_size > 0 {
                     self.config_override.sender_queue_size
                 } else {
-                    default_config.sender_queue_size
+                    shared.default_config.sender_queue_size
                 },
                 max_pending_acks: if self.config_override.max_pending_acks > 0 {
                     self.config_override.max_pending_acks
                 } else {
-                    default_config.max_pending_acks
+                    shared.default_config.max_pending_acks
                 },
             };
             let endpoint = ConnectionIdentifier::from_str(&self.data_endpoint)
                 .map_err(|e| format!("Invalid DATA_ENDPOINT `{}`: {e}", self.data_endpoint))?;
-            let channel = service
+            let channel = shared
+                .service
                 .register_channel(endpoint, self.channel_id.clone(), config)
                 .await?;
-            self.service = Some(service);
+            self.service = Some(shared);
             self.channel = Some(channel);
             Ok(())
         }
@@ -191,7 +192,6 @@ mod runtime {
     impl From<&ConfigOptions> for NetworkSink {
         fn from(value: &ConfigOptions) -> Self {
             NetworkSink {
-                bind: read_string(value, BIND),
                 data_endpoint: read_string(value, DATA_ENDPOINT),
                 channel_id: read_string(value, CHANNEL),
                 config_override: SenderConfig {

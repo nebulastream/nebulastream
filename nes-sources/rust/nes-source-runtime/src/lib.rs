@@ -1,11 +1,9 @@
 use async_trait::async_trait;
 use linkme::distributed_slice;
 use nes_buffer_runtime::{BufferProvider, TupleBuffer};
-use nes_io_runtime;
 use nes_io_runtime::IORuntime;
 use nes_source_validation::ConfigOptions;
 use std::pin::Pin;
-use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::{Instrument, debug, info};
@@ -109,14 +107,14 @@ pub fn start_source<T: AsyncEmitter + Send + 'static>(
     name: &str,
     origin_id: u64,
     config: &ConfigOptions,
-    runtime: Arc<IORuntime>,
+    runtime: IORuntime,
     mut emit: T,
     buffer_provider: BufferProvider,
 ) -> Result<(Controller, tokio::sync::oneshot::Receiver<T>)> {
     let (controller, mut rx) = tokio::sync::mpsc::channel(16);
     let (stop_sender, stop_signal) = tokio::sync::oneshot::channel();
     let source = construct_source(name, config);
-    runtime.runtime.spawn(
+    runtime.handle().spawn(
         async move {
             let log_on_source_drop = scopeguard::guard((), |_| {
                 panic!("Source Task was aborted.");

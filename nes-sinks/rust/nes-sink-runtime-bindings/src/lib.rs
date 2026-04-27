@@ -4,7 +4,7 @@ use crate::ffi::{WriteResult, on_error, on_flush};
 use cxx::SharedPtr;
 pub use nes_buffer_bindings::*;
 use nes_buffer_runtime::TupleBuffer;
-use nes_io_runtime::get_runtime;
+use nes_io_runtime::IORuntime;
 use nes_sink_runtime::{SinkCommand, SinkContext};
 use nes_sink_validation::{ConfigOptions, validate};
 use std::sync::atomic::AtomicUsize;
@@ -38,15 +38,24 @@ pub mod ffi {
     }
     extern "Rust" {
         type SinkHandle;
+        /// Constructs the sink handle. The IORuntime is fetched from the
+        /// calling C++ thread's `WorkerLocalSingleton<NES::IORuntime>` via the
+        /// `nes_current_io_runtime_address` C ABI hook in `IORuntime.cpp`.
         fn create_handle(
             query_context: QueryContext,
-            runtime_idx: usize,
             context: SharedPtr<SinkContext>,
         ) -> Result<Box<SinkHandle>>;
 
         unsafe fn try_write(handle: &SinkHandle, buffer: *mut MemorySegment) -> WriteResult;
         unsafe fn flush(handle: &SinkHandle) -> usize;
     }
+}
+
+unsafe extern "C" {
+    /// Returns the address of the current thread's `IORuntimeHandle`, or 0 if
+    /// no IORuntime is attached to this thread. Implemented in C++ in
+    /// `nes-io-runtime/src/IORuntime.cpp`.
+    fn nes_current_io_runtime_address() -> usize;
 }
 
 unsafe impl Send for ffi::SinkContext {}
@@ -65,10 +74,18 @@ impl Drop for SinkHandle {
 
 fn create_handle(
     query_context: ffi::QueryContext,
-    runtime_idx: usize,
     context: SharedPtr<ffi::SinkContext>,
 ) -> Result<Box<SinkHandle>, String> {
-    let runtime = get_runtime(runtime_idx).expect("non existing runtime");
+    let runtime_addr = unsafe { nes_current_io_runtime_address() };
+    if runtime_addr == 0 {
+        return Err("create_handle called from a thread without an attached IORuntime".to_string());
+    }
+    // SAFETY: `nes_current_io_runtime_address` returns the address of a
+    // `nes_io_runtime_bindings::IORuntime` (a `#[repr(transparent)]` newtype
+    // over `nes_io_runtime::IORuntime`) owned by C++ and outliving every
+    // spawned task on this runtime.
+    let runtime: IORuntime =
+        unsafe { (*(runtime_addr as *const IORuntime)).clone() };
     let config = serde_json::from_str::<ConfigOptions>(&query_context.sink_config)
         .expect("FFI serialization error. Could not convert config options to rust representation");
 

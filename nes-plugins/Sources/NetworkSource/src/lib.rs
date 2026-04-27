@@ -14,7 +14,6 @@
 
 const SOURCE_NAME: &str = "NETWORK";
 
-const BIND: &str = "BIND";
 const CHANNEL: &str = "CHANNEL";
 const RECEIVER_QUEUE_SIZE: &str = "RECEIVER_QUEUE_SIZE";
 
@@ -30,7 +29,6 @@ mod validation {
     static NETWORK_SOURCE_VALIDATOR: (&'static str, &'static [ConfigDefinition]) = (
         SOURCE_NAME,
         &[
-            ConfigDefinition::with_type(BIND, ConfigOptionsTypeTag::Text),
             ConfigDefinition::with_type(CHANNEL, ConfigOptionsTypeTag::Text),
             ConfigDefinition::with_default(RECEIVER_QUEUE_SIZE, ConfigOptionsType::Number(0)),
         ],
@@ -43,18 +41,19 @@ mod runtime {
     use async_trait::async_trait;
     use linkme::distributed_slice;
     use nes_buffer_runtime::BufferProvider;
+    use nes_io_runtime::current_io_runtime;
     use nes_network::receiver::{ReceiverChannel, ReceiverChannelResult};
-    use nes_network::registry::{self, ReceiverService};
+    use nes_network::registry::{self, SharedReceiverService};
     use nes_source_runtime::{
         AsyncSource, Result, SOURCE_CREATION_FUNCTIONS, SourceCreateFn, SourceResult,
     };
     use nes_source_validation::ConfigOptions;
+    use std::sync::Arc;
 
     struct NetworkSource {
-        bind: String,
         channel_id: String,
         receiver_queue_size: usize,
-        service: Option<ReceiverService>,
+        service: Option<Arc<SharedReceiverService>>,
         channel: Option<ReceiverChannel>,
     }
 
@@ -65,16 +64,18 @@ mod runtime {
         }
 
         async fn start(&mut self) -> Result<()> {
-            let (service, default_queue_size) = registry::receiver_service(&self.bind)?;
+            let runtime = current_io_runtime();
+            let shared = registry::receiver_service(&runtime)?;
             let queue_size = if self.receiver_queue_size > 0 {
                 self.receiver_queue_size
             } else {
-                default_queue_size
+                shared.default_queue_size
             };
-            let channel = service
+            let channel = shared
+                .service
                 .register_channel(self.channel_id.clone(), queue_size)
                 .await?;
-            self.service = Some(service);
+            self.service = Some(shared);
             self.channel = Some(channel);
             Ok(())
         }
@@ -147,7 +148,6 @@ mod runtime {
     impl From<&ConfigOptions> for NetworkSource {
         fn from(value: &ConfigOptions) -> Self {
             NetworkSource {
-                bind: value.get(BIND).cloned().unwrap_or_default(),
                 channel_id: value.get(CHANNEL).cloned().unwrap_or_default(),
                 receiver_queue_size: read_usize(value, RECEIVER_QUEUE_SIZE),
                 service: None,

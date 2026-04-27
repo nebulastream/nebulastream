@@ -43,7 +43,7 @@ target_include_directories(nes-sources-validation
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 target_link_libraries(nes-sources
-        PUBLIC nes-sources-validation nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings
+        PUBLIC nes-sources-validation nes-common nes-configurations nes-data-types nes-memory nes-executable
         PRIVATE nes-input-formatter-provider nes-runtime nes-io-runtime nes-source-runtime-bindings)
 
 target_include_directories(nes-sources PUBLIC
@@ -61,6 +61,5 @@ create_registries_for_component(COMPONENT nes-sources Source FileData InlineData
 
 
 target_link_rust_lib(nes-sources-validation nes_source_validation_bindings)
-target_link_rust_lib(nes-sources nes_network_bindings)
 target_link_rust_lib(nes-sources nes_source_runtime_bindings)
 add_tests_if_enabled(tests)

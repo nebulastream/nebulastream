@@ -15,6 +15,7 @@ runtime = [
     "dep:bytes",
     "dep:nes_buffer_bindings",
     "dep:nes_buffer_runtime",
+    "dep:nes_io_runtime",
     "dep:nes_network",
     "dep:nes_sink_runtime",
 ]
@@ -28,5 +29,6 @@ async-trait = { workspace = true, optional = true }
 bytes = { version = "1.10", optional = true }
 nes_buffer_bindings = { workspace = true, optional = true }
 nes_buffer_runtime = { workspace = true, optional = true }
+nes_io_runtime = { workspace = true, optional = true }
 nes_network = { workspace = true, optional = true }
 nes_sink_runtime = { workspace = true, optional = true }

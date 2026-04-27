@@ -41,13 +41,15 @@
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
 #include <IORuntime.hpp>
-#include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryStatus.hpp>
 #include <QueryTerminationType.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Thread.hpp>
 #include <WorkerStatus.hpp>
+#include <nlohmann/json.hpp>
+#include <rust/cxx.h>
+#include <nes-io-runtime-bindings/lib.h>
 
 namespace
 {
@@ -57,8 +59,14 @@ __itt_string_handle* ittStartQuery = __itt_string_handle_create("Start");
 __itt_string_handle* ittStopQuery = __itt_string_handle_create("Stop");
 }
 
-extern void initNetworkServices(
-    const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options, std::size_t ioRuntimeIdx);
+namespace
+{
+/// Config-registry names. Must match the constants in
+/// nes-network/network/src/registry.rs (`SENDER_SERVICE_CONFIG` /
+/// `RECEIVER_SERVICE_CONFIG`).
+constexpr auto NES_NETWORK_SENDER_CONFIG = "nes-network-sender";
+constexpr auto NES_NETWORK_RECEIVER_CONFIG = "nes-network-receiver";
+}
 
 namespace NES
 {
@@ -86,22 +94,25 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
-    NES_INFO("Using IORuntime: {}", IORuntime::instance().id());
+    NES_INFO("IORuntime constructed for worker {}", host.getRawValue());
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 
     if (!configuration.dataAddress.getValue().empty())
     {
         const auto& networkConfig = configuration.workerConfiguration.network;
-        initNetworkServices(
-            configuration.dataAddress.getValue(),
-            host,
-            NetworkOptions{
-                .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
-                .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
-                .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
-            },
-            IORuntime::instance().id());
+        const auto& connectionAddr = configuration.dataAddress.getValue();
+        const nlohmann::json senderConfig{
+            {"this_connection", connectionAddr},
+            {"sender_queue_size", networkConfig.senderQueueSize.getValue()},
+            {"max_pending_acks", networkConfig.maxPendingAcks.getValue()},
+        };
+        const nlohmann::json receiverConfig{
+            {"this_connection", connectionAddr},
+            {"receiver_queue_size", networkConfig.receiverQueueSize.getValue()},
+        };
+        attach_config(IORuntime::instance().rustHandle(), rust::Str(NES_NETWORK_SENDER_CONFIG), rust::Str(senderConfig.dump()));
+        attach_config(IORuntime::instance().rustHandle(), rust::Str(NES_NETWORK_RECEIVER_CONFIG), rust::Str(receiverConfig.dump()));
     }
 }
 

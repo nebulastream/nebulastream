@@ -6,7 +6,7 @@ use cxx::SharedPtr;
 use nes_buffer_bindings::ffi::BufferProviderHandle;
 pub use nes_buffer_bindings::*;
 use nes_buffer_runtime::{BufferProvider, TupleBuffer};
-use nes_io_runtime::get_runtime;
+use nes_io_runtime::IORuntime;
 use nes_source_runtime::{AsyncEmitter, SourceCommand};
 use nes_source_validation::{ConfigOptions, validate};
 use tokio::sync::mpsc::error::TrySendError;
@@ -65,9 +65,11 @@ pub mod ffi {
     }
     extern "Rust" {
         type RustSourceHandle;
+        /// Constructs the source handle. The IORuntime is fetched from the
+        /// calling C++ thread's `WorkerLocalSingleton<NES::IORuntime>` via the
+        /// `nes_current_io_runtime_address` C ABI hook in `IORuntime.cpp`.
         fn source_create_handle(
             query_context: QueryContext,
-            runtime_idx: usize,
             context: SharedPtr<SourceContext>,
             buffer_provider_handle: SharedPtr<BufferProviderHandle>,
         ) -> Result<Box<RustSourceHandle>>;
@@ -77,6 +79,13 @@ pub mod ffi {
 
 unsafe impl Send for ffi::SourceContext {}
 unsafe impl Sync for ffi::SourceContext {}
+
+unsafe extern "C" {
+    /// Returns the address of the current thread's `IORuntimeHandle`, or 0 if
+    /// no IORuntime is attached to this thread. Implemented in C++ in
+    /// `nes-io-runtime/src/IORuntime.cpp`.
+    fn nes_current_io_runtime_address() -> usize;
+}
 
 struct RustSourceHandle {
     channel: nes_source_runtime::Controller,
@@ -147,12 +156,20 @@ impl AsyncEmitter for Emitter {
 
 fn source_create_handle(
     query_context: ffi::QueryContext,
-    runtime_idx: usize,
     context: SharedPtr<ffi::SourceContext>,
     buffer_provider_handle: SharedPtr<BufferProviderHandle>,
 ) -> Result<Box<RustSourceHandle>, String> {
     let provider = BufferProvider::from_raw(buffer_provider_handle);
-    let runtime = get_runtime(runtime_idx).expect("non existing runtime");
+    let runtime_addr = unsafe { nes_current_io_runtime_address() };
+    if runtime_addr == 0 {
+        return Err("source_create_handle called from a thread without an attached IORuntime".to_string());
+    }
+    // SAFETY: `nes_current_io_runtime_address` returns the address of a
+    // `nes_io_runtime_bindings::IORuntime` (a `#[repr(transparent)]` newtype
+    // over `nes_io_runtime::IORuntime`) owned by C++ and outliving every
+    // spawned task on this runtime.
+    let runtime: IORuntime =
+        unsafe { (*(runtime_addr as *const IORuntime)).clone() };
     let config = serde_json::from_str::<ConfigOptions>(&query_context.source_config)
         .expect("FFI serialization error. Could not convert config options to rust representation");
 

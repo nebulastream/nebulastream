@@ -62,7 +62,7 @@
 /// Rust FFI function that enables in-memory communication channels for embedded multi-worker mode.
 /// Configures the network layer to use shared memory instead of real network sockets
 /// when workers run in the same process. Prevents actual port allocation.
-extern void enable_memcom();
+extern "C" void enable_memcom();
 
 using namespace std::literals;
 

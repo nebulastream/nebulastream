@@ -37,7 +37,7 @@ target_include_directories(nes-sinks-validation PUBLIC
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
 target_link_libraries(nes-sinks
         PUBLIC nes-sinks-validation nes-common nes-configurations nes-data-types nes-memory nes-executable
-        PRIVATE nes-network-bindings nes-io-runtime nes-sink-runtime-bindings)
+        PRIVATE nes-io-runtime nes-sink-runtime-bindings)
 target_link_rust_lib(nes-sinks nes_sink_runtime_bindings)
 
 target_include_directories(nes-sinks PUBLIC

@@ -1,10 +1,8 @@
 use async_trait::async_trait;
 use linkme::distributed_slice;
 use nes_buffer_runtime::TupleBuffer;
-use nes_io_runtime;
 use nes_io_runtime::IORuntime;
 use nes_sink_validation::ConfigOptions;
-use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc::Receiver;
 use tracing::{Instrument, debug, info};
@@ -73,12 +71,12 @@ fn construct_sink(name: &str, config: &ConfigOptions) -> Box<dyn AsyncSink + Sen
 pub fn start_sink(
     name: &str,
     config: &ConfigOptions,
-    runtime: Arc<IORuntime>,
+    runtime: IORuntime,
     context: SinkContext,
 ) -> Result<(Controller, tokio::task::JoinHandle<()>)> {
     let (controller, rx) = tokio::sync::mpsc::channel(16);
     let sink = construct_sink(name, config);
-    let task = runtime.runtime.spawn(
+    let task = runtime.handle().spawn(
         async move {
             let log_on_source_drop = scopeguard::guard((), |_| {
                 debug!("Sink Task was aborted.");

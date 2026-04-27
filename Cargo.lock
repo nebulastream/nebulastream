@@ -749,8 +749,10 @@ dependencies = [
  "bytes",
  "futures",
  "ittapi",
+ "nes_io_runtime",
  "pin-project",
  "serde",
+ "serde_json",
  "tokio",
  "tokio-retry2",
  "tokio-serde",
@@ -758,14 +760,6 @@ dependencies = [
  "tokio-util",
  "tracing",
  "url",
-]
-
-[[package]]
-name = "nes_network_bindings"
-version = "0.1.0"
-dependencies = [
- "cxx",
- "network_bindings",
 ]
 
 [[package]]
@@ -871,17 +865,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "network_bindings"
-version = "0.1.0"
-dependencies = [
- "cxx",
- "nes_io_runtime",
- "nes_network",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "network_sink"
 version = "0.1.0"
 dependencies = [
@@ -890,6 +873,7 @@ dependencies = [
  "linkme",
  "nes_buffer_bindings",
  "nes_buffer_runtime",
+ "nes_io_runtime",
  "nes_network",
  "nes_sink_runtime",
  "nes_sink_validation",
@@ -903,6 +887,7 @@ dependencies = [
  "async-trait",
  "linkme",
  "nes_buffer_runtime",
+ "nes_io_runtime",
  "nes_network",
  "nes_source_runtime",
  "nes_source_validation",

@@ -11,4 +11,3 @@
 # limitations under the License.
 
 add_subdirectory(interface)
-add_subdirectory(nes-network-bindings/network)

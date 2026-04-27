@@ -8,9 +8,7 @@ members = [
     "nes-memory/rust/nes-buffer-bindings",
     "nes-memory/rust/my-buffer-test",
     "nes-memory/rust/nes-buffer-runtime",
-    "nes-network/nes-network-bindings",
     "nes-network/network",
-    "nes-network/nes-network-bindings/network",
     "nes-common/rust/spdlog-bindings",
     "nes-common/rust/nes-config-options",
     "nes-plugins/Functions/RustAnswer/rust",
@@ -41,7 +39,6 @@ nes_config_options = { path = "nes-common/rust/nes-config-options" }
 nes_tokio_tcp_source = { path = "nes-plugins/tokio-tcp-source" }
 nes_tokio_file_sink = { path = "nes-plugins/tokio-file-sink" }
 nes_network = { path = "nes-network/network" }
-network_bindings = { path = "nes-network/nes-network-bindings/network" }
 nes_sink_validation_bindings = { path = "nes-sinks/rust/nes-sink-validation-bindings" }
 nes_sink_validation = { path = "nes-sinks/rust/nes-sink-validation" }
 nes_sink_runtime_bindings = { path = "nes-sinks/rust/nes-sink-runtime-bindings" }

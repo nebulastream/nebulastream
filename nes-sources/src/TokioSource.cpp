@@ -217,7 +217,6 @@ struct TokioSourceContext
                   .source_id = originId.getRawValue(),
                   .source_type = descriptor.getSourceType(),
                   .source_config = configToFlatJson(descriptor.getConfig())},
-              NES::IORuntime::instance().id(),
               context,
               std::move(bufferProvider)))
     {
