@@ -171,7 +171,7 @@ std::vector<RunningQuery> runQueries(
     if (k8sEnabled) {
         jsonSubmitter.emplace(K8sJSONSubmitter::createForMinikube("default"));
 
-        static constexpr size_t BASE64_POD_SIZE_LIMIT = 512 * 1024;
+        static constexpr size_t BASE64_POD_SIZE_LIMIT = 2ULL * 1024 * 1024 * 1024;  // 2 GB - increased from 512 KB to support large benchmark files
         static const std::string pvcName = "source-data-pvc";
 
         std::unordered_map<std::string, std::string> allSourceFiles;

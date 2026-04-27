@@ -27,6 +27,7 @@ namespace NES::Systest
 {
 
 namespace {
+
 /// Read entire file into a string. If the file can't be read, return an empty string.
 std::string readFileContents(const std::filesystem::path& path)
 {
@@ -119,7 +120,30 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     if (q.planInfoOrException)
     {
         nlohmann::json schemaNode = nlohmann::json::array();
-        for (const auto& fld : q.planInfoOrException->sinkOutputSchema)
+
+        // For Checksum sinks, use the sink descriptor's schema (input schema) instead of sinkOutputSchema
+        // because sinkOutputSchema is set to the Checksum output schema (S$Count, S$Checksum) by SystestBinder
+        Schema schemaToUse;
+        if (NES::toUpperCase(sinkType) == "CHECKSUM")
+        {
+            // Get the sink descriptor from the query plan
+            const auto& plan = q.planInfoOrException->queryPlan.getGlobalPlan();
+            auto sinkOps = NES::getOperatorByType<NES::SinkLogicalOperator>(plan);
+            if (!sinkOps.empty() && sinkOps[0]->getSinkDescriptor().has_value())
+            {
+                schemaToUse = *sinkOps[0]->getSinkDescriptor().value().getSchema();
+            }
+            else
+            {
+                schemaToUse = q.planInfoOrException->sinkOutputSchema;
+            }
+        }
+        else
+        {
+            schemaToUse = q.planInfoOrException->sinkOutputSchema;
+        }
+
+        for (const auto& fld : schemaToUse)
         {
             nlohmann::json f;
             f["name"] = fld.name;
@@ -129,7 +153,14 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
         }
         sink["schema"] = schemaNode;
     }
-    sink["parser_config"] = nlohmann::json::object();
+
+    // Add formatter config for Checksum sinks to match local behavior
+    nlohmann::json formatConfig = nlohmann::json::object();
+    if (NES::toUpperCase(sinkType) == "CHECKSUM")
+    {
+        formatConfig["quote_strings"] = "true";
+    }
+    sink["parser_config"] = formatConfig;
     sinks.push_back(sink);
     spec["sinks"] = sinks;
 
@@ -216,7 +247,7 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     nlohmann::json workerNodes = nlohmann::json::array();
     nlohmann::json wn;
     wn["host"] = "worker-1";
-    wn["image"] = "nebulastream/worker:distributed-poc";
+    wn["image"] = "sidondocker/worker:checksum-patch";
     wn["max_operators"] = 100;
 
     for (const auto& [key, value] : q.configurationOverride.overrideParameters) {
