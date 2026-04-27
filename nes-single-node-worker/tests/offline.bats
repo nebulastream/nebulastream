@@ -92,10 +92,12 @@ teardown() {
 }
 
 @test "worker rejects bad grpc address" {
-  # DNS Name is Valid, but cannot be resolved
+  # DNS Name is Valid, but cannot be resolved. The exact getaddrinfo error string differs
+  # depending on whether a DNS server is reachable (EAI_NONAME "Name or service not known")
+  # or not (EAI_AGAIN "Temporary failure in name resolution"), so we only assert that the
+  # worker logged a clean gRPC-startup failure rather than matching the resolver message.
   run timeout 10 $NES_WORKER --grpc=asdf.asdf.asdf:55555
 
-  echo $output | grep "Name or service not known"
   grep "Failed to start GRPC Server" singleNodeWorker.log
 
   # DNS Name is Invalid
