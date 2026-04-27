@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -35,7 +36,7 @@ namespace NES
 {
 
 // VarSizedToDoubleLogicalFunction::VarSizedToDoubleLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child)
-VarSizedToDoubleLogicalFunction::VarSizedToDoubleLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::FLOAT64), child(child)
+VarSizedToDoubleLogicalFunction::VarSizedToDoubleLogicalFunction(const LogicalFunction& child) : dataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)), child(child)
 {
 }
 

@@ -39,10 +39,10 @@ public:
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const
     {
-        auto patientIdVal = record.readUnqualified("MLIFE_PID").cast<nautilus::val<int32_t>>();
-        const auto zeitpunktVal = record.readUnqualified("ZEITPUNKT").cast<nautilus::val<uint64_t>>();
-        const auto insertionTs = record.readUnqualified("TSFAIL").cast<nautilus::val<uint64_t>>();
-        const auto ingestionTs = record.readUnqualified("TSLOG").cast<nautilus::val<uint64_t>>();
+        auto patientIdVal = record.readUnqualified("MLIFE_PID").getRawValueAs<nautilus::val<int32_t>>();
+        const auto zeitpunktVal = record.readUnqualified("ZEITPUNKT").getRawValueAs<nautilus::val<uint64_t>>();
+        const auto insertionTs = record.readUnqualified("TSFAIL").getRawValueAs<nautilus::val<uint64_t>>();
+        const auto ingestionTs = record.readUnqualified("TSLOG").getRawValueAs<nautilus::val<uint64_t>>();
         nautilus::val<VarSizedResult*> probeResult = nautilus::invoke(
             +[](const int32_t patientId, uint64_t unixTimestamp, const uint64_t insertionTs, const uint64_t ingestionTs, Arena* arenaPtr)
             {

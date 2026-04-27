@@ -18,26 +18,21 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
-#include <memory>
-#include <span>
-#include <stdexcept>
+#include <optional>
 #include <string>
 #include <system_error>
 #include <unordered_map>
 #include <utility>
 
-#include <SinksParsing/JSONFormat.hpp>
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
@@ -59,9 +54,6 @@ HTTPSink::HTTPSink(BackpressureController backpressureController, const SinkDesc
         sinkDescriptor.getFromConfig(ConfigParametersMatrix::ENDPOINT));
 
     logFilePath = sinkDescriptor.getFromConfig(ConfigParametersMatrix::LOG_FILE_PATH);
-
-    /// We default to json output format here since it seems to be more accesible for further usage of the data
-    formatter = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
 }
 
 std::ostream& HTTPSink::toString(std::ostream& str) const
@@ -96,11 +88,17 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in HTTPSink.");
     PRECONDITION(isOpen, "Sink was not opened");
 
-    /// Format buffer
-    const auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
+    /// Buffer is already formatted by an upstream OutputFormatter operator;
+    /// concatenate the raw bytes from each chunk into the HTTP payload.
+    std::string payload;
+    BufferIterator iterator{inputTupleBuffer};
+    for (auto element = iterator.getNextElement(); element.has_value(); element = iterator.getNextElement())
+    {
+        payload.append(element->buffer.getAvailableMemoryArea<char>().data(), element->contentLength);
+    }
 
     /// Skip empty buffers — nothing to log or send.
-    if (fBuffer.empty())
+    if (payload.empty())
     {
         return;
     }
@@ -111,7 +109,7 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     /// (different queries sharing the same log file) do not interleave.
     {
         const std::lock_guard<std::mutex> lock(logMutex);
-        logFile << fBuffer << '\n';
+        logFile << payload << '\n';
         logFile.flush();
     }
 
@@ -123,7 +121,7 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_POST, 1);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fBuffer.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
 
     /// Send of message and free headers
     curl_easy_perform(curl);

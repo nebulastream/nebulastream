@@ -42,9 +42,9 @@ IsNaNPhysicalFunction::IsNaNPhysicalFunction(PhysicalFunction child) : child(std
 VarVal IsNaNPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     // const nautilus::val<double> nanValue = std::numeric_limits<double>::quiet_NaN();
-    const auto leftValue = child.execute(record, arena).cast<nautilus::val<double>>();
+    const auto leftValue = child.execute(record, arena).getRawValueAs<nautilus::val<double>>();
     return leftValue != leftValue;
-    // const auto leftValue = child.execute(record, arena).cast<nautilus::val<uint64_t>>();
+    // const auto leftValue = child.execute(record, arena).getRawValueAs<nautilus::val<uint64_t>>();
     // const nautilus::val<bool> isNaN = (leftValue  nanValue) == 0;
     // return isNaN;
 }
