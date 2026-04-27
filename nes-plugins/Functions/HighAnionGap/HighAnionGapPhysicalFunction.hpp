@@ -110,7 +110,7 @@ public:
             and not(std::isnan(hco3Val)) and phTimestamp == abecTimestamp and phTimestamp == natriumTimestamp
             and phTimestamp == chloridTimestamp and phTimestamp == hco3Timestamp)
         {
-            if ((phVal < 7.3) and (abecVal < -6.0) and (natriumVal - chloridVal - hco3Val > 12))
+            if ((phVal < 7.3) and (abecVal < -3.0) and (natriumVal - chloridVal - hco3Val > 12))
             {
                 return std::optional{*this};
             }
