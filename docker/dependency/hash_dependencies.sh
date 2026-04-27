@@ -29,6 +29,11 @@ HASH_PATHS=(
   vcpkg
   docker/dependency
 )
+# Auto-discover all Cargo manifests + lockfiles (any depth) under each Rust workspace.
+# Adding a new workspace later only requires extending the list of roots passed to find.
+while IFS= read -r f; do HASH_PATHS+=("$f"); done < <(
+  find nes-network \( -name 'Cargo.toml' -o -name 'Cargo.lock' \) -type f
+)
 
 # Find all files, convert CRLF to LF on-the-fly, then hash
 find "${HASH_PATHS[@]}" -type f -exec sh -c ' printf "%s  %s\n" "$(tr -d "\r" < "$1" | sha256sum | cut -d " " -f1)" "$1"' sh {} \; \

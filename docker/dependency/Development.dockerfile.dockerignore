@@ -1,2 +1,6 @@
 # Ignore everything
 *
+
+# Allow only the Cargo manifests + lockfile needed for the in-image `cargo fetch`.
+!nes-network/**/Cargo.toml
+!nes-network/**/Cargo.lock
