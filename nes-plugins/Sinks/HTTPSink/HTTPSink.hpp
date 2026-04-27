@@ -17,7 +17,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
-#include <memory>
 #include <mutex>
 #include <optional>
 #include <ostream>
@@ -29,11 +28,9 @@
 #include <folly/Synchronized.h>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/Format.hpp>
 #include <BackpressureChannel.hpp>
 
 namespace NES
@@ -69,7 +66,6 @@ private:
     std::string logFilePath;
     CURL* curl;
     bool isOpen = false;
-    std::unique_ptr<Format> formatter;
     std::ofstream logFile;
 
     /// Shared across all HTTPSink instances so concurrent writes to the

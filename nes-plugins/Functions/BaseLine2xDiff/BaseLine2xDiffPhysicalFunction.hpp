@@ -94,12 +94,12 @@ public:
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const
     {
         /// get Wert as double
-        const auto valueVal = child.execute(record, arena).cast<nautilus::val<double>>();
-        auto patientIdVal = record.readUnqualified("MLIFE_PID").cast<nautilus::val<int32_t>>();
-        const auto bezeichnungVal = record.readUnqualified("BEZ").cast<VariableSizedData>();
-        const auto zeitpunktVal = record.readUnqualified("ZEITPUNKT").cast<nautilus::val<uint64_t>>();
-        const auto insertionTs = record.readUnqualified("TSFAIL").cast<nautilus::val<uint64_t>>();
-        const auto ingestionTs = record.readUnqualified("TSLOG").cast<nautilus::val<uint64_t>>();
+        const auto valueVal = child.execute(record, arena).getRawValueAs<nautilus::val<double>>();
+        auto patientIdVal = record.readUnqualified("MLIFE_PID").getRawValueAs<nautilus::val<int32_t>>();
+        const auto bezeichnungVal = record.readUnqualified("BEZ").getRawValueAs<VariableSizedData>();
+        const auto zeitpunktVal = record.readUnqualified("ZEITPUNKT").getRawValueAs<nautilus::val<uint64_t>>();
+        const auto insertionTs = record.readUnqualified("TSFAIL").getRawValueAs<nautilus::val<uint64_t>>();
+        const auto ingestionTs = record.readUnqualified("TSLOG").getRawValueAs<nautilus::val<uint64_t>>();
         nautilus::val<VarSizedResult*> probeResult = nautilus::invoke(
             +[](const int32_t patientId,
                 char* bez,

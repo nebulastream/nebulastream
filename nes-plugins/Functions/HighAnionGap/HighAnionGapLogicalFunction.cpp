@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -34,7 +35,7 @@
 namespace NES
 {
 
-HighAnionGapLogicalFunction::HighAnionGapLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::VARSIZED), child(child)
+HighAnionGapLogicalFunction::HighAnionGapLogicalFunction(const LogicalFunction& child) : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED)), child(child)
 // HighAnionGapLogicalFunction::HighAnionGapLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::BOOLEAN), child(child)
 {
 }

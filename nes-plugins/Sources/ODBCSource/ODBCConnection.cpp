@@ -36,6 +36,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Ranges.hpp>
@@ -148,7 +149,7 @@ TypeInfo getTypeInfo(const SQLSMALLINT sqlType, const SQLULEN sqlColLen)
             return TypeInfo{
                 .sqlType = SQL_VARCHAR,
                 .nesType = type->second,
-                .nesTypeSize = NES::DataType{NES::DataType::Type::VARSIZED}.getSizeInBytes(),
+                .nesTypeSize = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED).getSizeInBytesWithoutNull(),
                 .sqlColumnSize = sqlColLen};
         }
         constexpr size_t maxDigitsIn32BitFloat = 24;
@@ -157,7 +158,7 @@ TypeInfo getTypeInfo(const SQLSMALLINT sqlType, const SQLULEN sqlColLen)
             return TypeInfo{
                 .sqlType = SQL_DOUBLE,
                 .nesType = NES::DataType::Type::FLOAT64,
-                .nesTypeSize = NES::DataType{NES::DataType::Type::FLOAT64}.getSizeInBytes(),
+                .nesTypeSize = NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT64).getSizeInBytesWithoutNull(),
                 .sqlColumnSize = sqlColLen};
         }
         if (type->second == NES::DataType::Type::INT64)
@@ -165,13 +166,13 @@ TypeInfo getTypeInfo(const SQLSMALLINT sqlType, const SQLULEN sqlColLen)
             return TypeInfo{
                 .sqlType = SQL_C_SBIGINT,
                 .nesType = NES::DataType::Type::INT64,
-                .nesTypeSize = NES::DataType{NES::DataType::Type::INT64}.getSizeInBytes(),
+                .nesTypeSize = NES::DataTypeProvider::provideDataType(NES::DataType::Type::INT64).getSizeInBytesWithoutNull(),
                 .sqlColumnSize = sqlColLen};
         }
         return TypeInfo{
             .sqlType = sqlType,
             .nesType = type->second,
-            .nesTypeSize = NES::DataType{type->second}.getSizeInBytes(),
+            .nesTypeSize = NES::DataTypeProvider::provideDataType(type->second).getSizeInBytesWithoutNull(),
             .sqlColumnSize = sqlColLen};
     }
     throw NES::CannotOpenSource("Cannot conver SQLType {} to NES type.", sqlType);
@@ -413,7 +414,7 @@ SQLRETURN ODBCConnection::readVarSized(
         const auto childBufferIdx = buffer.storeChildBuffer(varSizedBuffer.value());
         *reinterpret_cast<VariableSizedAccess*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()])
             = VariableSizedAccess{childBufferIdx, VariableSizedAccess::Size{static_cast<uint64_t>(indicator)}};
-        buffer.setNumberOfTuples(buffer.getNumberOfTuples() + DataType{DataType::Type::VARSIZED}.getSizeInBytes());
+        buffer.setNumberOfTuples(buffer.getNumberOfTuples() + DataTypeProvider::provideDataType(DataType::Type::VARSIZED).getSizeInBytesWithoutNull());
         return ret;
     }
 

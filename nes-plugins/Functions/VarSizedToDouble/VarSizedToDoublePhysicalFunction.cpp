@@ -65,7 +65,7 @@ double convertVarSizedToDouble(const char* varSizedPtr, const uint32_t varSizedL
 
 VarVal VarSizedToDoublePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = child.execute(record, arena).cast<VariableSizedData>();
+    const auto leftValue = child.execute(record, arena).getRawValueAs<VariableSizedData>();
     const nautilus::val<double> doubleVal = nautilus::invoke(convertVarSizedToDouble, leftValue.getContent(), leftValue.getSize());
     return doubleVal;
 }
