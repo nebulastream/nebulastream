@@ -1,0 +1,112 @@
+# name: retrospective-study/HighAnionGapSql.test
+# description: SQL replacement of the stateful HighAnionGap UDF using value_or_null
+#              over a 1ms tumbling window — pivots the per-Bez rows into per-event
+#              columns, then applies the threshold predicate. Mimics
+#              nes-plugins/Functions/HighAnionGap/HighAnionGapPhysicalFunction.hpp:
+#                ph < 7.3 AND abec < -3.0 AND (natrium - chlorid - hco3) > 12
+#
+# The expected patient set was cross-checked against the original stateful
+# HighAnionGap UDF by running it on the same data and projecting mlife_PID
+# from rows whose alert string was non-empty: {1002, 1008, 1009}.
+# groups: [retrospective-study, NullHandling, WindowOperators]
+
+CREATE LOGICAL SOURCE odbc_source_35(
+    LabVal_ID INT32 NOT NULL,
+    mlife_PID INT32 NOT NULL,
+    mlife_FallNr INT32 NOT NULL,
+    Zeitpunkt UINT64 NOT NULL,
+    GruppenNr INT32 NOT NULL,
+    Gruppe VARSIZED,
+    Bez VARSIZED,
+    Wert VARSIZED,
+    Einheit VARSIZED,
+    Wertebereich VARSIZED,
+    SampleNr VARSIZED,
+    TSFail UINT64 NOT NULL,
+    TSLog UINT64 NOT NULL,
+    Lab_ID INT32 NOT NULL
+);
+
+# Patient scenarios — each patient's 5 measurements share one Zeitpunkt so they
+# fall into a single 1ms tumbling-window slice:
+#   1002 (ts=1000): pH=5.0,  abec=-10,  na=20,  cl=2,   hco3=2   → 16>12, all fire — TRIGGER
+#   1003 (ts=1000): pH=7.4   — pH not <7.3                          — no trigger
+#   1004 (ts=1000): only 4 measurements (HCO3 missing)              — MAX→NULL filtered out
+#   1005 (ts=2000): pH=7.3   — boundary, NOT <7.3                   — no trigger
+#   1006 (ts=3000): abec=-3.0 — boundary, NOT <-3.0                 — no trigger
+#   1007 (ts=4000): na-cl-hco3 = 130-100-18 = 12, NOT >12           — no trigger
+#   1008 (ts=5000): pH=7.1, abec=-4, na=145, cl=105, hco3=20 → 20>12 — TRIGGER
+#   1009 (ts=6000): pH=7.29, abec=-3.1, na=150, cl=105, hco3=18 → 27>12 — TRIGGER
+CREATE PHYSICAL SOURCE FOR odbc_source_35 TYPE File;
+ATTACH INLINE
+1,1002,1,1000,2,Blutgase arteriell,PH,5.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+2,1002,1,1000,2,Blutgase arteriell,ABEc,-10.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+3,1002,1,1000,2,Blutgase arteriell,NATRIUM(BG),20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+4,1002,1,1000,2,Blutgase arteriell,CHLORID(BG),2.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+5,1002,1,1000,2,Blutgase arteriell,HCO3,2.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+6,1003,2,1000,2,Blutgase arteriell,PH,7.4,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+7,1003,2,1000,2,Blutgase arteriell,ABEc,1.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+8,1003,2,1000,2,Blutgase arteriell,NATRIUM(BG),140.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+9,1003,2,1000,2,Blutgase arteriell,CHLORID(BG),100.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+10,1003,2,1000,2,Blutgase arteriell,HCO3,24.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+11,1004,3,1000,2,Blutgase arteriell,PH,5.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+12,1004,3,1000,2,Blutgase arteriell,ABEc,-10.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+13,1004,3,1000,2,Blutgase arteriell,NATRIUM(BG),20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+14,1004,3,1000,2,Blutgase arteriell,CHLORID(BG),2.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+15,1005,4,2000,2,Blutgase arteriell,PH,7.3,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+16,1005,4,2000,2,Blutgase arteriell,ABEc,-5.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+17,1005,4,2000,2,Blutgase arteriell,NATRIUM(BG),140.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+18,1005,4,2000,2,Blutgase arteriell,CHLORID(BG),100.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+19,1005,4,2000,2,Blutgase arteriell,HCO3,20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+20,1006,5,3000,2,Blutgase arteriell,PH,7.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+21,1006,5,3000,2,Blutgase arteriell,ABEc,-3.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+22,1006,5,3000,2,Blutgase arteriell,NATRIUM(BG),140.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+23,1006,5,3000,2,Blutgase arteriell,CHLORID(BG),100.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+24,1006,5,3000,2,Blutgase arteriell,HCO3,20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+25,1007,6,4000,2,Blutgase arteriell,PH,7.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+26,1007,6,4000,2,Blutgase arteriell,ABEc,-5.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+27,1007,6,4000,2,Blutgase arteriell,NATRIUM(BG),130.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+28,1007,6,4000,2,Blutgase arteriell,CHLORID(BG),100.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+29,1007,6,4000,2,Blutgase arteriell,HCO3,18.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+30,1008,7,5000,2,Blutgase arteriell,PH,7.1,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+31,1008,7,5000,2,Blutgase arteriell,ABEc,-4.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+32,1008,7,5000,2,Blutgase arteriell,NATRIUM(BG),145.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+33,1008,7,5000,2,Blutgase arteriell,CHLORID(BG),105.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+34,1008,7,5000,2,Blutgase arteriell,HCO3,20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+35,1009,8,6000,2,Blutgase arteriell,PH,7.29,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+36,1009,8,6000,2,Blutgase arteriell,ABEc,-3.1,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+37,1009,8,6000,2,Blutgase arteriell,NATRIUM(BG),150.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+38,1009,8,6000,2,Blutgase arteriell,CHLORID(BG),105.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+39,1009,8,6000,2,Blutgase arteriell,HCO3,18.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+
+CREATE SINK alertSink(window_start UINT64 NOT NULL, window_end UINT64 NOT NULL, patient_id INT32 NOT NULL, ph FLOAT64, abec FLOAT64, natrium FLOAT64, chlorid FLOAT64, hco3 FLOAT64) TYPE File;
+
+# value_or_null(predicate, value) → value when the predicate is true, NULL otherwise.
+# MAX over the window drops the NULLs (skip-null aggregation), leaving the one
+# matching value per Bez. The outer SELECT then applies the threshold predicate.
+# FLOAT64(0) - abec > FLOAT64(3.0) is the workaround for negative-literal parsing
+# (see docs/bugs/negative_float_constant.md / nebulastream issue #1572).
+SELECT window_start, window_end, patient_id, ph, abec, natrium, chlorid, hco3
+FROM (
+    SELECT
+        start AS window_start,
+        end AS window_end,
+        mlife_PID AS patient_id,
+        MAX(value_or_null(Bez == VARSIZED("PH"),          VarSizedToDouble(Wert))) AS ph,
+        MAX(value_or_null(Bez == VARSIZED("ABEc"),        VarSizedToDouble(Wert))) AS abec,
+        MAX(value_or_null(Bez == VARSIZED("NATRIUM(BG)"), VarSizedToDouble(Wert))) AS natrium,
+        MAX(value_or_null(Bez == VARSIZED("CHLORID(BG)"), VarSizedToDouble(Wert))) AS chlorid,
+        MAX(value_or_null(Bez == VARSIZED("HCO3"),        VarSizedToDouble(Wert))) AS hco3
+    FROM odbc_source_35
+    WHERE Gruppe == VARSIZED("Blutgase arteriell")
+    GROUP BY mlife_PID
+    WINDOW TUMBLING(Zeitpunkt, SIZE 1 MS)
+)
+WHERE ph < FLOAT64(7.3)
+  AND FLOAT64(0) - abec > FLOAT64(3.0)
+  AND natrium - chlorid - hco3 > FLOAT64(12)
+INTO alertSink;
+----
+1000,1001,1002,5.0,-10.0,20.0,2.0,2.0
+5000,5001,1008,7.1,-4.0,145.0,105.0,20.0
+6000,6001,1009,7.29,-3.1,150.0,105.0,18.0
