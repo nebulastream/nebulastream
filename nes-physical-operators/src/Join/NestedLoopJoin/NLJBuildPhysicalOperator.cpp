@@ -15,8 +15,8 @@
 
 #include <memory>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
@@ -25,7 +25,6 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ErrorHandling.hpp>
@@ -50,10 +49,10 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
     std::unique_ptr<SliceStoreRef> sliceStoreRef)
     : StreamJoinBuildPhysicalOperator{
-          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef), std::move(sliceStoreRef)}
+          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(tupleLayout), std::move(sliceStoreRef)}
 {
 }
 
@@ -65,10 +64,10 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
 
     /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto nljPagedVectorMemRef = sliceStoreRef->getDataStructureRef(timestamp, executionCtx.workerThreadId, operatorHandler);
-
+    auto nljPagedVectorMemRef = sliceStoreRef->getDataStructureRef(
+        timestamp, executionCtx.workerThreadId, operatorHandler, executionCtx.pipelineMemoryProvider.bufferProvider);
     /// Write record to the pagedVector
-    const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);
-    pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+    PagedVectorRef pagedVectorRef{BorrowedNautilusBuffer::from(nljPagedVectorMemRef), tupleLayout};
+    pagedVectorRef.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

@@ -12,12 +12,12 @@
 
 add_library(nes-sources-test-utils Util/TestSource.cpp)
 target_include_directories(nes-sources-test-utils PUBLIC ../private Util)
-target_link_libraries(nes-sources-test-utils PUBLIC nes-sources nes-memory-test-utils nes-input-formatters)
+target_link_libraries(nes-sources-test-utils PUBLIC nes-sources nes-input-formatters)
 
 function(add_nes_source_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-memory-test-utils nes-sources-test-utils)
+    target_link_libraries(${TARGET_NAME} nes-sources-test-utils)
 endfunction()
 
 add_nes_source_test(source-thread-test SourceThreadTest.cpp)

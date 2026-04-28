@@ -15,6 +15,7 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <ranges>
 #include <span>
@@ -33,6 +34,7 @@
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
@@ -42,7 +44,9 @@
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
@@ -108,36 +112,48 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
-    auto leftBufferRef = LowerSchemaProvider::lowerSchema(pageSize, leftInputSchema, memoryLayoutType);
-    auto rightBufferRef = LowerSchemaProvider::lowerSchema(pageSize, rightInputSchema, memoryLayoutType);
+    auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(leftInputSchema);
+    auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(rightInputSchema);
+    const uint64_t tupleSizeLeft = leftTupleLayout->getTupleSize();
+    const uint64_t tupleSizeRight = rightTupleLayout->getTupleSize();
 
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(*join, windowType);
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            auto* ptr = newNLJSlice.getPagedVectorRef(workerThreadId, JoinBuildSideType::Left);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
+            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
+            return const_cast<TupleBuffer*>(ptr);
         },
-        [](const WindowBasedOperatorHandler& handler) { return handler.getCreateNewSlicesFunction({}); });
+        [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
+        {
+            const CreateNewNLJSliceArgs nljSliceArgs{bufferProvider, tupleSizeLeft, tupleSizeRight};
+            return handler.getCreateNewSlicesFunction(nljSliceArgs);
+        });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            auto* ptr = newNLJSlice.getPagedVectorRef(workerThreadId, JoinBuildSideType::Right);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
+            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
+            return const_cast<TupleBuffer*>(ptr);
         },
-        [](const WindowBasedOperatorHandler& handler) { return handler.getCreateNewSlicesFunction({}); });
+        [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
+        {
+            const CreateNewNLJSliceArgs nljSliceArgs{bufferProvider, tupleSizeLeft, tupleSizeRight};
+            return handler.getCreateNewSlicesFunction(nljSliceArgs);
+        });
 
     auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
 
     const NLJBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef, std::move(sliceStoreRefLeft)};
+        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftTupleLayout, std::move(sliceStoreRefLeft)};
     const NLJBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef, std::move(sliceStoreRefRight)};
+        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightTupleLayout, std::move(sliceStoreRefRight)};
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator = NLJProbePhysicalOperator(
@@ -145,8 +161,8 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         joinFunction,
         join->getWindowMetaData(),
         joinSchema,
-        leftBufferRef,
-        rightBufferRef,
+        leftTupleLayout,
+        rightTupleLayout,
         getJoinFieldNames(leftInputSchema, logicalJoinFunction),
         getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
