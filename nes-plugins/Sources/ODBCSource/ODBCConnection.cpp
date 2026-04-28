@@ -406,14 +406,20 @@ SQLRETURN ODBCConnection::readVarSized(
     {
         const auto ret = SQLGetData(
             hstmt, colIdx, SQL_C_CHAR, varSizedBuffer.value().getAvailableMemoryArea<char>().data(), typeInfo.sqlColumnSize, &indicator);
-        const auto varsizedString
-            = std::string(varSizedBuffer.value().getAvailableMemoryArea<char>().data(), static_cast<uint64_t>(indicator));
-        currentTuple = fmt::format("{}, {}", currentTuple, varsizedString);
         checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
-        INVARIANT(indicator != SQL_NULL_DATA, "not supporting null data for varsized");
+        /// SQL NULL → empty string. Reset the indicator so the outer null check in executeQuery
+        /// does not reject the row, and so the size below is not a negative-cast-to-uint64_t blow-up.
+        if (indicator == SQL_NULL_DATA)
+        {
+            indicator = 0;
+        }
+        const auto varsizedSize = static_cast<uint64_t>(indicator);
+        const auto varsizedString
+            = std::string(varSizedBuffer.value().getAvailableMemoryArea<char>().data(), varsizedSize);
+        currentTuple = fmt::format("{}, {}", currentTuple, varsizedString);
         const auto childBufferIdx = buffer.storeChildBuffer(varSizedBuffer.value());
         *reinterpret_cast<VariableSizedAccess*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()])
-            = VariableSizedAccess{childBufferIdx, VariableSizedAccess::Size{static_cast<uint64_t>(indicator)}};
+            = VariableSizedAccess{childBufferIdx, VariableSizedAccess::Size{varsizedSize}};
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + DataTypeProvider::provideDataType(DataType::Type::VARSIZED).getSizeInBytesWithoutNull());
         return ret;
     }
