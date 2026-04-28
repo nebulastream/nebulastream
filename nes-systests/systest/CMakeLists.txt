@@ -98,7 +98,7 @@ endif ()
 
 # Collect additional systest directories registered by plugins
 get_property(PLUGIN_SYSTEST_DIRS GLOBAL PROPERTY PLUGIN_SYSTEST_DIRS)
-message(INFO "PLUGIN_SYSTEST_DIRS: ${PLUGIN_SYSTEST_DIRS}")
+message(STATUS "PLUGIN_SYSTEST_DIRS: ${PLUGIN_SYSTEST_DIRS}")
 
 # Add code coverage if enabled
 if (CODE_COVERAGE)

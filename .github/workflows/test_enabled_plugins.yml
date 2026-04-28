@@ -3,7 +3,10 @@ description: |
   Builds and tests NebulaStream with only specific plugins enabled while all
   others are disabled. This verifies that each plugin works correctly in isolation.
   Large tests are enabled to maximize coverage.
-  To add a new plugin, add a new entry to the matrix below.
+
+  The matrix is auto-discovered by .github/ci/generate_plugins_matrix.py from
+  the option(NES_PLUGIN_*) declarations in nes-plugins/CMakeLists.txt — adding
+  a new plugin requires no edits to this workflow.
 
 on:
   workflow_call:
@@ -18,9 +21,22 @@ on:
         description: "head_sha of the branch"
 
 jobs:
+  generate-matrix:
+    name: Generate Enabled-Plugin Matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - id: gen
+        run: python3 .github/ci/generate_plugins_matrix.py --mode enabled --output-github
+
   test-enabled-plugin:
+    needs: [ generate-matrix ]
     runs-on: [ self-hosted, linux, X64, Build ]
-    name: "Enabled plugins: ${{ matrix.config.name }}"
+    name: "Enabled plugins: ${{ matrix.name }}"
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libstdcxx-none
       volumes:
@@ -38,35 +54,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config:
-          - name: only-tcp-source
-            arg: -DNES_PLUGIN_TCP_SOURCE=ON
-          - name: only-generator-source
-            arg: -DNES_PLUGIN_GENERATOR_SOURCE=ON
-          - name: only-void-sink
-            arg: -DNES_PLUGIN_VOID_SINK=ON
-          - name: only-json-input-formatter
-            arg: -DNES_PLUGIN_JSON_INPUT_FORMATTER=ON
-          - name: only-json-output-formatter
-            arg: -DNES_PLUGIN_JSON_OUTPUT_FORMATTER=ON
-          - name: only-checksum-sink
-            arg: -DNES_PLUGIN_CHECKSUM_SINK=ON
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
       - name: Configure NebulaStream
-        # Disable all plugins first, then selectively enable the ones under test
-        run: >-
-          cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
-          -DENABLE_LARGE_TESTS=ON
-          -DNES_PLUGIN_TCP_SOURCE=OFF
-          -DNES_PLUGIN_GENERATOR_SOURCE=OFF
-          -DNES_PLUGIN_VOID_SINK=OFF
-          -DNES_PLUGIN_JSON_INPUT_FORMATTER=OFF
-          -DNES_PLUGIN_JSON_OUTPUT_FORMATTER=OFF
-          -DNES_PLUGIN_CHECKSUM_SINK=OFF
-          ${{ matrix.config.arg }}
+        run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON ${{ matrix.arg }}
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
       - name: Run Tests
@@ -75,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !github.event.act }}
         with:
-          name: logs-enabled-plugins-${{ matrix.config.name }}
+          name: logs-enabled-plugins-${{ matrix.name }}
           path: |
             build/**/*.log
             build/**/*.stats
@@ -83,5 +77,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
-          name: junit-enabled-plugins-${{ matrix.config.name }}.xml
+          name: junit-enabled-plugins-${{ matrix.name }}.xml
           path: /junit.xml
