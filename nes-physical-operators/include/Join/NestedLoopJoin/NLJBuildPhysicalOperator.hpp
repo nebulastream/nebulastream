@@ -16,13 +16,16 @@
 
 #include <cstdint>
 #include <memory>
+
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include "Nautilus/Interface/PagedVector/PagedVectorRef.hpp"
 
 namespace NES
 {
@@ -37,7 +40,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::shared_ptr<TupleLayout> tupleLayout,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;

@@ -17,12 +17,15 @@
 #include <memory>
 #include <optional>
 #include <string>
+
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Registry.hpp>
+#include "Nautilus/Interface/PagedVector/PagedVectorRef.hpp"
 
 namespace NES
 {
@@ -35,7 +38,7 @@ struct AggregationPhysicalFunctionRegistryArguments
     DataType resultType;
     PhysicalFunction inputFunction;
     Record::RecordFieldIdentifier resultFieldIdentifier;
-    std::optional<std::shared_ptr<TupleBufferRef>> bufferRefPagedVector;
+    std::optional<std::shared_ptr<TupleLayout>> tupleLayout;
     bool includeNullValues;
 };
 

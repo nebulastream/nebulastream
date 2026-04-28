@@ -63,8 +63,11 @@ public:
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         uint64_t maxNumberOfBuckets);
 
-    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
+    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction(
+        const CreateNewSlicesArguments& newSlicesArguments,
+        AbstractBufferProvider& bufferProvider,
+        uint64_t tupleSizeLeft,
+        uint64_t tupleSizeRight) const override;
 
     /// Is required to not perform the setup again and resolving a race condition to the cleanup state function
     std::atomic<bool> setupAlreadyCalled;

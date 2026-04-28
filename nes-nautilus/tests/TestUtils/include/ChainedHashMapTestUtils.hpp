@@ -20,12 +20,14 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -34,6 +36,7 @@
 #include <gtest/gtest.h>
 #include <nautilus/Engine.hpp>
 #include <NautilusTestUtils.hpp>
+#include "Nautilus/Interface/PagedVector/PagedVectorRef.hpp"
 
 namespace NES::TestUtils
 {
@@ -69,6 +72,7 @@ public:
     std::vector<Record::RecordFieldIdentifier> projectionKeys, projectionValues;
     std::vector<TupleBuffer> inputBuffers;
     std::shared_ptr<TupleBufferRef> inputBufferRef;
+    std::shared_ptr<TupleLayout> tupleLayout;
     uint64_t keySize, valueSize, entriesPerPage, entrySize;
     TestParams params;
 

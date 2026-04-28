@@ -15,14 +15,17 @@
 
 #include <cstdint>
 #include <memory>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val_bool.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <val_arith.hpp>
+#include "Runtime/AbstractBufferProvider.hpp"
 
 namespace NES
 {
@@ -65,7 +68,8 @@ SliceCacheSecondChance::EntryFound SliceCacheSecondChance::searchInCache(
 nautilus::val<SliceCacheEntry::DataStructure> SliceCacheSecondChance::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp,
     const nautilus::val<WorkerThreadId>& workerThreadId,
-    const SliceCacheReplaceEntry& replaceEntry)
+    const SliceCacheReplaceEntry& replaceEntry,
+    nautilus::val<AbstractBufferProvider*>)
 {
     /// We must use SliceCacheEntrySecondChance* for all pointer arithmetic, because the entries
     /// in memory are SliceCacheEntrySecondChance objects (40 bytes), not SliceCacheEntry (32 bytes).

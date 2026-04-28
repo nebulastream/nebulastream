@@ -40,7 +40,8 @@ public:
     virtual nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
-        const nautilus::val<OperatorHandler*>& operatorHandler)
+        const nautilus::val<OperatorHandler*>& operatorHandler,
+        nautilus::val<AbstractBufferProvider*> bufferProvider)
         = 0;
 
     /// Necessary, as our PhysicalOperators get copied during the pipelining phase, but we need to ensure uniqueness for the slice store ref

@@ -81,6 +81,10 @@ class TupleBuffer
     }
 
 public:
+    /// @brief Flag value for uninitialized child buffers.
+    inline static const VariableSizedAccess::Index INVALID_CHILD_BUFFER_INDEX_VALUE{
+        std::numeric_limits<VariableSizedAccess::Index::Underlying>::max()};
+
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] TupleBuffer() noexcept = default;
 
@@ -96,6 +100,12 @@ public:
         other.ptr = nullptr;
         other.size = 0;
     }
+
+    /// @brief Deep copies the tuple buffer into the target buffer.
+    /// The target must have *excactly* as much memory as the buffer being copied.
+    /// @Warning 1: Child buffers are ignored (not copied).
+    /// @Warning 2: Pinned Buffers are ignored (not copied).
+    void deepCopy(TupleBuffer& targetBuffer) const noexcept;
 
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
     TupleBuffer& operator=(const TupleBuffer& other) noexcept;
@@ -178,6 +188,9 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
+    /// @brief materializes and returns a child buffer by attaching it into the pinned buffer map
+    [[nodiscard]] TupleBuffer& getChildRef(VariableSizedAccess::Index bufferIndex) noexcept;
+
 private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
@@ -187,6 +200,8 @@ private:
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
+    /// maps unique control block addresses to materialized children tuple buffers.
+    std::unordered_map<detail::BufferControlBlock*, std::unique_ptr<TupleBuffer>> pinnedBufferMap;
 };
 
 /**

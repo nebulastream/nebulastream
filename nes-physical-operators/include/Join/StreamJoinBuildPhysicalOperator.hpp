@@ -16,12 +16,15 @@
 
 #include <cstdint>
 #include <memory>
+
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
+#include "Nautilus/Interface/PagedVector/PagedVectorRef.hpp"
 
 namespace NES
 {
@@ -33,7 +36,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::shared_ptr<TupleLayout> tupleLayout,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
     ~StreamJoinBuildPhysicalOperator() override = default;
 
@@ -41,7 +44,7 @@ public:
 
 protected:
     const JoinBuildSideType joinBuildSide;
-    const std::shared_ptr<TupleBufferRef> bufferRef;
+    const std::shared_ptr<TupleLayout> tupleLayout;
 };
 
 }

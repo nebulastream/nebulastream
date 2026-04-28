@@ -48,7 +48,8 @@
     "boost-url",
     "simdjson",
     "date",
-    "highs"
+    "highs",
+    "rapidcheck"
   ],
   "overrides": [
     {

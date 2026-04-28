@@ -50,8 +50,8 @@ HJOperatorHandler::HJOperatorHandler(
 {
 }
 
-std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-HJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const
+std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> HJOperatorHandler::getCreateNewSlicesFunction(
+    const CreateNewSlicesArguments& newSlicesArguments, AbstractBufferProvider&, uint64_t, uint64_t) const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Has setWorkerThreads() being called?");
@@ -139,7 +139,6 @@ void HJOperatorHandler::emitSlicesToProbe(
     const auto rightHashMaps = getHashMapsForSlice(sliceRight, JoinBuildSideType::Right);
 
     /// We need a buffer that is large enough to store:
-    /// - all pointers to (left + right) hashmaps of the window to be triggered
     /// - size of EmittedHJWindowTrigger
     const auto neededBufferSize = sizeof(EmittedHJWindowTrigger) + ((leftHashMaps.size() + rightHashMaps.size()) * sizeof(HashMap*));
     const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
@@ -175,5 +174,4 @@ void HJOperatorHandler::emitSlicesToProbe(
         leftHashMaps.size(),
         rightHashMaps.size());
 }
-
 }

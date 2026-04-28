@@ -116,7 +116,7 @@ static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLo
 namespace
 {
 std::vector<std::shared_ptr<AggregationPhysicalFunction>>
-getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const QueryExecutionConfiguration& configuration)
+getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const QueryExecutionConfiguration&)
 {
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
@@ -129,9 +129,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         const auto resultFieldIdentifier = descriptor->getAsField().getFieldName();
         const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
         PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-        const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-        auto bufferRef
-            = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0], memoryLayoutType);
+        auto tupleLayout = std::make_shared<BasicTupleLayout>(TupleSchema(logicalOperator.getInputSchemas()[0]));
 
         auto name = descriptor->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
@@ -139,7 +137,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
             std::move(physicalFinalType),
             std::move(aggregationInputFunction),
             resultFieldIdentifier,
-            bufferRef,
+            tupleLayout,
             descriptor->shallIncludeNullValues());
         if (auto aggregationPhysicalFunction
             = AggregationPhysicalFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
@@ -225,14 +223,15 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
+    auto tupleSize = std::make_shared<BasicTupleLayout>(TupleSchema(newInputSchema))->getTupleSize();
     auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             auto& aggregationSlice = dynamic_cast<AggregationSlice&>(slice);
             auto* ptr = aggregationSlice.getHashMapPtrOrCreate(workerThreadId);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(ChainedHashMap)};
+            return ptr;
         },
-        [hashMapOptions](WindowBasedOperatorHandler& handler)
+        [hashMapOptions, tupleSize](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             auto& aggHandler = dynamic_cast<AggregationOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{
@@ -241,7 +240,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
                 hashMapOptions.valueSize,
                 hashMapOptions.pageSize,
                 hashMapOptions.numberOfBuckets};
-            return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
+            return handler.getCreateNewSlicesFunction(hashMapSliceArgs, bufferProvider, tupleSize, tupleSize);
         });
     auto handler = std::make_shared<AggregationOperatorHandler>(
         inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);

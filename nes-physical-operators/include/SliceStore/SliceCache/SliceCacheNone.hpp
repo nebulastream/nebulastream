@@ -36,6 +36,7 @@ public:
     nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
-        const SliceCacheReplaceEntry& replaceEntry) override;
+        const SliceCacheReplaceEntry& replaceEntry,
+        nautilus::val<AbstractBufferProvider*> bufferProvider) override;
 };
 }
