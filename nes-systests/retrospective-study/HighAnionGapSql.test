@@ -1,9 +1,11 @@
 # name: retrospective-study/HighAnionGapSql.test
-# description: SQL replacement of the stateful HighAnionGap UDF using value_or_null
-#              over a 1ms tumbling window — pivots the per-Bez rows into per-event
-#              columns, then applies the threshold predicate. Mimics
-#              nes-plugins/Functions/HighAnionGap/HighAnionGapPhysicalFunction.hpp:
-#                ph < 7.3 AND abec < -3.0 AND (natrium - chlorid - hco3) > 12
+# description: SQL replacement of the stateful HighAnionGap UDF. Pivots the
+#              per-Bez rows into per-event columns via value_or_null + MAX over a
+#              1ms tumbling window, applies the threshold predicate, and renders
+#              the alert string with FMT — same shape as the UDF's output, minus
+#              the non-deterministic wall-clock timestamps:
+#                nes-plugins/Functions/HighAnionGap/HighAnionGapPhysicalFunction.hpp
+#              Threshold: ph < 7.3 AND abec < -3.0 AND (natrium - chlorid - hco3) > 12.
 #
 # The expected patient set was cross-checked against the original stateful
 # HighAnionGap UDF by running it on the same data and projecting mlife_PID
@@ -79,34 +81,41 @@ ATTACH INLINE
 38,1009,8,6000,2,Blutgase arteriell,CHLORID(BG),105.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
 39,1009,8,6000,2,Blutgase arteriell,HCO3,18.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
 
-CREATE SINK alertSink(window_start UINT64 NOT NULL, window_end UINT64 NOT NULL, patient_id INT32 NOT NULL, ph FLOAT64, abec FLOAT64, natrium FLOAT64, chlorid FLOAT64, hco3 FLOAT64) TYPE File;
+CREATE SINK alertSink(alert VARSIZED) TYPE File;
 
 # value_or_null(predicate, value) → value when the predicate is true, NULL otherwise.
 # MAX over the window drops the NULLs (skip-null aggregation), leaving the one
-# matching value per Bez. The outer SELECT then applies the threshold predicate.
+# matching value per Bez. The middle SELECT then applies the threshold predicate.
+# The outer SELECT renders the alert string with FMT, mimicking the UDF's text.
+# Numeric values render via std::to_chars shortest round-trip — integral values
+# like 5.0 emit as "5", consistent with the UDF's output.
 # FLOAT64(0) - abec > FLOAT64(3.0) is the workaround for negative-literal parsing
 # (see docs/bugs/negative_float_constant.md / nebulastream issue #1572).
-SELECT window_start, window_end, patient_id, ph, abec, natrium, chlorid, hco3
+SELECT FMT(
+    VARSIZED("High anion gap detected for patient {}. Reason: if( ( PH({}) < 7.3) AND (Base Excess({}) < -3.0) AND (Sodium({}) - Chloride({}) - Bicarbonate({}) > 12))"),
+    patient_id, ph, abec, natrium, chlorid, hco3
+) AS alert
 FROM (
-    SELECT
-        start AS window_start,
-        end AS window_end,
-        mlife_PID AS patient_id,
-        MAX(value_or_null(Bez == VARSIZED("PH"),          VarSizedToDouble(Wert))) AS ph,
-        MAX(value_or_null(Bez == VARSIZED("ABEc"),        VarSizedToDouble(Wert))) AS abec,
-        MAX(value_or_null(Bez == VARSIZED("NATRIUM(BG)"), VarSizedToDouble(Wert))) AS natrium,
-        MAX(value_or_null(Bez == VARSIZED("CHLORID(BG)"), VarSizedToDouble(Wert))) AS chlorid,
-        MAX(value_or_null(Bez == VARSIZED("HCO3"),        VarSizedToDouble(Wert))) AS hco3
-    FROM odbc_source_35
-    WHERE Gruppe == VARSIZED("Blutgase arteriell")
-    GROUP BY mlife_PID
-    WINDOW TUMBLING(Zeitpunkt, SIZE 1 MS)
+    SELECT patient_id, ph, abec, natrium, chlorid, hco3
+    FROM (
+        SELECT
+            mlife_PID AS patient_id,
+            MAX(value_or_null(Bez == VARSIZED("PH"),          VarSizedToDouble(Wert))) AS ph,
+            MAX(value_or_null(Bez == VARSIZED("ABEc"),        VarSizedToDouble(Wert))) AS abec,
+            MAX(value_or_null(Bez == VARSIZED("NATRIUM(BG)"), VarSizedToDouble(Wert))) AS natrium,
+            MAX(value_or_null(Bez == VARSIZED("CHLORID(BG)"), VarSizedToDouble(Wert))) AS chlorid,
+            MAX(value_or_null(Bez == VARSIZED("HCO3"),        VarSizedToDouble(Wert))) AS hco3
+        FROM odbc_source_35
+        WHERE Gruppe == VARSIZED("Blutgase arteriell")
+        GROUP BY mlife_PID
+        WINDOW TUMBLING(Zeitpunkt, SIZE 1 MS)
+    )
+    WHERE ph < FLOAT64(7.3)
+      AND FLOAT64(0) - abec > FLOAT64(3.0)
+      AND natrium - chlorid - hco3 > FLOAT64(12)
 )
-WHERE ph < FLOAT64(7.3)
-  AND FLOAT64(0) - abec > FLOAT64(3.0)
-  AND natrium - chlorid - hco3 > FLOAT64(12)
 INTO alertSink;
 ----
-1000,1001,1002,5.0,-10.0,20.0,2.0,2.0
-5000,5001,1008,7.1,-4.0,145.0,105.0,20.0
-6000,6001,1009,7.29,-3.1,150.0,105.0,18.0
+High anion gap detected for patient 1002. Reason: if( ( PH(5) < 7.3) AND (Base Excess(-10) < -3.0) AND (Sodium(20) - Chloride(2) - Bicarbonate(2) > 12))
+High anion gap detected for patient 1008. Reason: if( ( PH(7.1) < 7.3) AND (Base Excess(-4) < -3.0) AND (Sodium(145) - Chloride(105) - Bicarbonate(20) > 12))
+High anion gap detected for patient 1009. Reason: if( ( PH(7.29) < 7.3) AND (Base Excess(-3.1) < -3.0) AND (Sodium(150) - Chloride(105) - Bicarbonate(18) > 12))
