@@ -1,0 +1,113 @@
+# name: differential/HighAnionGapEquivalence.test
+# description: Differential equivalence between the stateful HighAnionGap UDF and
+#              the SQL pivot-and-threshold replacement. Both sides project the
+#              set of patient_ids whose lab-value combination crosses the
+#              high-anion-gap threshold under the given input. The UDF emits a
+#              non-deterministic alert string with wall-clock timestamps; this
+#              test sidesteps that by projecting only the triggering patient ID,
+#              which is deterministic and what the SQL replacement actually
+#              needs to match. Triggering set under the input: {1002, 1008, 1009}.
+#
+# Threshold (matches HighAnionGapPhysicalFunction.hpp:113 and the SQL replacement):
+#   ph < 7.3 AND abec < -3.0 AND (natrium - chlorid - hco3) > 12
+#
+# State caveat: the UDF's StaticSharedDiffState is process-global; only the
+# first side of the differential pair calls it, so state pollution can't affect
+# the SQL side.
+# groups: [Differential, retrospective-study, NullHandling, WindowOperators]
+
+CREATE LOGICAL SOURCE odbc_source_35(
+    LabVal_ID INT32 NOT NULL,
+    mlife_PID INT32 NOT NULL,
+    mlife_FallNr INT32 NOT NULL,
+    Zeitpunkt UINT64 NOT NULL,
+    GruppenNr INT32 NOT NULL,
+    Gruppe VARSIZED,
+    Bez VARSIZED,
+    Wert VARSIZED,
+    Einheit VARSIZED,
+    Wertebereich VARSIZED,
+    SampleNr VARSIZED,
+    TSFail UINT64 NOT NULL,
+    TSLog UINT64 NOT NULL,
+    Lab_ID INT32 NOT NULL
+);
+
+# Same patient scenarios as HighAnionGapSql.test:
+#   1002, 1008, 1009 trigger; 1003 (pH≥7.3), 1004 (HCO3 missing),
+#   1005 (boundary pH), 1006 (boundary abec), 1007 (boundary anion gap) don't.
+CREATE PHYSICAL SOURCE FOR odbc_source_35 TYPE File;
+ATTACH INLINE
+1,1002,1,1000,2,Blutgase arteriell,PH,5.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+2,1002,1,1000,2,Blutgase arteriell,ABEc,-10.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+3,1002,1,1000,2,Blutgase arteriell,NATRIUM(BG),20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+4,1002,1,1000,2,Blutgase arteriell,CHLORID(BG),2.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+5,1002,1,1000,2,Blutgase arteriell,HCO3,2.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+6,1003,2,1000,2,Blutgase arteriell,PH,7.4,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+7,1003,2,1000,2,Blutgase arteriell,ABEc,1.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+8,1003,2,1000,2,Blutgase arteriell,NATRIUM(BG),140.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+9,1003,2,1000,2,Blutgase arteriell,CHLORID(BG),100.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+10,1003,2,1000,2,Blutgase arteriell,HCO3,24.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+11,1004,3,1000,2,Blutgase arteriell,PH,5.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+12,1004,3,1000,2,Blutgase arteriell,ABEc,-10.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+13,1004,3,1000,2,Blutgase arteriell,NATRIUM(BG),20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+14,1004,3,1000,2,Blutgase arteriell,CHLORID(BG),2.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+15,1005,4,2000,2,Blutgase arteriell,PH,7.3,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+16,1005,4,2000,2,Blutgase arteriell,ABEc,-5.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+17,1005,4,2000,2,Blutgase arteriell,NATRIUM(BG),140.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+18,1005,4,2000,2,Blutgase arteriell,CHLORID(BG),100.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+19,1005,4,2000,2,Blutgase arteriell,HCO3,20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+20,1006,5,3000,2,Blutgase arteriell,PH,7.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+21,1006,5,3000,2,Blutgase arteriell,ABEc,-3.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+22,1006,5,3000,2,Blutgase arteriell,NATRIUM(BG),140.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+23,1006,5,3000,2,Blutgase arteriell,CHLORID(BG),100.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+24,1006,5,3000,2,Blutgase arteriell,HCO3,20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+25,1007,6,4000,2,Blutgase arteriell,PH,7.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+26,1007,6,4000,2,Blutgase arteriell,ABEc,-5.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+27,1007,6,4000,2,Blutgase arteriell,NATRIUM(BG),130.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+28,1007,6,4000,2,Blutgase arteriell,CHLORID(BG),100.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+29,1007,6,4000,2,Blutgase arteriell,HCO3,18.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+30,1008,7,5000,2,Blutgase arteriell,PH,7.1,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+31,1008,7,5000,2,Blutgase arteriell,ABEc,-4.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+32,1008,7,5000,2,Blutgase arteriell,NATRIUM(BG),145.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+33,1008,7,5000,2,Blutgase arteriell,CHLORID(BG),105.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+34,1008,7,5000,2,Blutgase arteriell,HCO3,20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+35,1009,8,6000,2,Blutgase arteriell,PH,7.29,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+36,1009,8,6000,2,Blutgase arteriell,ABEc,-3.1,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+37,1009,8,6000,2,Blutgase arteriell,NATRIUM(BG),150.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+38,1009,8,6000,2,Blutgase arteriell,CHLORID(BG),105.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+39,1009,8,6000,2,Blutgase arteriell,HCO3,18.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+
+CREATE SINK patientSink(patient_id INT32 NOT NULL) TYPE File;
+
+# Side A: stateful UDF. The UDF accumulates per-patient state from MLIFE_PID,
+# BEZ, ZEITPUNKT, TSFAIL, TSLOG read directly out of the record (side-channel,
+# not via the function argument). Returns a non-empty alert string only on the
+# row that completes the 5-measurement set with timestamps aligned and the
+# threshold met. Project mlife_PID for those rows.
+SELECT mlife_PID AS patient_id
+FROM odbc_source_35
+WHERE Gruppe == VARSIZED("Blutgase arteriell")
+  AND (Bez == VARSIZED("PH") OR Bez == VARSIZED("ABEc") OR Bez == VARSIZED("NATRIUM(BG)") OR Bez == VARSIZED("CHLORID(BG)") OR Bez == VARSIZED("HCO3"))
+  AND HighAnionGap(VarSizedToDouble(Wert)) != VARSIZED("")
+INTO patientSink;
+====
+# Side B: SQL pivot-and-threshold replacement, identical to HighAnionGapSql.test
+# but projecting only patient_id so the result shapes line up with side A.
+SELECT patient_id FROM (
+    SELECT
+        mlife_PID AS patient_id,
+        MAX(value_or_null(Bez == VARSIZED("PH"),          VarSizedToDouble(Wert))) AS ph,
+        MAX(value_or_null(Bez == VARSIZED("ABEc"),        VarSizedToDouble(Wert))) AS abec,
+        MAX(value_or_null(Bez == VARSIZED("NATRIUM(BG)"), VarSizedToDouble(Wert))) AS natrium,
+        MAX(value_or_null(Bez == VARSIZED("CHLORID(BG)"), VarSizedToDouble(Wert))) AS chlorid,
+        MAX(value_or_null(Bez == VARSIZED("HCO3"),        VarSizedToDouble(Wert))) AS hco3
+    FROM odbc_source_35
+    WHERE Gruppe == VARSIZED("Blutgase arteriell")
+    GROUP BY mlife_PID
+    WINDOW TUMBLING(Zeitpunkt, SIZE 1 MS)
+)
+WHERE ph < FLOAT64(7.3)
+  AND FLOAT64(0) - abec > FLOAT64(3.0)
+  AND natrium - chlorid - hco3 > FLOAT64(12)
+INTO patientSink;
