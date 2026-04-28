@@ -15,5 +15,6 @@ RUN --mount=type=cache,id=ccache,target=/ccache \
     && find build -name 'nes-repl-embedded' -type f -exec mv --target-directory=/tmp/bin {} +
 
 FROM nebulastream/nes-runtime-base:${RUNTIME_TAG} AS app
+
 COPY --from=build /tmp/bin /usr/bin
 ENTRYPOINT ["nes-repl-embedded"]
