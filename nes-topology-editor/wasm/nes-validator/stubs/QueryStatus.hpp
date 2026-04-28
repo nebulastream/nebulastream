@@ -16,7 +16,7 @@
 namespace NES
 {
 
-enum class QueryState : uint8_t
+enum class QueryStatus : uint8_t
 {
     Registered,
     Started,
@@ -25,7 +25,7 @@ enum class QueryState : uint8_t
     Failed,
 };
 
-inline std::ostream& operator<<(std::ostream& ostream, const QueryState& status)
+inline std::ostream& operator<<(std::ostream& ostream, const QueryStatus& status)
 {
     return ostream << magic_enum::enum_name(status);
 }
@@ -38,13 +38,13 @@ struct QueryMetrics
     std::optional<Exception> error;
 };
 
-struct LocalQueryStatus
+struct LocalQueryStatusSnapshot
 {
     QueryId queryId = INVALID_QUERY_ID;
-    QueryState state = QueryState::Registered;
+    QueryStatus state = QueryStatus::Registered;
     QueryMetrics metrics{};
 };
 
 }
 
-FMT_OSTREAM(NES::QueryState);
+FMT_OSTREAM(NES::QueryStatus);

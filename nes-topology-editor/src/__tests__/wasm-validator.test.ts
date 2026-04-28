@@ -672,7 +672,7 @@ describe('WASM validator with raw YAML topologies', () => {
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);
-    expect(result).toContain('Placement is not possible');
+    expect(result).toContain('placement failure');
   });
 
   it('accepts query when source and sink are on connected workers', () => {

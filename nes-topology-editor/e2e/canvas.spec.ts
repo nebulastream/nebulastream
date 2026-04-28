@@ -23,9 +23,12 @@ async function addSinkToWorker(page: Page, workerNode: Locator) {
   await page.waitForTimeout(100);
 }
 
-/** Wait for auto-layout to settle after structural changes */
+/** Wait for auto-layout to settle after structural changes, then fit view */
 async function waitForLayout(page: Page) {
   await page.waitForTimeout(500);
+  // Click "Fit View" in ReactFlow controls to ensure all nodes are visible
+  await page.getByRole('button', { name: 'Fit View' }).click();
+  await page.waitForTimeout(200);
 }
 
 /** Drag a node so its center lands at the given canvas coordinates */
@@ -150,6 +153,10 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
     await addSourceToWorker(page, page.locator('.worker-node'));
     await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 
+    // Deselect all nodes first (addSourceToWorker leaves the source selected)
+    await page.locator('.react-flow__pane').click({ position: { x: 50, y: 50 } });
+    await page.waitForTimeout(100);
+
     // Try to select and delete the edge
     await page.locator('.react-flow__edge').first().click({ force: true });
     await page.keyboard.press('Delete');
@@ -163,6 +170,10 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
     await addWorker(page);
     await addSinkToWorker(page, page.locator('.worker-node'));
     await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+
+    // Deselect all nodes first (addSinkToWorker leaves the sink selected)
+    await page.locator('.react-flow__pane').click({ position: { x: 50, y: 50 } });
+    await page.waitForTimeout(100);
 
     // Try to select and delete the edge
     await page.locator('.react-flow__edge').first().click({ force: true });
@@ -206,8 +217,9 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
     const hostWorkerLink = page.locator('text=Host Worker').locator('..').locator('button');
     const hostBefore = await hostWorkerLink.first().textContent();
 
-    // Deselect, then drag source onto worker2
+    // Deselect all nodes before dragging to avoid multi-node drag
     await page.locator('.react-flow__pane').click({ position: { x: 50, y: 50 } });
+    await page.waitForTimeout(200);
     await dragNodeOnto(page, page.locator('.source-node'), page.locator('.worker-node').nth(1));
 
     // Should still have 1 edge
@@ -269,6 +281,10 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
 
     // 2 edges so far (source→worker1, worker2→sink)
     await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+
+    // Deselect all nodes before dragging to avoid multi-node drag
+    await page.locator('.react-flow__pane').click({ position: { x: 50, y: 50 } });
+    await page.waitForTimeout(200);
 
     // Connect worker1 → worker2 via drag
     await dragNodeOnto(
