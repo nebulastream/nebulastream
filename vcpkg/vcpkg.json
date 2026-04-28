@@ -47,8 +47,11 @@
     "scope-guard",
     "boost-url",
     "simdjson",
+    "spdlog",
+    "yaml-cpp",
     "date",
-    "highs"
+    "highs",
+    "rapidcheck"
   ],
   "overrides": [
     {

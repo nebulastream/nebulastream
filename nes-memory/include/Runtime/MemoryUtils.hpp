@@ -16,8 +16,12 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Testing
+namespace NES::MemoryUtils
 {
 /// Used for testing to copy buffers from the pipeline execution context, so that we can both free the original TupleBuffer and keep the copy of the TupleBuffer for later checks.
 TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider);
+
+/// Returns a buffer for the specified size and optimizes internally for either pooled or unpooled.
+/// TODO #1582: is logic will be refactored into the Buffer Provider
+TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider);
 }

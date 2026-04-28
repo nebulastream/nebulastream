@@ -42,7 +42,8 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
     const DefaultTimeBasedSliceStoreRef* sliceStoreRef,
-    DefaultTimeBasedSliceStore* sliceStore)
+    DefaultTimeBasedSliceStore* sliceStore,
+    AbstractBufferProvider* bufferProvider)
 {
     PRECONDITION(operatorHandlerPtr != nullptr, "The operator handler should not be null");
     PRECONDITION(sliceStoreRef != nullptr, "The slice store ref should not be null");
@@ -52,7 +53,7 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
     PRECONDITION(windowHandler != nullptr, "The operator handler should be a WindowBasedOperatorHandler");
 
     /// Get a fresh SliceCreateFunction from the operator handler (picks up dynamic state like rolling avg bucket count for the hash join)
-    const auto createFunction = sliceStoreRef->createSlicesFunction(*windowHandler);
+    const auto createFunction = sliceStoreRef->createSlicesFunction(*windowHandler, *bufferProvider);
 
     /// Look up or create the slice in the slice store
     const auto slices = sliceStore->getSlicesOrCreate(timestamp, createFunction);
@@ -61,7 +62,7 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
     /// Use the data structure extractor to get the operator-specific data structure, then store its pointer for usage in nautilus
     entryToReplace->sliceStart = slices[0]->getSliceStart().getRawValue();
     entryToReplace->sliceEnd = slices[0]->getSliceEnd().getRawValue();
-    entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(*slices[0], workerThreadId).data();
+    entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(*slices[0], workerThreadId);
 }
 
 DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(
@@ -92,7 +93,8 @@ DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(const DefaultTimeBa
 nautilus::val<SliceCacheEntry::DataStructure> DefaultTimeBasedSliceStoreRef::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp,
     const nautilus::val<WorkerThreadId>& workerThreadId,
-    const nautilus::val<OperatorHandler*>& operatorHandler)
+    const nautilus::val<OperatorHandler*>& operatorHandler,
+    nautilus::val<AbstractBufferProvider*> bufferProvider)
 {
     nautilus::val<DefaultTimeBasedSliceStore*> sliceStoreVal{sliceStore};
     return sliceCache->getDataStructureRef(
@@ -107,8 +109,10 @@ nautilus::val<SliceCacheEntry::DataStructure> DefaultTimeBasedSliceStoreRef::get
                 timestamp,
                 workerThreadId,
                 nautilus::val<const DefaultTimeBasedSliceStoreRef*>(this),
-                sliceStoreVal);
-        });
+                sliceStoreVal,
+                bufferProvider);
+        },
+        bufferProvider);
 }
 
 void setupSliceStoreProxy(

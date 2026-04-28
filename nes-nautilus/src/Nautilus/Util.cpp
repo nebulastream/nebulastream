@@ -14,13 +14,17 @@
 
 #include <Nautilus/Util.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/val_std.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -109,6 +113,133 @@ VarVal createNautilusMaxValue(const DataType::Type physicalType)
             throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
         }
     }
+}
+
+NautilusBuffer NautilusBuffer::load(nautilus::val<const TupleBuffer*> originalBuffer)
+{
+    NautilusBuffer newBuffer;
+    nautilus::invoke(
+        +[](const NES::TupleBuffer* originalBuffer, NES::TupleBuffer* newBuffer) { *newBuffer = *originalBuffer; },
+        originalBuffer,
+        newBuffer.asArg());
+    return newBuffer;
+}
+
+nautilus::val<int8_t*> NautilusBuffer::data()
+{
+    return nautilus::invoke(+[](NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, &buffer);
+}
+
+nautilus::val<size_t> NautilusBuffer::getNumberOfRecords() const
+{
+    return nautilus::invoke(
+        +[](const NES::TupleBuffer* buffer)
+        {
+            INVARIANT(buffer->getAvailableMemoryArea<>().data() != nullptr, "Buffer is invalid for NautilusBuffer:getNumberOfRecords()");
+            return buffer->getNumberOfTuples();
+        },
+        asArg());
+}
+
+NautilusBuffer NautilusBuffer::getChild(nautilus::val<size_t> index)
+{
+    NautilusBuffer child;
+    nautilus::invoke(
+        +[](NES::TupleBuffer* buffer, NES::TupleBuffer* child, size_t index)
+        { *child = buffer->loadChildBuffer(NES::VariableSizedAccess::Index{index}); },
+        &buffer,
+        &child.buffer,
+        index);
+    return child;
+}
+
+nautilus::val<size_t> NautilusBuffer::storeChild(NautilusBuffer&& child)
+{
+    return nautilus::invoke(
+        +[](NES::TupleBuffer* buffer, NES::TupleBuffer* child)
+        { return static_cast<size_t>(buffer->storeChildBuffer(*child).getRawIndex()); },
+        &buffer,
+        &child.buffer);
+}
+
+nautilus::val<bool> NautilusBuffer::isValid() const
+{
+    return nautilus::invoke(+[](const NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<>().data() != nullptr; }, asArg());
+}
+
+nautilus::val<const NES::TupleBuffer*> NautilusBuffer::asArg() const
+{
+    return &const_cast<nautilus::val<NES::TupleBuffer>&>(buffer);
+}
+
+nautilus::val<NES::TupleBuffer*> NautilusBuffer::asArg()
+{
+    return &buffer;
+}
+
+nautilus::val<bool> NautilusBuffer::operator==(const NautilusBuffer& other) const
+{
+    return nautilus::invoke(
+        +[](const TupleBuffer* buffer, const TupleBuffer* other) -> bool
+        { return buffer->getAvailableMemoryArea<int8_t>().data() == other->getAvailableMemoryArea<int8_t>().data(); },
+        asArg(),
+        other.asArg());
+}
+
+NautilusBorrowedBuffer::NautilusBorrowedBuffer(const nautilus::val<NES::TupleBuffer*>& buffer) : buffer(buffer)
+{
+}
+
+NautilusBorrowedBuffer NautilusBorrowedBuffer::load(nautilus::val<TupleBuffer*> originalBuffer)
+{
+    return NautilusBorrowedBuffer{originalBuffer};
+}
+
+nautilus::val<uint8_t*> NautilusBorrowedBuffer::data()
+{
+    return nautilus::invoke(+[](NES::TupleBuffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, buffer);
+}
+
+nautilus::val<size_t> NautilusBorrowedBuffer::getNumberOfRecords() const
+{
+    return nautilus::invoke(+[](const NES::TupleBuffer* buffer) { return buffer->getNumberOfTuples(); }, buffer);
+}
+
+NautilusBuffer NautilusBorrowedBuffer::getChild(nautilus::val<size_t> index)
+{
+    NautilusBuffer child;
+    nautilus::invoke(
+        +[](TupleBuffer* self, TupleBuffer* child, size_t index) { *child = self->loadChildBuffer(VariableSizedAccess::Index{index}); },
+        buffer,
+        child.asArg(),
+        index);
+    return child;
+}
+
+nautilus::val<size_t> NautilusBorrowedBuffer::storeChild(NautilusBuffer&& child)
+{
+    return nautilus::invoke(
+        +[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawIndex(); }, buffer, child.asArg());
+}
+
+nautilus::val<size_t> NautilusBorrowedBuffer::storeChild(NautilusBorrowedBuffer&& child)
+{
+    return nautilus::invoke(
+        +[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawIndex(); }, buffer, child.get());
+}
+
+nautilus::val<NES::TupleBuffer*> NautilusBorrowedBuffer::get() const
+{
+    return buffer;
+}
+
+nautilus::val<bool> NautilusBorrowedBuffer::operator==(const NautilusBorrowedBuffer& other) const
+{
+    return nautilus::invoke(
+        +[](const TupleBuffer* buffer, const TupleBuffer* other) -> bool
+        { return buffer->getAvailableMemoryArea<uint8_t>().data() == other->getAvailableMemoryArea<uint8_t>().data(); },
+        get(),
+        other.get());
 }
 
 }

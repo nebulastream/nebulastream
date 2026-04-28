@@ -29,11 +29,11 @@ StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::shared_ptr<TupleLayout> tupleLayout,
     std::unique_ptr<SliceStoreRef> sliceStoreRef)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
     , joinBuildSide(joinBuildSide)
-    , bufferRef(std::move(bufferRef))
+    , tupleLayout(std::move(tupleLayout))
 {
 }
 }
