@@ -4,6 +4,10 @@ description: |
   the system gracefully handles missing plugins. Also runs with all plugins disabled.
   Large tests are enabled to maximize coverage.
 
+  The matrix is auto-discovered by .github/ci/generate_plugins_matrix.py from
+  the option(NES_PLUGIN_*) declarations in nes-plugins/CMakeLists.txt — adding
+  a new plugin requires no edits to this workflow.
+
 on:
   workflow_call:
     inputs:
@@ -17,9 +21,22 @@ on:
         description: "head_sha of the branch"
 
 jobs:
+  generate-matrix:
+    name: Generate Disabled-Plugin Matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - id: gen
+        run: python3 .github/ci/generate_plugins_matrix.py --mode disabled --output-github
+
   test-disabled-plugins:
+    needs: [ generate-matrix ]
     runs-on: [ self-hosted, linux, X64, Build ]
-    name: "Disabled plugins: ${{ matrix.config.name }}"
+    name: "Disabled plugins: ${{ matrix.name }}"
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libstdcxx-none
       volumes:
@@ -37,33 +54,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config:
-          - name: all-plugins-disabled
-            arg: >-
-              -DNES_PLUGIN_TCP_SOURCE=OFF
-              -DNES_PLUGIN_GENERATOR_SOURCE=OFF
-              -DNES_PLUGIN_VOID_SINK=OFF
-              -DNES_PLUGIN_JSON_INPUT_FORMATTER=OFF
-              -DNES_PLUGIN_JSON_OUTPUT_FORMATTER=OFF
-              -DNES_PLUGIN_CHECKSUM_SINK=OFF
-          - name: no-tcp-source
-            arg: -DNES_PLUGIN_TCP_SOURCE=OFF
-          - name: no-generator-source
-            arg: -DNES_PLUGIN_GENERATOR_SOURCE=OFF
-          - name: no-void-sink
-            arg: -DNES_PLUGIN_VOID_SINK=OFF
-          - name: no-json-input-formatter
-            arg: -DNES_PLUGIN_JSON_INPUT_FORMATTER=OFF
-          - name: no-json-output-formatter
-            arg: -DNES_PLUGIN_JSON_OUTPUT_FORMATTER=OFF
-          - name: no-checksum-sink
-            arg: -DNES_PLUGIN_CHECKSUM_SINK=OFF
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
       - name: Configure NebulaStream
-        run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON ${{ matrix.config.arg }}
+        run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON ${{ matrix.arg }}
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
       - name: Run Tests
@@ -72,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !github.event.act }}
         with:
-          name: logs-disabled-plugins-${{ matrix.config.name }}
+          name: logs-disabled-plugins-${{ matrix.name }}
           path: |
             build/**/*.log
             build/**/*.stats
@@ -80,5 +77,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
-          name: junit-disabled-plugins-${{ matrix.config.name }}.xml
+          name: junit-disabled-plugins-${{ matrix.name }}.xml
           path: /junit.xml
