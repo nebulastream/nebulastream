@@ -17,6 +17,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <val_bool.hpp>
@@ -44,7 +45,8 @@ public:
     nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
-        const SliceCacheReplaceEntry& replaceEntry) override;
+        const SliceCacheReplaceEntry& replaceEntry,
+        nautilus::val<AbstractBufferProvider*> bufferProvider) override;
     /// Overrides to include space for the per-thread replacement indices at the end of the cache entries.
     /// Memory layout: [Thread0 entries][Thread1 entries]...[ThreadN entries][Thread0 replIdx][Thread1 replIdx]...[ThreadN replIdx]
     [[nodiscard]] uint64_t getCacheMemorySize() const override;

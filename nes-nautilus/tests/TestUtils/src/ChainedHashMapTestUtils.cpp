@@ -45,6 +45,7 @@
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
 
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <NautilusTestUtils.hpp>
@@ -108,6 +109,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
 
     /// Creating a tuple buffer memory provider for the key and value buffers
     inputBufferRef = LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+    tupleLayout = std::make_shared<BasicTupleLayout>(inputSchema);
 
     /// Creating the fields for the key and value from the schema
     std::tie(fieldKeys, fieldValues) = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);

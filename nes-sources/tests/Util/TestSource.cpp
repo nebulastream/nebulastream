@@ -38,7 +38,6 @@
 #include <Util/Overloaded.hpp>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
-#include <MemoryTestUtils.hpp>
 
 namespace
 {

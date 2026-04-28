@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <tuple>
 #include <vector>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -25,10 +26,12 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ChainedHashMapTestUtils.hpp>
 #include <Engine.hpp>
+#include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
@@ -60,24 +63,33 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
                 [&](const nautilus::val<AbstractHashMapEntry*>& entry)
                 {
                     const ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
+                    const nautilus::val<uint64_t> tupleSize = tupleLayout->getTupleSize();
                     nautilus::invoke(
-                        +[](int8_t* pagedVectorMemArea)
+                        +[](AbstractBufferProvider* bufferManager, TupleBuffer* pagedVectorMemArea, const uint64_t tupleSize)
                         {
-                            /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                            new (pagedVector) PagedVector();
+                            if (auto pagedVectorBuffer = bufferManager->getUnpooledBuffer(PagedVector::getMainBufferSize()))
+                            {
+                                /// initialize paged vector buffer
+                                std::ignore = PagedVector::init(pagedVectorBuffer.value(), bufferManager->getBufferSize(), tupleSize);
+                                /// @warning: this will be refactored again during the ChainedHashMap refactor
+                                new (pagedVectorMemArea) TupleBuffer(pagedVectorBuffer.value());
+                                return;
+                            }
+                            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
                         },
-                        ref.getValueMemArea());
+                        bufferManagerVal,
+                        ref.getValueMemArea(),
+                        tupleSize);
                 },
                 bufferManagerVal);
 
             const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
+            PagedVectorRef pagedVectorRef(NautilusBorrowedBuffer::load(ref.getValueMemArea()), tupleLayout);
             const RecordBuffer recordBufferValue(bufferValue);
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
                 auto recordValue = inputBufferRef->readRecord(projectionAllFields, recordBufferValue, idxValues);
-                pagedVectorRef.writeRecord(recordValue, bufferManagerVal);
+                pagedVectorRef.pushBack(recordValue, bufferManagerVal);
             }
         }));
 }
@@ -105,9 +117,9 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
                 = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
             const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
+            const PagedVectorRef pagedVectorRef(NautilusBorrowedBuffer::load(ref.getValueMemArea()), tupleLayout);
             nautilus::val<uint64_t> recordBufferIndex = 0;
-            for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
+            for (auto it = pagedVectorRef.begin(); it != pagedVectorRef.end(); ++it)
             {
                 const auto record = *it;
                 tupleBufferRef->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);

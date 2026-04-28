@@ -80,7 +80,7 @@ public:
 protected:
     DataType inputType;
     DataType resultType;
-    const PhysicalFunction inputFunction;
+    PhysicalFunction inputFunction;
     const Record::RecordFieldIdentifier resultFieldIdentifier;
 };
 

@@ -39,8 +39,8 @@ public:
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         const JoinSchema& joinSchema,
-        std::shared_ptr<TupleBufferRef> leftMemoryProvider,
-        std::shared_ptr<TupleBufferRef> rightMemoryProvider,
+        std::shared_ptr<TupleLayout> leftTupleLayout,
+        std::shared_ptr<TupleLayout> rightTupleLayout,
         std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
         std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
 
@@ -50,15 +50,15 @@ protected:
     void performNLJ(
         const PagedVectorRef& outerPagedVector,
         const PagedVectorRef& innerPagedVector,
-        TupleBufferRef& outerMemoryProvider,
-        TupleBufferRef& innerMemoryProvider,
+        TupleLayout& outerTupleLayout,
+        TupleLayout& innerTupleLayout,
         const std::vector<Record::RecordFieldIdentifier>& outerKeyFieldNames,
         const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
-    std::shared_ptr<TupleBufferRef> leftMemoryProvider;
-    std::shared_ptr<TupleBufferRef> rightMemoryProvider;
+    std::shared_ptr<TupleLayout> leftTupleLayout;
+    std::shared_ptr<TupleLayout> rightTupleLayout;
     std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames;
     std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames;
 };

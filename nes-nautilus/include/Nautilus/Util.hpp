@@ -14,17 +14,23 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
+#include <nautilus/val_ptr.hpp>
+#include <nautilus/val_std.hpp>
 #include <ErrorHandling.hpp>
 #include <val.hpp>
+#include <val_bool.hpp>
+#include <val_concepts.hpp>
 
 namespace NES
 {
@@ -113,5 +119,55 @@ static VarVal createNautilusConstValue(T value, DataType::Type physicalType)
     }
     std::unreachable();
 }
+
+class NautilusBuffer
+{
+    nautilus::val<NES::TupleBuffer> buffer;
+
+public:
+    static NautilusBuffer load(const nautilus::val<const TupleBuffer*>& originalBuffer);
+
+    nautilus::val<int8_t*> data();
+
+    [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
+
+    NautilusBuffer getChild(const nautilus::val<size_t>& index);
+
+    nautilus::val<size_t> storeChild(NautilusBuffer&& child);
+    [[nodiscard]] nautilus::val<bool> isValid() const;
+
+    [[nodiscard]] nautilus::val<const NES::TupleBuffer*> asArg() const;
+
+    nautilus::val<NES::TupleBuffer*> asArg();
+
+    ~NautilusBuffer() = default;
+
+    nautilus::val<bool> operator==(const NautilusBuffer& other) const;
+};
+
+class NautilusBorrowedBuffer
+{
+    nautilus::val<NES::TupleBuffer*> buffer;
+
+    explicit NautilusBorrowedBuffer(const nautilus::val<NES::TupleBuffer*>& buffer);
+
+public:
+    static NautilusBorrowedBuffer load(const nautilus::val<TupleBuffer*>& originalBuffer);
+
+    nautilus::val<uint8_t*> data();
+
+    [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
+
+    NautilusBuffer getChild(const nautilus::val<size_t>& index);
+
+    nautilus::val<size_t> storeChild(NautilusBuffer&& child);
+
+    nautilus::val<size_t> storeChild(NautilusBorrowedBuffer&& child);
+
+    [[nodiscard]] nautilus::val<NES::TupleBuffer*> get() const;
+
+    nautilus::val<bool> operator==(const NautilusBorrowedBuffer& other) const;
+};
+
 
 }

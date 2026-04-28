@@ -12,21 +12,39 @@
     limitations under the License.
 */
 
-#include <MemoryTestUtils.hpp>
+#include <../include/Runtime/MemoryUtils.hpp>
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <span>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Testing
+namespace NES::MemoryUtils
 {
+
+TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
+{
+    if (size == provider.getBufferSize())
+    {
+        return provider.getBufferBlocking();
+    }
+
+    auto bufferOpt = provider.getUnpooledBuffer(size);
+    if (bufferOpt.has_value())
+    {
+        return bufferOpt.value();
+    }
+    throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+}
+
 TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider)
 {
-    auto copiedBuffer = provider.getBufferBlocking();
+    /// TODO #1582: you may need different size for the copy buffer, not always the default
+    auto copiedBuffer = getBuffer(buffer.getBufferSize(), provider);
     PRECONDITION(
         copiedBuffer.getBufferSize() >= buffer.getBufferSize(),
         "Attempt to copy buffer of size: {} into smaller buffer of size: {}",
@@ -51,11 +69,7 @@ TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provid
         auto childBuffer = buffer.loadChildBuffer(varSizedIndex);
         auto copiedChildBuffer = copyBuffer(childBuffer, provider);
         auto ret = copiedBuffer.storeChildBuffer(copiedChildBuffer);
-        INVARIANT(
-            ret == varSizedIndex,
-            "Child buffer index: {}, does not match index: {}",
-            childIdx,
-            copiedBuffer.storeChildBuffer(copiedChildBuffer));
+        INVARIANT(ret == varSizedIndex, "Child buffer index: {}, does not match index: {}", childIdx, ret);
     }
 
     return copiedBuffer;

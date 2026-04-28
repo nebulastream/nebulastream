@@ -235,5 +235,4 @@ ChunkNumber TupleBuffer::getChunkNumber() const noexcept
     return controlBlock->getChunkNumber();
 }
 
-
 }

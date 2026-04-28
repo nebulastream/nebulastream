@@ -16,12 +16,12 @@
 
 #include <cstddef>
 #include <memory>
+
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -35,7 +35,7 @@ public:
         DataType resultType,
         PhysicalFunction inputFunction,
         Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::shared_ptr<TupleBufferRef> bufferRefPagedVector);
+        std::shared_ptr<TupleLayout> tupleLayout);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -51,7 +51,7 @@ public:
     ~MedianAggregationPhysicalFunction() override = default;
 
 private:
-    std::shared_ptr<TupleBufferRef> bufferRefPagedVector;
+    std::shared_ptr<TupleLayout> tupleLayout;
 };
 
 }

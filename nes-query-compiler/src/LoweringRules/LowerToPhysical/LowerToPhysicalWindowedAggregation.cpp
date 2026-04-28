@@ -39,9 +39,11 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
@@ -116,7 +118,7 @@ static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLo
 namespace
 {
 std::vector<std::shared_ptr<AggregationPhysicalFunction>>
-getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const QueryExecutionConfiguration& configuration)
+getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const QueryExecutionConfiguration&)
 {
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
@@ -129,9 +131,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         const auto resultFieldIdentifier = descriptor->getAsField().getFieldName();
         const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
         PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-        const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-        auto bufferRef
-            = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0], memoryLayoutType);
+        auto tupleLayout = std::make_shared<BasicTupleLayout>(logicalOperator.getInputSchemas()[0]);
 
         auto name = descriptor->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
@@ -139,7 +139,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
             std::move(physicalFinalType),
             std::move(aggregationInputFunction),
             resultFieldIdentifier,
-            bufferRef,
+            tupleLayout,
             descriptor->shallIncludeNullValues());
         if (auto aggregationPhysicalFunction
             = AggregationPhysicalFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
@@ -226,13 +226,13 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             auto& aggregationSlice = dynamic_cast<AggregationSlice&>(slice);
             auto* ptr = aggregationSlice.getHashMapPtrOrCreate(workerThreadId);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(ChainedHashMap)};
+            return ptr;
         },
-        [hashMapOptions](WindowBasedOperatorHandler& handler)
+        [hashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
         {
             auto& aggHandler = dynamic_cast<AggregationOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{

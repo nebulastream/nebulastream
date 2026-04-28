@@ -48,8 +48,10 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
@@ -278,25 +280,22 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         = getJoinFieldExtensionsLeftRight(join->getLeftSchema(), join->getRightSchema(), logicalJoinFunction);
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields, memoryLayoutType);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields, memoryLayoutType);
-    auto leftBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema, memoryLayoutType);
-    auto rightBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema, memoryLayoutType);
+    auto leftTupleLayout = std::make_shared<BasicTupleLayout>(newLeftInputSchema);
+    auto rightTupleLayout = std::make_shared<BasicTupleLayout>(newRightInputSchema);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
-
     /// Creating the hash join operator handler and slice store
     auto handlerId = getNextOperatorHandlerId();
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             auto& hjSlice = dynamic_cast<HJSlice&>(slice);
             auto* ptr = hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Left);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(ChainedHashMap)};
+            return ptr;
         },
-        [hashMapOptions = leftHashMapOptions](WindowBasedOperatorHandler& handler)
+        [hashMapOptions = leftHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{
@@ -308,13 +307,13 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             auto& hjSlice = dynamic_cast<HJSlice&>(slice);
             auto* ptr = hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Right);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(ChainedHashMap)};
+            return ptr;
         },
-        [hashMapOptions = rightHashMapOptions](WindowBasedOperatorHandler& handler)
+        [hashMapOptions = rightHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{
@@ -333,14 +332,14 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         handlerId,
         JoinBuildSideType::Left,
         timeStampFieldLeft.toTimeFunction(),
-        leftBufferRef,
+        leftTupleLayout,
         leftHashMapOptions,
         std::move(sliceStoreRefLeft)};
     const HJBuildPhysicalOperator rightBuildOperator{
         handlerId,
         JoinBuildSideType::Right,
         timeStampFieldRight.toTimeFunction(),
-        rightBufferRef,
+        rightTupleLayout,
         rightHashMapOptions,
         std::move(sliceStoreRefRight)};
 
@@ -351,8 +350,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         physicalJoinFunction,
         join->getWindowMetaData(),
         joinSchema,
-        leftBufferRef,
-        rightBufferRef,
+        leftTupleLayout,
+        rightTupleLayout,
         leftHashMapOptions,
         rightHashMapOptions);
 
