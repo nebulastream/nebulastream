@@ -51,6 +51,7 @@
     "scope-guard",
     "simdjson",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "rapidcheck"
   ]
 }

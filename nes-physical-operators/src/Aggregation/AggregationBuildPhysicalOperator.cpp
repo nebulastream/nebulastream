@@ -90,7 +90,8 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
     /// Getting the corresponding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler);
+    const auto hashMapPtr
+        = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
     ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 

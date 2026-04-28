@@ -14,6 +14,7 @@
 
 #include <Util.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <DataTypes/DataType.hpp>

@@ -15,6 +15,7 @@
 #include <SliceStore/SliceCache/SliceCacheNone.hpp>
 
 #include <memory>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/TimestampRef.hpp>

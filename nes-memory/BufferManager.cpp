@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>

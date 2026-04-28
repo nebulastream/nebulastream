@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <ostream>
 #include <span>
@@ -81,6 +82,10 @@ class TupleBuffer
     }
 
 public:
+    /// @brief Flag value for uninitialized child buffers.
+    inline static const VariableSizedAccess::Index INVALID_CHILD_BUFFER_INDEX_VALUE{
+        std::numeric_limits<VariableSizedAccess::Index::Underlying>::max()}; /// NOLINT(cert-err58-cpp)
+
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] TupleBuffer() noexcept = default;
 

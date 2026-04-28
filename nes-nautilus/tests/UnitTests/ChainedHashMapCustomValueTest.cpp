@@ -30,6 +30,7 @@
 #include <Interface/RecordBuffer.hpp>
 
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -84,12 +85,13 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
     auto destructorCallback = [&](const ChainedHashMapEntry* entry)
     {
         const auto* memArea = reinterpret_cast<const int8_t*>(entry) + sizeof(ChainedHashMapEntry) + keySize;
-        const auto* pagedVector = reinterpret_cast<const PagedVector*>(memArea);
-        pagedVector->~PagedVector();
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): inline-stored TupleBuffer recovered from its containing entry.
+        const auto* pagedVectorMemArea = reinterpret_cast<const TupleBuffer*>(memArea);
+        pagedVectorMemArea->~TupleBuffer();
     };
 
     /// Resetting the entriesPerPage, as we have a paged vector as the value.
-    valueSize = sizeof(PagedVector);
+    valueSize = sizeof(TupleBuffer);
     const auto totalSizeOfEntry = (sizeof(ChainedHashMapEntry) + keySize + valueSize);
     entriesPerPage = params.pageSize / (totalSizeOfEntry);
 

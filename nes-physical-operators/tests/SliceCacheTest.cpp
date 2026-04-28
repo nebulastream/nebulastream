@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -21,6 +22,7 @@
 #include <span>
 #include <sstream>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -44,6 +46,14 @@
 #include <options.hpp>
 #include <val_arith.hpp>
 #include <val_ptr.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <ErrorHandling.hpp>
+#include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
@@ -127,6 +137,50 @@ private:
 class SliceCacheTestBase : public Testing::BaseUnitTest
 {
 public:
+    struct MockedPipelineContext final : PipelineExecutionContext
+    {
+        bool emitBuffer(const TupleBuffer&, ContinuationPolicy) override
+        {
+            INVARIANT(false, "This function should not be called");
+            std::unreachable();
+        }
+
+        TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+
+        /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): unreachable stub; parameter matches the overridden signature.
+        TupleBuffer& pinBuffer(TupleBuffer&&) override
+        {
+            INVARIANT(false, "This function should not be called");
+            std::unreachable();
+        }
+
+        [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return INITIAL<WorkerThreadId>; }
+
+        [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1; }
+
+        [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
+
+        [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
+
+        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
+        {
+            INVARIANT(false, "This function should not be called");
+            std::unreachable();
+        }
+
+        void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&) override
+        {
+            INVARIANT(false, "This function should not be called");
+            std::unreachable();
+        }
+
+        explicit MockedPipelineContext(std::shared_ptr<AbstractBufferProvider> bufferManager) : bufferManager(std::move(bufferManager)) { }
+
+        void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
+
+        std::shared_ptr<AbstractBufferProvider> bufferManager;
+    };
+
     struct SliceCacheTestOperation
     {
         Timestamp timestamp;
@@ -145,6 +199,7 @@ public:
     uint64_t numberOfEntries = 1;
     uint64_t sliceSize = 1;
     std::vector<SliceCacheTestOperation> operations;
+    std::unique_ptr<MockedPipelineContext> pec;
 
     static void SetUpTestSuite()
     {
@@ -161,6 +216,9 @@ public:
         options.setOption("engine.Compilation", compilation);
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
+
+        const std::shared_ptr<AbstractBufferProvider> bm = BufferManager::create(512, 100000);
+        pec = std::make_unique<MockedPipelineContext>(bm);
     }
 
     /// Creates random SliceCacheTestOperations and stores them in the operations vector.
@@ -192,7 +250,8 @@ public:
 
             /// Each operation gets a unique data pointer backed by expectedResultHelper
             auto expectedResultHelper = std::make_unique<uint64_t>(i);
-            const auto* expectedResult = reinterpret_cast<SliceCacheEntry::DataStructure>(expectedResultHelper.get());
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): SliceCacheEntry::DataStructure is an opaque void* alias used as a test token.
+            auto* expectedResult = reinterpret_cast<SliceCacheEntry::DataStructure>(expectedResultHelper.get());
             operations.push_back({Timestamp{timestamp}, sliceStart, sliceEnd, expectedResult, std::move(expectedResultHelper)});
         }
 

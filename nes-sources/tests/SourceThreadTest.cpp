@@ -30,6 +30,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -38,7 +39,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <MemoryTestUtils.hpp>
 #include <SourceThread.hpp>
 #include <TestSource.hpp>
 #include <nameof.hpp>
@@ -81,7 +81,7 @@ struct RecordingEmitFunction
                 if constexpr (std::same_as<T, SourceReturnType::Data>)
                 {
                     /// Release old Buffer
-                    return SourceReturnType::Data{Testing::copyBuffer(emitted.buffer, bm)};
+                    return SourceReturnType::Data{deepCopyBuffer(emitted.buffer, bm)};
                 }
                 else
                 {

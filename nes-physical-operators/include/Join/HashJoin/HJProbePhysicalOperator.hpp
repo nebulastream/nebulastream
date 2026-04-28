@@ -15,8 +15,10 @@
 #pragma once
 
 #include <memory>
+
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -37,8 +39,8 @@ public:
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         JoinSchema joinSchema,
-        std::shared_ptr<TupleBufferRef> leftBufferRef,
-        std::shared_ptr<TupleBufferRef> rightBufferRef,
+        std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
+        std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         HashMapOptions leftHashMapBasedOptions,
         HashMapOptions rightHashMapBasedOptions);
 
@@ -47,7 +49,7 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
-    std::shared_ptr<TupleBufferRef> leftBufferRef, rightBufferRef;
+    std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout, rightTupleLayout;
     HashMapOptions leftHashMapOptions, rightHashMapOptions;
 };
 
