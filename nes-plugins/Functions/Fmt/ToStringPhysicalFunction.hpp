@@ -14,30 +14,26 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
-#include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Arena.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-/// A function that represents a constant value of variable size, e.g., a string.
-class ConstantValueVariableSizePhysicalFunction final
+/// Stringifies a single child function's value into a VARSIZED. Dispatches at
+/// trace time on the underlying nautilus value type via VarVal::customVisit, so
+/// one class covers all integral, float, bool, char, and varsized inputs without
+/// per-type duplication.
+class ToStringPhysicalFunction final
 {
 public:
-    explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
+    explicit ToStringPhysicalFunction(PhysicalFunction child);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
-    [[nodiscard]] const std::vector<int8_t>& getData() const { return data; }
 
 private:
-    std::vector<int8_t> data;
+    PhysicalFunction child;
 };
 
-static_assert(PhysicalFunctionConcept<ConstantValueVariableSizePhysicalFunction>);
 }

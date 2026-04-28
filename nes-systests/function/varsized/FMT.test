@@ -1,0 +1,217 @@
+# name: function/varsized/FMT.test
+# description: Tests the FMT printf-style varsized formatter and its to_string lift.
+# groups: [VariableSizedData, Function]
+
+CREATE LOGICAL SOURCE data(
+  u8 UINT8,
+  u16 UINT16,
+  u32 UINT32,
+  u64 UINT64,
+  i8 INT8,
+  i16 INT16,
+  i32 INT32,
+  i64 INT64,
+  f32 FLOAT32,
+  f64 FLOAT64,
+  b BOOLEAN,
+  text VARSIZED
+);
+CREATE PHYSICAL SOURCE FOR data TYPE File;
+ATTACH INLINE
+1,2,3,4,-1,-2,-3,-4,1.5,2.5,true,hello
+
+# FMT with UINT8
+SELECT FMT(VARSIZED("u8={}"), u8) as v FROM data INTO File();
+----
+u8=1
+
+# FMT with UINT16
+SELECT FMT(VARSIZED("u16={}"), u16) as v FROM data INTO File();
+----
+u16=2
+
+# FMT with UINT32
+SELECT FMT(VARSIZED("u32={}"), u32) as v FROM data INTO File();
+----
+u32=3
+
+# FMT with UINT64
+SELECT FMT(VARSIZED("u64={}"), u64) as v FROM data INTO File();
+----
+u64=4
+
+# FMT with INT8
+SELECT FMT(VARSIZED("i8={}"), i8) as v FROM data INTO File();
+----
+i8=-1
+
+# FMT with INT16
+SELECT FMT(VARSIZED("i16={}"), i16) as v FROM data INTO File();
+----
+i16=-2
+
+# FMT with INT32
+SELECT FMT(VARSIZED("i32={}"), i32) as v FROM data INTO File();
+----
+i32=-3
+
+# FMT with INT64
+SELECT FMT(VARSIZED("i64={}"), i64) as v FROM data INTO File();
+----
+i64=-4
+
+# FMT with FLOAT32 — std::to_chars shortest round-trip
+SELECT FMT(VARSIZED("f32={}"), f32) as v FROM data INTO File();
+----
+f32=1.5
+
+# FMT with FLOAT64 — std::to_chars shortest round-trip
+SELECT FMT(VARSIZED("f64={}"), f64) as v FROM data INTO File();
+----
+f64=2.5
+
+# FMT with BOOLEAN
+SELECT FMT(VARSIZED("b={}"), b) as v FROM data INTO File();
+----
+b=true
+
+# FMT with VARSIZED (pass-through)
+SELECT FMT(VARSIZED("text={}"), text) as v FROM data INTO File();
+----
+text=hello
+
+# Two args, mixed types
+SELECT FMT(VARSIZED("{}|{}"), b, text) as v FROM data INTO File();
+----
+true|hello
+
+# Multiple fields
+SELECT FMT(VARSIZED("u32={}|i32={}|f64={}"), u32, i32, f64) as v FROM data INTO File();
+----
+u32=3|i32=-3|f64=2.5
+
+# All fields
+SELECT FMT(VARSIZED("{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}"), u8, u16, u32, u64, i8, i16, i32, i64, f32, f64, b, text) as v FROM data INTO File();
+----
+1|2|3|4|-1|-2|-3|-4|1.5|2.5|true|hello
+
+# float then bool then varsized — ordering preserved
+SELECT FMT(VARSIZED("{}|{}|{}"), f64, b, text) as v FROM data INTO File();
+----
+2.5|true|hello
+
+# --- Floating-point edge cases ---
+
+CREATE LOGICAL SOURCE floats(id UINT8, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR floats TYPE File;
+ATTACH INLINE
+1,nan
+2,inf
+3,-inf
+4,3.141592653589793
+5,0.000000001
+6,99999999999999.0
+7,-0.0
+8,1.7976931348623157e+308
+9,5e-324
+
+SELECT FMT(VARSIZED("{}"), f64) as v FROM floats INTO File();
+----
+nan
+inf
+-inf
+3.141592653589793
+1e-09
+99999999999999
+-0
+1.7976931348623157e+308
+0
+
+# --- Boundary values: max ---
+
+CREATE LOGICAL SOURCE maxvals(
+  u8 UINT8,
+  u16 UINT16,
+  u32 UINT32,
+  u64 UINT64,
+  i8 INT8,
+  i16 INT16,
+  i32 INT32,
+  i64 INT64
+);
+CREATE PHYSICAL SOURCE FOR maxvals TYPE File;
+ATTACH INLINE
+255,65535,4294967295,18446744073709551615,127,32767,2147483647,9223372036854775807
+
+SELECT FMT(VARSIZED("{}"), u8) as v FROM maxvals INTO File();
+----
+255
+
+SELECT FMT(VARSIZED("{}"), u16) as v FROM maxvals INTO File();
+----
+65535
+
+SELECT FMT(VARSIZED("{}"), u32) as v FROM maxvals INTO File();
+----
+4294967295
+
+SELECT FMT(VARSIZED("{}"), u64) as v FROM maxvals INTO File();
+----
+18446744073709551615
+
+SELECT FMT(VARSIZED("{}"), i8) as v FROM maxvals INTO File();
+----
+127
+
+SELECT FMT(VARSIZED("{}"), i16) as v FROM maxvals INTO File();
+----
+32767
+
+SELECT FMT(VARSIZED("{}"), i32) as v FROM maxvals INTO File();
+----
+2147483647
+
+SELECT FMT(VARSIZED("{}"), i64) as v FROM maxvals INTO File();
+----
+9223372036854775807
+
+# --- Boundary values: min/zero ---
+
+CREATE LOGICAL SOURCE minvals(
+  u8 UINT8,
+  u64 UINT64,
+  i8 INT8,
+  i16 INT16,
+  i32 INT32,
+  i64 INT64,
+  f32 FLOAT32,
+  f64 FLOAT64
+);
+CREATE PHYSICAL SOURCE FOR minvals TYPE File;
+ATTACH INLINE
+0,0,-128,-32768,-2147483648,-9223372036854775808,0.0,0.0
+
+SELECT FMT(VARSIZED("{}"), u8) as v FROM minvals INTO File();
+----
+0
+
+SELECT FMT(VARSIZED("{}"), u64) as v FROM minvals INTO File();
+----
+0
+
+# Most-negative two's-complement boundaries
+SELECT FMT(VARSIZED("{}"), i8) as v FROM minvals INTO File();
+----
+-128
+
+SELECT FMT(VARSIZED("{}"), i16) as v FROM minvals INTO File();
+----
+-32768
+
+SELECT FMT(VARSIZED("{}"), i32) as v FROM minvals INTO File();
+----
+-2147483648
+
+SELECT FMT(VARSIZED("{}"), i64) as v FROM minvals INTO File();
+----
+-9223372036854775808

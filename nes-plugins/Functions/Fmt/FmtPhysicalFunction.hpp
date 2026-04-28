@@ -15,29 +15,41 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <memory>
+#include <variant>
 #include <vector>
+
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Arena.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-/// A function that represents a constant value of variable size, e.g., a string.
-class ConstantValueVariableSizePhysicalFunction final
+/// Physical implementation of FMT. The format string is parsed once at
+/// registration time into a sequence of fragments: each fragment is either a
+/// literal byte run owned by this function, or a placeholder PhysicalFunction
+/// (already wrapped in to_string upstream so its execute always returns a
+/// VARSIZED). At execute time the fragments are concatenated into a single
+/// arena-allocated VARSIZED.
+class FmtPhysicalFunction final
 {
 public:
-    explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
+    struct LiteralFragment
+    {
+        std::shared_ptr<const std::byte[]> bytes;
+        size_t size;
+    };
+    using Fragment = std::variant<LiteralFragment, PhysicalFunction>;
+
+    explicit FmtPhysicalFunction(std::vector<Fragment> fragments);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
-    [[nodiscard]] const std::vector<int8_t>& getData() const { return data; }
 
 private:
-    std::vector<int8_t> data;
+    std::vector<Fragment> fragments;
+    /// Sum of literal-fragment sizes; placeholder sizes are added at execute time.
+    size_t literalBytes = 0;
 };
 
-static_assert(PhysicalFunctionConcept<ConstantValueVariableSizePhysicalFunction>);
 }
