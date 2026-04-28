@@ -60,24 +60,27 @@ INTO sink0;
 500,600,NULL
 
 
-# Checking if all aggregation function over a sliding window works with null values in the value field
+# Checking if all aggregation function over a sliding window works with null values in the value field.
+# MAX follows SQL-standard skip-null semantics: NULL only when every input was NULL.
+# SUM/MIN/AVG/MEDIAN still propagate any NULL through to the result.
 SELECT start, end, SUM(value) AS valueSum, MAX(value) AS valueMax,
        MIN(value) AS valueMin, AVG(value) AS valueAvg, MEDIAN(value) as valueMedian
 FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms)
 INTO sink1;
 ----
-0,100,4,3,0,1.333333,1
+0,100,4,3,0,1.333333,1.0
 50,150,3,2,1,1.5,1.5
-100,200,NULL,NULL,NULL,NULL,NULL
-150,250,NULL,NULL,NULL,NULL,NULL
+100,200,NULL,2,NULL,NULL,NULL
+150,250,NULL,10,NULL,NULL,NULL
 200,300,10,10,10,10.0,10.0
 300,400,9,4,1,2.25,2.0
 350,450,9,4,1,2.25,2.0
-450,550,NULL,NULL,NULL,NULL,NULL
-500,600,NULL,NULL,NULL,NULL,NULL
+450,550,NULL,11,NULL,NULL,NULL
+500,600,NULL,11,NULL,NULL,NULL
 
 
-# Keyed aggregation with only null values in the key
+# Keyed aggregation with only null values in the key.
+# id=NULL group has one non-null value per window — MAX picks it up while SUM/MIN/AVG stay NULL.
 SELECT start, end, id,
        SUM(value) AS valueSum,
        MIN(value) AS valueMin,
@@ -91,8 +94,8 @@ GROUP BY id
 WINDOW TUMBLING(ts, size 1 sec)
 INTO sink2;
 ----
-0,1000,NULL,NULL,NULL,NULL,NULL,1,2
-1000,2000,NULL,NULL,NULL,NULL,NULL,1,2
+0,1000,NULL,NULL,NULL,1,NULL,1,2
+1000,2000,NULL,NULL,NULL,4,NULL,1,2
 
 # Keyed aggregation with and w/o null values in the key
 SELECT start, end, id,
@@ -107,11 +110,11 @@ GROUP BY id
 WINDOW TUMBLING(ts, size 1 sec)
 INTO sink2;
 ----
-0,1000,NULL,NULL,NULL,NULL,NULL,1,2
+0,1000,NULL,NULL,NULL,1,NULL,1,2
 0,1000,1,5,2,3,2.5,2,2
 0,1000,3,NULL,NULL,NULL,NULL,0,2
-1000,2000,NULL,NULL,NULL,NULL,NULL,1,2
-1000,2000,1,NULL,NULL,NULL,NULL,1,2
+1000,2000,NULL,NULL,NULL,4,NULL,1,2
+1000,2000,1,NULL,NULL,5,NULL,1,2
 1000,2000,3,NULL,NULL,NULL,NULL,0,1
 
 SELECT start, end, MAX(value), MIN(value), AVG(value), MEDIAN(value)
