@@ -42,7 +42,7 @@
 namespace NES
 {
 
-std::mutex HTTPSink::logMutex;
+std::mutex HTTPSink::executeMutex;
 
 HTTPSink::HTTPSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController)), curl(nullptr)
@@ -104,14 +104,17 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     }
 
     /// Log the message to file, then flush immediately so the data is
-    /// persisted even if the container crashes right after.
-    /// The mutex ensures concurrent writes from multiple sink instances
-    /// (different queries sharing the same log file) do not interleave.
-    {
-        const std::lock_guard<std::mutex> lock(logMutex);
-        logFile << payload << '\n';
-        logFile.flush();
-    }
+    /// persisted even if the container crashes right after, and send via
+    /// libcurl. The mutex serialises both the file write and the curl
+    /// operations: a libcurl easy handle is not safe to use from multiple
+    /// threads concurrently, and execute() can be invoked concurrently from
+    /// the query engine's worker threads on a shared sink instance — without
+    /// the lock around the curl block, one thread's curl_slist_free_all or
+    /// stack-resident payload string could be torn down while another
+    /// thread's curl_easy_perform is still walking it.
+    const std::lock_guard<std::mutex> lock(executeMutex);
+    logFile << payload << '\n';
+    logFile.flush();
 
     curl_slist* headers = nullptr;
     /// Set newline delimited json as content type

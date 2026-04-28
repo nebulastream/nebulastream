@@ -68,9 +68,18 @@ private:
     bool isOpen = false;
     std::ofstream logFile;
 
-    /// Shared across all HTTPSink instances so concurrent writes to the
-    /// same log file do not interleave and corrupt lines.
-    static std::mutex logMutex;
+    /// Serialises execute() across all HTTPSink instances. Two reasons it
+    /// has to be process-wide rather than per-instance:
+    ///  1. Multiple sinks (different queries) may share the same log file —
+    ///     concurrent writes would interleave and corrupt lines.
+    ///  2. A libcurl easy handle is not safe to use from multiple threads
+    ///     concurrently. Even though each HTTPSink instance owns its own
+    ///     handle, the query engine can dispatch buffers to a single sink
+    ///     instance from any worker thread. Without the lock, one thread's
+    ///     curl_slist_free_all or stack-resident payload string could be
+    ///     torn down while another thread's curl_easy_perform is still
+    ///     reading it (segfault in Curl_checkheaders / Curl_http).
+    static std::mutex executeMutex;
 };
 
 struct ConfigParametersMatrix
