@@ -20,12 +20,14 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -69,6 +71,7 @@ public:
     std::vector<Record::RecordFieldIdentifier> projectionKeys, projectionValues;
     std::vector<TupleBuffer> inputBuffers;
     std::shared_ptr<TupleBufferRef> inputBufferRef;
+    std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
     uint64_t keySize, valueSize, entriesPerPage, entrySize;
     TestParams params;
 

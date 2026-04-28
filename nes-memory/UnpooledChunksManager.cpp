@@ -24,6 +24,7 @@
 #include <ranges>
 #include <thread>
 #include <utility>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>

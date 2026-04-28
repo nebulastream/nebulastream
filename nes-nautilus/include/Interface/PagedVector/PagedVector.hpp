@@ -14,11 +14,15 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -30,64 +34,101 @@ namespace NES
 class PagedVector
 {
 public:
-    struct TupleBufferWithCumulativeSum
+    /// @brief This class represents a single page of the paged vector.
+    /// Pages store fixed-sized data directly. Varsized data is stored into buffers that are attached to the page as children buffers.
+    /// Each page contains the cumulative sum in its header.
+    struct Page
     {
-        explicit TupleBufferWithCumulativeSum(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+        static void init(TupleBuffer buffer);
+        static Page load(TupleBuffer buffer);
+        static uint64_t getHeaderSize();
 
-        size_t cumulativeSum{0};
+        [[nodiscard]] size_t getCumulativeSum() const;
+        void setCumulativeSum(size_t newCumulativeSum);
+
+        [[nodiscard]] uint64_t getNumberOfTuples() const;
+
+    private:
+        explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+
+        struct Header
+        {
+            uint64_t cumulativeSum;
+
+            explicit Header(uint64_t cumulativeSum) : cumulativeSum(cumulativeSum) { }
+        };
+
+        [[nodiscard]] Header& header() { return *buffer.getAvailableMemoryArea<Header>().data(); }
+
+        [[nodiscard]] const Header& header() const { return *buffer.getAvailableMemoryArea<Header>().data(); }
+
         TupleBuffer buffer;
     };
 
-    PagedVector() = default;
+    /// Paged Vector magic numbers
+    static constexpr auto VALID_PV = 8254372433832867;
+    static constexpr auto INVALID_PV = 0;
 
-    /// Appends a new page to the pages vector if the last page is full.
-    void appendPageIfFull(AbstractBufferProvider* bufferProvider, uint64_t capacity, uint64_t bufferSize);
+    static void init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize);
+    static PagedVector load(const TupleBuffer& buffer);
 
-    /// Appends the pages of the given PagedVector with the pages of this PagedVector.
-    void moveAllPages(PagedVector& other);
+    /// @brief Appends a new page to the pages vector if the last page is full.
+    void appendPageIfFull(AbstractBufferProvider* bufferProvider);
 
-    /// Copies all pages from other to this
-    void copyFrom(const PagedVector& other);
+    /// @brief Copies all pages from other to this
+    void copyPagesFrom(AbstractBufferProvider& bufferProvider, const PagedVector& other);
 
-    /// Returns a pointer to the tuple buffer that contains the entry at the given position.
-    [[nodiscard]] const TupleBuffer* getTupleBufferForEntry(uint64_t entryPos) const;
-    /// Returns the position of the buffer in the buffer provider that contains the entry at the given position.
-    [[nodiscard]] std::optional<uint64_t> getBufferPosForEntry(uint64_t entryPos) const;
+    /// @brief Transfers ownership of `other`'s pages to this PagedVector by appending them as child buffers.
+    /// This is a *logical* move: the underlying page TupleBuffers are not physically detached from `other.buffer`;
+    /// they remain refcount-pinned by `other.buffer.children` until `other.buffer` itself is destroyed.
+    /// `other` is marked INVALID_PV after the call. The caller MUST drop `other` immediately after and MUST NOT
+    /// access it again — any further operation on `other` is undefined.
+    void movePagesFrom(PagedVector& other);
 
-    [[nodiscard]] uint64_t getTotalNumberOfEntries() const { return pages.getTotalNumberOfEntries(); }
-
-    [[nodiscard]] const TupleBuffer& getLastPage() const { return pages.getLastPage(); }
-
-    [[nodiscard]] const TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
-
-    [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
+    [[nodiscard]] uint64_t getStatus() const;
+    [[nodiscard]] uint64_t getTotalNumberOfRecords() const;
+    [[nodiscard]] uint64_t getNumberOfPages() const;
+    /// @brief Returns the size of the buffer for each one of the paged vector's pages.
+    [[nodiscard]] uint64_t getPageBufferSize() const;
+    [[nodiscard]] uint64_t getTupleSize() const;
+    [[nodiscard]] uint64_t getPageCapacity() const;
+    [[nodiscard]] bool isEmpty() const;
+    /// @brief Returns the size of the paged vector's main buffer (header) in bytes
+    [[nodiscard]] static uint64_t getMainBufferSize();
+    /// @brief Returns the index of the page that stores the record at the given global record index.
+    [[nodiscard]] size_t getPageIndex(uint64_t recordIndex) const;
 
 private:
-    /// Wrapper around a vector of TupleBufferWithCumulativeSum to take care of updating the cumulative sums
-    struct PagesWrapper
+    struct Header
     {
-        [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
-        [[nodiscard]] const TupleBuffer& getLastPage() const;
-        [[nodiscard]] const TupleBuffer& getFirstPage() const;
-        [[nodiscard]] uint64_t getNumberOfPages() const;
-        const TupleBufferWithCumulativeSum& operator[](size_t index) const;
-        [[nodiscard]] uint64_t getNumberOfTuplesLastPage() const;
+        uint64_t status;
+        uint64_t numPages;
+        uint64_t pageBufferSize;
+        uint64_t pageCapacity;
+        uint64_t tupleSize;
 
-        /// Finds the index in the vector<TupleBufferWithCumulativeSum> for an entry position
-        [[nodiscard]] std::optional<size_t> findIdx(uint64_t entryPos) const;
-        void addPage(const TupleBuffer& newPage);
-        void addPages(const PagesWrapper& other);
-        void clearPages();
-
-    private:
-        /// We use a cumulative sum to increase the speed of findIdx for an entry pos
-        void updateCumulativeSumLastItem();
-        void updateCumulativeSumAllPages();
-
-        std::vector<TupleBufferWithCumulativeSum> pages;
+        Header(uint64_t numPages, uint64_t bufferSize, uint64_t tupleSize)
+            : numPages(numPages), pageBufferSize(bufferSize), tupleSize(tupleSize)
+        {
+            PRECONDITION(bufferSize > Page::getHeaderSize() + tupleSize, "At least one tuple has to fit on a page!");
+            const uint64_t effectiveSpace = bufferSize - Page::getHeaderSize();
+            pageCapacity = effectiveSpace / tupleSize;
+            status = VALID_PV;
+        }
     };
 
-    PagesWrapper pages;
+    explicit PagedVector(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+
+    [[nodiscard]] Header& header() { return *buffer.getAvailableMemoryArea<Header>().data(); }
+
+    [[nodiscard]] const Header& header() const { return *buffer.getAvailableMemoryArea<Header>().data(); }
+
+    /// @brief We use a cumulative sum to increase the speed of findIdx for an entry pos
+    void updateCumulativeSumLastItem() const;
+    void updateCumulativeSumAllPages() const;
+    void addNewPage(AbstractBufferProvider* bufferProvider, uint64_t bufferSize);
+
+    TupleBuffer buffer;
 };
 
 }

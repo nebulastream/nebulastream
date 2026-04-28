@@ -14,49 +14,108 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+
+#include <functional>
+#include <utility>
+#include <DataTypes/Schema.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
+#include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
-/// Forward declaration of PagedVectorRefIter so that we can use it in PagedVectorRef
+/// @brief Forward declaration of PagedVectorRefIter so that we can use it in PagedVectorRef
 class PagedVectorRefIter;
+class PagedVectorRefIterSentinel;
 
-/// This class is a nautilus interface to our PagedVector. It provides a way to write and read records to and from the PagedVector
+/// @brief Load function that reads a varsized field from a specific address in memory
+using LoadVarSizedFunction = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> fieldSlot)>;
+/// @brief Allocation function that takes care of allocating the necessary space for the varsized data of a field
+using AllocateVarSizedFunction
+    = std::function<nautilus::val<int8_t*>(nautilus::val<int8_t*> fieldSlot, nautilus::val<uint64_t> allocationSize)>;
+
+/// @brief This class is the interface for creating different tuple layouts
+class PagedVectorTupleLayout
+{
+public:
+    virtual ~PagedVectorTupleLayout() = default;
+    [[nodiscard]] virtual const std::vector<Schema::Field>& getFields() const = 0;
+    [[nodiscard]] virtual Schema::Field getFieldAt(uint64_t pos) const = 0;
+    [[nodiscard]] virtual std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const = 0;
+    [[nodiscard]] virtual size_t getNumberOfFields() const = 0;
+    [[nodiscard]] virtual size_t getTupleSize() const = 0;
+
+    /// @brief Reads a record from the specified memory address. The address is expected to point at the beginning of the record to be read.
+    /// The LoadFunction handles the varsized data loading, as it is stored in a separate buffer.
+    [[nodiscard]] virtual Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSizedFunction) const = 0;
+
+    /// @brief Writes a record to the specified memory address (which should be its correct memory offset inside the correct page, which enough space allocated).
+    /// The allocateVarSized method takes care of allocating extra space for varsized if necessary.
+    virtual void writeRecord(const Record& record, nautilus::val<std::int8_t*> memoryForRecord, AllocateVarSizedFunction allocateVarSized)
+        = 0;
+};
+
+/// @brief This class is the default layout of tuples for the paged vector
+struct DefaultPagedVectorTupleLayout final : PagedVectorTupleLayout
+{
+private:
+    Schema schema;
+
+public:
+    explicit DefaultPagedVectorTupleLayout(const Schema& schema) : schema(schema) { }
+
+    [[nodiscard]] const std::vector<Schema::Field>& getFields() const override { return schema.getFields(); }
+
+    [[nodiscard]] Schema::Field getFieldAt(uint64_t pos) const override;
+
+    [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
+
+    [[nodiscard]] size_t getTupleSize() const override;
+
+    [[nodiscard]] size_t getNumberOfFields() const override;
+
+    [[nodiscard]] Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSizedFunction loadFunc) const override;
+
+    void writeRecord(const Record& record, nautilus::val<std::int8_t*> memoryForRecord, AllocateVarSizedFunction allocateVarSized) override;
+};
+
+/// @brief This class is a nautilus interface to our PagedVector. It provides a way to write and read records to and from the PagedVector
 /// Writing and reading records from a PagedVector should be ONLY done via this class. This class is not thread-safe.
 class PagedVectorRef
 {
 public:
-    /// Declaring PagedVectorRefIter a friend class such that we can access the private members
+    /// @brief Declaring PagedVectorRefIter a friend class such that we can access the private members
     friend class PagedVectorRefIter;
-    PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<TupleBufferRef>& bufferRef);
+    PagedVectorRef(NautilusBuffer pagedVectorBuffer, std::shared_ptr<PagedVectorTupleLayout> tupleLayout);
 
-    /// Writes a new record to the pagedVectorRef
-    /// @param record the new record to be written
-    /// @param bufferProvider: Buffer provider used for acquiring memory for the write operation, if needed
-    void writeRecord(const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const;
+    /// Appends the record to the paged vector, extending its total size and possibly allocating a new page.
+    void pushBack(const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider);
 
-    /// @brief Reads the specified fields of a record from the pagedVectorRef
-    /// @param pos record position in pagedVector
-    /// @param projections the desired fields of the record
-    [[nodiscard]] Record
-    readRecord(const nautilus::val<uint64_t>& pos, const std::vector<Record::RecordFieldIdentifier>& projections) const;
+    /// @brief Access method for getting a specific record from the paged vector.
+    /// The entryPos refers to the record's global position in the paged vector and is not page-specific.
+    [[nodiscard]] Record at(const nautilus::val<uint64_t>& entryPos) const;
 
-    [[nodiscard]] PagedVectorRefIter begin(const std::vector<Record::RecordFieldIdentifier>& projections) const;
-    [[nodiscard]] PagedVectorRefIter end(const std::vector<Record::RecordFieldIdentifier>& projections) const;
-    nautilus::val<bool> operator==(const PagedVectorRef& other) const;
-    [[nodiscard]] nautilus::val<uint64_t> getNumberOfTuples() const;
+    [[nodiscard]] PagedVectorRefIter begin() const;
+    [[nodiscard]] PagedVectorRefIterSentinel end() const;
+
+    /// @brief Returns the total number of records in the Paged Vector
+    [[nodiscard]] nautilus::val<uint64_t> getNumberOfRecords() const;
 
 private:
-    nautilus::val<PagedVector*> pagedVectorRef;
-    std::shared_ptr<TupleBufferRef> bufferRef;
+    /// @brief Holds a reference to the main paged vector buffer
+    NautilusBuffer pagedVectorBuffer;
+    /// @brief specifies how tuples are stored in the paged vector's pages
+    std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
 };
 
 class PagedVectorRefIter
@@ -64,27 +123,39 @@ class PagedVectorRefIter
 public:
     explicit PagedVectorRefIter(
         PagedVectorRef pagedVector,
-        const std::shared_ptr<TupleBufferRef>& bufferRef,
-        const std::vector<Record::RecordFieldIdentifier>& projections,
-        const nautilus::val<TupleBuffer*>& curPage,
+        const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout,
+        OwnedNautilusBuffer curPage,
         const nautilus::val<uint64_t>& posOnPage,
-        const nautilus::val<uint64_t>& pos,
-        const nautilus::val<uint64_t>& numberOfTuplesInPagedVector);
+        const nautilus::val<uint64_t>& pos);
 
     Record operator*() const;
     PagedVectorRefIter& operator++();
-    nautilus::val<bool> operator==(const PagedVectorRefIter& other) const;
-    nautilus::val<bool> operator!=(const PagedVectorRefIter& other) const;
+    PagedVectorRefIter operator++(int);
+    nautilus::val<bool> operator==(const PagedVectorRefIterSentinel& other) const;
+    nautilus::val<bool> operator!=(const PagedVectorRefIterSentinel& other) const;
     nautilus::val<uint64_t> operator-(const PagedVectorRefIter& other) const;
 
 private:
     PagedVectorRef pagedVector;
-    std::vector<Record::RecordFieldIdentifier> projections;
-    nautilus::val<uint64_t> pos;
+    mutable nautilus::val<uint64_t> pos;
+    mutable nautilus::val<uint64_t> posOnPage;
+    /// Lazily-materialized cache of the page that currently holds the element at `pos`. It is mutable because `operator*() const`
+    /// reloads it when iteration crosses a page boundary; this is logically const, as it does not change which element is referenced.
+    mutable OwnedNautilusBuffer curPage;
+    std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
+};
+
+class PagedVectorRefIterSentinel
+{
+public:
+    explicit PagedVectorRefIterSentinel(const nautilus::val<uint64_t>& numTuplesInPagedVector);
+
+    nautilus::val<bool> operator==(const PagedVectorRefIter& other) const;
+    nautilus::val<bool> operator!=(const PagedVectorRefIter& other) const;
+
+private:
+    friend PagedVectorRefIter;
     nautilus::val<uint64_t> numberOfTuplesInPagedVector;
-    nautilus::val<uint64_t> posOnPage;
-    nautilus::val<TupleBuffer*> curPage;
-    std::shared_ptr<TupleBufferRef> bufferRef;
 };
 
 }

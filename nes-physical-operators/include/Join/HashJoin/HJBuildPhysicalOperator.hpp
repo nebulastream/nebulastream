@@ -15,6 +15,7 @@
 #pragma once
 #include <memory>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -37,7 +38,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
         HashMapOptions hashMapOptions,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;

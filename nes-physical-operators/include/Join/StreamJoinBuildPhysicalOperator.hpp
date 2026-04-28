@@ -16,7 +16,8 @@
 
 #include <cstdint>
 #include <memory>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -33,7 +34,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
     ~StreamJoinBuildPhysicalOperator() override = default;
 
@@ -41,7 +42,8 @@ public:
 
 protected:
     const JoinBuildSideType joinBuildSide;
-    const std::shared_ptr<TupleBufferRef> bufferRef;
+    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members): immutable layout shared with derived build/probe operators.
+    const std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
 };
 
 }

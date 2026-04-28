@@ -19,6 +19,7 @@
 #include <memory>
 #include <span>
 #include <type_traits>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
@@ -32,7 +33,7 @@ namespace NES
 /// Represents the C++ struct that is stored in the SliceCache
 struct SliceCacheEntry
 {
-    using DataStructure = const std::byte*;
+    using DataStructure = void*;
 
     /// As we are doing everything in Nautilus, we do not care about the initialization of these values
     SliceCacheEntry() : sliceStart(0), sliceEnd(0), dataStructure(nullptr) { }
