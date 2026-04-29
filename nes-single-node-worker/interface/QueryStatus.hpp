@@ -21,7 +21,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {

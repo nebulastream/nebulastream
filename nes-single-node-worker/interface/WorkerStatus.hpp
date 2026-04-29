@@ -20,7 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 namespace NES

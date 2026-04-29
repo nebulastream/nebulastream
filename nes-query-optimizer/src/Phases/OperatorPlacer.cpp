@@ -14,19 +14,21 @@
 
 #include <Phases/OperatorPlacer.hpp>
 
+#include <unordered_map>
+#include <vector>
+
+#include <Identifiers/Identifiers.hpp>
 #include <Placement/BottomUpPlacement.hpp>
 #include <Placement/QueryDecomposition.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
 
 namespace NES
 {
-DistributedLogicalPlan OperatorPlacer::place(LogicalPlan plan) const
+std::unordered_map<Host, std::vector<LogicalPlan>> OperatorPlacer::place(LogicalPlan plan) const
 {
-    BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(plan);
+    BottomUpOperatorPlacer{ctx, topology}.apply(plan);
 
-    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
+    return QueryDecomposer(ctx, topology)
         .decompose(plan, defaultQueryOptimization.network);
 }
 }

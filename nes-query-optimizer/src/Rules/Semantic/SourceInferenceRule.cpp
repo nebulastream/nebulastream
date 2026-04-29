@@ -22,6 +22,7 @@
 #include <typeinfo>
 #include <utility>
 
+#include <PlannerContext.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
@@ -57,7 +58,7 @@ std::set<std::type_index> SourceInferenceRule::requiredBy() const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 bool SourceInferenceRule::operator==(const SourceInferenceRule& other) const
 {
-    return sourceCatalog == other.sourceCatalog;
+    return &ctx == &other.ctx;
 }
 
 LogicalPlan SourceInferenceRule::apply(LogicalPlan queryPlan) const
@@ -72,12 +73,7 @@ LogicalPlan SourceInferenceRule::apply(LogicalPlan queryPlan) const
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto schema = Schema();
-        auto logicalSourceOpt = sourceCatalog->getLogicalSource(source->getLogicalSourceName());
-        if (not logicalSourceOpt.has_value())
-        {
-            throw UnknownSourceName("Logical source not registered. Source Name: {}", source->getLogicalSourceName());
-        }
-        const auto& logicalSource = logicalSourceOpt.value();
+        const auto logicalSource = SourceCatalog::getLogicalSource(ctx, source->getLogicalSourceName());
         schema.appendFieldsFromOtherSchema(*logicalSource.getSchema());
         auto qualifierName = source->getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution

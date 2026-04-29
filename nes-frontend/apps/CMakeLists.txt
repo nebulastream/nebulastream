@@ -13,36 +13,32 @@
 # nes-repl is our REPL based frontend it comes in two flavours. The embedded version contains the single-node-worker and
 # can thus execute queries locally. The non-embedded version always requires the '-s' flag to deploy remote queries.
 
+# Workaround: both nes_rust_bindings and coordinator_bridge are separate Rust staticlibs
+# that each embed an identical copy of the cxx runtime. Allow the linker to deduplicate.
+
+# TODO: merge into a single Rust staticlib to avoid this.
+set(CXX_MULDEFS_FLAG "LINKER:-z,muldefs")
+
 # nes-repl-embedded
 add_executable(nes-repl-embedded repl/ReplStarter.cpp repl/Repl.cpp)
-target_link_libraries(nes-repl-embedded PUBLIC nes-frontend-embedded-lib argparse::argparse replxx::replxx)
+target_link_libraries(nes-repl-embedded PUBLIC nes-frontend-lib nes-coordinator-bridge sql-planner argparse::argparse replxx::replxx)
+target_link_options(nes-repl-embedded PRIVATE ${CXX_MULDEFS_FLAG})
 target_include_directories(nes-repl-embedded
         PUBLIC repl
 )
 
 # nes-repl
 add_executable(nes-repl repl/ReplStarter.cpp repl/Repl.cpp)
-target_link_libraries(nes-repl PUBLIC nes-frontend-lib argparse::argparse replxx::replxx)
+target_link_libraries(nes-repl PUBLIC nes-frontend-lib nes-coordinator-bridge sql-planner argparse::argparse replxx::replxx)
+target_link_options(nes-repl PRIVATE ${CXX_MULDEFS_FLAG})
 
 target_include_directories(nes-repl
         PUBLIC repl
 )
 
-# nes-cli is the one-shot controller for the nes-single-node-worker, it is completely stateless and intended to deploy
-# and control queries based on a topology specification which contains all state required to perform placement and
-# optimizations.
-
-add_executable(nes-cli cli/CLIStarter.cpp cli/QueryStateBackend.cpp)
-target_link_libraries(nes-cli PUBLIC nes-frontend-lib argparse::argparse yaml-cpp::yaml-cpp)
-
-target_include_directories(nes-cli
-        PRIVATE cli
-)
-
-# These are E2E Tests for both the CLI tool and the repl.
-# Because the REPL has both a interactive and non-interactive mode, the REPL is tested in both ways.
-# We use bats to drive the non-interactive tests for the cli and repl
-# This also tests the embedded version of the repl, which does not require a docker compose setup.
+# E2E Tests for the REPL. The REPL has both interactive and non-interactive mode.
+# We use bats to drive the non-interactive tests.
+# The embedded version does not require a docker compose setup.
 
 if (ENABLE_BATS_TESTS)
 
@@ -55,33 +51,11 @@ if (ENABLE_BATS_TESTS)
             env SYSTEST_TESTDATA=${CMAKE_CURRENT_BINARY_DIR}/../../nes-systests/testdata
             ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/embedded.bats
     )
-
-    add_test(
-            NAME offline-cli-test
-            COMMAND
-            env NES_CLI=$<TARGET_FILE:nes-cli>
-            env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/cli/tests
-            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
-            env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-            ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/offline.bats
-    )
 endif ()
 
 # These tests use docker CLI to run docker-compose from within the development container.
 if (ENABLE_DOCKER_TESTS)
     if (ENABLE_BATS_TESTS)
-        add_test(
-                NAME distributed-cli-test
-                COMMAND
-                env NES_CLI=$<TARGET_FILE:nes-cli>
-                env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/cli/tests
-                env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-                env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
-                env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
-                ${BATS} --jobs 4 --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/distributed.bats
-        )
-        set_tests_properties(distributed-cli-test PROPERTIES LABELS "DockerCompose" FIXTURES_REQUIRED RuntimeBaseImage)
-
         add_test(
                 NAME distributed-repl-tests
                 COMMAND

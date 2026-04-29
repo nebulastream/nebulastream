@@ -14,13 +14,10 @@
 
 
 #pragma once
-#include <cstddef>
-#include <cstdint>
 #include <expected>
 #include <functional>
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -28,232 +25,206 @@
 #include <vector>
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
 
-namespace NES
-{
+namespace NES {
+    using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
 
-using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">; /// NOLINT(misc-include-cleaner)
-using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
+    enum class StopMode : uint8_t {
+        Graceful,
+        Forceful
+    };
 
-enum class StatementOutputFormat : uint8_t
-{
-    JSON,
-    TEXT
-};
+    /// The source management statements are directly executed by the binder as we currently do not need to handle them differently between the frontends.
+    /// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
+    struct CreateLogicalSourceStatement {
+        std::string name;
+        Schema schema;
+    };
 
-/// The source management statements are directly executed by the binder as we currently do not need to handle them differently between the frontends.
-/// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
-struct CreateLogicalSourceStatement
-{
-    std::string name;
-    Schema schema;
-};
+    struct CreatePhysicalSourceStatement {
+        LogicalSourceName attachedTo;
+        std::string sourceType;
+        std::optional<Host> host;
+        std::unordered_map<std::string, std::string> sourceConfig;
+        std::unordered_map<std::string, std::string> parserConfig;
 
-struct CreatePhysicalSourceStatement
-{
-    LogicalSourceName attachedTo;
-    std::string sourceType;
-    std::optional<Host> host;
-    std::unordered_map<std::string, std::string> sourceConfig;
-    std::unordered_map<std::string, std::string> parserConfig;
-    friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
-};
+        friend std::ostream &operator<<(std::ostream &os, const CreatePhysicalSourceStatement &obj);
+    };
 
-struct CreateSinkStatement
-{
-    std::string name;
-    std::string sinkType;
-    Schema schema;
-    std::optional<Host> host;
-    std::unordered_map<std::string, std::string> sinkConfig;
-    std::unordered_map<std::string, std::string> formatConfig;
-};
+    struct CreateSinkStatement {
+        std::string name;
+        std::string sinkType;
+        Schema schema;
+        std::optional<Host> host;
+        std::unordered_map<std::string, std::string> sinkConfig;
+        std::unordered_map<std::string, std::string> formatConfig;
+    };
 
-/// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
-/// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
-struct ShowLogicalSourcesStatement
-{
-    std::optional<std::string> name;
-    std::optional<StatementOutputFormat> format;
-};
+    /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
+    /// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
+    struct ShowLogicalSourcesStatement {
+        std::optional<std::string> name;
+    };
 
-/// ShowPhysicalSourcesStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
-/// referencing a dms object
-struct ShowPhysicalSourcesStatement
-{
-    std::optional<LogicalSourceName> logicalSource;
-    std::optional<uint32_t> id;
-    std::optional<StatementOutputFormat> format;
-};
+    /// ShowPhysicalSourcesStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
+    /// referencing a dms object
+    struct ShowPhysicalSourcesStatement {
+        std::optional<LogicalSourceName> logicalSource;
+        std::optional<uint32_t> id;
+    };
 
-struct ShowSinksStatement
-{
-    std::optional<std::string> name;
-    std::optional<StatementOutputFormat> format;
-};
+    struct ShowSinksStatement {
+        std::optional<std::string> name;
+    };
 
-struct DropLogicalSourceStatement
-{
-    LogicalSourceName source;
-};
+    struct DropLogicalSourceStatement {
+        LogicalSourceName source;
+    };
 
-struct DropPhysicalSourceStatement
-{
-    SourceDescriptor descriptor;
-};
+    struct DropPhysicalSourceStatement {
+        uint64_t id;
+    };
 
-struct DropSinkStatement
-{
-    std::string name;
-};
+    struct DropSinkStatement {
+        std::string name;
+    };
 
-struct QueryStatement
-{
-    LogicalPlan plan;
-    std::optional<DistributedQueryId> id;
-};
+    struct QueryStatement {
+        LogicalPlan plan;
+        std::optional<QueryId> id;
+    };
 
-struct ExplainQueryStatement
-{
-    LogicalPlan plan;
-};
+    struct ExplainQueryStatement {
+        LogicalPlan plan;
+    };
 
-struct ShowQueriesStatement
-{
-    std::optional<DistributedQueryId> id;
-    std::optional<StatementOutputFormat> format;
-};
+    struct ShowQueriesStatement {
+        std::optional<std::string> name;
+        std::optional<int64_t> id;
+    };
 
-struct DropQueryStatement
-{
-    DistributedQueryId id;
-};
+    struct DropQueryStatement {
+        std::optional<std::string> name;
+        std::optional<int64_t> id;
+        StopMode stopMode = StopMode::Graceful;
+    };
 
-struct WorkerStatusStatement
-{
-    std::vector<std::string> host;
-};
+    struct WorkerStatusStatement {
+        std::vector<std::string> host;
+    };
 
-struct CreateWorkerStatement
-{
-    std::string host;
-    std::string dataAddress;
-    std::optional<size_t> capacity;
-    std::vector<std::string> downstream;
-    std::unordered_map<std::string, std::string> config; /// Flat dot-separated config map (e.g., "worker.receiver_queue_size" -> "2")
-};
+    struct CreateWorkerStatement {
+        std::string hostAddr;
+        std::string dataAddr;
+        std::optional<size_t> capacity;
+        std::vector<std::string> peers;
+        std::unordered_map<std::string, std::string> config;
+    };
 
-struct DropWorkerStatement
-{
-    std::string host;
-};
+    struct DropWorkerStatement {
+        std::string host;
+    };
 
-using Statement = std::variant<
-    WorkerStatusStatement,
-    CreateWorkerStatement,
-    DropWorkerStatement,
-    CreateLogicalSourceStatement,
-    CreatePhysicalSourceStatement,
-    CreateSinkStatement,
-    ShowLogicalSourcesStatement,
-    ShowPhysicalSourcesStatement,
-    DropLogicalSourceStatement,
-    DropPhysicalSourceStatement,
-    DropSinkStatement,
-    QueryStatement,
-    ExplainQueryStatement,
-    ShowQueriesStatement,
-    ShowSinksStatement,
-    DropQueryStatement>;
+    struct ShowWorkersStatement {
+        std::optional<std::string> host;
+    };
 
-inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)
-{
-    /// NOLINTNEXTLINE(fuchsia-trailing-return)
-    auto visitor = [](const auto& visitedStatement) -> std::optional<StatementOutputFormat>
-    {
-        if constexpr (requires { visitedStatement.format; })
-        {
-            return visitedStatement.format;
+    using Statement = std::variant<
+        WorkerStatusStatement,
+        CreateWorkerStatement,
+        DropWorkerStatement,
+        ShowWorkersStatement,
+        CreateLogicalSourceStatement,
+        CreatePhysicalSourceStatement,
+        CreateSinkStatement,
+        ShowLogicalSourcesStatement,
+        ShowPhysicalSourcesStatement,
+        DropLogicalSourceStatement,
+        DropPhysicalSourceStatement,
+        DropSinkStatement,
+        QueryStatement,
+        ExplainQueryStatement,
+        ShowQueriesStatement,
+        ShowSinksStatement,
+        DropQueryStatement>;
+
+    class StatementBinder {
+        /// PIMPL pattern to hide all the internally used binder member functions
+        class Impl;
+        std::unique_ptr<Impl> impl;
+
+    public:
+        explicit StatementBinder(
+            const std::function<LogicalPlan(AntlrSQLParser::QueryContext *)> &queryPlanBinder);
+
+        StatementBinder(const StatementBinder &other) = delete;
+
+        StatementBinder &operator=(const StatementBinder &other) = delete;
+
+        StatementBinder(StatementBinder &&other) noexcept;
+
+        StatementBinder &operator=(StatementBinder &&other) noexcept;
+
+        /// If the destructor was implicitly defaulted, it would call the destructor of the unique ptr, which would require the definition of Impl.
+        /// Deferring the destructor default to the implementation, where also the definition of Impl is, solves this problem.
+        ~StatementBinder();
+
+        [[nodiscard]] std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext *statementAST) const;
+
+        [[nodiscard]] std::expected<std::vector<std::expected<Statement, Exception> >, Exception>
+        parseAndBind(std::string_view statementString) const;
+
+        [[nodiscard]] std::expected<Statement, Exception> parseAndBindSingle(std::string_view statementStrings) const;
+    };
+}
+
+namespace fmt {
+    template<>
+    struct formatter<std::unordered_map<std::string, std::string> > {
+        [[nodiscard]] static constexpr auto parse(const format_parse_context &ctx) noexcept -> decltype(ctx.begin()) {
+            return ctx.begin();
         }
-        else
-        {
-            return std::nullopt;
+
+        static constexpr auto format(const std::unordered_map<std::string, std::string> &mapToFormat,
+                                     format_context &ctx)
+            -> decltype(ctx.out()) {
+            auto out = ctx.out();
+            out = format_to(out, "{{");
+            bool first = true;
+            for (const auto &[fst, snd]: mapToFormat) {
+                if (!first) {
+                    out = format_to(out, ", ");
+                }
+                /// Note: fmt::format_to correctly handles escaping for strings by default.
+                out = fmt::format_to(out, R"("{}": "{}")", fst, snd);
+                first = false;
+            }
+            out = format_to(out, "}}");
+            return out;
         }
     };
-    return std::visit(visitor, statement);
-}
-
-class StatementBinder
-{
-    /// PIMPL pattern to hide all the internally used binder member functions
-    class Impl;
-    std::unique_ptr<Impl> impl;
-
-public:
-    explicit StatementBinder(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
-
-    StatementBinder(const StatementBinder& other) = delete;
-    StatementBinder& operator=(const StatementBinder& other) = delete;
-    StatementBinder(StatementBinder&& other) noexcept;
-    StatementBinder& operator=(StatementBinder&& other) noexcept;
-
-    /// If the destructor was implicitly defaulted, it would call the destructor of the unique ptr, which would require the definition of Impl.
-    /// Deferring the destructor default to the implementation, where also the definition of Impl is, solves this problem.
-    ~StatementBinder();
-    [[nodiscard]] std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const;
-    [[nodiscard]] std::expected<std::vector<std::expected<Statement, Exception>>, Exception>
-    parseAndBind(std::string_view statementString) const;
-    [[nodiscard]] std::expected<Statement, Exception> parseAndBindSingle(std::string_view statementStrings) const;
-};
-}
-
-namespace fmt
-{
-template <>
-struct formatter<std::unordered_map<std::string, std::string>>
-{
-    [[nodiscard]] static constexpr auto parse(const format_parse_context& ctx) noexcept -> decltype(ctx.begin()) { return ctx.begin(); }
-
-    static constexpr auto format(const std::unordered_map<std::string, std::string>& mapToFormat, format_context& ctx)
-        -> decltype(ctx.out())
-    {
-        auto out = ctx.out();
-        out = format_to(out, "{{");
-        bool first = true;
-        for (const auto& [fst, snd] : mapToFormat)
-        {
-            if (!first)
-            {
-                out = format_to(out, ", ");
-            }
-            /// Note: fmt::format_to correctly handles escaping for strings by default.
-            out = fmt::format_to(out, R"("{}": "{}")", fst, snd);
-            first = false;
-        }
-        out = format_to(out, "}}");
-        return out;
-    }
-};
-
 }
 
 FMT_OSTREAM(NES::CreateLogicalSourceStatement);
+
 FMT_OSTREAM(NES::CreatePhysicalSourceStatement);
+
 FMT_OSTREAM(NES::DropLogicalSourceStatement);
+
 FMT_OSTREAM(NES::DropPhysicalSourceStatement);
+
 FMT_OSTREAM(NES::DropQueryStatement);
+
 FMT_OSTREAM(NES::WorkerStatusStatement);
+
 FMT_OSTREAM(NES::ExplainQueryStatement);
+
 FMT_OSTREAM(NES::CreateWorkerStatement);
+
 FMT_OSTREAM(NES::DropWorkerStatement);

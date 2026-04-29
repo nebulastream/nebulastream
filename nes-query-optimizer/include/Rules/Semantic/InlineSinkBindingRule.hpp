@@ -22,10 +22,11 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sinks/SinkCatalog.hpp>
 
 namespace NES
 {
+
+struct PlannerContext;
 
 /// The InlineSinkBindingPhase replaces all sink that are defined within the query itself (InlineSinkLogicalOperators), as opposed to
 /// sinks that are created in separate CREATE statements, with SinkLogicalOperators based on the given inline sink configuration.
@@ -33,7 +34,7 @@ namespace NES
 class InlineSinkBindingRule
 {
 public:
-    explicit InlineSinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit InlineSinkBindingRule(const PlannerContext& ctx) : ctx{ctx} { }
 
     static constexpr std::string_view NAME = "InlineSinkBindingRule";
 
@@ -45,7 +46,7 @@ public:
     bool operator==(const InlineSinkBindingRule& other) const;
 
 private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    const PlannerContext& ctx;
 };
 
 static_assert(RuleConcept<InlineSinkBindingRule, LogicalPlan>);

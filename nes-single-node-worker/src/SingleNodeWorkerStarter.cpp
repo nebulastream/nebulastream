@@ -76,12 +76,12 @@ int main(const int argc, const char* argv[])
             return 0;
         }
         {
-            NES::Thread::initializeThread(NES::Host(configuration->dataAddress.getValue()), "main");
-            NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->dataAddress.getValue()))};
+            NES::Thread::initializeThread(NES::Host(configuration->dataAddr.getValue()), "main");
+            NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->dataAddr.getValue()))};
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);
-            builder.AddListeningPort(configuration->grpcAddressUri.getValue(), grpc::InsecureServerCredentials());
+            builder.AddListeningPort(configuration->hostAddr.getValue(), grpc::InsecureServerCredentials());
             builder.RegisterService(&workerService);
             grpc::EnableDefaultHealthCheckService(true);
 
@@ -93,7 +93,7 @@ int main(const int argc, const char* argv[])
             }
 
             const auto hook = shutdownHook(*server);
-            NES_INFO("Server listening on {}", configuration->grpcAddressUri.getValue());
+            NES_INFO("Server listening on {}", configuration->hostAddr.getValue());
             server->Wait();
             NES_INFO("GRPC Server was shutdown. Terminating the SingleNodeWorker");
         }
