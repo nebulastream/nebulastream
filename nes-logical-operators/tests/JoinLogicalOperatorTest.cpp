@@ -30,24 +30,20 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/UUID.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
-#include <DistributedQuery.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -84,22 +80,25 @@ public:
     static std::vector<Identifier> rightFieldNames() { return {Identifier::parse("right_id"), Identifier::parse("right_value")}; }
 
     static TypedLogicalOperator<SourceDescriptorLogicalOperator>
-    makeSource(SourceCatalog& catalog, std::string_view name, const Schema<UnqualifiedUnboundField, Ordered>& schema)
-    {
-        const auto logical = catalog.addLogicalSource(Identifier::parse(std::string{name}), schema).value();
+    makeSource(std::string_view name, const Schema<UnqualifiedUnboundField, Ordered> &schema) {
+        const auto logical = LogicalSource{Identifier::parse(std::string{name}), schema};
         const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-        const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-        const auto descriptor
-            = catalog.addPhysicalSource(logical, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig).value();
+        const auto descriptor = SourceDescriptor::create(
+                    PhysicalSourceId{1},
+                    logical,
+                    Identifier::parse("File"),
+                    Host{"localhost"},
+                    sourceConfig,
+                    {{Identifier::parse("type"), "CSV"}})
+                .value();
         return SourceDescriptorLogicalOperator::create(descriptor);
     }
 
     /// Build a left_id = right_id equi-join over two file sources. Schema inference happens in the children-ctor, so the returned
-    /// operator already has its output schema bound. The catalog must outlive the returned operator.
-    static TypedLogicalOperator<JoinLogicalOperator> buildInferredJoin(SourceCatalog& catalog, JoinLogicalOperator::JoinType joinType)
-    {
-        const auto leftSource = makeSource(catalog, "left_src", createLeftSchema());
-        const auto rightSource = makeSource(catalog, "right_src", createRightSchema());
+    /// operator already has its output schema bound.
+    static TypedLogicalOperator<JoinLogicalOperator> buildInferredJoin(JoinLogicalOperator::JoinType joinType) {
+        const auto leftSource = makeSource("left_src", createLeftSchema());
+        const auto rightSource = makeSource("right_src", createRightSchema());
 
         auto joinFunction = EqualsLogicalFunction{
             FieldAccessLogicalFunction{leftSource->getOutputSchema().getFieldByName(Identifier::parse("left_id")).value()},
@@ -135,12 +134,13 @@ public:
             {Identifier::parse("END"), u64}};
     }
 
-    static SinkDescriptor
-    createSinkDescriptor(SinkCatalog& sinkCatalog, const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
-    {
+    static SinkDescriptor createSinkDescriptor(const Identifier &sinkName,
+                                               const Schema<UnqualifiedUnboundField, Ordered> &schema) {
         const std::unordered_map<Identifier, std::string> sinkConfig{
             {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
-        return sinkCatalog.addSinkDescriptor(sinkName, schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {}).value();
+        return SinkDescriptor::createNamed(INVALID_SINK_ID, sinkName, schema, Identifier::parse("file"),
+                                           Host{"localhost"}, sinkConfig, {})
+                .value();
     }
 };
 
@@ -161,16 +161,14 @@ TEST_F(JoinLogicalOperatorTest, GetJoinType)
           JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
           JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
-        SourceCatalog catalog;
-        const auto join = buildInferredJoin(catalog, joinType);
+        const auto join = buildInferredJoin(joinType);
         EXPECT_EQ(join->getJoinType(), joinType);
     }
 }
 
 TEST_F(JoinLogicalOperatorTest, LeftOuterJoinMarksRightFieldsNullableAndPreservesLeft)
 {
-    SourceCatalog catalog;
-    const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN);
+    const auto join = buildInferredJoin(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
     for (const auto& fieldName : leftFieldNames())
@@ -190,8 +188,7 @@ TEST_F(JoinLogicalOperatorTest, LeftOuterJoinMarksRightFieldsNullableAndPreserve
 
 TEST_F(JoinLogicalOperatorTest, RightOuterJoinMarksLeftFieldsNullableAndPreservesRight)
 {
-    SourceCatalog catalog;
-    const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN);
+    const auto join = buildInferredJoin(JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
     for (const auto& fieldName : leftFieldNames())
@@ -211,8 +208,7 @@ TEST_F(JoinLogicalOperatorTest, RightOuterJoinMarksLeftFieldsNullableAndPreserve
 
 TEST_F(JoinLogicalOperatorTest, FullOuterJoinMarksBothSidesNullable)
 {
-    SourceCatalog catalog;
-    const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::OUTER_FULL_JOIN);
+    const auto join = buildInferredJoin(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
     for (const auto& fieldName : leftFieldNames())
@@ -232,8 +228,7 @@ TEST_F(JoinLogicalOperatorTest, FullOuterJoinMarksBothSidesNullable)
 
 TEST_F(JoinLogicalOperatorTest, InnerJoinDoesNotMarkAnyFieldsNullable)
 {
-    SourceCatalog catalog;
-    const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::INNER_JOIN);
+    const auto join = buildInferredJoin(JoinLogicalOperator::JoinType::INNER_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
     for (const auto& fieldName : leftFieldNames())
@@ -258,8 +253,7 @@ TEST_F(JoinLogicalOperatorTest, WindowStartEndFieldsAreNotNullableForOuterJoins)
           JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
           JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
-        SourceCatalog catalog;
-        const auto join = buildInferredJoin(catalog, joinType);
+        const auto join = buildInferredJoin(joinType);
         const auto outputSchema = join->getOutputSchema();
 
         const auto startField = outputSchema.getFieldByName(join->getStartField().getFullyQualifiedName());
@@ -279,18 +273,17 @@ TEST_F(JoinLogicalOperatorTest, ReflectionRoundTripPreservesOuterJoinTypes)
           JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
           JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
-        SourceCatalog catalog;
-        SinkCatalog sinkCatalog;
-        const auto join = buildInferredJoin(catalog, joinType);
+        const auto join = buildInferredJoin(joinType);
 
         const bool leftNullable
             = joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
         const bool rightNullable
             = joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
         const auto sinkDescriptor
-            = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), createJoinOutputSchema(leftNullable, rightNullable));
+                = createSinkDescriptor(Identifier::parse("test_sink"),
+                                       createJoinOutputSchema(leftNullable, rightNullable));
         const auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({join});
-        const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+        const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
         const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan);
         const auto restored = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);

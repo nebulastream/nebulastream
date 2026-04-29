@@ -37,9 +37,9 @@ pub struct Model {
     pub input_schema: Json,
     #[sea_orm(column_type = "JsonBinary")]
     pub output_schema: Json,
-    #[sea_orm(column_type = "VarBinary(StringLen::None)")]
     #[serde(skip)]
-    pub imported: Vec<u8>,
+    #[sea_orm(column_type = "JsonBinary")]
+    pub imported: Json,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -49,9 +49,9 @@ impl ActiveModelBehavior for ActiveModel {}
 
 #[cfg(test)]
 mod tests {
-    use crate::Execute;
     use crate::database::Database;
     use crate::ml_model::{CreateMlModel, DropMlModel, GetMlModel};
+    use crate::Execute;
     use test_strategy::proptest;
 
     #[proptest(async = "tokio")]

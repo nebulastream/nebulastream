@@ -13,20 +13,19 @@
 */
 
 #pragma once
-#include <memory>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <utility>
 
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
+
+struct PlannerContext;
 
 /// The InlineSourceBindingPhase replaces all sources that are defined within the query itself (InlineSourceLogicalOperators), as opposed to
 /// sources that are created in separate CREATE statements, with physical sources based on the given inline source configuration.
@@ -34,7 +33,7 @@ namespace NES
 class InlineSourceBindingRule
 {
 public:
-    explicit InlineSourceBindingRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit InlineSourceBindingRule(const PlannerContext& ctx) : ctx{ctx} { }
 
     static constexpr std::string_view NAME = "InlineSourceBindingRule";
 
@@ -47,7 +46,8 @@ public:
 
 private:
     [[nodiscard]] LogicalOperator bindInlineSourceLogicalOperators(const LogicalOperator& current) const;
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
+
+    const PlannerContext& ctx;
 };
 
 static_assert(RuleConcept<InlineSourceBindingRule, LogicalPlan>);

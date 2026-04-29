@@ -14,15 +14,16 @@
 
 #pragma once
 
-#include <memory>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <ModelCatalog.hpp>
+
+namespace NES {
+    struct PlannerContext;
+}
 
 namespace NES
 {
@@ -32,7 +33,8 @@ namespace NES
 class InferModelResolutionRule
 {
 public:
-    explicit InferModelResolutionRule(std::shared_ptr<const ModelCatalog> modelCatalog) : modelCatalog(std::move(modelCatalog)) { }
+    explicit InferModelResolutionRule(const PlannerContext &ctx) : ctx(ctx) {
+    }
 
     static constexpr std::string_view NAME = "InferModelResolutionRule";
 
@@ -44,7 +46,7 @@ public:
     bool operator==(const InferModelResolutionRule& other) const;
 
 private:
-    std::shared_ptr<const ModelCatalog> modelCatalog;
+    const PlannerContext &ctx;
 };
 
 static_assert(RuleConcept<InferModelResolutionRule, LogicalPlan>);

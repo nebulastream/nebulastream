@@ -14,8 +14,6 @@
 
 
 #pragma once
-#include <cstddef>
-#include <cstdint>
 #include <expected>
 #include <functional>
 #include <memory>
@@ -35,30 +33,29 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
 
-namespace NES
-{
+namespace NES {
+    using LogicalSourceName = Identifier;
 
-using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">; /// NOLINT(misc-include-cleaner)
-using LogicalSourceName = Identifier;
-
-enum class StatementOutputFormat : uint8_t
-{
-    JSON,
-    TEXT
-};
-
-/// The source management statements are directly executed by the binder as we currently do not need to handle them differently between the frontends.
+    /// The source management statements are directly executed by the binder as we currently do not need to handle them differently between the frontends.
 /// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
 struct CreateLogicalSourceStatement
 {
     Identifier name;
     Schema<UnqualifiedUnboundField, Ordered> schema;
+};
+
+/// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
+/// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
+struct ShowLogicalSourcesStatement {
+    std::optional<Identifier> name;
+};
+
+struct DropLogicalSourceStatement {
+    LogicalSourceName source;
 };
 
 struct CreatePhysicalSourceStatement
@@ -71,6 +68,17 @@ struct CreatePhysicalSourceStatement
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
+struct DropPhysicalSourceStatement {
+    uint64_t id;
+};
+
+/// ShowPhysicalSourcesStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
+/// referencing a dms object
+struct ShowPhysicalSourcesStatement {
+    std::optional<LogicalSourceName> logicalSource;
+    std::optional<uint32_t> id;
+};
+
 struct CreateSinkStatement
 {
     Identifier name;
@@ -81,37 +89,9 @@ struct CreateSinkStatement
     std::unordered_map<Identifier, std::string> formatConfig;
 };
 
-/// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
-/// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
-struct ShowLogicalSourcesStatement
-{
-    std::optional<Identifier> name;
-    std::optional<StatementOutputFormat> format;
-};
-
-/// ShowPhysicalSourcesStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
-/// referencing a dms object
-struct ShowPhysicalSourcesStatement
-{
-    std::optional<LogicalSourceName> logicalSource;
-    std::optional<uint32_t> id;
-    std::optional<StatementOutputFormat> format;
-};
-
 struct ShowSinksStatement
 {
     std::optional<Identifier> name;
-    std::optional<StatementOutputFormat> format;
-};
-
-struct DropLogicalSourceStatement
-{
-    LogicalSourceName source;
-};
-
-struct DropPhysicalSourceStatement
-{
-    SourceDescriptor descriptor;
 };
 
 struct DropSinkStatement
@@ -119,10 +99,9 @@ struct DropSinkStatement
     Identifier name;
 };
 
-struct QueryStatement
-{
+struct QueryStatement {
     LogicalPlan plan;
-    std::optional<DistributedQueryId> id;
+    std::optional<Identifier> name;
 };
 
 struct ExplainQueryStatement
@@ -132,13 +111,13 @@ struct ExplainQueryStatement
 
 struct ShowQueriesStatement
 {
-    std::optional<DistributedQueryId> id;
-    std::optional<StatementOutputFormat> format;
+    std::optional<uint64_t> id;
+    std::optional<Identifier> name;
 };
 
-struct DropQueryStatement
-{
-    DistributedQueryId id;
+struct DropQueryStatement {
+    std::optional<Identifier> name;
+    std::optional<uint64_t> id;
 };
 
 struct CreateModelStatement
@@ -151,7 +130,7 @@ struct CreateModelStatement
 
 struct ShowModelsStatement
 {
-    std::optional<StatementOutputFormat> format;
+    std::optional<Identifier> name;
 };
 
 struct DropModelStatement
@@ -166,55 +145,42 @@ struct WorkerStatusStatement
 
 struct CreateWorkerStatement
 {
-    std::string host;
-    std::string dataAddress;
-    std::optional<size_t> capacity;
+    std::string hostAddr;
+    std::string dataAddr;
+    std::optional<size_t> maxOperators;
     std::vector<std::string> downstream;
     std::unordered_map<std::string, std::string> config; /// Flat dot-separated config map (e.g., "worker.receiver_queue_size" -> "2")
 };
 
-struct DropWorkerStatement
-{
+struct DropWorkerStatement {
     std::string host;
 };
 
+struct ShowWorkersStatement {
+    std::optional<std::string> host;
+};
+
 using Statement = std::variant<
-    WorkerStatusStatement,
-    CreateWorkerStatement,
-    DropWorkerStatement,
     CreateLogicalSourceStatement,
-    CreatePhysicalSourceStatement,
-    CreateSinkStatement,
-    CreateModelStatement,
     ShowLogicalSourcesStatement,
-    ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
+    CreatePhysicalSourceStatement,
+    ShowPhysicalSourcesStatement,
     DropPhysicalSourceStatement,
+    CreateSinkStatement,
+    ShowSinksStatement,
     DropSinkStatement,
-    DropModelStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
-    ShowSinksStatement,
+    DropQueryStatement,
+    WorkerStatusStatement,
+    CreateWorkerStatement,
+    DropWorkerStatement,
+    ShowWorkersStatement,
+    CreateModelStatement,
     ShowModelsStatement,
-    DropQueryStatement>;
-
-inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)
-{
-    /// NOLINTNEXTLINE(fuchsia-trailing-return)
-    auto visitor = [](const auto& visitedStatement) -> std::optional<StatementOutputFormat>
-    {
-        if constexpr (requires { visitedStatement.format; })
-        {
-            return visitedStatement.format;
-        }
-        else
-        {
-            return std::nullopt;
-        }
-    };
-    return std::visit(visitor, statement);
-}
+    DropModelStatement>;
 
 class StatementBinder
 {
@@ -223,9 +189,9 @@ class StatementBinder
     std::unique_ptr<Impl> impl;
 
 public:
-    explicit StatementBinder(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
+    explicit StatementBinder (
+    const std::function<LogicalPlan(AntlrSQLParser::QueryContext *)> &queryPlanBinder
+    );
 
     StatementBinder(const StatementBinder& other) = delete;
     StatementBinder& operator=(const StatementBinder& other) = delete;

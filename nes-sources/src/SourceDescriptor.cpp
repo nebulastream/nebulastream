@@ -24,13 +24,15 @@
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
+
+#include <Sources/SourceValidationProvider.hpp>
+#include <InputFormatterValidationProvider.hpp>
 
 namespace NES
 {
@@ -49,6 +51,52 @@ SourceDescriptor::SourceDescriptor(
     , host(std::move(host))
     , inputFormatterDescriptor(inputFormatterDescriptor)
 {
+}
+
+std::expected<SourceDescriptor, Exception> SourceDescriptor::create(
+    PhysicalSourceId id,
+    LogicalSource logicalSource,
+    const Identifier &sourceType,
+    Host host,
+    std::unordered_map<Identifier, std::string> descriptorConfig,
+    const std::unordered_map<Identifier, std::string> &inputFormatterConfig) {
+    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType.asCanonicalString(),
+                                                                 std::move(descriptorConfig));
+    if (not descriptorConfigOpt.has_value()) {
+        return std::unexpected{
+            UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.",
+                              sourceType)
+        };
+    }
+    std::unordered_map<std::string, std::string> formatterConfigStringMap;
+    formatterConfigStringMap.reserve(inputFormatterConfig.size());
+    for (const auto &[key, value]: inputFormatterConfig) {
+        formatterConfigStringMap.emplace(key.asCanonicalString(), value);
+    }
+    if (not formatterConfigStringMap.contains(InputFormatterDescriptor::getTypeString())) {
+        return std::unexpected{InvalidConfigParameter("Source config does not contain input formatter type")};
+    }
+
+    const std::string inputFormat = formatterConfigStringMap.at(InputFormatterDescriptor::getTypeString());
+    const auto formatterConfig = inputFormat == "NATIVE"
+                                     ? DescriptorConfig::Config{}
+                                     : InputFormatterValidationProvider::provide(inputFormat, formatterConfigStringMap);
+    if (not formatterConfig.has_value()) {
+        return std::unexpected{
+            UnknownSourceType(
+                "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.",
+                inputFormat)
+        };
+    }
+    const InputFormatterDescriptor formatDescriptor{inputFormat, formatterConfig.value()};
+    return SourceDescriptor{
+        id,
+        std::move(logicalSource),
+        sourceType.asCanonicalString(),
+        std::move(host),
+        std::move(descriptorConfigOpt.value()),
+        formatDescriptor
+    };
 }
 
 LogicalSource SourceDescriptor::getLogicalSource() const

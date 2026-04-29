@@ -63,13 +63,13 @@ mod sql_planner;
 pub use sql_planner::SqlPlanner;
 
 use crate::request_handler::RequestHandler;
-use controller::Controller;
 use controller::embedded::WorkerFactory;
+use controller::Controller;
 use model::database::Database;
 use model::request::Request;
 use std::sync::Arc;
 use tokio::sync::watch;
-use tracing::{Instrument, info_span};
+use tracing::{info_span, Instrument};
 
 #[cfg(not(madsim))]
 use model::database::StateBackend;
@@ -87,7 +87,12 @@ pub async fn run(
     let (intent_tx, intent_rx) = watch::channel(());
     let (state_tx, state_rx) = watch::channel(());
 
-    let controller = Controller::new(db.connection().clone(), intent_rx, Arc::new(state_tx), factory);
+    let controller = Controller::new(
+        db.connection().clone(),
+        intent_rx,
+        Arc::new(state_tx),
+        factory,
+    );
     let handler = RequestHandler::new(receiver, db, intent_tx, state_rx, planner);
 
     tokio::select! {

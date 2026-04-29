@@ -27,4 +27,3 @@ worker:
   default_max_inflight_buffers: 64
   dump_compilation_result: FILE
   dump_graph: true
-grpc: 0.0.0.0:8080

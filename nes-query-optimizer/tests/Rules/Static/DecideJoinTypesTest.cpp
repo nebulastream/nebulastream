@@ -22,6 +22,7 @@
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -46,9 +47,7 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -56,10 +55,7 @@
 #include <WindowTypes/Types/TumblingWindow.hpp>
 
 #include <Operators/LogicalOperatorFwd.hpp>
-#include <Util/UUID.hpp>
-#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -87,26 +83,31 @@ public:
         return Windowing::TimeBasedWindowType{Windowing::TumblingWindow{Windowing::TimeMeasure(TUMBLING_WINDOW_SIZE_MS)}};
     }
 
-    static LogicalSource
-    createLogicalSource(SourceCatalog& sourceCatalog, const Identifier& sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
-    {
-        return sourceCatalog.addLogicalSource(sourceName, schema).value();
+    static LogicalSource createLogicalSource(const Identifier &sourceName,
+                                             const Schema<UnqualifiedUnboundField, Ordered> &schema) {
+        return LogicalSource{sourceName, schema};
     }
 
-    static SourceDescriptor createSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
-    {
+    static SourceDescriptor createSourceDescriptor(const PhysicalSourceId physicalSourceId,
+                                                   const LogicalSource &logicalSource) {
         const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
-        const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("TYPE"), "CSV"}};
-        return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig)
-            .value();
+        return SourceDescriptor::create(
+                    physicalSourceId,
+                    logicalSource,
+                    Identifier::parse("File"),
+                    Host{"localhost"},
+                    sourceConfig,
+                    {{Identifier::parse("type"), "CSV"}})
+                .value();
     }
 
-    static SinkDescriptor
-    createSinkDescriptor(SinkCatalog& sinkCatalog, const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
-    {
+    static SinkDescriptor createSinkDescriptor(const Identifier &sinkName,
+                                               const Schema<UnqualifiedUnboundField, Ordered> &schema) {
         const std::unordered_map<Identifier, std::string> sinkConfig{
             {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
-        return sinkCatalog.addSinkDescriptor(sinkName, schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {}).value();
+        return SinkDescriptor::createNamed(INVALID_SINK_ID, sinkName, schema, Identifier::parse("file"),
+                                           Host{"localhost"}, sinkConfig, {})
+                .value();
     }
 
     /// Build the expected join output schema for a left/right (prefix "left"/"right") join. For outer joins the fields of the side that may
@@ -133,13 +134,10 @@ public:
 /// A simple Selection → InlineSource plan. Verify all operators get CHOICELESS.
 TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto schema = createSchema("src");
-    auto logicalSource = createLogicalSource(sourceCatalog, Identifier::parse("TEST"), schema);
-    auto sourceDescriptor = createSourceDescriptor(sourceCatalog, logicalSource);
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), schema);
+    auto logicalSource = createLogicalSource(Identifier::parse("TEST"), schema);
+    auto sourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, logicalSource);
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), schema);
 
     const auto sourceOp = SourceDescriptorLogicalOperator::create(sourceDescriptor);
 
@@ -149,7 +147,7 @@ TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
 
     auto selectionOp = SelectionLogicalOperator::create(sourceOp, selectionFn);
     auto sinkOp = SinkLogicalOperator::create(selectionOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -165,17 +163,14 @@ TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
 /// Build a join with Equals(FieldAccess, FieldAccess). Verify HASH_JOIN trait.
 TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
 
-    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
-    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+    auto leftLogicalSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, leftLogicalSource);
 
-    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
-    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+    auto rightLogicalSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(PhysicalSourceId{2}, rightLogicalSource);
 
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
@@ -206,9 +201,9 @@ TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
         {Identifier::parse("START"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
         {Identifier::parse("END"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
 
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), sinkSchema);
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), sinkSchema);
     auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     const DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -222,17 +217,14 @@ TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
 /// Same join but with NESTED_LOOP_JOIN strategy. Verify NLJ trait.
 TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
 
-    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
-    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+    auto leftLogicalSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, leftLogicalSource);
 
-    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
-    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+    auto rightLogicalSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(PhysicalSourceId{2}, rightLogicalSource);
 
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
@@ -262,9 +254,9 @@ TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
         {Identifier::parse("START"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
         {Identifier::parse("END"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
 
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), sinkSchema);
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), sinkSchema);
     auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::NESTED_LOOP_JOIN);
     auto result = rule.apply(plan);
@@ -278,17 +270,14 @@ TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
 /// Join with a non-field-access leaf in condition + HASH_JOIN strategy. Verify fallback to NLJ.
 TEST_F(DecideJoinTypesTest, ForcedHJWithUnsupportedConditionFallsBackToNLJ)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
 
-    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
-    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+    auto leftLogicalSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, leftLogicalSource);
 
-    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
-    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+    auto rightLogicalSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(PhysicalSourceId{2}, rightLogicalSource);
 
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
@@ -322,9 +311,9 @@ TEST_F(DecideJoinTypesTest, ForcedHJWithUnsupportedConditionFallsBackToNLJ)
         {Identifier::parse("START"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
         {Identifier::parse("END"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
 
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), sinkSchema);
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), sinkSchema);
     auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::HASH_JOIN);
     auto result = rule.apply(plan);
@@ -338,17 +327,14 @@ TEST_F(DecideJoinTypesTest, ForcedHJWithUnsupportedConditionFallsBackToNLJ)
 /// Equals(field, field) AND Equals(field, field). Verify HASH_JOIN.
 TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
 
-    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
-    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+    auto leftLogicalSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, leftLogicalSource);
 
-    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
-    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+    auto rightLogicalSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(PhysicalSourceId{2}, rightLogicalSource);
 
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
@@ -384,9 +370,9 @@ TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
         {Identifier::parse("START"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
         {Identifier::parse("END"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
 
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), sinkSchema);
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), sinkSchema);
     auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -400,17 +386,14 @@ TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
 /// LEFT outer join with equi-predicate under OPTIMIZER_CHOOSES strategy -> HASH_JOIN trait
 TEST_F(DecideJoinTypesTest, LeftOuterJoinWithEquiPredicateGetsHashJoin)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
 
-    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
-    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+    auto leftLogicalSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, leftLogicalSource);
 
-    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
-    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+    auto rightLogicalSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(PhysicalSourceId{2}, rightLogicalSource);
 
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
@@ -430,9 +413,9 @@ TEST_F(DecideJoinTypesTest, LeftOuterJoinWithEquiPredicateGetsHashJoin)
         JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN,
         characteristics.value());
 
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -446,17 +429,14 @@ TEST_F(DecideJoinTypesTest, LeftOuterJoinWithEquiPredicateGetsHashJoin)
 /// RIGHT outer join with equi-predicate under OPTIMIZER_CHOOSES strategy -> HASH_JOIN trait
 TEST_F(DecideJoinTypesTest, RightOuterJoinWithEquiPredicateGetsHashJoin)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
 
-    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
-    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+    auto leftLogicalSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, leftLogicalSource);
 
-    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
-    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+    auto rightLogicalSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(PhysicalSourceId{2}, rightLogicalSource);
 
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
@@ -476,9 +456,9 @@ TEST_F(DecideJoinTypesTest, RightOuterJoinWithEquiPredicateGetsHashJoin)
         JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
         characteristics.value());
 
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), createJoinOutputSchema(true, false));
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(true, false));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -492,17 +472,14 @@ TEST_F(DecideJoinTypesTest, RightOuterJoinWithEquiPredicateGetsHashJoin)
 /// FULL outer join with equi-predicate under OPTIMIZER_CHOOSES strategy -> HASH_JOIN trait
 TEST_F(DecideJoinTypesTest, FullOuterJoinWithEquiPredicateGetsHashJoin)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
 
-    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
-    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+    auto leftLogicalSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, leftLogicalSource);
 
-    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
-    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+    auto rightLogicalSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(PhysicalSourceId{2}, rightLogicalSource);
 
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
@@ -522,9 +499,9 @@ TEST_F(DecideJoinTypesTest, FullOuterJoinWithEquiPredicateGetsHashJoin)
         JoinLogicalOperator::JoinType::OUTER_FULL_JOIN,
         characteristics.value());
 
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), createJoinOutputSchema(true, true));
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(true, true));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -538,17 +515,14 @@ TEST_F(DecideJoinTypesTest, FullOuterJoinWithEquiPredicateGetsHashJoin)
 /// Outer joins under a forced NESTED_LOOP_JOIN strategy still receive the NLJ trait (the strategy is honored verbatim).
 TEST_F(DecideJoinTypesTest, OuterJoinGetsHashJoinEvenWithNLJStrategy)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
 
-    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
-    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+    auto leftLogicalSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, leftLogicalSource);
 
-    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
-    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+    auto rightLogicalSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(PhysicalSourceId{2}, rightLogicalSource);
 
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
@@ -568,9 +542,9 @@ TEST_F(DecideJoinTypesTest, OuterJoinGetsHashJoinEvenWithNLJStrategy)
         JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN,
         characteristics.value());
 
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::NESTED_LOOP_JOIN);
     auto result = rule.apply(plan);
@@ -584,17 +558,14 @@ TEST_F(DecideJoinTypesTest, OuterJoinGetsHashJoinEvenWithNLJStrategy)
 /// Outer join with non-equi predicate must be a NLJ, as the hash join does not support non-equi predicates
 TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
 {
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
-
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
 
-    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
-    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+    auto leftLogicalSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(PhysicalSourceId{1}, leftLogicalSource);
 
-    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
-    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+    auto rightLogicalSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(PhysicalSourceId{2}, rightLogicalSource);
 
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
@@ -619,9 +590,9 @@ TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
         JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN,
         characteristics.value());
 
-    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
+    auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);

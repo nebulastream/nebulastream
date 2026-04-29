@@ -41,7 +41,6 @@
 #include <Sequencing/SequenceData.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
-#include <Util/UUID.hpp>
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -51,20 +50,11 @@
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngine.hpp>
 #include <QueryEngineConfiguration.hpp>
-#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <TestSource.hpp>
 
 namespace NES
 {
-
-namespace
-{
-QueryId randomQueryId()
-{
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
-}
-}
 
 std::vector<std::byte> identifiableData(size_t identifier)
 {
@@ -286,7 +276,7 @@ QueryPlanBuilder TestingHarness::buildNewQuery() const
 
 std::unique_ptr<ExecutableQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilder&& builder)
 {
-    const auto queryId = randomQueryId();
+    const auto queryId = QueryId{lastQueryIdCounter++};
     queryIds.push_back(queryId);
     lastIdentifier = builder.nextIdentifier;
     lastOriginIdCounter = builder.originIdCounter;

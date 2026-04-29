@@ -28,13 +28,13 @@
 use crate::harness::TestHarness;
 use crate::model_state::{ModelState, Operation};
 use crate::workload::{
-    Invariant, Workload, WorkloadFactory, check_invariants, execute, gen_delays, parse_options,
-    pick_weighted,
+    check_invariants, execute, gen_delays, parse_options, pick_weighted, Invariant, Workload,
+    WorkloadFactory,
 };
 use async_trait::async_trait;
 use model::identifier::{FragmentId, QueryId};
-use model::query::GetQuery;
 use model::query::fragment::{self, FragmentState};
+use model::query::GetQuery;
 use model::statement::{Statement, StatementResult};
 use serde::Deserialize;
 use std::cell::RefCell;
@@ -242,12 +242,13 @@ impl Invariant<ModelState> for WorkerFragmentsActive {
             leaked.is_empty() && missing.is_empty(),
             "{}: {} leaked (active on worker but query dropped): {:?}, {} missing (expected active but not on worker): {:?}",
             self.name(),
-            leaked.len(), leaked,
-            missing.len(), missing,
+            leaked.len(),
+            leaked,
+            missing.len(),
+            missing,
         );
     }
 }
-
 
 inventory::submit! {
     WorkloadFactory {

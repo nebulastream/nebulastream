@@ -17,8 +17,8 @@ use chrono::{DateTime, Local};
 use model::database::{Database, DatabaseTransaction};
 use model::identifier::QueryId;
 use model::query;
-use model::query::GetQuery;
 use model::query::query_state::QueryState;
+use model::query::GetQuery;
 use model::request::{Payload, Request, StatementInput};
 use model::statement::{Statement, StatementResult};
 use model::worker::endpoint::NetworkAddr;
@@ -275,10 +275,8 @@ impl RequestHandler {
             // early — reaching Completed past a less-advanced wait
             // target is still a successful resolve from the caller's
             // point of view.
-            let early_termination = matches!(
-                query.state,
-                QueryState::Stopped | QueryState::Failed
-            ) && query.state != pending.block_until;
+            let early_termination = matches!(query.state, QueryState::Stopped | QueryState::Failed)
+                && query.state != pending.block_until;
             if early_termination {
                 let _ = pending.reply_to.send(Err(EarlyTermination(query).into()));
             } else {
@@ -324,9 +322,7 @@ impl RequestHandler {
                         || now >= pending.deadline
                     {
                         info!("completed: Queries({} queries)", queries.len());
-                        let _ = pending
-                            .reply_to
-                            .send(Ok(StatementResult::Queries(queries)));
+                        let _ = pending.reply_to.send(Ok(StatementResult::Queries(queries)));
                     } else {
                         self.pending_polls.push(pending);
                     }

@@ -27,7 +27,6 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 
 using namespace std::chrono_literals;
 
@@ -39,10 +38,8 @@ class QueryLogTest : public ::testing::Test
 protected:
     void SetUp() override { queryLog = std::make_unique<QueryLog>(); }
 
-    static QueryId randomQueryId() { return QueryId::createLocal(LocalQueryId(generateUUID())); }
-
     std::unique_ptr<QueryLog> queryLog;
-    const QueryId testQueryId = randomQueryId();
+    const QueryId testQueryId = QueryId{1};
     const std::chrono::system_clock::time_point testTime = std::chrono::system_clock::now();
 };
 
@@ -71,7 +68,7 @@ TEST_F(QueryLogTest, GetLogForQuery)
 
 TEST_F(QueryLogTest, GetLogForNonExistentQuery)
 {
-    const auto log = queryLog->getLogForQuery(randomQueryId());
+    const auto log = queryLog->getLogForQuery(QueryId{1});
     EXPECT_FALSE(log.has_value());
 }
 
@@ -139,14 +136,14 @@ TEST_F(QueryLogTest, GetQuerySummaryPartialExecution)
 
 TEST_F(QueryLogTest, GetQuerySummaryForNonExistentQuery)
 {
-    const auto status = queryLog->getQueryStatus(randomQueryId());
+    const auto status = queryLog->getQueryStatus(QueryId{1});
     EXPECT_FALSE(status.has_value());
 }
 
 TEST_F(QueryLogTest, MultipleQueriesIndependentLogs)
 {
-    const auto query1 = randomQueryId();
-    const auto query2 = randomQueryId();
+    const auto query1 = QueryId{1};
+    const auto query2 = QueryId{2};
 
     queryLog->logQueryStatusChange(query1, QueryStatus::Started, testTime);
     queryLog->logQueryStatusChange(query2, QueryStatus::Started, testTime + 50ms);
@@ -268,7 +265,7 @@ TEST_F(QueryLogTest, MultiThreadedLogging)
     queryIds.reserve(numQueries);
     for (uint64_t i = 0; i < numQueries; ++i)
     {
-        queryIds.push_back(randomQueryId());
+        queryIds.push_back(QueryId{static_cast<int64_t>(i + 1)});
     }
 
     std::barrier barrier{numThreads};

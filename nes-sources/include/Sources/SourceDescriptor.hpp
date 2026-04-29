@@ -38,7 +38,6 @@
 
 namespace NES
 {
-class SourceCatalog;
 class OperatorSerializationUtil;
 
 class SourceDescriptor final : public Descriptor
@@ -68,17 +67,9 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
-    friend class SourceCatalog;
     friend OperatorSerializationUtil;
     friend struct Unreflector<SourceDescriptor>;
     friend struct Reflector<SourceDescriptor>;
-
-    PhysicalSourceId physicalSourceId;
-    LogicalSource logicalSource;
-    std::string sourceType;
-    Host host;
-    InputFormatterDescriptor inputFormatterDescriptor;
-
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
@@ -88,6 +79,12 @@ private:
         Host host,
         DescriptorConfig::Config config,
         const InputFormatterDescriptor& inputFormatterDescriptor);
+
+    PhysicalSourceId physicalSourceId;
+    LogicalSource logicalSource;
+    std::string sourceType;
+    Host host;
+    InputFormatterDescriptor inputFormatterDescriptor;
 
 public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
@@ -103,6 +100,14 @@ public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
+
+    static std::expected<SourceDescriptor, Exception> create(
+        PhysicalSourceId id,
+        LogicalSource logicalSource,
+        const Identifier &sourceType,
+        Host host,
+        std::unordered_map<Identifier, std::string> descriptorConfig,
+        const std::unordered_map<Identifier, std::string> &inputFormatterConfig);
 };
 
 template <>
@@ -132,7 +137,7 @@ namespace NES::detail
 {
 struct ReflectedSourceDescriptor
 {
-    uint64_t physicalSourceId;
+    int64_t physicalSourceId;
     LogicalSource logicalSource;
     std::string type;
     Host host;

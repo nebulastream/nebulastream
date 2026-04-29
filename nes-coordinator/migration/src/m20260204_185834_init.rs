@@ -521,7 +521,7 @@ impl MigrationTrait for Migration {
                             .json_binary()
                             .not_null(),
                     )
-                    .col(ColumnDef::new(MlModel::Imported).binary().not_null())
+                    .col(ColumnDef::new(MlModel::Imported).json_binary().not_null())
                     .to_owned(),
             )
             .await?;

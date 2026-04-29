@@ -14,32 +14,20 @@
 resolver = "3"
 members = [
     "nes-coordinator/coordinator",
+    "nes-coordinator/model",
     "nes-coordinator/controller",
     "nes-coordinator/migration",
+    "nes-coordinator/bridge",
+    "nes-frontend/nebucli",
+]
+default-members = [
+    "nes-coordinator/coordinator",
     "nes-coordinator/model",
+    "nes-coordinator/controller",
+    "nes-coordinator/migration",
 ]
 
 [workspace.dependencies]
-anyhow = "1.0"
-async-trait = "0.1"
-chrono = { version = "0.4", features = ["serde"] }
-flume = "0.12"
-inventory = "0.3"
-madsim = { version = "0.2.34", features = ["macros"] }
-prost = "=0.13.4"
-sea-orm = { version = "=1.1.1", features = [
-    "sqlx-sqlite",
-    "runtime-tokio-rustls",
-    "macros",
-    "debug-print",
-    "with-json",
-    "sqlite-use-returning-for-3_35",
-] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-sqlx = { version = "=0.8.2", default-features = false, features = ["sqlite"] }
-strum = { version = "0.26", features = ["derive"] }
-thiserror = "2.0"
 tokio = { version = "0.2", package = "madsim-tokio", features = [
     "rt",
     "rt-multi-thread",
@@ -48,9 +36,30 @@ tokio = { version = "0.2", package = "madsim-tokio", features = [
     "time",
 ] }
 tokio-retry = "0.3.0"
+tracing = "0.1.44"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.145"
+thiserror = "2.0.17"
+anyhow = "1.0"
+sea-orm = { version = "=1.1.1", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+    "macros",
+    "debug-print",
+    "with-json",
+    "sqlite-use-returning-for-3_35",
+] }
+strum = { version = "0.26", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+madsim = { version = "0.2.34", features = ["macros"] }
 tonic = { version = "0.5.1", package = "madsim-tonic" }
 tonic-build = { version = "0.5", package = "madsim-tonic-build" }
-tracing = "0.1.44"
+prost = "=0.13.4"
+flume = "0.12"
+sqlx = { version = "0.8", default-features = false, features = ["sqlite"] }
+async-trait = "0.1"
+inventory = "0.3"
+proptest-stateful = { git = "https://github.com/yschroeder97/proptest-stateful.git", rev = "a4eed0b" }
 
 controller = { path = "nes-coordinator/controller" }
 migration = { path = "nes-coordinator/migration" }

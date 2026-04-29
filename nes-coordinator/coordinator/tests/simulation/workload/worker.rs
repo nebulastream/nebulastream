@@ -25,8 +25,8 @@
 use crate::harness::TestHarness;
 use crate::model_state::{ModelState, Operation};
 use crate::workload::{
-    Invariant, Workload, WorkloadFactory, check_invariants, execute, gen_delays, parse_options,
-    pick_weighted,
+    check_invariants, execute, gen_delays, parse_options, pick_weighted, Invariant, Workload,
+    WorkloadFactory,
 };
 use async_trait::async_trait;
 use model::statement::{Statement, StatementResult};
@@ -143,12 +143,7 @@ impl Workload for WorkerWorkload {
     #[allow(clippy::await_holding_refcell_ref)]
     async fn check(&self, harness: &TestHarness) {
         let model = self.model.borrow();
-        check_invariants(
-            &[&DbWorkersActive, &DbWorkersDropped],
-            harness,
-            &*model,
-        )
-        .await;
+        check_invariants(&[&DbWorkersActive, &DbWorkersDropped], harness, &*model).await;
     }
 }
 

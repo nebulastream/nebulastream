@@ -14,20 +14,15 @@
 
 #pragma once
 
-#include <memory>
-
 #include <Phases/OperatorPlacer.hpp>
 #include <Phases/RuleBasedOptimizer.hpp>
 #include <Phases/SemanticAnalyzer.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <WorkerCatalog.hpp>
 
 namespace NES
 {
-class ModelCatalog;
+struct PlannerContext;
 }
 
 namespace NES
@@ -36,17 +31,12 @@ namespace NES
 class QueryOptimizer final
 {
 public:
-    explicit QueryOptimizer(
-        const QueryOptimizerConfiguration& defaultQueryOptimization,
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::shared_ptr<const SinkCatalog>& sinkCatalog,
-        const std::shared_ptr<const WorkerCatalog>& workerCatalog,
-        const std::shared_ptr<const ModelCatalog>& modelCatalog)
-        : semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog)
-        , ruleBasedOptimization(defaultQueryOptimization)
-        , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
+    explicit QueryOptimizer(const QueryOptimizerConfiguration &defaultQueryOptimization, const PlannerContext &ctx)
+        : semanticAnalyzer(ctx), ruleBasedOptimization(defaultQueryOptimization),
+          operatorPlacement(defaultQueryOptimization, ctx) {
+    }
 
-    [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;
+    [[nodiscard]] std::unordered_map<Host, std::vector<LogicalPlan> > optimize(LogicalPlan plan) const;
 
 private:
     SemanticAnalyzer semanticAnalyzer;

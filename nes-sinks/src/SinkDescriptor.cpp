@@ -90,12 +90,17 @@ Host NamedSinkDescriptor::getHost() const
     return host;
 }
 
+SinkId NamedSinkDescriptor::getSinkId() const {
+    return id;
+}
+
 std::unordered_map<Identifier, std::string> NamedSinkDescriptor::getOutputFormatterConfig() const
 {
     return formatConfig;
 }
 
 NamedSinkDescriptor::NamedSinkDescriptor(
+    const SinkId id,
     Identifier name,
     Schema<UnqualifiedUnboundField, Ordered> nameWithSchema,
     const std::string_view sinkType,
@@ -103,7 +108,8 @@ NamedSinkDescriptor::NamedSinkDescriptor(
     std::unordered_map<Identifier, std::string> formatConfig,
     DescriptorConfig::Config config)
     : Descriptor(std::move(config))
-    , name(std::move(name))
+      , id(id)
+      , name(std::move(name))
     , schema(std::make_shared<Schema<UnqualifiedUnboundField, Ordered>>(std::move(nameWithSchema)))
     , sinkType(sinkType)
     , host(std::move(host))
@@ -112,15 +118,15 @@ NamedSinkDescriptor::NamedSinkDescriptor(
 }
 
 InlineSinkDescriptor::InlineSinkDescriptor(
-    uint64_t sinkId,
+    const SinkId id,
     std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema,
     const std::string_view sinkType,
     Host host,
     std::unordered_map<Identifier, std::string> formatConfig,
     DescriptorConfig::Config config)
     : Descriptor(std::move(config))
-    , sinkId(sinkId)
-    , schema(std::visit(
+      , id(id)
+      , schema(std::visit(
           [](auto&& arg) -> std::variant<
                              std::monostate,
                              std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
@@ -146,17 +152,16 @@ InlineSinkDescriptor::InlineSinkDescriptor(
 std::ostream& operator<<(std::ostream& out, const InlineSinkDescriptor& sinkDescriptor)
 {
     out << fmt::format(
-        "SinkDescriptor: (name: {}, type: {}, host: {}, Config: {})",
-        sinkDescriptor.sinkId,
+        "SinkDescriptor: (id: {}, type: {}, host: {}, Config: {})",
+        sinkDescriptor.id,
         sinkDescriptor.sinkType,
         sinkDescriptor.host,
         sinkDescriptor.toStringConfig());
     return out;
 }
 
-bool operator==(const InlineSinkDescriptor& lhs, const InlineSinkDescriptor& rhs)
-{
-    return lhs.sinkId == rhs.sinkId;
+bool operator==(const InlineSinkDescriptor& lhs, const InlineSinkDescriptor&rhs) {
+    return lhs.id == rhs.id;
 }
 
 std::string InlineSinkDescriptor::getFormatType() const
@@ -185,9 +190,8 @@ InlineSinkDescriptor::getSchema() const
     return schema;
 }
 
-uint64_t InlineSinkDescriptor::getSinkId() const
-{
-    return sinkId;
+SinkId InlineSinkDescriptor::getSinkId() const {
+    return id;
 }
 
 Host InlineSinkDescriptor::getHost() const
@@ -276,6 +280,10 @@ Host SinkDescriptor::getHost() const
     return std::visit([](const auto& var) { return var.getHost(); }, underlying);
 }
 
+SinkId SinkDescriptor::getSinkId() const {
+    return std::visit([](const auto &var) { return var.getSinkId(); }, underlying);
+}
+
 std::optional<DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<Identifier, std::string> configPairs)
 {
@@ -284,6 +292,49 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
         | std::ranges::to<std::unordered_map>();
     auto sinkValidationRegistryArguments = SinkValidationRegistryArguments{stringConfigMap};
     return SinkValidationRegistry::instance().create(std::string{sinkType}, std::move(sinkValidationRegistryArguments));
+}
+
+std::optional<SinkDescriptor> SinkDescriptor::createNamed(
+    const SinkId id,
+    Identifier name,
+    const Identifier &sinkType,
+    const Schema<UnqualifiedUnboundField, Ordered> &schema,
+    Host host,
+    std::unordered_map<Identifier, std::string> descriptorConfig,
+    std::unordered_map<Identifier, std::string> formatConfig) {
+    const auto validatedConfig = validateAndFormatConfig(sinkType.asCanonicalString(), std::move(descriptorConfig));
+    if (not validatedConfig.has_value()) {
+        return std::nullopt;
+    }
+    return SinkDescriptor{
+        NamedSinkDescriptor{
+            id, std::move(name), schema, sinkType.asCanonicalString(), std::move(host), std::move(formatConfig),
+            std::move(*validatedConfig)
+        }
+    };
+}
+
+std::optional<SinkDescriptor> SinkDescriptor::createInline(
+    const SinkId id,
+    const Identifier &sinkType,
+    const std::optional<Schema<UnqualifiedUnboundField, Ordered> > &schema,
+    Host host,
+    std::unordered_map<Identifier, std::string> descriptorConfig,
+    std::unordered_map<Identifier, std::string> formatConfig) {
+    auto validatedConfig = validateAndFormatConfig(sinkType.asCanonicalString(), std::move(descriptorConfig));
+    if (not validatedConfig.has_value()) {
+        return std::nullopt;
+    }
+    const std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField,
+        Ordered> > schemaVar
+            = schema.has_value()
+                  ? std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<
+                      UnqualifiedUnboundField, Ordered> >{schema.value()}
+                  : std::monostate{};
+    return SinkDescriptor{
+        InlineSinkDescriptor{
+            id, schemaVar, sinkType.asCanonicalString(), std::move(host), std::move(formatConfig),
+            std::move(*validatedConfig)}};
 }
 
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
@@ -303,9 +354,10 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
         rhs.underlying);
 }
 
-Reflected Reflector<NamedSinkDescriptor>::operator()(const NamedSinkDescriptor& descriptor) const
+Reflected Reflector<NamedSinkDescriptor>::operator()(const NamedSinkDescriptor &descriptor) const
 {
     return reflect(detail::ReflectedNamedSinkDescriptor{
+        .id = descriptor.getSinkId().getRawValue(),
         .name = descriptor.getSinkName(),
         .schema = *descriptor.getSchema(),
         .sinkType = descriptor.getSinkType(),
@@ -314,11 +366,13 @@ Reflected Reflector<NamedSinkDescriptor>::operator()(const NamedSinkDescriptor& 
         .config = descriptor.getReflectedConfig()});
 }
 
-NamedSinkDescriptor Unreflector<NamedSinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const
-{
-    const auto [name, schema, sinkType, host, formatConfig, config] = context.unreflect<detail::ReflectedNamedSinkDescriptor>(reflected);
+NamedSinkDescriptor Unreflector<NamedSinkDescriptor>::operator()(const Reflected &reflected,
+                                                                 const ReflectionContext &context) const {
+    const auto [id, name, schema, sinkType, host, formatConfig, config]
+        = context.unreflect<detail::ReflectedNamedSinkDescriptor>(reflected);
     const auto unreflectedFormatConfig = context.unreflect<std::unordered_map<Identifier, std::string>>(formatConfig);
-    return NamedSinkDescriptor{name, schema, sinkType, host, unreflectedFormatConfig, Descriptor::unreflectConfig(config, context)};
+    return NamedSinkDescriptor{
+        SinkId{id}, name, schema, sinkType, host, unreflectedFormatConfig, Descriptor::unreflectConfig(config, context)};
 }
 
 Reflected Reflector<InlineSinkDescriptor>::operator()(const InlineSinkDescriptor& descriptor) const
@@ -327,23 +381,25 @@ Reflected Reflector<InlineSinkDescriptor>::operator()(const InlineSinkDescriptor
     auto schema = std::visit(
         Overloaded{
             [](const std::monostate&) { return SchemaType{std::monostate{}}; },
-            [](const auto& schemaPtr) { return SchemaType{*schemaPtr}; }},
+            [](const auto &schemaPtr) { return SchemaType{*schemaPtr}; }},
         descriptor.getSchema());
 
     return reflect(detail::ReflectedInlineSinkDescriptor{
-        .sinkId = descriptor.getSinkId(),
+        .id = descriptor.getSinkId().getRawValue(),
         .schema = std::move(schema),
         .sinkType = descriptor.getSinkType(),
         .host = descriptor.getHost(),
         .formatConfig = reflect(descriptor.getOutputFormatterConfig()),
-        .config = descriptor.getReflectedConfig()});
+        .config = descriptor.getReflectedConfig()
+    });
 }
 
-InlineSinkDescriptor Unreflector<InlineSinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+InlineSinkDescriptor Unreflector<InlineSinkDescriptor>::operator()(const Reflected &reflected, const ReflectionContext& context) const
 {
-    auto [sinkId, schema, sinkType, host, formatConfig, config] = context.unreflect<detail::ReflectedInlineSinkDescriptor>(reflected);
+    auto [id, schema, sinkType, host, formatConfig, config] = context.unreflect<
+        detail::ReflectedInlineSinkDescriptor>(reflected);
     auto unreflectedFormatConfig = context.unreflect<std::unordered_map<Identifier, std::string>>(formatConfig);
-    return InlineSinkDescriptor{sinkId, schema, sinkType, host, unreflectedFormatConfig, Descriptor::unreflectConfig(config, context)};
+    return InlineSinkDescriptor{SinkId{id}, schema, sinkType, host, unreflectedFormatConfig, Descriptor::unreflectConfig(config, context)};
 }
 
 Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const

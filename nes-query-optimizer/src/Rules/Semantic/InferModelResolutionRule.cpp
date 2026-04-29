@@ -33,30 +33,28 @@
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <ErrorHandling.hpp>
-#include <ModelCatalog.hpp>
+#include <PlannerContext.hpp>
 
 namespace NES
 {
 
 namespace
 {
-LogicalOperator recur(const LogicalOperator& op, const ModelCatalog& modelCatalog)
-{
-    auto newChildren = op.getChildren() | std::views::transform([&](const auto& child) { return recur(child, modelCatalog); })
-        | std::ranges::to<std::vector>();
+LogicalOperator recur(const LogicalOperator &op, const PlannerContext &ctx) {
+    auto newChildren
+            = op.getChildren() | std::views::transform([&](const auto &child) { return recur(child, ctx); }) |
+              std::ranges::to<std::vector>();
 
     if (const auto inferModelName = op.tryGetAs<InferModelNameLogicalOperator>())
     {
         const auto& modelName = inferModelName->get().getModelName();
-        if (!modelCatalog.hasModel(modelName))
-        {
-            throw UnknownModelName("Model '{}' is not registered", modelName);
-        }
         PRECONDITION(
             std::ranges::size(newChildren) == 1,
             "Expected InferModelName Logical Operator to have one child, but has {}",
             std::ranges::size(newChildren));
-        return TypedLogicalOperator<InferModelLogicalOperator>{modelCatalog.load(modelName), std::move(newChildren.at(0))};
+        return TypedLogicalOperator<InferModelLogicalOperator>{
+            ModelCatalog::getModel(ctx, modelName), std::move(newChildren.at(0))
+        };
     }
     return op.withChildren(std::move(newChildren));
 }
@@ -65,7 +63,7 @@ LogicalOperator recur(const LogicalOperator& op, const ModelCatalog& modelCatalo
 LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    return queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front(), *modelCatalog)});
+    return queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front(), ctx)});
 }
 
 const std::type_info& InferModelResolutionRule::getType()
@@ -90,9 +88,8 @@ std::set<std::type_index> InferModelResolutionRule::requiredBy() const
     return {typeid(TypeInferenceRule)};
 }
 
-bool InferModelResolutionRule::operator==(const InferModelResolutionRule& other) const
-{
-    return modelCatalog == other.modelCatalog;
+bool InferModelResolutionRule::operator==(const InferModelResolutionRule & /*other*/) const {
+    return true;
 }
 
 }

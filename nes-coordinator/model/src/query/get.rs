@@ -26,6 +26,7 @@ pub struct GetQuery {
     pub ids: Option<Vec<QueryId>>,
     pub name: Option<String>,
     pub state: Option<QueryState>,
+    #[serde(default)]
     pub with_fragments: bool,
 }
 

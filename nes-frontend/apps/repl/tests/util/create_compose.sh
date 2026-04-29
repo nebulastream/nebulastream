@@ -90,10 +90,10 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     working_dir: /workdir/$HOST_NAME
     healthcheck:
       test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$HOST_PORT", "-connect-timeout", "5s" ]
-      interval: 2s
-      timeout: 10s
-      retries: 5
-      start_period: 5s
+      interval: 1s
+      timeout: 5s
+      retries: 3
+      start_period: 0s
     command: [
       "--grpc=$HOST_NAME:$HOST_PORT",
       "--data_address=$DATA",

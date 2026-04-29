@@ -28,6 +28,8 @@
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
+#include <PlannerContext.hpp>
+
 namespace NES
 {
 
@@ -53,9 +55,8 @@ std::set<std::type_index> InlineSourceBindingRule::requiredBy() const
     return {};
 };
 
-bool InlineSourceBindingRule::operator==(const InlineSourceBindingRule& other) const
-{
-    return sourceCatalog == other.sourceCatalog;
+bool InlineSourceBindingRule::operator==(const InlineSourceBindingRule & /*other*/) const {
+    return true;
 }
 
 LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const LogicalOperator& current) const
@@ -74,23 +75,8 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
         const auto parserConfig = inlineSource.value()->getParserConfig();
         auto sourceConfig = inlineSource.value()->getSourceConfig();
 
-        /// "host" is not part of the source config — it determines placement, not source behavior.
-        /// It is stored in the config map only because InlineSourceLogicalOperator lacks a dedicated host field.
-        auto hostIt = sourceConfig.find(Identifier::parse("host"));
-        if (hostIt == sourceConfig.end())
-        {
-            throw InvalidConfigParameter("`host`");
-        }
-        auto host = Host(hostIt->second);
-        sourceConfig.erase(hostIt);
-
-        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, sourceConfig);
-
-        if (!descriptorOpt.has_value())
-        {
-            throw InvalidConfigParameter("Could not create an inline source descriptor because of invalid config parameters");
-        }
-        const auto& descriptor = descriptorOpt.value();
+        const auto descriptor = SourceCatalog::createInlineSource(ctx, ConnectorKind::Inline, type, schema,
+                                                                  parserConfig, sourceConfig);
         return SourceDescriptorLogicalOperator::create(descriptor);
     }
 

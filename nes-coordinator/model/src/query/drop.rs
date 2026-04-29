@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-use crate::Execute;
 use crate::query::fragment;
 use crate::query::fragment::{DesiredFragmentState, StopMode};
 use crate::query::{self, Entity};
+use crate::Execute;
 use anyhow::Result;
 use sea_orm::sea_query::Expr;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
@@ -25,7 +25,9 @@ use super::get::GetQuery;
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct DropQuery {
+    #[serde(default)]
     pub stop_mode: StopMode,
+    #[serde(default)]
     pub filters: GetQuery,
 }
 

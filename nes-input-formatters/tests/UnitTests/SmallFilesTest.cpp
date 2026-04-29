@@ -38,7 +38,6 @@
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -120,8 +119,6 @@ class SmallFilesTest : public Testing::BaseUnitTest
                 "operation_state",
                 "radiation_level",
                 "orbital_velocity"}}}};
-
-    SourceCatalog sourceCatalog;
 
 public:
     static void SetUpTestCase()
@@ -220,8 +217,9 @@ public:
         std::shared_ptr<BufferManager> sourceBufferPool = BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
 
         /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
-        const auto [backpressureController, fileSource] = InputFormatterTestUtil::createFileSource(
-            sourceCatalog, testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
+        const auto [backpressureController, fileSource]
+                = InputFormatterTestUtil::createFileSource(testFilePath, schema, std::move(sourceBufferPool),
+                                                           numberOfRequiredSourceBuffers);
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);
         INVARIANT(

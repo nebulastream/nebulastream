@@ -106,5 +106,3 @@ impl TestConfig {
         DEFAULT_BUGGIFY_PROBABILITY
     }
 }
-
-

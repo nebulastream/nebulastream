@@ -37,13 +37,13 @@ pub mod stall;
 pub mod swizzle;
 pub mod worker;
 
-pub use crate::invariant::{Invariant, check_invariants};
+pub use crate::invariant::{check_invariants, Invariant};
 
 use crate::harness::TestHarness;
 use crate::model_state::{ModelState, Operation, Step};
 use async_trait::async_trait;
 use madsim::rand::seq::SliceRandom;
-use madsim::rand::{Rng, thread_rng};
+use madsim::rand::{thread_rng, Rng};
 use model::statement::{Statement, StatementResult};
 use serde::de::DeserializeOwned;
 use std::cell::RefCell;
@@ -97,8 +97,7 @@ pub trait Workload {
     async fn check(&self, _harness: &TestHarness) {}
 }
 
-type WorkloadCtor =
-    fn(&HashMap<String, toml::Value>, Rc<RefCell<ModelState>>) -> Box<dyn Workload>;
+type WorkloadCtor = fn(&HashMap<String, toml::Value>, Rc<RefCell<ModelState>>) -> Box<dyn Workload>;
 
 pub struct WorkloadFactory {
     pub name: &'static str,

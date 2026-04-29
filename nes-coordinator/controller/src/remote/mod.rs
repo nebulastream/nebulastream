@@ -22,18 +22,18 @@ use client::FragmentClient;
 use model::identifier::FragmentId;
 use model::query::fragment;
 use model::worker;
-use model::worker::WorkerTransition;
 use model::worker::endpoint::NetworkAddr;
+use model::worker::WorkerTransition;
 use sea_orm::ActiveModelTrait;
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::select;
 use tokio::sync::watch;
+use tokio_retry::strategy::{jitter, ExponentialBackoff};
 use tokio_retry::Retry;
-use tokio_retry::strategy::{ExponentialBackoff, jitter};
 use tonic::transport::{Channel, Endpoint};
-use tracing::{Instrument, debug, error, info, info_span, warn};
+use tracing::{debug, error, info, info_span, warn, Instrument};
 
 #[allow(clippy::pedantic, clippy::nursery)]
 pub mod worker_rpc_service {
@@ -59,8 +59,8 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(1);
 const CONNECT_MAX_RETRIES: usize = 8;
 const CONNECT_MAX_DELAY: Duration = Duration::from_secs(5);
 const RECONNECT_INTERVAL: Duration = Duration::from_secs(30);
-const ENDPOINT_KEEP_ALIVE_INTERVAL: Duration = Duration::from_mins(1);
-const ENDPOINT_KEEP_ALIVE_TIMEOUT: Duration = Duration::from_mins(1);
+const ENDPOINT_KEEP_ALIVE_INTERVAL: Duration = Duration::from_secs(60);
+const ENDPOINT_KEEP_ALIVE_TIMEOUT: Duration = Duration::from_secs(60);
 
 fn connect_retry_strategy() -> impl Iterator<Item = Duration> {
     ExponentialBackoff::from_millis(50)

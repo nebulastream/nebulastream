@@ -38,21 +38,15 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
-#include <Util/UUID.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
-
-#include <DistributedQuery.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -61,27 +55,33 @@ namespace
 {
 constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
 
-LogicalSource createLogicalTestSource(SourceCatalog& sourceCatalog, const std::string& name)
-{
+LogicalSource createLogicalTestSource(const std::string &name) {
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse(name + "_id"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse(name + "_value"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse(name + "_ts"), DataType::Type::UINT64}};
-    return sourceCatalog.addLogicalSource(Identifier::parse(name), schema).value();
+    return LogicalSource{Identifier::parse(name), schema};
 }
 
-SourceDescriptor createTestSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
-{
+SourceDescriptor createTestSourceDescriptor(const PhysicalSourceId physicalSourceId,
+                                            const LogicalSource &logicalSource) {
     const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-    return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), Host("localhost"), sourceConfig, parserConfig).value();
+    return SourceDescriptor::create(
+                physicalSourceId,
+                logicalSource,
+                Identifier::parse("File"),
+                Host{"localhost"},
+                sourceConfig,
+                {{Identifier::parse("type"), "CSV"}})
+            .value();
 }
 
-SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
-{
+SinkDescriptor createTestSinkDescriptor() {
     const std::unordered_map<Identifier, std::string> sinkConfig{
         {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
-    return sinkCatalog.getInlineSink(std::nullopt, Identifier::parse("file"), Host("localhost"), sinkConfig, {}).value();
+    return SinkDescriptor::createInline(INITIAL_SINK_ID, std::nullopt, Identifier::parse("file"), Host{"localhost"},
+                                        sinkConfig, {})
+            .value();
 }
 }
 
@@ -89,17 +89,14 @@ class DecideMemoryLayoutTest : public ::testing::Test
 {
 public:
     explicit DecideMemoryLayoutTest()
-        : leftSource(createLogicalTestSource(sourceCatalog, "left"))
-        , rightSource(createLogicalTestSource(sourceCatalog, "right"))
-        , leftSourceDescriptor(createTestSourceDescriptor(sourceCatalog, leftSource))
-        , rightSourceDescriptor(createTestSourceDescriptor(sourceCatalog, rightSource))
-        , sinkDescriptor(createTestSinkDescriptor(sinkCatalog))
-    {
+        : leftSource(createLogicalTestSource("left"))
+          , rightSource(createLogicalTestSource("right"))
+          , leftSourceDescriptor(createTestSourceDescriptor(PhysicalSourceId{1}, leftSource))
+          , rightSourceDescriptor(createTestSourceDescriptor(PhysicalSourceId{2}, rightSource))
+          , sinkDescriptor(createTestSinkDescriptor()) {
     }
 
 protected:
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
     LogicalSource leftSource;
     LogicalSource rightSource;
     SourceDescriptor leftSourceDescriptor;
@@ -112,7 +109,7 @@ TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsRowLayout)
 {
     const auto sourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto sinkOp = SinkLogicalOperator::create(sourceOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp}};
 
     const auto result = DecideMemoryLayoutRule{}.apply(plan);
 
@@ -143,7 +140,7 @@ TEST_F(DecideMemoryLayoutTest, BinaryPlanAllGetRowLayout)
             Windowing::BoundTimeCharacteristic{Windowing::TimeCharacteristicWrapper::createIngestionTime()},
             Windowing::BoundTimeCharacteristic{Windowing::TimeCharacteristicWrapper::createIngestionTime()}}});
     const auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp}};
 
     const auto result = DecideMemoryLayoutRule{}.apply(plan);
 

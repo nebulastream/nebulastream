@@ -13,7 +13,6 @@
 add_library(nes-inference
         src/Inference.cpp
         src/Model.cpp
-        src/ModelCatalog.cpp
         src/IreeTool.cpp
         src/IreeImporter.cpp
         src/IreeCompiler.cpp

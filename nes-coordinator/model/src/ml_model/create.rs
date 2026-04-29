@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-use crate::Execute;
 use crate::ml_model::{ActiveModel, Entity, Model};
+use crate::Execute;
 use anyhow::{Context, Result};
 use proptest::arbitrary::Arbitrary;
-use sea_orm::ActiveValue::Set;
 use sea_orm::entity::prelude::*;
+use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait};
 use serde::Deserialize;
 
@@ -27,7 +27,8 @@ pub struct CreateMlModel {
     pub path: String,
     pub input_schema: Json,
     pub output_schema: Json,
-    pub imported: Vec<u8>,
+    #[serde(default)]
+    pub imported: serde_json::Value,
     #[serde(default)]
     pub if_not_exists: bool,
 }
@@ -36,17 +37,13 @@ impl Arbitrary for CreateMlModel {
     type Parameters = ();
     fn arbitrary_with(_: ()) -> Self::Strategy {
         use proptest::prelude::*;
-        (
-            "[a-z][a-z0-9_]{2,29}",
-            "/[a-z]{1,8}/[a-z]{1,8}\\.onnx",
-            proptest::collection::vec(any::<u8>(), 0..256),
-        )
-            .prop_map(|(name, path, imported)| Self {
+        ("[a-z][a-z0-9_]{2,29}", "/[a-z]{1,8}/[a-z]{1,8}\\.onnx")
+            .prop_map(|(name, path)| Self {
                 name,
                 path,
                 input_schema: serde_json::json!({}),
                 output_schema: serde_json::json!({}),
-                imported,
+                imported: serde_json::json!({}),
                 if_not_exists: false,
             })
             .boxed()

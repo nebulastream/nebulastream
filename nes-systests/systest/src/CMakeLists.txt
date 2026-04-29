@@ -18,6 +18,5 @@ add_source_files(nes-systest-lib
         SystestState.cpp
         SystestResultCheck.cpp
         SystestConfiguration.cpp
-        QuerySubmitter.cpp
         SystestBinder.cpp
 )

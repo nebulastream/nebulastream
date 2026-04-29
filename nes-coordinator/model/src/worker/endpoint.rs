@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+use anyhow::Result;
 use proptest::arbitrary::Arbitrary;
 use proptest::strategy::BoxedStrategy;
 use sea_orm::sea_query::{ArrayType, Nullable, StringLen, ValueType, ValueTypeErr};
@@ -29,13 +30,13 @@ pub struct NetworkAddr {
 }
 
 impl NetworkAddr {
-    pub fn new(host: impl Into<String>, port: u16) -> Result<Self, &'static str> {
+    pub fn new(host: impl Into<String>, port: u16) -> Result<Self> {
         let host = host.into();
         if host.is_empty() {
-            return Err("Hostname cannot be empty");
+            anyhow::bail!("Hostname cannot be empty")
         }
         if port == 0 {
-            return Err("Port cannot be 0");
+            anyhow::bail!("Port cannot be zero")
         }
         Ok(Self { host, port })
     }

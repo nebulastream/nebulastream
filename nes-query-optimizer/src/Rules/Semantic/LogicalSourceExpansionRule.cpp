@@ -28,9 +28,9 @@
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
+#include <PlannerContext.hpp>
 
 namespace NES
 {
@@ -57,45 +57,35 @@ std::set<std::type_index> LogicalSourceExpansionRule::requiredBy() const
     return {};
 };
 
-bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& other) const
-{
-    return sourceCatalog == other.sourceCatalog;
+bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule & /*other*/) const {
+    return true;
 }
 
 namespace
 {
-LogicalOperator applyRecursive(const LogicalOperator& visiting, const SourceCatalog& sourceCatalog)
-{
-    auto children = visiting.getChildren()
-        | std::views::transform([&sourceCatalog](const auto& child) { return applyRecursive(child, sourceCatalog); })
-        | std::ranges::to<std::vector>();
+LogicalOperator applyRecursive(const LogicalOperator &visiting, const PlannerContext &ctx) {
+    auto children = visiting.getChildren() | std::views::transform([&ctx](const auto &child) {
+                        return applyRecursive(child, ctx);
+                    })
+                    | std::ranges::to<std::vector>();
     if (const auto sourceNameOperator = visiting.tryGetAs<SourceNameLogicalOperator>())
     {
-        const auto logicalSourceOpt = sourceCatalog.getLogicalSource(sourceNameOperator.value()->getLogicalSourceName());
-        if (not logicalSourceOpt.has_value())
-        {
-            throw UnknownSourceName("{}", sourceNameOperator.value()->getLogicalSourceName());
-        }
-        const auto& logicalSource = logicalSourceOpt.value();
-        const auto entriesOpt = sourceCatalog.getPhysicalSources(logicalSource);
-
-        if (not entriesOpt.has_value())
-        {
-            throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceNameOperator.value()->getLogicalSourceName());
-        }
-        const auto& entries = entriesOpt.value();
-        if (entries.empty())
-        {
+        /// The catalog keys sources by their canonical spelling, so the lookup has to fold the name the same way.
+        const auto logicalSource
+                = SourceCatalog::getLogicalSource(
+                    ctx, sourceNameOperator.value()->getLogicalSourceName().asCanonicalString());
+        const auto physicalSources = SourceCatalog::getPhysicalSources(
+            ctx, logicalSource.getLogicalSourceName().asCanonicalString());
+        if (physicalSources.empty()) {
             throw UnknownSourceName(
                 "No physical sources present for logical source \"{}\"", sourceNameOperator.value()->getLogicalSourceName());
         }
-        if (std::ranges::size(children) != 0 && std::ranges::size(entries) != 1)
-        {
+        if (std::ranges::size(children) != 0 && std::ranges::size(physicalSources) != 1) {
             throw UnknownSourceName("LogicalSource must either have no children or only expand to one physical source");
         }
 
-        auto expandedSourceOperators = entries
-            | std::views::transform([&children](const auto& entry) -> LogicalOperator
+        auto expandedSourceOperators = physicalSources
+                                       | std::views::transform([&children](const auto& entry) -> LogicalOperator
                                     { return SourceDescriptorLogicalOperator::create(entry).withChildrenUnsafe(children); })
             | std::ranges::to<std::vector>();
 
@@ -108,6 +98,6 @@ LogicalOperator applyRecursive(const LogicalOperator& visiting, const SourceCata
 LogicalPlan LogicalSourceExpansionRule::apply(const LogicalPlan& queryPlan) const
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    return queryPlan.withRootOperators({applyRecursive(queryPlan.getRootOperators().at(0), *sourceCatalog)});
+    return queryPlan.withRootOperators({applyRecursive(queryPlan.getRootOperators().at(0), ctx)});
 }
 }
