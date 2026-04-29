@@ -1,0 +1,55 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+pub mod database;
+mod format;
+pub mod identifier;
+pub mod query;
+pub mod request;
+pub mod sink;
+pub mod source;
+pub mod statement;
+pub mod worker;
+
+use anyhow::Result;
+pub use sea_orm::Set;
+use sea_orm::entity::prelude::*;
+use sea_orm::{Condition, ConnectionTrait};
+use serde::{Deserialize, Serialize};
+use strum::Display;
+
+pub trait IntoCondition {
+    fn to_condition(&self) -> Condition;
+}
+
+pub trait Execute {
+    type Response;
+    fn execute(&self, conn: &impl ConnectionTrait) -> impl Future<Output = Result<Self::Response>>;
+}
+
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Display, EnumIter, DeriveActiveEnum, Serialize, Deserialize,
+)]
+#[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
+pub enum ConnectorKind {
+    Shared,
+    Inline,
+    Internal,
+}
+
+impl Default for ConnectorKind {
+    fn default() -> Self {
+        Self::Shared
+    }
+}

@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc f89bc6814d15e43ffb3db9cc00d6b8c81bac24c143436b5aa4c6f2ba2b023168 # shrinks to input = _IfNotExistsCreatesNewNameArgs { req: SinkWithRefs { worker: CreateWorker { host_addr: NetworkAddr { host: "localhost", port: 1024 }, data_addr: NetworkAddr { host: "localhost", port: 1025 }, max_operators: None, peers: [], config: Null, if_not_exists: false }, sink: CreateSink { name: "A", host_addr: NetworkAddr { host: "localhost", port: 1024 }, sink_type: File, schema: Object {}, config: Object {}, if_not_exists: false } } }

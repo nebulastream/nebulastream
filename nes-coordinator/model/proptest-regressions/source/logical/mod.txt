@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc a67c0ff0dbfac6ec9519e724cb3efcdb234700d3ef032aec5b0119d909b1c087 # shrinks to input = _CreateAndGetArgs { req: CreateLogicalSource { name: "a0a", schema: Object {}, if_not_exists: false } }
