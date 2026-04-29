@@ -1,0 +1,81 @@
+[[test]]
+title = "small"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 20
+  end = 20
+  create_weight = 3
+  drop_weight = 1
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 20
+  end = 30
+  create_weight = 3
+  drop_weight = 1
+
+[[test]]
+title = "large"
+timeout = 120
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 100
+  end = 30
+  create_weight = 9
+  drop_weight = 1
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 100
+  end = 75
+  create_weight = 5
+  drop_weight = 1
+
+
+[[test]]
+title = "alternating"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  # create 10 workers
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 10
+  end = 10
+  create_weight = 1
+  drop_weight = 0
+
+  # create 20 long-running queries
+  [[test.workload]]
+  name = "Query"
+  num_ops = 20
+  begin = 5
+  end = 5
+  create_weight = 1
+  drop_weight = 0
+
+  # drop half of the workers
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 5
+  begin = 30
+  end = 40
+  create_weight = 0
+  drop_weight = 1
+
+  # create and drop 10 queries each
+  [[test.workload]]
+  name = "Query"
+  num_ops = 20
+  begin = 30
+  end = 40
+  create_weight = 1
+  drop_weight = 1
