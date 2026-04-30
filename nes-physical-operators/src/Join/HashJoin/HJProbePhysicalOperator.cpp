@@ -112,7 +112,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
                     rightEntry, rightHashMapPtr, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
                 auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
-                const PagedVectorRef rightPagedVector{rightPagedVectorMem, rightTupleLayout};
+                const PagedVectorRef rightPagedVector{NautilusBuffer::load(rightPagedVectorMem), rightTupleLayout};
                 const auto rightFields = rightTupleLayout->getAllFieldNames();
                 auto rightItStart = rightPagedVector.begin();
                 auto rightItEnd = rightPagedVector.end();
@@ -124,7 +124,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
                         leftEntry, leftHashMapPtr, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
                     auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
-                    const PagedVectorRef leftPagedVector{leftPagedVectorMem, leftTupleLayout};
+                    const PagedVectorRef leftPagedVector{NautilusBuffer::load(leftPagedVectorMem), leftTupleLayout};
                     const auto leftFields = leftTupleLayout->getAllFieldNames();
 
                     for (auto leftIt = leftPagedVector.begin(); leftIt != leftPagedVector.end(); ++leftIt)

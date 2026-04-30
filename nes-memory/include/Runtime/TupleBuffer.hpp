@@ -188,9 +188,6 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
-    /// @brief materializes and returns a child buffer by attaching it into the pinned buffer map
-    [[nodiscard]] TupleBuffer& getChildRef(VariableSizedAccess::Index bufferIndex) noexcept;
-
 private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
@@ -200,8 +197,6 @@ private:
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
-    /// maps unique control block addresses to materialized children tuple buffers.
-    std::unordered_map<detail::BufferControlBlock*, std::unique_ptr<TupleBuffer>> pinnedBufferMap;
 };
 
 /**

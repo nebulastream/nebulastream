@@ -23,6 +23,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
@@ -31,6 +32,7 @@ namespace NES
 {
 /// @brief Forward declaration of PagedVectorRefIter so that we can use it in PagedVectorRef
 class PagedVectorRefIter;
+class PagedVectorRefIterSentinel;
 
 
 using LoadFunction = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> fieldSlot)>;
@@ -106,7 +108,7 @@ class PagedVectorRef
 public:
     /// @brief Declaring PagedVectorRefIter a friend class such that we can access the private members
     friend class PagedVectorRefIter;
-    PagedVectorRef(const nautilus::val<TupleBuffer*>& pagedVectorBuffer, std::shared_ptr<TupleLayout> tupleLayout);
+    PagedVectorRef(NautilusBuffer pagedVectorBuffer, std::shared_ptr<TupleLayout> tupleLayout);
 
     /// Appends the record to the paged vector, extending its total size and possibly allocating a new page.
     void push_back(const Record& record, nautilus::val<AbstractBufferProvider*> bufferProvider);
@@ -116,7 +118,7 @@ public:
     [[nodiscard]] Record at(const nautilus::val<uint64_t>& entryPos) const;
 
     [[nodiscard]] PagedVectorRefIter begin() const;
-    [[nodiscard]] PagedVectorRefIter end() const;
+    [[nodiscard]] PagedVectorRefIterSentinel end() const;
     nautilus::val<bool> operator==(const PagedVectorRef& other) const;
 
     /// @brief Returns the total number of records in the Paged Vector
@@ -124,7 +126,7 @@ public:
 
 private:
     /// @brief Holds a reference to the main paged vector buffer
-    nautilus::val<TupleBuffer*> pagedVectorBuffer;
+    NautilusBuffer pagedVectorBuffer;
     /// @brief specifies how tuples are stored in the paged vector's pages
     std::shared_ptr<TupleLayout> tupleLayout;
 };
@@ -135,25 +137,39 @@ public:
     explicit PagedVectorRefIter(
         PagedVectorRef pagedVector,
         const std::shared_ptr<TupleLayout>& tupleLayout,
-        const nautilus::val<TupleBuffer*>& curPage,
+        NautilusBuffer curPage,
         const nautilus::val<uint64_t>& posOnPage,
-        const nautilus::val<uint64_t>& pos,
-        const nautilus::val<uint64_t>& numberOfTuplesInPagedVector);
+        const nautilus::val<uint64_t>& pos);
 
     Record operator*() const;
     PagedVectorRefIter& operator++();
-    nautilus::val<bool> operator==(const PagedVectorRefIter& other) const;
-    nautilus::val<bool> operator!=(const PagedVectorRefIter& other) const;
+    PagedVectorRefIter operator++(int);
+    nautilus::val<bool> operator==(const PagedVectorRefIterSentinel& other) const;
+    nautilus::val<bool> operator!=(const PagedVectorRefIterSentinel& other) const;
     nautilus::val<uint64_t> operator-(const PagedVectorRefIter& other) const;
 
 private:
     PagedVectorRef pagedVector;
     std::vector<Record::RecordFieldIdentifier> projections;
-    nautilus::val<uint64_t> pos;
-    nautilus::val<uint64_t> numberOfTuplesInPagedVector;
-    nautilus::val<uint64_t> posOnPage;
-    nautilus::val<TupleBuffer*> curPage;
+    mutable nautilus::val<uint64_t> pos;
+    mutable nautilus::val<uint64_t> posOnPage;
+    NautilusBuffer curPage;
     std::shared_ptr<TupleLayout> tupleLayout;
+};
+
+class PagedVectorRefIterSentinel
+{
+public:
+    explicit PagedVectorRefIterSentinel(const nautilus::val<uint64_t>& number_of_tuples_in_paged_vector);
+
+    explicit PagedVectorRefIterSentinel() : numberOfTuplesInPagedVector(0) { }
+
+    nautilus::val<bool> operator==(const PagedVectorRefIter& other) const;
+    nautilus::val<bool> operator!=(const PagedVectorRefIter& other) const;
+
+private:
+    friend PagedVectorRefIter;
+    nautilus::val<uint64_t> numberOfTuplesInPagedVector;
 };
 
 }

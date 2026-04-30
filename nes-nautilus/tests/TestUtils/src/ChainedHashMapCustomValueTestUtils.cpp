@@ -83,7 +83,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
                 bufferManagerVal);
 
             const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            PagedVectorRef pagedVectorRef(ref.getValueMemArea(), tupleLayout);
+            PagedVectorRef pagedVectorRef(NautilusBuffer::load(ref.getValueMemArea()), tupleLayout);
             const RecordBuffer recordBufferValue(bufferValue);
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
@@ -116,7 +116,7 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
                 = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
             const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), tupleLayout);
+            const PagedVectorRef pagedVectorRef(NautilusBuffer::load(ref.getValueMemArea()), tupleLayout);
             nautilus::val<uint64_t> recordBufferIndex = 0;
             for (auto it = pagedVectorRef.begin(); it != pagedVectorRef.end(); ++it)
             {

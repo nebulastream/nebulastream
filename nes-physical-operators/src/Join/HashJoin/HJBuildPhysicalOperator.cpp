@@ -155,7 +155,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         /// Inserting the tuple into the corresponding hash entry
         const ChainedHashMapRef::ChainedEntryRef entryRef{hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
         auto entryMemArea = entryRef.getValueMemArea();
-        PagedVectorRef pagedVectorRef(entryMemArea, tupleLayout);
+        PagedVectorRef pagedVectorRef(NautilusBuffer::load(entryMemArea), tupleLayout);
         pagedVectorRef.push_back(record, ctx.pipelineMemoryProvider.bufferProvider);
     }
 }

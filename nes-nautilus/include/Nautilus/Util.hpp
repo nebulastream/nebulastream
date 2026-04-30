@@ -19,10 +19,12 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
+#include <nautilus/val_std.hpp>
 #include <ErrorHandling.hpp>
 #include <val.hpp>
 
@@ -113,5 +115,31 @@ static VarVal createNautilusConstValue(T value, DataType::Type physicalType)
     }
     std::unreachable();
 }
+
+class NautilusBuffer
+{
+    nautilus::val<NES::TupleBuffer> buffer;
+
+public:
+    static NautilusBuffer load(nautilus::val<const TupleBuffer*> originalBuffer);
+
+    nautilus::val<uint8_t*> data();
+
+    nautilus::val<size_t> getNumberOfRecords() const;
+
+    NautilusBuffer getChild(nautilus::val<size_t> index);
+
+    nautilus::val<size_t> storeChild(NautilusBuffer&& child);
+    nautilus::val<bool> isValid() const;
+
+    nautilus::val<const NES::TupleBuffer*> asArg() const;
+
+    nautilus::val<NES::TupleBuffer*> asArg();
+
+    ~NautilusBuffer() = default;
+
+    nautilus::val<bool> operator==(const NautilusBuffer& other) const;
+};
+
 
 }

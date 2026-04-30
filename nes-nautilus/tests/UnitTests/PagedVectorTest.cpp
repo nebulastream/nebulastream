@@ -326,6 +326,18 @@ void storeScalarToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t fieldIdx, c
     nautilus::invoke(+[](AnyVec* a, uint64_t j, T v) { (*a)[j] = std::any{v}; }, out, nautilus::val<uint64_t>{fieldIdx}, value);
 }
 
+nautilus::val<AnyVec*> anyVecPushBack(const nautilus::val<std::vector<AnyVec>*>& vec, nautilus::val<size_t> numberOfFields)
+{
+    return nautilus::invoke(
+        +[](std::vector<AnyVec>* a, size_t numberOfFields)
+        {
+            a->emplace_back(AnyVec(numberOfFields, 0));
+            return &a->back();
+        },
+        vec,
+        numberOfFields);
+}
+
 VarVal buildVarVal(const nautilus::val<AnyVec*>& rec, uint64_t fieldIdx, DataType dt)
 {
     const nautilus::val<bool> notNull{false};
@@ -394,79 +406,146 @@ public:
         pagedVector_ = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
         PagedVector::init(pagedVector_, bufferManager.getBufferSize(), layout->getTupleSize());
 
-        pushbackFn_.emplace(engine_->registerFunction(std::function(
-            [layout, dataTypes = dataTypes_, projections = projections_](
-                nautilus::val<TupleBuffer*> pv, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
-            {
-                Record record;
-                /// static_val ensures each field iteration gets a distinct trace tag.
-                for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
+        pushbackFn_.emplace(engine_->registerFunction(
+            std::function(
+                [layout, dataTypes = dataTypes_, projections = projections_](
+                    nautilus::val<TupleBuffer*> pv, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
                 {
-                    record.write(projections[i], buildVarVal(rec, i, dataTypes[i]));
-                }
-                PagedVectorRef pvRef(pv, layout);
-                pvRef.push_back(record, bm);
-            })));
-
-        readAtFn_.emplace(engine_->registerFunction(std::function(
-            [layout, dataTypes = dataTypes_, projections = projections_](
-                nautilus::val<TupleBuffer*> pv, nautilus::val<uint64_t> index, nautilus::val<AnyVec*> out)
-            {
-                const PagedVectorRef pvRef(pv, layout);
-                auto record = pvRef.at(index);
-                for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
-                {
-                    auto value = record.read(projections[i]);
-                    switch (dataTypes[i].type)
+                    Record record;
+                    /// static_val ensures each field iteration gets a distinct trace tag.
+                    for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
                     {
-                        case DataType::Type::UINT8:
-                            storeScalarToAnyVec<uint8_t>(out, i, value.getRawValueAs<nautilus::val<uint8_t>>());
-                            break;
-                        case DataType::Type::UINT16:
-                            storeScalarToAnyVec<uint16_t>(out, i, value.getRawValueAs<nautilus::val<uint16_t>>());
-                            break;
-                        case DataType::Type::UINT32:
-                            storeScalarToAnyVec<uint32_t>(out, i, value.getRawValueAs<nautilus::val<uint32_t>>());
-                            break;
-                        case DataType::Type::UINT64:
-                            storeScalarToAnyVec<uint64_t>(out, i, value.getRawValueAs<nautilus::val<uint64_t>>());
-                            break;
-                        case DataType::Type::INT8:
-                            storeScalarToAnyVec<int8_t>(out, i, value.getRawValueAs<nautilus::val<int8_t>>());
-                            break;
-                        case DataType::Type::INT16:
-                            storeScalarToAnyVec<int16_t>(out, i, value.getRawValueAs<nautilus::val<int16_t>>());
-                            break;
-                        case DataType::Type::INT32:
-                            storeScalarToAnyVec<int32_t>(out, i, value.getRawValueAs<nautilus::val<int32_t>>());
-                            break;
-                        case DataType::Type::INT64:
-                            storeScalarToAnyVec<int64_t>(out, i, value.getRawValueAs<nautilus::val<int64_t>>());
-                            break;
-                        case DataType::Type::FLOAT32:
-                            storeScalarToAnyVec<float>(out, i, value.getRawValueAs<nautilus::val<float>>());
-                            break;
-                        case DataType::Type::FLOAT64:
-                            storeScalarToAnyVec<double>(out, i, value.getRawValueAs<nautilus::val<double>>());
-                            break;
-                        case DataType::Type::VARSIZED: {
-                            const auto vsd = value.getRawValueAs<VariableSizedData>();
-                            nautilus::invoke(
-                                +[](AnyVec* a, uint64_t j, int8_t* ptr, uint64_t len)
-                                { (*a)[j] = std::any{std::string(reinterpret_cast<const char*>(ptr), len)}; },
-                                out,
-                                nautilus::val<uint64_t>{i},
-                                vsd.getContent(),
-                                vsd.getSize());
-                            break;
-                        }
-                        case DataType::Type::BOOLEAN:
-                        case DataType::Type::CHAR:
-                        case DataType::Type::UNDEFINED:
-                            throw TestException("Unsupported type for TestablePagedVector::readAt");
+                        record.write(projections[i], buildVarVal(rec, i, dataTypes[i]));
                     }
-                }
-            })));
+                    PagedVectorRef pvRef(NautilusBuffer::load(pv), layout);
+                    pvRef.push_back(record, bm);
+                })));
+
+        readAtFn_.emplace(engine_->registerFunction(
+            std::function(
+                [layout, dataTypes = dataTypes_, projections = projections_](
+                    nautilus::val<TupleBuffer*> pv, nautilus::val<uint64_t> index, nautilus::val<AnyVec*> out)
+                {
+                    const PagedVectorRef pvRef(NautilusBuffer::load(pv), layout);
+                    auto record = pvRef.at(index);
+                    for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
+                    {
+                        auto value = record.read(projections[i]);
+                        switch (dataTypes[i].type)
+                        {
+                            case DataType::Type::UINT8:
+                                storeScalarToAnyVec<uint8_t>(out, i, value.getRawValueAs<nautilus::val<uint8_t>>());
+                                break;
+                            case DataType::Type::UINT16:
+                                storeScalarToAnyVec<uint16_t>(out, i, value.getRawValueAs<nautilus::val<uint16_t>>());
+                                break;
+                            case DataType::Type::UINT32:
+                                storeScalarToAnyVec<uint32_t>(out, i, value.getRawValueAs<nautilus::val<uint32_t>>());
+                                break;
+                            case DataType::Type::UINT64:
+                                storeScalarToAnyVec<uint64_t>(out, i, value.getRawValueAs<nautilus::val<uint64_t>>());
+                                break;
+                            case DataType::Type::INT8:
+                                storeScalarToAnyVec<int8_t>(out, i, value.getRawValueAs<nautilus::val<int8_t>>());
+                                break;
+                            case DataType::Type::INT16:
+                                storeScalarToAnyVec<int16_t>(out, i, value.getRawValueAs<nautilus::val<int16_t>>());
+                                break;
+                            case DataType::Type::INT32:
+                                storeScalarToAnyVec<int32_t>(out, i, value.getRawValueAs<nautilus::val<int32_t>>());
+                                break;
+                            case DataType::Type::INT64:
+                                storeScalarToAnyVec<int64_t>(out, i, value.getRawValueAs<nautilus::val<int64_t>>());
+                                break;
+                            case DataType::Type::FLOAT32:
+                                storeScalarToAnyVec<float>(out, i, value.getRawValueAs<nautilus::val<float>>());
+                                break;
+                            case DataType::Type::FLOAT64:
+                                storeScalarToAnyVec<double>(out, i, value.getRawValueAs<nautilus::val<double>>());
+                                break;
+                            case DataType::Type::VARSIZED: {
+                                const auto vsd = value.getRawValueAs<VariableSizedData>();
+                                nautilus::invoke(
+                                    +[](AnyVec* a, uint64_t j, int8_t* ptr, uint64_t len)
+                                    { (*a)[j] = std::any{std::string(reinterpret_cast<const char*>(ptr), len)}; },
+                                    out,
+                                    nautilus::val<uint64_t>{i},
+                                    vsd.getContent(),
+                                    vsd.getSize());
+                                break;
+                            }
+                            case DataType::Type::BOOLEAN:
+                            case DataType::Type::CHAR:
+                            case DataType::Type::UNDEFINED:
+                                throw TestException("Unsupported type for TestablePagedVector::readAt");
+                        }
+                    }
+                })));
+
+
+        readAll_.emplace(engine_->registerFunction(
+            std::function(
+                [layout, dataTypes = dataTypes_, projections = projections_](
+                    nautilus::val<TupleBuffer*> pv, nautilus::val<std::vector<AnyVec>*> outVec)
+                {
+                    const PagedVectorRef pvRef(NautilusBuffer::load(pv), layout);
+                    for (const auto& record : pvRef)
+                    {
+                        auto out = anyVecPushBack(outVec, nautilus::val<size_t>(layout->getNumberOfFields()));
+                        for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
+                        {
+                            auto value = record.read(projections[i]);
+                            switch (dataTypes[i].type)
+                            {
+                                case DataType::Type::UINT8:
+                                    storeScalarToAnyVec<uint8_t>(out, i, value.getRawValueAs<nautilus::val<uint8_t>>());
+                                    break;
+                                case DataType::Type::UINT16:
+                                    storeScalarToAnyVec<uint16_t>(out, i, value.getRawValueAs<nautilus::val<uint16_t>>());
+                                    break;
+                                case DataType::Type::UINT32:
+                                    storeScalarToAnyVec<uint32_t>(out, i, value.getRawValueAs<nautilus::val<uint32_t>>());
+                                    break;
+                                case DataType::Type::UINT64:
+                                    storeScalarToAnyVec<uint64_t>(out, i, value.getRawValueAs<nautilus::val<uint64_t>>());
+                                    break;
+                                case DataType::Type::INT8:
+                                    storeScalarToAnyVec<int8_t>(out, i, value.getRawValueAs<nautilus::val<int8_t>>());
+                                    break;
+                                case DataType::Type::INT16:
+                                    storeScalarToAnyVec<int16_t>(out, i, value.getRawValueAs<nautilus::val<int16_t>>());
+                                    break;
+                                case DataType::Type::INT32:
+                                    storeScalarToAnyVec<int32_t>(out, i, value.getRawValueAs<nautilus::val<int32_t>>());
+                                    break;
+                                case DataType::Type::INT64:
+                                    storeScalarToAnyVec<int64_t>(out, i, value.getRawValueAs<nautilus::val<int64_t>>());
+                                    break;
+                                case DataType::Type::FLOAT32:
+                                    storeScalarToAnyVec<float>(out, i, value.getRawValueAs<nautilus::val<float>>());
+                                    break;
+                                case DataType::Type::FLOAT64:
+                                    storeScalarToAnyVec<double>(out, i, value.getRawValueAs<nautilus::val<double>>());
+                                    break;
+                                case DataType::Type::VARSIZED: {
+                                    const auto vsd = value.getRawValueAs<VariableSizedData>();
+                                    nautilus::invoke(
+                                        +[](AnyVec* a, uint64_t j, int8_t* ptr, uint64_t len)
+                                        { (*a)[j] = std::any{std::string(reinterpret_cast<const char*>(ptr), len)}; },
+                                        out,
+                                        nautilus::val<uint64_t>{i},
+                                        vsd.getContent(),
+                                        vsd.getSize());
+                                    break;
+                                }
+                                case DataType::Type::BOOLEAN:
+                                case DataType::Type::CHAR:
+                                case DataType::Type::UNDEFINED:
+                                    throw TestException("Unsupported type for TestablePagedVector::readAt");
+                            }
+                        }
+                    }
+                })));
     }
 
     TestablePagedVector(const TestablePagedVector&) = delete;
@@ -488,10 +567,7 @@ public:
         const auto numEntries = PagedVector::load(pagedVector_).getTotalNumberOfRecords();
         std::vector<AnyVec> out;
         out.reserve(numEntries);
-        for (uint64_t i = 0; i < numEntries; ++i)
-        {
-            out.push_back(readAt(i));
-        }
+        (*readAll_)(&pagedVector_, &out);
         return out;
     }
 
@@ -519,6 +595,7 @@ private:
     std::unique_ptr<nautilus::engine::NautilusEngine> engine_;
     std::optional<nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, AnyVec*>> pushbackFn_;
     std::optional<nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, AnyVec*>> readAtFn_;
+    std::optional<nautilus::engine::CallableFunction<void, TupleBuffer*, std::vector<AnyVec>*>> readAll_;
 };
 
 /// Insert N items into a PagedVector, then iterate and compare against reference.
@@ -527,7 +604,7 @@ void insertAndIterateProperty()
     const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, 128);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
-    const auto numberOfItems = *rc::gen::inRange<uint64_t>(10, 501);
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, 501);
 
     NES_INFO("Property insertAndIterate: fields={}, N={}, field_types={}", fieldTypes.size(), numberOfItems, fmt::join(fieldTypes, ", "));
 
@@ -560,7 +637,7 @@ void insertAndReadByIndexProperty()
     const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, 128);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
-    const auto numberOfItems = *rc::gen::inRange<uint64_t>(10, 501);
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, 501);
 
     NES_INFO("Property insertAndReadByIndex: fields={}, N={}", fieldTypes.size(), numberOfItems);
 
@@ -591,7 +668,7 @@ void concatMoveProperty()
     const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, 128);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
-    const auto numVectors = *rc::gen::inRange<uint64_t>(2, 5);
+    const auto numVectors = *rc::gen::inRange<uint64_t>(1, 5);
 
     NES_INFO("Property concatMove: fields={}, numVectors={}", fieldTypes.size(), numVectors);
 
@@ -602,7 +679,7 @@ void concatMoveProperty()
 
     for (uint64_t v = 0; v < numVectors; ++v)
     {
-        const auto itemCount = *rc::gen::inRange<uint64_t>(50, 201);
+        const auto itemCount = *rc::gen::inRange<uint64_t>(0, 201);
         pagedVectors.emplace_back(fieldTypes, *bufferManager);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
@@ -635,7 +712,7 @@ void concatCopyProperty()
     const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, 128);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
-    const auto numVectors = *rc::gen::inRange<uint64_t>(2, 5);
+    const auto numVectors = *rc::gen::inRange<uint64_t>(1, 5);
 
     NES_INFO("Property concatCopy: fields={}, numVectors={}", fieldTypes.size(), numVectors);
 
@@ -646,7 +723,7 @@ void concatCopyProperty()
 
     for (uint64_t v = 0; v < numVectors; ++v)
     {
-        const auto itemCount = *rc::gen::inRange<uint64_t>(50, 201);
+        const auto itemCount = *rc::gen::inRange<uint64_t>(0, 201);
         pagedVectors.emplace_back(fieldTypes, *bufferManager);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
@@ -685,138 +762,6 @@ void concatCopyProperty()
 
 
 } /// anonymous namespace
-
-TEST(PagedVectorTest, readAtValidAccessOneFixedAttribute)
-{
-    Logger::setupLogging("PagedVectorTest.log", LogLevel::LOG_DEBUG);
-    const std::vector<DataType> fieldTypes = {{DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE}};
-    auto bufferManager = DirtyBufferProvider::create();
-
-    TestablePagedVector pv(fieldTypes, *bufferManager);
-
-    int32_t recordNum = 8200;
-    for (int32_t i = 0; i < recordNum; ++i)
-    {
-        pv.push_back({std::any(int32_t{i})});
-    }
-
-    ASSERT_EQ(pv.size(), recordNum);
-
-    auto val0 = pv.readAt(0);
-    ASSERT_EQ(std::any_cast<int32_t>(val0[0]), 0);
-    auto val4099 = pv.readAt(4099);
-    ASSERT_EQ(std::any_cast<int32_t>(val4099[0]), 4099);
-    auto lastVal = pv.readAt(recordNum - 1);
-    ASSERT_EQ(std::any_cast<int32_t>(lastVal[0]), recordNum - 1);
-}
-
-TEST(PagedVectorTest, readAtValidAccessOneVarSizedAttribute)
-{
-    Logger::setupLogging("PagedVectorTest.log", LogLevel::LOG_DEBUG);
-    const std::vector<DataType> fieldTypes = {{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}};
-    auto bufferManager = DirtyBufferProvider::create();
-
-    TestablePagedVector pv(fieldTypes, *bufferManager);
-
-    int32_t recordNum = 8200;
-
-    uint64_t minChars = 5;
-    uint64_t maxChars = 100;
-    int32_t recToCheck = recordNum - 1;
-    std::string recValue = "";
-    for (int32_t i = 0; i < recordNum; ++i)
-    {
-        uint64_t numChars = minChars + (rand() % (maxChars - minChars + 1));
-        std::string str;
-        str.reserve(numChars);
-
-        for (uint64_t j = 0; j < numChars; ++j)
-        {
-            char c = 'a' + (rand() % 26);
-            str.push_back(c);
-        }
-        if (i == recToCheck)
-        {
-            recValue = str;
-        }
-        pv.push_back({std::any(str)});
-    }
-    ASSERT_EQ(pv.size(), recordNum);
-    auto val = pv.readAt(recToCheck);
-    ASSERT_EQ(std::any_cast<std::string>(val[0]), recValue);
-}
-
-TEST(PagedVectorTest, readAtValidAccessThreeFixedAttributes)
-{
-    Logger::setupLogging("PagedVectorTest.log", LogLevel::LOG_DEBUG);
-    const std::vector<DataType> fieldTypes
-        = {{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE},
-           {DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE},
-           {DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}};
-    auto bufferManager = DirtyBufferProvider::create();
-
-    TestablePagedVector pv(fieldTypes, *bufferManager);
-
-    int32_t recordNum = 8200;
-    for (int32_t i = 0; i < recordNum; ++i)
-    {
-        pv.push_back(
-            {std::any(int32_t{i}),
-             std::any(double{static_cast<double>(i + 1)}),
-             std::any(uint64_t{static_cast<unsigned long int>(i + 2)})});
-    }
-
-    ASSERT_EQ(pv.size(), recordNum);
-
-    auto val0 = pv.readAt(0);
-    ASSERT_EQ(std::any_cast<int32_t>(val0[0]), 0);
-    ASSERT_EQ(std::any_cast<double>(val0[1]), 1);
-    ASSERT_EQ(std::any_cast<unsigned long int>(val0[2]), 2);
-
-    auto val4099 = pv.readAt(4099);
-    ASSERT_EQ(std::any_cast<int32_t>(val4099[0]), 4099);
-    ASSERT_EQ(std::any_cast<double>(val4099[1]), 4100);
-    ASSERT_EQ(std::any_cast<unsigned long int>(val4099[2]), 4101);
-
-    auto lastVal = pv.readAt(recordNum - 1);
-    ASSERT_EQ(std::any_cast<int32_t>(lastVal[0]), recordNum - 1);
-    ASSERT_EQ(std::any_cast<double>(lastVal[1]), recordNum);
-    ASSERT_EQ(std::any_cast<unsigned long int>(lastVal[2]), recordNum + 1);
-}
-
-TEST(PagedVectorTest, test1)
-{
-    Logger::setupLogging("PagedVectorTest.log", LogLevel::LOG_DEBUG);
-    const std::vector<DataType> fieldTypes
-        = {{DataType::Type::UINT8, DataType::NULLABLE::IS_NULLABLE},
-           {DataType::Type::UINT8, DataType::NULLABLE::IS_NULLABLE},
-           {DataType::Type::UINT8, DataType::NULLABLE::IS_NULLABLE},
-           {DataType::Type::UINT8, DataType::NULLABLE::IS_NULLABLE}};
-    auto bufferManager = DirtyBufferProvider::create();
-
-    TestablePagedVector pv(fieldTypes, *bufferManager);
-
-    int32_t recordNum = 10;
-    for (int32_t i = 0; i < recordNum; ++i)
-    {
-        pv.push_back(
-            {std::any(uint8_t{static_cast<uint8_t>(i)}),
-             std::any(uint8_t{static_cast<uint8_t>(i + 1)}),
-             std::any(uint8_t{static_cast<uint8_t>(i + 2)}),
-             std::any(uint8_t{static_cast<uint8_t>(i + 3)})});
-    }
-
-    ASSERT_EQ(pv.size(), recordNum);
-
-    for (int32_t i = 0; i < recordNum; ++i)
-    {
-        auto val = pv.readAt(i);
-        ASSERT_EQ(std::any_cast<uint8_t>(val[0]), i);
-        ASSERT_EQ(std::any_cast<uint8_t>(val[1]), i + 1);
-        ASSERT_EQ(std::any_cast<uint8_t>(val[2]), i + 2);
-        ASSERT_EQ(std::any_cast<uint8_t>(val[3]), i + 3);
-    }
-}
 
 RC_GTEST_PROP(PagedVectorPropertyTest, insertAndIterate, ())
 {

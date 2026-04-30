@@ -69,7 +69,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
         timestamp, executionCtx.workerThreadId, operatorHandler, executionCtx.pipelineMemoryProvider.bufferProvider);
     /// Write record to the pagedVector
     auto pagedVectorBufferRef = static_cast<nautilus::val<TupleBuffer*>>(nljPagedVectorMemRef);
-    PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, tupleLayout);
+    PagedVectorRef pagedVectorRef(NautilusBuffer::load(nljPagedVectorMemRef), tupleLayout);
     pagedVectorRef.push_back(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

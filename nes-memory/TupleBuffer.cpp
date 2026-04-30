@@ -254,15 +254,4 @@ ChunkNumber TupleBuffer::getChunkNumber() const noexcept
     return controlBlock->getChunkNumber();
 }
 
-TupleBuffer& TupleBuffer::getChildRef(VariableSizedAccess::Index bufferIndex) noexcept
-{
-    TupleBuffer childBuffer;
-    const auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
-    INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
-
-    auto address = childBuffer.getControlBlock();
-    pinnedBufferMap.insert(std::make_pair(address, std::make_unique<TupleBuffer>(childBuffer)));
-    return *pinnedBufferMap.at(address);
-}
-
 }

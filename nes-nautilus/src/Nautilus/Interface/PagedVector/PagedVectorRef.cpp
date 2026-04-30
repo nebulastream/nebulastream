@@ -39,16 +39,16 @@ uint64_t getTotalNumberOfRecordsProxy(const TupleBuffer* pagedVectorBuffer)
 uint64_t getBufferPosForEntryProxy(const TupleBuffer* pagedVectorBuffer, const uint64_t entryPos)
 {
     PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
-    return pagedVector.getRecordIndexInPage(entryPos).value_or(0);
+    return pagedVector.getRecordIndexInPage(entryPos);
 }
 
 nautilus::val<uint64_t> PagedVectorRef::getNumberOfRecords() const
 {
-    return nautilus::invoke(getTotalNumberOfRecordsProxy, pagedVectorBuffer);
+    return nautilus::invoke(getTotalNumberOfRecordsProxy, pagedVectorBuffer.asArg());
 }
 
-PagedVectorRef::PagedVectorRef(const nautilus::val<TupleBuffer*>& pagedVectorBuffer, std::shared_ptr<TupleLayout> tupleLayout)
-    : pagedVectorBuffer(pagedVectorBuffer), tupleLayout(std::move(tupleLayout))
+PagedVectorRef::PagedVectorRef(NautilusBuffer pagedVectorBuffer, std::shared_ptr<TupleLayout> tupleLayout)
+    : pagedVectorBuffer(std::move(pagedVectorBuffer)), tupleLayout(std::move(tupleLayout))
 {
 }
 
@@ -180,21 +180,23 @@ void BasicTupleLayout::writeRecord(const Record& record, nautilus::val<std::int8
 void PagedVectorRef::push_back(const Record& record, nautilus::val<AbstractBufferProvider*> bufferProvider)
 {
     /// get the page of the paged vector to write to. Append new page if necessary
-    auto lastPageBuffer = invoke(
-        +[](TupleBuffer* pagedVectorBuffer, AbstractBufferProvider* bufferProvider) -> TupleBuffer*
+    NautilusBuffer lastPageBuffer;
+    invoke(
+        +[](TupleBuffer* pagedVectorBuffer, AbstractBufferProvider* bufferProvider, TupleBuffer* currentPage)
         {
             PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             PRECONDITION(pagedVector.getStatus() == PagedVector::VALID_PV, "Paged Vector must be valid for push_back.");
             pagedVector.appendPageIfFull(bufferProvider);
             auto numPages = pagedVector.getNumberOfPages();
             VariableSizedAccess::Index lastPageIndex{numPages - 1};
-            return std::addressof(pagedVectorBuffer->getChildRef(lastPageIndex));
+            *currentPage = pagedVectorBuffer->loadChildBuffer(lastPageIndex);
         },
-        pagedVectorBuffer,
-        bufferProvider);
+        pagedVectorBuffer.asArg(),
+        bufferProvider,
+        lastPageBuffer.asArg());
 
     /// get the address in the page bufer to write the record to
-    auto recordAddress = invoke(
+    auto recordAddress = nautilus::invoke(
         +[](TupleBuffer* pagedVectorBuffer, TupleBuffer* lastPageBuffer) -> int8_t*
         {
             PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
@@ -208,8 +210,8 @@ void PagedVectorRef::push_back(const Record& record, nautilus::val<AbstractBuffe
             const uint64_t offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * indexWithinPage);
             return reinterpret_cast<int8_t*>(base) + offset;
         },
-        pagedVectorBuffer,
-        lastPageBuffer);
+        pagedVectorBuffer.asArg(),
+        lastPageBuffer.asArg());
 
     /// define varsized memory retrieval/allocation callback
     auto allocateVarSized =
@@ -255,7 +257,7 @@ void PagedVectorRef::push_back(const Record& record, nautilus::val<AbstractBuffe
                 /// return the memory address for the varsized data
                 return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().data());
             },
-            lastPageBuffer,
+            lastPageBuffer.asArg(),
             bufferProvider,
             fieldSlot,
             allocationSize);
@@ -263,46 +265,42 @@ void PagedVectorRef::push_back(const Record& record, nautilus::val<AbstractBuffe
     /// write the record using the layout
     tupleLayout->writeRecord(record, recordAddress, allocateVarSized);
     /// increase the entry count in the page
-    invoke(
-        +[](TupleBuffer* lastPageBuffer) { lastPageBuffer->setNumberOfTuples(lastPageBuffer->getNumberOfTuples() + 1); }, lastPageBuffer);
+    nautilus::invoke(
+        +[](TupleBuffer* lastPageBuffer) { lastPageBuffer->setNumberOfTuples(lastPageBuffer->getNumberOfTuples() + 1); },
+        lastPageBuffer.asArg());
 }
 
 Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
 {
     /// get the page buffer. We need this because if there record is varsized, the varsized data is stored in child buffers to the page buffer.
-    auto pageBuffer = invoke(
-        +[](TupleBuffer* pagedVectorBuffer, const uint64_t entryPos) -> TupleBuffer*
+    NautilusBuffer pageBuffer;
+    invoke(
+        +[](TupleBuffer* pagedVectorBuffer, const uint64_t entryPos, TupleBuffer* pageBuffer)
         {
             PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             PRECONDITION(pagedVector.getStatus() == PagedVector::VALID_PV, "Paged Vector must be valid for access.");
-            if (const auto pageBufferIndex = pagedVector.getPageIndex(entryPos); pageBufferIndex.has_value())
-            {
-                /// load page
-                VariableSizedAccess::Index childBufferIndex{pageBufferIndex.value()};
-                return std::addressof(pagedVectorBuffer->getChildRef(childBufferIndex));
-            }
-            return nullptr;
+            const auto pageBufferIndex = pagedVector.getPageIndex(entryPos);
+            /// load page
+            VariableSizedAccess::Index childBufferIndex{pageBufferIndex};
+            *pageBuffer = pagedVectorBuffer->loadChildBuffer(childBufferIndex);
         },
-        pagedVectorBuffer,
-        entryPos);
+        pagedVectorBuffer.asArg(),
+        entryPos,
+        pageBuffer.asArg());
     /// get the record's address in the page bufer
     auto recordAddress = invoke(
         +[](TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, const uint64_t entryPos) -> int8_t*
         {
             PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
-            auto entryBufferPos = pagedVector.getRecordIndexInPage(entryPos).value_or(0);
-            if (const auto pageBufferIndex = pagedVector.getPageIndex(entryPos); pageBufferIndex.has_value())
-            {
-                const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();
-                /// get record address
-                auto* base = std::to_address(pageBufferAddress.begin());
-                const auto offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * entryBufferPos);
-                return reinterpret_cast<int8_t*>(base) + offset;
-            }
-            return nullptr;
+            auto entryBufferPos = pagedVector.getRecordIndexInPage(entryPos);
+            const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();
+            /// get record address
+            auto* base = std::to_address(pageBufferAddress.begin());
+            const auto offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * entryBufferPos);
+            return reinterpret_cast<int8_t*>(base) + offset;
         },
-        pagedVectorBuffer,
-        pageBuffer,
+        pagedVectorBuffer.asArg(),
+        pageBuffer.asArg(),
         entryPos);
 
     auto loadFunction = [pageBuffer](const nautilus::val<int8_t*>& fieldSlot) -> std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>
@@ -319,7 +317,7 @@ Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
                 return reinterpret_cast<int8_t*>(
                     varSizedPage.getAvailableMemoryArea<>().subspan(access->getOffset().getRawOffset()).data());
             },
-            pageBuffer,
+            pageBuffer.asArg(),
             variableSizedAccess);
 
         auto varSizedDataLength = invoke(
@@ -338,45 +336,30 @@ Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
     return tupleLayout->readRecord(recordAddress, loadFunction);
 }
 
-PagedVectorRefIter PagedVectorRef::begin() const
+void loadChildBuffer(TupleBuffer* pagedVectorBuffer, uint64_t entryPos, TupleBuffer* currPage)
 {
-    const nautilus::val<uint64_t> pos(0);
-    const auto numberOfTuplesInPagedVector = invoke(getTotalNumberOfRecordsProxy, pagedVectorBuffer);
-    auto curPage = invoke(
-        +[](TupleBuffer* pagedVectorBuffer, uint64_t entryPos) -> TupleBuffer*
-        {
-            PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
-            PRECONDITION(pagedVector.getStatus() == PagedVector::VALID_PV, "Paged Vector must be valid for iterator begin().");
-            if (const auto index = pagedVector.getPageIndex(entryPos); index.has_value())
-            {
-                VariableSizedAccess::Index childBufferIndex{index.value()};
-                return std::addressof(pagedVectorBuffer->getChildRef(childBufferIndex));
-            }
-            return nullptr;
-        },
-        pagedVectorBuffer,
-        pos);
-    const auto posOnPage = nautilus::invoke(getBufferPosForEntryProxy, pagedVectorBuffer, pos);
-    PagedVectorRefIter pagedVectorRefIter(*this, tupleLayout, curPage, posOnPage, pos, numberOfTuplesInPagedVector);
-    return pagedVectorRefIter;
+    PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
+    const auto pageBufferIndex = pagedVector.getPageIndex(entryPos);
+    VariableSizedAccess::Index childBufferIndex{pageBufferIndex};
+    *currPage = pagedVectorBuffer->loadChildBuffer(childBufferIndex);
 }
 
-PagedVectorRefIter PagedVectorRef::end() const
+PagedVectorRefIter PagedVectorRef::begin() const
 {
-    /// sanity check
-    invoke(
-        +[](TupleBuffer* pagedVectorBuffer)
-        {
-            PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
-            PRECONDITION(pagedVector.getStatus() == PagedVector::VALID_PV, "Paged Vector must be valid for iterator end().");
-        },
-        pagedVectorBuffer);
-    /// End does not point to any existing page. Therefore, we only set the pos
-    const auto pos = invoke(getTotalNumberOfRecordsProxy, pagedVectorBuffer);
-    const nautilus::val<TupleBuffer*> curPage(nullptr);
-    const nautilus::val<uint64_t> posOnPage(0);
-    PagedVectorRefIter pagedVectorRefIter(*this, tupleLayout, curPage, posOnPage, pos, pos);
-    return pagedVectorRefIter;
+    if (getNumberOfRecords() == 0)
+    {
+        return PagedVectorRefIter(*this, tupleLayout, NautilusBuffer{}, 0, 0);
+    }
+
+    NautilusBuffer curPage;
+    nautilus::invoke(loadChildBuffer, pagedVectorBuffer.asArg(), nautilus::val<uint64_t>(0), curPage.asArg());
+    return PagedVectorRefIter(*this, tupleLayout, curPage, 0, 0);
+}
+
+PagedVectorRefIterSentinel PagedVectorRef::end() const
+{
+    const auto numberOfTuplesInPagedVector = nautilus::invoke(getTotalNumberOfRecordsProxy, pagedVectorBuffer.asArg());
+    return PagedVectorRefIterSentinel(numberOfTuplesInPagedVector);
 }
 
 nautilus::val<bool> PagedVectorRef::operator==(const PagedVectorRef& other) const
@@ -387,21 +370,22 @@ nautilus::val<bool> PagedVectorRef::operator==(const PagedVectorRef& other) cons
 PagedVectorRefIter::PagedVectorRefIter(
     PagedVectorRef pagedVector,
     const std::shared_ptr<TupleLayout>& tupleLayout,
-    const nautilus::val<TupleBuffer*>& curPage,
+    NautilusBuffer curPage,
     const nautilus::val<uint64_t>& posOnPage,
-    const nautilus::val<uint64_t>& pos,
-    const nautilus::val<uint64_t>& numberOfTuplesInPagedVector)
-    : pagedVector(std::move(pagedVector))
-    , pos(pos)
-    , numberOfTuplesInPagedVector(numberOfTuplesInPagedVector)
-    , posOnPage(posOnPage)
-    , curPage(curPage)
-    , tupleLayout(tupleLayout)
+    const nautilus::val<uint64_t>& pos)
+    : pagedVector(std::move(pagedVector)), pos(pos), posOnPage(posOnPage), curPage(std::move(curPage)), tupleLayout(tupleLayout)
 {
 }
 
 Record PagedVectorRefIter::operator*() const
 {
+    auto numberOfRecordsOnPage = curPage.getNumberOfRecords();
+    if (posOnPage >= numberOfRecordsOnPage)
+    {
+        posOnPage = 0;
+        nautilus::invoke(loadChildBuffer, this->pagedVector.pagedVectorBuffer.asArg(), this->pos, this->curPage.asArg());
+        posOnPage = nautilus::invoke(getBufferPosForEntryProxy, this->pagedVector.pagedVectorBuffer.asArg(), this->pos);
+    }
     return pagedVector.at(pos);
 }
 
@@ -409,52 +393,44 @@ PagedVectorRefIter& PagedVectorRefIter::operator++()
 {
     pos = pos + 1;
     posOnPage = posOnPage + 1;
-    const auto tuplesOnPage = RecordBuffer(curPage).getNumRecords();
-    if (posOnPage >= tuplesOnPage)
-    {
-        /// Go to the next page
-        posOnPage = 0;
-        if (pos < numberOfTuplesInPagedVector)
-        {
-            curPage = invoke(
-                +[](TupleBuffer* pagedVectorBuffer, uint64_t entryPos) -> TupleBuffer*
-                {
-                    PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
-                    if (const auto pageBufferIndex = pagedVector.getPageIndex(entryPos); pageBufferIndex.has_value())
-                    {
-                        VariableSizedAccess::Index childBufferIndex{pageBufferIndex.value()};
-                        return std::addressof(pagedVectorBuffer->getChildRef(childBufferIndex));
-                    }
-                    return nullptr;
-                },
-                this->pagedVector.pagedVectorBuffer,
-                this->pos);
-            posOnPage = nautilus::invoke(getBufferPosForEntryProxy, this->pagedVector.pagedVectorBuffer, this->pos);
-        }
-    }
     return *this;
 }
 
-nautilus::val<bool> PagedVectorRefIter::operator==(const PagedVectorRefIter& other) const
+PagedVectorRefIter PagedVectorRefIter::operator++(int)
 {
-    if (this == &other)
-    {
-        return true;
-    }
-
-    const auto samePos = pos == other.pos;
-    const auto samePagedVector = pagedVector == other.pagedVector;
-    return samePos && samePagedVector;
+    auto tmp = *this;
+    ++*this;
+    return tmp;
 }
 
-nautilus::val<bool> PagedVectorRefIter::operator!=(const PagedVectorRefIter& other) const
+nautilus::val<bool> PagedVectorRefIter::operator==(const PagedVectorRefIterSentinel& other) const
 {
-    return !(*this == other);
+    return this->pos == other.numberOfTuplesInPagedVector;
+}
+
+nautilus::val<bool> PagedVectorRefIter::operator!=(const PagedVectorRefIterSentinel& other) const
+{
+    return not(*this == other);
 }
 
 nautilus::val<uint64_t> PagedVectorRefIter::operator-(const PagedVectorRefIter& other) const
 {
     return pos - other.pos;
+}
+
+PagedVectorRefIterSentinel::PagedVectorRefIterSentinel(const nautilus::val<uint64_t>& number_of_tuples_in_paged_vector)
+    : numberOfTuplesInPagedVector(number_of_tuples_in_paged_vector)
+{
+}
+
+nautilus::val<bool> PagedVectorRefIterSentinel::operator==(const PagedVectorRefIter& other) const
+{
+    return other == *this;
+}
+
+nautilus::val<bool> PagedVectorRefIterSentinel::operator!=(const PagedVectorRefIter& other) const
+{
+    return other != *this;
 }
 
 }

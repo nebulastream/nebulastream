@@ -160,26 +160,24 @@ void PagedVector::movePagesFrom(PagedVector& other)
     other.header().status = INVALID_PV;
 }
 
-std::optional<uint64_t> PagedVector::getRecordIndexInPage(const uint64_t entryPos) const
+uint64_t PagedVector::getRecordIndexInPage(const uint64_t entryPos) const
 {
     PRECONDITION(
         getStatus() == PagedVector::PagedVectorStatus::VALID_PV,
         "Paged Vector must be valid for accessing a specific record relative to its page.");
     /// We need to find the index / page that the entryPos belongs to.
-    return getPageIndex(entryPos).and_then(
-        [&](const size_t index) -> std::optional<uint64_t>
-        {
-            /// We need to subtract the cumulative sum before our found index to get the position on the page
-            uint64_t cumulativeSumBefore = 0;
-            if (index > 0)
-            {
-                VariableSizedAccess::Index childBufferIndex{index - 1};
-                auto childBuffer = buffer.loadChildBuffer(childBufferIndex);
-                Page page = Page::load(childBuffer);
-                cumulativeSumBefore = page.getCumulativeSum();
-            }
-            return entryPos - cumulativeSumBefore;
-        });
+
+    auto index = getPageIndex(entryPos);
+    /// We need to subtract the cumulative sum before our found index to get the position on the page
+    uint64_t cumulativeSumBefore = 0;
+    if (index > 0)
+    {
+        VariableSizedAccess::Index childBufferIndex{index - 1};
+        auto childBuffer = buffer.loadChildBuffer(childBufferIndex);
+        Page page = Page::load(childBuffer);
+        cumulativeSumBefore = page.getCumulativeSum();
+    }
+    return entryPos - cumulativeSumBefore;
 }
 
 uint64_t PagedVector::getMainBufferSize()
@@ -230,14 +228,10 @@ void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider)
     addNewPage(bufferProvider, bufferProvider->getBufferSize());
 }
 
-std::optional<size_t> PagedVector::getPageIndex(const uint64_t entryPos) const
+size_t PagedVector::getPageIndex(const uint64_t entryPos) const
 {
     PRECONDITION(getStatus() == PagedVector::PagedVectorStatus::VALID_PV, "Paged Vector must be valid for accessing one of its pages.");
-    if (entryPos >= getTotalNumberOfRecords())
-    {
-        NES_WARNING("EntryPos {} exceeds the number of entries in the PagedVector {}!", entryPos, getTotalNumberOfRecords());
-        return {};
-    }
+    PRECONDITION(entryPos < getTotalNumberOfRecords(), "Paged Vector out of bounds");
 
     const auto numPages = getNumberOfPages();
 
@@ -272,7 +266,9 @@ std::optional<size_t> PagedVector::getPageIndex(const uint64_t entryPos) const
             return i;
         }
     }
-    return {};
+
+    INVARIANT(false, "PagedVector out of bounds");
+    std::unreachable();
 }
 
 uint64_t PagedVector::getTotalNumberOfRecords() const

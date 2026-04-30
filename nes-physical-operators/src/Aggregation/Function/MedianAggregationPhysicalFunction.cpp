@@ -69,7 +69,7 @@ void MedianAggregationPhysicalFunction::lift(
     }
 
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
-    PagedVectorRef pagedVectorRef(memArea, tupleLayout);
+    PagedVectorRef pagedVectorRef(NautilusBuffer::load(memArea), tupleLayout);
     pagedVectorRef.push_back(record, pipelineMemoryProvider.bufferProvider);
 }
 
@@ -119,9 +119,9 @@ Record MedianAggregationPhysicalFunction::lower(
     }
 
     /// Getting the paged vector from the aggregation state
-    const auto pagedVectorPtr
-        = static_cast<nautilus::val<PagedVector*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
-    const PagedVectorRef pagedVectorRef(pagedVectorPtr, tupleLayout);
+    const auto pagedVectorPtr = static_cast<nautilus::val<NES::TupleBuffer*>>(
+        aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
+    const PagedVectorRef pagedVectorRef(NautilusBuffer::load(pagedVectorPtr), tupleLayout);
     const auto numberOfEntries = invoke(
         +[](const PagedVector* pagedVector)
         {

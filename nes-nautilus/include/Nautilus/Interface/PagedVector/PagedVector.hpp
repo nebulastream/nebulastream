@@ -92,9 +92,9 @@ public:
     [[nodiscard]] static uint64_t getMainBufferSize();
 
     /// @brief Returns the index of a record within its page, given its global record index.
-    [[nodiscard]] std::optional<uint64_t> getRecordIndexInPage(uint64_t recordIndex) const;
+    [[nodiscard]] uint64_t getRecordIndexInPage(uint64_t recordIndex) const;
     /// @brief Returns the index of the page that stores the record at the given global record index.
-    [[nodiscard]] std::optional<size_t> getPageIndex(uint64_t recordIndex) const;
+    [[nodiscard]] size_t getPageIndex(uint64_t recordIndex) const;
 
 private:
     struct Header
