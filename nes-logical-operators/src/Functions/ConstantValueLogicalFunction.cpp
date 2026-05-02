@@ -33,20 +33,20 @@
 
 namespace NES
 {
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(DataType dataType, std::string constantValueAsString)
-    : constantValue(std::move(constantValueAsString)), dataType(std::move(dataType))
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(LogicalType logicalType, std::string constantValueAsString)
+    : constantValue(std::move(constantValueAsString)), logicalType(std::move(logicalType))
 {
 }
 
-DataType ConstantValueLogicalFunction::getDataType() const
+LogicalType ConstantValueLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-ConstantValueLogicalFunction ConstantValueLogicalFunction::withDataType(const DataType& dataType) const
+ConstantValueLogicalFunction ConstantValueLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
@@ -74,7 +74,7 @@ std::string ConstantValueLogicalFunction::explain(ExplainVerbosity verbosity) co
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("ConstantValueLogicalFunction({} : {})", constantValue, dataType);
+        return fmt::format("ConstantValueLogicalFunction({} : {})", constantValue, logicalType);
     }
     return constantValue;
 }
@@ -84,7 +84,7 @@ std::string ConstantValueLogicalFunction::getConstantValue() const
     return constantValue;
 }
 
-LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema&) const
+LogicalFunction ConstantValueLogicalFunction::withInferredLogicalType(const Schema&) const
 {
     /// the dataType of constant value functions is defined by the constant value type.
     /// thus it is already assigned correctly when the function node is created.
@@ -93,13 +93,14 @@ LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema&
 
 Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& function) const
 {
-    return reflect(detail::ReflectedConstantValueLogicalFunction{.value = function.getConstantValue(), .dataType = function.getDataType()});
+    return reflect(
+        detail::ReflectedConstantValueLogicalFunction{.value = function.getConstantValue(), .logicalType = function.getLogicalType()});
 }
 
 ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& reflected) const
 {
-    auto [value, dataType] = unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
-    return ConstantValueLogicalFunction{dataType, value};
+    auto [value, logicalType] = unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
+    return ConstantValueLogicalFunction{logicalType, value};
 }
 
 LogicalFunctionRegistryReturnType

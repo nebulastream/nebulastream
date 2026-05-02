@@ -41,16 +41,16 @@ public:
     [[nodiscard]] static std::string_view getName() noexcept;
     [[nodiscard]] std::string toString() const;
     [[nodiscard]] Reflected reflect() const;
-    [[nodiscard]] DataType getInputStamp() const;
-    [[nodiscard]] DataType getPartialAggregateStamp() const;
-    [[nodiscard]] DataType getFinalAggregateStamp() const;
+    [[nodiscard]] LogicalType getInputStamp() const;
+    [[nodiscard]] LogicalType getPartialAggregateStamp() const;
+    [[nodiscard]] LogicalType getFinalAggregateStamp() const;
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
     [[nodiscard]] MedianAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
-    [[nodiscard]] MedianAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
-    [[nodiscard]] MedianAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
-    [[nodiscard]] MedianAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
+    [[nodiscard]] MedianAggregationLogicalFunction withInputStamp(LogicalType inputStamp) const;
+    [[nodiscard]] MedianAggregationLogicalFunction withPartialAggregateStamp(LogicalType partialAggregateStamp) const;
+    [[nodiscard]] MedianAggregationLogicalFunction withFinalAggregateStamp(LogicalType finalAggregateStamp) const;
     [[nodiscard]] MedianAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
     [[nodiscard]] MedianAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
@@ -60,9 +60,9 @@ public:
 private:
     static constexpr std::string_view NAME = "Median";
 
-    DataType inputStamp;
-    DataType partialAggregateStamp;
-    DataType finalAggregateStamp;
+    LogicalType inputStamp;
+    LogicalType partialAggregateStamp;
+    LogicalType finalAggregateStamp;
     FieldAccessLogicalFunction onField;
     FieldAccessLogicalFunction asField;
 };

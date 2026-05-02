@@ -35,30 +35,29 @@
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(const LogicalFunction& child) : logicalType(child.getLogicalType()), child(child)
 {
 }
 
-DataType AbsoluteLogicalFunction::getDataType() const
+LogicalType AbsoluteLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-AbsoluteLogicalFunction AbsoluteLogicalFunction::withDataType(const DataType& dataType) const
+AbsoluteLogicalFunction AbsoluteLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction AbsoluteLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 1, "AbsoluteLogicalFunction expects exactly one child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = newChildren[0].getLogicalType();
+    return withLogicalType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> AbsoluteLogicalFunction::getChildren() const
@@ -88,7 +87,7 @@ std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("AbsoluteLogicalFunction({} : {})", child.explain(verbosity), dataType);
+        return fmt::format("AbsoluteLogicalFunction({} : {})", child.explain(verbosity), logicalType);
     }
     return fmt::format("ABS({})", child.explain(verbosity));
 }

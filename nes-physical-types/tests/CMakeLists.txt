@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-data-types
-        DataTypeSerializationUtil.cpp
-)
+include(ExternalProject)
+
+add_subdirectory(UnitTests)
+
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)

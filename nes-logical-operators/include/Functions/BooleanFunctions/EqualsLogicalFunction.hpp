@@ -38,9 +38,9 @@ public:
     EqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
     [[nodiscard]] bool operator==(const EqualsLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] EqualsLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalType getLogicalType() const;
+    [[nodiscard]] EqualsLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] EqualsLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -50,7 +50,7 @@ public:
 
 private:
     LogicalFunction left, right;
-    DataType dataType;
+    LogicalType logicalType;
 
     friend struct Reflector<EqualsLogicalFunction>;
 };

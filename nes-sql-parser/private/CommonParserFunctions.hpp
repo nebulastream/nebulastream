@@ -22,7 +22,7 @@
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
-#include <DataTypes/DataType.hpp>
+#include <DataTypes/LogicalType.hpp>
 #include <DataTypes/Schema.hpp>
 
 namespace NES
@@ -53,7 +53,7 @@ std::string bindStringLiteral(antlr4::Token* stringLiteral);
 
 Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST);
 
-DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, Nullable isNullable);
+LogicalType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, Nullable isNullable);
 
 std::string literalToString(const Literal& literal);
 

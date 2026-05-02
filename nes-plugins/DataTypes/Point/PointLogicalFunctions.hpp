@@ -40,10 +40,9 @@ public:
 
     [[nodiscard]] bool operator==(const PointConstructLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointConstructLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] PointConstructLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointConstructLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -67,10 +66,9 @@ public:
 
     [[nodiscard]] bool operator==(const PointAddLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointAddLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] PointAddLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointAddLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -94,10 +92,9 @@ public:
 
     [[nodiscard]] bool operator==(const PointSubLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointSubLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] PointSubLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointSubLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -121,10 +118,9 @@ public:
 
     [[nodiscard]] bool operator==(const PointScaleLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointScaleLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] PointScaleLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointScaleLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -148,10 +144,9 @@ public:
 
     [[nodiscard]] bool operator==(const PointDistanceLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointDistanceLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] PointDistanceLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointDistanceLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -179,10 +174,9 @@ public:
 
     [[nodiscard]] bool operator==(const PointEqualsLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointEqualsLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] PointEqualsLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointEqualsLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

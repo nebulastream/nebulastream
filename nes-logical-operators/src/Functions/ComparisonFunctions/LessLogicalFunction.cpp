@@ -37,7 +37,7 @@ namespace NES
 {
 
 LessLogicalFunction::LessLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(left)), right(std::move(right)), logicalType(LogicalType{"BOOL", {}, Nullable::NOT_NULLABLE})
 {
 }
 
@@ -51,25 +51,24 @@ std::string LessLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} < {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-DataType LessLogicalFunction::getDataType() const
+LogicalType LessLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-LessLogicalFunction LessLogicalFunction::withDataType(const DataType& dataType) const
+LessLogicalFunction LessLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction LessLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction LessLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
-    auto newDataType = this->getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = this->getLogicalType();
+    return withLogicalType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> LessLogicalFunction::getChildren() const

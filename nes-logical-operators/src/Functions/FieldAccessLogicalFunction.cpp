@@ -35,16 +35,16 @@
 namespace NES
 {
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
-    : fieldName(std::move(fieldName)), dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)) { };
+    : fieldName(std::move(fieldName)), logicalType(LogicalType{"UNDEFINED", {}, Nullable::IS_NULLABLE}) { };
 
-FieldAccessLogicalFunction::FieldAccessLogicalFunction(DataType dataType, std::string fieldName)
-    : fieldName(std::move(fieldName)), dataType(std::move(dataType)) { };
+FieldAccessLogicalFunction::FieldAccessLogicalFunction(LogicalType logicalType, std::string fieldName)
+    : fieldName(std::move(fieldName)), logicalType(std::move(logicalType)) { };
 
 bool FieldAccessLogicalFunction::operator==(const FieldAccessLogicalFunction& rhs) const
 {
     const bool fieldNamesMatch = rhs.fieldName == this->fieldName;
-    const bool dataTypesMatch = rhs.dataType == this->dataType;
-    return fieldNamesMatch and dataTypesMatch;
+    const bool typesMatch = rhs.logicalType == this->logicalType;
+    return fieldNamesMatch and typesMatch;
 }
 
 bool operator!=(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs)
@@ -68,12 +68,12 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("FieldAccessLogicalFunction({}: {})", fieldName, dataType);
+        return fmt::format("FieldAccessLogicalFunction({}: {})", fieldName, logicalType);
     }
     return fieldName;
 }
 
-LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction FieldAccessLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
     const auto existingField = schema.getFieldByName(fieldName);
     if (!existingField)
@@ -82,20 +82,20 @@ LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema& s
     }
 
     auto copy = *this;
-    copy.dataType = existingField.value().dataType;
+    copy.logicalType = existingField.value().logicalType;
     copy.fieldName = existingField.value().name;
     return copy;
 }
 
-DataType FieldAccessLogicalFunction::getDataType() const
+LogicalType FieldAccessLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-FieldAccessLogicalFunction FieldAccessLogicalFunction::withDataType(const DataType& dataType) const
+FieldAccessLogicalFunction FieldAccessLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 }
 
@@ -116,14 +116,14 @@ std::string_view FieldAccessLogicalFunction::getType() const
 
 Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function) const
 {
-    return reflect(detail::ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .dataType = function.getDataType()});
+    return reflect(
+        detail::ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .logicalType = function.getLogicalType()});
 }
 
 FieldAccessLogicalFunction Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& reflected) const
 {
     auto [name, type] = unreflect<detail::ReflectedFieldAccessLogicalFunction>(reflected);
-
-    return FieldAccessLogicalFunction{DataType{type}, name};
+    return FieldAccessLogicalFunction{type, name};
 }
 
 LogicalFunctionRegistryReturnType

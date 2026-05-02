@@ -151,8 +151,9 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
 
         copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "START";
         copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "END";
-        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64);
-        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64);
+        /// TODO(datatype-migration): see JoinLogicalOperator — INTEGER stand-in for window timestamps.
+        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE});
+        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE});
     }
     else
     {
@@ -165,15 +166,15 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
         auto newKeys = std::vector<FieldAccessLogicalFunction>();
         for (auto& key : keys)
         {
-            auto newKey = key.withInferredDataType(firstSchema);
+            auto newKey = key.withInferredLogicalType(firstSchema);
             newKeys.push_back(newKey.getAs<FieldAccessLogicalFunction>().get());
-            copy.outputSchema.addField(newKey.getAs<FieldAccessLogicalFunction>().get().getFieldName(), newKey.getDataType());
+            copy.outputSchema.addField(newKey.getAs<FieldAccessLogicalFunction>().get().getFieldName(), newKey.getLogicalType());
         }
         copy.groupingKey = newKeys;
     }
     for (const auto& agg : copy.aggregationFunctions)
     {
-        copy.outputSchema.addField(agg->getAsField().getFieldName(), agg->getAsField().getDataType());
+        copy.outputSchema.addField(agg->getAsField().getFieldName(), agg->getAsField().getLogicalType());
     }
     return copy;
 }

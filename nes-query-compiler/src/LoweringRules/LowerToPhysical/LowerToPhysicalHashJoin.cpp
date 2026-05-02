@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/LogicalTypeBridge.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
@@ -80,8 +81,8 @@ struct FieldNamesExtension
 {
     std::string oldName;
     std::string newName;
-    DataType oldDataType;
-    DataType newDataType;
+    LogicalType oldDataType;
+    LogicalType newDataType;
 };
 
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
@@ -126,10 +127,10 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
                 = rightInputSchema.getFieldByName(firstChild->get().getFieldName()).has_value() ? *firstChild : *secondChild;
 
             /// If they do not have the same data types, we need to cast both to a common one
-            if (firstChild->getDataType() != secondChild->getDataType())
+            if (firstChild->getLogicalType() != secondChild->getLogicalType())
             {
                 /// We are now converting the fields to a physical data type and then joining them together
-                const auto joinedDataType = leftField.getDataType().join(rightField.getDataType());
+                const auto joinedDataType = leftField.getLogicalType().join(rightField.getLogicalType());
                 if (joinedDataType.has_value())
                 {
                     const auto leftFieldNewName = leftField.get().getFieldName() + "_" + std::to_string(counter++);
@@ -137,12 +138,12 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
                     leftJoinNames.emplace_back(FieldNamesExtension{
                         .oldName = leftField.get().getFieldName(),
                         .newName = leftFieldNewName,
-                        .oldDataType = leftField.getDataType(),
+                        .oldDataType = leftField.getLogicalType(),
                         .newDataType = *joinedDataType});
                     rightJoinNames.emplace_back(FieldNamesExtension{
                         .oldName = rightField.get().getFieldName(),
                         .newName = rightFieldNewName,
-                        .oldDataType = rightField.getDataType(),
+                        .oldDataType = rightField.getLogicalType(),
                         .newDataType = *joinedDataType});
                 }
             }
@@ -151,13 +152,13 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
                 leftJoinNames.emplace_back(FieldNamesExtension{
                     .oldName = leftField.get().getFieldName(),
                     .newName = leftField.get().getFieldName(),
-                    .oldDataType = leftField.getDataType(),
-                    .newDataType = leftField.getDataType()});
+                    .oldDataType = leftField.getLogicalType(),
+                    .newDataType = leftField.getLogicalType()});
                 rightJoinNames.emplace_back(FieldNamesExtension{
                     .oldName = rightField.get().getFieldName(),
                     .newName = rightField.get().getFieldName(),
-                    .oldDataType = rightField.getDataType(),
-                    .newDataType = rightField.getDataType()});
+                    .oldDataType = rightField.getLogicalType(),
+                    .newDataType = rightField.getLogicalType()});
             }
         });
 
@@ -208,12 +209,13 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
     for (auto& fieldExtension : joinFieldExtensions)
     {
         const FieldAccessLogicalFunction fieldAccessKey{fieldExtension.newDataType, fieldExtension.newName};
-        if (fieldExtension.newDataType.isType(DataType::Type::VARSIZED))
+        const auto physicalKeyType = toPhysical(fieldExtension.newDataType).value();
+        if (physicalKeyType.isType(DataType::Type::VARSIZED))
         {
             const bool fieldReplaceSuccess = inputSchema.replaceTypeOfField(fieldExtension.newName, fieldExtension.newDataType);
             INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", fieldExtension.newName, inputSchema);
         }
-        keySize += fieldExtension.newDataType.getSizeInBytesWithNull();
+        keySize += physicalKeyType.getSizeInBytesWithNull();
         keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(fieldAccessKey));
         fieldKeyNames.emplace_back(fieldExtension.newName);
     }

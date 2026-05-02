@@ -28,12 +28,12 @@
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalTypeRegistry.hpp>
 
 namespace NES
 {
@@ -300,15 +300,16 @@ Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST)
     return schema;
 }
 
-DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const Nullable isNullable)
+LogicalType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const Nullable isNullable)
 {
     const std::string dataTypeText = typeDefAST->getText();
-    const auto dataType = DataTypeProvider::tryProvideDataType(dataTypeText, isNullable);
-    if (not dataType.has_value())
+    const auto logicalType = LogicalTypeRegistry::instance().create(
+        dataTypeText, LogicalTypeRegistryArguments{.nullable = isNullable, .parameters = {}});
+    if (not logicalType.has_value())
     {
         throw UnknownDataType("{}", dataTypeText);
     }
-    return *dataType;
+    return *logicalType;
 }
 
 [[nodiscard]] std::string literalToString(const Literal& literal)

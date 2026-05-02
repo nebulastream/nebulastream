@@ -36,28 +36,27 @@
 namespace NES
 {
 
-FloorLogicalFunction::FloorLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+FloorLogicalFunction::FloorLogicalFunction(const LogicalFunction& child) : logicalType(child.getLogicalType()), child(child) { };
 
-DataType FloorLogicalFunction::getDataType() const
+LogicalType FloorLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-FloorLogicalFunction FloorLogicalFunction::withDataType(const DataType& dataType) const
+FloorLogicalFunction FloorLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction FloorLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction FloorLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 1, "FloorLogicalFunction expects exactly one child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = newChildren[0].getLogicalType();
+    return withLogicalType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> FloorLogicalFunction::getChildren() const
@@ -87,7 +86,7 @@ std::string FloorLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("FloorLogicalFunction({} : {})", child.explain(verbosity), dataType);
+        return fmt::format("FloorLogicalFunction({} : {})", child.explain(verbosity), logicalType);
     }
     return fmt::format("FLOOR({})", child.explain(verbosity));
 }

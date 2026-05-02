@@ -34,6 +34,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalType.hpp>
+#include <DataTypes/LogicalTypeBridge.hpp>
+#include <LogicalTypeRegistry.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -309,20 +312,16 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
             }
             return std::make_tuple(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1), isNullable.value());
         }(field);
-        NES::DataType dataType;
-        if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed); type.has_value())
-        {
-            dataType = NES::DataTypeProvider::provideDataType(type.value(), isNullable);
-        }
-        else if (NES::toLowerCase(typeTrimmed) == "varsized")
-        {
-            dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED, isNullable);
-        }
-        else
+        /// The schema serializer (SchemaFormatter) writes LogicalType names directly, so we simply
+        /// look the name up in the LogicalTypeRegistry.
+        const std::string typeName{typeTrimmed};
+        const auto logicalType = NES::LogicalTypeRegistry::instance().create(
+            typeName, NES::LogicalTypeRegistryArguments{.nullable = isNullable, .parameters = {}});
+        if (not logicalType.has_value())
         {
             throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
         }
-        schema.addField(std::string(nameTrimmed), dataType);
+        schema.addField(std::string(nameTrimmed), *logicalType);
     }
     return schema;
 }
@@ -370,7 +369,7 @@ struct ExpectedToActualFieldMap
 {
     struct TypeIndexPair
     {
-        NES::DataType type;
+        NES::LogicalType type;
         std::optional<size_t> actualIndex;
     };
 
@@ -440,7 +439,7 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
             matchingFieldIt != actualResultSchema.getRawValue().end())
         {
             auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, offset);
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.logicalType, offset);
             matchedActualResultFields.emplace(offset);
             expectedToActualFieldMap.expectedResultsFieldSortIdx.emplace_back(expectedFieldIdx);
             expectedToActualFieldMap.actualResultsFieldSortIdx.emplace_back(offset);
@@ -448,7 +447,7 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
         else
         {
             expectedToActualFieldMap.schemaErrorStream << fmt::format("\n- '{}' is missing from actual result schema.", expectedField);
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, std::nullopt);
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.logicalType, std::nullopt);
         }
     }
     for (size_t fieldIdx = 0; fieldIdx < actualResultSchema.getRawValue().getNumberOfFields(); ++fieldIdx)
@@ -485,7 +484,7 @@ FieldMatchResult compareMatchableExpectedFields(
         if (typeActualPair.actualIndex.has_value())
         {
             const auto& actualField = splitActualResult.at(typeActualPair.actualIndex.value());
-            if (not compareStringAsTypeWithError(typeActualPair.type.type, expectedField, actualField))
+            if (not compareStringAsTypeWithError(NES::toPhysical(typeActualPair.type).value().type, expectedField, actualField))
             {
                 return FieldMatchResult::AT_LEAST_ONE_FIELD_MISMATCHED;
             }

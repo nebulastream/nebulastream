@@ -36,7 +36,7 @@
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : logicalType(child.getLogicalType()), child(child) { };
 
 bool SqrtLogicalFunction::operator==(const SqrtLogicalFunction& rhs) const
 {
@@ -47,31 +47,30 @@ std::string SqrtLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SqrtLogicalFunction({} : {})", child.explain(verbosity), dataType);
+        return fmt::format("SqrtLogicalFunction({} : {})", child.explain(verbosity), logicalType);
     }
     return fmt::format("SQRT({})", child.explain(verbosity));
 }
 
-DataType SqrtLogicalFunction::getDataType() const
+LogicalType SqrtLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-SqrtLogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) const
+SqrtLogicalFunction SqrtLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction SqrtLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 1, "SqrtLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = LogicalType{"FLOAT", {}, Nullable::NOT_NULLABLE};
+    return withLogicalType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const

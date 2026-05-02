@@ -32,8 +32,8 @@
 namespace NES
 {
 
-CastToTypeLogicalFunction::CastToTypeLogicalFunction(const DataType dataType, LogicalFunction child)
-    : castToType(dataType), child(std::move(child))
+CastToTypeLogicalFunction::CastToTypeLogicalFunction(LogicalType logicalType, LogicalFunction child)
+    : castToType(std::move(logicalType)), child(std::move(child))
 {
 }
 
@@ -42,19 +42,19 @@ bool CastToTypeLogicalFunction::operator==(const CastToTypeLogicalFunction& rhs)
     return this->castToType == rhs.castToType;
 }
 
-DataType CastToTypeLogicalFunction::getDataType() const
+LogicalType CastToTypeLogicalFunction::getLogicalType() const
 {
     return castToType;
 }
 
-CastToTypeLogicalFunction CastToTypeLogicalFunction::withDataType(const DataType& dataType) const
+CastToTypeLogicalFunction CastToTypeLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.castToType = dataType;
+    copy.castToType = logicalType;
     return copy;
 }
 
-LogicalFunction CastToTypeLogicalFunction::withInferredDataType(const Schema&) const
+LogicalFunction CastToTypeLogicalFunction::withInferredLogicalType(const Schema&) const
 {
     return *this;
 }

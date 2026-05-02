@@ -35,7 +35,7 @@ namespace NES
 {
 
 NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), child(std::move(child))
+    : logicalType(LogicalType{"BOOL", {}, Nullable::NOT_NULLABLE}), child(std::move(child))
 {
 }
 
@@ -49,27 +49,26 @@ std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("NOT({})", child.explain(verbosity));
 }
 
-LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction NegateLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    auto newChild = child.withInferredDataType(schema);
-    if (not newChild.getDataType().isType(DataType::Type::BOOLEAN))
+    auto newChild = child.withInferredLogicalType(schema);
+    if (not newChild.getLogicalType().isBool())
     {
-        throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", child.getDataType());
+        throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", child.getLogicalType());
     }
-    auto newDataType = newChild.getDataType();
-    newDataType.nullable = newChild.getDataType().nullable;
-    return withDataType(newDataType).withChildren({newChild});
+    auto newDataType = newChild.getLogicalType();
+    return withLogicalType(newDataType).withChildren({newChild});
 }
 
-DataType NegateLogicalFunction::getDataType() const
+LogicalType NegateLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-NegateLogicalFunction NegateLogicalFunction::withDataType(const DataType& dataType) const
+NegateLogicalFunction NegateLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
@@ -104,9 +103,9 @@ NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Refle
     {
         throw CannotDeserialize("Failed to deserialize child of NegateLogicalFunction");
     }
-    if (function->getDataType().type != DataType::Type::BOOLEAN)
+    if (function->getLogicalType().isBool() == false)
     {
-        throw CannotDeserialize("requires child of type bool, but got {}", function->getDataType());
+        throw CannotDeserialize("requires child of type bool, but got {}", function->getLogicalType());
     }
 
     return NegateLogicalFunction(std::move(function.value()));
@@ -124,9 +123,9 @@ LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunction
     {
         throw CannotDeserialize("NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    if (arguments.children[0].getDataType().type != DataType::Type::BOOLEAN)
+    if (arguments.children[0].getLogicalType().isBool() == false)
     {
-        throw CannotDeserialize("requires child of type bool, but got {}", arguments.children[0].getDataType());
+        throw CannotDeserialize("requires child of type bool, but got {}", arguments.children[0].getLogicalType());
     }
     return NegateLogicalFunction(arguments.children[0]);
 }

@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include <DataTypes/LogicalTypeBridge.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/OutputFormatterBufferRef.hpp>
@@ -49,7 +50,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
     fieldNames.reserve(schema.getNumberOfFields());
     for (const auto& field : schema)
     {
-        fields.emplace_back(field.name, field.dataType);
+        fields.emplace_back(field.name, toPhysical(field.logicalType).value());
         fieldNames.emplace_back(field.name);
     }
 
@@ -80,8 +81,9 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
             uint64_t fieldOffset = 0;
             for (const auto& field : schema)
             {
-                fields.emplace_back(field.name, field.dataType, fieldOffset);
-                fieldOffset += field.dataType.getSizeInBytesWithNull();
+                const auto physical = toPhysical(field.logicalType).value();
+                fields.emplace_back(field.name, physical, fieldOffset);
+                fieldOffset += physical.getSizeInBytesWithNull();
             }
             const auto tupleSize = std::accumulate(
                 fields.begin(),
@@ -97,7 +99,7 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
                 schema.begin(),
                 schema.end(),
                 0UL,
-                [](auto size, const Schema::Field& field) { return size + field.dataType.getSizeInBytesWithNull(); });
+                [](auto size, const Schema::Field& field) { return size + toPhysical(field.logicalType).value().getSizeInBytesWithNull(); });
             INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
 
             const uint64_t capacity = bufferSize / tupleSize;
@@ -106,8 +108,9 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
             uint64_t columnOffset = 0;
             for (const auto& field : schema)
             {
-                fields.emplace_back(field.name, field.dataType, field.dataType.getSizeInBytesWithNull(), columnOffset);
-                columnOffset += (field.dataType.getSizeInBytesWithNull() * capacity);
+                const auto physical = toPhysical(field.logicalType).value();
+                fields.emplace_back(field.name, physical, physical.getSizeInBytesWithNull(), columnOffset);
+                columnOffset += (physical.getSizeInBytesWithNull() * capacity);
             }
 
             return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});

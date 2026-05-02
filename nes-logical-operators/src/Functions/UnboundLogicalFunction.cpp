@@ -44,20 +44,20 @@ bool UnboundLogicalFunction::operator==(const UnboundLogicalFunction& rhs) const
     return operationName == rhs.operationName && children == rhs.children;
 }
 
-DataType UnboundLogicalFunction::getDataType() const
+LogicalType UnboundLogicalFunction::getLogicalType() const
 {
-    return DataTypeProvider::provideDataType(DataType::Type::UNDEFINED);
+    return LogicalType{"UNDEFINED", {}, Nullable::IS_NULLABLE};
 }
 
-UnboundLogicalFunction UnboundLogicalFunction::withDataType(const DataType&) const
+UnboundLogicalFunction UnboundLogicalFunction::withLogicalType(const LogicalType&) const
 {
     return *this;
 }
 
-LogicalFunction UnboundLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction UnboundLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
     auto inferredChildren = children
-        | std::views::transform([&schema](const auto& child) { return child.withInferredDataType(schema); })
+        | std::views::transform([&schema](const auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
 
     std::string mangled = operationName;
@@ -69,11 +69,11 @@ LogicalFunction UnboundLogicalFunction::withInferredDataType(const Schema& schem
 
     if (auto resolved = LogicalFunctionProvider::tryProvide(mangled, inferredChildren))
     {
-        return resolved->withInferredDataType(schema);
+        return resolved->withInferredLogicalType(schema);
     }
     if (auto resolved = LogicalFunctionProvider::tryProvide(operationName, inferredChildren))
     {
-        return resolved->withInferredDataType(schema);
+        return resolved->withInferredLogicalType(schema);
     }
 
     auto childTypes = inferredChildren | std::views::transform([](const auto& c) { return std::string{c.getLogicalType().getName()}; })

@@ -56,10 +56,10 @@ bool MedianAggregationLogicalFunction::shallIncludeNullValues() noexcept
 MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
-    if (not newOnField.getDataType().isNumeric())
+    auto newOnField = this->getOnField().withInferredLogicalType(schema).getAs<FieldAccessLogicalFunction>().get();
+    if (not newOnField.getLogicalType().isNumeric())
     {
-        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", newOnField.getDataType());
+        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", newOnField.getLogicalType());
     }
 
     ///Set fully qualified name for the as Field
@@ -79,12 +79,11 @@ MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredS
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         newAsFieldName = attributeNameResolver + fieldName;
     }
-    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
-        DataType::Type::FLOAT64, newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
-    return this->withInputStamp(newOnField.getDataType())
+    const auto newFinalAggregateStamp = LogicalType{"FLOAT", {}, newOnField.getLogicalType().getNullable()};
+    return this->withInputStamp(newOnField.getLogicalType())
         .withOnField(newOnField)
         .withFinalAggregateStamp(newFinalAggregateStamp)
-        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp));
+        .withAsField(this->getAsField().withFieldName(newAsFieldName).withLogicalType(newFinalAggregateStamp));
 }
 
 Reflected MedianAggregationLogicalFunction::reflect() const
@@ -122,17 +121,17 @@ std::string MedianAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-DataType MedianAggregationLogicalFunction::getInputStamp() const
+LogicalType MedianAggregationLogicalFunction::getInputStamp() const
 {
     return inputStamp;
 }
 
-DataType MedianAggregationLogicalFunction::getPartialAggregateStamp() const
+LogicalType MedianAggregationLogicalFunction::getPartialAggregateStamp() const
 {
     return partialAggregateStamp;
 }
 
-DataType MedianAggregationLogicalFunction::getFinalAggregateStamp() const
+LogicalType MedianAggregationLogicalFunction::getFinalAggregateStamp() const
 {
     return finalAggregateStamp;
 }
@@ -147,21 +146,21 @@ FieldAccessLogicalFunction MedianAggregationLogicalFunction::getAsField() const
     return asField;
 }
 
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
+MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInputStamp(LogicalType inputStamp) const
 {
     auto copy = *this;
     copy.inputStamp = std::move(inputStamp);
     return copy;
 }
 
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
+MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withPartialAggregateStamp(LogicalType partialAggregateStamp) const
 {
     auto copy = *this;
     copy.partialAggregateStamp = std::move(partialAggregateStamp);
     return copy;
 }
 
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
+MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withFinalAggregateStamp(LogicalType finalAggregateStamp) const
 {
     auto copy = *this;
     copy.finalAggregateStamp = std::move(finalAggregateStamp);

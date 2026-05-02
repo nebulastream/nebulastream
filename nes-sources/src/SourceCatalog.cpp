@@ -43,7 +43,7 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
     Schema newSchema;
     for (const auto& field : schema.getFields())
     {
-        newSchema.addField(logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.dataType);
+        newSchema.addField(logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.logicalType);
         if (field.name.find(logicalSourceName) != std::string::npos)
         {
             NES_DEBUG(

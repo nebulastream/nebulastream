@@ -83,7 +83,7 @@ EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema
         throw CannotDeserialize("Watermark assigner should have only one input");
     }
     const auto& inputSchema = inputSchemas[0];
-    copy.onField = onField.withInferredDataType(inputSchema);
+    copy.onField = onField.withInferredLogicalType(inputSchema);
     copy.inputSchema = inputSchema;
     copy.outputSchema = inputSchema;
     return copy;

@@ -88,8 +88,8 @@ SelectionLogicalOperator SelectionLogicalOperator::withInferredSchema(std::vecto
         }
     }
 
-    copy.predicate = predicate.withInferredDataType(firstSchema);
-    if (not copy.predicate.getDataType().isType(DataType::Type::BOOLEAN))
+    copy.predicate = predicate.withInferredLogicalType(firstSchema);
+    if (not copy.predicate.getLogicalType().isBool())
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
     }

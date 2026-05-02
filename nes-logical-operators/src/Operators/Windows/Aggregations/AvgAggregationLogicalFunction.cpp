@@ -53,43 +53,21 @@ std::string_view AvgAggregationLogicalFunction::getName() noexcept
 
 AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
 {
-    /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = this->getOnField().withInferredDataType(schema);
-    if (not newOnField.getDataType().isNumeric())
+    /// TODO(datatype-migration): aggregation type rules are simplified for the prototype —
+    /// previously promoted to UINT64/INT64/FLOAT64 to avoid overflow; now we keep INTEGER
+    /// or FLOAT and stamp the final aggregate as FLOAT regardless. Re-introduce overflow-safe
+    /// promotion once the LogicalType vocabulary grows back.
+    auto newOnField = this->getOnField().withInferredLogicalType(schema);
+    if (not newOnField.getLogicalType().isNumeric())
     {
         throw CannotDeserialize("aggregations on non numeric fields is not supported.");
     }
 
-    /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
-    if (this->getOnField().getDataType().isInteger())
-    {
-        if (this->getOnField().getDataType().isSignedInteger())
-        {
-            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
-                DataType::Type::INT64,
-                newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE));
-        }
-        else
-        {
-            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
-                DataType::Type::UINT64,
-                newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE));
-        }
-    }
-    else
-    {
-        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
-            DataType::Type::FLOAT64,
-            newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE));
-    }
-
-    ///Set fully qualified name for the as Field
     const auto onFieldName = newOnField.getAs<FieldAccessLogicalFunction>()->getFieldName();
     const auto asFieldName = this->getAsField().getFieldName();
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
 
     std::string newAsFieldName;
-    ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
         newAsFieldName = attributeNameResolver + asFieldName;
@@ -100,12 +78,11 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
         newAsFieldName = attributeNameResolver + fieldName;
     }
 
-    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
-        DataType::Type::FLOAT64, newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+    const auto newFinalAggregateStamp = LogicalType{"FLOAT", {}, newOnField.getLogicalType().getNullable()};
     return this->withOnField(newOnField.getAs<FieldAccessLogicalFunction>().get())
         .withFinalAggregateStamp(newFinalAggregateStamp)
-        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp))
-        .withInputStamp(newOnField.getDataType());
+        .withAsField(this->getAsField().withFieldName(newAsFieldName).withLogicalType(newFinalAggregateStamp))
+        .withInputStamp(newOnField.getLogicalType());
 }
 
 Reflected AvgAggregationLogicalFunction::reflect() const
@@ -144,17 +121,17 @@ std::string AvgAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-DataType AvgAggregationLogicalFunction::getInputStamp() const
+LogicalType AvgAggregationLogicalFunction::getInputStamp() const
 {
     return inputStamp;
 }
 
-DataType AvgAggregationLogicalFunction::getPartialAggregateStamp() const
+LogicalType AvgAggregationLogicalFunction::getPartialAggregateStamp() const
 {
     return partialAggregateStamp;
 }
 
-DataType AvgAggregationLogicalFunction::getFinalAggregateStamp() const
+LogicalType AvgAggregationLogicalFunction::getFinalAggregateStamp() const
 {
     return finalAggregateStamp;
 }
@@ -169,21 +146,21 @@ FieldAccessLogicalFunction AvgAggregationLogicalFunction::getAsField() const
     return asField;
 }
 
-AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
+AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInputStamp(LogicalType inputStamp) const
 {
     auto copy = *this;
     copy.inputStamp = std::move(inputStamp);
     return copy;
 }
 
-AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
+AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withPartialAggregateStamp(LogicalType partialAggregateStamp) const
 {
     auto copy = *this;
     copy.partialAggregateStamp = std::move(partialAggregateStamp);
     return copy;
 }
 
-AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
+AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withFinalAggregateStamp(LogicalType finalAggregateStamp) const
 {
     auto copy = *this;
     copy.finalAggregateStamp = std::move(finalAggregateStamp);

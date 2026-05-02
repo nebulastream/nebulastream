@@ -37,7 +37,7 @@ namespace NES
 {
 
 PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right) { };
+    : logicalType(LogicalType{"UNDEFINED", {}, Nullable::IS_NULLABLE}), left(left), right(right) { };
 
 bool PowLogicalFunction::operator==(const PowLogicalFunction& rhs) const
 {
@@ -51,26 +51,25 @@ std::string PowLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("POW({}, {})", left.explain(verbosity), right.explain(verbosity));
 }
 
-DataType PowLogicalFunction::getDataType() const
+LogicalType PowLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-PowLogicalFunction PowLogicalFunction::withDataType(const DataType& dataType) const
+PowLogicalFunction PowLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction PowLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction PowLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 2, "PowLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = LogicalType{"FLOAT", {}, Nullable::NOT_NULLABLE};
+    return withLogicalType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
@@ -83,7 +82,8 @@ PowLogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = DataType{copy.dataType.type, copy.left.getDataType().joinNullable(copy.right.getDataType())};
+    copy.logicalType = LogicalType{
+        copy.logicalType.getName(), copy.logicalType.getParameters(), copy.left.getLogicalType().joinNullable(copy.right.getLogicalType())};
     return copy;
 };
 

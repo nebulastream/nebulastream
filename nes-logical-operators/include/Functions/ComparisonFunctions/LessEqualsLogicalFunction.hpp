@@ -38,9 +38,9 @@ public:
 
     [[nodiscard]] bool operator==(const LessEqualsLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] LessEqualsLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalType getLogicalType() const;
+    [[nodiscard]] LessEqualsLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] LessEqualsLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -50,7 +50,7 @@ public:
 
 private:
     LogicalFunction left, right;
-    DataType dataType;
+    LogicalType logicalType;
 
     friend Reflector<LessEqualsLogicalFunction>;
 };

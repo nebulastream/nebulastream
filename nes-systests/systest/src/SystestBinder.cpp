@@ -156,8 +156,10 @@ public:
     static inline const Schema checksumSchema = []
     {
         Schema checksumSinkSchema;
-        checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+        /// TODO(datatype-migration): logically these are unsigned 64-bit ints; INTEGER is the
+        /// closest in the prototype's reduced LogicalType vocabulary.
+        checksumSinkSchema.addField("S$Count", LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE});
+        checksumSinkSchema.addField("S$Checksum", LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE});
         return checksumSinkSchema;
     }();
 
@@ -606,7 +608,7 @@ struct SystestBinder::Impl
         Schema schema;
         for (const auto& field : statement.schema.getFields())
         {
-            schema.addField(field.name, field.dataType);
+            schema.addField(field.name, field.logicalType);
         }
         sltSinkProvider.registerSink(statement.sinkType, statement.name, schema, statement.sinkConfig);
     }

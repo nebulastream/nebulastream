@@ -38,10 +38,10 @@ public:
 
     [[nodiscard]] bool operator==(const CastToUnixTimestampLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] CastToUnixTimestampLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalType getLogicalType() const;
+    [[nodiscard]] CastToUnixTimestampLogicalFunction withLogicalType(const LogicalType& logicalType) const;
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] CastToUnixTimestampLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -49,7 +49,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
-    DataType outputType;
+    LogicalType outputType;
     LogicalFunction child;
 
     friend Reflector<CastToUnixTimestampLogicalFunction>;

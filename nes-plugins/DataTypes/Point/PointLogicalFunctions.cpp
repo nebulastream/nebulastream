@@ -23,8 +23,6 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/LogicalType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -44,14 +42,14 @@ LogicalType pointType(Nullable nullable = Nullable::NOT_NULLABLE)
     return LogicalType{"Point", {}, nullable};
 }
 
-LogicalType float64Type(Nullable nullable = Nullable::NOT_NULLABLE)
+LogicalType floatType(Nullable nullable = Nullable::NOT_NULLABLE)
 {
-    return LogicalType{"FLOAT64", {}, nullable};
+    return LogicalType{"FLOAT", {}, nullable};
 }
 
-LogicalType booleanType(Nullable nullable = Nullable::NOT_NULLABLE)
+LogicalType boolType(Nullable nullable = Nullable::NOT_NULLABLE)
 {
-    return LogicalType{"BOOLEAN", {}, nullable};
+    return LogicalType{"BOOL", {}, nullable};
 }
 
 Nullable joinNullable(const std::vector<LogicalFunction>& children)
@@ -64,14 +62,6 @@ Nullable joinNullable(const std::vector<LogicalFunction>& children)
         }
     }
     return Nullable::NOT_NULLABLE;
-}
-
-/// Compound logical types like Point have no primitive DataType representation.
-/// Returning UNDEFINED keeps the legacy DataType bridge happy; the projection
-/// flattening inspects `getLogicalType()` directly to look up the layout.
-DataType compoundDataType(Nullable nullable)
-{
-    return DataTypeProvider::provideDataType(DataType::Type::UNDEFINED, nullable);
 }
 }
 
@@ -87,27 +77,22 @@ bool PointConstructLogicalFunction::operator==(const PointConstructLogicalFuncti
     return children == rhs.children;
 }
 
-DataType PointConstructLogicalFunction::getDataType() const
-{
-    return compoundDataType(logicalType.getNullable());
-}
-
 LogicalType PointConstructLogicalFunction::getLogicalType() const
 {
     return logicalType;
 }
 
-PointConstructLogicalFunction PointConstructLogicalFunction::withDataType(const DataType& dataType) const
+PointConstructLogicalFunction PointConstructLogicalFunction::withLogicalType(const LogicalType& newType) const
 {
     auto copy = *this;
-    copy.logicalType = pointType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+    copy.logicalType = newType;
     return copy;
 }
 
-LogicalFunction PointConstructLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction PointConstructLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
     auto inferredChildren = children
-        | std::views::transform([&schema](const auto& child) { return child.withInferredDataType(schema); }) | std::ranges::to<std::vector>();
+        | std::views::transform([&schema](const auto& child) { return child.withInferredLogicalType(schema); }) | std::ranges::to<std::vector>();
     PointConstructLogicalFunction copy{inferredChildren};
     copy.logicalType = pointType(joinNullable(inferredChildren));
     return copy;
@@ -186,27 +171,22 @@ bool PointAddLogicalFunction::operator==(const PointAddLogicalFunction& rhs) con
     return (left == rhs.left && right == rhs.right) || (left == rhs.right && right == rhs.left);
 }
 
-DataType PointAddLogicalFunction::getDataType() const
-{
-    return compoundDataType(logicalType.getNullable());
-}
-
 LogicalType PointAddLogicalFunction::getLogicalType() const
 {
     return logicalType;
 }
 
-PointAddLogicalFunction PointAddLogicalFunction::withDataType(const DataType& dataType) const
+PointAddLogicalFunction PointAddLogicalFunction::withLogicalType(const LogicalType& newType) const
 {
     auto copy = *this;
-    copy.logicalType = pointType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+    copy.logicalType = newType;
     return copy;
 }
 
-LogicalFunction PointAddLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction PointAddLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    auto l = left.withInferredDataType(schema);
-    auto r = right.withInferredDataType(schema);
+    auto l = left.withInferredLogicalType(schema);
+    auto r = right.withInferredLogicalType(schema);
     PointAddLogicalFunction copy{l, r};
     copy.logicalType = pointType(joinNullable({l, r}));
     return copy;
@@ -278,27 +258,22 @@ bool PointSubLogicalFunction::operator==(const PointSubLogicalFunction& rhs) con
     return left == rhs.left && right == rhs.right;
 }
 
-DataType PointSubLogicalFunction::getDataType() const
-{
-    return compoundDataType(logicalType.getNullable());
-}
-
 LogicalType PointSubLogicalFunction::getLogicalType() const
 {
     return logicalType;
 }
 
-PointSubLogicalFunction PointSubLogicalFunction::withDataType(const DataType& dataType) const
+PointSubLogicalFunction PointSubLogicalFunction::withLogicalType(const LogicalType& newType) const
 {
     auto copy = *this;
-    copy.logicalType = pointType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+    copy.logicalType = newType;
     return copy;
 }
 
-LogicalFunction PointSubLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction PointSubLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    auto l = left.withInferredDataType(schema);
-    auto r = right.withInferredDataType(schema);
+    auto l = left.withInferredLogicalType(schema);
+    auto r = right.withInferredLogicalType(schema);
     PointSubLogicalFunction copy{l, r};
     copy.logicalType = pointType(joinNullable({l, r}));
     return copy;
@@ -370,27 +345,22 @@ bool PointScaleLogicalFunction::operator==(const PointScaleLogicalFunction& rhs)
     return point == rhs.point && scalar == rhs.scalar;
 }
 
-DataType PointScaleLogicalFunction::getDataType() const
-{
-    return compoundDataType(logicalType.getNullable());
-}
-
 LogicalType PointScaleLogicalFunction::getLogicalType() const
 {
     return logicalType;
 }
 
-PointScaleLogicalFunction PointScaleLogicalFunction::withDataType(const DataType& dataType) const
+PointScaleLogicalFunction PointScaleLogicalFunction::withLogicalType(const LogicalType& newType) const
 {
     auto copy = *this;
-    copy.logicalType = pointType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+    copy.logicalType = newType;
     return copy;
 }
 
-LogicalFunction PointScaleLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction PointScaleLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    auto p = point.withInferredDataType(schema);
-    auto s = scalar.withInferredDataType(schema);
+    auto p = point.withInferredLogicalType(schema);
+    auto s = scalar.withInferredLogicalType(schema);
     PointScaleLogicalFunction copy{p, s};
     copy.logicalType = pointType(joinNullable({p, s}));
     return copy;
@@ -453,7 +423,7 @@ LogicalFunctionGeneratedRegistrar::RegisterPointScaleLogicalFunction(LogicalFunc
 /// ===== PointDistanceLogicalFunction =====
 
 PointDistanceLogicalFunction::PointDistanceLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : logicalType(float64Type()), left(std::move(left)), right(std::move(right))
+    : logicalType(floatType()), left(std::move(left)), right(std::move(right))
 {
 }
 
@@ -462,29 +432,24 @@ bool PointDistanceLogicalFunction::operator==(const PointDistanceLogicalFunction
     return (left == rhs.left && right == rhs.right) || (left == rhs.right && right == rhs.left);
 }
 
-DataType PointDistanceLogicalFunction::getDataType() const
-{
-    return DataTypeProvider::provideDataType(DataType::Type::FLOAT64, logicalType.getNullable());
-}
-
 LogicalType PointDistanceLogicalFunction::getLogicalType() const
 {
     return logicalType;
 }
 
-PointDistanceLogicalFunction PointDistanceLogicalFunction::withDataType(const DataType& dataType) const
+PointDistanceLogicalFunction PointDistanceLogicalFunction::withLogicalType(const LogicalType& newType) const
 {
     auto copy = *this;
-    copy.logicalType = float64Type(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+    copy.logicalType = newType;
     return copy;
 }
 
-LogicalFunction PointDistanceLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction PointDistanceLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    auto l = left.withInferredDataType(schema);
-    auto r = right.withInferredDataType(schema);
+    auto l = left.withInferredLogicalType(schema);
+    auto r = right.withInferredLogicalType(schema);
     PointDistanceLogicalFunction copy{l, r};
-    copy.logicalType = float64Type(joinNullable({l, r}));
+    copy.logicalType = floatType(joinNullable({l, r}));
     return copy;
 }
 
@@ -499,7 +464,7 @@ PointDistanceLogicalFunction PointDistanceLogicalFunction::withChildren(const st
     auto copy = *this;
     copy.left = newChildren[0];
     copy.right = newChildren[1];
-    copy.logicalType = float64Type(joinNullable(newChildren));
+    copy.logicalType = floatType(joinNullable(newChildren));
     return copy;
 }
 
@@ -545,7 +510,7 @@ LogicalFunctionGeneratedRegistrar::RegisterPointDistanceLogicalFunction(LogicalF
 /// ===== PointEqualsLogicalFunction =====
 
 PointEqualsLogicalFunction::PointEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : logicalType(booleanType()), left(std::move(left)), right(std::move(right))
+    : logicalType(boolType()), left(std::move(left)), right(std::move(right))
 {
 }
 
@@ -554,29 +519,24 @@ bool PointEqualsLogicalFunction::operator==(const PointEqualsLogicalFunction& rh
     return (left == rhs.left && right == rhs.right) || (left == rhs.right && right == rhs.left);
 }
 
-DataType PointEqualsLogicalFunction::getDataType() const
-{
-    return DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, logicalType.getNullable());
-}
-
 LogicalType PointEqualsLogicalFunction::getLogicalType() const
 {
     return logicalType;
 }
 
-PointEqualsLogicalFunction PointEqualsLogicalFunction::withDataType(const DataType& dataType) const
+PointEqualsLogicalFunction PointEqualsLogicalFunction::withLogicalType(const LogicalType& newType) const
 {
     auto copy = *this;
-    copy.logicalType = booleanType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+    copy.logicalType = newType;
     return copy;
 }
 
-LogicalFunction PointEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction PointEqualsLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    auto l = left.withInferredDataType(schema);
-    auto r = right.withInferredDataType(schema);
+    auto l = left.withInferredLogicalType(schema);
+    auto r = right.withInferredLogicalType(schema);
     PointEqualsLogicalFunction copy{l, r};
-    copy.logicalType = booleanType(joinNullable({l, r}));
+    copy.logicalType = boolType(joinNullable({l, r}));
     return copy;
 }
 
@@ -591,7 +551,7 @@ PointEqualsLogicalFunction PointEqualsLogicalFunction::withChildren(const std::v
     auto copy = *this;
     copy.left = newChildren[0];
     copy.right = newChildren[1];
-    copy.logicalType = booleanType(joinNullable(newChildren));
+    copy.logicalType = boolType(joinNullable(newChildren));
     return copy;
 }
 
@@ -634,41 +594,34 @@ LogicalFunctionGeneratedRegistrar::RegisterPointEqualsLogicalFunction(LogicalFun
     return PointEqualsLogicalFunction{arguments.children[0], arguments.children[1]};
 }
 
-/// Mangled-name overload entry: `Equals_Point_Point` is the key built by
-/// `UnboundLogicalFunction::withInferredDataType` when both children's logical
-/// type names equal "Point". Returns the same class as the bare PointEquals
-/// factory; the separate plugin name is what makes it discoverable via the
-/// overload-mangling path.
+/// Mangled-name overload entries: keys are built by
+/// `UnboundLogicalFunction::withInferredLogicalType` from the children's
+/// LogicalType names. With the prototype's reduced logical-type vocabulary,
+/// integer constants surface as "INTEGER", so the scalar*Point and Point*scalar
+/// overloads use the `INTEGER` key (not the legacy `INT64`).
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterEquals_Point_PointLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     return RegisterPointEqualsLogicalFunction(std::move(arguments));
 }
 
-/// `Point + Point` → component-wise PointAdd. Symmetric, so this single
-/// overload covers both `lhs + rhs` and `rhs + lhs`.
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterAdd_Point_PointLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     return RegisterPointAddLogicalFunction(std::move(arguments));
 }
 
-/// `Point * Integer` → PointScale. PointScale's constructor takes
-/// (point, scalar), and the parser feeds children in operand order
-/// (lhs, rhs), so this entry passes them through unchanged.
 LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterMul_Point_INT64LogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionGeneratedRegistrar::RegisterMul_Point_INTEGERLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     return RegisterPointScaleLogicalFunction(std::move(arguments));
 }
 
-/// `Integer * Point` — same factory but with arguments swapped so PointScale
-/// still sees (point, scalar). Until we add a commutativity helper to the
-/// registry, scalar*Point overloads must be registered explicitly.
 LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterMul_INT64_PointLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionGeneratedRegistrar::RegisterMul_INTEGER_PointLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.children.size() == 2, "Mul_INT64_Point requires exactly two children, got {}", arguments.children.size());
+    PRECONDITION(arguments.children.size() == 2, "Mul_INTEGER_Point requires exactly two children, got {}", arguments.children.size());
     std::swap(arguments.children[0], arguments.children[1]);
     return RegisterPointScaleLogicalFunction(std::move(arguments));
 }

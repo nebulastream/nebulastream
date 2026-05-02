@@ -36,7 +36,7 @@
 namespace NES
 {
 OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
+    : logicalType(LogicalType{"BOOL", {}, Nullable::NOT_NULLABLE}), left(std::move(left)), right(std::move(right))
 {
 }
 
@@ -52,15 +52,15 @@ std::string OrLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} OR {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-DataType OrLogicalFunction::getDataType() const
+LogicalType OrLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-OrLogicalFunction OrLogicalFunction::withDataType(const DataType& dataType) const
+OrLogicalFunction OrLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
@@ -83,22 +83,21 @@ std::string_view OrLogicalFunction::getType() const
     return NAME;
 }
 
-LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction OrLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
     /// check if children dataType is correct
     INVARIANT(
-        newChildren.at(0).getDataType().isType(DataType::Type::BOOLEAN),
+        newChildren.at(0).getLogicalType().isBool(),
         "the dataType of left child must be boolean, but was: {}",
-        newChildren.at(0).getDataType());
+        newChildren.at(0).getLogicalType());
     INVARIANT(
-        newChildren.at(1).getDataType().isType(DataType::Type::BOOLEAN),
+        newChildren.at(1).getLogicalType().isBool(),
         "the dataType of right child must be boolean, but was: {}",
-        newChildren.at(1).getDataType());
-    auto newDataType = this->getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+        newChildren.at(1).getLogicalType());
+    auto newDataType = this->getLogicalType();
+    return withLogicalType(newDataType).withChildren(newChildren);
 }
 
 Reflected Reflector<OrLogicalFunction>::operator()(const OrLogicalFunction& function) const

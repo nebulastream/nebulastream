@@ -14,6 +14,8 @@
 
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 
+#include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
@@ -29,9 +31,9 @@
 #include <AntlrSQLParser.h>
 #include <ParserRuleContext.h>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <LogicalTypeRegistry.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
@@ -349,7 +351,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
             break;
         case AntlrSQLLexer::MINUS:
             function = UnboundLogicalFunction(
-                "Mul", {ConstantValueLogicalFunction(DataTypeProvider::provideDataType("INTEGER"), "-1"), innerFunction});
+                "Mul", {ConstantValueLogicalFunction(LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE}, "-1"), innerFunction});
             break;
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
@@ -901,7 +903,14 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         default:
             helpers.top().hasUnnamedAggregation = false;
             /// Check if the function is a constructor for a datatype
-            if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
+            /// Only the four prototype primitive types act as constant-constructor names; compound
+            /// types (Point, ...) are real function calls and fall through to the general path.
+            static constexpr std::array<std::string_view, 4> primitiveConstantTypes{"INTEGER", "FLOAT", "BOOL", "TEXT"};
+            const auto isPrimitiveConstant = std::ranges::find(primitiveConstantTypes, funcName) != primitiveConstantTypes.end();
+            if (const auto logicalType = isPrimitiveConstant
+                    ? LogicalTypeRegistry::instance().create(
+                        funcName, LogicalTypeRegistryArguments{.nullable = Nullable::NOT_NULLABLE, .parameters = {}})
+                    : std::nullopt)
             {
                 if (helpers.top().constantBuilder.empty())
                 {
@@ -910,7 +919,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 helpers.top().hasUnnamedAggregation = false;
                 auto value = std::move(helpers.top().constantBuilder.back());
                 helpers.top().constantBuilder.pop_back();
-                auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
+                auto constFunctionItem = ConstantValueLogicalFunction(*logicalType, std::move(value));
                 helpers.top().functionBuilder.emplace_back(constFunctionItem);
             }
             else

@@ -20,7 +20,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
-#include <DataTypes/DataType.hpp>
+#include <DataTypes/Nullable.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Reflection.hpp>
 
@@ -32,12 +32,12 @@ namespace NES
 /// A LogicalType is purely an identity: a name plus optional named parameters
 /// plus nullability. It carries no information about how the value is laid out
 /// in physical memory — that mapping lives in LogicalTypeLoweringRegistry and
-/// is resolved during the new logical-to-primitive lowering phase.
+/// is resolved during the lowering phase.
 ///
-/// Built-in logical types (INT32, FLOAT64, ...) share the name of the
-/// underlying physical DataType; user-defined types (Point, Image, ...) live
-/// in plugins and may either be scalar wrappers around a physical type or
-/// compound types that flatten into multiple primitive fields at lowering time.
+/// Built-in primitive logical types (INTEGER, FLOAT, BOOL, TEXT) are registered
+/// in nes-data-types' LogicalTypeRegistry; user-defined types (Point, Image,
+/// ...) live in plugins and may either be scalar wrappers around a primitive
+/// or compound types that flatten into multiple primitive fields at lowering.
 class LogicalType final
 {
 public:
@@ -48,6 +48,9 @@ public:
         bool operator==(const Parameter&) const = default;
     };
 
+    /// Default-constructed LogicalType is the sentinel "UNDEFINED" type — used
+    /// when a function or schema field has not yet been type-inferred.
+    LogicalType();
     LogicalType(std::string name, std::vector<Parameter> parameters, Nullable nullable);
 
     [[nodiscard]] const std::string& getName() const;
@@ -55,28 +58,33 @@ public:
     [[nodiscard]] Nullable getNullable() const;
     [[nodiscard]] bool isNullable() const;
 
-    /// Prototype-level bridge to the existing physical-type machinery: every built-in
-    /// primitive logical type's name matches a DataType::Type enum name (INT32, ...),
-    /// so the underlying physical type can be recovered without a registry lookup.
-    /// Returns nullopt for plugin-defined / compound logical types.
-    [[nodiscard]] std::optional<DataType> toPhysical() const;
-
-    /// Wrap a primitive physical type as the matching primitive logical type.
-    static LogicalType fromPhysical(const DataType& dataType);
-
-    /// Mirrors DataType::join for primitive logical types — resolves both sides to
-    /// physical types, joins them, and re-wraps. Returns nullopt if either side is
-    /// non-primitive (compound) or if joining is undefined.
-    [[nodiscard]] std::optional<LogicalType> join(const LogicalType& other) const;
+    /// Combine nullability of two logical types: result is nullable if either side is.
     [[nodiscard]] Nullable joinNullable(const LogicalType& other) const;
 
-    /// Predicates inherited from primitive DataType semantics. Always false for
-    /// non-primitive logical types.
+    /// Return a `LogicalType` that the given two types can be merged into.
+    /// Pure logical-side rules (no physical bridge): identical names join to
+    /// themselves; numeric promotion (`INTEGER` + `FLOAT` -> `FLOAT`); mismatch
+    /// returns nullopt. Compound types only join with their identical name.
+    /// Nullability is propagated via `joinNullable`.
+    [[nodiscard]] std::optional<LogicalType> join(const LogicalType& other) const;
+
+    /// Predicates for the four prototype primitive types. False for compound and
+    /// other types (Point, ...). These are pure string-based queries — they do
+    /// not bridge to physical `DataType`.
     [[nodiscard]] bool isInteger() const;
-    [[nodiscard]] bool isSignedInteger() const;
     [[nodiscard]] bool isFloat() const;
     [[nodiscard]] bool isNumeric() const;
+    [[nodiscard]] bool isBool() const;
+    [[nodiscard]] bool isText() const;
     [[nodiscard]] bool isUndefined() const;
+
+    /// Best-effort byte size for the matching primitive physical realisation —
+    /// matches the size that the lowering bridge would produce when this type
+    /// is lowered to a `DataType` and `getSizeInBytesWithNull` is called.
+    /// Used by `Schema::addField` to keep its size cache in sync without
+    /// needing to reach into `nes-physical-types`. Returns 0 for compound
+    /// types — Schema's size is purely advisory in that case.
+    [[nodiscard]] size_t byteSize() const;
 
     bool operator==(const LogicalType& other) const = default;
 

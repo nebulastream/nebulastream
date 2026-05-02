@@ -37,19 +37,19 @@ namespace NES
 {
 
 AndLogicalFunction::AndLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
+    : logicalType(LogicalType{"BOOL", {}, Nullable::NOT_NULLABLE}), left(std::move(left)), right(std::move(right))
 {
 }
 
-DataType AndLogicalFunction::getDataType() const
+LogicalType AndLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-AndLogicalFunction AndLogicalFunction::withDataType(const DataType& dataType) const
+AndLogicalFunction AndLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
@@ -84,24 +84,23 @@ std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} AND {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction AndLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
 
     /// check if children dataType is correct
-    if (not newChildren.at(0).getDataType().isType(DataType::Type::BOOLEAN))
+    if (not newChildren.at(0).getLogicalType().isBool())
     {
-        throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", newChildren[0].getDataType());
+        throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", newChildren[0].getLogicalType());
     }
-    if (not newChildren.at(1).getDataType().isType(DataType::Type::BOOLEAN))
+    if (not newChildren.at(1).getLogicalType().isBool())
     {
-        throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", newChildren[1].getDataType());
+        throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", newChildren[1].getLogicalType());
     }
 
-    auto newDataType = this->getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = this->getLogicalType();
+    return withLogicalType(newDataType).withChildren(newChildren);
 }
 
 Reflected Reflector<AndLogicalFunction>::operator()(const AndLogicalFunction& function) const

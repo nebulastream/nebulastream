@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include <DataTypes/LogicalTypeBridge.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -54,8 +55,9 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
         const auto field = schema.getFieldByName(fieldName);
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        fieldsKey.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
-        offset += fieldValue.dataType.getSizeInBytesWithNull();
+        const auto physical = toPhysical(fieldValue.logicalType).value();
+        fieldsKey.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = physical, .fieldOffset = offset});
+        offset += physical.getSizeInBytesWithNull();
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -63,8 +65,9 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
         const auto field = schema.getFieldByName(fieldName);
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        fieldsValue.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = fieldValue.dataType, .fieldOffset = offset});
-        offset += fieldValue.dataType.getSizeInBytesWithNull();
+        const auto physical = toPhysical(fieldValue.logicalType).value();
+        fieldsValue.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = physical, .fieldOffset = offset});
+        offset += physical.getSizeInBytesWithNull();
     }
     return {fieldsKey, fieldsValue};
 }

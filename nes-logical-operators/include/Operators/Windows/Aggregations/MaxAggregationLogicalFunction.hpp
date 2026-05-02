@@ -36,17 +36,17 @@ public:
 
     [[nodiscard]] static std::string_view getName() noexcept;
     [[nodiscard]] std::string toString() const;
-    [[nodiscard]] DataType getInputStamp() const;
-    [[nodiscard]] DataType getPartialAggregateStamp() const;
-    [[nodiscard]] DataType getFinalAggregateStamp() const;
+    [[nodiscard]] LogicalType getInputStamp() const;
+    [[nodiscard]] LogicalType getPartialAggregateStamp() const;
+    [[nodiscard]] LogicalType getFinalAggregateStamp() const;
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
     [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] MaxAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
-    [[nodiscard]] MaxAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
-    [[nodiscard]] MaxAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
-    [[nodiscard]] MaxAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
+    [[nodiscard]] MaxAggregationLogicalFunction withInputStamp(LogicalType inputStamp) const;
+    [[nodiscard]] MaxAggregationLogicalFunction withPartialAggregateStamp(LogicalType partialAggregateStamp) const;
+    [[nodiscard]] MaxAggregationLogicalFunction withFinalAggregateStamp(LogicalType finalAggregateStamp) const;
     [[nodiscard]] MaxAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
     [[nodiscard]] MaxAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
@@ -56,9 +56,9 @@ public:
 private:
     static constexpr std::string_view NAME = "Max";
 
-    DataType inputStamp;
-    DataType partialAggregateStamp;
-    DataType finalAggregateStamp;
+    LogicalType inputStamp;
+    LogicalType partialAggregateStamp;
+    LogicalType finalAggregateStamp;
     FieldAccessLogicalFunction onField;
     FieldAccessLogicalFunction asField;
 };

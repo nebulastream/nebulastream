@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
+#include <DataTypes/LogicalType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Reflection.hpp>
 #include <folly/hash/Hash.h>
@@ -40,14 +40,14 @@ public:
     struct Field
     {
         Field() = default;
-        Field(std::string name, DataType dataType);
+        Field(std::string name, LogicalType logicalType);
 
         friend std::ostream& operator<<(std::ostream& os, const Field& field);
         bool operator==(const Field&) const = default;
         [[nodiscard]] std::string getUnqualifiedName() const;
 
         std::string name;
-        DataType dataType;
+        LogicalType logicalType{"UNDEFINED", {}, Nullable::IS_NULLABLE};
     };
 
     /// TODO #764: move qualified field logic in central place and improve
@@ -73,17 +73,12 @@ public:
     [[nodiscard]] bool operator==(const Schema& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
-    Schema addField(std::string name, const DataType& dataType);
-    Schema addField(std::string name, DataType::Type type);
-    Schema addField(std::string name, DataType::Type type, Nullable);
+    Schema addField(std::string name, LogicalType logicalType);
 
     /// Replaces the type of the field
-    [[nodiscard]] bool replaceTypeOfField(const std::string& name, DataType type);
+    [[nodiscard]] bool replaceTypeOfField(const std::string& name, LogicalType logicalType);
 
     /// @brief Returns the attribute field based on a qualified or unqualified field name.
-    /// If an unqualified field name is given (e.g., `getFieldByName("fieldName")`), the function will match attribute fields with any source name.
-    /// If a qualified field name is given (e.g., `getFieldByName("source$fieldName")`), the entire qualified field must match.
-    /// Note that this function does not return a field with an ambiguous field name.
     [[nodiscard]] std::optional<Field> getFieldByName(const std::string& fieldName) const;
 
     /// @Note: Raises a 'FieldNotFound' exception if the index is out of bounds.
@@ -104,14 +99,16 @@ public:
     void appendFieldsFromOtherSchema(const Schema& otherSchema);
     [[nodiscard]] bool renameField(const std::string& oldFieldName, std::string_view newFieldName);
 
+    /// TODO(datatype-migration): With LogicalType-typed fields, computing the size in bytes
+    /// requires lowering each field through PhysicalLayout — which lives in physical-types.
+    /// For now this remains a coarse approximation; the real size computation moves to the
+    /// lowering boundary at Phase 7.
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
 
     [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<Field>>().cbegin());
     [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<Field>>().cend());
 
 private:
-    /// Manipulating fields requires us to update the size of the schema (in bytes) and the 'nameToFieldMap', which maps names of fields to
-    /// their corresponding indexes in the 'fields' vector. Thus, the below three members are private to prevent accidental manipulation.
     std::vector<Field> fields;
     size_t sizeOfSchemaInBytes{0};
     std::unordered_map<std::string, size_t> nameToField;
@@ -125,7 +122,7 @@ namespace detail
 struct ReflectedField
 {
     std::string name;
-    DataType type;
+    LogicalType type{"UNDEFINED", {}, Nullable::IS_NULLABLE};
 };
 
 struct ReflectedSchema
@@ -164,7 +161,7 @@ struct Unreflector<Schema>
 template <>
 struct std::hash<NES::Schema::Field>
 {
-    size_t operator()(const NES::Schema::Field& field) const noexcept { return folly::hash::hash_combine(field.name, field.dataType); }
+    size_t operator()(const NES::Schema::Field& field) const noexcept { return folly::hash::hash_combine(field.name, field.logicalType); }
 };
 
 FMT_OSTREAM(NES::Schema);

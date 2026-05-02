@@ -37,7 +37,7 @@ namespace NES
 {
 
 SubLogicalFunction::SubLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right) { };
+    : logicalType(LogicalType{"UNDEFINED", {}, Nullable::IS_NULLABLE}), left(left), right(right) { };
 
 bool SubLogicalFunction::operator==(const SubLogicalFunction& rhs) const
 {
@@ -48,35 +48,34 @@ std::string SubLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SubLogicalFunction({} - {} : {})", left.explain(verbosity), right.explain(verbosity), dataType);
+        return fmt::format("SubLogicalFunction({} - {} : {})", left.explain(verbosity), right.explain(verbosity), logicalType);
     }
     return fmt::format("{} - {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-DataType SubLogicalFunction::getDataType() const
+LogicalType SubLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-SubLogicalFunction SubLogicalFunction::withDataType(const DataType& dataType) const
+SubLogicalFunction SubLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction SubLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction SubLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 2, "SubLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType().join(newChildren[1].getDataType());
+    auto newDataType = newChildren[0].getLogicalType().join(newChildren[1].getLogicalType());
     if (not newDataType.has_value())
     {
-        throw DifferentFieldTypeExpected("Could not join {} and {}", newChildren[0].getDataType(), newChildren[1].getDataType());
+        throw DifferentFieldTypeExpected("Could not join {} and {}", newChildren[0].getLogicalType(), newChildren[1].getLogicalType());
     }
-    newDataType.value().nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType.value()).withChildren(newChildren);
+    return withLogicalType(newDataType.value()).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> SubLogicalFunction::getChildren() const
@@ -90,8 +89,8 @@ SubLogicalFunction SubLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType
-        = children[0].getDataType().join(children[1].getDataType()).value_or(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED));
+    copy.logicalType
+        = children[0].getLogicalType().join(children[1].getLogicalType()).value_or(LogicalType{"UNDEFINED", {}, Nullable::IS_NULLABLE});
     return copy;
 };
 

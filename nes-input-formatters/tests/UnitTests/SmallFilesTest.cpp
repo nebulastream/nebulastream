@@ -56,11 +56,11 @@ std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema& schema)
     std::vector<size_t> varSizedFieldOffsets;
     for (const auto& field : schema)
     {
-        if (field.dataType.isType(NES::DataType::Type::VARSIZED))
+        if (field.logicalType.isType(NES::DataType::Type::VARSIZED))
         {
             varSizedFieldOffsets.emplace_back(priorFieldOffset);
         }
-        priorFieldOffset += field.dataType.getSizeInBytesWithNull();
+        priorFieldOffset += field.logicalType.getSizeInBytesWithNull();
     }
     return varSizedFieldOffsets;
 }

@@ -63,7 +63,7 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
         /// We infer the data type from the schema for the on field
-        auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
+        auto newOnField = this->getOnField().withInferredLogicalType(schema).getAs<FieldAccessLogicalFunction>().get();
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
@@ -79,16 +79,16 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
             newAsFieldName = attributeNameResolver + fieldName;
         }
 
-        /// a count aggregation is always on an uint 64 and never returns a NULL value
-        auto newInputStamp = DataTypeProvider::provideDataType(
-            DataType::Type::UINT64, newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
-        auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::UINT64, Nullable::NOT_NULLABLE);
+        /// TODO(datatype-migration): a count aggregation produces an unsigned 64-bit integer; with
+        /// the prototype's reduced LogicalType vocabulary we use INTEGER instead.
+        auto newInputStamp = LogicalType{"INTEGER", {}, newOnField.getLogicalType().getNullable()};
+        auto newFinalAggregateStamp = LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE};
         auto newAsField = this->getAsField().withFieldName(newAsFieldName);
 
         return this->withInputStamp(newInputStamp)
-            .withOnField(newOnField.withDataType(newInputStamp))
+            .withOnField(newOnField.withLogicalType(newInputStamp))
             .withFinalAggregateStamp(newFinalAggregateStamp)
-            .withAsField(newAsField.withDataType(newFinalAggregateStamp));
+            .withAsField(newAsField.withLogicalType(newFinalAggregateStamp));
     }
     throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
 }
@@ -130,17 +130,17 @@ std::string CountAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-DataType CountAggregationLogicalFunction::getInputStamp() const
+LogicalType CountAggregationLogicalFunction::getInputStamp() const
 {
     return inputStamp;
 }
 
-DataType CountAggregationLogicalFunction::getPartialAggregateStamp() const
+LogicalType CountAggregationLogicalFunction::getPartialAggregateStamp() const
 {
     return partialAggregateStamp;
 }
 
-DataType CountAggregationLogicalFunction::getFinalAggregateStamp() const
+LogicalType CountAggregationLogicalFunction::getFinalAggregateStamp() const
 {
     return finalAggregateStamp;
 }
@@ -155,21 +155,21 @@ FieldAccessLogicalFunction CountAggregationLogicalFunction::getAsField() const
     return asField;
 }
 
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
+CountAggregationLogicalFunction CountAggregationLogicalFunction::withInputStamp(LogicalType inputStamp) const
 {
     auto copy = *this;
     copy.inputStamp = std::move(inputStamp);
     return copy;
 }
 
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
+CountAggregationLogicalFunction CountAggregationLogicalFunction::withPartialAggregateStamp(LogicalType partialAggregateStamp) const
 {
     auto copy = *this;
     copy.partialAggregateStamp = std::move(partialAggregateStamp);
     return copy;
 }
 
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
+CountAggregationLogicalFunction CountAggregationLogicalFunction::withFinalAggregateStamp(LogicalType finalAggregateStamp) const
 {
     auto copy = *this;
     copy.finalAggregateStamp = std::move(finalAggregateStamp);

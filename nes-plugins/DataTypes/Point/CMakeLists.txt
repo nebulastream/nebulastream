@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Point logical type registration
+# Point logical type registration (LogicalType plugins still attached to nes-data-types)
 add_plugin(Point LogicalType nes-data-types PointTypeRegistration.cpp)
 
 # Point logical functions
@@ -25,11 +25,11 @@ add_plugin(PointEquals LogicalFunction nes-logical-operators PointLogicalFunctio
 # which these plugins satisfy.
 add_plugin(Equals_Point_Point LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 add_plugin(Add_Point_Point LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
-add_plugin(Mul_Point_INT64 LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
-add_plugin(Mul_INT64_Point LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
+add_plugin(Mul_Point_INTEGER LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
+add_plugin(Mul_INTEGER_Point LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 
 # Point lowering: PhysicalLayout = [(_X,F64),(_Y,F64),(_Z,F64)]
-add_plugin(Point LogicalTypeLowering nes-data-types PointLowering.cpp)
+add_plugin(Point LogicalTypeLowering nes-physical-types PointLowering.cpp)
 
 # Point physical functions
 add_plugin(Point PhysicalFunction nes-physical-operators PointPhysicalFunctions.cpp)

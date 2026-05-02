@@ -35,28 +35,27 @@
 namespace NES
 {
 
-CeilLogicalFunction::CeilLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+CeilLogicalFunction::CeilLogicalFunction(const LogicalFunction& child) : logicalType(child.getLogicalType()), child(child) { };
 
-DataType CeilLogicalFunction::getDataType() const
+LogicalType CeilLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-CeilLogicalFunction CeilLogicalFunction::withDataType(const DataType& dataType) const
+CeilLogicalFunction CeilLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction CeilLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction CeilLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 1, "CeilLogicalFunction expects exactly one child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = newChildren[0].getLogicalType();
+    return withLogicalType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> CeilLogicalFunction::getChildren() const
@@ -86,7 +85,7 @@ std::string CeilLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("CeilLogicalFunction({} : {})", child.explain(verbosity), dataType);
+        return fmt::format("CeilLogicalFunction({} : {})", child.explain(verbosity), logicalType);
     }
     return fmt::format("CEIL({})", child.explain(verbosity));
 }

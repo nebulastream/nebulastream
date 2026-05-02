@@ -37,7 +37,7 @@ namespace NES
 {
 
 ConcatLogicalFunction::ConcatLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right)
+    : logicalType(LogicalType{"UNDEFINED", {}, Nullable::IS_NULLABLE}), left(left), right(right)
 {
 }
 
@@ -53,31 +53,30 @@ std::string ConcatLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("CONCAT({}, {})", left.explain(verbosity), right.explain(verbosity));
 }
 
-DataType ConcatLogicalFunction::getDataType() const
+LogicalType ConcatLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-ConcatLogicalFunction ConcatLogicalFunction::withDataType(const DataType& dataType) const
+ConcatLogicalFunction ConcatLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction ConcatLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction ConcatLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 2, "ConcatLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType().join(newChildren[1].getDataType());
-    if (not newDataType.has_value() or not newDataType.value().isType(DataType::Type::VARSIZED))
+    auto newType = newChildren[0].getLogicalType().join(newChildren[1].getLogicalType());
+    if (not newType.has_value() or not newType.value().isText())
     {
         throw DifferentFieldTypeExpected(
-            "Expected VARSIZED as outcome of {} and {}", newChildren[0].getDataType(), newChildren[1].getDataType());
+            "Expected TEXT as outcome of {} and {}", newChildren[0].getLogicalType(), newChildren[1].getLogicalType());
     }
-    newDataType.value().nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType.value()).withChildren(newChildren);
+    return withLogicalType(newType.value()).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> ConcatLogicalFunction::getChildren() const
@@ -90,8 +89,8 @@ ConcatLogicalFunction ConcatLogicalFunction::withChildren(const std::vector<Logi
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType
-        = children[0].getDataType().join(children[1].getDataType()).value_or(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED));
+    copy.logicalType
+        = children[0].getLogicalType().join(children[1].getLogicalType()).value_or(LogicalType{"UNDEFINED", {}, Nullable::IS_NULLABLE});
     return copy;
 };
 

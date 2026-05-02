@@ -33,7 +33,7 @@ namespace NES
 {
 
 IsNullCheckLogicalFunction::IsNullCheckLogicalFunction(LogicalFunction child)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, Nullable::NOT_NULLABLE)), child(std::move(child))
+    : logicalType(LogicalType{"BOOL", {}, Nullable::NOT_NULLABLE}), child(std::move(child))
 {
 }
 
@@ -47,21 +47,21 @@ std::string IsNullCheckLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("NOT({})", child.explain(verbosity));
 }
 
-LogicalFunction IsNullCheckLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction IsNullCheckLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    auto newChild = child.withInferredDataType(schema);
-    return withDataType(getDataType()).withChildren({newChild});
+    auto newChild = child.withInferredLogicalType(schema);
+    return withLogicalType(getLogicalType()).withChildren({newChild});
 }
 
-DataType IsNullCheckLogicalFunction::getDataType() const
+LogicalType IsNullCheckLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-IsNullCheckLogicalFunction IsNullCheckLogicalFunction::withDataType(const DataType& dataType) const
+IsNullCheckLogicalFunction IsNullCheckLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 

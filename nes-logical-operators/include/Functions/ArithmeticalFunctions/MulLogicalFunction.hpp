@@ -37,9 +37,9 @@ public:
 
     [[nodiscard]] bool operator==(const MulLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] MulLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalType getLogicalType() const;
+    [[nodiscard]] MulLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] MulLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -48,7 +48,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
-    DataType dataType;
+    LogicalType logicalType;
     LogicalFunction left, right;
 
     friend Reflector<MulLogicalFunction>;

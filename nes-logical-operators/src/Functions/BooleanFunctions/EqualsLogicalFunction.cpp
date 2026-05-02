@@ -38,7 +38,7 @@
 namespace NES
 {
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(left)), right(std::move(right)), logicalType(LogicalType{"BOOL", {}, Nullable::NOT_NULLABLE})
 {
 }
 
@@ -49,25 +49,24 @@ bool EqualsLogicalFunction::operator==(const EqualsLogicalFunction& rhs) const
     return simpleMatch or commutativeMatch;
 }
 
-DataType EqualsLogicalFunction::getDataType() const
+LogicalType EqualsLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-EqualsLogicalFunction EqualsLogicalFunction::withDataType(const DataType& dataType) const
+EqualsLogicalFunction EqualsLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction EqualsLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
-    auto newDataType = this->getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = this->getLogicalType();
+    return withLogicalType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> EqualsLogicalFunction::getChildren() const

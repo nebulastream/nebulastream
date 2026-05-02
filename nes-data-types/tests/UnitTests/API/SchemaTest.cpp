@@ -96,7 +96,7 @@ TEST_F(SchemaTest, addFieldTest)
         Schema testSchema;
         for (const auto& field : rndFields)
         {
-            testSchema.addField(field.name, field.dataType);
+            testSchema.addField(field.name, field.logicalType);
         }
 
         ASSERT_EQ(testSchema.getNumberOfFields(), rndFields.size());
@@ -224,7 +224,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         Schema testSchema;
         for (const auto& field : rndFields)
         {
-            testSchema.addField(field.name, field.dataType);
+            testSchema.addField(field.name, field.logicalType);
         }
 
         ASSERT_EQ(testSchema.getNumberOfFields(), rndFields.size());
@@ -240,7 +240,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         auto replacingFields = getRandomFields(NUM_FIELDS);
         for (const auto& replaceField : replacingFields)
         {
-            EXPECT_TRUE(testSchema.replaceTypeOfField(replaceField.name, replaceField.dataType));
+            EXPECT_TRUE(testSchema.replaceTypeOfField(replaceField.name, replaceField.logicalType));
         }
 
         for (auto fieldCnt = 0_u64; fieldCnt < replacingFields.size(); ++fieldCnt)

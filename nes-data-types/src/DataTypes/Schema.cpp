@@ -22,24 +22,23 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <DataTypes/DataType.hpp>
+#include <DataTypes/LogicalType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-Schema::Field::Field(std::string name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType))
+Schema::Field::Field(std::string name, LogicalType logicalType) : name(std::move(name)), logicalType(std::move(logicalType))
 {
 }
 
 std::ostream& operator<<(std::ostream& os, const Schema::Field& field)
 {
-    return os << fmt::format("Field(name: {}, DataType: {})", field.name, field.dataType);
+    return os << fmt::format("Field(name: {}, LogicalType: {})", field.name, field.logicalType);
 }
 
 std::string Schema::Field::getUnqualifiedName() const
@@ -52,33 +51,22 @@ std::string Schema::Field::getUnqualifiedName() const
     return name.substr(separatorPosition + 1);
 }
 
-Schema Schema::addField(std::string name, const DataType& dataType)
+Schema Schema::addField(std::string name, LogicalType logicalType)
 {
-    return addField(std::move(name), dataType.type, dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
-}
-
-Schema Schema::addField(std::string name, const DataType::Type type)
-{
-    return addField(std::move(name), type, Nullable::NOT_NULLABLE);
-}
-
-Schema Schema::addField(std::string name, const DataType::Type type, const Nullable isNullable)
-{
-    DataType dataType{type, isNullable};
-    sizeOfSchemaInBytes += dataType.getSizeInBytesWithNull();
-    fields.emplace_back(std::move(name), std::move(dataType));
+    sizeOfSchemaInBytes += logicalType.byteSize();
+    fields.emplace_back(std::move(name), std::move(logicalType));
     nameToField.emplace(fields.back().name, fields.size() - 1);
     return *this;
 }
 
 /// No need to repopulate nameToField, since the key does not change
-bool Schema::replaceTypeOfField(const std::string& name, DataType type)
+bool Schema::replaceTypeOfField(const std::string& name, LogicalType logicalType)
 {
     if (const auto fieldIdx = nameToField.find(name); fieldIdx != nameToField.end())
     {
-        sizeOfSchemaInBytes -= fields.at(fieldIdx->second).dataType.getSizeInBytesWithNull();
-        sizeOfSchemaInBytes += type.getSizeInBytesWithNull();
-        fields.at(fieldIdx->second).dataType = std::move(type);
+        sizeOfSchemaInBytes -= fields.at(fieldIdx->second).logicalType.byteSize();
+        sizeOfSchemaInBytes += logicalType.byteSize();
+        fields.at(fieldIdx->second).logicalType = std::move(logicalType);
         return true;
     }
     NES_WARNING("Could not find field with name '{}'", name);
@@ -228,7 +216,7 @@ Schema withoutSourceQualifier(const Schema& input)
         {
             throw FieldAlreadyExists("Removing source prefixes would cause duplicated fields. Field `{}` is not unique.", field.name);
         }
-        withoutPrefix.addField(std::move(nameWithoutPrefix), field.dataType);
+        withoutPrefix.addField(std::move(nameWithoutPrefix), field.logicalType);
     }
 
 
@@ -252,7 +240,7 @@ auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
 
 Reflected Reflector<Schema::Field>::operator()(const Schema::Field& field) const
 {
-    return reflect(detail::ReflectedField{.name = field.name, .type = field.dataType});
+    return reflect(detail::ReflectedField{.name = field.name, .type = field.logicalType});
 }
 
 Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl) const
@@ -272,7 +260,7 @@ Schema Unreflector<Schema>::operator()(const Reflected& rfl) const
     Schema schema{};
     for (const auto& field : fields)
     {
-        schema.addField(field.name, field.dataType);
+        schema.addField(field.name, field.logicalType);
     }
     return schema;
 }

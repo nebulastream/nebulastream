@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/LogicalTypeBridge.hpp>
 #include <Functions/CastFieldPhysicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
@@ -42,7 +43,10 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     for (const auto& child : logicalFunction.getChildren())
     {
         childFunctions.emplace_back(lowerFunction(child));
-        inputTypes.emplace_back(child.getDataType());
+        if (const auto childPhysical = toPhysical(child.getLogicalType()))
+        {
+            inputTypes.emplace_back(*childPhysical);
+        }
     }
 
     /// 2. The field access and constant value nodes are special as they require a different treatment,
@@ -58,7 +62,9 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
 
     /// 3. Calling the registry to create an executable function.
     PhysicalFunctionRegistryArguments executableFunctionArguments{
-        .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()};
+        .childFunctions = childFunctions,
+        .inputTypes = inputTypes,
+        .outputType = toPhysical(logicalFunction.getLogicalType()).value_or(DataType{DataType::Type::UNDEFINED, Nullable::IS_NULLABLE})};
     if (const auto function
         = PhysicalFunctionRegistry::instance().create(std::string(logicalFunction.getType()), std::move(executableFunctionArguments)))
     {
@@ -84,7 +90,12 @@ T parseConstantValue(std::string_view input)
 PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)
 {
     const auto stringValue = constantFunction.getConstantValue();
-    switch (constantFunction.getDataType().type)
+    const auto physicalType = toPhysical(constantFunction.getLogicalType());
+    if (!physicalType.has_value())
+    {
+        throw UnknownPhysicalType("Constant value '{}' has compound logical type {}", stringValue, constantFunction.getLogicalType());
+    }
+    switch (physicalType->type)
     {
         case DataType::Type::UINT8:
             return ConstantUInt8ValueFunction(parseConstantValue<int8_t>(stringValue));

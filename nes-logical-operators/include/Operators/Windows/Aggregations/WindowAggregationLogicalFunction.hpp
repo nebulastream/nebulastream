@@ -46,22 +46,22 @@ using WindowAggregationLogicalFunction = TypedWindowAggregationLogicalFunction<>
 /// planning and optimization.
 template <typename T>
 concept WindowAggregationFunctionConcept = requires(
-    const T& thisFunction, const Schema& schema, DataType dataType, FieldAccessLogicalFunction fieldAccessLogicalFunction, const T& rhs) {
-    { thisFunction.getInputStamp() } -> std::convertible_to<DataType>;
+    const T& thisFunction, const Schema& schema, LogicalType logicalType, FieldAccessLogicalFunction fieldAccessLogicalFunction, const T& rhs) {
+    { thisFunction.getInputStamp() } -> std::convertible_to<LogicalType>;
 
-    { thisFunction.getPartialAggregateStamp() } -> std::convertible_to<DataType>;
+    { thisFunction.getPartialAggregateStamp() } -> std::convertible_to<LogicalType>;
 
-    { thisFunction.getFinalAggregateStamp() } -> std::convertible_to<DataType>;
+    { thisFunction.getFinalAggregateStamp() } -> std::convertible_to<LogicalType>;
 
     { thisFunction.getOnField() } -> std::convertible_to<FieldAccessLogicalFunction>;
 
     { thisFunction.getAsField() } -> std::convertible_to<FieldAccessLogicalFunction>;
 
-    { thisFunction.withInputStamp(dataType) } -> std::convertible_to<T>;
+    { thisFunction.withInputStamp(logicalType) } -> std::convertible_to<T>;
 
-    { thisFunction.withPartialAggregateStamp(dataType) } -> std::convertible_to<T>;
+    { thisFunction.withPartialAggregateStamp(logicalType) } -> std::convertible_to<T>;
 
-    { thisFunction.withFinalAggregateStamp(dataType) } -> std::convertible_to<T>;
+    { thisFunction.withFinalAggregateStamp(logicalType) } -> std::convertible_to<T>;
 
     { thisFunction.withOnField(fieldAccessLogicalFunction) } -> std::convertible_to<T>;
 
@@ -91,17 +91,17 @@ struct ErasedWindowAggregationFunction
     [[nodiscard]] virtual std::string toString() const = 0;
     [[nodiscard]] virtual Reflected reflect() const = 0;
     [[nodiscard]] virtual bool equals(const ErasedWindowAggregationFunction& other) const = 0;
-    [[nodiscard]] virtual DataType getInputStamp() const = 0;
-    [[nodiscard]] virtual DataType getPartialAggregateStamp() const = 0;
-    [[nodiscard]] virtual DataType getFinalAggregateStamp() const = 0;
+    [[nodiscard]] virtual LogicalType getInputStamp() const = 0;
+    [[nodiscard]] virtual LogicalType getPartialAggregateStamp() const = 0;
+    [[nodiscard]] virtual LogicalType getFinalAggregateStamp() const = 0;
     [[nodiscard]] virtual FieldAccessLogicalFunction getOnField() const = 0;
     [[nodiscard]] virtual FieldAccessLogicalFunction getAsField() const = 0;
 
     [[nodiscard]] virtual bool shallIncludeNullValues() const noexcept = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const = 0;
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withInputStamp(DataType inputStamp) const = 0;
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const = 0;
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const = 0;
+    [[nodiscard]] virtual WindowAggregationLogicalFunction withInputStamp(LogicalType inputStamp) const = 0;
+    [[nodiscard]] virtual WindowAggregationLogicalFunction withPartialAggregateStamp(LogicalType partialAggregateStamp) const = 0;
+    [[nodiscard]] virtual WindowAggregationLogicalFunction withFinalAggregateStamp(LogicalType finalAggregateStamp) const = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const = 0;
 
@@ -275,27 +275,27 @@ struct TypedWindowAggregationLogicalFunction
         return self->withInferredStamp(schema);
     }
 
-    [[nodiscard]] DataType getInputStamp() const { return self->getInputStamp(); }
+    [[nodiscard]] LogicalType getInputStamp() const { return self->getInputStamp(); }
 
-    [[nodiscard]] DataType getPartialAggregateStamp() const { return self->getPartialAggregateStamp(); }
+    [[nodiscard]] LogicalType getPartialAggregateStamp() const { return self->getPartialAggregateStamp(); }
 
-    [[nodiscard]] DataType getFinalAggregateStamp() const { return self->getFinalAggregateStamp(); }
+    [[nodiscard]] LogicalType getFinalAggregateStamp() const { return self->getFinalAggregateStamp(); }
 
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const { return self->getOnField(); }
 
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const { return self->getAsField(); }
 
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withInputStamp(DataType inputStamp) const
+    [[nodiscard]] TypedWindowAggregationLogicalFunction withInputStamp(LogicalType inputStamp) const
     {
         return self->withInputStamp(std::move(inputStamp));
     }
 
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const
+    [[nodiscard]] TypedWindowAggregationLogicalFunction withPartialAggregateStamp(LogicalType partialAggregateStamp) const
     {
         return self->withPartialAggregateStamp(std::move(partialAggregateStamp));
     }
 
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const
+    [[nodiscard]] TypedWindowAggregationLogicalFunction withFinalAggregateStamp(LogicalType finalAggregateStamp) const
     {
         return self->withFinalAggregateStamp(std::move(finalAggregateStamp));
     }
@@ -343,27 +343,27 @@ struct WindowAggregationFunctionModel : ErasedWindowAggregationFunction
         return impl.withInferredStamp(schema);
     }
 
-    [[nodiscard]] DataType getInputStamp() const override { return impl.getInputStamp(); }
+    [[nodiscard]] LogicalType getInputStamp() const override { return impl.getInputStamp(); }
 
-    [[nodiscard]] DataType getPartialAggregateStamp() const override { return impl.getPartialAggregateStamp(); }
+    [[nodiscard]] LogicalType getPartialAggregateStamp() const override { return impl.getPartialAggregateStamp(); }
 
-    [[nodiscard]] DataType getFinalAggregateStamp() const override { return impl.getFinalAggregateStamp(); }
+    [[nodiscard]] LogicalType getFinalAggregateStamp() const override { return impl.getFinalAggregateStamp(); }
 
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const override { return impl.getOnField(); }
 
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const override { return impl.getAsField(); }
 
-    [[nodiscard]] WindowAggregationLogicalFunction withInputStamp(DataType inputStamp) const override
+    [[nodiscard]] WindowAggregationLogicalFunction withInputStamp(LogicalType inputStamp) const override
     {
         return impl.withInputStamp(std::move(inputStamp));
     }
 
-    [[nodiscard]] WindowAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const override
+    [[nodiscard]] WindowAggregationLogicalFunction withPartialAggregateStamp(LogicalType partialAggregateStamp) const override
     {
         return impl.withPartialAggregateStamp(std::move(partialAggregateStamp));
     }
 
-    [[nodiscard]] WindowAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const override
+    [[nodiscard]] WindowAggregationLogicalFunction withFinalAggregateStamp(LogicalType finalAggregateStamp) const override
     {
         return impl.withFinalAggregateStamp(std::move(finalAggregateStamp));
     }

@@ -27,14 +27,16 @@ namespace NES
 std::string SchemaFormatter::getFormattedSchema()
 {
     PRECONDITION(schema->hasFields(), "Encountered schema without fields.");
+    auto formatField = [](const auto& field, std::stringstream& out)
+    {
+        out << field.name << ':' << field.logicalType.getName() << ':' << magic_enum::enum_name(field.logicalType.getNullable());
+    };
     std::stringstream ss;
-    ss << schema->getFields().front().name << ":" << magic_enum::enum_name(schema->getFields().front().dataType.type) << ":"
-       << magic_enum::enum_name(
-              schema->getFields().front().dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+    formatField(schema->getFields().front(), ss);
     for (const auto& field : schema->getFields() | std::views::drop(1))
     {
-        ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type) << ":"
-           << magic_enum::enum_name(field.dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+        ss << ',';
+        formatField(field, ss);
     }
     return fmt::format("{}\n", ss.str());
 }

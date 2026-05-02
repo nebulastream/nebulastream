@@ -191,15 +191,15 @@ void NautilusTestUtils::compileFillBufferFunction(
             for (nautilus::static_val<size_t> fieldIndex = 0; fieldIndex < schema.getNumberOfFields(); ++fieldIndex)
             {
                 const auto field = schema.getFieldAt(fieldIndex);
-                const auto physicalType = field.dataType;
+                const auto physicalType = field.logicalType;
                 const auto fieldName = field.name;
-                if (not field.dataType.isType(DataType::Type::VARSIZED))
+                if (not field.logicalType.isType(DataType::Type::VARSIZED))
                 {
                     const auto varValue = createNautilusConstValue(value, physicalType.type);
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }
-                else if (field.dataType.isType(DataType::Type::VARSIZED))
+                else if (field.logicalType.isType(DataType::Type::VARSIZED))
                 {
                     const auto pointerToVarSizedData = nautilus::invoke(
                         +[](TupleBuffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)

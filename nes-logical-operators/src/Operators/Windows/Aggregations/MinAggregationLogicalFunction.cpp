@@ -54,10 +54,10 @@ std::string_view MinAggregationLogicalFunction::getName() const noexcept
 MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
-    if (not newOnField.getDataType().isNumeric())
+    auto newOnField = this->getOnField().withInferredLogicalType(schema).getAs<FieldAccessLogicalFunction>().get();
+    if (not newOnField.getLogicalType().isNumeric())
     {
-        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", newOnField.getDataType());
+        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", newOnField.getLogicalType());
     }
 
     ///Set fully qualified name for the as Field
@@ -77,11 +77,11 @@ MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredStamp(c
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         newAsFieldName = attributeNameResolver + fieldName;
     }
-    auto newFinalAggregationStamp = newOnField.getDataType();
-    return this->withInputStamp(newOnField.getDataType())
+    auto newFinalAggregationStamp = newOnField.getLogicalType();
+    return this->withInputStamp(newOnField.getLogicalType())
         .withOnField(newOnField)
         .withFinalAggregateStamp(newFinalAggregationStamp)
-        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
+        .withAsField(this->getAsField().withFieldName(newAsFieldName).withLogicalType(newFinalAggregationStamp));
 }
 
 Reflected MinAggregationLogicalFunction::reflect() const
@@ -119,17 +119,17 @@ std::string MinAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-DataType MinAggregationLogicalFunction::getInputStamp() const
+LogicalType MinAggregationLogicalFunction::getInputStamp() const
 {
     return inputStamp;
 }
 
-DataType MinAggregationLogicalFunction::getPartialAggregateStamp() const
+LogicalType MinAggregationLogicalFunction::getPartialAggregateStamp() const
 {
     return partialAggregateStamp;
 }
 
-DataType MinAggregationLogicalFunction::getFinalAggregateStamp() const
+LogicalType MinAggregationLogicalFunction::getFinalAggregateStamp() const
 {
     return finalAggregateStamp;
 }
@@ -144,21 +144,21 @@ FieldAccessLogicalFunction MinAggregationLogicalFunction::getAsField() const
     return asField;
 }
 
-MinAggregationLogicalFunction MinAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
+MinAggregationLogicalFunction MinAggregationLogicalFunction::withInputStamp(LogicalType inputStamp) const
 {
     auto copy = *this;
     copy.inputStamp = std::move(inputStamp);
     return copy;
 }
 
-MinAggregationLogicalFunction MinAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
+MinAggregationLogicalFunction MinAggregationLogicalFunction::withPartialAggregateStamp(LogicalType partialAggregateStamp) const
 {
     auto copy = *this;
     copy.partialAggregateStamp = std::move(partialAggregateStamp);
     return copy;
 }
 
-MinAggregationLogicalFunction MinAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
+MinAggregationLogicalFunction MinAggregationLogicalFunction::withFinalAggregateStamp(LogicalType finalAggregateStamp) const
 {
     auto copy = *this;
     copy.finalAggregateStamp = std::move(finalAggregateStamp);

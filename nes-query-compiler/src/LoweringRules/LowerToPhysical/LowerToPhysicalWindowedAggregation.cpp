@@ -29,6 +29,7 @@
 #include <Aggregation/AggregationSlice.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalTypeBridge.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -122,8 +123,8 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
     for (const auto& descriptor : aggregationDescriptors)
     {
-        auto physicalInputType = descriptor->getOnField().getDataType();
-        auto physicalFinalType = descriptor->getAsField().getDataType();
+        auto physicalInputType = toPhysical(descriptor->getOnField().getLogicalType()).value();
+        auto physicalFinalType = toPhysical(descriptor->getAsField().getLogicalType()).value();
 
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->getOnField());
         const auto resultFieldIdentifier = descriptor->getAsField().getFieldName();
@@ -192,14 +193,15 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     auto newInputSchema = aggregation.getInputSchemas()[0];
     for (auto& nodeFunctionKey : aggregation->getGroupingKeys())
     {
-        auto loweredFunctionType = nodeFunctionKey.getDataType();
-        if (loweredFunctionType.isType(DataType::Type::VARSIZED))
+        auto loweredFunctionType = nodeFunctionKey.getLogicalType();
+        const auto physicalKeyType = toPhysical(loweredFunctionType).value();
+        if (physicalKeyType.isType(DataType::Type::VARSIZED))
         {
             const bool fieldReplaceSuccess = newInputSchema.replaceTypeOfField(nodeFunctionKey.getFieldName(), loweredFunctionType);
             INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", nodeFunctionKey.getFieldName(), newInputSchema);
         }
         keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey));
-        keySize += loweredFunctionType.getSizeInBytesWithNull();
+        keySize += physicalKeyType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();

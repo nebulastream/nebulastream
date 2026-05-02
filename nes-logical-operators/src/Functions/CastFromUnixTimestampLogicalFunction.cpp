@@ -36,7 +36,7 @@ namespace NES
 {
 
 CastFromUnixTimestampLogicalFunction::CastFromUnixTimestampLogicalFunction(LogicalFunction child)
-    : outputType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), child(std::move(child))
+    : outputType(LogicalType{"UNDEFINED", {}, Nullable::IS_NULLABLE}), child(std::move(child))
 {
 }
 
@@ -45,33 +45,31 @@ bool CastFromUnixTimestampLogicalFunction::operator==(const CastFromUnixTimestam
     return this->outputType == rhs.outputType && this->child == rhs.child;
 }
 
-DataType CastFromUnixTimestampLogicalFunction::getDataType() const
+LogicalType CastFromUnixTimestampLogicalFunction::getLogicalType() const
 {
     return outputType;
 }
 
-CastFromUnixTimestampLogicalFunction CastFromUnixTimestampLogicalFunction::withDataType(const DataType& dataType) const
+CastFromUnixTimestampLogicalFunction CastFromUnixTimestampLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.outputType = dataType;
+    copy.outputType = logicalType;
     return copy;
 }
 
-LogicalFunction CastFromUnixTimestampLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction CastFromUnixTimestampLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 1, "CeilLogicalFunction expects exactly one child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType();
-    if (newDataType.type != DataType::Type::UNDEFINED && newDataType.type != DataType::Type::UINT64)
+    INVARIANT(newChildren.size() == 1, "CastFromUnixTimestampLogicalFunction expects exactly one child function but has {}", newChildren.size());
+    auto childType = newChildren[0].getLogicalType();
+    /// TODO(datatype-migration): the prototype LogicalType vocabulary lacks a dedicated unsigned
+    /// 64-bit timestamp; we accept INTEGER as the stand-in.
+    if (not childType.isUndefined() and not childType.isInteger())
     {
-        throw DifferentFieldTypeExpected("CASTFROMUNIXTS expects a UINT64 input, but got {}", newDataType);
+        throw DifferentFieldTypeExpected("CASTFROMUNIXTS expects an INTEGER input, but got {}", childType);
     }
-
-    /// Output is ISO-8601 UTC string => VARSIZED
-    newDataType.type = DataType::Type::VARSIZED;
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    return withLogicalType(LogicalType{"TEXT", {}, childType.getNullable()}).withChildren(newChildren);
 }
 
 std::vector<LogicalFunction> CastFromUnixTimestampLogicalFunction::getChildren() const

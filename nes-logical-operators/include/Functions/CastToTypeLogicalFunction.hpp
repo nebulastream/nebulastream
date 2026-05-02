@@ -33,13 +33,13 @@ class CastToTypeLogicalFunction final
 public:
     static constexpr std::string_view NAME = "Cast";
 
-    CastToTypeLogicalFunction(DataType dataType, LogicalFunction child);
+    CastToTypeLogicalFunction(LogicalType logicalType, LogicalFunction child);
 
     [[nodiscard]] bool operator==(const CastToTypeLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] CastToTypeLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalType getLogicalType() const;
+    [[nodiscard]] CastToTypeLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] CastToTypeLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -48,7 +48,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
-    DataType castToType;
+    LogicalType castToType;
     LogicalFunction child;
 };
 

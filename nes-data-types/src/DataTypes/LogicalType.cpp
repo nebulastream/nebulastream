@@ -14,22 +14,23 @@
 
 #include <DataTypes/LogicalType.hpp>
 
-#include <optional>
 #include <ostream>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Nullable.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <magic_enum/magic_enum.hpp>
 
 namespace NES
 {
+
+LogicalType::LogicalType() : name("UNDEFINED"), nullable(true)
+{
+}
 
 LogicalType::LogicalType(std::string name, std::vector<Parameter> parameters, const Nullable nullable)
     : name(std::move(name)), parameters(std::move(parameters)), nullable(nullable == Nullable::IS_NULLABLE)
@@ -56,39 +57,6 @@ bool LogicalType::isNullable() const
     return nullable;
 }
 
-std::optional<DataType> LogicalType::toPhysical() const
-{
-    if (const auto type = magic_enum::enum_cast<DataType::Type>(name); type.has_value())
-    {
-        return DataTypeProvider::provideDataType(
-            type.value(), nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
-    }
-    return std::nullopt;
-}
-
-LogicalType LogicalType::fromPhysical(const DataType& dataType)
-{
-    return LogicalType{
-        std::string{magic_enum::enum_name(dataType.type)},
-        {},
-        dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE};
-}
-
-std::optional<LogicalType> LogicalType::join(const LogicalType& other) const
-{
-    const auto leftPhysical = toPhysical();
-    const auto rightPhysical = other.toPhysical();
-    if (not leftPhysical.has_value() or not rightPhysical.has_value())
-    {
-        return std::nullopt;
-    }
-    if (const auto joined = leftPhysical->join(rightPhysical.value()); joined.has_value())
-    {
-        return LogicalType::fromPhysical(joined.value());
-    }
-    return std::nullopt;
-}
-
 Nullable LogicalType::joinNullable(const LogicalType& other) const
 {
     return (this->nullable or other.nullable) ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE;
@@ -96,29 +64,12 @@ Nullable LogicalType::joinNullable(const LogicalType& other) const
 
 bool LogicalType::isInteger() const
 {
-    if (const auto physical = toPhysical(); physical.has_value())
-    {
-        return physical->isInteger();
-    }
-    return false;
-}
-
-bool LogicalType::isSignedInteger() const
-{
-    if (const auto physical = toPhysical(); physical.has_value())
-    {
-        return physical->isSignedInteger();
-    }
-    return false;
+    return name == "INTEGER";
 }
 
 bool LogicalType::isFloat() const
 {
-    if (const auto physical = toPhysical(); physical.has_value())
-    {
-        return physical->isFloat();
-    }
-    return false;
+    return name == "FLOAT";
 }
 
 bool LogicalType::isNumeric() const
@@ -126,13 +77,64 @@ bool LogicalType::isNumeric() const
     return isInteger() or isFloat();
 }
 
+bool LogicalType::isBool() const
+{
+    return name == "BOOL";
+}
+
+bool LogicalType::isText() const
+{
+    return name == "TEXT";
+}
+
 bool LogicalType::isUndefined() const
 {
-    if (const auto physical = toPhysical(); physical.has_value())
+    return name == "UNDEFINED";
+}
+
+size_t LogicalType::byteSize() const
+{
+    /// Mirrors `DataType::getSizeInBytesWithNull` for the primitive lowerings
+    /// performed by `nes-physical-types`'s `toPhysical` bridge. Update both in
+    /// lockstep — the lowering layer assumes the prototype names INTEGER /
+    /// FLOAT / BOOL / TEXT are equivalent to INT64 / FLOAT64 / BOOLEAN /
+    /// VARSIZED at the physical level.
+    if (name == "INTEGER" or name == "INT64" or name == "UINT64" or name == "FLOAT" or name == "FLOAT64")
     {
-        return physical->type == DataType::Type::UNDEFINED;
+        return 8;
     }
-    return false;
+    if (name == "INT32" or name == "UINT32" or name == "FLOAT32")
+    {
+        return 4;
+    }
+    if (name == "INT16" or name == "UINT16")
+    {
+        return 2;
+    }
+    if (name == "INT8" or name == "UINT8" or name == "BOOL" or name == "BOOLEAN" or name == "CHAR")
+    {
+        return 1;
+    }
+    if (name == "TEXT" or name == "VARSIZED")
+    {
+        return 16;
+    }
+    return 0;
+}
+
+std::optional<LogicalType> LogicalType::join(const LogicalType& other) const
+{
+    const auto resultNullable = joinNullable(other);
+    if (name == other.name)
+    {
+        return LogicalType{name, parameters, resultNullable};
+    }
+    /// Numeric promotion: any combination of INTEGER and FLOAT widens to FLOAT.
+    if ((isInteger() and other.isFloat()) or (isFloat() and other.isInteger()))
+    {
+        return LogicalType{"FLOAT", {}, resultNullable};
+    }
+    return std::nullopt;
 }
 
 std::ostream& operator<<(std::ostream& os, const LogicalType& logicalType)

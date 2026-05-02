@@ -41,16 +41,16 @@ public:
     static constexpr std::string_view NAME = "FieldAccess";
 
     explicit FieldAccessLogicalFunction(std::string fieldName);
-    FieldAccessLogicalFunction(DataType dataType, std::string fieldName);
+    FieldAccessLogicalFunction(LogicalType logicalType, std::string fieldName);
 
     [[nodiscard]] std::string getFieldName() const;
     [[nodiscard]] FieldAccessLogicalFunction withFieldName(std::string_view newFieldName) const;
 
     [[nodiscard]] bool operator==(const FieldAccessLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] FieldAccessLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalType getLogicalType() const;
+    [[nodiscard]] FieldAccessLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] FieldAccessLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -71,7 +71,7 @@ public:
 
 private:
     std::string fieldName;
-    DataType dataType;
+    LogicalType logicalType;
 };
 
 template <>
@@ -94,7 +94,7 @@ namespace NES::detail
 struct ReflectedFieldAccessLogicalFunction
 {
     std::string fieldName;
-    DataType dataType;
+    LogicalType logicalType;
 };
 }
 

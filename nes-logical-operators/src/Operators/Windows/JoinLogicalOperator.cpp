@@ -107,21 +107,24 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> 
 
     copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "START";
     copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "END";
-    copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64);
-    copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64);
+    /// TODO(datatype-migration): window timestamps are physically uint64 but the logical layer
+    /// can't address that type directly anymore. Use INTEGER for now; the lowering boundary stamps
+    /// the actual physical width.
+    copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE});
+    copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE});
 
     for (const auto& field : leftInputSchema.getFields())
     {
-        copy.outputSchema.addField(field.name, field.dataType);
+        copy.outputSchema.addField(field.name, field.logicalType);
     }
     for (const auto& field : rightInputSchema.getFields())
     {
-        copy.outputSchema.addField(field.name, field.dataType);
+        copy.outputSchema.addField(field.name, field.logicalType);
     }
 
     auto inputSchema = leftInputSchema;
     inputSchema.appendFieldsFromOtherSchema(rightInputSchema);
-    copy.joinFunction = joinFunction.withInferredDataType(inputSchema);
+    copy.joinFunction = joinFunction.withInferredLogicalType(inputSchema);
     copy.windowType->inferStamp(inputSchema);
     return copy;
 }

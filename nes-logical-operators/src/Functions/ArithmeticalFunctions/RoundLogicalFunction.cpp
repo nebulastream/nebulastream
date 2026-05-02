@@ -36,7 +36,7 @@
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : logicalType(child.getLogicalType()), child(child) { };
 
 bool RoundLogicalFunction::operator==(const RoundLogicalFunction& rhs) const
 {
@@ -47,31 +47,30 @@ std::string RoundLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("RoundLogicalFunction({} : {})", child.explain(verbosity), dataType);
+        return fmt::format("RoundLogicalFunction({} : {})", child.explain(verbosity), logicalType);
     }
     return fmt::format("ROUND({})", child.explain(verbosity));
 }
 
-DataType RoundLogicalFunction::getDataType() const
+LogicalType RoundLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-RoundLogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType) const
+RoundLogicalFunction RoundLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction RoundLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 1, "RoundLogicalFunction expects exactly one child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = newChildren[0].getLogicalType();
+    return withLogicalType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> RoundLogicalFunction::getChildren() const

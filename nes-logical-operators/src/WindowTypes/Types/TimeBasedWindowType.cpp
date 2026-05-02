@@ -34,7 +34,7 @@ bool TimeBasedWindowType::inferStamp(const Schema& schema)
         auto existingField = schema.getFieldByName(fieldName);
         if (existingField)
         {
-            if (not existingField.value().dataType.isInteger())
+            if (not existingField.value().logicalType.isInteger())
             {
                 throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field " + fieldName);
             }

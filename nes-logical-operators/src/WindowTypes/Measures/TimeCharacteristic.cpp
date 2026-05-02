@@ -43,7 +43,7 @@ TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalF
 
 TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalFunction& fieldAccess, const TimeUnit& unit)
 {
-    auto keyField = Schema::Field(fieldAccess.getFieldName(), fieldAccess.getDataType());
+    auto keyField = Schema::Field(fieldAccess.getFieldName(), fieldAccess.getLogicalType());
     return {Type::EventTime, keyField, unit};
 }
 

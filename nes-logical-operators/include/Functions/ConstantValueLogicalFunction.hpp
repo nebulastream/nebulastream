@@ -38,15 +38,15 @@ class ConstantValueLogicalFunction final
 public:
     static constexpr std::string_view NAME = "ConstantValue";
 
-    ConstantValueLogicalFunction(DataType dataType, std::string constantValueAsString);
+    ConstantValueLogicalFunction(LogicalType logicalType, std::string constantValueAsString);
 
     [[nodiscard]] std::string getConstantValue() const;
 
     [[nodiscard]] bool operator==(const ConstantValueLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] ConstantValueLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalType getLogicalType() const;
+    [[nodiscard]] ConstantValueLogicalFunction withLogicalType(const LogicalType& logicalType) const;
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] ConstantValueLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -68,7 +68,7 @@ public:
 
 private:
     const std::string constantValue;
-    DataType dataType;
+    LogicalType logicalType;
 };
 
 template <>
@@ -91,7 +91,7 @@ namespace NES::detail
 struct ReflectedConstantValueLogicalFunction
 {
     std::string value;
-    DataType dataType;
+    LogicalType logicalType;
 };
 }
 

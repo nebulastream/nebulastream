@@ -38,16 +38,16 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
     [[nodiscard]] std::string toString() const;
     [[nodiscard]] Reflected reflect() const;
-    [[nodiscard]] DataType getInputStamp() const;
-    [[nodiscard]] DataType getPartialAggregateStamp() const;
-    [[nodiscard]] DataType getFinalAggregateStamp() const;
+    [[nodiscard]] LogicalType getInputStamp() const;
+    [[nodiscard]] LogicalType getPartialAggregateStamp() const;
+    [[nodiscard]] LogicalType getFinalAggregateStamp() const;
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
     [[nodiscard]] SumAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
-    [[nodiscard]] SumAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
-    [[nodiscard]] SumAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
-    [[nodiscard]] SumAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
+    [[nodiscard]] SumAggregationLogicalFunction withInputStamp(LogicalType inputStamp) const;
+    [[nodiscard]] SumAggregationLogicalFunction withPartialAggregateStamp(LogicalType partialAggregateStamp) const;
+    [[nodiscard]] SumAggregationLogicalFunction withFinalAggregateStamp(LogicalType finalAggregateStamp) const;
     [[nodiscard]] SumAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
     [[nodiscard]] SumAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
@@ -56,9 +56,9 @@ public:
 private:
     static constexpr std::string_view NAME = "Sum";
 
-    DataType inputStamp;
-    DataType partialAggregateStamp;
-    DataType finalAggregateStamp;
+    LogicalType inputStamp;
+    LogicalType partialAggregateStamp;
+    LogicalType finalAggregateStamp;
     FieldAccessLogicalFunction onField;
     FieldAccessLogicalFunction asField;
 };

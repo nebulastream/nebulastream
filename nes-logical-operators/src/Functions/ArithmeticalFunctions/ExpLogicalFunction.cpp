@@ -36,35 +36,32 @@
 namespace NES
 {
 
-ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : logicalType(child.getLogicalType()), child(child) { };
 
 bool ExpLogicalFunction::operator==(const ExpLogicalFunction& rhs) const
 {
     return child == rhs.child;
 }
 
-DataType ExpLogicalFunction::getDataType() const
+LogicalType ExpLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-ExpLogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
+ExpLogicalFunction ExpLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction ExpLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
     /// Instead of having our own ExpPhysicalFunction, we use the existing Pow(e, childFunction)
-    const auto newChild = child.withInferredDataType(schema);
+    const auto newChild = child.withInferredLogicalType(schema);
     const std::string eulerNumber = "2.7182818284590452353602874713527";
-    const ConstantValueLogicalFunction expConstantValue{
-        DataTypeProvider::provideDataType(
-            DataType::Type::FLOAT64, newChild.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE),
-        eulerNumber};
-    return PowLogicalFunction(expConstantValue, newChild).withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
+    const ConstantValueLogicalFunction expConstantValue{LogicalType{"FLOAT", {}, newChild.getLogicalType().getNullable()}, eulerNumber};
+    return PowLogicalFunction(expConstantValue, newChild).withLogicalType(LogicalType{"FLOAT", {}, Nullable::NOT_NULLABLE});
 };
 
 std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const
@@ -89,7 +86,7 @@ std::string ExpLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("ExpLogicalFunction({} : {})", child.explain(verbosity), dataType);
+        return fmt::format("ExpLogicalFunction({} : {})", child.explain(verbosity), logicalType);
     }
     return fmt::format("EXP({})", child.explain(verbosity));
 }

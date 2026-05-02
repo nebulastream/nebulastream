@@ -24,7 +24,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/LogicalType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/DynamicBase.hpp>
@@ -47,33 +46,22 @@ template <typename Checked = NES::detail::ErasedLogicalFunction>
 struct TypedLogicalFunction;
 using LogicalFunction = TypedLogicalFunction<>;
 
-/// Optional override for compound logical types. Functions whose result is a
-/// compound `LogicalType` (e.g. `Point`) implement this so the projection's
-/// schema flattening can resolve their physical layout. Primitive-typed
-/// functions don't need it — the wrapper falls back to
-/// `LogicalType::fromPhysical(getDataType())`.
-template <typename T>
-concept HasLogicalTypeAPI = requires(const T& thisFunction) {
-    { thisFunction.getLogicalType() } -> std::convertible_to<LogicalType>;
-};
-
 /// Concept defining the interface for all logical functions in the query plan.
-/// Functions carry a primitive `DataType` stamp; compound result types
-/// (carried via the optional `getLogicalType()` accessor) are expanded into N
-/// primitive schema fields by the introducing operator (Projection) and
-/// dispatched into a per-name physical function at lowering.
+/// Functions carry a result `LogicalType` stamp; the corresponding physical
+/// representation is recovered at lowering time via the LogicalTypeLowering
+/// registry, never inside the logical layer.
 template <typename T>
 concept LogicalFunctionConcept = requires(
     const T& thisFunction,
     ExplainVerbosity verbosity,
-    DataType dataType,
+    LogicalType logicalType,
     Schema schema,
     std::vector<LogicalFunction> children,
     const T& rhs) {
-    /// Type stamp
-    { thisFunction.getDataType() } -> std::convertible_to<DataType>;
-    { thisFunction.withDataType(dataType) } -> std::convertible_to<T>;
-    { thisFunction.withInferredDataType(schema) } -> std::same_as<LogicalFunction>;
+    /// Result type stamp
+    { thisFunction.getLogicalType() } -> std::convertible_to<LogicalType>;
+    { thisFunction.withLogicalType(logicalType) } -> std::convertible_to<T>;
+    { thisFunction.withInferredLogicalType(schema) } -> std::same_as<LogicalFunction>;
 
     /// Returns a string representation of the function
     { thisFunction.explain(verbosity) } -> std::convertible_to<std::string>;
@@ -103,9 +91,8 @@ struct ErasedLogicalFunction
 
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
     [[nodiscard]] virtual LogicalType getLogicalType() const = 0;
-    [[nodiscard]] virtual DataType getDataType() const = 0;
-    [[nodiscard]] virtual LogicalFunction withDataType(const DataType& dataType) const = 0;
-    [[nodiscard]] virtual LogicalFunction withInferredDataType(const Schema& schema) const = 0;
+    [[nodiscard]] virtual LogicalFunction withLogicalType(const LogicalType& logicalType) const = 0;
+    [[nodiscard]] virtual LogicalFunction withInferredLogicalType(const Schema& schema) const = 0;
     [[nodiscard]] virtual std::vector<LogicalFunction> getChildren() const = 0;
     [[nodiscard]] virtual LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const = 0;
     [[nodiscard]] virtual std::string_view getType() const = 0;
@@ -264,16 +251,12 @@ struct TypedLogicalFunction
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const { return self->explain(verbosity); };
 
-    /// Result LogicalType — either the explicit compound stamp from the
-    /// underlying function (Point, ...) or the primitive type lifted from
-    /// `getDataType()`.
+    /// Result LogicalType stamp.
     [[nodiscard]] LogicalType getLogicalType() const { return self->getLogicalType(); };
 
-    [[nodiscard]] DataType getDataType() const { return self->getDataType(); };
+    [[nodiscard]] LogicalFunction withLogicalType(const LogicalType& logicalType) const { return self->withLogicalType(logicalType); };
 
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const { return self->withDataType(dataType); };
-
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const { return self->withInferredDataType(schema); };
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const { return self->withInferredLogicalType(schema); };
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const { return self->getChildren(); };
 
@@ -316,25 +299,13 @@ struct FunctionModel : ErasedLogicalFunction
 
     [[nodiscard]] std::string_view getType() const override { return impl.getType(); }
 
-    [[nodiscard]] LogicalType getLogicalType() const override
-    {
-        if constexpr (HasLogicalTypeAPI<FunctionType>)
-        {
-            return impl.getLogicalType();
-        }
-        else
-        {
-            return LogicalType::fromPhysical(impl.getDataType());
-        }
-    }
+    [[nodiscard]] LogicalType getLogicalType() const override { return impl.getLogicalType(); }
 
     [[nodiscard]] FunctionType get() const { return impl; }
 
-    [[nodiscard]] DataType getDataType() const override { return impl.getDataType(); }
+    [[nodiscard]] LogicalFunction withLogicalType(const LogicalType& logicalType) const override { return impl.withLogicalType(logicalType); }
 
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override { return impl.withDataType(dataType); }
-
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override { return impl.withInferredDataType(schema); }
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const Schema& schema) const override { return impl.withInferredLogicalType(schema); }
 
     [[nodiscard]] bool operator==(const LogicalFunction& other) const
     {

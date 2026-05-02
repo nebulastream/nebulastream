@@ -12,27 +12,14 @@
 
 add_source_files(nes-data-types
         Schema.cpp
-        DataType.cpp
-        DataTypeProvider.cpp
         LogicalType.cpp
-        PhysicalLayout.cpp
         TimeUnit.cpp
         )
 
 # Register plugins
-add_plugin(INTEGER DataType nes-data-types DataType.cpp)
-add_plugin(FLOAT DataType nes-data-types DataType.cpp)
-add_plugin(TEXT DataType nes-data-types DataType.cpp)
-add_plugin(BOOL DataType nes-data-types DataType.cpp)
-
 add_plugin(INTEGER LogicalType nes-data-types LogicalTypeRegistrations.cpp)
 add_plugin(FLOAT LogicalType nes-data-types LogicalTypeRegistrations.cpp)
 add_plugin(TEXT LogicalType nes-data-types LogicalTypeRegistrations.cpp)
 add_plugin(BOOL LogicalType nes-data-types LogicalTypeRegistrations.cpp)
-
-add_plugin(INTEGER LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
-add_plugin(FLOAT LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
-add_plugin(TEXT LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
-add_plugin(BOOL LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
 
 

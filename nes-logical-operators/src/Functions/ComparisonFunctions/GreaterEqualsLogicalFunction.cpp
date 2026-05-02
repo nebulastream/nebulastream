@@ -37,7 +37,7 @@ namespace NES
 {
 
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(left)), right(std::move(right)), logicalType(LogicalType{"BOOL", {}, Nullable::NOT_NULLABLE})
 {
 }
 
@@ -53,25 +53,24 @@ std::string GreaterEqualsLogicalFunction::explain(ExplainVerbosity verbosity) co
     return fmt::format("{} >= {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-DataType GreaterEqualsLogicalFunction::getDataType() const
+LogicalType GreaterEqualsLogicalFunction::getLogicalType() const
 {
-    return dataType;
+    return logicalType;
 };
 
-GreaterEqualsLogicalFunction GreaterEqualsLogicalFunction::withDataType(const DataType& dataType) const
+GreaterEqualsLogicalFunction GreaterEqualsLogicalFunction::withLogicalType(const LogicalType& logicalType) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.logicalType = logicalType;
     return copy;
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction GreaterEqualsLogicalFunction::withInferredLogicalType(const Schema& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredLogicalType(schema); })
         | std::ranges::to<std::vector>();
-    auto newDataType = this->getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto newDataType = this->getLogicalType();
+    return withLogicalType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> GreaterEqualsLogicalFunction::getChildren() const

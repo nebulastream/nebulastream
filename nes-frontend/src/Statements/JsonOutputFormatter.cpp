@@ -22,6 +22,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/LogicalType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
@@ -46,9 +47,14 @@ void to_json(nlohmann::json& jsonOutput, const DataType& dataType)
     jsonOutput = magic_enum::enum_name(dataType.type);
 }
 
+void to_json(nlohmann::json& jsonOutput, const LogicalType& logicalType)
+{
+    jsonOutput = logicalType.getName();
+}
+
 void to_json(nlohmann::json& jsonOutput, const Schema::Field& str)
 {
-    jsonOutput = nlohmann::json{{"name", str.name}, {"type", str.dataType}};
+    jsonOutput = nlohmann::json{{"name", str.name}, {"type", str.logicalType}};
 }
 
 void to_json(nlohmann::json& jsonOutput, const Schema& schema)

@@ -59,10 +59,10 @@ std::string MaxAggregationLogicalFunction::toString() const
 MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
-    if (not newOnField.getDataType().isNumeric())
+    auto newOnField = this->getOnField().withInferredLogicalType(schema).getAs<FieldAccessLogicalFunction>().get();
+    if (not newOnField.getLogicalType().isNumeric())
     {
-        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", newOnField.getDataType());
+        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", newOnField.getLogicalType());
     }
 
     ///Set fully qualified name for the as Field
@@ -82,11 +82,11 @@ MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredStamp(c
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         newAsFieldName = attributeNameResolver + fieldName;
     }
-    auto newFinalAggregationStamp = newOnField.getDataType();
-    return this->withInputStamp(newOnField.getDataType())
+    auto newFinalAggregationStamp = newOnField.getLogicalType();
+    return this->withInputStamp(newOnField.getLogicalType())
         .withOnField(newOnField)
         .withFinalAggregateStamp(newFinalAggregationStamp)
-        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
+        .withAsField(this->getAsField().withFieldName(newAsFieldName).withLogicalType(newFinalAggregationStamp));
 }
 
 Reflected MaxAggregationLogicalFunction::reflect() const
@@ -119,17 +119,17 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterMaxAggregationLogicalFunct
     return std::make_shared<WindowAggregationLogicalFunction>(MaxAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
 }
 
-DataType MaxAggregationLogicalFunction::getInputStamp() const
+LogicalType MaxAggregationLogicalFunction::getInputStamp() const
 {
     return inputStamp;
 }
 
-DataType MaxAggregationLogicalFunction::getPartialAggregateStamp() const
+LogicalType MaxAggregationLogicalFunction::getPartialAggregateStamp() const
 {
     return partialAggregateStamp;
 }
 
-DataType MaxAggregationLogicalFunction::getFinalAggregateStamp() const
+LogicalType MaxAggregationLogicalFunction::getFinalAggregateStamp() const
 {
     return finalAggregateStamp;
 }
@@ -144,21 +144,21 @@ FieldAccessLogicalFunction MaxAggregationLogicalFunction::getAsField() const
     return asField;
 }
 
-MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
+MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInputStamp(LogicalType inputStamp) const
 {
     auto copy = *this;
     copy.inputStamp = std::move(inputStamp);
     return copy;
 }
 
-MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
+MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withPartialAggregateStamp(LogicalType partialAggregateStamp) const
 {
     auto copy = *this;
     copy.partialAggregateStamp = std::move(partialAggregateStamp);
     return copy;
 }
 
-MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
+MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withFinalAggregateStamp(LogicalType finalAggregateStamp) const
 {
     auto copy = *this;
     copy.finalAggregateStamp = std::move(finalAggregateStamp);

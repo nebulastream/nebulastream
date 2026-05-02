@@ -16,8 +16,8 @@
 
 #include <string>
 #include <vector>
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/LogicalType.hpp>
+#include <DataTypes/Nullable.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES
