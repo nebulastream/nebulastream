@@ -130,15 +130,16 @@ static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction,
         case AntlrSQLLexer::EQ:
             return UnboundLogicalFunction("Equals", {std::move(leftFunction), std::move(rightFunction)});
         case AntlrSQLLexer::NEQJ:
-            return NegateLogicalFunction(UnboundLogicalFunction("Equals", {std::move(leftFunction), std::move(rightFunction)}));
+            return UnboundLogicalFunction(
+                "Negate", {UnboundLogicalFunction("Equals", {std::move(leftFunction), std::move(rightFunction)})});
         case AntlrSQLLexer::LT:
-            return LessLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+            return UnboundLogicalFunction("Less", {std::move(leftFunction), std::move(rightFunction)});
         case AntlrSQLLexer::GT:
-            return GreaterLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+            return UnboundLogicalFunction("Greater", {std::move(leftFunction), std::move(rightFunction)});
         case AntlrSQLLexer::GTE:
-            return GreaterEqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+            return UnboundLogicalFunction("GreaterEquals", {std::move(leftFunction), std::move(rightFunction)});
         case AntlrSQLLexer::LTE:
-            return LessEqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+            return UnboundLogicalFunction("LessEquals", {std::move(leftFunction), std::move(rightFunction)});
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
@@ -151,9 +152,9 @@ static LogicalFunction createLogicalBinaryFunction(LogicalFunction leftFunction,
     switch (tokenType)
     {
         case AntlrSQLLexer::AND:
-            return AndLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+            return UnboundLogicalFunction("And", {std::move(leftFunction), std::move(rightFunction)});
         case AntlrSQLLexer::OR:
-            return OrLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+            return UnboundLogicalFunction("Or", {std::move(leftFunction), std::move(rightFunction)});
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
@@ -306,19 +307,19 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     switch (opTokenType)
     {
         case AntlrSQLLexer::ASTERISK:
-            function = MulLogicalFunction(leftFunction, rightFunction);
+            function = UnboundLogicalFunction("Mul", {leftFunction, rightFunction});
             break;
         case AntlrSQLLexer::SLASH:
-            function = DivLogicalFunction(leftFunction, rightFunction);
+            function = UnboundLogicalFunction("Div", {leftFunction, rightFunction});
             break;
         case AntlrSQLLexer::PLUS:
-            function = AddLogicalFunction(leftFunction, rightFunction);
+            function = UnboundLogicalFunction("Add", {leftFunction, rightFunction});
             break;
         case AntlrSQLLexer::MINUS:
-            function = SubLogicalFunction(leftFunction, rightFunction);
+            function = UnboundLogicalFunction("Sub", {leftFunction, rightFunction});
             break;
         case AntlrSQLLexer::PERCENT:
-            function = ModuloLogicalFunction(leftFunction, rightFunction);
+            function = UnboundLogicalFunction("Mod", {leftFunction, rightFunction});
             break;
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
@@ -347,8 +348,8 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
             function = innerFunction;
             break;
         case AntlrSQLLexer::MINUS:
-            function = MulLogicalFunction(
-                ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UINT64), "-1"), innerFunction);
+            function = UnboundLogicalFunction(
+                "Mul", {ConstantValueLogicalFunction(DataTypeProvider::provideDataType("INTEGER"), "-1"), innerFunction});
             break;
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
@@ -796,8 +797,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
         }
         const auto innerFunction = helpers.top().joinKeyRelationHelper.back();
         helpers.top().joinKeyRelationHelper.pop_back();
-        auto negatedFunction = NegateLogicalFunction(innerFunction);
-        helpers.top().joinKeyRelationHelper.emplace_back(negatedFunction);
+        helpers.top().joinKeyRelationHelper.emplace_back(UnboundLogicalFunction("Negate", {innerFunction}));
     }
     else
     {
@@ -807,7 +807,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
         }
         const auto innerFunction = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
-        helpers.top().functionBuilder.emplace_back(NegateLogicalFunction(innerFunction));
+        helpers.top().functionBuilder.emplace_back(UnboundLogicalFunction("Negate", {innerFunction}));
     }
     AntlrSQLBaseListener::exitLogicalNot(context);
 }
@@ -926,15 +926,8 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 }
                 auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
                 std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
-                if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
-                {
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.push_back(*logicalFunction);
-                }
-                else
-                {
-                    throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
-                }
+                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                helpers.top().functionBuilder.emplace_back(UnboundLogicalFunction(funcName, std::move(funcArgs)));
             }
     }
 
