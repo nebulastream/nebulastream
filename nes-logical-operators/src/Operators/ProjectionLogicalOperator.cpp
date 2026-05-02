@@ -69,13 +69,20 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
 /// is expanded here, then never seen again at the schema level.
 PhysicalLayout resolveLayout(const LogicalType& logicalType)
 {
-    auto layoutOpt = LogicalTypeLoweringRegistry::instance().create(
-        std::string(logicalType.getName()), LogicalTypeLoweringRegistryArguments{.logicalType = logicalType});
+    if (auto layoutOpt = LogicalTypeLoweringRegistry::instance().create(
+            std::string(logicalType.getName()), LogicalTypeLoweringRegistryArguments{.logicalType = logicalType}))
+    {
+        return std::move(layoutOpt).value();
+    }
+    if (const auto physical = logicalType.toPhysical(); physical.has_value())
+    {
+        return PhysicalLayout{.components = {{.suffix = "", .physicalType = *physical}}};
+    }
     INVARIANT(
-        layoutOpt.has_value(),
+        false,
         "No physical layout registered for logical type '{}'. Add an entry to LogicalTypeLoweringRegistry.",
         logicalType.getName());
-    return std::move(layoutOpt).value();
+    std::unreachable();
 }
 }
 

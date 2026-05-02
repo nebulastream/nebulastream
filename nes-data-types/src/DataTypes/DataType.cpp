@@ -218,74 +218,24 @@ bool DataType::isType(const Type type) const
     return this->type == type;
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::CHAR, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::BOOLEAN, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::FLOAT32, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::FLOAT64, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT8DataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::INT8, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::INT16, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::INT32, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINTEGERDataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::INT64, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOATDataType(const DataTypeRegistryArguments args)
 {
-    return DataType{DataType::Type::UINT8, args.nullable};
+    return DataType{DataType::Type::FLOAT64, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT16DataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::UINT16, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::UINT32, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::UINT64, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(const DataTypeRegistryArguments args)
-{
-    return DataType{DataType::Type::UNDEFINED, args.nullable};
-}
-
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterTEXTDataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::VARSIZED, args.nullable};
+}
+
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLDataType(const DataTypeRegistryArguments args)
+{
+    return DataType{DataType::Type::BOOLEAN, args.nullable};
 }
 
 bool DataType::isInteger() const

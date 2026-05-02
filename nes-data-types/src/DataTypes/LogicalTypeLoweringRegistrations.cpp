@@ -30,87 +30,27 @@ PhysicalLayout scalarLayout(const DataType::Type physicalType, const LogicalType
 }
 
 LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterBOOLEANLogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::BOOLEAN, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterCHARLogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::CHAR, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterFLOAT32LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::FLOAT32, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterFLOAT64LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::FLOAT64, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterINT8LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::INT8, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterINT16LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::INT16, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterINT32LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::INT32, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterINT64LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
+LogicalTypeLoweringGeneratedRegistrar::RegisterINTEGERLogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
 {
     return scalarLayout(DataType::Type::INT64, args);
 }
 
 LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterUINT8LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
+LogicalTypeLoweringGeneratedRegistrar::RegisterFLOATLogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
 {
-    return scalarLayout(DataType::Type::UINT8, args);
+    return scalarLayout(DataType::Type::FLOAT64, args);
 }
 
 LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterUINT16LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::UINT16, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterUINT32LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::UINT32, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterUINT64LogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::UINT64, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterUNDEFINEDLogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
-{
-    return scalarLayout(DataType::Type::UNDEFINED, args);
-}
-
-LogicalTypeLoweringRegistryReturnType
-LogicalTypeLoweringGeneratedRegistrar::RegisterVARSIZEDLogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
+LogicalTypeLoweringGeneratedRegistrar::RegisterTEXTLogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
 {
     return scalarLayout(DataType::Type::VARSIZED, args);
+}
+
+LogicalTypeLoweringRegistryReturnType
+LogicalTypeLoweringGeneratedRegistrar::RegisterBOOLLogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
+{
+    return scalarLayout(DataType::Type::BOOLEAN, args);
 }
 
 }

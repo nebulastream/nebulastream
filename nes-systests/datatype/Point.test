@@ -7,22 +7,22 @@
 #              spread of compound results into primitive sink columns.
 # groups: [DataType, LogicalType, Point]
 
-CREATE LOGICAL SOURCE points(x FLOAT64 NOT NULL, y FLOAT64 NOT NULL, z FLOAT64 NOT NULL);
+CREATE LOGICAL SOURCE points(x FLOAT NOT NULL, y FLOAT NOT NULL, z FLOAT NOT NULL);
 CREATE PHYSICAL SOURCE FOR points TYPE File;
 ATTACH INLINE
 1.0,2.0,3.0
 4.0,5.0,6.0
 
-CREATE SINK out(p_x FLOAT64 NOT NULL, p_y FLOAT64 NOT NULL, p_z FLOAT64 NOT NULL,
-                d FLOAT64 NOT NULL,
-                s_x FLOAT64 NOT NULL, s_y FLOAT64 NOT NULL, s_z FLOAT64 NOT NULL) TYPE File;
+CREATE SINK out(p_x FLOAT NOT NULL, p_y FLOAT NOT NULL, p_z FLOAT NOT NULL,
+                d FLOAT NOT NULL,
+                s_x FLOAT NOT NULL, s_y FLOAT NOT NULL, s_z FLOAT NOT NULL) TYPE File;
 
 # Full mix: PointAdd produces compound, PointDistance produces scalar from
 # compound inputs, PointScale broadcasts a scalar over compound components.
 SELECT
-    PointAdd(Point(x, y, z), Point(FLOAT64(1.0), FLOAT64(1.0), FLOAT64(1.0))) AS p,
-    PointDistance(Point(x, y, z), Point(FLOAT64(0.0), FLOAT64(0.0), FLOAT64(0.0))) AS d,
-    PointScale(Point(x, y, z), FLOAT64(2.0)) AS s
+    PointAdd(Point(x, y, z), Point(Float(1.0), Float(1.0), Float(1.0))) AS p,
+    PointDistance(Point(x, y, z), Point(Float(0.0), Float(0.0), Float(0.0))) AS d,
+    PointScale(Point(x, y, z), Float(2.0)) AS s
 FROM points INTO out;
 ----
 2.0,3.0,4.0,3.7416573867739413,2.0,4.0,6.0

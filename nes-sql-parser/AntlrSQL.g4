@@ -77,7 +77,7 @@ createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: identifierChain typeDefinition nullableDefinition?;
 
-typeDefinition: DATA_TYPE;
+typeDefinition: DATA_TYPE | TEXT;
 nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
@@ -578,10 +578,10 @@ TINY_INT_TYPE: 'TINYINT';
 SMALL_INT_TYPE: 'SMALLINT';
 NORMAL_INT_TYPE: 'INT' | 'INTEGER';
 BIG_INT_TYPE: 'BIGINT';
-FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
+FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64' | 'FLOAT';
 CHAR_TYPE: 'CHAR';
 VARSIZED_TYPE: 'VARSIZED';
-BOOLEAN_TYPE: 'BOOLEAN';
+BOOLEAN_TYPE: 'BOOLEAN' | 'BOOL';
 
 UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
 

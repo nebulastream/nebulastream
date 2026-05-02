@@ -17,7 +17,6 @@
 #include <optional>
 #include <string>
 #include <DataTypes/DataType.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>
 
@@ -46,7 +45,6 @@ DataType provideDataType(const std::string& type)
 
 DataType provideDataType(const std::string& type, const DataType::NULLABLE isNullable)
 {
-    /// However, we provide the empty struct to be consistent with the design of our registries.
     const DataTypeRegistryArguments args{isNullable};
     if (const auto dataType = DataTypeRegistry::instance().create(type, args))
     {
@@ -62,8 +60,7 @@ DataType provideDataType(const DataType::Type type)
 
 DataType provideDataType(const DataType::Type type, const DataType::NULLABLE isNullable)
 {
-    const auto typeAsString = std::string(magic_enum::enum_name(type));
-    return provideDataType(typeAsString, isNullable);
+    return DataType{type, isNullable};
 }
 
 }

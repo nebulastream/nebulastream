@@ -27,74 +27,24 @@ LogicalType makeBuiltin(const std::string& name, LogicalTypeRegistryArguments ar
 }
 }
 
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterBOOLEANLogicalType(LogicalTypeRegistryArguments args)
+LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterINTEGERLogicalType(LogicalTypeRegistryArguments args)
 {
-    return makeBuiltin("BOOLEAN", std::move(args));
+    return makeBuiltin("INTEGER", std::move(args));
 }
 
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterCHARLogicalType(LogicalTypeRegistryArguments args)
+LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterFLOATLogicalType(LogicalTypeRegistryArguments args)
 {
-    return makeBuiltin("CHAR", std::move(args));
+    return makeBuiltin("FLOAT", std::move(args));
 }
 
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterFLOAT32LogicalType(LogicalTypeRegistryArguments args)
+LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterTEXTLogicalType(LogicalTypeRegistryArguments args)
 {
-    return makeBuiltin("FLOAT32", std::move(args));
+    return makeBuiltin("TEXT", std::move(args));
 }
 
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterFLOAT64LogicalType(LogicalTypeRegistryArguments args)
+LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterBOOLLogicalType(LogicalTypeRegistryArguments args)
 {
-    return makeBuiltin("FLOAT64", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterINT8LogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("INT8", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterINT16LogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("INT16", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterINT32LogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("INT32", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterINT64LogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("INT64", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterUINT8LogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("UINT8", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterUINT16LogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("UINT16", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterUINT32LogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("UINT32", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterUINT64LogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("UINT64", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterUNDEFINEDLogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("UNDEFINED", std::move(args));
-}
-
-LogicalTypeRegistryReturnType LogicalTypeGeneratedRegistrar::RegisterVARSIZEDLogicalType(LogicalTypeRegistryArguments args)
-{
-    return makeBuiltin("VARSIZED", std::move(args));
+    return makeBuiltin("BOOL", std::move(args));
 }
 
 }

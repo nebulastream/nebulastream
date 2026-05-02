@@ -302,40 +302,11 @@ Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST)
 
 DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const DataType::NULLABLE isNullable)
 {
-    std::string dataTypeText = typeDefAST->getText();
-
-    bool translated = false;
-    bool isUnsigned = false;
-    if (dataTypeText.starts_with("UNSIGNED "))
-    {
-        isUnsigned = true;
-        translated = true;
-        dataTypeText = dataTypeText.substr(std::strlen("UNSIGNED "));
-    }
-
-    static const std::unordered_map<std::string, std::string> DataTypeMapping
-        = {{"TINYINT", "INT8"}, {"SMALLINT", "INT16"}, {"INT", "INT32"}, {"INTEGER", "INT32"}, {"BIGINT", "INT64"}};
-
-    if (const auto found = DataTypeMapping.find(dataTypeText); found != DataTypeMapping.end())
-    {
-        translated = true;
-        dataTypeText = [&]
-        {
-            if (isUnsigned)
-            {
-                return "U" + found->second;
-            }
-            return found->second;
-        }();
-    }
+    const std::string dataTypeText = typeDefAST->getText();
     const auto dataType = DataTypeProvider::tryProvideDataType(dataTypeText, isNullable);
     if (not dataType.has_value())
     {
-        if (translated)
-        {
-            throw UnknownDataType("{}, translated into {}", typeDefAST->getText(), dataTypeText);
-        }
-        throw UnknownDataType("{}", typeDefAST->getText());
+        throw UnknownDataType("{}", dataTypeText);
     }
     return *dataType;
 }
