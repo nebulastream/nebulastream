@@ -183,9 +183,9 @@ void ChainedEntryMemoryProvider::writeRecord(
 {
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
     {
-        const auto& value = record.read(fieldIdentifier);
+        const auto value = record.read(fieldIdentifier);
         auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRef);
-        writeVarVal(value, castedEntryAddress + fieldOffset, type, hashMapRef, bufferProvider);
+        writeVarVal(value.asScalar(), castedEntryAddress + fieldOffset, type, hashMapRef, bufferProvider);
     }
 }
 

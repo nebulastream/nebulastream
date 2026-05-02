@@ -14,10 +14,13 @@
 #include <Nautilus/Interface/Record.hpp>
 
 #include <cstdint>
+#include <map>
 #include <numeric>
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <Nautilus/DataTypes/Value.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <std/ostream.h>
 #include <ErrorHandling.hpp>
@@ -30,30 +33,59 @@ Record::Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& fields) : rec
 {
 }
 
-const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) const
+Value Record::read(const RecordFieldIdentifier& fieldName) const
 {
-    if (not recordFields.contains(recordFieldIdentifier))
+    if (not recordFields.contains(fieldName))
     {
         const std::string allFields = std::accumulate(
             recordFields.begin(),
             recordFields.end(),
             std::string{},
             [](const std::string& acc, const auto& pair) { return acc + pair.first + ", "; });
-        throw FieldNotFound("Field {} not found in record {}.", recordFieldIdentifier, allFields);
+        throw FieldNotFound("Field {} not found in record {}.", fieldName, allFields);
     }
-    return recordFields.at(recordFieldIdentifier);
+    return Value::scalar(recordFields.at(fieldName));
 }
 
-void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal)
+Value Record::read(const RecordFieldIdentifier& fieldName, const std::vector<std::string>& suffixes) const
 {
-    /// We can not use the insert_or_assign method, as we otherwise run into a tracing exception, as this might result in incorrect code.
-    if (const auto [hashMapIterator, inserted] = recordFields.insert({recordFieldIdentifier, varVal}); not inserted)
+    std::map<std::string, VarVal> components;
+    for (const auto& suffix : suffixes)
     {
-        /// We need to first erase the old value, as we are overwriting an existing field with a potential new data type
-        /// This inefficiency is fine, as this code solely gets executed during tracing.
-        recordFields.erase(recordFieldIdentifier);
-        recordFields.insert_or_assign(recordFieldIdentifier, varVal);
+        const auto fullName = fieldName + suffix;
+        if (not recordFields.contains(fullName))
+        {
+            const std::string allFields = std::accumulate(
+                recordFields.begin(),
+                recordFields.end(),
+                std::string{},
+                [](const std::string& acc, const auto& pair) { return acc + pair.first + ", "; });
+            throw FieldNotFound("Field {} not found in record {}.", fullName, allFields);
+        }
+        components.emplace(suffix, recordFields.at(fullName));
     }
+    return Value{std::move(components)};
+}
+
+void Record::write(const RecordFieldIdentifier& fieldName, const Value& value)
+{
+    for (const auto& [suffix, component] : value.components())
+    {
+        const auto fullName = fieldName + suffix;
+        /// We can not use the insert_or_assign method, as we otherwise run into a tracing exception, as this might result in incorrect code.
+        if (const auto [hashMapIterator, inserted] = recordFields.insert({fullName, component}); not inserted)
+        {
+            /// We need to first erase the old value, as we are overwriting an existing field with a potential new data type
+            /// This inefficiency is fine, as this code solely gets executed during tracing.
+            recordFields.erase(fullName);
+            recordFields.insert_or_assign(fullName, component);
+        }
+    }
+}
+
+void Record::write(const RecordFieldIdentifier& fieldName, const VarVal& varVal)
+{
+    write(fieldName, Value::scalar(varVal));
 }
 
 void Record::reassignFields(const Record& other)
@@ -92,7 +124,7 @@ nautilus::val<bool> operator==(const Record& lhs, const Record& rhs)
 
     for (const auto& [fieldName, value] : nautilus::static_iterable(lhs.recordFields))
     {
-        if (not rhs.hasField(fieldName) or value != rhs.read(fieldName))
+        if (not rhs.hasField(fieldName) or value != rhs.recordFields.at(fieldName))
         {
             return false;
         }

@@ -1,0 +1,17 @@
+# name: datatype/Point.test
+# description: End-to-end test for the prototype Point logical type.
+# groups: [DataType, LogicalType, Point]
+
+CREATE LOGICAL SOURCE points(x FLOAT64 NOT NULL, y FLOAT64 NOT NULL, z FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR points TYPE File;
+ATTACH INLINE
+1.0,2.0,3.0
+4.0,5.0,6.0
+
+CREATE SINK out(p_x FLOAT64 NOT NULL, p_y FLOAT64 NOT NULL, p_z FLOAT64 NOT NULL) TYPE File;
+
+# Minimal: just construct a Point.
+SELECT Point(x, y, z) AS p FROM points INTO out;
+----
+1.0,2.0,3.0
+4.0,5.0,6.0

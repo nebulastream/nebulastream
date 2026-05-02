@@ -24,7 +24,7 @@
 namespace NES
 {
 
-VarVal SubPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+Value SubPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftPhysicalFunction.execute(record, arena);
     const auto rightValue = rightPhysicalFunction.execute(record, arena);

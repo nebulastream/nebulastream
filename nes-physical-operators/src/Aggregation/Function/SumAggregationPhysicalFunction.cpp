@@ -51,7 +51,7 @@ void SumAggregationPhysicalFunction::lift(
         const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, isNull);
 
         /// If value is null, we keep the old value. Otherwise, we add the value to the sum.
-        const auto newSum = VarVal::select(isNull, sum, (sum + value).castToType(inputType.type));
+        const auto newSum = VarVal::select(isNull, sum, (sum + value.asScalar()).castToType(inputType.type));
         newSum.writeToMemory(memAreaSum);
         storeNull(aggregationState, isNull);
     }
@@ -62,7 +62,7 @@ void SumAggregationPhysicalFunction::lift(
         const auto sum = VarVal::readNonNullableVarValFromMemory(memAreaSum, inputType);
 
         /// Updating the sum and write it back to the aggregation state
-        const auto newSum = (sum + value).castToType(inputType.type);
+        const auto newSum = (sum + value.asScalar()).castToType(inputType.type);
         newSum.writeToMemory(memAreaSum);
     }
 }

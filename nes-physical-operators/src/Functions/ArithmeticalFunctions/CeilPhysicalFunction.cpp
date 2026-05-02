@@ -32,7 +32,7 @@ CeilPhysicalFunction::CeilPhysicalFunction(PhysicalFunction childFunction, DataT
 {
 }
 
-VarVal CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+Value CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
     /// If the input type is a float, we need to ceil the value and returned the ceiled value.

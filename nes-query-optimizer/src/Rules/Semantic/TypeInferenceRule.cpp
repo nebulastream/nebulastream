@@ -15,20 +15,57 @@
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 
 #include <set>
+#include <string>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LogicalSchema.hpp>
+#include <DataTypes/LogicalType.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
+#include <Phases/LogicalTypeLowering/PhysicalLayout.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
+#include <ErrorHandling.hpp>
+#include <LogicalTypeLoweringRegistry.hpp>
 
 namespace NES
 {
+
+namespace
+{
+PhysicalLayout resolveLayout(const LogicalType& logicalType)
+{
+    auto layoutOpt = LogicalTypeLoweringRegistry::instance().create(
+        std::string(logicalType.getName()), LogicalTypeLoweringRegistryArguments{.logicalType = logicalType});
+    INVARIANT(
+        layoutOpt.has_value(),
+        "No physical layout registered for logical type '{}'. Add an entry to LogicalTypeLoweringRegistry.",
+        logicalType.getName());
+    return std::move(layoutOpt).value();
+}
+
+/// Expand any compound LogicalType in `schema` into N primitive components,
+/// using the LogicalTypeLoweringRegistry.
+LogicalSchema flattenCompoundFields(const LogicalSchema& schema)
+{
+    LogicalSchema flattened;
+    for (const auto& field : schema.getFields())
+    {
+        const auto layout = resolveLayout(field.logicalType);
+        for (const auto& component : layout.components)
+        {
+            flattened.addField(field.name + component.suffix, LogicalType::fromPhysical(component.physicalType));
+        }
+    }
+    return flattened;
+}
+}
 
 static LogicalOperator propagateSchema(const LogicalOperator& op)
 {
@@ -40,16 +77,30 @@ static LogicalOperator propagateSchema(const LogicalOperator& op)
     }
 
     std::vector<LogicalOperator> newChildren;
-    std::vector<Schema> childSchemas;
+    std::vector<LogicalSchema> childSchemas;
     for (const auto& child : children)
     {
         const LogicalOperator childWithSchema = propagateSchema(child);
-        childSchemas.push_back(childWithSchema.getOutputSchema());
+        childSchemas.push_back(childWithSchema.getOutputLogicalSchema());
         newChildren.push_back(childWithSchema);
     }
 
     const LogicalOperator updatedOperator = op.withChildren(newChildren);
-    return updatedOperator.withInferredSchema(childSchemas);
+    auto inferred = updatedOperator.withInferredLogicalSchema(childSchemas);
+
+    /// ProjectionLogicalOperator is the only operator today whose output may
+    /// carry a compound LogicalType (e.g. `Point(x, y, z) AS p`). Flatten the
+    /// stored output schema to primitive components so legacy operators
+    /// downstream (Sink, etc.) only ever see primitive `LogicalSchema`s — their
+    /// `withInferredSchema` bridge would otherwise trip in `toPrimitiveSchema`.
+    /// The function tree itself (the projection list) is preserved; the
+    /// compound→primitive spread happens at runtime in `Record::write`.
+    if (auto projection = inferred.tryGetAs<ProjectionLogicalOperator>())
+    {
+        const auto flattened = flattenCompoundFields((*projection)->getOutputLogicalSchema());
+        return LogicalOperator((*projection)->withOutputLogicalSchema(flattened));
+    }
+    return inferred;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

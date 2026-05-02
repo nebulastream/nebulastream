@@ -74,7 +74,8 @@ UnionLogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema
     const auto allSchemasEqualWithQualifier = std::ranges::adjacent_find(inputSchemas, std::ranges::not_equal_to{}) == inputSchemas.end();
     if (!allSchemasEqualWithQualifier)
     {
-        auto inputsWithoutSourceQualifier = inputSchemas | std::views::transform(withoutSourceQualifier);
+        auto inputsWithoutSourceQualifier
+            = inputSchemas | std::views::transform(static_cast<Schema (*)(const Schema&)>(&withoutSourceQualifier));
         const auto allSchemasEqualWithoutQualifier
             = std::ranges::adjacent_find(inputsWithoutSourceQualifier, std::ranges::not_equal_to{}) == inputsWithoutSourceQualifier.end();
         if (!allSchemasEqualWithoutQualifier)

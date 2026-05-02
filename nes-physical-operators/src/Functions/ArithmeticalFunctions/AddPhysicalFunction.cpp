@@ -14,7 +14,7 @@
 #include <Functions/ArithmeticalFunctions/AddPhysicalFunction.hpp>
 
 #include <utility>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -23,7 +23,7 @@
 namespace NES
 {
 
-VarVal AddPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+Value AddPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftPhysicalFunction.execute(record, arena);
     const auto rightValue = rightPhysicalFunction.execute(record, arena);

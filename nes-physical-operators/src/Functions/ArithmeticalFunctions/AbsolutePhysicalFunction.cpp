@@ -30,7 +30,7 @@ AbsolutePhysicalFunction::AbsolutePhysicalFunction(PhysicalFunction childFunctio
 {
 }
 
-VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+Value AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     auto value = childFunction.execute(record, arena);
     if (not inputType.isSignedInteger() and not inputType.isFloat())

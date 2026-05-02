@@ -16,7 +16,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Arena.hpp>
 
@@ -27,7 +27,7 @@ class FloorPhysicalFunction final
 {
 public:
     explicit FloorPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+    [[nodiscard]] Value execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction childFunction;

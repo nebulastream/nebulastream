@@ -32,7 +32,7 @@ FloorPhysicalFunction::FloorPhysicalFunction(PhysicalFunction childFunction, Dat
 {
 }
 
-VarVal FloorPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+Value FloorPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
     /// If the input type is a float, we need to floor the value and return the floored value.

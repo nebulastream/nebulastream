@@ -22,6 +22,9 @@ target_link_libraries(variable-sized-data-unit-tests nes-nautilus-test-util)
 add_nes_unit_test(var-val-unit-tests "UnitTests/VarValTest.cpp")
 target_link_libraries(var-val-unit-tests nes-nautilus-test-util)
 
+add_nes_unit_test(point-value-unit-tests "UnitTests/PointValueTest.cpp")
+target_link_libraries(point-value-unit-tests nes-nautilus-test-util)
+
 add_nes_unit_test(chained-hashmap-unit-tests "UnitTests/ChainedHashMapTest.cpp")
 target_link_libraries(chained-hashmap-unit-tests nes-nautilus-test-util)
 

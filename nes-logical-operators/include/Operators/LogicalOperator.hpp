@@ -26,6 +26,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <DataTypes/LogicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
@@ -55,19 +56,60 @@ template <typename Checked = NES::detail::ErasedLogicalOperator>
 struct TypedLogicalOperator;
 using LogicalOperator = TypedLogicalOperator<>;
 
+/// LogicalSchema-first API a concrete operator may expose. Operators that opt
+/// into this API can natively carry compound LogicalTypes through their input
+/// and output schemas — the only operators that need to do so are the ones
+/// that introduce or propagate compound types (e.g. Projection over a Point
+/// constructor function).
+template <typename T>
+concept HasLogicalSchemaAPI = requires(const T& thisOperator, std::vector<LogicalSchema> inputs) {
+    { thisOperator.getInputLogicalSchemas() } -> std::convertible_to<std::vector<LogicalSchema>>;
+    { thisOperator.getOutputLogicalSchema() } -> std::convertible_to<LogicalSchema>;
+    { thisOperator.withInferredLogicalSchema(inputs) } -> std::convertible_to<T>;
+};
+
+/// Legacy primitive-Schema API. The bulk of existing operators are still in
+/// this dialect; OperatorModel<T> bridges them by lifting LogicalSchemas in
+/// (assuming primitive-only) and lifting Schemas out.
+template <typename T>
+concept HasLegacySchemaAPI = requires(const T& thisOperator, std::vector<Schema> inputs) {
+    { thisOperator.getInputSchemas() } -> std::convertible_to<std::vector<Schema>>;
+    { thisOperator.getOutputSchema() } -> std::convertible_to<Schema>;
+    { thisOperator.withInferredSchema(inputs) } -> std::convertible_to<T>;
+};
+
 /// Concept defining the interface for all logical operators in the query plan.
 /// This concept defines the common interface that all logical operators must implement.
 /// Logical operators represent operations in the query plan and are used during query
 /// planning and optimization.
+///
+/// An operator may satisfy the schema portion of the concept either via the
+/// LogicalSchema-first API or the legacy primitive-Schema API; OperatorModel
+/// bridges between them. Compound LogicalTypes are only valid in operators
+/// that opt into HasLogicalSchemaAPI.
+/// Trait excluding the wrapper TypedLogicalOperator from concept satisfaction,
+/// since the wrapper exposes both schema APIs as forwarders and would otherwise
+/// cause a recursive constraint check during overload resolution of its own
+/// templated constructors.
 template <typename T>
-concept LogicalOperatorConcept = requires(
-    const T& thisOperator,
-    ExplainVerbosity verbosity,
-    OperatorId operatorId,
-    std::vector<LogicalOperator> children,
-    TraitSet traitSet,
-    const T& rhs,
-    std::vector<Schema> inputSchemas) {
+struct IsTypedLogicalOperator : std::false_type
+{
+};
+template <typename Checked>
+struct IsTypedLogicalOperator<TypedLogicalOperator<Checked>> : std::true_type
+{
+};
+
+template <typename T>
+concept LogicalOperatorConcept
+    = (not IsTypedLogicalOperator<std::remove_cvref_t<T>>::value)
+    && (HasLogicalSchemaAPI<T> || HasLegacySchemaAPI<T>) && requires(
+        const T& thisOperator,
+        ExplainVerbosity verbosity,
+        OperatorId operatorId,
+        std::vector<LogicalOperator> children,
+        TraitSet traitSet,
+        const T& rhs) {
     /// Returns a string representation of the operator
     { thisOperator.explain(verbosity, operatorId) } -> std::convertible_to<std::string>;
 
@@ -91,15 +133,6 @@ concept LogicalOperatorConcept = requires(
 
     /// Returns the trait set of the operator
     { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
-
-    /// Returns the input schemas of the operator
-    { thisOperator.getInputSchemas() } -> std::convertible_to<std::vector<Schema>>;
-
-    /// Returns the output schema of the operator
-    { thisOperator.getOutputSchema() } -> std::convertible_to<Schema>;
-
-    /// Creates a new operator with inferred schema based on input schemas
-    { thisOperator.withInferredSchema(inputSchemas) } -> std::convertible_to<T>;
 };
 
 namespace detail
@@ -116,9 +149,9 @@ struct ErasedLogicalOperator
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
     [[nodiscard]] virtual Reflected reflect() const = 0;
     [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
-    [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
-    [[nodiscard]] virtual Schema getOutputSchema() const = 0;
-    [[nodiscard]] virtual LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const = 0;
+    [[nodiscard]] virtual std::vector<LogicalSchema> getInputLogicalSchemas() const = 0;
+    [[nodiscard]] virtual LogicalSchema getOutputLogicalSchema() const = 0;
+    [[nodiscard]] virtual LogicalOperator withInferredLogicalSchema(std::vector<LogicalSchema> inputSchemas) const = 0;
     [[nodiscard]] virtual bool equals(const ErasedLogicalOperator& other) const = 0;
     [[nodiscard]] virtual OperatorId getOperatorId() const = 0;
     [[nodiscard]] virtual LogicalOperator withOperatorId(OperatorId id) const = 0;
@@ -276,13 +309,16 @@ struct TypedLogicalOperator
 
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return self->getChildren(); };
 
-    [[nodiscard]] TypedLogicalOperator withChildren(std::vector<LogicalOperator> children) const
+    /// Returns the type-erased LogicalOperator. The transformation goes through
+    /// the erased layer, so the typed identity (Checked) cannot be preserved —
+    /// callers that need the typed view must `tryGetAs` again on the result.
+    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const
     {
         return self->withChildren(std::move(children));
     }
 
     /// Static traits defined as member variables will be present in the new operator nonetheless
-    [[nodiscard]] TypedLogicalOperator withTraitSet(TraitSet traitSet) const { return self->withTraitSet(std::move(traitSet)); }
+    [[nodiscard]] LogicalOperator withTraitSet(TraitSet traitSet) const { return self->withTraitSet(std::move(traitSet)); }
 
     [[nodiscard]] OperatorId getId() const { return self->getOperatorId(); }
 
@@ -292,13 +328,41 @@ struct TypedLogicalOperator
 
     [[nodiscard]] TraitSet getTraitSet() const { return self->getTraitSet(); }
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const { return self->getInputSchemas(); }
+    [[nodiscard]] std::vector<LogicalSchema> getInputLogicalSchemas() const { return self->getInputLogicalSchemas(); }
 
-    [[nodiscard]] Schema getOutputSchema() const { return self->getOutputSchema(); }
+    [[nodiscard]] LogicalSchema getOutputLogicalSchema() const { return self->getOutputLogicalSchema(); }
 
-    [[nodiscard]] TypedLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const
+    [[nodiscard]] LogicalOperator withInferredLogicalSchema(std::vector<LogicalSchema> inputSchemas) const
     {
-        return self->withInferredSchema(std::move(inputSchemas));
+        return self->withInferredLogicalSchema(std::move(inputSchemas));
+    }
+
+    /// Bridge convenience: existing optimizer phases and the query-compiler
+    /// still reason in primitive Schema. These forwarders project the
+    /// LogicalSchema-typed view through `LogicalSchema::toPrimitiveSchema` /
+    /// `LogicalSchema::fromSchema`. Compound LogicalTypes will throw inside the
+    /// bridge until the dedicated lowering phase has run.
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const
+    {
+        std::vector<Schema> primitive;
+        for (const auto& logicalSchema : self->getInputLogicalSchemas())
+        {
+            primitive.push_back(logicalSchema.toPrimitiveSchema());
+        }
+        return primitive;
+    }
+
+    [[nodiscard]] Schema getOutputSchema() const { return self->getOutputLogicalSchema().toPrimitiveSchema(); }
+
+    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const
+    {
+        std::vector<LogicalSchema> lifted;
+        lifted.reserve(inputSchemas.size());
+        for (const auto& schema : inputSchemas)
+        {
+            lifted.push_back(LogicalSchema::fromSchema(schema));
+        }
+        return self->withInferredLogicalSchema(std::move(lifted));
     }
 
 private:
@@ -308,7 +372,7 @@ private:
     template <typename FriendChecked>
     friend struct TypedLogicalOperator;
 
-    [[nodiscard]] TypedLogicalOperator withOperatorId(const OperatorId id) const { return self->withOperatorId(id); };
+    [[nodiscard]] LogicalOperator withOperatorId(const OperatorId id) const { return self->withOperatorId(id); };
 
     std::shared_ptr<const NES::detail::ErasedLogicalOperator> self;
 };
@@ -341,13 +405,51 @@ struct OperatorModel : ErasedLogicalOperator
 
     [[nodiscard]] TraitSet getTraitSet() const override { return impl.getTraitSet(); }
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override { return impl.getInputSchemas(); }
-
-    [[nodiscard]] Schema getOutputSchema() const override { return impl.getOutputSchema(); }
-
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override
+    [[nodiscard]] std::vector<LogicalSchema> getInputLogicalSchemas() const override
     {
-        return impl.withInferredSchema(inputSchemas);
+        if constexpr (HasLogicalSchemaAPI<OperatorType>)
+        {
+            return impl.getInputLogicalSchemas();
+        }
+        else
+        {
+            std::vector<LogicalSchema> lifted;
+            for (const auto& schema : impl.getInputSchemas())
+            {
+                lifted.push_back(LogicalSchema::fromSchema(schema));
+            }
+            return lifted;
+        }
+    }
+
+    [[nodiscard]] LogicalSchema getOutputLogicalSchema() const override
+    {
+        if constexpr (HasLogicalSchemaAPI<OperatorType>)
+        {
+            return impl.getOutputLogicalSchema();
+        }
+        else
+        {
+            return LogicalSchema::fromSchema(impl.getOutputSchema());
+        }
+    }
+
+    [[nodiscard]] LogicalOperator withInferredLogicalSchema(std::vector<LogicalSchema> inputSchemas) const override
+    {
+        if constexpr (HasLogicalSchemaAPI<OperatorType>)
+        {
+            return impl.withInferredLogicalSchema(std::move(inputSchemas));
+        }
+        else
+        {
+            std::vector<Schema> primitive;
+            primitive.reserve(inputSchemas.size());
+            for (const auto& logicalSchema : inputSchemas)
+            {
+                primitive.push_back(logicalSchema.toPrimitiveSchema());
+            }
+            return impl.withInferredSchema(std::move(primitive));
+        }
     }
 
     [[nodiscard]] bool equals(const ErasedLogicalOperator& other) const override

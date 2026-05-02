@@ -93,8 +93,8 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
                 continue;
             }
             auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, dataTypeSize, columnOffset);
-            const auto& value = rec.read(name);
-            storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
+            const auto value = rec.read(name);
+            storeValue(type, recordBuffer, fieldAddress, value.asScalar(), bufferProvider);
         }
         writtenRecords = 1;
         successful = true;

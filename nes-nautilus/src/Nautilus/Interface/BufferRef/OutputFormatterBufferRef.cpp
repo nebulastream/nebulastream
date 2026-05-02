@@ -73,9 +73,9 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
             const auto& [name, type] = fields.at(i);
             const auto fieldAddress = recordAddress + writtenForThisRecord;
             const nautilus::val remainingBytes{bufferSize - bytesWritten - writtenForThisRecord};
-            const auto& value = rec.read(name);
+            const auto value = rec.read(name);
             const auto amountWritten
-                = formatter->writeFormattedValue(value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
+                = formatter->writeFormattedValue(value.asScalar(), type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
             writtenForThisRecord += amountWritten;
         }
     }

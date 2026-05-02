@@ -15,7 +15,7 @@
 #pragma once
 
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
@@ -28,7 +28,7 @@ class ModPhysicalFunction
 {
 public:
     ModPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
-    VarVal execute(const Record& record, ArenaRef& arena) const;
+    Value execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction leftPhysicalFunction;

@@ -17,6 +17,7 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
+#include <Nautilus/DataTypes/Value.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/DynamicBase.hpp>
@@ -47,8 +48,8 @@ concept PhysicalFunctionConcept = requires(const T& thisFunction, const Record& 
     /// Executes the function on the given record.
     /// @param record The record to evaluate the function on.
     /// @param arena The arena to allocate memory from.
-    /// @return The result of the function evaluation.
-    { thisFunction.execute(record, arena) } -> std::convertible_to<VarVal>;
+    /// @return The result of the function evaluation as a (possibly compound) Value.
+    { thisFunction.execute(record, arena) } -> std::convertible_to<Value>;
 };
 
 namespace detail
@@ -58,7 +59,7 @@ struct ErasedPhysicalFunction
 {
     virtual ~ErasedPhysicalFunction() = default;
 
-    [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
+    [[nodiscard]] virtual Value execute(const Record& record, ArenaRef& arena) const = 0;
 
 private:
     template <typename T>
@@ -206,7 +207,7 @@ struct TypedPhysicalFunction
         std::unreachable();
     }
 
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const { return self->execute(record, arena); }
+    [[nodiscard]] Value execute(const Record& record, ArenaRef& arena) const { return self->execute(record, arena); }
 
 private:
     template <typename FriendChecked>
@@ -226,7 +227,7 @@ struct PhysicalFunctionModel : ErasedPhysicalFunction
 
     explicit PhysicalFunctionModel(PhysicalFunctionType impl) : impl(std::move(impl)) { }
 
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override { return impl.execute(record, arena); }
+    [[nodiscard]] Value execute(const Record& record, ArenaRef& arena) const override { return impl.execute(record, arena); }
 
     [[nodiscard]] PhysicalFunctionType get() const { return impl; }
 

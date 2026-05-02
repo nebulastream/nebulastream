@@ -65,7 +65,7 @@ void AvgAggregationPhysicalFunction::lift(
         const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
 
         /// Updating the sum and count with the new value
-        const auto newSum = (sum + (value * multiplicationFactor)).castToType(inputType.type);
+        const auto newSum = (sum + (value.asScalar() * multiplicationFactor)).castToType(inputType.type);
         const auto newCount = count + multiplicationFactor;
 
         /// Writing the new isNull, sum, and count back to the aggregation state
@@ -82,7 +82,7 @@ void AvgAggregationPhysicalFunction::lift(
         const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
 
         /// Updating the sum and count with the new value
-        const auto newSum = (sum + value).castToType(inputType.type);
+        const auto newSum = (sum + value.asScalar()).castToType(inputType.type);
         const auto newCount = count + nautilus::val<uint64_t>{1};
 
         /// Writing the new sum, and count back to the aggregation state

@@ -14,6 +14,8 @@ add_source_files(nes-data-types
         Schema.cpp
         DataType.cpp
         DataTypeProvider.cpp
+        LogicalType.cpp
+        LogicalSchema.cpp
         TimeUnit.cpp
         )
 
@@ -32,5 +34,22 @@ add_plugin(UINT32 DataType nes-data-types DataType.cpp)
 add_plugin(UINT64 DataType nes-data-types DataType.cpp)
 add_plugin(UNDEFINED DataType nes-data-types DataType.cpp)
 add_plugin(VARSIZED DataType nes-data-types DataType.cpp)
+
+# Built-in logical-type plugins. Each shares the name of the underlying physical
+# DataType so legacy primitive lookups continue to round-trip cleanly.
+add_plugin(BOOLEAN LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(CHAR LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(FLOAT32 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(FLOAT64 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(INT8 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(INT16 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(INT32 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(INT64 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(UINT8 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(UINT16 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(UINT32 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(UINT64 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(UNDEFINED LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+add_plugin(VARSIZED LogicalType nes-data-types LogicalTypeRegistrations.cpp)
 
 

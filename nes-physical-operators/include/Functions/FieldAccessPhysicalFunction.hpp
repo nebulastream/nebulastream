@@ -13,8 +13,10 @@
 */
 #pragma once
 
+#include <string>
+#include <vector>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
@@ -22,14 +24,21 @@
 namespace NES
 {
 
+/// Reads a (possibly compound) field from the record. The suffixes vector
+/// describes the physical layout of the field — `{""}` for a scalar field
+/// (the default), `{".x", ".y", ".z"}` for a Point-shaped compound, etc.
+/// The lowering phase fills in the suffix list based on the field's logical
+/// type's physical layout.
 class FieldAccessPhysicalFunction
 {
 public:
     explicit FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+    FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field, std::vector<std::string> suffixes);
+    [[nodiscard]] Value execute(const Record& record, ArenaRef& arena) const;
 
 private:
-    const Record::RecordFieldIdentifier field;
+    Record::RecordFieldIdentifier field;
+    std::vector<std::string> suffixes;
 };
 
 static_assert(PhysicalFunctionConcept<FieldAccessPhysicalFunction>);

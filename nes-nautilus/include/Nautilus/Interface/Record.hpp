@@ -14,14 +14,27 @@
 
 #pragma once
 
+#include <string>
 #include <unordered_map>
+#include <vector>
+#include <Nautilus/DataTypes/Value.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES
 {
 
 /// A record is the primitive abstraction of a single entry/tuple in a data set.
-/// Operators receiving records can read and write fields of the record.
+///
+/// Storage is flat — each entry is one VarVal keyed by primitive field name. The
+/// public read/write API is in terms of Value, so callers don't need to know
+/// whether they're working with a scalar or a compound logical type:
+///   - read(name)               -> scalar Value (single component, key SCALAR_KEY)
+///   - read(name, suffixes)     -> compound Value gathered across name+suffix
+///   - write(name, value)       -> spreads each component into name+suffix
+///
+/// After the logical-lowering phase, every schema field is primitive, so most
+/// fields hold scalar Values. Compound Values exist only as transients passing
+/// through compound physical functions.
 class Record
 {
 public:
@@ -32,8 +45,21 @@ public:
 
     /// Adds all fields from the other record to this record. This will overwrite existing fields.
     void reassignFields(const Record& other);
-    const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
-    void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal);
+
+    /// Read a single primitive field as a scalar Value.
+    [[nodiscard]] Value read(const RecordFieldIdentifier& fieldName) const;
+
+    /// Read a (possibly compound) Value: gathers `fieldName + suffix` for each suffix.
+    /// For scalar reads pass {""}; for Point pass {".x", ".y", ".z"}.
+    [[nodiscard]] Value read(const RecordFieldIdentifier& fieldName, const std::vector<std::string>& suffixes) const;
+
+    /// Write a Value to the record. Each component is spread into `fieldName + suffix`.
+    /// For a scalar Value (suffix = ""), this writes to `fieldName`.
+    void write(const RecordFieldIdentifier& fieldName, const Value& value);
+
+    /// Convenience overload for callers that already have a raw VarVal — wraps it as a scalar Value.
+    void write(const RecordFieldIdentifier& fieldName, const VarVal& varVal);
+
     nautilus::val<uint64_t> getNumberOfFields() const;
     [[nodiscard]] bool hasField(const RecordFieldIdentifier& fieldName) const;
 

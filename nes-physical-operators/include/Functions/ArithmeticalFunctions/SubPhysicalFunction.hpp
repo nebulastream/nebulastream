@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
@@ -29,7 +29,7 @@ class SubPhysicalFunction final
 {
 public:
     SubPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+    [[nodiscard]] Value execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction leftPhysicalFunction;

@@ -32,7 +32,7 @@ RoundPhysicalFunction::RoundPhysicalFunction(PhysicalFunction childFunction, Dat
 {
 }
 
-VarVal RoundPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+Value RoundPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
     /// If the input type is a float, we need to round the value and return the rounded value.

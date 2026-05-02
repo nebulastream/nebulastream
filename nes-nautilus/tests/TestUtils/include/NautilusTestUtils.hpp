@@ -85,7 +85,7 @@ struct RecordWithFieldsHash
         for (const auto& fieldIdentifier : nautilus::static_iterable(record.fields))
         {
             auto val = record.record.read(fieldIdentifier);
-            hashValue ^= nautilus::details::RawValueResolver<uint64_t>::getRawValue(hashFunction->calculate(val));
+            hashValue ^= nautilus::details::RawValueResolver<uint64_t>::getRawValue(hashFunction->calculate(val.asScalar()));
         }
         return hashValue;
     }

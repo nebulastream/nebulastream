@@ -25,6 +25,8 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/LogicalSchema.hpp>
+#include <DataTypes/LogicalType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -46,17 +48,45 @@ template <typename Checked = NES::detail::ErasedLogicalFunction>
 struct TypedLogicalFunction;
 using LogicalFunction = TypedLogicalFunction<>;
 
+/// Logical-type-first API a concrete function may expose.
+template <typename T>
+concept HasLogicalTypeAPI
+    = requires(const T& thisFunction, LogicalType logicalType, LogicalSchema logicalSchema) {
+    { thisFunction.getLogicalType() } -> std::convertible_to<LogicalType>;
+    { thisFunction.withLogicalType(logicalType) } -> std::convertible_to<T>;
+    { thisFunction.withInferredLogicalType(logicalSchema) } -> std::same_as<LogicalFunction>;
+};
+
+/// Legacy primitive-DataType API a concrete function may expose. New code is
+/// encouraged to migrate to the LogicalType-typed contract above; existing
+/// classes are bridged transparently by FunctionModel<T>.
+template <typename T>
+concept HasLegacyDataTypeAPI = requires(const T& thisFunction, DataType dataType, Schema schema) {
+    { thisFunction.getDataType() } -> std::convertible_to<DataType>;
+    { thisFunction.withDataType(dataType) } -> std::convertible_to<T>;
+    { thisFunction.withInferredDataType(schema) } -> std::same_as<LogicalFunction>;
+};
+
 /// Concept defining the interface for all logical functions in the query plan.
 /// This concept defines the common interface that all logical functions must implement.
 /// Logical functions represent functions in the query plan and are used during query
 /// planning and optimization.
+///
+/// The type stamp on a logical function is a LogicalType — an abstract name +
+/// parameters + nullability. The mapping from LogicalType to a primitive
+/// physical DataType is resolved separately (via the LogicalTypeLoweringRegistry)
+/// at the optimizer-to-physical lowering boundary.
+///
+/// A concrete function may satisfy the type-stamp portion of this concept
+/// either via the LogicalType-first API (HasLogicalTypeAPI) or via the legacy
+/// DataType-based API (HasLegacyDataTypeAPI). The latter is bridged onto the
+/// former by FunctionModel<T>, since for built-in primitives the LogicalType
+/// name matches the DataType::Type enum name and round-trips losslessly.
 template <typename T>
-concept LogicalFunctionConcept = requires(
+concept LogicalFunctionConcept = (HasLogicalTypeAPI<T> || HasLegacyDataTypeAPI<T>) && requires(
     const T& thisFunction,
     ExplainVerbosity verbosity,
     std::vector<LogicalFunction> children,
-    DataType dataType,
-    Schema schema,
     const T& rhs) {
     /// Returns a string representation of the function
     { thisFunction.explain(verbosity) } -> std::convertible_to<std::string>;
@@ -64,17 +94,8 @@ concept LogicalFunctionConcept = requires(
     /// Returns the children functions of this function
     { thisFunction.getChildren() } -> std::convertible_to<std::vector<LogicalFunction>>;
 
-    /// Returns the data type of the function
-    { thisFunction.getDataType() } -> std::convertible_to<DataType>;
-
     /// Creates a new function with the given children
     { thisFunction.withChildren(children) } -> std::convertible_to<T>;
-
-    /// Creates a new operator with the given datatype
-    { thisFunction.withDataType(dataType) } -> std::convertible_to<T>;
-
-    /// Creates a new function with inferred data type based on input schema
-    { thisFunction.withInferredDataType(schema) } -> std::same_as<LogicalFunction>;
 
     /// Returns the type of the function
     { thisFunction.getType() } -> std::convertible_to<std::string_view>;
@@ -94,9 +115,9 @@ struct ErasedLogicalFunction
     virtual ~ErasedLogicalFunction() = default;
 
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
-    [[nodiscard]] virtual DataType getDataType() const = 0;
-    [[nodiscard]] virtual LogicalFunction withDataType(const DataType& dataType) const = 0;
-    [[nodiscard]] virtual LogicalFunction withInferredDataType(const Schema& schema) const = 0;
+    [[nodiscard]] virtual LogicalType getLogicalType() const = 0;
+    [[nodiscard]] virtual LogicalFunction withLogicalType(const LogicalType& logicalType) const = 0;
+    [[nodiscard]] virtual LogicalFunction withInferredLogicalType(const LogicalSchema& schema) const = 0;
     [[nodiscard]] virtual std::vector<LogicalFunction> getChildren() const = 0;
     [[nodiscard]] virtual LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const = 0;
     [[nodiscard]] virtual std::string_view getType() const = 0;
@@ -255,11 +276,40 @@ struct TypedLogicalFunction
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const { return self->explain(verbosity); };
 
-    [[nodiscard]] DataType getDataType() const { return self->getDataType(); };
+    [[nodiscard]] LogicalType getLogicalType() const { return self->getLogicalType(); };
 
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const { return self->withDataType(dataType); };
+    [[nodiscard]] LogicalFunction withLogicalType(const LogicalType& logicalType) const { return self->withLogicalType(logicalType); };
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const { return self->withInferredDataType(schema); };
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const LogicalSchema& schema) const
+    {
+        return self->withInferredLogicalType(schema);
+    };
+
+    /// Bridge convenience: existing operator and physical-lowering call sites still
+    /// reason in DataType/Schema. These forwarders project the LogicalType-typed
+    /// stamp into a primitive DataType using the trivial built-in mapping
+    /// (LogicalType name == DataType::Type enum name). Compound/plugin logical
+    /// types fall back to UNDEFINED here — the lowering phase is what actually
+    /// expands them, so callers downstream of that phase only see scalar stamps.
+    [[nodiscard]] DataType getDataType() const
+    {
+        return getLogicalType().toPhysical().value_or(DataType{DataType::Type::UNDEFINED, DataType::NULLABLE::IS_NULLABLE});
+    };
+
+    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const
+    {
+        return withLogicalType(LogicalType::fromPhysical(dataType));
+    };
+
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const
+    {
+        LogicalSchema logicalSchema;
+        for (const auto& field : schema.getFields())
+        {
+            logicalSchema.addField(field.name, LogicalType::fromPhysical(field.dataType));
+        }
+        return withInferredLogicalType(logicalSchema);
+    };
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const { return self->getChildren(); };
 
@@ -302,13 +352,52 @@ struct FunctionModel : ErasedLogicalFunction
 
     [[nodiscard]] std::string_view getType() const override { return impl.getType(); }
 
-    [[nodiscard]] DataType getDataType() const override { return impl.getDataType(); }
+    [[nodiscard]] LogicalType getLogicalType() const override
+    {
+        if constexpr (HasLogicalTypeAPI<FunctionType>)
+        {
+            return impl.getLogicalType();
+        }
+        else
+        {
+            return LogicalType::fromPhysical(impl.getDataType());
+        }
+    }
 
     [[nodiscard]] FunctionType get() const { return impl; }
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override { return impl.withInferredDataType(schema); }
+    [[nodiscard]] LogicalFunction withInferredLogicalType(const LogicalSchema& schema) const override
+    {
+        if constexpr (HasLogicalTypeAPI<FunctionType>)
+        {
+            return impl.withInferredLogicalType(schema);
+        }
+        else
+        {
+            Schema legacySchema;
+            for (const auto& field : schema.getFields())
+            {
+                legacySchema.addField(
+                    field.name,
+                    field.logicalType.toPhysical().value_or(
+                        DataType{DataType::Type::UNDEFINED, DataType::NULLABLE::IS_NULLABLE}));
+            }
+            return impl.withInferredDataType(legacySchema);
+        }
+    }
 
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override { return impl.withDataType(dataType); }
+    [[nodiscard]] LogicalFunction withLogicalType(const LogicalType& logicalType) const override
+    {
+        if constexpr (HasLogicalTypeAPI<FunctionType>)
+        {
+            return impl.withLogicalType(logicalType);
+        }
+        else
+        {
+            return impl.withDataType(logicalType.toPhysical().value_or(
+                DataType{DataType::Type::UNDEFINED, DataType::NULLABLE::IS_NULLABLE}));
+        }
+    }
 
     [[nodiscard]] bool operator==(const LogicalFunction& other) const
     {

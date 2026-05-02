@@ -12,22 +12,30 @@
     limitations under the License.
 */
 
+#include <string>
 #include <utility>
+#include <vector>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-FieldAccessPhysicalFunction::FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field) : field(std::move(field))
+FieldAccessPhysicalFunction::FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field)
+    : field(std::move(field)), suffixes{std::string{Value::SCALAR_KEY}}
 {
 }
 
-VarVal FieldAccessPhysicalFunction::execute(const Record& record, ArenaRef&) const
+FieldAccessPhysicalFunction::FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field, std::vector<std::string> suffixes)
+    : field(std::move(field)), suffixes(std::move(suffixes))
 {
-    return record.read(field);
+}
+
+Value FieldAccessPhysicalFunction::execute(const Record& record, ArenaRef&) const
+{
+    return record.read(field, suffixes);
 }
 
 }

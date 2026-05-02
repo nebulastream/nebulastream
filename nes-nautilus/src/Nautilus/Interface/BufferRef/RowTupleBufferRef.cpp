@@ -91,8 +91,8 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
                 continue;
             }
             auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
-            const auto& value = rec.read(name);
-            storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
+            const auto value = rec.read(name);
+            storeValue(type, recordBuffer, fieldAddress, value.asScalar(), bufferProvider);
         }
         writtenRecords = 1;
         successful = true;
