@@ -645,4 +645,32 @@ LogicalFunctionGeneratedRegistrar::RegisterEquals_Point_PointLogicalFunction(Log
     return RegisterPointEqualsLogicalFunction(std::move(arguments));
 }
 
+/// `Point + Point` → component-wise PointAdd. Symmetric, so this single
+/// overload covers both `lhs + rhs` and `rhs + lhs`.
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterAdd_Point_PointLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    return RegisterPointAddLogicalFunction(std::move(arguments));
+}
+
+/// `Point * Integer` → PointScale. PointScale's constructor takes
+/// (point, scalar), and the parser feeds children in operand order
+/// (lhs, rhs), so this entry passes them through unchanged.
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterMul_Point_INT64LogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    return RegisterPointScaleLogicalFunction(std::move(arguments));
+}
+
+/// `Integer * Point` — same factory but with arguments swapped so PointScale
+/// still sees (point, scalar). Until we add a commutativity helper to the
+/// registry, scalar*Point overloads must be registered explicitly.
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterMul_INT64_PointLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    PRECONDITION(arguments.children.size() == 2, "Mul_INT64_Point requires exactly two children, got {}", arguments.children.size());
+    std::swap(arguments.children[0], arguments.children[1]);
+    return RegisterPointScaleLogicalFunction(std::move(arguments));
+}
+
 }

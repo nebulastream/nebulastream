@@ -20,9 +20,13 @@ add_plugin(PointSub LogicalFunction nes-logical-operators PointLogicalFunctions.
 add_plugin(PointScale LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 add_plugin(PointDistance LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 add_plugin(PointEquals LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
-# Mangled overload entry — picked up by UnboundLogicalFunction's resolver when
-# the parser encounters `Point == Point`.
+# Mangled overload entries — the parser emits Unbound("<op>", args) for binary
+# operators and the resolver builds the key as "<op>_<lhsType>_<rhsType>",
+# which these plugins satisfy.
 add_plugin(Equals_Point_Point LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
+add_plugin(Add_Point_Point LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
+add_plugin(Mul_Point_INT64 LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
+add_plugin(Mul_INT64_Point LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 
 # Point lowering: PhysicalLayout = [(_X,F64),(_Y,F64),(_Z,F64)]
 add_plugin(Point LogicalTypeLowering nes-data-types PointLowering.cpp)

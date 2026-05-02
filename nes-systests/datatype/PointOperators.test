@@ -1,0 +1,26 @@
+# name: datatype/PointOperators.test
+# description: Exercises Point addition via `+` and Point scaling via `*` with
+#              an INTEGER scalar. The parser emits Unbound for both operators;
+#              the resolver mangles to `Add_Point_Point`, `Mul_Point_INT64`,
+#              and `Mul_INT64_Point` respectively, all registered by the Point
+#              plugin to delegate to PointAdd / PointScale.
+# groups: [DataType, LogicalType, Point]
+
+CREATE LOGICAL SOURCE points(x FLOAT NOT NULL, y FLOAT NOT NULL, z FLOAT NOT NULL);
+CREATE PHYSICAL SOURCE FOR points TYPE File;
+ATTACH INLINE
+1.0,2.0,3.0
+4.0,5.0,6.0
+
+CREATE SINK out(a_x FLOAT NOT NULL, a_y FLOAT NOT NULL, a_z FLOAT NOT NULL,
+                b_x FLOAT NOT NULL, b_y FLOAT NOT NULL, b_z FLOAT NOT NULL,
+                c_x FLOAT NOT NULL, c_y FLOAT NOT NULL, c_z FLOAT NOT NULL) TYPE File;
+
+SELECT
+    Point(x, y, z) + Point(Float(10.0), Float(20.0), Float(30.0)) AS a,
+    Point(x, y, z) * Integer(2) AS b,
+    Integer(3) * Point(x, y, z) AS c
+FROM points INTO out;
+----
+11.0,22.0,33.0,2.0,4.0,6.0,3.0,6.0,9.0
+14.0,25.0,36.0,8.0,10.0,12.0,12.0,15.0,18.0
