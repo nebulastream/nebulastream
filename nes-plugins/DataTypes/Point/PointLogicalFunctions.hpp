@@ -19,8 +19,9 @@
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/LogicalSchema.hpp>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/LogicalType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -30,7 +31,6 @@ namespace NES
 {
 
 /// Constructor function: `Point(x, y, z)` builds a Point from three FLOAT64 components.
-/// Result LogicalType = Point.
 class PointConstructLogicalFunction final
 {
 public:
@@ -40,9 +40,10 @@ public:
 
     [[nodiscard]] bool operator==(const PointConstructLogicalFunction& rhs) const;
 
+    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointConstructLogicalFunction withLogicalType(const LogicalType& logicalType) const;
-    [[nodiscard]] LogicalFunction withInferredLogicalType(const LogicalSchema& schema) const;
+    [[nodiscard]] PointConstructLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointConstructLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -57,7 +58,6 @@ private:
     friend Reflector<PointConstructLogicalFunction>;
 };
 
-/// Component-wise add of two Points. Result = Point.
 class PointAddLogicalFunction final
 {
 public:
@@ -67,9 +67,10 @@ public:
 
     [[nodiscard]] bool operator==(const PointAddLogicalFunction& rhs) const;
 
+    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointAddLogicalFunction withLogicalType(const LogicalType& logicalType) const;
-    [[nodiscard]] LogicalFunction withInferredLogicalType(const LogicalSchema& schema) const;
+    [[nodiscard]] PointAddLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointAddLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -84,7 +85,6 @@ private:
     friend Reflector<PointAddLogicalFunction>;
 };
 
-/// Component-wise subtract of two Points. Result = Point.
 class PointSubLogicalFunction final
 {
 public:
@@ -94,9 +94,10 @@ public:
 
     [[nodiscard]] bool operator==(const PointSubLogicalFunction& rhs) const;
 
+    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointSubLogicalFunction withLogicalType(const LogicalType& logicalType) const;
-    [[nodiscard]] LogicalFunction withInferredLogicalType(const LogicalSchema& schema) const;
+    [[nodiscard]] PointSubLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointSubLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -111,7 +112,6 @@ private:
     friend Reflector<PointSubLogicalFunction>;
 };
 
-/// Scale a Point by a FLOAT64 scalar. Result = Point.
 class PointScaleLogicalFunction final
 {
 public:
@@ -121,9 +121,10 @@ public:
 
     [[nodiscard]] bool operator==(const PointScaleLogicalFunction& rhs) const;
 
+    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointScaleLogicalFunction withLogicalType(const LogicalType& logicalType) const;
-    [[nodiscard]] LogicalFunction withInferredLogicalType(const LogicalSchema& schema) const;
+    [[nodiscard]] PointScaleLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointScaleLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -138,7 +139,6 @@ private:
     friend Reflector<PointScaleLogicalFunction>;
 };
 
-/// Euclidean distance between two Points. Result = FLOAT64 (scalar).
 class PointDistanceLogicalFunction final
 {
 public:
@@ -148,9 +148,10 @@ public:
 
     [[nodiscard]] bool operator==(const PointDistanceLogicalFunction& rhs) const;
 
+    [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] LogicalType getLogicalType() const;
-    [[nodiscard]] PointDistanceLogicalFunction withLogicalType(const LogicalType& logicalType) const;
-    [[nodiscard]] LogicalFunction withInferredLogicalType(const LogicalSchema& schema) const;
+    [[nodiscard]] PointDistanceLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] PointDistanceLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

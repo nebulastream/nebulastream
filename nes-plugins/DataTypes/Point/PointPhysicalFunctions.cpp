@@ -31,16 +31,16 @@ namespace NES
 
 namespace
 {
-/// Iterate Point components in their (sorted) suffix order. Both operands of
-/// component-wise operators must share the same suffix scheme.
+/// Component-wise binary op over Point's component map. `nautilus::static_iterable`
+/// wraps the host-side std::map so the iteration is unrolled at trace time;
+/// a plain range-for would produce "Invalid trace. constant loop".
 template <typename Op>
 Value componentWise(const Value& left, const Value& right, Op&& op)
 {
     std::map<std::string, VarVal> result;
-    for (const auto& [suffix, leftComponent] : left.components())
+    for (const auto& [suffix, leftComponent] : nautilus::static_iterable(left.components()))
     {
-        const auto& rightComponent = right.component(suffix);
-        result.emplace(suffix, op(leftComponent, rightComponent).castToType(DataType::Type::FLOAT64));
+        result.emplace(suffix, op(leftComponent, right.component(suffix)).castToType(DataType::Type::FLOAT64));
     }
     return Value{std::move(result)};
 }
@@ -120,7 +120,7 @@ Value PointScalePhysicalFunction::execute(const Record& record, ArenaRef& arena)
     const auto scalarValue = scalar.execute(record, arena);
     const auto& factor = scalarValue.asScalar();
     std::map<std::string, VarVal> result;
-    for (const auto& [suffix, component] : pointValue.components())
+    for (const auto& [suffix, component] : nautilus::static_iterable(pointValue.components()))
     {
         result.emplace(suffix, (component * factor).castToType(DataType::Type::FLOAT64));
     }
@@ -146,7 +146,7 @@ Value PointDistancePhysicalFunction::execute(const Record& record, ArenaRef& are
     const auto leftValue = left.execute(record, arena);
     const auto rightValue = right.execute(record, arena);
     VarVal sumOfSquares{nautilus::val<double>(0.0)};
-    for (const auto& [suffix, leftComponent] : leftValue.components())
+    for (const auto& [suffix, leftComponent] : nautilus::static_iterable(leftValue.components()))
     {
         const auto delta = (leftComponent - rightValue.component(suffix)).castToType(DataType::Type::FLOAT64);
         sumOfSquares = (sumOfSquares + (delta * delta)).castToType(DataType::Type::FLOAT64);

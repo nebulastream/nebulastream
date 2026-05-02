@@ -30,8 +30,8 @@ namespace NES
 /// an empty suffix string ("") so a record field named `x` keeps that name in
 /// the primitive schema. Compound logical types (Point, ...) lower to N
 /// components whose suffix strings include the leading separator, e.g. Point
-/// produces `[("_x", FLOAT64), ("_y", FLOAT64), ("_z", FLOAT64)]` so a Point
-/// field named `p` expands to record fields `p_x`, `p_y`, `p_z`.
+/// produces `[("_X", FLOAT64), ("_Y", FLOAT64), ("_Z", FLOAT64)]` so a Point
+/// field named `P` expands to record fields `P_X`, `P_Y`, `P_Z`.
 struct PhysicalLayout
 {
     struct Component

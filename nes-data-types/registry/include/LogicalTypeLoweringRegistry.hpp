@@ -16,7 +16,7 @@
 
 #include <string>
 #include <DataTypes/LogicalType.hpp>
-#include <Phases/LogicalTypeLowering/PhysicalLayout.hpp>
+#include <DataTypes/PhysicalLayout.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES

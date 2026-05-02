@@ -15,7 +15,7 @@ add_source_files(nes-data-types
         DataType.cpp
         DataTypeProvider.cpp
         LogicalType.cpp
-        LogicalSchema.cpp
+        PhysicalLayout.cpp
         TimeUnit.cpp
         )
 
@@ -51,5 +51,22 @@ add_plugin(UINT32 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
 add_plugin(UINT64 LogicalType nes-data-types LogicalTypeRegistrations.cpp)
 add_plugin(UNDEFINED LogicalType nes-data-types LogicalTypeRegistrations.cpp)
 add_plugin(VARSIZED LogicalType nes-data-types LogicalTypeRegistrations.cpp)
+
+# Built-in scalar logical-type → physical-layout lowerings. Each scalar type
+# lowers to a single component with empty suffix and the matching DataType.
+add_plugin(BOOLEAN LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(CHAR LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(FLOAT32 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(FLOAT64 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(INT8 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(INT16 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(INT32 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(INT64 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(UINT8 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(UINT16 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(UINT32 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(UINT64 LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(UNDEFINED LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
+add_plugin(VARSIZED LogicalTypeLowering nes-data-types LogicalTypeLoweringRegistrations.cpp)
 
 

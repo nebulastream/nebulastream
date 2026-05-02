@@ -20,8 +20,8 @@ add_plugin(PointSub LogicalFunction nes-logical-operators PointLogicalFunctions.
 add_plugin(PointScale LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 add_plugin(PointDistance LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 
-# Point lowering: PhysicalLayout = [(_x,F64),(_y,F64),(_z,F64)]
-add_plugin(Point LogicalTypeLowering nes-query-optimizer PointLowering.cpp)
+# Point lowering: PhysicalLayout = [(_X,F64),(_Y,F64),(_Z,F64)]
+add_plugin(Point LogicalTypeLowering nes-data-types PointLowering.cpp)
 
 # Point physical functions
 add_plugin(Point PhysicalFunction nes-physical-operators PointPhysicalFunctions.cpp)

@@ -14,7 +14,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <Phases/LogicalTypeLowering/PhysicalLayout.hpp>
+#include <DataTypes/PhysicalLayout.hpp>
 #include <LogicalTypeLoweringRegistry.hpp>
 
 namespace NES

@@ -32,4 +32,4 @@ endif ()
 
 add_tests_if_enabled(tests)
 
-create_registries_for_component(DataType LogicalType)
+create_registries_for_component(DataType LogicalType LogicalTypeLowering)

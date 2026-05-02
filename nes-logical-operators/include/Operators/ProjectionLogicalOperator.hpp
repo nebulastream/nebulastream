@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/LogicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -34,7 +33,15 @@
 namespace NES
 {
 
-/// Combines both selecting the fields to project and renaming/mapping of fields
+/// Combines both selecting the fields to project and renaming/mapping of fields.
+///
+/// When a projection's expression returns a compound `LogicalType` (e.g. a
+/// `Point` constructor), `withInferredSchema` flattens that single output into
+/// N primitive `Schema` fields named with the suffix scheme from
+/// `LogicalTypeLoweringRegistry` (Point `p` -> `p_X`, `p_Y`, `p_Z`). The
+/// projection list itself is preserved: a single `(p, PointConstruct(x,y,z))`
+/// projection stays one entry; the compound -> primitive spread happens at
+/// runtime in `Record::write`.
 class ProjectionLogicalOperator
 {
 public:
@@ -61,13 +68,6 @@ public:
     [[nodiscard]] ProjectionLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<LogicalSchema> getInputLogicalSchemas() const;
-    [[nodiscard]] LogicalSchema getOutputLogicalSchema() const;
-
-    /// Legacy forwarders for direct callers (tests, serialization). The
-    /// LogicalSchema-first API is the primary contract; these collapse the
-    /// LogicalSchema view through `LogicalSchema::toPrimitiveSchema` and will
-    /// throw if the projection holds a compound LogicalType.
     [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
     [[nodiscard]] ProjectionLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
@@ -76,17 +76,6 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
 
     [[nodiscard]] std::vector<std::string> getAccessedFields() const;
-
-    [[nodiscard]] ProjectionLogicalOperator withInferredLogicalSchema(std::vector<LogicalSchema> inputSchemas) const;
-
-    /// Replaces the stored output LogicalSchema verbatim, without re-running
-    /// per-projection inference. Used by the LogicalTypeLoweringRule to
-    /// substitute an already-flattened, primitive-only output schema after the
-    /// projection list has produced a (potentially compound) output. The
-    /// projection list itself is preserved: a projection like
-    /// `(p, PointConstruct(x, y, z))` keeps its single-pair form; the
-    /// compound→primitive spread happens at runtime in `Record::write`.
-    [[nodiscard]] ProjectionLogicalOperator withOutputLogicalSchema(LogicalSchema outputLogicalSchema) const;
 
     struct ConfigParameters
     {
@@ -112,7 +101,7 @@ private:
     bool asterisk = false;
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
-    LogicalSchema inputLogicalSchema, outputLogicalSchema;
+    Schema inputSchema, outputSchema;
 
     friend Reflector<ProjectionLogicalOperator>;
 };

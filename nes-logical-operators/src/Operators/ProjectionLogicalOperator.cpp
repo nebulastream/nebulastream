@@ -14,7 +14,6 @@
 
 #include <Operators/ProjectionLogicalOperator.hpp>
 
-#include <numeric>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -29,6 +28,9 @@
 #include <fmt/ranges.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/LogicalType.hpp>
+#include <DataTypes/PhysicalLayout.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -41,6 +43,7 @@
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
+#include <LogicalTypeLoweringRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -58,6 +61,22 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
     }
     return builder.str();
 }
+
+/// Look up the physical layout for a logical type. Compound types resolve to
+/// multiple primitive components; primitive types to a single component with
+/// empty suffix. This is the single integration point with the lowering
+/// registry — anything compound flowing out of a projection's function tree
+/// is expanded here, then never seen again at the schema level.
+PhysicalLayout resolveLayout(const LogicalType& logicalType)
+{
+    auto layoutOpt = LogicalTypeLoweringRegistry::instance().create(
+        std::string(logicalType.getName()), LogicalTypeLoweringRegistryArguments{.logicalType = logicalType});
+    INVARIANT(
+        layoutOpt.has_value(),
+        "No physical layout registered for logical type '{}'. Add an entry to LogicalTypeLoweringRegistry.",
+        logicalType.getName());
+    return std::move(layoutOpt).value();
+}
 }
 
 ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk)
@@ -74,7 +93,7 @@ std::vector<std::string> ProjectionLogicalOperator::getAccessedFields() const
 {
     if (asterisk)
     {
-        return inputLogicalSchema.getFieldNames();
+        return inputSchema.getFieldNames();
     }
 
     return projections | std::views::values
@@ -97,8 +116,8 @@ const std::vector<ProjectionLogicalOperator::Projection>& ProjectionLogicalOpera
 
 bool ProjectionLogicalOperator::operator==(const ProjectionLogicalOperator& rhs) const
 {
-    return projections == rhs.projections && outputLogicalSchema == rhs.outputLogicalSchema
-        && inputLogicalSchema == rhs.inputLogicalSchema && getTraitSet() == rhs.getTraitSet();
+    return projections == rhs.projections && outputSchema == rhs.outputSchema && inputSchema == rhs.inputSchema
+        && getTraitSet() == rhs.getTraitSet();
 };
 
 std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -110,9 +129,9 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     if (verbosity == ExplainVerbosity::Debug)
     {
         builder << "opId: " << id << ", ";
-        if (!outputLogicalSchema.getFieldNames().empty())
+        if (!outputSchema.getFieldNames().empty())
         {
-            builder << "schema: " << outputLogicalSchema << ", ";
+            builder << "schema: " << outputSchema << ", ";
         }
     }
 
@@ -136,7 +155,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     return builder.str();
 }
 
-ProjectionLogicalOperator ProjectionLogicalOperator::withInferredLogicalSchema(std::vector<LogicalSchema> inputSchemas) const
+ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     if (inputSchemas.empty())
     {
@@ -152,15 +171,15 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredLogicalSchema(s
         }
     }
 
-    /// Propagate type inference, resolve projection names, and reject duplicate explicit AS aliases in a single pass.
+    /// Type-infer projection functions, resolve names, reject duplicate AS aliases.
     /// An alias is explicit when its name differs from the auto-derived name (function.explain(Short)).
     auto copy = *this;
     copy.projections.clear();
-    copy.inputLogicalSchema = firstSchema;
+    copy.inputSchema = firstSchema;
     std::unordered_set<std::string> seenExplicitAliases;
     for (const auto& projection : projections)
     {
-        auto inferredFunction = projection.second.withInferredLogicalType(firstSchema);
+        auto inferredFunction = projection.second.withInferredDataType(firstSchema);
         const auto autoDerivedName = inferredFunction.explain(ExplainVerbosity::Short);
         const bool hasExplicitAlias = projection.first.has_value() && projection.first->getFieldName() != autoDerivedName;
         auto identifier = hasExplicitAlias ? *projection.first : FieldIdentifier(autoDerivedName);
@@ -172,33 +191,26 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredLogicalSchema(s
         copy.projections.emplace_back(std::move(identifier), std::move(inferredFunction));
     }
 
-    /// Resolve the output schema of the Projection. The output schema is logical:
-    /// each projected field carries its function's LogicalType, including compound
-    /// types like Point. The expansion to primitive fields (e.g. p_x, p_y, p_z)
-    /// happens later, at the dedicated logical-to-physical lowering boundary.
-    /// If an asterisk is used we propagate the entire input schema.
-    auto initial = LogicalSchema{};
+    /// Resolve the output schema. Each projected expression contributes one or
+    /// more primitive fields, depending on its result LogicalType's
+    /// PhysicalLayout: scalar types lower to one field with empty suffix, so
+    /// the field name is unchanged; compound types lower to N fields with
+    /// suffix names (Point `p` -> `p_X`, `p_Y`, `p_Z`).
+    Schema resolved;
     if (asterisk)
     {
-        initial.appendFieldsFromOtherSchema(copy.inputLogicalSchema);
+        resolved.appendFieldsFromOtherSchema(copy.inputSchema);
     }
-    copy.outputLogicalSchema = std::accumulate(
-        copy.projections.begin(),
-        copy.projections.end(),
-        initial,
-        [](LogicalSchema schema, const auto& projection)
+    for (const auto& [identifier, function] : copy.projections)
+    {
+        INVARIANT(identifier.has_value(), "Projection identifier must be set after inference");
+        const auto layout = resolveLayout(function.getLogicalType());
+        for (const auto& component : layout.components)
         {
-            INVARIANT(projection.first.has_value(), "Projection identifier must be set after inference");
-            return schema.addField(projection.first->getFieldName(), projection.second.getLogicalType());
-        });
-
-    return copy;
-}
-
-ProjectionLogicalOperator ProjectionLogicalOperator::withOutputLogicalSchema(LogicalSchema outputLogicalSchema) const
-{
-    auto copy = *this;
-    copy.outputLogicalSchema = std::move(outputLogicalSchema);
+            resolved.addField(identifier->getFieldName() + component.suffix, component.physicalType);
+        }
+    }
+    copy.outputSchema = std::move(resolved);
     return copy;
 }
 
@@ -221,35 +233,14 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withChildren(std::vector<Lo
     return copy;
 }
 
-std::vector<LogicalSchema> ProjectionLogicalOperator::getInputLogicalSchemas() const
-{
-    return {inputLogicalSchema};
-};
-
-LogicalSchema ProjectionLogicalOperator::getOutputLogicalSchema() const
-{
-    return outputLogicalSchema;
-}
-
 std::vector<Schema> ProjectionLogicalOperator::getInputSchemas() const
 {
-    return {inputLogicalSchema.toPrimitiveSchema()};
+    return {inputSchema};
 }
 
 Schema ProjectionLogicalOperator::getOutputSchema() const
 {
-    return outputLogicalSchema.toPrimitiveSchema();
-}
-
-ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
-{
-    std::vector<LogicalSchema> lifted;
-    lifted.reserve(inputSchemas.size());
-    for (const auto& schema : inputSchemas)
-    {
-        lifted.push_back(LogicalSchema::fromSchema(schema));
-    }
-    return withInferredLogicalSchema(std::move(lifted));
+    return outputSchema;
 }
 
 std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const

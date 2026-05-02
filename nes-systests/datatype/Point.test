@@ -1,5 +1,10 @@
 # name: datatype/Point.test
-# description: End-to-end test for the prototype Point logical type.
+# description: End-to-end test for the prototype Point logical type. Exercises
+#              SQL parsing of Point/PointAdd/PointDistance/PointScale; type
+#              inference flattening compound projection outputs to primitive
+#              schema fields (Point p -> p_X, p_Y, p_Z); physical functions
+#              that consume and produce compound `Value`s; and `Record::write`
+#              spread of compound results into primitive sink columns.
 # groups: [DataType, LogicalType, Point]
 
 CREATE LOGICAL SOURCE points(x FLOAT64 NOT NULL, y FLOAT64 NOT NULL, z FLOAT64 NOT NULL);
@@ -8,10 +13,17 @@ ATTACH INLINE
 1.0,2.0,3.0
 4.0,5.0,6.0
 
-CREATE SINK out(p_x FLOAT64 NOT NULL, p_y FLOAT64 NOT NULL, p_z FLOAT64 NOT NULL) TYPE File;
+CREATE SINK out(p_x FLOAT64 NOT NULL, p_y FLOAT64 NOT NULL, p_z FLOAT64 NOT NULL,
+                d FLOAT64 NOT NULL,
+                s_x FLOAT64 NOT NULL, s_y FLOAT64 NOT NULL, s_z FLOAT64 NOT NULL) TYPE File;
 
-# Minimal: just construct a Point.
-SELECT Point(x, y, z) AS p FROM points INTO out;
+# Full mix: PointAdd produces compound, PointDistance produces scalar from
+# compound inputs, PointScale broadcasts a scalar over compound components.
+SELECT
+    PointAdd(Point(x, y, z), Point(FLOAT64(1.0), FLOAT64(1.0), FLOAT64(1.0))) AS p,
+    PointDistance(Point(x, y, z), Point(FLOAT64(0.0), FLOAT64(0.0), FLOAT64(0.0))) AS d,
+    PointScale(Point(x, y, z), FLOAT64(2.0)) AS s
+FROM points INTO out;
 ----
-1.0,2.0,3.0
-4.0,5.0,6.0
+2.0,3.0,4.0,3.7416573867739413,2.0,4.0,6.0
+5.0,6.0,7.0,8.774964387392123,8.0,10.0,12.0

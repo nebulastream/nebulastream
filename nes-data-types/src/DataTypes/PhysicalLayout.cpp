@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Phases/LogicalTypeLowering/PhysicalLayout.hpp>
+#include <DataTypes/PhysicalLayout.hpp>
 
 #include <ostream>
 #include <fmt/format.h>
