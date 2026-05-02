@@ -81,8 +81,8 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
 
         /// a count aggregation is always on an uint 64 and never returns a NULL value
         auto newInputStamp = DataTypeProvider::provideDataType(
-            DataType::Type::UINT64, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
-        auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE);
+            DataType::Type::UINT64, newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+        auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::UINT64, Nullable::NOT_NULLABLE);
         auto newAsField = this->getAsField().withFieldName(newAsFieldName);
 
         return this->withInputStamp(newInputStamp)

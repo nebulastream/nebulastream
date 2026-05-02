@@ -21,6 +21,7 @@
 #include <ostream>
 #include <string>
 #include <type_traits>
+#include <DataTypes/Nullable.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Reflection.hpp>
 
@@ -47,13 +48,7 @@ struct DataType final
         VARSIZED,
     };
 
-    enum class NULLABLE : uint8_t
-    {
-        IS_NULLABLE,
-        NOT_NULLABLE
-    };
-
-    DataType(Type type, NULLABLE nullable);
+    DataType(Type type, Nullable nullable);
     DataType();
 
     template <class T>
@@ -123,7 +118,7 @@ struct DataType final
     /// Determines common data type for this and other data type. Returns @Type::UNDEFINED if it cannot find a common type.
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'
     [[nodiscard]] std::optional<DataType> join(const DataType& otherDataType) const;
-    [[nodiscard]] DataType::NULLABLE joinNullable(const DataType& otherDataType) const;
+    [[nodiscard]] Nullable joinNullable(const DataType& otherDataType) const;
     [[nodiscard]] std::string formattedBytesToString(const void* data) const;
 
     [[nodiscard]] bool isType(Type type) const;

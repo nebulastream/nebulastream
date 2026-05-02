@@ -80,8 +80,8 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 {
     NES_INFO("Checksum Sink completed. Checksum: {}", fmt::streamed(checksum));
 
-    outputFileStream << "S$Count:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE)
-                     << ",S$Checksum:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE) << '\n';
+    outputFileStream << "S$Count:UINT64:" << magic_enum::enum_name(Nullable::NOT_NULLABLE)
+                     << ",S$Checksum:UINT64:" << magic_enum::enum_name(Nullable::NOT_NULLABLE) << '\n';
     outputFileStream << checksum.numberOfTuples << "," << checksum.checksum << '\n';
     outputFileStream.close();
     isOpen = false;

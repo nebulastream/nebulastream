@@ -14,27 +14,17 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <DataTypes/DataType.hpp>
-#include <Util/Registry.hpp>
+#include <cstdint>
 
 namespace NES
 {
 
-using DataTypeRegistryReturnType = DataType;
-
-struct DataTypeRegistryArguments
+/// Nullability flag, lifted out of DataType so the logical layer can express
+/// it without depending on the physical DataType type.
+enum class Nullable : uint8_t
 {
-    Nullable nullable{Nullable::IS_NULLABLE};
-};
-
-class DataTypeRegistry : public BaseRegistry<DataTypeRegistry, std::string, DataTypeRegistryReturnType, DataTypeRegistryArguments>
-{
+    IS_NULLABLE,
+    NOT_NULLABLE
 };
 
 }
-
-#define INCLUDED_FROM_DATA_TYPE_REGISTRY
-#include <DataTypeGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_DATA_TYPE_REGISTRY

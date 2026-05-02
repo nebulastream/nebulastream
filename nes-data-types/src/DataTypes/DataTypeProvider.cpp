@@ -25,10 +25,10 @@ namespace NES::DataTypeProvider
 
 std::optional<DataType> tryProvideDataType(const std::string& type)
 {
-    return tryProvideDataType(type, DataType::NULLABLE::NOT_NULLABLE);
+    return tryProvideDataType(type, Nullable::NOT_NULLABLE);
 }
 
-std::optional<DataType> tryProvideDataType(const std::string& type, const DataType::NULLABLE isNullable)
+std::optional<DataType> tryProvideDataType(const std::string& type, const Nullable isNullable)
 {
     const DataTypeRegistryArguments args{isNullable};
     if (const auto dataType = DataTypeRegistry::instance().create(type, args))
@@ -40,10 +40,10 @@ std::optional<DataType> tryProvideDataType(const std::string& type, const DataTy
 
 DataType provideDataType(const std::string& type)
 {
-    return provideDataType(type, DataType::NULLABLE::NOT_NULLABLE);
+    return provideDataType(type, Nullable::NOT_NULLABLE);
 }
 
-DataType provideDataType(const std::string& type, const DataType::NULLABLE isNullable)
+DataType provideDataType(const std::string& type, const Nullable isNullable)
 {
     const DataTypeRegistryArguments args{isNullable};
     if (const auto dataType = DataTypeRegistry::instance().create(type, args))
@@ -55,10 +55,10 @@ DataType provideDataType(const std::string& type, const DataType::NULLABLE isNul
 
 DataType provideDataType(const DataType::Type type)
 {
-    return provideDataType(type, DataType::NULLABLE::NOT_NULLABLE);
+    return provideDataType(type, Nullable::NOT_NULLABLE);
 }
 
-DataType provideDataType(const DataType::Type type, const DataType::NULLABLE isNullable)
+DataType provideDataType(const DataType::Type type, const Nullable isNullable)
 {
     return DataType{type, isNullable};
 }

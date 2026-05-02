@@ -27,7 +27,7 @@ using LogicalTypeRegistryReturnType = LogicalType;
 
 struct LogicalTypeRegistryArguments
 {
-    DataType::NULLABLE nullable{DataType::NULLABLE::IS_NULLABLE};
+    Nullable nullable{Nullable::IS_NULLABLE};
     std::vector<LogicalType::Parameter> parameters;
 };
 

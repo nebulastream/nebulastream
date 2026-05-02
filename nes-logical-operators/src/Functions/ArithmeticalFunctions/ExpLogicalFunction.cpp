@@ -62,7 +62,7 @@ LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) c
     const std::string eulerNumber = "2.7182818284590452353602874713527";
     const ConstantValueLogicalFunction expConstantValue{
         DataTypeProvider::provideDataType(
-            DataType::Type::FLOAT64, newChild.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE),
+            DataType::Type::FLOAT64, newChild.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE),
         eulerNumber};
     return PowLogicalFunction(expConstantValue, newChild).withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
 };

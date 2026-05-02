@@ -39,37 +39,37 @@ namespace NES
 
 namespace
 {
-LogicalType pointType(DataType::NULLABLE nullable = DataType::NULLABLE::NOT_NULLABLE)
+LogicalType pointType(Nullable nullable = Nullable::NOT_NULLABLE)
 {
     return LogicalType{"Point", {}, nullable};
 }
 
-LogicalType float64Type(DataType::NULLABLE nullable = DataType::NULLABLE::NOT_NULLABLE)
+LogicalType float64Type(Nullable nullable = Nullable::NOT_NULLABLE)
 {
     return LogicalType{"FLOAT64", {}, nullable};
 }
 
-LogicalType booleanType(DataType::NULLABLE nullable = DataType::NULLABLE::NOT_NULLABLE)
+LogicalType booleanType(Nullable nullable = Nullable::NOT_NULLABLE)
 {
     return LogicalType{"BOOLEAN", {}, nullable};
 }
 
-DataType::NULLABLE joinNullable(const std::vector<LogicalFunction>& children)
+Nullable joinNullable(const std::vector<LogicalFunction>& children)
 {
     for (const auto& child : children)
     {
         if (child.getLogicalType().isNullable())
         {
-            return DataType::NULLABLE::IS_NULLABLE;
+            return Nullable::IS_NULLABLE;
         }
     }
-    return DataType::NULLABLE::NOT_NULLABLE;
+    return Nullable::NOT_NULLABLE;
 }
 
 /// Compound logical types like Point have no primitive DataType representation.
 /// Returning UNDEFINED keeps the legacy DataType bridge happy; the projection
 /// flattening inspects `getLogicalType()` directly to look up the layout.
-DataType compoundDataType(DataType::NULLABLE nullable)
+DataType compoundDataType(Nullable nullable)
 {
     return DataTypeProvider::provideDataType(DataType::Type::UNDEFINED, nullable);
 }
@@ -100,7 +100,7 @@ LogicalType PointConstructLogicalFunction::getLogicalType() const
 PointConstructLogicalFunction PointConstructLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
-    copy.logicalType = pointType(dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    copy.logicalType = pointType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     return copy;
 }
 
@@ -199,7 +199,7 @@ LogicalType PointAddLogicalFunction::getLogicalType() const
 PointAddLogicalFunction PointAddLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
-    copy.logicalType = pointType(dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    copy.logicalType = pointType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     return copy;
 }
 
@@ -291,7 +291,7 @@ LogicalType PointSubLogicalFunction::getLogicalType() const
 PointSubLogicalFunction PointSubLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
-    copy.logicalType = pointType(dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    copy.logicalType = pointType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     return copy;
 }
 
@@ -383,7 +383,7 @@ LogicalType PointScaleLogicalFunction::getLogicalType() const
 PointScaleLogicalFunction PointScaleLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
-    copy.logicalType = pointType(dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    copy.logicalType = pointType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     return copy;
 }
 
@@ -475,7 +475,7 @@ LogicalType PointDistanceLogicalFunction::getLogicalType() const
 PointDistanceLogicalFunction PointDistanceLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
-    copy.logicalType = float64Type(dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    copy.logicalType = float64Type(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     return copy;
 }
 
@@ -567,7 +567,7 @@ LogicalType PointEqualsLogicalFunction::getLogicalType() const
 PointEqualsLogicalFunction PointEqualsLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
-    copy.logicalType = booleanType(dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    copy.logicalType = booleanType(dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     return copy;
 }
 

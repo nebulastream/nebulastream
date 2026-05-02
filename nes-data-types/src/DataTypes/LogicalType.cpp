@@ -31,8 +31,8 @@
 namespace NES
 {
 
-LogicalType::LogicalType(std::string name, std::vector<Parameter> parameters, const DataType::NULLABLE nullable)
-    : name(std::move(name)), parameters(std::move(parameters)), nullable(nullable == DataType::NULLABLE::IS_NULLABLE)
+LogicalType::LogicalType(std::string name, std::vector<Parameter> parameters, const Nullable nullable)
+    : name(std::move(name)), parameters(std::move(parameters)), nullable(nullable == Nullable::IS_NULLABLE)
 {
 }
 
@@ -46,9 +46,9 @@ const std::vector<LogicalType::Parameter>& LogicalType::getParameters() const
     return parameters;
 }
 
-DataType::NULLABLE LogicalType::getNullable() const
+Nullable LogicalType::getNullable() const
 {
-    return nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    return nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE;
 }
 
 bool LogicalType::isNullable() const
@@ -61,7 +61,7 @@ std::optional<DataType> LogicalType::toPhysical() const
     if (const auto type = magic_enum::enum_cast<DataType::Type>(name); type.has_value())
     {
         return DataTypeProvider::provideDataType(
-            type.value(), nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+            type.value(), nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     }
     return std::nullopt;
 }
@@ -71,7 +71,7 @@ LogicalType LogicalType::fromPhysical(const DataType& dataType)
     return LogicalType{
         std::string{magic_enum::enum_name(dataType.type)},
         {},
-        dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE};
+        dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE};
 }
 
 std::optional<LogicalType> LogicalType::join(const LogicalType& other) const
@@ -89,9 +89,9 @@ std::optional<LogicalType> LogicalType::join(const LogicalType& other) const
     return std::nullopt;
 }
 
-DataType::NULLABLE LogicalType::joinNullable(const LogicalType& other) const
+Nullable LogicalType::joinNullable(const LogicalType& other) const
 {
-    return (this->nullable or other.nullable) ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    return (this->nullable or other.nullable) ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE;
 }
 
 bool LogicalType::isInteger() const
@@ -170,7 +170,7 @@ LogicalType Unreflector<LogicalType>::operator()(const Reflected& rfl) const
 {
     auto [name, parameters, nullable] = unreflect<std::tuple<std::string, std::vector<LogicalType::Parameter>, bool>>(rfl);
     return LogicalType{
-        std::move(name), std::move(parameters), nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE};
+        std::move(name), std::move(parameters), nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE};
 }
 
 }

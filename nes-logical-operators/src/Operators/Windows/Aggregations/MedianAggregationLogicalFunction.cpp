@@ -80,7 +80,7 @@ MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredS
         newAsFieldName = attributeNameResolver + fieldName;
     }
     const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
-        DataType::Type::FLOAT64, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+        DataType::Type::FLOAT64, newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     return this->withInputStamp(newOnField.getDataType())
         .withOnField(newOnField)
         .withFinalAggregateStamp(newFinalAggregateStamp)

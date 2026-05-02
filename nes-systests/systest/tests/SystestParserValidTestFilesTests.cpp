@@ -89,9 +89,9 @@ TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
     const SystestParser::SystestLogicalSource expectedLogicalSource{
         .name = "window",
         .fields
-        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "id"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "value"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "timestamp"}}};
+        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, Nullable::IS_NULLABLE), .name = "id"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, Nullable::IS_NULLABLE), .name = "value"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, Nullable::IS_NULLABLE), .name = "timestamp"}}};
 
     const std::vector<std::string> expectedInlineData
         = {{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",

@@ -67,20 +67,20 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
         {
             newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
                 DataType::Type::INT64,
-                newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
+                newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE));
         }
         else
         {
             newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
                 DataType::Type::UINT64,
-                newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
+                newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE));
         }
     }
     else
     {
         newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
             DataType::Type::FLOAT64,
-            newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
+            newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE));
     }
 
     ///Set fully qualified name for the as Field
@@ -101,7 +101,7 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
     }
 
     const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
-        DataType::Type::FLOAT64, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+        DataType::Type::FLOAT64, newOnField.getDataType().nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     return this->withOnField(newOnField.getAs<FieldAccessLogicalFunction>().get())
         .withFinalAggregateStamp(newFinalAggregateStamp)
         .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp))

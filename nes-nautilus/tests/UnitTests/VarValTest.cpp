@@ -282,18 +282,18 @@ TEST_F(VarValTest, readFromMemoryTest)
         return 0;
     };
 
-    testVarValReadFromMemory.operator()<int8_t>(-someRandomNumber, DataType{DataType::Type::INT8, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<int16_t>(minI8Minus1, DataType{DataType::Type::INT16, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<int32_t>(minI16Minus1, DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<int64_t>(minI32Minus1, DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<uint8_t>(someRandomNumber, DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<uint16_t>(maxUI8Plus1, DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<uint32_t>(maxUI16Plus1, DataType{DataType::Type::UINT32, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<uint64_t>(maxUI32Plus1, DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<float>(someRandomNumber, DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<double>(someRandomNumber, DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<bool>(true, DataType{DataType::Type::BOOLEAN, DataType::NULLABLE::NOT_NULLABLE});
-    testVarValReadFromMemory.operator()<bool>(false, DataType{DataType::Type::BOOLEAN, DataType::NULLABLE::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<int8_t>(-someRandomNumber, DataType{DataType::Type::INT8, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<int16_t>(minI8Minus1, DataType{DataType::Type::INT16, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<int32_t>(minI16Minus1, DataType{DataType::Type::INT32, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<int64_t>(minI32Minus1, DataType{DataType::Type::INT64, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<uint8_t>(someRandomNumber, DataType{DataType::Type::UINT8, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<uint16_t>(maxUI8Plus1, DataType{DataType::Type::UINT16, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<uint32_t>(maxUI16Plus1, DataType{DataType::Type::UINT32, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<uint64_t>(maxUI32Plus1, DataType{DataType::Type::UINT64, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<float>(someRandomNumber, DataType{DataType::Type::FLOAT32, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<double>(someRandomNumber, DataType{DataType::Type::FLOAT64, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<bool>(true, DataType{DataType::Type::BOOLEAN, Nullable::NOT_NULLABLE});
+    testVarValReadFromMemory.operator()<bool>(false, DataType{DataType::Type::BOOLEAN, Nullable::NOT_NULLABLE});
 }
 
 TEST_F(VarValTest, operatorBoolTest)

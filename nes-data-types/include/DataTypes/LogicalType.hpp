@@ -48,11 +48,11 @@ public:
         bool operator==(const Parameter&) const = default;
     };
 
-    LogicalType(std::string name, std::vector<Parameter> parameters, DataType::NULLABLE nullable);
+    LogicalType(std::string name, std::vector<Parameter> parameters, Nullable nullable);
 
     [[nodiscard]] const std::string& getName() const;
     [[nodiscard]] const std::vector<Parameter>& getParameters() const;
-    [[nodiscard]] DataType::NULLABLE getNullable() const;
+    [[nodiscard]] Nullable getNullable() const;
     [[nodiscard]] bool isNullable() const;
 
     /// Prototype-level bridge to the existing physical-type machinery: every built-in
@@ -68,7 +68,7 @@ public:
     /// physical types, joins them, and re-wraps. Returns nullopt if either side is
     /// non-primitive (compound) or if joining is undefined.
     [[nodiscard]] std::optional<LogicalType> join(const LogicalType& other) const;
-    [[nodiscard]] DataType::NULLABLE joinNullable(const LogicalType& other) const;
+    [[nodiscard]] Nullable joinNullable(const LogicalType& other) const;
 
     /// Predicates inherited from primitive DataType semantics. Always false for
     /// non-primitive logical types.

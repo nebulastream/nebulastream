@@ -33,7 +33,7 @@ namespace NES
 {
 
 IsNullCheckLogicalFunction::IsNullCheckLogicalFunction(LogicalFunction child)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, DataType::NULLABLE::NOT_NULLABLE)), child(std::move(child))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, Nullable::NOT_NULLABLE)), child(std::move(child))
 {
 }
 

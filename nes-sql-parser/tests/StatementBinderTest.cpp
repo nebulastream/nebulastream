@@ -106,9 +106,9 @@ TEST_F(StatementBinderTest, Nullable)
     const auto [actualSource] = createdSourceResult.value();
     Schema expectedSchema{};
     expectedSchema.addField(
-        "testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE));
+        "testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32, Nullable::IS_NULLABLE));
     expectedSchema.addField(
-        "testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE));
+        "testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, Nullable::NOT_NULLABLE));
     ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
@@ -138,8 +138,8 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
     ASSERT_EQ(expectedSinkConfig, inlineSinkOperator->getSinkConfig());
 
     Schema schema;
-    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE));
-    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE));
+    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64, Nullable::IS_NULLABLE));
+    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, Nullable::IS_NULLABLE));
     ASSERT_EQ(schema, inlineSinkOperator->getSchema());
 }
 
@@ -171,8 +171,8 @@ TEST_F(StatementBinderTest, InlineSourceQuery)
     ASSERT_EQ(expectedParserConfig, inlineSourceOperator->getParserConfig());
 
     Schema schema;
-    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE));
-    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE));
+    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64, Nullable::IS_NULLABLE));
+    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, Nullable::IS_NULLABLE));
     ASSERT_EQ(schema, inlineSourceOperator->getSchema());
 }
 
@@ -275,8 +275,8 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
     Schema expectedSchema{};
-    expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE));
-    expectedSchema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE));
+    expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, Nullable::IS_NULLABLE));
+    expectedSchema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, Nullable::IS_NULLABLE));
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
@@ -309,7 +309,7 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     const auto [actualSink] = createdSinkResult.value();
     Schema expectedSchema{};
     expectedSchema.addField(
-        "TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE));
+        "TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, Nullable::IS_NULLABLE));
     expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);

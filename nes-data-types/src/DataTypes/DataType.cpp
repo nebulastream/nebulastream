@@ -39,7 +39,7 @@ std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, con
     /// For a playground, please take a look at the godbolt link: https://godbolt.org/z/j1cTfczbh
     constexpr int8_t sizeOfIntInBytes = sizeof(int32_t);
     constexpr int8_t sizeOfLongInBytes = sizeof(int64_t);
-    const auto isNullable = left.nullable or right.nullable ? NES::DataType::NULLABLE::IS_NULLABLE : NES::DataType::NULLABLE::NOT_NULLABLE;
+    const auto isNullable = left.nullable or right.nullable ? NES::Nullable::IS_NULLABLE : NES::Nullable::NOT_NULLABLE;
 
     /// If left is a float, the result is a float or double depending on the bits of the left float
     if (left.isFloat() and right.isInteger())
@@ -123,7 +123,7 @@ std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, con
 namespace NES
 {
 
-DataType::DataType(const Type type, const NULLABLE nullable) : type(type), nullable(nullable == NULLABLE::IS_NULLABLE)
+DataType::DataType(const Type type, const Nullable nullable) : type(type), nullable(nullable == Nullable::IS_NULLABLE)
 {
 }
 
@@ -259,10 +259,10 @@ bool DataType::isNumeric() const
     return isInteger() or isFloat();
 }
 
-DataType::NULLABLE DataType::joinNullable(const DataType& otherDataType) const
+Nullable DataType::joinNullable(const DataType& otherDataType) const
 {
     const auto isNullableResult
-        = this->nullable or otherDataType.nullable ? NES::DataType::NULLABLE::IS_NULLABLE : NES::DataType::NULLABLE::NOT_NULLABLE;
+        = this->nullable or otherDataType.nullable ? NES::Nullable::IS_NULLABLE : NES::Nullable::NOT_NULLABLE;
     return isNullableResult;
 }
 
@@ -327,7 +327,7 @@ Reflected Reflector<DataType>::operator()(const DataType& field) const
 DataType Unreflector<DataType>::operator()(const Reflected& rfl) const
 {
     const auto [type, nullable] = unreflect<std::pair<DataType::Type, bool>>(rfl);
-    return DataTypeProvider::provideDataType(type, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    return DataTypeProvider::provideDataType(type, nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
 }
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)

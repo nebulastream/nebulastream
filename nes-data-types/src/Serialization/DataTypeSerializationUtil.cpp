@@ -48,7 +48,7 @@ DataType DataTypeSerializationUtil::deserializeDataType(const SerializableDataTy
             magic_enum::enum_values<DataType::Type>().size());
     }
     const DataType deserializedDataType
-        = DataType{*type, serializedDataType.nullable() ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE};
+        = DataType{*type, serializedDataType.nullable() ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE};
     return deserializedDataType;
 }
 

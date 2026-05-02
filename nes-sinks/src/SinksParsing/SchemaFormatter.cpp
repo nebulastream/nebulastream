@@ -19,6 +19,7 @@
 #include <string>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <DataTypes/Nullable.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -29,11 +30,11 @@ std::string SchemaFormatter::getFormattedSchema()
     std::stringstream ss;
     ss << schema->getFields().front().name << ":" << magic_enum::enum_name(schema->getFields().front().dataType.type) << ":"
        << magic_enum::enum_name(
-              schema->getFields().front().dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+              schema->getFields().front().dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     for (const auto& field : schema->getFields() | std::views::drop(1))
     {
         ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type) << ":"
-           << magic_enum::enum_name(field.dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+           << magic_enum::enum_name(field.dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
     }
     return fmt::format("{}\n", ss.str());
 }

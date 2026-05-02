@@ -54,15 +54,15 @@ std::string Schema::Field::getUnqualifiedName() const
 
 Schema Schema::addField(std::string name, const DataType& dataType)
 {
-    return addField(std::move(name), dataType.type, dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    return addField(std::move(name), dataType.type, dataType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
 }
 
 Schema Schema::addField(std::string name, const DataType::Type type)
 {
-    return addField(std::move(name), type, DataType::NULLABLE::NOT_NULLABLE);
+    return addField(std::move(name), type, Nullable::NOT_NULLABLE);
 }
 
-Schema Schema::addField(std::string name, const DataType::Type type, const DataType::NULLABLE isNullable)
+Schema Schema::addField(std::string name, const DataType::Type type, const Nullable isNullable)
 {
     DataType dataType{type, isNullable};
     sizeOfSchemaInBytes += dataType.getSizeInBytesWithNull();

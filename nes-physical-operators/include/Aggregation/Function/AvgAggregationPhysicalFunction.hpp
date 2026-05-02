@@ -50,7 +50,7 @@ public:
     ~AvgAggregationPhysicalFunction() override = default;
 
 private:
-    DataType countType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+    DataType countType{DataType::Type::UINT64, Nullable::NOT_NULLABLE};
     bool includeNullValues;
 };
 

@@ -53,7 +53,7 @@ std::string bindStringLiteral(antlr4::Token* stringLiteral);
 
 Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST);
 
-DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, DataType::NULLABLE isNullable);
+DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, Nullable isNullable);
 
 std::string literalToString(const Literal& literal);
 
