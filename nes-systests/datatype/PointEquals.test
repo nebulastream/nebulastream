@@ -1,8 +1,10 @@
 # name: datatype/PointEquals.test
-# description: Compound equality currently aborts at Value::asScalar — `==` on a
-#              compound Value calls asScalar on both operands, which violates
-#              `isScalar()` for a Point. Aliased so the parser drop (issue #1578)
-#              isn't what trips first.
+# description: Validates the overload-resolution path: parser emits an
+#              UnboundLogicalFunction for `==`, which during type inference
+#              resolves to `Equals_Point_Point` because both operand logical
+#              types are `Point`. The bound PointEquals function lowers to a
+#              component-wise physical comparison, sidestepping the legacy
+#              Value::operator== that aborts on compound Values.
 # groups: [DataType, LogicalType, Point]
 
 CREATE LOGICAL SOURCE points(x FLOAT NOT NULL, y FLOAT NOT NULL, z FLOAT NOT NULL);

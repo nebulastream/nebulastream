@@ -49,6 +49,11 @@ LogicalType float64Type(DataType::NULLABLE nullable = DataType::NULLABLE::NOT_NU
     return LogicalType{"FLOAT64", {}, nullable};
 }
 
+LogicalType booleanType(DataType::NULLABLE nullable = DataType::NULLABLE::NOT_NULLABLE)
+{
+    return LogicalType{"BOOLEAN", {}, nullable};
+}
+
 DataType::NULLABLE joinNullable(const std::vector<LogicalFunction>& children)
 {
     for (const auto& child : children)
@@ -535,6 +540,109 @@ LogicalFunctionGeneratedRegistrar::RegisterPointDistanceLogicalFunction(LogicalF
         throw CannotDeserialize("PointDistance requires exactly two children, got {}", arguments.children.size());
     }
     return PointDistanceLogicalFunction{arguments.children[0], arguments.children[1]};
+}
+
+/// ===== PointEqualsLogicalFunction =====
+
+PointEqualsLogicalFunction::PointEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
+    : logicalType(booleanType()), left(std::move(left)), right(std::move(right))
+{
+}
+
+bool PointEqualsLogicalFunction::operator==(const PointEqualsLogicalFunction& rhs) const
+{
+    return (left == rhs.left && right == rhs.right) || (left == rhs.right && right == rhs.left);
+}
+
+DataType PointEqualsLogicalFunction::getDataType() const
+{
+    return DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, logicalType.getNullable());
+}
+
+LogicalType PointEqualsLogicalFunction::getLogicalType() const
+{
+    return logicalType;
+}
+
+PointEqualsLogicalFunction PointEqualsLogicalFunction::withDataType(const DataType& dataType) const
+{
+    auto copy = *this;
+    copy.logicalType = booleanType(dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    return copy;
+}
+
+LogicalFunction PointEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
+{
+    auto l = left.withInferredDataType(schema);
+    auto r = right.withInferredDataType(schema);
+    PointEqualsLogicalFunction copy{l, r};
+    copy.logicalType = booleanType(joinNullable({l, r}));
+    return copy;
+}
+
+std::vector<LogicalFunction> PointEqualsLogicalFunction::getChildren() const
+{
+    return {left, right};
+}
+
+PointEqualsLogicalFunction PointEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& newChildren) const
+{
+    PRECONDITION(newChildren.size() == 2, "PointEquals requires exactly two children, got {}", newChildren.size());
+    auto copy = *this;
+    copy.left = newChildren[0];
+    copy.right = newChildren[1];
+    copy.logicalType = booleanType(joinNullable(newChildren));
+    return copy;
+}
+
+std::string_view PointEqualsLogicalFunction::getType() const
+{
+    return NAME;
+}
+
+std::string PointEqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
+{
+    return fmt::format("PointEquals({}, {})", left.explain(verbosity), right.explain(verbosity));
+}
+
+Reflected Reflector<PointEqualsLogicalFunction>::operator()(const PointEqualsLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedPointFunction{.children = {function.left, function.right}});
+}
+
+PointEqualsLogicalFunction Unreflector<PointEqualsLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [kids] = unreflect<detail::ReflectedPointFunction>(reflected);
+    if (kids.size() != 2 || !kids[0].has_value() || !kids[1].has_value())
+    {
+        throw CannotDeserialize("PointEquals requires exactly two children");
+    }
+    return PointEqualsLogicalFunction{kids[0].value(), kids[1].value()};
+}
+
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterPointEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<PointEqualsLogicalFunction>(arguments.reflected);
+    }
+    if (arguments.children.size() != 2)
+    {
+        throw CannotDeserialize("PointEquals requires exactly two children, got {}", arguments.children.size());
+    }
+    return PointEqualsLogicalFunction{arguments.children[0], arguments.children[1]};
+}
+
+/// Mangled-name overload entry: `Equals_Point_Point` is the key built by
+/// `UnboundLogicalFunction::withInferredDataType` when both children's logical
+/// type names equal "Point". Returns the same class as the bare PointEquals
+/// factory; the separate plugin name is what makes it discoverable via the
+/// overload-mangling path.
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterEquals_Point_PointLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    return RegisterPointEqualsLogicalFunction(std::move(arguments));
 }
 
 }

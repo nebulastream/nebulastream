@@ -39,6 +39,7 @@
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/UnboundLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
@@ -127,9 +128,9 @@ static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction,
     switch (tokenType)
     {
         case AntlrSQLLexer::EQ:
-            return EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+            return UnboundLogicalFunction("Equals", {std::move(leftFunction), std::move(rightFunction)});
         case AntlrSQLLexer::NEQJ:
-            return NegateLogicalFunction(EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction)));
+            return NegateLogicalFunction(UnboundLogicalFunction("Equals", {std::move(leftFunction), std::move(rightFunction)}));
         case AntlrSQLLexer::LT:
             return LessLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         case AntlrSQLLexer::GT:

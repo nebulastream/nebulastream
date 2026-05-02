@@ -16,6 +16,7 @@ add_subdirectory(ComparisonFunctions)
 
 add_source_files(nes-logical-operators
         LogicalFunctionProvider.cpp
+        UnboundLogicalFunction.cpp
 )
 
 add_plugin(ConstantValue LogicalFunction nes-logical-operators ConstantValueLogicalFunction.cpp)

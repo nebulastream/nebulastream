@@ -19,6 +19,10 @@ add_plugin(PointAdd LogicalFunction nes-logical-operators PointLogicalFunctions.
 add_plugin(PointSub LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 add_plugin(PointScale LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 add_plugin(PointDistance LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
+add_plugin(PointEquals LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
+# Mangled overload entry — picked up by UnboundLogicalFunction's resolver when
+# the parser encounters `Point == Point`.
+add_plugin(Equals_Point_Point LogicalFunction nes-logical-operators PointLogicalFunctions.cpp)
 
 # Point lowering: PhysicalLayout = [(_X,F64),(_Y,F64),(_Z,F64)]
 add_plugin(Point LogicalTypeLowering nes-data-types PointLowering.cpp)
@@ -29,6 +33,7 @@ add_plugin(PointAdd PhysicalFunction nes-physical-operators PointPhysicalFunctio
 add_plugin(PointSub PhysicalFunction nes-physical-operators PointPhysicalFunctions.cpp)
 add_plugin(PointScale PhysicalFunction nes-physical-operators PointPhysicalFunctions.cpp)
 add_plugin(PointDistance PhysicalFunction nes-physical-operators PointPhysicalFunctions.cpp)
+add_plugin(PointEquals PhysicalFunction nes-physical-operators PointPhysicalFunctions.cpp)
 
 # Make the logical-fn header visible to translation units in nes-logical-operators
 target_include_directories(nes-logical-operators PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

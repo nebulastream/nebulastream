@@ -78,10 +78,22 @@ private:
     PhysicalFunction left, right;
 };
 
+/// Component-wise equality with AND across components. Returns a scalar Bool.
+class PointEqualsPhysicalFunction final
+{
+public:
+    PointEqualsPhysicalFunction(PhysicalFunction left, PhysicalFunction right);
+    [[nodiscard]] Value execute(const Record& record, ArenaRef& arena) const;
+
+private:
+    PhysicalFunction left, right;
+};
+
 static_assert(PhysicalFunctionConcept<PointConstructPhysicalFunction>);
 static_assert(PhysicalFunctionConcept<PointAddPhysicalFunction>);
 static_assert(PhysicalFunctionConcept<PointSubPhysicalFunction>);
 static_assert(PhysicalFunctionConcept<PointScalePhysicalFunction>);
 static_assert(PhysicalFunctionConcept<PointDistancePhysicalFunction>);
+static_assert(PhysicalFunctionConcept<PointEqualsPhysicalFunction>);
 
 }

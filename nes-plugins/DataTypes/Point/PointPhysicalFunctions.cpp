@@ -161,4 +161,31 @@ PhysicalFunctionGeneratedRegistrar::RegisterPointDistancePhysicalFunction(Physic
     return PointDistancePhysicalFunction{args.childFunctions[0], args.childFunctions[1]};
 }
 
+/// ===== PointEqualsPhysicalFunction =====
+
+PointEqualsPhysicalFunction::PointEqualsPhysicalFunction(PhysicalFunction left, PhysicalFunction right)
+    : left(std::move(left)), right(std::move(right))
+{
+}
+
+Value PointEqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+{
+    const auto leftValue = left.execute(record, arena);
+    const auto rightValue = right.execute(record, arena);
+    VarVal allEqual{nautilus::val<bool>(true)};
+    for (const auto& [suffix, leftComponent] : nautilus::static_iterable(leftValue.components()))
+    {
+        const auto componentEqual = (leftComponent == rightValue.component(suffix));
+        allEqual = allEqual && componentEqual;
+    }
+    return Value::scalar(allEqual);
+}
+
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterPointEqualsPhysicalFunction(PhysicalFunctionRegistryArguments args)
+{
+    PRECONDITION(args.childFunctions.size() == 2, "PointEquals requires exactly two children");
+    return PointEqualsPhysicalFunction{args.childFunctions[0], args.childFunctions[1]};
+}
+
 }

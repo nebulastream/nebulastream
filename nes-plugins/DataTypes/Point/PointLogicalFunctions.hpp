@@ -166,6 +166,37 @@ private:
     friend Reflector<PointDistanceLogicalFunction>;
 };
 
+/// Component-wise equality. Result is a scalar Bool. Registered under the
+/// mangled overload key `Equals_Point_Point` so the resolver in
+/// `UnboundLogicalFunction::withInferredDataType` picks it up when both
+/// operands have logical type `Point`.
+class PointEqualsLogicalFunction final
+{
+public:
+    static constexpr std::string_view NAME = "PointEquals";
+
+    PointEqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
+
+    [[nodiscard]] bool operator==(const PointEqualsLogicalFunction& rhs) const;
+
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] LogicalType getLogicalType() const;
+    [[nodiscard]] PointEqualsLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] PointEqualsLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
+
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+
+private:
+    LogicalType logicalType;
+    LogicalFunction left, right;
+
+    friend Reflector<PointEqualsLogicalFunction>;
+};
+
 template <>
 struct Reflector<PointConstructLogicalFunction>
 {
@@ -216,12 +247,23 @@ struct Unreflector<PointDistanceLogicalFunction>
 {
     PointDistanceLogicalFunction operator()(const Reflected& reflected) const;
 };
+template <>
+struct Reflector<PointEqualsLogicalFunction>
+{
+    Reflected operator()(const PointEqualsLogicalFunction& function) const;
+};
+template <>
+struct Unreflector<PointEqualsLogicalFunction>
+{
+    PointEqualsLogicalFunction operator()(const Reflected& reflected) const;
+};
 
 static_assert(LogicalFunctionConcept<PointConstructLogicalFunction>);
 static_assert(LogicalFunctionConcept<PointAddLogicalFunction>);
 static_assert(LogicalFunctionConcept<PointSubLogicalFunction>);
 static_assert(LogicalFunctionConcept<PointScaleLogicalFunction>);
 static_assert(LogicalFunctionConcept<PointDistanceLogicalFunction>);
+static_assert(LogicalFunctionConcept<PointEqualsLogicalFunction>);
 
 }
 
@@ -238,3 +280,4 @@ FMT_OSTREAM(NES::PointAddLogicalFunction);
 FMT_OSTREAM(NES::PointSubLogicalFunction);
 FMT_OSTREAM(NES::PointScaleLogicalFunction);
 FMT_OSTREAM(NES::PointDistanceLogicalFunction);
+FMT_OSTREAM(NES::PointEqualsLogicalFunction);
