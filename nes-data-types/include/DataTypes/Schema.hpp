@@ -99,18 +99,11 @@ public:
     void appendFieldsFromOtherSchema(const Schema& otherSchema);
     [[nodiscard]] bool renameField(const std::string& oldFieldName, std::string_view newFieldName);
 
-    /// TODO(datatype-migration): With LogicalType-typed fields, computing the size in bytes
-    /// requires lowering each field through PhysicalLayout — which lives in physical-types.
-    /// For now this remains a coarse approximation; the real size computation moves to the
-    /// lowering boundary at Phase 7.
-    [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
-
     [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<Field>>().cbegin());
     [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<Field>>().cend());
 
 private:
     std::vector<Field> fields;
-    size_t sizeOfSchemaInBytes{0};
     std::unordered_map<std::string, size_t> nameToField;
 };
 

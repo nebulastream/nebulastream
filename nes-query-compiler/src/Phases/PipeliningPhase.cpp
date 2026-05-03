@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaLowering.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
@@ -94,11 +95,11 @@ PhysicalOperator createScanOperator(
 {
     INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
     INVARIANT(memoryLayout.has_value(), "Wrapped operator has no input memory layout type");
-    if (inputSchema.value().getSizeOfSchemaInBytes() > configuredBufferSize)
+    if (const auto tupleSize = physicalTupleByteSize(inputSchema.value()); tupleSize > configuredBufferSize)
     {
         throw TuplesTooLargeForPipelineBufferSize(
             "Got pipeline with an input schema size of {}, which is larger than the configured buffer size of the pipeline, which is {}",
-            inputSchema.value().getSizeOfSchemaInBytes(),
+            tupleSize,
             configuredBufferSize);
     }
 

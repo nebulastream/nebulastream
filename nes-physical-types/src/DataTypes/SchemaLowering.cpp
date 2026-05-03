@@ -14,11 +14,13 @@
 
 #include <DataTypes/SchemaLowering.hpp>
 
+#include <cstddef>
 #include <string>
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/LogicalType.hpp>
+#include <DataTypes/LogicalTypeBridge.hpp>
 #include <DataTypes/Nullable.hpp>
 #include <DataTypes/PhysicalLayout.hpp>
 #include <DataTypes/Schema.hpp>
@@ -82,6 +84,16 @@ Schema lowerSchema(const Schema& logical)
         }
     }
     return lowered;
+}
+
+size_t physicalTupleByteSize(const Schema& logical)
+{
+    size_t total = 0;
+    for (const auto& field : lowerSchema(logical).getFields())
+    {
+        total += toPhysical(field.logicalType).value().getSizeInBytesWithNull();
+    }
+    return total;
 }
 
 }

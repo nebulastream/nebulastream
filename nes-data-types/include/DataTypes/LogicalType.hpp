@@ -78,14 +78,6 @@ public:
     [[nodiscard]] bool isText() const;
     [[nodiscard]] bool isUndefined() const;
 
-    /// Best-effort byte size for the matching primitive physical realisation —
-    /// matches the size that the lowering bridge would produce when this type
-    /// is lowered to a `DataType` and `getSizeInBytesWithNull` is called.
-    /// Used by `Schema::addField` to keep its size cache in sync without
-    /// needing to reach into `nes-physical-types`. Returns 0 for compound
-    /// types — Schema's size is purely advisory in that case.
-    [[nodiscard]] size_t byteSize() const;
-
     bool operator==(const LogicalType& other) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const LogicalType& logicalType);

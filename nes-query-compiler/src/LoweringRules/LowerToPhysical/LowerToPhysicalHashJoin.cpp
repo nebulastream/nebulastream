@@ -28,6 +28,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/LogicalTypeBridge.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaLowering.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -281,9 +282,9 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields, memoryLayoutType);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields, memoryLayoutType);
     auto leftBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema, memoryLayoutType);
+        conf.numberOfRecordsPerKey.getValue() * physicalTupleByteSize(newLeftInputSchema), newLeftInputSchema, memoryLayoutType);
     auto rightBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema, memoryLayoutType);
+        conf.numberOfRecordsPerKey.getValue() * physicalTupleByteSize(newRightInputSchema), newRightInputSchema, memoryLayoutType);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
 

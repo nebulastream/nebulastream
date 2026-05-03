@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/SchemaLowering.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -124,7 +125,7 @@ bool BackpressureHandler::empty() const
 
 NetworkSink::NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
-    , tupleSize(sinkDescriptor.getSchema()->getSizeOfSchemaInBytes())
+    , tupleSize(physicalTupleByteSize(*sinkDescriptor.getSchema()))
     , backpressureHandler(
           sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BACKPRESSURE_UPPER_THRESHOLD),
           sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BACKPRESSURE_LOWER_THRESHOLD))

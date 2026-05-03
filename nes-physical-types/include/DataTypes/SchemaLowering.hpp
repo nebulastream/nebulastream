@@ -34,4 +34,10 @@ namespace NES
 /// Idempotent for already-flat schemas: scalar types lower to themselves.
 Schema lowerSchema(const Schema& logical);
 
+/// Byte size of a single tuple of the given schema once lowered to primitives.
+/// Sums `getSizeInBytesWithNull()` of every primitive component (so a `Point`
+/// field contributes 24 bytes, not 0). LogicalType itself carries no width;
+/// any byte-size question has to round-trip through the lowering registry.
+size_t physicalTupleByteSize(const Schema& logical);
+
 }

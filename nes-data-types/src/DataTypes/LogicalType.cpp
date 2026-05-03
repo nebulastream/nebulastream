@@ -92,36 +92,6 @@ bool LogicalType::isUndefined() const
     return name == "UNDEFINED";
 }
 
-size_t LogicalType::byteSize() const
-{
-    /// Mirrors `DataType::getSizeInBytesWithNull` for the primitive lowerings
-    /// performed by `nes-physical-types`'s `toPhysical` bridge. Update both in
-    /// lockstep — the lowering layer assumes the prototype names INTEGER /
-    /// FLOAT / BOOL / TEXT are equivalent to INT64 / FLOAT64 / BOOLEAN /
-    /// VARSIZED at the physical level.
-    if (name == "INTEGER" or name == "INT64" or name == "UINT64" or name == "FLOAT" or name == "FLOAT64")
-    {
-        return 8;
-    }
-    if (name == "INT32" or name == "UINT32" or name == "FLOAT32")
-    {
-        return 4;
-    }
-    if (name == "INT16" or name == "UINT16")
-    {
-        return 2;
-    }
-    if (name == "INT8" or name == "UINT8" or name == "BOOL" or name == "BOOLEAN" or name == "CHAR")
-    {
-        return 1;
-    }
-    if (name == "TEXT" or name == "VARSIZED")
-    {
-        return 16;
-    }
-    return 0;
-}
-
 std::optional<LogicalType> LogicalType::join(const LogicalType& other) const
 {
     const auto resultNullable = joinNullable(other);

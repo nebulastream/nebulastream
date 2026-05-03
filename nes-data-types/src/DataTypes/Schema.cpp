@@ -53,7 +53,6 @@ std::string Schema::Field::getUnqualifiedName() const
 
 Schema Schema::addField(std::string name, LogicalType logicalType)
 {
-    sizeOfSchemaInBytes += logicalType.byteSize();
     fields.emplace_back(std::move(name), std::move(logicalType));
     nameToField.emplace(fields.back().name, fields.size() - 1);
     return *this;
@@ -64,8 +63,6 @@ bool Schema::replaceTypeOfField(const std::string& name, LogicalType logicalType
 {
     if (const auto fieldIdx = nameToField.find(name); fieldIdx != nameToField.end())
     {
-        sizeOfSchemaInBytes -= fields.at(fieldIdx->second).logicalType.byteSize();
-        sizeOfSchemaInBytes += logicalType.byteSize();
         fields.at(fieldIdx->second).logicalType = std::move(logicalType);
         return true;
     }
@@ -123,7 +120,7 @@ Schema::Field Schema::getFieldAt(const size_t index) const
 
 std::ostream& operator<<(std::ostream& os, const Schema& schema)
 {
-    os << fmt::format("Schema(fields({}), size in bytes: {})", fmt::join(schema.fields, ","), schema.sizeOfSchemaInBytes);
+    os << fmt::format("Schema(fields({}))", fmt::join(schema.fields, ","));
     return os;
 }
 
@@ -177,7 +174,6 @@ void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
         this->fields.emplace_back(otherField);
         this->nameToField.emplace(otherField.name, this->fields.size() - 1);
     }
-    this->sizeOfSchemaInBytes += otherSchema.sizeOfSchemaInBytes;
 }
 
 bool Schema::renameField(const std::string& oldFieldName, const std::string_view newFieldName)
@@ -190,11 +186,6 @@ bool Schema::renameField(const std::string& oldFieldName, const std::string_view
         return true;
     }
     return false;
-}
-
-size_t Schema::getSizeOfSchemaInBytes() const
-{
-    return sizeOfSchemaInBytes;
 }
 
 Schema withoutSourceQualifier(const Schema& input)
