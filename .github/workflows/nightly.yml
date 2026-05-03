@@ -82,6 +82,7 @@ jobs:
     with:
       head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      matrix_config: nightly_matrix.yaml
 
   run_large_scale_tests_random_config:
     name: Large Scale Tests Random Worker Config
@@ -91,79 +92,6 @@ jobs:
     with:
       head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-
-  test-other-configs:
-    needs: [ fetch-current-main-commit, get-dev-images ]
-    runs-on: [ self-hosted, linux, X64, Build ]
-    name: "Build and tests: ${{matrix.cmake_args.name}}"
-    container:
-      image: nebulastream/nes-ci:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
-      env:
-        MOLD_JOBS: 1
-        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
-        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
-        SCCACHE_REGION: auto
-        SCCACHE_S3_USE_SSL: "true"
-        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
-    timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        cmake_args:
-          - name: tupleBuffer_debugging
-            arg: -DNES_DEBUG_TUPLE_BUFFER_LEAKS=ON
-          - name: all_slice_cache_tests
-            arg: -DALL_SLICE_CACHE_TESTS=ON
-        stdlib: [ libcxx, libstdcxx ]
-        sanitizer: [ none, address, undefined, thread ]
-        build_type: [ RelWithDebInfo, Debug ]
-        exclude:
-          # TODO #808 libc++ has to be compiled with TSAN
-          - stdlib: libcxx
-            sanitizer: thread
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
-      - name: Configure NebulaStream
-        shell: bash
-        run: |
-          log_level_arg=()
-          if [[ "${{ matrix.build_type }}" == "RelWithDebInfo" ]]; then
-            log_level_arg=(-DNES_LOG_LEVEL=DEBUG)
-          fi
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.cmake_args.arg }} "${log_level_arg[@]}"
-      - name: Build NebulaStream
-        shell: bash
-        run: |
-          source .github/.env/test-${{matrix.sanitizer}}.env
-          cmake --build build -j -- -k 0
-      - name: Run Tests
-        # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
-        shell: bash
-        run: |
-          source .github/.env/test-${{matrix.sanitizer}}.env
-          ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200
-      - name: Upload Test Logs on Failure
-        uses: actions/upload-artifact@v4
-        # Upload all log and stats files if any of the tests has failed.
-        if: ${{ failure() && !github.event.act }}
-        with:
-          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}-${{matrix.cmake_args.name}}
-          path: |
-            build/**/*.log
-            build/**/*.stats
-      - name: Upload Test Summary
-        uses: actions/upload-artifact@v4
-        if: ${{ failure() && !cancelled() && !github.event.act }}
-        with:
-          name: junit-${{ matrix.cmake_args.name }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
-          path: /junit.xml
 
   large-tests:
     name: "Large Scale Tests (${{ matrix.name }})"
