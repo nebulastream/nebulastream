@@ -94,16 +94,20 @@ public:
 
     StatementOutputFormat bindFormat(AntlrSQLParser::ShowFormatContext* formatAST) const
     {
-        if (formatAST->TEXT() != nullptr)
+        /// `TEXT` and `JSON` are not lexer keywords — they tokenize as IDENTIFIER
+        /// so that they can also be used as user-defined type names elsewhere.
+        if (const auto text = formatAST->IDENTIFIER()->getText(); text == "TEXT")
         {
             return StatementOutputFormat::TEXT;
         }
-        if (formatAST->JSON() != nullptr)
+        else if (text == "JSON")
         {
             return StatementOutputFormat::JSON;
         }
-        INVARIANT(false, "Invalid format type, is the binder out of sync or was a nullptr passed?");
-        std::unreachable();
+        else
+        {
+            throw InvalidQuerySyntax("Unsupported show format '{}'; expected TEXT or JSON", text);
+        }
     }
 
     CreateLogicalSourceStatement

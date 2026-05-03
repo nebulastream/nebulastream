@@ -29,8 +29,6 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/LogicalType.hpp>
-#include <DataTypes/LogicalTypeBridge.hpp>
-#include <DataTypes/PhysicalLayout.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -44,7 +42,6 @@
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <LogicalTypeLoweringRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -61,65 +58,6 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
         builder << " as " << projection.first->getFieldName();
     }
     return builder.str();
-}
-
-/// Look up the physical layout for a logical type. Compound types resolve to
-/// multiple primitive components; primitive types fall back to a single
-/// component lowered via the `toPhysical` bridge.
-///
-/// TODO(datatype-migration, phase-7): the flattening of compound LogicalType
-/// fields belongs at the lowering boundary (when we generate the physical
-/// runtime schema), not at logical-projection time. For the prototype this
-/// stays here so that systests that declare flat sink schemas keep working.
-PhysicalLayout resolveLayout(const LogicalType& logicalType)
-{
-    if (auto layoutOpt = LogicalTypeLoweringRegistry::instance().create(
-            std::string(logicalType.getName()), LogicalTypeLoweringRegistryArguments{.logicalType = logicalType}))
-    {
-        return std::move(layoutOpt).value();
-    }
-    if (const auto physical = toPhysical(logicalType); physical.has_value())
-    {
-        return PhysicalLayout{.components = {{.suffix = "", .physicalType = *physical}}};
-    }
-    INVARIANT(
-        false,
-        "No physical layout registered for logical type '{}'. Add an entry to LogicalTypeLoweringRegistry.",
-        logicalType.getName());
-    std::unreachable();
-}
-
-/// Map a primitive physical DataType back into the prototype's reduced
-/// LogicalType vocabulary. The flattened component types must use the
-/// user-facing names ("INTEGER", "FLOAT", "BOOL", "TEXT"), not the magic-enum
-/// names of the underlying DataType::Type ("INT64", "FLOAT64", ...).
-LogicalType prototypeLogicalTypeFromPhysical(const DataType& physicalType)
-{
-    const auto nullable = physicalType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE;
-    using Type = DataType::Type;
-    switch (physicalType.type)
-    {
-        case Type::INT8:
-        case Type::INT16:
-        case Type::INT32:
-        case Type::INT64:
-        case Type::UINT8:
-        case Type::UINT16:
-        case Type::UINT32:
-        case Type::UINT64:
-            return LogicalType{"INTEGER", {}, nullable};
-        case Type::FLOAT32:
-        case Type::FLOAT64:
-            return LogicalType{"FLOAT", {}, nullable};
-        case Type::BOOLEAN:
-            return LogicalType{"BOOL", {}, nullable};
-        case Type::CHAR:
-        case Type::VARSIZED:
-            return LogicalType{"TEXT", {}, nullable};
-        case Type::UNDEFINED:
-            return LogicalType{"UNDEFINED", {}, nullable};
-    }
-    return LogicalType{"UNDEFINED", {}, nullable};
 }
 }
 
@@ -235,11 +173,10 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
         copy.projections.emplace_back(std::move(identifier), std::move(inferredFunction));
     }
 
-    /// Resolve the output schema. Each projected expression contributes one or
-    /// more fields, depending on its result LogicalType's PhysicalLayout:
-    /// scalar types lower to one field with empty suffix (so the field name is
-    /// unchanged); compound types lower to N fields with suffix names (Point
-    /// `p` -> `p_X`, `p_Y`, `p_Z`).
+    /// Output schema carries one field per projection, stamped with the
+    /// projected expression's LogicalType. Compound types (Point, ...) stay
+    /// compound here; flattening to primitives happens at the lowering
+    /// boundary (see SchemaLowering and LowerToPhysicalSink).
     Schema resolved;
     if (asterisk)
     {
@@ -248,11 +185,7 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     for (const auto& [identifier, function] : copy.projections)
     {
         INVARIANT(identifier.has_value(), "Projection identifier must be set after inference");
-        const auto layout = resolveLayout(function.getLogicalType());
-        for (const auto& component : layout.components)
-        {
-            resolved.addField(identifier->getFieldName() + component.suffix, prototypeLogicalTypeFromPhysical(component.physicalType));
-        }
+        resolved.addField(identifier->getFieldName(), function.getLogicalType());
     }
     copy.outputSchema = std::move(resolved);
     return copy;

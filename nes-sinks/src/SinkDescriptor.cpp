@@ -62,6 +62,13 @@ std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
     return schema;
 }
 
+SinkDescriptor SinkDescriptor::withSchema(Schema replacement) const
+{
+    auto copy = *this;
+    copy.schema = std::make_shared<const Schema>(std::move(replacement));
+    return copy;
+}
+
 std::string SinkDescriptor::getFormatType() const
 {
     try

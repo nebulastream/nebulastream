@@ -51,6 +51,7 @@
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <DataTypes/SchemaLowering.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -260,7 +261,11 @@ public:
         }
         else
         {
-            sinkOutputSchema = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).getOutputSchema();
+            /// Sink declarations are logical: a compound type like `Point` here
+            /// expands at the lowering boundary into primitive columns in the
+            /// CSV. The result-checker compares against the file's flat header,
+            /// so lower the declared schema before stashing it.
+            sinkOutputSchema = lowerSchema(this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).getOutputSchema());
         }
     }
 

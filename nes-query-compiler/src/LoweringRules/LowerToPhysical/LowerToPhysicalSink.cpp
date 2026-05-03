@@ -15,9 +15,11 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalSink.hpp>
 
 #include <memory>
+#include <DataTypes/SchemaLowering.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
@@ -35,11 +37,21 @@ LoweringRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOpe
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-    auto physicalOperator = SinkPhysicalOperator(sink->getSinkDescriptor().value()); /// NOLINT(bugprone-unchecked-optional-access)
+
+    /// Lower the user-declared logical sink schema (which may carry compound
+    /// types like `Point`) to a primitive-only schema for the runtime side.
+    /// FileSink writes its CSV header from this schema and the runtime tuple
+    /// buffer consumes flat primitive fields, so both must see the lowered
+    /// version.
+    const auto loweredSinkSchema = lowerSchema(*sink->getSinkDescriptor()->getSchema()); /// NOLINT(bugprone-unchecked-optional-access)
+    const auto loweredDescriptor = sink->getSinkDescriptor()->withSchema(loweredSinkSchema); /// NOLINT(bugprone-unchecked-optional-access)
+    const auto loweredInputSchema = lowerSchema(sink.getInputSchemas()[0]);
+
+    auto physicalOperator = SinkPhysicalOperator(loweredDescriptor);
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        sink.getInputSchemas()[0],
-        sink.getOutputSchema(),
+        loweredInputSchema,
+        loweredSinkSchema,
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

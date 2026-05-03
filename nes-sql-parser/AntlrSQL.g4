@@ -77,7 +77,7 @@ createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: identifierChain typeDefinition nullableDefinition?;
 
-typeDefinition: DATA_TYPE | TEXT;
+typeDefinition: IDENTIFIER;
 nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
@@ -94,7 +94,7 @@ dropSink: SINK;
 dropFilter: attr=strictIdentifier EQ value=constant;
 
 showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT showFormat)?;
-showFormat: TEXT | JSON;
+showFormat: IDENTIFIER;
 showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
@@ -495,8 +495,6 @@ OFFSET: 'OFFSET' | 'offset';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
-JSON: 'JSON';
-TEXT: 'TEXT';
 EXPLAIN: 'EXPLAIN' | 'explain';
 
 ///--NebulaSQL-KEYWORD-LIST-END
@@ -568,22 +566,6 @@ SINKS: 'SINKS';
 SOURCES: 'SOURCES' | 'sources';
 QUERIES: 'QUERIES' | 'queries';
 
-
-DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
-
-INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
-INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
-INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
-TINY_INT_TYPE: 'TINYINT';
-SMALL_INT_TYPE: 'SMALLINT';
-NORMAL_INT_TYPE: 'INT' | 'INTEGER';
-BIG_INT_TYPE: 'BIGINT';
-FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64' | 'FLOAT';
-CHAR_TYPE: 'CHAR';
-VARSIZED_TYPE: 'VARSIZED';
-BOOLEAN_TYPE: 'BOOLEAN' | 'BOOL';
-
-UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
 
 
 

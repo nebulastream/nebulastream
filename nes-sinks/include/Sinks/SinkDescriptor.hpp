@@ -59,6 +59,10 @@ public:
     [[nodiscard]] std::string getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+    /// Return a copy of this descriptor with `schema` replaced by `replacement`.
+    /// Used by the lowering rule to swap the user-declared logical schema for
+    /// the primitive-lowered schema before the descriptor reaches the runtime.
+    [[nodiscard]] SinkDescriptor withSchema(Schema replacement) const;
     [[nodiscard]] std::string getSinkName() const;
     [[nodiscard]] bool isInline() const;
     [[nodiscard]] Host getHost() const;

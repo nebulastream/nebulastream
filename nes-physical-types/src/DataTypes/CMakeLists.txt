@@ -14,6 +14,7 @@ add_source_files(nes-physical-types
         DataType.cpp
         DataTypeProvider.cpp
         PhysicalLayout.cpp
+        SchemaLowering.cpp
         )
 
 # Register plugins

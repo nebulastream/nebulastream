@@ -12,9 +12,9 @@ ATTACH INLINE
 1.0,2.0,3.0
 4.0,5.0,6.0
 
-CREATE SINK out(a_x FLOAT NOT NULL, a_y FLOAT NOT NULL, a_z FLOAT NOT NULL,
-                b_x FLOAT NOT NULL, b_y FLOAT NOT NULL, b_z FLOAT NOT NULL,
-                c_x FLOAT NOT NULL, c_y FLOAT NOT NULL, c_z FLOAT NOT NULL) TYPE File;
+CREATE SINK out(a Point NOT NULL,
+                b Point NOT NULL,
+                c Point NOT NULL) TYPE File;
 
 SELECT
     Point(x, y, z) + Point(Float(10.0), Float(20.0), Float(30.0)) AS a,

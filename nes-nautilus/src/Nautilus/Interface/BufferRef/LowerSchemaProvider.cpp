@@ -24,6 +24,7 @@
 
 #include <DataTypes/LogicalTypeBridge.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaLowering.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/OutputFormatterBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
@@ -44,11 +45,15 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
     const std::string& outputFormatterType,
     const std::unordered_map<std::string, std::string>& config)
 {
+    /// Compound logical types (e.g. `Point`) reach this point when an upstream
+    /// operator has not been lowered yet. Spread them into primitive components
+    /// here so the formatter sees one column per physical field.
+    const auto flat = NES::lowerSchema(schema);
     std::vector<OutputFormatterBufferRef::Field> fields;
     std::vector<Record::RecordFieldIdentifier> fieldNames;
-    fields.reserve(schema.getNumberOfFields());
-    fieldNames.reserve(schema.getNumberOfFields());
-    for (const auto& field : schema)
+    fields.reserve(flat.getNumberOfFields());
+    fieldNames.reserve(flat.getNumberOfFields());
+    for (const auto& field : flat)
     {
         fields.emplace_back(field.name, toPhysical(field.logicalType).value());
         fieldNames.emplace_back(field.name);
@@ -71,15 +76,19 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
 {
     PRECONDITION(schema.hasFields(), "We can not lower an empty schema!");
 
+    /// Spread compound logical types (e.g. `Point`) into primitive components
+    /// before laying out the buffer. Idempotent for already-flat schemas.
+    const auto flat = NES::lowerSchema(schema);
+
     /// For now, we assume that the fields lie in the exact same order as in the Schema. Later on, we can have a separate optimizer phase
     /// that can change the order, alignment or even the datatype implementation, e.g., u32 instead of u8.
     switch (layoutType)
     {
         case MemoryLayoutType::ROW_LAYOUT: {
             std::vector<RowTupleBufferRef::Field> fields;
-            fields.reserve(schema.getNumberOfFields());
+            fields.reserve(flat.getNumberOfFields());
             uint64_t fieldOffset = 0;
-            for (const auto& field : schema)
+            for (const auto& field : flat)
             {
                 const auto physical = toPhysical(field.logicalType).value();
                 fields.emplace_back(field.name, physical, fieldOffset);
@@ -96,17 +105,17 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
 
         case MemoryLayoutType::COLUMNAR_LAYOUT: {
             const auto tupleSize = std::accumulate(
-                schema.begin(),
-                schema.end(),
+                flat.begin(),
+                flat.end(),
                 0UL,
                 [](auto size, const Schema::Field& field) { return size + toPhysical(field.logicalType).value().getSizeInBytesWithNull(); });
             INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
 
             const uint64_t capacity = bufferSize / tupleSize;
             std::vector<ColumnTupleBufferRef::Field> fields;
-            fields.reserve(schema.getNumberOfFields());
+            fields.reserve(flat.getNumberOfFields());
             uint64_t columnOffset = 0;
-            for (const auto& field : schema)
+            for (const auto& field : flat)
             {
                 const auto physical = toPhysical(field.logicalType).value();
                 fields.emplace_back(field.name, physical, physical.getSizeInBytesWithNull(), columnOffset);

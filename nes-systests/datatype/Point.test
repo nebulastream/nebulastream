@@ -1,10 +1,10 @@
 # name: datatype/Point.test
 # description: End-to-end test for the prototype Point logical type. Exercises
-#              SQL parsing of Point/PointAdd/PointDistance/PointScale; type
-#              inference flattening compound projection outputs to primitive
-#              schema fields (Point p -> p_X, p_Y, p_Z); physical functions
-#              that consume and produce compound `Value`s; and `Record::write`
-#              spread of compound results into primitive sink columns.
+#              SQL parsing of Point/PointAdd/PointDistance/PointScale; the
+#              logical projection emits compound LogicalType outputs (`p Point`,
+#              `s Point`); the sink declaration mirrors that compound shape;
+#              flattening to primitive sink columns happens at the lowering
+#              boundary in `LowerToPhysicalSink`.
 # groups: [DataType, LogicalType, Point]
 
 CREATE LOGICAL SOURCE points(x FLOAT NOT NULL, y FLOAT NOT NULL, z FLOAT NOT NULL);
@@ -13,9 +13,9 @@ ATTACH INLINE
 1.0,2.0,3.0
 4.0,5.0,6.0
 
-CREATE SINK out(p_x FLOAT NOT NULL, p_y FLOAT NOT NULL, p_z FLOAT NOT NULL,
+CREATE SINK out(p Point NOT NULL,
                 d FLOAT NOT NULL,
-                s_x FLOAT NOT NULL, s_y FLOAT NOT NULL, s_z FLOAT NOT NULL) TYPE File;
+                s Point NOT NULL) TYPE File;
 
 # Full mix: PointAdd produces compound, PointDistance produces scalar from
 # compound inputs, PointScale broadcasts a scalar over compound components.
