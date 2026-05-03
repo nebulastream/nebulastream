@@ -23,6 +23,8 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/LogicalType.hpp>
+#include <DataTypes/PhysicalLayout.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
@@ -58,6 +60,27 @@ void to_json(nlohmann::json& jsonOutput, const Schema::Field& str)
 }
 
 void to_json(nlohmann::json& jsonOutput, const Schema& schema)
+{
+    jsonOutput = nlohmann::json{schema.getFields()};
+}
+
+void to_json(nlohmann::json& jsonOutput, const PhysicalType& physicalType)
+{
+    std::vector<nlohmann::json> componentEntries;
+    componentEntries.reserve(physicalType.components.size());
+    for (const auto& component : physicalType.components)
+    {
+        componentEntries.push_back(nlohmann::json{{"suffix", component.suffix}, {"type", magic_enum::enum_name(component.type)}});
+    }
+    jsonOutput = nlohmann::json{{"components", componentEntries}, {"nullable", physicalType.nullable}};
+}
+
+void to_json(nlohmann::json& jsonOutput, const PhysicalSchema::Field& field)
+{
+    jsonOutput = nlohmann::json{{"name", field.name}, {"type", field.physicalType}};
+}
+
+void to_json(nlohmann::json& jsonOutput, const PhysicalSchema& schema)
 {
     jsonOutput = nlohmann::json{schema.getFields()};
 }

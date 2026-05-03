@@ -24,6 +24,9 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/LogicalType.hpp>
+#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
@@ -180,7 +183,9 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
         NES::Schema schema;
         for (const auto& schemaField : schemaFields)
         {
-            schema.addField(NES::toUpperCase(schemaField), NES::DataType::Type::UINT64);
+            schema.addField(
+                NES::toUpperCase(schemaField),
+                NES::LogicalType{NES::primitiveLogicalTypeName(NES::DataType::Type::UINT64), {}, NES::Nullable::NOT_NULLABLE});
         }
 
         statements.emplace_back(NES::CreateLogicalSourceStatement{.name = NES::toUpperCase(name), .schema = schema});
@@ -200,7 +205,9 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
         NES::Schema schema;
         for (const auto& schemaField : schemaFields)
         {
-            schema.addField(NES::toUpperCase(schemaField), NES::DataType::Type::UINT64);
+            schema.addField(
+                NES::toUpperCase(schemaField),
+                NES::LogicalType{NES::primitiveLogicalTypeName(NES::DataType::Type::UINT64), {}, NES::Nullable::NOT_NULLABLE});
         }
 
         statements.emplace_back(NES::CreateSinkStatement{

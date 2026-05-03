@@ -28,7 +28,7 @@
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
@@ -87,11 +87,14 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     const auto fieldNamesKey = inputSchemaKey.getFieldNames();
     const auto fieldNamesValue = inputSchemaValue.getFieldNames();
     inputSchema = inputSchemaKey;
-    inputSchema.appendFieldsFromOtherSchema(inputSchemaValue);
+    for (const auto& field : inputSchemaValue)
+    {
+        inputSchema.addField(field.name, field.physicalType);
+    }
 
     /// Setting the hash map configurations
-    keySize = inputSchemaKey.getSizeOfSchemaInBytes();
-    valueSize = inputSchemaValue.getSizeOfSchemaInBytes();
+    keySize = physicalTupleByteSize(inputSchemaKey);
+    valueSize = physicalTupleByteSize(inputSchemaValue);
     entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     entriesPerPage = params.pageSize / entrySize;
 
@@ -103,7 +106,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     constexpr auto minimumBuffers = 4000UL;
     constexpr auto callsToCreateMonotonicValues = 3;
     const auto bufferNeeded
-        = callsToCreateMonotonicValues * ((inputSchema.getSizeOfSchemaInBytes() * params.numberOfItems) / bufferSize + 1);
+        = callsToCreateMonotonicValues * ((physicalTupleByteSize(inputSchema) * params.numberOfItems) / bufferSize + 1);
     bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
@@ -363,10 +366,10 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     /// Calling now the compiled function to write all values of the map to the output buffer.
     const auto numberOfInputTuples = std::accumulate(
         inputBuffers.begin(), inputBuffers.end(), 0, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema.getSizeOfSchemaInBytes());
+    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * physicalTupleByteSize(inputSchema));
     if (not bufferOutputOpt)
     {
-        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema.getSizeOfSchemaInBytes());
+        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * physicalTupleByteSize(inputSchema));
         ASSERT_TRUE(false);
     }
     auto bufferOutput = bufferOutputOpt.value();

@@ -25,6 +25,9 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalType.hpp>
+#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -57,8 +60,8 @@ TEST_F(SourceCatalogTest, AddInspectLogicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::NOT_NULLABLE});
+    schema.addField("intField", LogicalType{primitiveLogicalTypeName(DataType::Type::INT32), {}, Nullable::NOT_NULLABLE});
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -69,8 +72,8 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 {
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::NOT_NULLABLE});
+    schema.addField("intField", LogicalType{primitiveLogicalTypeName(DataType::Type::INT32), {}, Nullable::NOT_NULLABLE});
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -118,8 +121,8 @@ TEST_F(SourceCatalogTest, AddInvalidPhysicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::NOT_NULLABLE});
+    schema.addField("intField", LogicalType{primitiveLogicalTypeName(DataType::Type::INT32), {}, Nullable::NOT_NULLABLE});
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -131,8 +134,8 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::NOT_NULLABLE});
+    schema.addField("intField", LogicalType{primitiveLogicalTypeName(DataType::Type::INT32), {}, Nullable::NOT_NULLABLE});
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
@@ -170,8 +173,8 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
     constexpr unsigned int concurrentLogicalSourceNames = 3;
     auto sourceCatalog = SourceCatalog{};
     auto schema = Schema{};
-    schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
+    schema.addField("stringField", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::NOT_NULLABLE});
+    schema.addField("intField", LogicalType{primitiveLogicalTypeName(DataType::Type::INT32), {}, Nullable::NOT_NULLABLE});
 
     std::atomic_uint64_t successfulPhysicalAdds{0};
     std::atomic_uint64_t failedPhysicalAdds{0};

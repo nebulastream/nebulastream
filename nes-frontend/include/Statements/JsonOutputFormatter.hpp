@@ -23,6 +23,8 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/PhysicalLayout.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
@@ -52,6 +54,12 @@ void to_json(nlohmann::json& jsonOutput, const DataType& dataType);
 void to_json(nlohmann::json& jsonOutput, const Schema::Field& str);
 
 void to_json(nlohmann::json& jsonOutput, const Schema& schema);
+
+void to_json(nlohmann::json& jsonOutput, const PhysicalType& physicalType);
+
+void to_json(nlohmann::json& jsonOutput, const PhysicalSchema::Field& field);
+
+void to_json(nlohmann::json& jsonOutput, const PhysicalSchema& schema);
 
 void to_json(nlohmann::json& jsonOutput, const google::protobuf::MessageLite& windowInfos);
 

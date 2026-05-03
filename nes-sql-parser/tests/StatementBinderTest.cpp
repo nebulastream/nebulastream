@@ -24,6 +24,9 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalType.hpp>
+#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
@@ -106,9 +109,9 @@ TEST_F(StatementBinderTest, Nullable)
     const auto [actualSource] = createdSourceResult.value();
     Schema expectedSchema{};
     expectedSchema.addField(
-        "testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32, Nullable::IS_NULLABLE));
+        "testSource$attribute1", LogicalType{primitiveLogicalTypeName(DataType::Type::UINT32), {}, Nullable::IS_NULLABLE});
     expectedSchema.addField(
-        "testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, Nullable::NOT_NULLABLE));
+        "testSource$attribute2", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::NOT_NULLABLE});
     ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
@@ -138,8 +141,8 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
     ASSERT_EQ(expectedSinkConfig, inlineSinkOperator->getSinkConfig());
 
     Schema schema;
-    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64, Nullable::IS_NULLABLE));
-    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, Nullable::IS_NULLABLE));
+    schema.addField("ID", LogicalType{primitiveLogicalTypeName(DataType::Type::UINT64), {}, Nullable::IS_NULLABLE});
+    schema.addField("TEXT", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::IS_NULLABLE});
     ASSERT_EQ(schema, inlineSinkOperator->getSchema());
 }
 
@@ -171,8 +174,8 @@ TEST_F(StatementBinderTest, InlineSourceQuery)
     ASSERT_EQ(expectedParserConfig, inlineSourceOperator->getParserConfig());
 
     Schema schema;
-    schema.addField("ID", DataTypeProvider::provideDataType(DataType::Type::UINT64, Nullable::IS_NULLABLE));
-    schema.addField("TEXT", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, Nullable::IS_NULLABLE));
+    schema.addField("ID", LogicalType{primitiveLogicalTypeName(DataType::Type::UINT64), {}, Nullable::IS_NULLABLE});
+    schema.addField("TEXT", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::IS_NULLABLE});
     ASSERT_EQ(schema, inlineSourceOperator->getSchema());
 }
 
@@ -188,8 +191,10 @@ TEST_F(StatementBinderTest, BindQuotedIdentifiers)
     const auto [actualSource] = createdSourceResult.value();
     Schema expectedSchema{};
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    expectedSchema.addField("testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    expectedSchema.addField(
+        "testSource$attribute1", LogicalType{primitiveLogicalTypeName(DataType::Type::UINT32), {}, Nullable::NOT_NULLABLE});
+    expectedSchema.addField(
+        "testSource$attribute2", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::NOT_NULLABLE});
     ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
@@ -206,8 +211,10 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const auto [actualSource] = createdSourceResult.value();
     Schema expectedSchema{};
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    expectedSchema.addField(
+        "TESTSOURCE$ATTRIBUTE1", LogicalType{primitiveLogicalTypeName(DataType::Type::UINT32), {}, Nullable::NOT_NULLABLE});
+    expectedSchema.addField(
+        "TESTSOURCE$ATTRIBUTE2", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::NOT_NULLABLE});
     ASSERT_EQ(actualSource.getLogicalSourceName(), "TESTSOURCE");
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 
@@ -258,8 +265,8 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
 {
     Schema schema{};
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    schema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32));
-    schema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    schema.addField("ATTRIBUTE1", LogicalType{primitiveLogicalTypeName(DataType::Type::UINT32), {}, Nullable::NOT_NULLABLE});
+    schema.addField("ATTRIBUTE2", LogicalType{primitiveLogicalTypeName(DataType::Type::VARSIZED), {}, Nullable::NOT_NULLABLE});
     const auto logicalSourceOpt = sourceCatalog->addLogicalSource("TESTSOURCE", schema);
     ASSERT_TRUE(logicalSourceOpt.has_value());
 }
@@ -274,9 +281,9 @@ TEST_F(StatementBinderTest, BindCreateSink)
     const auto createdSinkResult = sinkStatementHandler->apply(std::get<CreateSinkStatement>(*statement));
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
-    Schema expectedSchema{};
-    expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, Nullable::IS_NULLABLE));
-    expectedSchema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, Nullable::IS_NULLABLE));
+    PhysicalSchema expectedSchema{};
+    expectedSchema.addField("ATTRIBUTE1", DataType::Type::UINT32, true);
+    expectedSchema.addField("ATTRIBUTE2", DataType::Type::VARSIZED, true);
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
@@ -307,10 +314,9 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     const auto createdSinkResult = sinkStatementHandler->apply(std::get<CreateSinkStatement>(*statement));
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
-    Schema expectedSchema{};
-    expectedSchema.addField(
-        "TESTSOURCE$ATTRIBUTE1", DataTypeProvider::provideDataType(DataType::Type::UINT32, Nullable::IS_NULLABLE));
-    expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    PhysicalSchema expectedSchema{};
+    expectedSchema.addField("TESTSOURCE$ATTRIBUTE1", DataType::Type::UINT32, true);
+    expectedSchema.addField("TESTSOURCE$ATTRIBUTE2", DataType::Type::VARSIZED, false);
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");

@@ -26,6 +26,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalType.hpp>
+#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
@@ -64,9 +67,9 @@ public:
     static Schema createSchema(const std::string& prefix)
     {
         Schema schema;
-        schema.addField(prefix + ".id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField(prefix + ".value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField(prefix + ".ts", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+        schema.addField(prefix + ".id", LogicalType{primitiveLogicalTypeName(DataType::Type::UINT64), {}, Nullable::NOT_NULLABLE});
+        schema.addField(prefix + ".value", LogicalType{primitiveLogicalTypeName(DataType::Type::UINT64), {}, Nullable::NOT_NULLABLE});
+        schema.addField(prefix + ".ts", LogicalType{primitiveLogicalTypeName(DataType::Type::UINT64), {}, Nullable::NOT_NULLABLE});
         return schema;
     }
 

@@ -17,7 +17,8 @@
 
 #include <gtest/gtest.h>
 
-#include <DataTypes/DataType.hpp>
+#include <DataTypes/LogicalType.hpp>
+#include <DataTypes/Nullable.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -32,7 +33,9 @@ namespace NES
 class ProjectionLogicalOperatorTest : public ::testing::Test
 {
 protected:
-    Schema schema = Schema{}.addField("stream.a", DataType::Type::UINT64).addField("stream.b", DataType::Type::UINT64);
+    Schema schema = Schema{}
+                        .addField("stream.a", LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE})
+                        .addField("stream.b", LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE});
 };
 
 /// Two projections with the same explicit alias must be rejected with CannotInferSchema (code 2003).

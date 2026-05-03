@@ -33,6 +33,8 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalTypeBridge.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
@@ -62,7 +64,7 @@
 namespace NES::InputFormatterTestUtil
 {
 
-Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
+PhysicalSchema createSchema(const std::vector<TestDataTypes>& testDataTypes)
 {
     const auto fieldNamesOther = testDataTypes | NES::views::enumerate
         | std::views::transform([](const auto& idxDataTypePair) { return fmt::format("Field_{}", std::get<0>(idxDataTypePair)); })
@@ -71,51 +73,51 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
     return createSchema(testDataTypes, fieldNamesOther);
 }
 
-Schema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<std::string>& testFieldNames)
+PhysicalSchema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<std::string>& testFieldNames)
 {
-    auto schema = Schema{};
+    auto schema = PhysicalSchema{};
     for (const auto& [fieldNumber, dataType] : testDataTypes | NES::views::enumerate)
     {
         switch (dataType)
         {
             case TestDataTypes::UINT8:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT8));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::UINT8);
                 break;
             case TestDataTypes::UINT16:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT16));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::UINT16);
                 break;
             case TestDataTypes::UINT32:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT32));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::UINT32);
                 break;
             case TestDataTypes::UINT64:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT64));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::UINT64);
                 break;
             case TestDataTypes::INT8:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT8));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::INT8);
                 break;
             case TestDataTypes::INT16:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT16));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::INT16);
                 break;
             case TestDataTypes::INT32:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT32));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::INT32);
                 break;
             case TestDataTypes::INT64:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT64));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::INT64);
                 break;
             case TestDataTypes::FLOAT32:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::FLOAT32));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::FLOAT32);
                 break;
             case TestDataTypes::FLOAT64:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::FLOAT64);
                 break;
             case TestDataTypes::BOOLEAN:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::BOOLEAN));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::BOOLEAN);
                 break;
             case TestDataTypes::CHAR:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::CHAR));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::CHAR);
                 break;
             case TestDataTypes::VARSIZED:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+                schema.addField(testFieldNames.at(fieldNumber), DataType::Type::VARSIZED);
                 break;
         }
     }
@@ -174,13 +176,28 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
-    const Schema& schema,
+    const PhysicalSchema& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
     const size_t numberOfRequiredSourceBuffers)
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{
         {"file_path", filePath}, {"max_inflight_buffers", std::to_string(numberOfRequiredSourceBuffers)}};
-    const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
+
+    /// `addLogicalSource` consumes a logical `Schema`. Bridge each scalar physical
+    /// field back to the matching primitive `LogicalType` for the catalog entry.
+    auto logicalSchema = Schema{};
+    for (const auto& field : schema.getFields())
+    {
+        INVARIANT(
+            field.physicalType.isScalar(),
+            "InputFormatter test util only supports scalar physical fields, got: {}",
+            field.physicalType);
+        const auto& component = field.physicalType.components.front();
+        const auto dataType = DataTypeProvider::provideDataType(
+            component.type, field.physicalType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE);
+        logicalSchema.addField(field.name, fromPhysical(dataType));
+    }
+    const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", logicalSchema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
         logicalSource.value(), "File", Host("localhost"), std::move(fileSourceConfiguration), {{"type", "CSV"}});
@@ -203,7 +220,7 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const std::unordered_map<std::string, std::string>& parserConfiguration,
-    const Schema& schema,
+    const PhysicalSchema& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
     const bool isCompiled)
@@ -214,7 +231,7 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const ParserConfig& parserConfiguration,
-    const Schema& schema,
+    const PhysicalSchema& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
     const bool isCompiled)

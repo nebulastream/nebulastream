@@ -27,6 +27,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalType.hpp>
+#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -58,47 +61,63 @@ public:
 
     void SetUp() override { BaseUnitTest::SetUp(); }
 
-    static Schema createSchema()
+    static Schema createLogicalSchema()
     {
         Schema schema;
-        schema.addField("test.id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField("test.value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+        schema.addField("test.id", LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE});
+        schema.addField("test.value", LogicalType{"INTEGER", {}, Nullable::NOT_NULLABLE});
         return schema;
+    }
+
+    static PhysicalSchema createPhysicalSchema()
+    {
+        return PhysicalSchema{}.addField("test.id", DataType::Type::UINT64).addField("test.value", DataType::Type::UINT64);
     }
 
     /// Creates a PhysicalOperatorWrapper holding a SourcePhysicalOperator.
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
-        auto schema = createSchema();
-        auto descriptor = sourceCatalog.getInlineSource("File", schema, Host("localhost"), {{"type", "CSV"}}, {{"file_path", "/dev/null"}});
+        auto descriptor = sourceCatalog.getInlineSource(
+            "File", createLogicalSchema(), Host("localhost"), {{"type", "CSV"}}, {{"file_path", "/dev/null"}});
         EXPECT_TRUE(descriptor.has_value());
         auto sourceOp = SourcePhysicalOperator(
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
             OriginId(nextOriginId++));
+        auto physicalSchema = createPhysicalSchema();
         return std::make_shared<PhysicalOperatorWrapper>(
-            PhysicalOperator{sourceOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::SCAN);
+            PhysicalOperator{sourceOp},
+            physicalSchema,
+            physicalSchema,
+            MemoryLayoutType::ROW_LAYOUT,
+            MemoryLayoutType::ROW_LAYOUT,
+            PipelineLocation::SCAN);
     }
 
     /// Creates a PhysicalOperatorWrapper holding a SinkPhysicalOperator.
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
-        auto schema = createSchema();
-        auto descriptor = sinkCatalog.getInlineSink(schema, "Print", Host("localhost"), {{"output_format", "CSV"}}, {});
+        auto descriptor = sinkCatalog.getInlineSink(createLogicalSchema(), "Print", Host("localhost"), {{"output_format", "CSV"}}, {});
         EXPECT_TRUE(descriptor.has_value());
         auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
+        auto physicalSchema = createPhysicalSchema();
         return std::make_shared<PhysicalOperatorWrapper>(
-            PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
+            PhysicalOperator{sinkOp},
+            physicalSchema,
+            physicalSchema,
+            MemoryLayoutType::ROW_LAYOUT,
+            MemoryLayoutType::ROW_LAYOUT,
+            PipelineLocation::EMIT);
     }
 
     /// Creates a PhysicalOperatorWrapper holding a UnionPhysicalOperator.
     static std::shared_ptr<PhysicalOperatorWrapper> makeUnionWrapper()
     {
-        auto schema = createSchema();
         auto unionOp = UnionPhysicalOperator();
+        auto physicalSchema = createPhysicalSchema();
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{unionOp},
-            schema,
-            schema,
+            physicalSchema,
+            physicalSchema,
             MemoryLayoutType::ROW_LAYOUT,
             MemoryLayoutType::ROW_LAYOUT,
             PipelineLocation::INTERMEDIATE);

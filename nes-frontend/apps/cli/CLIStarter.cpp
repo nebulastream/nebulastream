@@ -34,6 +34,9 @@
 #include <unistd.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/LogicalType.hpp>
+#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> ///NOLINT(misc-include-cleaner)
@@ -539,7 +542,12 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         NES::Schema schema;
         for (const auto& schemaField : schemaFields)
         {
-            schema.addField(schemaField.name, schemaField.type);
+            schema.addField(
+                schemaField.name,
+                NES::LogicalType{
+                    NES::primitiveLogicalTypeName(schemaField.type.type),
+                    {},
+                    schemaField.type.nullable ? NES::Nullable::IS_NULLABLE : NES::Nullable::NOT_NULLABLE});
         }
 
         statements.emplace_back(NES::CreateLogicalSourceStatement{.name = name, .schema = schema});
@@ -559,7 +567,12 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         NES::Schema schema;
         for (const auto& schemaField : schemaFields)
         {
-            schema.addField(schemaField.name, schemaField.type);
+            schema.addField(
+                schemaField.name,
+                NES::LogicalType{
+                    NES::primitiveLogicalTypeName(schemaField.type.type),
+                    {},
+                    schemaField.type.nullable ? NES::Nullable::IS_NULLABLE : NES::Nullable::NOT_NULLABLE});
         }
 
         statements.emplace_back(NES::CreateSinkStatement{

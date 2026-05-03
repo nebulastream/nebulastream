@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
@@ -72,8 +73,8 @@ using SourceDescriptorOutputRowType
 constexpr std::array<std::string_view, 7> sourceDescriptorOutputColumns{
     "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config", "host"};
 
-using SinkDescriptorOutputRowType
-    = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, Host, std::unordered_map<std::string, std::string>>;
+using SinkDescriptorOutputRowType = std::
+    tuple<std::string, PhysicalSchema, std::string, NES::DescriptorConfig::Config, Host, std::unordered_map<std::string, std::string>>;
 constexpr std::array<std::string_view, 6> sinkDescriptorOutputColumns{
     "sink_name", "schema", "sink_type", "sink_config", "host", "format_config"};
 

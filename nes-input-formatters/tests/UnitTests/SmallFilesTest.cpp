@@ -30,7 +30,10 @@
 #include <vector>
 
 #include <Configuration/WorkerConfiguration.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -50,17 +53,21 @@
 
 namespace
 {
-std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema& schema)
+std::vector<size_t> getVarSizedFieldOffsets(const NES::PhysicalSchema& schema)
 {
     size_t priorFieldOffset = 0;
     std::vector<size_t> varSizedFieldOffsets;
     for (const auto& field : schema)
     {
-        if (field.logicalType.isType(NES::DataType::Type::VARSIZED))
+        const auto nullable = field.physicalType.nullable ? NES::Nullable::IS_NULLABLE : NES::Nullable::NOT_NULLABLE;
+        for (const auto& component : field.physicalType.components)
         {
-            varSizedFieldOffsets.emplace_back(priorFieldOffset);
+            if (component.type == NES::DataType::Type::VARSIZED)
+            {
+                varSizedFieldOffsets.emplace_back(priorFieldOffset);
+            }
+            priorFieldOffset += NES::DataTypeProvider::provideDataType(component.type, nullable).getSizeInBytesWithNull();
         }
-        priorFieldOffset += field.logicalType.getSizeInBytesWithNull();
     }
     return varSizedFieldOffsets;
 }
@@ -165,7 +172,7 @@ public:
 
     struct SetupResult
     {
-        Schema schema;
+        PhysicalSchema schema;
         MemoryLayoutType memoryLayoutType;
         size_t sizeOfFormattedBuffers;
         size_t numberOfExpectedRawBuffers;
@@ -204,7 +211,7 @@ public:
         }(currentTestFile, testDirPath, testConfig.fileEnding);
 
         const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
-        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, schema.getSizeOfSchemaInBytes());
+        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, physicalTupleByteSize(schema));
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector

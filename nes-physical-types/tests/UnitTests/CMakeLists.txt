@@ -11,3 +11,4 @@
 # limitations under the License.
 
 add_nes_unit_test(numeric-type-conversion-test "API/NumericTypeConversionTest.cpp")
+target_link_libraries(numeric-type-conversion-test nes-physical-types)
