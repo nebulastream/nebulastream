@@ -247,6 +247,33 @@ assert_json_contains() {
   [ "$duration" -ge 10 ]
 }
 
+@test "WAIT_FOR_QUERY_TERMINATION exits cleanly on SIGTERM" {
+  setup_distributed tests/topologies/1-node.yaml
+
+  # non_infinite_query.sql configures the source to produce data for 10000ms,
+  # so WAIT_FOR_QUERY_TERMINATION would normally make nes-repl block ~10s.
+  # Send SIGTERM to nes-repl mid-wait and verify the on-exit loop exits well
+  # before the 10s mark and reports the warning.
+  (
+    tail -f /dev/null | docker compose exec -T nes-repl bash -c \
+      "nes-repl -f JSON --on-exit WAIT_FOR_QUERY_TERMINATION </workdir/tests/sql-file-tests/good/non_infinite_query.sql"
+  ) &
+  REPL_BG=$!
+
+  # Give the REPL time to deploy the query and enter the on-exit wait loop.
+  sleep 3
+
+  start_time=$(date +%s)
+  docker compose exec -T nes-repl pkill -TERM -f "^nes-repl"
+  wait $REPL_BG
+  end_time=$(date +%s)
+
+  duration=$((end_time - start_time))
+  # SIGTERM should break the wait loop within a couple of polling intervals,
+  # well before the query's natural 10s end.
+  [ "$duration" -le 3 ]
+}
+
 @test "launch query and terminate query on exit behavior" {
   setup_distributed tests/topologies/1-node.yaml
 
