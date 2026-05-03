@@ -298,6 +298,7 @@ int main(int argc, char** argv)
         replClient.run();
 
         bool hasError = false;
+        const auto exitStopToken = SignalHandler::terminationToken();
         /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) validated by argparse .choices()
         switch (magic_enum::enum_cast<OnExitBehavior>(program.get<std::string>("--on-exit")).value())
         {
@@ -318,10 +319,14 @@ int main(int argc, char** argv)
                 }
                 [[clang::fallthrough]];
             case OnExitBehavior::WAIT_FOR_QUERY_TERMINATION:
-                while (!queryManager->getRunningQueries().empty())
+                while (!queryManager->getRunningQueries().empty() && !exitStopToken.stop_requested())
                 {
                     NES_DEBUG("Waiting for termination")
                     std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                }
+                if (exitStopToken.stop_requested())
+                {
+                    NES_WARNING("Termination signal received; aborting on-exit wait");
                 }
                 break;
             case OnExitBehavior::DO_NOTHING:
