@@ -1,0 +1,135 @@
+# CI Build & Test Matrix Configuration
+#
+# Each entry defines a build configuration and which test groups to run.
+# Test groups: unit, systest, docker
+#
+# Fields (arch, stdlib, build_type, sanitizer) can be arrays — the script
+# expands them into the cross product. Use 'exclude' to filter combos.
+# The 'name' field supports {arch}, {stdlib}, {build_type}, {sanitizer} placeholders.
+#
+# The 'runner' field is required and references a key in the 'runners' map.
+# It supports {field} placeholders, e.g. 'github-{arch}' resolves to 'github-x64'.
+#
+# To split test groups across parallel workers, create multiple entries
+# with the same build config but different 'tests' lists.
+
+default_cmake_flags:
+  ALL_HASHMAP_TESTS: "1"
+  NES_LOG_LEVEL: DEBUG
+
+runners:
+  github-x64: ubuntu-24.04
+  github-arm64: ubuntu-24.04-arm
+  self-hosted-x64: [self-hosted, linux, Build, x64]
+  self-hosted-arm64: [self-hosted, linux, Build, arm64]
+
+jobs:
+  # === Sanitizer builds (RelWithDebInfo, on self-hosted 64-core) ===
+
+  - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest+docker)"
+    arch: x64
+    stdlib: libcxx
+    build_type: RelWithDebInfo
+    sanitizer: address
+    runner: self-hosted-{arch}
+    tests: [unit, systest, docker]
+
+  - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest)"
+    arch: x64
+    stdlib: libstdcxx
+    build_type: RelWithDebInfo
+    sanitizer: thread
+    runner: self-hosted-{arch}
+    tests: [unit, systest]
+
+  - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest+docker)"
+    arch: x64
+    stdlib: libcxx
+    build_type: RelWithDebInfo
+    sanitizer: undefined
+    runner: self-hosted-{arch}
+    tests: [unit, systest, docker]
+
+  # === Debug builds (no sanitizer, split for parallelism on x64) ===
+
+  - name: "{arch} {stdlib} {build_type} (unit)"
+    arch: [x64]
+    stdlib: [libcxx, libstdcxx]
+    build_type: Debug
+    sanitizer: none
+    runner: github-{arch}
+    tests: [unit]
+
+  - name: "{arch} {stdlib} {build_type} (systest+docker)"
+    arch: [x64]
+    stdlib: [libcxx, libstdcxx]
+    build_type: Debug
+    sanitizer: none
+    runner: github-{arch}
+    tests: [systest, docker]
+
+  - name: "{arch} {stdlib} {build_type} (docker)"
+    arch: arm64
+    stdlib: libcxx
+    build_type: Debug
+    sanitizer: none
+    runner: github-{arch}
+    tests: [docker]
+
+  - name: "{arch} {stdlib} {build_type} (unit+systest)"
+    arch: arm64
+    stdlib: libcxx
+    build_type: Debug
+    sanitizer: none
+    runner: github-{arch}
+    tests: [unit, systest]
+
+  # === Optimized builds (no sanitizer, combined — all fast enough) ===
+
+  - name: "{arch} {stdlib} {build_type} (unit+systest+docker)"
+    arch: [x64, arm64]
+    stdlib: [libcxx, libstdcxx]
+    build_type: [RelWithDebInfo, Release]
+    sanitizer: none
+    runner: github-{arch}
+    tests: [unit, systest, docker]
+    exclude:
+      - arch: arm64
+        stdlib: libstdcxx
+
+  # === Special flag builds ===
+
+  - name: "{arch} {stdlib} {build_type} tuple buffer leak (unit)"
+    arch: x64
+    stdlib: libcxx
+    build_type: RelWithDebInfo
+    sanitizer: none
+    runner: github-x64
+    cmake_flags:
+      NES_DEBUG_TUPLE_BUFFER_LEAKS: "ON"
+    tests: [unit]
+
+  - name: "{arch} {stdlib} {build_type} tuple buffer leak (systest+docker)"
+    arch: x64
+    stdlib: libcxx
+    build_type: RelWithDebInfo
+    sanitizer: none
+    runner: github-x64
+    cmake_flags:
+      NES_DEBUG_TUPLE_BUFFER_LEAKS: "ON"
+    tests: [systest, docker]
+
+  # === Build-only (no tests, validates compilation) ===
+
+  - name: "{arch} {stdlib} {build_type} (build only)"
+    arch: [x64, arm64]
+    stdlib: [libcxx, libstdcxx]
+    build_type: Debug
+    sanitizer: none
+    runner: github-{arch}
+    cmake_flags:
+      NES_ENABLES_TESTS: "0"
+    tests: []
+    exclude:
+      - arch: arm64
+        stdlib: libstdcxx
