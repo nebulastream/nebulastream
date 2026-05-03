@@ -14,12 +14,10 @@
 
 #include <SinksParsing/SchemaFormatter.hpp>
 
-#include <ranges>
 #include <sstream>
 #include <string>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
-#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -27,16 +25,24 @@ namespace NES
 std::string SchemaFormatter::getFormattedSchema()
 {
     PRECONDITION(schema->hasFields(), "Encountered schema without fields.");
-    auto formatField = [](const auto& field, std::stringstream& out)
-    {
-        out << field.name << ':' << field.logicalType.getName() << ':' << magic_enum::enum_name(field.logicalType.getNullable());
-    };
     std::stringstream ss;
-    formatField(schema->getFields().front(), ss);
-    for (const auto& field : schema->getFields() | std::views::drop(1))
+    bool first = true;
+    /// Walk components: a `Point` field expands to one CSV column per component
+    /// (`_X`, `_Y`, `_Z`). Each column reports the prototype LogicalType name
+    /// (`INTEGER`/`FLOAT`/`BOOL`/`TEXT`) so the result-checker can resolve it
+    /// through `LogicalTypeRegistry`.
+    for (const auto& field : schema->getFields())
     {
-        ss << ',';
-        formatField(field, ss);
+        const auto* nullableStr = field.physicalType.nullable ? "IS_NULLABLE" : "NOT_NULLABLE";
+        for (const auto& component : field.physicalType.components)
+        {
+            if (not first)
+            {
+                ss << ',';
+            }
+            first = false;
+            ss << field.name << component.suffix << ':' << primitiveLogicalTypeName(component.type) << ':' << nullableStr;
+        }
     }
     return fmt::format("{}\n", ss.str());
 }

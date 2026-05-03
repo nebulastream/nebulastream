@@ -32,27 +32,31 @@ namespace NES
 /// components whose suffix strings include the leading separator, e.g. Point
 /// produces `[("_X", FLOAT64), ("_Y", FLOAT64), ("_Z", FLOAT64)]` so a Point
 /// field named `P` expands to record fields `P_X`, `P_Y`, `P_Z`.
-struct PhysicalLayout
+///
+/// `nullable` lives at the type level (not per component): a Point field is
+/// `NULL` or `NOT NULL` as a whole; the components inherit that.
+struct PhysicalType
 {
     struct Component
     {
         std::string suffix;
-        DataType physicalType;
+        DataType::Type type;
 
         bool operator==(const Component&) const = default;
         friend std::ostream& operator<<(std::ostream& os, const Component& component);
     };
 
     std::vector<Component> components;
+    bool nullable = false;
 
     [[nodiscard]] bool isCompound() const { return components.size() > 1; }
     [[nodiscard]] bool isScalar() const { return components.size() == 1 && components.front().suffix.empty(); }
 
-    bool operator==(const PhysicalLayout&) const = default;
-    friend std::ostream& operator<<(std::ostream& os, const PhysicalLayout& layout);
+    bool operator==(const PhysicalType&) const = default;
+    friend std::ostream& operator<<(std::ostream& os, const PhysicalType& type);
 };
 
 }
 
-FMT_OSTREAM(NES::PhysicalLayout);
-FMT_OSTREAM(NES::PhysicalLayout::Component);
+FMT_OSTREAM(NES::PhysicalType);
+FMT_OSTREAM(NES::PhysicalType::Component);

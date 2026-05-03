@@ -13,7 +13,6 @@
 */
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/PhysicalLayout.hpp>
 #include <LogicalTypeLoweringRegistry.hpp>
 
@@ -23,17 +22,15 @@ namespace NES
 LogicalTypeLoweringRegistryReturnType
 LogicalTypeLoweringGeneratedRegistrar::RegisterPointLogicalTypeLowering(LogicalTypeLoweringRegistryArguments args)
 {
-    const auto nullable = args.logicalType.getNullable();
-    const auto f64 = DataTypeProvider::provideDataType(DataType::Type::FLOAT64, nullable);
     /// Suffixes are uppercase to match the SQL parser, which uppercases all
     /// identifiers — a sink declaring `p_x F64` is stored as `P_X`, so the
     /// runtime spread of a Point named `P` must produce `P_X`, `P_Y`, `P_Z`.
-    return PhysicalLayout{
-        .components = {
-            {.suffix = "_X", .physicalType = f64},
-            {.suffix = "_Y", .physicalType = f64},
-            {.suffix = "_Z", .physicalType = f64},
-        }};
+    return PhysicalType{
+        .components
+        = {{.suffix = "_X", .type = DataType::Type::FLOAT64},
+           {.suffix = "_Y", .type = DataType::Type::FLOAT64},
+           {.suffix = "_Z", .type = DataType::Type::FLOAT64}},
+        .nullable = args.logicalType.isNullable()};
 }
 
 }

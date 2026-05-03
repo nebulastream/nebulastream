@@ -17,18 +17,19 @@
 #include <ostream>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES
 {
 
-std::ostream& operator<<(std::ostream& os, const PhysicalLayout::Component& component)
+std::ostream& operator<<(std::ostream& os, const PhysicalType::Component& component)
 {
-    return os << fmt::format("Component(suffix: '{}', physical: {})", component.suffix, component.physicalType);
+    return os << fmt::format("Component(suffix: '{}', type: {})", component.suffix, magic_enum::enum_name(component.type));
 }
 
-std::ostream& operator<<(std::ostream& os, const PhysicalLayout& layout)
+std::ostream& operator<<(std::ostream& os, const PhysicalType& type)
 {
-    return os << fmt::format("PhysicalLayout({})", fmt::join(layout.components, ", "));
+    return os << fmt::format("PhysicalType(components: [{}], nullable: {})", fmt::join(type.components, ", "), type.nullable);
 }
 
 }

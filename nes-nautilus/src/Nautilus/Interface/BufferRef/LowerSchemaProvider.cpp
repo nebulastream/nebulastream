@@ -16,13 +16,15 @@
 
 #include <cstdint>
 #include <memory>
-#include <numeric>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <DataTypes/LogicalTypeBridge.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalLayout.hpp>
 #include <DataTypes/PhysicalSchema.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/OutputFormatterBufferRef.hpp>
@@ -38,6 +40,26 @@
 namespace NES
 {
 
+namespace
+{
+/// Resolve a `PhysicalSchema::Field` into the per-cell list of
+/// `(record-field-name, DataType)` pairs that the runtime layouts consume.
+/// Compound fields (e.g. a `Point` with `_X`/`_Y`/`_Z`) yield one entry per
+/// component; scalar fields yield a single entry whose name equals the
+/// field's logical name.
+std::vector<std::pair<std::string, DataType>> spreadComponents(const PhysicalSchema::Field& field)
+{
+    const auto nullable = field.physicalType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE;
+    std::vector<std::pair<std::string, DataType>> spread;
+    spread.reserve(field.physicalType.components.size());
+    for (const auto& component : field.physicalType.components)
+    {
+        spread.emplace_back(field.name + component.suffix, DataTypeProvider::provideDataType(component.type, nullable));
+    }
+    return spread;
+}
+}
+
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat(
     const uint64_t bufferSize,
     const PhysicalSchema& schema,
@@ -46,20 +68,19 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
 {
     std::vector<OutputFormatterBufferRef::Field> fields;
     std::vector<Record::RecordFieldIdentifier> fieldNames;
-    fields.reserve(schema.getNumberOfFields());
-    fieldNames.reserve(schema.getNumberOfFields());
     for (const auto& field : schema)
     {
-        fields.emplace_back(field.name, toPhysical(field.logicalType).value());
-        fieldNames.emplace_back(field.name);
+        for (auto& [recordName, dataType] : spreadComponents(field))
+        {
+            fieldNames.emplace_back(recordName);
+            fields.emplace_back(std::move(recordName), std::move(dataType));
+        }
     }
 
-    /// Create the output formatter descriptor
     auto descriptorConfigOpt = OutputFormatterValidationProvider::provide(outputFormatterType, config);
     INVARIANT(descriptorConfigOpt.has_value(), "Parameter config for output format of type {} could not be validated", outputFormatterType);
     const OutputFormatterDescriptor descriptor(descriptorConfigOpt.value());
 
-    /// Create a output formatter instance by calling the registry
     const std::shared_ptr<OutputFormatter> outputFormatter
         = OutputFormatterProvider::provideOutputFormatter(outputFormatterType, fieldNames, descriptor);
 
@@ -71,49 +92,39 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const PhysicalSchema
 {
     PRECONDITION(schema.hasFields(), "We can not lower an empty schema!");
 
-    /// For now, we assume that the fields lie in the exact same order as in the Schema. Later on, we can have a separate optimizer phase
-    /// that can change the order, alignment or even the datatype implementation, e.g., u32 instead of u8.
+    const auto tupleSize = physicalTupleByteSize(schema);
+    INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
+
     switch (layoutType)
     {
         case MemoryLayoutType::ROW_LAYOUT: {
             std::vector<RowTupleBufferRef::Field> fields;
-            fields.reserve(schema.getNumberOfFields());
             uint64_t fieldOffset = 0;
             for (const auto& field : schema)
             {
-                const auto physical = toPhysical(field.logicalType).value();
-                fields.emplace_back(field.name, physical, fieldOffset);
-                fieldOffset += physical.getSizeInBytesWithNull();
+                for (auto& [recordName, dataType] : spreadComponents(field))
+                {
+                    const auto cellSize = dataType.getSizeInBytesWithNull();
+                    fields.emplace_back(std::move(recordName), std::move(dataType), fieldOffset);
+                    fieldOffset += cellSize;
+                }
             }
-            const auto tupleSize = std::accumulate(
-                fields.begin(),
-                fields.end(),
-                0UL,
-                [](auto size, const RowTupleBufferRef::Field& field) { return size + field.type.getSizeInBytesWithNull(); });
-            INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
             return std::make_shared<RowTupleBufferRef>(RowTupleBufferRef{std::move(fields), tupleSize, bufferSize});
         }
 
         case MemoryLayoutType::COLUMNAR_LAYOUT: {
-            const auto tupleSize = std::accumulate(
-                schema.begin(),
-                schema.end(),
-                0UL,
-                [](auto size, const PhysicalSchema::Field& field)
-                { return size + toPhysical(field.logicalType).value().getSizeInBytesWithNull(); });
-            INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
-
             const uint64_t capacity = bufferSize / tupleSize;
             std::vector<ColumnTupleBufferRef::Field> fields;
-            fields.reserve(schema.getNumberOfFields());
             uint64_t columnOffset = 0;
             for (const auto& field : schema)
             {
-                const auto physical = toPhysical(field.logicalType).value();
-                fields.emplace_back(field.name, physical, physical.getSizeInBytesWithNull(), columnOffset);
-                columnOffset += (physical.getSizeInBytesWithNull() * capacity);
+                for (auto& [recordName, dataType] : spreadComponents(field))
+                {
+                    const auto cellSize = dataType.getSizeInBytesWithNull();
+                    fields.emplace_back(std::move(recordName), std::move(dataType), cellSize, columnOffset);
+                    columnOffset += (cellSize * capacity);
+                }
             }
-
             return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});
         }
     }

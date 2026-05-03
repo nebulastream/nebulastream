@@ -20,7 +20,9 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/LogicalTypeBridge.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Nullable.hpp>
 #include <DataTypes/PhysicalSchema.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -44,30 +46,47 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
     const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameValues)
 {
-    /// For now, we assume that we the fields lie consecutively in the memory like in a row layout.
-    /// First, the key fields and then the value fields.
-    /// The key and values start after the ChainedHashMapEntry and its hash, see @ref ChainedHashMapEntry
+    /// For now, we assume the fields lie consecutively in memory like in a
+    /// row layout: keys first, then values. Both start after the
+    /// `ChainedHashMapEntry` and its hash (see @ref ChainedHashMapEntry).
+    /// A compound field (e.g. `Point`) contributes one record cell per
+    /// component (`P_X`/`P_Y`/`P_Z`), and the requested `fieldName` may name
+    /// either the logical field (`P`) or one of its components.
+    auto findComponent
+        = [&](const Record::RecordFieldIdentifier& requested) -> std::pair<Record::RecordFieldIdentifier, DataType>
+    {
+        for (const auto& field : schema.getFields())
+        {
+            for (const auto& component : field.physicalType.components)
+            {
+                const auto recordName = field.name + component.suffix;
+                if (recordName == requested or field.name == requested)
+                {
+                    const auto nullable = field.physicalType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE;
+                    return {recordName, DataTypeProvider::provideDataType(component.type, nullable)};
+                }
+            }
+        }
+        INVARIANT(false, "Field {} not found in schema", requested);
+        std::unreachable();
+    };
+
     std::vector<FieldOffsets> fieldsKey;
     std::vector<FieldOffsets> fieldsValue;
     uint64_t offset = sizeof(ChainedHashMapEntry);
     for (const auto& fieldName : fieldNameKeys)
     {
-        const auto field = schema.getFieldByName(fieldName);
-        INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
-        const auto& fieldValue = field.value();
-        const auto physical = toPhysical(fieldValue.logicalType).value();
-        fieldsKey.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = physical, .fieldOffset = offset});
-        offset += physical.getSizeInBytesWithNull();
+        auto [recordName, physical] = findComponent(fieldName);
+        const auto cellSize = physical.getSizeInBytesWithNull();
+        fieldsKey.emplace_back(FieldOffsets{.fieldIdentifier = std::move(recordName), .type = std::move(physical), .fieldOffset = offset});
+        offset += cellSize;
     }
-
     for (const auto& fieldName : fieldNameValues)
     {
-        const auto field = schema.getFieldByName(fieldName);
-        INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
-        const auto& fieldValue = field.value();
-        const auto physical = toPhysical(fieldValue.logicalType).value();
-        fieldsValue.emplace_back(FieldOffsets{.fieldIdentifier = fieldValue.name, .type = physical, .fieldOffset = offset});
-        offset += physical.getSizeInBytesWithNull();
+        auto [recordName, physical] = findComponent(fieldName);
+        const auto cellSize = physical.getSizeInBytesWithNull();
+        fieldsValue.emplace_back(FieldOffsets{.fieldIdentifier = std::move(recordName), .type = std::move(physical), .fieldOffset = offset});
+        offset += cellSize;
     }
     return {fieldsKey, fieldsValue};
 }

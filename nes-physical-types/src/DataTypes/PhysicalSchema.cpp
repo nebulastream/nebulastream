@@ -21,21 +21,23 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <DataTypes/LogicalType.hpp>
-#include <DataTypes/LogicalTypeBridge.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Nullable.hpp>
+#include <DataTypes/PhysicalLayout.hpp>
 #include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaLowering.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
+#include <LogicalTypeLoweringRegistry.hpp>
 
 namespace NES
 {
 
 std::ostream& operator<<(std::ostream& os, const PhysicalSchema::Field& field)
 {
-    return os << fmt::format("Field(name: {}, LogicalType: {})", field.name, field.logicalType);
+    return os << fmt::format("Field(name: {}, type: {})", field.name, field.physicalType);
 }
 
 std::string PhysicalSchema::Field::getUnqualifiedName() const
@@ -48,8 +50,15 @@ std::string PhysicalSchema::Field::getUnqualifiedName() const
     return name.substr(separatorPosition + 1);
 }
 
-PhysicalSchema::PhysicalSchema(std::vector<Field> fields) : fields(std::move(fields))
+PhysicalSchema& PhysicalSchema::addField(std::string name, PhysicalType physicalType)
 {
+    fields.emplace_back(Field{.name = std::move(name), .physicalType = std::move(physicalType)});
+    return *this;
+}
+
+PhysicalSchema& PhysicalSchema::addField(std::string name, DataType::Type type, bool nullable)
+{
+    return addField(std::move(name), PhysicalType{.components = {{.suffix = "", .type = type}}, .nullable = nullable});
 }
 
 std::ostream& operator<<(std::ostream& os, const PhysicalSchema& schema)
@@ -64,6 +73,16 @@ bool PhysicalSchema::hasFields() const
 
 std::size_t PhysicalSchema::getNumberOfFields() const
 {
+    std::size_t total = 0;
+    for (const auto& field : fields)
+    {
+        total += field.physicalType.components.size();
+    }
+    return total;
+}
+
+std::size_t PhysicalSchema::getNumberOfLogicalFields() const
+{
     return fields.size();
 }
 
@@ -74,8 +93,15 @@ const std::vector<PhysicalSchema::Field>& PhysicalSchema::getFields() const
 
 std::vector<std::string> PhysicalSchema::getFieldNames() const
 {
-    auto namesView = fields | std::views::transform([](const Field& field) { return field.name; });
-    return {namesView.begin(), namesView.end()};
+    std::vector<std::string> names;
+    for (const auto& field : fields)
+    {
+        for (const auto& component : field.physicalType.components)
+        {
+            names.emplace_back(field.name + component.suffix);
+        }
+    }
+    return names;
 }
 
 std::optional<PhysicalSchema::Field> PhysicalSchema::getFieldByName(const std::string& fieldName) const
@@ -133,6 +159,13 @@ bool PhysicalSchema::contains(const std::string& qualifiedFieldName) const
         {
             return true;
         }
+        for (const auto& component : field.physicalType.components)
+        {
+            if (field.name + component.suffix == qualifiedFieldName)
+            {
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -158,14 +191,19 @@ std::string PhysicalSchema::getQualifierNameForSystemGeneratedFieldsWithSeparato
 
 PhysicalSchema lower(const Schema& logical)
 {
-    const auto flat = lowerSchema(logical);
-    std::vector<PhysicalSchema::Field> fields;
-    fields.reserve(flat.getNumberOfFields());
-    for (const auto& field : flat.getFields())
+    PhysicalSchema physical;
+    for (const auto& field : logical.getFields())
     {
-        fields.push_back(PhysicalSchema::Field{.name = field.name, .logicalType = field.logicalType});
+        auto layoutOpt = LogicalTypeLoweringRegistry::instance().create(
+            std::string(field.logicalType.getName()), LogicalTypeLoweringRegistryArguments{.logicalType = field.logicalType});
+        INVARIANT(
+            layoutOpt.has_value(),
+            "No physical layout registered for logical type '{}' (field '{}'). Add an entry to LogicalTypeLoweringRegistry.",
+            field.logicalType.getName(),
+            field.name);
+        physical.addField(field.name, std::move(layoutOpt.value()));
     }
-    return PhysicalSchema{std::move(fields)};
+    return physical;
 }
 
 std::size_t physicalTupleByteSize(const PhysicalSchema& schema)
@@ -173,9 +211,42 @@ std::size_t physicalTupleByteSize(const PhysicalSchema& schema)
     std::size_t total = 0;
     for (const auto& field : schema.getFields())
     {
-        total += toPhysical(field.logicalType).value().getSizeInBytesWithNull();
+        for (const auto& component : field.physicalType.components)
+        {
+            total += DataTypeProvider::provideDataType(
+                         component.type, field.physicalType.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE)
+                         .getSizeInBytesWithNull();
+        }
     }
     return total;
+}
+
+std::string primitiveLogicalTypeName(const DataType::Type type)
+{
+    using Type = DataType::Type;
+    switch (type)
+    {
+        case Type::INT8:
+        case Type::INT16:
+        case Type::INT32:
+        case Type::INT64:
+        case Type::UINT8:
+        case Type::UINT16:
+        case Type::UINT32:
+        case Type::UINT64:
+            return "INTEGER";
+        case Type::FLOAT32:
+        case Type::FLOAT64:
+            return "FLOAT";
+        case Type::BOOLEAN:
+            return "BOOL";
+        case Type::CHAR:
+        case Type::VARSIZED:
+            return "TEXT";
+        case Type::UNDEFINED:
+            return "UNDEFINED";
+    }
+    std::unreachable();
 }
 
 }

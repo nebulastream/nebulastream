@@ -13,7 +13,7 @@
 */
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Nullable.hpp>
 #include <DataTypes/PhysicalLayout.hpp>
 #include <LogicalTypeLoweringRegistry.hpp>
 
@@ -22,10 +22,9 @@ namespace NES
 
 namespace
 {
-PhysicalLayout scalarLayout(const DataType::Type physicalType, const LogicalTypeLoweringRegistryArguments& args)
+PhysicalType scalarLayout(const DataType::Type type, const LogicalTypeLoweringRegistryArguments& args)
 {
-    const auto nullable = args.logicalType.getNullable();
-    return PhysicalLayout{.components = {{.suffix = "", .physicalType = DataTypeProvider::provideDataType(physicalType, nullable)}}};
+    return PhysicalType{.components = {{.suffix = "", .type = type}}, .nullable = args.logicalType.isNullable()};
 }
 }
 

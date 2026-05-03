@@ -32,15 +32,11 @@ namespace NES
 
 namespace
 {
-/// Map a primitive physical DataType back into the prototype's reduced
-/// LogicalType vocabulary (INTEGER / FLOAT / BOOL / TEXT). Lowered Schema
-/// fields use these user-facing names so the result round-trips through
-/// `toPhysical` and `SchemaFormatter` with the names users see in DDL.
-LogicalType primitiveLogicalType(const DataType& dt)
+LogicalType primitiveLogicalType(const PhysicalType::Component& component, const bool nullableFlag)
 {
-    const auto nullable = dt.nullable ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE;
+    const auto nullable = nullableFlag ? Nullable::IS_NULLABLE : Nullable::NOT_NULLABLE;
     using Type = DataType::Type;
-    switch (dt.type)
+    switch (component.type)
     {
         case Type::INT8:
         case Type::INT16:
@@ -80,20 +76,10 @@ Schema lowerSchema(const Schema& logical)
             field.name);
         for (const auto& component : layoutOpt->components)
         {
-            lowered.addField(field.name + component.suffix, primitiveLogicalType(component.physicalType));
+            lowered.addField(field.name + component.suffix, primitiveLogicalType(component, layoutOpt->nullable));
         }
     }
     return lowered;
-}
-
-size_t physicalTupleByteSize(const Schema& logical)
-{
-    size_t total = 0;
-    for (const auto& field : lowerSchema(logical).getFields())
-    {
-        total += toPhysical(field.logicalType).value().getSizeInBytesWithNull();
-    }
-    return total;
 }
 
 }

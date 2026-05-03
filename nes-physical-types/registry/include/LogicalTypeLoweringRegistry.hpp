@@ -22,7 +22,7 @@
 namespace NES
 {
 
-using LogicalTypeLoweringRegistryReturnType = PhysicalLayout;
+using LogicalTypeLoweringRegistryReturnType = PhysicalType;
 
 struct LogicalTypeLoweringRegistryArguments
 {
