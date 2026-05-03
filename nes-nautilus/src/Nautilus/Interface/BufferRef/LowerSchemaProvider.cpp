@@ -23,8 +23,7 @@
 #include <vector>
 
 #include <DataTypes/LogicalTypeBridge.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaLowering.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/OutputFormatterBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
@@ -41,19 +40,15 @@ namespace NES
 
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat(
     const uint64_t bufferSize,
-    const Schema& schema,
+    const PhysicalSchema& schema,
     const std::string& outputFormatterType,
     const std::unordered_map<std::string, std::string>& config)
 {
-    /// Compound logical types (e.g. `Point`) reach this point when an upstream
-    /// operator has not been lowered yet. Spread them into primitive components
-    /// here so the formatter sees one column per physical field.
-    const auto flat = NES::lowerSchema(schema);
     std::vector<OutputFormatterBufferRef::Field> fields;
     std::vector<Record::RecordFieldIdentifier> fieldNames;
-    fields.reserve(flat.getNumberOfFields());
-    fieldNames.reserve(flat.getNumberOfFields());
-    for (const auto& field : flat)
+    fields.reserve(schema.getNumberOfFields());
+    fieldNames.reserve(schema.getNumberOfFields());
+    for (const auto& field : schema)
     {
         fields.emplace_back(field.name, toPhysical(field.logicalType).value());
         fieldNames.emplace_back(field.name);
@@ -72,13 +67,9 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
 }
 
 std::shared_ptr<TupleBufferRef>
-LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema, const MemoryLayoutType layoutType)
+LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const PhysicalSchema& schema, const MemoryLayoutType layoutType)
 {
     PRECONDITION(schema.hasFields(), "We can not lower an empty schema!");
-
-    /// Spread compound logical types (e.g. `Point`) into primitive components
-    /// before laying out the buffer. Idempotent for already-flat schemas.
-    const auto flat = NES::lowerSchema(schema);
 
     /// For now, we assume that the fields lie in the exact same order as in the Schema. Later on, we can have a separate optimizer phase
     /// that can change the order, alignment or even the datatype implementation, e.g., u32 instead of u8.
@@ -86,9 +77,9 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
     {
         case MemoryLayoutType::ROW_LAYOUT: {
             std::vector<RowTupleBufferRef::Field> fields;
-            fields.reserve(flat.getNumberOfFields());
+            fields.reserve(schema.getNumberOfFields());
             uint64_t fieldOffset = 0;
-            for (const auto& field : flat)
+            for (const auto& field : schema)
             {
                 const auto physical = toPhysical(field.logicalType).value();
                 fields.emplace_back(field.name, physical, fieldOffset);
@@ -105,17 +96,18 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
 
         case MemoryLayoutType::COLUMNAR_LAYOUT: {
             const auto tupleSize = std::accumulate(
-                flat.begin(),
-                flat.end(),
+                schema.begin(),
+                schema.end(),
                 0UL,
-                [](auto size, const Schema::Field& field) { return size + toPhysical(field.logicalType).value().getSizeInBytesWithNull(); });
+                [](auto size, const PhysicalSchema::Field& field)
+                { return size + toPhysical(field.logicalType).value().getSizeInBytesWithNull(); });
             INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
 
             const uint64_t capacity = bufferSize / tupleSize;
             std::vector<ColumnTupleBufferRef::Field> fields;
-            fields.reserve(flat.getNumberOfFields());
+            fields.reserve(schema.getNumberOfFields());
             uint64_t columnOffset = 0;
-            for (const auto& field : flat)
+            for (const auto& field : schema)
             {
                 const auto physical = toPhysical(field.logicalType).value();
                 fields.emplace_back(field.name, physical, physical.getSizeInBytesWithNull(), columnOffset);

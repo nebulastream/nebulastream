@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/LogicalTypeBridge.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaLowering.hpp>
@@ -191,8 +192,8 @@ std::pair<Schema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapO
         /// Create a new map operator with the cast as its function
         mapPhysicalOperators.emplace_back(std::make_shared<PhysicalOperatorWrapper>(
             MapPhysicalOperator(newName, castedPhysicalFunction),
-            copyOfInputSchemaOfMap,
-            inputSchemaOfMap,
+            lower(copyOfInputSchemaOfMap),
+            lower(inputSchemaOfMap),
             memoryLayoutType,
             memoryLayoutType));
     }
@@ -227,7 +228,7 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
     const auto entriesPerPage = pageSize / entrySize;
 
     /// As we are using a paged vector for the value, we do not need to set the fieldNameValues for the chained hashmap
-    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, {});
+    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(lower(inputSchema), fieldKeyNames, {});
     HashMapOptions hashMapOptions{
         std::make_unique<MurMur3HashFunction>(),
         std::move(keyFunctions),
@@ -258,7 +259,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
 
     auto join = logicalOperator.getAs<JoinLogicalOperator>();
 
-    auto outputSchema = join.getOutputSchema();
+    const auto outputPhysical = lower(join.getOutputSchema());
     auto outputOriginId = outputOriginIds.get()[0];
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = NES::as<Windowing::TimeBasedWindowType>(join->getWindowType());
@@ -281,10 +282,12 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         = getJoinFieldExtensionsLeftRight(join->getLeftSchema(), join->getRightSchema(), logicalJoinFunction);
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields, memoryLayoutType);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields, memoryLayoutType);
+    const auto newLeftInputPhysical = lower(newLeftInputSchema);
+    const auto newRightInputPhysical = lower(newRightInputSchema);
     auto leftBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * physicalTupleByteSize(newLeftInputSchema), newLeftInputSchema, memoryLayoutType);
+        conf.numberOfRecordsPerKey.getValue() * physicalTupleByteSize(newLeftInputPhysical), newLeftInputPhysical, memoryLayoutType);
     auto rightBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * physicalTupleByteSize(newRightInputSchema), newRightInputSchema, memoryLayoutType);
+        conf.numberOfRecordsPerKey.getValue() * physicalTupleByteSize(newRightInputPhysical), newRightInputPhysical, memoryLayoutType);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
 
@@ -348,7 +351,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         std::move(sliceStoreRefRight)};
 
     /// Creating the hash join probe
-    auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, outputSchema);
+    auto joinSchema = JoinSchema(newLeftInputPhysical, newRightInputPhysical, outputPhysical);
     auto probeOperator = HJProbePhysicalOperator(
         handlerId,
         physicalJoinFunction,
@@ -363,8 +366,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     /// Building operator wrapper for the two builds and the probe.
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),
-        newLeftInputSchema,
-        outputSchema,
+        newLeftInputPhysical,
+        outputPhysical,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,
@@ -373,8 +376,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
 
     auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(rightBuildOperator),
-        newRightInputSchema,
-        outputSchema,
+        newRightInputPhysical,
+        outputPhysical,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,
@@ -383,8 +386,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),
-        outputSchema,
-        outputSchema,
+        outputPhysical,
+        outputPhysical,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,

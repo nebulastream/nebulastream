@@ -72,7 +72,7 @@ std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
                 id,
                 sinkName,
                 (sinkDescriptor) ? fmt::format("{}", *sinkDescriptor) : "(null)",
-                *sinkDescriptor->getSchema(),
+                *sinkDescriptor->getLogicalSchema(),
                 traitSet.explain(verbosity));
         }
         return fmt::format("SINK(opId: {}, sinkName: {})", id, sinkName);
@@ -99,13 +99,13 @@ SinkLogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> 
         }
     }
 
-    if (sinkDescriptor.has_value() && sinkDescriptor.value().isInline() && sinkDescriptor.value().getSchema()->getFields().empty())
+    if (sinkDescriptor.has_value() && sinkDescriptor.value().isInline() && sinkDescriptor.value().getLogicalSchema()->getFields().empty())
     {
-        copy.sinkDescriptor->schema = std::make_shared<const Schema>(firstSchema);
+        copy.sinkDescriptor = copy.sinkDescriptor->withLogicalSchema(firstSchema);
     }
-    else if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != firstSchema)
+    else if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getLogicalSchema() != firstSchema)
     {
-        std::vector expectedFields(copy.sinkDescriptor.value().getSchema()->begin(), copy.sinkDescriptor.value().getSchema()->end());
+        std::vector expectedFields(copy.sinkDescriptor.value().getLogicalSchema()->begin(), copy.sinkDescriptor.value().getLogicalSchema()->end());
         std::vector actualFields(firstSchema.begin(), firstSchema.end());
 
         std::stringstream expectedFieldsString;
@@ -171,7 +171,7 @@ std::vector<Schema> SinkLogicalOperator::getInputSchemas() const
 Schema SinkLogicalOperator::getOutputSchema() const
 {
     INVARIANT(this->sinkDescriptor.has_value(), "Logical Sink must have a valid descriptor (with a schema).");
-    return *this->sinkDescriptor.value().getSchema();
+    return *this->sinkDescriptor.value().getLogicalSchema();
 }
 
 std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const

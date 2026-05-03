@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <string>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 
 namespace NES
 {
@@ -27,13 +27,13 @@ namespace NES
 class SchemaFormatter
 {
 public:
-    explicit SchemaFormatter(const std::shared_ptr<const Schema>& schema) : schema(schema) { }
+    explicit SchemaFormatter(const std::shared_ptr<const PhysicalSchema>& schema) : schema(schema) { }
 
     virtual ~SchemaFormatter() = default;
 
     virtual std::string getFormattedSchema();
 
 protected:
-    std::shared_ptr<const Schema> schema;
+    std::shared_ptr<const PhysicalSchema> schema;
 };
 }

@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -62,7 +63,7 @@
 namespace NES
 {
 
-static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
+static auto getJoinFieldNames(const PhysicalSchema& inputSchema, const LogicalFunction& joinFunction)
 {
     return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>().has_value(); })
@@ -88,9 +89,9 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto join = logicalOperator.getAs<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
 
-    auto leftInputSchema = join->getLeftSchema();
-    auto rightInputSchema = join->getRightSchema();
-    auto outputSchema = join.getOutputSchema();
+    const auto leftInputSchema = lower(join->getLeftSchema());
+    const auto rightInputSchema = lower(join->getRightSchema());
+    const auto outputSchema = lower(join.getOutputSchema());
     auto outputOriginId = outputOriginIds[0];
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = NES::as<Windowing::TimeBasedWindowType>(join->getWindowType());

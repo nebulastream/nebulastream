@@ -15,7 +15,7 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalSink.hpp>
 
 #include <memory>
-#include <DataTypes/SchemaLowering.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -38,16 +38,14 @@ LoweringRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOpe
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
 
-    /// Lower the user-declared logical sink schema (which may carry compound
-    /// types like `Point`) to a primitive-only schema for the runtime side.
-    /// FileSink writes its CSV header from this schema and the runtime tuple
-    /// buffer consumes flat primitive fields, so both must see the lowered
-    /// version.
-    const auto loweredSinkSchema = lowerSchema(*sink->getSinkDescriptor()->getSchema()); /// NOLINT(bugprone-unchecked-optional-access)
-    const auto loweredDescriptor = sink->getSinkDescriptor()->withSchema(loweredSinkSchema); /// NOLINT(bugprone-unchecked-optional-access)
-    const auto loweredInputSchema = lowerSchema(sink.getInputSchemas()[0]);
+    /// SinkDescriptor lowers the user-declared schema internally; the runtime
+    /// side reads the primitive `PhysicalSchema` via `getSchema()`. We still
+    /// need to lower the upstream input schema separately for the operator
+    /// wrapper.
+    const auto loweredInputSchema = lower(sink.getInputSchemas()[0]);
+    const auto loweredSinkSchema = *sink->getSinkDescriptor()->getSchema(); /// NOLINT(bugprone-unchecked-optional-access)
 
-    auto physicalOperator = SinkPhysicalOperator(loweredDescriptor);
+    auto physicalOperator = SinkPhysicalOperator(sink->getSinkDescriptor().value());
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
         loweredInputSchema,

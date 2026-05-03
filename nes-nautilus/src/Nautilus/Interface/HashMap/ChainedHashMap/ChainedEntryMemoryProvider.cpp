@@ -21,7 +21,7 @@
 #include <vector>
 
 #include <DataTypes/LogicalTypeBridge.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -40,7 +40,7 @@ namespace NES
 {
 
 std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemoryProvider::createFieldOffsets(
-    const Schema& schema,
+    const PhysicalSchema& schema,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameValues)
 {

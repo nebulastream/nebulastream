@@ -15,6 +15,7 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 
 #include <memory>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -40,8 +41,8 @@ LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logic
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        logicalOperator.getInputSchemas()[0],
-        logicalOperator.getOutputSchema(),
+        lower(logicalOperator.getInputSchemas()[0]),
+        lower(logicalOperator.getOutputSchema()),
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

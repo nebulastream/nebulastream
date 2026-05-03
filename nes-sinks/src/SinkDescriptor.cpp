@@ -26,6 +26,7 @@
 #include <variant>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
@@ -51,21 +52,28 @@ SinkDescriptor::SinkDescriptor(
     : Descriptor(std::move(config))
     , sinkName(std::move(sinkName))
     , schema(std::make_shared<Schema>(schema))
+    , physicalSchema(std::make_shared<PhysicalSchema>(lower(schema)))
     , sinkType(sinkType)
     , host(std::move(host))
     , formatConfig(formatConfig)
 {
 }
 
-std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
+std::shared_ptr<const PhysicalSchema> SinkDescriptor::getSchema() const
+{
+    return physicalSchema;
+}
+
+std::shared_ptr<const Schema> SinkDescriptor::getLogicalSchema() const
 {
     return schema;
 }
 
-SinkDescriptor SinkDescriptor::withSchema(Schema replacement) const
+SinkDescriptor SinkDescriptor::withLogicalSchema(Schema replacement) const
 {
     auto copy = *this;
-    copy.schema = std::make_shared<const Schema>(std::move(replacement));
+    copy.schema = std::make_shared<const Schema>(replacement);
+    copy.physicalSchema = std::make_shared<const PhysicalSchema>(lower(replacement));
     return copy;
 }
 

@@ -18,6 +18,7 @@
 #include <optional>
 #include <ranges>
 #include <vector>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
@@ -37,7 +38,7 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
 
     const auto source = logicalOperator.getAs<UnionLogicalOperator>();
     auto inputSchemas = logicalOperator.getInputSchemas();
-    auto outputSchema = logicalOperator.getOutputSchema();
+    const auto outputPhysical = lower(logicalOperator.getOutputSchema());
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
@@ -45,10 +46,11 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
         | std::views::transform(
                        [&](const auto& schema)
                        {
+                           const auto inputPhysical = lower(schema);
                            return std::make_shared<PhysicalOperatorWrapper>(
-                               UnionRenamePhysicalOperator(schema.getFieldNames(), outputSchema.getFieldNames()),
-                               schema,
-                               outputSchema,
+                               UnionRenamePhysicalOperator(inputPhysical.getFieldNames(), outputPhysical.getFieldNames()),
+                               inputPhysical,
+                               outputPhysical,
                                memoryLayoutType,
                                memoryLayoutType,
                                PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
@@ -57,8 +59,8 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         UnionPhysicalOperator(),
-        source.getOutputSchema(),
-        logicalOperator.getOutputSchema(),
+        lower(source.getOutputSchema()),
+        outputPhysical,
         memoryLayoutType,
         memoryLayoutType,
         std::nullopt,

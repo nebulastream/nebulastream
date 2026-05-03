@@ -17,6 +17,7 @@
 #include <memory>
 #include <ranges>
 
+#include <DataTypes/PhysicalSchema.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -48,8 +49,8 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        inputSchemas[0],
-        logicalOperator.getOutputSchema(),
+        lower(inputSchemas[0]),
+        lower(logicalOperator.getOutputSchema()),
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

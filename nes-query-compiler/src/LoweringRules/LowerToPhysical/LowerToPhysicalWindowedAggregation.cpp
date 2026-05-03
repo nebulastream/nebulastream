@@ -30,6 +30,7 @@
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/LogicalTypeBridge.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -131,8 +132,8 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
         PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
         const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-        auto bufferRef
-            = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0], memoryLayoutType);
+        auto bufferRef = LowerSchemaProvider::lowerSchema(
+            configuration.pageSize.getValue(), lower(logicalOperator.getInputSchemas()[0]), memoryLayoutType);
 
         auto name = descriptor->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
@@ -209,7 +210,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const auto entriesPerPage = pageSize / entrySize;
 
     const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(*aggregation);
-    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
+    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(lower(newInputSchema), fieldKeyNames, fieldValueNames);
 
     const auto windowMetaData = WindowMetaData{aggregation->getWindowStartFieldName(), aggregation->getWindowEndFieldName()};
 
@@ -251,10 +252,12 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapOptions};
     const AggregationProbePhysicalOperator probe{hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
+    const auto newInputPhysical = lower(newInputSchema);
+    const auto outputPhysical = lower(outputSchema);
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
-        newInputSchema,
-        outputSchema,
+        newInputPhysical,
+        outputPhysical,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,
@@ -263,8 +266,8 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         probe,
-        newInputSchema,
-        outputSchema,
+        newInputPhysical,
+        outputPhysical,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,

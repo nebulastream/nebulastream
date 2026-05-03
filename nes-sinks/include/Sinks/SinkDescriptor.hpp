@@ -28,6 +28,7 @@
 #include <variant>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <DataTypes/PhysicalSchema.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
@@ -58,11 +59,16 @@ public:
     /// Will return "Native" as fallback, if the sink config does not use the OUTPUT_FORMAT parameter.
     [[nodiscard]] std::string getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
-    /// Return a copy of this descriptor with `schema` replaced by `replacement`.
-    /// Used by the lowering rule to swap the user-declared logical schema for
-    /// the primitive-lowered schema before the descriptor reaches the runtime.
-    [[nodiscard]] SinkDescriptor withSchema(Schema replacement) const;
+    /// Runtime-facing schema. Returns the lowered (primitive-only) schema that
+    /// runtime sinks (`FileSink`, `NetworkSink`, `SchemaFormatter`, ...) consume.
+    [[nodiscard]] std::shared_ptr<const PhysicalSchema> getSchema() const;
+    /// Logical schema as the user declared it (compound types preserved).
+    /// Used by the logical layer (`SinkLogicalOperator`) for type inference and
+    /// for serialisation round-trips. Runtime code must not call this.
+    [[nodiscard]] std::shared_ptr<const Schema> getLogicalSchema() const;
+    /// Return a copy of this descriptor with the user-declared schema replaced.
+    /// The runtime-facing `PhysicalSchema` is recomputed from the new schema.
+    [[nodiscard]] SinkDescriptor withLogicalSchema(Schema replacement) const;
     [[nodiscard]] std::string getSinkName() const;
     [[nodiscard]] bool isInline() const;
     [[nodiscard]] Host getHost() const;
@@ -79,6 +85,7 @@ private:
 
     std::variant<std::string, uint64_t> sinkName;
     std::shared_ptr<const Schema> schema;
+    std::shared_ptr<const PhysicalSchema> physicalSchema;
     std::string sinkType;
     Host host;
     std::unordered_map<std::string, std::string> formatConfig;
