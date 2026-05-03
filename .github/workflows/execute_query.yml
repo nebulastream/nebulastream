@@ -23,8 +23,10 @@ on:
         required: false
         type: string
         default: |
+          CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS DATA);
           CREATE LOGICAL SOURCE endless(val_1 UINT32 NOT NULL, ts UINT64 NOT NULL);
           CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
+              'localhost:8080' AS `SOURCE`.`HOST`,
               'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
               'CSV' as PARSER.`TYPE`,
               1 AS `SOURCE`.SEED,
@@ -32,15 +34,11 @@ on:
               'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
               'EMIT_RATE 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
               'SEQUENCE UINT32 0 200000000 1, SEQUENCE UINT64 0 200000000 1' AS `SOURCE`.GENERATOR_SCHEMA);
-          CREATE SINK someSink1(ENDLESS.TS UINT64 NOT NULL) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.OUTPUT_FORMAT);
-          CREATE SINK someSink2(ENDLESS.val_1 UINT32 NOT NULL, ENDLESS.TS UINT64 NOT NULL) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.OUTPUT_FORMAT);
-          CREATE SINK someSink3(val_plus_1 UINT32 NOT NULL) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.OUTPUT_FORMAT);
-          CREATE SINK someSink4(ENDLESS.agg_val_1 FLOAT64 NOT NULL) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.OUTPUT_FORMAT);
           SHOW QUERIES;
-          SELECT TS FROM ENDLESS INTO SOMESINK1;
-          SELECT * FROM ENDLESS INTO SOMESINK2;
-          SELECT val_1 + UINT32(1) AS val_plus_1 FROM ENDLESS INTO SOMESINK3;
-          SELECT AVG(val_1) AS agg_val_1 FROM ENDLESS WINDOW TUMBLING(ts, SIZE 1 SEC) INTO SOMESINK4;
+          SELECT TS FROM ENDLESS INTO Void('localhost:8080' AS `SINK`.`HOST`);
+          SELECT * FROM ENDLESS INTO Void('localhost:8080' AS `SINK`.`HOST`);
+          SELECT val_1 + UINT32(1) AS val_plus_1 FROM ENDLESS INTO Void('localhost:8080' AS `SINK`.`HOST`);
+          SELECT AVG(val_1) AS agg_val_1 FROM ENDLESS WINDOW TUMBLING(ts, SIZE 1 SEC) INTO Void('localhost:8080' AS `SINK`.`HOST`);
 
 jobs:
   execute-query:
@@ -82,21 +80,48 @@ jobs:
       - name: Build and Test
         shell: bash
         run: |
+          set -o pipefail
           cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
           cmake --build build -j -- -k 0
 
-          build/nes-single-node-worker/nes-single-node-worker > worker.log 2>&1 &
+          build/nes-single-node-worker/nes-single-node-worker --data_address=localhost:9090 > worker.log 2>&1 &
           WORKER_PID=$!
 
           sleep 5
 
-          timeout --foreground ${{inputs.runtime_seconds}} bash -c '{ cat query.sql; sleep ${{inputs.runtime_seconds}}; } | exec build/nes-frontend/apps/nes-repl --on-exit WAIT_FOR_QUERY_TERMINATION -s localhost:8080' || EXIT_CODE=$?
+          # Stream queries directly into the REPL via stdin redirection — no
+          # producer-side `sleep` keeping the bash pipeline open after the REPL
+          # has exited. With FAIL_FAST (also the non-interactive default) the
+          # REPL exits non-zero on the first statement error, which `timeout`
+          # then reports as the child's exit code instead of swallowing it.
+          # Exit-code interpretation:
+          #   124    → timeout fired ⇒ REPL was alive for the full duration
+          #            and exited cleanly on SIGTERM ⇒ pass
+          #   0      → REPL exited cleanly before timeout, i.e. all queries
+          #            terminated on their own ⇒ unexpected for an endless
+          #            stress test ⇒ fail
+          #   *      → REPL errored (FAIL_FAST on bad statement, etc.) ⇒ fail
+          EXIT_CODE=0
+          timeout --foreground "${{inputs.runtime_seconds}}" \
+            build/nes-frontend/apps/nes-repl \
+              --on-exit WAIT_FOR_QUERY_TERMINATION \
+              -e FAIL_FAST \
+              -s localhost:8080 \
+            < query.sql || EXIT_CODE=$?
 
-          # verify that the timeout has terminated nebuli.
-          if [ "${EXIT_CODE:-0}" -ne 124 ]; then
-            echo "✗ FAILURE: Unexpected exit code: ${EXIT_CODE}"
-            exit 1
-          fi
+          case "${EXIT_CODE}" in
+            124)
+              echo "✓ REPL ran for the full ${{inputs.runtime_seconds}}s and was terminated by timeout"
+              ;;
+            0)
+              echo "✗ FAILURE: REPL exited cleanly before timeout — queries terminated unexpectedly or never deployed"
+              exit 1
+              ;;
+            *)
+              echo "✗ FAILURE: REPL exited with non-zero code ${EXIT_CODE}"
+              exit 1
+              ;;
+          esac
 
           # stop worker
           kill $WORKER_PID
