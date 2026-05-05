@@ -331,15 +331,39 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     {
         throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
     }
-    LogicalFunction function;
+    auto opTokenType = context->op->getType();
+    if (context->valueExpression() != nullptr && !helpers.top().constantBuilder.empty())
+    {
+        auto& constant = helpers.top().constantBuilder.back();
+        if (constant == context->valueExpression()->getText())
+        {
+            switch (opTokenType)
+            {
+                case AntlrSQLLexer::PLUS:
+                    return;
+                case AntlrSQLLexer::MINUS:
+                    if (!constant.empty() && constant.front() == '-')
+                    {
+                        constant.erase(0, 1);
+                    }
+                    else
+                    {
+                        constant.insert(0, 1, '-');
+                    }
+                    return;
+                default:
+                    break;
+            }
+        }
+    }
 
     if (helpers.top().functionBuilder.empty())
     {
         throw InvalidQuerySyntax("Expected unary operator, got nothing: {}", context->getText());
     }
+    LogicalFunction function;
     const auto innerFunction = helpers.top().functionBuilder.back();
     helpers.top().functionBuilder.pop_back();
-    auto opTokenType = context->op->getType();
     switch (opTokenType)
     {
         case AntlrSQLLexer::PLUS:
@@ -347,7 +371,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
             break;
         case AntlrSQLLexer::MINUS:
             function = MulLogicalFunction(
-                ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UINT64), "-1"), innerFunction);
+                ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::INT64), "-1"), innerFunction);
             break;
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
