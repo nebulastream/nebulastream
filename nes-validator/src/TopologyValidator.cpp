@@ -22,8 +22,9 @@
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Phases/QueryOptimizer.hpp>
+#include <ModelCatalog.hpp>
 #include <Phases/SemanticAnalyzer.hpp>
+#include <QueryOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -102,8 +103,11 @@ std::string validateTopology(const std::string& yamlString)
         }
 
         // 5. Parse and validate SQL queries through semantic analysis + placement
-        auto semanticAnalyzer = SemanticAnalyzer(sourceCatalog, sinkCatalog);
-        auto queryOptimizer = QueryOptimizer(QueryOptimizerConfiguration{}, sourceCatalog, sinkCatalog, workerCatalog);
+        // Web build cannot run model inference; pass an empty ModelCatalog to satisfy the
+        // optimizer signature.
+        auto modelCatalog = std::make_shared<ModelCatalog>();
+        auto semanticAnalyzer = SemanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
+        auto queryOptimizer = QueryOptimizer(QueryOptimizerConfiguration{}, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
 
         for (const auto& query : config.query)
         {

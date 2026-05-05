@@ -154,6 +154,7 @@ set(NES_QUERY_OPTIMIZER_SRCS
     ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/LogicalSourceExpansionRule.cpp
     ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/TypeInferenceRule.cpp
     ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/OriginIdInferenceRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/InferModelResolutionRule.cpp
     # Static optimization rules
     ${NES_ROOT}/nes-query-optimizer/src/Rules/Static/DecideJoinTypesRule.cpp
     ${NES_ROOT}/nes-query-optimizer/src/Rules/Static/DecideMemoryLayoutRule.cpp
@@ -187,6 +188,16 @@ set(NES_LOGICAL_OPS_SERIALIZATION_SRCS
     ${NES_ROOT}/nes-logical-operators/src/Serialization/WindowTypeReflection.cpp
 )
 
+# nes-inference: include only the pure-C++ catalog/model so the optimizer compiles.
+# The IREE-backed importModel/compileModel are stubbed in inference_stub.cpp because
+# IREE cannot run in the browser. Without registered models, InferModelResolutionRule
+# (referenced by SemanticAnalyzer) is a no-op, so this stub is safe.
+set(NES_INFERENCE_SRCS
+    ${NES_ROOT}/nes-inference/src/Model.cpp
+    ${NES_ROOT}/nes-inference/src/ModelCatalog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/inference_stub.cpp
+)
+
 # ============================================================================
 # Build the WASM executable
 # ============================================================================
@@ -208,6 +219,7 @@ add_executable(nes-validator-wasm
     ${NES_SINGLE_NODE_WORKER_SRCS}
     ${NES_QUERY_ENGINE_SRCS}
     ${NES_LOGICAL_OPS_SERIALIZATION_SRCS}
+    ${NES_INFERENCE_SRCS}
     ${ANTLR4_GENERATED_SRCS}
 )
 
@@ -229,6 +241,7 @@ target_include_directories(nes-validator-wasm PRIVATE
     # NES module public headers
     ${NES_ROOT}/nes-common/include
     ${NES_ROOT}/nes-data-types/include
+    ${NES_ROOT}/nes-inference/include
     ${NES_ROOT}/nes-sql-parser/include
     ${NES_ROOT}/nes-sql-parser/private
     ${NES_ROOT}/nes-logical-operators/include

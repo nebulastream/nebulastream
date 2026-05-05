@@ -23,8 +23,9 @@
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Phases/QueryOptimizer.hpp>
+#include <ModelCatalog.hpp>
 #include <Phases/SemanticAnalyzer.hpp>
+#include <QueryOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -98,8 +99,11 @@ std::string explainTopology(const std::string& yamlString)
         }
 
         // 4. Run semantic analysis + full optimizer (same as nes-cli dump)
-        auto semanticAnalyzer = SemanticAnalyzer(sourceCatalog, sinkCatalog);
-        auto queryOptimizer = QueryOptimizer(QueryOptimizerConfiguration{}, sourceCatalog, sinkCatalog, workerCatalog);
+        // Web build cannot run model inference; an empty ModelCatalog is enough to satisfy the
+        // optimizer signature — InferModelResolutionRule has no work without registered models.
+        auto modelCatalog = std::make_shared<ModelCatalog>();
+        auto semanticAnalyzer = SemanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
+        auto queryOptimizer = QueryOptimizer(QueryOptimizerConfiguration{}, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
 
         std::stringstream output;
         for (const auto& query : config.query)

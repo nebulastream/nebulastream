@@ -46,6 +46,7 @@ target_link_libraries(nes-validator
         nes-configurations
         nes-sources-validation
         nes-sinks-validation
+        nes-inference
     PRIVATE
         nes-query-optimizer
         nes-sources-validation-registry
