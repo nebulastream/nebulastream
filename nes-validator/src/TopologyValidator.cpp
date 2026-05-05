@@ -23,7 +23,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <ModelCatalog.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -102,25 +101,30 @@ std::string validateTopology(const std::string& yamlString)
             workerCatalog->addWorker(Host(worker.host), worker.data, capacity, downstream);
         }
 
-        // 5. Parse and validate SQL queries through semantic analysis + placement
-        // Web build cannot run model inference; pass an empty ModelCatalog to satisfy the
-        // optimizer signature.
+        // 5. Parse and validate SQL queries through the full optimizer (semantic
+        // analysis runs internally inside QueryOptimizer::optimize on main, so we
+        // do NOT call SemanticAnalyzer separately — that would re-run
+        // OriginIdInferenceRule and trip its single-assignment invariant).
+        // Web build cannot run model inference; pass an empty ModelCatalog to
+        // satisfy the optimizer signature.
         auto modelCatalog = std::make_shared<ModelCatalog>();
-        auto semanticAnalyzer = SemanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
         auto queryOptimizer = QueryOptimizer(QueryOptimizerConfiguration{}, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
 
         for (const auto& query : config.query)
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-            auto analysedPlan = semanticAnalyzer.analyse(plan);
-            [[maybe_unused]] auto distributedPlan = queryOptimizer.optimize(analysedPlan);
+            [[maybe_unused]] auto distributedPlan = queryOptimizer.optimize(plan);
         }
 
         return ""; // success
     }
     catch (const std::exception& e)
     {
-        return e.what();
+        return std::string("Validation error: ") + e.what();
+    }
+    catch (...)
+    {
+        return "Unknown non-std exception during validation";
     }
 }
 

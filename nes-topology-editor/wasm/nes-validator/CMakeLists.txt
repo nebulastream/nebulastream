@@ -319,6 +319,10 @@ target_compile_options(nes-validator-wasm PRIVATE
     -fwasm-exceptions
     -O2
     -sUSE_ZLIB=0
+    # Override PRECONDITION/INVARIANT to throw std::runtime_error instead of
+    # std::terminate(), so failures surface through the embind catch as a
+    # readable string instead of an opaque __abort_js.
+    -include ${CMAKE_CURRENT_SOURCE_DIR}/wasm_assert.hpp
     -Wno-deprecated-declarations
     -Wno-deprecated-copy
     -Wno-unused-parameter

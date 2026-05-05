@@ -46,6 +46,7 @@ query: |
   SELECT * FROM SENSOR INTO VOID_SINK
 sinks:
   - name: VOID_SINK
+    host: node1:8080
     schema:
       - name: SENSOR$ID
         type: INT64
@@ -67,6 +68,7 @@ logical:
         type: INT64
 physical:
   - logical: sensor
+    host: node1:8080
     type: Generator
     parser_config:
       type: CSV
@@ -80,6 +82,10 @@ physical:
         SEQUENCE INT64 0 100 1
         NORMAL_DISTRIBUTION FLOAT64 0 1
         SEQUENCE INT64 0 100000 1000
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
 )";
 
 /// Query references a source name that does not exist in logical sources.
@@ -88,6 +94,7 @@ query: |
   SELECT * FROM NONEXISTENT_SOURCE INTO VOID_SINK
 sinks:
   - name: VOID_SINK
+    host: node1:8080
     schema:
       - name: SENSOR$ID
         type: INT64
@@ -101,6 +108,7 @@ logical:
         type: INT64
 physical:
   - logical: sensor
+    host: node1:8080
     type: Generator
     parser_config:
       type: CSV
@@ -112,6 +120,10 @@ physical:
       seed: 1
       generator_schema: |
         SEQUENCE INT64 0 100 1
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
 )";
 
 /// Invalid SQL syntax in the query (SELCT instead of SELECT, FORM instead of FROM).
@@ -150,6 +162,7 @@ physical:
 static constexpr auto noQueryYaml = R"(
 sinks:
   - name: VOID_SINK
+    host: node1:8080
     schema:
       - name: SENSOR$ID
         type: INT64
@@ -163,6 +176,7 @@ logical:
         type: INT64
 physical:
   - logical: sensor
+    host: node1:8080
     type: Generator
     parser_config:
       type: CSV
@@ -174,15 +188,21 @@ physical:
       seed: 1
       generator_schema: |
         SEQUENCE INT64 0 100 1
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
 )";
 
-/// Topology with multiple queries provided as a YAML sequence.
+/// Topology with multiple queries provided as a YAML sequence. Both queries
+/// must produce the same output schema since they share VOID_SINK.
 static constexpr auto multipleQueriesYaml = R"(
 query:
   - SELECT * FROM SENSOR INTO VOID_SINK
-  - SELECT ID, VALUE FROM SENSOR INTO VOID_SINK
+  - SELECT * FROM SENSOR INTO VOID_SINK
 sinks:
   - name: VOID_SINK
+    host: node1:8080
     schema:
       - name: SENSOR$ID
         type: INT64
@@ -204,6 +224,7 @@ logical:
         type: INT64
 physical:
   - logical: sensor
+    host: node1:8080
     type: Generator
     parser_config:
       type: CSV
@@ -217,12 +238,17 @@ physical:
         SEQUENCE INT64 0 100 1
         NORMAL_DISTRIBUTION FLOAT64 0 1
         SEQUENCE INT64 0 100000 1000
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
 )";
 
 /// Topology with a physical source referencing a non-existent logical source.
 static constexpr auto orphanedPhysicalSourceYaml = R"(
 sinks:
   - name: VOID_SINK
+    host: node1:8080
     schema:
       - name: SENSOR$ID
         type: INT64
@@ -236,6 +262,7 @@ logical:
         type: INT64
 physical:
   - logical: NONEXISTENT_LOGICAL
+    host: node1:8080
     type: Generator
     parser_config:
       type: CSV
@@ -247,12 +274,17 @@ physical:
       seed: 1
       generator_schema: |
         SEQUENCE INT64 0 100 1
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
 )";
 
 /// Topology with an invalid data type name in schema.
 static constexpr auto invalidDataTypeYaml = R"(
 sinks:
   - name: VOID_SINK
+    host: node1:8080
     schema:
       - name: SENSOR$ID
         type: INT64
@@ -266,6 +298,7 @@ logical:
         type: INVALID_TYPE
 physical:
   - logical: sensor
+    host: node1:8080
     type: Generator
     parser_config:
       type: CSV
@@ -277,6 +310,10 @@ physical:
       seed: 1
       generator_schema: |
         SEQUENCE INT64 0 100 1
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
 )";
 
 // ============================================================================
@@ -348,6 +385,7 @@ TEST_F(TopologyValidatorTest, MalformedYamlReturnsError)
 TEST_F(TopologyValidatorTest, FileSourceMissingFilePathReturnsError)
 {
     static constexpr auto yaml = R"(
+sinks: []
 logical:
   - name: test_source
     schema:
@@ -355,11 +393,16 @@ logical:
         type: UINT64
 physical:
   - logical: test_source
+    host: node1:8080
     type: File
     parser_config:
       type: CSV
       fieldDelimiter: ","
     source_config: {}
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
 )";
     auto result = Validator::validateTopology(yaml);
     EXPECT_NE(result, "") << "File source with empty config should return error";
@@ -370,6 +413,7 @@ physical:
 TEST_F(TopologyValidatorTest, TCPSourceMissingHostPortReturnsError)
 {
     static constexpr auto yaml = R"(
+sinks: []
 logical:
   - name: test_source
     schema:
@@ -377,11 +421,16 @@ logical:
         type: UINT64
 physical:
   - logical: test_source
+    host: node1:8080
     type: TCP
     parser_config:
       type: CSV
       fieldDelimiter: ","
     source_config: {}
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
 )";
     auto result = Validator::validateTopology(yaml);
     EXPECT_NE(result, "") << "TCP source with empty config should return error";
@@ -394,6 +443,7 @@ physical:
 TEST_F(TopologyValidatorTest, FileSourceWithFilePathPassesValidation)
 {
     static constexpr auto yaml = R"(
+sinks: []
 logical:
   - name: test_source
     schema:
@@ -401,12 +451,17 @@ logical:
         type: UINT64
 physical:
   - logical: test_source
+    host: node1:8080
     type: File
     parser_config:
       type: CSV
       fieldDelimiter: ","
     source_config:
       file_path: /tmp/test.csv
+workers:
+  - host: node1:8080
+    data: node1:9090
+    max_operators: 10000
 )";
     auto result = Validator::validateTopology(yaml);
     EXPECT_EQ(result, "") << "File source with valid file_path should pass, got: " << result;

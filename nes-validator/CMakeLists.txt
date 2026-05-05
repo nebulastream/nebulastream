@@ -23,13 +23,17 @@ target_include_directories(nes-validator PUBLIC
     $<INSTALL_INTERFACE:include/nebulastream/>
 )
 
-# Stub headers override system/vcpkg headers for folly and cpptrace
-# during nes-validator compilation only. PRIVATE prevents stubs from
-# leaking to consumers (e.g., nes-cli) that use the real libraries.
-# The BEFORE keyword ensures stubs are found first on the include path.
-target_include_directories(nes-validator BEFORE PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/stubs
-)
+# Stub headers override system/vcpkg headers for folly and cpptrace.
+# Only used by the WASM build (which compiles nes-validator sources directly
+# under Emscripten in nes-topology-editor/wasm/nes-validator). Native builds
+# MUST NOT use these stubs — folly::Synchronized's stub has a smaller layout
+# than the real one, so mixing stub-compiled TUs with real-folly libraries
+# (e.g., libnes-sinks.a) causes mutex-state corruption / hangs.
+if(EMSCRIPTEN)
+    target_include_directories(nes-validator BEFORE PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/stubs
+    )
+endif()
 
 # Link NES dependencies needed for validation pipeline.
 # nes-sql-parser provides: ANTLR4 (via vcpkg), StatementBinder, query parsing

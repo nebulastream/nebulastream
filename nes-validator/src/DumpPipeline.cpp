@@ -24,7 +24,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <ModelCatalog.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -98,11 +97,13 @@ std::string explainTopology(const std::string& yamlString)
             workerCatalog->addWorker(Host(worker.host), worker.data, capacity, downstream);
         }
 
-        // 4. Run semantic analysis + full optimizer (same as nes-cli dump)
-        // Web build cannot run model inference; an empty ModelCatalog is enough to satisfy the
-        // optimizer signature — InferModelResolutionRule has no work without registered models.
+        // 4. Run full optimizer (same as nes-cli dump). On main QueryOptimizer::optimize
+        // runs SemanticAnalyzer internally, so we do NOT call it separately — that
+        // would re-run OriginIdInferenceRule and trip its single-assignment invariant.
+        // Web build cannot run model inference; an empty ModelCatalog is enough to
+        // satisfy the optimizer signature — InferModelResolutionRule has no work
+        // without registered models.
         auto modelCatalog = std::make_shared<ModelCatalog>();
-        auto semanticAnalyzer = SemanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
         auto queryOptimizer = QueryOptimizer(QueryOptimizerConfiguration{}, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
 
         std::stringstream output;
@@ -112,8 +113,7 @@ std::string explainTopology(const std::string& yamlString)
             fmt::println(output, "Query:\n{}", query);
             fmt::println(output, "Initial Logical Plan:\n{}", plan);
 
-            auto analysedPlan = semanticAnalyzer.analyse(plan);
-            auto distributedPlan = queryOptimizer.optimize(analysedPlan);
+            auto distributedPlan = queryOptimizer.optimize(plan);
 
             fmt::println(output, "Optimized Global Plan:\n{}", distributedPlan.getGlobalPlan());
 
