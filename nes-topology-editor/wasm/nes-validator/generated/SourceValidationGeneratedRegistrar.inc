@@ -31,8 +31,8 @@ namespace NES
 /// declaration of register functions for 'Sources'
 SourceValidationRegistryReturnType RegisterTCPSourceValidation(SourceValidationRegistryArguments);
 SourceValidationRegistryReturnType RegisterGeneratorSourceValidation(SourceValidationRegistryArguments);
-SourceValidationRegistryReturnType RegisterNetworkSourceValidation(SourceValidationRegistryArguments);
 SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidationRegistryArguments);
+SourceValidationRegistryReturnType RegisterNetworkSourceValidation(SourceValidationRegistryArguments);
 
 }
 
@@ -46,8 +46,8 @@ Registrar<SourceValidationRegistry, std::string, SourceValidationRegistryReturnT
     using namespace NES;
     registry.addEntry("TCP", RegisterTCPSourceValidation);
 	registry.addEntry("Generator", RegisterGeneratorSourceValidation);
-	registry.addEntry("Network", RegisterNetworkSourceValidation);
 	registry.addEntry("File", RegisterFileSourceValidation);
+	registry.addEntry("Network", RegisterNetworkSourceValidation);
 	
 }
 }

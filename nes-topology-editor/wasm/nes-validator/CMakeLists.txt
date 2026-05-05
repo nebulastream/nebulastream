@@ -120,14 +120,18 @@ set(NES_SINK_VALIDATION_SRCS
 )
 
 # nes-configurations sources (Descriptor.hpp patched in stubs for wasm32 ConfigType compatibility)
-# Descriptor.cpp excluded -- needs protobuf. Stub implementations provided in descriptor_stubs.cpp.
+# Native Descriptor.cpp excluded -- it includes protobuf headers. descriptor_wasm.cpp provides
+# the same non-proto methods (ostream operators, toStringConfig, get/unreflectConfig).
 set(NES_CONFIGURATIONS_SRCS
-    ${NES_ROOT}/nes-configurations/src/Configurations/Descriptor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/descriptor_wasm.cpp
     ${NES_ROOT}/nes-configurations/src/Configurations/BaseConfiguration.cpp
     ${NES_ROOT}/nes-configurations/src/Configurations/BaseOption.cpp
+    ${NES_ROOT}/nes-configurations/src/Configurations/Validation/BooleanValidation.cpp
     ${NES_ROOT}/nes-configurations/src/Configurations/Validation/EndpointValidation.cpp
-    ${NES_ROOT}/nes-configurations/src/Configurations/Validation/NumberValidation.cpp
     ${NES_ROOT}/nes-configurations/src/Configurations/Validation/FloatValidation.cpp
+    ${NES_ROOT}/nes-configurations/src/Configurations/Validation/IpValidation.cpp
+    ${NES_ROOT}/nes-configurations/src/Configurations/Validation/NonZeroValidation.cpp
+    ${NES_ROOT}/nes-configurations/src/Configurations/Validation/NumberValidation.cpp
 )
 
 # nes-input-formatters: not needed in WASM (StatementBinder excluded, formatters stubbed)
@@ -142,10 +146,12 @@ set(NES_QUERY_OPTIMIZER_SRCS
     ${NES_ROOT}/nes-query-optimizer/src/Traits/PlacementTrait.cpp
     ${NES_ROOT}/nes-query-optimizer/src/Traits/ImplementationTypeTrait.cpp
     ${NES_ROOT}/nes-query-optimizer/src/Traits/MemoryLayoutTypeTrait.cpp
+    # Top-level
+    ${NES_ROOT}/nes-query-optimizer/src/QueryOptimizer.cpp
     # Phases
     ${NES_ROOT}/nes-query-optimizer/src/Phases/SemanticAnalyzer.cpp
-    ${NES_ROOT}/nes-query-optimizer/src/Phases/QueryOptimizer.cpp
-    ${NES_ROOT}/nes-query-optimizer/src/Phases/QueryDecomposition.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Phases/RuleBasedOptimizer.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Phases/OperatorPlacer.cpp
     # Semantic rules
     ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/InlineSinkBindingRule.cpp
     ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/SinkBindingRule.cpp
@@ -161,8 +167,8 @@ set(NES_QUERY_OPTIMIZER_SRCS
     ${NES_ROOT}/nes-query-optimizer/src/Rules/Static/RedundantProjectionRemovalRule.cpp
     ${NES_ROOT}/nes-query-optimizer/src/Rules/Static/RedundantUnionRemovalRule.cpp
     # Placement
-    ${NES_ROOT}/nes-query-optimizer/src/Rules/BottomUpPlacement.cpp
-    ${NES_ROOT}/nes-query-optimizer/src/Rules/OperatorPlacement.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Placement/BottomUpPlacement.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Placement/QueryDecomposition.cpp
 )
 
 # nes-distributed sources (topology, worker catalog, distributed query types)

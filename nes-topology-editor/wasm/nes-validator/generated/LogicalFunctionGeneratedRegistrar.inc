@@ -52,6 +52,8 @@ LogicalFunctionRegistryReturnType RegisterLessEqualsLogicalFunction(LogicalFunct
 LogicalFunctionRegistryReturnType RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments);
 LogicalFunctionRegistryReturnType RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments);
 LogicalFunctionRegistryReturnType RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments);
+LogicalFunctionRegistryReturnType RegisterFROM_BASE64LogicalFunction(LogicalFunctionRegistryArguments);
+LogicalFunctionRegistryReturnType RegisterTO_BASE64LogicalFunction(LogicalFunctionRegistryArguments);
 LogicalFunctionRegistryReturnType RegisterCastToTypeLogicalFunction(LogicalFunctionRegistryArguments);
 LogicalFunctionRegistryReturnType RegisterCastToUnixTsLogicalFunction(LogicalFunctionRegistryArguments);
 LogicalFunctionRegistryReturnType RegisterCastFromUnixTsLogicalFunction(LogicalFunctionRegistryArguments);
@@ -88,6 +90,8 @@ inline void Registrar<LogicalFunctionRegistry, std::string, LogicalFunctionRegis
 	registry.addEntry("ConstantValue", RegisterConstantValueLogicalFunction);
 	registry.addEntry("FieldAccess", RegisterFieldAccessLogicalFunction);
 	registry.addEntry("Concat", RegisterConcatLogicalFunction);
+	registry.addEntry("FROM_BASE64", RegisterFROM_BASE64LogicalFunction);
+	registry.addEntry("TO_BASE64", RegisterTO_BASE64LogicalFunction);
 	registry.addEntry("CastToType", RegisterCastToTypeLogicalFunction);
 	registry.addEntry("CastToUnixTs", RegisterCastToUnixTsLogicalFunction);
 	registry.addEntry("CastFromUnixTs", RegisterCastFromUnixTsLogicalFunction);

@@ -35,6 +35,8 @@ LogicalOperatorRegistryReturnType RegisterProjectionLogicalOperator(LogicalOpera
 LogicalOperatorRegistryReturnType RegisterUnionLogicalOperator(LogicalOperatorRegistryArguments);
 LogicalOperatorRegistryReturnType RegisterIngestionTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments);
 LogicalOperatorRegistryReturnType RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments);
+LogicalOperatorRegistryReturnType RegisterInferModelLogicalOperator(LogicalOperatorRegistryArguments);
+LogicalOperatorRegistryReturnType RegisterInferModelNameLogicalOperator(LogicalOperatorRegistryArguments);
 
 }
 
@@ -51,6 +53,8 @@ inline void Registrar<LogicalOperatorRegistry, std::string, LogicalOperatorRegis
 	registry.addEntry("Union", RegisterUnionLogicalOperator);
 	registry.addEntry("IngestionTimeWatermarkAssigner", RegisterIngestionTimeWatermarkAssignerLogicalOperator);
 	registry.addEntry("EventTimeWatermarkAssigner", RegisterEventTimeWatermarkAssignerLogicalOperator);
+	registry.addEntry("InferModel", RegisterInferModelLogicalOperator);
+	registry.addEntry("InferModelName", RegisterInferModelNameLogicalOperator);
 	
 }
 

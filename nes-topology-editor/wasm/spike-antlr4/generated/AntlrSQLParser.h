@@ -1,5 +1,5 @@
 
-// Generated from /IdeaProjects/nebulastream2/nes-sql-parser/AntlrSQL.g4 by ANTLR 4.13.2
+// Generated from /worktrees/topology-editor/nes-sql-parser/AntlrSQL.g4 by ANTLR 4.13.2
 
 #pragma once
 
@@ -34,18 +34,19 @@ public:
     THRESHOLD = 83, SIZE = 84, ADVANCE = 85, MS = 86, SEC = 87, MINUTE = 88, 
     HOUR = 89, DAY = 90, MIN = 91, MAX = 92, AVG = 93, SUM = 94, COUNT = 95, 
     MEDIAN = 96, WATERMARK = 97, OFFSET = 98, CSV_FORMAT = 99, AT_MOST_ONCE = 100, 
-    AT_LEAST_ONCE = 101, JSON = 102, TEXT = 103, EXPLAIN = 104, BOOLEAN_VALUE = 105, 
-    EQ = 106, NSEQ = 107, NEQ = 108, NEQJ = 109, LT = 110, LTE = 111, GT = 112, 
-    GTE = 113, PLUS = 114, MINUS = 115, ASTERISK = 116, SLASH = 117, PERCENT = 118, 
-    TILDE = 119, AMPERSAND = 120, PIPE = 121, CONCAT_PIPE = 122, HAT = 123, 
-    STRING = 124, INTEGER_VALUE = 125, FLOAT_LITERAL = 126, WS = 127, SINKS = 128, 
-    SOURCES = 129, QUERIES = 130, DATA_TYPE = 131, INTEGER_UNSIGNED_TYPE = 132, 
-    INTEGER_SIGNED_TYPE = 133, INTEGER_BASES_TYPES = 134, TINY_INT_TYPE = 135, 
-    SMALL_INT_TYPE = 136, NORMAL_INT_TYPE = 137, BIG_INT_TYPE = 138, FLOATING_POINT_TYPE = 139, 
-    CHAR_TYPE = 140, VARSIZED_TYPE = 141, BOOLEAN_TYPE = 142, UNSIGNED_TYPE_QUALIFIER = 143, 
-    SHOW = 144, FORMAT = 145, CREATE = 146, SOURCE = 147, LOGICAL = 148, 
-    PHYSICAL = 149, WORKER = 150, SINK = 151, SIMPLE_COMMENT = 152, BRACKETED_COMMENT = 153, 
-    IDENTIFIER = 154, UNRECOGNIZED = 155
+    AT_LEAST_ONCE = 101, JSON = 102, TEXT = 103, EXPLAIN = 104, MODEL = 105, 
+    MODELS = 106, MODEL_INFERENCE = 107, INPUT = 108, OUTPUT = 109, BOOLEAN_VALUE = 110, 
+    EQ = 111, NSEQ = 112, NEQ = 113, NEQJ = 114, LT = 115, LTE = 116, GT = 117, 
+    GTE = 118, PLUS = 119, MINUS = 120, ASTERISK = 121, SLASH = 122, PERCENT = 123, 
+    TILDE = 124, AMPERSAND = 125, PIPE = 126, CONCAT_PIPE = 127, HAT = 128, 
+    STRING = 129, INTEGER_VALUE = 130, FLOAT_LITERAL = 131, WS = 132, SINKS = 133, 
+    SOURCES = 134, QUERIES = 135, DATA_TYPE = 136, INTEGER_UNSIGNED_TYPE = 137, 
+    INTEGER_SIGNED_TYPE = 138, INTEGER_BASES_TYPES = 139, TINY_INT_TYPE = 140, 
+    SMALL_INT_TYPE = 141, NORMAL_INT_TYPE = 142, BIG_INT_TYPE = 143, FLOATING_POINT_TYPE = 144, 
+    CHAR_TYPE = 145, VARSIZED_TYPE = 146, BOOLEAN_TYPE = 147, UNSIGNED_TYPE_QUALIFIER = 148, 
+    SHOW = 149, FORMAT = 150, CREATE = 151, SOURCE = 152, LOGICAL = 153, 
+    PHYSICAL = 154, WORKER = 155, SINK = 156, SIMPLE_COMMENT = 157, BRACKETED_COMMENT = 158, 
+    IDENTIFIER = 159, UNRECOGNIZED = 160
   };
 
   enum {
@@ -53,34 +54,36 @@ public:
     RuleStatement = 3, RuleExplainStatement = 4, RuleCreateStatement = 5, 
     RuleCreateDefinition = 6, RuleCreateLogicalSourceDefinition = 7, RuleCreatePhysicalSourceDefinition = 8, 
     RuleOptionsClause = 9, RuleCreateSinkDefinition = 10, RuleCreateWorkerDefinition = 11, 
-    RuleSchemaDefinition = 12, RuleColumnDefinition = 13, RuleTypeDefinition = 14, 
-    RuleNullableDefinition = 15, RuleFromQuery = 16, RuleDropStatement = 17, 
-    RuleDropSubject = 18, RuleDropQuery = 19, RuleDropSource = 20, RuleDropLogicalSourceSubject = 21, 
-    RuleDropPhysicalSourceSubject = 22, RuleDropWorker = 23, RuleDropSink = 24, 
-    RuleDropFilter = 25, RuleShowStatement = 26, RuleShowFormat = 27, RuleShowSubject = 28, 
-    RuleShowFilter = 29, RuleQueryWithOptions = 30, RuleQuery = 31, RuleQueryOrganization = 32, 
-    RuleQueryTerm = 33, RuleQueryPrimary = 34, RuleQuerySpecification = 35, 
-    RuleFromClause = 36, RuleRelation = 37, RuleJoinRelation = 38, RuleJoinType = 39, 
-    RuleJoinCriteria = 40, RuleRelationPrimary = 41, RuleInlineSource = 42, 
-    RuleSchema = 43, RuleFromStatement = 44, RuleFromStatementBody = 45, 
-    RuleSelectClause = 46, RuleWhereClause = 47, RuleHavingClause = 48, 
-    RuleInlineTable = 49, RuleTableAlias = 50, RuleMultipartIdentifier = 51, 
-    RuleNamedConfigExpression = 52, RuleNamedExpression = 53, RuleIdentifier = 54, 
-    RuleStrictIdentifier = 55, RuleQuotedIdentifier = 56, RuleIdentifierChain = 57, 
-    RuleIdentifierList = 58, RuleIdentifierSeq = 59, RuleErrorCapturingIdentifier = 60, 
-    RuleErrorCapturingIdentifierExtra = 61, RuleNamedConfigExpressionSeq = 62, 
-    RuleNamedExpressionSeq = 63, RuleExpression = 64, RuleBooleanExpression = 65, 
-    RuleWindowedAggregationClause = 66, RuleGroupByClause = 67, RuleGroupingSet = 68, 
-    RuleWindowClause = 69, RuleWatermarkClause = 70, RuleWatermarkParameters = 71, 
-    RuleWindowSpec = 72, RuleTimeWindow = 73, RuleCountWindow = 74, RuleConditionWindow = 75, 
-    RuleConditionParameter = 76, RuleThresholdMinSizeParameter = 77, RuleSizeParameter = 78, 
-    RuleAdvancebyParameter = 79, RuleTimeUnit = 80, RuleTimestampParameter = 81, 
-    RuleFunctionName = 82, RuleSinkClause = 83, RuleSink = 84, RuleInlineSink = 85, 
-    RuleNullNotnull = 86, RuleStreamName = 87, RuleFileFormat = 88, RuleSortItem = 89, 
-    RulePredicate = 90, RuleValueExpression = 91, RuleComparisonOperator = 92, 
-    RuleHint = 93, RuleHintStatement = 94, RulePrimaryExpression = 95, RuleQualifiedName = 96, 
-    RuleNumber = 97, RuleUnsignedIntegerLiteral = 98, RuleSignedIntegerLiteral = 99, 
-    RuleConstant = 100, RuleBooleanValue = 101
+    RuleCreateModelDefinition = 12, RuleModelInputField = 13, RuleModelOutputField = 14, 
+    RuleSchemaDefinition = 15, RuleColumnDefinition = 16, RuleTypeDefinition = 17, 
+    RuleNullableDefinition = 18, RuleFromQuery = 19, RuleDropStatement = 20, 
+    RuleDropSubject = 21, RuleDropModel = 22, RuleDropQuery = 23, RuleDropSource = 24, 
+    RuleDropLogicalSourceSubject = 25, RuleDropPhysicalSourceSubject = 26, 
+    RuleDropWorker = 27, RuleDropSink = 28, RuleDropFilter = 29, RuleShowStatement = 30, 
+    RuleShowFormat = 31, RuleShowSubject = 32, RuleShowFilter = 33, RuleQueryWithOptions = 34, 
+    RuleQuery = 35, RuleQueryOrganization = 36, RuleQueryTerm = 37, RuleQueryPrimary = 38, 
+    RuleQuerySpecification = 39, RuleFromClause = 40, RuleRelation = 41, 
+    RuleJoinRelation = 42, RuleJoinType = 43, RuleJoinCriteria = 44, RuleRelationPrimary = 45, 
+    RuleModelInferenceSource = 46, RuleModelInferenceInput = 47, RuleInlineSource = 48, 
+    RuleSchema = 49, RuleFromStatement = 50, RuleFromStatementBody = 51, 
+    RuleSelectClause = 52, RuleWhereClause = 53, RuleHavingClause = 54, 
+    RuleInlineTable = 55, RuleTableAlias = 56, RuleMultipartIdentifier = 57, 
+    RuleNamedConfigExpression = 58, RuleNamedExpression = 59, RuleIdentifier = 60, 
+    RuleStrictIdentifier = 61, RuleQuotedIdentifier = 62, RuleIdentifierChain = 63, 
+    RuleIdentifierList = 64, RuleIdentifierSeq = 65, RuleErrorCapturingIdentifier = 66, 
+    RuleErrorCapturingIdentifierExtra = 67, RuleNamedConfigExpressionSeq = 68, 
+    RuleNamedExpressionSeq = 69, RuleExpression = 70, RuleBooleanExpression = 71, 
+    RuleWindowedAggregationClause = 72, RuleGroupByClause = 73, RuleGroupingSet = 74, 
+    RuleWindowClause = 75, RuleWatermarkClause = 76, RuleWatermarkParameters = 77, 
+    RuleWindowSpec = 78, RuleTimeWindow = 79, RuleCountWindow = 80, RuleConditionWindow = 81, 
+    RuleConditionParameter = 82, RuleThresholdMinSizeParameter = 83, RuleSizeParameter = 84, 
+    RuleAdvancebyParameter = 85, RuleTimeUnit = 86, RuleTimestampParameter = 87, 
+    RuleFunctionName = 88, RuleSinkClause = 89, RuleSink = 90, RuleInlineSink = 91, 
+    RuleNullNotnull = 92, RuleStreamName = 93, RuleFileFormat = 94, RuleSortItem = 95, 
+    RulePredicate = 96, RuleValueExpression = 97, RuleComparisonOperator = 98, 
+    RuleHint = 99, RuleHintStatement = 100, RulePrimaryExpression = 101, 
+    RuleQualifiedName = 102, RuleNumber = 103, RuleUnsignedIntegerLiteral = 104, 
+    RuleSignedIntegerLiteral = 105, RuleConstant = 106, RuleBooleanValue = 107
   };
 
   explicit AntlrSQLParser(antlr4::TokenStream *input);
@@ -116,6 +119,9 @@ public:
   class OptionsClauseContext;
   class CreateSinkDefinitionContext;
   class CreateWorkerDefinitionContext;
+  class CreateModelDefinitionContext;
+  class ModelInputFieldContext;
+  class ModelOutputFieldContext;
   class SchemaDefinitionContext;
   class ColumnDefinitionContext;
   class TypeDefinitionContext;
@@ -123,6 +129,7 @@ public:
   class FromQueryContext;
   class DropStatementContext;
   class DropSubjectContext;
+  class DropModelContext;
   class DropQueryContext;
   class DropSourceContext;
   class DropLogicalSourceSubjectContext;
@@ -146,6 +153,8 @@ public:
   class JoinTypeContext;
   class JoinCriteriaContext;
   class RelationPrimaryContext;
+  class ModelInferenceSourceContext;
+  class ModelInferenceInputContext;
   class InlineSourceContext;
   class SchemaContext;
   class FromStatementContext;
@@ -302,6 +311,7 @@ public:
     CreatePhysicalSourceDefinitionContext *createPhysicalSourceDefinition();
     CreateSinkDefinitionContext *createSinkDefinition();
     CreateWorkerDefinitionContext *createWorkerDefinition();
+    CreateModelDefinitionContext *createModelDefinition();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -400,6 +410,57 @@ public:
 
   CreateWorkerDefinitionContext* createWorkerDefinition();
 
+  class  CreateModelDefinitionContext : public antlr4::ParserRuleContext {
+  public:
+    AntlrSQLParser::IdentifierContext *modelName = nullptr;
+    antlr4::Token *modelPath = nullptr;
+    CreateModelDefinitionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *MODEL();
+    antlr4::tree::TerminalNode *INPUT();
+    std::vector<ModelInputFieldContext *> modelInputField();
+    ModelInputFieldContext* modelInputField(size_t i);
+    antlr4::tree::TerminalNode *OUTPUT();
+    std::vector<ModelOutputFieldContext *> modelOutputField();
+    ModelOutputFieldContext* modelOutputField(size_t i);
+    IdentifierContext *identifier();
+    antlr4::tree::TerminalNode *STRING();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  CreateModelDefinitionContext* createModelDefinition();
+
+  class  ModelInputFieldContext : public antlr4::ParserRuleContext {
+  public:
+    ModelInputFieldContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdentifierContext *identifier();
+    TypeDefinitionContext *typeDefinition();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  ModelInputFieldContext* modelInputField();
+
+  class  ModelOutputFieldContext : public antlr4::ParserRuleContext {
+  public:
+    ModelOutputFieldContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdentifierContext *identifier();
+    TypeDefinitionContext *typeDefinition();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  ModelOutputFieldContext* modelOutputField();
+
   class  SchemaDefinitionContext : public antlr4::ParserRuleContext {
   public:
     SchemaDefinitionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -494,6 +555,7 @@ public:
     DropSourceContext *dropSource();
     DropSinkContext *dropSink();
     DropWorkerContext *dropWorker();
+    DropModelContext *dropModel();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -501,6 +563,19 @@ public:
   };
 
   DropSubjectContext* dropSubject();
+
+  class  DropModelContext : public antlr4::ParserRuleContext {
+  public:
+    DropModelContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *MODEL();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  DropModelContext* dropModel();
 
   class  DropQueryContext : public antlr4::ParserRuleContext {
   public:
@@ -643,6 +718,15 @@ public:
     virtual size_t getRuleIndex() const override;
 
    
+  };
+
+  class  ShowModelsSubjectContext : public ShowSubjectContext {
+  public:
+    ShowModelsSubjectContext(ShowSubjectContext *ctx);
+
+    antlr4::tree::TerminalNode *MODELS();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };
 
   class  ShowPhysicalSourcesSubjectContext : public ShowSubjectContext {
@@ -1002,6 +1086,16 @@ public:
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };
 
+  class  ModelInferenceRelationContext : public RelationPrimaryContext {
+  public:
+    ModelInferenceRelationContext(RelationPrimaryContext *ctx);
+
+    ModelInferenceSourceContext *modelInferenceSource();
+    TableAliasContext *tableAlias();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
   class  TableNameContext : public RelationPrimaryContext {
   public:
     TableNameContext(RelationPrimaryContext *ctx);
@@ -1013,6 +1107,64 @@ public:
   };
 
   RelationPrimaryContext* relationPrimary();
+
+  class  ModelInferenceSourceContext : public antlr4::ParserRuleContext {
+  public:
+    AntlrSQLParser::IdentifierContext *modelName = nullptr;
+    ModelInferenceSourceContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *MODEL_INFERENCE();
+    ModelInferenceInputContext *modelInferenceInput();
+    IdentifierContext *identifier();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  ModelInferenceSourceContext* modelInferenceSource();
+
+  class  ModelInferenceInputContext : public antlr4::ParserRuleContext {
+  public:
+    ModelInferenceInputContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    ModelInferenceInputContext() = default;
+    void copyFrom(ModelInferenceInputContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
+    virtual size_t getRuleIndex() const override;
+
+   
+  };
+
+  class  ModelInferenceSubqueryContext : public ModelInferenceInputContext {
+  public:
+    ModelInferenceSubqueryContext(ModelInferenceInputContext *ctx);
+
+    QueryContext *query();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  class  ModelInferenceStreamNameContext : public ModelInferenceInputContext {
+  public:
+    ModelInferenceStreamNameContext(ModelInferenceInputContext *ctx);
+
+    MultipartIdentifierContext *multipartIdentifier();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  class  ModelInferenceNestedContext : public ModelInferenceInputContext {
+  public:
+    ModelInferenceNestedContext(ModelInferenceInputContext *ctx);
+
+    ModelInferenceSourceContext *modelInferenceSource();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  ModelInferenceInputContext* modelInferenceInput();
 
   class  InlineSourceContext : public antlr4::ParserRuleContext {
   public:

@@ -1,5 +1,5 @@
 
-// Generated from /IdeaProjects/nebulastream2/nes-sql-parser/AntlrSQL.g4 by ANTLR 4.13.2
+// Generated from /worktrees/topology-editor/nes-sql-parser/AntlrSQL.g4 by ANTLR 4.13.2
 
 #pragma once
 
@@ -52,6 +52,15 @@ public:
   virtual void enterCreateWorkerDefinition(AntlrSQLParser::CreateWorkerDefinitionContext * /*ctx*/) override { }
   virtual void exitCreateWorkerDefinition(AntlrSQLParser::CreateWorkerDefinitionContext * /*ctx*/) override { }
 
+  virtual void enterCreateModelDefinition(AntlrSQLParser::CreateModelDefinitionContext * /*ctx*/) override { }
+  virtual void exitCreateModelDefinition(AntlrSQLParser::CreateModelDefinitionContext * /*ctx*/) override { }
+
+  virtual void enterModelInputField(AntlrSQLParser::ModelInputFieldContext * /*ctx*/) override { }
+  virtual void exitModelInputField(AntlrSQLParser::ModelInputFieldContext * /*ctx*/) override { }
+
+  virtual void enterModelOutputField(AntlrSQLParser::ModelOutputFieldContext * /*ctx*/) override { }
+  virtual void exitModelOutputField(AntlrSQLParser::ModelOutputFieldContext * /*ctx*/) override { }
+
   virtual void enterSchemaDefinition(AntlrSQLParser::SchemaDefinitionContext * /*ctx*/) override { }
   virtual void exitSchemaDefinition(AntlrSQLParser::SchemaDefinitionContext * /*ctx*/) override { }
 
@@ -72,6 +81,9 @@ public:
 
   virtual void enterDropSubject(AntlrSQLParser::DropSubjectContext * /*ctx*/) override { }
   virtual void exitDropSubject(AntlrSQLParser::DropSubjectContext * /*ctx*/) override { }
+
+  virtual void enterDropModel(AntlrSQLParser::DropModelContext * /*ctx*/) override { }
+  virtual void exitDropModel(AntlrSQLParser::DropModelContext * /*ctx*/) override { }
 
   virtual void enterDropQuery(AntlrSQLParser::DropQueryContext * /*ctx*/) override { }
   virtual void exitDropQuery(AntlrSQLParser::DropQueryContext * /*ctx*/) override { }
@@ -111,6 +123,9 @@ public:
 
   virtual void enterShowSinksSubject(AntlrSQLParser::ShowSinksSubjectContext * /*ctx*/) override { }
   virtual void exitShowSinksSubject(AntlrSQLParser::ShowSinksSubjectContext * /*ctx*/) override { }
+
+  virtual void enterShowModelsSubject(AntlrSQLParser::ShowModelsSubjectContext * /*ctx*/) override { }
+  virtual void exitShowModelsSubject(AntlrSQLParser::ShowModelsSubjectContext * /*ctx*/) override { }
 
   virtual void enterShowFilter(AntlrSQLParser::ShowFilterContext * /*ctx*/) override { }
   virtual void exitShowFilter(AntlrSQLParser::ShowFilterContext * /*ctx*/) override { }
@@ -177,6 +192,21 @@ public:
 
   virtual void enterInlineDefinedSource(AntlrSQLParser::InlineDefinedSourceContext * /*ctx*/) override { }
   virtual void exitInlineDefinedSource(AntlrSQLParser::InlineDefinedSourceContext * /*ctx*/) override { }
+
+  virtual void enterModelInferenceRelation(AntlrSQLParser::ModelInferenceRelationContext * /*ctx*/) override { }
+  virtual void exitModelInferenceRelation(AntlrSQLParser::ModelInferenceRelationContext * /*ctx*/) override { }
+
+  virtual void enterModelInferenceSource(AntlrSQLParser::ModelInferenceSourceContext * /*ctx*/) override { }
+  virtual void exitModelInferenceSource(AntlrSQLParser::ModelInferenceSourceContext * /*ctx*/) override { }
+
+  virtual void enterModelInferenceStreamName(AntlrSQLParser::ModelInferenceStreamNameContext * /*ctx*/) override { }
+  virtual void exitModelInferenceStreamName(AntlrSQLParser::ModelInferenceStreamNameContext * /*ctx*/) override { }
+
+  virtual void enterModelInferenceSubquery(AntlrSQLParser::ModelInferenceSubqueryContext * /*ctx*/) override { }
+  virtual void exitModelInferenceSubquery(AntlrSQLParser::ModelInferenceSubqueryContext * /*ctx*/) override { }
+
+  virtual void enterModelInferenceNested(AntlrSQLParser::ModelInferenceNestedContext * /*ctx*/) override { }
+  virtual void exitModelInferenceNested(AntlrSQLParser::ModelInferenceNestedContext * /*ctx*/) override { }
 
   virtual void enterInlineSource(AntlrSQLParser::InlineSourceContext * /*ctx*/) override { }
   virtual void exitInlineSource(AntlrSQLParser::InlineSourceContext * /*ctx*/) override { }
