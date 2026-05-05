@@ -27,7 +27,7 @@ if [[ -n "$R2_ACCOUNT_ID" && -n "$R2_KEY" && -n "$R2_SECRET" ]]; then
     write_vcpkg_env "VCPKG_BINARY_SOURCES"     "clear;x-aws,s3://my-vcpkg-cache/,readwrite"
     echo "[nes-entrypoint] R2 binary cache configured (readwrite)"
 else
-    write_vcpkg_env "VCPKG_BINARY_SOURCES" "clear;http,https://pub-162f068cdd4a45d192dedb5f886cd825.r2.dev/{sha}.zip,read"
+    write_vcpkg_env "VCPKG_BINARY_SOURCES" "clear;default,readwrite;http,https://pub-162f068cdd4a45d192dedb5f886cd825.r2.dev/{sha}.zip,read"
     echo "[nes-entrypoint] No R2 secrets found, using public read-only binary cache"
 fi
 

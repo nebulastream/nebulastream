@@ -36,6 +36,12 @@ ARG ANTLR4_VERSION=4.13.2
 ARG TARGETARCH
 ENV NES_ARCH=${TARGETARCH}
 
+# Remove the default `ubuntu` user (UID 1000) that ships with the noble base
+# image so the `vscode` user added by the devcontainer common-utils feature
+# can own UID 1000 unambiguously — otherwise name lookups for UID 1000 resolve
+# to `ubuntu`, breaking the sudoers entry that targets `vscode`.
+RUN userdel -r ubuntu 2>/dev/null || true
+
 # -- Install AWS CLI (for R2 binary cache) ----------------------------------
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
@@ -106,8 +112,11 @@ RUN set -eux; \
     rustc --version;
 
 # Antlr JAR (required by the antlr4 vcpkg port)
-ADD --checksum=sha256:eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76 --chmod=744 \
-  https://www.antlr.org/download/antlr-${ANTLR4_VERSION}-complete.jar /opt/antlr-${ANTLR4_VERSION}-complete.jar
+RUN curl -fSL "https://www.antlr.org/download/antlr-${ANTLR4_VERSION}-complete.jar" \
+        -o /opt/antlr-${ANTLR4_VERSION}-complete.jar \
+    && echo "eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76  /opt/antlr-${ANTLR4_VERSION}-complete.jar" \
+       | sha256sum -c \
+    && chmod 744 /opt/antlr-${ANTLR4_VERSION}-complete.jar
 
 # ClangBuildAnalyzer
 RUN git clone https://github.com/aras-p/ClangBuildAnalyzer.git \
