@@ -98,7 +98,7 @@ std::string validateTopology(const std::string& yamlString)
                 | std::ranges::to<std::vector>();
             auto capacity = worker.maxOperators.has_value() ? Capacity(CapacityKind::Limited{*worker.maxOperators})
                                                            : Capacity(CapacityKind::Unlimited{});
-            workerCatalog->addWorker(Host(worker.host), worker.data, capacity, downstream);
+            workerCatalog->addWorker(Host(worker.host), worker.dataAddress, capacity, downstream);
         }
 
         // 5. Parse and validate SQL queries through the full optimizer (semantic

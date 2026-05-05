@@ -94,7 +94,7 @@ std::string explainTopology(const std::string& yamlString)
                 | std::ranges::to<std::vector>();
             auto capacity = worker.maxOperators.has_value() ? Capacity(CapacityKind::Limited{*worker.maxOperators})
                                                            : Capacity(CapacityKind::Unlimited{});
-            workerCatalog->addWorker(Host(worker.host), worker.data, capacity, downstream);
+            workerCatalog->addWorker(Host(worker.host), worker.dataAddress, capacity, downstream);
         }
 
         // 4. Run full optimizer (same as nes-cli dump). On main QueryOptimizer::optimize

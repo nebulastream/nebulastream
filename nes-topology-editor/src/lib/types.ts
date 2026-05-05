@@ -6,7 +6,7 @@ export interface Position {
 export interface Worker {
   id: string;
   host: string;
-  data: string;
+  dataAddress: string;
   capacity: number;
   downstream: string[];
   position: Position;

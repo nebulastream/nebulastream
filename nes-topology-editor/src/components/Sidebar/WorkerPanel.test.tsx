@@ -27,7 +27,7 @@ import WorkerPanel from './WorkerPanel';
 const mockWorker: Worker = {
   id: 'w1',
   host: '127.0.0.1',
-  data: '4000',
+  dataAddress: '4000',
   capacity: 8,
   downstream: [],
   position: { x: 0, y: 0 },

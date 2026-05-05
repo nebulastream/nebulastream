@@ -63,7 +63,7 @@ export const createTopologySlice: StateCreator<
       const worker: Worker = {
         id: generateId(),
         host,
-        data: `${hostBase}:9090`,
+        dataAddress: `${hostBase}:9090`,
         capacity: 10000,
         downstream: [],
         position: position ?? { x: 0, y: 0 },

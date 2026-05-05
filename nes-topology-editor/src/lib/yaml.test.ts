@@ -34,7 +34,7 @@ describe('storeToYaml', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        data: 'worker-1:8080',
+        dataAddress: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -43,7 +43,7 @@ describe('storeToYaml', () => {
     const result = storeToYaml(workers, [], [], [], []);
     expect(result).toContain('workers:');
     expect(result).toContain('host: worker-1:9090');
-    expect(result).toContain('data: worker-1:8080');
+    expect(result).toContain('data_address: worker-1:8080');
     expect(result).toContain('max_operators: 10000');
     expect(result).not.toContain('downstream');
   });
@@ -53,7 +53,7 @@ describe('storeToYaml', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        data: 'worker-1:8080',
+        dataAddress: 'worker-1:8080',
         capacity: 10000,
         downstream: ['w2'],
         position: { x: 0, y: 0 },
@@ -61,7 +61,7 @@ describe('storeToYaml', () => {
       {
         id: 'w2',
         host: 'worker-2:9090',
-        data: 'worker-2:8080',
+        dataAddress: 'worker-2:8080',
         capacity: 5000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -98,7 +98,7 @@ describe('storeToYaml', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        data: 'worker-1:8080',
+        dataAddress: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -144,7 +144,7 @@ describe('storeToYaml', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        data: 'worker-1:8080',
+        dataAddress: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -179,7 +179,7 @@ describe('storeToYaml', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        data: 'worker-1:8080',
+        dataAddress: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -199,7 +199,7 @@ describe('storeToYaml', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        data: 'worker-1:8080',
+        dataAddress: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -225,13 +225,13 @@ describe('yamlToStore', () => {
     const yaml = `
 workers:
   - host: worker-1:9090
-    data: worker-1:8080
+    data_address: worker-1:8080
     max_operators: 10000
 `;
     const result = yamlToStore(yaml);
     expect(result.workers).toHaveLength(1);
     expect(result.workers[0]!.host).toBe('worker-1:9090');
-    expect(result.workers[0]!.data).toBe('worker-1:8080');
+    expect(result.workers[0]!.dataAddress).toBe('worker-1:8080');
     expect(result.workers[0]!.capacity).toBe(10000);
     expect(result.workers[0]!.id).toBe('uuid-1');
     expect(result.workers[0]!.position).toEqual({ x: 0, y: 0 });
@@ -241,12 +241,12 @@ workers:
     const yaml = `
 workers:
   - host: worker-1:9090
-    data: worker-1:8080
+    data_address: worker-1:8080
     max_operators: 10000
     downstream:
       - worker-2:9090
   - host: worker-2:9090
-    data: worker-2:8080
+    data_address: worker-2:8080
     max_operators: 5000
 `;
     const result = yamlToStore(yaml);
@@ -273,7 +273,7 @@ logical:
     const yaml = `
 workers:
   - host: worker-1:9090
-    data: worker-1:8080
+    data_address: worker-1:8080
     max_operators: 10000
 logical:
   - name: GENERATOR_SOURCE
@@ -301,7 +301,7 @@ physical:
     const yaml = `
 workers:
   - host: worker-1:9090
-    data: worker-1:8080
+    data_address: worker-1:8080
     max_operators: 10000
 sinks:
   - name: VOID_SINK
@@ -368,7 +368,7 @@ describe('roundtrip', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        data: 'worker-1:8080',
+        dataAddress: 'worker-1:8080',
         capacity: 10000,
         downstream: ['w2'],
         position: { x: 100, y: 200 },
@@ -376,7 +376,7 @@ describe('roundtrip', () => {
       {
         id: 'w2',
         host: 'worker-2:9090',
-        data: 'worker-2:8080',
+        dataAddress: 'worker-2:8080',
         capacity: 5000,
         downstream: [],
         position: { x: 300, y: 200 },

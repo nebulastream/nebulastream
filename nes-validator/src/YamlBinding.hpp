@@ -64,7 +64,7 @@ struct SinkConfig
 struct WorkerConfig
 {
     std::string host;
-    std::string data;
+    std::string dataAddress;
     std::optional<size_t> maxOperators;
     std::vector<std::string> downstream;
 };

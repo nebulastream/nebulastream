@@ -103,7 +103,7 @@ export function storeToYaml(
   doc.workers = workers.map((w) => {
     const entry: Record<string, unknown> = {
       host: w.host,
-      data: w.data,
+      data_address: w.dataAddress,
       max_operators: w.capacity,
     };
     if (w.downstream.length > 0) {
@@ -144,7 +144,8 @@ export function yamlToStore(yamlStr: string): ParseResult {
     return {
       id,
       host: w.host ?? '',
-      data: w.data ?? '',
+      // Tolerant of legacy `data:` key on input — emit always uses `data_address` (CLI format).
+      dataAddress: w.data_address ?? w.data ?? '',
       capacity: w.max_operators ?? 10000,
       downstream: [],
       position: { x: 0, y: 0 },

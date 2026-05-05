@@ -84,7 +84,7 @@ physical:
         SEQUENCE INT64 0 100000 1000
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 )";
 
@@ -122,7 +122,7 @@ physical:
         SEQUENCE INT64 0 100 1
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 )";
 
@@ -190,7 +190,7 @@ physical:
         SEQUENCE INT64 0 100 1
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 )";
 
@@ -240,7 +240,7 @@ physical:
         SEQUENCE INT64 0 100000 1000
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 )";
 
@@ -276,7 +276,7 @@ physical:
         SEQUENCE INT64 0 100 1
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 )";
 
@@ -312,7 +312,7 @@ physical:
         SEQUENCE INT64 0 100 1
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 )";
 
@@ -401,7 +401,7 @@ physical:
     source_config: {}
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 )";
     auto result = Validator::validateTopology(yaml);
@@ -429,7 +429,7 @@ physical:
     source_config: {}
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 )";
     auto result = Validator::validateTopology(yaml);
@@ -460,7 +460,7 @@ physical:
       file_path: /tmp/test.csv
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 )";
     auto result = Validator::validateTopology(yaml);

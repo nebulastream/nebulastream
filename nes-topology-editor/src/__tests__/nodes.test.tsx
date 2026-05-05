@@ -31,7 +31,7 @@ describe('WorkerNode', () => {
     worker: {
       id: 'w1',
       host: 'worker-1:9090',
-      data: 'worker-1:8080',
+      dataAddress: 'worker-1:8080',
       capacity: 10000,
       downstream: [],
       position: { x: 0, y: 0 },
@@ -128,7 +128,7 @@ describe('Visual distinctness (CANV-07)', () => {
   it('all three node types produce different CSS classes', () => {
     const workerData = {
       worker: {
-        id: 'w1', host: 'w:9090', data: 'w:8080', capacity: 10,
+        id: 'w1', host: 'w:9090', dataAddress: 'w:8080', capacity: 10,
         downstream: [], position: { x: 0, y: 0 },
       },
     };

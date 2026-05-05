@@ -42,7 +42,7 @@ describe('WASM validator with storeToYaml output', () => {
 
   it('accepts topology with only a worker', () => {
     const workers: Worker[] = [
-      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+      { id: 'w1', host: 'localhost:9090', dataAddress: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
     const yaml = storeToYaml(workers, [], [], [], []);
     const result = validateTopology(yaml);
@@ -60,7 +60,7 @@ describe('WASM validator with storeToYaml output', () => {
 
   it('accepts full valid topology with query', () => {
     const workers: Worker[] = [
-      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+      { id: 'w1', host: 'localhost:9090', dataAddress: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
     const logical: LogicalSource[] = [
       { id: 'ls1', name: 'sensor', schema: [{ name: 'id', type: 'INT64' }, { name: 'value', type: 'FLOAT64' }] },
@@ -102,7 +102,7 @@ describe('WASM validator with storeToYaml output', () => {
 
   it('rejects query referencing nonexistent source', () => {
     const workers: Worker[] = [
-      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+      { id: 'w1', host: 'localhost:9090', dataAddress: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
     const sinks: Sink[] = [
       {
@@ -122,7 +122,7 @@ describe('WASM validator with storeToYaml output', () => {
 
   it('rejects sink with empty name', () => {
     const workers: Worker[] = [
-      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+      { id: 'w1', host: 'localhost:9090', dataAddress: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
     const sinks: Sink[] = [
       {
@@ -137,7 +137,7 @@ describe('WASM validator with storeToYaml output', () => {
 
   it('accepts sink with valid name and output_format', () => {
     const workers: Worker[] = [
-      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+      { id: 'w1', host: 'localhost:9090', dataAddress: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
     const sinks: Sink[] = [
       {
@@ -152,7 +152,7 @@ describe('WASM validator with storeToYaml output', () => {
 
   it('accepts topology with sink and source but no query', () => {
     const workers: Worker[] = [
-      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+      { id: 'w1', host: 'localhost:9090', dataAddress: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
     const logical: LogicalSource[] = [
       { id: 'ls1', name: 'sensor', schema: [{ name: 'id', type: 'INT64' }] },
@@ -197,7 +197,7 @@ describe('default source/sink configs produce valid YAML', () => {
     };
   }
 
-  const worker: Worker = { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } };
+  const worker: Worker = { id: 'w1', host: 'localhost:9090', dataAddress: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } };
   const logical: LogicalSource = { id: 'ls1', name: 'sensor', schema: [{ name: 'id', type: 'INT64' }] };
 
   it('Generator source with defaults is valid when logical source is set', () => {
@@ -296,7 +296,7 @@ describe('WASM validator rejects invalid YAML (CLI parity)', () => {
       'physical: []',
       'workers:',
       '  - host: localhost:8080',
-      '    data: localhost:9090',
+      '    data_address: localhost:9090',
       '    max_operators: 100',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -319,7 +319,7 @@ describe('WASM validator rejects invalid YAML (CLI parity)', () => {
       '    extra_field: bad',
       'workers:',
       '  - host: localhost:8080',
-      '    data: localhost:9090',
+      '    data_address: localhost:9090',
       '    max_operators: 100',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -340,7 +340,7 @@ describe('WASM validator rejects invalid YAML (CLI parity)', () => {
       'physical: []',
       'workers:',
       '  - host: localhost:8080',
-      '    data: localhost:9090',
+      '    data_address: localhost:9090',
       '    max_operators: 100',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -348,7 +348,7 @@ describe('WASM validator rejects invalid YAML (CLI parity)', () => {
   });
 
   it('accepts topology with multiple queries', () => {
-    const worker: Worker = { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } };
+    const worker: Worker = { id: 'w1', host: 'localhost:9090', dataAddress: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } };
     const logical: LogicalSource = { id: 'ls1', name: 'sensor', schema: [{ name: 'id', type: 'INT64' }] };
     const source: PhysicalSource = {
       id: 'ps1', logicalSourceId: logical.id, hostWorkerId: worker.id, type: 'Generator',
@@ -455,13 +455,13 @@ describe('WASM validator with raw YAML topologies', () => {
       '      generator_schema: SEQUENCE INT32 80 140 1',
       'workers:',
       '  - host: "w1:8080"',
-      '    data: "w1:9090"',
+      '    data_address: "w1:9090"',
       '    downstream: []',
       '  - host: "w2:8080"',
-      '    data: "w2:9090"',
+      '    data_address: "w2:9090"',
       '    downstream: []',
       '  - host: "w3:8080"',
-      '    data: "w3:9090"',
+      '    data_address: "w3:9090"',
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -551,13 +551,13 @@ describe('WASM validator with raw YAML topologies', () => {
       '      generator_schema: SEQUENCE INT32 80 140 1',
       'workers:',
       '  - host: "w1:8080"',
-      '    data: "w1:9090"',
+      '    data_address: "w1:9090"',
       '    downstream: []',
       '  - host: "w2:8080"',
-      '    data: "w2:9090"',
+      '    data_address: "w2:9090"',
       '    downstream: []',
       '  - host: "w3:8080"',
-      '    data: "w3:9090"',
+      '    data_address: "w3:9090"',
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -584,7 +584,7 @@ describe('WASM validator with raw YAML topologies', () => {
       '      socket_port: 9000',
       'workers:',
       '  - host: "w1:8080"',
-      '    data: "w1:9090"',
+      '    data_address: "w1:9090"',
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -606,7 +606,7 @@ describe('WASM validator with raw YAML topologies', () => {
       'physical: []',
       'workers:',
       '  - host: "w1:8080"',
-      '    data: "w1:9090"',
+      '    data_address: "w1:9090"',
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -628,7 +628,7 @@ describe('WASM validator with raw YAML topologies', () => {
       'physical: []',
       'workers:',
       '  - host: "w1:8080"',
-      '    data: "w1:9090"',
+      '    data_address: "w1:9090"',
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -665,10 +665,10 @@ describe('WASM validator with raw YAML topologies', () => {
       '      socket_port: 9000',
       'workers:',
       '  - host: "w1:8080"',
-      '    data: "w1:9090"',
+      '    data_address: "w1:9090"',
       '    downstream: []',
       '  - host: "w2:8080"',
-      '    data: "w2:9090"',
+      '    data_address: "w2:9090"',
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -705,11 +705,11 @@ describe('WASM validator with raw YAML topologies', () => {
       '      socket_port: 9000',
       'workers:',
       '  - host: "w1:8080"',
-      '    data: "w1:9090"',
+      '    data_address: "w1:9090"',
       '    downstream:',
       '      - "w2:8080"',
       '  - host: "w2:8080"',
-      '    data: "w2:9090"',
+      '    data_address: "w2:9090"',
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -746,7 +746,7 @@ describe('WASM validator with raw YAML topologies', () => {
       '      socket_port: 9000',
       'workers:',
       '  - host: "w1:8080"',
-      '    data: "w1:9090"',
+      '    data_address: "w1:9090"',
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);
@@ -774,7 +774,7 @@ describe('WASM validator with raw YAML topologies', () => {
       'physical: []',
       'workers:',
       '  - host: "w1:8080"',
-      '    data: "w1:9090"',
+      '    data_address: "w1:9090"',
       '    downstream: []',
     ].join('\n');
     const result = validateTopology(yaml);

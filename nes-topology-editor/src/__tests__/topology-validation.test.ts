@@ -7,7 +7,7 @@ function makeWorker(overrides: Partial<Worker> = {}): Worker {
   return {
     id: 'w1',
     host: 'localhost',
-    data: '4000',
+    dataAddress: '4000',
     capacity: 4,
     downstream: [],
     position: { x: 0, y: 0 },

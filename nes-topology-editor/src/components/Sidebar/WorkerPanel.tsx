@@ -85,8 +85,8 @@ export default function WorkerPanel({ worker }: WorkerPanelProps) {
         <input
           type="text"
           className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-          value={worker.data}
-          onChange={(e) => handleChange('data', e.target.value)}
+          value={worker.dataAddress}
+          onChange={(e) => handleChange('dataAddress', e.target.value)}
         />
       </div>
 

@@ -22,7 +22,7 @@ describe('Topology Store', () => {
       const updated = useStore.getState();
       expect(updated.workers).toHaveLength(1);
       expect(updated.workers[0]!.host).toBe('worker-1:8080');
-      expect(updated.workers[0]!.data).toBe('worker-1:9090');
+      expect(updated.workers[0]!.dataAddress).toBe('worker-1:9090');
       expect(updated.workers[0]!.capacity).toBe(10000);
       expect(updated.workers[0]!.downstream).toEqual([]);
     });
