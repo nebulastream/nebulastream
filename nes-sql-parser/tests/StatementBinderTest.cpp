@@ -26,6 +26,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -95,6 +96,66 @@ TEST_F(StatementBinderTest, BindQuery)
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+}
+
+TEST_F(StatementBinderTest, BindQueryWithNegativeTypedFloatLiteralInWherePredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b > FLOAT64(-0.5) AND b < FLOAT64(0.5) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "B > -0.5 AND B < 0.5");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithPositiveTypedFloatLiteralInWherePredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b < FLOAT64(+0.5) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "B < 0.5");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithDoubleNegativeTypedFloatLiteralInWherePredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b < FLOAT64(- -0.5) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "B < 0.5");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithUnaryMinusOnFieldInWherePredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE -b < FLOAT64(0.5) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "-1 * B < 0.5");
 }
 
 TEST_F(StatementBinderTest, Nullable)
