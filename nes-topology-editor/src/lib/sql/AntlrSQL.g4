@@ -14,6 +14,10 @@
 
 grammar AntlrSQL;
 
+// TypeScript target: the C++ semantic-predicate helpers (isValidDecimal, isHint,
+// SQL_standard_keyword_behavior, legacy_exponent_literal_as_decimal_enabled) live
+// on NesLexerBase / NesParserBase so the .g4 stays close to the canonical NES
+// grammar at nes-sql-parser/AntlrSQL.g4 — keep the rules below in lockstep.
 options { superClass=NesParserBase; }
 
 @parser::header {
@@ -32,7 +36,7 @@ statement: queryWithOptions | createStatement | dropStatement | showStatement | 
 
 explainStatement: EXPLAIN query;
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -41,6 +45,14 @@ createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
 optionsClause: (SET '(' options=namedConfigExpressionSeq ')');
 
 createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier optionsClause?;
+
+createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
+
+createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
+                       INPUT '(' modelInputField (',' modelInputField)* ')'
+                       OUTPUT '(' modelOutputField (',' modelOutputField)* ')';
+modelInputField: identifier typeDefinition;
+modelOutputField: identifier typeDefinition;
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: identifierChain typeDefinition nullableDefinition?;
@@ -51,21 +63,24 @@ nullableDefinition: NOT NULLTOKEN;
 fromQuery: AS query;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
-dropSubject: dropQuery | dropSource | dropSink;
+dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
+dropModel: MODEL;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
 dropPhysicalSourceSubject: PHYSICAL SOURCE;
+dropWorker: WORKER;
 dropSink: SINK;
 
 dropFilter: attr=strictIdentifier EQ value=constant;
 
 showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT showFormat)?;
 showFormat: TEXT | JSON;
-showSubject: QUERIES                                                           #showQueriesSubject
-    | LOGICAL SOURCES                                                          #showLogicalSourcesSubject
-    | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)?               #showPhysicalSourcesSubject
-    | SINKS                                                                    #showSinksSubject;
+showSubject: QUERIES #showQueriesSubject
+    | LOGICAL SOURCES #showLogicalSourcesSubject
+    | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
+    | SINKS #showSinksSubject
+    | MODELS #showModelsSubject;
 
 showFilter: attr=strictIdentifier EQ value=constant;
 
@@ -78,19 +93,20 @@ queryOrganization:
          (OFFSET offset=INTEGER_VALUE)?
          ;
 
-queryTerm: queryPrimary                                                        #primaryQuery
-         |  left=queryTerm setoperator=UNION right=queryTerm                   #setOperation
+queryTerm: queryPrimary #primaryQuery
+         |  left=queryTerm setoperator=UNION right=queryTerm  #setOperation
          ;
 
 queryPrimary
-    : querySpecification                                                       #queryPrimaryDefault
-    | fromStatement                                                            #fromStmt
-    | TABLE multipartIdentifier                                                #table
-    | inlineTable                                                              #inlineTableDefault1
-    | '(' query ')'                                                            #subquery
+    : querySpecification                                                    #queryPrimaryDefault
+    | fromStatement                                                         #fromStmt
+    | TABLE multipartIdentifier                                             #table
+    | inlineTable                                                           #inlineTableDefault1
+    | '(' query ')'                                                         #subquery
     ;
-
+/// new layout to be closer to traditional SQL
 querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause? sinkClause?;
+
 
 fromClause: FROM relation (',' relation)*;
 
@@ -112,11 +128,22 @@ joinCriteria
     ;
 
 relationPrimary
-    : multipartIdentifier tableAlias                                           #tableName
-    | '(' query ')'  tableAlias                                                #aliasedQuery
-    | '(' relation ')' tableAlias                                              #aliasedRelation
-    | inlineTable                                                              #inlineTableDefault2
-    | inlineSource                                                             #inlineDefinedSource
+    : multipartIdentifier tableAlias          #tableName
+    | '(' query ')'  tableAlias               #aliasedQuery
+    | '(' relation ')' tableAlias             #aliasedRelation
+    | inlineTable                             #inlineTableDefault2
+    | inlineSource                            #inlineDefinedSource
+    | modelInferenceSource tableAlias         #modelInferenceRelation
+    ;
+
+modelInferenceSource
+    : MODEL_INFERENCE '(' modelName=identifier ',' modelInferenceInput ')'
+    ;
+
+modelInferenceInput
+    : multipartIdentifier                     #modelInferenceStreamName
+    | '(' query ')'                           #modelInferenceSubquery
+    | modelInferenceSource                    #modelInferenceNested
     ;
 
 inlineSource
@@ -158,8 +185,8 @@ namedExpression
 identifier: strictIdentifier;
 
 strictIdentifier
-    : IDENTIFIER                                                               #unquotedIdentifier
-    | quotedIdentifier                                                         #quotedIdentifierAlternative;
+    : IDENTIFIER #unquotedIdentifier
+    | quotedIdentifier #quotedIdentifierAlternative;
 
 quotedIdentifier
     : BACKQUOTED_IDENTIFIER
@@ -184,8 +211,8 @@ errorCapturingIdentifier
     ;
 
 errorCapturingIdentifierExtra
-    : (MINUS identifier)+                                                      #errorIdent
-    |                                                                          #realIdent
+    : (MINUS identifier)+    #errorIdent
+    |                        #realIdent
     ;
 
 namedConfigExpressionSeq: (namedConfigExpression (',' namedConfigExpression)*)?;
@@ -201,13 +228,14 @@ expression
     ;
 
 booleanExpression
-    : NOT booleanExpression                                                    #logicalNot
-    | EXISTS '(' query ')'                                                     #exists
-    | valueExpression predicate?                                               #predicated
-    | left=booleanExpression op=AND right=booleanExpression                    #logicalBinary
-    | left=booleanExpression op=OR right=booleanExpression                     #logicalBinary
+    : NOT booleanExpression                                        #logicalNot
+    | EXISTS '(' query ')'                                         #exists
+    | valueExpression predicate?                                   #predicated
+    | left=booleanExpression op=AND right=booleanExpression  #logicalBinary
+    | left=booleanExpression op=OR right=booleanExpression   #logicalBinary
     ;
 
+/// Problem fixed that the querySpecification rule could match an empty string
 windowedAggregationClause:
     groupByClause? windowClause watermarkClause?
     | windowClause groupByClause? watermarkClause?;
@@ -232,24 +260,24 @@ windowClause
 watermarkClause: WATERMARK '(' watermarkParameters ')';
 
 watermarkParameters: watermarkIdentifier=identifier ',' watermark=INTEGER_VALUE watermarkTimeUnit=timeUnit;
-
+/// Adding Threshold Windows
 windowSpec:
-    timeWindow                                                                 #timeBasedWindow
-    | countWindow                                                              #countBasedWindow
-    | conditionWindow                                                          #thresholdBasedWindow
+    timeWindow #timeBasedWindow
+    | countWindow #countBasedWindow
+    | conditionWindow #thresholdBasedWindow
     ;
 
 timeWindow
-    : TUMBLING '(' (timestampParameter ',')?  sizeParameter ')'                #tumblingWindow
+    : TUMBLING '(' (timestampParameter ',')?  sizeParameter ')'                       #tumblingWindow
     | SLIDING '(' (timestampParameter ',')? sizeParameter ',' advancebyParameter ')' #slidingWindow
     ;
 
 countWindow:
-    TUMBLING '(' INTEGER_VALUE ')'                                             #countBasedTumbling
+    TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling
     ;
 
 conditionWindow
-    : THRESHOLD '(' conditionParameter (',' thresholdMinSizeParameter)? ')'    #thresholdWindow
+    : THRESHOLD '(' conditionParameter (',' thresholdMinSizeParameter)? ')' #thresholdWindow
     ;
 
 conditionParameter: expression;
@@ -302,16 +330,17 @@ predicate
     | IS NOT? kind=DISTINCT FROM right=valueExpression
     ;
 
+
 valueExpression
-    : (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'  #functionCall
-    | op=(MINUS | PLUS | TILDE) valueExpression                                #arithmeticUnary
+    : (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
+    | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
-    | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression #arithmeticBinary
-    | left=valueExpression op=AMPERSAND right=valueExpression                  #arithmeticBinary
-    | left=valueExpression op=HAT right=valueExpression                        #arithmeticBinary
-    | left=valueExpression op=PIPE right=valueExpression                       #arithmeticBinary
-    | left=valueExpression comparisonOperator right=valueExpression             #comparison
-    | primaryExpression                                                        #valueExpressionDefault
+    | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
+    | left=valueExpression op=AMPERSAND right=valueExpression                          #arithmeticBinary
+    | left=valueExpression op=HAT right=valueExpression                                #arithmeticBinary
+    | left=valueExpression op=PIPE right=valueExpression                               #arithmeticBinary
+    | left=valueExpression comparisonOperator right=valueExpression                          #comparison
+    | primaryExpression                                                                      #valueExpressionDefault
     ;
 
 comparisonOperator
@@ -328,14 +357,14 @@ hintStatement
     ;
 
 primaryExpression
-    : ASTERISK                                                                 #star
-    | qualifiedName '.' ASTERISK                                               #star
-    | base=primaryExpression '.' fieldName=identifier                          #dereference
-    | '(' query ')'                                                            #subqueryExpression
-    | '(' namedExpression (',' namedExpression)+ ')'                           #rowConstructor
-    | '(' expression ')'                                                       #parenthesizedExpression
-    | constant                                                                 #constantDefault
-    | identifier                                                               #columnReference
+    : ASTERISK                                                                                 #star
+    | qualifiedName '.' ASTERISK                                                               #star
+    | base=primaryExpression '.' fieldName=identifier                                          #dereference
+    | '(' query ')'                                                                            #subqueryExpression
+    | '(' namedExpression (',' namedExpression)+ ')'                                           #rowConstructor
+    | '(' expression ')'                                                                       #parenthesizedExpression
+    | constant                                                                                 #constantDefault
+    | identifier                                                                               #columnReference
     ;
 
 qualifiedName
@@ -343,8 +372,8 @@ qualifiedName
     ;
 
 number
-    : MINUS? INTEGER_VALUE                                                     #integerLiteral
-    | MINUS? FLOAT_LITERAL                                                     #floatLiteral
+    : MINUS? INTEGER_VALUE              #integerLiteral
+    | MINUS? FLOAT_LITERAL              #floatLiteral
     ;
 
 unsignedIntegerLiteral: INTEGER_VALUE;
@@ -352,11 +381,11 @@ unsignedIntegerLiteral: INTEGER_VALUE;
 signedIntegerLiteral: MINUS INTEGER_VALUE;
 
 constant
-    : NULLTOKEN                                                                #nullLiteral
-    | identifier STRING                                                        #typeConstructor
-    | number                                                                   #numericLiteral
-    | booleanValue                                                             #booleanLiteral
-    | STRING                                                                   #stringLiteral
+    : NULLTOKEN                                                                                #nullLiteral
+    | identifier STRING                                                                        #typeConstructor
+    | number                                                                                   #numericLiteral
+    | booleanValue                                                                             #booleanLiteral
+    | STRING                                                                                  #stringLiteral
     ;
 
 booleanValue
@@ -398,7 +427,7 @@ IN: 'IN' | 'in';
 INNER: 'INNER' | 'inner';
 INSERT: 'INSERT' | 'insert';
 INTO: 'INTO' | 'into';
-IS: 'IS' | 'is';
+IS: 'IS'  'is';
 JOIN: 'JOIN' | 'join';
 LAST: 'LAST';
 LEFT: 'LEFT';
@@ -456,18 +485,24 @@ COUNT: 'COUNT' | 'count';
 MEDIAN: 'MEDIAN' | 'median';
 WATERMARK: 'WATERMARK' | 'watermark';
 OFFSET: 'OFFSET' | 'offset';
-LOCALHOST: 'LOCALHOST' | 'localhost';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
 JSON: 'JSON';
 TEXT: 'TEXT';
 EXPLAIN: 'EXPLAIN' | 'explain';
+MODEL: 'MODEL';
+MODELS: 'MODELS';
+MODEL_INFERENCE: 'MODEL_INFERENCE';
+INPUT: 'INPUT';
+OUTPUT: 'OUTPUT';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************
 /// End of the keywords list
 ///****************************
+
+
 
 BOOLEAN_VALUE: 'true' | 'false';
 EQ  : '=' | '==';
@@ -501,8 +536,9 @@ INTEGER_VALUE
 
 FLOAT_LITERAL
     : DIGIT+ EXPONENT?
-    | DECIMAL_DIGITS EXPONENT? {this.isValidDecimal()}?
+    | DECIMAL_DIGITS EXPONENT? {isValidDecimal()}?
     ;
+
 
 fragment DECIMAL_DIGITS
     : DIGIT+ '.' DIGIT*
@@ -525,9 +561,11 @@ WS
     : [ \r\n\t]+ -> channel(HIDDEN)
     ;
 
+
 SINKS: 'SINKS';
 SOURCES: 'SOURCES' | 'sources';
 QUERIES: 'QUERIES' | 'queries';
+
 
 DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
 
@@ -545,20 +583,26 @@ BOOLEAN_TYPE: 'BOOLEAN';
 
 UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
 
+
+
 SHOW : 'SHOW';
 FORMAT : 'FORMAT';
 CREATE : 'CREATE';
 SOURCE : 'SOURCE';
 LOGICAL: 'LOGICAL';
 PHYSICAL: 'PHYSICAL';
+WORKER: 'WORKER';
 SINK : 'SINK';
+
+//Make sure that you add lexer rules for keywords before the identifier rule,
+//otherwise it will take priority and your grammars will not work
 
 SIMPLE_COMMENT
     : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
     ;
 
 BRACKETED_COMMENT
-    : '/*' {!this.isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
+    : '/*' {!isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
     ;
 
 IDENTIFIER
@@ -566,6 +610,8 @@ IDENTIFIER
     ;
 
 /// Catch-all for anything we can't recognize.
+/// We use this to be able to ignore and recover all the text
+/// when splitting statements with DelimiterLexer
 UNRECOGNIZED
     : .
     ;
