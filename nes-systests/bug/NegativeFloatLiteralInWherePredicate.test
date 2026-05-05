@@ -1,0 +1,39 @@
+# name: bug/NegativeFloatLiteralInWherePredicate.test
+# description: Reproduces the misparsing of negative typed literals in WHERE predicates during query registration
+# groups: [Bug, Selection, Parser]
+
+CREATE LOGICAL SOURCE stream(doublee FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+-1.0
+-0.25
+0.25
+1.0
+
+CREATE SINK sinkStream(stream.doublee FLOAT64 NOT NULL) TYPE File;
+
+SELECT *
+FROM stream
+WHERE doublee > FLOAT64(-0.5) AND doublee < FLOAT64(0.5)
+INTO sinkStream;
+----
+-0.25
+0.25
+
+CREATE LOGICAL SOURCE intStream(value INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR intStream TYPE File;
+ATTACH INLINE
+-2
+-1
+0
+1
+
+CREATE SINK sinkIntStream(intStream.value INT64 NOT NULL) TYPE File;
+
+SELECT *
+FROM intStream
+WHERE value > INT64(-2) AND value < INT64(1)
+INTO sinkIntStream;
+----
+-1
+0
