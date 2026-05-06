@@ -41,6 +41,17 @@ ATTACH INLINE
 1,,2004
 1,,3000
 
+CREATE LOGICAL SOURCE stream4(ts UINT64 NOT NULL, value INT32);
+CREATE PHYSICAL SOURCE FOR stream4 TYPE File;
+ATTACH INLINE
+0,
+250,
+500,
+750,
+1000,23
+1250,24
+1500,1
+1750,
 
 CREATE SINK sink0(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT32) TYPE File;
 CREATE SINK sink1(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT32, valueMax INT32, valueMin INT32, valueAvg FLOAT64, valueMedian FLOAT64) TYPE File;
@@ -48,16 +59,16 @@ CREATE SINK sink2(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32, valueSum
 
 
 # Checking if a sum over a tumbling window works with null values in the value field
-# We expect NULLs to be ignored in value fields for SUM aggregation
+# We expect NULLs to be ignored in value fields for SUM aggregation (SQL standard: NULL only when every input is NULL)
 SELECT start, end, SUM(value) as valueSum
 FROM stream WINDOW TUMBLING(ts, size 100 ms)
 INTO sink0;
 ----
 0,100,4
-100,200,NULL
+100,200,2
 200,300,10
 300,400,9
-500,600,NULL
+500,600,10
 
 
 # Checking if all aggregation function over a sliding window works with null values in the value field
@@ -68,13 +79,13 @@ INTO sink1;
 ----
 0,100,4,3,0,1.333333,1
 50,150,3,2,1,1.5,1.5
-100,200,NULL,NULL,NULL,NULL,NULL
-150,250,NULL,NULL,NULL,NULL,NULL
+100,200,2,2,2,2.0,2.0
+150,250,10,10,10,10.0,10.0
 200,300,10,10,10,10.0,10.0
 300,400,9,4,1,2.25,2.0
 350,450,9,4,1,2.25,2.0
-450,550,NULL,NULL,NULL,NULL,NULL
-500,600,NULL,NULL,NULL,NULL,NULL
+450,550,10,11,-1,5.0,5.0
+500,600,10,11,-1,5.0,5.0
 
 
 # Keyed aggregation with only null values in the key
@@ -91,8 +102,8 @@ GROUP BY id
 WINDOW TUMBLING(ts, size 1 sec)
 INTO sink2;
 ----
-0,1000,NULL,NULL,NULL,NULL,NULL,1,2
-1000,2000,NULL,NULL,NULL,NULL,NULL,1,2
+0,1000,NULL,1,1,1,1.0,1,2
+1000,2000,NULL,4,4,4,4.0,1,2
 
 # Keyed aggregation with and w/o null values in the key
 SELECT start, end, id,
@@ -107,11 +118,11 @@ GROUP BY id
 WINDOW TUMBLING(ts, size 1 sec)
 INTO sink2;
 ----
-0,1000,NULL,NULL,NULL,NULL,NULL,1,2
+0,1000,NULL,1,1,1,1.0,1,2
 0,1000,1,5,2,3,2.5,2,2
 0,1000,3,NULL,NULL,NULL,NULL,0,2
-1000,2000,NULL,NULL,NULL,NULL,NULL,1,2
-1000,2000,1,NULL,NULL,NULL,NULL,1,2
+1000,2000,NULL,4,4,4,4.0,1,2
+1000,2000,1,5,5,5,5.0,1,2
 1000,2000,3,NULL,NULL,NULL,NULL,0,1
 
 SELECT start, end, MAX(value), MIN(value), AVG(value), MEDIAN(value)
@@ -121,3 +132,18 @@ INTO File();
 ----
 2000,3000,NULL,NULL,NULL,NULL
 3000,4000,NULL,NULL,NULL,NULL
+
+
+SELECT start, end,
+       SUM(value) AS valueSum,
+       MIN(value) AS valueMin,
+       MAX(value) AS valueMax,
+       AVG(value) AS valueAvg,
+       MEDIAN(value) AS valueMedian,
+       COUNT(value) AS valueCount,
+       COUNT(*) AS countStarCount
+FROM stream4 WINDOW TUMBLING(ts, size 1 sec)
+INTO File();
+----
+0,1000,NULL,NULL,NULL,NULL,NULL,0,4
+1000,2000,48,1,24,16,23,3,4

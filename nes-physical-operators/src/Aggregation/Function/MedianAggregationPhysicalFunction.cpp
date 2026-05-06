@@ -57,20 +57,27 @@ void MedianAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
-    auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     if (inputType.nullable)
     {
-        /// Reading the current null value and combining it with the one of the record
-        const auto oldContainsNull = readNull(aggregationState);
-        storeNull(aggregationState, value.isNull() or oldContainsNull);
+        /// SQL-standard: NULL inputs are not part of the median set, so skip writing them. Flip the null flag to
+        /// false the first time we see a non-null value.
+        if (not value.isNull())
+        {
+            storeNull(aggregationState, false);
 
-        /// Skipping the first byte (null)
-        memArea += nautilus::val<uint64_t>{1};
+            /// Skipping the first byte (null); the paged vector lives right after it.
+            const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState) + nautilus::val<uint64_t>{1};
+            PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(memArea), tupleLayout);
+            pagedVectorRef.pushBack(record, pipelineMemoryProvider.bufferProvider);
+        }
     }
-
-    /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
-    PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(memArea), tupleLayout);
-    pagedVectorRef.pushBack(record, pipelineMemoryProvider.bufferProvider);
+    else
+    {
+        /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
+        const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
+        PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(memArea), tupleLayout);
+        pagedVectorRef.pushBack(record, pipelineMemoryProvider.bufferProvider);
+    }
 }
 
 void MedianAggregationPhysicalFunction::combine(
@@ -84,11 +91,10 @@ void MedianAggregationPhysicalFunction::combine(
 
     if (inputType.nullable)
     {
-        /// Combining the null values
+        /// SQL-standard: only stay null when both partitions are still empty (no non-null value seen on either side)
         const auto containsNull1 = readNull(aggregationState1);
         const auto containsNull2 = readNull(aggregationState2);
-        const auto newContainsNull = containsNull1 or containsNull2;
-        storeNull(aggregationState1, newContainsNull);
+        storeNull(aggregationState1, containsNull1 and containsNull2);
 
         /// Skipping the first byte (null)
         memArea1 += nautilus::val<uint64_t>{1};
@@ -111,7 +117,8 @@ void MedianAggregationPhysicalFunction::combine(
 Record MedianAggregationPhysicalFunction::lower(
     const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    /// If it contains null values, we simply return a null value
+    /// SQL-standard: if no non-null value was observed, the null flag is still set and the paged vector is empty,
+    /// so we return NULL. The early skip below also guards the numberOfEntries > 0 invariant.
     auto containsNull = nautilus::val<bool>{false};
     if (inputType.nullable)
     {
@@ -237,8 +244,8 @@ void MedianAggregationPhysicalFunction::reset(
 
     if (inputType.nullable)
     {
-        const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-        nautilus::memset(memArea, 0, 1);
+        /// Initialize the null flag to "no value seen yet" so all-NULL windows correctly emit NULL
+        storeNull(aggregationState, true);
     }
 }
 

@@ -247,10 +247,12 @@ SELECT * FROM left INNER JOIN right ON (id = id2) WINDOW TUMBLING(ts, size 1 sec
 
 #### SUM, AVG, MIN, MAX, MEDIAN
 
-If **any input value is NULL**, the aggregation result is **NULL**.
+NULL inputs are **skipped**. The aggregate is only `NULL` when **every** input in the window is `NULL`; otherwise the aggregation is computed over the non-null inputs alone (SQL-standard behavior).
 
 ```sql
--- Source: ts=0 value=0 | ts=20 value=3 | ts=50 value=1 | ts=100 value=2 | ts=150 value=NULL
+-- Source: ts=0 value=0 | ts=20 value=3 | ts=50 value=1
+--         ts=100 value=2 | ts=150 value=NULL
+--         ts=300 value=NULL | ts=350 value=NULL
 
 SELECT SUM(value), MAX(value), MIN(value), AVG(value), MEDIAN(value)
 FROM stream WINDOW TUMBLING(ts, size 100 ms);
@@ -259,16 +261,12 @@ FROM stream WINDOW TUMBLING(ts, size 100 ms);
 | Window      | SUM  | MAX  | MIN  | AVG  | MEDIAN |
 |-------------|------|------|------|------|--------|
 | [0, 100)    | 4    | 3    | 0    | 1.33 | 1      |
-| [100, 200)  | NULL | NULL | NULL | NULL | NULL   |
+| [100, 200)  | 2    | 2    | 2    | 2.0  | 2.0    |
+| [300, 400)  | NULL | NULL | NULL | NULL | NULL   |
 
-Window [0, 100) contains only non-null values (0, 3, 1), so aggregations work normally.
-Window [100, 200) contains value=2 and value=NULL — the presence of NULL makes the result NULL.
-
-To aggregate only over non-null values, pre-filter with `NOT ISNULL()`:
-
-```sql
-SELECT SUM(value) FROM stream WHERE NOT ISNULL(value) WINDOW TUMBLING(ts, size 100 ms);
-```
+- Window `[0, 100)` contains only non-null values `{0, 3, 1}`.
+- Window `[100, 200)` contains `{2, NULL}`. The `NULL` is skipped and the aggregations are computed over `{2}`.
+- Window `[300, 400)` contains only `NULL` values, so every aggregation returns `NULL`.
 
 #### COUNT
 
@@ -294,7 +292,9 @@ FROM stream GROUP BY id WINDOW TUMBLING(ts, size 1 sec);
 NULL keys form **their own group** — all rows with a NULL key are aggregated together.
 
 ```sql
--- Source: (ts=0, id=NULL, value=NULL), (ts=10, id=NULL, value=1), (ts=20, id=1, value=2), (ts=40, id=3, value=NULL)
+-- Source: (ts=0, id=NULL, value=NULL), (ts=10, id=NULL, value=1),
+--         (ts=20, id=1, value=2),     (ts=30, id=1, value=3),
+--         (ts=40, id=3, value=NULL),  (ts=50, id=3, value=NULL)
 
 SELECT id, SUM(value), COUNT(value), COUNT(ts)
 FROM stream GROUP BY id WINDOW TUMBLING(ts, size 1 sec);
@@ -302,9 +302,12 @@ FROM stream GROUP BY id WINDOW TUMBLING(ts, size 1 sec);
 
 | id   | SUM  | COUNT(value) | COUNT(ts) |
 |------|------|-------------|-----------|
-| NULL | NULL | 1           | 2         |
+| NULL | 1    | 1           | 2         |
 | 1    | 5    | 2           | 2         |
 | 3    | NULL | 0           | 2         |
+
+The `id=NULL` group has values `{NULL, 1}` — `SUM` skips the `NULL` and returns `1`.
+The `id=3` group has values `{NULL, NULL}` — `SUM` returns `NULL` because every input was `NULL`.
 
 ### ISNULL Function
 
@@ -333,7 +336,7 @@ SELECT ISNULL(CONCAT(a, b)) FROM stream;       -- true if the concat result is N
 | `NOT` | NULL → NULL | Yes, if operand nullable |
 | `CONCAT` | Either operand NULL → NULL | Yes, if any operand nullable |
 | `ISNULL(x)` | Returns TRUE/FALSE | **Always NOT NULL** |
-| `SUM`, `AVG`, `MIN`, `MAX`, `MEDIAN` | Any NULL input → NULL result | Yes, if input nullable |
+| `SUM`, `AVG`, `MIN`, `MAX`, `MEDIAN` | Skips NULLs; result is NULL only if **every** input is NULL | Yes, if input nullable |
 | `COUNT(field)` | Skips NULLs | **Always NOT NULL** |
 | Filter (WHERE) | NULL predicate → row excluded | N/A |
 | Projection | Pass-through | Preserves nullability |
