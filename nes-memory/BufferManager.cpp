@@ -139,6 +139,11 @@ void BufferManager::initialize(uint32_t withAlignment)
     const size_t offsetBetweenBuffers = allocatedAreaSize;
     allocatedAreaSize *= numOfBuffers;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
+
+    #ifndef NDEBUG
+        std::fill_n(reinterpret_cast<uint64_t*>(basePointer), allocatedAreaSize / 8, 0x4D5254535542454E);
+    #endif
+
     NES_TRACE(
         "Allocated {} bytes with alignment {} buffer size {} num buffer {} controlBlockSize {} {}",
         allocatedAreaSize,
