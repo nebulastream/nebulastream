@@ -19,6 +19,7 @@
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/RuleManager.hpp>
+#include <Rules/Semantic/InferModelResolutionRule.hpp>
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
@@ -30,8 +31,11 @@
 namespace NES
 {
 
-SemanticAnalyzer::SemanticAnalyzer(std::shared_ptr<const SourceCatalog> sourceCatalog, std::shared_ptr<const SinkCatalog> sinkCatalog)
-    : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+SemanticAnalyzer::SemanticAnalyzer(
+    std::shared_ptr<const SourceCatalog> sourceCatalog,
+    std::shared_ptr<const SinkCatalog> sinkCatalog,
+    std::shared_ptr<const ModelCatalog> modelCatalog)
+    : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), modelCatalog(std::move(modelCatalog))
 {
     RuleManager<LogicalPlan> ruleManager;
     ruleManager.addRule(InlineSinkBindingRule{this->sinkCatalog});
@@ -39,6 +43,7 @@ SemanticAnalyzer::SemanticAnalyzer(std::shared_ptr<const SourceCatalog> sourceCa
     ruleManager.addRule(InlineSourceBindingRule{this->sourceCatalog});
     ruleManager.addRule(SourceInferenceRule{this->sourceCatalog});
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
+    ruleManager.addRule(InferModelResolutionRule{this->modelCatalog});
     ruleManager.addRule(TypeInferenceRule{});
     ruleManager.addRule(OriginIdInferenceRule{});
 

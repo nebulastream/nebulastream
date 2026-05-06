@@ -36,6 +36,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
@@ -435,10 +436,22 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
     std::unordered_set<size_t> matchedActualResultFields;
     for (const auto& [expectedFieldIdx, expectedField] : expectedResultSchema.getRawValue() | NES::views::enumerate)
     {
-        if (const auto& matchingFieldIt = std::ranges::find(actualResultSchema.getRawValue(), expectedField);
-            matchingFieldIt != actualResultSchema.getRawValue().end())
+        /// Find a matching actual field that has not already been matched. This handles duplicate field names
+        /// by matching each expected field to a distinct actual field in order.
+        const auto& actualFields = actualResultSchema.getRawValue().getFields();
+        auto matchingFieldIt = actualFields.end();
+        for (auto it = actualFields.begin(); it != actualFields.end(); ++it)
         {
-            auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
+            const auto idx = static_cast<size_t>(std::distance(actualFields.begin(), it));
+            if (*it == expectedField and not matchedActualResultFields.contains(idx))
+            {
+                matchingFieldIt = it;
+                break;
+            }
+        }
+        if (matchingFieldIt != actualFields.end())
+        {
+            auto offset = static_cast<size_t>(std::distance(actualFields.begin(), matchingFieldIt));
             expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, offset);
             matchedActualResultFields.emplace(offset);
             expectedToActualFieldMap.expectedResultsFieldSortIdx.emplace_back(expectedFieldIdx);
@@ -753,6 +766,26 @@ namespace NES
 {
 std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery)
 {
+    /// Void sinks discard all tuples and produce no result file, so there is nothing to check.
+    if (runningQuery.systestQuery.planInfoOrException.has_value())
+    {
+        const auto sinkOperators
+            = getOperatorByType<SinkLogicalOperator>(runningQuery.systestQuery.planInfoOrException.value().queryPlan.getGlobalPlan());
+        if (not sinkOperators.empty())
+        {
+            if (const auto sinkOp = sinkOperators.at(0).tryGetAs<SinkLogicalOperator>(); sinkOp.has_value()
+                and sinkOp.value()->getSinkDescriptor().has_value()
+                and toUpperCase(sinkOp.value()->getSinkDescriptor().value().getSinkType()) == "VOID")
+            {
+                NES_INFO(
+                    "Skipping result check for {}:{} because it writes to a Void sink.",
+                    runningQuery.systestQuery.testName,
+                    runningQuery.systestQuery.queryIdInFile);
+                return std::nullopt;
+            }
+        }
+    }
+
     static constexpr std::string_view SchemaMismatchMessage = "\n\n"
                                                               "Schema Mismatch\n"
                                                               "---------------";

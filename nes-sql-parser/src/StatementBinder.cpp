@@ -255,6 +255,28 @@ public:
             .formatConfig = formatOptions};
     }
 
+    CreateModelStatement bindCreateModelStatement(AntlrSQLParser::CreateModelDefinitionContext* modelDefAST) const
+    {
+        const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
+        const auto modelPath = bindStringLiteral(modelDefAST->modelPath);
+
+        Schema inputs;
+        for (auto* const inputField : modelDefAST->modelInputField())
+        {
+            inputs = inputs.addField(
+                bindIdentifier(inputField->identifier()), bindDataType(inputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
+        }
+
+        Schema outputs;
+        for (auto* const outputField : modelDefAST->modelOutputField())
+        {
+            outputs = outputs.addField(
+                bindIdentifier(outputField->identifier()), bindDataType(outputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
+        }
+
+        return CreateModelStatement{.name = modelName, .path = modelPath, .inputs = inputs, .outputs = outputs};
+    }
+
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
     {
         if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
@@ -274,6 +296,10 @@ public:
         if (auto* const workerDefAST = createAST->createDefinition()->createWorkerDefinition(); workerDefAST != nullptr)
         {
             return bindCreateWorkerStatement(workerDefAST);
+        }
+        if (auto* const modelDefAST = createAST->createDefinition()->createModelDefinition(); modelDefAST != nullptr)
+        {
+            return bindCreateModelStatement(modelDefAST);
         }
         throw InvalidStatement("Unrecognized CREATE statement");
     }
@@ -393,72 +419,95 @@ public:
         {
             return bindShowSinksStatement(showFilter, showAST->showFormat());
         }
+        if (const auto* modelsSubject = dynamic_cast<AntlrSQLParser::ShowModelsSubjectContext*>(showAST->showSubject());
+            modelsSubject != nullptr)
+        {
+            const std::optional<StatementOutputFormat> format
+                = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
+            return ShowModelsStatement{.format = format};
+        }
         throw InvalidStatement("Unrecognized SHOW statement");
+    }
+
+    /// Validate a filter and extract its typed value, or throw a syntax error tied to `subject`.
+    template <typename T>
+    static T requireFilterValue(
+        const std::pair<std::string, Literal>& filter,
+        std::string_view expectedAttr,
+        std::string_view expectedTypeDescription,
+        std::string_view subject)
+    {
+        if (filter.first != expectedAttr)
+        {
+            throw InvalidQuerySyntax("Filter for {} must be on {} attribute", subject, expectedAttr);
+        }
+        if (!std::holds_alternative<T>(filter.second))
+        {
+            throw InvalidQuerySyntax("Filter value for {} must be {}", subject, expectedTypeDescription);
+        }
+        return std::get<T>(filter.second);
+    }
+
+    static DropLogicalSourceStatement bindDropLogicalSource(const std::pair<std::string, Literal>& filter)
+    {
+        return DropLogicalSourceStatement{
+            LogicalSourceName(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP LOGICAL SOURCE"))};
+    }
+
+    [[nodiscard]] DropPhysicalSourceStatement bindDropPhysicalSource(const std::pair<std::string, Literal>& filter) const
+    {
+        const auto id = requireFilterValue<uint64_t>(filter, "ID", "an unsigned integer", "DROP PHYSICAL SOURCE");
+        if (const auto physicalSource = sourceCatalog->getPhysicalSource(PhysicalSourceId{id}))
+        {
+            return DropPhysicalSourceStatement{*physicalSource};
+        }
+        throw UnknownSourceName("There is no physical source with id {}", id);
+    }
+
+    static DropQueryStatement bindDropQuery(const std::pair<std::string, Literal>& filter)
+    {
+        return DropQueryStatement{.id = DistributedQueryId(requireFilterValue<std::string>(filter, "ID", "a string", "DROP QUERY"))};
+    }
+
+    static DropSinkStatement bindDropSink(const std::pair<std::string, Literal>& filter)
+    {
+        return DropSinkStatement{requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SINK")};
+    }
+
+    static DropModelStatement bindDropModel(const std::pair<std::string, Literal>& filter)
+    {
+        return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
     }
 
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
         const auto* const dropFilter = dropAst->dropFilter();
         PRECONDITION(dropFilter != nullptr, "Drop statement must have a WHERE filter");
-        const auto [attr, value] = bindDropFilter(dropFilter);
+        const auto filter = bindDropFilter(dropFilter);
+        auto* const subject = dropAst->dropSubject();
 
-        if (AntlrSQLParser::DropSourceContext* dropSourceAst = dropAst->dropSubject()->dropSource(); dropSourceAst != nullptr)
+        if (auto* const dropSourceAst = subject->dropSource())
         {
-            if (const auto* const logicalSourceSubject = dropSourceAst->dropLogicalSourceSubject(); logicalSourceSubject != nullptr)
+            if (dropSourceAst->dropLogicalSourceSubject() != nullptr)
             {
-                if (attr != "NAME")
-                {
-                    throw InvalidQuerySyntax("Filter for DROP LOGICAL SOURCE must be on NAME attribute");
-                }
-                if (not std::holds_alternative<std::string>(value))
-                {
-                    throw InvalidQuerySyntax("Filter value for DROP LOGICAL SOURCE must be a string");
-                }
-                const auto logicalSourceName = LogicalSourceName(std::get<std::string>(value));
-                return DropLogicalSourceStatement{logicalSourceName};
+                return bindDropLogicalSource(filter);
             }
-            if (const auto* const physicalSourceSubject = dropSourceAst->dropPhysicalSourceSubject(); physicalSourceSubject != nullptr)
+            if (dropSourceAst->dropPhysicalSourceSubject() != nullptr)
             {
-                if (attr != "ID")
-                {
-                    throw InvalidQuerySyntax("Filter for DROP PHYSICAL SOURCE must be on ID attribute");
-                }
-                if (not std::holds_alternative<uint64_t>(value))
-                {
-                    throw InvalidQuerySyntax("Filter value for DROP PHYSICAL SOURCE must be an unsigned integer");
-                }
-                if (const auto physicalSource = sourceCatalog->getPhysicalSource(PhysicalSourceId{std::get<uint64_t>(value)});
-                    physicalSource.has_value())
-                {
-                    return DropPhysicalSourceStatement{*physicalSource};
-                }
-                throw UnknownSourceName("There is no physical source with id {}", std::get<uint64_t>(value));
+                return bindDropPhysicalSource(filter);
             }
         }
-        else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
+        if (subject->dropQuery() != nullptr)
         {
-            if (attr != "ID")
-            {
-                throw InvalidQuerySyntax("Filter for DROP QUERY must be on ID attribute");
-            }
-            if (not std::holds_alternative<std::string>(value))
-            {
-                throw InvalidQuerySyntax("Filter value for DROP QUERY must be a string");
-            }
-            return DropQueryStatement{.id = DistributedQueryId(std::get<std::string>(value))};
+            return bindDropQuery(filter);
         }
-        else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
+        if (subject->dropSink() != nullptr)
         {
-            if (attr != "NAME")
-            {
-                throw InvalidQuerySyntax("Filter for DROP SINK must be on NAME attribute");
-            }
-            if (not std::holds_alternative<std::string>(value))
-            {
-                throw InvalidQuerySyntax("Filter value for DROP SINK must be a string");
-            }
-            const auto sinkName = std::get<std::string>(value);
-            return DropSinkStatement{sinkName};
+            return bindDropSink(filter);
+        }
+        if (subject->dropModel() != nullptr)
+        {
+            return bindDropModel(filter);
         }
         throw InvalidStatement("Unrecognized DROP statement");
     }

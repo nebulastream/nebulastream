@@ -21,9 +21,24 @@ jobs:
     with:
       head_sha: ${{ inputs.head_sha }}
 
+  sanitize-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.sanitize.outputs.tag }}
+    steps:
+      - name: Sanitize dockerhub tag for Docker compatibility
+        id: sanitize
+        shell: bash
+        run: |
+          TAG="${{ inputs.dockerhub-tag }}"
+          # Docker tags allow only [a-zA-Z0-9._-] and max 128 chars.
+          SANITIZED=$(echo "$TAG" | sed 's/[^a-zA-Z0-9._-]/-/g' | sed 's/^[.-]*//' | cut -c1-128)
+          echo "Sanitized tag: '$TAG' -> '$SANITIZED'"
+          echo "tag=$SANITIZED" >> "$GITHUB_OUTPUT"
+
   build-image:
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
-    needs: [ get-dev-images ]
+    needs: [ get-dev-images, sanitize-tag ]
     strategy:
       fail-fast: false
       matrix:
@@ -50,7 +65,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-cli:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          tags: nebulastream/nes-cli:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
             RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
@@ -60,7 +75,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-repl:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          tags: nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
             RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
@@ -70,7 +85,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          tags: nebulastream/nes-repl-embedded:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
             RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
@@ -80,7 +95,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/worker:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          tags: nebulastream/worker:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
             RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
@@ -89,7 +104,7 @@ jobs:
 
   merge-images:
     name: "Merge images for different platforms into a single Multi-Platform image"
-    needs: [ build-image ]
+    needs: [ build-image, sanitize-tag ]
     runs-on: [ self-hosted, linux, Build ]
     steps:
       - name: Login to Docker Hub
@@ -106,18 +121,18 @@ jobs:
             nebulastream/nes-runtime-base:${{ inputs.dockerhub-tag }}-x64 \
             nebulastream/nes-runtime-base:${{ inputs.dockerhub-tag }}-arm64
 
-          docker buildx imagetools create -t nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }} \
-            nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-x64 \
-            nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-arm64
+          docker buildx imagetools create -t nebulastream/nes-repl-embedded:${{ needs.sanitize-tag.outputs.tag }} \
+            nebulastream/nes-repl-embedded:${{ needs.sanitize-tag.outputs.tag }}-x64 \
+            nebulastream/nes-repl-embedded:${{ needs.sanitize-tag.outputs.tag }}-arm64
           
-          docker buildx imagetools create -t nebulastream/nes-cli:${{ inputs.dockerhub-tag }} \
-            nebulastream/nes-cli:${{ inputs.dockerhub-tag }}-x64 \
-            nebulastream/nes-cli:${{ inputs.dockerhub-tag }}-arm64
+          docker buildx imagetools create -t nebulastream/nes-cli:${{ needs.sanitize-tag.outputs.tag }} \
+            nebulastream/nes-cli:${{ needs.sanitize-tag.outputs.tag }}-x64 \
+            nebulastream/nes-cli:${{ needs.sanitize-tag.outputs.tag }}-arm64
           
-          docker buildx imagetools create -t nebulastream/nes-repl:${{ inputs.dockerhub-tag }} \
-            nebulastream/nes-repl:${{ inputs.dockerhub-tag }}-x64 \
-            nebulastream/nes-repl:${{ inputs.dockerhub-tag }}-arm64
+          docker buildx imagetools create -t nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }} \
+            nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }}-x64 \
+            nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }}-arm64
 
-          docker buildx imagetools create -t nebulastream/worker:${{ inputs.dockerhub-tag }} \
-            nebulastream/worker:${{ inputs.dockerhub-tag }}-x64 \
-            nebulastream/worker:${{ inputs.dockerhub-tag }}-arm64
+          docker buildx imagetools create -t nebulastream/worker:${{ needs.sanitize-tag.outputs.tag }} \
+            nebulastream/worker:${{ needs.sanitize-tag.outputs.tag }}-x64 \
+            nebulastream/worker:${{ needs.sanitize-tag.outputs.tag }}-arm64

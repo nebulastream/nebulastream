@@ -14,6 +14,7 @@ add_library(nes-nautilus-test-util STATIC
         src/NautilusTestUtils.cpp
         src/ChainedHashMapTestUtils.cpp
         src/ChainedHashMapCustomValueTestUtils.cpp
+        src/TestTupleBuffer.cpp
 )
 
 target_include_directories(nes-nautilus-test-util PUBLIC
