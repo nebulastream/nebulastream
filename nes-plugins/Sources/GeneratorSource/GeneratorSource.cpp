@@ -72,6 +72,7 @@ void GeneratorSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     this->generatorStartTime = std::chrono::system_clock::now();
     this->startOfInterval = std::chrono::system_clock::now();
+    this->tuplesStream.str("");
     NES_TRACE("Opening GeneratorSource.");
 }
 
@@ -88,8 +89,12 @@ void GeneratorSource::close()
     }
 }
 
-Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
+    if (this->generator.shouldStop() && tuplesStream.tellp() == 0)
+    {
+        return FillTupleBufferResult::eos();
+    }
     try
     {
         const auto elapsedTime
@@ -116,46 +121,33 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupl
             }
         }
 
+        auto currentBuffer = tupleBuffer.getAvailableMemoryArea<std::ostream::char_type>();
+
         /// Generating the required number of tuples. Any tuples that do not fit into the tuple buffer, we add to the orphanTuples and emit
         /// a warning. Also, we first add the orphanTuples to the tuple buffer, before adding newly-created once.
-        const size_t rawTBSize = tupleBuffer.getBufferSize();
         uint64_t curTupleCount = 0;
         size_t writtenBytes = 0;
         while (curTupleCount < numberOfTuplesToGenerate)
         {
-            if (this->generator.shouldStop() || stopToken.stop_requested())
+            size_t bytesRead = tuplesStream.readsome(currentBuffer.data(), currentBuffer.size());
+            writtenBytes += bytesRead;
+            currentBuffer = currentBuffer.subspan(bytesRead);
+            if (currentBuffer.empty())
             {
                 break;
             }
 
-            auto insertedBytes = tuplesStream.tellp();
-            if (not orphanTuples.empty())
+            tuplesStream.str("");
+            if (this->generator.shouldStop())
             {
-                tuplesStream << orphanTuples;
-                orphanTuples.clear();
+                break;
             }
             this->generator.generateTuple(tuplesStream);
-            ++generatedTuplesCounter;
-            insertedBytes = tuplesStream.tellp() - insertedBytes;
-            if (writtenBytes + insertedBytes > rawTBSize)
-            {
-                this->orphanTuples = tuplesStream.str().substr(writtenBytes, tuplesStream.str().length() - writtenBytes);
-                NES_WARNING("Not all required tuples fit into buffer of size {}. {} are left over", rawTBSize, tuplesStream.str().size());
-                break;
-            }
-            writtenBytes += insertedBytes;
             ++curTupleCount;
+            tuplesStream.seekg(0, std::ios::beg);
         }
 
-        if (curTupleCount == 0 || stopToken.stop_requested())
-        {
-            return FillTupleBufferResult::eos();
-        }
-
-        tuplesStream.read(tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), writtenBytes);
         ++generatedBuffers;
-        tuplesStream.str("");
-        NES_TRACE("Wrote {} bytes", writtenBytes);
 
         /// Calculating how long to sleep. The whole method should take the duration of the flushInterval. If we have some time left, we
         /// sleep for the remaining duration. If there is no time left, we print a warning.
@@ -163,7 +155,7 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupl
             = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startOfInterval);
         if (durationGeneratingTuples > (flushInterval * noIntervals))
         {
-            NES_WARNING(
+            NES_TRACE(
                 "Can not produce all required tuples in the flushInterval of {} as it took us {}",
                 (flushInterval * noIntervals),
                 durationGeneratingTuples);
