@@ -51,6 +51,9 @@ public:
     ~MedianAggregationPhysicalFunction() override = default;
 
 private:
+    /// Layout: [null flag (optional) | padding (optional) | PagedVector*]
+    /// The padding aligns the pointer to alignof(PagedVector*), if the input field is nullable
+    size_t pagedVectorPtrOffset;
     std::shared_ptr<TupleBufferRef> bufferRefPagedVector;
 };
 

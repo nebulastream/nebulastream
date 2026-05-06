@@ -27,6 +27,7 @@
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
@@ -45,15 +46,16 @@ void SumAggregationPhysicalFunction::lift(
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (inputType.nullable)
     {
-        /// If the value is null and we do not include null values, we need to set the multiplication factor to 0
+        /// SQL-standard: skip NULL inputs
         const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
-        const auto isNull = readNull(aggregationState) or value.isNull();
-        const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, isNull);
-
-        /// If value is null, we keep the old value. Otherwise, we add the value to the sum.
-        const auto newSum = VarVal::select(isNull, sum, (sum + value).castToType(inputType.type));
+        const auto isNull = readNull(aggregationState);
+        const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, nautilus::val<bool>(false));
+        const auto sumPlusValue = (sum + value).castToType(inputType.type);
+        const auto newSum = VarVal::select(value.isNull(), sum, sumPlusValue);
         newSum.writeToMemory(memAreaSum);
-        storeNull(aggregationState, isNull);
+
+        /// Stay null only while every input has been NULL
+        storeNull(aggregationState, isNull and value.isNull());
     }
     else
     {
@@ -77,19 +79,19 @@ void SumAggregationPhysicalFunction::combine(
         /// Reading the sum from the first aggregation state
         const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1 + nautilus::val<uint64_t>{1});
         const auto isNull1 = readNull(aggregationState1);
-        const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, inputType, isNull1);
+        const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, inputType, nautilus::val<bool>(false));
 
         /// Reading the sum from the second aggregation state
         const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2 + nautilus::val<uint64_t>{1});
         const auto isNull2 = readNull(aggregationState2);
-        const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType, isNull2);
+        const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType, nautilus::val<bool>(false));
 
-        /// Combining the sum
+        /// Combining the sum and writing it back to the first aggregation state
         const auto newSum = (sum1 + sum2).castToType(inputType.type);
-
-        /// Writing the new sum and null back to the first aggregation state
         newSum.writeToMemory(memAreaSum1);
-        storeNull(aggregationState1, newSum.isNull());
+
+        /// SQL-standard: only stay null when both partitions are still empty
+        storeNull(aggregationState1, isNull1 and isNull2);
     }
     else
     {
@@ -139,6 +141,12 @@ void SumAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*
     /// Resetting the sum to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
+
+    /// Initialize the null flag to "no value seen yet"; it flips to false on the first non-null input
+    if (inputType.nullable)
+    {
+        storeNull(aggregationState, true);
+    }
 }
 
 void SumAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
