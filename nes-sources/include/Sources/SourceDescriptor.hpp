@@ -39,7 +39,6 @@
 
 namespace NES
 {
-class SourceCatalog;
 class OperatorSerializationUtil;
 
 struct ParserConfig
@@ -78,8 +77,16 @@ public:
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
+public:
+    explicit SourceDescriptor(
+        PhysicalSourceId physicalSourceId,
+        LogicalSource logicalSource,
+        std::string_view sourceType,
+        Host host,
+        DescriptorConfig::Config config,
+        ParserConfig parserConfig);
+
 private:
-    friend class SourceCatalog;
     friend OperatorSerializationUtil;
     friend struct Unreflector<SourceDescriptor>;
     friend struct Reflector<SourceDescriptor>;
@@ -89,16 +96,6 @@ private:
     std::string sourceType;
     Host host;
     ParserConfig parserConfig;
-
-
-    /// Used by Sources to create a valid SourceDescriptor.
-    explicit SourceDescriptor(
-        PhysicalSourceId physicalSourceId,
-        LogicalSource logicalSource,
-        std::string_view sourceType,
-        Host host,
-        DescriptorConfig::Config config,
-        ParserConfig parserConfig);
 
 public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.

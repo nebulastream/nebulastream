@@ -24,9 +24,10 @@ get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 # Add Library
 add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
 find_package(highs CONFIG REQUIRED)
-target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider highs::highs)
+target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators nes-single-node-worker-interface PRIVATE nes-input-formatter-provider highs::highs)
 target_include_directories(nes-query-optimizer
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/nes-coordinator/bridge/include>)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-query-optimizer REUSE_FROM nes-common)

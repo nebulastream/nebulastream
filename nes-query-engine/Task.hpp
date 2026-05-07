@@ -28,7 +28,7 @@
 #include <cpptrace/from_current.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {

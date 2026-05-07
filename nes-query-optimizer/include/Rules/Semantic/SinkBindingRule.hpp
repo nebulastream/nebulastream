@@ -13,22 +13,24 @@
 */
 
 #pragma once
-#include <memory>
+
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <utility>
+
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sinks/SinkCatalog.hpp>
 
 namespace NES
 {
+
+struct PlannerContext;
+
 class SinkBindingRule
 {
 public:
-    explicit SinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit SinkBindingRule(const PlannerContext& ctx) : ctx{ctx} { }
 
     static constexpr std::string_view NAME = "SinkBindingRule";
 
@@ -40,7 +42,7 @@ public:
     bool operator==(const SinkBindingRule& other) const;
 
 private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    const PlannerContext& ctx;
 };
 
 static_assert(RuleConcept<SinkBindingRule, LogicalPlan>);

@@ -20,7 +20,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
-
+#include <Runtime/QueryTerminationType.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
@@ -126,9 +126,10 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
     const auto queryId = QueryPlanSerializationUtil::deserializeQueryId(request->queryid());
+    const auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
     CPPTRACE_TRY
     {
-        getValueOrThrow(delegate.stopQuery(queryId));
+        getValueOrThrow(delegate.stopQuery(queryId, terminationType));
         return grpc::Status::OK;
     }
     CPPTRACE_CATCH(const Exception& e)

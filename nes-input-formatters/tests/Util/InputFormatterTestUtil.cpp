@@ -42,10 +42,11 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/Ranges.hpp>
@@ -172,7 +173,6 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
 }
 
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
-    SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
@@ -180,14 +180,15 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{
         {"file_path", filePath}, {"max_inflight_buffers", std::to_string(numberOfRequiredSourceBuffers)}};
-    const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
-    INVARIANT(logicalSource.has_value(), "TestSource already existed");
-    const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
-        logicalSource.value(), "File", Host("localhost"), std::move(fileSourceConfiguration), {{"type", "CSV"}});
-    INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
+    auto descriptorConfig = SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
+    INVARIANT(descriptorConfig.has_value(), "File source config validation failed");
+    auto parserConfig = ParserConfig::create({{"type", "CSV"}});
+    LogicalSource logicalSource{"TestSource", schema};
+    SourceDescriptor sourceDescriptor{
+        PhysicalSourceId{1}, logicalSource, "File", Host("localhost"), std::move(descriptorConfig.value()), parserConfig};
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
+    return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor)};
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)

@@ -14,20 +14,18 @@
 
 #pragma once
 
-#include <memory>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <unordered_map>
-#include <utility>
-#include <Identifiers/Identifiers.hpp>
+
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
+
+struct PlannerContext;
 
 /**
  * @brief This class will expand the logical query graph by adding information about the physical sources and expand the
@@ -84,7 +82,7 @@ namespace NES
 class LogicalSourceExpansionRule
 {
 public:
-    explicit LogicalSourceExpansionRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit LogicalSourceExpansionRule(const PlannerContext& ctx) : ctx{ctx} {}
 
     static constexpr std::string_view NAME = "LogicalSourceExpansionRule";
 
@@ -96,7 +94,7 @@ public:
     bool operator==(const LogicalSourceExpansionRule& other) const;
 
 private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    const PlannerContext& ctx;
 };
 
 static_assert(RuleConcept<LogicalSourceExpansionRule, LogicalPlan>);

@@ -27,7 +27,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 using namespace std::chrono_literals;
 
@@ -39,10 +39,14 @@ class QueryLogTest : public ::testing::Test
 protected:
     void SetUp() override { queryLog = std::make_unique<QueryLog>(); }
 
-    static QueryId randomQueryId() { return QueryId::createLocal(LocalQueryId(generateUUID())); }
+    static QueryId nextQueryId()
+    {
+        static std::atomic<int64_t> counter{1};
+        return QueryId{counter.fetch_add(1)};
+    }
 
     std::unique_ptr<QueryLog> queryLog;
-    const QueryId testQueryId = randomQueryId();
+    const QueryId testQueryId = nextQueryId();
     const std::chrono::system_clock::time_point testTime = std::chrono::system_clock::now();
 };
 
@@ -71,7 +75,7 @@ TEST_F(QueryLogTest, GetLogForQuery)
 
 TEST_F(QueryLogTest, GetLogForNonExistentQuery)
 {
-    const auto log = queryLog->getLogForQuery(randomQueryId());
+    const auto log = queryLog->getLogForQuery(nextQueryId());
     EXPECT_FALSE(log.has_value());
 }
 
@@ -139,14 +143,14 @@ TEST_F(QueryLogTest, GetQuerySummaryPartialExecution)
 
 TEST_F(QueryLogTest, GetQuerySummaryForNonExistentQuery)
 {
-    const auto status = queryLog->getQueryStatus(randomQueryId());
+    const auto status = queryLog->getQueryStatus(nextQueryId());
     EXPECT_FALSE(status.has_value());
 }
 
 TEST_F(QueryLogTest, MultipleQueriesIndependentLogs)
 {
-    const auto query1 = randomQueryId();
-    const auto query2 = randomQueryId();
+    const auto query1 = nextQueryId();
+    const auto query2 = nextQueryId();
 
     queryLog->logQueryStatusChange(query1, QueryStatus::Started, testTime);
     queryLog->logQueryStatusChange(query2, QueryStatus::Started, testTime + 50ms);
@@ -268,7 +272,7 @@ TEST_F(QueryLogTest, MultiThreadedLogging)
     queryIds.reserve(numQueries);
     for (uint64_t i = 0; i < numQueries; ++i)
     {
-        queryIds.push_back(randomQueryId());
+        queryIds.push_back(nextQueryId());
     }
 
     std::barrier barrier{numThreads};

@@ -19,7 +19,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
+#include <PlannerContext.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -53,7 +53,7 @@ std::set<std::type_index> InlineSinkBindingRule::requiredBy() const
 
 bool InlineSinkBindingRule::operator==(const InlineSinkBindingRule& other) const
 {
-    return sinkCatalog == other.sinkCatalog;
+    return &ctx == &other.ctx;
 }
 
 LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
@@ -65,27 +65,11 @@ LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
         {
             const auto schema = sink.value()->getSchema();
             const auto type = sink.value()->getSinkType();
-            auto config = sink.value()->getSinkConfig();
+            const auto config = sink.value()->getSinkConfig();
             const auto formatConfig = sink.value()->getFormatConfig();
 
-            /// "host" is not part of the sink config — it determines placement, not sink behavior.
-            /// It is stored in the config map only because InlineSinkLogicalOperator lacks a dedicated host field.
-            auto hostIt = config.find("host");
-            if (hostIt == config.end())
-            {
-                throw InvalidConfigParameter("'host'");
-            }
-            auto host = Host(hostIt->second);
-            config.erase(hostIt);
-
-            const auto sinkDescriptor = sinkCatalog->getInlineSink(schema, type, host, config, formatConfig);
-
-            if (!sinkDescriptor.has_value())
-            {
-                throw InvalidConfigParameter("Failed to create inline sink descriptor");
-            }
-
-            SinkLogicalOperator sinkOperator{sinkDescriptor.value()};
+            const auto sinkDescriptor = SinkCatalog::createInlineSink(ctx, ConnectorKind::Inline, schema, type, config, formatConfig);
+            SinkLogicalOperator sinkOperator{sinkDescriptor};
             sinkOperator = sinkOperator.withChildren(sink.value().getChildren());
             newRootOperators.emplace_back(sinkOperator);
         }

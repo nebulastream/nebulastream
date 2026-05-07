@@ -21,7 +21,7 @@
 #include <Util/ExecutionMode.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {

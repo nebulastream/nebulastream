@@ -99,7 +99,7 @@ SinkLogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> 
         }
     }
 
-    if (sinkDescriptor.has_value() && sinkDescriptor.value().isInline() && sinkDescriptor.value().getSchema()->getFields().empty())
+    if (sinkDescriptor.has_value() && sinkDescriptor.value().getSinkName().empty() && sinkDescriptor.value().getSchema()->getFields().empty())
     {
         copy.sinkDescriptor->schema = std::make_shared<const Schema>(firstSchema);
     }

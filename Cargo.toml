@@ -1,0 +1,59 @@
+[workspace]
+resolver = "3"
+members = [
+    "nes-coordinator/coordinator",
+    "nes-coordinator/model",
+    "nes-coordinator/controller",
+    "nes-coordinator/migration",
+    "nes-coordinator/bridge",
+    "nes-frontend/nebucli",
+]
+default-members = [
+    "nes-coordinator/coordinator",
+    "nes-coordinator/model",
+    "nes-coordinator/controller",
+    "nes-coordinator/migration",
+]
+
+[workspace.dependencies]
+tokio = { version = "0.2", package = "madsim-tokio", features = [
+    "rt",
+    "rt-multi-thread",
+    "sync",
+    "macros",
+    "time",
+] }
+tokio-retry = "0.3.0"
+tracing = "0.1.44"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.145"
+thiserror = "2.0.17"
+anyhow = "1.0"
+sea-orm = { version = "=1.1.1", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+    "macros",
+    "debug-print",
+    "with-json",
+    "sqlite-use-returning-for-3_35",
+] }
+strum = { version = "0.26", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+madsim = { version = "0.2.34", features = ["macros"] }
+tonic = { version = "0.5.1", package = "madsim-tonic" }
+tonic-build = { version = "0.5", package = "madsim-tonic-build" }
+prost = "=0.13.4"
+flume = "0.12"
+sqlx = { version = "0.8", default-features = false, features = ["sqlite"] }
+async-trait = "0.1"
+inventory = "0.3"
+proptest-stateful = { git = "https://github.com/yschroeder97/proptest-stateful.git", rev = "a4eed0b" }
+
+controller = { path = "nes-coordinator/controller" }
+migration = { path = "nes-coordinator/migration" }
+model = { path = "nes-coordinator/model" }
+
+[patch.crates-io]
+sqlx = { git = "https://github.com/madsim-rs/sqlx.git", rev = "3efe6d0065963db2a2b7f30dee69f647e28dec81" }
+tokio-retry = { git = "https://github.com/madsim-rs/rust-tokio-retry.git", rev = "95e2fd3" }
+getrandom = { git = "https://github.com/madsim-rs/getrandom.git", rev = "e79a7ae" }

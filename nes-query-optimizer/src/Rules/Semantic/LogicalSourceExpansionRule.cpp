@@ -31,6 +31,8 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
+#include "PlannerContext.hpp"
+
 namespace NES
 {
 
@@ -58,32 +60,21 @@ std::set<std::type_index> LogicalSourceExpansionRule::requiredBy() const
 
 bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& other) const
 {
-    return sourceCatalog == other.sourceCatalog;
+    return &ctx == &other.ctx;
 }
 
 LogicalPlan LogicalSourceExpansionRule::apply(LogicalPlan queryPlan) const
 {
     for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(queryPlan))
     {
-        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp->getLogicalSourceName());
-        if (not logicalSourceOpt.has_value())
-        {
-            throw UnknownSourceName("{}", sourceOp->getLogicalSourceName());
-        }
-        const auto& logicalSource = logicalSourceOpt.value();
-        const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
-
-        if (not entriesOpt.has_value())
-        {
-            throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceOp->getLogicalSourceName());
-        }
-        const auto& entries = entriesOpt.value();
-        if (entries.empty())
+        const auto logicalSource = SourceCatalog::getLogicalSource(ctx, sourceOp->getLogicalSourceName());
+        const auto sourceDescriptors = SourceCatalog::getSourceDescriptors(ctx, sourceOp->getLogicalSourceName());
+        if (sourceDescriptors.empty())
         {
             throw UnknownSourceName("No physical sources present for logical source \"{}\"", sourceOp->getLogicalSourceName());
         }
 
-        auto expandedSourceOperators = entries
+        auto expandedSourceOperators = sourceDescriptors
             | std::views::transform([](const auto& entry) { return LogicalOperator{SourceDescriptorLogicalOperator{entry}}; })
             | std::ranges::to<std::vector>();
 

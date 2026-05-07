@@ -20,6 +20,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <vector>
+#include <PlannerContext.hpp>
 
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -55,7 +56,7 @@ std::set<std::type_index> SinkBindingRule::requiredBy() const
 
 bool SinkBindingRule::operator==(const SinkBindingRule& other) const
 {
-    return sinkCatalog == other.sinkCatalog;
+    return &ctx == &other.ctx;
 }
 
 LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
@@ -78,12 +79,8 @@ LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
                     return sinkOperator.value();
                 }
 
-                const auto sinkDescriptor = sinkCatalog->getSinkDescriptor(sinkOperator->get().getSinkName());
-                if (not sinkDescriptor.has_value())
-                {
-                    throw UnknownSinkName("{}", sinkOperator->get().getSinkName());
-                }
-                return sinkOperator.value()->withSinkDescriptor(sinkDescriptor.value());
+                const auto sinkDescriptor = SinkCatalog::getSinkDescriptor(ctx, sinkOperator->get().getSinkName());
+                return sinkOperator.value()->withSinkDescriptor(sinkDescriptor);
             })
         | std::ranges::to<std::vector<LogicalOperator>>());
 }

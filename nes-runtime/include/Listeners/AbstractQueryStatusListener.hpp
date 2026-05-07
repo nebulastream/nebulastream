@@ -17,7 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <QueryStatus.hpp>
 
 namespace NES

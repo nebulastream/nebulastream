@@ -15,5 +15,4 @@ add_subdirectory(Util)
 
 add_source_files(nes-common
         Thread.cpp
-        ErrorHandling.cpp
-        QueryId.cpp)
+        ErrorHandling.cpp)

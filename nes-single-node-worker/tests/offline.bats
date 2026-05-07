@@ -81,25 +81,25 @@ teardown() {
   grep "Starting SingleNodeWorker" singleNodeWorker.log
 }
 
-@test "worker accepts grpc address" {
-  run timeout 5 $NES_WORKER --grpc=localhost:55555
+@test "worker accepts host address" {
+  run timeout 5 $NES_WORKER --host_addr=localhost:55555
   [ "$status" -eq 124 ] # killed by timeout
   grep "localhost:55555" singleNodeWorker.log
 
-  run timeout 5 $NES_WORKER --grpc=0.0.0.0:55555
+  run timeout 5 $NES_WORKER --host_addr=0.0.0.0:55555
   [ "$status" -eq 124 ] # killed by timeout
   grep "0.0.0.0:55555" singleNodeWorker.log
 }
 
-@test "worker rejects bad grpc address" {
+@test "worker rejects bad host address" {
   # DNS Name is Valid, but cannot be resolved
-  run timeout 10 $NES_WORKER --grpc=asdf.asdf.asdf:55555
+  run timeout 10 $NES_WORKER --host_addr=asdf.asdf.asdf:55555
 
   echo $output | grep "Name or service not known"
   grep "Failed to start GRPC Server" singleNodeWorker.log
 
   # DNS Name is Invalid
-  run timeout 10 $NES_WORKER --grpc=wow!:55555
+  run timeout 10 $NES_WORKER --host_addr=wow!:55555
   grep "Invalid hostname: 'wow!'" singleNodeWorker.log
   [ "$status" -ne 0 ]
 }

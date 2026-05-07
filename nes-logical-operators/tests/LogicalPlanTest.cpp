@@ -32,18 +32,19 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/UUID.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 using namespace NES;
 
-QueryId randomQueryId()
+QueryId nextQueryId()
 {
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
+    static std::atomic<int64_t> counter{1};
+    return QueryId{counter.fetch_add(1)};
 }
 
 class LogicalPlanTest : public ::testing::Test
@@ -52,16 +53,14 @@ protected:
     LogicalPlanTest()
         : sourceOp{SourceNameLogicalOperator("Source")}
         , sourceOp2(
-              [this]
+              []
               {
                   const auto dummySchema = Schema{};
-                  const auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value();
-                  const std::unordered_map<std::string, std::string> dummyParserConfig
-                      = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
-                  auto dummySourceDescriptor
-                      = sourceCatalog
-                            .addPhysicalSource(logicalSource, "File", Host("localhost"), {{"file_path", "/dev/null"}}, dummyParserConfig)
-                            .value();
+                  LogicalSource logicalSource{"Source", dummySchema};
+                  auto parserConfig = ParserConfig::create({{"type", "CSV"}});
+                  auto descriptorConfig = SourceValidationProvider::provide("File", {{"file_path", "/dev/null"}});
+                  SourceDescriptor dummySourceDescriptor{
+                      PhysicalSourceId{1}, logicalSource, "File", Host("localhost"), std::move(descriptorConfig.value()), parserConfig};
                   return LogicalOperator{SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor))};
               }())
         , selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("logicalfunction"))}
@@ -69,7 +68,6 @@ protected:
     {
     }
 
-    SourceCatalog sourceCatalog;
     LogicalOperator sourceOp;
     LogicalOperator sourceOp2;
     LogicalOperator selectionOp;
@@ -86,7 +84,7 @@ TEST_F(LogicalPlanTest, SingleRootConstructor)
 TEST_F(LogicalPlanTest, MultipleRootsConstructor)
 {
     const std::vector roots = {sourceOp, selectionOp};
-    const auto queryId = randomQueryId();
+    const auto queryId = nextQueryId();
     LogicalPlan plan(queryId, roots);
     EXPECT_EQ(plan.getRootOperators().size(), 2);
     EXPECT_EQ(plan.getQueryId(), queryId);

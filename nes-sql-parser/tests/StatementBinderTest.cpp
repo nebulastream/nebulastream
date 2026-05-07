@@ -346,17 +346,14 @@ TEST_F(StatementBinderTest, ShowLogicalSources)
         ASSERT_TRUE(sourceStatementHandler->apply(std::get<CreateLogicalSourceStatement>(statement.value())).has_value());
     }
 
-    const std::string allLogicalQueryString = "SHOW LOGICAL SOURCES FORMAT JSON";
+    const std::string allLogicalQueryString = "SHOW LOGICAL SOURCES";
     const std::string filteredQuotedLogicalQueryString = "SHOW LOGICAL SOURCES WHERE NAME = 'TESTSOURCE1'";
-    const std::string invalidFormatQueryString = "SHOW LOGICAL SOURCES WHERE NAME = 'testSource1' FORMAT INVALID_FORMAT";
-    const std::string formatInInvalidPositionString = "SHOW LOGICAL SOURCES FORMAT JSON WHERE NAME = 'testSource' ";
 
     const auto allSourcesStatementExp = binder->parseAndBindSingle(allLogicalQueryString);
     ASSERT_TRUE(allSourcesStatementExp.has_value());
     ASSERT_TRUE(std::holds_alternative<ShowLogicalSourcesStatement>(*allSourcesStatementExp));
-    const auto [name, format] = std::get<ShowLogicalSourcesStatement>(*allSourcesStatementExp);
+    const auto [name] = std::get<ShowLogicalSourcesStatement>(*allSourcesStatementExp);
     ASSERT_FALSE(name.has_value());
-    ASSERT_TRUE(format == StatementOutputFormat::JSON);
     const auto allSourcesStatementResult = sourceStatementHandler->apply(std::get<ShowLogicalSourcesStatement>(*allSourcesStatementExp));
     ASSERT_TRUE(allSourcesStatementResult.has_value());
     ASSERT_EQ(allSourcesStatementResult.value().sources.size(), 2);
@@ -364,21 +361,14 @@ TEST_F(StatementBinderTest, ShowLogicalSources)
     const auto filteredQuotedStatementExp = binder->parseAndBindSingle(filteredQuotedLogicalQueryString);
     ASSERT_TRUE(filteredQuotedStatementExp.has_value());
     ASSERT_TRUE(std::holds_alternative<ShowLogicalSourcesStatement>(*filteredQuotedStatementExp));
-    const auto [name2, format2] = std::get<ShowLogicalSourcesStatement>(*filteredQuotedStatementExp);
+    const auto [name2] = std::get<ShowLogicalSourcesStatement>(*filteredQuotedStatementExp);
     ASSERT_TRUE(name2.has_value());
     ASSERT_EQ(*name2, "TESTSOURCE1");
-    ASSERT_TRUE(format2 == std::nullopt);
     const auto filteredQuotedSourcesStatementResult
         = sourceStatementHandler->apply(std::get<ShowLogicalSourcesStatement>(*filteredQuotedStatementExp));
     ASSERT_TRUE(filteredQuotedSourcesStatementResult.has_value());
     ASSERT_EQ(filteredQuotedSourcesStatementResult.value().sources.size(), 1);
     ASSERT_EQ(filteredQuotedSourcesStatementResult.value().sources.at(0).getLogicalSourceName(), "TESTSOURCE1");
-
-    const auto invalidFormatStatementExp = binder->parseAndBindSingle(invalidFormatQueryString);
-    ASSERT_FALSE(invalidFormatStatementExp.has_value());
-
-    const auto formatInInvalidPositionStatementExp = binder->parseAndBindSingle(formatInInvalidPositionString);
-    ASSERT_FALSE(formatInInvalidPositionStatementExp.has_value());
 }
 
 TEST_F(StatementBinderTest, ShowPhysicalSources)
@@ -417,18 +407,17 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     }
 
     const std::string_view allPhysicalSourcesStatementString = "SHOW PHYSICAL SOURCES";
-    const std::string_view filteredPhysicalSourcesStatementString = "SHOW PHYSICAL SOURCES WHERE ID = 2 FORMAT JSON";
-    const std::string_view physicalSourceForLogicalSourceStatementString = "SHOW PHYSICAL SOURCES FOR testSourCe1 FORMAT TEXT";
+    const std::string_view filteredPhysicalSourcesStatementString = "SHOW PHYSICAL SOURCES WHERE ID = 2";
+    const std::string_view physicalSourceForLogicalSourceStatementString = "SHOW PHYSICAL SOURCES FOR testSourCe1";
     const std::string_view physicalSourceForLogicalSourceStatementFilteredString = "SHOW PHYSICAL SOURCES FOR testSource2 WHERE ID = 3";
 
     const auto allPhysicalSourcesStatementExp = binder->parseAndBindSingle(allPhysicalSourcesStatementString);
     ASSERT_TRUE(allPhysicalSourcesStatementExp.has_value());
     ASSERT_TRUE(std::holds_alternative<ShowPhysicalSourcesStatement>(*allPhysicalSourcesStatementExp));
     auto showAllPhysicalSources = std::get<ShowPhysicalSourcesStatement>(*allPhysicalSourcesStatementExp);
-    const auto [logicalSource, id, format] = showAllPhysicalSources;
+    const auto [logicalSource, id] = showAllPhysicalSources;
     ASSERT_FALSE(logicalSource.has_value());
     ASSERT_FALSE(id.has_value());
-    ASSERT_TRUE(format == std::nullopt);
     const auto allPhysicalSourcesStatementResult = sourceStatementHandler->apply(showAllPhysicalSources);
     ASSERT_TRUE(allPhysicalSourcesStatementResult.has_value());
     ASSERT_EQ(allPhysicalSourcesStatementResult.value().sources.size(), 3);
@@ -437,11 +426,10 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(filteredPhysicalSourcesStatementExp.has_value());
     ASSERT_TRUE(std::holds_alternative<ShowPhysicalSourcesStatement>(*filteredPhysicalSourcesStatementExp));
     auto showFilteredPhysicalSources = std::get<ShowPhysicalSourcesStatement>(*filteredPhysicalSourcesStatementExp);
-    const auto [logicalSource2, id2, format2] = showFilteredPhysicalSources;
+    const auto [logicalSource2, id2] = showFilteredPhysicalSources;
     ASSERT_FALSE(logicalSource2.has_value());
     ASSERT_TRUE(id2.has_value());
     ASSERT_TRUE(*id2 == 2);
-    ASSERT_TRUE(format2 == StatementOutputFormat::JSON);
     const auto filteredPhysicalSourcesStatementResult = sourceStatementHandler->apply(showFilteredPhysicalSources);
     ASSERT_TRUE(filteredPhysicalSourcesStatementResult.has_value());
     ASSERT_EQ(filteredPhysicalSourcesStatementResult.value().sources.size(), 1);
@@ -452,11 +440,10 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementExp.has_value());
     ASSERT_TRUE(std::holds_alternative<ShowPhysicalSourcesStatement>(*physicalSourceForLogicalSourceStatementExp));
     auto showPhysicalSourceForLogicalSource = std::get<ShowPhysicalSourcesStatement>(*physicalSourceForLogicalSourceStatementExp);
-    const auto [logicalSource3, id3, format3] = showPhysicalSourceForLogicalSource;
+    const auto [logicalSource3, id3] = showPhysicalSourceForLogicalSource;
     ASSERT_TRUE(logicalSource3.has_value());
     ASSERT_EQ(logicalSource3->getRawValue(), "TESTSOURCE1");
     ASSERT_FALSE(id3.has_value());
-    ASSERT_TRUE(format3 == StatementOutputFormat::TEXT);
     const auto physicalSourceForLogicalSourceStatementResult = sourceStatementHandler->apply(showPhysicalSourceForLogicalSource);
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementResult.value().sources.size(), 1);
@@ -469,12 +456,11 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(std::holds_alternative<ShowPhysicalSourcesStatement>(*physicalSourceForLogicalSourceStatementFilteredExp));
     auto showPhysicalSourceForLogicalSourceFiltered
         = std::get<ShowPhysicalSourcesStatement>(*physicalSourceForLogicalSourceStatementFilteredExp);
-    const auto [logicalSource4, id4, format4] = showPhysicalSourceForLogicalSourceFiltered;
+    const auto [logicalSource4, id4] = showPhysicalSourceForLogicalSourceFiltered;
     ASSERT_TRUE(logicalSource4.has_value());
     ASSERT_EQ(logicalSource4->getRawValue(), "TESTSOURCE2");
     ASSERT_TRUE(id4.has_value());
     ASSERT_TRUE(*id4 == 3);
-    ASSERT_TRUE(format4 == std::nullopt);
     const auto physicalSourceForLogicalSourceStatementFilteredResult
         = sourceStatementHandler->apply(showPhysicalSourceForLogicalSourceFiltered);
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementFilteredResult.has_value());
@@ -499,26 +485,21 @@ TEST_F(StatementBinderTest, ShowSinks)
         ASSERT_TRUE(sinkStatementHandler->apply(std::get<CreateSinkStatement>(statement.value())).has_value());
     }
 
-    const std::string allSinksQueryString = "SHOW SINKS FORMAT JSON";
+    const std::string allSinksQueryString = "SHOW SINKS";
     const std::string filteredQuotedSinksQueryString = "SHOW SINKS WHERE NAME = 'TESTSINK1'";
-    const std::string invalidFormatQueryString = "SHOW SINKS WHERE NAME = 'testSink1' FORMAT INVALID_FORMAT";
 
     const auto allSinksStatementExp = binder->parseAndBindSingle(allSinksQueryString);
     const auto filteredQuotedSinksStatementExp = binder->parseAndBindSingle(filteredQuotedSinksQueryString);
-    const auto invalidFormatStatementExp = binder->parseAndBindSingle(invalidFormatQueryString);
     ASSERT_TRUE(allSinksStatementExp.has_value());
     ASSERT_TRUE(filteredQuotedSinksStatementExp.has_value());
-    ASSERT_FALSE(invalidFormatStatementExp.has_value());
 
     auto allSinksStatement = std::get<ShowSinksStatement>(*allSinksStatementExp);
-    const auto [name, format] = allSinksStatement;
+    const auto [name] = allSinksStatement;
     ASSERT_FALSE(name.has_value());
-    ASSERT_TRUE(format == StatementOutputFormat::JSON);
     auto filteredQuotedSinksStatement = std::get<ShowSinksStatement>(*filteredQuotedSinksStatementExp);
-    const auto [name2, format2] = filteredQuotedSinksStatement;
+    const auto [name2] = filteredQuotedSinksStatement;
     ASSERT_TRUE(name2.has_value());
     ASSERT_EQ(*name2, "TESTSINK1");
-    ASSERT_TRUE(format2 == std::nullopt);
 
     const auto allSinksResult = sinkStatementHandler->apply(allSinksStatement);
     const auto filteredQuotedSinksResult = sinkStatementHandler->apply(filteredQuotedSinksStatement);

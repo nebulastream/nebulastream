@@ -15,7 +15,6 @@
 #pragma once
 
 #include <cstdint>
-#include <cstdio>
 #include <cstdlib>
 #include <optional>
 #include <ostream>
@@ -119,10 +118,6 @@ private:
                 NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
                 if (auto logger = ::NES::Logger::getInstance()) \
                 { \
-                    if (!logger->isConsoleLoggingEnabled()) \
-                    { \
-                        fmt::print(stderr, "Precondition violated: ({}): " formatString "\n", #condition __VA_OPT__(, ) __VA_ARGS__); \
-                    } \
                     logger->shutdown(); \
                 } \
                 std::terminate(); \
@@ -141,10 +136,6 @@ private:
                 NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
                 if (auto logger = ::NES::Logger::getInstance()) \
                 { \
-                    if (!logger->isConsoleLoggingEnabled()) \
-                    { \
-                        fmt::print(stderr, "Invariant violated: ({}): " formatString "\n", #condition __VA_OPT__(, ) __VA_ARGS__); \
-                    } \
                     logger->shutdown(); \
                 } \
                 std::terminate(); \

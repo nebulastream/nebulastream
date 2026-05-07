@@ -23,17 +23,17 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
-#include <Util/Overloaded.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SinkValidationRegistry.hpp>
@@ -42,14 +42,16 @@ namespace NES
 {
 
 SinkDescriptor::SinkDescriptor(
-    std::variant<std::string, uint64_t> sinkName,
+    SinkId id,
+    std::string name,
     const Schema& schema,
     const std::string_view sinkType,
     Host host,
     const std::unordered_map<std::string, std::string>& formatConfig,
     DescriptorConfig::Config config)
     : Descriptor(std::move(config))
-    , sinkName(std::move(sinkName))
+    , id(id)
+    , name(std::move(name))
     , schema(std::make_shared<Schema>(schema))
     , sinkType(sinkType)
     , host(std::move(host))
@@ -80,24 +82,19 @@ std::string SinkDescriptor::getSinkType() const
     return sinkType;
 }
 
+SinkId SinkDescriptor::getSinkId() const
+{
+    return id;
+}
+
 std::string SinkDescriptor::getSinkName() const
 {
-    return std::visit(
-        Overloaded{
-            [](const std::string& name) { return name; },
-            [](const uint64_t& name) { return std::to_string(name); },
-        },
-        sinkName);
+    return name;
 }
 
 std::unordered_map<std::string, std::string> SinkDescriptor::getOutputFormatterConfig() const
 {
     return formatConfig;
-}
-
-bool SinkDescriptor::isInline() const
-{
-    return std::holds_alternative<uint64_t>(this->sinkName);
 }
 
 Host SinkDescriptor::getHost() const
@@ -115,8 +112,9 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
     out << fmt::format(
-        "SinkDescriptor: (name: {}, type: {}, host: {}, Config: {}, FormatConfig: {{{}}})",
-        sinkDescriptor.sinkName,
+        "SinkDescriptor: (id: {}, name: {}, type: {}, host: {}, Config: {}, FormatConfig: {{{}}})",
+        sinkDescriptor.id,
+        sinkDescriptor.name,
         sinkDescriptor.sinkType,
         sinkDescriptor.host,
         sinkDescriptor.toStringConfig(),
@@ -126,13 +124,14 @@ std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor
 
 bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 {
-    return lhs.sinkName == rhs.sinkName;
+    return lhs.id == rhs.id;
 }
 
 Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
 {
     return reflect(detail::ReflectedSinkDescriptor{
-        .sinkName = descriptor.sinkName,
+        .id = descriptor.id.getRawValue(),
+        .name = descriptor.name,
         .schema = *descriptor.schema,
         .sinkType = descriptor.sinkType,
         .host = descriptor.host,
@@ -143,8 +142,8 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
 
 SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
 {
-    auto [name, schema, type, host, formatConfig, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
-    return SinkDescriptor{name, schema, type, host, formatConfig, Descriptor::unreflectConfig(config)};
+    auto [id, name, schema, type, host, formatConfig, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
+    return SinkDescriptor{SinkId{id}, std::move(name), schema, type, host, formatConfig, Descriptor::unreflectConfig(config)};
 }
 
 }
