@@ -1,0 +1,62 @@
+# name: theta_join/ThetaJoinNull.test
+# description: Join where some join-key fields are NULL - null records are excluded from output
+# groups: [WindowOperators, Join, NullHandling, CompilationIntensive]
+
+# Source definitions
+# Empty id field in inline data represents NULL.
+# streamNull1 row 2 (id1=NULL) and streamNull2 row 2 (id2=NULL) must not appear in any output.
+CREATE LOGICAL SOURCE streamNull1(id1 INT32, value1 INT32 NOT NULL, timestamp1 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR streamNull1 TYPE File;
+ATTACH INLINE
+3,10,1000
+,20,1100
+5,30,1200
+7,40,1300
+
+CREATE LOGICAL SOURCE streamNull2(id2 INT32, value2 INT32 NOT NULL, timestamp2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR streamNull2 TYPE File;
+ATTACH INLINE
+6,50,1050
+,60,1150
+8,70,1250
+2,80,1350
+
+CREATE SINK sinkNullLt(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 INT32, value1 INT32 NOT NULL, timestamp1 UINT64 NOT NULL, id2 INT32, value2 INT32 NOT NULL, timestamp2 UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkNullLtSliding(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 INT32, value1 INT32 NOT NULL, timestamp1 UINT64 NOT NULL, id2 INT32, value2 INT32 NOT NULL, timestamp2 UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkNullLtTumbling2s(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 INT32, value1 INT32 NOT NULL, timestamp1 UINT64 NOT NULL, id2 INT32, value2 INT32 NOT NULL, timestamp2 UINT64 NOT NULL) TYPE File;
+
+# Query 1 - id1 < id2, tumbling 1 sec
+# Tests: a record with NULL in the join key produces no output row — NULL is not smaller than any value
+SELECT * FROM (SELECT * FROM streamNull1) INNER JOIN (SELECT * FROM streamNull2) ON id1 < id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkNullLt;
+----
+1000 2000 3 10 1000 6 50 1050
+1000 2000 3 10 1000 8 70 1250
+1000 2000 5 30 1200 6 50 1050
+1000 2000 5 30 1200 8 70 1250
+1000 2000 7 40 1300 8 70 1250
+
+# Query 2 - id1 < id2, sliding 1 sec advance 500 ms
+# Tests: null exclusion holds with sliding windows — null-keyed records are absent regardless of window type
+SELECT * FROM (SELECT * FROM streamNull1) INNER JOIN (SELECT * FROM streamNull2) ON id1 < id2 WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms) INTO sinkNullLtSliding;
+----
+500 1500 3 10 1000 6 50 1050
+500 1500 3 10 1000 8 70 1250
+500 1500 5 30 1200 6 50 1050
+500 1500 5 30 1200 8 70 1250
+500 1500 7 40 1300 8 70 1250
+1000 2000 3 10 1000 6 50 1050
+1000 2000 3 10 1000 8 70 1250
+1000 2000 5 30 1200 6 50 1050
+1000 2000 5 30 1200 8 70 1250
+1000 2000 7 40 1300 8 70 1250
+
+# Query 3 - id1 < id2, tumbling 2 sec
+# Tests: null exclusion is independent of window size — a wider window that groups more records together still produces no output for null-keyed records
+SELECT * FROM (SELECT * FROM streamNull1) INNER JOIN (SELECT * FROM streamNull2) ON id1 < id2 WINDOW TUMBLING (timestamp1, timestamp2, size 2 sec) INTO sinkNullLtTumbling2s;
+----
+0 2000 3 10 1000 6 50 1050
+0 2000 3 10 1000 8 70 1250
+0 2000 5 30 1200 6 50 1050
+0 2000 5 30 1200 8 70 1250
+0 2000 7 40 1300 8 70 1250
+
