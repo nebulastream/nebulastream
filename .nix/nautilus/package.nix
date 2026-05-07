@@ -15,8 +15,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "d75a6816436c824090c85191a0c1e39239cf2479";
-    hash = "sha256-M0OOYKk/bCegCv2RpuvJ4Q9gSccpW78r3C9xtrGIHe0=";
+    rev = "d6fe0857258e7ecd3d7c220ed7ae856139234b81";
+    hash = "sha256-m5nPSCra78cJa7b1Pe+zrZ+UBuyMaCjyf6eQRBgY+24=";
   };
 
   baseBuildInputs = [
@@ -52,9 +52,7 @@ let
 
       patches = [
         ./patches/0001-disable-ubsan-function-call-check.patch
-        ./patches/0002-increase-typed-value-ref-u16-to-u32.patch
         ./patches/0003-disable-cond-branch-weights.patch
-        ./patches/0004-restore-val-ptr-member-access.patch
       ];
 
       nativeBuildInputs = [
