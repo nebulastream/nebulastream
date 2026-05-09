@@ -15,7 +15,13 @@ RUN apt-get update -y && apt-get install -y \
         jq \
         yq \
         bats \
+        bats-support \
+        bats-assert \
+        bats-file \
         openjdk-21-jre-headless
+
+# Additional testing libraries for bats are discovered via the BATS_LIB_PATH environemnt
+ENV BATS_LIB_PATH=/usr/lib/bats
 
 # The vcpkg port of antlr requires the jar to be available somewhere
 ADD --checksum=sha256:eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76 --chmod=744 \
