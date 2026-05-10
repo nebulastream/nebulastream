@@ -16,7 +16,9 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Arena.hpp>
 #include <val_arith.hpp>
@@ -41,7 +43,25 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const ArenaRef& arena) const
+        const ArenaRef& arena,
+        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const DataType& valueType) const
+        = 0;
+
+    /// Deserializes the value from serialized form to it's c++ type representation and writes the result
+    /// into the buffer at bufferAddress.
+    /// Fixed-sized types are inlined, varsized types write their ptr and size into the buffer.
+    /// bufferAddress points to enough allocated memory to hold the deserialization result.
+    /// We use this function to avoid allocating memory for struct and array elements of structs / arrays, since deserializeToVarVal for these
+    /// types already allocates memories for all contained elements.
+    virtual void deserializeIntoBuffer(
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize,
+        const std::vector<std::string>& nullValues,
+        const ArenaRef& arena,
+        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const DataType& valueType,
+        const nautilus::val<int8_t*>& bufferAddress) const
         = 0;
 };
 }

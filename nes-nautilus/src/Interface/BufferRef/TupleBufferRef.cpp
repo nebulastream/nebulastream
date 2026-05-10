@@ -25,6 +25,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VarVal.hpp>
@@ -36,7 +37,9 @@
 #include <Interface/VariableSizedAccessRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <boost/mp11/set.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/std/cstring.h>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val.hpp>
@@ -156,9 +159,10 @@ VarSizedLoadFn TupleBufferRef::getRecordBufferLoad(const RecordBuffer& recordBuf
 VarSizedStoreFn
 TupleBufferRef::getRecordBufferStore(const RecordBuffer& recordBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    return [recordBuffer, bufferProvider](const nautilus::val<int8_t*>& slot, const VarVal& value)
+    return
+        [recordBuffer, bufferProvider](
+            const nautilus::val<int8_t*>& slot, const nautilus::val<int8_t*> varsizedContent, const nautilus::val<uint64_t>& varSizedSize)
     {
-        const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
         auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(slot);
 
         invoke(
@@ -176,8 +180,8 @@ TupleBufferRef::getRecordBufferStore(const RecordBuffer& recordBuffer, const nau
             },
             recordBuffer.getReference(),
             bufferProvider,
-            varSizedValue.getContent(),
-            varSizedValue.getSize(),
+            varsizedContent,
+            varSizedSize,
             refToIndex);
     };
 }

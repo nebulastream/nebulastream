@@ -19,6 +19,8 @@ target_include_directories(json_value_deserializer_plugin PUBLIC ${CMAKE_CURRENT
 link_plugin_library(nes-input-formatters json_value_deserializer_plugin)
 add_registry_entry(ValueDeserializer JSONCHAR HEADER JSONValueDeserializers.hpp)
 add_registry_entry(ValueDeserializer JSONVARSIZED HEADER JSONValueDeserializers.hpp)
+add_registry_entry(ValueDeserializer JSONSTRUCT HEADER JSONValueDeserializers.hpp)
+add_registry_entry(ValueDeserializer JSONFIXEDSIZED HEADER JSONValueDeserializers.hpp)
 add_registry_entry(ValueDeserializer NullableJSONCHAR HEADER JSONValueDeserializers.hpp)
 add_registry_entry(ValueDeserializer NullableJSONVARSIZED HEADER JSONValueDeserializers.hpp)
 

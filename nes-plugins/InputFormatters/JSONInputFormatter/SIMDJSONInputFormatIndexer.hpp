@@ -112,6 +112,8 @@ public:
         /// decode them, the default ones would hand the escape sequences through to the record verbatim.
         deserializerTypes[DataType::Type::CHAR] = "JSONCHAR";
         deserializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
+        deserializerTypes[DataType::Type::STRUCT] = "JSONSTRUCT";
+        deserializerTypes[DataType::Type::FIXEDSIZED] = "JSONFIXEDSIZED";
 
         /// Override the datatype defaults for the fields that the user configured a deserializer for
         fieldDeserializerTypes = parseValueDeserializerOverrides(deserializerOverrides, this->fieldNamesOutput);

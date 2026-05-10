@@ -26,7 +26,6 @@ SELECT "absoluteCounter", "airPumpTime", "beans/frontOrRightQuantity", "milk/cyc
 ----
 0,0.1,0.1,0
 
-
 SELECT "machineId", "milk/cycles/left", "milk/cycles/right", "milk/totalTime", "water/totalQuantity" FROM NestedJSON2 INTO File();
 ----
 101,0,0,0.0,0.0

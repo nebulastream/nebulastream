@@ -18,6 +18,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <span>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <Interface/BufferRef/TupleBufferRef.hpp>
@@ -77,6 +80,7 @@ public:
     void markWithTupleDelimiters(FieldIndex offsetToFirstTuple, FieldIndex offsetToLastTuple);
 
 private:
+    FieldIndex sizeOfFieldDelimiter{};
     size_t numberOfFieldsInSchema{};
     size_t numberOfOffsetsPerTuple{};
     size_t totalNumberOfTuples{};

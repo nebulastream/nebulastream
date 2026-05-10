@@ -62,7 +62,8 @@ struct FieldAccess
 /// fixed-size slot (in a PagedVector page or a TupleBuffer child buffer, depending on the layout).
 /// Load resolves the (pointer, length) of the payload; store writes the payload at the slot.
 using VarSizedLoadFn = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> slot)>;
-using VarSizedStoreFn = std::function<void(nautilus::val<int8_t*> slot, const VarVal& value)>;
+using VarSizedStoreFn = std::function<void(
+    const nautilus::val<int8_t*>& slot, const nautilus::val<int8_t*> varsizedContent, const nautilus::val<uint64_t>& varSizedSize)>;
 
 /// Materializes a record from the given already-addressed fields. The caller decides which fields to
 /// pass (e.g. after applying projections), so every field in @param fields is read.

@@ -143,7 +143,9 @@ void SequenceField::validate(std::string_view rawSchemaLine)
             break;
         }
         case DataType::Type::UNDEFINED:
-        case DataType::Type::VARSIZED: {
+        case DataType::Type::VARSIZED:
+        case DataType::Type::FIXEDSIZED:
+        case DataType::Type::STRUCT: {
             throw InvalidConfigParameter("Could not parse {} as SequenceField!", type);
         }
     }
@@ -225,7 +227,9 @@ SequenceField::SequenceField(std::string_view rawSchemaLine)
             break;
         }
         case DataType::Type::UNDEFINED:
-        case DataType::Type::VARSIZED: {
+        case DataType::Type::VARSIZED:
+        case DataType::Type::FIXEDSIZED:
+        case DataType::Type::STRUCT: {
             INVARIANT(false, "Unknown Type \"{}\" in: {}", type, rawSchemaLine);
         }
     }
@@ -332,7 +336,9 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
         /// Getting a var sized from a normal_distribution is possible but we might want to do something different than solely converting
         /// the value to a string
         case DataType::Type::UNDEFINED:
-        case DataType::Type::VARSIZED: {
+        case DataType::Type::VARSIZED:
+        case DataType::Type::FIXEDSIZED:
+        case DataType::Type::STRUCT: {
             INVARIANT(false, "Output Type \"{}\" is not supported for normal or binomial distribution.", outputType);
         }
     }
