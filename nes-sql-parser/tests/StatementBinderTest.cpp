@@ -258,6 +258,47 @@ TEST_F(StatementBinderTest, BindQuotedIdentifiers)
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
 
+TEST_F(StatementBinderTest, BindFixedSizeArrayType)
+{
+    const std::string createLogicalSourceStatement
+        = "CREATE LOGICAL SOURCE `testSource` (`scalar` UINT32, `image` UINT16 ARRAY[16] NOT NULL, `quad` FLOAT64 ARRAY[4])";
+    const auto statement = binder->parseAndBindSingle(createLogicalSourceStatement);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateLogicalSourceStatement>(*statement));
+    const auto createdSourceResult = sourceStatementHandler->apply(std::get<CreateLogicalSourceStatement>(*statement));
+    ASSERT_TRUE(createdSourceResult.has_value());
+    const auto [actualSource] = createdSourceResult.value();
+
+    Schema expectedSchema{};
+    expectedSchema.addField(
+        "testSource$scalar", DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE));
+    expectedSchema.addField(
+        "testSource$image",
+        DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, /*count=*/16});
+    expectedSchema.addField(
+        "testSource$quad",
+        DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::IS_NULLABLE, DataType::Type::FLOAT64, /*count=*/4});
+
+    ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
+    ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
+}
+
+TEST_F(StatementBinderTest, RejectsArrayWithVarsizedElement)
+{
+    /// Arrays of VARSIZED are not supported in this round; binder must surface the
+    /// error rather than silently producing a malformed FIXEDSIZED.
+    const std::string statement = "CREATE LOGICAL SOURCE `bad` (`tags` VARSIZED ARRAY[3])";
+    const auto result = binder->parseAndBindSingle(statement);
+    EXPECT_FALSE(result.has_value()) << "expected binder to reject VARSIZED ARRAY[N]";
+}
+
+TEST_F(StatementBinderTest, RejectsArrayWithZeroCount)
+{
+    const std::string statement = "CREATE LOGICAL SOURCE `bad` (`empty` UINT8 ARRAY[0])";
+    const auto result = binder->parseAndBindSingle(statement);
+    EXPECT_FALSE(result.has_value()) << "expected binder to reject ARRAY[0]";
+}
+
 TEST_F(StatementBinderTest, BindCreateBindSource)
 {
     const std::string createLogicalSourceStatement

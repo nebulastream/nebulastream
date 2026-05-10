@@ -302,7 +302,10 @@ Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST)
 
 DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const DataType::NULLABLE isNullable)
 {
-    std::string dataTypeText = typeDefAST->getText();
+    /// Resolve the leading DATA_TYPE token in isolation. When the rule also matches
+    /// the optional `ARRAY '[' count ']'` suffix, calling `getText()` on the whole
+    /// rule would concatenate everything into an unparseable string.
+    std::string dataTypeText = typeDefAST->DATA_TYPE()->getText();
 
     bool translated = false;
     bool isUnsigned = false;
@@ -328,6 +331,38 @@ DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const D
             return found->second;
         }();
     }
+
+    /// `T ARRAY[N]` syntax → FIXEDSIZED. The element type comes from the leading
+    /// DATA_TYPE token (must be primitive); the count is the bracketed integer.
+    /// Constructed directly because `DataTypeRegistryArguments` only carries
+    /// `nullable` and can't pass the element type / count through the registry.
+    if (typeDefAST->ARRAY() != nullptr)
+    {
+        const auto elementType = DataTypeProvider::tryProvideDataType(dataTypeText, DataType::NULLABLE::NOT_NULLABLE);
+        if (not elementType.has_value() || elementType->type == DataType::Type::VARSIZED
+            || elementType->type == DataType::Type::FIXEDSIZED || elementType->type == DataType::Type::STRUCT
+            || elementType->type == DataType::Type::UNDEFINED)
+        {
+            throw UnknownDataType(
+                "{} is not a supported element type for `ARRAY[N]`; only primitive scalar types are allowed", dataTypeText);
+        }
+        const auto countText = typeDefAST->count->getText();
+        uint32_t count = 0;
+        try
+        {
+            count = static_cast<uint32_t>(std::stoul(countText));
+        }
+        catch (const std::exception&)
+        {
+            throw UnknownDataType("Could not parse FIXEDSIZED array count '{}' as a positive integer", countText);
+        }
+        if (count == 0)
+        {
+            throw UnknownDataType("FIXEDSIZED array count must be greater than zero");
+        }
+        return DataType{DataType::Type::FIXEDSIZED, isNullable, elementType->type, count};
+    }
+
     const auto dataType = DataTypeProvider::tryProvideDataType(dataTypeText, isNullable);
     if (not dataType.has_value())
     {

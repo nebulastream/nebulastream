@@ -19,6 +19,12 @@ target_link_libraries(paged-vector-unit-tests nes-nautilus-test-util)
 add_nes_unit_test(variable-sized-data-unit-tests "UnitTests/VariableSizedDataTest.cpp")
 target_link_libraries(variable-sized-data-unit-tests nes-nautilus-test-util)
 
+add_nes_unit_test(fixed-sized-data-unit-tests "UnitTests/FixedSizedDataTest.cpp")
+target_link_libraries(fixed-sized-data-unit-tests nes-nautilus-test-util)
+
+add_nes_unit_test(struct-data-unit-tests "UnitTests/StructDataTest.cpp")
+target_link_libraries(struct-data-unit-tests nes-nautilus-test-util)
+
 add_nes_unit_test(var-val-unit-tests "UnitTests/VarValTest.cpp")
 target_link_libraries(var-val-unit-tests nes-nautilus-test-util)
 

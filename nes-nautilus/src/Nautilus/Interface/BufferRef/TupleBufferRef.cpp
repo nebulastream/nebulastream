@@ -28,6 +28,9 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/FixedSizedData.hpp>
+#include <Nautilus/DataTypes/StructData.hpp>
+#include <nautilus/std/cstring.h>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -144,26 +147,58 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
         null = readValueFromMemRef<bool>(fieldReference);
         varValRef += 1;
     }
-
-    if (physicalType.type != DataType::Type::VARSIZED)
+    switch (physicalType.type)
     {
-        return VarVal::readVarValFromMemory(varValRef, physicalType, null);
+        case DataType::Type::VARSIZED: {
+            auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
+            const auto varSizedPtr = invoke(
+                {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+                +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
+                {
+                    INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+                    INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
+                    return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
+                },
+                recordBuffer.getReference(),
+                variableSizedAccess);
+            const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(variableSizedAccess, offsetof(VariableSizedAccess, size));
+            return VarVal{VariableSizedData(varSizedPtr, size), physicalType.nullable, null};
+        }
+        case DataType::Type::FIXEDSIZED: {
+            auto fixedSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
+            const auto fixedSizedPtr = invoke(
+                {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+                +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
+                {
+                    INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+                    INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
+                    return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
+                },
+                recordBuffer.getReference(),
+                fixedSizedAccess);
+            return VarVal{FixedSizedData(fixedSizedPtr, physicalType.count, physicalType.elementType), physicalType.nullable, null};
+        }
+        case DataType::Type::STRUCT: {
+            /// Inline storage: the struct's bytes live directly in the tuple at
+            /// `varValRef`. Per-field offsets are determined by `StructData`'s
+            /// inline-layout rules.
+            return VarVal{StructData{varValRef, physicalType.fields}, physicalType.nullable, null};
+        }
+        case DataType::Type::UINT8:
+        case DataType::Type::UINT16:
+        case DataType::Type::UINT32:
+        case DataType::Type::UINT64:
+        case DataType::Type::INT8:
+        case DataType::Type::INT16:
+        case DataType::Type::INT32:
+        case DataType::Type::INT64:
+        case DataType::Type::FLOAT32:
+        case DataType::Type::FLOAT64:
+        case DataType::Type::BOOLEAN:
+        case DataType::Type::CHAR:
+        case DataType::Type::UNDEFINED:
+            return VarVal::readVarValFromMemory(varValRef, physicalType, null);
     }
-
-    auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
-    const auto varSizedPtr = invoke(
-        {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
-        {
-            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
-            INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
-            return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
-        },
-        recordBuffer.getReference(),
-        variableSizedAccess);
-
-    const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(variableSizedAccess, offsetof(VariableSizedAccess, size));
-    return VarVal{VariableSizedData(varSizedPtr, size), physicalType.nullable, null};
 }
 
 VarVal TupleBufferRef::storeValue(
@@ -181,7 +216,17 @@ VarVal TupleBufferRef::storeValue(
         VarVal{value.isNull()}.writeToMemory(varValRef);
         varValRef += 1;
     }
-    if (physicalType.type != DataType::Type::VARSIZED)
+    if (physicalType.type == DataType::Type::STRUCT)
+    {
+        /// Inline storage: copy the struct's bytes straight into the tuple slot.
+        /// Width is derived from the schema, so it folds to a constant at trace time.
+        const auto src = value.getRawValueAs<StructData>();
+        const auto bytes = nautilus::val<uint64_t>(physicalType.getSizeInBytesWithoutNull());
+        nautilus::memcpy(varValRef, src.getRawPtr(), bytes);
+        return value;
+    }
+
+    if (physicalType.type != DataType::Type::VARSIZED && physicalType.type != DataType::Type::FIXEDSIZED)
     {
         /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
         /// We get the correct function to call via a unordered_map
@@ -192,26 +237,44 @@ VarVal TupleBufferRef::storeValue(
         throw UnknownDataType("Physical Type: {} is currently not supported", physicalType);
     }
 
-    const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
+    /// VARSIZED and FIXEDSIZED both bottom out in `writeVarSized`: it copies the payload
+    /// into a child buffer and returns the 16-byte `VariableSizedAccess` for the slot.
+    /// Only the source of (pointer, byte-count) differs.
     auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
+
+    nautilus::val<int8_t*> payloadPtr{nullptr};
+    nautilus::val<uint64_t> payloadLength{0};
+    if (physicalType.type == DataType::Type::FIXEDSIZED)
+    {
+        const auto fixedValue = value.getRawValueAs<FixedSizedData>();
+        const auto totalBytes = static_cast<uint64_t>(fixedValue.getTotalSizeInBytes());
+        payloadPtr = fixedValue.getRawPtr();
+        payloadLength = nautilus::val<uint64_t>(totalBytes);
+    }
+    else
+    {
+        const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
+        payloadPtr = varSizedValue.getContent();
+        payloadLength = varSizedValue.getSize();
+    }
 
     invoke(
         +[](TupleBuffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider,
-            const int8_t* varSizedPtr,
-            const uint64_t varSizedValueLength,
+            const int8_t* payloadPtr,
+            const uint64_t payloadLength,
             VariableSizedAccess* refToIndex)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
-            const std::span varSizedValueSpan{varSizedPtr, varSizedPtr + varSizedValueLength};
-            const VariableSizedAccess writtenAccess = writeVarSized(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
+            const std::span payloadSpan{payloadPtr, payloadPtr + payloadLength};
+            const VariableSizedAccess writtenAccess = writeVarSized(*tupleBuffer, *bufferProvider, std::as_bytes(payloadSpan));
             *refToIndex = writtenAccess;
         },
         recordBuffer.getReference(),
         bufferProvider,
-        varSizedValue.getContent(),
-        varSizedValue.getSize(),
+        payloadPtr,
+        payloadLength,
         refToIndex);
 
     return value;

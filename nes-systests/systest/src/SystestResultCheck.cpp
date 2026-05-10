@@ -271,6 +271,13 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
             return NES::compareStringAsTypeWithError<float>(left.getRawValue(), right.getRawValue());
         case NES::DataType::Type::FLOAT64:
             return NES::compareStringAsTypeWithError<double>(left.getRawValue(), right.getRawValue());
+        case NES::DataType::Type::FIXEDSIZED:
+            /// FIXEDSIZED renders as a JSON array literal `[v0,v1,...]` from the JSON
+            /// output formatter; the systest compares against the same string in the
+            /// expected-result block of the .test file.
+            return left.getRawValue() == right.getRawValue();
+        case NES::DataType::Type::STRUCT:
+            return left.getRawValue() == right.getRawValue();
         case NES::DataType::Type::UNDEFINED:
             throw NES::UnknownDataType("Not supporting UNDEFINED in result check comparison");
     }
@@ -310,13 +317,56 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
             return std::make_tuple(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1), isNullable.value());
         }(field);
         NES::DataType dataType;
-        if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed); type.has_value())
+        /// `FIXEDSIZED<ELEMENT,N>` — emitted by `SchemaFormatter::formatTypeForHeader`.
+        /// Decode the element type and count and reconstruct the parameterized DataType
+        /// directly (the registry only handles scalar types).
+        if (typeTrimmed.starts_with("FIXEDSIZED<") && typeTrimmed.ends_with('>'))
         {
+            const auto inner = typeTrimmed.substr(std::string_view("FIXEDSIZED<").size(),
+                typeTrimmed.size() - std::string_view("FIXEDSIZED<").size() - 1);
+            /// Inner separator is `;` (not `,`) to avoid colliding with the outer
+            /// comma-separated field split. Format: `FIXEDSIZED<ELEMENT;COUNT>`.
+            const auto sepPos = inner.find(';');
+            if (sepPos == std::string_view::npos)
+            {
+                throw NES::SLTUnexpectedToken("Malformed FIXEDSIZED header column: {}", typeTrimmed);
+            }
+            const auto elementTypeStr = NES::trimWhiteSpaces(inner.substr(0, sepPos));
+            const auto countStr = NES::trimWhiteSpaces(inner.substr(sepPos + 1));
+            const auto elementType = magic_enum::enum_cast<NES::DataType::Type>(elementTypeStr);
+            if (not elementType.has_value())
+            {
+                throw NES::SLTUnexpectedToken("Unknown FIXEDSIZED element type: {}", elementTypeStr);
+            }
+            uint32_t count = 0;
+            try
+            {
+                count = static_cast<uint32_t>(std::stoul(std::string(countStr)));
+            }
+            catch (const std::exception&)
+            {
+                throw NES::SLTUnexpectedToken("Could not parse FIXEDSIZED count: {}", countStr);
+            }
+            dataType = NES::DataType{NES::DataType::Type::FIXEDSIZED, isNullable, elementType.value(), count};
+        }
+        else if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed);
+                 type.has_value() && type.value() != NES::DataType::Type::STRUCT)
+        {
+            /// STRUCT explicitly excluded — its enum name carries no layout, so
+            /// `provideDataType(STRUCT)` would fail. Named struct types reach
+            /// the fallback below via their registered name.
             dataType = NES::DataTypeProvider::provideDataType(type.value(), isNullable);
         }
         else if (NES::toLowerCase(typeTrimmed) == "varsized")
         {
             dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED, isNullable);
+        }
+        else if (auto plugin = NES::DataTypeProvider::tryProvideDataType(std::string{typeTrimmed}, isNullable);
+                 plugin.has_value())
+        {
+            /// Plugin-registered named type (e.g. ThermalFrame). Matches the
+            /// header form emitted by `SchemaFormatter::formatTypeForHeader`.
+            dataType = *plugin;
         }
         else
         {

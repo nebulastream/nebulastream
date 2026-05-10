@@ -15,6 +15,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <Nautilus/DataTypes/FixedSizedData.hpp>
+#include <Nautilus/DataTypes/StructData.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -127,6 +129,14 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 {
                     const auto& varSizedContent = val;
                     return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
+                }
+                else if constexpr (std::is_same_v<T, FixedSizedData>)
+                {
+                    return hash ^ nautilus::invoke(hashBytes, val.getRawPtr(), nautilus::val<uint64_t>(val.getTotalSizeInBytes()));
+                }
+                else if constexpr (std::is_same_v<T, StructData>)
+                {
+                    return hash ^ nautilus::invoke(hashBytes, val.getRawPtr(), nautilus::val<uint64_t>(val.getTotalSizeInBytes()));
                 }
                 else
                 {

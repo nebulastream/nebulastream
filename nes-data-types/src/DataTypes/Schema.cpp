@@ -54,7 +54,13 @@ std::string Schema::Field::getUnqualifiedName() const
 
 Schema Schema::addField(std::string name, const DataType& dataType)
 {
-    return addField(std::move(name), dataType.type, dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    /// Preserve the full DataType — including STRUCT layout (`structName`, `fields`)
+    /// and FIXEDSIZED metadata. Going through the (type, nullable) overload would
+    /// reset these via the 2-arg constructor.
+    sizeOfSchemaInBytes += dataType.getSizeInBytesWithNull();
+    fields.emplace_back(std::move(name), dataType);
+    nameToField.emplace(fields.back().name, fields.size() - 1);
+    return *this;
 }
 
 Schema Schema::addField(std::string name, const DataType::Type type)
