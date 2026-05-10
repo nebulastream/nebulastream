@@ -62,10 +62,18 @@ LogicalFunction LessEqualsLogicalFunction::withInferredDataType(const Schema<Fie
     auto copy = *this;
     copy.left = copy.left.withInferredDataType(schema);
     copy.right = copy.right.withInferredDataType(schema);
-    if (!copy.left.getDataType().isNumeric() or !copy.right.getDataType().isNumeric())
+    /// Two STRUCTs of the same nominal type are accepted as well: their comparison semantics are provided by a
+    /// `LessEquals_<Struct>_<Struct>` physical function plugin, which `FunctionProvider` dispatches to during lowering.
+    const auto& leftType = copy.left.getDataType();
+    const auto& rightType = copy.right.getDataType();
+    const bool bothNumeric = leftType.isNumeric() and rightType.isNumeric();
+    const bool sameStruct = leftType.type == DataType::Type::STRUCT and rightType.type == DataType::Type::STRUCT
+        and leftType.structName == rightType.structName;
+    if (!bothNumeric and !sameStruct)
     {
         throw CannotInferStamp(
-            "Can only apply less than or equals to two functions with numeric data types, but got left: {}, right: {}",
+            "Can only apply less than or equals to two functions with numeric data types or two STRUCTs of the same type, but got left: "
+            "{}, right: {}",
             copy.left,
             copy.right);
     }
