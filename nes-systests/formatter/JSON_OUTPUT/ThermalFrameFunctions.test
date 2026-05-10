@@ -1,0 +1,14 @@
+# name: ThermalFrameFunctions.test
+# description: Exercises the per-record to_celsius and is_fever functions over a ThermalFrame STRUCT column. Validates that nominal STRUCT typing flows through SQL → logical/physical lowering → Nautilus, and that the per-pixel C++ helpers produce the right Celsius array and fever-aggregate boolean.
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE thermalRecords(`timestamp` UINT64 NOT NULL, `frame` ThermalFrame NOT NULL);
+CREATE PHYSICAL SOURCE FOR thermalRecords TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+ATTACH INLINE
+{"timestamp": 1, "frame": {"pixels": [30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000]}}
+{"timestamp": 2, "frame": {"pixels": [30000, 30000, 30000, 30000, 30000, 31200, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000]}}
+
+SELECT `timestamp`, to_celsius(`frame`) AS celsius, is_fever(`frame`) AS fever FROM thermalRecords INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"THERMALRECORDS$timestamp":1,"CELSIUS":[26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85],"FEVER":false}
+{"THERMALRECORDS$timestamp":2,"CELSIUS":[26.85,26.85,26.85,26.85,26.85,38.849998,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85,26.85],"FEVER":true}
