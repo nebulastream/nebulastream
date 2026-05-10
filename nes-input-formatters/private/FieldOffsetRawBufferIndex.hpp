@@ -18,6 +18,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <span>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <Interface/BufferRef/TupleBufferRef.hpp>
@@ -55,7 +58,8 @@ public:
         const nautilus::val<uint64_t>& recordIndex,
         const InputFormatIndexer& indexer,
         nautilus::val<RawBufferIndex*> rawBufferIndex,
-        const TupleBufferRef& bufferRef) const override;
+        const TupleBufferRef& bufferRef,
+        ArenaRef&) const override;
 
     [[nodiscard]] TupleDelimiterOffsets getTupleDelimiterOffsets() const override
     {
@@ -75,6 +79,7 @@ public:
     void markWithTupleDelimiters(FieldIndex offsetToFirstTuple, FieldIndex offsetToLastTuple);
 
 private:
+    FieldIndex sizeOfFieldDelimiter{};
     size_t numberOfFieldsInSchema{};
     size_t numberOfOffsetsPerTuple{};
     size_t totalNumberOfTuples{};

@@ -23,6 +23,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <fmt/format.h>
+#include <InputFormatIndexer.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatterValidationRegistry.hpp>
 #include <RawBufferIndex.hpp>

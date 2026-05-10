@@ -122,8 +122,6 @@ public:
 
     [[nodiscard]] std::string_view getFieldDelimitingBytes() const override { return ""; }
 
-    [[nodiscard]] QuotationType getQuotationType() const override { return QuotationType::DOUBLE_QUOTE; }
-
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);

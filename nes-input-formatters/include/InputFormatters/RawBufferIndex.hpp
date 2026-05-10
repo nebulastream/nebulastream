@@ -20,6 +20,7 @@
 
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
+#include <Arena.hpp>
 #include <RawTupleBuffer.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -61,8 +62,8 @@ public:
         const nautilus::val<uint64_t>& recordIndex,
         const InputFormatIndexer& indexer,
         nautilus::val<RawBufferIndex*> rawBufferIndex,
-        const TupleBufferRef& bufferRef) const
-        = 0;
+        const TupleBufferRef& bufferRef,
+        ArenaRef& arena) const = 0;
 
     [[nodiscard]] virtual TupleDelimiterOffsets getTupleDelimiterOffsets() const = 0;
     [[nodiscard]] virtual size_t getNumberOfTuples() const = 0;

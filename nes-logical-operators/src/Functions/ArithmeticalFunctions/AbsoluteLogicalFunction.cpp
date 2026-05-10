@@ -77,6 +77,8 @@ DataType::Type inferAbsoluteResultType(const DataType::Type inputType)
         case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
         case DataType::Type::VARSIZED:
+        case DataType::Type::STRUCT:
+        case DataType::Type::FIXEDSIZED:
             throw InferenceRuntimeFailure("Should not infer absolute type for {}", magic_enum::enum_name(inputType));
     }
 }
