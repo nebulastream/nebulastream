@@ -127,8 +127,62 @@ DataType::DataType(const Type type, const NULLABLE nullable) : type(type), nulla
 {
 }
 
+DataType::DataType(const Type type, const NULLABLE nullable, const Type elementType, const uint32_t count)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(elementType), count(count)
+{
+    if (type != Type::FIXEDSIZED)
+    {
+        throw DifferentFieldTypeExpected(
+            "The elementType/count DataType constructor is fixed-sized only, but got: {}", magic_enum::enum_name(type));
+    }
+}
+
+DataType::DataType(
+    const Type type, const NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), structName(std::move(structName)), fields(std::move(fields))
+{
+    if (type != Type::STRUCT)
+    {
+        throw DifferentFieldTypeExpected(
+            "The structName/fields DataType constructor is STRUCT only, but got: {}", magic_enum::enum_name(type));
+    }
+}
+
 DataType::DataType() : type(Type::UNDEFINED), nullable(true)
 {
+}
+
+namespace
+{
+/// Inline byte size of a single field for STRUCT layouts.
+///
+/// STRUCT bytes are laid out in-place: a primitive uses its native size, a
+/// FIXEDSIZED field is `count * elementSize` (no offset/size indirection —
+/// indirection is only for top-level FIXEDSIZED in a tuple buffer), and a
+/// nested STRUCT recurses with the same rule.
+///
+/// Mirrors `StructData::fieldSizeInBytes` in nes-nautilus; the two must agree
+/// or tuple-buffer reads will misinterpret bytes.
+uint32_t inlineFieldSizeInBytes(const NES::DataType& field)
+{
+    using Type = NES::DataType::Type;
+    using NULLABLE = NES::DataType::NULLABLE;
+    if (field.type == Type::FIXEDSIZED)
+    {
+        const auto elementSize = NES::DataType{field.elementType, NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+        return field.count * elementSize;
+    }
+    if (field.type == Type::STRUCT)
+    {
+        uint32_t total = 0;
+        for (const auto& [name, sub] : field.fields)
+        {
+            total += inlineFieldSizeInBytes(sub);
+        }
+        return total;
+    }
+    return NES::DataType{field.type, NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+}
 }
 
 /// NOLINTBEGIN(readability-magic-numbers)
@@ -152,6 +206,20 @@ uint32_t DataType::getSizeInBytesWithoutNull() const
             /// Returning '16' for VARSIZED, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
             /// and 8 bytes for the size of the VARSIZED
             return 16;
+        case Type::FIXEDSIZED:
+            /// We store FIXEDSIZED like VARSZIED for now. After moving physical details, like sizes in bytes, into the memory layout, we
+            /// may store FIXEDSIZED in-place
+            return 16;
+        case Type::STRUCT: {
+            /// Inline layout: same rules as `StructData` in nes-nautilus.
+            /// Per-field nullability is intentionally ignored for the PoC.
+            uint32_t total = 0;
+            for (const auto& [name, field] : fields)
+            {
+                total += inlineFieldSizeInBytes(field);
+            }
+            return total;
+        }
         case Type::INT64:
         case Type::UINT64:
         case Type::FLOAT64:
@@ -206,6 +274,44 @@ std::string DataType::formattedBytesToString(const void* data) const
         case Type::VARSIZED: {
             const auto* textPointer = static_cast<const char*>(data);
             return textPointer;
+        }
+        case Type::FIXEDSIZED: {
+            /// Best-effort textual rendering for output formatting; consumers that need
+            /// typed access should go through `FixedSizedData::at()` instead.
+            const auto elementSize = DataType{elementType, NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+            std::string out = "[";
+            const auto* bytes = static_cast<const std::byte*>(data);
+            for (uint32_t i = 0; i < count; ++i)
+            {
+                if (i > 0)
+                {
+                    out += ",";
+                }
+                out += DataType{elementType, NULLABLE::NOT_NULLABLE}.formattedBytesToString(bytes + (i * elementSize));
+            }
+            out += "]";
+            return out;
+        }
+        case Type::STRUCT: {
+            /// Walks the inline struct bytes in field order; offsets follow the
+            /// same rules as `inlineFieldSizeInBytes` so this stays in sync with
+            /// how the bytes were written.
+            std::string out = structName + "{";
+            const auto* bytes = static_cast<const std::byte*>(data);
+            uint32_t offset = 0;
+            bool first = true;
+            for (const auto& [name, field] : fields)
+            {
+                if (!first)
+                {
+                    out += ",";
+                }
+                first = false;
+                out += name + ":" + field.formattedBytesToString(bytes + offset);
+                offset += inlineFieldSizeInBytes(field);
+            }
+            out += "}";
+            return out;
         }
         case Type::UNDEFINED:
             return "invalid physical type";
@@ -328,6 +434,23 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
         return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED, isNullableResult)}
                                                       : std::nullopt;
     }
+    if (this->type == Type::FIXEDSIZED)
+    {
+        if (otherDataType.type == Type::FIXEDSIZED && otherDataType.elementType == this->elementType && otherDataType.count == this->count)
+        {
+            return DataType{Type::FIXEDSIZED, isNullableResult, this->elementType, this->count};
+        }
+        return std::nullopt;
+    }
+    if (this->type == Type::STRUCT)
+    {
+        /// Nominal typing: only joinable to a STRUCT with the same name and field layout.
+        if (otherDataType.type == Type::STRUCT && otherDataType.structName == this->structName && otherDataType.fields == this->fields)
+        {
+            return DataType{Type::STRUCT, isNullableResult, this->structName, this->fields};
+        }
+        return std::nullopt;
+    }
 
     if (this->isNumeric())
     {
@@ -371,17 +494,51 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
 
 Reflected Reflector<DataType>::operator()(const DataType& field) const
 {
-    return reflect(std::make_pair(field.type, field.nullable));
+    return reflect(std::make_tuple(field.type, field.nullable, field.elementType, field.count, field.structName, field.fields));
 }
 
 DataType Unreflector<DataType>::operator()(const Reflected& rfl) const
 {
-    const auto [type, nullable] = unreflect<std::pair<DataType::Type, bool>>(rfl);
-    return DataTypeProvider::provideDataType(type, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    using TupleT
+        = std::tuple<DataType::Type, bool, DataType::Type, uint32_t, std::string, std::vector<std::pair<std::string, DataType>>>;
+    const auto [type, nullable, elementType, count, structName, fields] = unreflect<TupleT>(rfl);
+    const auto nullableEnum = nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    if (type == DataType::Type::FIXEDSIZED)
+    {
+        return DataType{type, nullableEnum, elementType, count};
+    }
+    if (type == DataType::Type::STRUCT)
+    {
+        return DataType{type, nullableEnum, structName, fields};
+    }
+    return DataTypeProvider::provideDataType(type, nullableEnum);
 }
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)
 {
+    if (dataType.type == DataType::Type::FIXEDSIZED)
+    {
+        return os << fmt::format(
+                   "DataType(type: FIXEDSIZED<{}, {}> nullable: {})",
+                   magic_enum::enum_name(dataType.elementType),
+                   dataType.count,
+                   dataType.nullable);
+    }
+    if (dataType.type == DataType::Type::STRUCT)
+    {
+        std::string fieldList;
+        bool first = true;
+        for (const auto& [name, field] : dataType.fields)
+        {
+            if (!first)
+            {
+                fieldList += ", ";
+            }
+            first = false;
+            fieldList += fmt::format("{}: {}", name, field);
+        }
+        return os << fmt::format("DataType(type: STRUCT<{}, {{{}}}> nullable: {})", dataType.structName, fieldList, dataType.nullable);
+    }
     return os << fmt::format("DataType(type: {} nullable: {})", magic_enum::enum_name(dataType.type), dataType.nullable);
 }
 

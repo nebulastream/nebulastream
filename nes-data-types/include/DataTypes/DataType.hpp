@@ -21,6 +21,8 @@
 #include <ostream>
 #include <string>
 #include <type_traits>
+#include <utility>
+#include <vector>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Reflection.hpp>
 
@@ -45,6 +47,8 @@ struct DataType final
         CHAR,
         UNDEFINED,
         VARSIZED,
+        FIXEDSIZED,
+        STRUCT,
     };
 
     enum class NULLABLE : uint8_t
@@ -54,6 +58,13 @@ struct DataType final
     };
 
     DataType(Type type, NULLABLE nullable);
+    /// FIXEDSIZED-only constructor: also carries element type and count.
+    /// Todo: remove in a proper frontend datatype refactoring
+    DataType(Type type, NULLABLE nullable, Type elementType, uint32_t count);
+    /// STRUCT-only constructor: nominal name + ordered named field layout.
+    /// Hacky PoC for extensible composite types — plugins register a creator that
+    /// builds one of these for their named struct (e.g. "Image").
+    DataType(Type type, NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields);
     DataType();
 
     template <class T>
@@ -134,6 +145,14 @@ struct DataType final
 
     Type type;
     bool nullable;
+    /// Only meaningful when `type == FIXEDSIZED`; defaults make non-array DataTypes
+    /// compare and hash identically to before this struct grew these fields.
+    Type elementType = Type::UNDEFINED;
+    uint32_t count = 0;
+    /// Only meaningful when `type == STRUCT`. Identity is nominal: two STRUCTs
+    /// are equal iff name and fields match.
+    std::string structName;
+    std::vector<std::pair<std::string, DataType>> fields;
 };
 
 template <>
@@ -155,7 +174,16 @@ struct std::hash<NES::DataType>
 {
     size_t operator()(const NES::DataType& dataType) const noexcept
     {
-        return (static_cast<uint16_t>(dataType.type) << 8) | static_cast<uint8_t>(dataType.nullable);
+        size_t h = (static_cast<uint16_t>(dataType.type) << 8) | static_cast<uint8_t>(dataType.nullable);
+        h ^= static_cast<size_t>(dataType.elementType) << 16;
+        h ^= static_cast<size_t>(dataType.count) << 24;
+        h ^= std::hash<std::string>{}(dataType.structName) << 1;
+        for (const auto& [name, field] : dataType.fields)
+        {
+            h ^= std::hash<std::string>{}(name) + 0x9e3779b9 + (h << 6) + (h >> 2);
+            h ^= std::hash<NES::DataType>{}(field) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
+        return h;
     }
 };
 

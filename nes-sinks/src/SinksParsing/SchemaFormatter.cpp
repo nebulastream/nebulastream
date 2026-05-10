@@ -23,16 +23,41 @@
 
 namespace NES
 {
+namespace
+{
+/// Header type column. For scalar types this is just the enum name (e.g. `UINT16`).
+/// FIXEDSIZED carries element type and count which scalar types don't, so we encode
+/// them as `FIXEDSIZED<UINT16,16>` to keep the field separator (`:`) count constant
+/// across rows. The decoder lives in `nes-systests/.../SystestResultCheck.cpp`.
+std::string formatTypeForHeader(const DataType& dataType)
+{
+    if (dataType.type == DataType::Type::FIXEDSIZED)
+    {
+        /// `;` (not `,`) inside the angle brackets so the comma-separated outer
+        /// field split in `SystestResultCheck::parseFieldNames` doesn't tokenize it.
+        return fmt::format("FIXEDSIZED<{};{}>", magic_enum::enum_name(dataType.elementType), dataType.count);
+    }
+    if (dataType.type == DataType::Type::STRUCT)
+    {
+        /// Nominal STRUCTs are identified by their registered name; emitting that
+        /// directly lets `SystestResultCheck::parseFieldNames` round-trip via
+        /// `DataTypeProvider::tryProvideDataType(name)`.
+        return dataType.structName;
+    }
+    return std::string(magic_enum::enum_name(dataType.type));
+}
+}
+
 std::string SchemaFormatter::getFormattedSchema()
 {
     PRECONDITION(schema->hasFields(), "Encountered schema without fields.");
     std::stringstream ss;
-    ss << schema->getFields().front().name << ":" << magic_enum::enum_name(schema->getFields().front().dataType.type) << ":"
+    ss << schema->getFields().front().name << ":" << formatTypeForHeader(schema->getFields().front().dataType) << ":"
        << magic_enum::enum_name(
               schema->getFields().front().dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     for (const auto& field : schema->getFields() | std::views::drop(1))
     {
-        ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type) << ":"
+        ss << ',' << field.name << ':' << formatTypeForHeader(field.dataType) << ":"
            << magic_enum::enum_name(field.dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     }
     return fmt::format("{}\n", ss.str());

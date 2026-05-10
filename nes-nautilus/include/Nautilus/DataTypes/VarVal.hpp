@@ -18,6 +18,8 @@
 #include <utility>
 #include <variant>
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/FixedSizedData.hpp>
+#include <Nautilus/DataTypes/StructData.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/ostream.h>
@@ -35,7 +37,7 @@ namespace NES
 namespace detail
 {
 template <typename... T>
-using var_val_helper = std::variant<VariableSizedData, nautilus::val<T>...>;
+using var_val_helper = std::variant<VariableSizedData, FixedSizedData, StructData, nautilus::val<T>...>;
 using var_val_t = var_val_helper<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double, char>;
 
 
@@ -133,6 +135,14 @@ public:
                 if constexpr (std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>)
                 {
                     throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
+                }
+                else if constexpr (std::is_same_v<removedCVRefT0, FixedSizedData> || std::is_same_v<removedCVRefT1, FixedSizedData>)
+                {
+                    throw UnknownOperation("Cannot cast FixedSizedData to anything else.");
+                }
+                else if constexpr (std::is_same_v<removedCVRefT0, StructData> || std::is_same_v<removedCVRefT1, StructData>)
+                {
+                    throw UnknownOperation("Cannot cast StructData to anything else.");
                 }
                 else
                 {

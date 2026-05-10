@@ -83,7 +83,12 @@ modelOutputField: identifier typeDefinition;
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: identifierChain typeDefinition nullableDefinition?;
 
-typeDefinition: DATA_TYPE;
+/// `DATA_TYPE` alone is a scalar column type (e.g. `UINT16`).
+/// `DATA_TYPE ARRAY '[' count ']'` is a fixed-size array column type (e.g.
+/// `UINT16 ARRAY[16]`); the element type is the leading `DATA_TYPE` and the
+/// count must be a positive integer literal. Resolved to `DataType::Type::FIXEDSIZED`
+/// in `bindDataType` (CommonParserFunctions.cpp).
+typeDefinition: DATA_TYPE (ARRAY '[' count=INTEGER_VALUE ']')?;
 nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
@@ -211,7 +216,7 @@ namedExpression
 identifier: strictIdentifier;
 
 strictIdentifier
-    : IDENTIFIER #unquotedIdentifier
+    : DATA_TYPE #unquotedIdentifier
     | quotedIdentifier #quotedIdentifierAlternative;
 
 quotedIdentifier
@@ -424,6 +429,7 @@ booleanValue
 ALL: 'ALL' | 'all';
 AND: 'AND' | 'and';
 ANY: 'ANY';
+ARRAY: 'ARRAY' | 'array';
 AS: 'AS' | 'as';
 ASC: 'ASC' | 'asc';
 AT: 'AT';
@@ -593,21 +599,24 @@ SOURCES: 'SOURCES' | 'sources';
 QUERIES: 'QUERIES' | 'queries';
 
 
-DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
+/// All the type-name sub-rules are fragments so they don't produce their own
+/// token types. DATA_TYPE itself is the only token rule for column types and
+/// is defined AFTER the keyword rules below so its `IDENTIFIER` alternative
+/// doesn't pre-empt keywords (CREATE/SOURCE/etc) — those need to win the
+/// lexer's first-defined tiebreak.
+fragment INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
+fragment INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
+fragment INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
+fragment TINY_INT_TYPE: 'TINYINT';
+fragment SMALL_INT_TYPE: 'SMALLINT';
+fragment NORMAL_INT_TYPE: 'INT' | 'INTEGER';
+fragment BIG_INT_TYPE: 'BIGINT';
+fragment FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
+fragment CHAR_TYPE: 'CHAR';
+fragment VARSIZED_TYPE: 'VARSIZED';
+fragment BOOLEAN_TYPE: 'BOOLEAN';
 
-INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
-INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
-INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
-TINY_INT_TYPE: 'TINYINT';
-SMALL_INT_TYPE: 'SMALLINT';
-NORMAL_INT_TYPE: 'INT' | 'INTEGER';
-BIG_INT_TYPE: 'BIGINT';
-FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
-CHAR_TYPE: 'CHAR';
-VARSIZED_TYPE: 'VARSIZED';
-BOOLEAN_TYPE: 'BOOLEAN';
-
-UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
+fragment UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
 
 
 
@@ -622,6 +631,13 @@ SINK : 'SINK';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
+
+/// Single token covering both built-in primitive type names and plugin-registered
+/// named types (e.g. `ThermalFrame`, `Image`). Lives below all keyword rules so
+/// keywords win the lexer tiebreak; lives above IDENTIFIER so identifier-shaped
+/// type names still tokenize as DATA_TYPE for `typeDefinition`. Consumers that
+/// previously matched IDENTIFIER (`strictIdentifier`) now match DATA_TYPE.
+DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE | IDENTIFIER;
 
 SIMPLE_COMMENT
     : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
