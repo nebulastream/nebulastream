@@ -27,13 +27,17 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/FixedSizedData.hpp>
+#include <DataTypes/StructData.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <std/cstring.h>
 
 #include <Configurations/Descriptor.hpp>
@@ -76,12 +80,14 @@ void writeValue(
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     nautilus::val<uint64_t>& written,
     nautilus::val<uint64_t>& currentRemainingSize,
-    const std::string& serializerType)
+    const std::string& serializerType,
+    const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+    const DataType& fieldType)
 {
     const ValueSerializerConfig config{.quoted = true};
     const std::unique_ptr<ValueSerializer> valueSerializer = provideValueSerializer(serializerType, config);
-    const nautilus::val<uint64_t> amountWritten
-        = valueSerializer->serializeAndWrite(value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer);
+    const nautilus::val<uint64_t> amountWritten = valueSerializer->serializeAndWrite(
+        value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer, serializerTypes, fieldType);
     written += amountWritten;
     currentRemainingSize -= amountWritten;
 }
@@ -106,6 +112,8 @@ JSONOutputFormatter::JSONOutputFormatter(
     serializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
     serializerTypes[DataType::Type::CHAR] = "JSONCHAR";
     serializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
+    serializerTypes[DataType::Type::STRUCT] = "JSONSTRUCT";
+    serializerTypes[DataType::Type::FIXEDSIZED] = "JSONFIXEDSIZED";
 
     /// Override the datatype defaults for the fields that the user configured a serializer for
     fieldSerializerTypes
@@ -164,7 +172,9 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
                 bufferProvider,
                 written,
                 currentRemainingSize,
-                getSerializerType(fieldNames.at(fieldIndex), fieldType.type));
+                getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
+                serializerTypes,
+                fieldType);
         }
     }
     else
@@ -176,7 +186,9 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
             bufferProvider,
             written,
             currentRemainingSize,
-            getSerializerType(fieldNames.at(fieldIndex), fieldType.type));
+            getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
+            serializerTypes,
+            fieldType);
     }
 
     /// Either write a , or a }\n depending on if this is the last value of the record

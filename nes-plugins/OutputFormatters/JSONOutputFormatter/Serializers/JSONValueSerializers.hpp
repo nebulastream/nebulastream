@@ -35,7 +35,9 @@ public:
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-        const nautilus::val<int8_t*>& startingAddress) const override;
+        const nautilus::val<int8_t*>& startingAddress,
+        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const DataType& valueType) const override;
 
     static std::unique_ptr<ValueSerializer> provideSerializer(ValueSerializerRegistryArguments args);
 };
@@ -49,7 +51,41 @@ public:
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-        const nautilus::val<int8_t*>& startingAddress) const override;
+        const nautilus::val<int8_t*>& startingAddress,
+        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const DataType& valueType) const override;
+
+    static std::unique_ptr<ValueSerializer> provideSerializer(ValueSerializerRegistryArguments args);
+};
+
+class JSONSTRUCTValueSerializer final : public ValueSerializer
+{
+public:
+    explicit JSONSTRUCTValueSerializer() noexcept = default;
+    [[nodiscard]] nautilus::val<uint64_t> serializeAndWrite(
+        const VarVal& value,
+        const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<int8_t*>& startingAddress,
+        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const DataType& valueType) const override;
+
+    static std::unique_ptr<ValueSerializer> provideSerializer(ValueSerializerRegistryArguments args);
+};
+
+class JSONFIXEDSIZEDValueSerializer final : public ValueSerializer
+{
+public:
+    explicit JSONFIXEDSIZEDValueSerializer() noexcept = default;
+    [[nodiscard]] nautilus::val<uint64_t> serializeAndWrite(
+        const VarVal& value,
+        const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<int8_t*>& startingAddress,
+        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const DataType& valueType) const override;
 
     static std::unique_ptr<ValueSerializer> provideSerializer(ValueSerializerRegistryArguments args);
 };

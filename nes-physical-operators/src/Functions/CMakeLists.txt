@@ -18,7 +18,6 @@ add_source_files(nes-physical-operators
         CastToPhysicalFunction.cpp
         )
 
-
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)
 add_subdirectory(BooleanFunctions)
@@ -34,6 +33,7 @@ add_source_files(nes-physical-operators
         CastFromUnixTimestampPhysicalFunction.cpp
         CastVarSizedToNumericPhysicalFunction.cpp
         ExtractFromTimestampPhysicalFunction.cpp
+        ConstructStructPhysicalFunction.cpp
 )
 
 add_registry_entry(PhysicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
@@ -48,3 +48,4 @@ add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Year_Of)
 add_registry_entry(PhysicalFunction FromBase64 KEY FROM_BASE64)
 add_registry_entry(PhysicalFunction OctetLength KEY OCTET_LENGTH)
 add_registry_entry(PhysicalFunction ToBase64 KEY TO_BASE64)
+add_registry_entry(PhysicalFunction ConstructStruct)

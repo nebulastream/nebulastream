@@ -95,7 +95,9 @@ createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<
            {TestDataTypes::FLOAT64, DataType::Type::FLOAT64},
            {TestDataTypes::BOOLEAN, DataType::Type::BOOLEAN},
            {TestDataTypes::CHAR, DataType::Type::CHAR},
-           {TestDataTypes::VARSIZED, DataType::Type::VARSIZED}};
+           {TestDataTypes::VARSIZED, DataType::Type::VARSIZED},
+           {TestDataTypes::STRUCT, DataType::Type::STRUCT},
+           {TestDataTypes::FIXEDSIZED, DataType::Type::FIXEDSIZED}};
 
     return testDataTypes | NES::views::enumerate
         | std::views::transform(
