@@ -41,6 +41,8 @@
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
+#include <Functions/CastToTypeLogicalFunction.hpp>
+#include <Functions/ConstructStructLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
@@ -925,18 +927,53 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             break;
         default:
             helpers.top().hasUnnamedAggregation = false;
-            /// Check if the function is a constructor for a datatype
+            /// Check if the function is a constructor for a datatype:
+            ///   STRUCT target           -> ConstructStruct over N field expressions in functionBuilder
+            ///   non-STRUCT, literal arg -> ConstantValueLogicalFunction (literal in constantBuilder)
+            ///   non-STRUCT, expr arg    -> CastToTypeLogicalFunction (expression in functionBuilder)
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
-                if (helpers.top().constantBuilder.empty())
+                if (dataType->type == DataType::Type::STRUCT)
                 {
-                    throw InvalidQuerySyntax("Expected constant, got nothing at {}", context->getText());
+                    const auto numArgs = context->argument.size();
+                    if (numArgs != dataType->fields.size())
+                    {
+                        throw InvalidQuerySyntax(
+                            "Struct constructor '{}' expects {} arguments, got {} at {}",
+                            funcName,
+                            dataType->fields.size(),
+                            numArgs,
+                            context->getText());
+                    }
+                    if (numArgs > helpers.top().functionBuilder.size())
+                    {
+                        throw InvalidQuerySyntax(
+                            "Struct constructor '{}' expects {} arguments but only {} are available (raw literals must be wrapped, e.g. FLOAT64(1.5))",
+                            funcName,
+                            numArgs,
+                            helpers.top().functionBuilder.size());
+                    }
+                    auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                    std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
+                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                    helpers.top().functionBuilder.emplace_back(ConstructStructLogicalFunction(*dataType, std::move(args)));
                 }
-                helpers.top().hasUnnamedAggregation = false;
-                auto value = std::move(helpers.top().constantBuilder.back());
-                helpers.top().constantBuilder.pop_back();
-                auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
-                helpers.top().functionBuilder.emplace_back(constFunctionItem);
+                else if (!helpers.top().constantBuilder.empty())
+                {
+                    auto value = std::move(helpers.top().constantBuilder.back());
+                    helpers.top().constantBuilder.pop_back();
+                    helpers.top().functionBuilder.emplace_back(ConstantValueLogicalFunction(*dataType, std::move(value)));
+                }
+                else if (!helpers.top().functionBuilder.empty())
+                {
+                    auto inner = std::move(helpers.top().functionBuilder.back());
+                    helpers.top().functionBuilder.pop_back();
+                    helpers.top().functionBuilder.emplace_back(CastToTypeLogicalFunction(*dataType, std::move(inner)));
+                }
+                else
+                {
+                    throw InvalidQuerySyntax("Type constructor '{}' requires an argument at {}", funcName, context->getText());
+                }
             }
             else
             {

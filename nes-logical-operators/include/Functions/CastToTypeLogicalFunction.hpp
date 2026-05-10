@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -66,6 +67,15 @@ struct Unreflector<CastToTypeLogicalFunction>
 
 static_assert(LogicalFunctionConcept<CastToTypeLogicalFunction>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedCastToTypeLogicalFunction
+{
+    DataType castToType;
+    std::optional<LogicalFunction> child;
+};
 }
 
 FMT_OSTREAM(NES::CastToTypeLogicalFunction);
