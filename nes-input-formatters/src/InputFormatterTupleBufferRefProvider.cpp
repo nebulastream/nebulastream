@@ -27,7 +27,7 @@
 namespace NES
 {
 
-std::shared_ptr<InputFormatterTupleBufferRef>
+std::shared_ptr<TupleBufferRef>
 provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider)
 {
     if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(

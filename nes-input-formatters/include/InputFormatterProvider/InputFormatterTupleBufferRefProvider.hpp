@@ -20,12 +20,11 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <InputFormatterTupleBufferRef.hpp>
 
 namespace NES
 {
 
-std::shared_ptr<InputFormatterTupleBufferRef>
+std::shared_ptr<TupleBufferRef>
 provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider);
 
 bool contains(const std::string& parserType);

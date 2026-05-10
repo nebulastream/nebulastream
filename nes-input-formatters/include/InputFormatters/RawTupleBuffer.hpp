@@ -21,7 +21,6 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Concepts.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -30,28 +29,29 @@ namespace NES
 using FieldIndex = uint32_t;
 using SequenceNumberType = SequenceNumber::Underlying;
 
+class RawTupleBuffer;
+
+namespace detail
+{
+/// Defined in InputFormatter.cpp. The only sanctioned way to build a RawTupleBuffer over externally-allocated (typically arena-allocated)
+/// spanning-tuple bytes. The caller owns the underlying memory and must keep it alive for the duration of indexing.
+RawTupleBuffer makeSpanningTupleBuffer(const char* rawDataPtr, std::size_t sizeOfSpanningTuple);
+}
+
 /// Takes a tuple buffer containing raw, unformatted data and wraps it into an object that fulfills the following purposes:
 /// 1. The RawTupleBuffer allows its users to operate on string_views, instead of handling raw pointers (which a TupleBuffer would require)
 /// 2. It exposes only those functions of the TupleBuffer that are required for formatting
 /// 3. It selectively exposes the reduced set of functions, to prohibit setting, e.g., the SequenceNumber in InputFormatIndexer
 /// 4. It exposes functions with more descriptive names, e.g., `getNumberOfBytes()` instead of `getNumberOfTuples`
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
-
-template <InputFormatIndexerType FormatterType>
-class InputFormatter;
-
 class RawTupleBuffer
 {
-    template <InputFormatIndexerType FormatterType>
-    friend class InputFormatter;
-
 public:
     RawTupleBuffer() = default;
     ~RawTupleBuffer() = default;
     explicit RawTupleBuffer(TupleBuffer rawTupleBuffer)
         : rawBuffer(std::move(rawTupleBuffer))
         , bufferView(rawBuffer.getAvailableMemoryArea<char>().data(), rawBuffer.getNumberOfTuples()) { };
-
 
     RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer& operator=(RawTupleBuffer&& other) noexcept = default;
@@ -90,7 +90,9 @@ private:
     TupleBuffer rawBuffer;
     std::string_view bufferView;
 
-    /// Used by InputFormatter to pass an arena-allocated spanning tuple to an InputFormatIndexer
+    /// Used by detail::makeSpanningTupleBuffer to wrap an arena-allocated spanning tuple. Not exposed as a public ctor so the only path to
+    /// this form of RawTupleBuffer goes through the friended factory below.
+    friend RawTupleBuffer detail::makeSpanningTupleBuffer(const char*, std::size_t);
     explicit RawTupleBuffer(const char* rawDataPtr, const size_t sizeOfSpanningTuple) : bufferView(rawDataPtr, sizeOfSpanningTuple) { };
 };
 
