@@ -1,0 +1,20 @@
+# name: StructAdd.test
+# description: Per-struct `+` semantics for Reading. The Image plugin registers
+# `Add_Reading_Reading` as a PhysicalFunction; `FunctionProvider` dispatches to it
+# because both operands of `+` are nominal-typed `Reading`. Plugin's chosen semantics
+# is pairwise field add (temperature + temperature, humidity + humidity).
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE thermometer(sensor_id UINT64 NOT NULL, celsius FLOAT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR thermometer TYPE File;
+ATTACH INLINE
+1,23.5,100
+2,24.0,200
+3,25.5,300
+
+# Reading(celsius, 50.0) + Reading(1.0, 5.0) → temperature += 1, humidity += 5
+SELECT Reading(celsius, FLOAT64(50.0)) + Reading(FLOAT64(1.0), FLOAT64(5.0)) AS combined FROM thermometer INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"COMBINED":{"temperature":24.5,"humidity":55.0}}
+{"COMBINED":{"temperature":25.0,"humidity":55.0}}
+{"COMBINED":{"temperature":26.5,"humidity":55.0}}

@@ -1,0 +1,64 @@
+# name: JoinedReadingStruct.test
+# description: Builds a custom STRUCT (`Reading`) from member data sourced across two physically different sensor streams. The thermometer stream is a minimal 3-column reading; the hygrometer stream carries extra metadata (battery, uptime) that is irrelevant to the constructed struct. A windowed event-time JOIN aligns records by sensor/device id, and the type-constructor `Reading(celsius, humidity_pct)` pulls just the relevant subset of each stream's fields into the nominal Reading struct. The constructed value flows through the JSON output formatter as a regular STRUCT.
+# groups: [Formatter, JSON, Join]
+
+# Thermometer: a minimal sensor stream. Only `celsius` ever contributes to a
+# Reading; `sensor_id` is the join key and `ts` drives the window.
+CREATE LOGICAL SOURCE thermometer(sensor_id UINT64 NOT NULL, celsius FLOAT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR thermometer TYPE File;
+ATTACH INLINE
+1,23.5,100
+2,24.0,200
+3,25.5,300
+
+# Hygrometer: a *different-shape* sensor stream. Wider schema (battery + uptime
+# metadata that the Reading struct doesn't care about) and entirely different
+# field names. Only `humidity_pct` ever contributes to a Reading.
+CREATE LOGICAL SOURCE hygrometer(device_id UINT64 NOT NULL, humidity_pct FLOAT64 NOT NULL, battery_pct UINT8 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR hygrometer TYPE File;
+ATTACH INLINE
+1,65.0,87,100
+2,70.0,80,200
+3,55.0,72,300
+
+# Construct struct from constants
+SELECT Reading(FLOAT64(1.5), FLOAT64(60.5)) AS reading FROM thermometer INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"READING":{"temperature":1.5,"humidity":60.5}}
+{"READING":{"temperature":1.5,"humidity":60.5}}
+{"READING":{"temperature":1.5,"humidity":60.5}}
+
+# Construct struct from constant and literal
+SELECT Reading(celsius, FLOAT64(60.5)) AS reading FROM thermometer INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"READING":{"temperature":23.5,"humidity":60.5}}
+{"READING":{"temperature":24.0,"humidity":60.5}}
+{"READING":{"temperature":25.5,"humidity":60.5}}
+
+# Construct struct from constant and literal-addition
+SELECT Reading(celsius + FLOAT64(10.0), FLOAT64(60.5)) AS reading FROM thermometer INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"READING":{"temperature":33.5,"humidity":60.5}}
+{"READING":{"temperature":34.0,"humidity":60.5}}
+{"READING":{"temperature":35.5,"humidity":60.5}}
+
+# Each stream contributes a distinct subset of its fields to the constructed
+# Reading: `celsius` from the thermometer side, `humidity_pct` from the
+# hygrometer side. battery_pct, uptime_seconds, and the per-stream ids are
+# all dropped on the floor by the projection.
+SELECT Reading(celsius, humidity_pct) AS reading
+FROM (SELECT * FROM thermometer) JOIN (SELECT * FROM hygrometer) ON sensor_id = device_id
+  WINDOW TUMBLING (ts, size 1 sec) INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"READING":{"temperature":23.5,"humidity":65.0}}
+{"READING":{"temperature":24.0,"humidity":70.0}}
+{"READING":{"temperature":25.5,"humidity":55.0}}
+
+# Add celsius and humidity
+SELECT Reading(celsius + humidity_pct, humidity_pct) AS reading
+FROM (SELECT * FROM thermometer) JOIN (SELECT * FROM hygrometer) ON sensor_id = device_id
+  WINDOW TUMBLING (ts, size 1 sec) INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"READING":{"temperature":88.5,"humidity":65.0}}
+{"READING":{"temperature":94.0,"humidity":70.0}}
+{"READING":{"temperature":80.5,"humidity":55.0}}
