@@ -89,6 +89,7 @@ EXCEPTION(InferenceRuntimeFailure, 3006, "inference runtime failure")
 EXCEPTION(ArithmeticalError, 3013, "arithmetical error")
 EXCEPTION(WindowingError, 3014, "windowing error")
 EXCEPTION(IOError, 3015, "I/O error")
+EXCEPTION(OutOfRangeAccess, 3016, "out of range access")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")

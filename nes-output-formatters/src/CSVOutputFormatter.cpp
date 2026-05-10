@@ -65,12 +65,14 @@ void writeValue(
     nautilus::val<uint64_t>& written,
     nautilus::val<uint64_t>& currentRemainingSize,
     const std::string& serializerType,
-    const bool& quoteStrings)
+    const bool& quoteStrings,
+    const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+    const DataType& fieldType)
 {
     const ValueSerializerConfig config{.quoted = quoteStrings};
     const std::unique_ptr<ValueSerializer> serializer = provideValueSerializer(serializerType, config);
-    const nautilus::val<uint64_t> amountWritten
-        = serializer->serializeAndWrite(value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer);
+    const nautilus::val<uint64_t> amountWritten = serializer->serializeAndWrite(
+        value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer, serializerTypes, fieldType);
     written += amountWritten;
     currentRemainingSize -= amountWritten;
 }
@@ -127,6 +129,9 @@ CSVOutputFormatter::CSVOutputFormatter(const std::vector<Record::RecordFieldIden
     serializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
     serializerTypes[DataType::Type::CHAR] = "DefaultCHAR";
     serializerTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
+    /// We intentionally do not define defaults for STRUCT and FIXEDSIZED here, as CSV does not support these variants by default.
+    /// Should the user try to create CSV-formatted data with such types, they will encounter an error, unless a specific serializer
+    /// was defined for these fields or the STRUCT-plugin field defines its own default serializer.
 
     /// Override the datatype defaults for the fields that the user configured a serializer for
     fieldSerializerTypes = parseValueSerializerOverrides(config.valueSerializers, this->fieldNames);
@@ -170,7 +175,9 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
                 written,
                 currentRemainingSize,
                 getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
-                quoteStrings);
+                quoteStrings,
+                serializerTypes,
+                fieldType);
         }
     }
     else
@@ -183,7 +190,9 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
             written,
             currentRemainingSize,
             getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
-            quoteStrings);
+            quoteStrings,
+            serializerTypes,
+            fieldType);
     }
 
     /// Write either the field delimiter or the tuple delimiter, depending on the field index

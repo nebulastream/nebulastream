@@ -64,6 +64,8 @@ public:
         throw UnknownValueDeserializerType("No ValueDeserializer configured for DataType {}", magic_enum::enum_name(dataType));
     }
 
+    [[nodiscard]] const std::unordered_map<DataType::Type, std::string>& getDeserializerTypes() const { return deserializerTypes; }
+
     friend std::ostream& operator<<(std::ostream& out, const InputFormatIndexer& indexer);
 
 protected:

@@ -146,7 +146,9 @@ nautilus::val<uint64_t> DefaultCHARValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<char>>();
     return nautilus::invoke(
@@ -158,7 +160,9 @@ nautilus::val<uint64_t> DefaultF32ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
     return nautilus::invoke(
@@ -175,7 +179,9 @@ nautilus::val<uint64_t> DefaultF64ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<double>>();
     return nautilus::invoke(
@@ -192,7 +198,9 @@ nautilus::val<uint64_t> DefaultINT8ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
     return nautilus::invoke(
@@ -209,7 +217,9 @@ nautilus::val<uint64_t> DefaultINT16ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
     return nautilus::invoke(
@@ -226,7 +236,9 @@ nautilus::val<uint64_t> DefaultINT32ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
     return nautilus::invoke(
@@ -243,7 +255,9 @@ nautilus::val<uint64_t> DefaultINT64ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<int64_t>>();
     return nautilus::invoke(
@@ -260,7 +274,9 @@ nautilus::val<uint64_t> DefaultBOOLValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<bool>>();
     return nautilus::invoke(
@@ -272,7 +288,9 @@ nautilus::val<uint64_t> DefaultUINT8ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<uint8_t>>();
     return nautilus::invoke(
@@ -289,7 +307,9 @@ nautilus::val<uint64_t> DefaultUINT16ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<uint16_t>>();
     return nautilus::invoke(
@@ -306,7 +326,9 @@ nautilus::val<uint64_t> DefaultUINT32ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<uint32_t>>();
     return nautilus::invoke(
@@ -323,7 +345,9 @@ nautilus::val<uint64_t> DefaultUINT64ValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<uint64_t>>();
     return nautilus::invoke(
@@ -340,7 +364,9 @@ nautilus::val<uint64_t> DefaultVARSIZEDValueSerializer::serializeAndWrite(
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>&,
+    const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<VariableSizedData>();
     if (quoted)

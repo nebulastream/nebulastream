@@ -79,6 +79,8 @@ enum class TestDataTypes : uint8_t
     BOOLEAN,
     CHAR,
     VARSIZED,
+    STRUCT,
+    FIXEDSIZED
 };
 
 struct ThreadInputBuffers

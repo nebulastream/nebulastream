@@ -38,6 +38,8 @@ public:
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-        const nautilus::val<int8_t*>& startingAddress) const = 0;
+        const nautilus::val<int8_t*>& startingAddress,
+        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const DataType& valueType) const = 0;
 };
 }
