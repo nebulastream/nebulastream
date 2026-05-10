@@ -22,6 +22,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
@@ -54,9 +55,11 @@ CastToTypeLogicalFunction CastToTypeLogicalFunction::withDataType(const DataType
     return copy;
 }
 
-LogicalFunction CastToTypeLogicalFunction::withInferredDataType(const Schema&) const
+LogicalFunction CastToTypeLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    return *this;
+    auto copy = *this;
+    copy.child = child.withInferredDataType(schema);
+    return copy;
 }
 
 std::vector<LogicalFunction> CastToTypeLogicalFunction::getChildren() const
@@ -82,26 +85,33 @@ std::string CastToTypeLogicalFunction::explain(ExplainVerbosity) const
     return fmt::format("Cast to {})", castToType);
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunctionRegistryArguments arguments)
+Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction& function) const
 {
+    return reflect(detail::ReflectedCastToTypeLogicalFunction{.castToType = function.getDataType(), .child = function.getChildren().at(0)});
+}
+
+CastToTypeLogicalFunction Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [castToType, child] = unreflect<detail::ReflectedCastToTypeLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("CastToTypeLogicalFunction is missing child");
+    }
+    return CastToTypeLogicalFunction{castToType, std::move(child.value())};
+}
+
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterCastLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<CastToTypeLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("CastToTypeLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
-    std::unreachable();
-}
-
-Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction&) const
-{
-    PRECONDITION(false, "CastToTypeLogicalFunction not expected to be reflected");
-    std::unreachable();
-}
-
-CastToTypeLogicalFunction Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected&) const
-{
-    PRECONDITION(false, "CastToTypeLogicalFunction not expected to be unreflected");
     std::unreachable();
 }
 
