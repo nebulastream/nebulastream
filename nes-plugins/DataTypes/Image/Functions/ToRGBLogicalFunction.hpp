@@ -1,0 +1,88 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <DataTypes/DataType.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
+#include <LogicalFunctionRegistry.hpp>
+
+namespace NES
+{
+
+/// `to_rgb(ThermalFrame, colormap_name) -> RGBFrame`. Two-arg nominal-typed
+/// function: child0 must be a ThermalFrame STRUCT, child1 a VARSIZED string
+/// naming a colormap. Output is a same-pixel-count RGBFrame STRUCT.
+class ToRGBLogicalFunction final
+{
+public:
+    static constexpr std::string_view NAME = "TO_RGB";
+
+    ToRGBLogicalFunction(const LogicalFunction& frame, const LogicalFunction& colormap);
+
+    [[nodiscard]] bool operator==(const ToRGBLogicalFunction& rhs) const;
+
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] ToRGBLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] ToRGBLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
+
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+    static LogicalFunctionRegistryReturnType createTO_RGB(LogicalFunctionRegistryArguments arguments);
+
+private:
+    DataType dataType;
+    LogicalFunction frame;
+    LogicalFunction colormap;
+
+    friend Reflector<ToRGBLogicalFunction>;
+};
+
+namespace detail
+{
+struct ReflectedToRGBLogicalFunction
+{
+    LogicalFunction frame;
+    LogicalFunction colormap;
+};
+}
+
+template <>
+struct Reflector<ToRGBLogicalFunction>
+{
+    Reflected operator()(const ToRGBLogicalFunction& function, const ReflectionContext& context) const;
+};
+
+template <>
+struct Unreflector<ToRGBLogicalFunction>
+{
+    ToRGBLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
+};
+
+static_assert(LogicalFunctionConcept<ToRGBLogicalFunction>);
+
+}
+
+FMT_OSTREAM(NES::ToRGBLogicalFunction);
