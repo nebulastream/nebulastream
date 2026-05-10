@@ -14,6 +14,7 @@
 #include <Functions/FunctionProvider.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -79,6 +80,14 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
         {
             return (*factory)(PhysicalFunctionRegistryArguments{
                 .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()});
+        }
+        /// Ordering comparisons accept STRUCT operands during type inference only because a plugin is expected to define
+        /// their semantics. The generic numeric implementations cannot handle STRUCTs, so fail here instead of at runtime.
+        constexpr std::array<std::string_view, 4> structOnlyViaPlugin{"Greater", "GreaterEquals", "Less", "LessEquals"};
+        if (std::ranges::contains(structOnlyViaPlugin, baseName))
+        {
+            throw UnknownFunctionType(
+                "Can not lower function: {}. No physical function registered as {}", logicalFunction, specializedName);
         }
     }
 
