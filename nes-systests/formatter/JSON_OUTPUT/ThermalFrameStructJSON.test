@@ -1,0 +1,14 @@
+# name: ThermalFrameStructJSON.test
+# description: Round-trips a STRUCT-typed column (ThermalFrame, registered as a plugin DataType) from JSON input through the inline STRUCT layout in the tuple buffer and back out as a JSON object via the JSON output formatter.
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE thermalRecords(`timestamp` UINT64 NOT NULL, `camera_id` UINT32 NOT NULL, `frame` ThermalFrame NOT NULL);
+CREATE PHYSICAL SOURCE FOR thermalRecords TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+ATTACH INLINE
+{"timestamp": 1714060800000, "camera_id": 1, "frame": {"pixels": [30100, 30180, 30220, 30150, 30210, 41900, 52400, 30260, 30230, 53100, 65535, 30290, 30170, 30240, 30205, 30130]}}
+{"timestamp": 1714060800040, "camera_id": 1, "frame": {"pixels": [30120, 30200, 30240, 30160, 30230, 42150, 52900, 30270, 30250, 53600, 65535, 30310, 30190, 30260, 30225, 30150]}}
+
+SELECT * FROM thermalRecords INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"THERMALRECORDS$timestamp":1714060800000,"THERMALRECORDS$camera_id":1,"THERMALRECORDS$frame":{"pixels":[30100,30180,30220,30150,30210,41900,52400,30260,30230,53100,65535,30290,30170,30240,30205,30130]}}
+{"THERMALRECORDS$timestamp":1714060800040,"THERMALRECORDS$camera_id":1,"THERMALRECORDS$frame":{"pixels":[30120,30200,30240,30160,30230,42150,52900,30270,30250,53600,65535,30310,30190,30260,30225,30150]}}

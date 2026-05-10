@@ -1,0 +1,27 @@
+# name: ThermalFrameToRGB.test
+# description: Exercises to_rgb(ThermalFrame, colormap) which produces an RGBFrame STRUCT (planar r/g/b UINT8 channels). Validates two-arg STRUCT-typed function lowering plus a STRUCT-with-multiple-FIXEDSIZED-fields output rendered through the JSON output formatter.
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE thermalRecords(`timestamp` UINT64 NOT NULL, `frame` ThermalFrame NOT NULL);
+CREATE PHYSICAL SOURCE FOR thermalRecords TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+ATTACH INLINE
+{"timestamp": 1, "frame": {"pixels": [30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000]}}
+{"timestamp": 2, "frame": {"pixels": [30000, 30000, 30000, 30000, 30000, 31200, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000, 30000]}}
+
+# `grayscale` colormap: high byte of UINT16 broadcast across r/g/b.
+# 30000 = 0x7530 → top byte 0x75 = 117. 31200 = 0x79E0 → top byte 0x79 = 121.
+SELECT `timestamp`, to_rgb(`frame`, VARSIZED('grayscale')) AS rgb FROM thermalRecords INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"THERMALRECORDS$timestamp":1,"RGB":{"r":[117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117],"g":[117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117],"b":[117,117,117,117,117,117,117,117,117,117,117,117,117,117,117,117]}}
+{"THERMALRECORDS$timestamp":2,"RGB":{"r":[117,117,117,117,117,121,117,117,117,117,117,117,117,117,117,117],"g":[117,117,117,117,117,121,117,117,117,117,117,117,117,117,117,117],"b":[117,117,117,117,117,121,117,117,117,117,117,117,117,117,117,117]}}
+
+# `iron` colormap is body-temperature calibrated via piecewise-linear waypoints
+# (see IRON_WAYPOINTS in ToRGBPhysicalFunction.cpp).
+# 30000 sits between waypoints {29900,(0,0,200)} and {30300,(180,0,100)} with
+#   t = (30000-29900)*255/400 = 63 → (44, 0, 175) (cool blue-purple).
+# 31200 sits between waypoints {31100,(255,200,0)} and {31500,(255,255,255)} with
+#   t = (31200-31100)*255/400 = 63 → (255, 213, 63) (yellow-white, fever).
+SELECT `timestamp`, to_rgb(`frame`, VARSIZED('iron')) AS rgb FROM thermalRecords INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"THERMALRECORDS$timestamp":1,"RGB":{"r":[44,44,44,44,44,44,44,44,44,44,44,44,44,44,44,44],"g":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"b":[175,175,175,175,175,175,175,175,175,175,175,175,175,175,175,175]}}
+{"THERMALRECORDS$timestamp":2,"RGB":{"r":[44,44,44,44,44,255,44,44,44,44,44,44,44,44,44,44],"g":[0,0,0,0,0,213,0,0,0,0,0,0,0,0,0,0],"b":[175,175,175,175,175,63,175,175,175,175,175,175,175,175,175,175]}}
