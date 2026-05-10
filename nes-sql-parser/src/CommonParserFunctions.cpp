@@ -361,10 +361,14 @@ Schema<UnqualifiedUnboundField, Ordered> bindSchema(AntlrSQLParser::SchemaDefini
 
 DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const DataType::NULLABLE isNullable)
 {
-    /// Resolve the leading DATA_TYPE token in isolation. When the rule also matches
+    /// Resolve the leading type-name token in isolation. When the rule also matches
     /// the optional `ARRAY '[' count ']'` suffix, calling `getText()` on the whole
     /// rule would concatenate everything into an unparseable string.
-    std::string dataTypeText = typeDefAST->DATA_TYPE()->getText();
+    /// The name is a DATA_TYPE token for built-ins (`UINT16`) and an IDENTIFIER token
+    /// for plugin-registered named types (`Image`); exactly one of the two is present.
+    auto* const typeNameToken = typeDefAST->DATA_TYPE() != nullptr ? typeDefAST->DATA_TYPE() : typeDefAST->IDENTIFIER();
+    INVARIANT(typeNameToken != nullptr, "typeDefinition must carry either a DATA_TYPE or an IDENTIFIER token");
+    std::string dataTypeText = typeNameToken->getText();
 
     bool translated = false;
     bool isUnsigned = false;

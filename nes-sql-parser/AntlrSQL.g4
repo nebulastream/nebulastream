@@ -87,12 +87,13 @@ modelOutputField: identifier typeDefinition;
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
 
-/// `DATA_TYPE` alone is a scalar column type (e.g. `UINT16`).
-/// `DATA_TYPE ARRAY '[' count ']'` is a fixed-size array column type (e.g.
-/// `UINT16 ARRAY[16]`); the element type is the leading `DATA_TYPE` and the
-/// count must be a positive integer literal. Resolved to `DataType::Type::FIXEDSIZED`
-/// in `bindDataType` (CommonParserFunctions.cpp).
-typeDefinition: DATA_TYPE (ARRAY '[' count=INTEGER_VALUE ']')?;
+/// A bare type name alone is a scalar column type: either a built-in (`UINT16`,
+/// matched as `DATA_TYPE`) or a plugin-registered named type (`Image`, matched as
+/// `IDENTIFIER`). `bindDataType` (CommonParserFunctions.cpp) resolves both by name.
+/// `typeName ARRAY '[' count ']'` is a fixed-size array column type (e.g.
+/// `UINT16 ARRAY[16]`); the element type is the leading type name and the
+/// count must be a positive integer literal. Resolved to `DataType::Type::FIXEDSIZED`.
+typeDefinition: (DATA_TYPE | IDENTIFIER) (ARRAY '[' count=INTEGER_VALUE ']')?;
 nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
@@ -219,8 +220,11 @@ namedExpression
 
 identifier: strictIdentifier;
 
+/// `DATA_TYPE` is accepted alongside `IDENTIFIER` so a column may be named after a
+/// built-in type (e.g. a field literally called `INT`). Both alternatives are plain
+/// tokens, so `#unquotedIdentifier` consumers keep reading the text via `getText()`.
 strictIdentifier
-    : DATA_TYPE #unquotedIdentifier
+    : (IDENTIFIER | DATA_TYPE) #unquotedIdentifier
     | quotedIdentifier #quotedIdentifierAlternative;
 
 quotedIdentifier
@@ -661,12 +665,15 @@ VERSION : 'VERSION' | 'version';
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
 
-/// Single token covering both built-in primitive type names and plugin-registered
-/// named types (e.g. `ThermalFrame`, `Image`). Lives below all keyword rules so
-/// keywords win the lexer tiebreak; lives above IDENTIFIER so identifier-shaped
-/// type names still tokenize as DATA_TYPE for `typeDefinition`. Consumers that
-/// previously matched IDENTIFIER (`strictIdentifier`) now match DATA_TYPE.
-DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE | IDENTIFIER;
+/// Covers only the built-in primitive type names. Plugin-registered named types
+/// (e.g. `ThermalFrame`, `Image`) are identifier-shaped and deliberately NOT
+/// matched here: the lexer cannot tell a struct name from a column name, so that
+/// decision belongs to the parser. `typeDefinition` accepts `DATA_TYPE | IDENTIFIER`
+/// and the binder resolves the name via `DataTypeProvider::tryProvideDataType`.
+/// Adding `IDENTIFIER` here would make every identifier in the language lex as
+/// DATA_TYPE and silently kill every rule that matches on `IDENTIFIER`.
+/// Lives below the keyword rules so keywords win the lexer's first-defined tiebreak.
+DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
 
 SIMPLE_COMMENT
     : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)

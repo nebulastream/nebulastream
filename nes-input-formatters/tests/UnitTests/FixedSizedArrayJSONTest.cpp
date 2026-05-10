@@ -28,9 +28,9 @@
 
 #include <Configuration/WorkerConfiguration.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/FixedSizedData.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/DataTypes/FixedSizedData.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -43,10 +43,13 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTestUtil.hpp>
+#include <InputFormatterValidationProvider.hpp>
 #include <TestTaskQueue.hpp>
 
 namespace NES
 {
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 
 /// End-to-end test for FIXEDSIZED array support in the NestedJSON formatter.
 ///
@@ -105,19 +108,36 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
 
     /// Schema: scalar fields plus a FIXEDSIZED uint16[16] field. Element type and
     /// count are baked in via the new DataType constructor.
-    Schema schema{};
-    schema.addField("timestamp", DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE});
-    schema.addField("camera_id", DataType{DataType::Type::UINT32, DataType::NULLABLE::NOT_NULLABLE});
-    schema.addField(
-        "image",
-        DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, imageElementCount});
+    const std::vector<std::string> fieldNames = {"timestamp", "camera_id", "image"};
+    const std::vector<DataType> fieldTypes
+        = {DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE},
+           DataType{DataType::Type::UINT32, DataType::NULLABLE::NOT_NULLABLE},
+           DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, imageElementCount}};
+
+    const std::vector<Identifier> fieldIdentifiers = fieldNames
+        | std::views::transform([](const auto& name) { return Identifier::parse(fmt::format("\"{}\"", name)); })
+        | std::ranges::to<std::vector>();
+
+    std::vector<UnqualifiedUnboundField> fields;
+    for (const auto&& [fieldId, fieldType] : std::views::zip(fieldIdentifiers, fieldTypes))
+    {
+        fields.push_back(UnqualifiedUnboundField{fieldId, fieldType});
+    }
+
+    Schema<UnqualifiedUnboundField, Ordered> schema{fields};
+
 
     /// Load JSONL through the file source. Buffer sized to comfortably hold the file.
     constexpr size_t sizeOfRawBuffers = 4096;
     InputFormatterTestUtil::ThreadSafeVector<TupleBuffer> rawBuffers;
     SourceCatalog sourceCatalog;
     constexpr size_t numberOfRequiredSourceBuffers = 4;
-    auto sourceBufferPool = BufferManager::create(sizeOfRawBuffers, numberOfRequiredSourceBuffers);
+    auto sourceBufferPool = BufferManager::create(
+        10 * static_cast<size_t>(numberOfRequiredSourceBuffers) * sizeOfRawBuffers,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        sizeOfRawBuffers,
+        std::make_shared<NesDefaultMemoryAllocator>());
     const auto [backpressureController, fileSource] = InputFormatterTestUtil::createFileSource(
         sourceCatalog, testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
     fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
@@ -128,9 +148,16 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
     /// formatted buffers into `resultBuffers`.
     const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
     constexpr size_t numberOfRequiredFormattedBuffers = 8;
-    auto testBufferManager = BufferManager::create(sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);
-    const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", "NestedJSON"}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
+    auto testBufferManager = BufferManager::create(
+        10 * static_cast<size_t>(numberOfRequiredFormattedBuffers) * sizeOfFormattedBuffers,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        sizeOfFormattedBuffers,
+        std::make_shared<NesDefaultMemoryAllocator>());
+
+    const std::unordered_map<std::string, std::string> inputFormatterConfig{{"tuple_delimiter", "\n"}};
+    const auto parserConfiguration = InputFormatterValidationProvider::provide("NestedJSON", inputFormatterConfig).value();
+
     auto testStage = InputFormatterTestUtil::createInputFormatter(
         parserConfiguration, schema, MemoryLayoutType::ROW_LAYOUT, sizeOfFormattedBuffers, /*isCompiled=*/false);
 
@@ -163,13 +190,13 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
         ASSERT_LT(recordIdx, expectedRecords.size()) << "Got more records than expected";
         const auto& [expectedTimestamp, expectedImage] = expectedRecords[recordIdx];
 
-        const auto timestampVal = recordOpt->read("timestamp");
+        const auto timestampVal = recordOpt->read(schema.getFieldByName(Identifier::parse("timestamp"))->getFullyQualifiedName());
         EXPECT_EQ(timestampVal.getRawValueAs<nautilus::val<uint64_t>>(), expectedTimestamp);
 
-        const auto cameraIdVal = recordOpt->read("camera_id");
+        const auto cameraIdVal = recordOpt->read(schema.getFieldByName(Identifier::parse("camera_id"))->getFullyQualifiedName());
         EXPECT_EQ(cameraIdVal.getRawValueAs<nautilus::val<uint32_t>>(), cameraId);
 
-        const auto imageVarVal = recordOpt->read("image");
+        const auto imageVarVal = recordOpt->read(schema.getFieldByName(Identifier::parse("image"))->getFullyQualifiedName());
         const auto imageArr = imageVarVal.getRawValueAs<FixedSizedData>();
         ASSERT_EQ(imageArr.getNumElements(), imageElementCount);
         ASSERT_EQ(imageArr.getElementType(), DataType::Type::UINT16);

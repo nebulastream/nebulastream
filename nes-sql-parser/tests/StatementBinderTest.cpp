@@ -427,17 +427,18 @@ TEST_F(StatementBinderTest, BindFixedSizeArrayType)
     ASSERT_TRUE(createdSourceResult.has_value());
     const auto [actualSource] = createdSourceResult.value();
 
-    Schema expectedSchema{};
-    expectedSchema.addField(
-        "testSource$scalar", DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE));
-    expectedSchema.addField(
-        "testSource$image",
-        DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, /*count=*/16});
-    expectedSchema.addField(
-        "testSource$quad",
-        DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::IS_NULLABLE, DataType::Type::FLOAT64, /*count=*/4});
+    Schema<UnqualifiedUnboundField, Ordered> expectedSchema{
+        UnqualifiedUnboundField{
+            Identifier::parse("testSource$scalar"),
+            DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
+        UnqualifiedUnboundField{
+            Identifier::parse("testSource$image"),
+            DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, /*count=*/16}},
+        UnqualifiedUnboundField{
+            Identifier::parse("testSource$quad"),
+            DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::IS_NULLABLE, DataType::Type::FLOAT64, /*count=*/4}}};
 
-    ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
+    ASSERT_EQ(actualSource.getLogicalSourceName(), Identifier::parse("testSource"));
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
 
