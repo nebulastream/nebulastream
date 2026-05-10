@@ -37,12 +37,6 @@
 namespace NES
 {
 
-enum class QuotationType : uint8_t
-{
-    NONE,
-    DOUBLE_QUOTE
-};
-
 template <typename T>
 struct ParseResult
 {
@@ -50,14 +44,24 @@ struct ParseResult
     bool isNull;
 };
 
+/// Parses one field of `dataType` from the raw bytes at [fieldAddress, fieldAddress + fieldSize)
+/// — primitives, single-byte CHAR, or VARSIZED — and returns the result as a `VarVal`. Used by
+/// flat textual formats (CSV today) where each field's bytes are already stripped of quotes
+/// and escapes by the indexer. JSON formatters do not go through this path; they call simdjson's
+/// typed accessors directly via the helpers in `Common/JsonValueParser.hpp`.
+[[nodiscard]] VarVal parseRawValueIntoVarVal(
+    DataType dataType,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues);
+
 void parseRawValueIntoRecord(
     DataType dataType,
     Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
-    const std::vector<std::string>& nullValues,
-    QuotationType quotationType);
+    const std::vector<std::string>& nullValues);
 
 /// We expect a pointer and the size so that we can use this method from the nautilus runtime
 bool checkIsNullProxy(const int8_t* fieldAddress, uint64_t fieldSize, const std::vector<std::string>* nullValues) noexcept;

@@ -16,10 +16,7 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <cstring>
-#include <span>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -27,15 +24,12 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <std/cstring.h>
-#include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <select.hpp>
 #include <val.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
-#include <common/FunctionAttributes.hpp>
 
 namespace NES
 {
@@ -47,89 +41,38 @@ bool checkIsNullProxy(const int8_t* fieldAddress, const uint64_t fieldSize, cons
     return std::ranges::any_of(*nullValues, [fieldAsString](const std::string& nullValue) { return nullValue == fieldAsString; });
 }
 
-void parseRawValueIntoRecord(
+VarVal parseRawValueIntoVarVal(
     const DataType dataType,
-    Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
-    const std::string& fieldName,
-    const std::vector<std::string>& nullValues,
-    const QuotationType quotationType)
+    const std::vector<std::string>& nullValues)
 {
     switch (dataType.type)
     {
-        case DataType::Type::BOOLEAN: {
-            const auto varVal = parseFixedSizeIntoVarVal<bool>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::INT8: {
-            const auto varVal = parseFixedSizeIntoVarVal<int8_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::INT16: {
-            const auto varVal = parseFixedSizeIntoVarVal<int16_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::INT32: {
-            const auto varVal = parseFixedSizeIntoVarVal<int32_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::INT64: {
-            const auto varVal = parseFixedSizeIntoVarVal<int64_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::UINT8: {
-            const auto varVal = parseFixedSizeIntoVarVal<uint8_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::UINT16: {
-            const auto varVal = parseFixedSizeIntoVarVal<uint16_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::UINT32: {
-            const auto varVal = parseFixedSizeIntoVarVal<uint32_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::UINT64: {
-            const auto varVal = parseFixedSizeIntoVarVal<uint64_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::FLOAT32: {
-            const auto varVal = parseFixedSizeIntoVarVal<float>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::FLOAT64: {
-            const auto varVal = parseFixedSizeIntoVarVal<double>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::CHAR: {
-            switch (quotationType)
-            {
-                case QuotationType::NONE: {
-                    const auto varVal = parseFixedSizeIntoVarVal<char>(dataType.nullable, fieldAddress, fieldSize, nullValues);
-                    record.write(fieldName, varVal);
-                    return;
-                }
-                case QuotationType::DOUBLE_QUOTE: {
-                    const auto varVal = parseFixedSizeIntoVarVal<char>(
-                        dataType.nullable, fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2), nullValues);
-                    record.write(fieldName, varVal);
-                    return;
-                }
-            }
-            std::unreachable();
-        }
+        case DataType::Type::BOOLEAN:
+            return parseFixedSizeIntoVarVal<bool>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::INT8:
+            return parseFixedSizeIntoVarVal<int8_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::INT16:
+            return parseFixedSizeIntoVarVal<int16_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::INT32:
+            return parseFixedSizeIntoVarVal<int32_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::INT64:
+            return parseFixedSizeIntoVarVal<int64_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::UINT8:
+            return parseFixedSizeIntoVarVal<uint8_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::UINT16:
+            return parseFixedSizeIntoVarVal<uint16_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::UINT32:
+            return parseFixedSizeIntoVarVal<uint32_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::UINT64:
+            return parseFixedSizeIntoVarVal<uint64_t>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::FLOAT32:
+            return parseFixedSizeIntoVarVal<float>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::FLOAT64:
+            return parseFixedSizeIntoVarVal<double>(dataType.nullable, fieldAddress, fieldSize, nullValues);
+        case DataType::Type::CHAR:
+            return parseFixedSizeIntoVarVal<char>(dataType.nullable, fieldAddress, fieldSize, nullValues);
         case DataType::Type::VARSIZED: {
             nautilus::val<bool> isNull = false;
             if (dataType.nullable)
@@ -141,32 +84,30 @@ void parseRawValueIntoRecord(
                     fieldSize,
                     nautilus::val<const std::vector<std::string>*>{&nullValues});
             }
-
-            switch (quotationType)
-            {
-                case QuotationType::NONE: {
-                    const auto ptr = nautilus::select(isNull, nautilus::val<int8_t*>{nullptr}, fieldAddress);
-                    const auto size = nautilus::select(isNull, nautilus::val<uint64_t>{0}, fieldSize);
-                    const VariableSizedData varSized{ptr, size};
-                    const VarVal varVal{varSized, dataType.nullable, isNull};
-                    record.write(fieldName, varVal);
-                    return;
-                }
-                case QuotationType::DOUBLE_QUOTE: {
-                    const auto ptr = nautilus::select(isNull, nautilus::val<int8_t*>{nullptr}, fieldAddress + nautilus::val<uint32_t>(1));
-                    const auto size = nautilus::select(isNull, nautilus::val<uint64_t>{0}, fieldSize - nautilus::val<uint64_t>(2));
-                    const VariableSizedData varSized{ptr, size};
-                    const VarVal varVal{varSized, dataType.nullable, isNull};
-                    record.write(fieldName, varVal);
-                    return;
-                }
-            }
-            std::unreachable();
+            const auto ptr = nautilus::select(isNull, nautilus::val<int8_t*>{nullptr}, fieldAddress);
+            const auto size = nautilus::select(isNull, nautilus::val<uint64_t>{0}, fieldSize);
+            const VariableSizedData varSized{ptr, size};
+            return VarVal{varSized, dataType.nullable, isNull};
         }
+        case DataType::Type::FIXEDSIZED:
+            throw NotImplemented("Flat textual formatters do not support FIXEDSIZED arrays.");
+        case DataType::Type::STRUCT:
+            throw NotImplemented("Flat textual formatters do not support STRUCT types.");
         case DataType::Type::UNDEFINED:
             throw NotImplemented("Cannot parse undefined type.");
     }
     std::unreachable();
+}
+
+void parseRawValueIntoRecord(
+    const DataType dataType,
+    Record& record,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& fieldName,
+    const std::vector<std::string>& nullValues)
+{
+    record.write(fieldName, parseRawValueIntoVarVal(dataType, fieldAddress, fieldSize, nullValues));
 }
 
 }
