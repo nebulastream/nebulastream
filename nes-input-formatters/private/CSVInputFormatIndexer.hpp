@@ -118,8 +118,6 @@ public:
 
     [[nodiscard]] std::string_view getFieldDelimitingBytes() const override { return {&fieldDelimiter, SIZE_OF_FIELD_DELIMITER}; }
 
-    [[nodiscard]] QuotationType getQuotationType() const override { return QuotationType::NONE; }
-
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -132,7 +130,6 @@ private:
     char fieldDelimiter;
     bool allowCommasInStrings{};
     size_t numberOfFields;
-    std::vector<std::string> nullValues;
+    std::vector<std::string> nullValues{};
 };
-
 }

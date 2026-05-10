@@ -66,7 +66,8 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
     const nautilus::val<uint64_t>& recordIndex,
     const InputFormatIndexer& indexer,
     nautilus::val<RawBufferIndex*> rawBufferIndex,
-    const TupleBufferRef& bufferRef) const
+    const TupleBufferRef& bufferRef,
+    ArenaRef&) const
 {
     Record record;
     const auto indexBufferPtr = nautilus::invoke(getIndexValuesProxy, rawBufferIndex);
@@ -90,13 +91,18 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
         parseRawValueIntoRecord(
-            fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues(), indexer.getQuotationType());
+            fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues());
     }
     return record;
 }
 
 void FieldOffsetRawBufferIndex::startSetup(const size_t numberOfFieldsInSchema)
 {
+    PRECONDITION(
+        sizeOfFieldDelimiter <= std::numeric_limits<FieldIndex>::max(),
+        "Size of field delimiter must be smaller than: {}",
+        std::numeric_limits<FieldIndex>::max());
+    this->sizeOfFieldDelimiter = static_cast<FieldIndex>(sizeOfFieldDelimiter);
     this->numberOfFieldsInSchema = numberOfFieldsInSchema;
     this->numberOfOffsetsPerTuple = this->numberOfFieldsInSchema + 1;
     this->totalNumberOfTuples = 0;

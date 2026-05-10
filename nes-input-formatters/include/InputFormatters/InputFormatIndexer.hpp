@@ -42,7 +42,6 @@ public:
 
     [[nodiscard]] virtual std::string_view getTupleDelimitingBytes() const = 0;
     [[nodiscard]] virtual std::string_view getFieldDelimitingBytes() const = 0;
-    [[nodiscard]] virtual QuotationType getQuotationType() const = 0;
     [[nodiscard]] virtual const std::vector<std::string>& getNullValues() const = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatIndexer& indexer);

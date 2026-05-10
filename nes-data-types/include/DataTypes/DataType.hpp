@@ -45,6 +45,8 @@ struct DataType final
         CHAR,
         UNDEFINED,
         VARSIZED,
+        FIXEDSIZED,
+        STRUCT
     };
 
     enum class NULLABLE : uint8_t

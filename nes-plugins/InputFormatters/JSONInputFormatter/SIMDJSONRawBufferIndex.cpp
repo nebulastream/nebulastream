@@ -39,9 +39,10 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
+#include <JsonValueParser.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
-#include <SIMDJSONParsingUtil.hpp>
+#include <SIMDJSONInputFormatIndexer.hpp>
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
@@ -52,6 +53,31 @@
 
 namespace NES
 {
+
+namespace
+{
+
+/// Flat-JSON traits: a single `find_field_unordered` (via `operator[]`, which
+/// internally calls the same routine — no `rewind()`) walks straight to the
+/// field, and FIXEDSIZED arrays are not supported in the flat schema model.
+struct FlatJsonTraits
+{
+    using BufferIndex = SIMDJSONRawBufferIndex;
+    using Indexer = SIMDJSONInputFormatIndexer;
+
+    static simdjson::simdjson_result<simdjson::ondemand::value>
+    navigate(simdjson::simdjson_result<simdjson::ondemand::document_reference>& doc, const std::string_view fieldName)
+    {
+        return doc[fieldName];
+    }
+
+    static constexpr bool supportsFixedSized = false;
+};
+
+using FlatParser = JsonValueParser::JsonRecordParser<FlatJsonTraits>;
+
+}
+
 SIMDJSONRawBufferIndex::SIMDJSONRawBufferIndex()
 {
     INVARIANT(
@@ -66,84 +92,18 @@ SIMDJSONRawBufferIndex::hasNext(const nautilus::val<uint64_t>&, const nautilus::
     return not lastTuple;
 }
 
-void writeValueToRecord(
-    const DataType dataType,
-    Record& record,
-    const QualifiedIdentifier& fieldName,
-    const nautilus::val<FieldIndex>& fieldIndex,
-    const nautilus::val<RawBufferIndex*>& rawBufferIndex,
-    const nautilus::val<const InputFormatIndexer*>& indexer)
-{
-    switch (dataType.type)
-    {
-        case DataType::Type::INT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::INT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::INT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::INT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<float>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<double>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::CHAR: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<char>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<bool>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseJsonVarSized(fieldIndex, rawBufferIndex, indexer, dataType.nullable));
-            return;
-        }
-        case DataType::Type::UNDEFINED:
-            throw NotImplemented("Cannot parse undefined type.");
-    }
-    std::unreachable();
-}
-
 Record SIMDJSONRawBufferIndex::readSpanningRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const InputFormatIndexer& indexer,
     nautilus::val<RawBufferIndex*> rawBufferIndex,
-    const TupleBufferRef& bufferRef) const
+    const TupleBufferRef& bufferRef,
+    ArenaRef& arena) const
 {
     Record record;
     const auto numberOfFields = bufferRef.getAllDataTypes().size();
+    const nautilus::val<const InputFormatIndexer*> indexerVal{&indexer};
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
         const auto fieldName = bufferRef.getAllFieldNames().at(i);
@@ -152,22 +112,17 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         {
             continue;
         }
-
-        auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
         const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
-        writeValueToRecord(
-            fieldDataType, record, fieldName, fieldIndex, rawBufferIndex, nautilus::val<const InputFormatIndexer*>(&indexer));
+        auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
+        FlatParser::writeValueToRecord(fieldDataType, record, fieldName, fieldIndex, rawBufferIndex, indexerVal, arena);
     }
-    /// Increment iterator and return record
+
     nautilus::invoke(
-        +[](RawBufferIndex* rawBufferIndexPtr)
+        +[](RawBufferIndex* bi)
         {
-            PRECONDITION(
-                dynamic_cast<SIMDJSONRawBufferIndex*>(rawBufferIndexPtr) != nullptr, "rawBufferIndex must be a SIMDJSONRawBufferIndex");
-            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): type verified by PRECONDITION above.
-            auto* simdJsonBufferIndex = static_cast<SIMDJSONRawBufferIndex*>(rawBufferIndexPtr);
-            ++simdJsonBufferIndex->docStreamIterator;
-            simdJsonBufferIndex->isAtLastTuple = simdJsonBufferIndex->docStreamIterator.at_end();
+            auto* simdJsonBI = dynamic_cast<SIMDJSONRawBufferIndex*>(bi);
+            ++simdJsonBI->docStreamIterator;
+            simdJsonBI->isAtLastTuple = simdJsonBI->docStreamIterator.at_end();
         },
         rawBufferIndex);
     return record;
