@@ -90,8 +90,7 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-        parseRawValueIntoRecord(
-            fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues());
+        parseRawValueIntoRecord(fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues());
     }
     return record;
 }

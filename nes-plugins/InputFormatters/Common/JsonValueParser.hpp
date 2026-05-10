@@ -25,12 +25,12 @@
 
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/FixedSizedData.hpp>
-#include <Nautilus/DataTypes/StructData.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/FixedSizedData.hpp>
+#include <DataTypes/StructData.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
+#include <Interface/Record.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>

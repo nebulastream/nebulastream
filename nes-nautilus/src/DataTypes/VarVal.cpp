@@ -74,6 +74,14 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
             {
                 throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for VariableSizedData"));
             }
+            else if constexpr (std::is_same_v<ValType, FixedSizedData>)
+            {
+                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for FixedSizedData"));
+            }
+            else if constexpr (std::is_same_v<ValType, StructData>)
+            {
+                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for StructData"));
+            }
             else
             {
                 *static_cast<nautilus::val<typename ValType::raw_type*>>(memRef) = val;
@@ -158,6 +166,12 @@ VarVal VarVal::castToType(const DataType::Type type) const
         case DataType::Type::VARSIZED: {
             return {getRawValueAs<VariableSizedData>(), nullable, null};
         }
+        case DataType::Type::FIXEDSIZED: {
+            return {getRawValueAs<FixedSizedData>(), nullable, null};
+        }
+        case DataType::Type::STRUCT: {
+            return {getRawValueAs<StructData>(), nullable, null};
+        }
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
     }
@@ -213,7 +227,11 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
         case DataType::Type::FLOAT64: {
             return {readValueFromMemRef<double>(memRef), type.nullable, null};
         }
+        case DataType::Type::STRUCT: {
+            return {StructData{memRef, type.fields}, type.nullable, null};
+        }
         case DataType::Type::VARSIZED:
+        case DataType::Type::FIXEDSIZED:
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type.type));
     }
@@ -225,7 +243,8 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
     return std::visit(
         [&]<typename LHS, typename RHS>(const LHS& trueUnderlying, const RHS& falseUnderlying) -> VarVal
         {
-            if constexpr (std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData>)
+            if constexpr (std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData> && !std::same_as<LHS, FixedSizedData>
+                          && !std::same_as<LHS, StructData>)
             {
                 return VarVal{
                     nautilus::select(condition, trueUnderlying, falseUnderlying),
@@ -239,6 +258,42 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
                     VariableSizedData{
                         nautilus::select(condition, trueUnderlying.getContent(), falseUnderlying.getContent()),
                         nautilus::select(condition, trueUnderlying.getSize(), falseUnderlying.getSize())},
+                    trueValue.nullable or falseValue.nullable,
+                    nautilus::select(condition, trueValue.null, falseValue.null)};
+            }
+
+            if constexpr (std::same_as<LHS, RHS> && std::same_as<LHS, FixedSizedData>)
+            {
+                /// Element type and count are host-side schema constants — they must agree
+                /// for select to be well-defined. The pointer is the only nautilus value to select on.
+                INVARIANT(
+                    trueUnderlying.getElementType() == falseUnderlying.getElementType()
+                        && trueUnderlying.getNumElements() == falseUnderlying.getNumElements(),
+                    "FixedSizedData select with mismatched shape: ({}, {}) vs ({}, {})",
+                    magic_enum::enum_name(trueUnderlying.getElementType()),
+                    trueUnderlying.getNumElements(),
+                    magic_enum::enum_name(falseUnderlying.getElementType()),
+                    falseUnderlying.getNumElements());
+                return VarVal{
+                    FixedSizedData{
+                        nautilus::select(condition, trueUnderlying.getRawPtr(), falseUnderlying.getRawPtr()),
+                        trueUnderlying.getNumElements(),
+                        trueUnderlying.getElementType()},
+                    trueValue.nullable or falseValue.nullable,
+                    nautilus::select(condition, trueValue.null, falseValue.null)};
+            }
+
+            if constexpr (std::same_as<LHS, RHS> && std::same_as<LHS, StructData>)
+            {
+                /// Field layout is host-side schema and must agree on both branches; only
+                /// the underlying pointer is selected on.
+                INVARIANT(
+                    trueUnderlying.getFields() == falseUnderlying.getFields(),
+                    "StructData select with mismatched field layout");
+                return VarVal{
+                    StructData{
+                        nautilus::select(condition, trueUnderlying.getRawPtr(), falseUnderlying.getRawPtr()),
+                        trueUnderlying.getFields()},
                     trueValue.nullable or falseValue.nullable,
                     nautilus::select(condition, trueValue.null, falseValue.null)};
             }

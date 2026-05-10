@@ -24,6 +24,31 @@
 
 namespace NES
 {
+namespace
+{
+/// Header type column. For scalar types this is just the enum name (e.g. `UINT16`).
+/// FIXEDSIZED carries element type and count which scalar types don't, so we encode
+/// them as `FIXEDSIZED<UINT16,16>` to keep the field separator (`:`) count constant
+/// across rows. The decoder lives in `nes-systests/.../SystestResultCheck.cpp`.
+std::string formatTypeForHeader(const DataType& dataType)
+{
+    if (dataType.type == DataType::Type::FIXEDSIZED)
+    {
+        /// `;` (not `,`) inside the angle brackets so the comma-separated outer
+        /// field split in `SystestResultCheck::parseFieldNames` doesn't tokenize it.
+        return fmt::format("FIXEDSIZED<{};{}>", magic_enum::enum_name(dataType.elementType), dataType.count);
+    }
+    if (dataType.type == DataType::Type::STRUCT)
+    {
+        /// Nominal STRUCTs are identified by their registered name; emitting that
+        /// directly lets `SystestResultCheck::parseFieldNames` round-trip via
+        /// `DataTypeProvider::tryProvideDataType(name)`.
+        return dataType.structName;
+    }
+    return std::string(magic_enum::enum_name(dataType.type));
+}
+}
+
 std::string SchemaFormatter::getFormattedSchema()
 {
     PRECONDITION(!std::ranges::empty(*schema), "Encountered schema without fields.");
@@ -37,7 +62,7 @@ std::string SchemaFormatter::getFormattedSchema()
                         return fmt::format(
                             "{}:{}:{}",
                             field.getFullyQualifiedName(),
-                            magic_enum::enum_name(field.getDataType().type),
+                            formatTypeForHeader(field.getDataType()),
                             magic_enum::enum_name(
                                 field.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
                     }),
