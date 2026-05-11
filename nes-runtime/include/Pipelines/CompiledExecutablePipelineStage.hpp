@@ -15,11 +15,14 @@
 
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Interface/CompiledHandle.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
+#include <nautilus/Module.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
@@ -44,10 +47,15 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*>
-    compilePipeline() const;
+    /// Registers the main pipeline lambda on the in-progress nautilus module under the
+    /// well-known name "pipeline_execute". Called after operators have added their
+    /// helper registrations via CompilationContext, so the whole pipeline compiles in a
+    /// single module.compile() pass.
+    void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
+
     nautilus::engine::NautilusEngine engine;
-    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*> compiledPipelineFunction;
+    std::shared_ptr<CompiledModuleSlot> moduleSlot;
+    std::optional<CompiledHandle<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*>> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<Pipeline> pipeline;
 };

@@ -19,6 +19,7 @@
 #include <ostream>
 #include <unordered_map>
 #include <utility>
+#include <Interface/CompiledHandle.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -28,6 +29,7 @@
 #include <CompilationContext.hpp>
 #include <Engine.hpp>
 #include <ExecutionContext.hpp>
+#include <Module.hpp>
 #include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
 #include <function.hpp>
@@ -36,12 +38,17 @@
 namespace NES
 {
 
+namespace
+{
+constexpr auto PIPELINE_FUNCTION_NAME = "pipeline_execute";
+}
+
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
     : engine(std::move(options))
-    , compiledPipelineFunction(nullptr)
+    , moduleSlot(std::make_shared<CompiledModuleSlot>())
     , operatorHandlers(std::move(operatorHandlers))
     , pipeline(std::move(pipeline))
 {
@@ -52,51 +59,43 @@ void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffe
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
+    (*compiledPipelineFunction)(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
 
-nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*>
-CompiledExecutablePipelineStage::compilePipeline() const
+void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine::NautilusModule& module) const
 {
-    CPPTRACE_TRY
+    /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
+    /// Additionally, we can NOT use const or const references for the parameters of the lambda function
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
+        compiledFunction = [this](
+                               nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
+                               nautilus::val<const TupleBuffer*> recordBufferRef,
+                               nautilus::val<const Arena*> arenaRef)
     {
-        /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
-        /// Additionally, we can NOT use const or const references for the parameters of the lambda function
-        /// NOLINTBEGIN(performance-unnecessary-value-param)
-        const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
-            compiledFunction = [this](
-                                   nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                                   nautilus::val<const TupleBuffer*> recordBufferRef,
-                                   nautilus::val<const Arena*> arenaRef)
-        {
-            auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
-            RecordBuffer recordBuffer(recordBufferRef);
+        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+        RecordBuffer recordBuffer(recordBufferRef);
 
-            pipeline->getRootOperator().open(ctx, recordBuffer);
-            switch (ctx.getOpenReturnState())
-            {
-                case OpenReturnState::CONTINUE: {
-                    pipeline->getRootOperator().close(ctx, recordBuffer);
-                    break;
-                }
-                case OpenReturnState::REPEAT: {
-                    nautilus::invoke(
-                        +[](PipelineExecutionContext* pec, const TupleBuffer* buffer)
-                        { pec->repeatTask(*buffer, std::chrono::milliseconds(0)); },
-                        pipelineExecutionContext,
-                        recordBufferRef);
-                    break;
-                }
+        pipeline->getRootOperator().open(ctx, recordBuffer);
+        switch (ctx.getOpenReturnState())
+        {
+            case OpenReturnState::CONTINUE: {
+                pipeline->getRootOperator().close(ctx, recordBuffer);
+                break;
             }
-        };
-        /// NOLINTEND(performance-unnecessary-value-param)
-        return engine.registerFunction(compiledFunction);
-    }
-    CPPTRACE_CATCH(...)
-    {
-        throw wrapExternalException(fmt::format("Could not query compile pipeline: {}", *pipeline));
-    }
-    std::unreachable();
+            case OpenReturnState::REPEAT: {
+                nautilus::invoke(
+                    +[](PipelineExecutionContext* pec, const TupleBuffer* buffer)
+                    { pec->repeatTask(*buffer, std::chrono::milliseconds(0)); },
+                    pipelineExecutionContext,
+                    recordBufferRef);
+                break;
+            }
+        }
+    };
+    /// NOLINTEND(performance-unnecessary-value-param)
+    module.registerFunction<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>(
+        PIPELINE_FUNCTION_NAME, std::move(compiledFunction));
 }
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
@@ -117,9 +116,26 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    CompilationContext compilationCtx{engine};
+
+    /// Build one nautilus module per pipeline stage. Operators register helper functions
+    /// (e.g. hashmap cleanup) into this module during setup() via CompilationContext, and
+    /// the main pipeline lambda is registered immediately after. A single module.compile()
+    /// call then produces one IR/optimization/codegen pass for the entire pipeline.
+    auto moduleBuilder = engine.createModule();
+    CompilationContext compilationCtx{moduleBuilder, moduleSlot};
     pipeline->getRootOperator().setup(ctx, compilationCtx);
-    compiledPipelineFunction = this->compilePipeline();
+
+    CPPTRACE_TRY
+    {
+        registerPipelineFunction(moduleBuilder);
+        moduleSlot->compiled.emplace(moduleBuilder.compile());
+    }
+    CPPTRACE_CATCH(...)
+    {
+        throw wrapExternalException(fmt::format("Could not query compile pipeline: {}", *pipeline));
+    }
+
+    compiledPipelineFunction.emplace(moduleSlot, PIPELINE_FUNCTION_NAME);
 }
 
 }

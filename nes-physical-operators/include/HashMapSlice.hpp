@@ -21,16 +21,16 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/CompiledHandle.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
-#include <Engine.hpp>
 
 namespace NES
 {
 
 struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 {
-    using NautilusCleanupExec = nautilus::engine::CallableFunction<void, HashMap*>;
+    using NautilusCleanupExec = CompiledHandle<void, HashMap*>;
 
     CreateNewHashMapSliceArgs(
         std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup,
