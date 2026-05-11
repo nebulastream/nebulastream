@@ -110,29 +110,21 @@ void MaxAggregationPhysicalFunction::combine(
     }
 }
 
-Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void MaxAggregationPhysicalFunction::lower(
+    Record& outputRecord, const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     if (not inputType.nullable)
     {
         /// Reading the max value from the aggregation state
         const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-        const auto max = VarVal::readNonNullableVarValFromMemory(memAreaMax, inputType);
-
-        /// Creating a record with the max value
-        Record record;
-        record.write(resultFieldIdentifier, max);
-        return record;
+        outputRecord.write(resultFieldIdentifier, VarVal::readNonNullableVarValFromMemory(memAreaMax, inputType));
+        return;
     }
 
     /// Reading the max value from the aggregation state
     const auto isNull = readNull(aggregationState);
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
-    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType, isNull);
-
-    /// Creating a record with the max value
-    Record record;
-    record.write(resultFieldIdentifier, max);
-    return record;
+    outputRecord.write(resultFieldIdentifier, VarVal::readVarValFromMemory(memAreaMax, inputType, isNull));
 }
 
 void MaxAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)

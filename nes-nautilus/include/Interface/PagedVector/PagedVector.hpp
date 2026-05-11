@@ -62,12 +62,19 @@ public:
 
     [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
 
+    /// Random-access view of the i-th page. The caller must respect getNumberOfTuples() to know how many
+    /// entries in the page are live. Used by typed-buffer consumers (e.g. MEDIAN) that own the page layout
+    /// and need direct slot access instead of going through a schema-based TupleBufferRef.
+    [[nodiscard]] const TupleBuffer& getPage(size_t idx) const { return pages[idx].buffer; }
+    [[nodiscard]] TupleBuffer& getLastPageMutable() { return pages.getLastPageMutable(); }
+
 private:
     /// Wrapper around a vector of TupleBufferWithCumulativeSum to take care of updating the cumulative sums
     struct PagesWrapper
     {
         [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
         [[nodiscard]] const TupleBuffer& getLastPage() const;
+        [[nodiscard]] TupleBuffer& getLastPageMutable();
         [[nodiscard]] const TupleBuffer& getFirstPage() const;
         [[nodiscard]] uint64_t getNumberOfPages() const;
         const TupleBufferWithCumulativeSum& operator[](size_t index) const;

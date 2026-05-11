@@ -81,17 +81,12 @@ void CountAggregationPhysicalFunction::combine(
     newCount.writeToMemory(memAreaCount1);
 }
 
-Record CountAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void CountAggregationPhysicalFunction::lower(
+    Record& outputRecord, const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, resultType);
-
-    /// Creating a record with the count
-    Record record;
-    record.write(resultFieldIdentifier, count);
-
-    return record;
+    outputRecord.write(resultFieldIdentifier, VarVal::readNonNullableVarValFromMemory(memAreaCount, resultType));
 }
 
 void CountAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)

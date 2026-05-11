@@ -56,9 +56,11 @@ public:
         PipelineMemoryProvider& pipelineMemoryProvider)
         = 0;
 
-    /// Returns the aggregation state as a nautilus record. The record will contain the aggregation state in the field specified by resultFieldIdentifier
-    /// It will NOT contain any other metadata fields, e.g., window start and end fields
-    virtual Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) = 0;
+    /// Writes the aggregation state into @p outputRecord under the field specified by resultFieldIdentifier.
+    /// Other fields of @p outputRecord (e.g. window start/end, group-by keys) are left untouched.
+    virtual void
+    lower(Record& outputRecord, nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
+        = 0;
 
     /// Resets the aggregation state to its initial state. For a sum, this would be 0, for a min aggregation, this would be the maximum possible value, etc.
     virtual void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) = 0;

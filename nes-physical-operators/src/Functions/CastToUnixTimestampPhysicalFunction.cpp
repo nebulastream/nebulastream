@@ -127,28 +127,28 @@ CastToUnixTimestampPhysicalFunction::CastToUnixTimestampPhysicalFunction(Physica
 VarVal CastToUnixTimestampPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    if (value.isNullable())
+
+    /// For non-nullable inputs this is a compile-time false, folded away by the trace.
+    const nautilus::val<bool> valueIsNull = value.isNullable() ? value.isNull() : nautilus::val<bool>{false};
+
+    /// Skip the parse on nulls; the returned VarVal carries the null flag regardless.
+    nautilus::val<uint64_t> parsedMilliSeconds{0};
+    if (not valueIsNull)
     {
-        if (value.isNull())
-        {
-            return VarVal{0, true, true}.castToType(outputType.type);
-        }
+        const auto var = value.getRawValueAs<VariableSizedData>();
+        const auto size = var.getSize();
+        const auto ptr = var.getContent();
+        parsedMilliSeconds = nautilus::invoke(
+            +[](const uint32_t size, const char* iso8601String) -> uint64_t
+            {
+                const std::string_view iso8601StringView{iso8601String, size};
+                return parseISO8601TimestampToUnixMilliSeconds(iso8601StringView);
+            },
+            size,
+            ptr);
     }
 
-    const auto var = value.getRawValueAs<VariableSizedData>();
-    const auto size = var.getSize();
-    const auto ptr = var.getContent();
-
-    const auto parsedMilliSeconds = nautilus::invoke(
-        +[](const uint32_t size, const char* iso8601String) -> uint64_t
-        {
-            const std::string_view iso8601StringView{iso8601String, size};
-            return parseISO8601TimestampToUnixMilliSeconds(iso8601StringView);
-        },
-        size,
-        ptr);
-
-    return VarVal{parsedMilliSeconds, value.isNullable(), false}.castToType(outputType.type);
+    return VarVal{parsedMilliSeconds, value.isNullable(), valueIsNull}.castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterCastToUnixTsPhysicalFunction(

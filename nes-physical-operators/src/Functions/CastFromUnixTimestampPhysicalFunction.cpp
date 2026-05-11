@@ -28,6 +28,7 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 #include <function.hpp>
+#include <select.hpp>
 #include <val_arith.hpp>
 
 namespace NES
@@ -41,31 +42,29 @@ CastFromUnixTimestampPhysicalFunction::CastFromUnixTimestampPhysicalFunction(Phy
 VarVal CastFromUnixTimestampPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    if (value.isNullable())
+
+    /// For non-nullable inputs this is a compile-time false, folded away by the trace.
+    const nautilus::val<bool> valueIsNull = value.isNullable() ? value.isNull() : nautilus::val<bool>{false};
+
+    /// ISO-8601 UTC format: YYYY-MM-DDTHH:MM:SS.mmmZ (24 chars). Skip the allocation for nulls.
+    constexpr uint32_t iso8601OutputLen = 24;
+    const auto allocSize = nautilus::select(valueIsNull, nautilus::val<uint32_t>{0}, nautilus::val<uint32_t>{iso8601OutputLen});
+    auto timestampAsIso8601 = arena.allocateVariableSizedData(allocSize);
+
+    if (not valueIsNull)
     {
-        if (value.isNull())
-        {
-            return VarVal{VariableSizedData{nullptr, 0}, true, true};
-        }
+        const auto milliSeconds = value.getRawValueAs<nautilus::val<uint64_t>>();
+        nautilus::invoke(
+            +[](const uint64_t milliSecondsSinceEpoch, char* outTimestampIso8601Utc)
+            {
+                const std::chrono::sys_time utcTimePoint{std::chrono::milliseconds{milliSecondsSinceEpoch}};
+                std::format_to(outTimestampIso8601Utc, "{:%FT%T}Z", utcTimePoint);
+            },
+            milliSeconds,
+            timestampAsIso8601.getContent());
     }
 
-    /// ISO-8601 UTC format: YYYY-MM-DDTHH:MM:SS.mmmZ (24 chars)
-    const auto milliSeconds = value.getRawValueAs<nautilus::val<uint64_t>>();
-    constexpr uint32_t iso8601OutputLen = 24;
-    const nautilus::val<uint32_t> isoTimestampLength{iso8601OutputLen};
-    auto timestampAsIso8601 = arena.allocateVariableSizedData(isoTimestampLength);
-    const auto payload = timestampAsIso8601.getContent();
-
-    nautilus::invoke(
-        +[](const uint64_t milliSecondsSinceEpoch, char* outTimestampIso8601Utc)
-        {
-            const std::chrono::sys_time utcTimePoint{std::chrono::milliseconds{milliSecondsSinceEpoch}};
-            std::format_to(outTimestampIso8601Utc, "{:%FT%T}Z", utcTimePoint);
-        },
-        milliSeconds,
-        payload);
-
-    return VarVal{timestampAsIso8601, value.isNullable(), false};
+    return VarVal{timestampAsIso8601, value.isNullable(), valueIsNull};
 }
 
 PhysicalFunctionRegistryReturnType

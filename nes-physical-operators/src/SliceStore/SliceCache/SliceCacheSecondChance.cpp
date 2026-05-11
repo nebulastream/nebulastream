@@ -49,17 +49,22 @@ SliceCacheSecondChance::EntryFound SliceCacheSecondChance::searchInCache(
     const nautilus::val<SliceCacheEntrySecondChance*>& threadLocalStart, const nautilus::val<Timestamp>& timestamp)
 {
     /// We assume that a timestamp is in the cache, if the timestamp is in the range of the slice, e.g., sliceStart <= timestamp < sliceEnd.
-    for (nautilus::val<uint64_t> i = 0; i < numberOfEntries; ++i)
+    /// The `!foundFlag` clause keeps the loop single-exit; a `break` instead would add a second exit edge and
+    /// defeat LoopAnalysisPhase's canonicalisation, which empirically slows pipeline compilation by ~190x.
+    nautilus::val<SliceCacheEntrySecondChance*> foundEntry = nullptr;
+    nautilus::val<bool> foundFlag = false;
+    for (nautilus::val<uint64_t> i = 0; i < numberOfEntries && !foundFlag; ++i)
     {
         nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntry = threadLocalStart + i;
         const auto sliceStart = nautilus::val<Timestamp>{sliceCacheEntry.get(&SliceCacheEntry::sliceStart)};
         const auto sliceEnd = nautilus::val<Timestamp>{sliceCacheEntry.get(&SliceCacheEntry::sliceEnd)};
         if (sliceStart <= timestamp && timestamp < sliceEnd)
         {
-            return {.sliceCacheEntry = sliceCacheEntry, .foundInCache = true};
+            foundEntry = sliceCacheEntry;
+            foundFlag = true;
         }
     }
-    return {.sliceCacheEntry = nullptr, .foundInCache = false};
+    return {.sliceCacheEntry = foundEntry, .foundInCache = foundFlag};
 }
 
 nautilus::val<SliceCacheEntry::DataStructure> SliceCacheSecondChance::getDataStructureRef(
@@ -80,36 +85,49 @@ nautilus::val<SliceCacheEntry::DataStructure> SliceCacheSecondChance::getDataStr
     const nautilus::val<uint64_t*>& replacementIndexBase{replacementIndexRaw};
     nautilus::val<uint64_t*> replacementIndexPtr = replacementIndexBase + workerThreadId.convertToValue();
 
-    /// We check if the timestamp is already in the cache.
-    if (auto [sliceCacheEntryToReplace, foundInCache] = searchInCache(threadLocalStart, timestamp); foundInCache)
-    {
-        sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
-        return nautilus::val<SliceCacheEntry*>{sliceCacheEntryToReplace}.get(&SliceCacheEntry::dataStructure);
-    }
+    /// We check if the timestamp is already in the cache. Cache hits dominate steady-state workloads
+    /// so we hint the branch direction to guide LLVM's downstream block-layout pass.
+    auto [searchResult, foundInCache] = searchInCache(threadLocalStart, timestamp);
+    foundInCache.setIsTrueProbability(0.95);
 
-    /// If this is not the case, we iterate through the cache until we have find a slice that has the second chance bit set to false.
-    /// If we find such a slice, we set the second chance bit to true, replace the slice and return the data structure.
-    /// We must start at the current replacement index, as we have to replace the oldest entry.
-    nautilus::val<uint64_t> replacementIndex = *replacementIndexPtr;
-    for (nautilus::val<uint64_t> i = 0; i < 2 * numberOfEntries; ++i)
+    nautilus::val<SliceCacheEntry*> targetEntry = nullptr;
+    if (foundInCache)
     {
-        nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = threadLocalStart + replacementIndex;
-        const nautilus::val<bool> secondChanceBit = sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit);
-        if (secondChanceBit == nautilus::val<bool>{false})
+        searchResult.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
+        targetEntry = nautilus::val<SliceCacheEntry*>{searchResult};
+    }
+    else
+    {
+        /// On miss, iterate through the cache until we find a slice with the second-chance bit cleared.
+        /// We start at the current replacement index so we replace the oldest entry.
+        /// `!victimFound` in the loop header keeps the loop single-exit; a `break` would add a second
+        /// exit edge and defeat LoopAnalysisPhase canonicalisation.
+        nautilus::val<uint64_t> replacementIndex = *replacementIndexPtr;
+        nautilus::val<bool> victimFound = false;
+        for (nautilus::val<uint64_t> i = 0; i < 2 * numberOfEntries && !victimFound; ++i)
         {
-            break;
+            nautilus::val<SliceCacheEntrySecondChance*> candidate = threadLocalStart + replacementIndex;
+            const nautilus::val<bool> secondChanceBit = candidate.get(&SliceCacheEntrySecondChance::secondChanceBit);
+            if (secondChanceBit == nautilus::val<bool>{false})
+            {
+                victimFound = true;
+            }
+            else
+            {
+                candidate.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{false};
+                replacementIndex = (replacementIndex + 1) % numberOfEntries;
+            }
         }
-        sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{false};
-        replacementIndex = (replacementIndex + 1) % numberOfEntries;
-    }
-    /// Increment the replacement to give the current replaced entry not the first victim next miss
-    *replacementIndexPtr = (replacementIndex + 1) % numberOfEntries;
+        /// Increment the replacement to give the current replaced entry not the first victim next miss
+        *replacementIndexPtr = (replacementIndex + 1) % numberOfEntries;
 
-    /// Replacing the slice and returning the data structure.
-    nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = threadLocalStart + replacementIndex;
-    sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
-    replaceEntry(nautilus::val<SliceCacheEntry*>{threadLocalStart + replacementIndex});
-    return nautilus::val<SliceCacheEntry*>{threadLocalStart + replacementIndex}.get(&SliceCacheEntry::dataStructure);
+        /// Replacing the slice.
+        nautilus::val<SliceCacheEntrySecondChance*> victim = threadLocalStart + replacementIndex;
+        victim.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
+        targetEntry = nautilus::val<SliceCacheEntry*>{victim};
+        replaceEntry(targetEntry);
+    }
+    return targetEntry.get(&SliceCacheEntry::dataStructure);
 }
 
 }

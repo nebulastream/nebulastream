@@ -43,7 +43,8 @@ public:
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
-    Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+    void
+    lower(Record& outputRecord, nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;

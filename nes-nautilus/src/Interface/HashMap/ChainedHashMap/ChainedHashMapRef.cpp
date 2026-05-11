@@ -169,16 +169,20 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(ChainedEntryRef&& other) noe
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Record& recordKey, const HashFunction::HashValue& hash) const
 {
     auto entry = findChain(hash);
-    while (entry)
+    nautilus::val<bool> found = false;
+    while (entry && !found)
     {
         const ChainedEntryRef entryRef(entry, hashMapRef, fieldKeys, fieldValues);
         if (compareKeys(entryRef, recordKey))
         {
-            return entry;
+            found = true;
         }
-        entry = entryRef.getNext();
+        else
+        {
+            entry = entryRef.getNext();
+        }
     }
-    return nullptr;
+    return entry;
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findEntry(const ChainedEntryRef& otherEntryRef) const
@@ -213,24 +217,25 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
 
     ///  If entry contains nullptr, there does not exist a key with the same values.
     const auto hashValue = hashFunction.calculate(keyValues);
-    if (const auto entryRef = findKey(recordKey, hashValue))
+    const auto existingEntry = findKey(recordKey, hashValue);
+    nautilus::val<AbstractHashMapEntry*> resultEntry(nullptr);
+    if (existingEntry)
     {
-        return static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
+        resultEntry = static_cast<nautilus::val<AbstractHashMapEntry*>>(existingEntry);
     }
-
-    /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
-    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider), hashMapRef, fieldKeys, fieldValues};
-    newEntryRef.copyKeysToEntry(recordKey, bufferProvider);
-
-
-    /// Calling the onInsert lambda function to insert values or anything else that the user wants.
-    auto castedEntryRef = static_cast<nautilus::val<AbstractHashMapEntry*>>(newEntryRef.entryRef);
-    if (onInsert)
+    else
     {
-        onInsert(castedEntryRef);
+        /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
+        const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider), hashMapRef, fieldKeys, fieldValues};
+        newEntryRef.copyKeysToEntry(recordKey, bufferProvider);
+        resultEntry = static_cast<nautilus::val<AbstractHashMapEntry*>>(newEntryRef.entryRef);
+        /// Calling the onInsert lambda function to insert values or anything else that the user wants.
+        if (onInsert)
+        {
+            onInsert(resultEntry);
+        }
     }
-
-    return castedEntryRef;
+    return resultEntry;
 }
 
 void ChainedHashMapRef::insertOrUpdateEntry(
@@ -299,17 +304,16 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
 {
     const auto numberOfTuplesRef = getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
     const auto numberOfTuples = readValueFromMemRef<uint64_t>(numberOfTuplesRef);
-    if (numberOfTuples == 0)
+    nautilus::val<ChainedHashMapEntry*> chainStart = nullptr;
+    if (numberOfTuples != 0)
     {
-        return nullptr;
+        const auto maskRef = getMemberRef(hashMapRef, &ChainedHashMap::mask);
+        const auto mask = readValueFromMemRef<uint64_t>(maskRef);
+        const auto entryStartPos = hash & mask;
+        const auto entriesRef = getMemberRef(hashMapRef, &ChainedHashMap::entries);
+        auto entries = readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
+        chainStart = entries[entryStartPos];
     }
-
-    const auto maskRef = getMemberRef(hashMapRef, &ChainedHashMap::mask);
-    auto mask = readValueFromMemRef<uint64_t>(maskRef);
-    const auto entryStartPos = hash & mask;
-    const auto entriesRef = getMemberRef(hashMapRef, &ChainedHashMap::entries);
-    auto entries = readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
-    const nautilus::val<ChainedHashMapEntry*> chainStart = entries[entryStartPos];
     return chainStart;
 }
 

@@ -110,29 +110,21 @@ void MinAggregationPhysicalFunction::combine(
     }
 }
 
-Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void MinAggregationPhysicalFunction::lower(
+    Record& outputRecord, const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
     if (not inputType.nullable)
     {
         /// Reading the min value from the aggregation state
         const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-        const auto min = VarVal::readNonNullableVarValFromMemory(memAreaMin, inputType);
-
-        /// Creating a record with the min value
-        Record record;
-        record.write(resultFieldIdentifier, min);
-        return record;
+        outputRecord.write(resultFieldIdentifier, VarVal::readNonNullableVarValFromMemory(memAreaMin, inputType));
+        return;
     }
 
     /// Reading the min value from the aggregation state
     const auto isNull = readNull(aggregationState);
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
-    const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType, isNull);
-
-    /// Creating a record with the min value
-    Record record;
-    record.write(resultFieldIdentifier, min);
-    return record;
+    outputRecord.write(resultFieldIdentifier, VarVal::readVarValFromMemory(memAreaMin, inputType, isNull));
 }
 
 void MinAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)

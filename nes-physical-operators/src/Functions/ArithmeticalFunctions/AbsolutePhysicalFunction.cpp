@@ -33,6 +33,7 @@ AbsolutePhysicalFunction::AbsolutePhysicalFunction(PhysicalFunction childFunctio
 VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     auto value = childFunction.execute(record, arena);
+    /// Unsigned/non-arithmetic types short-circuit at trace construction; no traced branch emitted.
     if (not inputType.isSignedInteger() and not inputType.isFloat())
     {
         return value;
@@ -41,11 +42,12 @@ VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     /// We need to built a zero and negativeOne via castToType, as we can not make any assumptions on the input type.
     const auto zero = VarVal{0}.castToType(inputType.type);
     const auto negativeOne = VarVal{-1}.castToType(inputType.type);
+    VarVal result = value;
     if (value < zero)
     {
-        return value * negativeOne;
+        result = value * negativeOne;
     }
-    return value;
+    return result;
 }
 
 PhysicalFunctionRegistryReturnType
