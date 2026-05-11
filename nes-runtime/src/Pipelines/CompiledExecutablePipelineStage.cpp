@@ -23,6 +23,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <nautilus/val_ptr.hpp>
@@ -133,6 +134,14 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     CPPTRACE_CATCH(...)
     {
         throw wrapExternalException(fmt::format("Could not query compile pipeline: {}", *pipeline));
+    }
+
+    if (const auto stats = moduleSlot->compiled->getStatistics())
+    {
+        NES_INFO(
+            "Nautilus compilation statistics for pipeline {}:\n{}",
+            pipeline->getPipelineId(),
+            stats->formatReport(fmt::format("pipeline-{}", pipeline->getPipelineId()), "mlir"));
     }
 
     compiledPipelineFunction.emplace(moduleSlot, PIPELINE_FUNCTION_NAME);

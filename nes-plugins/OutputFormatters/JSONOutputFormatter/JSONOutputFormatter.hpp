@@ -43,7 +43,7 @@ public:
     [[nodiscard]] nautilus::val<uint64_t> writeFormattedValue(
         const VarVal& value,
         const DataType& fieldType,
-        const nautilus::static_val<uint64_t>& fieldIndex,
+        uint64_t fieldIndex,
         const nautilus::val<int8_t*>& fieldPointer,
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,

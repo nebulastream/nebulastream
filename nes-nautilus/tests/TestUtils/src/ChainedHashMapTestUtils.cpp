@@ -244,7 +244,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator(cons
                 outputRecord.reassignFields(keyRecord);
                 outputRecord.reassignFields(valueRecord);
                 tupleBufferRef->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
-                outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
+                outputBufferIndex = outputBufferIndex + 1;
                 recordBufferOutput.setNumRecords(outputBufferIndex);
             }
         }));
