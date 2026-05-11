@@ -50,6 +50,13 @@ Every entry uses [`_template.md`](_template.md) as a skeleton:
 
 Source: TU Berlin DIMA thesis template, adapted from [Leuphana](https://pubdata.leuphana.de/server/api/core/bitstreams/f4c7f7f2-3974-410c-a07b-4e545390561e/content) (pp. 20, 24).
 
+> **A note on what the level of use captures.** The DIMA scale measures
+> the *kind* of AI assistance, not the share of intellectual work in a
+> session. Substantive contributions made by the author (decisions,
+> corrections, source audits, restructures, methodology fixes) are
+> documented in each entry's Goal and Outcome sections, and visible in
+> the verbatim prompts.
+
 ## Adding a new entry
 
 1. End the conversation. If on claude.ai, click Share, copy the public URL.
