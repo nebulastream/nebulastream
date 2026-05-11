@@ -42,7 +42,6 @@
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
 #include <select.hpp>
-#include <static.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -149,7 +148,7 @@ CSVOutputFormatter::CSVOutputFormatter(
 nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
     const VarVal& value,
     const DataType& fieldType,
-    const nautilus::static_val<uint64_t>& fieldIndex,
+    uint64_t fieldIndex,
     const nautilus::val<int8_t*>& fieldPointer,
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
@@ -185,7 +184,7 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
 
     /// Write either the field delimiter or the tuple delimiter, depending on the field index
     const auto delimiter = nautilus::select(
-        fieldIndex == nautilus::val<uint64_t>{fieldNames.size()} - 1,
+        nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>{fieldNames.size()} - 1,
         nautilus::val<const char*>{tupleDelimiter.c_str()},
         nautilus::val<const char*>{fieldDelimiter.c_str()});
 

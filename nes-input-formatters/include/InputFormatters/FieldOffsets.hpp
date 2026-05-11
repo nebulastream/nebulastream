@@ -97,9 +97,9 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 continue;
             }
 
-            const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getNumberOfFields() + 1);
+            const auto numPriorFields = recordIndex * (metaData.getNumberOfFields() + 1);
             const auto recordOffsetAddress = indexBufferPtr + (numPriorFields + i);
-            const auto recordOffsetEndAddress = indexBufferPtr + (numPriorFields + i + nautilus::static_val<uint64_t>(1));
+            const auto recordOffsetEndAddress = indexBufferPtr + (numPriorFields + i + 1);
             const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(recordOffsetAddress);
             const auto fieldOffsetEnd = readValueFromMemRef<FieldIndex>(recordOffsetEndAddress);
 
@@ -133,9 +133,9 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             {
                 continue;
             }
-            const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getNumberOfFields());
-            nautilus::static_val<uint64_t> offsetPairStart = i * 2;
-            nautilus::static_val<uint64_t> offsetPairEnd = offsetPairStart + 1;
+            const auto numPriorFields = recordIndex * metaData.getNumberOfFields();
+            auto offsetPairStart = i * 2;
+            auto offsetPairEnd = offsetPairStart + 1;
             const auto recordOffsetAddress = indexBufferPtr + ((numPriorFields * 2) + offsetPairStart);
             const auto recordOffsetEndAddress = indexBufferPtr + ((numPriorFields * 2) + offsetPairEnd);
             const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(recordOffsetAddress);

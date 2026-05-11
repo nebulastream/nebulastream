@@ -49,7 +49,6 @@
 #include <ErrorHandling.hpp>
 #include <NautilusTestUtils.hpp>
 #include <options.hpp>
-#include <static.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 
@@ -242,7 +241,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator(cons
                 outputRecord.reassignFields(keyRecord);
                 outputRecord.reassignFields(valueRecord);
                 tupleBufferRef->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
-                outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
+                outputBufferIndex = outputBufferIndex + 1;
                 recordBufferOutput.setNumRecords(outputBufferIndex);
             }
         }));

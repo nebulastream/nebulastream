@@ -88,7 +88,7 @@ nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() con
     /// We call this method solely, if we actually need the value memory area and not a VarVal.
     /// Therefore, we do not store the valueOffset in the ChainedEntryRef or the ChainedEntryMemoryProvider
     /// During tracing the offset is calculated and should be stored as a constant in the compiled code
-    nautilus::static_val<uint64_t> valueMemAreaOffset(0);
+    uint64_t valueMemAreaOffset{0};
     if (memoryProviderValues.getAllFields().empty())
     {
         /// We take the max offset of the keys

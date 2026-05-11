@@ -138,7 +138,7 @@ void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) 
     {
         for (nautilus::static_val<size_t> i = 0; i < inputFieldNames.size(); ++i)
         {
-            const auto value = record.read(inputFieldNames.at(nautilus::static_val<int>(i)));
+            const auto value = record.read(inputFieldNames.at(i));
             const auto memPos = inputBuffer + nautilus::val<uint64_t>(i * sizeof(float));
             value.writeToMemory(memPos);
         }

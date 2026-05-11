@@ -41,7 +41,6 @@
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
 #include <select.hpp>
-#include <static.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -184,7 +183,7 @@ JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldId
 nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     const VarVal& value,
     const DataType& fieldType,
-    const nautilus::static_val<uint64_t>& fieldIndex,
+    uint64_t fieldIndex,
     const nautilus::val<int8_t*>& fieldPointer,
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
@@ -198,7 +197,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     /// Write the pre-value content
     const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
         writePreValueContents,
-        fieldIndex == nautilus::val<uint64_t>(0),
+        nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(0),
         fieldName,
         currentRemainingSize,
         recordBuffer.getReference(),
@@ -234,7 +233,9 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
 
     /// Either write a , or a }\n depending on if this is the last value of the record
     const auto delimiter = nautilus::select(
-        fieldIndex == nautilus::val<uint64_t>(fieldNames.size()) - 1, nautilus::val<const char*>{"}\n"}, nautilus::val<const char*>{","});
+        nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(fieldNames.size()) - 1,
+        nautilus::val<const char*>{"}\n"},
+        nautilus::val<const char*>{","});
 
     written += nautilus::invoke(
         writeValueToBuffer, delimiter, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);

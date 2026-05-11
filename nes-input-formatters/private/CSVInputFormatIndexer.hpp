@@ -30,7 +30,6 @@
 #include <InputFormatIndexer.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
 #include <RawValueParser.hpp>
-#include <static.hpp>
 
 namespace NES
 {
@@ -73,13 +72,13 @@ struct CSVMetaData
 
     [[nodiscard]] const std::vector<std::string>& getNullValues() const { return nullValues; }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
+    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(uint64_t i) const
     {
         PRECONDITION(i < fieldNames.size(), "Trying to access position, larger than the size of fieldNames {}", fieldNames.size());
         return fieldNames[i];
     }
 
-    [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const
+    [[nodiscard]] const DataType& getFieldDataTypeAt(uint64_t i) const
     {
         PRECONDITION(
             i < fieldDataTypes.size(), "Trying to access position, larger than the size of fieldDataTypes {}", fieldDataTypes.size());

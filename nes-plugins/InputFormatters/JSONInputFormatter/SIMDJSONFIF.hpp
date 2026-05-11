@@ -108,17 +108,17 @@ struct SIMDJSONMetaData
 
     static QuotationType getQuotationType() { return QuotationType::DOUBLE_QUOTE; }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
+    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(uint64_t i) const
     {
         return fieldNamesOutput[i];
     }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& i) const
+    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameInJsonAt(uint64_t i) const
     {
         return fieldNamesInJson[i];
     }
 
-    [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
+    [[nodiscard]] const DataType& getFieldDataTypeAt(uint64_t i) const { return fieldDataTypes[i]; }
 
     [[nodiscard]] static const std::vector<std::string>& getNullValues()
     {
