@@ -1,39 +1,80 @@
 name: Setup sccache
 description: |
-  Configures sccache environment variables for S3-compatible (R2) remote caching.
+  Configures sccache environment variables. When S3 credentials are provided,
+  uses S3-compatible remote caching. Otherwise falls back to local disk cache,
+  which is useful for fork PRs where secrets aren't available.
   sccache must already be installed in the container image.
-
 inputs:
   bucket:
     description: 'S3/R2 bucket name for the sccache cache'
-    required: true
+    required: false
+    default: ''
   endpoint:
     description: 'S3-compatible endpoint URL'
-    required: true
+    required: false
+    default: ''
   access_key:
-    description: 'AWS/R2 access key ID'
-    required: true
+    description: 'S3 access key ID'
+    required: false
+    default: ''
   secret_key:
-    description: 'AWS/R2 secret access key'
-    required: true
+    description: 'S3 secret access key'
+    required: false
+    default: ''
   region:
-    description: 'S3/R2 region'
+    description: 'S3 region'
     required: false
     default: 'auto'
-
+  local_cache_size:
+    description: 'Max size for local cache (only used in local mode)'
+    required: false
+    default: '10G'
+  local_cache_dir:
+    description: 'Directory for local cache (only used in local mode)'
+    required: false
+    default: ''
 runs:
   using: 'composite'
   steps:
-    - name: Export sccache environment
+    - name: Configure sccache
       shell: bash
+      env:
+        IN_BUCKET: ${{ inputs.bucket }}
+        IN_ENDPOINT: ${{ inputs.endpoint }}
+        IN_ACCESS_KEY: ${{ inputs.access_key }}
+        IN_SECRET_KEY: ${{ inputs.secret_key }}
+        IN_REGION: ${{ inputs.region }}
+        IN_LOCAL_SIZE: ${{ inputs.local_cache_size }}
+        IN_LOCAL_DIR: ${{ inputs.local_cache_dir }}
       run: |
-        # S3/R2 configuration
-        echo "SCCACHE_BUCKET=${{ inputs.bucket }}" >> "$GITHUB_ENV"
-        echo "SCCACHE_ENDPOINT=${{ inputs.endpoint }}" >> "$GITHUB_ENV"
-        echo "SCCACHE_REGION=${{ inputs.region }}" >> "$GITHUB_ENV"
-        echo "SCCACHE_S3_USE_SSL=true" >> "$GITHUB_ENV"
-        echo "AWS_ACCESS_KEY_ID=${{ inputs.access_key }}" >> "$GITHUB_ENV"
-        echo "AWS_SECRET_ACCESS_KEY=${{ inputs.secret_key }}" >> "$GITHUB_ENV"
+        set -euo pipefail
 
-        # Run without daemon so sccache works across docker run boundaries
-        echo "SCCACHE_NO_DAEMON=1" >> "$GITHUB_ENV"
+        # Decide mode: remote requires all four S3 inputs to be non-empty.
+        if [[ -n "$IN_BUCKET" && -n "$IN_ENDPOINT" && -n "$IN_ACCESS_KEY" && -n "$IN_SECRET_KEY" ]]; then
+          echo "::notice::sccache configured for remote S3 cache (bucket=$IN_BUCKET)"
+          {
+            echo "SCCACHE_BUCKET=$IN_BUCKET"
+            echo "SCCACHE_ENDPOINT=$IN_ENDPOINT"
+            echo "SCCACHE_REGION=$IN_REGION"
+            echo "SCCACHE_S3_USE_SSL=true"
+            echo "AWS_ACCESS_KEY_ID=$IN_ACCESS_KEY"
+            echo "AWS_SECRET_ACCESS_KEY=$IN_SECRET_KEY"
+            echo "SCCACHE_NO_DAEMON=1"
+          } >> "$GITHUB_ENV"
+        else
+          # Pick a cache dir. Default to a stable path under RUNNER_TEMP so it
+          # survives across steps within a job but doesn't pollute the workspace.
+          if [[ -z "$IN_LOCAL_DIR" ]]; then
+            LOCAL_DIR="${RUNNER_TEMP:-/tmp}/sccache"
+          else
+            LOCAL_DIR="$IN_LOCAL_DIR"
+          fi
+          mkdir -p "$LOCAL_DIR"
+
+          echo "::notice::sccache configured for LOCAL cache (dir=$LOCAL_DIR, size=$IN_LOCAL_SIZE) — remote credentials not provided"
+          {
+            echo "SCCACHE_DIR=$LOCAL_DIR"
+            echo "SCCACHE_CACHE_SIZE=$IN_LOCAL_SIZE"
+            echo "SCCACHE_NO_DAEMON=1"
+          } >> "$GITHUB_ENV"
+        fi
