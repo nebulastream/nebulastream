@@ -104,6 +104,8 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
         nautilus::engine::Options options;
         const auto compilation = backend == ExecutionMode::COMPILER;
         options.setOption("engine.Compilation", compilation);
+        options.setOption("engine.backend", std::string("mlir"));
+        options.setOption("engine.compilationStrategy", std::string("legacy"));
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         const nautilus::engine::NautilusEngine engine(options);
         compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, memoryProviderInputBuffer);
@@ -240,8 +242,10 @@ void NautilusTestUtils::compileFillBufferFunction(
 
     const bool compilation = (backend == ExecutionMode::COMPILER);
     options.setOption("engine.Compilation", compilation);
-    auto engine = nautilus::engine::NautilusEngine(options);
+    options.setOption("engine.backend", std::string("mlir"));
+    options.setOption("engine.compilationStrategy", std::string("legacy"));
     options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
+    auto engine = nautilus::engine::NautilusEngine(options);
     auto compiledFunction = engine.registerFunction(tmp);
 
     compiledFunctions[{functionName, backend}]
