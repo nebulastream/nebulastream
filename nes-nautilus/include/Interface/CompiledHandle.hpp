@@ -19,8 +19,8 @@
 #include <string>
 #include <utility>
 #include <Engine.hpp>
-#include <Module.hpp>
 #include <ErrorHandling.hpp>
+#include <Module.hpp>
 
 namespace NES
 {
@@ -44,10 +44,7 @@ template <typename R, typename... Args>
 class CompiledHandle
 {
 public:
-    CompiledHandle(std::shared_ptr<CompiledModuleSlot> slot, std::string name)
-        : slot(std::move(slot)), name(std::move(name))
-    {
-    }
+    CompiledHandle(std::shared_ptr<CompiledModuleSlot> slot, std::string name) : slot(std::move(slot)), name(std::move(name)) { }
 
     R operator()(Args... args) const
     {
