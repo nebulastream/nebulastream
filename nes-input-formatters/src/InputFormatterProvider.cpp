@@ -22,19 +22,21 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
+#include <InputFormatterDescriptor.hpp>
 #include <ScanPhysicalOperator.hpp>
 
 namespace NES
 {
 
-std::shared_ptr<TupleBufferRef> provideInputFormatter(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider)
+std::shared_ptr<TupleBufferRef>
+provideInputFormatter(const InputFormatterDescriptor& formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider)
 {
     if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
-            formatScanConfig.parserType, InputFormatIndexerRegistryArguments(formatScanConfig, std::move(memoryProvider))))
+            formatScanConfig.getInputFormatterType(), InputFormatIndexerRegistryArguments(formatScanConfig, std::move(memoryProvider))))
     {
         return std::move(inputFormatter.value());
     }
-    throw UnknownParserType("unknown type of input formatter: {}", formatScanConfig.parserType);
+    throw UnknownInputFormatterType("unknown type of input formatter: {}", formatScanConfig.getInputFormatterType());
 }
 
 bool contains(const std::string& parserType)

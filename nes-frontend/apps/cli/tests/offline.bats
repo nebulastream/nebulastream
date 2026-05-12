@@ -274,7 +274,7 @@ physical:
     host: worker-1:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -402,7 +402,7 @@ bad_topology() {
   local f=$(bad_topology 's/type: CSV/input_format: CSV/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Parser configuration must contain: type"* ]]
+  [[ "$output" == *"Source config does not contain input formatter type"* ]]
 }
 
 @test "error: unregistered source type reports type name" {

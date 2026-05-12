@@ -130,7 +130,7 @@ physical:
   - logical: stream
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -144,7 +144,7 @@ physical:
   - logical: stream2
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -157,7 +157,7 @@ physical:
   - logical: stream3
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -170,7 +170,7 @@ physical:
   - logical: stream4
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -183,7 +183,7 @@ physical:
   - logical: stream5
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -196,7 +196,7 @@ physical:
   - logical: stream6
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -209,7 +209,7 @@ physical:
   - logical: stream7
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -222,7 +222,7 @@ physical:
   - logical: stream8
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED

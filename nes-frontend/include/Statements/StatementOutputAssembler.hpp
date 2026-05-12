@@ -34,6 +34,7 @@
 #include <Statements/StatementHandler.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <DistributedQuery.hpp>
+#include <InputFormatterDescriptor.hpp>
 #include <QueryStatus.hpp>
 
 namespace NES
@@ -68,9 +69,9 @@ using LogicalSourceOutputRowType = std::tuple<std::string, Schema>;
 constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_name", "schema"};
 
 using SourceDescriptorOutputRowType
-    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config, Host>;
+    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, InputFormatterDescriptor, NES::DescriptorConfig::Config, Host>;
 constexpr std::array<std::string_view, 7> sourceDescriptorOutputColumns{
-    "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config", "host"};
+    "physical_source_id", "source_name", "schema", "source_type", "input_formatter_config", "source_config", "host"};
 
 using SinkDescriptorOutputRowType
     = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, Host, std::unordered_map<std::string, std::string>>;
@@ -128,7 +129,7 @@ struct StatementOutputAssembler<CreatePhysicalSourceStatementResult>
                 result.created.getLogicalSource().getLogicalSourceName(),
                 *result.created.getLogicalSource().getSchema(),
                 result.created.getSourceType(),
-                result.created.getParserConfig(),
+                result.created.getInputFormatterDescriptor(),
                 result.created.getConfig(),
                 result.created.getHost())});
     }
@@ -186,7 +187,7 @@ struct StatementOutputAssembler<ShowPhysicalSourcesStatementResult>
                 source.getLogicalSource().getLogicalSourceName(),
                 *source.getLogicalSource().getSchema(),
                 source.getSourceType(),
-                source.getParserConfig(),
+                source.getInputFormatterDescriptor(),
                 source.getConfig(),
                 source.getHost());
         }
@@ -242,7 +243,7 @@ struct StatementOutputAssembler<DropPhysicalSourceStatementResult>
                 result.dropped.getLogicalSource().getLogicalSourceName(),
                 *result.dropped.getLogicalSource().getSchema(),
                 result.dropped.getSourceType(),
-                result.dropped.getParserConfig(),
+                result.dropped.getInputFormatterDescriptor(),
                 result.dropped.getConfig(),
                 result.dropped.getHost())});
     }

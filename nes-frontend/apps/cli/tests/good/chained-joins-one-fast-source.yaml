@@ -135,7 +135,7 @@ physical:
     host: worker-2:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -150,7 +150,7 @@ physical:
     host: worker-3:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -164,7 +164,7 @@ physical:
     host: worker-4:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -178,7 +178,7 @@ physical:
     host: worker-5:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -192,7 +192,7 @@ physical:
     host: worker-6:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -206,7 +206,7 @@ physical:
     host: worker-7:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -220,7 +220,7 @@ physical:
     host: worker-8:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -234,7 +234,7 @@ physical:
     host: worker-9:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED

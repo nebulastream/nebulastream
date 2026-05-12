@@ -30,6 +30,7 @@
 #include <google/protobuf/message_lite.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <InputFormatterDescriptor.hpp>
 
 namespace nlohmann
 {
@@ -45,7 +46,7 @@ struct adl_serializer<NES::EnumWrapper>
 namespace NES
 {
 
-void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig);
+void to_json(nlohmann::json& jsonOutput, const InputFormatterDescriptor& inputFormatterDescriptor);
 
 void to_json(nlohmann::json& jsonOutput, const DataType& dataType);
 

@@ -46,6 +46,7 @@
 #include <ErrorHandling.hpp>
 #include <FileUtil.hpp>
 #include <InputFormatterTestUtil.hpp>
+#include <InputFormatterValidationProvider.hpp>
 #include <TestTaskQueue.hpp>
 
 namespace
@@ -288,8 +289,14 @@ public:
                 = BufferManager::create(setupResult.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
 
             /// Create compiled pipeline stage containing InputFormatter and EmitOperator(emits formatted buffers into 'resultBuffers')
-            const std::unordered_map<std::string, std::string> parserConfiguration{
-                {"type", testConfig.formatterType}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
+
+            auto inputFormatterConfig = std::unordered_map<std::string, std::string>{{"tuple_delimiter", "\n"}};
+            if (testConfig.formatterType == "CSV")
+            {
+                inputFormatterConfig.emplace("field_delimiter", "|");
+            }
+            const auto parserConfiguration
+                = InputFormatterValidationProvider::provide(testConfig.formatterType, std::move(inputFormatterConfig)).value();
             auto testStage = InputFormatterTestUtil::createInputFormatter(
                 parserConfiguration,
                 setupResult.schema,
