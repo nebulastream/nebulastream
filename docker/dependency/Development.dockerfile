@@ -96,6 +96,13 @@ RUN python3 -m venv /opt/iree && \
     ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
     iree-compile --version
 
+# Install OpenVINO converter tools for ML inference model import.
+ARG OPENVINO_VERSION=2025.3.0
+RUN python3 -m venv /opt/openvino && \
+    /opt/openvino/bin/pip install --no-cache-dir openvino==${OPENVINO_VERSION} && \
+    ln -s /opt/openvino/bin/ovc /usr/local/bin/ovc && \
+    ovc --version
+
 # Install Docker CLI and Docker Compose for Docker-in-Docker testing
 RUN apt-get update && \
     apt-get install -y \

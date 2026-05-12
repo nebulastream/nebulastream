@@ -142,6 +142,7 @@ struct CreateModelStatement
 {
     std::string name;
     std::string path;
+    std::string backend = "OPENVINO";
     Schema inputs;
     Schema outputs;
 };

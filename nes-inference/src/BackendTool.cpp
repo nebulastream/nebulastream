@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <IreeTool.hpp>
+#include <BackendTool.hpp>
 
 #include <cstddef>
 #include <cstdlib>
@@ -35,7 +35,7 @@
 namespace NES
 {
 
-std::string format_as(const IreeVersion& version)
+std::string format_as(const ToolVersion& version)
 {
     return fmt::format("{}.{}", version.major, version.minor);
 }
@@ -94,10 +94,10 @@ std::optional<std::filesystem::path> findExecutable(std::string_view name)
 namespace
 {
 
-/// Extract the leading "MAJOR.MINOR" from a `--version` output, ignoring any rc/build suffix.
-std::optional<IreeVersion> extractIreeVersion(std::string_view versionOutput)
+/// Extract the first "MAJOR.MINOR" from a `--version` output, ignoring patch/build suffixes.
+std::optional<ToolVersion> extractToolVersion(std::string_view versionOutput)
 {
-    static const std::regex VersionRegex{R"(version\s+(\d+)\.(\d+))"};
+    static const std::regex VersionRegex{R"((\d+)\.(\d+))"};
     std::cmatch match;
     if (!std::regex_search(versionOutput.data(), versionOutput.data() + versionOutput.size(), match, VersionRegex))
     {
@@ -109,7 +109,7 @@ std::optional<IreeVersion> extractIreeVersion(std::string_view versionOutput)
     {
         return std::nullopt;
     }
-    return IreeVersion{.major = *major, .minor = *minor};
+    return ToolVersion{.major = *major, .minor = *minor};
 }
 
 }
@@ -139,7 +139,7 @@ std::expected<ToolDiscovery, std::string> discoverTool(std::string_view name, bo
 
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) bytes-to-text for captured stdout
     std::string versionOutput(reinterpret_cast<const char*>(result.stdoutData.data()), result.stdoutData.size());
-    auto version = extractIreeVersion(versionOutput);
+    auto version = extractToolVersion(versionOutput);
     if (!version.has_value())
     {
         return std::unexpected(fmt::format("could not parse version from `{} --version` output:\n{}", name, versionOutput));

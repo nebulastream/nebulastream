@@ -259,6 +259,15 @@ public:
     {
         const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
         const auto modelPath = bindStringLiteral(modelDefAST->modelPath);
+        const auto modelBackend = [&]()
+        {
+            const auto backend = modelDefAST->modelBackend != nullptr ? toUpperCase(bindIdentifier(modelDefAST->modelBackend)) : "OPENVINO";
+            if (backend != "IREE" && backend != "OPENVINO")
+            {
+                throw InvalidQuerySyntax("MODEL backend must be either IREE or OPENVINO but got '{}'", backend);
+            }
+            return backend;
+        }();
 
         Schema inputs;
         for (auto* const inputField : modelDefAST->modelInputField())
@@ -274,7 +283,7 @@ public:
                 bindIdentifier(outputField->identifier()), bindDataType(outputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
         }
 
-        return CreateModelStatement{.name = modelName, .path = modelPath, .inputs = inputs, .outputs = outputs};
+        return CreateModelStatement{.name = modelName, .path = modelPath, .backend = modelBackend, .inputs = inputs, .outputs = outputs};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

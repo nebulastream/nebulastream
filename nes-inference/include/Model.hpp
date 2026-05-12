@@ -16,11 +16,14 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -57,6 +60,10 @@ struct RefCountedByteBuffer
         {
             return false;
         }
+        if (lhs.size == 0)
+        {
+            return true;
+        }
         if (!lhs.buffer || !rhs.buffer)
         {
             return lhs.buffer == rhs.buffer;
@@ -82,6 +89,15 @@ class Model;
 using ImportedModel = Model<struct Imported_>;
 using CompiledModel = Model<struct Compiled_>;
 
+enum class ModelBackend : uint8_t
+{
+    IREE,
+    OPENVINO,
+};
+
+std::optional<ModelBackend> parseModelBackend(std::string_view backend);
+std::string_view modelBackendToString(ModelBackend backend);
+
 /// A model at a particular lifecycle stage: textual form after import, compiled
 /// bytecode after compile. The payload is a ref-counted byte buffer; the
 /// signature (function name, shapes) scraped at import time flows unchanged
@@ -89,7 +105,9 @@ using CompiledModel = Model<struct Compiled_>;
 template <typename Tag>
 class Model
 {
+    ModelBackend backend = ModelBackend::OPENVINO;
     detail::RefCountedByteBuffer data;
+    detail::RefCountedByteBuffer auxiliaryData;
     std::string functionName;
     std::vector<size_t> inputShape;
     std::vector<size_t> outputShape;
@@ -101,8 +119,19 @@ class Model
     friend struct Reflector<Model<Imported_>>;
     friend struct Unreflector<Model<Imported_>>;
 
-    Model(detail::RefCountedByteBuffer buf, std::string fnName, std::vector<size_t> inShape, std::vector<size_t> outShape)
-        : data(std::move(buf)), functionName(std::move(fnName)), inputShape(std::move(inShape)), outputShape(std::move(outShape))
+    Model(
+        ModelBackend modelBackend,
+        detail::RefCountedByteBuffer buf,
+        detail::RefCountedByteBuffer auxBuf,
+        std::string fnName,
+        std::vector<size_t> inShape,
+        std::vector<size_t> outShape)
+        : backend(modelBackend)
+        , data(std::move(buf))
+        , auxiliaryData(std::move(auxBuf))
+        , functionName(std::move(fnName))
+        , inputShape(std::move(inShape))
+        , outputShape(std::move(outShape))
     {
     }
 
@@ -110,7 +139,9 @@ class Model
     /// payload buffer — used when compiling turns one lifecycle stage into the next.
     template <typename OtherTag>
     Model(Model<OtherTag> other, detail::RefCountedByteBuffer buf)
-        : data(std::move(buf))
+        : backend(other.backend)
+        , data(std::move(buf))
+        , auxiliaryData(std::move(other.auxiliaryData))
         , functionName(std::move(other.functionName))
         , inputShape(std::move(other.inputShape))
         , outputShape(std::move(other.outputShape))
@@ -126,6 +157,10 @@ public:
     ~Model() = default;
 
     [[nodiscard]] std::span<const std::byte> getData() const { return data.view(); }
+
+    [[nodiscard]] std::span<const std::byte> getAuxiliaryData() const { return auxiliaryData.view(); }
+
+    [[nodiscard]] ModelBackend getBackend() const { return backend; }
 
     [[nodiscard]] size_t size() const { return data.size; }
 

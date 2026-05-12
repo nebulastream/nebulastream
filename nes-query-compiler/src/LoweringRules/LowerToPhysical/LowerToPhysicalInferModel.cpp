@@ -50,8 +50,6 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
     }
     auto model = std::move(*compiled);
 
-    NES_DEBUG("Lowering InferModel operator to physical IREE operator (function: {})", model.getFunctionName());
-
     /// Create the physical operator. Input names come from the logical operator: they
     /// were resolved by `withInferredSchema` to the upstream schema's qualified names
     /// (`source$field`), which is what the runtime `record.read` lookup requires.
@@ -64,6 +62,11 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
         inferModelOp.get().getOutputFieldNames(),
         inferModelOp.get().hasVarsizedInput(),
         inferModelOp.get().hasVarsizedOutput());
+
+    /// Other physical inference operators will be added later,
+    /// so we should log the actual physical implementation we are lowering to.
+    /// The backend is not too relevant and function name only applies to IREE.
+    NES_DEBUG("Lowering InferModel operator to physical InferModelPhysicalOperator operator")
 
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");

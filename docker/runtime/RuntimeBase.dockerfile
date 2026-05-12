@@ -31,3 +31,10 @@ RUN apt-get update && apt-get install -y python3 python3-venv && \
     ln -s /opt/iree/bin/iree-compile /usr/local/bin/iree-compile && \
     ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
     apt clean && rm -rf /var/lib/apt/lists/*
+
+# Install OpenVINO converter tools for ML inference model import.
+ARG OPENVINO_VERSION=2025.3.0
+RUN python3 -m venv /opt/openvino && \
+    /opt/openvino/bin/pip install --no-cache-dir openvino==${OPENVINO_VERSION} && \
+    ln -s /opt/openvino/bin/ovc /usr/local/bin/ovc && \
+    ovc --version

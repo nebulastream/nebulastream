@@ -25,8 +25,8 @@
 #include <fmt/ranges.h>
 
 #include <Util/Logger/Logger.hpp>
+#include <BackendTool.hpp>
 #include <Inference.hpp>
-#include <IreeTool.hpp>
 #include <MlirAnalyzer.hpp>
 #include <Model.hpp>
 #include <ModelAccess.hpp>

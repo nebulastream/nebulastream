@@ -597,8 +597,8 @@ TEST_F(StatementBinderTest, BindCreateModel)
 {
     const std::string modelPath = std::string(INFERENCE_TEST_DATA) + "/tiny_identity.onnx";
     /// tiny_identity.onnx has a 100-element f32 tensor on each side; VARSIZED mirrors it as a single bulk-byte field.
-    const std::string createModelStatement = "CREATE MODEL identity ('" + modelPath
-        + "') "
+    const std::string createModelStatement = "CREATE MODEL identity ('" + modelPath + "' BACKEND IREE"
+        + ") "
           "INPUT (f1 VARSIZED) "
           "OUTPUT (o1 VARSIZED)";
     const auto statement = binder->parseAndBindSingle(createModelStatement);
@@ -608,6 +608,7 @@ TEST_F(StatementBinderTest, BindCreateModel)
     const auto& createModel = std::get<CreateModelStatement>(*statement);
     ASSERT_EQ(createModel.name, "IDENTITY");
     ASSERT_EQ(createModel.path, modelPath);
+    ASSERT_EQ(createModel.backend, "IREE");
     ASSERT_EQ(createModel.inputs.getNumberOfFields(), 1);
     ASSERT_EQ(createModel.outputs.getNumberOfFields(), 1);
 
@@ -652,6 +653,66 @@ TEST_F(StatementBinderTest, BindCreateModel)
     ASSERT_TRUE(badStatement.has_value());
     const auto badResult = modelStatementHandler->apply(std::get<CreateModelStatement>(*badStatement));
     ASSERT_FALSE(badResult.has_value());
+}
+
+TEST_F(StatementBinderTest, BindCreateModelBackend)
+{
+    const std::string modelPath = std::string(INFERENCE_TEST_DATA) + "/tiny_identity.onnx";
+    const auto defaultBackend
+        = binder->parseAndBindSingle("CREATE MODEL defaultBackend ('" + modelPath + "') INPUT (f1 VARSIZED) OUTPUT (o1 VARSIZED)");
+    ASSERT_TRUE(defaultBackend.has_value());
+    const auto& defaultModel = std::get<CreateModelStatement>(*defaultBackend);
+    ASSERT_EQ(defaultModel.backend, "OPENVINO");
+
+    const auto explicitBackend = binder->parseAndBindSingle(
+        "CREATE MODEL explicitBackend ('" + modelPath + "' BACKEND iree) INPUT (f1 VARSIZED) OUTPUT (o1 VARSIZED)");
+    ASSERT_TRUE(explicitBackend.has_value());
+    const auto& explicitModel = std::get<CreateModelStatement>(*explicitBackend);
+    ASSERT_EQ(explicitModel.backend, "IREE");
+
+    const auto explicitOpenVinoBackend = binder->parseAndBindSingle(
+        "CREATE MODEL explicitOpenVinoBackend ('" + modelPath + "' BACKEND openvino) INPUT (f1 VARSIZED) OUTPUT (o1 VARSIZED)");
+    ASSERT_TRUE(explicitOpenVinoBackend.has_value());
+    const auto& explicitOpenVinoModel = std::get<CreateModelStatement>(*explicitOpenVinoBackend);
+    ASSERT_EQ(explicitOpenVinoModel.backend, "OPENVINO");
+
+    const auto invalidBackend = binder->parseAndBindSingle(
+        "CREATE MODEL invalidBackend ('" + modelPath + "' BACKEND tensorflow) INPUT (f1 VARSIZED) OUTPUT (o1 VARSIZED)");
+    ASSERT_FALSE(invalidBackend.has_value());
+}
+
+TEST_F(StatementBinderTest, BindCreateModelRegistersOpenVinoAndDefaultBackend)
+{
+    const std::string modelPath = std::string(INFERENCE_TEST_DATA) + "/tiny_identity.onnx";
+    const auto defaultBackend
+        = binder->parseAndBindSingle("CREATE MODEL defaultBackend ('" + modelPath + "') INPUT (f1 VARSIZED) OUTPUT (o1 VARSIZED)");
+    ASSERT_TRUE(defaultBackend.has_value());
+    const auto& defaultModel = std::get<CreateModelStatement>(*defaultBackend);
+    ASSERT_EQ(defaultModel.backend, "OPENVINO");
+
+    const auto defaultResult = modelStatementHandler->apply(defaultModel);
+    if (!defaultResult.has_value() && std::string(defaultResult.error().what()).find("ovc is not available") != std::string::npos)
+    {
+        GTEST_SKIP() << "OpenVINO import unavailable in this environment";
+    }
+    ASSERT_TRUE(defaultResult.has_value()) << defaultResult.error().what();
+    ASSERT_EQ(defaultResult->name, "DEFAULTBACKEND");
+    ASSERT_EQ(defaultResult->path, modelPath);
+    ASSERT_TRUE(defaultResult->inputSchema.hasFields());
+    ASSERT_TRUE(defaultResult->outputSchema.hasFields());
+
+    const auto explicitOpenVinoBackend = binder->parseAndBindSingle(
+        "CREATE MODEL explicitOpenVinoBackend ('" + modelPath + "' BACKEND OPENVINO) INPUT (f1 VARSIZED) OUTPUT (o1 VARSIZED)");
+    ASSERT_TRUE(explicitOpenVinoBackend.has_value());
+    const auto& explicitOpenVinoModel = std::get<CreateModelStatement>(*explicitOpenVinoBackend);
+    ASSERT_EQ(explicitOpenVinoModel.backend, "OPENVINO");
+
+    const auto explicitOpenVinoResult = modelStatementHandler->apply(explicitOpenVinoModel);
+    ASSERT_TRUE(explicitOpenVinoResult.has_value()) << explicitOpenVinoResult.error().what();
+    ASSERT_EQ(explicitOpenVinoResult->name, "EXPLICITOPENVINOBACKEND");
+    ASSERT_EQ(explicitOpenVinoResult->path, modelPath);
+    ASSERT_TRUE(explicitOpenVinoResult->inputSchema.hasFields());
+    ASSERT_TRUE(explicitOpenVinoResult->outputSchema.hasFields());
 }
 
 TEST_F(StatementBinderTest, ExplainStatement)

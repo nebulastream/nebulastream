@@ -14,31 +14,28 @@
 
 #pragma once
 
-#include <expected>
-#include <filesystem>
+#include <cstddef>
 #include <string>
-
+#include <vector>
 #include <Model.hpp>
 
 namespace NES
 {
-
-struct ImportError
+struct RuntimeMetadata
 {
-    std::string message;
+    std::vector<size_t> inputShape;
+    size_t nDim = 0;
+    std::string functionName;
+    size_t inputSize = 0;
+    size_t outputSize = 0;
 };
 
-struct CompileError
+class RuntimeBackend
 {
-    std::string message;
+public:
+    virtual ~RuntimeBackend() = default;
+
+    virtual RuntimeMetadata setup(const CompiledModel& model) = 0;
+    virtual void infer(std::byte* inputBuffer, size_t inputBufferSize, std::byte* outputBuffer, size_t outputBufferSize) = 0;
 };
-
-/// Import a model from a file.
-[[nodiscard]] ModelBackend defaultModelBackend();
-std::expected<ImportedModel, ImportError> importModel(const std::filesystem::path& modelPath);
-std::expected<ImportedModel, ImportError> importModel(const std::filesystem::path& modelPath, ModelBackend backend);
-
-/// Compile a previously imported model so it can be executed by the runtime.
-std::expected<CompiledModel, CompileError> compileModel(const ImportedModel& imported);
-
 }

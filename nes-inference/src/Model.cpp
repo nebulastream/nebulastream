@@ -16,10 +16,15 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <limits>
 #include <optional>
+#include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
+
+#include <openssl/evp.h>
 
 #include <DataTypes/Schema.hpp>
 #include <Util/Reflection.hpp>
@@ -34,6 +39,8 @@ namespace detail
 struct ReflectedImportedModel
 {
     std::optional<std::string> mlir;
+    std::optional<std::string> auxiliary;
+    std::optional<std::string> backend;
     std::optional<std::string> functionName;
     std::optional<std::vector<size_t>> inputShape;
     std::optional<std::vector<size_t>> outputShape;
@@ -50,13 +57,104 @@ struct
 };
 }
 
+std::optional<ModelBackend> parseModelBackend(std::string_view backend)
+{
+    if (backend == "iree" || backend == "IREE")
+    {
+        return ModelBackend::IREE;
+    }
+    if (backend == "openvino" || backend == "OPENVINO" || backend == "OpenVINO")
+    {
+        return ModelBackend::OPENVINO;
+    }
+    return std::nullopt;
+}
+
+std::string_view modelBackendToString(ModelBackend backend)
+{
+    switch (backend)
+    {
+        case ModelBackend::IREE:
+            return "iree";
+        case ModelBackend::OPENVINO:
+            return "openvino";
+    }
+    std::unreachable();
+}
+
+namespace
+{
+
+std::string bytesToBase64(std::span<const std::byte> data)
+{
+    if (data.empty())
+    {
+        return {};
+    }
+    constexpr auto maxEncodableInputSize = static_cast<size_t>(std::numeric_limits<int>::max() / 4) * 3;
+    if (data.size() > maxEncodableInputSize)
+    {
+        throw CannotSerialize("Model payload is too large for OpenSSL base64 encoding");
+    }
+
+    std::string encoded(((data.size() + 2) / 3) * 4, '\0');
+    const auto encodedLen = EVP_EncodeBlock(
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) OpenSSL EVP API requires unsigned char*
+        reinterpret_cast<unsigned char*>(encoded.data()),
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) OpenSSL EVP API requires unsigned char*
+        reinterpret_cast<const unsigned char*>(data.data()),
+        static_cast<int>(data.size()));
+    encoded.resize(static_cast<size_t>(encodedLen));
+    return encoded;
+}
+
+detail::RefCountedByteBuffer base64ToBytes(std::string_view data)
+{
+    if (data.empty())
+    {
+        return {};
+    }
+    if (data.size() % 4 != 0)
+    {
+        throw CannotDeserialize("Invalid base64 model payload length");
+    }
+    if (data.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
+    {
+        throw CannotDeserialize("Base64 model payload is too large for OpenSSL decoding");
+    }
+
+    const auto thirdIsPadding = data[data.size() - 2] == '=';
+    const auto fourthIsPadding = data[data.size() - 1] == '=';
+    if (thirdIsPadding && !fourthIsPadding)
+    {
+        throw CannotDeserialize("Invalid base64 model payload padding");
+    }
+
+    std::vector<std::byte> decoded((data.size() / 4) * 3);
+    const auto decodedLen = EVP_DecodeBlock(
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) OpenSSL EVP API requires unsigned char*
+        reinterpret_cast<unsigned char*>(decoded.data()),
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) OpenSSL EVP API requires unsigned char*
+        reinterpret_cast<const unsigned char*>(data.data()),
+        static_cast<int>(data.size()));
+    if (decodedLen < 0)
+    {
+        throw CannotDeserialize("Invalid base64 model payload character");
+    }
+
+    const auto padding = static_cast<size_t>(thirdIsPadding) + static_cast<size_t>(fourthIsPadding);
+    decoded.resize(static_cast<size_t>(decodedLen) - padding);
+    return detail::RefCountedByteBuffer::fromBytes(decoded);
+}
+
+}
+
 Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model) const
 {
-    const auto data = model.getData();
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-char for textual MLIR serialization
-    std::string mlir(reinterpret_cast<const char*>(data.data()), data.size());
     return reflect(detail::ReflectedImportedModel{
-        .mlir = std::make_optional(std::move(mlir)),
+        .mlir = std::make_optional(bytesToBase64(model.getData())),
+        .auxiliary = std::make_optional(bytesToBase64(model.getAuxiliaryData())),
+        .backend = std::make_optional(std::string{modelBackendToString(model.getBackend())}),
         .functionName = std::make_optional(model.getFunctionName()),
         .inputShape = std::make_optional(model.getInputShape()),
         .outputShape = std::make_optional(model.getOutputShape())});
@@ -65,11 +163,15 @@ Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model) const
 ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl) const
 {
     auto reflected = unreflect<detail::ReflectedImportedModel>(rfl);
-    const auto mlir = reflected.mlir.value_or(std::string{});
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) char-to-byte for buffer construction
-    const auto* mlirBytes = reinterpret_cast<const std::byte*>(mlir.data());
+    auto backend = ModelBackend::OPENVINO;
+    if (reflected.backend.has_value())
+    {
+        backend = parseModelBackend(*reflected.backend).value_or(ModelBackend::OPENVINO);
+    }
     return ImportedModel{
-        detail::RefCountedByteBuffer::fromBytes({mlirBytes, mlir.size()}),
+        backend,
+        base64ToBytes(reflected.mlir.value_or(std::string{})),
+        base64ToBytes(reflected.auxiliary.value_or(std::string{})),
         reflected.functionName.value_or(std::string{}),
         reflected.inputShape.value_or(std::vector<size_t>{}),
         reflected.outputShape.value_or(std::vector<size_t>{})};
