@@ -1,0 +1,94 @@
+# name: function/varsized/OctetLength.test
+# description: Tests for the OCTET_LENGTH function on VARSIZED inputs (returns byte size as UINT64)
+# groups: [Function, Text, Projection]
+
+# Use an id column so we can include rows with an empty VARSIZED value
+# (a bare empty line would terminate the ATTACH INLINE block).
+CREATE LOGICAL SOURCE textStream(id UINT64 NOT NULL, data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR textStream TYPE File;
+ATTACH INLINE
+1,
+2,Hello
+3,NebulaStream
+4,hello world
+5,!@?$%^&*()
+6,äöü
+7,你好
+8,🎉🚀
+9,Hi🌍
+
+CREATE LOGICAL SOURCE systestSafeTextStream(id UINT64 NOT NULL, data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR systestSafeTextStream TYPE File;
+ATTACH INLINE
+2,Hello
+3,NebulaStream
+4,hello_world
+5,!@?$%^&*()
+6,äöü
+7,你好
+8,🎉🚀
+9,Hi🌍
+
+CREATE SINK lengthSink(id UINT64 NOT NULL, len UINT64 NOT NULL) TYPE File;
+CREATE SINK passThroughSink(id UINT64 NOT NULL, data VARSIZED NOT NULL, len UINT64 NOT NULL) TYPE File;
+
+# Empty string, simple words, words with spaces, special characters, and UTF-8 multibyte chars
+# (OCTET_LENGTH returns byte count — "äöü" is 2 bytes per char in UTF-8 → 6)
+SELECT id AS id, OCTET_LENGTH(data) AS len FROM textStream INTO lengthSink;
+----
+1 0
+2 5
+3 12
+4 11
+5 10
+6 6
+7 6
+8 8
+9 6
+
+# Combined projection of original value and its length
+SELECT id AS id, OCTET_LENGTH(data) AS len FROM textStream WHERE OCTET_LENGTH(data) > UINT64(0) INTO lengthSink;
+----
+2 5
+3 12
+4 11
+5 10
+6 6
+7 6
+8 8
+9 6
+
+# OCTET_LENGTH composed with CONCAT — append "!!" (2 bytes) to each row
+SELECT id AS id, OCTET_LENGTH(CONCAT(data, VARSIZED("!!"))) AS len FROM textStream INTO lengthSink;
+----
+1 2
+2 7
+3 14
+4 13
+5 12
+6 8
+7 8
+8 10
+9 8
+
+# Combined projection of original value and its length
+SELECT id AS id, data as data, OCTET_LENGTH(data) AS len FROM systestSafeTextStream INTO passThroughSink;
+----
+2 Hello 5
+3 NebulaStream 12
+4 hello_world 11
+5 !@?$%^&*() 10
+6 äöü 6
+7 你好 6
+8 🎉🚀 8
+9 Hi🌍 6
+
+# OCTET_LENGTH is unary — passing more than one argument must be rejected.
+SELECT id AS id, OCTET_LENGTH(data, data) AS len FROM textStream INTO lengthSink;
+----
+ERROR 2002
+
+# OCTET_LENGTH is unary — passing zero arguments must be rejected.
+SELECT id AS id, OCTET_LENGTH() AS len FROM textStream INTO lengthSink;
+----
+ERROR 2002
