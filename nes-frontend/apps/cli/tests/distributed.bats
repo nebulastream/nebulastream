@@ -21,44 +21,44 @@ teardown()      { nes_distributed_teardown; }
 
 @test "launch query from topology" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
 }
 
 @test "launch multiple query from topology" {
   setup_distributed tests/good/multiple-select-gen-into-void.yaml
 
-  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml start
+  run docker_nes_cli -t tests/good/multiple-select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
   [ ${#lines[@]} -eq 8 ]
 
   query_ids=("${lines[@]}")
 
-  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[0]}"
+  run docker_nes_cli -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[0]}"
   [ "$status" -eq 0 ]
 
-  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[1]}" "${query_ids[2]}" "${query_ids[3]}" "${query_ids[4]}" "${query_ids[5]}"
+  run docker_nes_cli -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[1]}" "${query_ids[2]}" "${query_ids[3]}" "${query_ids[4]}" "${query_ids[5]}"
   [ "$status" -eq 0 ]
 
-  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[6]}" "${query_ids[7]}"
+  run docker_nes_cli -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[6]}" "${query_ids[7]}"
   [ "$status" -eq 0 ]
 }
 
 @test "launch query from commandline" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 }
 
 @test "launch bad query from commandline" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'selectaaa DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'selectaaa DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 1 ]
 }
 
 @test "launch and stop query" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
@@ -67,13 +67,13 @@ teardown()      { nes_distributed_teardown; }
 
   sleep 1
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml stop "$QUERY_ID"
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
 @test "launch and monitor query" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
@@ -82,7 +82,7 @@ teardown()      { nes_distributed_teardown; }
 
   sleep 1
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
@@ -92,7 +92,7 @@ teardown()      { nes_distributed_teardown; }
 @test "launch and monitor distributed queries" {
   setup_distributed tests/good/distributed-query-deployment.yaml
 
-  run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
   # Output should be a query ID (human-readable name)
   [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
@@ -100,7 +100,7 @@ teardown()      { nes_distributed_teardown; }
 
   for i in $(seq 1 20); do
     sleep 1
-    run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
+    run docker_nes_cli -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
     [ "$status" -eq 0 ]
     QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
     if [ "$QUERY_STATUS" = "Running" ]; then
@@ -114,7 +114,7 @@ teardown()      { nes_distributed_teardown; }
 @test "launch and monitor distributed queries crazy join" {
   setup_distributed tests/good/chained-joins.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
   # Output should be a query ID (human-readable name)
   [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
@@ -122,19 +122,19 @@ teardown()      { nes_distributed_teardown; }
 
   sleep 1
 
-  run DOCKER_NES_CLI status "$QUERY_ID"
+  run docker_nes_cli status "$QUERY_ID"
   echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
   QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 
-  run DOCKER_NES_CLI stop "$QUERY_ID"
+  run docker_nes_cli stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
 @test "launch and monitor distributed queries crazy join with a fast source" {
   setup_distributed tests/good/chained-joins-one-fast-source.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
@@ -144,7 +144,7 @@ teardown()      { nes_distributed_teardown; }
   # Poll until the fast source has stopped and the query becomes PartiallyStopped
   for i in $(seq 1 20); do
     sleep 1
-    run DOCKER_NES_CLI status "$QUERY_ID"
+    run docker_nes_cli status "$QUERY_ID"
     [ "$status" -eq 0 ]
     QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
     if [ "$QUERY_STATUS" = "PartiallyStopped" ]; then
@@ -158,7 +158,7 @@ teardown()      { nes_distributed_teardown; }
   echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
   [ "$QUERY_STATUS" = "PartiallyStopped" ]
 
-  run DOCKER_NES_CLI stop "$QUERY_ID"
+  run docker_nes_cli stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
@@ -167,7 +167,7 @@ teardown()      { nes_distributed_teardown; }
 
   docker compose stop worker-1
 
-  run DOCKER_NES_CLI -d start
+  run docker_nes_cli -d start
 
   sync_workdir
   grep "(5001) : query registration call failed; Status: UNAVAILABLE" nes-cli.log
@@ -175,14 +175,14 @@ teardown()      { nes_distributed_teardown; }
 
   docker compose up -d --wait worker-1
   # now it should work
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
 }
 
 @test "worker goes offline during processing" {
   setup_distributed tests/good/chained-joins.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
@@ -192,7 +192,7 @@ teardown()      { nes_distributed_teardown; }
   # This would cause the query to fail as it was unexpectedly stopped. If we kill the worker: upstream and downstream
   # will wait for the "crashed" worker to return. However this test does not test that as it is currently not possible.
   docker compose kill worker-1
-  run DOCKER_NES_CLI status "$QUERY_ID"
+  run docker_nes_cli status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
@@ -247,7 +247,7 @@ EOF
 @test "worker goes offline and comes back during processing" {
   setup_distributed tests/good/chained-joins.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
@@ -255,7 +255,7 @@ EOF
 
   # Simulate a crash by killing worker-1.
   docker compose kill worker-1
-  run DOCKER_NES_CLI status "$QUERY_ID"
+  run docker_nes_cli status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   sleep 1
@@ -266,7 +266,7 @@ EOF
 # The query running on worker-1 is terminated and on restart it is not restarted, this will cause subsequent status
 # request to find that the previous local query id is not registered on worker-1, currently this is falsely reported as a ConnectionError.
 
-  run DOCKER_NES_CLI status "$QUERY_ID"
+  run docker_nes_cli status "$QUERY_ID"
   [ "$status" -eq 0 ]
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
 [
@@ -290,18 +290,18 @@ EOF
 @test "worker status" {
   setup_distributed tests/good/select-gen-into-void.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
   sleep 1
 
-  run DOCKER_NES_CLI status $query_id
+  run docker_nes_cli status $query_id
   [ $status -eq 0 ]
   assert_json_contains "[{\"query_id\":\"$query_id\", \"query_status\":\"Running\", \"running\": {}, \"started\": {}}]" "$output"
 
   local_query_id=$(echo "$output" | jq -r '.[1].local_query_id')
-  run DOCKER_NES_CLI status
+  run docker_nes_cli status
   [ $status -eq 0 ]
 
   # Expect to find the local query in the worker status
@@ -311,7 +311,7 @@ EOF
 @test "back pressure using worker config" {
   setup_distributed tests/good/backpressure-worker-config.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
@@ -324,7 +324,7 @@ EOF
     fi
   done
 
-  run DOCKER_NES_CLI stop $query_id
+  run docker_nes_cli stop $query_id
   # 0 means there is no overwrite and the worker default will be picked.
   grep "host: worker-2:8080" worker-2/singleNodeWorker.log
   grep "max_pending_acks: 0" worker-2/singleNodeWorker.log
@@ -336,7 +336,7 @@ EOF
 @test "back pressure using optimizer flags" {
   setup_distributed tests/good/backpressure-optimizer-flags.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
@@ -349,7 +349,7 @@ EOF
     fi
   done
 
-  run DOCKER_NES_CLI stop $query_id
+  run docker_nes_cli stop $query_id
   grep "host: worker-2:8080" worker-2/singleNodeWorker.log
   grep "max_pending_acks: 25" worker-2/singleNodeWorker.log
   grep "sender_queue_size: 32" worker-2/singleNodeWorker.log
@@ -360,7 +360,7 @@ EOF
 @test "order of worker termination when backpressure is applied. terminate sink" {
   setup_distributed tests/good/backpressure-worker-config.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
@@ -388,7 +388,7 @@ EOF
   grep "NetworkSink was closed by other side" worker-2/singleNodeWorker.log
   grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
 
-  run DOCKER_NES_CLI status $query_id
+  run docker_nes_cli status $query_id
   [ $status -eq 0 ]
 
   expected_json=$(cat <<EOF
@@ -414,7 +414,7 @@ EOF
 @test "order of worker termination when backpressure is applied. terminate source" {
   setup_distributed tests/good/backpressure-worker-config.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
@@ -431,7 +431,7 @@ EOF
   docker compose stop worker-2
   sleep 2
 
-  run DOCKER_NES_CLI status $query_id
+  run docker_nes_cli status $query_id
   [ $status -eq 0 ]
 
   expected_json=$(cat <<EOF
@@ -462,13 +462,13 @@ EOF
 
 @test "launch query using 3-nodes topology" {
   setup_distributed tests/good/3-nodes.yaml
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
 }
 
 @test "placement fails with reversed downstream edges" {
   setup_distributed tests/bad/3-nodes-reversed-edges.yaml
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 1 ]
 
   sync_workdir
