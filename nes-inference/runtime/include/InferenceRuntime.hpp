@@ -63,6 +63,7 @@ private:
     std::vector<size_t> inputShape;
     size_t nDim = 0;
     std::string functionName;
+    TensorElementType inputElementType = TensorElementType::FLOAT32;
 
     /// NOLINTNEXTLINE(modernize-avoid-c-arrays) dynamic byte buffer requires array form
     std::unique_ptr<std::byte[]> inputData;

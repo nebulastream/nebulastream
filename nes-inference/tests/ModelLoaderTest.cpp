@@ -75,6 +75,8 @@ TEST(ModelLoaderTest, LoadsIdentityModel)
     ASSERT_TRUE(result.has_value()) << "Failed to load identity model: " << (result ? "" : result.error());
     EXPECT_EQ(result->getInputShape(), (std::vector<size_t>{1, 100}));
     EXPECT_EQ(result->getOutputShape(), (std::vector<size_t>{1, 100}));
+    EXPECT_EQ(result->getInputElementType(), TensorElementType::FLOAT32);
+    EXPECT_EQ(result->getOutputElementType(), TensorElementType::FLOAT32);
     EXPECT_EQ(result->inputSize(), 400U);
     EXPECT_EQ(result->outputSize(), 400U);
     EXPECT_FALSE(result->getFunctionName().empty());
@@ -88,6 +90,8 @@ TEST(ModelLoaderTest, LoadsReductionModel)
     ASSERT_TRUE(result.has_value()) << "Failed to load reduction model: " << (result ? "" : result.error());
     EXPECT_EQ(result->getInputShape(), (std::vector<size_t>{1, 100}));
     EXPECT_EQ(result->getOutputShape(), (std::vector<size_t>{1, 10}));
+    EXPECT_EQ(result->getInputElementType(), TensorElementType::FLOAT32);
+    EXPECT_EQ(result->getOutputElementType(), TensorElementType::FLOAT32);
     EXPECT_EQ(result->inputSize(), 400U);
     EXPECT_EQ(result->outputSize(), 40U);
     EXPECT_FALSE(result->getFunctionName().empty());
@@ -101,8 +105,25 @@ TEST(ModelLoaderTest, LoadsExpansionModel)
     ASSERT_TRUE(result.has_value()) << "Failed to load expansion model: " << (result ? "" : result.error());
     EXPECT_EQ(result->getInputShape(), (std::vector<size_t>{1, 10}));
     EXPECT_EQ(result->getOutputShape(), (std::vector<size_t>{1, 100}));
+    EXPECT_EQ(result->getInputElementType(), TensorElementType::FLOAT32);
+    EXPECT_EQ(result->getOutputElementType(), TensorElementType::FLOAT32);
     EXPECT_EQ(result->inputSize(), 40U);
     EXPECT_EQ(result->outputSize(), 400U);
+    EXPECT_FALSE(result->getFunctionName().empty());
+    EXPECT_FALSE(result->empty());
+}
+
+TEST(ModelLoaderTest, LoadsVehicleCountModel)
+{
+    const std::string path = std::string(INFERENCE_TEST_DATA) + "/vehicle_count_model.onnx";
+    auto result = importAndCompile(path);
+    ASSERT_TRUE(result.has_value()) << "Failed to load vehicle count model: " << (result ? "" : result.error());
+    EXPECT_EQ(result->getInputShape(), (std::vector<size_t>{1, 540, 960, 3}));
+    EXPECT_EQ(result->getOutputShape(), (std::vector<size_t>{1, 1}));
+    EXPECT_EQ(result->getInputElementType(), TensorElementType::UINT8);
+    EXPECT_EQ(result->getOutputElementType(), TensorElementType::INT64);
+    EXPECT_EQ(result->inputSize(), 1555200U);
+    EXPECT_EQ(result->outputSize(), 8U);
     EXPECT_FALSE(result->getFunctionName().empty());
     EXPECT_FALSE(result->empty());
 }

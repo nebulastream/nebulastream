@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <numeric>
@@ -28,6 +29,27 @@
 
 namespace NES
 {
+
+enum class TensorElementType : uint8_t
+{
+    FLOAT32,
+    UINT8,
+    INT64,
+};
+
+[[nodiscard]] constexpr size_t tensorElementTypeSize(TensorElementType type)
+{
+    switch (type)
+    {
+        case TensorElementType::FLOAT32:
+            return sizeof(float);
+        case TensorElementType::UINT8:
+            return sizeof(uint8_t);
+        case TensorElementType::INT64:
+            return sizeof(int64_t);
+    }
+    std::unreachable();
+}
 
 namespace detail
 {
@@ -93,6 +115,8 @@ class Model
     std::string functionName;
     std::vector<size_t> inputShape;
     std::vector<size_t> outputShape;
+    TensorElementType inputElementType;
+    TensorElementType outputElementType;
 
     template <typename OtherTag>
     friend class Model;
@@ -101,8 +125,19 @@ class Model
     friend struct Reflector<Model<Imported_>>;
     friend struct Unreflector<Model<Imported_>>;
 
-    Model(detail::RefCountedByteBuffer buf, std::string fnName, std::vector<size_t> inShape, std::vector<size_t> outShape)
-        : data(std::move(buf)), functionName(std::move(fnName)), inputShape(std::move(inShape)), outputShape(std::move(outShape))
+    Model(
+        detail::RefCountedByteBuffer buf,
+        std::string fnName,
+        std::vector<size_t> inShape,
+        std::vector<size_t> outShape,
+        TensorElementType inType,
+        TensorElementType outType)
+        : data(std::move(buf))
+        , functionName(std::move(fnName))
+        , inputShape(std::move(inShape))
+        , outputShape(std::move(outShape))
+        , inputElementType(inType)
+        , outputElementType(outType)
     {
     }
 
@@ -114,6 +149,8 @@ class Model
         , functionName(std::move(other.functionName))
         , inputShape(std::move(other.inputShape))
         , outputShape(std::move(other.outputShape))
+        , inputElementType(std::move(other.inputElementType))
+        , outputElementType(std::move(other.outputElementType))
     {
     }
 
@@ -137,18 +174,22 @@ public:
 
     [[nodiscard]] const std::vector<size_t>& getOutputShape() const { return outputShape; }
 
+    [[nodiscard]] TensorElementType getInputElementType() const { return inputElementType; }
+
+    [[nodiscard]] TensorElementType getOutputElementType() const { return outputElementType; }
+
     [[nodiscard]] size_t getNDim() const { return inputShape.size(); }
 
     [[nodiscard]] size_t getOutputDims() const { return outputShape.size(); }
 
     [[nodiscard]] size_t inputSize() const
     {
-        return sizeof(float) * std::accumulate(inputShape.begin(), inputShape.end(), size_t{1}, std::multiplies<>());
+        return tensorElementTypeSize(inputElementType) * std::accumulate(inputShape.begin(), inputShape.end(), size_t{1}, std::multiplies<>());
     }
 
     [[nodiscard]] size_t outputSize() const
     {
-        return sizeof(float) * std::accumulate(outputShape.begin(), outputShape.end(), size_t{1}, std::multiplies<>());
+        return tensorElementTypeSize(outputElementType) * std::accumulate(outputShape.begin(), outputShape.end(), size_t{1}, std::multiplies<>());
     }
 
     bool operator==(const Model&) const = default;

@@ -87,7 +87,9 @@ std::expected<ImportedModel, ImportError> IreeImporter::importOnnx(const std::fi
         detail::RefCountedByteBuffer::fromBytes(result.stdoutData),
         std::move(signature->functionName),
         std::move(signature->inputShape),
-        std::move(signature->outputShape));
+        std::move(signature->outputShape),
+        signature->inputElementType,
+        signature->outputElementType);
 }
 
 }

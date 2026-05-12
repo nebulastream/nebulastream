@@ -22,6 +22,7 @@ add_plugin(ConstantValue LogicalFunction nes-logical-operators ConstantValueLogi
 add_plugin(FieldAccess LogicalFunction nes-logical-operators FieldAccessLogicalFunction.cpp)
 add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)
 add_plugin(FROM_BASE64 LogicalFunction nes-logical-operators FromBase64LogicalFunction.cpp)
+add_plugin(JPEG_TO_RGB_960X540 LogicalFunction nes-logical-operators JpegToRgb960x540LogicalFunction.cpp)
 add_plugin(TO_BASE64 LogicalFunction nes-logical-operators ToBase64LogicalFunction.cpp)
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
 add_plugin(CastToUnixTs LogicalFunction nes-logical-operators CastToUnixTimestampLogicalFunction.cpp)

@@ -15,6 +15,7 @@
 #include <Model.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -37,6 +38,8 @@ struct ReflectedImportedModel
     std::optional<std::string> functionName;
     std::optional<std::vector<size_t>> inputShape;
     std::optional<std::vector<size_t>> outputShape;
+    std::optional<uint8_t> inputElementType;
+    std::optional<uint8_t> outputElementType;
 };
 
 struct
@@ -59,7 +62,9 @@ Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model) const
         .mlir = std::make_optional(std::move(mlir)),
         .functionName = std::make_optional(model.getFunctionName()),
         .inputShape = std::make_optional(model.getInputShape()),
-        .outputShape = std::make_optional(model.getOutputShape())});
+        .outputShape = std::make_optional(model.getOutputShape()),
+        .inputElementType = std::make_optional(static_cast<uint8_t>(model.getInputElementType())),
+        .outputElementType = std::make_optional(static_cast<uint8_t>(model.getOutputElementType()))});
 }
 
 ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl) const
@@ -72,7 +77,9 @@ ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl) const
         detail::RefCountedByteBuffer::fromBytes({mlirBytes, mlir.size()}),
         reflected.functionName.value_or(std::string{}),
         reflected.inputShape.value_or(std::vector<size_t>{}),
-        reflected.outputShape.value_or(std::vector<size_t>{})};
+        reflected.outputShape.value_or(std::vector<size_t>{}),
+        static_cast<TensorElementType>(reflected.inputElementType.value_or(static_cast<uint8_t>(TensorElementType::FLOAT32))),
+        static_cast<TensorElementType>(reflected.outputElementType.value_or(static_cast<uint8_t>(TensorElementType::FLOAT32)))};
 }
 
 Reflected Reflector<RegisteredModel>::operator()(const RegisteredModel& model) const

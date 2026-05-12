@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 #include <CompilationContext.hpp>
@@ -58,7 +59,11 @@ private:
     std::shared_ptr<detail::ThreadLocalRuntimeWrapper> threadLocal;
     std::vector<std::string> inputFieldNames;
     std::vector<std::string> outputFieldNames;
+    DataType outputFieldType;
+    size_t inputSize;
     size_t outputSize;
+    size_t inputElementSize;
+    size_t outputElementSize;
     bool varsizedInput;
     bool varsizedOutput;
     std::optional<PhysicalOperator> child;

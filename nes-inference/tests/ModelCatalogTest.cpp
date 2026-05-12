@@ -54,6 +54,11 @@ std::filesystem::path identityPath()
     return std::filesystem::path(INFERENCE_TEST_DATA) / "tiny_identity.onnx";
 }
 
+std::filesystem::path vehicleCountPath()
+{
+    return std::filesystem::path(INFERENCE_TEST_DATA) / "vehicle_count_model.onnx";
+}
+
 }
 
 class ModelCatalogTest : public ::testing::Test
@@ -82,6 +87,18 @@ TEST_F(ModelCatalogTest, RegistersModelWithVarsizedSingleFieldOnBothSides)
             .inputs = Schema{}.addField("blob_in", dt(DataType::Type::VARSIZED)),
             .outputs = Schema{}.addField("blob_out", dt(DataType::Type::VARSIZED))}));
     EXPECT_TRUE(catalog.hasModel("identity-varsized"));
+}
+
+TEST_F(ModelCatalogTest, RegistersVehicleCountModelWithVarsizedInputAndInt64Output)
+{
+    ModelCatalog catalog;
+    ASSERT_NO_THROW(catalog.registerModel(
+        "vehicle-count",
+        vehicleCountPath(),
+        ModelSchema{
+            .inputs = Schema{}.addField("image", dt(DataType::Type::VARSIZED)),
+            .outputs = Schema{}.addField("vehicle_count", dt(DataType::Type::INT64))}));
+    EXPECT_TRUE(catalog.hasModel("vehicle-count"));
 }
 
 TEST_F(ModelCatalogTest, RejectsNonFloat32NonVarsizedInputType)
