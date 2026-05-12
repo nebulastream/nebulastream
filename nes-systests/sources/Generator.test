@@ -170,3 +170,34 @@ INTO generator_sink_text;
 17,yellow,X
 18,brown,bl5
 19,yellow,IgiKX
+
+CREATE LOGICAL SOURCE generator_large_text(id UINT64 NOT NULL, text VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR generator_large_text TYPE GENERATOR SET(
+    'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    1 as `SOURCE`.SEED,
+    'SEQUENCE UINT64 0 20 1, RANDOMSTR 4096 4096' AS `SOURCE`.GENERATOR_SCHEMA
+);
+CREATE SINK generator_sink_text_with_size(generator_large_text.id UINT64 NOT NULL, length UINT64 NOT NULL) TYPE File;
+SELECT id, OCTET_LENGTH(text) as length FROM generator_large_text
+INTO generator_sink_text_with_size;
+----
+0,4096
+1,4096
+2,4096
+3,4096
+4,4096
+5,4096
+6,4096
+7,4096
+8,4096
+9,4096
+10,4096
+11,4096
+12,4096
+13,4096
+14,4096
+15,4096
+16,4096
+17,4096
+18,4096
+19,4096
