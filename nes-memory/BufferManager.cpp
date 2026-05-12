@@ -14,7 +14,9 @@
 #include <Runtime/BufferManager.hpp>
 
 #include <algorithm>
+#include <array>
 #include <atomic>
+#include <bit>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
@@ -139,6 +141,13 @@ void BufferManager::initialize(uint32_t withAlignment)
     const size_t offsetBetweenBuffers = allocatedAreaSize;
     allocatedAreaSize *= numOfBuffers;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
+
+#ifndef NDEBUG
+    constexpr std::array marker{'N', 'E', 'B', 'U', 'S', 'T', 'R', 'M'};
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): basePointer is freshly allocated raw storage aligned to >= alignof(uint64_t).
+    std::fill_n(reinterpret_cast<uint64_t*>(basePointer), allocatedAreaSize / sizeof(uint64_t), std::bit_cast<uint64_t>(marker));
+#endif
+
     NES_TRACE(
         "Allocated {} bytes with alignment {} buffer size {} num buffer {} controlBlockSize {} {}",
         allocatedAreaSize,
