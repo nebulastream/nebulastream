@@ -1,0 +1,43 @@
+diff --git a/include/mqtt/ssl_options.h b/include/mqtt/ssl_options.h
+index 7fb7ac3..27223d3 100644
+--- a/include/mqtt/ssl_options.h
++++ b/include/mqtt/ssl_options.h
+@@ -103,7 +103,7 @@ private:
+     psk_handler pskHandler_;
+ 
+     /** ALPN protocol list, in wire format */
+-    std::basic_string<unsigned char> protos_;
++    std::basic_string<char> protos_;
+ 
+     /** Callbacks from the C library */
+     static int on_error(const char* str, size_t len, void* context);
+diff --git a/src/ssl_options.cpp b/src/ssl_options.cpp
+index 52fdd36..680e534 100644
+--- a/src/ssl_options.cpp
++++ b/src/ssl_options.cpp
+@@ -321,13 +321,11 @@ std::vector<string> ssl_options::get_alpn_protos() const
+ // prepended by a byte of its length.
+ void ssl_options::set_alpn_protos(const std::vector<string>& protos)
+ {
+-    using uchar = unsigned char;
+-
+     if (!protos.empty()) {
+-        std::basic_string<uchar> protoBin;
++        std::basic_string<char> protoBin;
+         for (const auto& proto : protos) {
+-            protoBin.push_back(uchar(proto.length()));
+-            for (const char c : proto) protoBin.push_back(uchar(c));
++            protoBin.push_back(char(proto.length()));
++            for (const char c : proto) protoBin.push_back(char(c));
+         }
+         protos_ = std::move(protoBin);
+ 
+@@ -335,7 +333,7 @@ void ssl_options::set_alpn_protos(const std::vector<string>& protos)
+         opts_.protos_len = unsigned(protos_.length());
+     }
+     else {
+-        protos_ = std::basic_string<uchar>();
++        protos_ = std::basic_string<char>();
+         opts_.protos = nullptr;
+         opts_.protos_len = 0;
+     }
