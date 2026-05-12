@@ -22,7 +22,6 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
-#include <ScanPhysicalOperator.hpp>
 
 namespace NES
 {
