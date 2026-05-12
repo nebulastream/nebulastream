@@ -54,7 +54,7 @@ docker_nes_repl() {
   [ "$status" -eq 0 ]
 }
 
-#bats test_tags=IREE
+#bats test_tags=INFERENCE
 @test "create model show and drop lifecycle" {
   setup_distributed tests/topologies/1-node.yaml
   run docker_nes_repl tests/sql-file-tests/good/create_model.sql

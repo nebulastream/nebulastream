@@ -18,7 +18,7 @@ endfunction()
 
 add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp")
 
-if (ENABLE_IREE_TESTS)
+if (ENABLE_INFERENCE_TESTS)
     add_nes_logical_operators_test(infer-model-logical-operator-test "InferModelLogicalOperatorTest.cpp")
     target_link_libraries(infer-model-logical-operator-test nes-inference nes-grpc)
     target_compile_definitions(infer-model-logical-operator-test PRIVATE INFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata")
