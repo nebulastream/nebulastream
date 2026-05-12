@@ -1,0 +1,14 @@
+# name: neg_float_repro
+# groups: [test]
+
+CREATE LOGICAL SOURCE s(id INT32 NOT NULL, v FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+1,-10.0
+2,1.0
+
+CREATE SINK out(s.id INT32 NOT NULL, s.v FLOAT64 NOT NULL) TYPE File;
+
+SELECT * FROM s WHERE v < FLOAT64(-3.0) INTO out;
+----
+1,-10.0

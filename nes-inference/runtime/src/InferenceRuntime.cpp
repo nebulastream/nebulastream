@@ -104,6 +104,20 @@ const SharedIreeRuntime& sharedRuntime()
     return Runtime;
 }
 
+iree_hal_element_type_t toIreeElementType(TensorElementType type)
+{
+    switch (type)
+    {
+        case TensorElementType::FLOAT32:
+            return IREE_HAL_ELEMENT_TYPE_FLOAT_32;
+        case TensorElementType::UINT8:
+            return IREE_HAL_ELEMENT_TYPE_UINT_8;
+        case TensorElementType::INT64:
+            return IREE_HAL_ELEMENT_TYPE_INT_64;
+    }
+    std::unreachable();
+}
+
 }
 
 struct InferenceRuntime::Impl
@@ -161,6 +175,7 @@ void InferenceRuntime::setup(const CompiledModel& model)
     this->inputShape = model.getInputShape();
     this->nDim = model.getNDim();
     this->functionName = model.getFunctionName();
+    this->inputElementType = model.getInputElementType();
 
     /// NOLINTNEXTLINE(modernize-avoid-c-arrays) dynamic byte buffer requires array form
     this->inputData = std::make_unique<std::byte[]>(model.inputSize());
@@ -198,7 +213,7 @@ void InferenceRuntime::infer()
         deviceAllocator,
         this->nDim,
         this->inputShape.data(),
-        IREE_HAL_ELEMENT_TYPE_FLOAT_32,
+        toIreeElementType(this->inputElementType),
         IREE_HAL_ENCODING_TYPE_DENSE_ROW_MAJOR,
         iree_hal_buffer_params_t{
             .usage = IREE_HAL_BUFFER_USAGE_DEFAULT,

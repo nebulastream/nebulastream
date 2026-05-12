@@ -73,6 +73,23 @@ std::optional<std::vector<size_t>> parseShape(std::string_view shapeCsv)
     return shape;
 }
 
+std::optional<TensorElementType> parseTensorElementType(std::string_view type)
+{
+    if (type == "f32")
+    {
+        return TensorElementType::FLOAT32;
+    }
+    if (type == "ui8" || type == "u8")
+    {
+        return TensorElementType::UINT8;
+    }
+    if (type == "i64" || type == "si64")
+    {
+        return TensorElementType::INT64;
+    }
+    return std::nullopt;
+}
+
 }
 
 ///NOLINTNEXTLINE(readability-convert-member-functions-to-static) hide implementation detail
@@ -89,11 +106,12 @@ std::expected<ModelSignature, std::string> MlirAnalyzer::analyze(std::string_vie
         return std::unexpected(std::string{"could not find func.func signature in MLIR"});
     }
 
-    const std::string inType = match[3].str();
-    const std::string outType = match[5].str();
-    if (inType != "f32" || outType != "f32")
+    const auto inputElementType = parseTensorElementType(match[3].str());
+    const auto outputElementType = parseTensorElementType(match[5].str());
+    if (!inputElementType.has_value() || !outputElementType.has_value())
     {
-        return std::unexpected(fmt::format("unsupported tensor element types: input={}, output={} (only f32 supported)", inType, outType));
+        return std::unexpected(
+            fmt::format("unsupported tensor element types: input={}, output={}", match[3].str(), match[5].str()));
     }
 
     auto inputShape = parseShape(std::string_view{match[2].first, match[2].second});
@@ -109,7 +127,11 @@ std::expected<ModelSignature, std::string> MlirAnalyzer::analyze(std::string_vie
 
     /// IREE runtime looks up entry points by their fully qualified name `module.<name>`.
     return ModelSignature{
-        .functionName = "module." + match[1].str(), .inputShape = std::move(*inputShape), .outputShape = std::move(*outputShape)};
+        .functionName = "module." + match[1].str(),
+        .inputShape = std::move(*inputShape),
+        .outputShape = std::move(*outputShape),
+        .inputElementType = *inputElementType,
+        .outputElementType = *outputElementType};
 }
 
 }

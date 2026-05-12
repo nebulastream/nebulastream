@@ -29,9 +29,16 @@ namespace NES::detail
 struct ModelAccess
 {
     static ImportedModel
-    makeImported(RefCountedByteBuffer buf, std::string fnName, std::vector<size_t> inShape, std::vector<size_t> outShape)
+    makeImported(
+        RefCountedByteBuffer buf,
+        std::string fnName,
+        std::vector<size_t> inShape,
+        std::vector<size_t> outShape,
+        TensorElementType inputElementType,
+        TensorElementType outputElementType)
     {
-        return ImportedModel{std::move(buf), std::move(fnName), std::move(inShape), std::move(outShape)};
+        return ImportedModel{
+            std::move(buf), std::move(fnName), std::move(inShape), std::move(outShape), inputElementType, outputElementType};
     }
 
     static CompiledModel compileFrom(ImportedModel imported, RefCountedByteBuffer buf)

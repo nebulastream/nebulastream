@@ -20,6 +20,8 @@
 #include <string_view>
 #include <vector>
 
+#include <Model.hpp>
+
 namespace NES
 {
 
@@ -28,6 +30,8 @@ struct ModelSignature
     std::string functionName;
     std::vector<size_t> inputShape;
     std::vector<size_t> outputShape;
+    TensorElementType inputElementType;
+    TensorElementType outputElementType;
 
     bool operator==(const ModelSignature&) const = default;
 };

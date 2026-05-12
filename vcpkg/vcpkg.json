@@ -47,6 +47,7 @@
     "gtest",
     "highs",
     "ireeruntime",
+    "libjpeg-turbo",
     "libcuckoo",
     "libuuid",
     "magic-enum",

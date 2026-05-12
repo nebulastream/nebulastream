@@ -36,6 +36,7 @@
 #include <Arena.hpp>
 #include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
+#include <ErrorHandling.hpp>
 #include <Model.hpp>
 #include <PhysicalOperator.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -79,6 +80,20 @@ namespace
 
 using detail::ThreadLocalRuntimeWrapper;
 
+DataType::Type queryDataTypeForTensorElementType(TensorElementType type)
+{
+    switch (type)
+    {
+        case TensorElementType::FLOAT32:
+            return DataType::Type::FLOAT32;
+        case TensorElementType::UINT8:
+            return DataType::Type::UINT8;
+        case TensorElementType::INT64:
+            return DataType::Type::INT64;
+    }
+    std::unreachable();
+}
+
 void setupSessions(ThreadLocalRuntimeWrapper* twl, PipelineExecutionContext* pec)
 {
     twl->setup(pec->getNumberOfWorkerThreads());
@@ -101,6 +116,14 @@ void infer(ThreadLocalRuntimeWrapper* twl, WorkerThreadId thread)
     twl->getHandle(thread).infer();
 }
 
+void validateInputBlobSize(uint64_t actualSize, uint64_t expectedSize)
+{
+    if (actualSize != expectedSize)
+    {
+        throw InferenceRuntimeFailure("Model input blob size mismatch: got {} B but expected {} B", actualSize, expectedSize);
+    }
+}
+
 }
 
 InferModelPhysicalOperator::InferModelPhysicalOperator(
@@ -111,7 +134,11 @@ InferModelPhysicalOperator::InferModelPhysicalOperator(
     bool varsizedOutput)
     : inputFieldNames(std::move(inputFieldNames))
     , outputFieldNames(std::move(outputFieldNames))
+    , outputFieldType(queryDataTypeForTensorElementType(model.getOutputElementType()), DataType::NULLABLE::NOT_NULLABLE)
+    , inputSize(model.inputSize())
     , outputSize(model.outputSize())
+    , inputElementSize(tensorElementTypeSize(model.getInputElementType()))
+    , outputElementSize(tensorElementTypeSize(model.getOutputElementType()))
     , varsizedInput(varsizedInput)
     , varsizedOutput(varsizedOutput)
 {
@@ -133,6 +160,7 @@ void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) 
     {
         const auto& value = record.read(inputFieldNames.at(0));
         auto varSized = value.getRawValueAs<VariableSizedData>();
+        nautilus::invoke(validateInputBlobSize, varSized.getSize(), nautilus::val<uint64_t>(inputSize));
         nautilus::memcpy(inputBuffer, varSized.getContent(), varSized.getSize());
     }
     else
@@ -140,7 +168,7 @@ void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) 
         for (nautilus::static_val<size_t> i = 0; i < inputFieldNames.size(); ++i)
         {
             const auto value = record.read(inputFieldNames.at(nautilus::static_val<int>(i)));
-            const auto memPos = inputBuffer + nautilus::val<uint64_t>(i * sizeof(float));
+            const auto memPos = inputBuffer + nautilus::val<uint64_t>(i * inputElementSize);
             value.writeToMemory(memPos);
         }
     }
@@ -158,11 +186,10 @@ void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) 
     }
     else
     {
-        const DataType floatType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE};
         for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
         {
-            const auto memPos = outputBuffer + nautilus::val<uint64_t>(i * sizeof(float));
-            const auto result = VarVal::readNonNullableVarValFromMemory(memPos, floatType);
+            const auto memPos = outputBuffer + nautilus::val<uint64_t>(i * outputElementSize);
+            const auto result = VarVal::readNonNullableVarValFromMemory(memPos, outputFieldType);
             record.write(outputFieldNames.at(i), result);
         }
     }

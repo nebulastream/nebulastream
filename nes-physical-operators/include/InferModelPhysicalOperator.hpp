@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <Interface/Record.hpp>
 
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -59,7 +60,11 @@ private:
     std::shared_ptr<detail::ThreadLocalRuntimeWrapper> threadLocal;
     std::vector<QualifiedIdentifier> inputFieldNames;
     std::vector<QualifiedIdentifier> outputFieldNames;
+    DataType outputFieldType;
+    size_t inputSize;
     size_t outputSize;
+    size_t inputElementSize;
+    size_t outputElementSize;
     bool varsizedInput;
     bool varsizedOutput;
     std::optional<PhysicalOperator> child;

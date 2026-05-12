@@ -1,0 +1,19 @@
+# name: inference/InferVehicleCountModel.test
+# description: Vehicle-count model inference from base64-encoded JPEG frame bytes
+# groups: [Inference]
+
+CREATE LOGICAL SOURCE stream(image_jpeg_base64 VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH FILE small/inference/vehicle_count_img00004_jpeg_base64.csv
+
+CREATE MODEL vehicle_counter ('model/vehicle_count_model.onnx')
+INPUT (image VARSIZED)
+OUTPUT (vehicle_count INT64);
+
+CREATE SINK result(VEHICLE_COUNT INT64 NOT NULL) TYPE File;
+
+SELECT vehicle_count
+FROM MODEL_INFERENCE(vehicle_counter, (SELECT JPEG_TO_RGB_960X540(FROM_BASE64(image_jpeg_base64)) AS image FROM stream))
+INTO result;
+----
+10
