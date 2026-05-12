@@ -44,54 +44,26 @@ target_include_directories(nes-cli
 # We use bats to drive the non-interactive tests for the cli and repl
 # This also tests the embedded version of the repl, which does not require a docker compose setup.
 
-if (ENABLE_BATS_TESTS)
+add_e2e_test(
+    NAME embedded-repl-test
+    BATS_FILE repl/tests/embedded.bats
+)
 
-    add_test(
-            NAME embedded-repl-test
-            COMMAND
-            env NES_REPL=$<TARGET_FILE:nes-repl-embedded>
-            env NES_REPL_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/repl/tests
-            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
-            env SYSTEST_TESTDATA=${CMAKE_CURRENT_BINARY_DIR}/../../nes-systests/testdata
-            ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/embedded.bats
-    )
-
-    add_test(
-            NAME offline-cli-test
-            COMMAND
-            env NES_CLI=$<TARGET_FILE:nes-cli>
-            env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/cli/tests
-            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
-            env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-            ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/offline.bats
-    )
-endif ()
+add_e2e_test(
+    NAME offline-cli-test
+    BATS_FILE cli/tests/offline.bats
+)
 
 # These tests use docker CLI to run docker-compose from within the development container.
-if (ENABLE_DOCKER_TESTS)
-    if (ENABLE_BATS_TESTS)
-        add_test(
-                NAME distributed-cli-test
-                COMMAND
-                env NES_CLI=$<TARGET_FILE:nes-cli>
-                env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/cli/tests
-                env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-                env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
-                env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
-                ${BATS} --jobs 4 --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/distributed.bats
-        )
-        set_tests_properties(distributed-cli-test PROPERTIES LABELS "DockerCompose" FIXTURES_REQUIRED RuntimeBaseImage)
+add_e2e_test(
+    NAME distributed-cli-test
+    BATS_FILE cli/tests/distributed.bats
+    DOCKER_COMPOSE
+    JOBS 4
+)
 
-        add_test(
-                NAME distributed-repl-tests
-                COMMAND
-                env NES_REPL=$<TARGET_FILE:nes-repl>
-                env NES_REPL_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/repl/tests
-                env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-                env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
-                env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
-                ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/distributed.bats
-        )
-        set_tests_properties(distributed-repl-tests PROPERTIES LABELS "DockerCompose" FIXTURES_REQUIRED RuntimeBaseImage)
-    endif ()
-endif ()
+add_e2e_test(
+    NAME distributed-repl-tests
+    BATS_FILE repl/tests/distributed.bats
+    DOCKER_COMPOSE
+)
