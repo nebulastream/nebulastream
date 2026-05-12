@@ -17,6 +17,7 @@ add_source_files(nes-sinks
         Sink.cpp
         SinkProvider.cpp
         SinkCatalog.cpp
+        BackpressureHandler.cpp
 )
 
 # Register plugins
