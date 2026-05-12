@@ -1,0 +1,45 @@
+# name: function/varsized/CharLength.test
+# description: Tests for the CHAR_LENGTH function on VARSIZED inputs (counts UTF-8 codepoints, returns UINT64)
+# groups: [Function, Text, Projection]
+
+# Same fixture as OctetLength.test — id column lets us include an empty-string row.
+CREATE LOGICAL SOURCE textStream(id UINT64 NOT NULL, data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR textStream TYPE File;
+ATTACH INLINE
+1,
+2,Hello
+3,NebulaStream
+4,hello world
+5,!@?$%^&*()
+6,äöü
+7,你好
+8,🎉🚀
+9,Hi🌍
+
+CREATE SINK lengthSink(id UINT64 NOT NULL, len UINT64 NOT NULL) TYPE File;
+
+# Codepoint count: ASCII rows match their byte length, "äöü" is 3 codepoints (not 6).
+SELECT id AS id, CHAR_LENGTH(data) AS len FROM textStream INTO lengthSink;
+----
+1 0
+2 5
+3 12
+4 11
+5 10
+6 3
+7 2
+8 2
+9 3
+
+# CHAR_LENGTH composed with CONCAT — append "!!" (2 codepoints) to each row.
+SELECT id AS id, CHAR_LENGTH(CONCAT(data, VARSIZED("!!"))) AS len FROM textStream INTO lengthSink;
+----
+1 2
+2 7
+3 14
+4 13
+5 12
+6 5
+7 4
+8 4
+9 5
