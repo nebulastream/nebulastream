@@ -94,10 +94,25 @@ public:
         false,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
 
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_UPPER_THRESHOLD{
+        "backpressure_upper_threshold",
+        1000,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(BACKPRESSURE_UPPER_THRESHOLD, config); }};
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_LOWER_THRESHOLD{
+        "backpressure_lower_threshold",
+        200,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(BACKPRESSURE_LOWER_THRESHOLD, config); }};
+
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP);
+        = DescriptorConfig::createConfigParameterContainerMap(
+            OUTPUT_FORMAT, ADD_TIMESTAMP, BACKPRESSURE_UPPER_THRESHOLD, BACKPRESSURE_LOWER_THRESHOLD);
 
     static std::optional<DescriptorConfig::Config>
     validateAndFormatConfig(std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs);
