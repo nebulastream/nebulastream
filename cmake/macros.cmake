@@ -94,3 +94,98 @@ macro(add_tests_if_enabled TEST_FOLDER_NAME)
         add_subdirectory(${TEST_FOLDER_NAME})
     endif ()
 endmacro()
+
+# Adds a bats end-to-end test that uses the shared lib at
+# scripts/testing/distributed_bats_lib.bash. Gated on ENABLE_BATS_TESTS; if
+# DOCKER_COMPOSE is set, additionally gated on ENABLE_DOCKER_TESTS. No-op
+# when gates are OFF, so callers do not need to wrap calls in if() guards.
+#
+# Required:
+#   NAME — ctest name
+#   BATS_FILE — bats file path relative to CMAKE_CURRENT_SOURCE_DIR
+#
+# Optional:
+#   DOCKER_COMPOSE — flag: run as a docker-compose-backed test (adds the
+#                    DockerCompose label, RuntimeBaseImage fixture, and the
+#                    NES_RUNTIME_BASE_IMAGE env var). Without it the test
+#                    runs the binaries directly (offline).
+#   JOBS      — bats parallelism (omit for sequential)
+#   EXTRA_ENV — additional KEY=VALUE env entries (escape hatch)
+#
+# Always-on bats flags: --verbose-run --timing.
+#
+# Auto-injected env (the .bats picks whichever it needs):
+#   NES_DIR, NES_TEST_TMP_DIR, NES_BATS_LIB
+#   NES_WORKER         = $<TARGET_FILE:nes-single-node-worker>
+#   NES_CLI            = $<TARGET_FILE:nes-cli>
+#   NES_REPL           = $<TARGET_FILE:nes-repl>
+#   NES_REPL_EMBEDDED  = $<TARGET_FILE:nes-repl-embedded>
+#   NES_SYSTEST        = $<TARGET_FILE:systest>
+#   NES_RUNTIME_BASE_IMAGE (only when DOCKER_COMPOSE is set)
+#
+# Fixture dependencies: E2eBinaries always; RuntimeBaseImage when
+# DOCKER_COMPOSE is set. Per-test app images are built by the .bats
+# setup_file with anonymous tags and rely on docker layer caching.
+function(add_e2e_test)
+    cmake_parse_arguments(ARG
+        "DOCKER_COMPOSE"
+        "NAME;BATS_FILE;JOBS"
+        "EXTRA_ENV"
+        ${ARGN}
+    )
+    if (NOT ARG_NAME)
+        message(FATAL_ERROR "add_e2e_test requires NAME")
+    endif ()
+    if (NOT ARG_BATS_FILE)
+        message(FATAL_ERROR "add_e2e_test requires BATS_FILE")
+    endif ()
+    if (NOT ENABLE_BATS_TESTS)
+        return()
+    endif ()
+    if (ARG_DOCKER_COMPOSE AND NOT ENABLE_DOCKER_TESTS)
+        return()
+    endif ()
+
+    set(_bats_flags --verbose-run --timing)
+    if (ARG_JOBS)
+        list(APPEND _bats_flags --jobs ${ARG_JOBS})
+    endif ()
+
+    set(_env_pairs
+        NES_DIR=${CMAKE_SOURCE_DIR}
+        NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
+        NES_BATS_LIB=${CMAKE_SOURCE_DIR}/scripts/testing/distributed_bats_lib.bash
+        NES_WORKER=$<TARGET_FILE:nes-single-node-worker>
+        NES_CLI=$<TARGET_FILE:nes-cli>
+        NES_REPL=$<TARGET_FILE:nes-repl>
+        NES_REPL_EMBEDDED=$<TARGET_FILE:nes-repl-embedded>
+        NES_SYSTEST=$<TARGET_FILE:systest>
+    )
+    if (ARG_DOCKER_COMPOSE)
+        list(APPEND _env_pairs NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE})
+    endif ()
+    list(APPEND _env_pairs ${ARG_EXTRA_ENV})
+
+    set(_env_cmd)
+    foreach (_pair IN LISTS _env_pairs)
+        list(APPEND _env_cmd env ${_pair})
+    endforeach ()
+
+    add_test(
+        NAME ${ARG_NAME}
+        COMMAND ${_env_cmd}
+            ${BATS} ${_bats_flags}
+            ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_BATS_FILE}
+    )
+
+    set(_fixtures E2eBinaries)
+    set(_labels "")
+    if (ARG_DOCKER_COMPOSE)
+        list(APPEND _fixtures RuntimeBaseImage)
+        set(_labels DockerCompose)
+    endif ()
+    set_tests_properties(${ARG_NAME} PROPERTIES
+        FIXTURES_REQUIRED "${_fixtures}"
+        LABELS "${_labels}"
+    )
+endfunction()
