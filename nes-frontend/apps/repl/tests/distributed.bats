@@ -19,7 +19,7 @@ teardown_file() { nes_distributed_teardown_file; }
 setup()         { nes_distributed_setup; }
 teardown()      { nes_distributed_teardown; }
 
-DOCKER_NES_REPL() {
+docker_nes_repl() {
   # In Docker-out-of-Docker environments, docker exec tears down the exec
   # session when its stdin pipe closes, even if the process is still running.
   # Work around this by: (1) piping from tail to keep stdin open until
@@ -30,7 +30,7 @@ DOCKER_NES_REPL() {
 
 @test "launch query from topology" {
   setup_distributed tests/topologies/8-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/good/test_large_distributed.sql
+  run docker_nes_repl tests/sql-file-tests/good/test_large_distributed.sql
   [ "$status" -eq 0 ]
 
   assert_json_equal '[{"worker":"sink-node:8080"}]' "${lines[0]}"
@@ -50,13 +50,13 @@ DOCKER_NES_REPL() {
 
 @test "launch multiple queries" {
   setup_distributed tests/topologies/1-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries_distributed.sql
+  run docker_nes_repl tests/sql-file-tests/good/multiple_queries_distributed.sql
   [ "$status" -eq 0 ]
 }
 
 @test "create model show and drop lifecycle" {
   setup_distributed tests/topologies/1-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/good/create_model.sql
+  run docker_nes_repl tests/sql-file-tests/good/create_model.sql
   [ "$status" -eq 0 ]
 
   # lines[0]: CREATE MODEL result — eagerly loaded, returns full metadata
@@ -73,7 +73,7 @@ DOCKER_NES_REPL() {
 
 @test "launch bad query should fail" {
   setup_distributed tests/topologies/1-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/bad/integer_literal_in_query_without_type_distributed.sql
+  run docker_nes_repl tests/sql-file-tests/bad/integer_literal_in_query_without_type_distributed.sql
   [ "$status" -ne 0 ]
 
   sync_workdir
@@ -84,7 +84,7 @@ DOCKER_NES_REPL() {
   setup_distributed tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
-  ADDITIONAL_NEBULI_FLAGS="--on-exit WAIT_FOR_QUERY_TERMINATION" run DOCKER_NES_REPL tests/sql-file-tests/good/non_infinite_query.sql
+  ADDITIONAL_NEBULI_FLAGS="--on-exit WAIT_FOR_QUERY_TERMINATION" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]
@@ -125,7 +125,7 @@ DOCKER_NES_REPL() {
   setup_distributed tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
-  ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run DOCKER_NES_REPL tests/sql-file-tests/good/non_infinite_query.sql
+  ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]
@@ -145,7 +145,7 @@ DOCKER_NES_REPL() {
   setup_distributed tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
-  run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries_distributed.sql
+  run docker_nes_repl tests/sql-file-tests/good/multiple_queries_distributed.sql
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]

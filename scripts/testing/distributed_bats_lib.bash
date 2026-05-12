@@ -25,7 +25,7 @@
 #     nes_distributed_setup_file, nes_distributed_teardown_file
 #     nes_distributed_setup, nes_distributed_teardown
 #     sync_workdir, setup_distributed
-#     DOCKER_NES_CLI, wait_until_status   (used by cli/MQTT* suites)
+#     docker_nes_cli, wait_until_status   (used by cli/MQTT* suites)
 #
 #   Layer-2 callers pass the client binary path to nes_distributed_setup_file
 #   (e.g. "$NES_CLI"); the lib derives the test label / image-name prefixes /
@@ -288,7 +288,7 @@ setup_distributed() {
   return $exit_code
 }
 
-DOCKER_NES_CLI() {
+docker_nes_cli() {
   # docker compose exec v2 disconnects the session when its stdin reaches EOF
   # (docker/compose#10418). In bats subshells stdin is closed, so we pipe from
   # tail to keep the connection alive.
@@ -303,7 +303,7 @@ wait_until_status() {
 
   for i in $(seq 1 80); do
     sleep 1
-    run DOCKER_NES_CLI -t "$topology_file" status "$query_id"
+    run docker_nes_cli -t "$topology_file" status "$query_id"
     [ "$status" -eq 0 ]
     query_status=$(echo "$output" | jq -r --arg query_id "$query_id" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
     if [ "$query_status" = "$desired_status" ]; then
