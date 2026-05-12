@@ -17,8 +17,10 @@
 #include <map>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
@@ -33,12 +35,31 @@
 namespace NES
 {
 
-void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig)
+void to_json(nlohmann::json& jsonOutput, const InputFormatterDescriptor& config)
 {
-    jsonOutput = nlohmann::json{
-        {"type", parserConfig.parserType},
-        {"field_delimiter", parserConfig.fieldDelimiter},
-        {"tuple_delimiter", parserConfig.tupleDelimiter}};
+    jsonOutput = nlohmann::json::object();
+    jsonOutput["type"] = config.getInputFormatterType();
+    const auto orderedConfig = config.getConfig() | std::ranges::to<std::map<std::string, DescriptorConfig::ConfigType>>();
+    for (const auto& [key, val] : orderedConfig)
+    {
+        if (key == InputFormatterDescriptor::getTypeString())
+        {
+            continue;
+        }
+        jsonOutput[key] = std::visit(
+            [](auto&& arg) -> nlohmann::json
+            {
+                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, char>)
+                {
+                    return std::string(1, arg);
+                }
+                else
+                {
+                    return nlohmann::json(arg);
+                }
+            },
+            val);
+    }
 }
 
 void to_json(nlohmann::json& jsonOutput, const DataType& dataType)

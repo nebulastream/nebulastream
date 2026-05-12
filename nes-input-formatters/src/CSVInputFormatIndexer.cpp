@@ -19,14 +19,17 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 
+#include <Configurations/Descriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsetRawBufferIndex.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatter.hpp>
+#include <InputFormatterValidationRegistry.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 
@@ -144,6 +147,17 @@ std::unique_ptr<RawBufferIndex> CSVInputFormatIndexer::indexRawBuffer(const std:
     const auto offsetOfLastTupleDelimiter = static_cast<FieldIndex>(startIdxOfNextTuple - SIZE_OF_TUPLE_DELIMITER);
     fieldOffsets->markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
     return fieldOffsets;
+}
+
+DescriptorConfig::Config CSVInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<ConfigParametersCSVInputFormatIndexer>(std::move(config), NAME);
+}
+
+InputFormatterValidationRegistryReturnType
+InputFormatterValidationGeneratedRegistrar::RegisterCSVInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+{
+    return CSVInputFormatIndexer::validateAndFormat(arguments.config);
 }
 
 InputFormatIndexerRegistryReturnType

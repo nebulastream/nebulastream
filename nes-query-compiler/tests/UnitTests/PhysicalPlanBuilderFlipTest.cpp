@@ -32,6 +32,7 @@
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <InputFormatterDescriptor.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
@@ -70,7 +71,8 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = sourceCatalog.getInlineSource("File", schema, Host("localhost"), {{"type", "CSV"}}, {{"file_path", "/dev/null"}});
+        auto descriptor = sourceCatalog.getInlineSource(
+            "File", schema, Host("localhost"), {{InputFormatterDescriptor::getTypeString(), "CSV"}}, {{"file_path", "/dev/null"}});
         EXPECT_TRUE(descriptor.has_value());
         auto sourceOp = SourcePhysicalOperator(
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)

@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -86,7 +87,7 @@ struct TestConfig
     size_t numRequiredBuffers{};
     uint64_t sizeOfRawBuffers{};
     uint64_t sizeOfFormattedBuffers{};
-    ParserConfig parserConfig;
+    DescriptorConfig::Config parserConfig;
     std::vector<TestDataTypes> testSchema;
     const MemoryLayoutType memoryLayoutType;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
@@ -151,8 +152,6 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
 SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
 
-ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
-
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
@@ -167,14 +166,7 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpe
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const ParserConfig& parserConfiguration,
-    const Schema& schema,
-    MemoryLayoutType memoryLayoutType,
-    size_t sizeOfFormattedBuffers,
-    bool isCompiled);
-
-std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const std::unordered_map<std::string, std::string>& parserConfiguration,
+    const DescriptorConfig::Config& parserConfiguration,
     const Schema& schema,
     MemoryLayoutType memoryLayoutType,
     size_t sizeOfFormattedBuffers,
