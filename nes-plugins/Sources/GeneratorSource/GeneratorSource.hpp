@@ -79,9 +79,6 @@ private:
     std::chrono::time_point<std::chrono::system_clock> startOfInterval;
     std::chrono::milliseconds flushInterval;
     std::unique_ptr<GeneratorRate> generatorRate;
-
-    /// if inserting a set of generated tuples into the buffer would overflow it, this string saves them so it can be inserted into the next buffer
-    std::string orphanTuples;
 };
 
 struct ConfigParametersGenerator
