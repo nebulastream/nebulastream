@@ -42,6 +42,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-input-formatters REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(InputFormatIndexer)
+create_registries_for_component(InputFormatIndexer InputFormatterValidation)
 
 add_tests_if_enabled(tests)

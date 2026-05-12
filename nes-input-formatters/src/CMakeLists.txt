@@ -17,7 +17,11 @@ add_source_files(nes-input-formatters
         RawValueParser.cpp
         InputFormatter.cpp
         FieldOffsetRawBufferIndex.cpp
+        InputFormatterDescriptor.cpp
+        InputFormatterValidationProvider.cpp
+        InputFormatIndexer.cpp
 )
 
 # Register plugins
 add_plugin(CSV InputFormatIndexer nes-input-formatters CSVInputFormatIndexer.cpp)
+add_plugin(CSV InputFormatterValidation nes-input-formatters CSVInputFormatIndexer.cpp)

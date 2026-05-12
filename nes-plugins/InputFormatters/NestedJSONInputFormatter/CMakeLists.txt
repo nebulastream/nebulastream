@@ -12,6 +12,7 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_plugin_as_library(NestedJSON InputFormatIndexer nes-input-formatters-registry nested_json_input_format_indexer_plugin_library NestedJSONInputFormatIndexer.cpp NestedJSONRawBufferIndex.cpp)
+add_plugin(NestedJSON InputFormatterValidation nested_json_input_format_indexer_plugin_library NestedJSONInputFormatIndexer.cpp NestedJSONRawBufferIndex.cpp)
 target_include_directories(nested_json_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 target_include_directories(nested_json_input_format_indexer_plugin_library PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../Common)
 

@@ -24,6 +24,7 @@
 #include <fmt/format.h>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatIndexerRegistry.hpp>
+#include <InputFormatterValidationRegistry.hpp>
 #include <NestedJSONRawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 
@@ -56,15 +57,26 @@ std::unique_ptr<RawBufferIndex> NestedJSONInputFormatIndexer::indexRawBuffer(con
     return rawBufferIndex;
 }
 
-std::ostream& operator<<(std::ostream& os, const NestedJSONInputFormatIndexer&)
+std::ostream& NestedJSONInputFormatIndexer::toString(std::ostream& str) const
 {
-    return os << fmt::format("NestedJSONInputFormatIndexer(tupleDelimiter: {})", NestedJSONInputFormatIndexer::TUPLE_DELIMITER);
+    return str << fmt::format("SIMDJSONInputFormatIndexer(tupleDelimiter: {})", NestedJSONInputFormatIndexer::TUPLE_DELIMITER);
+}
+
+DescriptorConfig::Config NestedJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<ConfigParametersNestedJSON>(std::move(config), NAME);
 }
 
 InputFormatIndexerRegistryReturnType RegisterNestedJSONInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
     return arguments.createInputFormatterWithIndexer(
         NestedJSONInputFormatIndexer::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
+}
+
+InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterNestedJSONInputFormatterValidation(
+    InputFormatterValidationRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param
+{
+    return NestedJSONInputFormatIndexer::validateAndFormat(arguments.config);
 }
 
 }

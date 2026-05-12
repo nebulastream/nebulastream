@@ -19,11 +19,15 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 
+#include <Configurations/Descriptor.hpp>
 #include <fmt/format.h>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatIndexerRegistry.hpp>
+#include <InputFormatterValidationRegistry.hpp>
+#include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SIMDJSONRawBufferIndex.hpp>
 
@@ -56,9 +60,14 @@ std::unique_ptr<RawBufferIndex> SIMDJSONInputFormatIndexer::indexRawBuffer(const
     return rawBufferIndex;
 }
 
-std::ostream& operator<<(std::ostream& os, const SIMDJSONInputFormatIndexer&)
+std::ostream& SIMDJSONInputFormatIndexer::toString(std::ostream& str) const
 {
-    return os << fmt::format("SIMDJSONInputFormatIndexer(tupleDelimiter: {})", SIMDJSONInputFormatIndexer::TUPLE_DELIMITER);
+    return str << fmt::format("SIMDJSONInputFormatIndexer(tupleDelimiter: {})", SIMDJSONInputFormatIndexer::TUPLE_DELIMITER);
+}
+
+DescriptorConfig::Config SIMDJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<ConfigParametersSIMDJSON>(std::move(config), NAME);
 }
 
 InputFormatIndexerRegistryReturnType RegisterJSONInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
@@ -67,4 +76,9 @@ InputFormatIndexerRegistryReturnType RegisterJSONInputFormatIndexer(InputFormatI
         SIMDJSONInputFormatIndexer::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
 }
 
+InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterJSONInputFormatterValidation(
+    InputFormatterValidationRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
+{
+    return SIMDJSONInputFormatIndexer::validateAndFormat(arguments.config);
+}
 }

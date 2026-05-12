@@ -26,6 +26,7 @@
 #include <unordered_set>
 #include <utility>
 
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -33,7 +34,9 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterDescriptor.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
+#include <InputFormatterValidationProvider.hpp>
 
 namespace NES
 {
@@ -89,13 +92,22 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
             UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
     }
 
-    auto parserConfigObject = ParserConfig::create(parserConfig);
-    if (not contains(parserConfigObject.parserType))
+    if (not parserConfig.contains(InputFormatterDescriptor::getTypeString()))
     {
-        return std::unexpected{InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType)};
+        return std::unexpected{InvalidConfigParameter("Source config does not contain input formatter type")};
     }
+    const std::string inputFormat = parserConfig.at(InputFormatterDescriptor::getTypeString());
+    const auto parserConfigObject = (toUpperCase(inputFormat) == "NATIVE")
+        ? DescriptorConfig::Config{}
+        : InputFormatterValidationProvider::provide(inputFormat, parserConfig);
+    if (not parserConfigObject.has_value())
+    {
+        return std::unexpected{UnknownSourceType(
+            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormat)};
+    }
+    const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
 
-    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(host), std::move(descriptorConfigOpt.value()), parserConfigObject};
+    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(host), std::move(descriptorConfigOpt.value()), formatDescriptor};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
     NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);
@@ -156,13 +168,27 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
         return std::nullopt;
     }
 
-    auto parserConfig = ParserConfig::create(std::move(parserConfigMap));
+    if (not parserConfigMap.contains(InputFormatterDescriptor::getTypeString()))
+    {
+        throw InvalidConfigParameter("Source config does not contain input formatter type");
+    }
+    const std::string inputFormat = parserConfigMap.at(InputFormatterDescriptor::getTypeString());
+    const auto parserConfigObject = (toUpperCase(inputFormat) == "NATIVE")
+        ? DescriptorConfig::Config{}
+        : InputFormatterValidationProvider::provide(inputFormat, parserConfigMap);
+    if (not parserConfigObject.has_value())
+    {
+        throw UnknownSourceType(
+            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormat);
+    }
+    const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
+
 
     auto physicalId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
     auto name = physicalId.toString();
 
     const auto logicalSource = LogicalSource{name, schema};
-    SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, std::move(host), descriptorConfig.value(), parserConfig};
+    SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, std::move(host), descriptorConfig.value(), formatDescriptor};
     return sourceDescriptor;
 }
 

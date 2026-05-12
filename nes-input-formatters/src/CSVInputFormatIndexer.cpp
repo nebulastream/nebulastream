@@ -20,14 +20,19 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 
+#include <Configurations/Descriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsetRawBufferIndex.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatter.hpp>
+#include <InputFormatterValidationRegistry.hpp>
+#include <RawBufferIndex.hpp>
+#include <RawTupleBuffer.hpp>
 
 namespace
 {
@@ -145,6 +150,17 @@ std::unique_ptr<RawBufferIndex> CSVInputFormatIndexer::indexRawBuffer(const RawT
     return fieldOffsets;
 }
 
+DescriptorConfig::Config CSVInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<ConfigParametersCSVInputFormatIndexer>(std::move(config), NAME);
+}
+
+InputFormatterValidationRegistryReturnType
+InputFormatterValidationGeneratedRegistrar::RegisterCSVInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+{
+    return CSVInputFormatIndexer::validateAndFormat(arguments.config);
+}
+
 InputFormatIndexerRegistryReturnType
 RegisterCSVInputFormatIndexer(InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
@@ -152,8 +168,8 @@ RegisterCSVInputFormatIndexer(InputFormatIndexerRegistryArguments arguments) ///
         CSVInputFormatIndexer::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
 }
 
-std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer&)
+std::ostream& CSVInputFormatIndexer::toString(std::ostream& str) const
 {
-    return os << fmt::format("CSVInputFormatIndexer()");
+    return str << fmt::format("CSVInputFormatIndexer()");
 }
 }

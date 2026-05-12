@@ -41,5 +41,11 @@ public:
     [[nodiscard]] virtual std::string_view getTupleDelimitingBytes() const = 0;
     [[nodiscard]] virtual std::string_view getFieldDelimitingBytes() const = 0;
     [[nodiscard]] virtual const std::vector<std::string>& getNullValues() const = 0;
+
+    friend std::ostream& operator<<(std::ostream& out, const InputFormatIndexer& indexer);
+
+protected:
+    /// Implemented by children of InputFormatIndexer. Called by '<<'. Allows to use '<<' on abstract InputFormatIndexer.
+    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 };
 }

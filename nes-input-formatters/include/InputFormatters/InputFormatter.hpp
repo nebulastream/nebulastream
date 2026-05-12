@@ -55,15 +55,12 @@ struct IndexPhaseResult;
 class InputFormatter : public TupleBufferRef
 {
 public:
-    explicit InputFormatter(
-        std::unique_ptr<InputFormatIndexer> inputFormatIndexer,
-        std::shared_ptr<TupleBufferRef> memoryProvider,
-        const ParserConfig& parserConfig)
+    explicit InputFormatter(std::unique_ptr<InputFormatIndexer> inputFormatIndexer, std::shared_ptr<TupleBufferRef> memoryProvider)
         : TupleBufferRef(*memoryProvider)
         , inputFormatIndexer(std::move(inputFormatIndexer))
         , projections(memoryProvider->getAllFieldNames())
         , memoryProvider(std::move(memoryProvider))
-        , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))
+        , sequenceShredder(std::make_unique<SequenceShredder>(this->inputFormatIndexer->getTupleDelimitingBytes().size()))
     {
     }
 

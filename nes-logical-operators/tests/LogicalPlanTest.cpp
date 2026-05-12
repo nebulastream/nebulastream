@@ -57,7 +57,7 @@ protected:
                   const auto dummySchema = Schema{};
                   const auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value();
                   const std::unordered_map<std::string, std::string> dummyParserConfig
-                      = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
+                      = {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}};
                   auto dummySourceDescriptor
                       = sourceCatalog
                             .addPhysicalSource(logicalSource, "File", Host("localhost"), {{"file_path", "/dev/null"}}, dummyParserConfig)

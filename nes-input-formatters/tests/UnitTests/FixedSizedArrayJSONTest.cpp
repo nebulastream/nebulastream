@@ -45,6 +45,8 @@
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
+#include "InputFormatterValidationProvider.hpp"
+
 namespace NES
 {
 
@@ -128,8 +130,8 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
     const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
     constexpr size_t numberOfRequiredFormattedBuffers = 8;
     auto testBufferManager = BufferManager::create(sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);
-    const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", "NestedJSON"}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
+    const std::unordered_map<std::string, std::string> inputFormatterConfig{{"tuple_delimiter", "\n"}};
+    const auto parserConfiguration = InputFormatterValidationProvider::provide("NestedJSON", inputFormatterConfig).value();
     auto testStage = InputFormatterTestUtil::createInputFormatter(
         parserConfiguration, schema, MemoryLayoutType::ROW_LAYOUT, sizeOfFormattedBuffers, /*isCompiled=*/false);
 

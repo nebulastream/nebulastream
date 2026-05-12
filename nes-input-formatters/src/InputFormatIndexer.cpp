@@ -12,21 +12,14 @@
     limitations under the License.
 */
 
-#pragma once
+#include <InputFormatIndexer.hpp>
 
-#include <memory>
-
-#include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <InputFormatterDescriptor.hpp>
+#include <ostream>
 
 namespace NES
 {
-
-std::shared_ptr<TupleBufferRef>
-provideInputFormatterTupleBufferRef(const InputFormatterDescriptor& formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider);
-
-bool contains(const std::string& parserType);
+std::ostream& operator<<(std::ostream& out, const InputFormatIndexer& indexer)
+{
+    return indexer.toString(out);
+}
 }

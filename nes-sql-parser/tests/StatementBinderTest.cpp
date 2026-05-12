@@ -46,6 +46,7 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterValidationProvider.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryId.hpp>
 
@@ -317,8 +318,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const std::string createPhysicalSourceStatement
         = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (0 as `SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
-    const ParserConfig expectedParserConfig{
-        .parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ",", .allowCommasInStrings = true};
+    const auto expectedParserConfig
+        = InputFormatterValidationProvider::provide("CSV", {{"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value();
     std::unordered_map<std::string, std::string> unvalidatedConfig{{"file_path", "/dev/null"}};
     const DescriptorConfig::Config descriptorConfig = SourceValidationProvider::provide("File", std::move(unvalidatedConfig)).value();
 
@@ -328,7 +329,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_TRUE(physicalSourceResult.has_value());
     const auto [physicalSource] = physicalSourceResult.value();
     ASSERT_EQ(physicalSource.getLogicalSource(), actualSource);
-    ASSERT_EQ(physicalSource.getParserConfig(), expectedParserConfig);
+    ASSERT_EQ(physicalSource.getInputFormatterDescriptor().getConfig(), expectedParserConfig);
     ASSERT_EQ(physicalSource.getSourceType(), "File");
     ASSERT_EQ(physicalSource.getConfig(), descriptorConfig);
     ASSERT_EQ(physicalSource.getPhysicalSourceId().getRawValue(), 1);
