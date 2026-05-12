@@ -50,6 +50,11 @@ namespace NES
  * Unpooled buffers are either allocated on the spot or served via a previously allocated, unpooled buffer that has
  * been returned to the BufferManager by some component.
  *
+ * Debug-only marker fill: in debug builds the pooled memory area is prefilled with the ASCII pattern "NEBUSTRM"
+ * (repeated). This turns code paths that rely on freshly-allocated buffers being zeroed into visible bugs
+ * (e.g. a sink that forgets to trim by the formatted byte count will emit "NEBUSTRM..." trailing garbage
+ * instead of silently passing thanks to an implicit zero terminator). When debugging a buffer-handling
+ * issue, grep dumps/logs for "NEBUSTRM" or 0x4D5254535542454E to spot reads of uninitialized buffer memory.
  */
 class BufferManager final : public std::enable_shared_from_this<BufferManager>, public BufferRecycler, public AbstractBufferProvider
 {
