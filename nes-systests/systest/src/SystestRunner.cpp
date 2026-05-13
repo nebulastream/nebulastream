@@ -18,6 +18,7 @@
 #include <atomic>
 #include <cerrno>
 #include <chrono>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -47,7 +48,6 @@
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
-#include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -411,7 +411,8 @@ std::vector<RunningQuery> runQueries(
 
 namespace
 {
-std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQuery>& queries, nlohmann::json& resultJson)
+std::vector<RunningQuery>
+serializeExecutionResults(const std::vector<RunningQuery>& queries, std::vector<BenchmarkResult>& benchmarkResults)
 {
     std::vector<RunningQuery> failedQueries;
     for (const auto& queryRan : queries)
@@ -421,12 +422,11 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
             failedQueries.emplace_back(queryRan);
         }
         const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
-        resultJson.push_back({
-            {"query name", queryRan.systestQuery.testName},
-            {"time", executionTimeInSeconds},
-            {"bytesPerSecond", static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds},
-            {"tuplesPerSecond", static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds},
-        });
+        benchmarkResults.push_back(
+            {.queryName = queryRan.systestQuery.testName,
+             .time = executionTimeInSeconds,
+             .bytesPerSecond = static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds,
+             .tuplesPerSecond = static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds});
     }
     return failedQueries;
 }
@@ -435,7 +435,7 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
 std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
     const SingleNodeWorkerConfiguration& configuration,
-    nlohmann::json& resultJson,
+    std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
@@ -516,7 +516,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     }
 
     return serializeExecutionResults(
-        ranQueries | std::views::transform([](const auto& query) { return *query; }) | std::ranges::to<std::vector>(), resultJson);
+        ranQueries | std::views::transform([](const auto& query) { return *query; }) | std::ranges::to<std::vector>(), benchmarkResults);
 }
 
 void printQueryResultToStdOut(

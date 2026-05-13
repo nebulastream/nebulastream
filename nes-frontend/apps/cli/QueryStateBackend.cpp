@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -27,12 +28,24 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
-#include <nlohmann/json.hpp>
+#include <rfl/Rename.hpp>
+#include <rfl/json/read.hpp>
+#include <rfl/json/write.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::CLI
 {
+namespace
+{
+struct PersistedQueryState
+{
+    rfl::Rename<"query_id", std::string> queryId;
+    rfl::Rename<"local_queries", std::unordered_map<std::string, std::vector<std::string>>> localQueries;
+    rfl::Rename<"created_at", std::string> createdAt;
+};
+}
+
 std::string PersistedQueryId::toString() const
 {
     return queryId.getRawValue();
@@ -88,28 +101,20 @@ std::filesystem::path QueryStateBackend::getQueryFilePath(const DistributedQuery
 PersistedQueryId QueryStateBackend::store(const DistributedQueryId& distributedQueryId, const DistributedQuery& distributedQuery)
 {
     auto filePath = getQueryFilePath(distributedQueryId);
-    nlohmann::json jsonObject;
-    jsonObject["query_id"] = distributedQueryId.getRawValue();
-    /// Manually serialize the local queries mapping
-    nlohmann::json localQueriesJson = nlohmann::json::object();
+    PersistedQueryState state;
+    state.queryId = distributedQueryId.getRawValue();
     for (const auto& [grpcAddr, queryId] : distributedQuery.iterate())
     {
-        const std::string grpcKey = grpcAddr.getRawValue();
-        if (!localQueriesJson.contains(grpcKey))
-        {
-            localQueriesJson[grpcKey] = nlohmann::json::array();
-        }
-        localQueriesJson[grpcKey].push_back(queryId.getLocalQueryId().getRawValue());
+        state.localQueries()[grpcAddr.getRawValue()].push_back(queryId.getLocalQueryId().getRawValue());
     }
-    jsonObject["local_queries"] = localQueriesJson;
-    auto now = std::chrono::system_clock::now();
-    jsonObject["created_at"] = fmt::format("{:%Y-%m-%dT%H:%M:%S%z}", now);
+    state.createdAt = fmt::format("{:%Y-%m-%dT%H:%M:%S%z}", std::chrono::system_clock::now());
+
     std::ofstream file(filePath);
     if (!file)
     {
         throw InvalidConfigParameter("Failed to open state file for writing: {}", filePath.string());
     }
-    file << jsonObject.dump(4);
+    file << rfl::json::write(state, rfl::json::pretty);
     file.close();
     if (!file)
     {
@@ -131,29 +136,24 @@ DistributedQuery QueryStateBackend::load(PersistedQueryId persistedId)
     {
         throw InvalidConfigParameter("Could not open state file: {}", filePath.string());
     }
-    nlohmann::json jsonObject;
-    try
+    std::stringstream contents;
+    contents << file.rdbuf();
+    auto parsed = rfl::json::read<PersistedQueryState>(contents.str());
+    if (!parsed)
     {
-        jsonObject = nlohmann::json::parse(file);
+        throw InvalidConfigParameter("Failed to parse state file {}: {}", filePath.string(), parsed.error().what());
     }
-    catch (const nlohmann::json::parse_error& e)
-    {
-        throw InvalidConfigParameter("Failed to parse state file {}: {}", filePath.string(), e.what());
-    }
-    if (!jsonObject.contains("local_queries"))
-    {
-        throw InvalidConfigParameter("State file {} is missing local_queries field", filePath.string());
-    }
-    /// Manually deserialize the local queries mapping
-    auto distributedId = DistributedQueryId(jsonObject.at("query_id").get<std::string>());
+    const auto state = std::move(parsed.value());
+    auto distributedId = DistributedQueryId(state.queryId());
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
-    for (const auto& [workerKey, localQueryIdsJson] : jsonObject["local_queries"].items())
+    for (const auto& [workerKey, localQueryIds] : state.localQueries())
     {
         const Host worker(workerKey);
         std::vector<QueryId> queryIds;
-        for (const auto& localQueryIdStr : localQueryIdsJson)
+        queryIds.reserve(localQueryIds.size());
+        for (const auto& localQueryIdStr : localQueryIds)
         {
-            queryIds.emplace_back(QueryId::create(LocalQueryId(localQueryIdStr.get<std::string>()), distributedId));
+            queryIds.emplace_back(QueryId::create(LocalQueryId(localQueryIdStr), distributedId));
         }
         localQueries.emplace(worker, std::move(queryIds));
     }

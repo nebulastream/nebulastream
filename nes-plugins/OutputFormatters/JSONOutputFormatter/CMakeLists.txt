@@ -23,3 +23,7 @@ target_include_directories(json_output_formatter_validation_plugin
         PUBLIC include
         PRIVATE .
 )
+
+find_package(simdjson CONFIG REQUIRED)
+target_link_libraries(json_output_formatter_plugin PRIVATE simdjson::simdjson)
+target_link_libraries(json_output_formatter_validation_plugin PRIVATE simdjson::simdjson)

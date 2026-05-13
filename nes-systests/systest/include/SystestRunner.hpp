@@ -28,7 +28,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <nlohmann/json_fwd.hpp>
+#include <rfl/Rename.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestProgressTracker.hpp>
@@ -83,12 +83,23 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
+/// Serialized to BenchmarkResults.json via rfl::json::write. The field names below are the JSON keys.
+struct BenchmarkResult
+{
+    /// rfl::Rename keeps the historical JSON key "query name" (with a space) that consumers of
+    /// BenchmarkResults.json already depend on, since a space cannot appear in a C++ identifier.
+    rfl::Rename<"query name", std::string> queryName;
+    double time;
+    double bytesPerSecond;
+    double tuplesPerSecond;
+};
+
 /// Run queries sequentially locally and benchmark the run time of each query.
 /// @return vector containing failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
     const SingleNodeWorkerConfiguration& configuration,
-    nlohmann::json& resultJson,
+    std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker);
 
