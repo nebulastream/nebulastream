@@ -85,8 +85,6 @@ public:
     [[nodiscard]] SequenceShredderResult
     tryFindLeadingSpanningTupleForBufferWithDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
     [[nodiscard]] SpanningBuffers tryFindTrailingSpanningTupleForBufferWithDelimiter(SequenceNumber sequenceNumber);
-    [[nodiscard]] SpanningBuffers
-    tryFindTrailingSpanningTupleForBufferWithDelimiter(SequenceNumber sequenceNumber, FieldIndex offsetOfLastTuple);
 
     /// Tries to find a reachable buffer with a delimiter in leading direction.
     /// If successful, starts a claiming trailing delimiter search with that reachable buffer as the start (search starts at 'sequenceNumber')

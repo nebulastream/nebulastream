@@ -15,7 +15,6 @@
 #include <SpanningTupleBufferState.hpp>
 
 #include <cstddef>
-#include <limits>
 #include <optional>
 #include <ostream>
 #include <span>
@@ -88,14 +87,7 @@ bool SpanningTupleBufferEntry::trySetWithDelimiter(const ABAItNo abaItNumber, co
     if (isCurrentEntryUsedUp(abaItNumber))
     {
         setBuffersAndOffsets(indexedBuffer);
-        if (indexedBuffer.getByteOffsetOfLastTuple() != std::numeric_limits<FieldIndex>::max())
-        {
-            this->atomicState.setHasTupleDelimiterAndValidTrailingSpanningTupleState(abaItNumber);
-        }
-        else
-        {
-            this->atomicState.setHasTupleDelimiterState(abaItNumber);
-        }
+        this->atomicState.setHasTupleDelimiterState(abaItNumber);
         return true;
     }
     return false;
@@ -134,15 +126,6 @@ void SpanningTupleBufferEntry::setStateOfFirstIndex(TupleBuffer dummyBuffer)
     this->lastDelimiterOffset = 0;
 }
 
-void SpanningTupleBufferEntry::setOffsetOfTrailingSpanningTuple(const FieldIndex offsetOfLastTuple)
-{
-    PRECONDITION(offsetOfLastTuple != std::numeric_limits<FieldIndex>::max(), "offsetOfLastTuple is not valid");
-    PRECONDITION(this->lastDelimiterOffset == std::numeric_limits<FieldIndex>::max(), "Must not overwrite an already valid offset");
-    /// @NOTE: the order is important! The 'lastDelimiterOffset' must be valid before calling 'setHasValidLastDelimiterOffset'
-    this->lastDelimiterOffset = offsetOfLastTuple;
-    this->atomicState.setHasValidLastDelimiterOffset();
-}
-
 void SpanningTupleBufferEntry::claimNoDelimiterBuffer(std::span<StagedBuffer> spanningTupleVector, const size_t spanningTupleIdx)
 {
     INVARIANT(this->leadingBufferRef.getReferenceCounter() != 0, "Tried to claim a leading buffer with a nullptr");
@@ -168,11 +151,7 @@ void SpanningTupleBufferEntry::claimLeadingBuffer(std::span<StagedBuffer> spanni
 SpanningTupleBufferEntry::EntryState SpanningTupleBufferEntry::getEntryState(const ABAItNo expectedABAItNo) const
 {
     const auto currentState = this->atomicState.getState();
-    const bool isCorrectABA = expectedABAItNo == currentState.getABAItNo();
-    const bool hasDelimiter = currentState.hasTupleDelimiter();
-    const bool validLastDelimiterOffset = currentState.hasValidLastDelimiterOffset();
-    return EntryState{
-        .hasCorrectABA = isCorrectABA, .hasDelimiter = hasDelimiter, .hasValidTrailingDelimiterOffset = validLastDelimiterOffset};
+    return EntryState{.hasCorrectABA = expectedABAItNo == currentState.getABAItNo(), .hasDelimiter = currentState.hasTupleDelimiter()};
 }
 
 bool SpanningTupleBufferEntry::validateFinalState(
