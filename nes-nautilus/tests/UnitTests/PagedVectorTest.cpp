@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <any>
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -21,6 +22,7 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -28,8 +30,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -40,8 +40,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <gtest/gtest.h>
-#include <magic_enum/magic_enum.hpp>
+#include <gtest/gtest.h> /// NOLINT(misc-include-cleaner): consumed via macros expanded from rapidcheck/gtest.h
 #include <nautilus/Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
@@ -55,10 +54,11 @@
 
 #include <Util/Ranges.hpp>
 
-#include <rapidcheck.h>
+#include <rapidcheck.h> /// NOLINT(misc-include-cleaner)
 #include <fmt/ranges.h>
 #include <rapidcheck/gtest.h>
 
+/// NOLINTBEGIN(misc-include-cleaner, bugprone-unchecked-optional-access)
 namespace NES
 {
 namespace
@@ -77,6 +77,10 @@ nautilus::engine::NautilusEngine makeEngine(EngineMode mode)
     options.setOption("mlir.enableMultithreading", false);
     return {options};
 }
+
+/// Marker pattern written into freshly handed-out buffers so tests notice if the PagedVector
+/// reads uninitialised memory: a dirty page surfaces as 0xDEADBEEF instead of zero.
+constexpr uint32_t DIRTY_FILL_PATTERN = 0xDEADBEEF;
 
 struct DirtyBufferProvider : AbstractBufferProvider
 {
@@ -100,7 +104,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
         auto buffer = bm->getBufferBlocking();
         for (uint32_t& availableMemoryArea : buffer.getAvailableMemoryArea<uint32_t>())
         {
-            availableMemoryArea = 0xDEADBEEF;
+            availableMemoryArea = DIRTY_FILL_PATTERN;
         }
         return buffer;
     }
@@ -112,7 +116,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
         {
             for (uint32_t& availableMemoryArea : buffer->getAvailableMemoryArea<uint32_t>())
             {
-                availableMemoryArea = 0xDEADBEEF;
+                availableMemoryArea = DIRTY_FILL_PATTERN;
             }
         }
         return buffer;
@@ -125,7 +129,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
         {
             for (uint32_t& availableMemoryArea : buffer->getAvailableMemoryArea<uint32_t>())
             {
-                availableMemoryArea = 0xDEADBEEF;
+                availableMemoryArea = DIRTY_FILL_PATTERN;
             }
         }
         return buffer;
@@ -138,7 +142,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
         {
             for (uint32_t& availableMemoryArea : buffer->getAvailableMemoryArea<uint32_t>())
             {
-                availableMemoryArea = 0xDEADBEEF;
+                availableMemoryArea = DIRTY_FILL_PATTERN;
             }
         }
         return buffer;
@@ -151,10 +155,29 @@ struct DirtyBufferProvider : AbstractBufferProvider
 /// Schemas whose tuple size exceeds this must be discarded via RC_PRE.
 constexpr uint64_t BUFFER_SIZE = 4096;
 
+/// Maximum number of fields generated per random schema.
+constexpr size_t MAX_SCHEMA_FIELDS = 128;
+
+/// Number of buffers pre-allocated for each test's DirtyBufferProvider.
+constexpr size_t POOLED_BUFFER_COUNT = 1024;
+
+/// Range bounds for randomly sized VARSIZED payloads. Lower bound is the first printable ASCII char,
+/// upper bound is the last; we keep payloads as printable ASCII so failing inputs are easy to read.
+constexpr char PRINTABLE_ASCII_MIN = 32;
+constexpr char PRINTABLE_ASCII_MAX = 127;
+constexpr size_t MAX_VARSIZED_LEN = 64;
+
+/// Upper bound (exclusive) on the per-property generated record count.
+constexpr uint64_t MAX_ITEMS_PER_PROPERTY = 501;
+
+/// Per-vector item-count range and max number of paged vectors used by the concat properties.
+constexpr uint64_t MAX_ITEMS_PER_CONCAT_VECTOR = 201;
+constexpr uint64_t MAX_CONCAT_VECTORS = 5;
+
 using AnyVec = std::vector<std::any>;
 
 /// Value types used by the property generators (includes VARSIZED).
-const std::vector<DataType::Type> ALL_VALUE_TYPES = {
+constexpr std::array ALL_VALUE_TYPES = {
     DataType::Type::UINT8,
     DataType::Type::UINT16,
     DataType::Type::UINT32,
@@ -183,10 +206,10 @@ Schema createSchemaFromDataTypes(const std::vector<DataType>& dataTypes)
 
 /// Generator for a non-empty vector of DataType drawn from a Type pool.
 /// Nullability is randomised per field.
-rc::Gen<std::vector<DataType>> genDataTypeSchema(std::vector<DataType::Type> pool, size_t minFields, size_t maxFields)
+rc::Gen<std::vector<DataType>> genDataTypeSchema(std::span<const DataType::Type> pool, size_t minFields, size_t maxFields)
 {
     return rc::gen::exec(
-        [pool = std::move(pool), minFields, maxFields]()
+        [pool = std::vector<DataType::Type>(pool.begin(), pool.end()), minFields, maxFields]()
         {
             const auto numFields = *rc::gen::inRange(minFields, maxFields + 1);
             std::vector<DataType> schema;
@@ -224,42 +247,42 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
         {
             AnyVec result;
             result.reserve(types.size());
-            for (const auto& dt : types)
+            for (const auto& dataType : types)
             {
-                switch (dt.type)
+                switch (dataType.type)
                 {
                     case DataType::Type::UINT8:
-                        result.push_back(genScalarAny<uint8_t>(dt.nullable));
+                        result.push_back(genScalarAny<uint8_t>(dataType.nullable));
                         break;
                     case DataType::Type::UINT16:
-                        result.push_back(genScalarAny<uint16_t>(dt.nullable));
+                        result.push_back(genScalarAny<uint16_t>(dataType.nullable));
                         break;
                     case DataType::Type::UINT32:
-                        result.push_back(genScalarAny<uint32_t>(dt.nullable));
+                        result.push_back(genScalarAny<uint32_t>(dataType.nullable));
                         break;
                     case DataType::Type::UINT64:
-                        result.push_back(genScalarAny<uint64_t>(dt.nullable));
+                        result.push_back(genScalarAny<uint64_t>(dataType.nullable));
                         break;
                     case DataType::Type::INT8:
-                        result.push_back(genScalarAny<int8_t>(dt.nullable));
+                        result.push_back(genScalarAny<int8_t>(dataType.nullable));
                         break;
                     case DataType::Type::INT16:
-                        result.push_back(genScalarAny<int16_t>(dt.nullable));
+                        result.push_back(genScalarAny<int16_t>(dataType.nullable));
                         break;
                     case DataType::Type::INT32:
-                        result.push_back(genScalarAny<int32_t>(dt.nullable));
+                        result.push_back(genScalarAny<int32_t>(dataType.nullable));
                         break;
                     case DataType::Type::INT64:
-                        result.push_back(genScalarAny<int64_t>(dt.nullable));
+                        result.push_back(genScalarAny<int64_t>(dataType.nullable));
                         break;
                     case DataType::Type::FLOAT32:
-                        result.push_back(genScalarAny<float>(dt.nullable));
+                        result.push_back(genScalarAny<float>(dataType.nullable));
                         break;
                     case DataType::Type::FLOAT64:
-                        result.push_back(genScalarAny<double>(dt.nullable));
+                        result.push_back(genScalarAny<double>(dataType.nullable));
                         break;
                     case DataType::Type::VARSIZED: {
-                        if (dt.nullable)
+                        if (dataType.nullable)
                         {
                             const bool isNull = *rc::gen::arbitrary<bool>();
                             if (isNull)
@@ -267,18 +290,18 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
                                 result.emplace_back(std::optional<std::string>{});
                                 break;
                             }
-                            auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(32, 127));
-                            if (str.size() > 64)
+                            auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX));
+                            if (str.size() > MAX_VARSIZED_LEN)
                             {
-                                str.resize(64);
+                                str.resize(MAX_VARSIZED_LEN);
                             }
                             result.emplace_back(std::optional<std::string>{std::move(str)});
                             break;
                         }
-                        auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(32, 127));
-                        if (str.size() > 64)
+                        auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX));
+                        if (str.size() > MAX_VARSIZED_LEN)
                         {
-                            str.resize(64);
+                            str.resize(MAX_VARSIZED_LEN);
                         }
                         result.emplace_back(std::move(str));
                         break;
@@ -384,8 +407,8 @@ bool anyVecsEqual(const AnyVec& lhs, const AnyVec& rhs, const std::vector<DataTy
         std::views::zip(lhs, rhs, types),
         [](const auto& entry)
         {
-            const auto& [l, r, dt] = entry;
-            return compareAnyField(l, r, dt) == 0;
+            const auto& [left, right, dataType] = entry;
+            return compareAnyField(left, right, dataType) == 0;
         });
 }
 
@@ -405,7 +428,8 @@ nautilus::val<T> fetchScalarFromAnyVec(const nautilus::val<AnyVec*>& rec, uint64
             rec,
             nautilus::val<uint64_t>{fieldIdx});
     }
-    return nautilus::invoke(+[](AnyVec* a, uint64_t j) -> T { return std::any_cast<T>((*a)[j]); }, rec, nautilus::val<uint64_t>{fieldIdx});
+    return nautilus::invoke(
+        +[](AnyVec* anyVec, uint64_t pos) -> T { return std::any_cast<T>((*anyVec)[pos]); }, rec, nautilus::val<uint64_t>{fieldIdx});
 }
 
 template <typename T>
@@ -423,52 +447,59 @@ void storeScalarToAnyVec(
             isNull);
         return;
     }
-    nautilus::invoke(+[](AnyVec* a, uint64_t j, T v) { (*a)[j] = std::any{v}; }, out, nautilus::val<uint64_t>{fieldIdx}, value);
+    nautilus::invoke(
+        +[](AnyVec* anyVec, uint64_t pos, T scalar) { (*anyVec)[pos] = std::any{scalar}; }, out, nautilus::val<uint64_t>{fieldIdx}, value);
 }
 
-void storeVarValToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t pos, const VarVal& value, const DataType& dt)
+void storeVarValToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t pos, const VarVal& value, const DataType& dataType)
 {
-    switch (dt.type)
+    switch (dataType.type)
     {
         case DataType::Type::UINT8:
-            storeScalarToAnyVec<uint8_t>(out, pos, value.getRawValueAs<nautilus::val<uint8_t>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<uint8_t>(out, pos, value.getRawValueAs<nautilus::val<uint8_t>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::UINT16:
-            storeScalarToAnyVec<uint16_t>(out, pos, value.getRawValueAs<nautilus::val<uint16_t>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<uint16_t>(out, pos, value.getRawValueAs<nautilus::val<uint16_t>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::UINT32:
-            storeScalarToAnyVec<uint32_t>(out, pos, value.getRawValueAs<nautilus::val<uint32_t>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<uint32_t>(out, pos, value.getRawValueAs<nautilus::val<uint32_t>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::UINT64:
-            storeScalarToAnyVec<uint64_t>(out, pos, value.getRawValueAs<nautilus::val<uint64_t>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<uint64_t>(out, pos, value.getRawValueAs<nautilus::val<uint64_t>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::INT8:
-            storeScalarToAnyVec<int8_t>(out, pos, value.getRawValueAs<nautilus::val<int8_t>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<int8_t>(out, pos, value.getRawValueAs<nautilus::val<int8_t>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::INT16:
-            storeScalarToAnyVec<int16_t>(out, pos, value.getRawValueAs<nautilus::val<int16_t>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<int16_t>(out, pos, value.getRawValueAs<nautilus::val<int16_t>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::INT32:
-            storeScalarToAnyVec<int32_t>(out, pos, value.getRawValueAs<nautilus::val<int32_t>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<int32_t>(out, pos, value.getRawValueAs<nautilus::val<int32_t>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::INT64:
-            storeScalarToAnyVec<int64_t>(out, pos, value.getRawValueAs<nautilus::val<int64_t>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<int64_t>(out, pos, value.getRawValueAs<nautilus::val<int64_t>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::FLOAT32:
-            storeScalarToAnyVec<float>(out, pos, value.getRawValueAs<nautilus::val<float>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<float>(out, pos, value.getRawValueAs<nautilus::val<float>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::FLOAT64:
-            storeScalarToAnyVec<double>(out, pos, value.getRawValueAs<nautilus::val<double>>(), dt.nullable, value.isNull());
+            storeScalarToAnyVec<double>(out, pos, value.getRawValueAs<nautilus::val<double>>(), dataType.nullable, value.isNull());
             break;
         case DataType::Type::VARSIZED: {
             const auto vsd = value.getRawValueAs<VariableSizedData>();
-            if (dt.nullable)
+            if (dataType.nullable)
             {
                 nautilus::invoke(
-                    +[](AnyVec* a, uint64_t j, int8_t* ptr, uint64_t len, bool null)
+                    +[](AnyVec* anyVec, uint64_t pos, int8_t* ptr, uint64_t len, bool null)
                     {
-                        (*a)[j] = null ? std::any{std::optional<std::string>{}}
-                                       : std::any{std::optional<std::string>{std::string(reinterpret_cast<const char*>(ptr), len)}};
+                        if (null)
+                        {
+                            (*anyVec)[pos] = std::any{std::optional<std::string>{}};
+                            return;
+                        }
+                        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+                        const auto* const cptr = reinterpret_cast<const char*>(ptr);
+                        (*anyVec)[pos] = std::any{std::optional<std::string>{std::string(cptr, len)}};
                     },
                     out,
                     nautilus::val<uint64_t>{pos},
@@ -478,8 +509,12 @@ void storeVarValToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t pos, const 
                 break;
             }
             nautilus::invoke(
-                +[](AnyVec* a, uint64_t j, int8_t* ptr, uint64_t len)
-                { (*a)[j] = std::any{std::string(reinterpret_cast<const char*>(ptr), len)}; },
+                +[](AnyVec* anyVec, uint64_t pos, int8_t* ptr, uint64_t len)
+                {
+                    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+                    const auto* const cptr = reinterpret_cast<const char*>(ptr);
+                    (*anyVec)[pos] = std::any{std::string(cptr, len)};
+                },
                 out,
                 nautilus::val<uint64_t>{pos},
                 vsd.getContent(),
@@ -496,10 +531,10 @@ void storeVarValToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t pos, const 
 nautilus::val<bool> checkIfNullInAnyVec(const nautilus::val<AnyVec*>& rec, uint64_t fieldIdx, DataType::Type type)
 {
     return nautilus::invoke(
-        +[](AnyVec* a, uint64_t j, DataType::Type t) -> bool
+        +[](AnyVec* anyVec, uint64_t pos, DataType::Type fieldType) -> bool
         {
-            const auto& entry = (*a)[j];
-            switch (t)
+            const auto& entry = (*anyVec)[pos];
+            switch (fieldType)
             {
                 case DataType::Type::UINT8:
                     return !std::any_cast<std::optional<uint8_t>>(entry).has_value();
@@ -535,73 +570,78 @@ nautilus::val<bool> checkIfNullInAnyVec(const nautilus::val<AnyVec*>& rec, uint6
 nautilus::val<AnyVec*> anyVecPushBack(const nautilus::val<std::vector<AnyVec>*>& vec, const nautilus::val<size_t>& numberOfFields)
 {
     return nautilus::invoke(
-        +[](std::vector<AnyVec>* a, size_t numberOfFields)
+        +[](std::vector<AnyVec>* outer, size_t numberOfFields)
         {
-            a->emplace_back(numberOfFields, 0);
-            return &a->back();
+            outer->emplace_back(numberOfFields, 0);
+            return &outer->back();
         },
         vec,
         numberOfFields);
 }
 
-VarVal buildVarVal(const nautilus::val<AnyVec*>& rec, uint64_t fieldIdx, DataType dt)
+VarVal buildVarVal(const nautilus::val<AnyVec*>& rec, uint64_t fieldIdx, DataType dataType)
 {
-    const nautilus::val<bool> isNull = dt.nullable ? checkIfNullInAnyVec(rec, fieldIdx, dt.type) : nautilus::val<bool>{false};
-    switch (dt.type)
+    const nautilus::val<bool> isNull = dataType.nullable ? checkIfNullInAnyVec(rec, fieldIdx, dataType.type) : nautilus::val<bool>{false};
+    switch (dataType.type)
     {
         case DataType::Type::UINT8:
-            return {fetchScalarFromAnyVec<uint8_t>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<uint8_t>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::UINT16:
-            return {fetchScalarFromAnyVec<uint16_t>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<uint16_t>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::UINT32:
-            return {fetchScalarFromAnyVec<uint32_t>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<uint32_t>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::UINT64:
-            return {fetchScalarFromAnyVec<uint64_t>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<uint64_t>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::INT8:
-            return {fetchScalarFromAnyVec<int8_t>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<int8_t>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::INT16:
-            return {fetchScalarFromAnyVec<int16_t>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<int16_t>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::INT32:
-            return {fetchScalarFromAnyVec<int32_t>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<int32_t>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::INT64:
-            return {fetchScalarFromAnyVec<int64_t>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<int64_t>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::FLOAT32:
-            return {fetchScalarFromAnyVec<float>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<float>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::FLOAT64:
-            return {fetchScalarFromAnyVec<double>(rec, fieldIdx, dt.nullable), dt.nullable, isNull};
+            return {fetchScalarFromAnyVec<double>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::VARSIZED: {
             auto ptr = nautilus::invoke(
-                +[](AnyVec* a, uint64_t j, bool nullable) -> int8_t*
+                +[](AnyVec* anyVec, uint64_t pos, bool nullable) -> int8_t*
                 {
+                    const char* data = nullptr;
                     if (nullable)
                     {
-                        const auto& opt = std::any_cast<const std::optional<std::string>&>((*a)[j]);
-                        if (!opt.has_value())
-                        {
-                            return nullptr;
-                        }
-                        return const_cast<int8_t*>(reinterpret_cast<const int8_t*>(opt->data()));
+                        const auto& opt = std::any_cast<const std::optional<std::string>&>((*anyVec)[pos]);
+                        data = opt.has_value() ? opt->data() : nullptr;
                     }
-                    const auto& s = std::any_cast<const std::string&>((*a)[j]);
-                    return const_cast<int8_t*>(reinterpret_cast<const int8_t*>(s.data()));
+                    else
+                    {
+                        data = std::any_cast<const std::string&>((*anyVec)[pos]).data();
+                    }
+                    /// reinterpret_cast: punning char* to int8_t* (same representation).
+                    /// const_cast: the VariableSizedData/Nautilus API requires a mutable int8_t* even though
+                    /// this code path only reads from the buffer; the reference behind `data` originates from
+                    /// the std::any/std::string store and is not actually written through.
+                    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast,cppcoreguidelines-pro-type-reinterpret-cast)
+                    return const_cast<int8_t*>(reinterpret_cast<const int8_t*>(data));
                 },
                 rec,
                 nautilus::val<uint64_t>{fieldIdx},
-                nautilus::val<bool>{dt.nullable});
+                nautilus::val<bool>{dataType.nullable});
             auto len = nautilus::invoke(
-                +[](AnyVec* a, uint64_t j, bool nullable) -> uint64_t
+                +[](AnyVec* anyVec, uint64_t pos, bool nullable) -> uint64_t
                 {
                     if (nullable)
                     {
-                        const auto& opt = std::any_cast<const std::optional<std::string>&>((*a)[j]);
+                        const auto& opt = std::any_cast<const std::optional<std::string>&>((*anyVec)[pos]);
                         return opt.has_value() ? opt->size() : 0;
                     }
-                    return std::any_cast<const std::string&>((*a)[j]).size();
+                    return std::any_cast<const std::string&>((*anyVec)[pos]).size();
                 },
                 rec,
                 nautilus::val<uint64_t>{fieldIdx},
-                nautilus::val<bool>{dt.nullable});
-            return {VariableSizedData(ptr, len), dt.nullable, isNull};
+                nautilus::val<bool>{dataType.nullable});
+            return {VariableSizedData(ptr, len), dataType.nullable, isNull};
         }
         case DataType::Type::BOOLEAN:
         case DataType::Type::CHAR:
@@ -631,11 +671,10 @@ public:
         pagedVector = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
         PagedVector::init(pagedVector, bufferManager.getBufferSize(), layout->getTupleSize());
 
+        /// NOLINTBEGIN(performance-unnecessary-value-param)
         pushbackFn.emplace(engine->registerFunction(std::function(
             [layout, dataTypes = dataTypes, projections = projections](
-                nautilus::val<TupleBuffer*> pagedVector,
-                nautilus::val<AbstractBufferProvider*> bm,
-                nautilus::val<AnyVec*> rec) /// NOLINT(performance-unnecessary-value-param)
+                nautilus::val<TupleBuffer*> pagedVector, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
             {
                 Record record;
                 /// static_val ensures each field iteration gets a distinct trace tag.
@@ -649,9 +688,7 @@ public:
 
         readAtFn.emplace(engine->registerFunction(std::function(
             [layout, dataTypes = dataTypes, projections = projections](
-                nautilus::val<TupleBuffer*> pagedVector,
-                nautilus::val<uint64_t> index,
-                nautilus::val<AnyVec*> out) /// NOLINT(performance-unnecessary-value-param)
+                nautilus::val<TupleBuffer*> pagedVector, nautilus::val<uint64_t> index, nautilus::val<AnyVec*> out)
             {
                 const PagedVectorRef pvRef(NautilusBorrowedBuffer::load(pagedVector), layout);
                 auto record = pvRef.at(index);
@@ -663,8 +700,7 @@ public:
 
         readAll.emplace(engine->registerFunction(std::function(
             [layout, dataTypes = dataTypes, projections = projections](
-                nautilus::val<TupleBuffer*> pagedVector,
-                nautilus::val<std::vector<AnyVec>*> outVector) /// NOLINT(performance-unnecessary-value-param)
+                nautilus::val<TupleBuffer*> pagedVector, nautilus::val<std::vector<AnyVec>*> outVector)
             {
                 const PagedVectorRef pvRef(NautilusBorrowedBuffer::load(pagedVector), layout);
                 for (const auto& record : pvRef)
@@ -676,13 +712,17 @@ public:
                     }
                 }
             })));
+        /// NOLINTEND(performance-unnecessary-value-param)
     }
 
+    ~TestablePagedVector() = default;
     TestablePagedVector(const TestablePagedVector&) = delete;
     TestablePagedVector& operator=(const TestablePagedVector&) = delete;
     TestablePagedVector(TestablePagedVector&&) = default;
     TestablePagedVector& operator=(TestablePagedVector&&) = delete;
 
+    /// const_cast: pushbackFn's signature requires AnyVec* even though the trace lambda only reads from it.
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     void pushBack(const AnyVec& record) { (*pushbackFn)(&pagedVector, &bufferManager, const_cast<AnyVec*>(&record)); }
 
     AnyVec readAt(uint64_t index)
@@ -720,6 +760,7 @@ public:
 private:
     std::vector<DataType> dataTypes;
     TupleBuffer pagedVector;
+    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     AbstractBufferProvider& bufferManager;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::unique_ptr<nautilus::engine::NautilusEngine> engine;
@@ -731,15 +772,15 @@ private:
 /// Insert N items into a PagedVector, then iterate and compare against reference.
 void insertAndIterateProperty(EngineMode mode)
 {
-    const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, 128);
+    const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, MAX_SCHEMA_FIELDS);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
-    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, 501);
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_PROPERTY);
 
     NES_INFO("Property insertAndIterate: fields={}, N={}, field_types={}", fieldTypes.size(), numberOfItems, fmt::join(fieldTypes, ", "));
 
-    auto bufferManager = DirtyBufferProvider::create(BUFFER_SIZE, 1024);
-    TestablePagedVector pv(fieldTypes, *bufferManager, mode);
+    auto bufferManager = DirtyBufferProvider::create(BUFFER_SIZE, POOLED_BUFFER_COUNT);
+    TestablePagedVector pagedVector(fieldTypes, *bufferManager, mode);
 
     std::vector<AnyVec> reference;
     reference.reserve(numberOfItems);
@@ -747,13 +788,13 @@ void insertAndIterateProperty(EngineMode mode)
     {
         auto record = *genAnyVec(fieldTypes);
         reference.push_back(record);
-        pv.pushBack(record);
+        pagedVector.pushBack(record);
     }
 
-    NES_INFO("insertAndIterate: PagedVector has {} entries", pv.size());
-    RC_ASSERT(pv.size() == reference.size());
+    NES_INFO("insertAndIterate: PagedVector has {} entries", pagedVector.size());
+    RC_ASSERT(pagedVector.size() == reference.size());
 
-    auto actual = pv.toVector();
+    auto actual = pagedVector.toVector();
     RC_ASSERT(actual.size() == reference.size());
     for (size_t i = 0; i < actual.size(); ++i)
     {
@@ -764,15 +805,15 @@ void insertAndIterateProperty(EngineMode mode)
 /// Insert N items into a PagedVector, then read each by index and compare against reference.
 void insertAndReadByIndexProperty(EngineMode mode)
 {
-    const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, 128);
+    const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, MAX_SCHEMA_FIELDS);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
-    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, 501);
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_PROPERTY);
 
     NES_INFO("Property insertAndReadByIndex: fields={}, N={}", fieldTypes.size(), numberOfItems);
 
-    auto bufferManager = DirtyBufferProvider::create(BUFFER_SIZE, 1024);
-    TestablePagedVector pv(fieldTypes, *bufferManager, mode);
+    auto bufferManager = DirtyBufferProvider::create(BUFFER_SIZE, POOLED_BUFFER_COUNT);
+    TestablePagedVector pagedVector(fieldTypes, *bufferManager, mode);
 
     std::vector<AnyVec> reference;
     reference.reserve(numberOfItems);
@@ -780,14 +821,14 @@ void insertAndReadByIndexProperty(EngineMode mode)
     {
         auto record = *genAnyVec(fieldTypes);
         reference.push_back(record);
-        pv.pushBack(record);
+        pagedVector.pushBack(record);
     }
 
-    RC_ASSERT(pv.size() == reference.size());
+    RC_ASSERT(pagedVector.size() == reference.size());
 
     for (uint64_t idx = 0; idx < reference.size(); ++idx)
     {
-        auto actual = pv.readAt(idx);
+        auto actual = pagedVector.readAt(idx);
         RC_ASSERT(anyVecsEqual(actual, reference[idx], fieldTypes));
     }
 }
@@ -795,21 +836,21 @@ void insertAndReadByIndexProperty(EngineMode mode)
 /// Create K PagedVectors, insert items, concatMove via movePagesFrom, verify against concatenated reference.
 void concatMoveProperty(EngineMode mode)
 {
-    const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, 128);
+    const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, MAX_SCHEMA_FIELDS);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
-    const auto numVectors = *rc::gen::inRange<uint64_t>(1, 5);
+    const auto numVectors = *rc::gen::inRange<uint64_t>(1, MAX_CONCAT_VECTORS);
 
     NES_INFO("Property concatMove: fields={}, numVectors={}", fieldTypes.size(), numVectors);
 
-    auto bufferManager = DirtyBufferProvider::create(BUFFER_SIZE, 1024);
+    auto bufferManager = DirtyBufferProvider::create(BUFFER_SIZE, POOLED_BUFFER_COUNT);
 
     std::vector<TestablePagedVector> pagedVectors;
     std::vector<AnyVec> fullReference;
 
     for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
     {
-        const auto itemCount = *rc::gen::inRange<uint64_t>(0, 201);
+        const auto itemCount = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_CONCAT_VECTOR);
         pagedVectors.emplace_back(fieldTypes, *bufferManager, mode);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
@@ -839,17 +880,17 @@ void concatMoveProperty(EngineMode mode)
 
 void concatCopyProperty(EngineMode mode)
 {
-    const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, 128);
+    const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, MAX_SCHEMA_FIELDS);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
-    const auto numVectors = *rc::gen::inRange<uint64_t>(1, 5);
+    const auto numVectors = *rc::gen::inRange<uint64_t>(1, MAX_CONCAT_VECTORS);
     NES_INFO("Property concatCopy: fields={}, numVectors={}", fieldTypes.size(), numVectors);
-    auto bufferManager = DirtyBufferProvider::create(BUFFER_SIZE, 1024);
+    auto bufferManager = DirtyBufferProvider::create(BUFFER_SIZE, POOLED_BUFFER_COUNT);
     std::vector<TestablePagedVector> pagedVectors;
     std::vector<AnyVec> fullReference;
 
     for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
     {
-        const auto itemCount = *rc::gen::inRange<uint64_t>(0, 201);
+        const auto itemCount = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_CONCAT_VECTOR);
         pagedVectors.emplace_back(fieldTypes, *bufferManager, mode);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
@@ -932,3 +973,5 @@ RC_GTEST_PROP(PagedVectorPropertyTest, concatCopyPagedVector, ())
 }
 
 }
+
+/// NOLINTEND(misc-include-cleaner, bugprone-unchecked-optional-access)
