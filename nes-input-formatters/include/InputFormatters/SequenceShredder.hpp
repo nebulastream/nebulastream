@@ -87,9 +87,6 @@ public:
     /// Assumes findLeadingSpanningTupleWithDelimiter was already called and the StagedBuffer for 'sequenceNumber' already set
     /// Searches for a reachable buffer that delimits tuples in trailing direction (higher SequenceNumbers)
     SpanningBuffers findTrailingSpanningTupleWithDelimiter(SequenceNumber sequenceNumber);
-    /// Overload that allows to lazily set the offset of the last record starting in the StagedBuffer (and the atomic state)
-    /// if the offset was not already known when 'findLeadingSpanningTupleWithDelimiter' was called
-    SpanningBuffers findTrailingSpanningTupleWithDelimiter(SequenceNumber sequenceNumber, FieldIndex offsetOfLastTuple);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 

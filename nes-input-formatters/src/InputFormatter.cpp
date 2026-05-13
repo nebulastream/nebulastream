@@ -59,7 +59,6 @@ struct IndexPhaseResult
     bool hasLeadingSpanningTupleBool = false;
     bool hasTupleDelimiter = false;
     bool isRepeat = false;
-    bool hasValidOffsetOfTrailingSpanningTuple = false;
     /// Stashed from the indexer's RawBufferIndex; read later by 'indexTrailingSpanningTupleProxy' instead of dereferencing the RawBufferIndex.
     FieldIndex offsetOfLastTupleInRawBuffer = std::numeric_limits<FieldIndex>::max();
 
@@ -181,7 +180,6 @@ public:
         const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter] = result->getTupleDelimiterOffsets();
         assignRawBufferIndex(std::move(result));
 
-        tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple = offsetOfLastTupleDelimiter != std::numeric_limits<FieldIndex>::max();
         tlIndexPhaseResult.offsetOfLastTupleInRawBuffer = offsetOfLastTupleDelimiter;
 
         tlIndexPhaseResult.hasTupleDelimiter = offsetOfFirstTupleDelimiter < tupleBuffer.getBufferSize();
@@ -263,10 +261,7 @@ bool indexTrailingSpanningTupleProxy(
         return false;
     }
 
-    /// if the offset to trailing SpanningTuple was not known after indexing we need to set it in the SequenceShredder, allowing threads to find it
-    auto stagedBuffers = (not tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple)
-        ? sequenceShredder->findTrailingSpanningTupleWithDelimiter(tupleBuffer->getSequenceNumber(), offsetOfLastTupleDelimiter)
-        : sequenceShredder->findTrailingSpanningTupleWithDelimiter(tupleBuffer->getSequenceNumber());
+    auto stagedBuffers = sequenceShredder->findTrailingSpanningTupleWithDelimiter(tupleBuffer->getSequenceNumber());
     /// a trailing spanning tuple must span at least 2 buffers
     if (stagedBuffers.getSize() < 2)
     {

@@ -109,24 +109,6 @@ SpanningBuffers SpanningTupleBuffer::tryFindTrailingSpanningTupleForBufferWithDe
     return SpanningBuffers{};
 }
 
-SpanningBuffers SpanningTupleBuffer::tryFindTrailingSpanningTupleForBufferWithDelimiter(
-    const SequenceNumber sequenceNumber, const FieldIndex offsetOfLastTuple)
-{
-    const auto [sequenceNumberBufferIdx, _] = getBufferIdxAndABAItNo(sequenceNumber);
-    this->buffer.at(sequenceNumberBufferIdx.getRawValue()).setOffsetOfTrailingSpanningTuple(offsetOfLastTuple);
-
-    auto [firstSpanningTupleStartBuffer, lastSN] = claimingTrailingDelimiterSearch(sequenceNumber);
-    if (firstSpanningTupleStartBuffer.has_value())
-    {
-        const auto sizeOfSpanningTuple = lastSN.getRawValue() - sequenceNumber.getRawValue() + 1;
-        std::vector<StagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
-        spanningTupleBuffers[0] = std::move(firstSpanningTupleStartBuffer.value());
-        claimSpanningTupleBuffers(sequenceNumber, spanningTupleBuffers);
-        return SpanningBuffers(std::move(spanningTupleBuffers));
-    }
-    return SpanningBuffers{};
-}
-
 SequenceShredderResult SpanningTupleBuffer::tryFindSpanningTupleForBufferWithoutDelimiter(
     const SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer)
 {
@@ -184,7 +166,7 @@ std::optional<size_t> SpanningTupleBuffer::searchLeading(const SpanningTupleBuff
     auto isPriorIteration = searchStartBufferIdxV < leadingDistance;
     auto entryState = this->buffer[(searchStartBufferIdxV - leadingDistance) % buffer.size()].getEntryState(
         static_cast<ABAItNo>(abaItNumber.getRawValue() - static_cast<size_t>(isPriorIteration)));
-    while (entryState.hasCorrectABA and not entryState.hasValidTrailingDelimiterOffset and not(entryState.hasDelimiter))
+    while (entryState.hasCorrectABA and not(entryState.hasDelimiter))
     {
         ++leadingDistance;
         isPriorIteration = searchStartBufferIdxV < leadingDistance;
