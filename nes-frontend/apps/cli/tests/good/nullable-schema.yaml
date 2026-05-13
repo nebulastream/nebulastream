@@ -1,0 +1,71 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Exercises the optional `nullable` flag on schema fields.
+# - `id`        omits `nullable` (must default to false / NOT_NULLABLE)
+# - `value`     explicitly sets `nullable: true`
+# - `label`     explicitly sets `nullable: false`
+
+query: |
+  SELECT
+    *
+  FROM
+    GENERATOR_SOURCE
+  INTO
+    VOID_SINK
+sinks:
+  - name: VOID_SINK
+    host: worker-1:8080
+    schema:
+      - name: GENERATOR_SOURCE$id
+        type: UINT64
+      - name: GENERATOR_SOURCE$value
+        type: FLOAT64
+        nullable: true
+      - name: GENERATOR_SOURCE$label
+        type: UINT64
+        nullable: false
+    type: Void
+
+logical:
+  - name: GENERATOR_SOURCE
+    schema:
+      - name: id
+        type: UINT64
+      - name: value
+        type: FLOAT64
+        nullable: true
+      - name: label
+        type: UINT64
+        nullable: false
+
+physical:
+  - logical: GENERATOR_SOURCE
+    host: worker-1:8080
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100 1
+        NORMAL_DISTRIBUTION FLOAT64 0 1
+        SEQUENCE UINT64 0 5 1
+
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000
