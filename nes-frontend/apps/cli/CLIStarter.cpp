@@ -21,6 +21,7 @@
 #include <functional>
 #include <initializer_list>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -36,15 +37,14 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongTypeJson.hpp> ///NOLINT(misc-include-cleaner)
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Statements/JsonOutputFormatter.hpp> ///NOLINT(misc-include-cleaner)
 #include <Statements/StatementHandler.hpp>
+#include <Statements/StatementJsonSerializers.hpp> ///NOLINT(misc-include-cleaner)
 #include <Statements/StatementOutputAssembler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -55,7 +55,8 @@
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/ranges.h>
-#include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
+#include <rfl/Generic.hpp>
+#include <rfl/json/write.hpp>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <DistributedQuery.hpp>
@@ -635,12 +636,12 @@ void doStatus(
         {
             throw std::move(result.error());
         }
-        auto jsonResult = nlohmann::json(NES::StatementOutputAssembler<NES::WorkerStatusStatementResult>{}.convert(result.value()));
-        std::cout << jsonResult.dump(4) << '\n';
+        auto rows = NES::rowsToJsonArray(NES::StatementOutputAssembler<NES::WorkerStatusStatementResult>{}.convert(result.value()));
+        std::cout << rfl::json::write(rows, rfl::json::pretty) << '\n';
     }
     else
     {
-        auto result = nlohmann::json::array();
+        rfl::Generic::Array result;
         for (const auto& query : queries)
         {
             auto statementResult
@@ -650,17 +651,18 @@ void doStatus(
                 throw std::move(statementResult.error());
             }
 
-            nlohmann::json results(NES::StatementOutputAssembler<NES::ShowQueriesStatementResult>{}.convert(statementResult.value()));
-            result.insert(result.end(), results.begin(), results.end());
+            auto results
+                = NES::rowsToJsonArray(NES::StatementOutputAssembler<NES::ShowQueriesStatementResult>{}.convert(statementResult.value()));
+            result.insert(result.end(), std::make_move_iterator(results.begin()), std::make_move_iterator(results.end()));
         }
 
-        std::cout << result.dump(4) << '\n';
+        std::cout << rfl::json::write(result, rfl::json::pretty) << '\n';
     }
 }
 
 void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector<NES::DistributedQueryId>& queries)
 {
-    auto result = nlohmann::json::array();
+    rfl::Generic::Array result;
     for (const auto& query : queries)
     {
         auto statementResult = queryStatementHandler(NES::DropQueryStatement{.id = query});
@@ -669,11 +671,12 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector
             throw std::move(statementResult.error());
         }
 
-        nlohmann::json results(NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value()));
-        result.insert(result.end(), results.begin(), results.end());
+        auto results
+            = NES::rowsToJsonArray(NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value()));
+        result.insert(result.end(), std::make_move_iterator(results.begin()), std::make_move_iterator(results.end()));
     }
 
-    std::cout << result.dump(4) << '\n';
+    std::cout << rfl::json::write(result, rfl::json::pretty) << '\n';
 }
 
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)

@@ -20,9 +20,11 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <simdjson.h>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -36,7 +38,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <nlohmann/json.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
@@ -51,6 +52,16 @@ namespace NES
 {
 namespace
 {
+/// Escapes a raw byte string into a quoted JSON string literal. simdjson's string builder performs
+/// RFC 8259-conformant escaping (\b \f \n \r \t \" \\ short forms, \uXXXX for the remaining control
+/// characters) with a SIMD fast path that scans for characters needing escaping.
+std::string escapeAsJsonString(std::string_view input)
+{
+    simdjson::builder::string_builder builder;
+    builder.escape_and_append_with_quotes(input);
+    return std::string{builder.view().value()};
+}
+
 uint64_t writePreValueContents(
     const bool isFirstField,
     const char* fieldIdentifier,
@@ -87,7 +98,7 @@ uint64_t writeChar(
     AbstractBufferProvider* bufferProvider)
 {
     /// Chars are treated as strings in JSON
-    const std::string charAsJsonString = nlohmann::json(std::string(1, content)).dump();
+    const std::string charAsJsonString = escapeAsJsonString(std::string_view(&content, 1));
     return writeValueToBuffer(charAsJsonString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
@@ -99,8 +110,9 @@ uint64_t writeVarsized(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    /// Use nlohmann json library to delimit all special characters in the string
-    const std::string jsonFormattedString = nlohmann::json(std::string(reinterpret_cast<const char*>(varSizedContent), contentSize)).dump();
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) -- int8_t buffer reinterpreted as char* for string_view
+    const auto* const contentChars = reinterpret_cast<const char*>(varSizedContent);
+    const std::string jsonFormattedString = escapeAsJsonString(std::string_view(contentChars, contentSize));
     return writeValueToBuffer(jsonFormattedString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 

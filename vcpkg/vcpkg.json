@@ -46,7 +46,6 @@
     "magic-enum",
     "nameof",
     "nautilus",
-    "nlohmann-json",
     "reflectcpp",
     "replxx",
     "scope-guard",

@@ -202,9 +202,6 @@ set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
-find_package(nlohmann_json REQUIRED)
-set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
-
 if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)
     if (NOT ${GTest_FOUND})

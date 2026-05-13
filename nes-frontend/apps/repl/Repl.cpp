@@ -33,13 +33,12 @@
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <Statements/JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 #include <Statements/StatementHandler.hpp>
+#include <Statements/StatementJsonSerializers.hpp> /// NOLINT(misc-include-cleaner)
 #include <Statements/StatementOutputAssembler.hpp>
 #include <Statements/TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 #include <Util/Logger/Logger.hpp>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
+#include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
 #include <replxx.hxx>
 
@@ -441,9 +440,8 @@ struct Repl::Impl
                     std::cout << std::visit(
                         [](const auto& statementResult)
                         {
-                            nlohmann::json output
-                                = NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult);
-                            return output;
+                            return rfl::json::write(NES::rowsToJsonArray(
+                                NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult)));
                         },
                         result.value())
                               << "\n";

@@ -21,7 +21,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <nlohmann/json.hpp>
 
 namespace NES
 {
@@ -93,29 +92,3 @@ struct hash<NES::QueryId>
 }
 
 FMT_OSTREAM(NES::QueryId);
-
-namespace nlohmann
-{
-template <>
-struct adl_serializer<NES::QueryId>
-{
-    ///NOLINTNEXTLINE(readability-identifier-naming)
-    static NES::QueryId from_json(const json& jsonObject)
-    {
-        if (jsonObject.is_object())
-        {
-            auto localId = NES::LocalQueryId(jsonObject.at("local_query_id").get<std::string>());
-            auto distributedId = NES::DistributedQueryId(jsonObject.at("distributed_query_id").get<std::string>());
-            return NES::QueryId::create(localId, distributedId);
-        }
-        return NES::QueryId::createLocal(NES::LocalQueryId(jsonObject.get<std::string>()));
-    }
-
-    ///NOLINTNEXTLINE(readability-identifier-naming)
-    static void to_json(json& jsonObject, const NES::QueryId& queryId)
-    {
-        jsonObject["local_query_id"] = queryId.getLocalQueryId().getRawValue();
-        jsonObject["distributed_query_id"] = queryId.getDistributedQueryId().getRawValue();
-    }
-};
-}

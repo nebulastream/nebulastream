@@ -46,8 +46,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
-#include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
-#include <nlohmann/json_fwd.hpp>
+#include <rfl/json/write.hpp>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -350,7 +349,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
             }
             if (config.benchmark)
             {
-                nlohmann::json benchmarkResults;
+                std::vector<Systest::BenchmarkResult> benchmarkResults;
                 std::vector<Systest::SystestQuery> benchmarkQueries;
                 benchmarkQueries.reserve(queries.size());
 
@@ -378,10 +377,11 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 auto failed = runQueriesAndBenchmark(
                     benchmarkQueries, singleNodeWorkerConfiguration, benchmarkResults, config.clusterConfig, progressTracker);
                 failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
-                std::cout << benchmarkResults.dump(4);
+                const auto serializedResults = rfl::json::write(benchmarkResults, rfl::json::pretty);
+                std::cout << serializedResults;
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
                 std::ofstream outputFile(outputPath);
-                outputFile << benchmarkResults.dump(4);
+                outputFile << serializedResults;
                 outputFile.close();
             }
             else

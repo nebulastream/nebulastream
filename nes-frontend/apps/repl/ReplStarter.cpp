@@ -38,8 +38,8 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Statements/JsonOutputFormatter.hpp>
 #include <Statements/StatementHandler.hpp>
+#include <Statements/StatementJsonSerializers.hpp>
 #include <Statements/StatementOutputAssembler.hpp>
 #include <Statements/TextOutputFormatter.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -53,7 +53,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
-#include <nlohmann/json.hpp>
+#include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
@@ -115,7 +115,7 @@ std::ostream& printStatementResult(std::ostream& os, NES::StatementOutputFormat 
         case NES::StatementOutputFormat::TEXT:
             return os << toText(result);
         case NES::StatementOutputFormat::JSON:
-            return os << nlohmann::json(result).dump() << '\n';
+            return os << rfl::json::write(NES::rowsToJsonArray(result)) << '\n';
     }
     std::unreachable();
 }
