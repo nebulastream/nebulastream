@@ -32,6 +32,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterProvider.hpp>
 
@@ -90,7 +91,12 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     }
 
     auto parserConfigObject = ParserConfig::create(parserConfig);
-    if (not contains(parserConfigObject.parserType))
+    /// "Native" is a sentinel parser type that means "skip parsing — the source
+    /// already produces structured tuples" (see PipeliningPhase.cpp where the
+    /// scan operator is built without an InputFormatter for Native sources).
+    /// It is intentionally not registered in the InputFormatter registry, so
+    /// exempt it from the registry-membership check here.
+    if (toUpperCase(parserConfigObject.parserType) != "NATIVE" and not contains(parserConfigObject.parserType))
     {
         return std::unexpected{InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType)};
     }
