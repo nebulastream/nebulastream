@@ -1,0 +1,24 @@
+# name: function/dspro/Pseudonymize.test
+# description: Skeleton tests for the Pseudonymize function (identity behavior until students implement it).
+# groups: [Function, Pseudonymize]
+
+CREATE LOGICAL SOURCE stream(patient_id INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+0
+1
+2
+3
+
+CREATE SINK sinkStream(patient_id_pseudo INT32 NOT NULL) TYPE File;
+
+# TODO(student): once Pseudonymize no longer returns the identity, replace the expected
+#                rows below with the expected pseudonymized values.
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream INTO sinkStream;
+----
+0
+1
+2
+3
