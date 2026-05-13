@@ -1,0 +1,25 @@
+# name: function/dspro/Format.test
+# description: Skeleton tests for the Format function (returns the format string verbatim until students implement substitution).
+# groups: [Function, Format]
+
+CREATE LOGICAL SOURCE stream(value INT32 NOT NULL, other_value INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10
+2,20
+3,30
+
+CREATE SINK sinkStream(formatted VARSIZED NOT NULL) TYPE File;
+
+# TODO(student): once Format actually substitutes `{}` placeholders, replace the
+#                expected rows below with the formatted output, e.g.:
+#                  Value is: 1, which is larger than: 10
+#                  Value is: 2, which is larger than: 20
+#                  Value is: 3, which is larger than: 30
+SELECT
+    Format(VARSIZED("Value is: {}, which is larger than: {}"), value, other_value) AS formatted
+FROM stream INTO sinkStream;
+----
+Value is: {}, which is larger than: {}
+Value is: {}, which is larger than: {}
+Value is: {}, which is larger than: {}
