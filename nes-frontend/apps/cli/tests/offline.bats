@@ -494,3 +494,30 @@ bad_topology() {
   [[ "$output" == *"only-digit names are reserved"* ]]
 }
 
+# --- Nullable schema field tests ---
+# Schema fields accept an optional `nullable: <bool>` flag (defaults to false).
+# These tests pin: (1) `true`/`false`/omitted all parse, (2) the schema-field
+# keyset includes `nullable` so it's not rejected as unknown, (3) a non-bool
+# value is rejected with the right error.
+
+@test "nullable: dump succeeds with mixed nullable schema fields" {
+  run $NES_CLI -t tests/good/nullable-schema.yaml dump
+  [ "$status" -eq 0 ]
+}
+
+@test "nullable: appears in the schema-field accepted-keys list" {
+  # Trip the unknown-key check by adding a bogus sibling of `nullable`. The
+  # error message lists the accepted keys, which must now include `nullable`.
+  local f=$(bad_topology '/^logical:/,/^[a-z]/s/        type: FLOAT64/        type: FLOAT64\n        bogus_key: true/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unknown key 'bogus_key'"* ]]
+  [[ "$output" == *"name, type, nullable"* ]]
+}
+
+@test "nullable: non-bool value is rejected" {
+  run $NES_CLI -d -t tests/bad/invalid_nullable_value.yaml dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Invalid value for 'nullable'"* ]]
+}
+

@@ -333,9 +333,12 @@ struct convert<NES::CLI::SchemaField>
 {
     static bool decode(const Node& node, NES::CLI::SchemaField& rhs)
     {
-        acceptKeys({"name", "type"}, node);
+        acceptKeys({"name", "type", "nullable"}, node);
         rhs.name = bindIdentifierName(getValue<std::string>(node, "name"));
+
+        const bool nullable = getOrDefault<bool>(node, "nullable", false);
         rhs.type = stringToFieldType(getValue<std::string>(node, "type"));
+        rhs.type.nullable = nullable;
         return true;
     }
 };
