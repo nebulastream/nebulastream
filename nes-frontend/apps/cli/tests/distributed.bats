@@ -220,7 +220,7 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -235,7 +235,7 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -253,7 +253,7 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   for i in $(seq 1 20); do
@@ -275,7 +275,7 @@ assert_json_contains() {
   run DOCKER_NES_CLI start
   [ "$status" -eq 0 ]
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -296,7 +296,7 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   # Poll until the fast source has stopped and the query becomes PartiallyStopped
