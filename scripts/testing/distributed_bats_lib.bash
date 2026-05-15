@@ -487,6 +487,14 @@ _external_systest_compose() {
 
 nes_external_systest_teardown() {
   _external_systest_compose cp "systest:$CONTAINER_WORKDIR/." . || true
+  # If the outer systest invocation predicted a host log path
+  # (NES_DISPATCH_LOG_PATH, set by the in-binary dispatcher), copy the inner
+  # systest's log there so the user sees a non-empty SystemTest_*.log on the
+  # host — instead of the empty one the outer would have produced before
+  # exec()-ing into bats. Best-effort: container teardown still wins on error.
+  if [ -n "${NES_DISPATCH_LOG_PATH:-}" ]; then
+    _external_systest_compose cp "systest:${CONTAINER_WORKDIR}/systest.log" "${NES_DISPATCH_LOG_PATH}" || true
+  fi
   _external_systest_compose down -v || true
   docker volume rm "$TEST_VOLUME" || true
 }
@@ -505,11 +513,15 @@ nes_external_systest_compose_up() {
 # Run `systest --testLocation $TEST_FILE --accept-requires $PROFILE_NAME` inside
 # the systest container. `--data` points at $NES_DIR/nes-systests/testdata,
 # which exists inside the container because TESTCONFIG_VOLUME mirrors that
-# subtree. Forwards ASAN_OPTIONS (sanitizer builds may set detect_leaks=0).
+# subtree. `--log-path` writes inside CONTAINER_WORKDIR so the file lives in
+# a known location that teardown can copy out to the host (otherwise the log
+# is lost when the container is torn down). Forwards ASAN_OPTIONS (sanitizer
+# builds may set detect_leaks=0).
 nes_external_systest_run() {
   _external_systest_compose exec -e ASAN_OPTIONS systest \
     systest --workingDir "$CONTAINER_WORKDIR/systest-workdir" \
     --data "$NES_DIR/nes-systests/testdata" \
     --testLocation "$TEST_FILE" \
-    --accept-requires "$PROFILE_NAME" "$@" >&3
+    --accept-requires "$PROFILE_NAME" \
+    --log-path "$CONTAINER_WORKDIR/systest.log" "$@" >&3
 }

@@ -42,7 +42,6 @@
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
-#include <ExternalSystestDispatch.hpp>
 #include <SystestConfiguration.hpp>
 
 #include <Sources/SourceDescriptor.hpp>
@@ -384,49 +383,6 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
     return testGroups;
 }
 
-/// Dispatch a `# requires:`-bearing test to the external bats runner, or
-/// — if dispatch is impossible — print an actionable error and exit.
-///
-/// This is what powers the "click play in CLion on a .test file with
-/// `# requires:`" UX: the existing systest gutter plugin invokes this
-/// binary with `--testLocation <file>` and no `--accept-requires`; this
-/// function then shells out to scripts/testing/external_systest.bats with
-/// the right env, which brings up the docker-compose stack the test
-/// depends on, runs `systest --testLocation <file> --accept-requires
-/// <profile>` inside the systest container, and tears the stack down.
-/// The function never returns when dispatch happens — it `std::exit`s
-/// with the bats wrapper's exit code so the caller's run window sees a
-/// pass/fail.
-void dispatchOrRefuseRequirements(const NES::Systest::TestFile& testfile, const DiscoveryFilters& filters)
-{
-    const auto missing = unsatisfiedRequirements(testfile, filters);
-    if (missing.empty())
-    {
-        return;
-    }
-
-    const auto outcome = NES::Systest::dispatchExternalSystest(testfile.file, testfile.requirements);
-    if (outcome.dispatched)
-    {
-        std::exit(outcome.exitCode); ///NOLINT(concurrency-mt-unsafe)
-    }
-
-    std::cerr << fmt::format(
-        "Refusing to run file://{}: this test declares `# requires: {:}` and dispatch to the external_systest "
-        "bats runner failed: {}.\n"
-        "\n"
-        "Expected runners, in order of preference:\n"
-        "  1. Click the systest play-button in CLion (after applying the systest-profile convention so this "
-        "     dispatcher can locate the profile dir automatically).\n"
-        "  2. Run the ctest entry produced by `add_external_systest_profile(NAME ... TEST_FILE ... PROFILE_DIR "
-        "...)` in the plugin's CMakeLists.txt. See nes-plugins/Sources/MQTTSource/CMakeLists.txt for an example.\n"
-        "  3. Invoke scripts/testing/external_systest.bats directly with PROFILE_DIR / PROFILE_NAME / TEST_FILE / "
-        "NES_DIR / NES_SYSTEST / NES_RUNTIME_BASE_IMAGE set.\n",
-        testfile.getLogFilePath(),
-        missing,
-        outcome.skipReason);
-    std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
-}
 
 TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {
@@ -439,7 +395,6 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         if (config.testQueryNumbers.empty())
         {
             const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-            dispatchOrRefuseRequirements(testfile, filters);
             if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
             {
                 std::cout << fmt::format(
@@ -454,7 +409,6 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
         const auto testfile
             = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-        dispatchOrRefuseRequirements(testfile, filters);
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(

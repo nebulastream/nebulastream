@@ -16,19 +16,26 @@
 
 #include <array>
 #include <cerrno>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unordered_set>
 #include <vector>
 
+#include <fmt/chrono.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h> ///NOLINT: required by fmt for range formatting
+
+#include <SystestConfiguration.hpp>
 
 namespace NES::Systest
 {
@@ -250,17 +257,33 @@ DispatchOutcome dispatchExternalSystest(const std::filesystem::path& testFile, c
     std::error_code ec;
     std::filesystem::create_directories(tmpDir, ec); /// ignore failure; bats will surface a clearer error
 
+    /// Predict the same log path the executor's setupLogging would have
+    /// produced (PATH_TO_BINARY_DIR/nes-systests/SystemTest_<ts>_<pid>.log) so
+    /// the user sees a stable, populated host log file after the run. The
+    /// bats wrapper writes the inner systest's log to this path on teardown
+    /// via `docker compose cp`. We compute it here — not in the inner — so
+    /// it lives outside the docker container that gets torn down.
+    const std::filesystem::path logDir = std::filesystem::path(NES_REPO_ROOT) / ".." / "nes-systests-logs";
+    const std::filesystem::path hostLogDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
+    std::filesystem::create_directories(hostLogDir, ec);
+    const auto now = std::chrono::system_clock::now();
+    const auto logPid = ::getpid();
+    const std::string logFileName = fmt::format("SystemTest_{:%Y-%m-%d_%H-%M-%S}_{}.log", now, logPid);
+    const std::filesystem::path hostLogPath = hostLogDir / logFileName;
+
     std::cout << fmt::format(
         "Dispatching `# requires: {}` test to external_systest bats wrapper.\n"
         "  test file:    {}\n"
         "  profile dir:  {}\n"
         "  bats wrapper: {}\n"
-        "  runtime img:  {}\n",
+        "  runtime img:  {}\n"
+        "Find the log at: file://{}\n",
         profileName,
         absoluteTestFile.string(),
         profileDir->string(),
         std::string{batsWrapper},
-        runtimeImage);
+        runtimeImage,
+        hostLogPath.string());
     std::cout.flush();
 
     setEnvOrDie("NES_DIR", nesDir);
@@ -271,6 +294,7 @@ DispatchOutcome dispatchExternalSystest(const std::filesystem::path& testFile, c
     setEnvOrDie("PROFILE_DIR", profileDir->string());
     setEnvOrDie("PROFILE_NAME", profileName);
     setEnvOrDie("TEST_FILE", absoluteTestFile.string());
+    setEnvOrDie("NES_DISPATCH_LOG_PATH", hostLogPath.string());
 
     const std::string wrapper{batsWrapper};
     std::array<const char*, 5> argv{"bats", "--verbose-run", "--timing", wrapper.c_str(), nullptr};
@@ -312,6 +336,102 @@ DispatchOutcome dispatchExternalSystest(const std::filesystem::path& testFile, c
         out.exitCode = EXIT_FAILURE;
     }
     return out;
+}
+
+std::vector<std::string> readRequirementsFromHeader(const std::filesystem::path& testFile)
+{
+    std::vector<std::string> requirements;
+    std::ifstream stream(testFile);
+    if (!stream.is_open())
+    {
+        return requirements;
+    }
+    constexpr std::string_view directive = "# requires:";
+    std::string line;
+    while (std::getline(stream, line))
+    {
+        const auto firstNonSpace = line.find_first_not_of(" \t");
+        if (firstNonSpace == std::string::npos)
+        {
+            continue;
+        }
+        if (line[firstNonSpace] != '#')
+        {
+            break;
+        }
+        if (!line.starts_with(directive))
+        {
+            continue;
+        }
+        auto remainder = std::string_view(line).substr(directive.size());
+        const auto start = remainder.find_first_not_of(" \t");
+        if (start == std::string_view::npos)
+        {
+            continue;
+        }
+        remainder.remove_prefix(start);
+        const auto end = remainder.find_first_of(" \t");
+        if (end != std::string_view::npos)
+        {
+            remainder = remainder.substr(0, end);
+        }
+        if (!remainder.empty())
+        {
+            requirements.emplace_back(remainder);
+        }
+    }
+    return requirements;
+}
+
+void maybeDispatchExternalSystest(const SystestConfiguration& config)
+{
+    const auto& testFilePath = config.directlySpecifiedTestFiles.getValue();
+    if (testFilePath.empty())
+    {
+        return;
+    }
+
+    const auto requirements = readRequirementsFromHeader(testFilePath);
+    if (requirements.empty())
+    {
+        return;
+    }
+
+    /// If every declared requirement is already listed in --accept-requires,
+    /// we're being invoked *by* the bats wrapper (recursion guard) and should
+    /// fall through to the normal executor path.
+    std::unordered_set<std::string> accepted;
+    for (const auto& option : config.acceptRequires.getValues())
+    {
+        accepted.insert(option.getValue());
+    }
+    const bool allAccepted = std::ranges::all_of(requirements, [&](const auto& req) { return accepted.contains(req); });
+    if (allAccepted)
+    {
+        return;
+    }
+
+    const auto outcome = dispatchExternalSystest(testFilePath, requirements);
+    if (outcome.dispatched)
+    {
+        std::exit(outcome.exitCode); ///NOLINT(concurrency-mt-unsafe)
+    }
+
+    std::cerr << fmt::format(
+        "Refusing to run file://{}: this test declares `# requires: {:}` and dispatch to the external_systest "
+        "bats runner failed: {}.\n"
+        "\n"
+        "Expected runners, in order of preference:\n"
+        "  1. Click the systest play-button in CLion (after applying the systest-profile convention so this "
+        "     dispatcher can locate the profile dir automatically).\n"
+        "  2. Run the ctest entry produced by `add_external_systest_profile(NAME ... TEST_FILE ... PROFILE_DIR "
+        "...)` in the plugin's CMakeLists.txt. See nes-plugins/Sources/MQTTSource/CMakeLists.txt for an example.\n"
+        "  3. Invoke scripts/testing/external_systest.bats directly with PROFILE_DIR / PROFILE_NAME / TEST_FILE / "
+        "NES_DIR / NES_SYSTEST / NES_RUNTIME_BASE_IMAGE set.\n",
+        std::filesystem::path(testFilePath).string(),
+        requirements,
+        outcome.skipReason);
+    std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
 }
 
 }

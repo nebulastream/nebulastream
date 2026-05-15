@@ -36,6 +36,7 @@
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
+#include <ExternalSystestDispatch.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
@@ -509,6 +510,16 @@ int main(int argc, const char** argv)
     NES::Thread::initializeThread(NES::Host("systest"), "main");
 
     auto config = parseConfiguration(argc, argv);
+
+    /// Pre-executor hook: if this run is a single .test file declaring
+    /// `# requires:` and the caller hasn't already satisfied it via
+    /// --accept-requires, shell out to the external_systest bats wrapper.
+    /// Runs *before* SystestExecutor opens its log file so the host doesn't
+    /// end up with an empty SystemTest_*.log while the real work happens
+    /// inside the docker container the bats wrapper spawns. The dispatcher
+    /// exits with the bats wrapper's status and never returns.
+    NES::Systest::maybeDispatchExternalSystest(config);
+
     NES::SystestExecutor executor(std::move(config));
     const auto result = executor.executeSystests();
 

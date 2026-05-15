@@ -18,8 +18,26 @@
 #include <string>
 #include <vector>
 
+namespace NES
+{
+class SystestConfiguration;
+}
+
 namespace NES::Systest
 {
+
+/// Read `# requires:` directives from a .test file's header. Same shape as
+/// the parser in SystestState.cpp, exposed here so the dispatcher can decide
+/// before the full systest parser / logger fires.
+std::vector<std::string> readRequirementsFromHeader(const std::filesystem::path& testFile);
+
+/// If config selects a single test file that declares `# requires:` and no
+/// `--accept-requires` profile satisfies it, dispatch to the bats runner and
+/// exit with its status. Otherwise return so main() can proceed normally.
+/// Called *before* the executor's logger setup so we don't litter an empty
+/// SystemTest_*.log when the real work happens inside the docker container.
+void maybeDispatchExternalSystest(const SystestConfiguration& config);
+
 
 /// Outcome of an attempt to dispatch a `# requires:`-bearing test to the
 /// external_systest bats runner.
