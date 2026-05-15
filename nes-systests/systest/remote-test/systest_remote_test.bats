@@ -201,15 +201,22 @@ DOCKER_SYSTEST() {
   docker compose exec systest systest --log-path $CONTAINER_WORKDIR/systest.log --data /data  --workingDir $CONTAINER_WORKDIR/systest-workdir "$@" >&3
 }
 
+# Inference systests load ONNX models via the IREE toolchain. When the IREE tools are not
+# available in the worker image (ENABLE_IREE_TESTS=OFF), exclude the Inference group too.
+EXTRA_EXCLUDE_GROUPS=()
+if [ "$ENABLE_IREE_TESTS" != "ON" ]; then
+  EXTRA_EXCLUDE_GROUPS+=(Inference)
+fi
+
 @test "two node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
-  run DOCKER_SYSTEST -e large tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
+  run DOCKER_SYSTEST -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
 @test "8 node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
-  run DOCKER_SYSTEST -e large tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
+  run DOCKER_SYSTEST -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
   [ "$status" -eq 0 ]
 }
 
@@ -218,6 +225,6 @@ DOCKER_SYSTEST() {
     skip "Large tests disabled (ENABLE_LARGE_TESTS=$ENABLE_LARGE_TESTS)"
   fi
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
-  run DOCKER_SYSTEST -g large -e tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
+  run DOCKER_SYSTEST -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
   [ "$status" -eq 0 ]
 }

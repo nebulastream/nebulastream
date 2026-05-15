@@ -13,3 +13,6 @@
 add_nes_unit_test(statement-binder-test "StatementBinderTest.cpp")
 target_link_libraries(statement-binder-test nes-sql-parser nes-frontend-lib)
 target_compile_definitions(statement-binder-test PRIVATE INFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata")
+if (ENABLE_IREE_TESTS)
+    target_compile_definitions(statement-binder-test PRIVATE NES_HAVE_IREE_TESTS=1)
+endif ()

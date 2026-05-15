@@ -208,6 +208,9 @@ assert_json_contains() {
 }
 
 @test "create model show and drop lifecycle" {
+  if [ "$ENABLE_IREE_TESTS" != "ON" ]; then
+    skip "IREE tools not available (ENABLE_IREE_TESTS=$ENABLE_IREE_TESTS)"
+  fi
   setup_distributed tests/topologies/1-node.yaml
   run DOCKER_NES_REPL tests/sql-file-tests/good/create_model.sql
   [ "$status" -eq 0 ]

@@ -109,6 +109,9 @@ assert_json_contains() {
 }
 
 @test "nebucli dump with model inference topology" {
+  if [ "$ENABLE_IREE_TESTS" != "ON" ]; then
+    skip "IREE tools not available (ENABLE_IREE_TESTS=$ENABLE_IREE_TESTS)"
+  fi
   run $NES_CLI -t tests/good/infer-model.yaml dump
   [ "$status" -eq 0 ]
 }
