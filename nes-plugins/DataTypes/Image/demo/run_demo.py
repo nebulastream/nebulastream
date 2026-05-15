@@ -107,7 +107,7 @@ CREATE LOGICAL SOURCE thermalRecords(`timestamp` UINT64 NOT NULL, `frame` Therma
 
 CREATE PHYSICAL SOURCE FOR thermalRecords TYPE File
 SET(
-    'NestedJSON' AS `PARSER`.`TYPE`,
+    'NestedJSON' AS `INPUT_FORMATTER`.`TYPE`,
     '{INPUT_JSON}' AS `SOURCE`.FILE_PATH
 );
 

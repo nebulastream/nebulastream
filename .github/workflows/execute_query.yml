@@ -26,7 +26,7 @@ on:
           CREATE LOGICAL SOURCE endless(val_1 UINT32 NOT NULL, ts UINT64 NOT NULL);
           CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
               'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-              'CSV' as PARSER.`TYPE`,
+              'CSV' as INPUT_FORMATTER.`TYPE`,
               1 AS `SOURCE`.SEED,
               -1 AS `SOURCE`.MAX_RUNTIME_MS,
               'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,

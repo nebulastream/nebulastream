@@ -160,12 +160,12 @@ collectConfigBlock(const ConfigMap& configOptions, const std::initializer_list<s
 
 std::unordered_map<std::string, std::string> parseInputFormatterConfig(const ConfigMap& configOptions)
 {
-    return collectConfigBlock(configOptions, {"PARSER", "INPUT_FORMATTER"});
+    return collectConfigBlock(configOptions, {"INPUT_FORMATTER"});
 }
 
 std::unordered_map<std::string, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
 {
-    return collectConfigBlock(configOptions, {"PARSER", "OUTPUT_FORMATTER"});
+    return collectConfigBlock(configOptions, {"OUTPUT_FORMATTER"});
 }
 
 std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions)

@@ -3,7 +3,7 @@
 # groups: [Formatter, JSON]
 
 CREATE LOGICAL SOURCE thermalFrames(`timestamp` UINT64 NOT NULL, `camera_id` UINT32 NOT NULL, `image` UINT16 ARRAY[16] NOT NULL);
-CREATE PHYSICAL SOURCE FOR thermalFrames TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+CREATE PHYSICAL SOURCE FOR thermalFrames TYPE File SET('NestedJSON' AS `INPUT_FORMATTER`.`TYPE`);
 ATTACH INLINE
 {"timestamp": 1714060800000, "camera_id": 1, "image": [30100, 30180, 30220, 30150, 30210, 41900, 52400, 30260, 30230, 53100, 65535, 30290, 30170, 30240, 30205, 30130]}
 {"timestamp": 1714060800040, "camera_id": 1, "image": [30120, 30200, 30240, 30160, 30230, 42150, 52900, 30270, 30250, 53600, 65535, 30310, 30190, 30260, 30225, 30150]}
@@ -20,7 +20,7 @@ SELECT * FROM thermalFrames INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
 ## RawValueParser FIXEDSIZED trace path (3.14 -> 3.139999). All values here
 ## are exact (1.5, -2.25, 0.0, -0.0).
 CREATE LOGICAL SOURCE mixedArrays(`id` UINT64 NOT NULL, `floats` FLOAT64 ARRAY[3] NOT NULL, `signed` INT16 ARRAY[2] NOT NULL);
-CREATE PHYSICAL SOURCE FOR mixedArrays TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+CREATE PHYSICAL SOURCE FOR mixedArrays TYPE File SET('NestedJSON' AS `INPUT_FORMATTER`.`TYPE`);
 ATTACH INLINE
 {"id": 1, "floats": [1.5, -2.25, 0.0], "signed": [-1, 32767]}
 {"id": 2, "floats": [0.5, 0.0, -0.0], "signed": [-32768, 0]}
