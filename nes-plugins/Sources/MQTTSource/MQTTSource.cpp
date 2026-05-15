@@ -18,6 +18,8 @@
 #include <chrono>
 #include <cstddef>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <ostream>
 #include <ratio>
@@ -26,10 +28,12 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <mqtt/async_client.h>
 #include <mqtt/connect_options.h>
 #include <mqtt/exception.h>
+#include <mqtt/message.h>
 
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -38,6 +42,8 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <FileDataRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
@@ -189,6 +195,148 @@ SourceValidationRegistryReturnType RegisterMQTTSourceValidation(SourceValidation
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterMQTTSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<MQTTSource>(sourceRegistryArguments.sourceDescriptor);
+}
+
+namespace
+{
+
+/// `ATTACH FILE` / `ATTACH INLINE` for the MQTT source: publish each row to a
+/// unique retained topic so the source can subscribe and read it back. The
+/// alternative — pre-seeding the broker via a `mqtt_producer` compose service
+/// — kept the data file far from the .test file and forced a third yaml/jsonl
+/// hop. With these registrars in place, the data lives in the .test file (or a
+/// referenced testdata path) and the broker stays a pure dependency.
+///
+/// Topic semantics: the user's `topic` config is treated as a publish prefix
+/// after stripping a trailing `/+` if present (so `test/data/+` and
+/// `test/data` both publish to `test/data/0`, `test/data/1`, ...). The source
+/// subscribes to whatever topic the user wrote, including the wildcard.
+std::string publishPrefix(const PhysicalSourceConfig& cfg)
+{
+    auto it = cfg.sourceConfig.find(ConfigParametersMQTTSource::TOPIC);
+    if (it == cfg.sourceConfig.end())
+    {
+        throw InvalidConfigParameter("MQTT InlineData/FileData: `topic` is required");
+    }
+    std::string topic = it->second;
+    if (topic.ends_with("/+"))
+    {
+        topic.resize(topic.size() - 2);
+    }
+    else if (topic == "+")
+    {
+        throw InvalidConfigParameter("MQTT InlineData/FileData: `topic` cannot be a bare wildcard");
+    }
+    return topic;
+}
+
+void publishRowAsRetained(mqtt::async_client& client, const std::string& topic, std::string_view row, int32_t qos)
+{
+    /// The JSON / CSV parsers downstream read the source buffer as a stream
+    /// and split records on newline. Append one per published row so two
+    /// rows in the same tuple buffer don't fuse into an un-parseable blob.
+    /// Any pre-existing trailing CR/LF is stripped first so a CRLF .test
+    /// file or a producer-side \n doesn't yield empty rows.
+    std::string payload(row);
+    while (!payload.empty() && (payload.back() == '\n' || payload.back() == '\r'))
+    {
+        payload.pop_back();
+    }
+    payload.push_back('\n');
+    auto message = mqtt::message::create(topic, payload.data(), payload.size(), qos, /*retained=*/true);
+    client.publish(message)->wait();
+}
+
+class Publisher
+{
+public:
+    explicit Publisher(const PhysicalSourceConfig& cfg)
+        : serverURI(cfg.sourceConfig.at(ConfigParametersMQTTSource::SERVER_URI))
+        , qos(cfg.sourceConfig.contains(ConfigParametersMQTTSource::QOS) ? std::stoi(cfg.sourceConfig.at(ConfigParametersMQTTSource::QOS)) : 1)
+        , topicPrefix(publishPrefix(cfg))
+        , client(serverURI, "nes-systest-mqtt-loader-" + UUIDToString(generateUUID()))
+    {
+        try
+        {
+            const auto connectOptions = mqtt::connect_options_builder().clean_session(true).finalize();
+            client.connect(connectOptions)->wait();
+        }
+        catch (const mqtt::exception& e)
+        {
+            throw CannotOpenSource("MQTT loader could not connect to {}: {}", serverURI, e.what());
+        }
+    }
+
+    ~Publisher()
+    {
+        try
+        {
+            client.disconnect()->wait();
+        }
+        catch (const mqtt::exception& e)
+        {
+            NES_WARNING("MQTT loader disconnect failed: {}", e.what());
+        }
+    }
+
+    Publisher(const Publisher&) = delete;
+    Publisher& operator=(const Publisher&) = delete;
+    Publisher(Publisher&&) = delete;
+    Publisher& operator=(Publisher&&) = delete;
+
+    void publishRow(std::string_view row)
+    {
+        const auto topic = topicPrefix + "/" + std::to_string(nextIndex++);
+        try
+        {
+            publishRowAsRetained(client, topic, row, qos);
+        }
+        catch (const mqtt::exception& e)
+        {
+            throw CannotOpenSource("MQTT loader failed to publish to {}: {}", topic, e.what());
+        }
+    }
+
+private:
+    std::string serverURI;
+    int32_t qos;
+    std::string topicPrefix;
+    mqtt::async_client client;
+    size_t nextIndex = 0;
+};
+
+}
+
+InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterMQTTInlineData(InlineDataRegistryArguments args)
+{
+    Publisher publisher(args.physicalSourceConfig);
+    for (const auto& row : args.tuples)
+    {
+        publisher.publishRow(row);
+    }
+    return args.physicalSourceConfig;
+}
+
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterMQTTFileData(FileDataRegistryArguments args)
+{
+    std::ifstream input(args.testFilePath);
+    if (!input.is_open())
+    {
+        throw CannotOpenSource("MQTT FileData: cannot open {}", args.testFilePath.string());
+    }
+    /// Stream line-by-line so multi-gigabyte fixtures don't blow up memory —
+    /// each publish handles one row before the next read.
+    Publisher publisher(args.physicalSourceConfig);
+    std::string line;
+    while (std::getline(input, line))
+    {
+        if (line.empty())
+        {
+            continue;
+        }
+        publisher.publishRow(line);
+    }
+    return args.physicalSourceConfig;
 }
 
 }

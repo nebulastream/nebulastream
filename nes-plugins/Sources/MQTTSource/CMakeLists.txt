@@ -12,15 +12,16 @@
 
 add_plugin_as_library(MQTT Source nes-sources-registry mqtt_source_plugin_library MQTTSource.cpp)
 add_plugin_as_library(MQTT SourceValidation nes-sources-registry mqtt_source_validation_plugin_library MQTTSource.cpp)
+# InlineData / FileData plugins materialise the test's ATTACH content into the
+# broker (publish each row to a unique retained topic). systest dispatches into
+# these when the .test file has `ATTACH INLINE` / `ATTACH FILE` under an MQTT
+# physical source — see RegisterMQTT{Inline,File}Data in MQTTSource.cpp.
+add_plugin_as_library(MQTT InlineData nes-sources-registry mqtt_inline_data_plugin_library MQTTSource.cpp)
+add_plugin_as_library(MQTT FileData nes-sources-registry mqtt_file_data_plugin_library MQTTSource.cpp)
 
-target_include_directories(mqtt_source_plugin_library
-        PUBLIC include
-        PRIVATE .
-)
-target_include_directories(mqtt_source_validation_plugin_library
-        PUBLIC include
-        PRIVATE .
-)
+foreach (_lib mqtt_source_plugin_library mqtt_source_validation_plugin_library mqtt_inline_data_plugin_library mqtt_file_data_plugin_library)
+    target_include_directories(${_lib} PUBLIC include PRIVATE .)
+endforeach ()
 
 find_package(PahoMqttCpp CONFIG REQUIRED)
 # vcpkg builds Paho C++ as a static library (PahoMqttCpp::paho-mqttpp3-static);
@@ -30,8 +31,9 @@ if (TARGET PahoMqttCpp::paho-mqttpp3-static)
 else ()
     set(PAHO_MQTTPP3_TARGET PahoMqttCpp::paho-mqttpp3)
 endif ()
-target_link_libraries(mqtt_source_plugin_library PRIVATE ${PAHO_MQTTPP3_TARGET})
-target_link_libraries(mqtt_source_validation_plugin_library PRIVATE ${PAHO_MQTTPP3_TARGET})
+foreach (_lib mqtt_source_plugin_library mqtt_source_validation_plugin_library mqtt_inline_data_plugin_library mqtt_file_data_plugin_library)
+    target_link_libraries(${_lib} PRIVATE ${PAHO_MQTTPP3_TARGET})
+endforeach ()
 
 # External-dependency systest: a `# requires: mqtt` test file plus the
 # co-located docker-compose snippet that brings up the broker and pre-seeds
