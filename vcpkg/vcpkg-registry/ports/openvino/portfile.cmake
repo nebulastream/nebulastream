@@ -95,6 +95,8 @@ if(ENABLE_INTEL_CPU)
             REPO ARM-software/ComputeLibrary
             REF v25.03
             SHA512 a7c9f8138631aabe24cfe68021d3cdaf6716b69dbcf183694217ca87720efd399f5d809f9fd4522a435a6a991855bcf40d5c6fa6189d77ee8ca5caa1f9ade95c
+	    PATCHES
+		fix-arm.patch
         )
         file(COPY "${DEP_SOURCE_PATH}/" DESTINATION "${SOURCE_PATH}/src/plugins/intel_cpu/thirdparty/ComputeLibrary")
 
