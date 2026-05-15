@@ -32,3 +32,13 @@ else ()
 endif ()
 target_link_libraries(mqtt_source_plugin_library PRIVATE ${PAHO_MQTTPP3_TARGET})
 target_link_libraries(mqtt_source_validation_plugin_library PRIVATE ${PAHO_MQTTPP3_TARGET})
+
+# External-dependency systest: a `# requires: mqtt` test file plus the
+# co-located docker-compose snippet that brings up the broker and pre-seeds
+# retained messages. add_external_systest_profile is a no-op when
+# ENABLE_BATS_TESTS / ENABLE_DOCKER_TESTS are OFF, so this needs no guard.
+add_external_systest_profile(
+        NAME mqtt
+        TEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/systests/MQTT.test
+        PROFILE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/systest-profile
+)
