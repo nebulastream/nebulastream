@@ -25,5 +25,5 @@ add_e2e_test(
     NAME odbc-source-test
     BATS_FILE tests/distributed.bats
     DOCKER_COMPOSE
-    JOBS 4
+    JOBS 1
 )

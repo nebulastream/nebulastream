@@ -53,7 +53,7 @@ namespace NES
 
 struct ConnectionInformation
 {
-    std::string host;
+    std::string server;
     std::string port;
     std::string database;
     std::string username;
@@ -142,7 +142,7 @@ struct Connection
         auto connectionString = fmt::format(
             "DRIVER={{{}}};SERVER={},{};DATABASE={};UID={};PWD={};TrustServerCertificate=yes;Encrypt=yes;CharSet=UTF-8",
             connectionInformation.driver,
-            connectionInformation.host,
+            connectionInformation.server,
             connectionInformation.port,
             connectionInformation.database,
             connectionInformation.username,
@@ -296,6 +296,11 @@ struct PreparedStatement
 
         auto sqlTypes = getSqlResultTypes(hStmt);
         NES_DEBUG("Binding {} to {}.", fmt::join(sqlTypes, ", "), schema);
+
+        if (sqlTypes.size() != schema.getNumberOfFields())
+        {
+            throw CannotOpenSource("Query returned {} columns, but schema expects {}.", sqlTypes.size(), schema.getNumberOfFields());
+        }
 
         auto columnMappingResults = std::views::enumerate(std::views::zip(sqlTypes, schema))
             | std::views::transform(
@@ -487,6 +492,14 @@ struct PreparedStatement
             {
                 INVARIANT(nullable, "SQLGetData returned SQL_NULL_DATA for a non nullable column.");
                 *nullable = static_cast<std::byte>(1);
+                continue;
+            }
+
+            if (totalLen == 0)
+            {
+                *reinterpret_cast<VariableSizedAccess*>(destination.data())
+                    = VariableSizedAccess{INVALID_VARIABLE_SIZED_INDEX, VariableSizedAccess::Size{0}};
+                continue;
             }
 
             TupleBuffer resultBuffer;
@@ -498,15 +511,22 @@ struct PreparedStatement
             }
             else
             {
-                INVARIANT(totalLen >= 0, "SQLGetData returned a negative length.");
-                resultBuffer = provider.getUnpooledBuffer(totalLen).value();
+                INVARIANT(totalLen >= 0, "SQLGetData returned a negative length: {}.", totalLen);
+                /// Account for zero termination
+                resultBuffer = provider.getUnpooledBuffer(totalLen + 1).value();
             }
 
             SQLLEN bytesRead = 0;
             rc = SQLGetData(
-                statement.get(), index.index, cType.type, resultBuffer.getAvailableMemoryArea<std::byte>().data(), totalLen, &bytesRead);
+                statement.get(),
+                index.index,
+                cType.type,
+                resultBuffer.getAvailableMemoryArea<std::byte>().data(),
+                totalLen + 1,
+                &bytesRead);
             CHECK(rc, SQL_HANDLE_STMT, statement.get(), "SQLGetData");
             auto childBufferIndex = parent.storeChildBuffer(resultBuffer);
+            NES_DEBUG("SQLGetData returned {} bytes.", bytesRead);
             *reinterpret_cast<VariableSizedAccess*>(destination.data())
                 = VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{static_cast<uint64_t>(bytesRead)}};
         }
@@ -555,7 +575,7 @@ ODBCSource::ODBCSource(const SourceDescriptor& sourceDescriptor)
     , sourceContext(
           std::make_unique<Context>(
               ConnectionInformation{
-                  .host = sourceDescriptor.getFromConfig(ConfigParametersODBC::HOST),
+                  .server = sourceDescriptor.getFromConfig(ConfigParametersODBC::SERVER),
                   .port = sourceDescriptor.getFromConfig(ConfigParametersODBC::PORT),
                   .database = sourceDescriptor.getFromConfig(ConfigParametersODBC::DATABASE),
                   .username = sourceDescriptor.getFromConfig(ConfigParametersODBC::USERNAME),

@@ -45,7 +45,7 @@ physical:
       type: Native
     type: ODBC
     source_config:
-      host: postgres
+      server: postgres
       port: "5432"
       database: nesdb
       username: nes

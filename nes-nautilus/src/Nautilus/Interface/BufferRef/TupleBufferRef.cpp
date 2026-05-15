@@ -88,7 +88,10 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
     TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
 {
     const auto totalVarSizedLength = varSizedValue.size();
-
+    if (totalVarSizedLength == 0)
+    {
+        return VariableSizedAccess{INVALID_VARIABLE_SIZED_INDEX, VariableSizedAccess::Offset(0), VariableSizedAccess::Size{0}};
+    }
 
     /// If there are no child buffers, we get a new buffer and copy the var sized into the newly acquired
     const auto numberOfChildBuffers = tupleBuffer.getNumberOfChildBuffers();
@@ -122,6 +125,11 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
 std::span<std::byte>
 TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
 {
+    if (variableSizedAccess.getIndex() == INVALID_VARIABLE_SIZED_INDEX)
+    {
+        return {};
+    }
+
     /// Loading the childbuffer containing the variable sized data.
     auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
 

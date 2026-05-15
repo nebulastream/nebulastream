@@ -104,11 +104,14 @@ nes_build_runtime_image() {
   local image_tag="${prefix}-${suffix}"
   local ctx=$(mktemp -d)
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
+  local start_time=$(date +%s)
   docker build --load -t "$image_tag" -f - "$ctx" <<EOF
     FROM $NES_RUNTIME_BASE_IMAGE
     COPY $container_bin /usr/bin
     ENTRYPOINT ["$container_bin"]
 EOF
+  local build_status=$?
+  echo "# [docker build $image_tag] took $(($(date +%s) - start_time))s (status=$build_status)" >&3
   rm -rf "$ctx"
   export "$image_var=$image_tag"
 }
@@ -125,10 +128,13 @@ nes_build_app_image() {
   local image_tag="${prefix}-${suffix}"
   local ctx=$(mktemp -d)
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
+  local start_time=$(date +%s)
   docker build --load -t "$image_tag" -f - "$ctx" <<EOF
     FROM $NES_RUNTIME_BASE_IMAGE
     COPY $container_bin /usr/bin
 EOF
+  local build_status=$?
+  echo "# [docker build $image_tag] took $(($(date +%s) - start_time))s (status=$build_status)" >&3
   rm -rf "$ctx"
   export "$image_var=$image_tag"
 }
@@ -235,6 +241,10 @@ nes_distributed_setup_file() {
 
 nes_distributed_teardown_file() {
   echo "# Test suite completed" >&3
+  if [ -n "$NES_KEEP_TEST_ARTIFACTS" ]; then
+    echo "# NES_KEEP_TEST_ARTIFACTS set — keeping WORKER_IMAGE=$WORKER_IMAGE and ${NES_BATS_APP_IMAGE_VAR}=${!NES_BATS_APP_IMAGE_VAR}" >&3
+    return 0
+  fi
   docker rmi "$WORKER_IMAGE" || true
   docker rmi "${!NES_BATS_APP_IMAGE_VAR}" || true
 }
@@ -270,6 +280,11 @@ sync_workdir() {
 
 nes_distributed_teardown() {
   sync_workdir || true
+  if [ -n "$NES_KEEP_TEST_ARTIFACTS" ]; then
+    echo "# NES_KEEP_TEST_ARTIFACTS set — keeping volume $TEST_VOLUME (workdir: $TMP_DIR)" >&3
+    docker compose down || true
+    return 0
+  fi
   docker compose down -v || true
   docker volume rm $TEST_VOLUME || true
 }
@@ -279,11 +294,18 @@ nes_distributed_teardown() {
 # `cd`'d into a working directory containing tests/util/create_compose.sh.
 setup_distributed() {
   tests/util/create_compose.sh "$1" > docker-compose.yaml
-  local compose_output exit_code=0
+  local compose_output exit_code=0 start_time end_time
+  start_time=$(date +%s)
   compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
+  end_time=$(date +%s)
+  echo "# [docker compose up] took $((end_time - start_time))s (status=$exit_code)" >&3
   if [ "$exit_code" -ne 0 ]; then
     echo "# [docker compose up] (status=$exit_code):" >&3
     while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
+    echo "# [docker compose ps]:" >&3
+    while IFS= read -r line; do echo "#   $line" >&3; done < <(docker compose ps -a 2>&1)
+    echo "# [docker compose logs]:" >&3
+    while IFS= read -r line; do echo "#   $line" >&3; done < <(docker compose logs --no-color --timestamps 2>&1)
   fi
   return $exit_code
 }

@@ -19,9 +19,6 @@
 
 namespace NES
 {
-VariableSizedAccess::Index::Index(const uint64_t index) : index(index)
-{
-}
 
 VariableSizedAccess::Index::Underlying VariableSizedAccess::Index::getRawIndex() const
 {

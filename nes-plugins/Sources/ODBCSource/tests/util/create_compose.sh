@@ -67,11 +67,30 @@ is_valid_config() {
 cat <<EOF
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: nes
       POSTGRES_PASSWORD: nes
       POSTGRES_DB: nesdb
+      POSTGRES_INITDB_ARGS: "--no-sync"
+    command:
+      - "postgres"
+      - "-c"
+      - "fsync=off"
+      - "-c"
+      - "synchronous_commit=off"
+      - "-c"
+      - "full_page_writes=off"
+      - "-c"
+      - "checkpoint_timeout=30min"
+      - "-c"
+      - "max_wal_size=4GB"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "log_statement=none"
+    tmpfs:
+      - /var/lib/postgresql/data:rw,size=512m
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nes -d nesdb"]
       interval: 2s

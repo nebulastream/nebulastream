@@ -48,7 +48,7 @@ struct VariableSizedAccess
         using Underlying = uint32_t;
         static constexpr auto UnderlyingBits = sizeof(Underlying) * 8;
 
-        explicit Index(uint64_t index);
+        constexpr explicit Index(uint64_t index) : index(static_cast<Underlying>(index)) { }
 
         [[nodiscard]] Underlying getRawIndex() const;
         friend std::ostream& operator<<(std::ostream& os, const Index& index);
@@ -126,6 +126,9 @@ public:
         return os << "VariableSizedAccess(index: " << obj.index << " offset: " << obj.offset << ")";
     }
 };
+
+constexpr static VariableSizedAccess::Index INVALID_VARIABLE_SIZED_INDEX
+    = VariableSizedAccess::Index(std::numeric_limits<VariableSizedAccess::Index::Underlying>::max());
 
 static_assert(sizeof(VariableSizedAccess) == 16, "VariableSizedAccess must be 16 bytes");
 static_assert(sizeof(VariableSizedAccess::Size) == 8, "VariableSizedAccess::Size must be 8 bytes");

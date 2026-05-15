@@ -83,10 +83,13 @@ private:
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all ODBC config parameters.
 struct ConfigParametersODBC
 {
-    static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
-        "host",
+    /// Named "server" rather than "host" so that inline source SQL can still
+    /// use `SOURCE.HOST` for the worker placement (the inline-source binder
+    /// unconditionally extracts the "host" config key as placement).
+    static inline const DescriptorConfig::ConfigParameter<std::string> SERVER{
+        "server",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SERVER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> PORT{
         "port",
         std::nullopt,
@@ -164,7 +167,7 @@ struct ConfigParametersODBC
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SourceDescriptor::parameterMap,
-            HOST,
+            SERVER,
             PORT,
             DRIVER,
             POLL_INTERVAL_MS,

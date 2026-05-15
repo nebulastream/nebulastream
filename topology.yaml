@@ -1,0 +1,5 @@
+logical: [ ]
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
