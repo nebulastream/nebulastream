@@ -1,0 +1,69 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# MQTT profile for external_systest. Merged with
+# scripts/testing/external_systest_base.compose.yaml at test time.
+#
+# /profile inside the containers is this directory, mounted read-only as a
+# docker volume by the bats runner.
+#
+# Scope: batch-style tests only. The producer pre-publishes each row of
+# mqtt-data.jsonl as a retained message on its own topic before the systest
+# container starts, so the .test DSL can compare RESULT rows deterministically.
+# Tests that need runtime-driven data injection, sink subscription, or
+# backpressure/timing assertions belong in a plugin-local distributed.bats
+# using nes_distributed_*, not in this profile.
+
+services:
+  # Gate the base `systest` service on the broker being healthy AND the
+  # producer having seeded all retained messages. Docker compose merges
+  # this into the base service definition.
+  systest:
+    depends_on:
+      mqtt_broker:
+        condition: service_healthy
+      mqtt_producer:
+        condition: service_completed_successfully
+
+  mqtt_broker:
+    image: eclipse-mosquitto:2.0
+    command: ["/usr/sbin/mosquitto", "-c", "/profile/mosquitto.conf"]
+    volumes:
+      - profile:/profile:ro
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "healthcheck", "-m", "test", "-q", "1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  # One-shot pre-seed of retained messages. Each line of mqtt-data.jsonl is
+  # published to its own topic (test/data/0, test/data/1, ...) because the
+  # mosquitto broker only retains one message per topic. The MQTT source
+  # subscribes to test/data/+ to read them all.
+  mqtt_producer:
+    image: alpine:latest
+    depends_on:
+      mqtt_broker:
+        condition: service_healthy
+    volumes:
+      - profile:/profile:ro
+    command: >
+      sh -c '
+      apk add --no-cache mosquitto-clients > /dev/null 2>&1;
+      i=0;
+      while IFS= read -r line || [ -n "$$line" ]; do
+        printf "%s\n" "$$line" | mosquitto_pub -h mqtt_broker -t "test/data/$$i" -s -r -q 1;
+        i=$$((i + 1));
+      done < /profile/mqtt-data.jsonl;
+      echo "All messages published";
+      '
