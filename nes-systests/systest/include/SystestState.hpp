@@ -234,6 +234,11 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
+    /// External-dependency profiles declared via `# requires: <profile>` in
+    /// the header. A test with a non-empty `requirements` list is excluded
+    /// from the normal lane and must be invoked through the external runner
+    /// (which passes `--accept-requires <profile>` to satisfy this check).
+    std::vector<std::string> requirements;
     std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;

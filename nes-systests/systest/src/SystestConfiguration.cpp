@@ -33,6 +33,7 @@ std::vector<BaseOption*> SystestConfiguration::getOptions()
         &testDataDir,
         &endlessMode,
         &excludeGroups,
+        &acceptRequires,
         &remoteWorker,
         &clusterConfigPath};
 }

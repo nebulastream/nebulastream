@@ -189,3 +189,71 @@ function(add_e2e_test)
         LABELS "${_labels}"
     )
 endfunction()
+
+# Registers an external-dependency systest: one .test DSL file plus a
+# plugin-local profile directory holding compose.snippet.yaml (+ aux files).
+# All callers delegate the actual docker-compose orchestration to the shared
+# scripts/testing/external_systest.bats runner — there is no per-plugin bats
+# file. Gated on ENABLE_BATS_TESTS AND ENABLE_DOCKER_TESTS; no-op otherwise,
+# so callers do not need if() guards.
+#
+# Required:
+#   NAME         — profile identifier. Must match the `# requires: <name>`
+#                  header in TEST_FILE; doubles as the ctest name suffix.
+#   TEST_FILE    — absolute path to the .test file (must live under the repo
+#                  root so the bats runner can stage it for the container).
+#   PROFILE_DIR  — directory containing compose.snippet.yaml and any aux
+#                  files the snippet references (configs, seed data).
+#
+# Optional:
+#   CTEST_NAME   — override the default ctest entry name
+#                  (`${NAME}-systest-external`).
+#
+# Per-test app images use random tags so concurrent lanes don't collide; the
+# cleanup pattern is scoped to `${NAME}` for the same reason.
+function(add_external_systest_profile)
+    cmake_parse_arguments(ARG
+        ""
+        "NAME;TEST_FILE;PROFILE_DIR;CTEST_NAME"
+        ""
+        ${ARGN}
+    )
+    if (NOT ARG_NAME)
+        message(FATAL_ERROR "add_external_systest_profile requires NAME")
+    endif ()
+    if (NOT ARG_TEST_FILE)
+        message(FATAL_ERROR "add_external_systest_profile(${ARG_NAME}) requires TEST_FILE")
+    endif ()
+    if (NOT ARG_PROFILE_DIR)
+        message(FATAL_ERROR "add_external_systest_profile(${ARG_NAME}) requires PROFILE_DIR")
+    endif ()
+    if (NOT ENABLE_BATS_TESTS OR NOT ENABLE_DOCKER_TESTS)
+        return()
+    endif ()
+    if (NOT EXISTS "${ARG_TEST_FILE}")
+        message(FATAL_ERROR "add_external_systest_profile(${ARG_NAME}): TEST_FILE does not exist: ${ARG_TEST_FILE}")
+    endif ()
+    if (NOT EXISTS "${ARG_PROFILE_DIR}/compose.snippet.yaml")
+        message(FATAL_ERROR
+            "add_external_systest_profile(${ARG_NAME}): PROFILE_DIR missing compose.snippet.yaml: ${ARG_PROFILE_DIR}")
+    endif ()
+
+    if (NOT ARG_CTEST_NAME)
+        set(ARG_CTEST_NAME "${ARG_NAME}-systest-external")
+    endif ()
+
+    add_test(NAME ${ARG_CTEST_NAME} COMMAND
+        env NES_DIR=${CMAKE_SOURCE_DIR}
+        env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
+        env NES_BATS_LIB=${CMAKE_SOURCE_DIR}/scripts/testing/distributed_bats_lib.bash
+        env NES_SYSTEST=$<TARGET_FILE:systest>
+        env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
+        env PROFILE_DIR=${ARG_PROFILE_DIR}
+        env PROFILE_NAME=${ARG_NAME}
+        env TEST_FILE=${ARG_TEST_FILE}
+        ${BATS} --verbose-run --timing
+            ${CMAKE_SOURCE_DIR}/scripts/testing/external_systest.bats)
+    set_tests_properties(${ARG_CTEST_NAME} PROPERTIES
+        FIXTURES_REQUIRED "E2eBinaries;RuntimeBaseImage"
+        LABELS "DockerCompose")
+endfunction()
