@@ -47,6 +47,19 @@ target_compile_definitions(nes-systest-lib PUBLIC
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
         SYSTEST_EXTERNAL_DATA_DIR="${EXPANDED_TEST_DATA_PATH}"
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
+        # Paths the in-binary external-systest dispatcher needs. The repo
+        # root is the source of truth for the bats wrapper, the shared bats
+        # library, and the test-tmp area; baking them in keeps `systest -t
+        # <file>` self-contained (no per-developer env-var setup).
+        NES_REPO_ROOT="${CMAKE_SOURCE_DIR}"
+        NES_BATS_LIB_PATH="${CMAKE_SOURCE_DIR}/scripts/testing/distributed_bats_lib.bash"
+        EXTERNAL_SYSTEST_BATS="${CMAKE_SOURCE_DIR}/scripts/testing/external_systest.bats"
+        DEFAULT_NES_TEST_TMP_DIR="${CMAKE_BINARY_DIR}/test-tmp"
+        # NES_RUNTIME_BASE_IMAGE is only set when ENABLE_DOCKER_TESTS is ON;
+        # default to empty so the dispatcher can surface a clear error
+        # ("rebuild with ENABLE_DOCKER_TESTS=ON") rather than failing inside
+        # docker build with a stale tag.
+        DEFAULT_NES_RUNTIME_BASE_IMAGE="${NES_RUNTIME_BASE_IMAGE}"
 )
 
 # Find required packages
