@@ -256,6 +256,31 @@ if docker info -f "{{println .SecurityOptions}}" | grep -q rootless || [ "$FORCE
   USE_USERNAME=root
 fi
 
+# Detect the host's docker group GID and pass it through as a build-arg so
+# the dev image can create a matching `docker` group internally. Combined
+# with a bind-mounted /var/run/docker.sock and `--group-add docker` at run
+# time, that gives the container user docker-daemon access without
+# per-developer numeric --group-add hacks.
+#
+# If we can't detect a host docker group (macOS, rootless installs, distros
+# that don't ship one), we pass an empty value and the Dockerfile skips
+# the group setup. We don't guess a default GID — silently baking the wrong
+# number is worse than not baking one at all.
+#
+# In rootless mode the in-container user maps to the host user via the
+# docker-rootless mapping, so a docker group inside the image is not needed.
+if [ "$USE_ROOTLESS" = true ]; then
+  USE_DOCKER_GID=""
+else
+  USE_DOCKER_GID=$(getent group docker 2>/dev/null | cut -d: -f3 || true)
+  if [ -z "$USE_DOCKER_GID" ]; then
+    echo "No host 'docker' group detected; image will be built without docker-daemon access from inside the container."
+    echo "If you need docker-in-container (e.g. for external_systest), create a docker group on the host and re-run this script."
+  else
+    echo "Baking host docker group GID=${USE_DOCKER_GID} into the image."
+  fi
+fi
+
 
 # Set default public vcpkg cache URL if no S3 credentials are set and caching is not disabled
 VCPKG_CACHE_DEFAULT_PUBLIC_URL="https://pub-5953001ad2a543df8a2121726cf1908b.r2.dev"
@@ -308,6 +333,7 @@ if [ $BUILD_LOCAL -eq 1 ]; then
                --build-arg GID=${USE_GID} \
                --build-arg USERNAME=${USE_USERNAME} \
                --build-arg ROOTLESS=${USE_ROOTLESS} \
+               --build-arg DOCKER_GID=${USE_DOCKER_GID} \
                --build-arg TAG=default .
 else
   if ! docker manifest inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 ; then
@@ -323,6 +349,7 @@ Either build locally with the -l option, or open a PR (draft) and let the CI bui
                --build-arg GID=${USE_GID} \
                --build-arg USERNAME=${USE_USERNAME} \
                --build-arg ROOTLESS=${USE_ROOTLESS} \
+               --build-arg DOCKER_GID=${USE_DOCKER_GID} \
                --build-arg TAG=${TAG} .
 fi
 
@@ -356,20 +383,31 @@ echo "==========================================================================
 echo ""
 echo "To enable Docker-in-Docker testing, mount the docker socket:"
 echo ""
+# The image bakes the host's docker group GID (when detected) under the
+# name `docker`, so `--group-add docker` works portably. In rootless mode
+# the container user is root and no `--group-add` is needed.
+if [ "$USE_ROOTLESS" = true ]; then
+    GROUP_ADD_HINT=""
+elif [ -n "$USE_DOCKER_GID" ]; then
+    GROUP_ADD_HINT=" --group-add docker"
+else
+    GROUP_ADD_HINT=""
+fi
+
 if [ -S "$DOCKER_SOCKET" ]; then
     echo "Detected docker socket at: $DOCKER_SOCKET"
     echo ""
     echo "Command line:"
-    echo "  docker run -v $DOCKER_SOCKET:/var/run/docker.sock \\"
+    echo "  docker run -v $DOCKER_SOCKET:/var/run/docker.sock${GROUP_ADD_HINT} \\"
     echo "    -v \$(pwd):\$(pwd) -w \$(pwd) nebulastream/nes-development:local"
     echo ""
     echo "CLion Docker Toolchain (Settings → Docker → Container settings → Run options):"
-    echo "  -v $DOCKER_SOCKET:/var/run/docker.sock"
+    echo "  -v $DOCKER_SOCKET:/var/run/docker.sock${GROUP_ADD_HINT}"
 else
     echo "Warning: Could not detect docker socket automatically."
     echo ""
     echo "Rootful Docker (default):"
-    echo "  -v /var/run/docker.sock:/var/run/docker.sock"
+    echo "  -v /var/run/docker.sock:/var/run/docker.sock${GROUP_ADD_HINT}"
     echo ""
     echo "Rootless Docker (typical):"
     echo "  -v \$XDG_RUNTIME_DIR/docker.sock:/var/run/docker.sock"
@@ -378,4 +416,8 @@ else
 fi
 echo ""
 echo "Note: Docker CLI connects to host Docker daemon via socket. No isolation namespace."
+if [ -n "$GROUP_ADD_HINT" ]; then
+    echo "Note: --group-add docker grants access to /var/run/docker.sock; required by tests"
+    echo "      that spawn docker-compose stacks (e.g. external_systest)."
+fi
 echo "========================================================================================"

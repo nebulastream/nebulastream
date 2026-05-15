@@ -154,6 +154,23 @@ following settings:
 This configuration assumes ccache is using the default directory of `$HOME/.cache/ccache`. You can create additional
 docker-based toolchains if you plan to experiment with different sanitizer.
 
+#### Docker-in-container toolchain options
+
+Tests that spawn their own docker stacks (notably `external_systest` for
+plugins that talk to MQTT brokers, databases, etc.) need the dev container
+to reach the host docker daemon. After `install-local-docker-environment.sh`
+has been run, the image already has a `docker` group with the host's GID
+baked in, so the CLion toolchain just needs:
+
+```
+-v /var/run/docker.sock:/var/run/docker.sock --group-add docker
+```
+
+Adapt the socket path for rootless setups (e.g. `-v $XDG_RUNTIME_DIR/docker.sock:/var/run/docker.sock`).
+`install-local-docker-environment.sh` prints the exact line for the local
+machine when it finishes. On macOS the script forces rootless mode and no
+`--group-add` is needed (the container user is `root`).
+
 Lastly, you need to create a new CMake profile which uses the newly created docker-based toolchain:
 
 ![CLion-CMake-Settings](../resources/SetupDockerCmakeClion.png)
