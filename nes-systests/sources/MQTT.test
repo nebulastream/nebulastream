@@ -1,0 +1,16 @@
+# name: sources/MQTT.test
+# description: Reads pre-seeded retained messages from an MQTT broker via the MQTT source.
+# Excluded from normal systest lanes (no broker present); selected by the
+# `mqtt` profile via add_systest_with_profile() in MQTTSource/CMakeLists.txt.
+# groups: [mqtt, external]
+CREATE LOGICAL SOURCE mqtt_source(id INT32, value INT32, timestamp UINT64);
+
+CREATE PHYSICAL SOURCE FOR mqtt_source TYPE MQTT SET("JSON" AS PARSER.`TYPE`, "mqtt_broker" AS `SOURCE`.serveruri, "test/data/+" AS `SOURCE`.topic, "100" AS `SOURCE`.flushintervalms);
+
+SELECT id, value, timestamp FROM mqtt_source INTO File();
+----
+1 2 3
+1 2 3
+1 2 3
+1 2 3
+1 2 3

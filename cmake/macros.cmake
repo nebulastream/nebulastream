@@ -189,3 +189,66 @@ function(add_e2e_test)
         LABELS "${_labels}"
     )
 endfunction()
+
+# Registers a systest that needs an external system (an MQTT broker, a
+# Postgres instance, ...). Plugin author supplies:
+#
+#   NAME         ctest name
+#   PROFILE_DIR  dir holding compose.snippet.yaml (mandatory) plus aux files
+#                (configs, seed data) referenced from it
+#   GROUP        systest group label used to select the .test files. The
+#                .test files declare `# groups: [<GROUP>, external]` so they
+#                are excluded from normal systest lanes and selected here.
+#
+# Under the hood: shells out to the shared scripts/testing/external_systest.bats
+# (no per-plugin bats file needed). At run time the base compose template is
+# merged with the plugin's snippet via `docker compose -f base -f snippet`.
+# The snippet can extend services.systest.depends_on to gate on the profile's
+# healthchecks.
+#
+# Gated on ENABLE_BATS_TESTS + ENABLE_DOCKER_TESTS; no-op when either is OFF.
+#
+# TODO(follow-up): replace GROUP + the `external` group convention with a
+# first-class `# requires: <profile>` directive in the .test parser. Today
+# three things are coupled by naming convention — the .test's `groups:`
+# list, the `external` exclusion in every regular lane, and this GROUP arg —
+# with no validation that they match. Once systest learns about `# requires:`,
+# this macro can pass the profile name directly and the `external` group
+# exclusions in normal lanes go away.
+function(add_systest_with_profile)
+    cmake_parse_arguments(ARG "" "NAME;PROFILE_DIR;GROUP" "" ${ARGN})
+    foreach (arg NAME PROFILE_DIR GROUP)
+        if (NOT ARG_${arg})
+            message(FATAL_ERROR "add_systest_with_profile requires ${arg}")
+        endif ()
+    endforeach ()
+    if (NOT ENABLE_BATS_TESTS OR NOT ENABLE_DOCKER_TESTS)
+        return()
+    endif ()
+    if (NOT IS_DIRECTORY "${ARG_PROFILE_DIR}")
+        message(FATAL_ERROR
+            "add_systest_with_profile: PROFILE_DIR not a directory: ${ARG_PROFILE_DIR}")
+    endif ()
+    if (NOT EXISTS "${ARG_PROFILE_DIR}/compose.snippet.yaml")
+        message(FATAL_ERROR
+            "add_systest_with_profile: missing ${ARG_PROFILE_DIR}/compose.snippet.yaml")
+    endif ()
+
+    add_test(
+        NAME ${ARG_NAME}
+        COMMAND
+            env NES_DIR=${CMAKE_SOURCE_DIR}
+            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
+            env NES_BATS_LIB=${CMAKE_SOURCE_DIR}/scripts/testing/distributed_bats_lib.bash
+            env NES_SYSTEST=$<TARGET_FILE:systest>
+            env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
+            env PROFILE_DIR=${ARG_PROFILE_DIR}
+            env PROFILE_GROUP=${ARG_GROUP}
+            ${BATS} --verbose-run --timing
+                ${CMAKE_SOURCE_DIR}/scripts/testing/external_systest.bats
+    )
+    set_tests_properties(${ARG_NAME} PROPERTIES
+        FIXTURES_REQUIRED "E2eBinaries;RuntimeBaseImage"
+        LABELS "DockerCompose"
+    )
+endfunction()

@@ -32,3 +32,12 @@ else ()
 endif ()
 target_link_libraries(mqtt_source_plugin_library PRIVATE ${PAHO_MQTTPP3_TARGET})
 target_link_libraries(mqtt_source_validation_plugin_library PRIVATE ${PAHO_MQTTPP3_TARGET})
+
+# External-dependency systest for the MQTT source. Profile dir is co-located
+# with the plugin; nes-systests/sources/MQTT.test carries `groups: [mqtt, external]`
+# so it is excluded from regular systest lanes and selected here.
+add_systest_with_profile(
+    NAME mqtt-source-systest
+    PROFILE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test-profile/mqtt
+    GROUP mqtt
+)

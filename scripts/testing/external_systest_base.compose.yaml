@@ -1,0 +1,49 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Base compose for external_systest. Merged with a plugin-supplied
+# compose.snippet.yaml at test time (`docker compose -f base -f snippet up`).
+# The snippet adds the external dependency services (broker, db, ...) and
+# can extend services.systest.depends_on to gate the systest container on
+# their healthchecks.
+#
+# Env vars expanded by docker compose at up-time (exported by
+# nes_external_systest_setup_file): SYSTEST_IMAGE, CONTAINER_WORKDIR,
+# TESTCONFIG_VOLUME, TEST_VOLUME, PROFILE_VOLUME, NES_DIR, PROFILE_GROUP.
+
+services:
+  systest:
+    image: ${SYSTEST_IMAGE}
+    pull_policy: never
+    stop_grace_period: 0s
+    command: ["sleep", "infinity"]
+    working_dir: ${CONTAINER_WORKDIR}
+    volumes:
+      # Reconstruct $NES_DIR/nes-systests inside the container so the
+      # systest binary's hardcoded discovery dir resolves.
+      - ${TESTCONFIG_VOLUME}:${NES_DIR}
+      - ${TEST_VOLUME}:${CONTAINER_WORKDIR}
+      # Plugin's profile dir (configs, seed data) mounted read-only.
+      - ${PROFILE_VOLUME}:/profile:ro
+
+networks:
+  default:
+    labels:
+      nes-test: external-systest-${PROFILE_GROUP}
+
+volumes:
+  ${TESTCONFIG_VOLUME}:
+    external: true
+  ${TEST_VOLUME}:
+    external: true
+  ${PROFILE_VOLUME}:
+    external: true

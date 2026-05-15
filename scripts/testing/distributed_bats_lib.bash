@@ -344,3 +344,139 @@ nes_offline_setup() {
   cd "$TMP_DIR" || exit
   echo "# Using TEST_DIR: $TMP_DIR" >&3
 }
+
+# ---------------------------------------------------------------------------
+# External-systest preset — for `.test` DSL files that need a docker-compose
+# external dependency (an MQTT broker, a Postgres instance, ...).
+#
+# Contract (set by CMake's add_systest_with_profile macro):
+#   PROFILE_DIR    plugin-local dir holding compose.snippet.yaml + aux files
+#   PROFILE_GROUP  systest group filter passed to `systest --groups <group>`
+#   NES_SYSTEST    path to systest binary (from add_e2e_test env injection)
+#   NES_DIR        repo root (for the .test discovery dir)
+#   NES_TEST_TMP_DIR, NES_RUNTIME_BASE_IMAGE
+#
+# Pipeline (one bats @test, no per-profile bats files):
+#   1. Bake a systest container image (FROM $NES_RUNTIME_BASE_IMAGE, COPY systest).
+#   2. Stage $NES_DIR/nes-systests into a docker volume so test discovery
+#      works inside the container (we may be Docker-out-of-Docker).
+#   3. Stage $PROFILE_DIR into a docker volume so the compose snippet can
+#      reference mosquitto.conf / seed data / etc. via /profile.
+#   4. Merge external_systest_base.compose.yaml + $PROFILE_DIR/compose.snippet.yaml
+#      and `docker compose up -d --wait`. Snippet can extend
+#      services.systest.depends_on to gate on profile healthchecks.
+#   5. `docker compose exec systest systest --groups $PROFILE_GROUP`.
+#   6. On teardown, copy the systest workdir back out for inspection.
+# ---------------------------------------------------------------------------
+
+nes_external_systest_setup_file() {
+  # Scope the leaked-resource scan to this profile only — nes_cleanup_leaked_resources
+  # removes containers using any image that matches its reference patterns, so a
+  # broader `nes-systest-external-*` would tear down a concurrently-running
+  # postgres / odbc / ... lane's container when an mqtt lane starts up.
+  nes_cleanup_leaked_resources "external-systest-${PROFILE_GROUP}" \
+    "nes-systest-external-${PROFILE_GROUP}-*"
+
+  nes_require_env NES_SYSTEST
+  nes_require_env NES_DIR
+  nes_require_env NES_TEST_TMP_DIR
+  nes_require_env NES_RUNTIME_BASE_IMAGE
+  nes_require_env PROFILE_DIR
+  nes_require_env PROFILE_GROUP
+  nes_require_executable "$NES_SYSTEST"
+  if [ ! -f "$PROFILE_DIR/compose.snippet.yaml" ]; then
+    echo "ERROR: PROFILE_DIR missing compose.snippet.yaml: $PROFILE_DIR" >&2
+    exit 1
+  fi
+
+  nes_build_app_image SYSTEST_IMAGE \
+    "nes-systest-external-${PROFILE_GROUP}" "$NES_SYSTEST" systest
+
+  export CONTAINER_WORKDIR="/$(cat /proc/sys/kernel/random/uuid)"
+
+  # Volume containing $NES_DIR/nes-systests so systest discovery works inside
+  # the container (we may be Docker-out-of-Docker — no bind-mounts).
+  export TESTCONFIG_VOLUME=$(docker volume create)
+  # Volume holding the plugin-local profile dir; mounted read-only at /profile.
+  export PROFILE_VOLUME=$(docker volume create)
+
+  local host
+  host=$(docker run -d --rm \
+    -v "$TESTCONFIG_VOLUME":/config \
+    -v "$PROFILE_VOLUME":/profile \
+    alpine sleep infinity)
+  docker exec "$host" sh -c "mkdir -p /config/nes-systests"
+  tar -chf - -C "${NES_DIR}/nes-systests" . \
+    | docker exec -i "$host" tar -xf - -C /config/nes-systests
+  tar -chf - -C "${PROFILE_DIR}" . \
+    | docker exec -i "$host" tar -xf - -C /profile
+  docker stop -t0 "$host"
+
+  echo "# Using NES_SYSTEST: $NES_SYSTEST" >&3
+  echo "# Using PROFILE_DIR: $PROFILE_DIR" >&3
+  echo "# Using PROFILE_GROUP: $PROFILE_GROUP" >&3
+  echo "# Using SYSTEST_IMAGE: $SYSTEST_IMAGE" >&3
+  echo "# Using TESTCONFIG_VOLUME: $TESTCONFIG_VOLUME" >&3
+  echo "# Using PROFILE_VOLUME: $PROFILE_VOLUME" >&3
+  echo "# Using CONTAINER_WORKDIR: $CONTAINER_WORKDIR" >&3
+}
+
+nes_external_systest_teardown_file() {
+  docker volume rm "$TESTCONFIG_VOLUME" || true
+  docker volume rm "$PROFILE_VOLUME" || true
+  docker rmi "$SYSTEST_IMAGE" || true
+  echo "# Test suite completed" >&3
+}
+
+nes_external_systest_setup() {
+  mkdir -p "$NES_TEST_TMP_DIR"
+  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
+  cd "$TMP_DIR" || exit
+  echo "# Using TEST_DIR: $TMP_DIR" >&3
+
+  export TEST_VOLUME=$(docker volume create)
+  local host=$(docker run -d --rm -v "$TEST_VOLUME":/data alpine sleep infinity)
+  docker stop -t0 "$host"
+  echo "# Using TEST_VOLUME: $TEST_VOLUME" >&3
+}
+
+# Run docker compose against the merged base + profile-snippet project. Used
+# for every compose op (up, exec, cp, down) so they all address the same
+# Compose project — bare `docker compose` from the test tmpdir would not.
+_external_systest_compose() {
+  docker compose \
+    -f "${NES_DIR}/scripts/testing/external_systest_base.compose.yaml" \
+    -f "${PROFILE_DIR}/compose.snippet.yaml" \
+    "$@"
+}
+
+nes_external_systest_teardown() {
+  _external_systest_compose cp "systest:$CONTAINER_WORKDIR/." . || true
+  _external_systest_compose down -v || true
+  docker volume rm "$TEST_VOLUME" || true
+}
+
+# Bring up base+profile compose and assert the merged stack is healthy.
+nes_external_systest_compose_up() {
+  local compose_output exit_code=0
+  compose_output=$(_external_systest_compose up -d --wait 2>&1) || exit_code=$?
+  if [ "$exit_code" -ne 0 ]; then
+    echo "# [docker compose up] (status=$exit_code):" >&3
+    while IFS= read -r line; do echo "#   $line" >&3; done <<<"$compose_output"
+  fi
+  return $exit_code
+}
+
+# Run `systest --groups <profile>` inside the systest container.
+# --data points at $NES_DIR/nes-systests/testdata, which exists inside the
+# container because TESTCONFIG_VOLUME re-creates $NES_DIR/nes-systests/* from
+# the source tree. That covers source-checked-in TESTDATA{small/...} files;
+# ExternalData-fetched files (only used with ENABLE_LARGE_TESTS) are not yet
+# staged into this lane — a follow-up if a profile needs them.
+# Forwards ASAN_OPTIONS (sanitizer builds set detect_leaks=0).
+nes_external_systest_run() {
+  _external_systest_compose exec -e ASAN_OPTIONS systest \
+    systest --workingDir "$CONTAINER_WORKDIR/systest-workdir" \
+    --data "$NES_DIR/nes-systests/testdata" \
+    --groups "$PROFILE_GROUP" "$@" >&3
+}
