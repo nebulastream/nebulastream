@@ -64,6 +64,10 @@ struct DiscoveryFilters
     std::unordered_set<std::string> excludedGroups;
     std::unordered_set<std::string> explicitlyExcludedGroups;
     std::unordered_set<std::string> disabledTestFiles;
+    /// Profile names the caller declares as satisfied (`--accept-requires`).
+    /// Tests with `# requires:` lines are kept only when every requirement
+    /// appears here.
+    std::unordered_set<std::string> acceptedRequires;
 };
 
 DiscoveryFilters createDiscoveryFilters(const NES::SystestConfiguration& config)
@@ -82,7 +86,21 @@ DiscoveryFilters createDiscoveryFilters(const NES::SystestConfiguration& config)
         .includedGroups = std::move(includedGroups),
         .excludedGroups = std::move(excludedGroups),
         .explicitlyExcludedGroups = std::move(explicitlyExcludedGroups),
-        .disabledTestFiles = toLowerSet(config.disabledTestFiles.getValues(), [](const auto& option) { return option.getValue(); })};
+        .disabledTestFiles = toLowerSet(config.disabledTestFiles.getValues(), [](const auto& option) { return option.getValue(); }),
+        .acceptedRequires = toLowerSet(config.acceptRequires.getValues(), [](const auto& option) { return option.getValue(); })};
+}
+
+std::optional<std::string> unsatisfiedRequirement(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
+{
+    if (!testFile.requirement)
+    {
+        return std::nullopt;
+    }
+    if (filters.acceptedRequires.contains(NES::toLowerCase(*testFile.requirement)))
+    {
+        return std::nullopt;
+    }
+    return *testFile.requirement;
 }
 
 bool hasMatchingGroup(const NES::Systest::TestFile& testFile, const std::unordered_set<std::string>& groups)
@@ -142,6 +160,19 @@ std::optional<std::string> getDisabledTestFileSkipReason(const NES::Systest::Tes
         "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n", testFile.getLogFilePath());
 }
 
+std::optional<std::string> getUnsatisfiedRequiresSkipReason(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
+{
+    const auto missing = unsatisfiedRequirement(testFile, filters);
+    if (!missing)
+    {
+        return std::nullopt;
+    }
+    return fmt::format(
+        "Skipping file://{} because it requires external profile `{}` not listed in --accept-requires.\n",
+        testFile.getLogFilePath(),
+        *missing);
+}
+
 std::optional<std::string> getSkipReason(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
 {
     if (const auto skipReason = getIncludedGroupSkipReason(testFile, filters))
@@ -153,6 +184,10 @@ std::optional<std::string> getSkipReason(const NES::Systest::TestFile& testFile,
         return skipReason;
     }
     if (const auto skipReason = getDisabledTestFileSkipReason(testFile, filters))
+    {
+        return skipReason;
+    }
+    if (const auto skipReason = getUnsatisfiedRequiresSkipReason(testFile, filters))
     {
         return skipReason;
     }
@@ -251,10 +286,71 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
     return groups;
 }
 
+/// Parse the `# requires: <profile>` directive from the .test header. At most
+/// one such line is allowed per test — a `.test` file selects a single external
+/// profile bundle. Stops scanning at the first non-comment/non-blank line.
+/// Throws TestException on a malformed file with multiple `# requires:` lines.
+std::optional<std::string> readRequirement(const TestFile& testfile)
+{
+    std::ifstream ifstream(testfile.file);
+    if (!ifstream.is_open())
+    {
+        return std::nullopt;
+    }
+
+    constexpr std::string_view directive = "# requires:";
+    std::optional<std::string> requirement;
+    std::string line;
+    while (std::getline(ifstream, line))
+    {
+        const auto firstNonSpace = line.find_first_not_of(" \t");
+        if (firstNonSpace == std::string::npos)
+        {
+            continue;
+        }
+        if (line[firstNonSpace] != '#')
+        {
+            break;
+        }
+        if (!line.starts_with(directive))
+        {
+            continue;
+        }
+        auto remainder = std::string_view(line).substr(directive.size());
+        const auto start = remainder.find_first_not_of(" \t");
+        if (start == std::string_view::npos)
+        {
+            continue;
+        }
+        remainder.remove_prefix(start);
+        const auto end = remainder.find_first_of(" \t");
+        if (end != std::string_view::npos)
+        {
+            remainder = remainder.substr(0, end);
+        }
+        if (remainder.empty())
+        {
+            continue;
+        }
+        if (requirement)
+        {
+            throw NES::TestException(
+                "Test {} declares multiple `# requires:` directives (`{}` and `{}`). A test selects exactly one external profile; "
+                "merge the services into a single profile if you need more than one.",
+                testfile.file.string(),
+                *requirement,
+                std::string(remainder));
+        }
+        requirement = std::string(remainder);
+    }
+    return requirement;
+}
+
 TestFile::TestFile(
     const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
     : file(weakly_canonical(file))
     , groups(readGroups(*this))
+    , requirement(readRequirement(*this))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog)) { };
 
@@ -266,6 +362,7 @@ TestFile::TestFile(
     : file(weakly_canonical(file))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this))
+    , requirement(readRequirement(*this))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog)) { };
 
@@ -296,6 +393,26 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
     return testGroups;
 }
 
+void refuseIfRequirementsUnsatisfied(const NES::Systest::TestFile& testfile, const DiscoveryFilters& filters)
+{
+    const auto missing = unsatisfiedRequirements(testfile, filters);
+    if (missing.empty())
+    {
+        return;
+    }
+    std::cerr << fmt::format(
+        "Refusing to run file://{}: this test declares `# requires: {:}` but those profile(s) were not declared "
+        "satisfied via --accept-requires. `systest --testLocation` cannot bring up the docker-compose stack the "
+        "test depends on; that is the job of scripts/testing/external_systest.bats. The expected runner is the "
+        "ctest entry produced by an `add_external_systest_profile(NAME ... TEST_FILE ... PROFILE_DIR ...)` call "
+        "in the plugin's CMakeLists.txt — which both registers the test and provisions the runtime dependency. "
+        "If no such macro call exists yet for this .test file, add one (see "
+        "nes-plugins/Sources/MQTTSource/CMakeLists.txt for an example) and rebuild.\n",
+        testfile.getLogFilePath(),
+        missing);
+    std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+}
+
 TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {
     const auto filters = createDiscoveryFilters(config);
@@ -307,6 +424,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         if (config.testQueryNumbers.empty())
         {
             const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+            refuseIfRequirementsUnsatisfied(testfile, filters);
             if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
             {
                 std::cout << fmt::format(
@@ -321,6 +439,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
         const auto testfile
             = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+        refuseIfRequirementsUnsatisfied(testfile, filters);
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(
@@ -345,6 +464,28 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         });
 
     return testMap;
+}
+
+std::map<std::string, std::vector<std::filesystem::path>> discoverExternalTests(const SystestConfiguration& config)
+{
+    std::map<std::string, std::vector<std::filesystem::path>> byProfile;
+    if (not config.directlySpecifiedTestFiles.getValue().empty())
+    {
+        return byProfile;
+    }
+    const auto testMap = discoverTestsRecursively(config.testsDiscoverDir.getValue(), config.testFileExtension.getValue());
+    for (const auto& [_, testFile] : testMap)
+    {
+        if (testFile.requirement)
+        {
+            byProfile[*testFile.requirement].push_back(testFile.file);
+        }
+    }
+    for (auto& [_, files] : byProfile)
+    {
+        std::ranges::sort(files);
+    }
+    return byProfile;
 }
 
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)

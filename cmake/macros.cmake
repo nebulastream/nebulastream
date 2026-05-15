@@ -189,3 +189,106 @@ function(add_e2e_test)
         LABELS "${_labels}"
     )
 endfunction()
+
+# Registers every external-dependency systest in a directory against a
+# profile. A profile is `<PROFILE_DIR>/profile.yaml` + `compose.snippet.yaml`
+# plus any aux files the snippet references (configs, seed data); a test is
+# a `<TEST_DIR>/*.test` file whose header declares `# requires: <profile-name>`.
+# Each matching test gets its own ctest entry that invokes the systest binary
+# directly — the in-binary dispatcher in ExternalSystestDispatch.cpp brings up
+# the docker-compose stack on a free host port and tears it down on exit. The
+# test itself runs in the systest process, so the CLion debug button hits
+# breakpoints exactly like for a non-external systest.
+#
+# Required:
+#   PROFILE_DIR  — directory containing profile.yaml + compose.snippet.yaml.
+#                  profile.yaml's `name:` field is the profile identifier;
+#                  every test file selects this profile via `# requires: <name>`.
+#
+# Optional:
+#   TEST_DIR     — directory holding the `*.test` files. Defaults to
+#                  `<PROFILE_DIR>/../systests` (the convention used by
+#                  in-tree plugins).
+#
+# Behaviour:
+#   - One ctest entry per `*.test` file under TEST_DIR is registered, named
+#     `<profile-name>-<test-stem>-systest-external`. This keeps
+#     local-runnability (gutter / `--testLocation`) and CI registration in
+#     lockstep — adding a new test file under TEST_DIR is automatically
+#     picked up by CI.
+#   - Each test file must declare `# requires: <profile-name>` in its header;
+#     a mismatch raises FATAL_ERROR at configure time so authors discover the
+#     problem at build, not at test run.
+#
+# Gated on ENABLE_DOCKER_TESTS; no-op otherwise, so callers do not need
+# if() guards.
+function(add_external_systest_profile)
+    cmake_parse_arguments(ARG
+        ""
+        "PROFILE_DIR;TEST_DIR"
+        ""
+        ${ARGN}
+    )
+    if (NOT ARG_PROFILE_DIR)
+        message(FATAL_ERROR "add_external_systest_profile requires PROFILE_DIR")
+    endif ()
+    if (NOT EXISTS "${ARG_PROFILE_DIR}/compose.snippet.yaml")
+        message(FATAL_ERROR
+            "add_external_systest_profile: PROFILE_DIR missing compose.snippet.yaml: ${ARG_PROFILE_DIR}")
+    endif ()
+    if (NOT EXISTS "${ARG_PROFILE_DIR}/profile.yaml")
+        message(FATAL_ERROR
+            "add_external_systest_profile: PROFILE_DIR missing profile.yaml (declares `name:` + `endpoints:`): ${ARG_PROFILE_DIR}")
+    endif ()
+
+    # Hand-roll a `name:` extractor since CMake has no YAML parser. The
+    # dispatcher's yaml-cpp pass is still the authoritative validator at run
+    # time; this regex is just enough to ground per-test `# requires:` checks
+    # at configure time.
+    file(STRINGS "${ARG_PROFILE_DIR}/profile.yaml" _profile_name_lines REGEX "^[ \t]*name:[ \t]*[^ \t#]+")
+    if (NOT _profile_name_lines)
+        message(FATAL_ERROR
+            "add_external_systest_profile: ${ARG_PROFILE_DIR}/profile.yaml has no `name:` field at top level")
+    endif ()
+    list(GET _profile_name_lines 0 _profile_name_line)
+    string(REGEX REPLACE "^[ \t]*name:[ \t]*([^ \t#]+).*$" "\\1" _profile_name "${_profile_name_line}")
+
+    if (NOT ARG_TEST_DIR)
+        set(ARG_TEST_DIR "${ARG_PROFILE_DIR}/../systests")
+    endif ()
+    if (NOT IS_DIRECTORY "${ARG_TEST_DIR}")
+        message(FATAL_ERROR
+            "add_external_systest_profile(${_profile_name}): TEST_DIR is not a directory: ${ARG_TEST_DIR}")
+    endif ()
+
+    if (NOT ENABLE_DOCKER_TESTS)
+        return()
+    endif ()
+
+    file(GLOB _test_files CONFIGURE_DEPENDS "${ARG_TEST_DIR}/*.test")
+    if (NOT _test_files)
+        message(FATAL_ERROR
+            "add_external_systest_profile(${_profile_name}): no *.test files in ${ARG_TEST_DIR}")
+    endif ()
+
+    foreach (_test_file IN LISTS _test_files)
+        get_filename_component(_test_stem "${_test_file}" NAME_WE)
+        set(_ctest_name "${_profile_name}-${_test_stem}-systest-external")
+
+        # Every registered test must declare `# requires: <_profile_name>` so
+        # local gutter execution and the CI lane stay in agreement. The
+        # dispatcher re-validates this at run time, but catching it here
+        # gives the author a configure-time error pointing at the exact file.
+        file(STRINGS "${_test_file}" _requires_match
+            REGEX "^[ \t]*#[ \t]*requires:[ \t]*${_profile_name}([ \t]|$)")
+        if (NOT _requires_match)
+            message(FATAL_ERROR
+                "add_external_systest_profile(${_profile_name}): test ${_test_file} does not declare "
+                "`# requires: ${_profile_name}` in its header. Either add the directive, or move the file out of ${ARG_TEST_DIR}.")
+        endif ()
+
+        add_test(NAME ${_ctest_name}
+            COMMAND $<TARGET_FILE:systest> --testLocation ${_test_file})
+        set_tests_properties(${_ctest_name} PROPERTIES LABELS "DockerCompose")
+    endforeach ()
+endfunction()

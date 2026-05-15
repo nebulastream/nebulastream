@@ -23,6 +23,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -234,6 +235,11 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
+    /// External-dependency profile declared via `# requires: <profile>` in
+    /// the header. Exactly one requires-line is allowed per test; multiple
+    /// lines are a parse error. A test with a set `requirement` is excluded
+    /// from discovery unless `--accept-requires <profile>` matches.
+    std::optional<std::string> requirement;
     std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
@@ -247,6 +253,13 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
 /// load test file map objects from files defined in systest config
 TestFileMap loadTestFileMap(const SystestConfiguration& config);
+
+/// External-dependency tests are filtered out of normal discovery (their
+/// `# requires:` directive isn't satisfied). This helper returns them
+/// grouped by profile name so `--list` can surface them in a separate
+/// section — otherwise they would silently disappear, which makes
+/// "where is my new MQTT test?" a confusing question.
+std::map<std::string, std::vector<std::filesystem::path>> discoverExternalTests(const SystestConfiguration& config);
 
 }
 

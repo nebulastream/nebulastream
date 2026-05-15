@@ -78,6 +78,10 @@ void configureArgumentParser(ArgumentParser& program)
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
         .nargs(argparse::nargs_pattern::at_least_one);
+    program.add_argument("--accept-requires")
+        .help("external-dependency profile(s) the caller has brought up; satisfies matching `# requires:` headers. "
+              "Set by the external_systest bats runner; end users normally don't pass this.")
+        .nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("--disableConfigFile")
         .default_value(defaultDisableConfigPath)
         .help("path to the default systest disable config file");
@@ -323,6 +327,7 @@ void applyGroupSelection(const ArgumentParser& program, NES::SystestConfiguratio
         config.excludedGroupsProvidedOnCommandLine = true;
     }
     addSequenceOptionValues(program, "--exclude-groups", config.excludeGroups);
+    addSequenceOptionValues(program, "--accept-requires", config.acceptRequires);
 }
 
 void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfiguration& config)
