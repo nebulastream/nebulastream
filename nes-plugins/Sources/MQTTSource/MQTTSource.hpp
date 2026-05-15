@@ -69,6 +69,25 @@ private:
     int32_t qos;
     std::chrono::milliseconds flushingInterval;
     size_t maxFlushRetries;
+    /// When true, the source pairs with an in-process publisher (set up by the
+    /// MQTT InlineData/FileData registrars when a `.test` uses ATTACH). On
+    /// open() the source subscribes to a derived control topic and publishes
+    /// a "ready" marker; the publisher waits for that marker before sending
+    /// data rows on `topic`; the source EOS-es when an "eos" marker arrives
+    /// on the control topic. With this enabled, retained messages + the
+    /// topic-per-row hack go away — pure pub/sub at line speed.
+    bool controlChannelEnabled;
+    /// Derived from `topic` at construction. The actual data topic the source
+    /// subscribes to / receives rows on. Today identical to `topic`; kept as
+    /// a separate field so future schemes (e.g. wildcard-strip semantics) have
+    /// somewhere to live.
+    std::string dataTopic;
+    /// Derived from `topic` + "/_nes_control". Used only when controlChannelEnabled.
+    std::string controlTopic;
+    /// Set when an "eos" marker is consumed on the control topic. The next
+    /// fillTupleBuffer call returns EoS immediately instead of waiting for
+    /// the flush-retry timeout.
+    bool eosReceived = false;
 
     std::unique_ptr<mqtt::async_client> client;
 
@@ -126,9 +145,26 @@ struct ConfigParametersMQTTSource
             return qos;
         }};
 
+    /// Internal flag set by the MQTT InlineData/FileData registrars to wire the
+    /// source up for a publish-after-subscribe handshake. Defaults to false, so
+    /// non-test MQTT sources behave like ordinary streaming subscribers. Users
+    /// can override in a .test file's SET clause to opt in/out explicitly.
+    static inline const DescriptorConfig::ConfigParameter<bool> CONTROL_CHANNEL_ENABLED{
+        "controlchannel",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(CONTROL_CHANNEL_ENABLED, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap, SERVER_URI, CLIENT_ID, QOS, TOPIC, FLUSH_INTERVAL_MS, MAX_FLUSH_RETRIES);
+            SourceDescriptor::parameterMap,
+            SERVER_URI,
+            CLIENT_ID,
+            QOS,
+            TOPIC,
+            FLUSH_INTERVAL_MS,
+            MAX_FLUSH_RETRIES,
+            CONTROL_CHANNEL_ENABLED);
 };
 
 }

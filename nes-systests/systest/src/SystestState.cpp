@@ -393,26 +393,6 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
     return testGroups;
 }
 
-void refuseIfRequirementsUnsatisfied(const NES::Systest::TestFile& testfile, const DiscoveryFilters& filters)
-{
-    const auto missing = unsatisfiedRequirements(testfile, filters);
-    if (missing.empty())
-    {
-        return;
-    }
-    std::cerr << fmt::format(
-        "Refusing to run file://{}: this test declares `# requires: {:}` but those profile(s) were not declared "
-        "satisfied via --accept-requires. `systest --testLocation` cannot bring up the docker-compose stack the "
-        "test depends on; that is the job of scripts/testing/external_systest.bats. The expected runner is the "
-        "ctest entry produced by an `add_external_systest_profile(NAME ... TEST_FILE ... PROFILE_DIR ...)` call "
-        "in the plugin's CMakeLists.txt — which both registers the test and provisions the runtime dependency. "
-        "If no such macro call exists yet for this .test file, add one (see "
-        "nes-plugins/Sources/MQTTSource/CMakeLists.txt for an example) and rebuild.\n",
-        testfile.getLogFilePath(),
-        missing);
-    std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
-}
-
 TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {
     const auto filters = createDiscoveryFilters(config);
@@ -424,7 +404,6 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         if (config.testQueryNumbers.empty())
         {
             const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-            refuseIfRequirementsUnsatisfied(testfile, filters);
             if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
             {
                 std::cout << fmt::format(
@@ -439,7 +418,6 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
         const auto testfile
             = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-        refuseIfRequirementsUnsatisfied(testfile, filters);
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(

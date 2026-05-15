@@ -1,9 +1,15 @@
 # name: MQTTSource/MQTT.test
-# description: Reads pre-seeded retained messages from an MQTT broker via the MQTT source.
+# description: Reads ATTACH-declared rows from an MQTT broker. The MQTT InlineData registrar spawns a publisher that waits for the source to subscribe + signal "ready" on a control topic, then publishes the rows non-retained on the configured data topic.
 # requires: mqtt
 CREATE LOGICAL SOURCE mqtt_source(id INT32, value INT32, timestamp UINT64);
 
-CREATE PHYSICAL SOURCE FOR mqtt_source TYPE MQTT SET("JSON" AS PARSER.`TYPE`, "mqtt_broker" AS `SOURCE`.serveruri, "test/data/+" AS `SOURCE`.topic, "100" AS `SOURCE`.flushintervalms);
+CREATE PHYSICAL SOURCE FOR mqtt_source TYPE MQTT SET("JSON" AS INPUT_FORMATTER.`TYPE`, "mqtt_broker" AS `SOURCE`.serveruri, "test/data" AS `SOURCE`.topic, "100" AS `SOURCE`.flushintervalms);
+ATTACH INLINE
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
 
 SELECT id, value, timestamp FROM mqtt_source INTO File();
 ----
