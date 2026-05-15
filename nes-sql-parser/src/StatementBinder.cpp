@@ -229,7 +229,7 @@ public:
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
         std::unordered_map<std::string, std::string> formatOptions{};
-        if (const auto formatConfigIter = configOptions.find("PARSER"); formatConfigIter != configOptions.end())
+        if (const auto formatConfigIter = configOptions.find("OUTPUT_FORMATTER"); formatConfigIter != configOptions.end())
         {
             formatOptions
                 = formatConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
