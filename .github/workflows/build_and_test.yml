@@ -220,7 +220,10 @@ jobs:
               rm -rf build-offline
               cmake -GNinja -B build-offline
               cmake --build build-offline -j
-              ctest --test-dir build-offline -j --output-on-failure --timeout 1200
+              # Exclude DockerCompose-labeled tests: they need /var/run/docker.sock to spin
+              # up sibling containers, which `--network=none` (and the missing socket bind)
+              # makes impossible. They are not testing offline-build behavior.
+              ctest --test-dir build-offline -j --output-on-failure --timeout 1200 -LE DockerCompose
             '
       - uses: actions/upload-artifact@v4
         # Upload all log and stat files if any of the tests has failed.

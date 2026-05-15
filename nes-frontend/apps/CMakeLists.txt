@@ -63,6 +63,7 @@ if (ENABLE_BATS_TESTS)
             env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/cli/tests
             env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
             env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
+            env ENABLE_IREE_TESTS=${ENABLE_IREE_TESTS}
             ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/offline.bats
     )
 endif ()
@@ -90,6 +91,7 @@ if (ENABLE_DOCKER_TESTS)
                 env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
                 env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
                 env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
+                env ENABLE_IREE_TESTS=${ENABLE_IREE_TESTS}
                 ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/distributed.bats
         )
         set_tests_properties(distributed-repl-tests PROPERTIES LABELS "DockerCompose" FIXTURES_REQUIRED RuntimeBaseImage)

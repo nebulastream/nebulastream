@@ -594,6 +594,7 @@ TEST_F(StatementBinderTest, ShowSinks)
     ASSERT_EQ(filteredQuotedSinksResult.value().sinks.at(0).getSinkName(), "TESTSINK1");
 }
 
+#if NES_HAVE_IREE_TESTS
 TEST_F(StatementBinderTest, BindCreateModel)
 {
     const std::string modelPath = std::string(INFERENCE_TEST_DATA) + "/tiny_identity.onnx";
@@ -654,6 +655,7 @@ TEST_F(StatementBinderTest, BindCreateModel)
     const auto badResult = modelStatementHandler->apply(std::get<CreateModelStatement>(*badStatement));
     ASSERT_FALSE(badResult.has_value());
 }
+#endif
 
 TEST_F(StatementBinderTest, ExplainStatement)
 {

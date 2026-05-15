@@ -43,10 +43,19 @@ else ()
     message(STATUS "Bats tests enabled: using ${BATS}")
 endif ()
 
-# Check if IREE tools are available for inference-backed physical operator tests
+# Check if IREE tools are available for inference-backed physical operator tests.
+# Auto-detect by default, but honor a user-provided -DENABLE_IREE_TESTS=ON/OFF.
 find_program(IREE_IMPORT_ONNX iree-import-onnx)
 find_program(IREE_COMPILE iree-compile)
 if (IREE_IMPORT_ONNX STREQUAL "IREE_IMPORT_ONNX-NOTFOUND" OR IREE_COMPILE STREQUAL "IREE_COMPILE-NOTFOUND")
+    if (DEFINED ENABLE_IREE_TESTS AND ENABLE_IREE_TESTS)
+        message(FATAL_ERROR
+            "ENABLE_IREE_TESTS=ON but IREE tools were not found.\n"
+            "  iree-import-onnx: ${IREE_IMPORT_ONNX}\n"
+            "  iree-compile: ${IREE_COMPILE}\n"
+            "  Install the IREE toolchain and ensure iree-import-onnx and iree-compile are in PATH, or pass -DENABLE_IREE_TESTS=OFF."
+        )
+    endif ()
     set(ENABLE_IREE_TESTS OFF CACHE BOOL "Build tests that require iree-import-onnx and iree-compile" FORCE)
     message(WARNING
         "IREE tools not found. Disabling IREE inference tests.\n"
@@ -55,6 +64,12 @@ if (IREE_IMPORT_ONNX STREQUAL "IREE_IMPORT_ONNX-NOTFOUND" OR IREE_COMPILE STREQU
         "  To enable, install the IREE toolchain and ensure iree-import-onnx and iree-compile are in PATH."
     )
 else ()
-    set(ENABLE_IREE_TESTS ON CACHE BOOL "Build tests that require iree-import-onnx and iree-compile" FORCE)
-    message(STATUS "IREE inference tests enabled")
+    if (NOT DEFINED ENABLE_IREE_TESTS)
+        set(ENABLE_IREE_TESTS ON CACHE BOOL "Build tests that require iree-import-onnx and iree-compile")
+    endif ()
+    if (ENABLE_IREE_TESTS)
+        message(STATUS "IREE inference tests enabled")
+    else ()
+        message(STATUS "IREE inference tests disabled (user override)")
+    endif ()
 endif ()
