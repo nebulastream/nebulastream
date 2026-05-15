@@ -2,14 +2,25 @@
 #include <atomic>
 #include <cstddef>
 #include <memory>
+#include <ranges>
 #include <Identifiers/Identifiers.hpp>
+#include <Thread.hpp>
 
-struct ThreadInitializationContext
+class ThreadInitializationContext
 {
-    explicit ThreadInitializationContext(const NES::Host& worker_id) : workerId(worker_id) { }
+    explicit ThreadInitializationContext(std::vector<std::function<void()>> threadInitHooks) : threadInitHooks(std::move(threadInitHooks))
+    {
+    }
 
-    std::atomic_size_t thread_id = 1;
-    NES::Host workerId;
+    friend void init_thread(std::shared_ptr<ThreadInitializationContext> context);
+    std::vector<std::function<void()>> threadInitHooks;
+
+public:
+    static std::shared_ptr<ThreadInitializationContext> fromCurrentThreadsContext()
+    {
+        return std::shared_ptr<ThreadInitializationContext>(
+            new ThreadInitializationContext(NES::detail::threadInitHooks | std::views::values | std::ranges::to<std::vector>()));
+    }
 };
 
 void init_thread(std::shared_ptr<ThreadInitializationContext> context);

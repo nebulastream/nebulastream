@@ -1,4 +1,8 @@
+#include <iostream>
+
+
 #include <nes-io-runtime-bindings/lib.h>
+#include <nlohmann/json.hpp>
 #include <IORuntime.hpp>
 #include <IORuntimeBindings.hpp>
 #include <Thread.hpp>
@@ -6,23 +10,25 @@
 namespace NES
 {
 
-IORuntime::IORuntime() : handle(init_io_runtime(2, std::make_shared<ThreadInitializationContext>(NES::Thread::getThisWorkerNodeId())))
+IORuntime::IORuntime() : handle(init_io_runtime(2, ThreadInitializationContext::fromCurrentThreadsContext()))
 {
 }
 
 IORuntime::~IORuntime() = default;
 
+void IORuntime::attachConfig(std::string_view serviceName, const nlohmann::json& config)
+{
+    attach_config(*handle, rust::Str(std::string(serviceName)), rust::Str(config.dump()));
+}
+
 } // namespace NES
 
-/// C ABI hook used by Rust FFI bridges (sink/source bindings) to discover the
-/// current thread's `IORuntimeHandle` without taking it as a parameter.
-/// Returns the address of the Rust opaque handle, or 0 if no IORuntime is
-/// associated with the calling thread (i.e., not a NES worker thread).
-extern "C" std::size_t nes_current_io_runtime_address() noexcept
+extern "C" IORuntimeHandle* current_io_runtime_internal()
 {
-    if (auto* rt = NES::IORuntime::tryInstance())
+    if (auto instance = NES::IORuntime::tryInstance())
     {
-        return rt->rustHandleAddress();
+        return std::addressof(*instance->handle);
     }
-    return 0;
+    NES_ERROR("No IORuntime instance found.");
+    return nullptr;
 }

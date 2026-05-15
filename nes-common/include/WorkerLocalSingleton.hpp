@@ -53,7 +53,10 @@ class WorkerLocalSingleton
         _instance = self;
         if (self)
         {
-            detail::threadInitHooks[std::type_index(typeid(T))] = [self]() noexcept { _instance = self; };
+            detail::threadInitHooks[std::type_index(typeid(T))] = [self]() noexcept
+            {
+                _instance = self;
+            };
         }
         else
         {

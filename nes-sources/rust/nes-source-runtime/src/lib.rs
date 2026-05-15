@@ -6,6 +6,7 @@ use nes_source_validation::ConfigOptions;
 use std::pin::Pin;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::task::Builder;
 use tracing::{Instrument, debug, info};
 
 type BoxFuture<T> = Pin<Box<dyn Future<Output = T> + Send>>;
@@ -44,6 +45,11 @@ pub trait AsyncSource {
 
 pub enum SourceCommand {
     Stop,
+}
+pub struct QueryContext {
+    pub query_id: String,
+    pub distributed_query_id: String,
+    pub source_id: u64,
 }
 
 pub type SourceCreateFn = dyn Fn(&ConfigOptions) -> Box<dyn AsyncSource + Send> + Sync + Send;
@@ -105,7 +111,7 @@ fn construct_source(name: &str, config: &ConfigOptions) -> Box<dyn AsyncSource +
 
 pub fn start_source<T: AsyncEmitter + Send + 'static>(
     name: &str,
-    origin_id: u64,
+    query_context: QueryContext,
     config: &ConfigOptions,
     runtime: IORuntime,
     mut emit: T,
@@ -114,13 +120,25 @@ pub fn start_source<T: AsyncEmitter + Send + 'static>(
     let (controller, mut rx) = tokio::sync::mpsc::channel(16);
     let (stop_sender, stop_signal) = tokio::sync::oneshot::channel();
     let source = construct_source(name, config);
-    runtime.handle().spawn(
+    let task_name = format!(
+        "SourceTask-{}-{}",
+        query_context.query_id, query_context.source_id
+    );
+    tokio::task::Builder::new().name(&task_name).spawn_on(
         async move {
             let log_on_source_drop = scopeguard::guard((), |_| {
                 panic!("Source Task was aborted.");
             });
 
-            match run_source(source, origin_id, &mut rx, &mut emit, buffer_provider).await {
+            match run_source(
+                source,
+                query_context.source_id,
+                &mut rx,
+                &mut emit,
+                buffer_provider,
+            )
+            .await
+            {
                 Ok(()) => {}
                 Err(error_message) => {
                     let _ = emit.error(error_message).await;
@@ -133,6 +151,7 @@ pub fn start_source<T: AsyncEmitter + Send + 'static>(
             scopeguard::ScopeGuard::into_inner(log_on_source_drop);
         }
         .in_current_span(),
+        &runtime.handle(),
     );
 
     Ok((controller, stop_signal))

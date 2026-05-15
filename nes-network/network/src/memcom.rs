@@ -90,18 +90,21 @@ impl PinnedDrop for SimplexStreamWriter {
 }
 
 struct MemCom {
-    listening:
-        tokio::sync::RwLock<HashMap<ConnectionIdentifier, tokio::sync::mpsc::Sender<Channel>>>,
+    listening: std::sync::RwLock<HashMap<ConnectionIdentifier, tokio::sync::mpsc::Sender<Channel>>>,
 }
 
 static INSTANCE: sync::LazyLock<MemCom> = sync::LazyLock::new(|| MemCom {
-    listening: tokio::sync::RwLock::new(HashMap::new()),
+    listening: std::sync::RwLock::new(HashMap::new()),
 });
 
 pub async fn memcom_bind(
     connection_identifier: ConnectionIdentifier,
 ) -> Result<tokio::sync::mpsc::Receiver<Channel>> {
-    INSTANCE.bind(&connection_identifier).await
+    INSTANCE.bind(&connection_identifier)
+}
+
+pub fn memcom_unbind(connection_identifier: &ConnectionIdentifier) {
+    INSTANCE.unbind(&connection_identifier)
 }
 
 pub async fn memcom_connect(connection_identifier: &ConnectionIdentifier) -> Result<Channel> {
@@ -109,16 +112,23 @@ pub async fn memcom_connect(connection_identifier: &ConnectionIdentifier) -> Res
 }
 
 impl MemCom {
-    async fn bind(
+    fn bind(
         &self,
         connection: &ConnectionIdentifier,
     ) -> Result<tokio::sync::mpsc::Receiver<Channel>> {
         let (tx, rx) = tokio::sync::mpsc::channel(1000);
-        let mut locked = self.listening.write().await;
+        let mut locked = self.listening.write().unwrap();
         if let Some(_) = locked.insert(connection.clone(), tx) {
             warn!("Rebinding {connection}");
         }
         Ok(rx)
+    }
+
+    fn unbind(&self, connection: &ConnectionIdentifier) {
+        let mut locked = self.listening.write().unwrap();
+        locked
+            .remove(&connection.clone())
+            .expect("Connection not found");
     }
 
     async fn connect(&self, connection: &ConnectionIdentifier) -> Result<Channel> {
@@ -139,7 +149,7 @@ impl MemCom {
             this: &MemCom,
             connection: &ConnectionIdentifier,
         ) -> core::result::Result<tokio::sync::mpsc::Sender<Channel>, RetryError<Error>> {
-            let channel = this.listening.read().await.get(connection).cloned();
+            let channel = this.listening.read().unwrap().get(connection).cloned();
             let Some(channel) = channel else {
                 warn!("Could not connect to {}. Retrying...", connection);
                 return RetryError::to_transient("Worker not found in registry".into());
@@ -159,7 +169,7 @@ impl MemCom {
                 // The handshake channel receiver was dropped, which means the registry
                 // entry should have been removed by the listening side already
                 debug_assert!(
-                    !self.listening.read().await.contains_key(connection),
+                    !self.listening.read().unwrap().contains_key(connection),
                     "Entry should have been removed when handshake receiver was dropped"
                 );
                 Err("could not connect".into())

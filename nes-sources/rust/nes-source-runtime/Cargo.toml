@@ -13,6 +13,6 @@ tracing.workspace = true
 linkme.workspace = true
 nes_source_validation.workspace = true
 nes_io_runtime.workspace = true
-tokio = { features = ["fs", "io-util", "macros"], workspace = true }
+tokio = { features = ["fs", "io-util", "macros", "tracing"], workspace = true }
 async-trait = { workspace = true }
 scopeguard.workspace = true

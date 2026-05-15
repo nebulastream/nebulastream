@@ -57,3 +57,10 @@ fn attach_config(runtime: &IORuntime, name: &str, config: &str) -> Result<(), St
         .attach(name.to_string(), config.to_string());
     Ok(())
 }
+
+unsafe extern "C" {
+    fn current_io_runtime_internal() -> *const IORuntime;
+}
+pub fn current_io_runtime() -> Option<nes_io_runtime::IORuntime> {
+    unsafe { current_io_runtime_internal().as_ref() }.map(|handle| handle.0.clone())
+}

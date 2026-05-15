@@ -7,7 +7,8 @@ use nes_buffer_bindings::ffi::BufferProviderHandle;
 pub use nes_buffer_bindings::*;
 use nes_buffer_runtime::{BufferProvider, TupleBuffer};
 use nes_io_runtime::IORuntime;
-use nes_source_runtime::{AsyncEmitter, SourceCommand};
+use nes_io_runtime_bindings::current_io_runtime;
+use nes_source_runtime::{AsyncEmitter, QueryContext, SourceCommand};
 use nes_source_validation::{ConfigOptions, validate};
 use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::oneshot::error::TryRecvError;
@@ -29,7 +30,7 @@ pub mod ffi {
     struct QueryContext {
         query_id: String,
         distributed_query_id: String,
-        source_id: usize,
+        source_id: u64,
         source_type: String,
         source_config: String,
     }
@@ -79,14 +80,6 @@ pub mod ffi {
 
 unsafe impl Send for ffi::SourceContext {}
 unsafe impl Sync for ffi::SourceContext {}
-
-unsafe extern "C" {
-    /// Returns the address of the current thread's `IORuntimeHandle`, or 0 if
-    /// no IORuntime is attached to this thread. Implemented in C++ in
-    /// `nes-io-runtime/src/IORuntime.cpp`.
-    fn nes_current_io_runtime_address() -> usize;
-}
-
 struct RustSourceHandle {
     channel: nes_source_runtime::Controller,
     stop_signal: tokio::sync::oneshot::Receiver<Emitter>,
@@ -142,12 +135,7 @@ impl AsyncEmitter for Emitter {
 
     async fn data(&mut self, data: TupleBuffer) -> nes_source_runtime::Result<()> {
         async_operation(move |done, ctx| unsafe {
-            ffi::source_on_data(
-                self.context.pin_mut_unchecked(),
-                data.leak(),
-                done,
-                ctx,
-            )
+            ffi::source_on_data(self.context.pin_mut_unchecked(), data.leak(), done, ctx)
         })
         .await;
         Ok(())
@@ -160,16 +148,7 @@ fn source_create_handle(
     buffer_provider_handle: SharedPtr<BufferProviderHandle>,
 ) -> Result<Box<RustSourceHandle>, String> {
     let provider = BufferProvider::from_raw(buffer_provider_handle);
-    let runtime_addr = unsafe { nes_current_io_runtime_address() };
-    if runtime_addr == 0 {
-        return Err("source_create_handle called from a thread without an attached IORuntime".to_string());
-    }
-    // SAFETY: `nes_current_io_runtime_address` returns the address of a
-    // `nes_io_runtime_bindings::IORuntime` (a `#[repr(transparent)]` newtype
-    // over `nes_io_runtime::IORuntime`) owned by C++ and outliving every
-    // spawned task on this runtime.
-    let runtime: IORuntime =
-        unsafe { (*(runtime_addr as *const IORuntime)).clone() };
+    let runtime = current_io_runtime().expect("Could not fetch IORuntime from C++ thread");
     let config = serde_json::from_str::<ConfigOptions>(&query_context.source_config)
         .expect("FFI serialization error. Could not convert config options to rust representation");
 
@@ -180,7 +159,11 @@ fn source_create_handle(
         let entered_ = span.enter();
         nes_source_runtime::start_source(
             &query_context.source_type,
-            query_context.source_id as u64,
+            QueryContext {
+                source_id: query_context.source_id,
+                query_id: query_context.query_id,
+                distributed_query_id: query_context.distributed_query_id,
+            },
             &config,
             runtime,
             Emitter { context },

@@ -10,6 +10,7 @@ crate-type = ["rlib", "staticlib"]
 cxx.workspace = true
 nes_buffer_bindings.workspace = true
 nes_buffer_runtime.workspace = true
+nes_io_runtime_bindings.workspace = true
 nes_io_runtime.workspace = true
 tokio.workspace = true
 serde_json.workspace = true

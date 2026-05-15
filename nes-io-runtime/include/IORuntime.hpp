@@ -1,10 +1,13 @@
 #pragma once
 
 #include <cstddef>
-#include <rust/cxx.h>
 #include <nes-io-runtime-bindings/lib.h>
+#include <nlohmann/detail/meta/std_fs.hpp>
+#include <nlohmann/json_fwd.hpp>
+#include <rust/cxx.h>
 #include <WorkerLocalSingleton.hpp>
 
+extern "C" IORuntimeHandle* current_io_runtime_internal();
 namespace NES
 {
 
@@ -20,21 +23,12 @@ namespace NES
 class IORuntime : public WorkerLocalSingleton<IORuntime>
 {
     rust::Box<IORuntimeHandle> handle;
-
+    friend IORuntimeHandle* ::current_io_runtime_internal();
 public:
     IORuntime();
     ~IORuntime();
 
-    /// Reference to the Rust opaque handle. Used for FFI calls that take a
-    /// `&IORuntimeHandle` (e.g. `attach_config`).
-    [[nodiscard]] const IORuntimeHandle& rustHandle() const { return *handle; }
-
-    /// Address of the underlying Rust handle, for FFI bridges that cannot
-    /// declare the cxx-opaque type (cxx 1.0 limitation: opaque Rust types
-    /// cannot be shared across crates). The bridge casts this back to the
-    /// matching Rust type internally — see e.g. `create_handle` in
-    /// `nes_sink_runtime_bindings`.
-    [[nodiscard]] std::size_t rustHandleAddress() const { return reinterpret_cast<std::size_t>(&*handle); }
+    void attachConfig(std::string_view serviceName, const nlohmann::json& config);
 };
 
 } // namespace NES

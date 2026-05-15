@@ -68,9 +68,7 @@ pub fn init_io_runtime(
     thread_count: u32,
     on_thread_start: impl Fn() + Send + Sync + 'static,
 ) -> Result<IORuntime, String> {
-    let build_err: Arc<std::sync::Mutex<Option<String>>> =
-        Arc::new(std::sync::Mutex::new(None));
-
+    let build_err: Arc<std::sync::Mutex<Option<String>>> = Arc::new(std::sync::Mutex::new(None));
     let inner: Arc<IORuntimeInner> = {
         let build_err = build_err.clone();
         Arc::new_cyclic(move |weak: &Weak<IORuntimeInner>| {

@@ -15,4 +15,5 @@ tokio.workspace = true
 serde_json.workspace = true
 nes_sink_validation.workspace = true
 nes_sink_runtime.workspace = true
+nes_io_runtime_bindings.workspace = true
 tracing.workspace = true

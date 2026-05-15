@@ -4,7 +4,8 @@ use crate::ffi::{WriteResult, on_error, on_flush};
 use cxx::SharedPtr;
 pub use nes_buffer_bindings::*;
 use nes_buffer_runtime::TupleBuffer;
-use nes_io_runtime::IORuntime;
+use nes_io_runtime::{IORuntime};
+use nes_io_runtime_bindings::current_io_runtime;
 use nes_sink_runtime::{SinkCommand, SinkContext};
 use nes_sink_validation::{ConfigOptions, validate};
 use std::sync::atomic::AtomicUsize;
@@ -51,13 +52,6 @@ pub mod ffi {
     }
 }
 
-unsafe extern "C" {
-    /// Returns the address of the current thread's `IORuntimeHandle`, or 0 if
-    /// no IORuntime is attached to this thread. Implemented in C++ in
-    /// `nes-io-runtime/src/IORuntime.cpp`.
-    fn nes_current_io_runtime_address() -> usize;
-}
-
 unsafe impl Send for ffi::SinkContext {}
 unsafe impl Sync for ffi::SinkContext {}
 
@@ -76,16 +70,7 @@ fn create_handle(
     query_context: ffi::QueryContext,
     context: SharedPtr<ffi::SinkContext>,
 ) -> Result<Box<SinkHandle>, String> {
-    let runtime_addr = unsafe { nes_current_io_runtime_address() };
-    if runtime_addr == 0 {
-        return Err("create_handle called from a thread without an attached IORuntime".to_string());
-    }
-    // SAFETY: `nes_current_io_runtime_address` returns the address of a
-    // `nes_io_runtime_bindings::IORuntime` (a `#[repr(transparent)]` newtype
-    // over `nes_io_runtime::IORuntime`) owned by C++ and outliving every
-    // spawned task on this runtime.
-    let runtime: IORuntime =
-        unsafe { (*(runtime_addr as *const IORuntime)).clone() };
+    let runtime = current_io_runtime().expect("Could not fetch IORuntime from C++ thread");
     let config = serde_json::from_str::<ConfigOptions>(&query_context.sink_config)
         .expect("FFI serialization error. Could not convert config options to rust representation");
 

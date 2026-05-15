@@ -37,6 +37,9 @@
 #include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+#include <nes-io-runtime-bindings/lib.h>
+#include <nlohmann/json.hpp>
+#include <rust/cxx.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
@@ -47,9 +50,6 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Thread.hpp>
 #include <WorkerStatus.hpp>
-#include <nlohmann/json.hpp>
-#include <rust/cxx.h>
-#include <nes-io-runtime-bindings/lib.h>
 
 namespace
 {
@@ -76,9 +76,7 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
-    : ioRuntime(std::make_unique<IORuntime>())
-    , listener(std::make_shared<CompositeStatisticListener>())
-    , configuration(configuration)
+    : ioRuntime(std::make_unique<IORuntime>()), listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     {
         std::stringstream configStr;
@@ -94,10 +92,6 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
-    NES_INFO("IORuntime constructed for worker {}", host.getRawValue());
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
-    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
-
     if (!configuration.dataAddress.getValue().empty())
     {
         const auto& networkConfig = configuration.workerConfiguration.network;
@@ -111,9 +105,13 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
             {"this_connection", connectionAddr},
             {"receiver_queue_size", networkConfig.receiverQueueSize.getValue()},
         };
-        attach_config(IORuntime::instance().rustHandle(), rust::Str(NES_NETWORK_SENDER_CONFIG), rust::Str(senderConfig.dump()));
-        attach_config(IORuntime::instance().rustHandle(), rust::Str(NES_NETWORK_RECEIVER_CONFIG), rust::Str(receiverConfig.dump()));
+        ioRuntime->attachConfig(NES_NETWORK_RECEIVER_CONFIG, receiverConfig);
+        ioRuntime->attachConfig(NES_NETWORK_SENDER_CONFIG, senderConfig);
     }
+
+    NES_INFO("IORuntime constructed for worker {}", host.getRawValue());
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
+    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept

@@ -181,8 +181,14 @@ fn initialize_logging(logger: SharedPtr<ffi::SpdLogger>) {
     // Create spdlog layer
     let spdlog_layer = SpdlogLayer::new(logger);
 
+    // let console_layer = console_subscriber::ConsoleLayer::builder()
+    //     .with_default_env()
+    //     .spawn();
+
     // Set the subscriber globally without calling init()
-    let subscriber = tracing_subscriber::registry().with(spdlog_layer);
+    let subscriber = tracing_subscriber::registry()
+        // .with(console_layer)
+        .with(spdlog_layer);
     if let Err(e) = tracing::subscriber::set_global_default(subscriber) {
         warn!("Could not initialize rust logger: {e:?}");
     }

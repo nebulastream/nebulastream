@@ -323,6 +323,12 @@ cxx = \"=${NES_CXX_VERSION}\"
 linkme = \"=0.3.35\"
 ${dep_lines}")
 
+    file(WRITE "${umbrella_dir}/.cargo/config.toml"
+            "[build]
+rustflags = [\"--cfg\", \"tokio_unstable\"]
+")
+
+
     file(MAKE_DIRECTORY "${umbrella_dir}/src")
     file(WRITE "${umbrella_dir}/src/lib.rs" "${extern_lines}")
 
