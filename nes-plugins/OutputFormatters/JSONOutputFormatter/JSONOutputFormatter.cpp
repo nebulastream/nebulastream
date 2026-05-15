@@ -78,18 +78,6 @@ uint64_t writePreValueContents(
     return writeValueToBuffer(preValueContentString.c_str(), remainingSpace, buffer, bufferProvider, bufferAddress);
 }
 
-uint64_t writeBool(
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    const bool value,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    /// JSON booleans need to be represented by true/false instead of 1/0
-    const std::string valueAsString = value ? "true" : "false";
-    return writeValueToBuffer(valueAsString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
 uint64_t writeChar(
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
@@ -127,18 +115,6 @@ void writeValue(
 {
     switch (fieldType.type)
     {
-        case DataType::Type::BOOLEAN: {
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeBool,
-                fieldPointer + written,
-                currentRemainingSize,
-                value.getRawValueAs<nautilus::val<bool>>(),
-                recordBuffer.getReference(),
-                bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
         case DataType::Type::CHAR: {
             const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
                 writeChar,
@@ -175,7 +151,8 @@ void writeValue(
         case DataType::Type::UINT32:
         case DataType::Type::UINT64:
         case DataType::Type::FLOAT32:
-        case DataType::Type::FLOAT64: {
+        case DataType::Type::FLOAT64:
+        case DataType::Type::BOOLEAN: {
             const nautilus::val<uint64_t> amountWritten
                 = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
             written += amountWritten;
