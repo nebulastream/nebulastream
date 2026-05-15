@@ -44,3 +44,9 @@ add_external_systest_profile(
         TEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/systests/MQTT.test
         PROFILE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/systest-profile
 )
+add_external_systest_profile(
+        NAME mqtt
+        CTEST_NAME mqtt-ysb-systest-external
+        TEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/systests/MQTT_YSB.test
+        PROFILE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/systest-profile
+)

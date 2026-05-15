@@ -1,0 +1,17 @@
+# name: MQTTSource/MQTT_YSB.test
+# description: Reads the 100K ysb1k fixture (1114 rows) through an MQTT broker — the JSONL is published by the MQTT FileData registrar to retained topics, the source subscribes and reads them back, a Checksum sink counts and hashes every row.
+# requires: mqtt
+CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
+
+# The flush interval / retry count are bumped well above the defaults so the
+# subscriber waits long enough for mosquitto to drain its inflight queue when
+# replaying retained messages. Without this the source EOS-es before the
+# broker finishes delivering all retained messages.
+CREATE PHYSICAL SOURCE FOR ysb1k TYPE MQTT SET("JSON" AS PARSER.`TYPE`, "mqtt_broker" AS `SOURCE`.serveruri, "test/ysb1k/+" AS `SOURCE`.topic, "500" AS `SOURCE`.flushintervalms, "20" AS `SOURCE`.maxflushretries);
+ATTACH FILE small/ysb/ysb1k_100K.jsonl
+
+CREATE SINK ysb1kChecksum(ysb1k.user_id UINT64, ysb1k.page_id UINT64, ysb1k.campaign_id UINT64, ysb1k.ad_type UINT64, ysb1k.event_type UINT64, ysb1k.current_ms UINT64, ysb1k.ip UINT64, ysb1k.d1 UINT64, ysb1k.d2 UINT64, ysb1k.d3 UINT32, ysb1k.d4 UINT16) TYPE Checksum;
+
+SELECT * FROM ysb1k INTO ysb1kChecksum;
+----
+1114 5155724
