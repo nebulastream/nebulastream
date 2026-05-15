@@ -1,4 +1,4 @@
-    # name: sources/FileParsing.test
+# name: sources/FileParsing.test
 # description: Parses File (inline and as file) with different parsing options
 # groups: [Sources]
 

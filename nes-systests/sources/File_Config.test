@@ -8,7 +8,7 @@
 
 CREATE SINK noConfFileSink(noConfSourceFile.id UINT64 NOT NULL, noConfSourceFile.value UINT64 NOT NULL, noConfSourceFile.timestamp UINT64 NOT NULL)  TYPE File;
 CREATE LOGICAL SOURCE noConfSourceFile(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR noConfSourceFile TYPE File SET('CSV' AS PARSER.`TYPE`);
+CREATE PHYSICAL SOURCE FOR noConfSourceFile TYPE File SET('CSV' AS INPUT_FORMATTER.`TYPE`);
 ATTACH FILE small/stream8.csv
 
 SELECT * FROM noConfSourceFile INTO noConfFileSink;

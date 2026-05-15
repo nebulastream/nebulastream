@@ -58,7 +58,7 @@ ATTACH INLINE
 3,3.5
 
 # A file source with a non-standard field delimiter and inline data
-CREATE PHYSICAL SOURCE FOR input TYPE File SET('|' AS PARSER.FIELD_DELIMITER);
+CREATE PHYSICAL SOURCE FOR input TYPE File SET('|' AS INPUT_FORMATTER.FIELD_DELIMITER);
 ATTACH INLINE
 1|1.5
 2|2.5
@@ -95,7 +95,7 @@ Example:
 SELECT ID, VALUE, TIMESTAMP
 FROM File(
 	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
-	'CSV' AS PARSER.`TYPE`,
+	'CSV' AS INPUT_FORMATTER.`TYPE`,
 	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
 INTO output;
 ```
@@ -119,7 +119,7 @@ Instead of naming the sink, you can create the inline sink by writing `[TYPE]([o
 The accepted options are mostly the same as when creating a sink via a `CREATE SINK` statement.
 The only difference is that a schema CAN OPTIONALLY be given via the options `SINK.SCHEMA` using the `SCHEMA` function.
 If no schema is given, the schema is inferred automatically.
-Inline sinks are also able to configure the output formatter via `PARSER.*` parameters.
+Inline sinks are also able to configure the output formatter via `OUTPUT_FORMATTER.*` parameters.
 
 Because the systest framework automatically sets the sink file paths, `File` and `Generator` sinks can be created
 without any options. 
@@ -133,7 +133,7 @@ INTO File();
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source
-INTO File(SCHEMA(ID UINT64, VALUE VARSIZE, TIMESTAMP UINT64) AS `SINK`.`SCHEMA`, FALSE AS `PARSER`.QUOTE_STRINGS);
+INTO File(SCHEMA(ID UINT64, VALUE VARSIZE, TIMESTAMP UINT64) AS `SINK`.`SCHEMA`, FALSE AS `OUTPUT_FORMATTER`.QUOTE_STRINGS);
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source
@@ -287,7 +287,7 @@ SELECT id, value, timestamp
 FROM File(
     'small/stream8.csv' AS `SOURCE`.FILE_PATH,
     'source-node:9090' AS `SOURCE`.`HOST`,
-    'CSV' AS PARSER.`TYPE`,
+    'CSV' AS INPUT_FORMATTER.`TYPE`,
     SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
 INTO File(
     'sink-node:9090' AS `SINK`.`HOST`,

@@ -213,7 +213,7 @@ TEST_F(StatementBinderTest, InlineSourceQuery)
     const std::string query = "SELECT id, text \n"
                               "FROM File(\n"
                               "'input.csv' AS `SOURCE`.FILE_PATH,\n"
-                              "'CSV' AS PARSER.`TYPE`,\n"
+                              "'CSV' AS INPUT_FORMATTER.`TYPE`,\n"
                               "SCHEMA(id UINT64, text VARSIZED) AS `SOURCE`.`SCHEMA`)\n"
                               "INTO output\n";
     const auto statement = binder->parseAndBindSingle(query);
@@ -277,7 +277,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 
     const std::string createPhysicalSourceStatement
-        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (0 as `SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
+        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (0 as `SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS INPUT_FORMATTER.`TYPE`, '\n' AS INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
     const auto expectedParserConfig
         = InputFormatterValidationProvider::provide("CSV", {{"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value();
@@ -453,16 +453,16 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     createSourcesStatements.emplace_back("CREATE LOGICAL SOURCE testSource2 (attribute1 UINT32, attribute2 INT32)");
     createSourcesStatements.emplace_back(
         "CREATE PHYSICAL SOURCE FOR testSource1 TYPE File SET (200 as "
-        "`SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS "
-        "PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER)");
+        "`SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS INPUT_FORMATTER.`TYPE`, '\n' AS "
+        "INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER)");
     createSourcesStatements.emplace_back(
         "CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (0 as "
-        "`SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/random' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS "
-        "PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER)");
+        "`SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/random' AS `SOURCE`.FILE_PATH, 'CSV' AS INPUT_FORMATTER.`TYPE`, '\n' AS "
+        "INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER)");
     createSourcesStatements.emplace_back(
         "CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (0 as "
-        "`SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/ones' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS "
-        "PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER)");
+        "`SOURCE`.MAX_INFLIGHT_BUFFERS, '/dev/ones' AS `SOURCE`.FILE_PATH, 'CSV' AS INPUT_FORMATTER.`TYPE`, '\n' AS "
+        "INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER)");
 
     for (const auto& sourceStatementString : createSourcesStatements)
     {
