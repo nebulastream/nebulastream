@@ -168,8 +168,7 @@ std::optional<std::string> getUnsatisfiedRequiresSkipReason(const NES::Systest::
         return std::nullopt;
     }
     return fmt::format(
-        "Skipping file://{} because it requires external profile(s) {:} not provided via --accept-requires. "
-        "Run the corresponding ctest entry (registered by add_external_systest_profile) or the external_systest bats wrapper.\n",
+        "Skipping file://{} because it requires external profile(s) {:} not listed in --accept-requires.\n",
         testFile.getLogFilePath(),
         missing);
 }
@@ -392,10 +391,13 @@ void refuseIfRequirementsUnsatisfied(const NES::Systest::TestFile& testfile, con
         return;
     }
     std::cerr << fmt::format(
-        "Refusing to run file://{}: this test declares `# requires: {:}` and the listed profile(s) are not satisfied "
-        "via --accept-requires. External-dependency systests must be invoked through the ctest entry registered by "
-        "add_external_systest_profile(), or via the scripts/testing/external_systest.bats wrapper directly. Running "
-        "`systest --testLocation` on this file in isolation does not bring up the docker-compose stack the test depends on.\n",
+        "Refusing to run file://{}: this test declares `# requires: {:}` but those profile(s) were not declared "
+        "satisfied via --accept-requires. `systest --testLocation` cannot bring up the docker-compose stack the "
+        "test depends on; that is the job of scripts/testing/external_systest.bats. The expected runner is the "
+        "ctest entry produced by an `add_external_systest_profile(NAME ... TEST_FILE ... PROFILE_DIR ...)` call "
+        "in the plugin's CMakeLists.txt — which both registers the test and provisions the runtime dependency. "
+        "If no such macro call exists yet for this .test file, add one (see "
+        "nes-plugins/Sources/MQTTSource/CMakeLists.txt for an example) and rebuild.\n",
         testfile.getLogFilePath(),
         missing);
     std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
