@@ -383,7 +383,6 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
     return testGroups;
 }
 
-
 TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {
     const auto filters = createDiscoveryFilters(config);

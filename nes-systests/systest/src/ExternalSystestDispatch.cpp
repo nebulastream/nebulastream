@@ -25,11 +25,11 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <unordered_set>
+#include <vector>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unordered_set>
-#include <vector>
 
 #include <fmt/chrono.h>
 #include <fmt/format.h>
@@ -230,9 +230,8 @@ DispatchOutcome dispatchExternalSystest(const std::filesystem::path& testFile, c
     }();
     if (runtimeImage.empty())
     {
-        out.skipReason
-            = "NES_RUNTIME_BASE_IMAGE is unset and no default was baked in at build time. Rebuild with "
-              "ENABLE_DOCKER_TESTS=ON, or set NES_RUNTIME_BASE_IMAGE in the environment.";
+        out.skipReason = "NES_RUNTIME_BASE_IMAGE is unset and no default was baked in at build time. Rebuild with "
+                         "ENABLE_DOCKER_TESTS=ON, or set NES_RUNTIME_BASE_IMAGE in the environment.";
         return out;
     }
 

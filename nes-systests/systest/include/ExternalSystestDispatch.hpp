@@ -38,7 +38,6 @@ std::vector<std::string> readRequirementsFromHeader(const std::filesystem::path&
 /// SystemTest_*.log when the real work happens inside the docker container.
 void maybeDispatchExternalSystest(const SystestConfiguration& config);
 
-
 /// Outcome of an attempt to dispatch a `# requires:`-bearing test to the
 /// external_systest bats runner.
 struct DispatchOutcome
@@ -62,7 +61,6 @@ struct DispatchOutcome
 /// Returns a DispatchOutcome instead of exiting so the caller can decide
 /// whether to fall back to the legacy "refuse with error" path when
 /// dispatch is impossible (e.g., the profile directory is missing).
-DispatchOutcome dispatchExternalSystest(
-    const std::filesystem::path& testFile, const std::vector<std::string>& requirements);
+DispatchOutcome dispatchExternalSystest(const std::filesystem::path& testFile, const std::vector<std::string>& requirements);
 
 }

@@ -68,8 +68,7 @@ public:
     /// are kept only when every requirement is listed here; the external bats
     /// runner injects this via `--accept-requires <profile>`.
     SequenceOption<StringOption> acceptRequires
-        = {"accept_requires",
-           "external-dependency profiles currently satisfied (matched against `# requires:` headers)"};
+        = {"accept_requires", "external-dependency profiles currently satisfied (matched against `# requires:` headers)"};
     StringOption workerConfig = {"worker_config", "", "used worker config file (.yaml)"};
     StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
     BoolOption remoteWorker = {"remote_worker", "false", "use remote worker"};

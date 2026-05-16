@@ -252,7 +252,8 @@ class Publisher
 public:
     explicit Publisher(const PhysicalSourceConfig& cfg)
         : serverURI(cfg.sourceConfig.at(ConfigParametersMQTTSource::SERVER_URI))
-        , qos(cfg.sourceConfig.contains(ConfigParametersMQTTSource::QOS) ? std::stoi(cfg.sourceConfig.at(ConfigParametersMQTTSource::QOS)) : 1)
+        , qos(cfg.sourceConfig.contains(ConfigParametersMQTTSource::QOS) ? std::stoi(cfg.sourceConfig.at(ConfigParametersMQTTSource::QOS))
+                                                                         : 1)
         , topicPrefix(publishPrefix(cfg))
         , client(serverURI, "nes-systest-mqtt-loader-" + UUIDToString(generateUUID()))
     {
