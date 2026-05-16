@@ -18,11 +18,13 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <expected> /// NOLINT(misc-include-cleaner)
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -47,6 +49,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <ExternalSystestDispatch.hpp>
 #include <SystestRunner.hpp>
 
 namespace
@@ -100,7 +103,7 @@ std::optional<std::string> unsatisfiedRequirement(const NES::Systest::TestFile& 
     {
         return std::nullopt;
     }
-    return *testFile.requirement;
+    return testFile.requirement;
 }
 
 bool hasMatchingGroup(const NES::Systest::TestFile& testFile, const std::unordered_set<std::string>& groups)
@@ -286,64 +289,13 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
     return groups;
 }
 
-/// Parse the `# requires: <profile>` directive from the .test header. At most
-/// one such line is allowed per test — a `.test` file selects a single external
-/// profile bundle. Stops scanning at the first non-comment/non-blank line.
-/// Throws TestException on a malformed file with multiple `# requires:` lines.
-std::optional<std::string> readRequirement(const TestFile& testfile)
+/// Forwarder so TestFile's constructors don't pull `ExternalSystestDispatch.hpp`
+/// into every translation unit that touches a TestFile member-initializer.
+/// The dispatcher's reader is the single source of truth for the
+/// `# requires:` grammar — see ExternalSystestDispatch.cpp.
+static std::optional<std::string> readRequirement(const TestFile& testfile)
 {
-    std::ifstream ifstream(testfile.file);
-    if (!ifstream.is_open())
-    {
-        return std::nullopt;
-    }
-
-    constexpr std::string_view directive = "# requires:";
-    std::optional<std::string> requirement;
-    std::string line;
-    while (std::getline(ifstream, line))
-    {
-        const auto firstNonSpace = line.find_first_not_of(" \t");
-        if (firstNonSpace == std::string::npos)
-        {
-            continue;
-        }
-        if (line[firstNonSpace] != '#')
-        {
-            break;
-        }
-        if (!line.starts_with(directive))
-        {
-            continue;
-        }
-        auto remainder = std::string_view(line).substr(directive.size());
-        const auto start = remainder.find_first_not_of(" \t");
-        if (start == std::string_view::npos)
-        {
-            continue;
-        }
-        remainder.remove_prefix(start);
-        const auto end = remainder.find_first_of(" \t");
-        if (end != std::string_view::npos)
-        {
-            remainder = remainder.substr(0, end);
-        }
-        if (remainder.empty())
-        {
-            continue;
-        }
-        if (requirement)
-        {
-            throw NES::TestException(
-                "Test {} declares multiple `# requires:` directives (`{}` and `{}`). A test selects exactly one external profile; "
-                "merge the services into a single profile if you need more than one.",
-                testfile.file.string(),
-                *requirement,
-                std::string(remainder));
-        }
-        requirement = std::string(remainder);
-    }
-    return requirement;
+    return NES::Systest::readRequirementFromHeader(testfile.file);
 }
 
 TestFile::TestFile(
@@ -546,27 +498,33 @@ std::string RunningQuery::getThroughput() const
     return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
 }
 
-std::string TestFile::getLogFilePath() const
+std::string toHostPath(const std::filesystem::path& path)
 {
-    if (const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT"))
+    const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT");
+    if (hostNebulaStreamRoot == nullptr)
     {
-        auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
-
-        auto filePathIter = file.begin();
-        if (const auto it = std::ranges::find(file, commonFolder); it != file.end())
-        {
-            filePathIter = std::next(it);
-        }
-
-        std::filesystem::path resultPath(hostNebulaStreamRoot);
-        for (; filePathIter != file.end(); ++filePathIter)
-        {
-            resultPath /= *filePathIter;
-        }
-
-        return resultPath.string();
+        return path.string();
     }
 
-    return std::filesystem::path(file);
+    const auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
+
+    auto filePathIter = path.begin();
+    if (const auto it = std::ranges::find(path, commonFolder); it != path.end())
+    {
+        filePathIter = std::next(it);
+    }
+
+    std::filesystem::path resultPath(hostNebulaStreamRoot);
+    for (; filePathIter != path.end(); ++filePathIter)
+    {
+        resultPath /= *filePathIter;
+    }
+
+    return resultPath.string();
+}
+
+std::string TestFile::getLogFilePath() const
+{
+    return toHostPath(file);
 }
 }

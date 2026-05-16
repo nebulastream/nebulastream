@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <initializer_list>
 #include <iostream>
 #include <iterator>
@@ -199,6 +200,12 @@ struct SystestQuery
     std::expected<PlanInfo, Exception> planInfoOrException;
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
+    /// Invoked once by the result check, after the query has stopped and before
+    /// its result file is read. A pull-based sink capture (ODBC) sets this to a
+    /// closure that reads the external system back into the result file; the
+    /// query being Stopped guarantees the read observes every written row.
+    /// Empty for every other query. See SinkCaptureRegistryArguments::resultFinalizer.
+    std::function<void()> finalizeResultFile;
     ConfigurationOverride configurationOverride;
     std::optional<DistributedLogicalPlan> differentialQueryPlan;
     std::optional<std::pair<TestName, SystestQueryId>> runAfter;
@@ -253,6 +260,17 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
 /// load test file map objects from files defined in systest config
 TestFileMap loadTestFileMap(const SystestConfiguration& config);
+
+/// Translate an in-container path to its host equivalent using
+/// `HOST_NEBULASTREAM_ROOT`. The env var holds the host's checkout path
+/// (e.g. `/home/rudi/dima/nebulastream-public`); the in-container view of
+/// the same checkout lives at a different prefix (e.g.
+/// `/tmp/nebulastream-public/...`). We find the common basename in
+/// `path` and rebase everything from there onto the env var's value.
+/// Used so that `file://...` links printed to stdout are clickable from
+/// the host (CLion build window, etc.). Returns `path` unchanged when the
+/// env var is not set.
+std::string toHostPath(const std::filesystem::path& path);
 
 /// External-dependency tests are filtered out of normal discovery (their
 /// `# requires:` directive isn't satisfied). This helper returns them

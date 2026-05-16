@@ -80,8 +80,9 @@ void configureArgumentParser(ArgumentParser& program)
         .help("ignore groups, takes precedence over -g")
         .nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("--accept-requires")
-        .help("external-dependency profile(s) the caller has brought up; satisfies matching `# requires:` headers. "
-              "Set by the external_systest bats runner; end users normally don't pass this.")
+        .help("external-dependency profile(s) the caller has already brought up; satisfies matching `# requires:` "
+              "headers. The in-binary external_systest dispatcher sets this for itself before running the test in "
+              "the same process. Pass this from the CLI only if you have started the profile's compose stack out-of-band.")
         .nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("--disableConfigFile")
         .default_value(defaultDisableConfigPath)
@@ -471,6 +472,23 @@ void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfigu
     if (program.is_used("--list"))
     {
         std::cout << NES::Systest::loadTestFileMap(config);
+        const auto externalTests = NES::Systest::discoverExternalTests(config);
+        if (not externalTests.empty())
+        {
+            std::cout << "\nExternal-dependency Test Files (require an external profile to be brought up):\n";
+            for (const auto& [profile, files] : externalTests)
+            {
+                std::cout << "  requires `" << profile << "`:\n";
+                for (const auto& file : files)
+                {
+                    std::cout << "    file://" << file.c_str() << "\n";
+                }
+            }
+            std::cout << "\nRun these via `ctest -R <profile>-<test>-systest-external` (the\n"
+                         "`add_external_systest_profile()` macro in CMakeLists registers one entry per file),\n"
+                         "or invoke `systest --testLocation <file>` directly to let the in-binary dispatcher\n"
+                         "bring up the profile's compose stack on the fly.\n";
+        }
         std::exit(0); ///NOLINT(concurrency-mt-unsafe)
     }
 
@@ -513,12 +531,12 @@ int main(int argc, const char** argv)
 
     /// Pre-executor hook: if this run is a single .test file declaring
     /// `# requires:` and the caller hasn't already satisfied it via
-    /// --accept-requires, shell out to the external_systest bats wrapper.
-    /// Runs *before* SystestExecutor opens its log file so the host doesn't
-    /// end up with an empty SystemTest_*.log while the real work happens
-    /// inside the docker container the bats wrapper spawns. The dispatcher
-    /// exits with the bats wrapper's status and never returns.
-    NES::Systest::maybeDispatchExternalSystest(config);
+    /// --accept-requires, bring up the broker docker stack and mark the
+    /// requirement satisfied. The test then runs *in this process* (so
+    /// CLion's debug button hits breakpoints normally — same UX as a
+    /// non-external systest). The returned RAII guard tears the stack down
+    /// when main() exits.
+    const auto externalGuard = NES::Systest::maybeDispatchExternalSystest(config);
 
     NES::SystestExecutor executor(std::move(config));
     const auto result = executor.executeSystests();

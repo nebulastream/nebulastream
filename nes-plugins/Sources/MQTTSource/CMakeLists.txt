@@ -13,8 +13,10 @@
 add_plugin_as_library(MQTT Source nes-sources-registry mqtt_source_plugin_library MQTTSource.cpp)
 add_plugin_as_library(MQTT SourceValidation nes-sources-registry mqtt_source_validation_plugin_library MQTTSource.cpp)
 # InlineData / FileData plugins materialise the test's ATTACH content into the
-# broker (publish each row to a unique retained topic). systest dispatches into
-# these when the .test file has `ATTACH INLINE` / `ATTACH FILE` under an MQTT
+# broker. The publisher subscribes to the data topic's `_nes_control` sibling,
+# waits for the source to publish "ready", then streams rows on the data topic
+# and writes a zero-byte sentinel to mark EOS. systest dispatches into these
+# when the .test file has `ATTACH INLINE` / `ATTACH FILE` under an MQTT
 # physical source — see RegisterMQTT{Inline,File}Data in MQTTSource.cpp.
 add_plugin_as_library(MQTT InlineData nes-sources-registry mqtt_inline_data_plugin_library MQTTSource.cpp)
 add_plugin_as_library(MQTT FileData nes-sources-registry mqtt_file_data_plugin_library MQTTSource.cpp)
@@ -33,16 +35,12 @@ foreach (_lib mqtt_source_plugin_library mqtt_source_validation_plugin_library m
     target_link_libraries(${_lib} PRIVATE ${PAHO_MQTTPP3_TARGET})
 endforeach ()
 
-# External-dependency systest: a `# requires: mqtt` test file plus the
-# co-located docker-compose snippet that brings up the broker and pre-seeds
-# retained messages. add_external_systest_profile is a no-op when
-# ENABLE_BATS_TESTS / ENABLE_DOCKER_TESTS are OFF, so this needs no guard.
+# External-dependency systests: every `*.test` file under `systests/` that
+# declares `# requires: mqtt` is registered as a ctest entry by the macro.
+# The co-located `systest-profile/` brings up the broker; the in-binary
+# dispatcher (ExternalSystestDispatch.cpp) drives docker compose and the test
+# runs in-process. add_external_systest_profile is a no-op when
+# ENABLE_DOCKER_TESTS is OFF, so this needs no if() guard.
 add_external_systest_profile(
-        PROFILE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/systest-profile
-)
-add_external_systest_profile(
-        NAME mqtt
-        CTEST_NAME mqtt-ysb-systest-external
-        TEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/systests/MQTT_YSB.test
         PROFILE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/systest-profile
 )

@@ -406,25 +406,32 @@ else
     GROUP_ADD_HINT=""
 fi
 
+# host-gateway lets the dev container reach ports published by sibling
+# containers (the external_systest dispatcher brings up a broker via the
+# host daemon and the in-process test reaches it at host.docker.internal:<port>).
+# Docker Desktop on Mac/Windows handles this automatically; on Linux the
+# `--add-host=host.docker.internal:host-gateway` flag is required.
+ADD_HOST_FLAG=" --add-host=host.docker.internal:host-gateway"
+
 if [ -S "$DOCKER_SOCKET" ]; then
     echo "Detected docker socket at: $DOCKER_SOCKET"
     echo ""
     echo "Command line:"
-    echo "  docker run -v $DOCKER_SOCKET:/var/run/docker.sock${GROUP_ADD_HINT} \\"
+    echo "  docker run -v $DOCKER_SOCKET:/var/run/docker.sock${GROUP_ADD_HINT}${ADD_HOST_FLAG} \\"
     echo "    -v \$(pwd):\$(pwd) -w \$(pwd) nebulastream/nes-development:local"
     echo ""
     echo "CLion Docker Toolchain (Settings → Docker → Container settings → Run options):"
-    echo "  -v $DOCKER_SOCKET:/var/run/docker.sock${GROUP_ADD_HINT}"
+    echo "  -v $DOCKER_SOCKET:/var/run/docker.sock${GROUP_ADD_HINT}${ADD_HOST_FLAG}"
 else
     echo "Warning: Could not detect docker socket automatically."
     echo ""
     echo "Rootful Docker (default):"
-    echo "  -v /var/run/docker.sock:/var/run/docker.sock${GROUP_ADD_HINT}"
+    echo "  -v /var/run/docker.sock:/var/run/docker.sock${GROUP_ADD_HINT}${ADD_HOST_FLAG}"
     echo ""
     echo "Rootless Docker (typical):"
-    echo "  -v \$XDG_RUNTIME_DIR/docker.sock:/var/run/docker.sock"
+    echo "  -v \$XDG_RUNTIME_DIR/docker.sock:/var/run/docker.sock${ADD_HOST_FLAG}"
     echo "  or"
-    echo "  -v /run/user/\$(id -u)/docker.sock:/var/run/docker.sock"
+    echo "  -v /run/user/\$(id -u)/docker.sock:/var/run/docker.sock${ADD_HOST_FLAG}"
 fi
 echo ""
 echo "Note: Docker CLI connects to host Docker daemon via socket. No isolation namespace."

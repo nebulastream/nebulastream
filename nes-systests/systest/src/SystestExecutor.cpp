@@ -260,7 +260,7 @@ void setupLogging(const SystestConfiguration& config)
         }
     }
 
-    fmt::println(std::cout, "Find the log at: file://{}", absoluteLogPath.string());
+    fmt::println(std::cout, "Find the log at: file://{}", NES::Systest::toHostPath(absoluteLogPath));
     Logger::setupLogging(absoluteLogPath.string(), LogLevel::LOG_DEBUG, false);
 
     const auto symlinkPath = logDir / "latest.log";

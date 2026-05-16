@@ -17,7 +17,10 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -40,8 +43,11 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UUID.hpp>
+#include <mqtt/token.h>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
@@ -251,6 +257,9 @@ SourceValidationRegistryReturnType RegisterMQTTSourceValidation(SourceValidation
     return MQTTSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param): the matching declaration in the auto-generated
+/// SourceGeneratedRegistrar.inc takes SourceRegistryArguments by value; a const-ref definition here would
+/// not match (compile error). The generator owns the calling convention.
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterMQTTSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<MQTTSource>(sourceRegistryArguments.sourceDescriptor);
@@ -278,7 +287,13 @@ namespace
 ///
 /// The thread lives in `args.serverThreads` — same lifetime contract TCP's
 /// in-process mock server uses, so cancellation on shutdown is uniform.
-constexpr std::chrono::milliseconds kDefaultReadyTimeout{30000};
+/// 90s — long enough for sanitizer / TSAN / coverage builds where binder
+/// startup is measurably slower than the ~1s observed on a debug build.
+/// Below ~60s a TSAN run on CI can routinely time out before the source's
+/// open() reaches the handshake point, leaving the publisher dead and the
+/// test failing with an all-empty result. The handshake itself is fast;
+/// this is purely the headroom for the source to spin up.
+constexpr std::chrono::milliseconds kDefaultReadyTimeout{90000};
 constexpr std::string_view kControlReady = "ready";
 
 /// Accepts the ConfigParameter<T> static instances directly via their implicit
@@ -316,16 +331,32 @@ std::string normalisePayload(std::string_view row)
 class Publisher
 {
 public:
+    /// NOLINTNEXTLINE(readability-identifier-naming): trailing underscore on the
+    /// parameters is required — same-name parameters would shadow the members
+    /// and break the move-then-read order in this initializer list (use-after-
+    /// move on `dataTopic_`).
     Publisher(std::string serverURI_, std::string dataTopic_, int32_t qos_)
         : serverURI(std::move(serverURI_))
         , dataTopic(std::move(dataTopic_))
         , controlTopic(deriveControlTopic(dataTopic))
         , qos(qos_)
-        , client(serverURI, "nes-systest-mqtt-loader-" + UUIDToString(generateUUID()))
+        /// kMaxBufferedMessages caps paho's outgoing-message queue at the
+        /// client side. The 2-arg constructor defaults to ~10 — too low for
+        /// the batched-wait publisher loop, which keeps up to
+        /// kPublishBatchSize tokens unwaited. Set it high enough that the
+        /// publisher never blocks on the queue cap; broker-side
+        /// max_inflight_messages is the actual rate-limiting knob.
+        , client(serverURI, "nes-systest-mqtt-loader-" + UUIDToString(generateUUID()), kMaxBufferedMessages)
     {
         try
         {
-            const auto connectOptions = mqtt::connect_options_builder().clean_session(true).finalize();
+            /// max_inflight raises the client-side QoS=1 inflight window
+            /// from paho's default (10) up to something that lets the
+            /// batched publisher fill the broker-side queue. Effective
+            /// inflight is min(client max_inflight, mosquitto's
+            /// max_inflight_messages); the broker's is set to 200 in
+            /// mosquitto.conf.
+            const auto connectOptions = mqtt::connect_options_builder().clean_session(true).max_inflight(kClientMaxInflight).finalize();
             client.start_consuming();
             client.connect(connectOptions)->wait();
             client.subscribe(controlTopic, qos)->wait();
@@ -384,13 +415,26 @@ public:
         throw CannotOpenSource("MQTT loader timed out after {}ms waiting for subscriber ready on {}", timeout.count(), controlTopic);
     }
 
+    /// Publish one row on the data topic, *without* waiting for its PUBACK.
+    /// The returned token goes into `pendingTokens` and is drained either
+    /// when the batch hits `kPublishBatchSize` or when `publishEos()` runs.
+    /// At QoS=1 the broker still durably receives every message — we just
+    /// don't pay one RTT per row, which is the dominant cost when publishing
+    /// to a local broker over millions of rows. PUBACKs are still required
+    /// for delivery; mosquitto's max_inflight_messages governs the actual
+    /// window of concurrent in-flight publishes (bumped to 200 in
+    /// mosquitto.conf so a batch isn't held up serially on the broker side).
     void publishRow(std::string_view row)
     {
         try
         {
             const auto payload = normalisePayload(row);
             auto message = mqtt::message::create(dataTopic, payload.data(), payload.size(), qos, /*retained=*/false);
-            client.publish(message)->wait();
+            pendingTokens.push_back(client.publish(message));
+            if (pendingTokens.size() >= kPublishBatchSize)
+            {
+                drainPending();
+            }
         }
         catch (const mqtt::exception& e)
         {
@@ -404,10 +448,18 @@ public:
     /// guarantee applies — EOS cannot be delivered ahead of trailing rows.
     /// Empty rows are filtered upstream in the file-reading loop, so a
     /// zero-byte message is unambiguously the sentinel.
+    ///
+    /// Drains any pending publish tokens *before* sending the EOS marker, so
+    /// the broker is guaranteed to have all data rows durably stored before
+    /// the EOS event the source EOS-es on. Otherwise the EOS PUBACK could
+    /// race ahead of trailing data PUBACKs and the source would EOS with the
+    /// tail in flight (per-subscription ordering only guarantees the *send*
+    /// order, not the broker's storage order).
     void publishEos()
     {
         try
         {
+            drainPending();
             auto message = mqtt::message::create(dataTopic, "", 0, qos, /*retained=*/false);
             client.publish(message)->wait();
         }
@@ -418,11 +470,41 @@ public:
     }
 
 private:
+    /// 1000 buffers a row of headroom while keeping memory bounded. With
+    /// mosquitto's `max_inflight_messages=200` the broker concurrently
+    /// processes ~200 of these at a time, so batch sizes above ~1000 stop
+    /// helping. Tuned for the 1M / 5M YSB cases; smaller tests drain on
+    /// EOS regardless.
+    static constexpr std::size_t kPublishBatchSize = 1000;
+
+    /// paho's client-side buffer; must be larger than kPublishBatchSize so
+    /// the publisher never trips MQTTASYNC_MAX_BUFFERED (-12) while batches
+    /// drain. Effectively unlimited for our scale (1M rows × a few hundred
+    /// bytes = ~250MB at the absolute worst, much less in practice because
+    /// the broker drains continuously).
+    static constexpr int kMaxBufferedMessages = 100000;
+
+    /// Client-side QoS=1 inflight window. paho's default of 10 caps
+    /// effective throughput at ~10 messages per RTT regardless of how
+    /// quickly the broker acks; bumping this lets the broker's
+    /// max_inflight_messages window (200) be the actual bottleneck.
+    static constexpr int kClientMaxInflight = 1000;
+
+    void drainPending()
+    {
+        for (auto& token : pendingTokens)
+        {
+            token->wait();
+        }
+        pendingTokens.clear();
+    }
+
     std::string serverURI;
     std::string dataTopic;
     std::string controlTopic;
     int32_t qos;
     mqtt::async_client client;
+    std::vector<mqtt::token_ptr> pendingTokens;
 };
 
 /// Pull what the publisher needs out of the descriptor's stringly-typed map.
@@ -432,8 +514,8 @@ struct PublisherConfig
 {
     std::string serverURI;
     std::string dataTopic;
-    int32_t qos;
-    std::chrono::milliseconds readyTimeout;
+    int32_t qos{};
+    std::chrono::milliseconds readyTimeout{};
 };
 
 PublisherConfig extractPublisherConfig(const PhysicalSourceConfig& cfg)
@@ -462,10 +544,28 @@ void enableControlChannel(PhysicalSourceConfig& cfg)
     cfg.sourceConfig[ConfigParametersMQTTSource::CONTROL_CHANNEL_ENABLED] = "true";
 }
 
+/// When the in-binary dispatcher in ExternalSystestDispatch.cpp brings up the
+/// broker locally on a host port, it exports NES_EXTERNAL_ENDPOINT_BROKER =
+/// `<host>:<port>` for the `broker` endpoint declared in the profile's
+/// profile.yaml. The MQTT source's serveruri gets rewritten to this so the
+/// in-process source and publisher reach the broker at the dispatcher-managed
+/// endpoint instead of the symbolic `mqtt_broker:1883` the .test file
+/// declares. Applied here (in the registrar) rather than in the source's
+/// constructor so the rewritten URI lives in the descriptor and both the
+/// source and the publisher pick it up consistently.
+void applyDispatchOverrides(PhysicalSourceConfig& cfg)
+{
+    if (const char* endpoint = std::getenv("NES_EXTERNAL_ENDPOINT_BROKER"))
+    {
+        cfg.sourceConfig[ConfigParametersMQTTSource::SERVER_URI] = endpoint;
+    }
+}
+
 }
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterMQTTInlineData(InlineDataRegistryArguments args)
 {
+    applyDispatchOverrides(args.physicalSourceConfig);
     auto config = extractPublisherConfig(args.physicalSourceConfig);
     auto rows = std::move(args.tuples);
 
@@ -502,6 +602,7 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterMQTTFileData(File
     {
         throw CannotOpenSource("MQTT FileData: not a regular file: {}", args.testFilePath.string());
     }
+    applyDispatchOverrides(args.physicalSourceConfig);
     auto config = extractPublisherConfig(args.physicalSourceConfig);
     auto path = args.testFilePath;
 

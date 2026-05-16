@@ -1,5 +1,5 @@
 # name: MQTTSource/MQTT_stream_file.test
-# description: Reads the 100K ysb1k fixture (1114 rows) through an MQTT broker — the FileData registrar streams the JSONL to a publisher that waits for the source to subscribe + signal "ready" on a control topic before sending, then writes "eos" on the same control topic when finished. The source EOS-es immediately on "eos"; no timeout, no retained messages, no broker queue tuning.
+# description: Reads a small CSV stream fixture through an MQTT broker, exercising the FileData registrar's line-by-line publishing path with the publish-after-subscribe handshake and zero-byte EOS sentinel on the data topic. Sinks the result tuples into File() so the expected-output diff can verify ordering at low scale.
 # requires: mqtt
 CREATE LOGICAL SOURCE ysb1k(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 

@@ -14,27 +14,49 @@
 
 #include <ExternalSystestDispatch.hpp>
 
+#include <algorithm>
 #include <array>
+#include <cctype>
 #include <cerrno>
 #include <chrono>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <filesystem>
 #include <fstream>
+#include <initializer_list>
 #include <iostream>
+#include <memory>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_set>
+#include <utility>
 #include <vector>
+
+#include <grp.h>
+#include <netdb.h>
+#include <poll.h>
 #include <unistd.h>
+#include <cpptrace/from_current.hpp>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt for range formatting
+#include <yaml-cpp/exceptions.h>
+#include <yaml-cpp/node/emit.h>
+#include <yaml-cpp/node/node.h>
+#include <yaml-cpp/node/parse.h>
 
+#include <Util/Strings.hpp>
+#include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 
 namespace NES::Systest
@@ -43,24 +65,10 @@ namespace NES::Systest
 namespace
 {
 
-/// Read the absolute path of the running binary. Used so the bats wrapper
-/// can rebuild the systest container image from the same binary that was
-/// just invoked — no need for the caller to point at $<TARGET_FILE:systest>.
-std::optional<std::filesystem::path> currentExecutablePath()
-{
-    std::error_code ec;
-    auto path = std::filesystem::read_symlink("/proc/self/exe", ec);
-    if (ec)
-    {
-        return std::nullopt;
-    }
-    return path;
-}
-
 /// Parse a single header directive value (e.g., `# profile-dir: <value>`).
 /// Returns nullopt if the directive is absent before the first non-comment,
-/// non-blank line. The token after the directive prefix is taken verbatim
-/// up to end-of-line (so paths with spaces work after a quote is stripped).
+/// non-blank line. Token after the prefix is taken verbatim up to
+/// end-of-line, with optional surrounding double quotes stripped.
 std::optional<std::string> readHeaderDirective(const std::filesystem::path& testFile, std::string_view prefix)
 {
     std::ifstream stream(testFile);
@@ -96,7 +104,7 @@ std::optional<std::string> readHeaderDirective(const std::filesystem::path& test
         {
             remainder = remainder.substr(0, end + 1);
         }
-        if (!remainder.empty() && remainder.front() == '"' && remainder.back() == '"' && remainder.size() >= 2)
+        if (remainder.size() >= 2 && remainder.front() == '"' && remainder.back() == '"')
         {
             remainder.remove_prefix(1);
             remainder.remove_suffix(1);
@@ -106,15 +114,10 @@ std::optional<std::string> readHeaderDirective(const std::filesystem::path& test
     return std::nullopt;
 }
 
-/// Locate the profile directory for `testFile`. Two sources, first wins:
-///   1. A `# profile-dir: <path>` directive in the test file header. Paths
-///      may be absolute or relative to the .test file's parent directory.
-///   2. The convention `<plugin>/systest-profile`, derived as
-///      dirname(dirname(testFile)) / "systest-profile" — matches the
-///      `<plugin>/systests/X.test` + `<plugin>/systest-profile/` layout the
-///      design documents.
-/// Returns nullopt when neither yields a directory containing
-/// `compose.snippet.yaml`.
+/// Locate the profile dir for `testFile`. `# profile-dir:` directive wins;
+/// otherwise the convention `<plugin>/systest-profile` (= dirname(dirname(
+/// testFile)) / "systest-profile"). Profile dir must contain
+/// compose.snippet.yaml — that's the file `docker compose -f` consumes.
 std::optional<std::filesystem::path> findProfileDir(const std::filesystem::path& testFile)
 {
     const auto testDir = testFile.parent_path();
@@ -145,207 +148,641 @@ std::optional<std::filesystem::path> findProfileDir(const std::filesystem::path&
     {
         std::error_code ec;
         auto canonical = std::filesystem::weakly_canonical(convention, ec);
-        if (!ec)
-        {
-            return canonical;
-        }
-        return convention;
+        return ec ? convention : canonical;
     }
     return std::nullopt;
 }
 
-void setEnvOrDie(const char* key, const std::string& value)
+struct ProfileEndpoint
+{
+    std::string name;
+    int containerPort = 0;
+};
+
+struct ProfileSpec
+{
+    std::string name;
+    std::vector<ProfileEndpoint> endpoints;
+};
+
+/// Profile + endpoint names become env-var suffixes (`<NAME>_PORT`,
+/// `NES_EXTERNAL_ENDPOINT_<NAME>`), so they have to be valid identifier
+/// stems. The same restriction also keeps them sane as `# requires:` tokens
+/// and ctest entry-name fragments.
+bool isValidProfileIdentifier(std::string_view name)
+{
+    if (name.empty() || !(std::isalpha(static_cast<unsigned char>(name.front())) != 0))
+    {
+        return false;
+    }
+    return std::ranges::all_of(name, [](char c) { return std::isalnum(static_cast<unsigned char>(c)) != 0 || c == '_'; });
+}
+
+/// Read `profile.yaml` from the profile dir. The manifest declares the
+/// profile's `# requires:` name and the list of endpoints the dispatcher
+/// must allocate host ports for. The dispatcher uses this to stay generic
+/// — the only plugin-aware bit (which env var the source registrar reads)
+/// stays in the plugin itself.
+ProfileSpec readProfileSpec(const std::filesystem::path& profileDir)
+{
+    const auto manifest = profileDir / "profile.yaml";
+    if (!std::filesystem::is_regular_file(manifest))
+    {
+        throw TestException(
+            "external_systest: missing profile.yaml in {} (expected `name:` and `endpoints:` declarations)", profileDir.string());
+    }
+    YAML::Node root;
+    try
+    {
+        root = YAML::LoadFile(manifest.string());
+    }
+    catch (const YAML::Exception& exception)
+    {
+        throw TestException("external_systest: failed to parse {}: {}", manifest.string(), exception.what());
+    }
+    if (!root.IsMap() || !root["name"] || !root["name"].IsScalar())
+    {
+        throw TestException("external_systest: {} must declare a scalar `name:` field", manifest.string());
+    }
+    ProfileSpec spec;
+    spec.name = root["name"].as<std::string>();
+    if (!isValidProfileIdentifier(spec.name))
+    {
+        throw TestException(
+            "external_systest: {} `name: {}` must match [A-Za-z][A-Za-z0-9_]* (used as a `# requires:` token and a ctest entry-name "
+            "suffix)",
+            manifest.string(),
+            spec.name);
+    }
+    if (!root["endpoints"] || !root["endpoints"].IsSequence())
+    {
+        throw TestException("external_systest: {} must declare an `endpoints:` sequence (at least one)", manifest.string());
+    }
+    std::unordered_set<std::string> seenEndpoints;
+    for (const auto& node : root["endpoints"])
+    {
+        if (!node.IsMap() || !node["name"] || !node["container_port"])
+        {
+            throw TestException(
+                "external_systest: {} endpoint entry must have `name:` and `container_port:` fields (got: `{}`)",
+                manifest.string(),
+                YAML::Dump(node));
+        }
+        auto endpointName = node["name"].as<std::string>();
+        const auto containerPort = node["container_port"].as<int>();
+        if (!isValidProfileIdentifier(endpointName))
+        {
+            throw TestException(
+                "external_systest: {} endpoint `name: {}` must match [A-Za-z][A-Za-z0-9_]* (used as the suffix in `<NAME>_PORT` / "
+                "`<NAME>_CONTAINER_PORT` / `NES_EXTERNAL_ENDPOINT_<NAME>` env vars)",
+                manifest.string(),
+                endpointName);
+        }
+        if (containerPort < 1 || containerPort > 65535)
+        {
+            throw TestException(
+                "external_systest: {} endpoint `{}` declares `container_port: {}`, must be in [1, 65535]",
+                manifest.string(),
+                endpointName,
+                containerPort);
+        }
+        if (!seenEndpoints.insert(endpointName).second)
+        {
+            throw TestException(
+                "external_systest: {} declares endpoint `{}` more than once (duplicate names would silently overwrite each other's env "
+                "vars)",
+                manifest.string(),
+                endpointName);
+        }
+        spec.endpoints.push_back({.name = std::move(endpointName), .containerPort = containerPort});
+    }
+    if (spec.endpoints.empty())
+    {
+        throw TestException("external_systest: {} declares no endpoints", manifest.string());
+    }
+    return spec;
+}
+
+/// Address the in-process test should use to reach the dispatcher-managed
+/// broker. Two cases:
+///   - systest binary runs on the host directly → 127.0.0.1 (loopback).
+///   - systest binary runs inside the CLion dev-container toolchain → the
+///     host's docker daemon publishes the broker on the host's interfaces;
+///     the dev container reaches them via `host.docker.internal`.
+///
+/// On Linux `host.docker.internal` requires `--add-host=host.docker.internal:
+/// host-gateway` on the *dev container* (Docker Desktop / Mac do this
+/// automatically). `.claude/skills/nes-build/in-docker.sh` and the install
+/// script's printed CLion run-options example both include that flag; the
+/// reachability probe below surfaces a precise diagnostic if either is
+/// missing.
+std::string computeExternalHost()
+{
+    if (const char* override = std::getenv("NES_EXTERNAL_HOST_OVERRIDE"))
+    {
+        return override;
+    }
+    if (std::filesystem::exists("/.dockerenv"))
+    {
+        return "host.docker.internal";
+    }
+    return "127.0.0.1";
+}
+
+/// Connect once to (host, port) with a short timeout. Returns true on
+/// successful TCP handshake, false on any failure (timeout, refused,
+/// unreachable). Used to fail fast after compose-up rather than letting the
+/// MQTT publisher's 30s ready-timeout swallow a misconfigured dev container.
+bool probeReachable(const std::string& host, int port, std::chrono::milliseconds timeout)
+{
+    addrinfo hints{};
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    addrinfo* result = nullptr;
+    const auto portStr = std::to_string(port);
+    if (::getaddrinfo(host.c_str(), portStr.c_str(), &hints, &result) != 0)
+    {
+        return false;
+    }
+    bool ok = false;
+    for (const addrinfo* rp = result; rp != nullptr; rp = rp->ai_next)
+    {
+        const int sock = ::socket(rp->ai_family, rp->ai_socktype | SOCK_NONBLOCK, rp->ai_protocol);
+        if (sock < 0)
+        {
+            continue;
+        }
+        const int rc = ::connect(sock, rp->ai_addr, rp->ai_addrlen);
+        if (rc == 0)
+        {
+            ok = true;
+            ::close(sock);
+            break;
+        }
+        if (errno == EINPROGRESS)
+        {
+            pollfd pfd{.fd = sock, .events = POLLOUT, .revents = 0};
+            if (::poll(&pfd, 1, static_cast<int>(timeout.count())) > 0 && (pfd.revents & POLLOUT) != 0)
+            {
+                int sockErr = 0;
+                socklen_t len = sizeof(sockErr);
+                if (::getsockopt(sock, SOL_SOCKET, SO_ERROR, &sockErr, &len) == 0 && sockErr == 0)
+                {
+                    ok = true;
+                    ::close(sock);
+                    break;
+                }
+            }
+        }
+        ::close(sock);
+    }
+    ::freeaddrinfo(result);
+    return ok;
+}
+
+/// Verify the current process can reach the docker socket before we start
+/// shelling out to `docker volume create` / `docker compose up`. The
+/// alternative is a five-line cpptrace dump triggered ~four call frames in
+/// when the first docker subprocess fails with "permission denied while
+/// trying to connect to the docker API at unix:///var/run/docker.sock" —
+/// usable but not very actionable.
+///
+/// Most common cause of the failure: CLion's docker toolchain passes
+/// `--user $UID:$GID` to map host UID/GID for file ownership. Docker
+/// silently drops the supplementary groups the image baked into `/etc/group`
+/// when `--user` overrides USER, so even though the image lists the docker
+/// (or systemd-network squatter) GID for the user, the running process is
+/// not a member at run time. The fix is `--group-add <gid>` in the
+/// toolchain's run options. The diagnostic below tells the user the exact
+/// GID to add and where to add it.
+///
+/// We probe by stat()-ing the socket and walking the process's
+/// supplementary groups. A miss throws CannotOpenSource with the targeted
+/// hint; a hit (or socket-not-at-standard-path, e.g. rootless docker) lets
+/// dispatch proceed and any subsequent docker error surface its own way.
+void checkDockerSocketAccess()
+{
+    constexpr const char* socketPath = "/var/run/docker.sock";
+    struct stat statBuf{};
+    if (::stat(socketPath, &statBuf) != 0)
+    {
+        /// Standard path missing — rootless docker, daemon not running, etc.
+        /// Let docker's own error surface from the next subprocess call.
+        return;
+    }
+    const gid_t socketGid = statBuf.st_gid;
+
+    if (::getegid() == socketGid)
+    {
+        return;
+    }
+    std::array<gid_t, 1024> supplementary{};
+    const int nGroups = ::getgroups(static_cast<int>(supplementary.size()), supplementary.data());
+    if (nGroups < 0)
+    {
+        /// getgroups failed — bail rather than throw a confusing diagnostic;
+        /// the docker subprocess will fail with its own error if it has to.
+        return;
+    }
+    for (int i = 0; i < nGroups; ++i)
+    {
+        if (supplementary[i] == socketGid)
+        {
+            return;
+        }
+    }
+
+    std::string groupName = "(no name in /etc/group)";
+    if (const auto* grp = ::getgrgid(socketGid); grp != nullptr && grp->gr_name != nullptr)
+    {
+        groupName = grp->gr_name;
+    }
+
+    /// ANSI escapes only when stderr is a TTY — build logs (file/pipe) get
+    /// plain text instead of literal `\033[…m` garbage.
+    const bool useColor = ::isatty(STDERR_FILENO) != 0;
+    const auto* const red = useColor ? "\033[1;31m" : "";
+    const auto* const yellow = useColor ? "\033[1;33m" : "";
+    const auto* const bold = useColor ? "\033[1m" : "";
+    const auto* const reset = useColor ? "\033[0m" : "";
+
+    /// Banner-style framing so the actionable hint pops in a CLion build
+    /// window without the user having to scroll. We `std::exit` rather than
+    /// throw to suppress the cpptrace terminate-handler stack dump that
+    /// would otherwise push the diagnostic off-screen — at this point in
+    /// dispatch no RAII guards have been constructed yet, so cleanup is a
+    /// no-op.
+    std::cerr << '\n'
+              << red << "============================================================================\n"
+              << " external_systest: cannot access the docker socket\n"
+              << "============================================================================" << reset << "\n\n"
+              << "The socket at " << bold << socketPath << reset << " is group-owned by GID " << bold << socketGid << reset << " (`"
+              << groupName << "` inside this container).\n"
+              << "The current process is uid=" << ::geteuid() << " gid=" << ::getegid() << " and is not a member of GID " << socketGid
+              << ".\n\n"
+              << "Most likely cause: CLion's docker toolchain passes " << bold << "--user $UID:$GID" << reset << " for\n"
+              << "host-user file ownership, and Docker silently drops the supplementary\n"
+              << "groups baked into /etc/group whenever --user is set.\n\n"
+              << yellow << "  FIX:" << reset << " in CLion " << bold << "Settings -> Docker -> Container settings -> Run options" << reset
+              << ",\n"
+              << "       add the flag\n\n"
+              << "           " << bold << "--group-add " << socketGid << reset << "\n\n"
+              << "(.claude/skills/nes-build/in-docker.sh doesn't pass --user, so the\n"
+              << "image bake is enough there — no flag needed for that path.)\n"
+              << red << "============================================================================" << reset << "\n\n";
+    std::cerr.flush();
+    std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+}
+
+/// Ask the kernel for a free TCP port: bind a socket to port 0 on
+/// 127.0.0.1, read back the assigned port, close. The port can in theory be
+/// reused by another process before docker binds to it (TOCTOU); for
+/// local-developer interactive use the window is small enough that we
+/// accept the risk — the user explicitly asked to defer hardened
+/// collision-handling.
+int pickFreeTcpPort()
+{
+    const int sock = ::socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0)
+    {
+        throw CannotOpenSource("external_systest: socket() failed: {}", std::strerror(errno));
+    }
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = 0;
+    if (::bind(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
+    {
+        ::close(sock);
+        throw CannotOpenSource("external_systest: bind() failed: {}", std::strerror(errno));
+    }
+    socklen_t len = sizeof(addr);
+    if (::getsockname(sock, reinterpret_cast<sockaddr*>(&addr), &len) < 0)
+    {
+        ::close(sock);
+        throw CannotOpenSource("external_systest: getsockname() failed: {}", std::strerror(errno));
+    }
+    const int port = ntohs(addr.sin_port);
+    ::close(sock);
+    return port;
+}
+
+/// Set an env var or throw. Used for the small set of vars the compose
+/// snippet substitutes and the plugin registrars consume (PROFILE_VOLUME,
+/// NES_EXTERNAL_HOST, the per-endpoint *_PORT / NES_EXTERNAL_ENDPOINT_*
+/// pairs). Throws CannotOpenSource so the surrounding RAII guards
+/// (ProfileVolumeGuard, ExternalSystestDispatchGuard) get a chance to clean
+/// up before the process unwinds.
+void setEnvOrThrow(const char* key, const std::string& value)
 {
     if (::setenv(key, value.c_str(), /*overwrite=*/1) != 0)
     {
-        std::cerr << fmt::format("systest: failed to setenv {}: {}\n", key, std::strerror(errno));
-        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+        throw CannotOpenSource("external_systest: setenv {} failed: {}", key, std::strerror(errno));
     }
 }
-}
 
-DispatchOutcome dispatchExternalSystest(const std::filesystem::path& testFile, const std::vector<std::string>& requirements)
+/// Fork+exec+wait the docker binary with the given argv. argv must be
+/// owned strings (typically `{"docker", "compose", ...}`) — the previous
+/// shape that built std::string_view vectors directly from temporaries
+/// produced a footgun where the .data() pointers outlived the temporaries.
+/// Centralising argv lifetime here is what retires that trap.
+///
+/// If `captureStdout` is non-null, the child's stdout + stderr are piped
+/// back into the string. Otherwise they inherit the parent's fds.
+/// Returns the exit code; -1 if signal-killed.
+int runDockerArgv(const std::vector<std::string>& argvOwned, std::string* captureStdout = nullptr)
 {
-    DispatchOutcome out;
-
-    if (requirements.empty())
+    std::vector<char*> argv;
+    argv.reserve(argvOwned.size() + 1);
+    for (const auto& s : argvOwned)
     {
-        out.skipReason = "no `# requires:` directives in test header";
-        return out;
+        argv.push_back(const_cast<char*>(s.c_str()));
+    }
+    argv.push_back(nullptr);
+
+    /// NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays): POSIX `pipe(int[2])` requires this shape.
+    int pipeFds[2] = {-1, -1};
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay): pipe() takes int*; the decay is mandated by the POSIX signature.
+    if ((captureStdout != nullptr) && ::pipe(pipeFds) != 0)
+    {
+        throw CannotOpenSource("external_systest: pipe() failed: {}", std::strerror(errno));
     }
 
-    auto absoluteTestFile = testFile;
-    {
-        std::error_code ec;
-        auto canonical = std::filesystem::weakly_canonical(absoluteTestFile, ec);
-        if (!ec)
-        {
-            absoluteTestFile = canonical;
-        }
-    }
-
-    constexpr std::string_view repoRoot = NES_REPO_ROOT;
-    constexpr std::string_view batsLib = NES_BATS_LIB_PATH;
-    constexpr std::string_view batsWrapper = EXTERNAL_SYSTEST_BATS;
-    constexpr std::string_view defaultTmpDir = DEFAULT_NES_TEST_TMP_DIR;
-    constexpr std::string_view defaultRuntimeImage = DEFAULT_NES_RUNTIME_BASE_IMAGE;
-
-    if (!std::filesystem::is_regular_file(batsWrapper))
-    {
-        out.skipReason = fmt::format("external_systest bats wrapper not found at {}", batsWrapper);
-        return out;
-    }
-
-    const auto profileDir = findProfileDir(absoluteTestFile);
-    if (!profileDir)
-    {
-        out.skipReason = fmt::format(
-            "could not locate a systest-profile directory for {} (looked for `# profile-dir:` directive and the "
-            "`<plugin>/systest-profile/` convention)",
-            absoluteTestFile.string());
-        return out;
-    }
-
-    /// The bats runner needs a single satisfied profile to invoke the
-    /// inner systest with `--accept-requires`. Use the first declared
-    /// `# requires:` — tests with multiple profiles still work because
-    /// the docker-compose snippet brings up everything the profile needs;
-    /// the name is only used for resource scoping and the gate check.
-    const auto& profileName = requirements.front();
-
-    const auto systestBinary = currentExecutablePath();
-    if (!systestBinary)
-    {
-        out.skipReason = "failed to resolve /proc/self/exe for the systest binary";
-        return out;
-    }
-
-    const std::string runtimeImage = [defaultRuntimeImage]() -> std::string
-    {
-        if (const char* env = std::getenv("NES_RUNTIME_BASE_IMAGE"))
-        {
-            return env;
-        }
-        return std::string{defaultRuntimeImage};
-    }();
-    if (runtimeImage.empty())
-    {
-        out.skipReason = "NES_RUNTIME_BASE_IMAGE is unset and no default was baked in at build time. Rebuild with "
-                         "ENABLE_DOCKER_TESTS=ON, or set NES_RUNTIME_BASE_IMAGE in the environment.";
-        return out;
-    }
-
-    const std::string tmpDir = [defaultTmpDir]() -> std::string
-    {
-        if (const char* env = std::getenv("NES_TEST_TMP_DIR"))
-        {
-            return env;
-        }
-        return std::string{defaultTmpDir};
-    }();
-
-    const std::string nesDir = [repoRoot]() -> std::string
-    {
-        if (const char* env = std::getenv("NES_DIR"))
-        {
-            return env;
-        }
-        return std::string{repoRoot};
-    }();
-
-    std::error_code ec;
-    std::filesystem::create_directories(tmpDir, ec); /// ignore failure; bats will surface a clearer error
-
-    /// Predict the same log path the executor's setupLogging would have
-    /// produced (PATH_TO_BINARY_DIR/nes-systests/SystemTest_<ts>_<pid>.log) so
-    /// the user sees a stable, populated host log file after the run. The
-    /// bats wrapper writes the inner systest's log to this path on teardown
-    /// via `docker compose cp`. We compute it here — not in the inner — so
-    /// it lives outside the docker container that gets torn down.
-    const std::filesystem::path logDir = std::filesystem::path(NES_REPO_ROOT) / ".." / "nes-systests-logs";
-    const std::filesystem::path hostLogDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
-    std::filesystem::create_directories(hostLogDir, ec);
-    const auto now = std::chrono::system_clock::now();
-    const auto logPid = ::getpid();
-    const std::string logFileName = fmt::format("SystemTest_{:%Y-%m-%d_%H-%M-%S}_{}.log", now, logPid);
-    const std::filesystem::path hostLogPath = hostLogDir / logFileName;
-
-    std::cout << fmt::format(
-        "Dispatching `# requires: {}` test to external_systest bats wrapper.\n"
-        "  test file:    {}\n"
-        "  profile dir:  {}\n"
-        "  bats wrapper: {}\n"
-        "  runtime img:  {}\n"
-        "Find the log at: file://{}\n",
-        profileName,
-        absoluteTestFile.string(),
-        profileDir->string(),
-        std::string{batsWrapper},
-        runtimeImage,
-        hostLogPath.string());
-    std::cout.flush();
-
-    setEnvOrDie("NES_DIR", nesDir);
-    setEnvOrDie("NES_BATS_LIB", std::string{batsLib});
-    setEnvOrDie("NES_SYSTEST", systestBinary->string());
-    setEnvOrDie("NES_RUNTIME_BASE_IMAGE", runtimeImage);
-    setEnvOrDie("NES_TEST_TMP_DIR", tmpDir);
-    setEnvOrDie("PROFILE_DIR", profileDir->string());
-    setEnvOrDie("PROFILE_NAME", profileName);
-    setEnvOrDie("TEST_FILE", absoluteTestFile.string());
-    setEnvOrDie("NES_DISPATCH_LOG_PATH", hostLogPath.string());
-
-    const std::string wrapper{batsWrapper};
-    std::array<const char*, 5> argv{"bats", "--verbose-run", "--timing", wrapper.c_str(), nullptr};
-
-    /// Fork rather than execvp directly: in-progress systest output is
-    /// already on stdout/stderr, and we want a clean handoff with the
-    /// dispatched-to-bats banner above it visible in CLion's run window.
     const pid_t pid = ::fork();
     if (pid < 0)
     {
-        out.skipReason = fmt::format("fork failed: {}", std::strerror(errno));
-        return out;
+        if (captureStdout != nullptr)
+        {
+            ::close(pipeFds[0]);
+            ::close(pipeFds[1]);
+        }
+        throw CannotOpenSource("external_systest: fork() for {} failed: {}", argvOwned.front(), std::strerror(errno));
     }
     if (pid == 0)
     {
-        ::execvp("bats", const_cast<char* const*>(argv.data()));
-        std::cerr << fmt::format("systest: failed to exec bats: {}\n", std::strerror(errno));
+        if (captureStdout != nullptr)
+        {
+            ::close(pipeFds[0]);
+            ::dup2(pipeFds[1], STDOUT_FILENO);
+            ::dup2(pipeFds[1], STDERR_FILENO);
+            ::close(pipeFds[1]);
+        }
+        ::execvp(argvOwned.front().c_str(), argv.data());
+        std::cerr << fmt::format("external_systest: failed to exec {}: {}\n", argvOwned.front(), std::strerror(errno));
         std::_Exit(127);
     }
-
+    if (captureStdout != nullptr)
+    {
+        ::close(pipeFds[1]);
+        std::array<char, 4096> buffer{};
+        while (true)
+        {
+            const auto n = ::read(pipeFds[0], buffer.data(), buffer.size());
+            if (n > 0)
+            {
+                captureStdout->append(buffer.data(), static_cast<size_t>(n));
+            }
+            else if (n == 0 || errno != EINTR)
+            {
+                break;
+            }
+        }
+        ::close(pipeFds[0]);
+    }
     int status = 0;
     if (::waitpid(pid, &status, 0) < 0)
     {
-        out.skipReason = fmt::format("waitpid failed: {}", std::strerror(errno));
-        return out;
+        throw CannotOpenSource("external_systest: waitpid for {} failed: {}", argvOwned.front(), std::strerror(errno));
     }
-
-    out.dispatched = true;
-    if (WIFEXITED(status))
-    {
-        out.exitCode = WEXITSTATUS(status);
-    }
-    else if (WIFSIGNALED(status))
-    {
-        out.exitCode = 128 + WTERMSIG(status);
-    }
-    else
-    {
-        out.exitCode = EXIT_FAILURE;
-    }
-    return out;
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
 }
 
-std::vector<std::string> readRequirementsFromHeader(const std::filesystem::path& testFile)
+/// Fork+exec a docker subcommand. argv must NOT include "docker" — that's
+/// added here.
+int runDocker(std::initializer_list<std::string_view> args)
 {
-    std::vector<std::string> requirements;
+    std::vector<std::string> argvOwned{"docker"};
+    for (auto a : args)
+    {
+        argvOwned.emplace_back(a);
+    }
+    return runDockerArgv(argvOwned);
+}
+
+/// Spawn `docker compose -p <project> -f <snippet> <subcommand...>` and
+/// wait. Caller is responsible for any env vars the compose file references
+/// (PROFILE_VOLUME, NES_EXTERNAL_HOST, <NAME>_PORT, ...) being set before
+/// this is called — they propagate via the child's inherited environment.
+///
+/// `--progress=quiet` collapses docker compose's per-tick spinner reprints
+/// (dozens of "[+] up 1/2 ⠋ Container ... Waiting Ns" lines while
+/// healthchecking) into nothing. Errors still print normally.
+int runDockerCompose(const std::string& projectName, const std::filesystem::path& composeFile, std::initializer_list<std::string_view> args)
+{
+    std::vector<std::string> argvOwned{"docker", "compose", "--progress=quiet", "-p", projectName, "-f", composeFile.string()};
+    for (auto a : args)
+    {
+        argvOwned.emplace_back(a);
+    }
+    return runDockerArgv(argvOwned);
+}
+
+/// Capture stdout+stderr of `docker compose -p <project> -f <snippet> logs`.
+/// Used by the up-failure path to fold the broker container's output into
+/// the exception message — by the time the dispatch guard's destructor
+/// runs `docker compose down`, the per-container logs are gone. Capturing
+/// before tear-down keeps the diagnostic actionable.
+std::string captureDockerComposeLogs(const std::string& projectName, const std::filesystem::path& composeFile)
+{
+    const std::vector<std::string> argvOwned{
+        "docker", "compose", "-p", projectName, "-f", composeFile.string(), "logs", "--no-color", "--no-log-prefix"};
+    std::string output;
+    try
+    {
+        runDockerArgv(argvOwned, &output);
+    }
+    catch (const std::exception& exception)
+    {
+        return fmt::format("(failed to capture docker compose logs: {})", exception.what());
+    }
+    return output;
+}
+
+/// Populate a docker volume with the contents of `sourceDir`. Works regardless
+/// of whether `sourceDir` is on the host filesystem or only visible from
+/// inside a dev container — `docker cp` reads from the *client's*
+/// filesystem (wherever the systest binary runs) and streams the bytes to
+/// the daemon, which writes them into the container the volume is mounted
+/// in. No path translation needed, no shell pipe to fail silently.
+///
+/// The helper container exists because `docker cp` requires a container
+/// (not a bare volume) as the destination. An `alpine sleep infinity`
+/// holds the volume mounted at /dest while `docker cp` populates it, then
+/// the HelperStopper RAII guard stops the helper.
+void populateVolumeFromDir(const std::string& volumeName, const std::filesystem::path& sourceDir)
+{
+    const auto helperName
+        = fmt::format("nes-systest-profile-loader-{}-{}", ::getpid(), std::chrono::steady_clock::now().time_since_epoch().count());
+    if (const auto rc = runDocker({"run", "-d", "--rm", "--name", helperName, "-v", volumeName + ":/dest", "alpine", "sleep", "infinity"});
+        rc != 0)
+    {
+        throw CannotOpenSource("external_systest: failed to start profile-loader helper (`docker run` exit {})", rc);
+    }
+
+    /// Ensure the helper goes away no matter how we leave the function.
+    /// Destructor swallows any failure — best effort.
+    struct HelperStopper
+    {
+        const std::string& name;
+
+        ~HelperStopper()
+        {
+            try
+            {
+                runDocker({"stop", "-t", "0", name});
+            }
+            /// NOLINTNEXTLINE(bugprone-empty-catch): destructor must not throw; intentional swallow.
+            catch (const std::exception&)
+            {
+            }
+        }
+    } stopper{helperName};
+
+    /// The `/.` suffix means "copy the directory's contents, not the
+    /// directory itself" — so mosquitto.conf lands at /dest/mosquitto.conf,
+    /// not /dest/<profile-dir-name>/mosquitto.conf.
+    const auto src = sourceDir.string() + "/.";
+    const auto dst = helperName + ":/dest";
+    if (const auto rc = runDocker({"cp", src, dst}); rc != 0)
+    {
+        throw CannotOpenSource(
+            "external_systest: failed to populate docker volume `{}` from {} (`docker cp` exit {})", volumeName, sourceDir.string(), rc);
+    }
+}
+
+}
+
+/// Owns the lifetime of an anonymous docker volume populated with the
+/// profile-dir contents. Used by the broker container as the `/profile` mount
+/// source — sidesteps the host-vs-container path mismatch a bind mount would
+/// hit when systest runs inside the CLion docker toolchain.
+class ProfileVolumeGuard
+{
+public:
+    explicit ProfileVolumeGuard(const std::filesystem::path& profileDir)
+        : volumeName(fmt::format("nes-systest-profile-{}-{}", ::getpid(), std::chrono::system_clock::now().time_since_epoch().count()))
+    {
+        if (const auto rc = runDocker({"volume", "create", volumeName}); rc != 0)
+        {
+            throw CannotOpenSource("external_systest: `docker volume create {}` exited with status {}", volumeName, rc);
+        }
+        created = true;
+
+        CPPTRACE_TRY
+        {
+            populateVolumeFromDir(volumeName, profileDir);
+        }
+        CPPTRACE_CATCH(...)
+        {
+            /// Surface the original error, but try to clean up first.
+            runDocker({"volume", "rm", volumeName});
+            created = false;
+            throw;
+        }
+    }
+
+    ~ProfileVolumeGuard()
+    {
+        if (created)
+        {
+            try
+            {
+                runDocker({"volume", "rm", volumeName});
+            }
+            /// NOLINTNEXTLINE(bugprone-empty-catch): destructor must not throw; intentional swallow.
+            catch (const std::exception&)
+            {
+            }
+        }
+    }
+
+    ProfileVolumeGuard(const ProfileVolumeGuard&) = delete;
+    ProfileVolumeGuard& operator=(const ProfileVolumeGuard&) = delete;
+    ProfileVolumeGuard(ProfileVolumeGuard&&) = delete;
+    ProfileVolumeGuard& operator=(ProfileVolumeGuard&&) = delete;
+
+    [[nodiscard]] const std::string& name() const { return volumeName; }
+
+private:
+    std::string volumeName;
+    bool created = false;
+};
+
+/// NOLINTBEGIN(readability-identifier-naming): trailing-underscore parameters are intentional — they
+/// disambiguate from same-named members in the initializer list. Without them, `std::move(name)` would
+/// move the parameter, and the next initializer reading the same identifier would be a use-after-move.
+ExternalSystestDispatchGuard::ExternalSystestDispatchGuard(
+    std::string projectName_, std::filesystem::path composeFile_, std::unique_ptr<ProfileVolumeGuard> volume_)
+    : projectName(std::move(projectName_)), composeFile(std::move(composeFile_)), volume(std::move(volume_))
+/// NOLINTEND(readability-identifier-naming)
+{
+    const auto rc = runDockerCompose(projectName, composeFile, {"up", "-d", "--wait"});
+    if (rc != 0)
+    {
+        /// Snapshot the per-container logs *before* tearing the stack down —
+        /// `docker compose down` removes the containers, after which their
+        /// logs are gone. Folding them into the exception means the user
+        /// sees mosquitto's actual stderr ("Unable to open config file
+        /// ...", "Address already in use", etc.) without having to re-run
+        /// anything.
+        const auto containerLogs = captureDockerComposeLogs(projectName, composeFile);
+        /// Bring anything partial down — otherwise a half-up stack leaks
+        /// until the next test run reuses the project name. The volume
+        /// guard's destructor (running after this throw unwinds) takes care
+        /// of the docker volume.
+        runDockerCompose(projectName, composeFile, {"down"});
+        throw CannotOpenSource(
+            "external_systest: `docker compose up` exited with status {} for {} (project {}).\n"
+            "--- broker container logs ---\n"
+            "{}"
+            "--- end of logs ---",
+            rc,
+            composeFile.string(),
+            projectName,
+            containerLogs.empty() ? std::string("(no output captured)\n") : containerLogs);
+    }
+    up = true;
+}
+
+ExternalSystestDispatchGuard::~ExternalSystestDispatchGuard()
+{
+    if (up)
+    {
+        try
+        {
+            /// `down` without `-v` because the volume is external (declared
+            /// `external: true` in the snippet) — compose treats it as
+            /// owned by the caller and doesn't remove it. The volume guard
+            /// destroys the volume itself when this dispatch guard's member
+            /// destruction runs immediately after the body of this dtor.
+            runDockerCompose(projectName, composeFile, {"down"});
+        }
+        /// NOLINTNEXTLINE(bugprone-empty-catch): destructor must not throw; intentional swallow.
+        catch (const std::exception&)
+        {
+        }
+    }
+}
+
+std::optional<std::string> readRequirementFromHeader(const std::filesystem::path& testFile)
+{
     std::ifstream stream(testFile);
     if (!stream.is_open())
     {
-        return requirements;
+        return std::nullopt;
     }
     constexpr std::string_view directive = "# requires:";
+    std::optional<std::string> requirement;
     std::string line;
     while (std::getline(stream, line))
     {
@@ -374,63 +811,214 @@ std::vector<std::string> readRequirementsFromHeader(const std::filesystem::path&
         {
             remainder = remainder.substr(0, end);
         }
-        if (!remainder.empty())
+        if (remainder.empty())
         {
-            requirements.emplace_back(remainder);
+            continue;
         }
+        if (requirement)
+        {
+            throw TestException(
+                "Test {} declares multiple `# requires:` directives (`{}` and `{}`). A test selects exactly one external profile; "
+                "merge the services into a single profile if you need more than one.",
+                testFile.string(),
+                *requirement,
+                std::string(remainder));
+        }
+        requirement = std::string(remainder);
     }
-    return requirements;
+    return requirement;
 }
 
-void maybeDispatchExternalSystest(const SystestConfiguration& config)
+std::unique_ptr<ExternalSystestDispatchGuard> maybeDispatchExternalSystest(SystestConfiguration& config)
 {
     const auto& testFilePath = config.directlySpecifiedTestFiles.getValue();
     if (testFilePath.empty())
     {
-        return;
+        return nullptr;
     }
 
-    const auto requirements = readRequirementsFromHeader(testFilePath);
-    if (requirements.empty())
+    const auto requirement = readRequirementFromHeader(testFilePath);
+    if (!requirement)
     {
-        return;
+        return nullptr;
     }
 
-    /// If every declared requirement is already listed in --accept-requires,
-    /// we're being invoked *by* the bats wrapper (recursion guard) and should
-    /// fall through to the normal executor path.
-    std::unordered_set<std::string> accepted;
+    /// Recursion / "already-set-up" guard: if the caller already declared the
+    /// profile satisfied (e.g., a future ctest entry that wants to manage its
+    /// own broker, or a developer who started one in a separate terminal),
+    /// trust them and stay out of the way.
     for (const auto& option : config.acceptRequires.getValues())
     {
-        accepted.insert(option.getValue());
-    }
-    const bool allAccepted = std::ranges::all_of(requirements, [&](const auto& req) { return accepted.contains(req); });
-    if (allAccepted)
-    {
-        return;
+        if (option.getValue() == *requirement)
+        {
+            return nullptr;
+        }
     }
 
-    const auto outcome = dispatchExternalSystest(testFilePath, requirements);
-    if (outcome.dispatched)
+    const auto& profileName = *requirement;
+
+    const auto profileDir = findProfileDir(testFilePath);
+    if (!profileDir)
     {
-        std::exit(outcome.exitCode); ///NOLINT(concurrency-mt-unsafe)
+        throw CannotOpenSource(
+            "external_systest: could not locate a systest-profile directory for {} (looked for `# profile-dir:` "
+            "directive and the `<plugin>/systest-profile/` convention)",
+            testFilePath);
     }
 
-    std::cerr << fmt::format(
-        "Refusing to run file://{}: this test declares `# requires: {:}` and dispatch to the external_systest "
-        "bats runner failed: {}.\n"
-        "\n"
-        "Expected runners, in order of preference:\n"
-        "  1. Click the systest play-button in CLion (after applying the systest-profile convention so this "
-        "     dispatcher can locate the profile dir automatically).\n"
-        "  2. Run the ctest entry produced by `add_external_systest_profile(NAME ... TEST_FILE ... PROFILE_DIR "
-        "...)` in the plugin's CMakeLists.txt. See nes-plugins/Sources/MQTTSource/CMakeLists.txt for an example.\n"
-        "  3. Invoke scripts/testing/external_systest.bats directly with PROFILE_DIR / PROFILE_NAME / TEST_FILE / "
-        "NES_DIR / NES_SYSTEST / NES_RUNTIME_BASE_IMAGE set.\n",
-        std::filesystem::path(testFilePath).string(),
-        requirements,
-        outcome.skipReason);
-    std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+    const auto profileSpec = readProfileSpec(*profileDir);
+    if (profileSpec.name != profileName)
+    {
+        throw TestException(
+            "external_systest: profile name mismatch for {}: `# requires:` declares `{}` but {} declares `name: {}`",
+            testFilePath,
+            profileName,
+            (*profileDir / "profile.yaml").string(),
+            profileSpec.name);
+    }
+
+    const auto composeFile = *profileDir / "compose.snippet.yaml";
+
+    /// Fail fast with a targeted hint if the process can't reach the docker
+    /// socket — otherwise the failure cascades through `docker volume create`
+    /// as a generic "permission denied" cpptrace deep in ProfileVolumeGuard.
+    checkDockerSocketAccess();
+
+    /// Stage the profile dir's contents into a docker volume rather than
+    /// bind-mounting from the host filesystem. The dev container's view of
+    /// `*profileDir` (/tmp/nebulastream-public/...) typically doesn't exist
+    /// on the host docker daemon's filesystem, so a bind mount fails — the
+    /// daemon mounts an empty directory and the broker can't find its
+    /// config. A docker volume sidesteps the host-vs-container path
+    /// mapping entirely: we tar-pipe the in-container files into the volume
+    /// via a one-shot alpine helper, then the broker mounts the volume.
+    auto volumeGuard = std::make_unique<ProfileVolumeGuard>(*profileDir);
+
+    /// Per-pid project name so concurrent runs at least don't collide on
+    /// docker's resource namespace (network, container names). Host ports
+    /// can still collide if two tests pick the same random port — that's
+    /// the documented trade-off.
+    const auto projectName = fmt::format("nes-systest-{}-{}", profileName, ::getpid());
+
+    /// Generic endpoint-port allocation, driven by profile.yaml. For every
+    /// endpoint the profile declares, allocate a free host port and export:
+    ///   <NAME>_PORT                    — allocated host port (compose
+    ///                                    snippet substitutes
+    ///                                    `${<NAME>_PORT}` into its `ports:`
+    ///                                    mapping's host side).
+    ///   <NAME>_CONTAINER_PORT          — container-side port declared in
+    ///                                    profile.yaml. Snippet uses this for
+    ///                                    the container side of the mapping
+    ///                                    so profile.yaml stays the single
+    ///                                    source of truth for the port a
+    ///                                    given service listens on.
+    ///   NES_EXTERNAL_ENDPOINT_<NAME>   — `<host>:<port>` pair (plugin
+    ///                                    registrars read this; the source
+    ///                                    config's serveruri / connection
+    ///                                    string is rewritten from it).
+    /// `NES_EXTERNAL_HOST` is the host address the in-process test reaches
+    /// the broker at; 127.0.0.1 on the host, host.docker.internal inside the
+    /// CLion dev-container toolchain.
+    const std::string externalHost = computeExternalHost();
+    setEnvOrThrow("PROFILE_VOLUME", volumeGuard->name());
+    setEnvOrThrow("NES_EXTERNAL_HOST", externalHost);
+    std::vector<std::pair<std::string, int>> allocations;
+    allocations.reserve(profileSpec.endpoints.size());
+    for (const auto& endpoint : profileSpec.endpoints)
+    {
+        const auto endpointUpper = NES::toUpperCase(endpoint.name);
+        const int hostPort = pickFreeTcpPort();
+        setEnvOrThrow(fmt::format("{}_PORT", endpointUpper).c_str(), std::to_string(hostPort));
+        setEnvOrThrow(fmt::format("{}_CONTAINER_PORT", endpointUpper).c_str(), std::to_string(endpoint.containerPort));
+        setEnvOrThrow(fmt::format("NES_EXTERNAL_ENDPOINT_{}", endpointUpper).c_str(), fmt::format("{}:{}", externalHost, hostPort));
+        allocations.emplace_back(endpoint.name, hostPort);
+    }
+
+    std::cout << fmt::format(
+        "Bringing up external_systest profile `{}` for {}\n"
+        "  compose file:    {}\n"
+        "  profile dir:     {}\n"
+        "  profile volume:  {}\n"
+        "  external host:   {}\n"
+        "  endpoints:       {}\n"
+        "  project name:    {}\n",
+        profileName,
+        testFilePath,
+        composeFile.string(),
+        profileDir->string(),
+        volumeGuard->name(),
+        externalHost,
+        fmt::join(allocations | std::views::transform([](const auto& a) { return fmt::format("{}={}", a.first, a.second); }), ", "),
+        projectName);
+    std::cout.flush();
+
+    auto guard = std::make_unique<ExternalSystestDispatchGuard>(projectName, composeFile, std::move(volumeGuard));
+
+    /// Reachability probe — fail fast with a targeted diagnostic rather than
+    /// letting the source's connect attempt block for tens of seconds. The
+    /// in-container case hits this when the dev container was started without
+    /// `--add-host=host.docker.internal:host-gateway`, which leaves
+    /// host.docker.internal unresolvable. The host case hits this if the
+    /// broker port is somehow not bound (unlikely after `--wait`).
+    for (const auto& [name, port] : allocations)
+    {
+        if (!probeReachable(externalHost, port, std::chrono::seconds(2)))
+        {
+            /// ANSI escapes only when stderr is a TTY — CI build logs (file/pipe)
+            /// get plain text instead of literal `\033[…m` garbage.
+            const bool useColor = ::isatty(STDERR_FILENO) != 0;
+            const auto* const red = useColor ? "\033[1;31m" : "";
+            const auto* const yellow = useColor ? "\033[1;33m" : "";
+            const auto* const bold = useColor ? "\033[1m" : "";
+            const auto* const reset = useColor ? "\033[0m" : "";
+
+            const auto isContainerCase = (externalHost == "host.docker.internal");
+
+            /// Echo to stderr before throwing — the cpptrace terminate handler
+            /// only prints stack frames, not the exception's what(), so without
+            /// this CI logs would only show the trace. The throw still fires
+            /// after for normal exception propagation.
+            std::cerr << '\n'
+                      << red << "============================================================================\n"
+                      << " external_systest: broker came up but endpoint is unreachable\n"
+                      << "============================================================================" << reset << "\n\n"
+                      << "Profile " << bold << "`" << profileName << "`" << reset << " endpoint " << bold << "`" << name << "`" << reset
+                      << " at " << bold << externalHost << ":" << port << reset << " did not respond within 2s.\n\n";
+            if (isContainerCase)
+            {
+                std::cerr << "Cause: this process is running inside a container (`/.dockerenv` present),\n"
+                          << "so the dispatcher uses `host.docker.internal` to reach the host-published\n"
+                          << "broker port — but Docker silently makes `host.docker.internal` resolvable\n"
+                          << "only when the container was started with `--add-host=host.docker.internal:\n"
+                          << "host-gateway`. Three launchers do this for you:\n"
+                          << "  - CLion docker toolchain run options (Settings → Docker → Container\n"
+                          << "    settings → Run options): " << bold << "--add-host=host.docker.internal:host-gateway" << reset << "\n"
+                          << "  - .claude/skills/nes-build/in-docker.sh (already includes the flag)\n"
+                          << "  - .github/steps/run-in-container/action.yml (already includes the flag)\n\n"
+                          << yellow << "  FIX:" << reset << " add " << bold << "--add-host=host.docker.internal:host-gateway" << reset
+                          << " to whichever\n"
+                          << "       launcher started this container.\n";
+            }
+            else
+            {
+                std::cerr << "Cause: the broker came up but its host-published port is not reachable\n"
+                          << "at " << externalHost << ":" << port << ".\n\n"
+                          << yellow << "  FIX:" << reset << " confirm the broker container is bound to the host's loopback\n"
+                          << "       interface and that nothing on the host is firewalling that port.\n";
+            }
+            std::cerr << red << "============================================================================" << reset << "\n\n";
+            std::cerr.flush();
+
+            throw CannotOpenSource(
+                "external_systest: profile `{}` came up but endpoint `{}` at {}:{} is unreachable", profileName, name, externalHost, port);
+        }
+    }
+
+    /// Mark the gate as satisfied so SystestState's discovery filter and the
+    /// directly-specified-file refusal path both let the test through.
+    config.acceptRequires.add(*requirement);
+
+    return guard;
 }
 
 }

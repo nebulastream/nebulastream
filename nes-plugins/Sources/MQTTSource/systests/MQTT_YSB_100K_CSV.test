@@ -1,5 +1,5 @@
 # name: MQTTSource/MQTT_YSB_100K_CSV.test
-# description: Reads the 100K ysb1k fixture (1114 rows) through an MQTT broker — the FileData registrar streams the JSONL to a publisher that waits for the source to subscribe + signal "ready" on a control topic before sending, then writes "eos" on the same control topic when finished. The source EOS-es immediately on "eos"; no timeout, no retained messages, no broker queue tuning.
+# description: CSV variant of MQTT_YSB_100K — reads the ysb1k 100K CSV fixture (1114 rows) through an MQTT broker. Exercises the same publish-after-subscribe handshake and zero-byte EOS sentinel on the data topic, with CSV-formatted payloads parsed by the CSV input formatter on the source side.
 # requires: mqtt
 CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
 

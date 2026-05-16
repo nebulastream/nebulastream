@@ -1,5 +1,5 @@
 # name: MQTTSource/MQTT_YSB_100K.test
-# description: Reads the 100K ysb1k fixture (1114 rows) through an MQTT broker — the FileData registrar streams the JSONL to a publisher that waits for the source to subscribe + signal "ready" on a control topic before sending, then writes "eos" on the same control topic when finished. The source EOS-es immediately on "eos"; no timeout, no retained messages, no broker queue tuning.
+# description: Reads the ysb1k 100K JSON fixture (1114 rows) through an MQTT broker. The FileData registrar streams the JSONL line-by-line to a publisher that subscribes to <topic>/_nes_control and waits for the source to publish "ready" there once it has subscribed to the data topic. The publisher then streams the rows non-retained on the data topic and writes a zero-byte payload as the EOS sentinel. The source treats that sentinel as end-of-stream; no flush-retry timeout, no retained messages, no broker queue tuning.
 # requires: mqtt
 CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
 
