@@ -225,6 +225,6 @@ TEST_F(SystestStateTest, RequiresHeaderRecognisedAmongOtherDirectives)
     const auto& parsed = testMap.at(std::filesystem::weakly_canonical(testFile));
     EXPECT_EQ(parsed.groups, std::vector<std::string>{"Misc"});
     ASSERT_TRUE(parsed.requirement.has_value());
-    EXPECT_EQ(*parsed.requirement, "mqtt");
+    EXPECT_EQ(*parsed.requirement, "mqtt"); /// NOLINT(bugprone-unchecked-optional-access): guarded by the ASSERT_TRUE on the previous line.
 }
 }

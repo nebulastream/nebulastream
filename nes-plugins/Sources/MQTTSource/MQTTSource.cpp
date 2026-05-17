@@ -257,10 +257,12 @@ SourceValidationRegistryReturnType RegisterMQTTSourceValidation(SourceValidation
     return MQTTSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-/// NOLINTNEXTLINE(performance-unnecessary-value-param): the matching declaration in the auto-generated
-/// SourceGeneratedRegistrar.inc takes SourceRegistryArguments by value; a const-ref definition here would
-/// not match (compile error). The generator owns the calling convention.
+/// The matching declaration in the auto-generated SourceGeneratedRegistrar.inc takes SourceRegistryArguments by value; a
+/// const-ref definition here would not match (compile error). The generator owns the calling convention. The function is
+/// also reached only by name from the registrar; `static` / anonymous-namespace would hide it from the registrar resolver.
+/// NOLINTBEGIN(performance-unnecessary-value-param, misc-use-internal-linkage)
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterMQTTSource(SourceRegistryArguments sourceRegistryArguments)
+/// NOLINTEND(performance-unnecessary-value-param, misc-use-internal-linkage)
 {
     return std::make_unique<MQTTSource>(sourceRegistryArguments.sourceDescriptor);
 }
@@ -331,11 +333,10 @@ std::string normalisePayload(std::string_view row)
 class Publisher
 {
 public:
-    /// NOLINTNEXTLINE(readability-identifier-naming): trailing underscore on the
-    /// parameters is required — same-name parameters would shadow the members
-    /// and break the move-then-read order in this initializer list (use-after-
-    /// move on `dataTopic_`).
-    Publisher(std::string serverURI_, std::string dataTopic_, int32_t qos_)
+    /// Trailing underscore on the parameters is required — same-name parameters
+    /// would shadow the members in the initializer list, making `std::move(name)`
+    /// move the parameter and the next initializer reading `name` a use-after-move.
+    Publisher(std::string serverURI_, std::string dataTopic_, int32_t qos_) /// NOLINT(readability-identifier-naming)
         : serverURI(std::move(serverURI_))
         , dataTopic(std::move(dataTopic_))
         , controlTopic(deriveControlTopic(dataTopic))
@@ -555,6 +556,7 @@ void enableControlChannel(PhysicalSourceConfig& cfg)
 /// source and the publisher pick it up consistently.
 void applyDispatchOverrides(PhysicalSourceConfig& cfg)
 {
+    /// NOLINTNEXTLINE(concurrency-mt-unsafe): called from registry-time descriptor construction, before any worker thread runs.
     if (const char* endpoint = std::getenv("NES_EXTERNAL_ENDPOINT_BROKER"))
     {
         cfg.sourceConfig[ConfigParametersMQTTSource::SERVER_URI] = endpoint;

@@ -80,6 +80,7 @@ public:
     /// Reset the consumed pointer and set the tail pointer to the end of the payload
     void stash(const std::string_view payload)
     {
+        /// NOLINTNEXTLINE(readability-simplify-boolean-expr): the canonical form fires on INVARIANT's expanded `!(cond)` shape; rewriting it as DeMorgan'd `consumed != 0 || tail != 0` reads less clearly than the equality-pair the precondition states.
         INVARIANT(consumed == 0 && tail == 0, "Consume stash before stashing a new payload.");
 
         buf.assign(payload);

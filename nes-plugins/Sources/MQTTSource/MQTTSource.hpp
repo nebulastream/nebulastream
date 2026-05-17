@@ -40,6 +40,7 @@ namespace NES
 class MQTTSource : public Source
 {
 public:
+    /// NOLINTNEXTLINE(cert-err58-cpp): static-storage std::string init is the project-wide plugin-name idiom; matches sibling Source plugins.
     static inline const std::string NAME = "MQTT";
 
     explicit MQTTSource(const SourceDescriptor& sourceDescriptor);
@@ -97,6 +98,10 @@ private:
 };
 
 /// Defines the names, (optional) default values, (optional) validation & config functions for all MQTT config parameters.
+/// NOLINTBEGIN(cert-err58-cpp): static-storage ConfigParameter initialization is the project-wide pattern for source plugins
+/// (TCPSource, FileSource, etc.). The constructors can theoretically throw `std::bad_alloc`; in practice they are evaluated
+/// once at static-init time on a path the runtime cannot meaningfully recover from. Refactoring would require redesigning the
+/// ConfigParameter registry across every plugin — out of scope for any single PR.
 struct ConfigParametersMQTTSource
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
@@ -166,5 +171,7 @@ struct ConfigParametersMQTTSource
             MAX_FLUSH_RETRIES,
             CONTROL_CHANNEL_ENABLED);
 };
+
+/// NOLINTEND(cert-err58-cpp)
 
 }

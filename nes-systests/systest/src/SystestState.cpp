@@ -293,6 +293,7 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
 /// into every translation unit that touches a TestFile member-initializer.
 /// The dispatcher's reader is the single source of truth for the
 /// `# requires:` grammar — see ExternalSystestDispatch.cpp.
+/// NOLINTNEXTLINE(misc-use-anonymous-namespace): TU-local helper; `static` is the historical convention used by sibling files in this directory.
 static std::optional<std::string> readRequirement(const TestFile& testfile)
 {
     return NES::Systest::readRequirementFromHeader(testfile.file);
@@ -500,7 +501,8 @@ std::string RunningQuery::getThroughput() const
 
 std::string toHostPath(const std::filesystem::path& path)
 {
-    const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT");
+    const char* hostNebulaStreamRoot
+        = std::getenv("HOST_NEBULASTREAM_ROOT"); /// NOLINT(concurrency-mt-unsafe): runs in single-threaded test-startup code.
     if (hostNebulaStreamRoot == nullptr)
     {
         return path.string();
