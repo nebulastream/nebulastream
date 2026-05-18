@@ -256,30 +256,22 @@ const WindowMetaData& WindowedAggregationLogicalOperator::getWindowMetaData() co
     return windowMetaData;
 }
 
-Reflected Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
-    const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const
+WindowedAggregationLogicalOperator::Wire WindowedAggregationLogicalOperator::wire() const
 {
     std::vector<std::pair<std::string, Reflected>> windowAggregations;
-
-    for (const auto& agg : op->getWindowAggregation())
+    for (const auto& agg : aggregationFunctions)
     {
         windowAggregations.emplace_back(agg->getName(), agg->reflect());
     }
-
-    return reflect(detail::ReflectedWindowAggregationLogicalOperator{
-        .aggregations = windowAggregations, .keys = op->getGroupingKeys(), .windowType = reflectWindowType(*op->getWindowType())});
+    return Wire{.aggregations = std::move(windowAggregations), .keys = groupingKey, .windowType = reflectWindowType(*windowType)};
 }
 
-TypedLogicalOperator<WindowedAggregationLogicalOperator> Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
-    const Reflected& reflected, const ReflectionContext& context) const
+WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::fromWire(Wire wire, const ReflectionContext& context)
 {
-    auto [aggregations, keys, windowTypeReflected] = context.unreflect<detail::ReflectedWindowAggregationLogicalOperator>(reflected);
-
-    auto windowType = unreflectWindowType(windowTypeReflected, context);
+    auto windowType = unreflectWindowType(wire.windowType, context);
 
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions;
-
-    for (const auto& [name, reflectedAggregation] : aggregations)
+    for (const auto& [name, reflectedAggregation] : wire.aggregations)
     {
         auto functionOpt = AggregationLogicalFunctionRegistry::instance().create(
             name, AggregationLogicalFunctionRegistryArguments{.fields = {}, .reflected = reflectedAggregation});
@@ -290,9 +282,7 @@ TypedLogicalOperator<WindowedAggregationLogicalOperator> Unreflector<TypedLogica
         aggregationFunctions.emplace_back(functionOpt.value());
     }
 
-
-    return TypedLogicalOperator<WindowedAggregationLogicalOperator>{
-        WindowedAggregationLogicalOperator{keys, aggregationFunctions, windowType}};
+    return WindowedAggregationLogicalOperator{std::move(wire.keys), std::move(aggregationFunctions), std::move(windowType)};
 }
 
 LogicalOperatorRegistryReturnType

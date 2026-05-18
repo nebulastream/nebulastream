@@ -224,12 +224,11 @@ std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected
-Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op) const
+ProjectionLogicalOperator::Wire ProjectionLogicalOperator::wire() const
 {
-    detail::ReflectedProjectionLogicalOperator reflected;
-
-    for (auto [identifierOpt, function] : op->getProjections())
+    Wire result;
+    result.asterisk = asterisk;
+    for (const auto& [identifierOpt, function] : projections)
     {
         /// Only serialize identifiers that differ from the auto-derived name (i.e. explicit AS aliases).
         std::optional<std::string> identifier;
@@ -241,29 +240,20 @@ Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const Typ
                 identifier = identifierOpt->getFieldName();
             }
         }
-        reflected.projections.emplace_back(identifier, function);
+        result.projections.emplace_back(std::move(identifier), function);
     }
-
-    reflected.asterisk = op->asterisk;
-
-    return reflect(reflected);
+    return result;
 }
 
-TypedLogicalOperator<ProjectionLogicalOperator>
-Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+ProjectionLogicalOperator ProjectionLogicalOperator::fromWire(Wire wire, const ReflectionContext&)
 {
-    auto [asterisk, projections] = context.unreflect<detail::ReflectedProjectionLogicalOperator>(reflected);
-
-    std::vector<ProjectionLogicalOperator::Projection> parsedProjections;
-    parsedProjections.reserve(projections.size());
-
-    for (auto [identifier, function] : projections)
+    std::vector<Projection> parsedProjections;
+    parsedProjections.reserve(wire.projections.size());
+    for (auto& [identifier, function] : wire.projections)
     {
-        parsedProjections.emplace_back(identifier, function);
+        parsedProjections.emplace_back(std::move(identifier), std::move(function));
     }
-
-    return TypedLogicalOperator<ProjectionLogicalOperator>{
-        ProjectionLogicalOperator{std::move(parsedProjections), ProjectionLogicalOperator::Asterisk(asterisk)}};
+    return ProjectionLogicalOperator{std::move(parsedProjections), Asterisk(wire.asterisk)};
 }
 
 LogicalOperatorRegistryReturnType

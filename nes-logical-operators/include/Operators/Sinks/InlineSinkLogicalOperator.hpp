@@ -33,6 +33,17 @@ namespace NES
 class InlineSinkLogicalOperator
 {
 public:
+    /// InlineSink is a planner-internal intermediate operator: it is replaced by
+    /// `SinkLogicalOperator` during binding and never reaches serialization on
+    /// the production path. `Wire`/`wire`/`fromWire` are only present to satisfy
+    /// the `Reflectable` concept so the operator-wrapper machinery compiles;
+    /// hitting either at runtime is a programmer error.
+    struct Wire
+    {
+    };
+    [[nodiscard]] Wire wire() const;
+    [[nodiscard]] static InlineSinkLogicalOperator fromWire(Wire, const ReflectionContext&);
+
     explicit InlineSinkLogicalOperator(
         std::string sinkType,
         const Schema& schema,
@@ -70,20 +81,6 @@ private:
     std::string sinkType;
     std::unordered_map<std::string, std::string> sinkConfig;
     std::unordered_map<std::string, std::string> formatConfig;
-
-    friend Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<InlineSinkLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<InlineSinkLogicalOperator>>
-{
-    TypedLogicalOperator<InlineSinkLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<InlineSinkLogicalOperator>);

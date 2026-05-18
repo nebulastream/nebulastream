@@ -35,6 +35,14 @@ namespace NES
 
 struct SinkLogicalOperator final
 {
+    struct Wire
+    {
+        std::optional<SinkDescriptor> sinkDescriptor;
+        std::string sinkName;
+    };
+    [[nodiscard]] Wire wire() const { return Wire{getSinkDescriptor(), getSinkName()}; }
+    [[nodiscard]] static SinkLogicalOperator fromWire(Wire wire, const ReflectionContext&);
+
     /// During deserialization, we don't need to know/use the name of the sink anymore.
     SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
@@ -85,29 +93,7 @@ private:
     std::optional<SinkDescriptor> sinkDescriptor;
 
     friend class OperatorSerializationUtil;
-    friend Reflector<TypedLogicalOperator<SinkLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<SinkLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<SinkLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<SinkLogicalOperator>>
-{
-    TypedLogicalOperator<SinkLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SinkLogicalOperator>);
-}
-
-namespace NES::detail
-{
-struct ReflectedSinkLogicalOperator
-{
-    std::optional<SinkDescriptor> sinkDescriptor;
-    std::string sinkName;
-};
 }

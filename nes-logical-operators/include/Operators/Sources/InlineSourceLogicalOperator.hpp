@@ -34,6 +34,15 @@ namespace NES
 class InlineSourceLogicalOperator
 {
 public:
+    /// See InlineSinkLogicalOperator — InlineSource is a planner-internal
+    /// intermediate, replaced by SourceDescriptorLogicalOperator before
+    /// serialization. Stub Wire only present to satisfy `Reflectable`.
+    struct Wire
+    {
+    };
+    [[nodiscard]] Wire wire() const;
+    [[nodiscard]] static InlineSourceLogicalOperator fromWire(Wire, const ReflectionContext&);
+
     explicit InlineSourceLogicalOperator(
         std::string type,
         const Schema& schema,
@@ -72,20 +81,6 @@ private:
     std::string sourceType;
     std::unordered_map<std::string, std::string> sourceConfig;
     std::unordered_map<std::string, std::string> parserConfig;
-
-    friend Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<InlineSourceLogicalOperator>&) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<InlineSourceLogicalOperator>>
-{
-    TypedLogicalOperator<InlineSourceLogicalOperator> operator()(const Reflected&) const;
 };
 
 static_assert(LogicalOperatorConcept<InlineSourceLogicalOperator>);

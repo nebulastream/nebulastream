@@ -34,6 +34,17 @@ namespace NES
 class InferModelNameLogicalOperator
 {
 public:
+    /// Wire shape uses optionals because the original on-wire representation
+    /// did. fromWire throws if either is missing — that's the same invariant
+    /// the previous explicit Unreflector enforced.
+    struct Wire
+    {
+        std::optional<std::string> modelName;
+        std::optional<std::vector<std::string>> inputFieldNames;
+    };
+    [[nodiscard]] Wire wire() const { return Wire{std::make_optional(modelName), std::make_optional(inputFieldNames)}; }
+    [[nodiscard]] static InferModelNameLogicalOperator fromWire(Wire wire, const ReflectionContext&);
+
     explicit InferModelNameLogicalOperator(std::string modelName, std::vector<std::string> inputFieldNames);
 
     [[nodiscard]] std::string getModelName() const;
@@ -68,39 +79,6 @@ private:
     Schema inputSchema, outputSchema;
 };
 
-template <>
-struct Reflector<InferModelNameLogicalOperator>
-{
-    Reflected operator()(const InferModelNameLogicalOperator& op) const;
-};
-
-template <>
-struct Unreflector<InferModelNameLogicalOperator>
-{
-    InferModelNameLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<InferModelNameLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<InferModelNameLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<InferModelNameLogicalOperator>>
-{
-    TypedLogicalOperator<InferModelNameLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
-};
-
 static_assert(LogicalOperatorConcept<InferModelNameLogicalOperator>);
 
-}
-
-namespace NES::detail
-{
-struct ReflectedInferModelNameLogicalOperator
-{
-    std::optional<std::string> modelName;
-    std::optional<std::vector<std::string>> inputFieldNames;
-};
 }

@@ -101,19 +101,6 @@ std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getC
     return children;
 }
 
-Reflected Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>::operator()(
-    const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>&) const
-{
-    return Reflected{};
-}
-
-TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>
-Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>::operator()(
-    const Reflected&, const ReflectionContext&) const
-{
-    return TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>{IngestionTimeWatermarkAssignerLogicalOperator{}};
-}
-
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {

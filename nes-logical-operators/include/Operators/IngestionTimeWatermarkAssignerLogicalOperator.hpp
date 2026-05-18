@@ -31,6 +31,15 @@ namespace NES
 class IngestionTimeWatermarkAssignerLogicalOperator final
 {
 public:
+    struct Wire
+    {
+    };
+    [[nodiscard]] Wire wire() const { return Wire{}; }
+    [[nodiscard]] static IngestionTimeWatermarkAssignerLogicalOperator fromWire(Wire, const ReflectionContext&)
+    {
+        return IngestionTimeWatermarkAssignerLogicalOperator{};
+    }
+
     IngestionTimeWatermarkAssignerLogicalOperator();
 
     [[nodiscard]] bool operator==(const IngestionTimeWatermarkAssignerLogicalOperator& rhs) const;
@@ -57,21 +66,6 @@ protected:
     TraitSet traitSet;
     Schema inputSchema;
     Schema outputSchema;
-
-    friend Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>
-{
-    TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>
-    operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<IngestionTimeWatermarkAssignerLogicalOperator>);

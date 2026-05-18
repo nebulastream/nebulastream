@@ -39,6 +39,20 @@ namespace NES
 class InferModelLogicalOperator
 {
 public:
+    /// Wire shape: the model is stored as an opaque `Reflected` blob so that
+    /// reconstruction goes through `context.unreflect<RegisteredModel>(...)`,
+    /// which threads the `ModelCatalog` deserialization context.
+    struct Wire
+    {
+        Reflected model;
+        std::vector<std::string> inputFieldNames;
+    };
+    [[nodiscard]] Wire wire() const { return Wire{.model = reflect(model), .inputFieldNames = inputFieldNames}; }
+    [[nodiscard]] static InferModelLogicalOperator fromWire(Wire wire, const ReflectionContext& context)
+    {
+        return InferModelLogicalOperator{context.unreflect<RegisteredModel>(wire.model), std::move(wire.inputFieldNames)};
+    }
+
     InferModelLogicalOperator(RegisteredModel model, std::vector<std::string> inputFieldNames);
 
     [[nodiscard]] const RegisteredModel& getModel() const;
@@ -79,39 +93,6 @@ private:
     Schema inputSchema, outputSchema;
 };
 
-template <>
-struct Reflector<InferModelLogicalOperator>
-{
-    Reflected operator()(const InferModelLogicalOperator& op) const;
-};
-
-template <>
-struct Unreflector<InferModelLogicalOperator>
-{
-    InferModelLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<InferModelLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<InferModelLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>
-{
-    TypedLogicalOperator<InferModelLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
-};
-
 static_assert(LogicalOperatorConcept<InferModelLogicalOperator>);
 
-}
-
-namespace NES::detail
-{
-struct ReflectedInferModelLogicalOperator
-{
-    Reflected model;
-    std::vector<std::string> inputFieldNames;
-};
 }

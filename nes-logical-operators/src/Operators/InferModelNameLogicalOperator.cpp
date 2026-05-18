@@ -118,44 +118,13 @@ std::vector<LogicalOperator> InferModelNameLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected Reflector<InferModelNameLogicalOperator>::operator()(const InferModelNameLogicalOperator& op) const
+InferModelNameLogicalOperator InferModelNameLogicalOperator::fromWire(Wire wire, const ReflectionContext&)
 {
-    return reflect(detail::ReflectedInferModelNameLogicalOperator{
-        .modelName = std::make_optional(op.getModelName()), .inputFieldNames = std::make_optional(op.getInputFieldNames())});
-}
-
-InferModelNameLogicalOperator
-Unreflector<InferModelNameLogicalOperator>::operator()(const Reflected& rfl, const ReflectionContext& context) const
-{
-    auto [modelNameOpt, inputFieldNamesOpt] = context.unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
-
-    if (!modelNameOpt.has_value() || !inputFieldNamesOpt.has_value())
+    if (!wire.modelName.has_value() || !wire.inputFieldNames.has_value())
     {
         throw CannotDeserialize("Failed to deserialize InferModelNameLogicalOperator");
     }
-
-    return InferModelNameLogicalOperator(modelNameOpt.value(), inputFieldNamesOpt.value());
-}
-
-Reflected Reflector<TypedLogicalOperator<InferModelNameLogicalOperator>>::operator()(
-    const TypedLogicalOperator<InferModelNameLogicalOperator>& op) const
-{
-    return reflect(detail::ReflectedInferModelNameLogicalOperator{
-        .modelName = std::make_optional(op->getModelName()), .inputFieldNames = std::make_optional(op->getInputFieldNames())});
-}
-
-TypedLogicalOperator<InferModelNameLogicalOperator>
-Unreflector<TypedLogicalOperator<InferModelNameLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
-{
-    auto [modelNameOpt, inputFieldNamesOpt] = context.unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
-
-    if (!modelNameOpt.has_value() || !inputFieldNamesOpt.has_value())
-    {
-        throw CannotDeserialize("Failed to deserialize TypedLogicalOperator<InferModelNameLogicalOperator>");
-    }
-
-    return TypedLogicalOperator<InferModelNameLogicalOperator>{
-        InferModelNameLogicalOperator(modelNameOpt.value(), inputFieldNamesOpt.value())};
+    return InferModelNameLogicalOperator{std::move(wire.modelName.value()), std::move(wire.inputFieldNames.value())};
 }
 
 /// generated registry interface requires by-value argument

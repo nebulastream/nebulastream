@@ -25,6 +25,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -48,6 +49,17 @@ public:
     };
 
     using Projection = std::pair<std::optional<FieldIdentifier>, LogicalFunction>;
+
+    /// Wire shape: only identifiers that differ from the auto-derived name are
+    /// kept (see `wire()` in the .cpp). The asterisk flag rides along.
+    struct Wire
+    {
+        bool asterisk;
+        std::vector<std::pair<std::optional<std::string>, LogicalFunction>> projections;
+    };
+    [[nodiscard]] Wire wire() const;
+    [[nodiscard]] static ProjectionLogicalOperator fromWire(Wire wire, const ReflectionContext& context);
+
     ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk);
 
     [[nodiscard]] const std::vector<Projection>& getProjections() const;
@@ -95,32 +107,8 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
-
-    friend Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>
-{
-    TypedLogicalOperator<ProjectionLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);
-
-}
-
-namespace NES::detail
-{
-struct ReflectedProjectionLogicalOperator
-{
-    bool asterisk;
-    std::vector<std::pair<std::optional<std::string>, LogicalFunction>> projections;
-};
 
 }

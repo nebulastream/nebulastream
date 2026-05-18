@@ -123,20 +123,6 @@ std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChild
     return children;
 }
 
-Reflected Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::operator()(
-    const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op) const
-{
-    return reflect(detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{.onField = op->onField, .timeUnit = op->unit});
-}
-
-TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>
-Unreflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::operator()(
-    const Reflected& reflected, const ReflectionContext& context) const
-{
-    auto [onField, timeUnit] = context.unreflect<detail::ReflectedEventTimeWatermarkAssignerLogicalOperator>(reflected);
-    return TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>{EventTimeWatermarkAssignerLogicalOperator{onField, timeUnit}};
-}
-
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {

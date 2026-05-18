@@ -105,16 +105,4 @@ SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
     return sourceDescriptor;
 }
 
-Reflected Reflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::operator()(
-    const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op) const
-{
-    return reflect(op->getSourceDescriptor());
-}
-
-TypedLogicalOperator<SourceDescriptorLogicalOperator>
-Unreflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
-{
-    auto sourceDescriptor = context.unreflect<SourceDescriptor>(rfl);
-    return TypedLogicalOperator<SourceDescriptorLogicalOperator>{SourceDescriptorLogicalOperator(std::move(sourceDescriptor))};
-}
 }

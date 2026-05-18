@@ -185,35 +185,6 @@ std::vector<LogicalOperator> InferModelLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected Reflector<InferModelLogicalOperator>::operator()(const InferModelLogicalOperator& op) const
-{
-    return reflect(detail::ReflectedInferModelLogicalOperator{.model = reflect(op.getModel()), .inputFieldNames = op.getInputFieldNames()});
-}
-
-InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(const Reflected& rfl, const ReflectionContext& context) const
-{
-    auto reflected = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
-
-
-    return InferModelLogicalOperator(context.unreflect<RegisteredModel>(reflected.model), std::move(reflected.inputFieldNames));
-}
-
-Reflected
-Reflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const TypedLogicalOperator<InferModelLogicalOperator>& op) const
-{
-    return reflect(
-        detail::ReflectedInferModelLogicalOperator{.model = reflect(op->getModel()), .inputFieldNames = op->getInputFieldNames()});
-}
-
-TypedLogicalOperator<InferModelLogicalOperator>
-Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
-{
-    auto reflected = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
-
-    return TypedLogicalOperator<InferModelLogicalOperator>{
-        InferModelLogicalOperator(context.unreflect<RegisteredModel>(reflected.model), std::move(reflected.inputFieldNames))};
-}
-
 /// generated registry interface requires by-value argument
 LogicalOperatorRegistryReturnType
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)

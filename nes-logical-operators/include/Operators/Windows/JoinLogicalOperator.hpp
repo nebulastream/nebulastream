@@ -27,6 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -46,6 +47,19 @@ public:
         INNER_JOIN,
         CARTESIAN_PRODUCT
     };
+
+    /// Wire shape: join predicate + opaque window-type blob (reflected/
+    /// unreflected via `reflectWindowType`/`unreflectWindowType` in the .cpp) +
+    /// join type enum. `wire()` / `fromWire` are defined in the .cpp because
+    /// both ends need `WindowTypeReflection.hpp`.
+    struct Wire
+    {
+        LogicalFunction joinFunction;
+        Reflected windowType;
+        JoinType joinType = JoinType::INNER_JOIN;
+    };
+    [[nodiscard]] Wire wire() const;
+    [[nodiscard]] static JoinLogicalOperator fromWire(Wire wire, const ReflectionContext& context);
 
     explicit JoinLogicalOperator(LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType);
 
@@ -84,31 +98,7 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema leftInputSchema, rightInputSchema, outputSchema;
-
-    friend Reflector<TypedLogicalOperator<JoinLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<JoinLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<JoinLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<JoinLogicalOperator>>
-{
-    TypedLogicalOperator<JoinLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);
-}
-
-namespace NES::detail
-{
-struct ReflectedJoinLogicalOperator
-{
-    LogicalFunction joinFunction;
-    Reflected windowType;
-    JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
-};
 }

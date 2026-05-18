@@ -43,6 +43,22 @@ namespace NES
 class WindowedAggregationLogicalOperator final : public OriginIdAssigner
 {
 public:
+    /// Wire-format shape used by the generic `Reflector` / `Unreflector` (see
+    /// `Util/Reflection/Reflectable.hpp`). `aggregations` is a list of
+    /// `<aggregation-name, reflected-config>` pairs so each entry can be
+    /// dispatched through `AggregationLogicalFunctionRegistry` by name on the
+    /// receiving side. `wire()` / `fromWire` are implemented in the `.cpp`
+    /// because both ends need the aggregation registry and window-type
+    /// reflection helpers.
+    struct Wire
+    {
+        std::vector<std::pair<std::string, Reflected>> aggregations;
+        std::vector<FieldAccessLogicalFunction> keys;
+        Reflected windowType;
+    };
+    [[nodiscard]] Wire wire() const;
+    [[nodiscard]] static WindowedAggregationLogicalOperator fromWire(Wire wire, const ReflectionContext& context);
+
     WindowedAggregationLogicalOperator(
         std::vector<FieldAccessLogicalFunction> groupingKey,
         std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions,
@@ -91,32 +107,8 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
-
-    friend Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>
-{
-    TypedLogicalOperator<WindowedAggregationLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<WindowedAggregationLogicalOperator>);
 
-}
-
-namespace NES::detail
-{
-struct ReflectedWindowAggregationLogicalOperator
-{
-    std::vector<std::pair<std::string, Reflected>> aggregations;
-    std::vector<FieldAccessLogicalFunction> keys;
-    Reflected windowType;
-};
 }

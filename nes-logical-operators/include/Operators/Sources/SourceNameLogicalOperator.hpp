@@ -35,6 +35,15 @@ namespace NES
 class SourceNameLogicalOperator
 {
 public:
+    /// SourceName is a planner-internal intermediate, replaced by
+    /// SourceDescriptorLogicalOperator during binding. Stub Wire only present
+    /// to satisfy `Reflectable`.
+    struct Wire
+    {
+    };
+    [[nodiscard]] Wire wire() const;
+    [[nodiscard]] static SourceNameLogicalOperator fromWire(Wire, const ReflectionContext&);
+
     explicit SourceNameLogicalOperator(std::string logicalSourceName);
     explicit SourceNameLogicalOperator(std::string logicalSourceName, Schema schema);
 
@@ -69,20 +78,6 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema schema, inputSchema, outputSchema;
-
-    friend Reflector<TypedLogicalOperator<SourceNameLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<SourceNameLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<SourceNameLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<SourceNameLogicalOperator>>
-{
-    TypedLogicalOperator<SourceNameLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SourceNameLogicalOperator>);

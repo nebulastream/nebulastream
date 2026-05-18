@@ -193,20 +193,15 @@ LogicalFunction JoinLogicalOperator::getJoinFunction() const
     return joinFunction;
 }
 
-Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const TypedLogicalOperator<JoinLogicalOperator>& op) const
+JoinLogicalOperator::Wire JoinLogicalOperator::wire() const
 {
-    return reflect(detail::ReflectedJoinLogicalOperator{
-        .joinFunction = op->getJoinFunction(), .windowType = reflectWindowType(*op->getWindowType()), .joinType = op->joinType});
+    return Wire{.joinFunction = joinFunction, .windowType = reflectWindowType(*windowType), .joinType = joinType};
 }
 
-TypedLogicalOperator<JoinLogicalOperator>
-Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+JoinLogicalOperator JoinLogicalOperator::fromWire(Wire wire, const ReflectionContext& context)
 {
-    auto [joinFunction, reflectedWindowType, joinType] = context.unreflect<detail::ReflectedJoinLogicalOperator>(reflected);
-
-    const auto windowType = unreflectWindowType(reflectedWindowType, context);
-
-    return TypedLogicalOperator<JoinLogicalOperator>{JoinLogicalOperator(joinFunction, windowType, joinType)};
+    auto windowType = unreflectWindowType(wire.windowType, context);
+    return JoinLogicalOperator{std::move(wire.joinFunction), std::move(windowType), wire.joinType};
 }
 
 LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(LogicalOperatorRegistryArguments arguments)

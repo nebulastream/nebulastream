@@ -146,17 +146,6 @@ UnionLogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputS
     return copy;
 }
 
-Reflected Reflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(const TypedLogicalOperator<UnionLogicalOperator>&) const
-{
-    return reflect(true);
-}
-
-TypedLogicalOperator<UnionLogicalOperator>
-Unreflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
-{
-    return TypedLogicalOperator<UnionLogicalOperator>{UnionLogicalOperator{}};
-}
-
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {

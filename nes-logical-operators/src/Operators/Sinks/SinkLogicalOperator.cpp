@@ -197,28 +197,20 @@ SinkLogicalOperator SinkLogicalOperator::withSinkDescriptor(SinkDescriptor sinkD
     return newOperator;
 }
 
-Reflected Reflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const TypedLogicalOperator<SinkLogicalOperator>& op) const
+SinkLogicalOperator SinkLogicalOperator::fromWire(Wire wire, const ReflectionContext&)
 {
-    return reflect(detail::ReflectedSinkLogicalOperator{.sinkDescriptor = op->getSinkDescriptor(), .sinkName = op->getSinkName()});
-}
-
-TypedLogicalOperator<SinkLogicalOperator>
-Unreflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
-{
-    auto [descriptor, name] = context.unreflect<detail::ReflectedSinkLogicalOperator>(reflected);
-    if (descriptor.has_value())
+    if (wire.sinkDescriptor.has_value())
     {
-        if (descriptor->getSinkName() != name)
+        if (wire.sinkDescriptor->getSinkName() != wire.sinkName)
         {
             throw CannotDeserialize(
                 "SinkLogicalOperator cannot be deserialized because the sink name in the operator ({}) and the sink name in the "
                 "SinkDescriptor (do not link to the same sink ({}) are not equal.",
-                descriptor->getSinkName(),
-                name);
+                wire.sinkDescriptor->getSinkName(),
+                wire.sinkName);
         }
-
-        return TypedLogicalOperator<SinkLogicalOperator>{SinkLogicalOperator{descriptor.value()}};
+        return SinkLogicalOperator{wire.sinkDescriptor.value()};
     }
-    return TypedLogicalOperator<SinkLogicalOperator>{SinkLogicalOperator{name}};
+    return SinkLogicalOperator{wire.sinkName};
 }
 }

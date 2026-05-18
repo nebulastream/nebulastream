@@ -31,6 +31,12 @@ namespace NES
 class UnionLogicalOperator
 {
 public:
+    struct Wire
+    {
+    };
+    [[nodiscard]] Wire wire() const { return Wire{}; }
+    [[nodiscard]] static UnionLogicalOperator fromWire(Wire, const ReflectionContext&) { return UnionLogicalOperator{}; }
+
     explicit UnionLogicalOperator();
 
     [[nodiscard]] bool operator==(const UnionLogicalOperator& rhs) const;
@@ -60,20 +66,6 @@ private:
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
     TraitSet traitSet;
-
-    friend Reflector<TypedLogicalOperator<UnionLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<UnionLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<UnionLogicalOperator>&) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<UnionLogicalOperator>>
-{
-    TypedLogicalOperator<UnionLogicalOperator> operator()(const Reflected&, const ReflectionContext&) const;
 };
 
 static_assert(LogicalOperatorConcept<UnionLogicalOperator>);

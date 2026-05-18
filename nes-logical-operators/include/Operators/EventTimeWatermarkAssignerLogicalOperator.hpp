@@ -26,6 +26,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -38,6 +39,17 @@ namespace NES
 class EventTimeWatermarkAssignerLogicalOperator
 {
 public:
+    struct Wire
+    {
+        LogicalFunction onField;
+        Windowing::TimeUnit timeUnit;
+    };
+    [[nodiscard]] Wire wire() const { return Wire{onField, unit}; }
+    [[nodiscard]] static EventTimeWatermarkAssignerLogicalOperator fromWire(Wire wire, const ReflectionContext&)
+    {
+        return EventTimeWatermarkAssignerLogicalOperator{std::move(wire.onField), wire.timeUnit};
+    }
+
     EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
 
     LogicalFunction onField;
@@ -65,31 +77,7 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
-
-    friend Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>
-{
-    TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>
-    operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
-}
-
-namespace NES::detail
-{
-struct ReflectedEventTimeWatermarkAssignerLogicalOperator
-{
-    LogicalFunction onField;
-    Windowing::TimeUnit timeUnit;
-};
 }

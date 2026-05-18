@@ -39,6 +39,17 @@ namespace NES
 class SourceDescriptorLogicalOperator final : public OriginIdAssigner
 {
 public:
+    /// Wire-format alias: the original wire shape is the `SourceDescriptor`
+    /// itself (no wrapping Object), so we expose the alias rather than a
+    /// nested struct to keep round-trip bytes identical to the previous code
+    /// path.
+    using Wire = SourceDescriptor;
+    [[nodiscard]] Wire wire() const { return sourceDescriptor; }
+    [[nodiscard]] static SourceDescriptorLogicalOperator fromWire(Wire wire, const ReflectionContext&)
+    {
+        return SourceDescriptorLogicalOperator{std::move(wire)};
+    }
+
     explicit SourceDescriptorLogicalOperator(SourceDescriptor sourceDescriptor);
 
     [[nodiscard]] SourceDescriptor getSourceDescriptor() const;
@@ -66,20 +77,6 @@ private:
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
-
-    friend Reflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>
-{
-    TypedLogicalOperator<SourceDescriptorLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
