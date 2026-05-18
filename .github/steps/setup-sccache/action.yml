@@ -59,7 +59,6 @@ runs:
             echo "SCCACHE_S3_USE_SSL=true"
             echo "AWS_ACCESS_KEY_ID=$IN_ACCESS_KEY"
             echo "AWS_SECRET_ACCESS_KEY=$IN_SECRET_KEY"
-            echo "SCCACHE_NO_DAEMON=1"
           } >> "$GITHUB_ENV"
         else
           # Pick a cache dir. Default to a stable path under RUNNER_TEMP so it
@@ -75,6 +74,5 @@ runs:
           {
             echo "SCCACHE_DIR=$LOCAL_DIR"
             echo "SCCACHE_CACHE_SIZE=$IN_LOCAL_SIZE"
-            echo "SCCACHE_NO_DAEMON=1"
           } >> "$GITHUB_ENV"
         fi

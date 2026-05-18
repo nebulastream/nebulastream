@@ -39,4 +39,4 @@ runs:
              -e SCCACHE_BUCKET -e SCCACHE_ENDPOINT -e SCCACHE_REGION -e SCCACHE_S3_USE_SSL \
              -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
              ${{inputs.image_name}} \
-              /usr/bin/bash -c "${DOCKER_LOGIN_CMD}"'${{inputs.run}}'
+              /usr/bin/bash -e -c "${DOCKER_LOGIN_CMD}"'${{inputs.run}}'
