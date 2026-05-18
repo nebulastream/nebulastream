@@ -398,6 +398,35 @@ private:
 
 }
 
+/// Wrapper-aware Reflector/Unreflector for any operator that opts in via `Reflectable`.
+///
+/// Replaces the per-operator `Reflector<TypedLogicalOperator<X>>` /
+/// `Unreflector<TypedLogicalOperator<X>>` specializations: the body was always
+/// "reflect the operator's fields" / "construct the wrapper around the
+/// reconstructed operator", so making it generic over `Reflectable<T>` covers
+/// every plugin that declares a `Wire` / `wire()` / `fromWire`.
+///
+/// The wrapper's implicit-conversion constructor still allocates a fresh
+/// `OperatorId` here. Id restoration happens at the outer
+/// `QueryPlanSerializationUtil::deserializeQueryPlan` level via
+/// `op.withOperatorId(serialized.operatorId)`, which is unchanged.
+template <typename T>
+requires Reflectable<T>
+struct Reflector<TypedLogicalOperator<T>>
+{
+    Reflected operator()(const TypedLogicalOperator<T>& op) const { return reflect(*op); }
+};
+
+template <typename T>
+requires Reflectable<T>
+struct Unreflector<TypedLogicalOperator<T>>
+{
+    TypedLogicalOperator<T> operator()(const Reflected& data, const ReflectionContext& context) const
+    {
+        return TypedLogicalOperator<T>{context.unreflect<T>(data)};
+    }
+};
+
 inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
 {
     return os << op.explain(ExplainVerbosity::Short);

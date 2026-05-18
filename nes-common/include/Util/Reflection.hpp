@@ -19,6 +19,7 @@
 #include <utility>
 #include <Util/Reflection/OptionalReflection.hpp>
 #include <Util/Reflection/PairReflection.hpp>
+#include <Util/Reflection/Reflectable.hpp>
 #include <Util/Reflection/ReflectionCore.hpp>
 #include <Util/Reflection/UnorderedMapReflection.hpp>
 #include <Util/Reflection/VariantReflection.hpp>

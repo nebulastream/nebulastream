@@ -25,6 +25,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -37,6 +38,21 @@ namespace NES
 class SelectionLogicalOperator
 {
 public:
+    /// Wire-format shape used by the generic `Reflector` / `Unreflector` (see
+    /// `Util/Reflection/Reflectable.hpp`). Naming the on-wire fields here once
+    /// replaces the previous `Reflector<TypedLogicalOperator<...>>` /
+    /// `Unreflector<TypedLogicalOperator<...>>` specializations and the
+    /// `detail::ReflectedSelectionLogicalOperator` shadow struct.
+    struct Wire
+    {
+        LogicalFunction predicate;
+    };
+    [[nodiscard]] Wire wire() const { return Wire{predicate}; }
+    [[nodiscard]] static SelectionLogicalOperator fromWire(Wire wire, const ReflectionContext&)
+    {
+        return SelectionLogicalOperator{std::move(wire.predicate)};
+    }
+
     explicit SelectionLogicalOperator(LogicalFunction predicate);
 
     [[nodiscard]] LogicalFunction getPredicate() const;
@@ -76,29 +92,7 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
-
-    friend Reflector<TypedLogicalOperator<SelectionLogicalOperator>>;
-};
-
-template <>
-struct Reflector<TypedLogicalOperator<SelectionLogicalOperator>>
-{
-    Reflected operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const;
-};
-
-template <>
-struct Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>
-{
-    TypedLogicalOperator<SelectionLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);
-}
-
-namespace NES::detail
-{
-struct ReflectedSelectionLogicalOperator
-{
-    LogicalFunction predicate;
-};
 }

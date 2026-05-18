@@ -130,19 +130,6 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected
-Reflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const
-{
-    return reflect(detail::ReflectedSelectionLogicalOperator{op->getPredicate()});
-}
-
-TypedLogicalOperator<SelectionLogicalOperator>
-Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
-{
-    auto [predicate] = context.unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
-    return TypedLogicalOperator<SelectionLogicalOperator>{SelectionLogicalOperator(predicate)};
-}
-
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
