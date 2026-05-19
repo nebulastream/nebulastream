@@ -5,6 +5,7 @@ edition = "2024"
 
 [lib]
 crate-type = ["rlib"]
+path = "src/sink_runtime.rs"
 
 [dependencies]
 nes_buffer_bindings.workspace = true

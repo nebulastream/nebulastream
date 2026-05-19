@@ -1097,6 +1097,7 @@ dependencies = [
  "ittapi",
  "nes_io_runtime",
  "pin-project",
+ "scopeguard",
  "serde",
  "serde_json",
  "tokio",

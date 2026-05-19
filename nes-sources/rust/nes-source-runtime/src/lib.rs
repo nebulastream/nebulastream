@@ -6,6 +6,7 @@ use nes_source_validation::ConfigOptions;
 use std::pin::Pin;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
+#[cfg(tokio_unstable)]
 use tokio::task::Builder;
 use tracing::{Instrument, debug, info};
 
@@ -91,7 +92,7 @@ async fn run_source(
             command = commands.recv() => {
                 match command.expect("Controller should outlive the source task") {
                     SourceCommand::Stop => {
-                        debug!("Source was requested to stop");
+                        info!("Source was requested to stop");
                         break 'run;}
                 }
             }
@@ -124,35 +125,54 @@ pub fn start_source<T: AsyncEmitter + Send + 'static>(
         "SourceTask-{}-{}",
         query_context.query_id, query_context.source_id
     );
-    tokio::task::Builder::new().name(&task_name).spawn_on(
-        async move {
-            let log_on_source_drop = scopeguard::guard((), |_| {
-                panic!("Source Task was aborted.");
-            });
+    let task = async move {
+        let log_on_source_drop = scopeguard::guard((), |_| {
+            panic!("Source Task was aborted.");
+        });
 
-            match run_source(
-                source,
-                query_context.source_id,
-                &mut rx,
-                &mut emit,
-                buffer_provider,
-            )
-            .await
-            {
-                Ok(()) => {}
-                Err(error_message) => {
-                    let _ = emit.error(error_message).await;
-                }
+        match run_source(
+            source,
+            query_context.source_id,
+            &mut rx,
+            &mut emit,
+            buffer_provider,
+        )
+        .await
+        {
+            Ok(()) => {}
+            Err(error_message) => {
+                let _ = emit.error(error_message).await;
             }
-            let _ = stop_sender.send(emit);
-            rx.close();
-
-            // source stops itself, it can no longer be aborted
-            scopeguard::ScopeGuard::into_inner(log_on_source_drop);
         }
-        .in_current_span(),
-        &runtime.handle(),
-    );
+        info!("Source has stopped");
+        let _ = stop_sender.send(emit);
+        rx.close();
+
+        // source stops itself, it can no longer be aborted
+        scopeguard::ScopeGuard::into_inner(log_on_source_drop);
+    }
+    .in_current_span();
+
+    spawn_source_task(&runtime, &task_name, task);
 
     Ok((controller, stop_signal))
+}
+
+#[cfg(tokio_unstable)]
+fn spawn_source_task<F>(runtime: &IORuntime, task_name: &str, task: F)
+where
+    F: Future<Output = ()> + Send + 'static,
+{
+    Builder::new()
+        .name(task_name)
+        .spawn_on(task, &runtime.handle())
+        .expect("failed to spawn source task");
+}
+
+#[cfg(not(tokio_unstable))]
+fn spawn_source_task<F>(runtime: &IORuntime, _task_name: &str, task: F)
+where
+    F: Future<Output = ()> + Send + 'static,
+{
+    runtime.handle().spawn(task);
 }

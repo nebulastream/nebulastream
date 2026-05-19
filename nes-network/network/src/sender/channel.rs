@@ -21,7 +21,6 @@ use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
 use tokio::sync::oneshot;
 use tokio_stream::StreamExt;
-use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, Span, debug, info, info_span, trace, warn};
 
 use super::control::*;
@@ -38,8 +37,6 @@ enum ChannelHandlerStatus {
     /// to the receiver failed. This can happen if the network connection was
     /// already broken when attempting to propagate the close signal.
     ClosedBySoftwareButFailedToPropagate(Error),
-    /// The channel was cancelled via the cancellation token.
-    Cancelled,
 }
 
 /// Establishes a network connection and performs channel identification handshake.
@@ -100,6 +97,7 @@ pub(super) enum ChannelCommand {
     /// the handler stops reading further commands from the queue and only
     /// resumes once both `pending_writes` and `wait_for_ack` are empty.
     Flush(oneshot::Sender<()>),
+    Close(oneshot::Sender<bool>),
 }
 pub(super) type ChannelCommandQueue = async_channel::Sender<ChannelCommand>;
 pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCommand>;
@@ -133,15 +131,14 @@ pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCom
 /// The handler runs until one of these conditions:
 /// - Receiver sends a Close message
 /// - Software closes the channel via `SenderChannel::close()`
-/// - Cancellation token is triggered
 /// - Unrecoverable error occurs
 pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
-    cancellation_token: CancellationToken,
     pending_writes: VecDeque<TupleBuffer>,
     wait_for_ack: HashMap<OriginSequenceNumber, TupleBuffer>,
     /// When `Some`, a flush is in progress: command-queue reads are paused
     /// until both `pending_writes` and `wait_for_ack` drain, at which point
     /// the waker is signalled and reads resume.
+    pending_close: Option<oneshot::Sender<bool>>,
     pending_flush: Option<oneshot::Sender<()>>,
     writer: DataChannelSenderWriter<W>,
     reader: DataChannelSenderReader<R>,
@@ -150,24 +147,27 @@ pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
 }
 
 enum ErrorOrStatus {
+    /// The receiver sent a Close message, initiating shutdown.
+    ClosedByOtherSide,
+    /// The local software closed the channel (via `SenderChannel::close()`),
+    /// and the Close message was successfully sent to the receiver.
+    ClosedBySoftware(oneshot::Sender<bool>),
     Error(Error),
-    Status(ChannelHandlerStatus),
 }
 type InternalResult<T> = std::result::Result<T, ErrorOrStatus>;
 
 impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     pub fn new(
-        cancellation_token: CancellationToken,
         queue: ChannelCommandQueueListener,
         reader: DataChannelSenderReader<R>,
         writer: DataChannelSenderWriter<W>,
         max_pending_acks: usize,
     ) -> Self {
         Self {
-            cancellation_token,
             pending_writes: Default::default(),
             wait_for_ack: Default::default(),
             pending_flush: None,
+            pending_close: None,
             reader,
             writer,
             queue,
@@ -196,6 +196,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 );
                 self.pending_flush = Some(done);
             }
+            ChannelCommand::Close(done) => self.pending_close = Some(done),
         }
         Ok(())
     }
@@ -215,9 +216,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         match response {
             DataChannelResponse::Close => {
                 info!("Channel Closed by other receiver");
-                return Err(ErrorOrStatus::Status(
-                    ChannelHandlerStatus::ClosedByOtherSide,
-                ));
+                return Err(ErrorOrStatus::ClosedByOtherSide);
             }
             DataChannelResponse::NAckData(seq) => {
                 if let Some(write) = self.wait_for_ack.remove(&seq) {
@@ -236,8 +235,10 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     ));
                 };
 
-                static PACKET_ACK_RECEIVED_EVENT: std::sync::OnceLock<ittapi::Event> = std::sync::OnceLock::new();
-                let event = PACKET_ACK_RECEIVED_EVENT.get_or_init(|| ittapi::Event::new("PACKET_ACK"));
+                static PACKET_ACK_RECEIVED_EVENT: std::sync::OnceLock<ittapi::Event> =
+                    std::sync::OnceLock::new();
+                let event =
+                    PACKET_ACK_RECEIVED_EVENT.get_or_init(|| ittapi::Event::new("PACKET_ACK"));
                 let _ = event.start();
                 trace!("Ack for {seq:?}");
             }
@@ -269,7 +270,6 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     /// future was dropped, the buffer would be stranded in `wait_for_ack`
     /// without ever being sent — the receiver would never ack it.
     async fn send_pending(
-        cancel_token: &CancellationToken,
         writer: &mut DataChannelSenderWriter<W>,
         pending_writes: &mut VecDeque<TupleBuffer>,
         wait_for_ack: &mut HashMap<OriginSequenceNumber, TupleBuffer>,
@@ -280,13 +280,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         let sequence_number = buffer.sequence();
         trace!("Sending {:?}", sequence_number);
 
-        let Some(result) = cancel_token
-            .run_until_cancelled(writer.feed(DataChannelRequest::Data(buffer.clone())))
-            .await
-        else {
-            // Cancelled: buffer is still safely in pending_writes
-            return Err(ErrorOrStatus::Status(ChannelHandlerStatus::Cancelled));
-        };
+        let result = writer.feed(DataChannelRequest::Data(buffer.clone())).await;
 
         match result {
             Ok(()) => {
@@ -306,36 +300,10 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         Ok(())
     }
 
-    async fn cancellable<F: Future>(
-        token: &CancellationToken,
-        fut: F,
-    ) -> InternalResult<F::Output> {
-        let Some(r) = token.run_until_cancelled(fut).await else {
-            return Err(ErrorOrStatus::Status(ChannelHandlerStatus::Cancelled));
-        };
-        Ok(r)
-    }
-    async fn read_from_software(
-        cancellation_token: &CancellationToken,
-        s: &mut ChannelCommandQueueListener,
-    ) -> InternalResult<ChannelCommand> {
-        let Ok(r) = Self::cancellable(cancellation_token, s.recv()).await? else {
-            // we don't send the stop here because we don't have access to the writer.
-            // the `run` method will eventually fix up this error by sending the `Close`
-            return Err(ErrorOrStatus::Status(
-                ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(
-                    "Did not try to propagate".into(),
-                ),
-            ));
-        };
-        Ok(r)
-    }
-
     async fn read_from_other_side(
-        cancellation_token: &CancellationToken,
         s: &mut DataChannelSenderReader<R>,
     ) -> InternalResult<DataChannelResponse> {
-        let Some(r) = Self::cancellable(cancellation_token, s.next()).await? else {
+        let Some(r) = s.next().await else {
             return Err(ErrorOrStatus::Error("Connection Lost".into()));
         };
 
@@ -345,14 +313,8 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         }
     }
 
-    async fn flush_writes(
-        cancel_token: &CancellationToken,
-        writer: &mut DataChannelSenderWriter<W>,
-    ) -> InternalResult<()> {
-        if Self::cancellable(cancel_token, writer.flush())
-            .await
-            .is_err()
-        {
+    async fn flush_writes(writer: &mut DataChannelSenderWriter<W>) -> InternalResult<()> {
+        if writer.flush().await.is_err() {
             return Err(ErrorOrStatus::Error("Connection Lost".into()));
         };
         Ok(())
@@ -381,6 +343,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     /// next iteration and command-queue reads resume.
     async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
         loop {
+            if self.pending_close.is_some() {
+                return Err(ErrorOrStatus::ClosedBySoftware(
+                    self.pending_close.take().unwrap(),
+                ));
+            }
+
             // Resolve any pending flush as soon as the channel is fully drained.
             if self.pending_flush.is_some()
                 && self.pending_writes.is_empty()
@@ -398,17 +366,17 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             // When there's nothing left to send, flush the codec buffer so the
             // receiver actually sees the data we fed earlier and can send Acks.
             if !should_send_pending {
-                Self::flush_writes(&self.cancellation_token, &mut self.writer).await?;
+                Self::flush_writes(&mut self.writer).await?;
             }
 
             select! {
-                response = Self::read_from_other_side(&self.cancellation_token, &mut self.reader), if should_read_from_other_side => {
+                response = Self::read_from_other_side(&mut self.reader), if should_read_from_other_side => {
                     self.handle_response(response?)?;
                 },
-                request = Self::read_from_software(&self.cancellation_token, &mut self.queue), if should_read_from_software => {
-                    self.handle_request(request?).await?;
+                request = self.queue.recv(), if should_read_from_software => {
+                    self.handle_request(request.expect("Queue should not have been closed")).await?;
                 },
-                send_result = Self::send_pending(&self.cancellation_token, &mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack), if should_send_pending => {
+                send_result = Self::send_pending(&mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack), if should_send_pending => {
                     send_result?;
                 },
                 _ = tokio::time::sleep(Duration::from_secs(10)) => {
@@ -442,25 +410,25 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             .expect_err("Handler should have not terminated by its own.")
         {
             ErrorOrStatus::Error(e) => return Err(e),
-            ErrorOrStatus::Status(status) => status,
-        };
+            ErrorOrStatus::ClosedByOtherSide => ChannelHandlerStatus::ClosedByOtherSide,
+            ErrorOrStatus::ClosedBySoftware(done) => {
+                let mut done = Some(done);
+                let close_failed_on_drop = scopeguard::guard((), |_| {
+                    let _ = done.take().unwrap().send(false);
+                });
+                let result = self.writer.send(DataChannelRequest::Close).await;
 
-        // Fixup the ClosedBySoftwareButFailedToPropagate created in read_from_software
-        if let ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(_) = status {
-            let Some(result) = self
-                .cancellation_token
-                .run_until_cancelled(self.writer.send(DataChannelRequest::Close))
-                .await
-            else {
-                return Ok(ChannelHandlerStatus::Cancelled);
-            };
-            if let Err(e) = result {
-                return Ok(ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(
-                    e.into(),
-                ));
-            };
-            return Ok(ChannelHandlerStatus::ClosedBySoftware);
-        }
+                scopeguard::ScopeGuard::into_inner(close_failed_on_drop);
+                let done = done.take().unwrap();
+                if let Err(e) = result {
+                    let _ = done.send(false);
+                    ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(e.into())
+                } else {
+                    let _ = done.send(true);
+                    ChannelHandlerStatus::ClosedBySoftware
+                }
+            }
+        };
 
         Ok(status)
     }
@@ -507,7 +475,6 @@ async fn channel_handler(
     };
 
     let mut handler = ChannelHandler::new(
-        pending_channel.cancellation,
         pending_channel.queue,
         reader,
         writer,
@@ -560,11 +527,9 @@ pub(super) fn create_channel_handler(
                     // If the channel has terminated due to an Error, the channel will be restarted.
                     // It does not really matter if this succeeds or not. If the channel or
                     // controller was terminated, then this channel wouldn't be restarted anyway.
-                    let _ = pending_channel
-                        .cancellation
-                        .clone()
-                        .run_until_cancelled(controller.send(
-                            NetworkingConnectionControlCommand::RetryChannel(pending_channel),
+                    let _ = controller
+                        .send(NetworkingConnectionControlCommand::RetryChannel(
+                            pending_channel,
                         ))
                         .await;
                     return;
@@ -581,10 +546,6 @@ pub(super) fn create_channel_handler(
                     ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(e) => {
                         info!("Channel Closed by software.");
                         warn!("Failed to propagate ChannelClose to other side due to: {e}");
-                    }
-                    ChannelHandlerStatus::Cancelled => {
-                        info!("Channel Closed by cancellation.");
-                        return;
                     }
                 }
             }

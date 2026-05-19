@@ -39,6 +39,7 @@ public:
 
 private:
     SingleNodeWorker worker;
+    WorkerConfig config;
 };
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration);

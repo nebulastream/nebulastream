@@ -58,6 +58,7 @@ mod runtime {
     use bytes::Bytes;
     use linkme::distributed_slice;
     use nes_buffer_runtime::{ChildBufferIndex, TupleBuffer};
+    use nes_io_runtime::current_io_runtime;
     use nes_network::protocol::{ConnectionIdentifier, TupleBuffer as NetworkBuffer};
     use nes_network::registry::{self, SharedSenderService};
     use nes_network::sender::{SenderChannel, SenderConfig};
@@ -65,7 +66,7 @@ mod runtime {
     use nes_sink_validation::ConfigOptions;
     use std::str::FromStr;
     use std::sync::Arc;
-    use nes_io_runtime::current_io_runtime;
+    use tracing::warn;
 
     /// Owns a retain-counted `TupleBuffer` alongside the number of valid bytes,
     /// and exposes the valid slice as `&[u8]` so `bytes::Bytes::from_owner` can
@@ -144,7 +145,9 @@ mod runtime {
             let Some(channel) = self.channel.take() else {
                 return Ok(());
             };
-            channel.close();
+            if !channel.close().await.map_err(|e| e.to_string())? {
+                warn!("NetworkSink could not send close signal to downstream receiver");
+            };
             Ok(())
         }
     }

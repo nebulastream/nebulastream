@@ -6,7 +6,6 @@ use cxx::SharedPtr;
 use nes_buffer_bindings::ffi::BufferProviderHandle;
 pub use nes_buffer_bindings::*;
 use nes_buffer_runtime::{BufferProvider, TupleBuffer};
-use nes_io_runtime::IORuntime;
 use nes_io_runtime_bindings::current_io_runtime;
 use nes_source_runtime::{AsyncEmitter, QueryContext, SourceCommand};
 use nes_source_validation::{ConfigOptions, validate};
@@ -156,7 +155,7 @@ fn source_create_handle(
 
     let (controller, signal) = {
         let span = span!(Level::INFO, "Source",  distributed_query_id = %query_context.distributed_query_id, query_id = %query_context.query_id, source_type = %query_context.source_type, source_id = %query_context.source_id);
-        let entered_ = span.enter();
+        let _entered = span.enter();
         nes_source_runtime::start_source(
             &query_context.source_type,
             QueryContext {

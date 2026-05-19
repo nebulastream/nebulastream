@@ -49,6 +49,7 @@ pub mod ffi {
 
         unsafe fn try_write(handle: &SinkHandle, buffer: *mut MemorySegment) -> WriteResult;
         unsafe fn flush(handle: &SinkHandle) -> usize;
+        unsafe fn flush_stop(handle: &SinkHandle) -> usize;
     }
 }
 
@@ -79,7 +80,7 @@ fn create_handle(
     let c2 = context.clone();
     let (controller, task) = {
         let span = span!(Level::INFO, "Source",  distributed_query_id = %query_context.distributed_query_id, query_id = %query_context.query_id, sink_type = %query_context.sink_type, sink_id = %query_context.sink_id);
-        let entered_ = span.enter();
+        let _entered = span.enter();
         nes_sink_runtime::start_sink(
             &query_context.sink_type,
             &config,
@@ -106,6 +107,15 @@ static EPOCH_COUNTER: AtomicUsize = AtomicUsize::new(1);
 unsafe fn flush(handle: &SinkHandle) -> usize {
     let epoch = EPOCH_COUNTER.fetch_add(1, SeqCst);
     match handle.controller.try_send(SinkCommand::Flush(epoch)) {
+        Ok(_) => epoch,
+        Err(TrySendError::Full(_)) => 0,
+        Err(TrySendError::Closed(_)) => panic!("Channel should not be closed"),
+    }
+}
+
+unsafe fn flush_stop(handle: &SinkHandle) -> usize {
+    let epoch = EPOCH_COUNTER.fetch_add(1, SeqCst);
+    match handle.controller.try_send(SinkCommand::FlushStop(epoch)) {
         Ok(_) => epoch,
         Err(TrySendError::Full(_)) => 0,
         Err(TrySendError::Closed(_)) => panic!("Channel should not be closed"),

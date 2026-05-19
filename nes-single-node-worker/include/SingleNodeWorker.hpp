@@ -30,6 +30,7 @@
 #include <QueryStatus.hpp>
 #include <QueryTerminationType.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <WorkerLocalSingleton.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES

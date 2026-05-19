@@ -8,6 +8,7 @@
 void init_thread(std::shared_ptr<ThreadInitializationContext> context)
 {
     PRECONDITION(context != nullptr, "context must not be null");
+    NES::Thread::initializeThread(context->host, fmt::format("IO-{}", context->counter++));
     for (const auto& hook : context->threadInitHooks)
     {
         hook();

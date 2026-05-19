@@ -20,7 +20,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::runtime::Handle;
 use tokio::sync::oneshot;
-use tracing::{Instrument, debug, info_span};
+use tracing::{Instrument, debug, info, info_span};
 
 /// Configuration for sender-side network channels.
 #[derive(Clone, Debug)]
@@ -102,8 +102,13 @@ impl SenderChannel {
     ///
     /// Note: The return value only indicates whether the local queue was closed,
     /// not whether the close signal was successfully propagated to the receiver.
-    pub fn close(self) -> bool {
-        self.queue.close()
+    pub async fn close(self) -> Result<bool> {
+        let (tx, rx) = oneshot::channel();
+        self.queue
+            .send(ChannelCommand::Close(tx))
+            .await
+            .map_err(|_| "Network Service Closed")?;
+        Ok(rx.await.map_err(|_| "Network Service Closed")?)
     }
 }
 
@@ -207,6 +212,13 @@ pub struct NetworkService<C: Communication> {
     controller: NetworkServiceController,
     communication: PhantomData<C>,
 }
+
+impl<C: Communication> Drop for NetworkService<C> {
+    fn drop(&mut self) {
+        info!("Network Service dropped");
+    }
+}
+
 impl<C: Communication + 'static> NetworkService<C> {
     /// Starts the network service on the provided tokio runtime.
     ///
@@ -225,10 +237,8 @@ impl<C: Communication + 'static> NetworkService<C> {
                 let communication = communication.clone();
                 async move {
                     debug!("Starting sender network service");
-                    debug!(
-                        "sender network service stopped: {:?}",
-                        network_sender_dispatcher(this_connection, listener, communication).await
-                    );
+                    network_sender_dispatcher(this_connection, listener, communication).await;
+                    debug!("sender network service stopped");
                 }
             }
             .instrument(info_span!("sender", this = %this_connection)),

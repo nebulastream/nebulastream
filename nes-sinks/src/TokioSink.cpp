@@ -330,7 +330,7 @@ void TokioSink::stop(PipelineExecutionContext& pec)
     if (!context->stopEpoch)
     {
         NES_DEBUG("Start flush");
-        auto stopEpoch = flush(*context->handle);
+        auto stopEpoch = flush_stop(*context->handle);
         if (stopEpoch == 0)
         {
             NES_DEBUG("Could not flush queue is full");

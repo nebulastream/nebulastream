@@ -20,6 +20,7 @@ pub trait AsyncSink {
 
 pub enum SinkCommand {
     Flush(usize),
+    FlushStop(usize),
     Data(TupleBuffer),
     Close,
 }
@@ -51,7 +52,8 @@ async fn run_sink(
                     SinkCommand::Data(buffer) => {sink.execute(buffer).await?},
                     SinkCommand::Close => {
                     info!("Sink was requested to close, terminating the sink.");
-                        break 'run;}
+                        break 'run;},
+                    SinkCommand::FlushStop(epoch) => {sink.flush().await?; sink.stop().await?; (context.on_flush)(epoch); return Ok(())},
                 }
             }
         }

@@ -12,6 +12,7 @@ const STOP_WHEN_SEQUENCE_FINISHES: &str = "STOP_GENERATOR_WHEN_SEQUENCE_FINISHES
 const MAX_RUNTIME: &str = "MAX_RUNTIME";
 const FLUSH_INTERVAL_MS: &str = "FLUSH_INTERVAL_MS";
 const FAIL_AFTER: &str = "FAIL_AFTER";
+const STOP_DURATION: &str = "STOP_DURATION";
 
 /// Splits a generator schema into field entries.
 ///
@@ -391,6 +392,11 @@ mod validation {
             ),
             ConfigDefinition::with_default(FLUSH_INTERVAL_MS, ConfigOptionsType::Number(10)),
             ConfigDefinition::with_default_and_check(
+                STOP_DURATION,
+                ConfigOptionsType::Text(""),
+                &validate_optional_duration,
+            ),
+            ConfigDefinition::with_default_and_check(
                 FAIL_AFTER,
                 ConfigOptionsType::Text(""),
                 &validate_optional_duration,
@@ -760,6 +766,7 @@ mod runtime {
         flush_interval: Duration,
         max_runtime: Option<Duration>,
         fail_after: Option<Duration>,
+        stop_duration: Option<Duration>,
         start_time: Option<Instant>,
         interval_start: Option<SystemTime>,
         orphan_tuples: String,
@@ -854,11 +861,7 @@ mod runtime {
             trace!("Wrote {} bytes", written_bytes);
 
             let target_duration = self.flush_interval * no_intervals as u32;
-            let elapsed_since_interval = self
-                .interval_start
-                .unwrap()
-                .elapsed()
-                .unwrap_or_default();
+            let elapsed_since_interval = self.interval_start.unwrap().elapsed().unwrap_or_default();
 
             if elapsed_since_interval < target_duration {
                 let sleep_duration = target_duration - elapsed_since_interval;
@@ -875,6 +878,10 @@ mod runtime {
         }
 
         async fn stop(&mut self) -> Result<()> {
+            if let Some(duration) = self.stop_duration {
+                tokio::time::sleep(duration).await;
+            }
+
             if self.generated_buffers == 0 {
                 warn!(
                     "Generated {} buffers. Closing GeneratorSource.",
@@ -912,6 +919,7 @@ mod runtime {
                 .parse()
                 .map_err(|_| "Invalid flush_interval_ms")?;
             let fail_after = parse_optional_duration(config.get(FAIL_AFTER).unwrap())?;
+            let stop_duration = parse_optional_duration(config.get(STOP_DURATION).unwrap())?;
 
             let stop_behavior = parse_generator_stop(stop_str)?;
             let generator = Generator::new(seed, stop_behavior, schema)?;
@@ -921,6 +929,7 @@ mod runtime {
                 generator,
                 rate,
                 flush_interval: Duration::from_millis(flush_interval_ms),
+                stop_duration,
                 max_runtime,
                 fail_after,
                 start_time: None,
@@ -939,6 +948,5 @@ mod runtime {
     }
 
     #[distributed_slice(SOURCE_CREATION_FUNCTIONS)]
-    static GENERATOR_SOURCE: (&str, &SourceCreateFn) =
-        (SOURCE_NAME, &create_generator_source);
+    static GENERATOR_SOURCE: (&str, &SourceCreateFn) = (SOURCE_NAME, &create_generator_source);
 }

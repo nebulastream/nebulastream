@@ -16,18 +16,26 @@
 
 #include <chrono>
 #include <memory>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <folly/ScopeGuard.h>
 #include <ErrorHandling.hpp>
 #include <QueryStatus.hpp>
 #include <QueryTerminationType.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+#include <scope_guard.hpp>
 
 namespace NES
 {
+auto updateWorkerNodeIdForScope(const Host& workerNodeId)
+{
+    const auto currentWorkerNodeId = std::exchange(Thread::WorkerNodeId, workerNodeId);
+    return scope_guard::make_scope_exit([=]() { Thread::WorkerNodeId = currentWorkerNodeId; });
+}
 
 EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
     WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration)
@@ -44,33 +52,40 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
                  mergedConfig.dataAddress.setValue(config.dataAddress);
 
                  const LogContext logContext("create", config.host);
+                 auto guard = updateWorkerNodeIdForScope(config.host);
                  return SingleNodeWorker(mergedConfig, config.host);
              }()}
+    , config(std::move(config))
 {
 }
 
 std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(LogicalPlan plan)
 {
+    auto guard = updateWorkerNodeIdForScope(config.host);
     return worker.registerQuery(plan);
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(QueryId queryId)
 {
+    auto guard = updateWorkerNodeIdForScope(config.host);
     return worker.startQuery(queryId);
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)
 {
+    auto guard = updateWorkerNodeIdForScope(config.host);
     return worker.stopQuery(queryId, QueryTerminationType::Graceful);
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const
 {
+    auto guard = updateWorkerNodeIdForScope(config.host);
     return worker.getQueryStatus(queryId);
 }
 
 std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
 {
+    auto guard = updateWorkerNodeIdForScope(config.host);
     return worker.getWorkerStatus(after);
 }
 

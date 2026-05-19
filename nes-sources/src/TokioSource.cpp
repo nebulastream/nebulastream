@@ -271,7 +271,6 @@ void NES::TokioSource::stop()
 
 NES::SourceReturnType::TryStopResult NES::TokioSource::tryStop(std::chrono::milliseconds)
 {
-    NES_INFO("Trying Stopping TokioSource");
     if (!context)
     {
         return SourceReturnType::TryStopResult::NOT_RUNNING;

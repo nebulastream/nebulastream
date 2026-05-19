@@ -16,7 +16,7 @@ use super::SenderConfig;
 use super::channel::{ChannelCommandQueue, ChannelCommandQueueListener, create_channel_handler};
 use crate::channel::{Channel, Communication};
 use crate::protocol::*;
-use crate::util::{ActiveTokens, ScopedTask};
+use crate::util::ScopedTask;
 use futures::SinkExt;
 use std::collections::HashMap;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -25,7 +25,6 @@ use tokio_retry2::RetryError::Transient;
 use tokio_retry2::strategy::{ExponentialBackoff, jitter};
 use tokio_retry2::{Retry, RetryError};
 use tokio_stream::StreamExt;
-use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, Span, error, info, info_span, warn};
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -41,8 +40,6 @@ pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub(super) struct PendingChannel {
     /// The software-facing unique identifier for this channel
     pub id: ChannelIdentifier,
-    /// Token used to cancel the channel registration attempt
-    pub cancellation: CancellationToken,
     /// Command queue for receiving commands to send on this channel
     pub queue: ChannelCommandQueueListener,
     /// Maximum number of buffers that can be in-flight (sent but not yet acknowledged).
@@ -399,17 +396,19 @@ async fn connection_handler<C: Communication + 'static>(
     // This task requests connections and then establishes DataChannels on those connections
     // once the underlying TCP connection is ready.
     // Spawn a task to handle channel establishment requests
-    tokio::spawn({
+    let _request_handler = ScopedTask::new(tokio::spawn({
         async move {
             'connection: loop {
                 let (tx, rx) = oneshot::channel();
                 // Wait until the KeepAlive task creates a connection
-                request_connection
-                    .send(tx)
-                    .await
-                    .expect("Connection Task should not have aborted");
-                let (mut reader, mut writer) =
-                    rx.await.expect("Connection Task should not have aborted");
+                if request_connection.send(tx).await.is_err() {
+                    // KeepAlive task has aborted, exit
+                    return;
+                }
+                let Ok((mut reader, mut writer)) = rx.await else {
+                    // KeepAlive task has aborted, exit
+                    return;
+                };
 
                 loop {
                     let Some((channel, response)) = await_channel_registration_request.recv().await
@@ -432,18 +431,15 @@ async fn connection_handler<C: Communication + 'static>(
             }
         }
         .in_current_span()
-    });
+    }));
 
-    let mut active_channel = ActiveTokens::default();
     while let Ok(control_message) = listener.recv().await {
         match control_message {
             NetworkingConnectionControlCommand::RegisterChannel(channel, response, config) => {
                 let (sender, queue) = async_channel::bounded(config.sender_queue_size);
-                let channel_cancellation = CancellationToken::new();
 
                 let pending_channel = PendingChannel {
                     id: channel,
-                    cancellation: channel_cancellation.clone(),
                     queue,
                     max_pending_acks: config.max_pending_acks,
                 };
@@ -459,7 +455,6 @@ async fn connection_handler<C: Communication + 'static>(
                     .in_current_span(),
                 );
 
-                active_channel.add_token(channel_cancellation);
                 let _ = response.send(sender);
             }
             NetworkingConnectionControlCommand::RetryChannel(pending_channel) => {
@@ -528,7 +523,7 @@ pub(super) async fn network_sender_dispatcher(
     this_connection: ThisConnectionIdentifier,
     control: NetworkServiceControlListener,
     communication: impl Communication + 'static,
-) -> Result<()> {
+) {
     // All currently active connections. Dropping the hashmap will abort all active connections.
     // TODO: Currently, connections are never removed from this map, even when all channels
     // on a connection have closed. This means connection handlers and keepalive tasks persist
@@ -572,7 +567,5 @@ pub(super) async fn network_sender_dispatcher(
             // if it has been removed from the `connections` map.
             .expect("BUG: Connection should not have been terminated");
     }
-
     // The software side was closed, which means that the NetworkingService was dropped.
-    Err("Queue was closed".into())
 }

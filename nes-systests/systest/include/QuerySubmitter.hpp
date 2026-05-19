@@ -35,7 +35,7 @@ namespace NES::Systest
 class QuerySubmitter
 {
 public:
-    static constexpr std::chrono::milliseconds DEFAULT_QUERY_TIMEOUT = std::chrono::seconds{2000};
+    static constexpr std::chrono::milliseconds DEFAULT_QUERY_TIMEOUT = std::chrono::seconds{5};
 
     explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager, std::chrono::milliseconds queryTimeout = DEFAULT_QUERY_TIMEOUT);
     std::expected<DistributedQueryId, Exception> registerQuery(const DistributedLogicalPlan& plan);

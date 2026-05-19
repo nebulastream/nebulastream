@@ -325,7 +325,7 @@ ${dep_lines}")
 
     file(WRITE "${umbrella_dir}/.cargo/config.toml"
             "[build]
-rustflags = [\"--cfg\", \"tokio_unstable\"]
+rustflags = []
 ")
 
 
