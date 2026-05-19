@@ -74,6 +74,14 @@ if [ ! -f "$WORKERS_FILE" ]; then
   exit 1
 fi
 
+# When CODE_COVERAGE=ON, add_e2e_test sets LLVM_PROFILE_FILE on the host. Pass
+# it through to every service so instrumented binaries write *.profraw into
+# their cwd inside the synced TEST_VOLUME (collected by ccov-collect-bats).
+COVERAGE_ENV_LINE=""
+if [ -n "$LLVM_PROFILE_FILE" ]; then
+  COVERAGE_ENV_LINE="      LLVM_PROFILE_FILE: \"$LLVM_PROFILE_FILE\""
+fi
+
 # Start building the compose file
 # Volume mounts:
 #   TESTDATA_VOLUME:   test input data -> /data
@@ -85,7 +93,9 @@ services:
     image: $SYSTEST_IMAGE
     pull_policy: never
     stop_grace_period: 0s
-    command: ["sleep", "infinity"]
+${COVERAGE_ENV_LINE:+    environment:
+$COVERAGE_ENV_LINE
+}    command: ["sleep", "infinity"]
     working_dir: $CONTAINER_WORKDIR
     volumes:
       - $TESTDATA_VOLUME:/data
@@ -113,7 +123,9 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     image: $WORKER_IMAGE
     pull_policy: never
     working_dir: $CONTAINER_WORKDIR/$HOST_NAME
-    healthcheck:
+${COVERAGE_ENV_LINE:+    environment:
+$COVERAGE_ENV_LINE
+}    healthcheck:
       test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$GRPC_PORT", "-connect-timeout", "5s" ]
       interval: 1s
       timeout: 5s
