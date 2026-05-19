@@ -42,6 +42,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <string>
 #include <string_view>
@@ -120,6 +121,29 @@ void wireSourcePresence(PhysicalSourceConfig& cfg, const std::string& presenceTo
     cfg.sourceConfig[ConfigParametersMQTTSource::PRESENCE_TOPIC] = presenceTopic;
 }
 
+/// Test-publisher-only knob: when set, the publisher rewrites the source's
+/// serveruri to this value *after* readEndpoint has captured the dispatcher
+/// endpoint for itself. The publisher still reaches the real broker; the
+/// source tries to open the bogus URI and fails fast with CannotOpenSource
+/// (4002). Lets MQTTRuntime_Unreachable.test cover the "broker unreachable"
+/// error path without relying on host networking quirks (a reserved port, an
+/// invalid hostname, etc. behave differently across sanitizer builds and CI
+/// runners). The knob is consumed and erased here so
+/// MQTTSource::validateAndFormat never sees the unknown key.
+constexpr std::string_view kTestSourceUriOverrideKey = "_test_source_uri_override";
+
+std::optional<std::string> consumeTestKnob(PhysicalSourceConfig& cfg, const std::string_view key)
+{
+    const auto it = cfg.sourceConfig.find(std::string{key});
+    if (it == cfg.sourceConfig.end())
+    {
+        return std::nullopt;
+    }
+    auto value = it->second;
+    cfg.sourceConfig.erase(it);
+    return value;
+}
+
 /// Strip any trailing CR/LF and append exactly one '\n'. Downstream JSON/CSV
 /// parsers split records on newline; without normalisation two adjacent rows
 /// in the same TupleBuffer can fuse into a single un-parseable blob.
@@ -192,9 +216,14 @@ void publishRow(mqtt::async_client& client, const std::string& dataTopic, int32_
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterMQTTInlineData(InlineDataRegistryArguments args)
 {
+    const auto sourceUriOverride = consumeTestKnob(args.physicalSourceConfig, kTestSourceUriOverrideKey);
     applyDispatchOverrides(args.physicalSourceConfig);
     auto endpoint = readEndpoint(args.physicalSourceConfig);
     wireSourcePresence(args.physicalSourceConfig, endpoint.presenceTopic);
+    if (sourceUriOverride.has_value())
+    {
+        args.physicalSourceConfig.sourceConfig[ConfigParametersMQTTSource::SERVER_URI] = sourceUriOverride.value();
+    }
     args.serverThreads->push_back(spawnPublisherThread(
         std::move(endpoint),
         [rows = std::move(args.tuples)](mqtt::async_client& client, const std::string& dataTopic, int32_t qos, const std::stop_token& stopToken)

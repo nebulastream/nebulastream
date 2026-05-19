@@ -1,0 +1,19 @@
+# name: MQTTSource/MQTTRuntime_Unreachable.test
+# description: Runtime error — source cannot reach the broker. The InlineData provider engineers this via the test publisher's `_test_source_uri_override` knob: applyDispatchOverrides rewrites serveruri to the real broker, the publisher itself uses that, then the publisher rewrites the source's serveruri back to a reserved local port. MQTTSource::open() throws mqtt::exception (TCP/TLS connect failure), the catch block rethrows as CannotOpenSource (4002), and the source-thread routine wraps that in RunningRoutineFailure (4001) — which is the code the framework surfaces. One query per file mirrors the existing MQTT systest layout and sidesteps the cold-start broker race that bites multi-query files (publishers from queries 2..N spawn at load-time and collide with the broker's first-client-connect handling).
+# requires: mqtt
+# groups: [Negative, Runtime]
+
+
+CREATE LOGICAL SOURCE mqtt_unreachable(id INT32, value INT32, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR mqtt_unreachable TYPE MQTT SET(
+    "JSON" AS INPUT_FORMATTER.`TYPE`,
+    "mqtt_broker" AS `SOURCE`.serveruri,
+    "test/runtime/unreachable" AS `SOURCE`.topic,
+    "100" AS `SOURCE`.flushintervalms,
+    "tcp://127.0.0.1:1" AS `SOURCE`._test_source_uri_override);
+ATTACH INLINE
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+
+SELECT id, value, timestamp FROM mqtt_unreachable INTO File();
+----
+ERROR 4001
