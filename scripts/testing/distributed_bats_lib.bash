@@ -240,10 +240,20 @@ nes_distributed_teardown_file() {
 }
 
 nes_distributed_setup() {
-  # Create temp directory within the mounted workspace (not /tmp)
-  # so it's accessible from docker-compose containers running on the host
+  # Deterministic per-test working dir under the mounted workspace (not /tmp,
+  # so docker-compose containers running on the host can access it). The path
+  # is a function of the .bats file name and the bats-internal test name —
+  # both shell-safe — so reruns of the same test land at the same location.
+  # Coverage relies on this: the bats-coverage-collect fixture copies
+  # profraws into build/ccov/bats-profraws/ preserving the source subpath, so
+  # deterministic source paths → deterministic destination filenames → the
+  # entries cmake-codecov has in profraw.list stay valid across reruns.
   mkdir -p "$NES_TEST_TMP_DIR"
-  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
+  local _bats_file=${BATS_TEST_FILENAME##*/}
+  _bats_file=${_bats_file%.bats}
+  export TMP_DIR="$NES_TEST_TMP_DIR/${_bats_file}/${BATS_TEST_NAME}"
+  rm -rf "$TMP_DIR"
+  mkdir -p "$TMP_DIR"
   # Testdata lives in the same dir as the .bats file (by convention named
   # `tests/`); copying it as a subdir of TMP_DIR matches the path prefix used
   # in the @test bodies (e.g. tests/good/example.yaml).
@@ -338,8 +348,13 @@ nes_offline_teardown_file() {
 }
 
 nes_offline_setup() {
+  # See nes_distributed_setup for the deterministic-path rationale.
   mkdir -p "$NES_TEST_TMP_DIR"
-  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
+  local _bats_file=${BATS_TEST_FILENAME##*/}
+  _bats_file=${_bats_file%.bats}
+  export TMP_DIR="$NES_TEST_TMP_DIR/${_bats_file}/${BATS_TEST_NAME}"
+  rm -rf "$TMP_DIR"
+  mkdir -p "$TMP_DIR"
   cp -r "$(dirname "$BATS_TEST_FILENAME")" "$TMP_DIR"
   cd "$TMP_DIR" || exit
   echo "# Using TEST_DIR: $TMP_DIR" >&3

@@ -246,6 +246,23 @@ if (NES_ENABLES_TESTS)
         include(cmake/CodeCoverage.cmake)
         add_code_coverage_all_targets(EXCLUDE ${CMAKE_BINARY_DIR}/* tests/*)
         message(STATUS "Tests are enabled with code coverage")
+
+        # FIXTURES_CLEANUP test that ctest auto-schedules after every bats
+        # test (each is FIXTURES_REQUIRED BatsCoverage — see cmake/macros.cmake).
+        # Copies the *.profraw files bats binaries wrote under build/test-tmp
+        # into a dedicated build/ccov/bats-profraws/ that ccov-run-bats owns.
+        # `cp --parents` preserves the source subpath, so deterministic per-test
+        # TMP_DIRs (distributed_bats_lib.bash) → deterministic destination
+        # filenames here → cmake-codecov's profraw.list entries stay valid
+        # across reruns even though paths are appended each time.
+        # build/test-tmp itself is left alone so developers can inspect each
+        # test's working dir post-mortem.
+        set(BATS_COVERAGE_DIR ${CMAKE_BINARY_DIR}/ccov/bats-profraws)
+        add_test(NAME bats-coverage-collect
+                COMMAND bash -c "mkdir -p '${BATS_COVERAGE_DIR}' && if [ -d '${CMAKE_BINARY_DIR}/test-tmp' ]; then cd '${CMAKE_BINARY_DIR}/test-tmp' && find . -type f -name '*.profraw' -size +0c -exec cp --parents {} '${BATS_COVERAGE_DIR}/' \\;; fi")
+        set_tests_properties(bats-coverage-collect PROPERTIES
+                FIXTURES_CLEANUP BatsCoverage
+                LABELS Bats)
     endif ()
 else ()
     message(STATUS "Tests are disabled")
@@ -278,6 +295,62 @@ if (CODE_COVERAGE)
     foreach (NES_DIR ${NES_COVERAGE_DIRECTORIES})
         target_code_coverage(${NES_DIR} PUBLIC AUTO ALL)
     endforeach ()
+    # Libraries the e2e binaries (nes-cli, nes-repl, nes-repl-embedded,
+    # nes-single-node-worker, systest) link against. PUBLIC propagates
+    # -fprofile-instr-generate/-fcoverage-mapping (compile + link) to the
+    # executables via INTERFACE_*, so the exes' own *Starter.cpp and friends
+    # also get instrumented without needing per-exe target_code_coverage calls.
     target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO ALL)
+    target_code_coverage(nes-single-node-worker-interface PUBLIC AUTO ALL)
     target_code_coverage(nes-frontend-lib PUBLIC AUTO ALL)
+    target_code_coverage(nes-frontend-embedded-lib PUBLIC AUTO ALL)
+    target_code_coverage(nes-systest-lib PUBLIC AUTO ALL)
+
+    # Plug the bats-driven e2e tests into cmake-codecov's aggregator the same
+    # way per-target gtest runners do: a `ccov-run-bats` target invokes the
+    # tests (via ctest -L Bats), then appends the produced profraws and the
+    # e2e binaries to profraw.list / binaries.list. ccov-all-processing depends
+    # on it and merges everything into all-merged.profdata, so the existing
+    # ccov-all-export / ccov-all (HTML) targets cover gtest + bats from a
+    # single invocation:
+    #
+    #   cmake --build <dir> --target ccov-all-export
+    #
+    # Bats tests write *.profraw into cwd (LLVM_PROFILE_FILE set by
+    # add_e2e_test). For offline tests that's the host TMP_DIR; for
+    # docker-compose tests it's /workdir inside the container, synced back to
+    # the host TMP_DIR by sync_workdir in distributed_bats_lib.bash. Either
+    # way, everything lands under ${CMAKE_BINARY_DIR}/test-tmp.
+    set(_ccov_bats_binaries
+        nes-single-node-worker
+        nes-cli
+        nes-repl
+        nes-repl-embedded
+        systest)
+    # One -E echo per binary, each its own shell invocation so the >> redirect
+    # applies per binary (same pattern cmake-codecov uses in
+    # CodeCoverage.cmake:319 for ccov-run-<gtest>).
+    set(_ccov_bats_append_objects)
+    foreach (_bin IN LISTS _ccov_bats_binaries)
+        list(APPEND _ccov_bats_append_objects
+            COMMAND ${CMAKE_COMMAND} -E echo "-object=$<TARGET_FILE:${_bin}>"
+                >> ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list)
+    endforeach ()
+    # Same five-stage structure as ccov-run-<gtest> (CodeCoverage.cmake:312):
+    # wipe → run-something → find/echo paths into profraw.list → echo
+    # binaries into binaries.list. The "run something" is `ctest -L Bats`,
+    # which transitively also runs the bats-coverage-collect FIXTURES_CLEANUP
+    # test that copies profraws from build/test-tmp into BATS_COVERAGE_DIR.
+    # Deterministic test-tmp paths (distributed_bats_lib.bash) give us stable
+    # destination filenames, so profraw.list entries stay valid across reruns
+    # even though they're appended each time (mirrors gtest's <name>.profraw).
+    add_custom_target(ccov-run-bats
+            COMMAND ${CMAKE_COMMAND} -E rm -rf ${BATS_COVERAGE_DIR}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${BATS_COVERAGE_DIR}
+            COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_BINARY_DIR} -L Bats --output-on-failure
+            COMMAND bash -c "find ${BATS_COVERAGE_DIR} -type f -name '*.profraw' ! -size 0 >> ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/profraw.list"
+            ${_ccov_bats_append_objects}
+            DEPENDS ccov-preprocessing ${_ccov_bats_binaries}
+            COMMENT "Running bats e2e tests for coverage")
+    add_dependencies(ccov-all-processing ccov-run-bats)
 endif ()
