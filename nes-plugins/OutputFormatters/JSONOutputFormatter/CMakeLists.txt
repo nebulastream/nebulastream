@@ -11,8 +11,8 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(JSON OutputFormatter nes-output-formatters-registry json_output_formatter_plugin JSONOutputFormatter.cpp)
-add_plugin_as_library(JSON OutputFormatterValidation nes-output-formatters-registry json_output_formatter_validation_plugin JSONOutputFormatter.cpp)
+add_plugin_as_library(JSON OutputFormatter json_output_formatter_plugin JSONOutputFormatter.cpp)
+add_plugin_as_library(JSON OutputFormatterValidation json_output_formatter_validation_plugin JSONOutputFormatter.cpp)
 
 target_include_directories(json_output_formatter_plugin
         PUBLIC include

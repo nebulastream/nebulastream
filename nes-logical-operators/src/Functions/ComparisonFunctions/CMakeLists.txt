@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Greater LogicalFunction nes-logical-operators GreaterLogicalFunction.cpp)
-add_plugin(GreaterEquals LogicalFunction nes-logical-operators GreaterEqualsLogicalFunction.cpp)
-add_plugin(Less LogicalFunction nes-logical-operators LessLogicalFunction.cpp)
-add_plugin(LessEquals LogicalFunction nes-logical-operators LessEqualsLogicalFunction.cpp)
+add_plugin(Greater LogicalFunction GreaterLogicalFunction.cpp)
+add_plugin(GreaterEquals LogicalFunction GreaterEqualsLogicalFunction.cpp)
+add_plugin(Less LogicalFunction LessLogicalFunction.cpp)
+add_plugin(LessEquals LogicalFunction LessEqualsLogicalFunction.cpp)

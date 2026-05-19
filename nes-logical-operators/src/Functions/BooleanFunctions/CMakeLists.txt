@@ -10,8 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(And LogicalFunction nes-logical-operators AndLogicalFunction.cpp)
-add_plugin(Equals LogicalFunction nes-logical-operators EqualsLogicalFunction.cpp)
-add_plugin(Negate LogicalFunction nes-logical-operators NegateLogicalFunction.cpp)
-add_plugin(Or LogicalFunction nes-logical-operators OrLogicalFunction.cpp)
-add_plugin(IsNull LogicalFunction nes-logical-operators IsNullCheckLogicalFunction.cpp)
+add_plugin(And LogicalFunction AndLogicalFunction.cpp)
+add_plugin(Equals LogicalFunction EqualsLogicalFunction.cpp)
+add_plugin(Negate LogicalFunction NegateLogicalFunction.cpp)
+add_plugin(Or LogicalFunction OrLogicalFunction.cpp)
+add_plugin(IsNull LogicalFunction IsNullCheckLogicalFunction.cpp)
