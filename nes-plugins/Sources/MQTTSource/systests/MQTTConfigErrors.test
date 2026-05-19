@@ -1,0 +1,54 @@
+# name: MQTTSource/MQTTConfigErrors.test
+# description: Descriptor-time validation errors for the MQTT source plugin. Each query uses the inline `FROM MQTT(...)` form so source-descriptor construction happens during per-query binding — the framework attaches the resulting exception to the individual query and `ERROR <code>` matches it. The equivalent `CREATE PHYSICAL SOURCE` statements would throw inside the create-callback and abort the whole test file before any per-query expectation could fire. Broker comes up via `# requires: mqtt` but is never reached: every case fails before open(). Runtime errors (connection failures, malformed payloads) live in MQTTRuntimeErrors.test.
+# requires: mqtt
+# groups: [Negative, Config]
+
+
+# Case 1: qos out of range. The QOS validator returns nullopt for any value
+# outside {0, 1, 2}; validateAndFormat then throws InvalidConfigParameter.
+SELECT id, value, timestamp FROM MQTT(
+    "mqtt_broker" AS `SOURCE`.serveruri,
+    "test/qos_bad" AS `SOURCE`.topic,
+    "5" AS `SOURCE`.qos,
+    "JSON" AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id INT32, value INT32, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+INTO File();
+----
+ERROR 1000
+
+
+# Case 2: unknown config key. validateAndFormat rejects any key that is not in
+# ConfigParametersMQTTSource::parameterMap before any per-key validator runs.
+SELECT id, value, timestamp FROM MQTT(
+    "mqtt_broker" AS `SOURCE`.serveruri,
+    "test/unknown_key" AS `SOURCE`.topic,
+    "anything" AS `SOURCE`.notAKnownKey,
+    "JSON" AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id INT32, value INT32, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+INTO File();
+----
+ERROR 1000
+
+
+# Case 3: missing required `topic`. `topic` has no default; validateAndFormat
+# walks the parameter map and throws when a non-default key is absent.
+SELECT id, value, timestamp FROM MQTT(
+    "mqtt_broker" AS `SOURCE`.serveruri,
+    "JSON" AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id INT32, value INT32, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+INTO File();
+----
+ERROR 1000
+
+
+# Case 4: unknown input formatter. SourceCatalog::getInlineSource looks up the
+# input formatter in InputFormatterValidationProvider; an unknown type makes
+# it throw UnknownSourceType (mislabeled but that's the registered code).
+SELECT id, value, timestamp FROM MQTT(
+    "mqtt_broker" AS `SOURCE`.serveruri,
+    "test/bad_formatter" AS `SOURCE`.topic,
+    "NOT_A_FORMATTER" AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id INT32, value INT32, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+INTO File();
+----
+ERROR 2017

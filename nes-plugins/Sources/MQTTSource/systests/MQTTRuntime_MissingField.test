@@ -1,0 +1,18 @@
+# name: MQTTSource/MQTTRuntime_MissingField.test
+# description: Runtime error — the provider publishes a JSON object that lacks a required (NOT NULL) field. The source delivers the message verbatim; the JSON formatter cannot satisfy the schema and throws FieldNotFound (2004). Mirrors the corresponding File-source case in formatter/JSON/BasicJSON.test (`MissingKeyFronJSONStream`). One query per file to avoid the multi-query cold-start race on the broker.
+# requires: mqtt
+# groups: [Negative, Runtime]
+
+
+CREATE LOGICAL SOURCE mqtt_missing_field(id UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR mqtt_missing_field TYPE MQTT SET(
+    "JSON" AS INPUT_FORMATTER.`TYPE`,
+    "mqtt_broker" AS `SOURCE`.serveruri,
+    "test/runtime/missing_field" AS `SOURCE`.topic,
+    "100" AS `SOURCE`.flushintervalms);
+ATTACH INLINE
+{"ID": 1, "VALUE": 1}
+
+SELECT id, value, name FROM mqtt_missing_field INTO File();
+----
+ERROR 2004

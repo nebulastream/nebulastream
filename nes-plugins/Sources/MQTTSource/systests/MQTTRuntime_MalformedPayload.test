@@ -1,0 +1,18 @@
+# name: MQTTSource/MQTTRuntime_MalformedPayload.test
+# description: Runtime error — the provider publishes a payload the JSON formatter cannot parse into a NOT NULL schema. The source itself runs the full happy path: connects, subscribes, consumes the message, hands the bytes to the input formatter. The formatter tries to materialise a non-nullable UINT64 from a string value and throws CannotFormatMalformedStringValue (3002). One query per file to avoid the multi-query cold-start race on the broker.
+# requires: mqtt
+# groups: [Negative, Runtime]
+
+
+CREATE LOGICAL SOURCE mqtt_malformed(id UINT64 NOT NULL, value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR mqtt_malformed TYPE MQTT SET(
+    "JSON" AS INPUT_FORMATTER.`TYPE`,
+    "mqtt_broker" AS `SOURCE`.serveruri,
+    "test/runtime/malformed" AS `SOURCE`.topic,
+    "100" AS `SOURCE`.flushintervalms);
+ATTACH INLINE
+{"ID": 1, "VALUE": "not-a-number"}
+
+SELECT id, value FROM mqtt_malformed INTO File();
+----
+ERROR 3002
