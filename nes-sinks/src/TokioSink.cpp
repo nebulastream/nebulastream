@@ -199,7 +199,7 @@ static DescriptorConfig::Config addHeader(DescriptorConfig::Config config, std::
 
 struct TokioSinkContext
 {
-    std::optional<size_t> stopEpoch;
+    std::optional<size_t> flushEpoch;
     std::atomic_size_t epochCounter{0};
     std::atomic_bool gracefulStop{false};
 
@@ -271,12 +271,20 @@ TokioSink::TokioSink(BackpressureController backpressureController, SinkDescript
 ///
 /// stop is also guaranteed to be called only if not a single pending (including delayed-repeated) tasks are in the queue. stop will be called without any concurrent modification to the sink
 ///
-/// A graceful stop allows the sink to flush its content before stopping the query. The c++ side of the Tokio sink is connected via an
-/// mpsc queue. Before starting the stop protocol the sink will attempt to write all backpressure buffers to the sink.
-/// since the stop is executed on a single thread we send a flush signal with an epoch number attached to the sink.
-/// once we receive the epoch we know this sink has written everything up to the epoch and we can stop the sink without losing data.
+/// Graceful termination is a three-stage protocol over an mpsc queue to the rust sink task:
+///   1. Drain the backpressure backlog via try_write.
+///   2. Issue a Flush with an epoch tag and repeat the task until the rust
+///      side acks the epoch via on_flush — at that point all queued data has
+///      been written by the sink.
+///   3. Issue a Close via sink_stop() and repeat the task until sink_stop
+///      returns true — at that point the rust sink task has run AsyncSink::stop
+///      to completion and the SinkHandle is safe to drop.
 ///
-/// A forceful stop will drop the SinkHandle which will (in the rust code) abort the Sink Task
+/// Forceful termination (query failure / destruction without stop()): the
+/// SinkHandle is dropped while the rust controller is still live, which
+/// drops the controller's Sender. The rust task observes the closed
+/// controller and panics — mirroring the source runtime's enforcement of
+/// the never-drop contract.
 TokioSink::~TokioSink() = default;
 
 void TokioSink::start(PipelineExecutionContext& pec)
@@ -327,29 +335,42 @@ void TokioSink::stop(PipelineExecutionContext& pec)
         }
     }
 
-    if (!context->stopEpoch)
+    // Stage 1: issue a Flush with an epoch tag and wait until the rust task
+    // acks it via on_flush. Once acked, all previously-enqueued Data
+    // commands have been processed by AsyncSink::execute and flushed.
+    if (!context->flushEpoch)
     {
         NES_DEBUG("Start flush");
-        auto stopEpoch = flush_stop(*context->handle);
-        if (stopEpoch == 0)
+        auto epoch = flush(*context->handle);
+        if (epoch == 0)
         {
-            NES_DEBUG("Could not flush queue is full");
+            NES_DEBUG("Could not flush, queue is full");
             pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
             return;
         }
-        NES_DEBUG("Waiting for flush ack: {}", stopEpoch);
-        context->stopEpoch = stopEpoch;
+        NES_DEBUG("Waiting for flush ack: {}", epoch);
+        context->flushEpoch = epoch;
     }
-    if (context->epochCounter < context->stopEpoch)
+    if (context->epochCounter < context->flushEpoch)
     {
         NES_DEBUG("Repeating until flush ack");
         pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
+        return;
     }
-    else
+
+    // Stage 2: drive sink_stop() until it returns true. The first call
+    // submits SinkCommand::Close; subsequent calls poll the stop_signal
+    // oneshot. Once true, the rust task has run AsyncSink::stop to
+    // completion and the SinkHandle is safe to drop.
+    if (!sink_stop(*context->handle))
     {
-        context->gracefulStop = true;
-        NES_INFO("Sink Closed successfully");
+        NES_DEBUG("Repeating until sink stop ack");
+        pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
+        return;
     }
+
+    context->gracefulStop = true;
+    NES_INFO("Sink Closed successfully");
 }
 
 std::ostream& TokioSink::toString(std::ostream& os) const
