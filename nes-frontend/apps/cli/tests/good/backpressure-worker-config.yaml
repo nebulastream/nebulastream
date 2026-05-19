@@ -43,13 +43,11 @@ sinks:
     config:
       ingestion: 5000
       output_format: CSV
-
 logical:
   - name: GENERATOR_SOURCE
     schema:
       - name: DOUBLE
         type: FLOAT64
-
 physical:
   - logical: GENERATOR_SOURCE
     host: worker-2:8080
@@ -64,7 +62,6 @@ physical:
       seed: 1
       generator_schema: |
         NORMAL_DISTRIBUTION FLOAT64 0 1
-
 # Enforces backpressure using the worker configs, which should make the queues so small that backpressure is triggered
 workers:
   - host: worker-1:8080
@@ -75,12 +72,20 @@ workers:
         number_of_buffers_in_global_buffer_manager: 128
         network:
           receiver_queue_size: 2
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-2:8080
     data_address: worker-2:9090
-    downstream: [ worker-1:8080 ]
+    downstream: ['worker-1:8080']
     max_operators: 10000
     config:
       worker:
         network:
           sender_queue_size: 2
           max_pending_acks: 2
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1

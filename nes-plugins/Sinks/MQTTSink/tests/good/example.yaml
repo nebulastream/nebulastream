@@ -22,13 +22,7 @@
 #   Single worker generates a UINT64 sequence and publishes it as CSV
 #   to the external MQTT broker. No downstream NES connections.
 
-query: |
-  SELECT 
-    *
-  FROM 
-    GENERATOR
-  INTO 
-    MQTT
+query: "SELECT \n  *\nFROM \n  GENERATOR\nINTO \n  MQTT\n"
 sinks:
   - name: MQTT
     host: worker-1:8080
@@ -42,13 +36,11 @@ sinks:
       topic: mqtt-sink-test
       client_id: nes-test-client
       qos: 2
-
 logical:
   - name: GENERATOR
     schema:
       - name: NUMBER
         type: UINT64
-
 physical:
   - logical: GENERATOR
     host: worker-1:8080
@@ -60,8 +52,13 @@ physical:
       stop_generator_when_sequence_finishes: ALL
       generator_schema: |
         SEQUENCE UINT64 1 10 1
-
 workers:
   - host: worker-1:8080
     data_address: worker-1:9090
     max_operators: 10000
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: COMPILER
+        query_engine:
+          number_of_worker_threads: 4

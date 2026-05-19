@@ -41,6 +41,10 @@ if declare -F bats_load_library >/dev/null 2>&1; then
     bats_load_library bats-file
 fi
 
+# Compose-emitter helpers (emit_workers, emit_frontend). Sourced relative to
+# this file's directory.
+source "$(dirname "${BASH_SOURCE[0]}")/compose_lib.sh"
+
 # ---------------------------------------------------------------------------
 # Layer 1 — primitives
 # ---------------------------------------------------------------------------
@@ -66,16 +70,17 @@ nes_require_executable() {
 }
 
 # Clean up containers, networks and images leaked by previous (potentially
-# crashed) test runs. Networks are matched by `nes-test=<label>`; images are
-# matched against the reference patterns passed as remaining args.
+# crashed) test runs. Networks are matched by the suite-wide `nes-test=<label>`
+# tag attached to the default network by setup_distributed; images are matched
+# against the reference patterns passed as remaining args.
 nes_cleanup_leaked_resources() {
   local label="$1"
   shift
 
-  for net in $(docker network ls --filter label=nes-test=$label -q 2>/dev/null); do
+  for net in $(docker network ls --filter "label=nes-test=$label" -q 2>/dev/null); do
     docker network inspect "$net" -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
   done
-  docker network prune -f --filter label=nes-test=$label 2>/dev/null || true
+  docker network prune -f --filter "label=nes-test=$label" 2>/dev/null || true
 
   if [ "$#" -eq 0 ]; then
     return 0
@@ -207,12 +212,12 @@ nes_distributed_setup_file() {
   local bin_name
   bin_name=$(basename "$bin_path")
   local suffix="${bin_name#nes-}"
-  local test_label="distributed-${suffix}"
+  export NES_COMPOSE_PROJECT="distributed-${suffix}"
   local worker_prefix="nes-worker-${suffix}-test"
   local app_prefix="${bin_name}-image"
   export NES_BATS_APP_IMAGE_VAR="${suffix^^}_IMAGE"
 
-  nes_cleanup_leaked_resources "$test_label" "${worker_prefix}-*" "${app_prefix}-*"
+  nes_cleanup_leaked_resources "$NES_COMPOSE_PROJECT" "${worker_prefix}-*" "${app_prefix}-*"
 
   nes_require_env NES_WORKER
   nes_require_env NES_TEST_TMP_DIR
@@ -284,16 +289,47 @@ nes_distributed_teardown() {
   docker volume rm $TEST_VOLUME || true
 }
 
-# Generate docker-compose.yaml from a topology file using the suite's local
-# tests/util/create_compose.sh, then bring the stack up. Assumes the suite has
-# `cd`'d into a working directory containing tests/util/create_compose.sh.
+# Assemble a docker-compose stack from generated frontend + workers files,
+# plus an optional suite-local overlay (tests/util/compose.overlay.yaml) for
+# extra services like mqtt-broker. Assumes the caller has `cd`'d into the
+# per-test working directory.
+#
+# Usage: setup_distributed <kind> <topology.yaml>     kind ∈ {cli, repl, systest}
 setup_distributed() {
-  tests/util/create_compose.sh "$1" > docker-compose.yaml
+  local kind="$1"
+  local topology="$2"
+  # The cli reads its topology either from -t or from NES_TOPOLOGY_FILE; forward
+  # the path via the compose env so tests that omit -t still resolve it.
+  export NES_TOPOLOGY_FILE="$topology"
+  emit_frontend "$kind"  > frontend.compose.yaml
+  emit_workers  "$topology" > workers.compose.yaml
+  # Tag the default network with a suite-wide label so leftover networks from
+  # crashed runs can be matched by nes_cleanup_leaked_resources. The compose
+  # project name is left to compose's default (cwd basename), which is unique
+  # per test because each test runs in its own TMP_DIR — keeps container
+  # names from colliding between tests in the same suite.
+  cat > network.compose.yaml <<EOF
+networks:
+  default:
+    labels:
+      nes-test: "${NES_COMPOSE_PROJECT:-distributed}"
+EOF
+  # Export the file set via the standard COMPOSE_FILE env so subsequent
+  # `docker compose` invocations (exec, down, logs, ...) in the same test pick
+  # up the same stack without needing -f flags re-passed.
+  local files="frontend.compose.yaml:workers.compose.yaml:network.compose.yaml"
+  if [ -f tests/util/compose.overlay.yaml ]; then
+    files+=":tests/util/compose.overlay.yaml"
+  fi
+  export COMPOSE_FILE="$files"
   local compose_output exit_code=0
   compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
   if [ "$exit_code" -ne 0 ]; then
     echo "# [docker compose up] (status=$exit_code):" >&3
     while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
+    echo "# [docker compose logs]:" >&3
+    docker compose logs --no-color 2>&1 \
+      | while IFS= read -r line; do echo "#   $line" >&3; done
   fi
   return $exit_code
 }

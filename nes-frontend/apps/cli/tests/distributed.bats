@@ -20,13 +20,13 @@ setup()         { nes_distributed_setup; }
 teardown()      { nes_distributed_teardown; }
 
 @test "launch query from topology" {
-  setup_distributed tests/good/select-gen-into-void.yaml
+  setup_distributed cli tests/good/select-gen-into-void.yaml
   run docker_nes_cli -t tests/good/select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
 }
 
 @test "launch multiple query from topology" {
-  setup_distributed tests/good/multiple-select-gen-into-void.yaml
+  setup_distributed cli tests/good/multiple-select-gen-into-void.yaml
 
   run docker_nes_cli -t tests/good/multiple-select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
@@ -45,19 +45,19 @@ teardown()      { nes_distributed_teardown; }
 }
 
 @test "launch query from commandline" {
-  setup_distributed tests/good/select-gen-into-void.yaml
+  setup_distributed cli tests/good/select-gen-into-void.yaml
   run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 }
 
 @test "launch bad query from commandline" {
-  setup_distributed tests/good/select-gen-into-void.yaml
+  setup_distributed cli tests/good/select-gen-into-void.yaml
   run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'selectaaa DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 1 ]
 }
 
 @test "launch and stop query" {
-  setup_distributed tests/good/select-gen-into-void.yaml
+  setup_distributed cli tests/good/select-gen-into-void.yaml
   run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
@@ -72,7 +72,7 @@ teardown()      { nes_distributed_teardown; }
 }
 
 @test "launch and monitor query" {
-  setup_distributed tests/good/select-gen-into-void.yaml
+  setup_distributed cli tests/good/select-gen-into-void.yaml
   run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
@@ -90,7 +90,7 @@ teardown()      { nes_distributed_teardown; }
 }
 
 @test "launch and monitor distributed queries" {
-  setup_distributed tests/good/distributed-query-deployment.yaml
+  setup_distributed cli tests/good/distributed-query-deployment.yaml
 
   run docker_nes_cli -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
@@ -112,7 +112,7 @@ teardown()      { nes_distributed_teardown; }
 }
 
 @test "launch and monitor distributed queries crazy join" {
-  setup_distributed tests/good/chained-joins.yaml
+  setup_distributed cli tests/good/chained-joins.yaml
 
   run docker_nes_cli start
   [ "$status" -eq 0 ]
@@ -132,7 +132,7 @@ teardown()      { nes_distributed_teardown; }
 }
 
 @test "launch and monitor distributed queries crazy join with a fast source" {
-  setup_distributed tests/good/chained-joins-one-fast-source.yaml
+  setup_distributed cli tests/good/chained-joins-one-fast-source.yaml
 
   run docker_nes_cli start
   [ "$status" -eq 0 ]
@@ -163,7 +163,7 @@ teardown()      { nes_distributed_teardown; }
 }
 
 @test "test worker not available" {
-  setup_distributed tests/good/chained-joins.yaml
+  setup_distributed cli tests/good/chained-joins.yaml
 
   docker compose stop worker-1
 
@@ -180,7 +180,7 @@ teardown()      { nes_distributed_teardown; }
 }
 
 @test "worker goes offline during processing" {
-  setup_distributed tests/good/chained-joins.yaml
+  setup_distributed cli tests/good/chained-joins.yaml
 
   run docker_nes_cli start
   [ "$status" -eq 0 ]
@@ -245,7 +245,7 @@ EOF
 }
 
 @test "worker goes offline and comes back during processing" {
-  setup_distributed tests/good/chained-joins.yaml
+  setup_distributed cli tests/good/chained-joins.yaml
 
   run docker_nes_cli start
   [ "$status" -eq 0 ]
@@ -288,7 +288,7 @@ EOF
 }
 
 @test "worker status" {
-  setup_distributed tests/good/select-gen-into-void.yaml
+  setup_distributed cli tests/good/select-gen-into-void.yaml
 
   run docker_nes_cli start
   [ $status -eq 0 ]
@@ -309,7 +309,7 @@ EOF
 }
 
 @test "back pressure using worker config" {
-  setup_distributed tests/good/backpressure-worker-config.yaml
+  setup_distributed cli tests/good/backpressure-worker-config.yaml
 
   run docker_nes_cli start
   [ $status -eq 0 ]
@@ -334,7 +334,7 @@ EOF
 }
 
 @test "back pressure using optimizer flags" {
-  setup_distributed tests/good/backpressure-optimizer-flags.yaml
+  setup_distributed cli tests/good/backpressure-optimizer-flags.yaml
 
   run docker_nes_cli start
   [ $status -eq 0 ]
@@ -358,7 +358,7 @@ EOF
 }
 
 @test "order of worker termination when backpressure is applied. terminate sink" {
-  setup_distributed tests/good/backpressure-worker-config.yaml
+  setup_distributed cli tests/good/backpressure-worker-config.yaml
 
   run docker_nes_cli start
   [ $status -eq 0 ]
@@ -412,7 +412,7 @@ EOF
 }
 
 @test "order of worker termination when backpressure is applied. terminate source" {
-  setup_distributed tests/good/backpressure-worker-config.yaml
+  setup_distributed cli tests/good/backpressure-worker-config.yaml
 
   run docker_nes_cli start
   [ $status -eq 0 ]
@@ -455,19 +455,19 @@ EOF
 }
 
 @test "launch query with topology from stdin" {
-  setup_distributed tests/good/select-gen-into-void.yaml
+  setup_distributed cli tests/good/select-gen-into-void.yaml
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start'"
   [ "$status" -eq 0 ]
 }
 
 @test "launch query using 3-nodes topology" {
-  setup_distributed tests/good/3-nodes.yaml
+  setup_distributed cli tests/good/3-nodes.yaml
   run docker_nes_cli start
   [ "$status" -eq 0 ]
 }
 
 @test "placement fails with reversed downstream edges" {
-  setup_distributed tests/bad/3-nodes-reversed-edges.yaml
+  setup_distributed cli tests/bad/3-nodes-reversed-edges.yaml
   run docker_nes_cli start
   [ "$status" -eq 1 ]
 
@@ -476,7 +476,7 @@ EOF
 }
 
 @test "launch and stop query with topology from stdin" {
-  setup_distributed tests/good/select-gen-into-void.yaml
+  setup_distributed cli tests/good/select-gen-into-void.yaml
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 
@@ -490,7 +490,7 @@ EOF
 }
 
 @test "query status with topology from stdin" {
-  setup_distributed tests/good/select-gen-into-void.yaml
+  setup_distributed cli tests/good/select-gen-into-void.yaml
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 

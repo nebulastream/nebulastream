@@ -22,13 +22,7 @@
 #   Single worker subscribes to the external MQTT broker, parses CSV,
 #   and writes a checksum of the FLOAT64 column to results.csv.
 
-query: |
-  SELECT 
-    *
-  FROM 
-    MQTT
-  INTO 
-    CHECKSUM
+query: "SELECT \n  *\nFROM \n  MQTT\nINTO \n  CHECKSUM\n"
 sinks:
   - name: CHECKSUM
     host: worker-1:8080
@@ -39,13 +33,11 @@ sinks:
     config:
       output_format: CSV
       file_path: results.csv
-
 logical:
   - name: MQTT
     schema:
       - name: DOUBLE
         type: FLOAT64
-
 physical:
   - logical: MQTT
     host: worker-1:8080
@@ -59,8 +51,13 @@ physical:
       flush_interval_ms: 100
       client_id: nes-test-client
       qos: 2
-
 workers:
   - host: worker-1:8080
     data_address: worker-1:9090
     max_operators: 10000
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1

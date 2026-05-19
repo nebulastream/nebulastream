@@ -1,3 +1,7 @@
 workers:
   - host: "worker-node:8080"
     data_address: "worker-node:9090"
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER

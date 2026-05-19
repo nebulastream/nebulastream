@@ -39,13 +39,11 @@ sinks:
       - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
     type: Void
-
 logical:
   - name: GENERATOR_SOURCE
     schema:
       - name: DOUBLE
         type: FLOAT64
-
 physical:
   - logical: GENERATOR_SOURCE
     host: worker-1:8080
@@ -60,12 +58,23 @@ physical:
       seed: 1
       generator_schema: |
         NORMAL_DISTRIBUTION FLOAT64 0 1
-
 workers:
   - host: worker-1:8080
     data_address: worker-1:9090
     max_operators: 10000
-    downstream: [ worker-2:8080 ]
+    downstream: ['worker-2:8080']
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-2:8080
     data_address: worker-2:9090
     max_operators: 10000
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1

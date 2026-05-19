@@ -20,7 +20,6 @@
 
 query: |
   SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK
-
 sinks:
   - name: VOID_SINK
     host: node1:8080
@@ -30,13 +29,11 @@ sinks:
     type: Print
     config:
       output_format: CSV
-
 logical:
   - name: GENERATOR_SOURCE
     schema:
       - name: DOUBLE
         type: FLOAT64
-
 physical:
   - logical: GENERATOR_SOURCE
     host: node3:8080
@@ -50,20 +47,35 @@ physical:
       seed: 1
       generator_schema: |
         NORMAL_DISTRIBUTION FLOAT64 0 1
-
 workers:
   - host: node1:8080
     data_address: node1:9090
     max_operators: 10000
-
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: node2:8080
     data_address: node2:9090
     max_operators: 10000
     downstream:
       - node1:8080
-
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: node3:8080
     data_address: node3:9090
     max_operators: 10000
     downstream:
       - node2:8080
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1

@@ -26,7 +26,7 @@ docker_mqtt_subscribe() {
 }
 
 @test "example test with small data" {
-  setup_distributed tests/good/example.yaml
+  setup_distributed cli tests/good/example.yaml
 
   docker_mqtt_subscribe "mqtt-sink-test" results.csv &
   run docker_nes_cli -t tests/good/example.yaml start
@@ -42,7 +42,7 @@ docker_mqtt_subscribe() {
 }
 
 @test "test child buffer" {
-  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
+  setup_distributed cli tests/good/single-worker-with-4k-buffers.yaml
   docker_mqtt_subscribe "mqtt-sink-test" results.csv &
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM
@@ -74,7 +74,7 @@ EOF
 
 
 @test "more data test" {
-  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
+  setup_distributed cli tests/good/single-worker-with-4k-buffers.yaml
   docker_mqtt_subscribe "mqtt-sink-test" results.csv &
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM

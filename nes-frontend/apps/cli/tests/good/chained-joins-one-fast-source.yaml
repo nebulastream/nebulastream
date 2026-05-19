@@ -79,7 +79,6 @@ sinks:
     config:
       file_path: out.csv
       output_format: CSV
-
 logical:
   - name: stream
     schema:
@@ -129,7 +128,6 @@ logical:
         type: UINT64
       - name: id2
         type: UINT64
-
 physical:
   - logical: stream
     host: worker-2:8080
@@ -244,40 +242,93 @@ physical:
       generator_schema: |
         SEQUENCE UINT64 0 10000000 1000
         SEQUENCE UINT64 0 10000000 1
-
 workers:
   - host: worker-1:8080
     data_address: worker-1:9090
     max_operators: 10000
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-2:8080
     data_address: worker-2:9090
     max_operators: 10000
-    downstream: [ worker-1:8080 ]
+    downstream: ['worker-1:8080']
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-3:8080
     data_address: worker-3:9090
     max_operators: 10000
-    downstream: [ worker-1:8080 ]
+    downstream: ['worker-1:8080']
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-4:8080
     data_address: worker-4:9090
     max_operators: 10000
-    downstream: [ worker-1:8080 ]
+    downstream: ['worker-1:8080']
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-5:8080
     data_address: worker-5:9090
     max_operators: 10000
-    downstream: [ worker-1:8080 ]
+    downstream: ['worker-1:8080']
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-6:8080
     data_address: worker-6:9090
     max_operators: 10000
-    downstream: [ worker-1:8080 ]
+    downstream: ['worker-1:8080']
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-7:8080
     data_address: worker-7:9090
     max_operators: 10000
-    downstream: [ worker-1:8080 ]
+    downstream: ['worker-1:8080']
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-8:8080
     data_address: worker-8:9090
     max_operators: 10000
-    downstream: [ worker-1:8080 ]
+    downstream: ['worker-1:8080']
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1
   - host: worker-9:8080
     data_address: worker-9:9090
     max_operators: 10000
-    downstream: [ worker-1:8080 ]
+    downstream: ['worker-1:8080']
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+        query_engine:
+          number_of_worker_threads: 1

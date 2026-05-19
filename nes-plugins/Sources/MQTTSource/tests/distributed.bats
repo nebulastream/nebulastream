@@ -32,7 +32,7 @@ docker_mqtt_subscribe() {
 }
 
 @test "launch query from topology" {
-  setup_distributed tests/good/example.yaml
+  setup_distributed cli tests/good/example.yaml
   run docker_nes_cli -t tests/good/example.yaml start
   [ "$status" -eq 0 ]
   query_id=$output
@@ -50,7 +50,7 @@ docker_mqtt_subscribe() {
 }
 
 @test "launch query from commandline" {
-  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
+  setup_distributed cli tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         "worker-1:8080" as `SOURCE`.`HOST`,
@@ -81,7 +81,7 @@ EOF
 }
 
 @test "long flushing interval" {
-  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
+  setup_distributed cli tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         "worker-1:8080" as `SOURCE`.`HOST`,
@@ -118,7 +118,7 @@ EOF
   # configures the buffer to use 4096 bytes.
   # the source receives raw ascii csv. the data is always ['3', '2', '\n'] (3 bytes)
 
-  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
+  setup_distributed cli tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         "worker-1:8080" as `SOURCE`.`HOST`,
@@ -154,7 +154,7 @@ EOF
 }
 
 @test "more data" {
-  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
+  setup_distributed cli tests/good/single-worker-with-4k-buffers.yaml
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         "worker-1:8080" as `SOURCE`.`HOST`,
