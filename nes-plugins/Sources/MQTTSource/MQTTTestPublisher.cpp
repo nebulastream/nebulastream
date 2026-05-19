@@ -132,6 +132,15 @@ void wireSourcePresence(PhysicalSourceConfig& cfg, const std::string& presenceTo
 /// MQTTSource::validateAndFormat never sees the unknown key.
 constexpr std::string_view kTestSourceUriOverrideKey = "_test_source_uri_override";
 
+/// Test-publisher-only knob: when set to a non-negative integer N, the
+/// publisher publishes only the first N rows of the ATTACH INLINE content,
+/// then disconnects without sending the rest. The source consumes those N
+/// rows and EOSes via heartbeat-absence — verifying that a mid-stream
+/// publisher disappearance is handled gracefully and the source delivers
+/// the partial result rather than hanging or surfacing an error. Like the
+/// uri-override knob this is consumed and erased before MQTT validation.
+constexpr std::string_view kTestDisconnectAfterKey = "_test_disconnect_after_n_tuples";
+
 std::optional<std::string> consumeTestKnob(PhysicalSourceConfig& cfg, const std::string_view key)
 {
     const auto it = cfg.sourceConfig.find(std::string{key});
@@ -217,6 +226,7 @@ void publishRow(mqtt::async_client& client, const std::string& dataTopic, int32_
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterMQTTInlineData(InlineDataRegistryArguments args)
 {
     const auto sourceUriOverride = consumeTestKnob(args.physicalSourceConfig, kTestSourceUriOverrideKey);
+    const auto disconnectAfter = consumeTestKnob(args.physicalSourceConfig, kTestDisconnectAfterKey);
     applyDispatchOverrides(args.physicalSourceConfig);
     auto endpoint = readEndpoint(args.physicalSourceConfig);
     wireSourcePresence(args.physicalSourceConfig, endpoint.presenceTopic);
@@ -224,9 +234,18 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterMQTTInlineDat
     {
         args.physicalSourceConfig.sourceConfig[ConfigParametersMQTTSource::SERVER_URI] = sourceUriOverride.value();
     }
+    auto rows = std::move(args.tuples);
+    if (disconnectAfter.has_value())
+    {
+        const auto limit = std::stoul(disconnectAfter.value());
+        if (limit < rows.size())
+        {
+            rows.resize(limit);
+        }
+    }
     args.serverThreads->push_back(spawnPublisherThread(
         std::move(endpoint),
-        [rows = std::move(args.tuples)](mqtt::async_client& client, const std::string& dataTopic, int32_t qos, const std::stop_token& stopToken)
+        [rows = std::move(rows)](mqtt::async_client& client, const std::string& dataTopic, int32_t qos, const std::stop_token& stopToken)
         {
             for (const auto& row : rows)
             {
