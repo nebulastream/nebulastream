@@ -49,6 +49,15 @@ if [ ! -f "$WORKERS_FILE" ]; then
   exit 1
 fi
 
+# When CODE_COVERAGE=ON, add_e2e_test sets LLVM_PROFILE_FILE on the host. Pass
+# it through to every service so instrumented binaries inside containers
+# write *.profraw into their cwd (mounted from TEST_VOLUME, synced back to
+# the host TMP_DIR by sync_workdir).
+COVERAGE_ENV_LINE=""
+if [ -n "$LLVM_PROFILE_FILE" ]; then
+  COVERAGE_ENV_LINE="      LLVM_PROFILE_FILE: \"$LLVM_PROFILE_FILE\""
+fi
+
 # Check if worker config is valid (not null, empty object, or whitespace)
 is_valid_config() {
   local config="$1"
@@ -87,7 +96,8 @@ services:
     environment:
       NES_TOPOLOGY_FILE: $WORKERS_FILE
       XDG_STATE_HOME: /workdir/.xdg-state
-    stop_grace_period: 0s
+${COVERAGE_ENV_LINE:+$COVERAGE_ENV_LINE
+}    stop_grace_period: 0s
     working_dir: /workdir
     command: ["sleep", "infinity"]
     volumes:
@@ -120,7 +130,9 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     image: $WORKER_IMAGE
     pull_policy: never
     working_dir: /workdir/$HOST_NAME
-    healthcheck:
+${COVERAGE_ENV_LINE:+    environment:
+$COVERAGE_ENV_LINE
+}    healthcheck:
       test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$HOST_PORT", "-connect-timeout", "5s" ]
       interval: 1s
       timeout: 5s
@@ -146,7 +158,9 @@ EOF
     image: $WORKER_IMAGE
     pull_policy: never
     working_dir: /workdir/$HOST_NAME
-    healthcheck:
+${COVERAGE_ENV_LINE:+    environment:
+$COVERAGE_ENV_LINE
+}    healthcheck:
       test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$HOST_PORT", "-connect-timeout", "5s" ]
       interval: 1s
       timeout: 5s

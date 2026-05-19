@@ -175,6 +175,16 @@ function(add_e2e_test)
     if (ARG_DOCKER_COMPOSE)
         list(APPEND _env_pairs NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE})
     endif ()
+    if (CODE_COVERAGE)
+        # Binaries (host or in-container) write profraw files into cwd, which
+        # is under $NES_TEST_TMP_DIR (directly for offline, via the synced
+        # /workdir for docker-compose). The bats-coverage-collect FIXTURES_CLEANUP
+        # test in the top-level CMakeLists.txt copies them out after all bats
+        # tests finish. %h+%p+%m disambiguates across parallel containers and
+        # forks; collisions across runs don't matter because each ccov-run-bats
+        # wipes the destination dir before re-running.
+        list(APPEND _env_pairs LLVM_PROFILE_FILE=ccov-bats-%h-%p-%m.profraw)
+    endif ()
     list(APPEND _env_pairs ${ARG_EXTRA_ENV})
 
     set(_env_cmd)
@@ -190,10 +200,15 @@ function(add_e2e_test)
     )
 
     set(_fixtures E2eBinaries)
-    set(_labels "")
+    set(_labels Bats)
     if (ARG_DOCKER_COMPOSE)
         list(APPEND _fixtures RuntimeBaseImage)
-        set(_labels DockerCompose)
+        list(APPEND _labels DockerCompose)
+    endif ()
+    if (CODE_COVERAGE)
+        # Triggers the bats-coverage-collect FIXTURES_CLEANUP test (top-level
+        # CMakeLists.txt) that harvests profraws after the bats run.
+        list(APPEND _fixtures BatsCoverage)
     endif ()
     set_tests_properties(${ARG_NAME} PROPERTIES
         FIXTURES_REQUIRED "${_fixtures}"

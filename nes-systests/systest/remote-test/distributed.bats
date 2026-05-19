@@ -74,8 +74,14 @@ teardown_file() {
 
 INSTANCE_PID=0
 setup() {
+  # Deterministic per-test working dir (see distributed_bats_lib.bash for the
+  # rationale — coverage harvest relies on stable paths across reruns).
   mkdir -p "$NES_TEST_TMP_DIR"
-  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
+  local _bats_file=${BATS_TEST_FILENAME##*/}
+  _bats_file=${_bats_file%.bats}
+  export TMP_DIR="$NES_TEST_TMP_DIR/${_bats_file}/${BATS_TEST_NAME}"
+  rm -rf "$TMP_DIR"
+  mkdir -p "$TMP_DIR"
 
   # Copy NES_DIR contents to temp directory for DOOD compatibility
   cd "$TMP_DIR" || exit
