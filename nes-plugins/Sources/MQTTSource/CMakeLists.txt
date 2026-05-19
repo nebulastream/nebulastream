@@ -12,14 +12,15 @@
 
 add_plugin_as_library(MQTT Source nes-sources-registry mqtt_source_plugin_library MQTTSource.cpp)
 add_plugin_as_library(MQTT SourceValidation nes-sources-registry mqtt_source_validation_plugin_library MQTTSource.cpp)
-# InlineData / FileData plugins materialise the test's ATTACH content into the
-# broker. The publisher subscribes to the data topic's `_nes_control` sibling,
-# waits for the source to publish "ready", then streams rows on the data topic
-# and writes a zero-byte sentinel to mark EOS. systest dispatches into these
-# when the .test file has `ATTACH INLINE` / `ATTACH FILE` under an MQTT
-# physical source — see RegisterMQTT{Inline,File}Data in MQTTSource.cpp.
-add_plugin_as_library(MQTT InlineData nes-sources-registry mqtt_inline_data_plugin_library MQTTSource.cpp)
-add_plugin_as_library(MQTT FileData nes-sources-registry mqtt_file_data_plugin_library MQTTSource.cpp)
+# InlineData / FileData plugins live in MQTTTestPublisher.cpp so MQTTSource.{hpp,cpp}
+# stays a pure runtime subscriber with no test-scaffold awareness. The test
+# publisher waits on the source's `presencetopic` advertisement, streams the
+# ATTACH rows on the data topic, then writes a zero-byte EOS sentinel that
+# the source consumes via its `eosonemptypayload` flag. Both flags are
+# generic source-feature opt-ins; the test publisher is the only thing that
+# sets them.
+add_plugin_as_library(MQTT InlineData nes-sources-registry mqtt_inline_data_plugin_library MQTTTestPublisher.cpp)
+add_plugin_as_library(MQTT FileData nes-sources-registry mqtt_file_data_plugin_library MQTTTestPublisher.cpp)
 
 find_package(PahoMqttCpp CONFIG REQUIRED)
 # vcpkg builds Paho C++ as a static library (PahoMqttCpp::paho-mqttpp3-static);

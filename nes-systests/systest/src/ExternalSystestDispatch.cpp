@@ -354,32 +354,81 @@ bool probeReachable(const std::string& host, int port, std::chrono::milliseconds
 /// Verify the current process can reach the docker socket before we start
 /// shelling out to `docker volume create` / `docker compose up`. The
 /// alternative is a five-line cpptrace dump triggered ~four call frames in
-/// when the first docker subprocess fails with "permission denied while
-/// trying to connect to the docker API at unix:///var/run/docker.sock" —
-/// usable but not very actionable.
+/// when the first docker subprocess fails — usable but not very actionable.
 ///
-/// Most common cause of the failure: CLion's docker toolchain passes
-/// `--user $UID:$GID` to map host UID/GID for file ownership. Docker
-/// silently drops the supplementary groups the image baked into `/etc/group`
-/// when `--user` overrides USER, so even though the image lists the docker
-/// (or systemd-network squatter) GID for the user, the running process is
-/// not a member at run time. The fix is `--group-add <gid>` in the
-/// toolchain's run options. The diagnostic below tells the user the exact
-/// GID to add and where to add it.
+/// Two failure modes get targeted banners:
 ///
-/// We probe by stat()-ing the socket and walking the process's
-/// supplementary groups. A miss throws CannotOpenSource with the targeted
-/// hint; a hit (or socket-not-at-standard-path, e.g. rootless docker) lets
-/// dispatch proceed and any subsequent docker error surface its own way.
+///   (1) Socket missing at /var/run/docker.sock. Inside the dev container
+///       this is almost always a missing `-v /var/run/docker.sock:...`
+///       bind mount in the toolchain's run options. Docker would otherwise
+///       surface `dial unix /var/run/docker.sock: connect: no such file or
+///       directory` ~four call frames deep. On macOS + colima the same
+///       fix needs a host-side symlink first because CLion's docker-java
+///       client validates the bind source on the Mac before talking to
+///       dockerd, and /var/run/docker.sock does not exist on macOS.
+///
+///   (2) Socket present but the process is not in its group. Most common
+///       cause: CLion's docker toolchain passes `--user $UID:$GID` to map
+///       host UID/GID for file ownership. Docker silently drops the
+///       supplementary groups the image baked into `/etc/group` when
+///       `--user` overrides USER, so even though the image lists the
+///       docker (or systemd-network squatter) GID for the user, the
+///       running process is not a member at run time. Fix is
+///       `--group-add <gid>` in the toolchain's run options; the diagnostic
+///       reports the exact GID.
+///
+/// Outside a container, a missing socket falls through (rootless docker
+/// at $XDG_RUNTIME_DIR, daemon not running, etc.) and lets docker's own
+/// error surface from the next subprocess call.
 void checkDockerSocketAccess()
 {
     constexpr const char* socketPath = "/var/run/docker.sock";
+
+    /// ANSI escapes only when stderr is a TTY — build logs (file/pipe) get
+    /// plain text instead of literal `\033[…m` garbage.
+    const bool useColor = ::isatty(STDERR_FILENO) != 0;
+    const auto* const red = useColor ? "\033[1;31m" : "";
+    const auto* const yellow = useColor ? "\033[1;33m" : "";
+    const auto* const bold = useColor ? "\033[1m" : "";
+    const auto* const reset = useColor ? "\033[0m" : "";
+
     struct stat statBuf{};
     if (::stat(socketPath, &statBuf) != 0)
     {
-        /// Standard path missing — rootless docker, daemon not running, etc.
-        /// Let docker's own error surface from the next subprocess call.
-        return;
+        /// Outside a container we have no actionable advice — let docker's
+        /// own error speak.
+        if (!std::filesystem::exists("/.dockerenv"))
+        {
+            return;
+        }
+
+        /// Banner-style framing so the actionable hint pops in a CLion build
+        /// window without the user having to scroll. We `std::exit` rather
+        /// than throw to suppress the cpptrace terminate-handler stack dump
+        /// that would otherwise push the diagnostic off-screen.
+        std::cerr << '\n'
+                  << red << "============================================================================\n"
+                  << " external_systest: docker socket not bind-mounted into this container\n"
+                  << "============================================================================" << reset << "\n\n"
+                  << "Expected the host's docker socket at " << bold << socketPath << reset << ", but no\n"
+                  << "such file exists inside this container. The systest dispatcher needs to\n"
+                  << "shell out to `docker compose` to bring up the external services this\n"
+                  << "test depends on, so it needs a path to the host's docker daemon.\n\n"
+                  << yellow << "  FIX:" << reset << " in CLion " << bold << "Settings -> Docker -> Container settings -> Run options"
+                  << reset << ",\n"
+                  << "       add the flag\n\n"
+                  << "           " << bold << "-v /var/run/docker.sock:/var/run/docker.sock" << reset << "\n\n"
+                  << "On " << bold << "macOS + colima" << reset << ", CLion validates the bind source on the Mac side\n"
+                  << "before talking to dockerd, and /var/run/docker.sock does not exist on\n"
+                  << "macOS — adding the flag alone makes CLion silently fail to reload the\n"
+                  << "CMake configuration. Symlink the colima socket to that path on the host\n"
+                  << "first (run on the Mac, not inside this container):\n\n"
+                  << "           " << bold << R"(sudo ln -sf "$HOME/.colima/default/docker.sock" /var/run/docker.sock)" << reset << "\n\n"
+                  << "(.claude/skills/nes-build/in-docker.sh already passes the bind mount,\n"
+                  << "which is why systests work via the skill without toolchain changes.)\n"
+                  << red << "============================================================================" << reset << "\n\n";
+        std::cerr.flush();
+        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
     const gid_t socketGid = statBuf.st_gid;
 
@@ -409,20 +458,6 @@ void checkDockerSocketAccess()
         groupName = grp->gr_name;
     }
 
-    /// ANSI escapes only when stderr is a TTY — build logs (file/pipe) get
-    /// plain text instead of literal `\033[…m` garbage.
-    const bool useColor = ::isatty(STDERR_FILENO) != 0;
-    const auto* const red = useColor ? "\033[1;31m" : "";
-    const auto* const yellow = useColor ? "\033[1;33m" : "";
-    const auto* const bold = useColor ? "\033[1m" : "";
-    const auto* const reset = useColor ? "\033[0m" : "";
-
-    /// Banner-style framing so the actionable hint pops in a CLion build
-    /// window without the user having to scroll. We `std::exit` rather than
-    /// throw to suppress the cpptrace terminate-handler stack dump that
-    /// would otherwise push the diagnostic off-screen — at this point in
-    /// dispatch no RAII guards have been constructed yet, so cleanup is a
-    /// no-op.
     std::cerr << '\n'
               << red << "============================================================================\n"
               << " external_systest: cannot access the docker socket\n"

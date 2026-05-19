@@ -1,5 +1,5 @@
 # name: MQTTSource/MQTT_stream_file.test
-# description: Reads a small CSV stream fixture through an MQTT broker, exercising the FileData registrar's line-by-line publishing path with the publish-after-subscribe handshake and zero-byte EOS sentinel on the data topic. Sinks the result tuples into File() so the expected-output diff can verify ordering at low scale.
+# description: Reads a small CSV stream fixture through an MQTT broker, exercising the FileData registrar's line-by-line publishing path. The publisher thread waits for the source's presence announcement on <topic>/_nes_presence before sending; the source EOS-es via heartbeat-absence after the publisher disconnects. Sinks the result tuples into File() so the expected-output diff can verify ordering at low scale.
 # requires: mqtt
 CREATE LOGICAL SOURCE ysb1k(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 

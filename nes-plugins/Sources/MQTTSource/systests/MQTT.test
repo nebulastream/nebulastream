@@ -1,5 +1,5 @@
 # name: MQTTSource/MQTT.test
-# description: Reads ATTACH-declared rows from an MQTT broker. The MQTT InlineData registrar spawns a publisher that subscribes to <topic>/_nes_control and waits for the source to publish "ready" there once it has subscribed to the data topic. The publisher then streams the rows non-retained on the data topic and writes a zero-byte payload as the EOS sentinel. The source treats that sentinel as end-of-stream.
+# description: Reads ATTACH-declared rows from an MQTT broker. The MQTT InlineData registrar spawns a publisher thread that waits for the source's presence announcement on <topic>/_nes_presence (a generic source feature, opt-in via the `presencetopic` knob), then publishes the rows and disconnects. The source EOS-es via heartbeat-absence (flushIntervalMs × maxFlushRetries) once the publisher has gone away.
 # requires: mqtt
 CREATE LOGICAL SOURCE mqtt_source(id INT32, value INT32, timestamp UINT64);
 
