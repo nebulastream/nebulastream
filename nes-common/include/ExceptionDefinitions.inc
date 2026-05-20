@@ -75,6 +75,8 @@ EXCEPTION(PlacementFailure, 2300, "placement failure")
 EXCEPTION(InvalidTopology, 2301, "invalid topology")
 EXCEPTION(UnknownWorker, 2302, "unknown worker")
 EXCEPTION(DistributedFailure, 2303, "distributed failure")
+EXCEPTION(WorkerUnreachable, 2304, "worker could not be reached")
+EXCEPTION(WorkerAlreadyExists, 2305, "worker already exists")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
@@ -100,6 +102,11 @@ EXCEPTION(QueryStartFailed, 5002, "query start call failed")
 EXCEPTION(QueryStopFailed, 5003, "query stop call failed")
 EXCEPTION(QueryUnregistrationFailed, 5004, "query unregistration call failed")
 EXCEPTION(QueryStatusFailed, 5005, "query status call failed")
+EXCEPTION(QueryWaitTimeout, 5006, "timed out waiting for a query to reach the requested state")
+
+/// 6XXX Errors reading or writing the coordinator's catalog
+EXCEPTION(CatalogUnavailable, 6000, "catalog is unavailable")
+EXCEPTION(CatalogWriteRejected, 6001, "catalog rejected the write")
 
 /// 9XXX Internal errors (e.g. bugs)
 EXCEPTION(FunctionNotImplemented, 9000, "function not implemented")
