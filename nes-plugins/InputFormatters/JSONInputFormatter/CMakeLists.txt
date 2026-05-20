@@ -15,10 +15,10 @@ add_plugin_as_library(JSON InputFormatIndexer json_input_format_indexer_plugin_l
 add_plugin(JSON InputFormatterValidation SIMDJSONInputFormatIndexer.cpp SIMDJSONRawBufferIndex.cpp)
 #add_plugin_as_library(JSON InputFormatterValidation json_input_format_validation_plugin_library SIMDJSONInputFormatIndexer.cpp SIMDJSONRawBufferIndex.cpp)
 target_include_directories(json_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
-target_include_directories(json_input_format_indexer_plugin_library PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../Common)
+target_include_directories(json_input_format_indexer_plugin_library PRIVATE .)
 # add_plugin() defers the sources above to the registry component target (nes-input-formatters),
 # which compiles them without the flags set on the plugin library, so it needs the same include dirs.
-target_include_directories(nes-input-formatters PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ ${CMAKE_CURRENT_SOURCE_DIR}/../Common)
+target_include_directories(nes-input-formatters PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ )
 
 find_package(simdjson CONFIG REQUIRED)
 target_link_libraries(json_input_format_indexer_plugin_library PRIVATE simdjson::simdjson)
