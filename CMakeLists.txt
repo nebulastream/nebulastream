@@ -245,6 +245,24 @@ if (NES_ENABLES_TESTS)
                 LABELS "DockerCompose"
         )
     endif ()
+
+    # Register the coordinator Rust workspace (model + migration) tests with
+    # CTest so a local `ctest` run covers them alongside the C++ tests. The
+    # `coordinator-tests` label lets CI exclude them (-LE coordinator-tests);
+    # CI coverage of these crates is provided by the dedicated coordinator.yml
+    # workflow.
+    if (Rust_CARGO)
+        set(NES_CARGO_EXECUTABLE "${Rust_CARGO}")
+    else ()
+        find_program(NES_CARGO_EXECUTABLE NAMES cargo REQUIRED)
+    endif ()
+    add_test(
+            NAME coordinator-tests
+            COMMAND ${NES_CARGO_EXECUTABLE} test --workspace --manifest-path ${CMAKE_SOURCE_DIR}/Cargo.toml
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+    set_tests_properties(coordinator-tests PROPERTIES LABELS "coordinator-tests")
+
     if (CODE_COVERAGE)
         include(cmake/CodeCoverage.cmake)
         add_code_coverage_all_targets(EXCLUDE ${CMAKE_BINARY_DIR}/* tests/*)
