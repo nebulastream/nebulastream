@@ -38,6 +38,11 @@ create_runtime_registry(InputFormatIndexer nes-input-formatters
         HEADER_TEMPLATE "\${PLUGIN_NAME}InputFormatIndexer.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
+create_runtime_registry(ValueDeserializer nes-input-formatters
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}ValueDeserializer::provideDeserializer"
+        HEADER_TEMPLATE "DefaultValueDeserializers.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+
 add_subdirectory(src)
 get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 target_sources(nes-input-formatters PRIVATE ${NES_SOURCE_PARSERS_SOURCE_FILES})

@@ -340,7 +340,13 @@ void parseLeadingRecord(
             = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTupleRawBufferIndex));
 
         auto record = getIndexPhaseResult()->leadingSpanningTupleRawBufferIndex->readSpanningRecord(
-            projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexer, leadingRawBufferIndex, bufferRef);
+            projections,
+            spanningRecordPtr,
+            nautilus::val<uint64_t>(0),
+            indexer,
+            leadingRawBufferIndex,
+            bufferRef,
+            executionCtx.pipelineMemoryProvider.arena);
         executeChild(executionCtx, record);
     }
 }
@@ -359,7 +365,13 @@ void parseRecordsInRawBuffer(
     while (getIndexPhaseResult()->rawBufferIndex->hasNext(bufferRecordIdx, rawBufferIndexVal))
     {
         auto record = getIndexPhaseResult()->rawBufferIndex->readSpanningRecord(
-            projections, recordBuffer.getMemArea(), bufferRecordIdx, indexer, rawBufferIndexVal, bufferRef);
+            projections,
+            recordBuffer.getMemArea(),
+            bufferRecordIdx,
+            indexer,
+            rawBufferIndexVal,
+            bufferRef,
+            executionCtx.pipelineMemoryProvider.arena);
         executeChild(executionCtx, record);
         bufferRecordIdx += 1;
     }
@@ -389,7 +401,13 @@ void parseTrailingRecord(
             = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleRawBufferIndex));
 
         auto record = getIndexPhaseResult()->trailingSpanningTupleRawBufferIndex->readSpanningRecord(
-            projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexer, trailingRawBufferIndex, bufferRef);
+            projections,
+            spanningRecordPtr,
+            nautilus::val<uint64_t>(0),
+            indexer,
+            trailingRawBufferIndex,
+            bufferRef,
+            executionCtx.pipelineMemoryProvider.arena);
         executeChild(executionCtx, record);
     }
 }
