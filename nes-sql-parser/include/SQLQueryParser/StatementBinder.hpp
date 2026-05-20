@@ -28,6 +28,9 @@
 #include <vector>
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -42,7 +45,7 @@ namespace NES
 {
 
 using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">; /// NOLINT(misc-include-cleaner)
-using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
+using LogicalSourceName = Identifier;
 
 enum class StatementOutputFormat : uint8_t
 {
@@ -54,35 +57,35 @@ enum class StatementOutputFormat : uint8_t
 /// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
 struct CreateLogicalSourceStatement
 {
-    std::string name;
-    Schema schema;
+    Identifier name;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
 };
 
 struct CreatePhysicalSourceStatement
 {
     LogicalSourceName attachedTo;
-    std::string sourceType;
+    Identifier sourceType;
     std::optional<Host> host;
-    std::unordered_map<std::string, std::string> sourceConfig;
-    std::unordered_map<std::string, std::string> parserConfig;
+    std::unordered_map<Identifier, std::string> sourceConfig;
+    std::unordered_map<Identifier, std::string> parserConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
 struct CreateSinkStatement
 {
-    std::string name;
-    std::string sinkType;
-    Schema schema;
+    Identifier name;
+    Identifier sinkType;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
     std::optional<Host> host;
-    std::unordered_map<std::string, std::string> sinkConfig;
-    std::unordered_map<std::string, std::string> formatConfig;
+    std::unordered_map<Identifier, std::string> sinkConfig;
+    std::unordered_map<Identifier, std::string> formatConfig;
 };
 
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
 /// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
 struct ShowLogicalSourcesStatement
 {
-    std::optional<std::string> name;
+    std::optional<Identifier> name;
     std::optional<StatementOutputFormat> format;
 };
 
@@ -97,7 +100,7 @@ struct ShowPhysicalSourcesStatement
 
 struct ShowSinksStatement
 {
-    std::optional<std::string> name;
+    std::optional<Identifier> name;
     std::optional<StatementOutputFormat> format;
 };
 
@@ -113,7 +116,7 @@ struct DropPhysicalSourceStatement
 
 struct DropSinkStatement
 {
-    std::string name;
+    Identifier name;
 };
 
 struct QueryStatement
@@ -142,8 +145,8 @@ struct CreateModelStatement
 {
     std::string name;
     std::string path;
-    Schema inputs;
-    Schema outputs;
+    Schema<UnqualifiedUnboundField, Ordered> inputs;
+    Schema<UnqualifiedUnboundField, Ordered> outputs;
 };
 
 struct ShowModelsStatement

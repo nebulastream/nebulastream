@@ -21,7 +21,6 @@
 #include <typeinfo>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>

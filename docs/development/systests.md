@@ -70,12 +70,12 @@ ATTACH FILE testdata.csv
 
 # A generator source with no additional input data because it generates its data automatically.
 CREATE PHYSICAL SOURCE FOR input TYPE Generator SET(
-       'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
+       'ONE' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS "SOURCE".SEED,
 # Avoid using timeouts for the generator sources, it can cause flakey tests. 
-#      1000000 AS `SOURCE`.MAX_RUNTIME_MS,
+#      1000000 AS "SOURCE".MAX_RUNTIME_MS,
 # Instead rely on self-terminating sequences
-       'SEQUENCE UINT64 0 100 1, SEQUENCE FLOAT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
+       'SEQUENCE UINT64 0 100 1, SEQUENCE FLOAT64 0 200 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 ```
 
@@ -94,9 +94,9 @@ Example:
 ```sql
 SELECT ID, VALUE, TIMESTAMP
 FROM File(
-	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
-	'CSV' AS PARSER.`TYPE`,
-	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+	'small/stream8.csv' AS "SOURCE".FILE_PATH,
+	'CSV' AS PARSER."TYPE",
+	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS "SOURCE"."SCHEMA")
 INTO output;
 ```
 
@@ -133,7 +133,7 @@ INTO File();
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source
-INTO File(SCHEMA(ID UINT64, VALUE VARSIZE, TIMESTAMP UINT64) AS `SINK`.`SCHEMA`, FALSE AS `PARSER`.QUOTE_STRINGS);
+INTO File(SCHEMA(ID UINT64, VALUE VARSIZE, TIMESTAMP UINT64) AS "SINK"."SCHEMA", FALSE AS "PARSER".QUOTE_STRINGS);
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source
@@ -263,14 +263,14 @@ CREATE LOGICAL SOURCE nameStream(firstName VARSIZED, lastName VARSIZED);
 
 CREATE PHYSICAL SOURCE FOR nameStream
 TYPE File
-SET("sink-node:9090" AS `SOURCE`.`HOST`);
+SET("sink-node:9090" AS "SOURCE"."HOST");
 ATTACH INLINE
 Alice,Smith
 Bob,Jones
 
 CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED)
 TYPE File
-SET("sink-node:9090" AS `SINK`.`HOST`);
+SET("sink-node:9090" AS "SINK"."HOST");
 
 SELECT CONCAT(firstName, lastName) AS firstNameLastName
 FROM nameStream
@@ -285,13 +285,13 @@ BobJones
 ```sql
 SELECT id, value, timestamp
 FROM File(
-    'small/stream8.csv' AS `SOURCE`.FILE_PATH,
-    'source-node:9090' AS `SOURCE`.`HOST`,
-    'CSV' AS PARSER.`TYPE`,
-    SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+    'small/stream8.csv' AS "SOURCE".FILE_PATH,
+    'source-node:9090' AS "SOURCE"."HOST",
+    'CSV' AS PARSER."TYPE",
+    SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS "SOURCE"."SCHEMA")
 INTO File(
-    'sink-node:9090' AS `SINK`.`HOST`,
-    'CSV' AS `SINK`.`INPUT_FORMAT`);
+    'sink-node:9090' AS "SINK"."HOST",
+    'CSV' AS "SINK"."INPUT_FORMAT");
 ----
 1,100,1000
 2,200,2000

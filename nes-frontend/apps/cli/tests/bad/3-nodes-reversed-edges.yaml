@@ -10,7 +10,7 @@ sinks:
   - name: VOID_SINK
     host: node1:8080
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     type: Print
     config:

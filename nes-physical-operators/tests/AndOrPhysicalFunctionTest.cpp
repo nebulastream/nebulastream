@@ -19,6 +19,7 @@
 #include <Functions/BooleanFunctions/AndPhysicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrPhysicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -53,15 +54,15 @@ public:
         const nautilus::val<bool> isNull = true;
         const nautilus::val<bool> isNotNull = false;
         record = Record{std::unordered_map<Record::RecordFieldIdentifier, VarVal>{
-            {"true", VarVal{nautilus::val<bool>{true}, isNullable, isNotNull}},
-            {"false", VarVal{nautilus::val<bool>{false}, isNullable, isNotNull}},
-            {"null", VarVal{nautilus::val<bool>{true}, isNullable, isNull}}}};
+            {Identifier::parse("true"), VarVal{nautilus::val<bool>{true}, isNullable, isNotNull}},
+            {Identifier::parse("false"), VarVal{nautilus::val<bool>{false}, isNullable, isNotNull}},
+            {Identifier::parse("null"), VarVal{nautilus::val<bool>{true}, isNullable, isNull}}}};
     }
 
     Record record;
-    FieldAccessPhysicalFunction readTrue{"true"};
-    FieldAccessPhysicalFunction readFalse{"false"};
-    FieldAccessPhysicalFunction readNull{"null"};
+    FieldAccessPhysicalFunction readTrue{Identifier::parse("true")};
+    FieldAccessPhysicalFunction readFalse{Identifier::parse("false")};
+    FieldAccessPhysicalFunction readNull{Identifier::parse("null")};
     std::shared_ptr<AbstractBufferProvider> bufferManager;
 };
 

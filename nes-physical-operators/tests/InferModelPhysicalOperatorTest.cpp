@@ -29,13 +29,18 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <ranges>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -191,26 +196,47 @@ public:
         return names;
     }
 
-    /// Builds the input/output schemas for a VARSIZED-input inference test.
-    static std::pair<Schema, Schema> makeSchemas(const std::vector<std::string>& outputFieldNames)
-    {
-        Schema inputSchema;
-        inputSchema.addField("input_blob", DataType::Type::VARSIZED);
+    using TestSchema = Schema<UnqualifiedUnboundField, Ordered>;
 
-        Schema outputSchema;
-        outputSchema.addField("input_blob", DataType::Type::VARSIZED);
+    static UnqualifiedUnboundField makeField(std::string_view name, DataType::Type type)
+    {
+        return UnqualifiedUnboundField{Identifier::parse(std::string{name}), DataType{type, DataType::NULLABLE::NOT_NULLABLE}};
+    }
+
+    static std::vector<QualifiedIdentifier> toIdLists(const std::vector<std::string>& names)
+    {
+        return names | std::views::transform([](const std::string& n) { return QualifiedIdentifier::tryParse(n).value(); })
+            | std::ranges::to<std::vector>();
+    }
+
+    static std::vector<QualifiedIdentifier> toIdLists(const TestSchema& schema)
+    {
+        return schema
+            | std::views::transform([](const UnqualifiedUnboundField& f)
+                                    { return static_cast<QualifiedIdentifier>(f.getFullyQualifiedName()); })
+            | std::ranges::to<std::vector>();
+    }
+
+    /// Builds the input/output schemas for a VARSIZED-input inference test.
+    static std::pair<TestSchema, TestSchema> makeSchemas(const std::vector<std::string>& outputFieldNames)
+    {
+        auto inputSchema = std::vector{makeField("input_blob", DataType::Type::VARSIZED)} | std::ranges::to<TestSchema>();
+
+        std::vector<UnqualifiedUnboundField> outputFields;
+        outputFields.push_back(makeField("input_blob", DataType::Type::VARSIZED));
         for (const auto& name : outputFieldNames)
         {
-            outputSchema.addField(name, DataType::Type::FLOAT32);
+            outputFields.push_back(makeField(name, DataType::Type::FLOAT32));
         }
-        return {inputSchema, outputSchema};
+        auto outputSchema = std::move(outputFields) | std::ranges::to<TestSchema>();
+        return {std::move(inputSchema), std::move(outputSchema)};
     }
 
     /// Creates a Scan -> InferModel -> Emit pipeline with the given model and schemas.
     static InferencePipeline createInferencePipeline(
         const NES::CompiledModel& model,
-        const Schema& inputSchema,
-        const Schema& outputSchema,
+        const TestSchema& inputSchema,
+        const TestSchema& outputSchema,
         const std::vector<std::string>& inputFieldNames,
         const std::vector<std::string>& outputFieldNames,
         bool varsizedInput,
@@ -219,8 +245,9 @@ public:
         auto inputBufRef = LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, MemoryLayoutType::ROW_LAYOUT);
         auto outputBufRef = LowerSchemaProvider::lowerSchema(bufferSize, outputSchema, MemoryLayoutType::ROW_LAYOUT);
 
-        ScanPhysicalOperator scan(inputBufRef, inputSchema.getFieldNames());
-        InferModelPhysicalOperator inferModel(model, inputFieldNames, outputFieldNames, varsizedInput, varsizedOutput);
+        ScanPhysicalOperator scan(inputBufRef, toIdLists(inputSchema));
+        InferModelPhysicalOperator inferModel(
+            model, toIdLists(inputFieldNames), toIdLists(outputFieldNames), varsizedInput, varsizedOutput);
         const EmitPhysicalOperator emit(OperatorHandlerId(1), outputBufRef);
 
         inferModel.setChild(PhysicalOperator(emit));
@@ -235,7 +262,7 @@ public:
     }
 
     /// Creates an input TupleBuffer with VARSIZED records, each containing packed floats.
-    static TupleBuffer createInputBuffer(const Schema& inputSchema, const std::vector<std::vector<float>>& recordFloats)
+    static TupleBuffer createInputBuffer(const TestSchema& inputSchema, const std::vector<std::vector<float>>& recordFloats)
     {
         auto bufMgr = BufferManager::create(bufferSize, 200);
         auto tupleBuffer = bufMgr->getBufferBlocking();
@@ -628,13 +655,11 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
     constexpr size_t numFloats = 100;
 
     /// Input schema: VARSIZED blob of packed floats
-    Schema inputSchema;
-    inputSchema.addField("input_blob", DataType::Type::VARSIZED);
+    auto inputSchema = std::vector{makeField("input_blob", DataType::Type::VARSIZED)} | std::ranges::to<TestSchema>();
 
     /// Output schema: input blob + single VARSIZED output blob
-    Schema outputSchema;
-    outputSchema.addField("input_blob", DataType::Type::VARSIZED);
-    outputSchema.addField("output_blob", DataType::Type::VARSIZED);
+    auto outputSchema = std::vector{makeField("input_blob", DataType::Type::VARSIZED), makeField("output_blob", DataType::Type::VARSIZED)}
+        | std::ranges::to<TestSchema>();
 
     auto inputBuffer = createInputBuffer(inputSchema, {makeFloats(numFloats)});
     ASSERT_TRUE(identityModel.has_value());

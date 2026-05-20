@@ -23,47 +23,53 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
 std::expected<SinkDescriptor, Exception> SinkCatalog::addSinkDescriptor(
-    std::string sinkName,
-    const Schema& schema,
-    const std::string_view sinkType,
+    Identifier sinkName,
+    const Schema<UnqualifiedUnboundField, Ordered>& schema,
+    const Identifier& sinkType,
     Host host,
-    std::unordered_map<std::string, std::string> config,
-    const std::unordered_map<std::string, std::string>& formatConfig)
+    std::unordered_map<Identifier, std::string> config,
+    const std::unordered_map<Identifier, std::string>& formatConfig)
 {
-    if (std::ranges::all_of(sinkName, [](const char character) { return std::isdigit(character); }))
+    if (std::ranges::all_of(fmt::format("{}", sinkName), [](const char character) { return std::isdigit(character); }))
     {
         return std::unexpected{InvalidConfigParameter("Sink name '{}' is invalid: only-digit names are reserved", sinkName)};
     }
 
-    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
+    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType.asCanonicalString(), std::move(config));
     if (not descriptorConfigOpt.has_value())
     {
         return std::unexpected{InvalidConfigParameter("Invalid configuration for sink '{}' of type '{}'", sinkName, sinkType)};
     }
 
     const auto lockedSinks = sinks.wlock();
-    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(host), formatConfig, std::move(descriptorConfigOpt.value())};
+    auto sinkDescriptor = SinkDescriptor{NamedSinkDescriptor{
+        sinkName, schema, sinkType.asCanonicalString(), std::move(host), formatConfig, std::move(descriptorConfigOpt.value())}};
 
     /// TODO #1504: duplicate sinks are not registered
-    lockedSinks->emplace(toUpperCase(sinkName), sinkDescriptor);
+    lockedSinks->emplace(std::move(sinkName), sinkDescriptor);
     return sinkDescriptor;
 }
 
-std::optional<SinkDescriptor> SinkCatalog::getSinkDescriptor(const std::string& sinkName) const
+std::optional<SinkDescriptor> SinkCatalog::getSinkDescriptor(const Identifier& sinkName) const
 {
     const auto lockedSinks = sinks.rlock();
-    const auto sinkDescriptorOpt = lockedSinks->find(std::string{sinkName});
+    const auto sinkDescriptorOpt = lockedSinks->find(sinkName);
     if (sinkDescriptorOpt == lockedSinks->end())
     {
         return std::nullopt;
@@ -72,13 +78,13 @@ std::optional<SinkDescriptor> SinkCatalog::getSinkDescriptor(const std::string& 
 }
 
 std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
-    const Schema& schema,
-    std::string_view sinkType,
+    const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
+    const Identifier& sinkType,
     Host host,
-    std::unordered_map<std::string, std::string> config,
-    const std::unordered_map<std::string, std::string>& formatConfig) const
+    std::unordered_map<Identifier, std::string> config,
+    const std::unordered_map<Identifier, std::string>& formatConfig) const
 {
-    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
+    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType.asCanonicalString(), std::move(config));
 
     const auto inlineSinkId = InlineSinkId{nextInlineSinkId.fetch_add(1)};
 
@@ -87,13 +93,23 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
         return std::nullopt;
     }
 
-    auto sinkDescriptor = SinkDescriptor{
-        inlineSinkId.getRawValue(), schema, sinkType, std::move(host), formatConfig, std::move(descriptorConfigOpt.value())};
+    const std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schemaVar
+        = schema.has_value()
+        ? std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>>{schema.value()}
+        : std::monostate{};
+
+    auto sinkDescriptor = SinkDescriptor{InlineSinkDescriptor{
+        inlineSinkId.getRawValue(),
+        schemaVar,
+        sinkType.asCanonicalString(),
+        std::move(host),
+        formatConfig,
+        std::move(descriptorConfigOpt.value())}};
 
     return sinkDescriptor;
 }
 
-bool SinkCatalog::removeSinkDescriptor(const std::string& sinkName)
+bool SinkCatalog::removeSinkDescriptor(const Identifier& sinkName)
 {
     const auto lockedSinks = sinks.wlock();
     return lockedSinks->erase(sinkName) == 1;
@@ -105,7 +121,7 @@ bool SinkCatalog::removeSinkDescriptor(const SinkDescriptor& sinkDescriptor)
     return lockedSinks->erase(sinkDescriptor.getSinkName()) == 1;
 }
 
-bool SinkCatalog::containsSinkDescriptor(const std::string& sinkName) const
+bool SinkCatalog::containsSinkDescriptor(const Identifier& sinkName) const
 {
     const auto lockedSinks = sinks.rlock();
     return lockedSinks->contains(sinkName);

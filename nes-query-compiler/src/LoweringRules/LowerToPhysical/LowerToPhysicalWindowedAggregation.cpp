@@ -20,7 +20,9 @@
 #include <numeric>
 #include <ranges>
 #include <span>
+#include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
@@ -45,13 +47,20 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <magic_enum/magic_enum.hpp>
+
+#include <DataTypes/UnboundField.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapOptions.hpp>
@@ -63,56 +72,6 @@
 
 namespace NES
 {
-
-static std::pair<std::vector<Record::RecordFieldIdentifier>, std::vector<Record::RecordFieldIdentifier>>
-getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
-{
-    std::vector<Record::RecordFieldIdentifier> fieldKeyNames;
-    std::vector<Record::RecordFieldIdentifier> fieldValueNames;
-
-    /// Getting the key and value field names
-    for (const auto& nodeAccess : logicalOperator.getGroupingKeys())
-    {
-        fieldKeyNames.emplace_back(nodeAccess.getFieldName());
-    }
-    for (const auto& descriptor : logicalOperator.getWindowAggregation())
-    {
-        const auto aggregationResultFieldIdentifier = descriptor->getOnField().getFieldName();
-        fieldValueNames.emplace_back(aggregationResultFieldIdentifier);
-    }
-    return {fieldKeyNames, fieldValueNames};
-}
-
-static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOperator& logicalOperator)
-{
-    auto* const timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(logicalOperator.getWindowType().get());
-    if (timeWindow == nullptr)
-    {
-        throw UnknownWindowType("Window type is not a time based window type");
-    }
-
-    switch (timeWindow->getTimeCharacteristic().getType())
-    {
-        case Windowing::TimeCharacteristic::Type::IngestionTime: {
-            if (timeWindow->getTimeCharacteristic().field.name == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
-            {
-                return std::make_unique<IngestionTimeFunction>();
-            }
-            throw UnknownWindowType(
-                "The ingestion time field of a window must be: {}", Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME);
-        }
-        case Windowing::TimeCharacteristic::Type::EventTime: {
-            /// For event time fields, we look up the reference field name and create an expression to read the field.
-            auto timeCharacteristicField = timeWindow->getTimeCharacteristic().field.name;
-            auto timeStampField = FieldAccessPhysicalFunction(timeCharacteristicField);
-            return std::make_unique<EventTimeFunction>(timeStampField, timeWindow->getTimeCharacteristic().getTimeUnit());
-        }
-        default: {
-            throw UnknownWindowType("Unknown window type: {}", magic_enum::enum_name(timeWindow->getTimeCharacteristic().getType()));
-        }
-    }
-}
-
 namespace
 {
 std::vector<std::shared_ptr<AggregationPhysicalFunction>>
@@ -122,27 +81,35 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
     for (const auto& descriptor : aggregationDescriptors)
     {
-        auto physicalInputType = descriptor->getOnField().getDataType();
-        auto physicalFinalType = descriptor->getAsField().getDataType();
+        const auto fieldIsBound
+            = std::holds_alternative<TypedLogicalFunction<FieldAccessLogicalFunction>>(descriptor.function.getInputFunction());
+        PRECONDITION(fieldIsBound, "Expected the aggregation function to be bound");
+        const auto fieldAccessFunction = std::get<TypedLogicalFunction<FieldAccessLogicalFunction>>(descriptor.function.getInputFunction());
 
-        auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->getOnField());
-        const auto resultFieldIdentifier = descriptor->getAsField().getFieldName();
-        const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+        auto physicalInputType = fieldAccessFunction->getDataType();
+        auto physicalFinalType = descriptor.function->getAggregateType();
+
+        auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(
+            fieldAccessFunction, *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>());
+        const auto resultFieldIdentifier = descriptor.name;
+
+        const auto memoryLayoutTypeTrait = logicalOperator.getChild()->getTraitSet().tryGet<MemoryLayoutTypeTrait>();
         PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
         const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-        auto bufferRef
-            = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0], memoryLayoutType);
 
-        auto name = descriptor->getName();
+        const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild()->getTraitSet());
+
+        auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), physicalInputSchema, memoryLayoutType);
+        auto name = descriptor.function->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
             std::move(physicalInputType),
             std::move(physicalFinalType),
             std::move(aggregationInputFunction),
             resultFieldIdentifier,
             bufferRef,
-            descriptor->shallIncludeNullValues());
+            descriptor.function.shallIncludeNullValues());
         if (auto aggregationPhysicalFunction
-            = AggregationPhysicalFunctionRegistry::instance().create(std::string(name), std::move(aggregationArguments)))
+            = AggregationPhysicalFunctionRegistry::instance().create(std::string{name}, std::move(aggregationArguments)))
         {
             aggregationPhysicalFunctions.push_back(aggregationPhysicalFunction.value());
         }
@@ -157,29 +124,29 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 
 LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
-    PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 1, "Expected one child");
-    auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
-    auto inputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getChildren().at(0).getTraitSet());
-    PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
-    PRECONDITION(inputOriginIdsOpt.has_value(), "Expected the inputOriginIds trait to be set");
-    const auto& outputOriginIds = outputOriginIdsOpt.value().get();
-    PRECONDITION(std::ranges::size(outputOriginIds) == 1, "Expected one output origin id");
-    PRECONDITION(logicalOperator.getInputSchemas().size() == 1, "Expected one input schema");
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-
-
     auto aggregation = logicalOperator.getAs<WindowedAggregationLogicalOperator>();
+    const auto traitSet = logicalOperator.getTraitSet();
+    const auto childTraitSet = aggregation->getChild().getTraitSet();
+
+    auto outputOriginIds = traitSet.get<OutputOriginIdsTrait>();
+    auto inputOriginIds = childTraitSet.get<OutputOriginIdsTrait>();
+    PRECONDITION(std::ranges::size(*outputOriginIds) == 1, "Expected one output origin id");
+    auto outputOriginId = (*outputOriginIds)[0];
+
+    const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
+
+    PRECONDITION(
+        std::holds_alternative<Windowing::BoundTimeCharacteristic>(aggregation->getCharacteristic()),
+        "Expected time characteristic to be bound");
+
     auto handlerId = getNextOperatorHandlerId();
-    auto outputSchema = aggregation.getOutputSchema();
-    auto outputOriginId = outputOriginIds[0];
-    auto inputOriginIds = inputOriginIdsOpt.value().get();
-    auto timeFunction = getTimeFunction(*aggregation);
-    auto windowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(aggregation->getWindowType());
-    INVARIANT(windowType != nullptr, "Window type must be a time-based window type");
+    auto timeFunction = TimeFunction::create(std::get<Windowing::BoundTimeCharacteristic>(aggregation->getCharacteristic()));
+    auto windowType = aggregation->getWindowType();
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
+
+    const auto physicalInputSchema = createPhysicalOutputSchema(childTraitSet);
+    const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);
 
     const auto valueSize = std::accumulate(
         aggregationPhysicalFunctions.begin(),
@@ -189,16 +156,21 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     uint64_t keySize = 0;
     std::vector<PhysicalFunction> keyFunctions;
-    auto newInputSchema = aggregation.getInputSchemas()[0];
-    for (auto& nodeFunctionKey : aggregation->getGroupingKeys())
+    const std::unordered_map<QualifiedIdentifier, QualifiedUnboundField> newInputFields
+        = physicalInputSchema
+        | std::views::transform(
+              [](const auto& field)
+              {
+                  return std::make_pair(
+                      field.getFullyQualifiedName(), QualifiedUnboundField{field.getFullyQualifiedName(), field.getDataType()});
+              })
+        | std::ranges::to<std::unordered_map>();
+    auto boundGroupingKeys = aggregation->getGroupingKeys();
+    for (auto& nodeFunctionKey : boundGroupingKeys)
     {
         auto loweredFunctionType = nodeFunctionKey.getDataType();
-        if (loweredFunctionType.isType(DataType::Type::VARSIZED))
-        {
-            const bool fieldReplaceSuccess = newInputSchema.replaceTypeOfField(nodeFunctionKey.getFieldName(), loweredFunctionType);
-            INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", nodeFunctionKey.getFieldName(), newInputSchema);
-        }
-        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey));
+        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(
+            nodeFunctionKey, *aggregation->getChild().getTraitSet().get<FieldMappingTrait>()));
         keySize += loweredFunctionType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
@@ -206,10 +178,21 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const auto pageSize = conf.pageSize.getValue();
     const auto entriesPerPage = pageSize / entrySize;
 
-    const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(*aggregation);
-    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(newInputSchema, fieldKeyNames, fieldValueNames);
+    const auto fieldKeyNames
+        = boundGroupingKeys | std::views::transform([](const auto& field) { return QualifiedIdentifier{field->getField().getLastName()}; });
+    const auto fieldValueNames
+        = aggregation->getWindowAggregation()
+        | std::views::transform(
+              [](const auto& projectedAggregation) -> QualifiedIdentifier
+              {
+                  return std::get<TypedLogicalFunction<FieldAccessLogicalFunction>>(projectedAggregation.function->getInputFunction())
+                      ->getField()
+                      .getLastName();
+              });
+    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(
+        physicalInputSchema, fieldKeyNames | std::ranges::to<std::vector>(), fieldValueNames | std::ranges::to<std::vector>());
 
-    const auto windowMetaData = WindowMetaData{aggregation->getWindowStartFieldName(), aggregation->getWindowEndFieldName()};
+    const auto windowMetaData = WindowMetaData{aggregation->getWindowStartField(), aggregation->getWindowEndField()};
 
     const HashMapOptions hashMapOptions(
         std::make_unique<MurMur3HashFunction>(),
@@ -224,7 +207,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         numberOfBuckets);
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
+        windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
         {
@@ -244,15 +227,15 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto handler = std::make_shared<AggregationOperatorHandler>(
-        inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
+        *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
     const AggregationBuildPhysicalOperator build{
         handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapOptions};
     const AggregationProbePhysicalOperator probe{hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
-        newInputSchema,
-        outputSchema,
+        physicalInputSchema,
+        physicalOutputSchema,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,
@@ -261,8 +244,8 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         probe,
-        newInputSchema,
-        outputSchema,
+        physicalInputSchema,
+        physicalOutputSchema,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,

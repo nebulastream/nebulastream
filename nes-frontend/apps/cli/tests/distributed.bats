@@ -485,8 +485,8 @@ EOF
   run DOCKER_NES_CLI stop $query_id
   # 0 means there is no overwrite and the worker default will be picked.
   grep "host: worker-2:8080" worker-2/singleNodeWorker.log
-  grep "max_pending_acks: 0" worker-2/singleNodeWorker.log
-  grep "sender_queue_size: 0" worker-2/singleNodeWorker.log
+  grep "MAX_PENDING_ACKS: 0" worker-2/singleNodeWorker.log
+  grep "SENDER_QUEUE_SIZE: 0" worker-2/singleNodeWorker.log
   grep "Backpressure" worker-2/singleNodeWorker.log
   [ $status -eq 0 ]
 }
@@ -509,8 +509,8 @@ EOF
 
   run DOCKER_NES_CLI stop $query_id
   grep "host: worker-2:8080" worker-2/singleNodeWorker.log
-  grep "max_pending_acks: 25" worker-2/singleNodeWorker.log
-  grep "sender_queue_size: 32" worker-2/singleNodeWorker.log
+  grep "MAX_PENDING_ACKS: 25" worker-2/singleNodeWorker.log
+  grep "SENDER_QUEUE_SIZE: 32" worker-2/singleNodeWorker.log
   grep "Backpressure" worker-2/singleNodeWorker.log
   [ $status -eq 0 ]
 }
