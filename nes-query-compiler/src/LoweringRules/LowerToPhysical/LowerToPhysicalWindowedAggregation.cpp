@@ -157,6 +157,14 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 
 LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
 {
+    /// Phase 1 (skeleton): the spillable, out-of-core slice store is not implemented yet. Refuse fail-fast when it is
+    /// requested rather than silently falling back to the in-memory store. Phase 4 replaces this guard with the
+    /// construction of a SpillableTimeBasedSliceStore at the slice-store site below.
+    if (conf.spill.enabled.getValue())
+    {
+        throw NotImplemented("Spillable (out-of-core) slice store is not implemented yet (Phase 1 skeleton)");
+    }
+
     PRECONDITION(logicalOperator.tryGetAs<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
     PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 1, "Expected one child");
     auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());

@@ -26,6 +26,7 @@
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <SliceCacheConfiguration.hpp>
+#include <SpillConfig.hpp>
 
 namespace NES
 {
@@ -75,6 +76,8 @@ public:
 
     SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
 
+    SpillConfig spill = {"spill", "Configuration for the out-of-core (spillable) window-slice store"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -85,7 +88,8 @@ private:
             &numberOfRecordsPerKey,
             &maxNumberOfBuckets,
             &operatorBufferSize,
-            &sliceCacheConfiguration};
+            &sliceCacheConfiguration,
+            &spill};
     }
 };
 
