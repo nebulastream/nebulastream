@@ -112,7 +112,9 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
 
         const LogContext context("queryId", plan.getQueryId());
 
-        listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
+        const auto planStr = explain(plan, ExplainVerbosity::Debug);
+        NES_INFO("Registering query {} with plan:\n{}", plan.getQueryId(), planStr);
+        listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), planStr});
         const DumpMode dumpMode(
             configuration.workerConfiguration.dumpQueryCompilationIR.getValue(), configuration.workerConfiguration.dumpGraph.getValue());
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(plan);

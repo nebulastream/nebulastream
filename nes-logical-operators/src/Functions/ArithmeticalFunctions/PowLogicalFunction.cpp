@@ -18,12 +18,15 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -35,8 +38,7 @@
 namespace NES
 {
 
-PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right) { };
+PowLogicalFunction::PowLogicalFunction(LogicalFunction left, LogicalFunction right) : left(std::move(left)), right(std::move(right)) { };
 
 bool PowLogicalFunction::operator==(const PowLogicalFunction& rhs) const
 {
@@ -55,21 +57,18 @@ DataType PowLogicalFunction::getDataType() const
     return dataType;
 };
 
-PowLogicalFunction PowLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction PowLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    if ((!copy.left.getDataType().isNumeric()) || (!copy.left.getDataType().isNumeric()))
+    {
+        throw CannotInferStamp("Can only apply pow to two numeric input function, but got left: {}, right: {}", copy.left, copy.right);
+    }
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
-};
-
-LogicalFunction PowLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 2, "PowLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
@@ -79,10 +78,14 @@ std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
 
 PowLogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    if ((!children.at(0).getDataType().isNumeric()) || (!children.at(1).getDataType().isNumeric()))
+    {
+        throw CannotInferStamp("Can only apply pow to two numeric input function, but got left: {}, right: {}", left, right);
+    }
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = DataType{copy.dataType.type, copy.left.getDataType().joinNullable(copy.right.getDataType())};
+    copy.dataType = DataType{DataType::Type::FLOAT64, copy.left.getDataType().joinNullable(copy.right.getDataType())};
     return copy;
 };
 

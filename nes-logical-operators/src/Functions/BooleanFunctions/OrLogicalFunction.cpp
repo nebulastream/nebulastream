@@ -22,8 +22,10 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -34,8 +36,7 @@
 
 namespace NES
 {
-OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
+OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right) : left(std::move(left)), right(std::move(right))
 {
 }
 
@@ -54,13 +55,6 @@ std::string OrLogicalFunction::explain(ExplainVerbosity verbosity) const
 DataType OrLogicalFunction::getDataType() const
 {
     return dataType;
-};
-
-OrLogicalFunction OrLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
 };
 
 std::vector<LogicalFunction> OrLogicalFunction::getChildren() const
@@ -82,22 +76,18 @@ std::string_view OrLogicalFunction::getType() const
     return NAME;
 }
 
-LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction OrLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    /// check if children dataType is correct
-    INVARIANT(
-        newChildren.at(0).getDataType().isType(DataType::Type::BOOLEAN),
-        "the dataType of left child must be boolean, but was: {}",
-        newChildren.at(0).getDataType());
-    INVARIANT(
-        newChildren.at(1).getDataType().isType(DataType::Type::BOOLEAN),
-        "the dataType of right child must be boolean, but was: {}",
-        newChildren.at(1).getDataType());
-    auto newDataType = this->getDataType();
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType).withChildren(newChildren);
+    auto copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    if (!copy.left.getDataType().isType(DataType::Type::BOOLEAN) && copy.right.getDataType().isType(DataType::Type::BOOLEAN))
+    {
+        throw CannotInferStamp("Can only apply or to two boolean input function, but got left: {}, right: {}", copy.left, copy.right);
+    }
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    return copy;
 }
 
 Reflected Reflector<OrLogicalFunction>::operator()(const OrLogicalFunction& function) const
@@ -108,7 +98,7 @@ Reflected Reflector<OrLogicalFunction>::operator()(const OrLogicalFunction& func
 OrLogicalFunction Unreflector<OrLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [left, right] = context.unreflect<detail::ReflectedOrLogicalFunction>(reflected);
-    return {left, right};
+    return {std::move(left), std::move(right)};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrLogicalFunction(LogicalFunctionRegistryArguments arguments)

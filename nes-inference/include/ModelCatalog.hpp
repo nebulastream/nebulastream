@@ -20,7 +20,9 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Util/Reflection.hpp>
 #include <Model.hpp>
 
@@ -29,6 +31,10 @@ namespace NES
 
 class ModelCatalog;
 
+/// Catalog-side field schema for a model — ordered list of name + DataType pairs.
+/// Ordered because the runtime indexes inputs/outputs positionally by tensor slot.
+using ModelFieldList = Schema<UnqualifiedUnboundField, Ordered>;
+
 /// User-declared input and output field schemas of a model. Not a property of
 /// the MLIR/bytecode — it's catalog-side metadata, declared alongside the model
 /// in `CREATE MODEL` and passed through to the logical operator for schema
@@ -36,8 +42,8 @@ class ModelCatalog;
 struct
     ModelSchema /// NOLINT(bugprone-exception-escape) defaulted special members on a struct holding Schema (vector) trip the check; no real escape
 {
-    Schema inputs;
-    Schema outputs;
+    ModelFieldList inputs;
+    ModelFieldList outputs;
 
     bool operator==(const ModelSchema&) const = default;
 };

@@ -34,7 +34,10 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -199,8 +202,8 @@ using ExpectedResultTuple = ResultTuple<ExpectedResultField, struct ExpectedResu
 using ActualResultTuple = ResultTuple<ActualResultField, struct ActualResultTuple_>;
 using ExpectedResultTuples = ResultTuples<ExpectedResultIndex, ExpectedResultTuple>;
 using ActualResultTuples = ResultTuples<ActualResultIndex, ActualResultTuple>;
-using ExpectedResultSchema = ResultCheckStrongType<NES::Schema, struct ExpectedResultSchema_>;
-using ActualResultSchema = ResultCheckStrongType<NES::Schema, struct ActualResultSchema_>;
+using ExpectedResultSchema = ResultCheckStrongType<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>, struct ExpectedResultSchema_>;
+using ActualResultSchema = ResultCheckStrongType<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>, struct ActualResultSchema_>;
 using SchemaErrorString = ResultCheckStrongType<std::string, struct SchemaErrorString_>;
 using ResultErrorString = ResultCheckStrongType<std::string, struct ResultErrorString_>;
 using SchemaErrorStream = ErrorStream<SchemaErrorString, struct SchemaErrorStream_>;
@@ -277,59 +280,61 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
     std::unreachable();
 }
 
-NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
+NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> parseFieldNames(const std::string_view fieldNamesRawLine)
 {
     /// Assumes the field and type to be similar to
     /// window$val_i8_i8:INT32:IS_NULLABLE, window$val_i8_i8_plus_1:INT16:NOT_NULLABLE
-    NES::Schema schema;
-    for (const auto& field : std::ranges::split_view(fieldNamesRawLine, ',')
-             | std::views::transform([](auto splitNameAndType)
-                                     { return std::string_view(splitNameAndType.begin(), splitNameAndType.end()); })
-             | std::views::filter([](const auto& stringViewSplit) { return !stringViewSplit.empty(); }))
-    {
-        /// At this point, we have a field and tpye separated by a colon, e.g., "window$val_i8_i8:INT32"
-        /// We need to split the fieldName and type by the colon, store the field name and type in a vector.
-        /// After that, we can trim the field name and type and store it in the fields vector.
-        /// "window$val_i8_i8:INT32:IS_NULLABLE " -> ["window$val_i8_i8", "INT32 ", " IS_NULLABLE"] -> {"window$val_i8_i8", INT32, NOT_NULLABLE}
-        const auto [nameTrimmed, typeTrimmed, isNullable]
-            = [](const std::string_view field) -> std::tuple<std::string_view, std::string_view, NES::DataType::NULLABLE>
-        {
-            std::vector<std::string_view> fieldAndTypeVector;
-            for (const auto subrange : std::ranges::split_view(field, ':'))
-            {
-                fieldAndTypeVector.emplace_back(NES::trimWhiteSpaces(std::string_view(subrange)));
-            }
-            INVARIANT(fieldAndTypeVector.size() == 3, "Field and type pairs should always be pairs of a key, a value and isNullable");
+    auto fields
+        = std::ranges::split_view(fieldNamesRawLine, ',')
+        | std::views::transform([](auto splitNameAndType) { return std::string_view(splitNameAndType.begin(), splitNameAndType.end()); })
+        | std::views::filter([](const auto& stringViewSplit) { return !stringViewSplit.empty(); })
+        | std::views::transform(
+              [](const auto& field)
+              {
+                  /// At this point, we have a field and tpye separated by a colon, e.g., "window$val_i8_i8:INT32"
+                  /// We need to split the fieldName and type by the colon, store the field name and type in a vector.
+                  /// After that, we can trim the field name and type and store it in the fields vector.
+                  /// "window$val_i8_i8:INT32:IS_NULLABLE " -> ["window$val_i8_i8", "INT32 ", " IS_NULLABLE"] -> {"window$val_i8_i8", INT32, NOT_NULLABLE}
+                  const auto [nameTrimmed, typeTrimmed, isNullable]
+                      = [](const std::string_view field) -> std::tuple<std::string_view, std::string_view, NES::DataType::NULLABLE>
+                  {
+                      std::vector<std::string_view> fieldAndTypeVector;
+                      for (const auto subrange : std::ranges::split_view(field, ':'))
+                      {
+                          fieldAndTypeVector.emplace_back(NES::trimWhiteSpaces(std::string_view(subrange)));
+                      }
+                      INVARIANT(
+                          fieldAndTypeVector.size() == 3, "Field and type pairs should always be pairs of a key, a value and isNullable");
 
-            const auto isNullableString = fieldAndTypeVector.at(2);
-            const auto isNullable = magic_enum::enum_cast<NES::DataType::NULLABLE>(isNullableString);
-            if (not isNullable)
-            {
-                throw NES::SLTUnexpectedToken("Unknown nullable: {}", isNullableString);
-            }
-            return std::make_tuple(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1), isNullable.value());
-        }(field);
-        NES::DataType dataType;
-        if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed); type.has_value())
-        {
-            dataType = NES::DataTypeProvider::provideDataType(type.value(), isNullable);
-        }
-        else if (NES::toLowerCase(typeTrimmed) == "varsized")
-        {
-            dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED, isNullable);
-        }
-        else
-        {
-            throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
-        }
-        schema.addField(std::string(nameTrimmed), dataType);
-    }
-    return schema;
+                      const auto isNullableString = fieldAndTypeVector.at(2);
+                      const auto isNullable = magic_enum::enum_cast<NES::DataType::NULLABLE>(isNullableString);
+                      if (not isNullable)
+                      {
+                          throw NES::SLTUnexpectedToken("Unknown nullable: {}", isNullableString);
+                      }
+                      return std::make_tuple(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1), isNullable.value());
+                  }(field);
+                  NES::DataType dataType;
+                  if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed); type.has_value())
+                  {
+                      dataType = NES::DataTypeProvider::provideDataType(type.value(), isNullable);
+                  }
+                  else if (NES::toLowerCase(typeTrimmed) == "varsized")
+                  {
+                      dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED, isNullable);
+                  }
+                  else
+                  {
+                      throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
+                  }
+                  return NES::UnqualifiedUnboundField{NES::Identifier::parse(std::string(nameTrimmed)), dataType};
+              });
+    return fields | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 }
 
 struct QueryResult
 {
-    NES::Schema schema;
+    NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> schema;
     std::vector<std::string> result;
 };
 
@@ -438,21 +443,23 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
     {
         /// Find a matching actual field that has not already been matched. This handles duplicate field names
         /// by matching each expected field to a distinct actual field in order.
-        const auto& actualFields = actualResultSchema.getRawValue().getFields();
-        auto matchingFieldIt = actualFields.end();
-        for (auto it = actualFields.begin(); it != actualFields.end(); ++it)
+        const auto& actualSchema = actualResultSchema.getRawValue();
+        const auto begin = actualSchema.begin();
+        const auto end = actualSchema.end();
+        auto matchingFieldIt = end;
+        for (auto it = begin; it != end; ++it)
         {
-            const auto idx = static_cast<size_t>(std::distance(actualFields.begin(), it));
+            const auto idx = static_cast<size_t>(std::distance(begin, it));
             if (*it == expectedField and not matchedActualResultFields.contains(idx))
             {
                 matchingFieldIt = it;
                 break;
             }
         }
-        if (matchingFieldIt != actualFields.end())
+        if (matchingFieldIt != end)
         {
-            auto offset = static_cast<size_t>(std::distance(actualFields.begin(), matchingFieldIt));
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, offset);
+            auto offset = static_cast<size_t>(std::distance(begin, matchingFieldIt));
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.getDataType(), offset);
             matchedActualResultFields.emplace(offset);
             expectedToActualFieldMap.expectedResultsFieldSortIdx.emplace_back(expectedFieldIdx);
             expectedToActualFieldMap.actualResultsFieldSortIdx.emplace_back(offset);
@@ -460,15 +467,15 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
         else
         {
             expectedToActualFieldMap.schemaErrorStream << fmt::format("\n- '{}' is missing from actual result schema.", expectedField);
-            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, std::nullopt);
+            expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.getDataType(), std::nullopt);
         }
     }
-    for (size_t fieldIdx = 0; fieldIdx < actualResultSchema.getRawValue().getNumberOfFields(); ++fieldIdx)
+    for (size_t fieldIdx = 0; fieldIdx < std::ranges::size(actualResultSchema.getRawValue()); ++fieldIdx)
     {
         if (not matchedActualResultFields.contains(fieldIdx))
         {
-            expectedToActualFieldMap.schemaErrorStream << fmt::format(
-                "\n+ '{}' is unexpected field in actual result schema.", actualResultSchema.getRawValue().getFieldAt(fieldIdx));
+            expectedToActualFieldMap.schemaErrorStream
+                << fmt::format("\n+ '{}' is unexpected field in actual result schema.", actualResultSchema.getRawValue()[fieldIdx]);
             expectedToActualFieldMap.additionalActualFields.emplace_back(fieldIdx);
         }
     }
@@ -826,13 +833,13 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
                 runningQuery.systestQuery.resultFileForDifferentialQuery()));
         }
 
-        if (result1->schema.getNumberOfFields() == 0)
+        if (std::ranges::size(result1->schema) == 0)
         {
             return annotateDifferentialError(
                 fmt::format("First result file is empty or has no schema: {}", runningQuery.systestQuery.resultFile()));
         }
 
-        if (result2->schema.getNumberOfFields() == 0)
+        if (std::ranges::size(result2->schema) == 0)
         {
             return annotateDifferentialError(fmt::format(
                 "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));

@@ -3,37 +3,37 @@
 # groups: [WindowOperators, Join, CompilationIntensive] TODO #1272
 
 # Source definitions
-CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH FILE small/stream.csv
 
-CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
 ATTACH FILE small/stream2.csv
 
-CREATE LOGICAL SOURCE stream4(id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream4(id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream4 TYPE File;
 ATTACH FILE small/stream4.csv
 
-CREATE LOGICAL SOURCE stream4_1(id4_1 UINT64 NOT NULL, value4_1 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream4_1(id4_1 UINT64 NOT NULL, value4_1 UINT64 NOT NULL, timestamp4_1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream4_1 TYPE File;
 ATTACH FILE small/stream4.csv
 
-CREATE LOGICAL SOURCE stream7(id7 UINT64 NOT NULL, value7 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream7(id7 UINT64 NOT NULL, value7 UINT64 NOT NULL, timestamp7 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream7 TYPE File;
 ATTACH FILE small/stream7.csv
 
-CREATE LOGICAL SOURCE stream7_1(id7_1 UINT64 NOT NULL, value7_1 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE stream7_1(id7_1 UINT64 NOT NULL, value7_1 UINT64 NOT NULL, timestamp7_1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream7_1 TYPE File;
 ATTACH FILE small/stream7.csv
 
-CREATE SINK sinkStreamStream2(streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.id2 UINT64 NOT NULL, stream2.value2 UINT64 NOT NULL, stream2.timestamp UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkStreamStream2Stream4(streamstream2stream4.start UINT64 NOT NULL, streamstream2stream4.end UINT64 NOT NULL, streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.id2 UINT64 NOT NULL, stream2.value2 UINT64 NOT NULL, stream2.timestamp UINT64 NOT NULL, stream4.id4 UINT64 NOT NULL, stream4.value4 UINT64 NOT NULL, stream4.timestamp UINT64 NOT NULL)  TYPE File;
-CREATE SINK sinkStreamStream2Stream4Stream4_1(streamstream2stream4stream4_1.start UINT64 NOT NULL, streamstream2stream4stream4_1.end	 UINT64 NOT NULL, streamstream2stream4.start	 UINT64 NOT NULL, streamstream2stream4.end	 UINT64 NOT NULL, streamstream2.start	 UINT64 NOT NULL, streamstream2.end	 UINT64 NOT NULL, stream.id	 UINT64 NOT NULL, stream.value	 UINT64 NOT NULL, stream.timestamp	 UINT64 NOT NULL, stream2.id2	 UINT64 NOT NULL, stream2.value2	 UINT64 NOT NULL, stream2.timestamp	 UINT64 NOT NULL, stream4.id4	 UINT64 NOT NULL, stream4.value4	 UINT64 NOT NULL, stream4.timestamp	 UINT64 NOT NULL, stream4_1.id4_1	 UINT64 NOT NULL, stream4_1.value4_1	 UINT64 NOT NULL, stream4_1.timestamp UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkStream7Stream7_1(stream7stream7_1.start UINT64 NOT NULL, stream7stream7_1.end UINT64 NOT NULL, stream7.id7 UINT64 NOT NULL, stream7.value7 UINT64 NOT NULL, stream7.timestamp UINT64 NOT NULL, stream7_1.id7_1 UINT64 NOT NULL, stream7_1.value7_1 UINT64 NOT NULL, stream7_1.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStreamStream2(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStreamStream2Stream4(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkStreamStream2Stream4Stream4_1(start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, start2 UINT64 NOT NULL, end2 UINT64 NOT NULL, start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, id4 UINT64 NOT NULL, value4 UINT64 NOT NULL, timestamp4 UINT64 NOT NULL, id4_1 UINT64 NOT NULL, value4_1 UINT64 NOT NULL, timestamp4_1 UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStream7Stream7_1(start UINT64 NOT NULL, end UINT64 NOT NULL, id7 UINT64 NOT NULL, value7 UINT64 NOT NULL, timestamp7 UINT64 NOT NULL, id7_1 UINT64 NOT NULL, value7_1 UINT64 NOT NULL, timestamp7_1 UINT64 NOT NULL) TYPE File;
 
 # Query 1 - Join two streams
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec) INTO sinkStreamStream2;
+SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO sinkStreamStream2;
 ----
 1000 2000 12 1 1001 12 5 1011
 1000 2000 4 1 1002 4 3 1102
@@ -67,10 +67,17 @@ SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id = 
 21000 22000 1 21 21000 1 21 21000
 
 # Query 2 - Join three streams
-SELECT * FROM (SELECT * FROM stream)
- INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec)
- INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW TUMBLING (timestamp, size 1 sec)
- INTO sinkStreamStream2Stream4;
+SELECT * FROM (
+  SELECT * FROM (
+    SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
+    FROM (
+      SELECT * FROM (SELECT * FROM stream)
+      INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+    )
+  )
+  INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
+)
+INTO sinkStreamStream2Stream4;
 ----
 1000 2000 1000 2000 4 1 1002 4 3 1112 4 4 1001
 1000 2000 1000 2000 4 1 1002 4 3 1102 4 4 1001
@@ -82,11 +89,23 @@ SELECT * FROM (SELECT * FROM stream)
 15000 16000 15000 16000 1 15 15000 1 15 15000 1 15 15000
 
 # Query 3 - Join four streams
-SELECT * FROM (SELECT * FROM stream)
- INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec)
- INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW TUMBLING (timestamp, size 1 sec)
- INNER JOIN (SELECT * FROM stream4_1) ON id = id4_1 WINDOW TUMBLING (timestamp, size 1 sec)
- INTO sinkStreamStream2Stream4Stream4_1;
+SELECT * FROM (
+  SELECT * FROM (
+    SELECT start as start2, end as end2, start1, end1, id, value, timestamp1, id2, value2, timestamp2, id4, value4, timestamp4
+    FROM (
+      SELECT * FROM (
+        SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
+        FROM (
+          SELECT * FROM (SELECT * FROM stream)
+          INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+        )
+      )
+      INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW TUMBLING (timestamp1, timestamp4, size 1 sec)
+    )
+  )
+  INNER JOIN (SELECT * FROM stream4_1) ON id = id4_1 WINDOW TUMBLING (timestamp1, timestamp4_1, size 1 sec)
+)
+INTO sinkStreamStream2Stream4Stream4_1;
 ----
 12000 13000 12000 13000 12000 13000 1 12 12000 1 12 12000 1 12 12000 1 12 12000
 13000 14000 13000 14000 13000 14000 1 13 13000 1 13 13000 1 13 13000 1 13 13000
@@ -99,7 +118,7 @@ SELECT * FROM (SELECT * FROM stream)
 
 # Query 4 - Join two streams with a sliding stream
 SELECT * FROM (SELECT * FROM stream7)
- INNER JOIN (SELECT * FROM stream7_1) ON id7 = id7_1 WINDOW SLIDING (timestamp, size 1 sec, advance by 250 ms)
+ INNER JOIN (SELECT * FROM stream7_1) ON id7 = id7_1 WINDOW SLIDING (timestamp7, timestamp7_1, size 1 sec, advance by 250 ms)
  INTO sinkStream7Stream7_1;
 ----
 250 1250 1 1 1240 1 1 1240
@@ -230,11 +249,23 @@ SELECT * FROM (SELECT * FROM stream7)
 2750 3750 42 18 2990 42 18 2990
 
 # Query 5 - Join three streams with a sliding stream
-SELECT * FROM (SELECT * FROM stream)
- INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
- INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
- INNER JOIN (SELECT * FROM stream4_1) ON id = id4_1 WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
- INTO sinkStreamStream2Stream4Stream4_1;
+SELECT * FROM (
+  SELECT * FROM (
+    SELECT start as start2, end as end2, start1, end1, id, value, timestamp1, id2, value2, timestamp2, id4, value4, timestamp4
+    FROM (
+      SELECT * FROM (
+        SELECT start as start1, end as end1, id, value, timestamp1, id2, value2, timestamp2
+        FROM (
+          SELECT * FROM (SELECT * FROM stream)
+          INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW SLIDING (timestamp1, timestamp2, size 1 sec, advance by 500 ms)
+        )
+      )
+      INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW SLIDING (timestamp1, timestamp4, size 1 sec, advance by 500 ms)
+    )
+  )
+  INNER JOIN (SELECT * FROM stream4_1) ON id = id4_1 WINDOW SLIDING (timestamp1, timestamp4_1, size 1 sec, advance by 500 ms)
+)
+INTO sinkStreamStream2Stream4Stream4_1;
 ----
 500 1500 500 1500 500 1500 12 1 1001 12 5 1011 12 1 1300 12 1 1300
 500 1500 500 1500 500 1500 4 1 1002 4 3 1102 4 4 1001 4 4 1001

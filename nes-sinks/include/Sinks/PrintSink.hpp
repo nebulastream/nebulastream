@@ -63,12 +63,12 @@ private:
 struct ConfigParametersPrint
 {
     static inline const DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
-        "ingestion",
+        "INGESTION",
         0,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INGESTION, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format",
+        "OUTPUT_FORMAT",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 

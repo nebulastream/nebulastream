@@ -71,17 +71,17 @@ namespace NES::OutputFormatterConfig
 struct ConfigParametersCSV
 {
     static inline const DescriptorConfig::ConfigParameter<bool> QUOTE_STRINGS{
-        "quote_strings",
+        "QUOTE_STRINGS",
         false,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(QUOTE_STRINGS, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_DELIMITER{
-        "field_delimiter",
+        "FIELD_DELIMITER",
         ",",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_DELIMITER, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> TUPLE_DELIMITER{
-        "tuple_delimiter",
+        "TUPLE_DELIMITER",
         "\n",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
 

@@ -15,12 +15,17 @@
 #pragma once
 
 
+#include <cstddef>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Schema/Field.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
@@ -30,40 +35,23 @@ namespace NES
 class MaxAggregationLogicalFunction
 {
 public:
-    MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
-    explicit MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
-    ~MaxAggregationLogicalFunction() = default;
+    explicit MaxAggregationLogicalFunction(AggregationFieldAccess inputFunction);
+    MaxAggregationLogicalFunction(AggregationFieldAccess inputFunction, DataType aggregateType);
 
+    [[nodiscard]] MaxAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] static std::string_view getName() noexcept;
-    [[nodiscard]] std::string toString() const;
-    [[nodiscard]] DataType getInputStamp() const;
-    [[nodiscard]] DataType getPartialAggregateStamp() const;
-    [[nodiscard]] DataType getFinalAggregateStamp() const;
-    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
-    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
-
     [[nodiscard]] Reflected reflect() const;
-    [[nodiscard]] MaxAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
-    [[nodiscard]] MaxAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
-    [[nodiscard]] MaxAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
-    [[nodiscard]] MaxAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
-    [[nodiscard]] MaxAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
-    [[nodiscard]] MaxAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
+    [[nodiscard]] DataType getAggregateType() const;
+    [[nodiscard]] AggregationFieldAccess getInputFunction() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
-    [[nodiscard]] bool operator==(const MaxAggregationLogicalFunction& otherMaxAggregationLogicalFunction) const;
-
+    [[nodiscard]] bool operator==(const MaxAggregationLogicalFunction& other) const;
 
 private:
+    AggregationFieldAccess inputFunction;
+    DataType aggregateType;
     static constexpr std::string_view NAME = "Max";
-
-    DataType inputStamp;
-    DataType partialAggregateStamp;
-    DataType finalAggregateStamp;
-    FieldAccessLogicalFunction onField;
-    FieldAccessLogicalFunction asField;
 };
-
-static_assert(WindowAggregationFunctionConcept<MaxAggregationLogicalFunction>);
 
 template <>
 struct Reflector<MaxAggregationLogicalFunction>
@@ -78,12 +66,10 @@ struct Unreflector<MaxAggregationLogicalFunction>
 };
 }
 
-namespace NES::detail
+template <>
+struct std::hash<NES::MaxAggregationLogicalFunction>
 {
-struct ReflectedMaxAggregationLogicalFunction
-{
-    FieldAccessLogicalFunction onField;
-    FieldAccessLogicalFunction asField;
+    size_t operator()(const NES::MaxAggregationLogicalFunction& aggregationFunction) const noexcept;
 };
 
-}
+static_assert(NES::WindowAggregationFunctionConcept<NES::MaxAggregationLogicalFunction>);

@@ -13,12 +13,14 @@
 */
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 
+#include <ranges>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
 #include <vector>
 
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
@@ -66,14 +68,15 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
 
     if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
     {
+        PRECONDITION(std::ranges::empty(inlineSource->getChildren()), "Inline source operator must have no children");
         const auto type = inlineSource.value()->getSourceType();
-        const auto schema = inlineSource.value()->getSchema();
+        const auto schema = inlineSource.value()->getSourceSchema();
         const auto parserConfig = inlineSource.value()->getParserConfig();
         auto sourceConfig = inlineSource.value()->getSourceConfig();
 
         /// "host" is not part of the source config — it determines placement, not source behavior.
         /// It is stored in the config map only because InlineSourceLogicalOperator lacks a dedicated host field.
-        auto hostIt = sourceConfig.find("host");
+        auto hostIt = sourceConfig.find(Identifier::parse("host"));
         if (hostIt == sourceConfig.end())
         {
             throw InvalidConfigParameter("`host`");
@@ -88,8 +91,7 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
             throw InvalidConfigParameter("Could not create an inline source descriptor because of invalid config parameters");
         }
         const auto& descriptor = descriptorOpt.value();
-        const TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceDescriptorLogicalOperator{descriptor};
-        return sourceDescriptorLogicalOperator->withChildren(newChildren);
+        return SourceDescriptorLogicalOperator::create(descriptor);
     }
 
     return current.withChildren(newChildren);

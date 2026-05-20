@@ -18,11 +18,18 @@
 #include <utility>
 #include <vector>
 
+#include <ranges>
+
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/InferModelLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
 #include <InferModelPhysicalOperator.hpp>
 #include <Inference.hpp>
@@ -52,27 +59,37 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
 
     NES_DEBUG("Lowering InferModel operator to physical IREE operator (function: {})", model.getFunctionName());
 
-    /// Create the physical operator. Input names come from the logical operator: they
-    /// were resolved by `withInferredSchema` to the upstream schema's qualified names
-    /// (`source$field`), which is what the runtime `record.read` lookup requires.
-    /// Output names come from the model — they are the user-declared output field names
-    /// that will be written back onto the record.
+    /// Create the physical operator. Both input and output field names come from the model's
+    /// declared schema. The runtime `record.read` lookup matches by canonical identifier text,
+    /// and `withInferredSchema` already verified the child carries fields with these names.
     /// The operator owns its own thread-local IREE session pool; no OperatorHandler needed.
-    auto physicalOperator = InferModelPhysicalOperator(
-        std::move(model),
-        inferModelOp.get().getInputFieldNames(),
-        inferModelOp.get().getOutputFieldNames(),
-        inferModelOp.get().hasVarsizedInput(),
-        inferModelOp.get().hasVarsizedOutput());
+    const auto toIdList = [](const auto& fields)
+    {
+        return fields
+            | std::views::transform([](const UnqualifiedUnboundField& f)
+                                    { return static_cast<QualifiedIdentifier>(f.getFullyQualifiedName()); })
+            | std::ranges::to<std::vector>();
+    };
+    /// VARSIZED is the bulk-byte escape hatch: the validator in `ModelCatalog::registerModel` enforces
+    /// that a VARSIZED side has exactly one field, so checking the first field is sufficient.
+    const auto& modelInputs = inferModelOp.get().getModel().getSchema().inputs;
+    const auto& modelOutputs = inferModelOp.get().getModel().getSchema().outputs;
+    const bool varsizedInput = modelInputs.size() > 0 && modelInputs.begin()->getDataType().isType(DataType::Type::VARSIZED);
+    const bool varsizedOutput = modelOutputs.size() > 0 && modelOutputs.begin()->getDataType().isType(DataType::Type::VARSIZED);
+    auto physicalOperator
+        = InferModelPhysicalOperator(std::move(model), toIdList(modelInputs), toIdList(modelOutputs), varsizedInput, varsizedOutput);
 
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
 
+    const auto physicalOutputSchema = createPhysicalOutputSchema(logicalOperator.getTraitSet());
+    const auto physicalInputSchema = createPhysicalOutputSchema(inferModelOp.get().getChildren().at(0).getTraitSet());
+
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        logicalOperator.getInputSchemas().at(0),
-        logicalOperator.getOutputSchema(),
+        physicalInputSchema,
+        physicalOutputSchema,
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);

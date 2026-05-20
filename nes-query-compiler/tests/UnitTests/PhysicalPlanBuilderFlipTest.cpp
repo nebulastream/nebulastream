@@ -27,7 +27,10 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -36,7 +39,7 @@
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
+#include <SourceDescriptorPhysicalOperator.hpp>
 #include <UnionPhysicalOperator.hpp>
 
 namespace NES
@@ -58,21 +61,25 @@ public:
 
     void SetUp() override { BaseUnitTest::SetUp(); }
 
-    static Schema createSchema()
+    static Schema<UnqualifiedUnboundField, Ordered> createSchema()
     {
-        Schema schema;
-        schema.addField("test.id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField("test.value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        return schema;
+        return Schema<UnqualifiedUnboundField, Ordered>{
+            {Identifier::parse("id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            {Identifier::parse("value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
     }
 
-    /// Creates a PhysicalOperatorWrapper holding a SourcePhysicalOperator.
+    /// Creates a PhysicalOperatorWrapper holding a SourceDescriptorPhysicalOperator.
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = sourceCatalog.getInlineSource("File", schema, Host("localhost"), {{"type", "CSV"}}, {{"file_path", "/dev/null"}});
+        auto descriptor = sourceCatalog.getInlineSource(
+            Identifier::parse("File"),
+            schema,
+            Host("localhost"),
+            {{Identifier::parse("type"), "CSV"}},
+            {{Identifier::parse("file_path"), "/dev/null"}});
         EXPECT_TRUE(descriptor.has_value());
-        auto sourceOp = SourcePhysicalOperator(
+        auto sourceOp = SourceDescriptorPhysicalOperator(
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
             OriginId(nextOriginId++));
         return std::make_shared<PhysicalOperatorWrapper>(
@@ -83,7 +90,8 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
         auto schema = createSchema();
-        auto descriptor = sinkCatalog.getInlineSink(schema, "Print", Host("localhost"), {{"output_format", "CSV"}}, {});
+        auto descriptor = sinkCatalog.getInlineSink(
+            schema, Identifier::parse("Print"), Host("localhost"), {{Identifier::parse("output_format"), "CSV"}}, {});
         EXPECT_TRUE(descriptor.has_value());
         auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
         return std::make_shared<PhysicalOperatorWrapper>(
@@ -177,7 +185,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, LinearChainFlip)
     /// After flip, source should be root.
     ASSERT_EQ(plan.getRootOperators().size(), 1U);
     const auto& root = plan.getRootOperators()[0];
-    EXPECT_TRUE(root->getPhysicalOperator().tryGet<SourcePhysicalOperator>());
+    EXPECT_TRUE(root->getPhysicalOperator().tryGet<SourceDescriptorPhysicalOperator>());
 
     /// Root's child should be the sink.
     ASSERT_EQ(root->getChildren().size(), 1U);
@@ -208,7 +216,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, DiamondShapeFlip)
     ASSERT_EQ(plan.getRootOperators().size(), 2U);
     for (const auto& root : plan.getRootOperators())
     {
-        EXPECT_TRUE(root->getPhysicalOperator().tryGet<SourcePhysicalOperator>());
+        EXPECT_TRUE(root->getPhysicalOperator().tryGet<SourceDescriptorPhysicalOperator>());
     }
 
     /// All 4 nodes must be reachable.
@@ -245,7 +253,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, MultiOperatorChainFlip)
     /// After flip: source -> union2 -> union1 -> sink.
     ASSERT_EQ(plan.getRootOperators().size(), 1U);
     auto current = plan.getRootOperators()[0];
-    EXPECT_TRUE(current->getPhysicalOperator().tryGet<SourcePhysicalOperator>());
+    EXPECT_TRUE(current->getPhysicalOperator().tryGet<SourceDescriptorPhysicalOperator>());
 
     ASSERT_EQ(current->getChildren().size(), 1U);
     current = current->getChildren()[0];
