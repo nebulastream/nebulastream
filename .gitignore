@@ -58,7 +58,7 @@ scripts/__pycache__
 .nix/gdb
 
 
-# Ignore Claude/Codex specific files and all possible combinations of Claude/Agents.md
+# Ignore tool-local Claude/Codex state; shared project skills live in .agents/skills/.
 .claude/
 .codex/
 [Cc][Ll][Aa][Uu][Dd][Ee].md
