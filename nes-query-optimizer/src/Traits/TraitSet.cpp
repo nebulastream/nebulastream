@@ -55,7 +55,7 @@ Reflected Reflector<TraitSet>::operator()(const TraitSet& traitSet) const
 {
     detail::ReflectedTraitSet reflectedTraitSet;
 
-    for (const auto& trait : traitSet | std::views::values)
+    for (const auto& trait : traitSet)
     {
         reflectedTraitSet.traits.emplace_back(trait);
     }

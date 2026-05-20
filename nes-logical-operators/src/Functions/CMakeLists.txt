@@ -26,6 +26,7 @@ add_plugin(CHAR_LENGTH LogicalFunction CharLengthLogicalFunction.cpp)
 add_plugin(FROM_BASE64 LogicalFunction FromBase64LogicalFunction.cpp)
 add_plugin(TO_BASE64 LogicalFunction ToBase64LogicalFunction.cpp)
 add_plugin(CastToType LogicalFunction CastToTypeLogicalFunction.cpp)
+add_plugin(UnboundFieldAccess LogicalFunction UnboundFieldAccessLogicalFunction.cpp)
 add_plugin(CastToUnixTs LogicalFunction CastToUnixTimestampLogicalFunction.cpp)
 add_plugin(CastFromUnixTs LogicalFunction CastFromUnixTimestampLogicalFunction.cpp)
 

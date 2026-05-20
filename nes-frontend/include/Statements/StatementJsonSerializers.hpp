@@ -28,6 +28,9 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Util/TypeTraits.hpp>
 #include <fmt/chrono.h> /// NOLINT(misc-include-cleaner) -- required for fmt::format of std::chrono::time_point
 #include <fmt/format.h>
@@ -52,26 +55,30 @@ inline rfl::Generic toFrontendGeneric(const DataType& dataType)
     return reflect(std::string(magic_enum::enum_name(dataType.type)));
 }
 
-inline rfl::Generic toFrontendGeneric(const Schema::Field& field)
+/// reflectcpp's native handler for Identifier (via Reflector<Identifier>) emits `[original-string, case-sensitive-bool]`.
+/// The historical frontend JSON shape is the canonical (case-folded) string — override here.
+inline rfl::Generic toFrontendGeneric(const Identifier& identifier)
+{
+    return reflect(identifier.asCanonicalString());
+}
+
+inline rfl::Generic toFrontendGeneric(const UnqualifiedUnboundField& field)
 {
     rfl::Object<rfl::Generic> obj;
-    obj["name"] = reflect(field.name);
-    obj["type"] = toFrontendGeneric(field.dataType);
+    obj["name"] = reflect(field.getFullyQualifiedName());
+    obj["type"] = toFrontendGeneric(field.getDataType());
     return obj;
 }
 
-/// Historical shape: an outer array wrapping the array of fields.
-inline rfl::Generic toFrontendGeneric(const Schema& schema)
+inline rfl::Generic toFrontendGeneric(const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
     rfl::Generic::Array fields;
-    fields.reserve(schema.getFields().size());
-    for (const auto& field : schema.getFields())
+    fields.reserve(schema.size());
+    for (const auto& field : schema)
     {
         fields.emplace_back(toFrontendGeneric(field));
     }
-    rfl::Generic::Array outer;
-    outer.emplace_back(std::move(fields));
-    return outer;
+    return fields;
 }
 
 /// reflectcpp's native std::unordered_map handler outputs a flat JSON object. The historical layout

@@ -6,11 +6,11 @@
 GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1024]
 GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
 
-CREATE LOGICAL SOURCE outOfOrderStreamA(consumerId INT32 NOT NULL, sectorId INT32 NOT NULL, consumedPower FLOAT64 NOT NULL, consumerType VARSIZED NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE outOfOrderStreamA(consumerId INT32 NOT NULL, sectorId INT32 NOT NULL, consumedPower FLOAT64 NOT NULL, consumerType VARSIZED NOT NULL, timestampA UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR outOfOrderStreamA TYPE File;
 ATTACH FILE outoforder/outOfOrderStreamA.csv
 
-CREATE LOGICAL SOURCE outOfOrderStreamB(consumerId2 INT32 NOT NULL, sectorId2 INT32 NOT NULL, consumedPower2 FLOAT64 NOT NULL, consumerType2 VARSIZED NOT NULL, timestamp UINT64 NOT NULL);
+CREATE LOGICAL SOURCE outOfOrderStreamB(consumerId2 INT32 NOT NULL, sectorId2 INT32 NOT NULL, consumedPower2 FLOAT64 NOT NULL, consumerType2 VARSIZED NOT NULL, timestampB UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR outOfOrderStreamB TYPE File;
 ATTACH FILE outoforder/outOfOrderStreamB.csv
 
@@ -18,7 +18,7 @@ ATTACH FILE outoforder/outOfOrderStreamB.csv
 SELECT start, end, sectorId, SUM(consumedPower) AS consumedPower
 FROM outOfOrderStreamA
 GROUP BY sectorId
-WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
+WINDOW SLIDING(timestampA, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
 INTO Checksum();
 ----
 ERROR 3014
@@ -27,7 +27,7 @@ ERROR 3014
 SELECT *
 FROM (SELECT * FROM outOfOrderStreamA)
 INNER JOIN (SELECT * FROM outOfOrderStreamB) ON consumerId = consumerId2
-WINDOW SLIDING (timestamp, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
+WINDOW SLIDING (timestampA, timestampB, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
 INTO Checksum();
 ----
 ERROR 3014

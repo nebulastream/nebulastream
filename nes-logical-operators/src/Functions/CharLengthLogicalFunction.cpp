@@ -16,27 +16,25 @@
 
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp> /// NOLINT(misc-include-cleaner)
+#include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h> /// NOLINT(misc-include-cleaner)
 
 namespace NES
 {
 
-/// NOLINTNEXTLINE(modernize-pass-by-value)
-CharLengthLogicalFunction::CharLengthLogicalFunction(const LogicalFunction& child)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)), child(child)
+CharLengthLogicalFunction::CharLengthLogicalFunction(LogicalFunction child) : child(std::move(child))
 {
 }
 
@@ -50,33 +48,22 @@ std::string CharLengthLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("CHAR_LENGTH({})", child.explain(verbosity));
 }
 
+LogicalFunction CharLengthLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+{
+    auto copy = *this;
+    copy.child = child.withInferredDataType(schema);
+    if (not copy.child.getDataType().isType(DataType::Type::VARSIZED))
+    {
+        throw DifferentFieldTypeExpected("CHAR_LENGTH expects a VARSIZED input but got {}", copy.child.getDataType());
+    }
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+    copy.dataType.nullable = copy.child.getDataType().nullable;
+    return copy;
+}
+
 DataType CharLengthLogicalFunction::getDataType() const
 {
     return dataType;
-};
-
-CharLengthLogicalFunction CharLengthLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
-LogicalFunction CharLengthLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    std::vector<LogicalFunction> newChildren;
-    for (auto& chr : getChildren())
-    {
-        newChildren.push_back(chr.withInferredDataType(schema));
-    }
-    INVARIANT(newChildren.size() == 1, "CharLengthLogicalFunction expects exactly one child but has {}", newChildren.size());
-    if (not newChildren[0].getDataType().isType(DataType::Type::VARSIZED))
-    {
-        throw DifferentFieldTypeExpected("CHAR_LENGTH expects a VARSIZED input but got {}", newChildren[0].getDataType());
-    }
-    auto newDataType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
-    newDataType.nullable = newChildren[0].getDataType().nullable;
-    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> CharLengthLogicalFunction::getChildren() const
@@ -86,12 +73,12 @@ std::vector<LogicalFunction> CharLengthLogicalFunction::getChildren() const
 
 CharLengthLogicalFunction CharLengthLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 1, "CharLengthLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
 };
 
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::string_view CharLengthLogicalFunction::getType() const
 {
     return NAME;
@@ -106,12 +93,7 @@ CharLengthLogicalFunction
 Unreflector<CharLengthLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [child] = context.unreflect<detail::ReflectedCharLengthLogicalFunction>(reflected);
-
-    if (!child.has_value())
-    {
-        throw CannotDeserialize("CharLengthLogicalFunction is missing its child");
-    }
-    return CharLengthLogicalFunction{child.value()};
+    return CharLengthLogicalFunction(std::move(child));
 }
 
 LogicalFunctionRegistryReturnType

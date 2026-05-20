@@ -21,9 +21,9 @@
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 #include <val_concepts.hpp>
 

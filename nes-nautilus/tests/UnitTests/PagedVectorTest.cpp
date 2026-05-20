@@ -215,16 +215,17 @@ constexpr std::array ALL_VALUE_TYPES = {
 };
 
 /// Builds a Schema with sequentially named fields ("field0", "field1", ...) from the given DataType vector.
-Schema createSchemaFromDataTypes(const std::vector<DataType>& dataTypes)
+Schema<QualifiedUnboundField, Ordered> createSchemaFromDataTypes(const std::vector<DataType>& dataTypes)
 {
-    auto schema = Schema{};
-
-    for (const auto& [typeIdx, dataType] : views::enumerate(dataTypes))
-    {
-        const auto name = Record::RecordFieldIdentifier("field" + std::to_string(typeIdx));
-        schema.addField(name, dataType);
-    }
-    return schema;
+    return views::enumerate(dataTypes)
+        | std::views::transform(
+               [](const auto& pair)
+               {
+                   const auto& [typeIdx, dataType] = pair;
+                   const auto name = Record::RecordFieldIdentifier(Identifier::parse("field" + std::to_string(typeIdx)));
+                   return QualifiedUnboundField{name, dataType};
+               })
+        | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>();
 }
 
 /// Generator for a non-empty vector of DataType drawn from a Type pool.
@@ -341,7 +342,7 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
 
 uint64_t estimateSchemaSize(const std::vector<DataType>& types)
 {
-    return createSchemaFromDataTypes(types).getSizeOfSchemaInBytes();
+    return createSchemaFromDataTypes(types).getSizeInBytes();
 }
 
 template <typename T>
@@ -685,7 +686,8 @@ public:
         : dataTypes(fieldTypes), bufferManager(bufferManager)
     {
         const auto schema = createSchemaFromDataTypes(dataTypes);
-        projections = schema.getFieldNames();
+        projections = schema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+            | std::ranges::to<std::vector>();
         auto layout = std::make_shared<DefaultPagedVectorTupleLayout>(schema);
 
         nautilus::engine::Options options;
@@ -694,7 +696,7 @@ public:
         engine = std::make_unique<nautilus::engine::NautilusEngine>(makeEngine(mode));
 
         pagedVector = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
-        PagedVector::init(pagedVector, bufferManager.getBufferSize(), layout->getTupleSize());
+        PagedVector::init(pagedVector, bufferManager.getBufferSize(), layout->getSchema().getSizeInBytes());
 
         /// NOLINTBEGIN(performance-unnecessary-value-param)
         pushbackFn.emplace(engine->registerFunction(std::function(
@@ -730,7 +732,7 @@ public:
                 const PagedVectorRef pvRef(BorrowedNautilusBuffer::from(pagedVector), layout);
                 for (const auto& record : pvRef)
                 {
-                    auto out = anyVecPushBack(outVector, nautilus::val<size_t>(layout->getNumberOfFields()));
+                    auto out = anyVecPushBack(outVector, nautilus::val<size_t>(std::ranges::size(layout->getSchema())));
                     for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
                     {
                         storeVarValToAnyVec(out, i, record.read(projections[i]), dataTypes[i]);
@@ -900,7 +902,6 @@ void concatMoveProperty(EngineMode mode)
     std::vector<TestablePagedVector> pagedVectors;
     pagedVectors.reserve(numVectors);
     std::vector<AnyVec> fullReference;
-
     for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
     {
         const auto itemCount = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_CONCAT_VECTOR);

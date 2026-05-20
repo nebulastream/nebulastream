@@ -29,6 +29,7 @@
 #include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES

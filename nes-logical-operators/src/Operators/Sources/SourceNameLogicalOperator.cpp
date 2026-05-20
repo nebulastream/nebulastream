@@ -15,6 +15,8 @@
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -24,8 +26,11 @@
 #include <fmt/ranges.h>
 
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -36,25 +41,24 @@
 namespace NES
 {
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName)
+SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, Identifier logicalSourceName)
     : ManagedByOperator(std::move(self)), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName, const Schema& schema)
-    : ManagedByOperator(std::move(self)), logicalSourceName(std::move(logicalSourceName)), schema(schema)
+TypedLogicalOperator<SourceNameLogicalOperator> SourceNameLogicalOperator::create(Identifier logicalSourceName)
 {
+    return TypedLogicalOperator<SourceNameLogicalOperator>{std::move(logicalSourceName)};
 }
 
 bool SourceNameLogicalOperator::operator==(const SourceNameLogicalOperator& rhs) const
 {
-    return this->getSchema() == rhs.getSchema() && this->getName() == rhs.getName() && getOutputSchema() == rhs.getOutputSchema()
-        && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
+    return this->logicalSourceName == rhs.logicalSourceName && getTraitSet() == rhs.getTraitSet();
 }
 
-SourceNameLogicalOperator SourceNameLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+SourceNameLogicalOperator SourceNameLogicalOperator::withInferredSchema() const
 {
-    PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
+    PRECONDITION(false, "Schema<Field, Unordered> inference should happen on SourceDescriptorLogicalOperator");
     return *this;
 }
 
@@ -78,18 +82,6 @@ std::string_view SourceNameLogicalOperator::getName() const noexcept
     return "Source";
 }
 
-Schema SourceNameLogicalOperator::getSchema() const
-{
-    return schema;
-}
-
-SourceNameLogicalOperator SourceNameLogicalOperator::withSchema(const Schema& schema) const
-{
-    auto copy = *this;
-    copy.schema = schema;
-    return copy;
-}
-
 SourceNameLogicalOperator SourceNameLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
@@ -102,21 +94,26 @@ TraitSet SourceNameLogicalOperator::getTraitSet() const
     return traitSet;
 }
 
-SourceNameLogicalOperator SourceNameLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+SourceNameLogicalOperator SourceNameLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
     copy.children = std::move(children);
     return copy;
 }
 
-std::vector<Schema> SourceNameLogicalOperator::getInputSchemas() const
+/// NOLINTBEGIN(readability-convert-member-functions-to-static, performance-unnecessary-value-param)
+SourceNameLogicalOperator SourceNameLogicalOperator::withChildren(std::vector<LogicalOperator>) const
 {
-    return {inputSchema};
-};
+    PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
+    std::unreachable();
+}
 
-Schema SourceNameLogicalOperator::getOutputSchema() const
+/// NOLINTEND(readability-convert-member-functions-to-static, performance-unnecessary-value-param)
+
+Schema<Field, Unordered> SourceNameLogicalOperator::getOutputSchema()
 {
-    return outputSchema;
+    INVARIANT(false, "SourceNameLogicalOperator does not define a output schema");
+    std::unreachable();
 }
 
 std::vector<LogicalOperator> SourceNameLogicalOperator::getChildren() const
@@ -124,7 +121,7 @@ std::vector<LogicalOperator> SourceNameLogicalOperator::getChildren() const
     return children;
 }
 
-std::string SourceNameLogicalOperator::getLogicalSourceName() const
+Identifier SourceNameLogicalOperator::getLogicalSourceName() const
 {
     return logicalSourceName;
 }
@@ -143,4 +140,9 @@ Unreflector<TypedLogicalOperator<SourceNameLogicalOperator>>::operator()(const R
     std::unreachable();
 }
 
+}
+
+std::size_t std::hash<NES::SourceNameLogicalOperator>::operator()(const NES::SourceNameLogicalOperator& sourceNameLogicalOperator) const
+{
+    return std::hash<NES::Identifier>{}(sourceNameLogicalOperator.getLogicalSourceName());
 }

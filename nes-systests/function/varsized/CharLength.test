@@ -31,8 +31,8 @@ SELECT id AS id, CHAR_LENGTH(data) AS len FROM textStream INTO lengthSink;
 8 2
 9 3
 
-# CHAR_LENGTH composed with CONCAT — append "!!" (2 codepoints) to each row.
-SELECT id AS id, CHAR_LENGTH(CONCAT(data, VARSIZED("!!"))) AS len FROM textStream INTO lengthSink;
+# CHAR_LENGTH composed with CONCAT — append '!!' (2 codepoints) to each row.
+SELECT id AS id, CHAR_LENGTH(CONCAT(data, VARSIZED('!!'))) AS len FROM textStream INTO lengthSink;
 ----
 1 2
 2 7

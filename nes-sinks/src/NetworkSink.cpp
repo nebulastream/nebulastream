@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -31,9 +32,14 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <network/lib.h>
 #include <rust/cxx.h>
+
+#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -45,7 +51,7 @@ namespace NES
 
 NetworkSink::NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
-    , tupleSize(sinkDescriptor.getSchema()->getSizeOfSchemaInBytes())
+    , tupleSize(NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())->getSizeInBytes())
     , backpressureHandler(
           sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD),
           sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD))

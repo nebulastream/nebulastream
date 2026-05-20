@@ -15,9 +15,10 @@
 #include <SinksParsing/SchemaFormatter.hpp>
 
 #include <ranges>
-#include <sstream>
 #include <string>
+#include <DataTypes/DataType.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
@@ -25,16 +26,21 @@ namespace NES
 {
 std::string SchemaFormatter::getFormattedSchema()
 {
-    PRECONDITION(schema->hasFields(), "Encountered schema without fields.");
-    std::stringstream ss;
-    ss << schema->getFields().front().name << ":" << magic_enum::enum_name(schema->getFields().front().dataType.type) << ":"
-       << magic_enum::enum_name(
-              schema->getFields().front().dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
-    for (const auto& field : schema->getFields() | std::views::drop(1))
-    {
-        ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type) << ":"
-           << magic_enum::enum_name(field.dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
-    }
-    return fmt::format("{}\n", ss.str());
+    PRECONDITION(!std::ranges::empty(*schema), "Encountered schema without fields.");
+    return fmt::format(
+        "{}\n",
+        fmt::join(
+            *schema
+                | std::views::transform(
+                    [](const auto& field)
+                    {
+                        return fmt::format(
+                            "{}:{}:{}",
+                            field.getFullyQualifiedName(),
+                            magic_enum::enum_name(field.getDataType().type),
+                            magic_enum::enum_name(
+                                field.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
+                    }),
+            ","));
 }
 }

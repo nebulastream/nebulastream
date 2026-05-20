@@ -21,7 +21,9 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp> /// NOLINT(misc-include-cleaner)
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -62,7 +64,7 @@ FromBase64LogicalFunction FromBase64LogicalFunction::withDataType(const DataType
     return copy;
 };
 
-LogicalFunction FromBase64LogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction FromBase64LogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& chr : getChildren())
