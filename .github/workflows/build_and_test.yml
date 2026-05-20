@@ -126,10 +126,16 @@ jobs:
           files: build/junit-unit.xml,build/junit-systest.xml,build/junit-docker.xml
 
   # Log level tests — verifies the NES_LOG_LEVEL compile-time flag works across all build types.
+  # Fanned out one job per build_type so each shard only loops the 6 log levels and fits the
+  # 40-min wall-clock cap even on fork PRs (which run without remote sccache credentials).
   build-and-test-log-level:
-    name: "Log Level Tests"
+    name: "Log Level Tests (${{ matrix.build_type }})"
     timeout-minutes: 40
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, RelWithDebInfo, Release, Benchmark]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -150,14 +156,12 @@ jobs:
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
           run: |
-            for BUILD_TYPE in Debug RelWithDebInfo Release Benchmark; do
-              for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
-                echo "=== ${BUILD_TYPE} / ${LOG_LEVEL} ==="
-                cmake -GNinja -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DNES_LOG_LEVEL=$LOG_LEVEL
-                cmake --build build --target nes-common-tests -j -- -k 0
-                ctest --test-dir build -j --output-on-failure --output-junit build/junit-log-${BUILD_TYPE}-${LOG_LEVEL}.xml --timeout 600 -R "testLogLevel"
-                cmake --build build --target clean
-              done
+            for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
+              echo "=== ${{ matrix.build_type }} / ${LOG_LEVEL} ==="
+              cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=$LOG_LEVEL
+              cmake --build build --target nes-common-tests -j -- -k 0
+              ctest --test-dir build -j --output-on-failure --output-junit build/junit-log-${{ matrix.build_type }}-${LOG_LEVEL}.xml --timeout 600 -R "testLogLevel"
+              cmake --build build --target clean
             done
 
   clean-build-and-test-linux:
