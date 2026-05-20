@@ -1,0 +1,27 @@
+<application>
+  <component name="McpPluginSettings">
+    <option name="disabledTools">
+      <set>
+        <option value="ide_close_project" />
+        <option value="ide_create_module" />
+        <option value="ide_import_modules" />
+        <option value="ide_list_tests" />
+        <option value="ide_open_project" />
+        <option value="ide_open_workspace" />
+        <option value="ide_reformat_code" />
+        <option value="ide_optimize_imports" />
+        <option value="ide_convert_java_to_kotlin" />
+        <option value="ide_enroll_all_projects" />
+        <option value="ide_set_lifecycle_log_file" />
+        <option value="ide_release_all_projects" />
+        <option value="ide_release_project" />
+        <option value="ide_set_all_project_modes" />
+        <option value="ide_set_project_mode" />
+        <option value="ide_create_file" />
+        <option value="ide_replace_text_in_file" />
+        <option value="ide_link_build_system" />
+      </set>
+    </option>
+    <option name="settingsSchemaVersion" value="9" />
+  </component>
+</application>
