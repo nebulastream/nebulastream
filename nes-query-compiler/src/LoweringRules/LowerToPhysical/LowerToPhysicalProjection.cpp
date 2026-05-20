@@ -18,17 +18,26 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <utility>
 #include <vector>
 
+
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/FunctionProvider.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Schema/Binder.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterProvider.hpp>
@@ -39,32 +48,34 @@
 
 namespace
 {
-NES::ScanPhysicalOperator
-createScanOperator(const NES::LogicalOperator& projectionOp, const size_t bufferSize, const NES::Schema& inputSchema)
+NES::ScanPhysicalOperator createScanOperator(
+    const NES::TypedLogicalOperator<NES::ProjectionLogicalOperator>& projectionOp,
+    const size_t bufferSize,
+    const NES::Schema<NES::QualifiedUnboundField, NES::Ordered>& inputSchema,
+    NES::MemoryLayoutType memoryLayoutType)
 {
-    const auto sourceOperators
-        = projectionOp.getChildren()
-        | std::views::filter([](const auto& childOperator)
-                             { return childOperator.template tryGetAs<NES::SourceDescriptorLogicalOperator>().has_value(); })
-        | std::views::transform(
-              [](const auto& sourceChildOperator)
-              { return sourceChildOperator.template tryGetAs<NES::SourceDescriptorLogicalOperator>().value()->getSourceDescriptor(); })
-        | std::ranges::to<std::vector>();
-    PRECONDITION(sourceOperators.size() < 2, "We expect a projection to have at most one source operator as a child.");
-
-    const auto memoryLayoutTypeTrait = projectionOp.getTraitSet().tryGet<NES::MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-    const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
-    if (sourceOperators.size() == 1)
+    const auto sourceDescriptorOpt = [&]
     {
-        const auto inputFormatterConfig = sourceOperators.front().getInputFormatterDescriptor();
-        if (NES::toUpperCase(inputFormatterConfig.getInputFormatterType()) != "NATIVE")
+        if (const auto sourceOp = projectionOp->getChild().tryGetAs<NES::SourceDescriptorLogicalOperator>())
         {
-            return NES::ScanPhysicalOperator(provideInputFormatter(inputFormatterConfig, memoryProvider), inputSchema.getFieldNames());
+            return std::optional{sourceOp.value()->getSourceDescriptor()};
+        }
+        return std::optional<NES::SourceDescriptor>{};
+    }();
+
+    auto inputFieldNames = projectionOp->getAccessedFields()
+        | std::views::transform([](const auto& field) -> NES::QualifiedIdentifier { return field.getFullyQualifiedName(); })
+        | std::ranges::to<std::vector>();
+
+    const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
+    if (sourceDescriptorOpt.has_value())
+    {
+        if (NES::toUpperCase(sourceDescriptorOpt.value().getInputFormatterType()) != "NATIVE")
+        {
+            return NES::ScanPhysicalOperator(provideInputFormatter(inputFormatterConfig, memoryProvider), std::move(inputFieldNames));
         }
     }
-    return NES::ScanPhysicalOperator(memoryProvider, inputSchema.getFieldNames());
+    return NES::ScanPhysicalOperator(memoryProvider, std::move(inputFieldNames));
 }
 
 }
@@ -75,17 +86,20 @@ namespace NES
 LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
 {
     auto projection = projectionLogicalOperator.getAs<ProjectionLogicalOperator>();
-    auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
-    auto outputSchema = projectionLogicalOperator.getOutputSchema();
-    auto bufferSize = conf.pageSize.getValue();
+    const auto traitSet = projectionLogicalOperator.getTraitSet();
+    const auto childTraitSet = projection->getChild().getTraitSet();
 
-    const auto memoryLayoutTypeTrait = projectionLogicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-    auto scan = createScanOperator(projectionLogicalOperator, bufferSize, inputSchema);
+    const auto outputSchema = createPhysicalOutputSchema(traitSet);
+    const auto inputSchema = createPhysicalOutputSchema(childTraitSet);
+
+    const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
+
+    auto bufferSize = conf.pageSize.getValue();
+    auto scan = createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan,
-        outputSchema,
+        inputSchema,
         outputSchema,
         memoryLayoutType,
         memoryLayoutType,
@@ -95,16 +109,17 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
 
     auto child = scanWrapper;
 
+    auto fieldMappingTrait = traitSet.get<FieldMappingTrait>();
     for (const auto& [fieldName, function] : projection->getProjections())
     {
-        auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
-        auto physicalOperator = MapPhysicalOperator(
-            fieldName.transform([](const auto& identifier) { return identifier.getFieldName(); })
-                .value_or(function.explain(ExplainVerbosity::Short)),
-            physicalFunction);
+        auto targetName = fieldMappingTrait->getMapping(unbind(fieldName));
+        PRECONDITION(targetName.has_value(), "Projection name was not in field mapping");
+        auto physicalFunction
+            = QueryCompilation::FunctionProvider::lowerFunction(function, *projection->getChild()->getTraitSet().get<FieldMappingTrait>());
+        auto physicalOperator = MapPhysicalOperator(std::move(targetName).value(), physicalFunction);
         child = std::make_shared<PhysicalOperatorWrapper>(
             physicalOperator,
-            outputSchema,
+            inputSchema,
             outputSchema,
             memoryLayoutType,
             memoryLayoutType,
@@ -115,7 +130,7 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     }
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
-    const std::vector leafs(projectionLogicalOperator.getChildren().size(), child);
+    const std::vector leafs(projectionLogicalOperator.getChildren().size(), scanWrapper);
     return {.root = child, .leafs = {scanWrapper}};
 }
 

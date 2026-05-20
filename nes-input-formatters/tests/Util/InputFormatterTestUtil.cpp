@@ -24,6 +24,7 @@
 #include <iterator>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -35,6 +36,9 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -44,6 +48,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -63,64 +68,43 @@
 namespace NES::InputFormatterTestUtil
 {
 
-Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
+Schema<UnqualifiedUnboundField, Ordered> createSchema(const std::vector<TestDataTypes>& testDataTypes)
 {
     const auto fieldNamesOther = testDataTypes | NES::views::enumerate
-        | std::views::transform([](const auto& idxDataTypePair) { return fmt::format("Field_{}", std::get<0>(idxDataTypePair)); })
+        | std::views::transform([](const auto& idxDataTypePair)
+                                { return Identifier::parse(fmt::format("Field_{}", std::get<0>(idxDataTypePair))); })
         | std::ranges::to<std::vector>();
 
     return createSchema(testDataTypes, fieldNamesOther);
 }
 
-Schema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<std::string>& testFieldNames)
+Schema<UnqualifiedUnboundField, Ordered>
+createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<Identifier>& testFieldNames)
 {
-    auto schema = Schema{};
-    for (const auto& [fieldNumber, dataType] : testDataTypes | NES::views::enumerate)
-    {
-        switch (dataType)
-        {
-            case TestDataTypes::UINT8:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT8));
-                break;
-            case TestDataTypes::UINT16:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT16));
-                break;
-            case TestDataTypes::UINT32:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT32));
-                break;
-            case TestDataTypes::UINT64:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::UINT64));
-                break;
-            case TestDataTypes::INT8:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT8));
-                break;
-            case TestDataTypes::INT16:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT16));
-                break;
-            case TestDataTypes::INT32:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT32));
-                break;
-            case TestDataTypes::INT64:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::INT64));
-                break;
-            case TestDataTypes::FLOAT32:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::FLOAT32));
-                break;
-            case TestDataTypes::FLOAT64:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
-                break;
-            case TestDataTypes::BOOLEAN:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::BOOLEAN));
-                break;
-            case TestDataTypes::CHAR:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::CHAR));
-                break;
-            case TestDataTypes::VARSIZED:
-                schema.addField(testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-                break;
-        }
-    }
-    return schema;
+    static const std::unordered_map<TestDataTypes, DataType::Type> TestDataTypeToNormalDataType
+        = {{TestDataTypes::INT8, DataType::Type::INT8},
+           {TestDataTypes::UINT8, DataType::Type::UINT8},
+           {TestDataTypes::INT16, DataType::Type::INT16},
+           {TestDataTypes::UINT16, DataType::Type::UINT16},
+           {TestDataTypes::INT32, DataType::Type::INT32},
+           {TestDataTypes::UINT32, DataType::Type::UINT32},
+           {TestDataTypes::INT64, DataType::Type::INT64},
+           {TestDataTypes::UINT64, DataType::Type::UINT64},
+           {TestDataTypes::FLOAT32, DataType::Type::FLOAT32},
+           {TestDataTypes::FLOAT64, DataType::Type::FLOAT64},
+           {TestDataTypes::BOOLEAN, DataType::Type::BOOLEAN},
+           {TestDataTypes::CHAR, DataType::Type::CHAR},
+           {TestDataTypes::VARSIZED, DataType::Type::VARSIZED}};
+
+    return testDataTypes | NES::views::enumerate
+        | std::views::transform(
+               [&testFieldNames](const auto& idxDataTypePair)
+               {
+                   const auto& [fieldNumber, dataType] = idxDataTypePair;
+                   return UnqualifiedUnboundField{
+                       testFieldNames.at(fieldNumber), DataTypeProvider::provideDataType(TestDataTypeToNormalDataType.at(dataType))};
+               })
+        | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>();
 }
 
 SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers)
@@ -141,16 +125,21 @@ SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& re
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
-    const Schema& schema,
+    const Schema<UnqualifiedUnboundField, Ordered>& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
     const size_t numberOfRequiredSourceBuffers)
 {
-    std::unordered_map<std::string, std::string> fileSourceConfiguration{
-        {"file_path", filePath}, {"max_inflight_buffers", std::to_string(numberOfRequiredSourceBuffers)}};
-    const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
+    std::unordered_map<Identifier, std::string> fileSourceConfiguration{
+        {Identifier::parse("file_path"), filePath},
+        {Identifier::parse("max_inflight_buffers"), std::to_string(numberOfRequiredSourceBuffers)}};
+    const auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("TestSource"), schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
-        logicalSource.value(), "File", Host("localhost"), std::move(fileSourceConfiguration), {{"type", "CSV"}});
+        logicalSource.value(),
+        Identifier::parse("File"),
+        Host("localhost"),
+        std::move(fileSourceConfiguration),
+        {{Identifier::parse("type"), "CSV"}});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
@@ -170,17 +159,29 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const DescriptorConfig::Config& parserConfiguration,
-    const Schema& schema,
+    const Schema<UnqualifiedUnboundField, Ordered>& schema,
+    const MemoryLayoutType memoryLayoutType,
+    const size_t sizeOfFormattedBuffers,
+    const bool isCompiled)
+{
+    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+    return createInputFormatter(validatedParserConfiguration, schema, memoryLayoutType, sizeOfFormattedBuffers, isCompiled);
+}
+
+std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
+    const DescriptorConfig::Config&
+    const Schema<UnqualifiedUnboundField, Ordered>& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
     const bool isCompiled)
 {
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
+    const auto qualifiedSchema = schema | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>();
 
-    auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType);
+    auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, qualifiedSchema, memoryLayoutType);
     auto inputFormatterType = std::get<std::string>(parserConfiguration.at("type"));
     auto scanOp = ScanPhysicalOperator(
-        provideInputFormatter(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider), schema.getFieldNames());
+        provideInputFormatter(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider), qualifiedSchema.getUniqueFieldNames());
     scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
 
     auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(scanOp));

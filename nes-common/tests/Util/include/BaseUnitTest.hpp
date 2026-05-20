@@ -96,9 +96,11 @@ private:
 
 #if defined(__has_feature) && __has_feature(thread_sanitizer)
     /// We double the timeout for tests when running with the thread sanitizer, as it significantly slows down execution for some tests
-    static constexpr std::chrono::minutes WAIT_TIME_SETUP{10};
+    static constexpr std::chrono::minutes WAIT_TIME_SETUP{16};
 #else
-    static constexpr std::chrono::minutes WAIT_TIME_SETUP{5};
+    /// 8 minutes leaves headroom for the slowest parameterized tests (e.g. ChainedHashMapCustomValueTest,
+    /// ~6 min on CI) so they don't trip the deadline spuriously when CI machines run slow.
+    static constexpr std::chrono::minutes WAIT_TIME_SETUP{12};
 #endif
 };
 

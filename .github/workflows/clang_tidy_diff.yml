@@ -30,7 +30,9 @@ permissions:
 
 jobs:
   check-clang-tidy:
-    timeout-minutes: 90
+    # The diff check builds the whole project plus runs clang-tidy on the GitHub-hosted
+    # runner, which is slow; give it generous headroom so it doesn't time out spuriously.
+    timeout-minutes: 180
     name: Clang-Tidy Diff
     runs-on: ${{ matrix.runner }}
     strategy:

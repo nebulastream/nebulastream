@@ -49,7 +49,6 @@
 #include <CommonTokenStream.h>
 #include <Exceptions.h>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -57,6 +56,10 @@
 #include <Util/URI.hpp>
 #include <ErrorHandling.hpp>
 
+#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <CommonParserFunctions.hpp>
 
 namespace NES
@@ -70,8 +73,6 @@ class StatementBinder::Impl
     std::function<LogicalPlan(AntlrSQLParser::QueryContext*)> queryBinder;
 
 public:
-    using Literal = std::variant<std::string, int64_t, uint64_t, double, bool>;
-
     Impl(
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
         const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryBinder)
@@ -80,17 +81,6 @@ public:
     }
 
     ~Impl() = default;
-
-    /// TODO #897 replace with normal comparison binding
-    std::pair<std::string, Literal> bindShowFilter(const AntlrSQLParser::ShowFilterContext* showFilterAST) const
-    {
-        return {bindIdentifier(showFilterAST->attr), bindLiteral(showFilterAST->value)};
-    }
-
-    std::pair<std::string, Literal> bindDropFilter(const AntlrSQLParser::DropFilterContext* dropFilterAST) const
-    {
-        return {bindIdentifier(dropFilterAST->attr), bindLiteral(dropFilterAST->value)};
-    }
 
     StatementOutputFormat bindFormat(AntlrSQLParser::ShowFormatContext* formatAST) const
     {
@@ -119,8 +109,8 @@ public:
     {
         const auto logicalSourceName = LogicalSourceName(bindIdentifier(physicalSourceDefAST->logicalSource->strictIdentifier()));
         /// TODO #764 use normal identifiers for types
-        const std::string type = physicalSourceDefAST->type->getText();
-        auto configOptions = [&]()
+        const Identifier type = bindIdentifier(physicalSourceDefAST->type);
+        const auto configOptions = [&]()
         {
             if (physicalSourceDefAST->optionsClause() != nullptr)
             {
@@ -134,7 +124,7 @@ public:
 
         /// "host" determines worker placement, not source behavior — extract it from the config map into a dedicated field.
         std::optional<Host> host;
-        if (auto it = sourceConfig.find("host"); it != sourceConfig.end())
+        if (auto it = sourceConfig.find(Identifier::parse("host")); it != sourceConfig.end())
         {
             host = Host(it->second);
             sourceConfig.erase(it);
@@ -152,7 +142,9 @@ public:
 
         auto capacity = [&] -> std::optional<size_t>
         {
-            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "CAPACITY"; });
+            auto it = std::ranges::find_if(
+                configs,
+                [](const auto& key) { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("CAPACITY"); });
             if (it != configs.end())
             {
                 auto* literalOpt = std::get_if<Literal>(&it->second);
@@ -167,7 +159,9 @@ public:
 
         auto dataAddress = [&] -> std::string
         {
-            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "DATA"; });
+            auto it = std::ranges::find_if(
+                configs,
+                [](const auto& key) { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("DATA"); });
             if (it != configs.end())
             {
                 const Literal* literalOpt = std::get_if<Literal>(&it->second);
@@ -183,7 +177,9 @@ public:
         auto downStreams = [&] -> std::vector<std::string>
         {
             return configs
-                | std::views::filter([](const auto& option) { return option.first.size() == 1 && option.first[0] == "DOWNSTREAM"; })
+                | std::views::filter(
+                       [](const auto& option)
+                       { return option.first.size() == 1 && *std::ranges::begin(option.first) == Identifier::parse("DOWNSTREAM"); })
                 | std::views::values
                 | std::views::transform(
                        [](const auto& value)
@@ -210,7 +206,7 @@ public:
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
     {
         const auto sinkName = bindIdentifier(sinkDefAST->sinkName->strictIdentifier());
-        const auto sinkType = sinkDefAST->type->getText();
+        const Identifier sinkType = bindIdentifier(sinkDefAST->type);
         const auto configOptions = [&]()
         {
             if (sinkDefAST->optionsClause() != nullptr)
@@ -219,27 +215,28 @@ public:
             }
             return ConfigMap{};
         }();
-        std::unordered_map<std::string, std::string> sinkOptions{};
-        if (const auto sinkConfigIter = configOptions.find("SINK"); sinkConfigIter != configOptions.end())
+        std::unordered_map<Identifier, std::string> sinkOptions{};
+        static const auto SinkIdentifier = Identifier::parse("SINK");
+        if (const auto sinkConfigIter = configOptions.find(SinkIdentifier); sinkConfigIter != configOptions.end())
         {
-            sinkOptions
-                = sinkConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-                | std::views::transform(
-                      [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
-                | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            sinkOptions = sinkConfigIter->second
+                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+                | std::views::transform([](auto& pair)
+                                        { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
+                | std::ranges::to<std::unordered_map<Identifier, std::string>>();
         }
-        std::unordered_map<std::string, std::string> formatOptions{};
-        if (const auto formatConfigIter = configOptions.find("OUTPUT_FORMATTER"); formatConfigIter != configOptions.end())
+        std::unordered_map<Identifier, std::string> formatOptions{};
+        if (const auto formatConfigIter = configOptions.find(Identifier::parse("OUTPUT_FORMATTER")); formatConfigIter != configOptions.end())
         {
-            formatOptions
-                = formatConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-                | std::views::transform(
-                      [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
-                | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            formatOptions = formatConfigIter->second
+                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+                | std::views::transform([](auto& pair)
+                                        { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
+                | std::ranges::to<std::unordered_map<Identifier, std::string>>();
         }
         /// "host" determines worker placement, not sink behavior — extract it from the config map into a dedicated field.
         std::optional<Host> host;
-        if (auto it = sinkOptions.find("host"); it != sinkOptions.end())
+        if (auto it = sinkOptions.find(Identifier::parse("host")); it != sinkOptions.end())
         {
             host = Host(it->second);
             sinkOptions.erase(it);
@@ -260,21 +257,25 @@ public:
         const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
         const auto modelPath = bindStringLiteral(modelDefAST->modelPath);
 
-        Schema inputs;
+        std::vector<UnqualifiedUnboundField> inputs;
         for (auto* const inputField : modelDefAST->modelInputField())
         {
-            inputs = inputs.addField(
+            inputs.emplace_back(
                 bindIdentifier(inputField->identifier()), bindDataType(inputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
         }
 
-        Schema outputs;
+        std::vector<UnqualifiedUnboundField> outputs;
         for (auto* const outputField : modelDefAST->modelOutputField())
         {
-            outputs = outputs.addField(
+            outputs.emplace_back(
                 bindIdentifier(outputField->identifier()), bindDataType(outputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
         }
 
-        return CreateModelStatement{.name = modelName, .path = modelPath, .inputs = inputs, .outputs = outputs};
+        return CreateModelStatement{
+            .name = fmt::format("{}", modelName),
+            .path = modelPath,
+            .inputs = std::move(inputs) | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>(),
+            .outputs = std::move(outputs) | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>()};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
@@ -312,7 +313,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "NAME")
+            static const auto NameIdentifier = Identifier::parse("NAME");
+            if (attr != NameIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW LOGICAL SOURCES must be on name attribute");
             }
@@ -320,7 +322,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW LOGICAL SOURCES must be a string");
             }
-            return ShowLogicalSourcesStatement{.name = std::get<std::string>(value), .format = format};
+            return ShowLogicalSourcesStatement{.name = Identifier::parse(std::get<std::string>(value)), .format = format};
         }
         return ShowLogicalSourcesStatement{.name = std::nullopt, .format = format};
     }
@@ -340,7 +342,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "ID")
+            static const auto IdIdentifier = Identifier::parse("ID");
+            if (attr != IdIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW PHYSICAL SOURCES must be on id attribute");
             }
@@ -361,7 +364,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "NAME")
+            static const auto NameIdentifier = Identifier::parse("NAME");
+            if (attr != NameIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW SINKS must be on name attribute");
             }
@@ -369,7 +373,7 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW SINKS must be a string");
             }
-            return ShowSinksStatement{.name = std::get<std::string>(value), .format = format};
+            return ShowSinksStatement{.name = Identifier::parse(std::get<std::string>(value)), .format = format};
         }
         return ShowSinksStatement{.name = std::nullopt, .format = format};
     }
@@ -382,7 +386,8 @@ public:
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
-            if (attr != "ID")
+            static const auto IdIdentifier = Identifier::parse("ID");
+            if (attr != IdIdentifier)
             {
                 throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on id attribute");
             }
@@ -432,12 +437,12 @@ public:
     /// Validate a filter and extract its typed value, or throw a syntax error tied to `subject`.
     template <typename T>
     static T requireFilterValue(
-        const std::pair<std::string, Literal>& filter,
+        const std::pair<Identifier, Literal>& filter,
         std::string_view expectedAttr,
         std::string_view expectedTypeDescription,
         std::string_view subject)
     {
-        if (filter.first != expectedAttr)
+        if (filter.first != Identifier::parse(std::string{expectedAttr}))
         {
             throw InvalidQuerySyntax("Filter for {} must be on {} attribute", subject, expectedAttr);
         }
@@ -448,13 +453,13 @@ public:
         return std::get<T>(filter.second);
     }
 
-    static DropLogicalSourceStatement bindDropLogicalSource(const std::pair<std::string, Literal>& filter)
+    static DropLogicalSourceStatement bindDropLogicalSource(const std::pair<Identifier, Literal>& filter)
     {
         return DropLogicalSourceStatement{
-            LogicalSourceName(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP LOGICAL SOURCE"))};
+            LogicalSourceName(Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP LOGICAL SOURCE")))};
     }
 
-    [[nodiscard]] DropPhysicalSourceStatement bindDropPhysicalSource(const std::pair<std::string, Literal>& filter) const
+    [[nodiscard]] DropPhysicalSourceStatement bindDropPhysicalSource(const std::pair<Identifier, Literal>& filter) const
     {
         const auto id = requireFilterValue<uint64_t>(filter, "ID", "an unsigned integer", "DROP PHYSICAL SOURCE");
         if (const auto physicalSource = sourceCatalog->getPhysicalSource(PhysicalSourceId{id}))
@@ -464,17 +469,17 @@ public:
         throw UnknownSourceName("There is no physical source with id {}", id);
     }
 
-    static DropQueryStatement bindDropQuery(const std::pair<std::string, Literal>& filter)
+    static DropQueryStatement bindDropQuery(const std::pair<Identifier, Literal>& filter)
     {
         return DropQueryStatement{.id = DistributedQueryId(requireFilterValue<std::string>(filter, "ID", "a string", "DROP QUERY"))};
     }
 
-    static DropSinkStatement bindDropSink(const std::pair<std::string, Literal>& filter)
+    static DropSinkStatement bindDropSink(const std::pair<Identifier, Literal>& filter)
     {
-        return DropSinkStatement{requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SINK")};
+        return DropSinkStatement{Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SINK"))};
     }
 
-    static DropModelStatement bindDropModel(const std::pair<std::string, Literal>& filter)
+    static DropModelStatement bindDropModel(const std::pair<Identifier, Literal>& filter)
     {
         return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
     }
@@ -539,9 +544,11 @@ public:
                 if (queryAst->optionsClause() != nullptr)
                 {
                     auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
-                    if (auto optionsIter = options.find("QUERY"); optionsIter != options.end())
+                    static const auto QueryIdentifier = Identifier::parse("QUERY");
+                    static const auto IdIdentifier = Identifier::parse("ID");
+                    if (auto optionsIter = options.find(QueryIdentifier); optionsIter != options.end())
                     {
-                        if (auto idIter = optionsIter->second.find("ID"); idIter != optionsIter->second.end())
+                        if (auto idIter = optionsIter->second.find(IdIdentifier); idIter != optionsIter->second.end())
                         {
                             auto* literal = std::get_if<Literal>(&idIter->second);
                             if ((literal == nullptr) || !std::holds_alternative<std::string>(*literal))

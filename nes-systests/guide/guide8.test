@@ -16,9 +16,9 @@ ATTACH INLINE
 96.5,120
 99.0,130
 
-CREATE SINK sink(`HEALTH_SENSOR$OXYGEN_LEVEL_MEDIAN` FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sink(oxygen_level_median FLOAT64 NOT NULL) TYPE File;
 
-SELECT MEDIAN(oxygen_level)
+SELECT MEDIAN(oxygen_level) AS oxygen_level_median
 FROM health_sensor
 WINDOW TUMBLING(ts, SIZE 100 MS)
 INTO sink;

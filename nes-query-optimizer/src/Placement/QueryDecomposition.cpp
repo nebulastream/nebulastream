@@ -23,14 +23,17 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/PlacementTrait.hpp>
@@ -60,7 +63,7 @@ struct DecompositionContext
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
 
-    void addPlanToNode(LogicalOperator&& op, const NetworkTopology::NodeId& nodeId)
+    void addPlanToNode(LogicalOperator op, const NetworkTopology::NodeId& nodeId)
     {
         plansByNode[nodeId].emplace_back(INVALID_QUERY_ID, std::vector{std::move(op)});
     }
@@ -89,35 +92,42 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& downstreamData = downstreamWorker->dataAddress;
     const auto& upstreamData = upstreamWorker->dataAddress;
 
-    auto sourceConfig = std::unordered_map<std::string, std::string>{{"channel", channel.id.getRawValue()}, {"bind", downstreamData}};
+    auto sourceConfig = std::unordered_map<Identifier, std::string>{
+        {Identifier::parse("channel"), channel.id.getRawValue()}, {Identifier::parse("bind"), downstreamData}};
     if (context.config.receiverQueueSize.isExplicitlySet())
     {
-        sourceConfig.emplace("receiver_queue_size", std::to_string(context.config.receiverQueueSize.getValue()));
+        sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string(context.config.receiverQueueSize.getValue()));
     }
 
-    auto sinkConfig = std::unordered_map<std::string, std::string>{
-        {"channel", channel.id.getRawValue()}, {"bind", upstreamData}, {"data_endpoint", downstreamData}, {"output_format", "NATIVE"}};
+    auto sinkConfig = std::unordered_map<Identifier, std::string>{
+        {Identifier::parse("channel"), channel.id.getRawValue()},
+        {Identifier::parse("bind"), upstreamData},
+        {Identifier::parse("data_endpoint"), downstreamData},
+        {Identifier::parse("output_format"), "NATIVE"}};
 
     if (context.config.maxPendingAcks.isExplicitlySet())
     {
-        sinkConfig.emplace("max_pending_acks", std::to_string(context.config.maxPendingAcks.getValue()));
+        sinkConfig.emplace(Identifier::parse("max_pending_acks"), std::to_string(context.config.maxPendingAcks.getValue()));
     }
     if (context.config.senderQueueSize.isExplicitlySet())
     {
-        sinkConfig.emplace("sender_queue_size", std::to_string(context.config.senderQueueSize.getValue()));
+        sinkConfig.emplace(Identifier::parse("sender_queue_size"), std::to_string(context.config.senderQueueSize.getValue()));
     }
     if (context.config.backpressureUpperThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace("backpressure_upper_threshold", std::to_string(context.config.backpressureUpperThreshold.getValue()));
+        sinkConfig.emplace(
+            Identifier::parse("backpressure_upper_threshold"), std::to_string(context.config.backpressureUpperThreshold.getValue()));
     }
     if (context.config.backpressureLowerThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace("backpressure_lower_threshold", std::to_string(context.config.backpressureLowerThreshold.getValue()));
+        sinkConfig.emplace(
+            Identifier::parse("backpressure_lower_threshold"), std::to_string(context.config.backpressureLowerThreshold.getValue()));
     }
 
+    auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
     const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
-        "Network",
-        channel.upstreamOp.getOutputSchema(),
+        Identifier::parse("Network"),
+        orderedUpstreamSchema,
         Host(channel.downstreamNode.getRawValue()),
         {{InputFormatterDescriptor::getTypeString(), "Native"}},
         sourceConfig);
@@ -125,22 +135,24 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 
     auto networkSinkDescriptor = context.sinkCatalog->getInlineSink(
-        channel.upstreamOp.getOutputSchema(), "Network", Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
+        orderedUpstreamSchema, Identifier::parse("Network"), Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
     auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
-    TraitSet ts;
+    const auto ts = channel.upstreamOp.getTraitSet()
+        | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(PlacementTrait); }) | std::ranges::to<TraitSet>();
+    auto upstreamTs = ts;
+    auto downstreamTs = ts;
 
-    USED_IN_DEBUG auto traitInserted = ts.tryInsert(outputOriginIds.get());
-    INVARIANT(traitInserted, "Failed to add output origin");
-    traitInserted = ts.tryInsert(memoryLayout.get());
-    INVARIANT(traitInserted, "Failed to add memory layout");
+    upstreamTs.insert(PlacementTrait{channel.upstreamNode});
+    downstreamTs.insert(PlacementTrait{channel.downstreamNode});
+
+    auto bridgeSink = SinkLogicalOperator::create(networkSinkDescriptor.value());
 
     return Bridge{
-        TypedLogicalOperator<SourceDescriptorLogicalOperator>{networkSourceDescriptor} -> withTraitSet(ts),
-        TypedLogicalOperator<SinkLogicalOperator>{networkSinkDescriptor.value()} -> withTraitSet(ts).withInferredSchema(
-            {channel.upstreamOp.getOutputSchema()})};
+        SourceDescriptorLogicalOperator::create(networkSourceDescriptor)->withTraitSet(ts),
+        SinkLogicalOperator::create(networkSinkDescriptor.value(), channel.upstreamOp)->withTraitSet(ts).withInferredSchema()};
 }
 
 LogicalOperator createNetworkChannel(
@@ -167,9 +179,9 @@ LogicalOperator createNetworkChannel(
         auto [networkSource, networkSink] = connect(
             context,
             NetworkChannel{
-                .id = ChannelId(generateUUID()), .upstreamOp = op, .upstreamNode = upstreamNode, .downstreamNode = downstreamNode});
+                .id = ChannelId(generateUUID()), .upstreamOp = currentOp, .upstreamNode = upstreamNode, .downstreamNode = downstreamNode});
 
-        context.addPlanToNode(networkSink.withChildren({std::move(currentOp)}), upstreamNode);
+        context.addPlanToNode(std::move(networkSink), upstreamNode);
         currentOp = networkSource;
     }
 
@@ -233,8 +245,8 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
         .sinkCatalog = copyPtr(sinkCatalog),
         .workerCatalog = copyPtr(workerCatalog)};
 
-    auto root = decomposePlanRecursive(context, placedPlan.getRootOperators().front());
-    context.addPlanToNode(std::move(root), getPlacementFor(root));
+    auto root = decomposePlanRecursive(context, placedPlan.getRootOperators().front()).withInferredSchema();
+    context.addPlanToNode(root, getPlacementFor(root));
 
     for (const auto& [node, plans] : context.plansByNode)
     {

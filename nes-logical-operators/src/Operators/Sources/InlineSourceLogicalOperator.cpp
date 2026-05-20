@@ -14,6 +14,8 @@
 
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 
+#include <cstdint>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -21,10 +23,18 @@
 #include <vector>
 
 #include <fmt/format.h>
+#include <folly/hash/Hash.h>
+/// NOLINTNEXTLINE(misc-include-cleaner
+#include <Util/Hash.hpp>
 
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Field.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -34,35 +44,35 @@ namespace NES
 {
 
 
-InlineSourceLogicalOperator InlineSourceLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+InlineSourceLogicalOperator InlineSourceLogicalOperator::withInferredSchema()
 {
-    PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
-    return *this;
+    PRECONDITION(false, "Schema<Field, Unordered> inference should happen on SourceDescriptorLogicalOperator");
+    std::unreachable();
 }
 
-std::string InlineSourceLogicalOperator::getSourceType() const
+Identifier InlineSourceLogicalOperator::getSourceType() const
 {
     return sourceType;
 }
 
-std::unordered_map<std::string, std::string> InlineSourceLogicalOperator::getSourceConfig() const
+std::unordered_map<Identifier, std::string> InlineSourceLogicalOperator::getSourceConfig() const
 {
     return sourceConfig;
 }
 
-std::unordered_map<std::string, std::string> InlineSourceLogicalOperator::getParserConfig() const
+std::unordered_map<Identifier, std::string> InlineSourceLogicalOperator::getParserConfig() const
 {
     return parserConfig;
 }
 
-Schema InlineSourceLogicalOperator::getSchema() const
+Schema<UnqualifiedUnboundField, Ordered> InlineSourceLogicalOperator::getSourceSchema() const
 {
-    return schema;
+    return sourceSchema;
 }
 
 bool InlineSourceLogicalOperator::operator==(const InlineSourceLogicalOperator& rhs) const
 {
-    return this->sourceType == rhs.sourceType && this->schema == rhs.schema && this->parserConfig == rhs.parserConfig
+    return this->sourceType == rhs.sourceType && this->sourceSchema == rhs.sourceSchema && this->parserConfig == rhs.parserConfig
         && this->sourceConfig == rhs.sourceConfig;
 }
 
@@ -99,14 +109,10 @@ InlineSourceLogicalOperator InlineSourceLogicalOperator::withChildren(std::vecto
     return copy;
 }
 
-std::vector<Schema> InlineSourceLogicalOperator::getInputSchemas() const
+Schema<Field, Unordered> InlineSourceLogicalOperator::getOutputSchema()
 {
-    return {schema};
-};
-
-Schema InlineSourceLogicalOperator::getOutputSchema() const
-{
-    return schema;
+    INVARIANT(false, "Convert InlineSourceLogical Operator to SourceDescriptorLogicalOperator before retrieving output schema");
+    std::unreachable();
 }
 
 std::vector<LogicalOperator> InlineSourceLogicalOperator::getChildren() const
@@ -116,16 +122,26 @@ std::vector<LogicalOperator> InlineSourceLogicalOperator::getChildren() const
 
 InlineSourceLogicalOperator::InlineSourceLogicalOperator(
     WeakLogicalOperator self,
-    std::string type,
-    const Schema& schema,
-    std::unordered_map<std::string, std::string> sourceConfig,
-    std::unordered_map<std::string, std::string> parserConfig)
+    Identifier type,
+    Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
+    std::unordered_map<Identifier, std::string> sourceConfig,
+    std::unordered_map<Identifier, std::string> parserConfig)
     : ManagedByOperator(std::move(self))
-    , schema(schema)
+    , sourceSchema(std::move(sourceSchema))
     , sourceType(std::move(type))
     , sourceConfig(std::move(sourceConfig))
     , parserConfig(std::move(parserConfig))
 {
+}
+
+TypedLogicalOperator<InlineSourceLogicalOperator> InlineSourceLogicalOperator::create(
+    Identifier type,
+    Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
+    std::unordered_map<Identifier, std::string> sourceConfig,
+    std::unordered_map<Identifier, std::string> parserConfig)
+{
+    return TypedLogicalOperator<InlineSourceLogicalOperator>{
+        std::move(type), std::move(sourceSchema), std::move(sourceConfig), std::move(parserConfig)};
 }
 
 Reflected
@@ -142,4 +158,10 @@ Unreflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(const
     std::unreachable();
 }
 
+}
+
+uint64_t std::hash<NES::InlineSourceLogicalOperator>::operator()(const NES::InlineSourceLogicalOperator& op) const noexcept
+{
+    return folly::hash::hash_combine_generic(
+        NES::Hash{}, op.getSourceType(), op.getSourceSchema(), op.getSourceConfig(), op.getParserConfig());
 }

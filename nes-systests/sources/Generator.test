@@ -1,71 +1,71 @@
-# name: sources/Generator.test
+ # name: sources/Generator.test
 # description: Tests the generator source
 # groups: [Sources, Generator]
 
 CREATE LOGICAL SOURCE generatorDefault(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generatorDefault TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1' AS `SOURCE`.GENERATOR_SCHEMA
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 
 CREATE LOGICAL SOURCE generatorDifferentDataTypes(field1 UINT64 NOT NULL, field2 UINT32 NOT NULL, field3 UINT16 NOT NULL, field4 UINT8 NOT NULL, field5 INT64 NOT NULL, field6 INT32 NOT NULL, field7 INT16 NOT NULL, field8 INT8 NOT NULL, field9 FLOAT64 NOT NULL, field10 FLOAT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generatorDifferentDataTypes TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
-       'emit_rate 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
-       1 AS `SOURCE`.SEED,
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'FIXED' AS "SOURCE".GENERATOR_RATE_TYPE,
+       'emit_rate 1000' AS "SOURCE".GENERATOR_RATE_CONFIG,
+       1 AS "SOURCE".SEED,
        'SEQUENCE UINT64 0 10 1, SEQUENCE UINT32 0 9 1, SEQUENCE UINT16 0 8 1, SEQUENCE UINT8 0 7 1, SEQUENCE INT64 0 6 1, SEQUENCE INT32 0 5 1, SEQUENCE INT16 0 4 1, SEQUENCE INT8 0 3 1, SEQUENCE FLOAT64 0 2 1, SEQUENCE FLOAT32 0 1 1'
-       AS `SOURCE`.GENERATOR_SCHEMA
+       AS "SOURCE".GENERATOR_SCHEMA
 );
 
 CREATE LOGICAL SOURCE generator10K(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generator10K TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
-       'emit_rate 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
-       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS "SOURCE".SEED,
+       'FIXED' AS "SOURCE".GENERATOR_RATE_TYPE,
+       'emit_rate 1000' AS "SOURCE".GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 
 CREATE LOGICAL SOURCE generator10KSinus(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generator10KSinus TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'SINUS' AS `SOURCE`.GENERATOR_RATE_TYPE,
-       'amplitude 1000, frequency 2' AS `SOURCE`.GENERATOR_RATE_CONFIG,
-       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS "SOURCE".SEED,
+       'SINUS' AS "SOURCE".GENERATOR_RATE_TYPE,
+       'amplitude 1000, frequency 2' AS "SOURCE".GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 
 CREATE LOGICAL SOURCE generatorStopAll(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generatorStopAll TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 
 CREATE LOGICAL SOURCE generatorStopOne(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generatorStopOne TYPE Generator SET(
-       'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
+       'ONE' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 
 CREATE LOGICAL SOURCE generatorInline(id UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generatorInline TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'SEQUENCE UINT64 0 10 1' AS `SOURCE`.GENERATOR_SCHEMA
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 10 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 
 
-CREATE SINK generator_sink(generatorDefault.id UINT64 NOT NULL, generatorDefault.field2 UINT64 NOT NULL) TYPE File;
-CREATE SINK generator_data_types_sink(generatorDifferentDataTypes.field1 UINT64 NOT NULL, generatorDifferentDataTypes.field2 UINT32 NOT NULL, generatorDifferentDataTypes.field3 UINT16 NOT NULL, generatorDifferentDataTypes.field4 UINT8 NOT NULL, generatorDifferentDataTypes.field5 INT64 NOT NULL, generatorDifferentDataTypes.field6 INT32 NOT NULL, generatorDifferentDataTypes.field7 INT16 NOT NULL, generatorDifferentDataTypes.field8 INT8 NOT NULL, generatorDifferentDataTypes.field9 FLOAT64 NOT NULL, generatorDifferentDataTypes.field10 FLOAT32 NOT NULL) TYPE File;
-CREATE SINK checksum_10K_Sinus(generator10KSinus.id UINT64 NOT NULL,generator10KSinus.field2 UINT64 NOT NULL) TYPE Checksum;
-CREATE SINK checksum_10K(generator10K.id UINT64 NOT NULL, generator10K.field2 UINT64 NOT NULL) TYPE Checksum;
-CREATE SINK stop_all_checksum(generatorStopAll.id UINT64 NOT NULL, generatorStopAll.field2 UINT64 NOT NULL) TYPE Checksum;
-CREATE SINK stop_one_checksum(generatorStopOne.id UINT64 NOT NULL, generatorStopOne.field2 UINT64 NOT NULL) TYPE Checksum;
-CREATE SINK generator_sink_inline(generatorInline.id UINT64 NOT NULL) TYPE File;
+CREATE SINK generator_sink(id UINT64 NOT NULL, field2 UINT64 NOT NULL) TYPE File;
+CREATE SINK generator_data_types_sink(field1 UINT64 NOT NULL, field2 UINT32 NOT NULL, field3 UINT16 NOT NULL, field4 UINT8 NOT NULL, field5 INT64 NOT NULL, field6 INT32 NOT NULL, field7 INT16 NOT NULL, field8 INT8 NOT NULL, field9 FLOAT64 NOT NULL, field10 FLOAT32 NOT NULL) TYPE File;
+CREATE SINK checksum_10K_Sinus(id UINT64 NOT NULL,field2 UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK checksum_10K(id UINT64 NOT NULL, field2 UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK stop_all_checksum(id UINT64 NOT NULL, field2 UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK stop_one_checksum(id UINT64 NOT NULL, field2 UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK generator_sink_inline(id UINT64 NOT NULL) TYPE File;
 
 SELECT * FROM generatorDefault INTO generator_sink;
 ----
@@ -126,15 +126,15 @@ SELECT * FROM generatorInline INTO generator_sink_inline;
 
 CREATE LOGICAL SOURCE generator_with_timeout(id FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generator_with_timeout TYPE Generator SET(
-       'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES, # Normal Distribution Never finishes
-       2000 AS `SOURCE`.MAX_RUNTIME_MS,
-       1 AS `SOURCE`.SEED,
-       'NORMAL_DISTRIBUTION FLOAT64 0 10' AS `SOURCE`.GENERATOR_SCHEMA
+       'ONE' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES, # Normal Distribution Never finishes
+       2000 AS "SOURCE".MAX_RUNTIME_MS,
+       1 AS "SOURCE".SEED,
+       'NORMAL_DISTRIBUTION FLOAT64 0 10' AS "SOURCE".GENERATOR_SCHEMA
 );
-CREATE SINK generator_sink_timeout(generator_with_timeout.id FLOAT64 NOT NULL) TYPE File;
+CREATE SINK generator_sink_timeout(id FLOAT64 NOT NULL) TYPE File;
 
 # Predicate eliminates all tuples on purpose, as this test does not care about the result.
-# The test only validates that the query terminates based on the `MAX_RUNTIME_MS`
+# The test only validates that the query terminates based on the "MAX_RUNTIME_MS"
 SELECT * FROM generator_with_timeout
 WHERE BOOLEAN(FALSE)
 INTO generator_sink_timeout;
@@ -142,11 +142,11 @@ INTO generator_sink_timeout;
 
 CREATE LOGICAL SOURCE generator_text(id UINT64 NOT NULL, word VARSIZED NOT NULL, random_word VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR generator_text TYPE GENERATOR SET(
-    'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES, # Text generator never finishes
-    1 as `SOURCE`.SEED,
-    'SEQUENCE UINT64 0 20 1, WORDLIST small/wordlist.csv, RANDOMSTR 1 6' AS `SOURCE`.GENERATOR_SCHEMA
+    'ONE' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES, # Text generator never finishes
+    1 as "SOURCE".SEED,
+    'SEQUENCE UINT64 0 20 1, WORDLIST small/wordlist.csv, RANDOMSTR 1 6' AS "SOURCE".GENERATOR_SCHEMA
 );
-CREATE SINK generator_sink_text(generator_text.id UINT64 NOT NULL, generator_text.word VARSIZED NOT NULL, generator_text.random_word VARSIZED NOT NULL) TYPE File;
+CREATE SINK generator_sink_text(id UINT64 NOT NULL, word VARSIZED NOT NULL, random_word VARSIZED NOT NULL) TYPE File;
 SELECT * FROM generator_text
 INTO generator_sink_text;
 ----

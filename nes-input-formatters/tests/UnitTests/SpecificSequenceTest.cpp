@@ -201,7 +201,7 @@ TEST_F(SpecificSequenceTest, simdJSONFirstObjectEndsAtBufferBoundary)
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(12)}}}},
-        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "\n{\"Field_0\":12}\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "\n{\"FIELD_0\":12}\n"}}});
 }
 
 /// SIMDJSON detects a complete tuple '{"Field_0":567}' in buffer 2, this leads to an empty spanning tuple between the ending '}'-byte
@@ -221,9 +221,9 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryLeading)
         .expectedResults
         = {WorkerThreadResults<TestTuple>{{{TestTuple(1234), TestTuple(567)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(89)}}}},
         .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"Field_0\":1234}"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"Field_0\":567}"},
-           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"Field_0\":89}\n"}}});
+        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"FIELD_0\":1234}"},
+           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"FIELD_0\":567}"},
+           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"FIELD_0\":89}\n"}}});
 }
 
 /// SIMDJSON detects a complete tuple '{"Field_0":567}' in buffer 3, this leads to an empty spanning tuple between the ending '}'-byte
@@ -244,9 +244,9 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryTrailing)
         = {WorkerThreadResults<TestTuple>{{{TestTuple(89)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(1234), TestTuple(567)}}}},
 
         .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"Field_0\":1234}"},
-           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"Field_0\":89}\n"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"Field_0\":567}"}}});
+        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"FIELD_0\":1234}"},
+           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"FIELD_0\":89}\n"},
+           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"FIELD_0\":567}"}}});
 }
 }
 

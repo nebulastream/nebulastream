@@ -13,9 +13,9 @@ ATTACH INLINE
 6,20,20000
 7,21,21000
 
-CREATE SINK streamSink(id INT64 NOT NULL, stream.value INT64 NOT NULL, stream.timestamp INT64 NOT NULL)  TYPE File;
-CREATE SINK streamSinkWithNew(stream.id INT64 NOT NULL, stream.value INT64 NOT NULL, stream.timestamp INT64 NOT NULL, new INT64 NOT NULL)  TYPE File;
-CREATE SINK streamSink3(id INT64 NOT NULL, value INT64 NOT NULL, stream.timestamp INT64 NOT NULL)  TYPE File;
+CREATE SINK streamSink(id INT64 NOT NULL, value INT64 NOT NULL, timestamp INT64 NOT NULL)  TYPE File;
+CREATE SINK streamSinkWithNew(id INT64 NOT NULL, value INT64 NOT NULL, timestamp INT64 NOT NULL, new INT64 NOT NULL)  TYPE File;
+CREATE SINK streamSink3(id INT64 NOT NULL, value INT64 NOT NULL, timestamp INT64 NOT NULL)  TYPE File;
 
 
 # Map with mul function touches one field
