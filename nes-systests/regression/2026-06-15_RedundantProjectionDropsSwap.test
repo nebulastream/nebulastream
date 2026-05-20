@@ -1,0 +1,20 @@
+# description: RedundantProjectionRemovalRule must not drop a projection that swaps fields.
+# A SELECT b AS a, a AS b FROM r(a, b) projection has all-FieldAccess functions and identical
+# unbound input/output schemas, so the trivial-check shortcut treats it as removable. Removing it
+# silently inverts the rename and emits the original (a, b) pairs instead of the swapped (b, a) pairs.
+# groups: [regression]
+
+CREATE LOGICAL SOURCE r(a INT64 NOT NULL, b INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR r TYPE File;
+ATTACH INLINE
+1,100
+2,200
+3,300
+
+CREATE SINK swapSink(a INT64 NOT NULL, b INT64 NOT NULL) TYPE File;
+
+SELECT b AS a, a AS b FROM r INTO swapSink;
+----
+100,1
+200,2
+300,3

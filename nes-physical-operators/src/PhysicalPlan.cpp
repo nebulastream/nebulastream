@@ -25,7 +25,7 @@
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
+#include <SourceDescriptorPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -38,7 +38,9 @@ PhysicalPlan::PhysicalPlan(
 {
     for (const auto& rootOperator : this->rootOperators)
     {
-        PRECONDITION(rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(), "Expects SourcePhysicalOperator as roots");
+        PRECONDITION(
+            rootOperator->getPhysicalOperator().tryGet<SourceDescriptorPhysicalOperator>(),
+            "Expects SourceDescriptorPhysicalOperator as roots");
     }
 }
 

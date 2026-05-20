@@ -134,7 +134,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                 const ChainedHashMapRef::ChainedEntryRef entryRefReset{
                     entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
-                const nautilus::val<uint64_t> tupleSize = tupleLayout->getTupleSize();
+                const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
                 nautilus::invoke(
                     +[](TupleBuffer* pagedVectorBufferMemArea, AbstractBufferProvider* bufferProvider, uint64_t tupleSize) -> void
                     {

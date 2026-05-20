@@ -18,10 +18,10 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Time/Timestamp.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>

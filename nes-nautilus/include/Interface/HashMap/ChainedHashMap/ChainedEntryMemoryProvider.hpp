@@ -17,8 +17,11 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/Record.hpp>
@@ -46,7 +49,7 @@ public:
     /// We need to create the fields for the keys and values here, as we know here how the fields and the values are stored in the ChainedHashMapEntry.
     /// We can use here "normal" C++ values, as only the C++ runtime MUST call this method
     static std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> createFieldOffsets(
-        const Schema& schema,
+        const Schema<QualifiedUnboundField, Ordered>& schema,
         const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
         const std::vector<Record::RecordFieldIdentifier>& fieldNameValues);
 

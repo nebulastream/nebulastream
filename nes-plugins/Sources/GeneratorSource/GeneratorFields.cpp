@@ -490,7 +490,8 @@ RandomStrField::RandomStrField(std::string_view rawSchemaLine)
         rawSchemaLine);
     INVARIANT(
         parsedMinLength <= parsedMaxLength,
-        "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema line: "
+        "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema "
+        "line: "
         "{}",
         parsedMinLength,
         parsedMaxLength,
@@ -540,7 +541,8 @@ void RandomStrField::validate(std::string_view rawSchemaLine)
     if (parsedMinLength > parsedMaxLength)
     {
         throw InvalidConfigParameter(
-            "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema line: "
+            "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema "
+            "line: "
             "{}",
             parsedMinLength,
             parsedMaxLength,

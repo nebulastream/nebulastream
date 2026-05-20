@@ -15,7 +15,7 @@
 #pragma once
 
 #include <string>
-#include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Util/UnreflectionRegistry.hpp>
 
 namespace NES

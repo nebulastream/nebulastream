@@ -27,6 +27,8 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/Record.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -83,7 +85,8 @@ inline simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldO
 inline bool checkIsNullJsonProxy(
     const FieldIndex fieldIndex, const SIMDJSONRawBufferIndex* simdJsonRawBufferIndex, const SIMDJSONInputFormatIndexer* simdIndexer)
 {
-    const auto& fieldName = simdIndexer->getFieldNameInJsonAt(fieldIndex);
+    const auto fieldNameStr = simdIndexer->getFieldNameInJsonAt(fieldIndex).asCanonicalString();
+    const std::string_view fieldName = fieldNameStr;
     auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
 
     /// First, we check if the key is not in the doc. If this is the case, we can return true, as this counts as null
@@ -110,7 +113,7 @@ VarVal parseJsonVarSized(
 void writeValueToRecord(
     DataType dataType,
     Record& record,
-    const std::string& fieldName,
+    const QualifiedIdentifier& fieldName,
     const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<RawBufferIndex*>& rawBufferIndex,
     const nautilus::val<const InputFormatIndexer*>& indexer);
@@ -209,7 +212,8 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, RawBufferIndex* r
         }
     }
 
-    const auto& fieldName = simdIndexer->getFieldNameInJsonAt(fieldIndex);
+    const auto fieldNameStr = simdIndexer->getFieldNameInJsonAt(fieldIndex).asCanonicalString();
+    const std::string_view fieldName = fieldNameStr;
     auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
     auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
     /// Order is important, since signed_integral<char> is true and unsigned_integral<bool> is true
@@ -292,7 +296,8 @@ ParsedResultVariableSized* parseJsonVarSizedProxy(FieldIndex fieldIndex, RawBuff
         }
     }
     auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
-    const auto& fieldName = simdIndexer->getFieldNameInJsonAt(fieldIndex);
+    const auto fieldNameStr = simdIndexer->getFieldNameInJsonAt(fieldIndex).asCanonicalString();
+    const std::string_view fieldName = fieldNameStr;
 
     /// Get the value from the document and convert it to a span of bytes
     const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);

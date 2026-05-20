@@ -22,8 +22,12 @@
 #include <utility>
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Static/DecideFieldMappings.hpp>
+#include <Rules/Static/DecideFieldOrder.hpp>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -48,7 +52,7 @@ std::set<std::type_index> RedundantUnionRemovalRule::dependsOn() const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> RedundantUnionRemovalRule::requiredBy() const
 {
-    return {};
+    return {typeid(DecideFieldMappings), typeid(DecideFieldOrder)};
 }
 
 bool RedundantUnionRemovalRule::operator==(const RedundantUnionRemovalRule&) const
@@ -56,17 +60,25 @@ bool RedundantUnionRemovalRule::operator==(const RedundantUnionRemovalRule&) con
     return true;
 }
 
+namespace
+{
+LogicalOperator recur(const LogicalOperator& op)
+{
+    auto newChildren = op.getChildren() | std::views::transform(recur) | std::ranges::to<std::vector>();
+
+    if (op.tryGetAs<UnionLogicalOperator>().has_value() && newChildren.size() == 1)
+    {
+        return newChildren.front();
+    }
+    return op.withChildren(std::move(newChildren));
+}
+}
+
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan RedundantUnionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    for (const auto& unionOperator : getOperatorByType<UnionLogicalOperator>(queryPlan)
-             | std::views::filter([](const auto& op) { return op.getChildren().size() == 1; }))
-    {
-        auto child = unionOperator.getChildren().front();
-        auto replaceResult = replaceSubtree(queryPlan, unionOperator.getId(), child);
-        INVARIANT(replaceResult.has_value(), "Failed to replace union with its child");
-        queryPlan = std::move(replaceResult.value());
-    }
+    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
+    queryPlan = queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front().withInferredSchema())});
     return queryPlan;
 }
 

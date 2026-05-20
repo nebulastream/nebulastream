@@ -25,12 +25,11 @@
 namespace NES
 {
 
-using AggregationLogicalFunctionRegistryReturnType = std::shared_ptr<WindowAggregationLogicalFunction>;
+using AggregationLogicalFunctionRegistryReturnType = WindowAggregationLogicalFunction;
 
 struct AggregationLogicalFunctionRegistryArguments
 {
-    std::vector<FieldAccessLogicalFunction> fields;
-    Reflected reflected;
+    std::vector<AggregationFieldAccess> on;
 };
 
 class AggregationLogicalFunctionRegistry : public BaseRegistry<

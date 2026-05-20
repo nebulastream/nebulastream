@@ -197,8 +197,8 @@ CheckOptions:
   readability-identifier-length.IgnoredParameterNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts|op|fn'
   readability-identifier-length.IgnoredVariableNames: 'it|bm|tb|id|os|ss|lhs|rhs|ts|op|fn'
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
-  # Workaround for header bug around std::expected
+  # Workaround for header bug around std::expected and std::ranges::fold_left
   # It always tries to insert the libc++ implementation headers instead of the stdlib headers.
   # Also, it sometimes even tries to remove the stdlib headers as not needed, then inserts the libc++ headers.
   # Reflection headers use transitive includes intentionally for clean API separation
-  misc-include-cleaner.IgnoreHeaders: 'expected;__.*expected\.h;__.*unexpected\.h;LogicalFunctionReflection\.hpp;TraitReflection\.hpp;Reflection\.hpp;Reflection.*\.hpp'
+  misc-include-cleaner.IgnoreHeaders: 'expected;__.*expected\.h;__.*unexpected\.h;__.*fold\.h;__.*ranges_lower_bound\.h;LogicalFunctionReflection\.hpp;TraitReflection\.hpp;Reflection\.hpp;Reflection.*\.hpp'

@@ -22,8 +22,8 @@ dave,catB,225
 eve,catA,300
 frank,catB,325
 
-CREATE SINK sinkStartEnd(integers.start UINT64 NOT NULL, integers.end UINT64 NOT NULL) TYPE File;
-CREATE SINK sinkStrStartEnd(strings.start UINT64 NOT NULL, strings.end UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStartEnd(start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStrStartEnd(start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
 
 # Window-only with integer source: should produce start/end columns.
 SELECT start, end FROM integers WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkStartEnd;

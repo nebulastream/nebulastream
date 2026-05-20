@@ -13,13 +13,22 @@
 */
 
 #pragma once
+#include <cstdint>
+#include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Field.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -35,31 +44,37 @@ class InlineSinkLogicalOperator : public ManagedByOperator
 public:
     explicit InlineSinkLogicalOperator(
         WeakLogicalOperator self,
-        std::string sinkType,
-        const Schema& schema,
-        std::unordered_map<std::string, std::string> config,
-        std::unordered_map<std::string, std::string> formatConfig);
+        Identifier sinkType,
+        std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
+        std::unordered_map<Identifier, std::string> config,
+        std::unordered_map<Identifier, std::string> formatConfig);
+
+    static TypedLogicalOperator<InlineSinkLogicalOperator> create(
+        Identifier sinkType,
+        std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
+        std::unordered_map<Identifier, std::string> config,
+        std::unordered_map<Identifier, std::string> formatConfig);
 
     [[nodiscard]] bool operator==(const InlineSinkLogicalOperator& rhs) const;
 
     [[nodiscard]] InlineSinkLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
 
+    [[nodiscard]] InlineSinkLogicalOperator withChildrenUnsafe(std::vector<LogicalOperator> children) const;
     [[nodiscard]] InlineSinkLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] static Schema<Field, Unordered> getOutputSchema();
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] static std::string_view getName() noexcept;
 
-    [[nodiscard]] InlineSinkLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] static InlineSinkLogicalOperator withInferredSchema();
 
-    [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getSinkConfig() const;
-    [[nodiscard]] Schema getSchema() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getFormatConfig() const;
+    [[nodiscard]] Identifier getSinkType() const;
+    [[nodiscard]] std::unordered_map<Identifier, std::string> getSinkConfig() const;
+    [[nodiscard]] std::optional<Schema<UnqualifiedUnboundField, Ordered>> getTargetSchema() const;
+    [[nodiscard]] std::unordered_map<Identifier, std::string> getFormatConfig() const;
 
 private:
     static constexpr std::string_view NAME = "InlineSink";
@@ -67,10 +82,10 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
 
-    Schema schema;
-    std::string sinkType;
-    std::unordered_map<std::string, std::string> sinkConfig;
-    std::unordered_map<std::string, std::string> formatConfig;
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> targetSchema;
+    Identifier sinkType;
+    std::unordered_map<Identifier, std::string> sinkConfig;
+    std::unordered_map<Identifier, std::string> formatConfig;
 
     friend Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>;
 };
@@ -89,3 +104,9 @@ struct Unreflector<TypedLogicalOperator<InlineSinkLogicalOperator>>
 
 static_assert(LogicalOperatorConcept<InlineSinkLogicalOperator>);
 }
+
+template <>
+struct std::hash<NES::InlineSinkLogicalOperator>
+{
+    uint64_t operator()(const NES::InlineSinkLogicalOperator& op) const noexcept;
+};

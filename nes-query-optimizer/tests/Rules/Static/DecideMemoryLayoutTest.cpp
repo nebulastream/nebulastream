@@ -12,82 +12,114 @@
     limitations under the License.
 */
 
+#include <array>
 #include <cstdint>
-#include <memory>
-#include <vector>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
-#include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
-#include <BaseUnitTest.hpp>
-
-#include <Rules/Static/DecideMemoryLayoutRule.hpp>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Plans/LogicalPlanBuilder.hpp>
+#include <Rules/Static/DecideMemoryLayoutRule.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/UUID.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
-#include <WindowTypes/Types/WindowType.hpp>
+
+#include <DistributedQuery.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
+/// NOLINTBEGIN(bugprone-unchecked-optional-access)
 namespace
 {
+constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
 
-class DecideMemoryLayoutTest : public Testing::BaseUnitTest
+LogicalSource createLogicalTestSource(SourceCatalog& sourceCatalog, const std::string& name)
+{
+    const Schema<UnqualifiedUnboundField, Ordered> schema{
+        UnqualifiedUnboundField{Identifier::parse(name + "_id"), DataType::Type::UINT64},
+        UnqualifiedUnboundField{Identifier::parse(name + "_value"), DataType::Type::UINT64},
+        UnqualifiedUnboundField{Identifier::parse(name + "_ts"), DataType::Type::UINT64}};
+    return sourceCatalog.addLogicalSource(Identifier::parse(name), schema).value();
+}
+
+SourceDescriptor createTestSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
+{
+    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
+    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), Host("localhost"), sourceConfig, parserConfig).value();
+}
+
+SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
+{
+    const std::unordered_map<Identifier, std::string> sinkConfig{
+        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
+    return sinkCatalog.getInlineSink(std::nullopt, Identifier::parse("file"), Host("localhost"), sinkConfig, {}).value();
+}
+}
+
+class DecideMemoryLayoutTest : public ::testing::Test
 {
 public:
-    static void SetUpTestSuite() { Logger::setupLogging("DecideMemoryLayoutTest.log", LogLevel::LOG_DEBUG); }
-
-    static constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
-
-    static LogicalPlan createSourcePlan(const std::string& sourceType, const Schema& schema)
+    explicit DecideMemoryLayoutTest()
+        : leftSource(createLogicalTestSource(sourceCatalog, "left"))
+        , rightSource(createLogicalTestSource(sourceCatalog, "right"))
+        , leftSourceDescriptor(createTestSourceDescriptor(sourceCatalog, leftSource))
+        , rightSourceDescriptor(createTestSourceDescriptor(sourceCatalog, rightSource))
+        , sinkDescriptor(createTestSinkDescriptor(sinkCatalog))
     {
-        return LogicalPlanBuilder::createLogicalPlan(sourceType, schema, {}, {});
     }
 
-    static Schema createSchema(const std::string& prefix)
-    {
-        Schema schema;
-        schema.addField(prefix + ".id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField(prefix + ".value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField(prefix + ".ts", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        return schema;
-    }
-
-    static std::shared_ptr<Windowing::WindowType> createTumblingWindow()
-    {
-        return std::make_shared<Windowing::TumblingWindow>(
-            Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(TUMBLING_WINDOW_SIZE_MS));
-    }
+protected:
+    SourceCatalog sourceCatalog;
+    SinkCatalog sinkCatalog;
+    LogicalSource leftSource;
+    LogicalSource rightSource;
+    SourceDescriptor leftSourceDescriptor;
+    SourceDescriptor rightSourceDescriptor;
+    SinkDescriptor sinkDescriptor;
 };
 
-/// InlineSource with sink. Verify all get ROW_LAYOUT.
+/// Source → Sink. Verify all operators get ROW_LAYOUT.
 TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsRowLayout)
 {
-    auto schema = createSchema("src");
-    auto plan = createSourcePlan("TEST", schema);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+    const auto sourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
+    const auto sinkOp = SinkLogicalOperator::create(sourceOp, sinkDescriptor);
+    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
 
-    const DecideMemoryLayoutRule pass;
-    auto result = pass.apply(plan);
+    const auto result = DecideMemoryLayoutRule{}.apply(plan);
 
     for (const auto& op : BFSRange(result.getRootOperators()[0]))
     {
         ASSERT_TRUE(op.getTraitSet().contains<MemoryLayoutTypeTrait>());
-        auto trait = op.getTraitSet().get<MemoryLayoutTypeTrait>();
+        const auto trait = op.getTraitSet().get<MemoryLayoutTypeTrait>();
         EXPECT_TRUE(trait->memoryLayout == MemoryLayoutType::ROW_LAYOUT);
     }
 }
@@ -95,28 +127,33 @@ TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsRowLayout)
 /// Source → Join ← Source → Sink. Verify all operators get the trait.
 TEST_F(DecideMemoryLayoutTest, BinaryPlanAllGetRowLayout)
 {
-    auto leftSchema = createSchema("left");
-    auto rightSchema = createSchema("right");
-    auto leftPlan = createSourcePlan("TEST", leftSchema);
-    auto rightPlan = createSourcePlan("TEST", rightSchema);
+    const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
+    const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
 
-    auto joinFunction = LogicalFunction{EqualsLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+    auto joinFunction = LogicalFunction{EqualsLogicalFunction{
+        FieldAccessLogicalFunction{leftSourceOp->getOutputSchema()[Identifier::parse("left_id")].value()},
+        FieldAccessLogicalFunction{rightSourceOp->getOutputSchema()[Identifier::parse("right_id")].value()}}};
 
-    auto plan
-        = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+    const auto joinOp = JoinLogicalOperator::create(
+        {leftSourceOp, rightSourceOp},
+        std::move(joinFunction),
+        Windowing::TimeBasedWindowType{Windowing::TumblingWindow{Windowing::TimeMeasure{TUMBLING_WINDOW_SIZE_MS}}},
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        JoinTimeCharacteristic{std::array{
+            Windowing::BoundTimeCharacteristic{Windowing::TimeCharacteristicWrapper::createIngestionTime()},
+            Windowing::BoundTimeCharacteristic{Windowing::TimeCharacteristicWrapper::createIngestionTime()}}});
+    const auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
+    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
 
-    const DecideMemoryLayoutRule pass;
-    auto result = pass.apply(plan);
+    const auto result = DecideMemoryLayoutRule{}.apply(plan);
 
     for (const auto& op : BFSRange(result.getRootOperators()[0]))
     {
         ASSERT_TRUE(op.getTraitSet().contains<MemoryLayoutTypeTrait>()) << "Operator missing MemoryLayoutTypeTrait";
-        auto trait = op.getTraitSet().get<MemoryLayoutTypeTrait>();
+        const auto trait = op.getTraitSet().get<MemoryLayoutTypeTrait>();
         EXPECT_TRUE(trait->memoryLayout == MemoryLayoutType::ROW_LAYOUT);
     }
 }
+}
 
-}
-}
+/// NOLINTEND(bugprone-unchecked-optional-access)

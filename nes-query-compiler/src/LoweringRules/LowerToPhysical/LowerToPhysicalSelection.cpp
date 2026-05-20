@@ -15,11 +15,15 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 
 #include <memory>
+#include <vector>
+
 #include <Functions/FunctionProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
@@ -30,25 +34,30 @@ namespace NES
 
 LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
     const auto selection = logicalOperator.getAs<SelectionLogicalOperator>();
     const auto function = selection->getPredicate();
-    const auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+    const auto func
+        = QueryCompilation::FunctionProvider::lowerFunction(function, *selection->getChild()->getTraitSet().get<FieldMappingTrait>());
+    const auto traitSet = logicalOperator.getTraitSet();
+
+    const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
+
+    const auto outputSchema = createPhysicalOutputSchema(traitSet);
+    const auto inputSchema = createPhysicalOutputSchema(selection->getChild()->getTraitSet());
+
     auto physicalOperator = SelectionPhysicalOperator(func);
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        logicalOperator.getInputSchemas()[0],
-        logicalOperator.getOutputSchema(),
+        inputSchema,
+        outputSchema,
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
-    std::vector leafes(logicalOperator.getChildren().size(), wrapper);
-    return {.root = wrapper, .leafs = {leafes}};
+    std::vector leaves(logicalOperator.getChildren().size(), wrapper);
+    return {.root = wrapper, .leafs = {leaves}};
 };
 
 std::unique_ptr<AbstractLoweringRule>

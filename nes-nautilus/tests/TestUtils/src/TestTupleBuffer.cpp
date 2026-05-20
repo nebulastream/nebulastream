@@ -28,8 +28,11 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -220,7 +223,7 @@ std::optional<FieldValue> varValToFieldValue(const VarVal& value, const DataType
 
 /// ---- TestTupleBuffer ----
 
-TestTupleBuffer::TestTupleBuffer(const Schema& schema) : schema(schema)
+TestTupleBuffer::TestTupleBuffer(TestSchema schema) : schema(std::move(schema))
 {
 }
 
@@ -255,9 +258,9 @@ uint64_t TestTupleBufferView::getNumberOfTuples() const
 
 void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> values)
 {
-    if (values.size() != impl->schema.getNumberOfFields())
+    if (values.size() != impl->schema.size())
     {
-        throw TestException("TestTupleBufferView: expected {} fields, got {}", impl->schema.getNumberOfFields(), values.size());
+        throw TestException("TestTupleBufferView: expected {} fields, got {}", impl->schema.size(), values.size());
     }
 
     auto tupleIndex = nautilus::val<uint64_t>(impl->buffer.getNumberOfTuples());
@@ -266,9 +269,9 @@ void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> 
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(impl->bufferProvider);
 
     Record record;
-    for (const auto [value, field] : std::views::zip(values, impl->schema.getFields()))
+    for (const auto [value, field] : std::views::zip(values, impl->schema))
     {
-        record.write(field.name, fieldValueToVarVal(value, field.dataType));
+        record.write(field.getFullyQualifiedName(), fieldValueToVarVal(value, field.getDataType()));
     }
 
     impl->bufRef->writeRecord(tupleIndex, recordBuffer, record, bufProviderVal);
@@ -279,9 +282,8 @@ void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> 
 
 FieldView TestTupleBufferRecordView::operator[](const std::string& fieldName)
 {
-    const auto& fields = impl->schema.getFields();
-    const auto it = std::ranges::find(fields, fieldName, &Schema::Field::name);
-    if (it == fields.end())
+    const auto field = impl->schema[static_cast<QualifiedIdentifierBase<1>>(Identifier::parse(fieldName))];
+    if (!field.has_value())
     {
         throw FieldNotFound("TestTupleBufferRecordView: field '{}' not found in schema", fieldName);
     }
@@ -290,7 +292,7 @@ FieldView TestTupleBufferRecordView::operator[](const std::string& fieldName)
     fieldView.implWeak = impl;
     fieldView.recordIndex = recordIndex;
     fieldView.fieldName = fieldName;
-    fieldView.dataType = it->dataType;
+    fieldView.dataType = field->getDataType();
     return fieldView;
 }
 
@@ -314,7 +316,8 @@ FieldView& FieldView::operator=(const FieldValue& value)
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(locked->bufferProvider);
 
     Record record;
-    record.write(fieldName, fieldValueToVarVal(std::optional{value}, dataType));
+    const auto fieldId = QualifiedIdentifierBase<1>{Identifier::parse(fieldName)};
+    record.write(fieldId, fieldValueToVarVal(std::optional{value}, dataType));
     locked->bufRef->writeRecord(recordIdx, recordBuffer, record, bufProviderVal);
     return *this;
 }
@@ -337,7 +340,8 @@ FieldView& FieldView::operator=(std::nullopt_t)
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(locked->bufferProvider);
 
     Record record;
-    record.write(fieldName, fieldValueToVarVal(std::nullopt, dataType));
+    const auto fieldId = QualifiedIdentifierBase<1>{Identifier::parse(fieldName)};
+    record.write(fieldId, fieldValueToVarVal(std::nullopt, dataType));
     locked->bufRef->writeRecord(recordIdx, recordBuffer, record, bufProviderVal);
     return *this;
 }
@@ -354,8 +358,9 @@ std::optional<FieldValue> FieldView::readFieldValue() const
     auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(locked->buffer));
     const RecordBuffer recordBuffer(bufPtr);
 
-    auto record = locked->bufRef->readRecord({fieldName}, recordBuffer, recordIdx);
-    const auto& varVal = record.read(fieldName);
+    const auto fieldId = QualifiedIdentifierBase<1>{Identifier::parse(fieldName)};
+    auto record = locked->bufRef->readRecord({fieldId}, recordBuffer, recordIdx);
+    const auto& varVal = record.read(fieldId);
     return varValToFieldValue(varVal, dataType);
 }
 

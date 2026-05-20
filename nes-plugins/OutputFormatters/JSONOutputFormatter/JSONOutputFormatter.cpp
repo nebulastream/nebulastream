@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -166,7 +167,10 @@ void writeValue(
 }
 }
 
-JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames) : OutputFormatter(fieldNames)
+JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames)
+    : OutputFormatter(fieldNames)
+    , canonicalFieldNames(
+          fieldNames | std::views::transform([](const auto& id) { return fmt::format("{}", id); }) | std::ranges::to<std::vector>())
 {
 }
 
@@ -183,7 +187,8 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     nautilus::val<uint64_t> currentRemainingSize = remainingSize;
 
     /// The identifier of the current field, which should be prepended to the value
-    const nautilus::val<const char*> fieldName{fieldNames.at(fieldIndex).c_str()};
+    /// Important field name must be valid at execution time, thats why we don't calculate the canonicalisation during tracing but in ctor
+    const nautilus::val<const char*> fieldName{canonicalFieldNames.at(fieldIndex).c_str()};
     /// Write the pre-value content
     const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
         writePreValueContents,

@@ -14,53 +14,58 @@
 
 #include <Rules/Semantic/InferModelResolutionRule.hpp>
 
+#include <ranges>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
 #include <utility>
+#include <vector>
+
 #include <Operators/InferModelLogicalOperator.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Semantic/InlineSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/OriginIdInferenceRule.hpp>
+#include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 
 namespace NES
 {
 
-LogicalPlan InferModelResolutionRule::apply(LogicalPlan queryPlan) const
+namespace
 {
-    for (const auto& inferModelNameOp : getOperatorByType<InferModelNameLogicalOperator>(queryPlan))
-    {
-        const auto& op = inferModelNameOp.get();
-        const auto& modelName = op.getModelName();
+LogicalOperator recur(const LogicalOperator& op, const ModelCatalog& modelCatalog)
+{
+    auto newChildren = op.getChildren() | std::views::transform([&](const auto& child) { return recur(child, modelCatalog); })
+        | std::ranges::to<std::vector>();
 
-        if (!modelCatalog->hasModel(modelName))
+    if (const auto inferModelName = op.tryGetAs<InferModelNameLogicalOperator>())
+    {
+        const auto& modelName = inferModelName->get().getModelName();
+        if (!modelCatalog.hasModel(modelName))
         {
             throw UnknownModelName("Model '{}' is not registered", modelName);
         }
-
-        auto loaded = modelCatalog->load(modelName);
-        auto inputFieldNames = op.getInputFieldNames();
-        if (inputFieldNames.empty())
-        {
-            for (const auto& field : loaded.getSchema().inputs.getFields())
-            {
-                inputFieldNames.push_back(field.name);
-            }
-        }
-        auto inferModelOp = TypedLogicalOperator<InferModelLogicalOperator>{std::move(loaded), std::move(inputFieldNames)};
-        /// Preserve children from the original operator
-        auto replacement = LogicalOperator{inferModelOp->withChildren(op.getChildren())};
-
-        auto replaceResult = replaceSubtree(queryPlan, inferModelNameOp.getId(), replacement);
-        INVARIANT(replaceResult.has_value(), "Failed to replace InferModelNameLogicalOperator with InferModelLogicalOperator");
-        queryPlan = std::move(replaceResult.value());
+        PRECONDITION(
+            std::ranges::size(newChildren) == 1,
+            "Expected InferModelName Logical Operator to have one child, but has {}",
+            std::ranges::size(newChildren));
+        return TypedLogicalOperator<InferModelLogicalOperator>{modelCatalog.load(modelName), std::move(newChildren.at(0))};
     }
-    return queryPlan;
+    return op.withChildren(std::move(newChildren));
+}
+}
+
+LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
+{
+    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
+    return queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front(), *modelCatalog)});
 }
 
 const std::type_info& InferModelResolutionRule::getType()
@@ -76,7 +81,7 @@ std::string_view InferModelResolutionRule::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> InferModelResolutionRule::dependsOn() const
 {
-    return {typeid(LogicalSourceExpansionRule)};
+    return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(InlineSinkBindingRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
