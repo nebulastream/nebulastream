@@ -14,6 +14,9 @@
 
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 
+#include <cstdint>
+#include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -22,45 +25,78 @@
 
 #include <fmt/format.h>
 
-#include <DataTypes/Schema.hpp>
+
+#include <DataTypes/Schema.hpp> /// NOLINT(misc-include-cleaner)
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Field.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Hash.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
-InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+
+InlineSinkLogicalOperator::InlineSinkLogicalOperator(
+    WeakLogicalOperator self,
+    Identifier sinkType,
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
+    std::unordered_map<Identifier, std::string> config,
+    std::unordered_map<Identifier, std::string> formatConfig)
+    : ManagedByOperator(std::move(self))
+    , targetSchema(std::move(schema))
+    , sinkType(std::move(sinkType))
+    , sinkConfig(std::move(config))
+    , formatConfig(std::move(std::move(formatConfig)))
 {
-    PRECONDITION(false, "Schema inference should happen on SinkLogicalOperator");
-    return *this;
 }
 
-std::string InlineSinkLogicalOperator::getSinkType() const
+TypedLogicalOperator<InlineSinkLogicalOperator> InlineSinkLogicalOperator::create(
+    Identifier sinkType,
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
+    std::unordered_map<Identifier, std::string> config,
+    std::unordered_map<Identifier, std::string> formatConfig)
+{
+    return TypedLogicalOperator<InlineSinkLogicalOperator>{
+        std::move(sinkType), std::move(schema), std::move(config), std::move(formatConfig)};
+}
+
+InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema()
+{
+    PRECONDITION(false, "Schema<Field, Unordered> inference should happen on SinkLogicalOperator");
+    std::unreachable();
+}
+
+Identifier InlineSinkLogicalOperator::getSinkType() const
 {
     return sinkType;
 }
 
-std::unordered_map<std::string, std::string> InlineSinkLogicalOperator::getSinkConfig() const
+std::unordered_map<Identifier, std::string> InlineSinkLogicalOperator::getSinkConfig() const
 {
     return sinkConfig;
 }
 
-Schema InlineSinkLogicalOperator::getSchema() const
+std::optional<Schema<UnqualifiedUnboundField, Ordered>> InlineSinkLogicalOperator::getTargetSchema() const
 {
-    return schema;
+    return targetSchema;
 }
 
-std::unordered_map<std::string, std::string> InlineSinkLogicalOperator::getFormatConfig() const
+std::unordered_map<Identifier, std::string> InlineSinkLogicalOperator::getFormatConfig() const
 {
     return formatConfig;
 }
 
 bool InlineSinkLogicalOperator::operator==(const InlineSinkLogicalOperator& rhs) const
 {
-    return this->sinkType == rhs.sinkType && this->schema == rhs.schema && this->sinkConfig == rhs.sinkConfig
+    return this->sinkType == rhs.sinkType && this->targetSchema == rhs.targetSchema && this->sinkConfig == rhs.sinkConfig
         && this->formatConfig == rhs.formatConfig;
 }
 
@@ -97,33 +133,15 @@ InlineSinkLogicalOperator InlineSinkLogicalOperator::withChildren(std::vector<Lo
     return copy;
 }
 
-std::vector<Schema> InlineSinkLogicalOperator::getInputSchemas() const
+Schema<Field, Unordered> InlineSinkLogicalOperator::getOutputSchema()
 {
-    return {schema};
-};
-
-Schema InlineSinkLogicalOperator::getOutputSchema() const
-{
-    return schema;
+    INVARIANT(false, "SinkLogicalOperator does not define a output schema");
+    std::unreachable();
 }
 
 std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
 {
     return children;
-}
-
-InlineSinkLogicalOperator::InlineSinkLogicalOperator(
-    WeakLogicalOperator self,
-    std::string type,
-    const Schema& schema,
-    std::unordered_map<std::string, std::string> config,
-    std::unordered_map<std::string, std::string> formatConfig)
-    : ManagedByOperator(std::move(self))
-    , schema(schema)
-    , sinkType(std::move(type))
-    , sinkConfig(std::move(config))
-    , formatConfig(std::move(formatConfig))
-{
 }
 
 Reflected
@@ -140,4 +158,9 @@ Unreflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(const R
     std::unreachable();
 }
 
+}
+
+uint64_t std::hash<NES::InlineSinkLogicalOperator>::operator()(const NES::InlineSinkLogicalOperator& op) const noexcept
+{
+    return folly::hash::hash_combine_generic(NES::Hash{}, op.getTargetSchema(), op.getSinkType(), op.getSinkConfig());
 }

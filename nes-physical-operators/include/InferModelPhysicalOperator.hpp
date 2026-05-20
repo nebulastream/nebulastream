@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include <Identifiers/Identifier.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 #include <CompilationContext.hpp>
@@ -40,8 +41,8 @@ class InferModelPhysicalOperator final : public PhysicalOperatorConcept
 public:
     InferModelPhysicalOperator(
         CompiledModel model,
-        std::vector<std::string> inputFieldNames,
-        std::vector<std::string> outputFieldNames,
+        std::vector<QualifiedIdentifier> inputFieldNames,
+        std::vector<QualifiedIdentifier> outputFieldNames,
         bool varsizedInput,
         bool varsizedOutput);
 
@@ -56,8 +57,8 @@ private:
     /// shared_ptr to keep `PhysicalOperator` copyable (its type-erasure returns the concrete
     /// op by value) while giving us a stable address we can pass into `nautilus::invoke`.
     std::shared_ptr<detail::ThreadLocalRuntimeWrapper> threadLocal;
-    std::vector<std::string> inputFieldNames;
-    std::vector<std::string> outputFieldNames;
+    std::vector<QualifiedIdentifier> inputFieldNames;
+    std::vector<QualifiedIdentifier> outputFieldNames;
     size_t outputSize;
     bool varsizedInput;
     bool varsizedOutput;

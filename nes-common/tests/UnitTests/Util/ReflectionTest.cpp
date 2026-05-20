@@ -15,8 +15,8 @@
 
 #include <cstdint>
 #include <optional>
+#include <span>
 #include <string>
-#include <typeindex>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -254,11 +254,11 @@ TEST(ReflectionTest, UnsignedConversion)
     /// Reflectcpp only has signed int64_t as a backing type in its rfl::Generic variant.
     /// C++ guarantees that for any uint64_t u static_cast<uint64_t>(static_cast<int64_t>(u)) == u ,
     /// but this test makes sure that no code of reflectcpp or us breaks this.
-    constexpr uint64_t unsigned_input = std::dynamic_extent - 1;
-    const auto reflected = reflect(unsigned_input);
+    constexpr uint64_t unsignedInput = std::dynamic_extent - 1;
+    const auto reflected = reflect(unsignedInput);
     const ReflectionContext context{};
     const auto deserialized = context.unreflect<uint64_t>(reflected);
-    EXPECT_EQ(deserialized, unsigned_input);
+    EXPECT_EQ(deserialized, unsignedInput);
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)

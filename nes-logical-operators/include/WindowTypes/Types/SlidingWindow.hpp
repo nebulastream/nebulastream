@@ -13,33 +13,33 @@
 */
 
 #pragma once
+#include <cstddef>
+#include <functional>
 #include <memory>
+#include <ostream>
+#include <Util/Logger/Formatter.hpp>
 #include <Util/ReflectionFwd.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
-#include <WindowTypes/Types/TimeBasedWindowType.hpp>
-#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES::Windowing
 {
 
 /// A SlidingWindow assigns records to multiple overlapping windows.
-class SlidingWindow : public TimeBasedWindowType
+class SlidingWindow
 {
 public:
-    static std::shared_ptr<WindowType> of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    SlidingWindow(TimeMeasure size, TimeMeasure slide);
 
-    [[nodiscard]] TimeMeasure getSize() const override;
-    [[nodiscard]] TimeMeasure getSlide() const override;
+    [[nodiscard]] TimeMeasure getSize() const;
+    [[nodiscard]] TimeMeasure getSlide() const;
 
-    std::string toString() const override;
-
-    bool operator==(const WindowType& otherWindowType) const override;
-    SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    bool operator==(const SlidingWindow& otherWindowType) const;
+    friend std::ostream& operator<<(std::ostream& os, const SlidingWindow& slidingWindow);
 
 private:
-    const TimeMeasure size;
-    const TimeMeasure slide;
+    TimeMeasure size;
+    TimeMeasure slide;
 };
 
 }
@@ -57,14 +57,21 @@ struct Unreflector<Windowing::SlidingWindow>
 {
     Windowing::SlidingWindow operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
-}
 
-namespace NES::detail
+namespace detail
 {
 struct ReflectedSlidingWindow
 {
     Windowing::TimeMeasure size{0};
     Windowing::TimeMeasure slide{0};
-    Windowing::TimeCharacteristic timeCharacteristic;
 };
 }
+}
+
+template <>
+struct std::hash<NES::Windowing::SlidingWindow>
+{
+    std::size_t operator()(const NES::Windowing::SlidingWindow& window) const noexcept;
+};
+
+FMT_OSTREAM(NES::Windowing::SlidingWindow);

@@ -14,21 +14,27 @@
 
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
 
+#include <array>
 #include <cstddef>
 #include <memory>
 #include <ranges>
 #include <span>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/TimeUnit.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
@@ -45,13 +51,14 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <Watermark/TimestampField.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
@@ -62,38 +69,40 @@
 namespace NES
 {
 
-static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
+namespace
+{
+std::vector<QualifiedIdentifier>
+getJoinFieldNames(const Schema<QualifiedUnboundField, Ordered>& inputSchema, const LogicalFunction& joinFunction)
 {
     return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>().has_value(); })
-        | std::views::transform([](const auto& child)
-                                { return child.template tryGetAs<FieldAccessLogicalFunction>()->get().getFieldName(); })
-        | std::views::filter([&](const auto& fieldName) { return inputSchema.contains(fieldName); })
-        | std::ranges::to<std::vector<std::string>>();
+        | std::views::transform([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>().value()->getField(); })
+        | std::views::filter([&](const auto& field) { return inputSchema.contains(field.getLastName()); })
+        | std::views::transform([](const auto& field) { return QualifiedIdentifier{field.getLastName()}; })
+        | std::ranges::to<std::vector>();
 };
+}
 
 LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
-    PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 2, "Expected two children");
-    auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
-    PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
-    const auto& outputOriginIds = outputOriginIdsOpt.value().get();
-    PRECONDITION(std::ranges::size(outputOriginIdsOpt.value().get()) == 1, "Expected one output origin id");
-    PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-
     auto join = logicalOperator.getAs<JoinLogicalOperator>();
+    auto children = join->getBothChildren();
+    const auto traitSet = logicalOperator.getTraitSet();
+
+    auto outputOriginIds = traitSet.get<OutputOriginIdsTrait>();
+    PRECONDITION(std::ranges::size(*outputOriginIds) == 1, "Expected one output origin id");
+
+    const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
+
     auto handlerId = getNextOperatorHandlerId();
 
-    auto leftInputSchema = join->getLeftSchema();
-    auto rightInputSchema = join->getRightSchema();
-    auto outputSchema = join.getOutputSchema();
-    auto outputOriginId = outputOriginIds[0];
+    auto leftInputSchema = createPhysicalOutputSchema(children[0]->getTraitSet());
+    auto rightInputSchema = createPhysicalOutputSchema(children[1]->getTraitSet());
+    auto outputSchema = createPhysicalOutputSchema(traitSet);
+    auto outputOriginId = (*outputOriginIds)[0];
     auto logicalJoinFunction = join->getJoinFunction();
-    auto windowType = NES::as<Windowing::TimeBasedWindowType>(join->getWindowType());
+    auto windowType = join->getWindowType();
     const auto pageSize = conf.pageSize.getValue();
 
     const auto inputOriginIds
@@ -103,18 +112,29 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
               {
                   auto childOutputOriginIds = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
                   PRECONDITION(childOutputOriginIds.has_value(), "Expected the outputOriginIds trait of the child to be set");
-                  return childOutputOriginIds.value().get();
+                  return *childOutputOriginIds.value();
               })
         | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
-    auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
+    auto combinedFieldMappingVec = join->getChildren()
+        | std::views::transform([](const auto& child)
+                                { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
+        | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
+    auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
+
+    auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
     auto leftBufferRef = LowerSchemaProvider::lowerSchema(pageSize, leftInputSchema, memoryLayoutType);
     auto rightBufferRef = LowerSchemaProvider::lowerSchema(pageSize, rightInputSchema, memoryLayoutType);
 
-    auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(*join, windowType);
+    const auto& joinTimeCharacteristicsVariant = join->getJoinTimeCharacteristics();
+    auto characteristicsAreBound
+        = std::holds_alternative<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
+    PRECONDITION(characteristicsAreBound, "Expected the join time characteristics to be bound");
+    const auto& [timeStampFieldLeft, timeStampFieldRight]
+        = std::get<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
+        windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
         {
@@ -135,15 +155,15 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
 
     const NLJBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef, std::move(sliceStoreRefLeft)};
+        handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftBufferRef, std::move(sliceStoreRefLeft)};
     const NLJBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef, std::move(sliceStoreRefRight)};
+        handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightBufferRef, std::move(sliceStoreRefRight)};
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator = NLJProbePhysicalOperator(
         handlerId,
         joinFunction,
-        join->getWindowMetaData(),
+        WindowMetaData{join->getStartField(), join->getEndField()},
         joinSchema,
         leftBufferRef,
         rightBufferRef,

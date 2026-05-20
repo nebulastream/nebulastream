@@ -20,7 +20,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -53,7 +55,7 @@ CastToTypeLogicalFunction CastToTypeLogicalFunction::withDataType(const DataType
     return copy;
 }
 
-LogicalFunction CastToTypeLogicalFunction::withInferredDataType(const Schema&) const
+LogicalFunction CastToTypeLogicalFunction::withInferredDataType(const Schema<Field, Unordered>&) const
 {
     return *this;
 }

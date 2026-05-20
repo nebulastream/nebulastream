@@ -97,13 +97,13 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegi
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(std::string(SYSTEST_FILE_PATH_PARAMETER)))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
     {
         throw InvalidConfigParameter("Mock FileSource cannot use given inline data if a 'file_path' is set");
     }
 
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.try_emplace(
-        std::string(SYSTEST_FILE_PATH_PARAMETER), systestAdaptorArguments.testFilePath.string());
+        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
 
 
     if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
@@ -121,13 +121,13 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
 
 FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(std::string(SYSTEST_FILE_PATH_PARAMETER)))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
     {
         throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
     }
 
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
-        std::string(SYSTEST_FILE_PATH_PARAMETER), systestAdaptorArguments.testFilePath.string());
+        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
 
     return systestAdaptorArguments.physicalSourceConfig;
 }

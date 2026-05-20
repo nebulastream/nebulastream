@@ -14,6 +14,7 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalHashJoin.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -21,19 +22,24 @@
 #include <span>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/TimeUnit.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
@@ -49,17 +55,20 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Schema/Field.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <Watermark/TimestampField.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
@@ -68,6 +77,7 @@
 #include <LoweringRuleRegistry.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
+#include <QueryExecutionConfiguration.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
@@ -78,14 +88,12 @@ namespace
 /// Helper struct for storing the old and new field name and datatype for each join comparison
 struct FieldNamesExtension
 {
-    std::string oldName;
-    std::string newName;
-    DataType oldDataType;
-    DataType newDataType;
+    Field oldField;
+    QualifiedUnboundField newField;
 };
 
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
-getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rightInputSchema, LogicalFunction& joinFunction)
+getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalOperator& rightChild, const LogicalFunction& joinFunction)
 {
     /// Tuple  of left, right join fields and the combined data type, e.g., i32 and i8 --> i32
     std::vector<FieldNamesExtension> leftJoinNames;
@@ -107,57 +115,61 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
     uint64_t counter = 0;
     std::ranges::for_each(
         parentsOfJoinComparisons,
-        [leftInputSchema, rightInputSchema, &leftJoinNames, &rightJoinNames, &counter](const LogicalFunction& parent)
+        [leftChild, rightChild, &leftJoinNames, &rightJoinNames, &counter, &joinFunction](const LogicalFunction& parent)
         {
             /// We expect the parent to have exactly two children and that both children are FieldAccessLogicalFunction
             /// This should be true, as the join operator receives an input schema from its parent operator without any additional functions
             /// over the join fields.
             PRECONDITION(parent.getChildren().size() == 2, "Expect the parent to have exact two children, left and right join fields");
-            const auto& firstChild = parent.getChildren().at(0).tryGetAs<FieldAccessLogicalFunction>();
-            const auto& secondChild = parent.getChildren().at(1).tryGetAs<FieldAccessLogicalFunction>();
-            if (not(firstChild.has_value() && secondChild.has_value()))
+            const auto& firstField = parent.getChildren().at(0).tryGetAs<FieldAccessLogicalFunction>();
+            const auto& secondField = parent.getChildren().at(1).tryGetAs<FieldAccessLogicalFunction>();
+            if (not(firstField.has_value() && secondField.has_value()))
             {
                 throw UnknownJoinStrategy(
                     "Could not handle join strategy that has chained logical functions operating over the join fields!");
             }
-            const auto leftField
-                = leftInputSchema.getFieldByName(firstChild->get().getFieldName()).has_value() ? *firstChild : *secondChild;
-            const auto rightField
-                = rightInputSchema.getFieldByName(firstChild->get().getFieldName()).has_value() ? *firstChild : *secondChild;
+
+            auto [leftField, rightField] = [&]
+            {
+                if (firstField.value()->getField().getProducedBy() == leftChild)
+                {
+                    PRECONDITION(
+                        secondField.value()->getField().getProducedBy() == rightChild, "Expected the second field to be the right field");
+                    return std::pair{firstField.value()->getField(), secondField.value()->getField()};
+                }
+                PRECONDITION(
+                    firstField.value()->getField().getProducedBy() == rightChild, "Expected the first field to be the right field");
+                PRECONDITION(
+                    secondField.value()->getField().getProducedBy() == leftChild, "Expected the second field to be the left field");
+                return std::pair{secondField.value()->getField(), firstField.value()->getField()};
+            }();
+            if (leftField.getProducedBy() == rightField.getProducedBy())
+            {
+                throw UnknownJoinStrategy("Cannot handle self joins yet, but got {} as part of the predicate", joinFunction);
+            }
 
             /// If they do not have the same data types, we need to cast both to a common one
-            if (firstChild->getDataType() != secondChild->getDataType())
+            if (firstField->getDataType() != secondField->getDataType())
             {
                 /// We are now converting the fields to a physical data type and then joining them together
-                const auto joinedDataType = leftField.getDataType().join(rightField.getDataType());
-                if (joinedDataType.has_value())
+                if (auto joinedDataType = leftField.getDataType().join(rightField.getDataType()); joinedDataType.has_value())
                 {
-                    const auto leftFieldNewName = leftField.get().getFieldName() + "_" + std::to_string(counter++);
-                    const auto rightFieldNewName = rightField.get().getFieldName() + "_" + std::to_string(counter++);
-                    leftJoinNames.emplace_back(FieldNamesExtension{
-                        .oldName = leftField.get().getFieldName(),
-                        .newName = leftFieldNewName,
-                        .oldDataType = leftField.getDataType(),
-                        .newDataType = *joinedDataType});
-                    rightJoinNames.emplace_back(FieldNamesExtension{
-                        .oldName = rightField.get().getFieldName(),
-                        .newName = rightFieldNewName,
-                        .oldDataType = rightField.getDataType(),
-                        .newDataType = *joinedDataType});
+                    const auto leftFieldNewName
+                        = QualifiedIdentifier::create(leftField.getLastName(), Identifier::parse("j" + std::to_string(counter++)));
+                    const auto rightFieldNewName
+                        = QualifiedIdentifier::create(rightField.getLastName(), Identifier::parse("j" + std::to_string(counter++)));
+                    leftJoinNames.emplace_back(
+                        FieldNamesExtension{.oldField = leftField, .newField = QualifiedUnboundField{leftFieldNewName, *joinedDataType}});
+                    rightJoinNames.emplace_back(
+                        FieldNamesExtension{.oldField = rightField, .newField = QualifiedUnboundField{rightFieldNewName, *joinedDataType}});
                 }
             }
             else
             {
                 leftJoinNames.emplace_back(FieldNamesExtension{
-                    .oldName = leftField.get().getFieldName(),
-                    .newName = leftField.get().getFieldName(),
-                    .oldDataType = leftField.getDataType(),
-                    .newDataType = leftField.getDataType()});
+                    .oldField = leftField, .newField = QualifiedUnboundField{leftField.getLastName(), leftField.getDataType()}});
                 rightJoinNames.emplace_back(FieldNamesExtension{
-                    .oldName = rightField.get().getFieldName(),
-                    .newName = rightField.get().getFieldName(),
-                    .oldDataType = rightField.getDataType(),
-                    .newDataType = rightField.getDataType()});
+                    .oldField = rightField, .newField = QualifiedUnboundField{rightField.getLastName(), rightField.getDataType()}});
             }
         });
 
@@ -165,57 +177,57 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
 }
 
 /// Creates for each field a map operator that has as its function a cast to the correct data type
-std::pair<Schema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapOperators(
-    const Schema& inputSchemaOfJoin, const std::vector<FieldNamesExtension>& fieldNameExtensions, const MemoryLayoutType& memoryLayoutType)
+std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapOperators(
+    const LogicalOperator& inputOperator,
+    const std::vector<FieldNamesExtension>& fieldNameExtensions,
+    const MemoryLayoutType& memoryLayoutType)
 {
-    Schema inputSchemaOfMap(inputSchemaOfJoin);
+    auto currentFields = createPhysicalOutputSchema(inputOperator.getTraitSet()) | std::ranges::to<std::vector<QualifiedUnboundField>>();
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> mapPhysicalOperators;
-    for (const auto& [oldName, newName, oldDataType, newDataType] : fieldNameExtensions)
+    for (const auto& [oldField, newField] : fieldNameExtensions)
     {
-        if (newName == oldName and newDataType == oldDataType)
+        if (oldField.getLastName() == newField.getFullyQualifiedName() and oldField.getDataType() == newField.getDataType())
         {
             continue;
         }
 
         /// Creating a new physical function that reads from the old field and casts it to the new data type
-        const FieldAccessLogicalFunction fieldAccessOldField(oldDataType, oldName);
-        const CastToTypeLogicalFunction castToTypeFunction(newDataType, fieldAccessOldField);
-        const PhysicalFunction castedPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(castToTypeFunction);
+        const FieldAccessLogicalFunction fieldAccessOldField(oldField);
+        const CastToTypeLogicalFunction castToTypeFunction(newField.getDataType(), fieldAccessOldField);
+        const PhysicalFunction castedPhysicalFunction
+            = QueryCompilation::FunctionProvider::lowerFunction(castToTypeFunction, *inputOperator.getTraitSet().get<FieldMappingTrait>());
 
         /// Get a copy of the current input schema before adding to the inputSchemaOfMap the newly added field
-        const Schema copyOfInputSchemaOfMap(inputSchemaOfMap);
-        inputSchemaOfMap.addField(newName, newDataType);
+        auto inputSchema = Schema<QualifiedUnboundField, Ordered>{currentFields};
+        currentFields.emplace_back(newField);
+        const Schema<QualifiedUnboundField, Ordered> outputSchema(currentFields);
 
         /// Create a new map operator with the cast as its function
         mapPhysicalOperators.emplace_back(std::make_shared<PhysicalOperatorWrapper>(
-            MapPhysicalOperator(newName, castedPhysicalFunction),
-            copyOfInputSchemaOfMap,
-            inputSchemaOfMap,
+            MapPhysicalOperator(newField.getFullyQualifiedName(), castedPhysicalFunction),
+            inputSchema,
+            outputSchema,
             memoryLayoutType,
             memoryLayoutType));
     }
 
-    return {inputSchemaOfMap, mapPhysicalOperators};
+    return {Schema<QualifiedUnboundField, Ordered>{currentFields}, mapPhysicalOperators};
 }
 
-HashMapOptions
-createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Schema& inputSchema, const QueryExecutionConfiguration& conf)
+HashMapOptions createHashMapOptions(
+    std::vector<FieldNamesExtension>& joinFieldExtensions,
+    Schema<QualifiedUnboundField, Ordered>& inputSchema,
+    const QueryExecutionConfiguration& conf)
 {
     uint64_t keySize = 0;
     constexpr auto valueSize = sizeof(PagedVector);
     std::vector<PhysicalFunction> keyFunctions;
-    std::vector<std::string> fieldKeyNames;
+    std::vector<QualifiedIdentifier> fieldKeyNames;
     for (auto& fieldExtension : joinFieldExtensions)
     {
-        const FieldAccessLogicalFunction fieldAccessKey{fieldExtension.newDataType, fieldExtension.newName};
-        if (fieldExtension.newDataType.isType(DataType::Type::VARSIZED))
-        {
-            const bool fieldReplaceSuccess = inputSchema.replaceTypeOfField(fieldExtension.newName, fieldExtension.newDataType);
-            INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", fieldExtension.newName, inputSchema);
-        }
-        keySize += fieldExtension.newDataType.getSizeInBytesWithNull();
-        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(fieldAccessKey));
-        fieldKeyNames.emplace_back(fieldExtension.newName);
+        keySize += fieldExtension.newField.getDataType().getSizeInBytesWithNull();
+        keyFunctions.emplace_back(FieldAccessPhysicalFunction{fieldExtension.newField.getFullyQualifiedName()});
+        fieldKeyNames.emplace_back(fieldExtension.newField.getFullyQualifiedName());
     }
 
     const auto pageSize = conf.pageSize.getValue();
@@ -242,53 +254,61 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
 
 LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
-    PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 2, "Expected two children");
-    auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
-    PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-    auto& outputOriginIds = outputOriginIdsOpt.value();
-    PRECONDITION(std::ranges::size(outputOriginIdsOpt.value().get()) == 1, "Expected one output origin id");
-    PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
-
     auto join = logicalOperator.getAs<JoinLogicalOperator>();
+    const auto children = join->getBothChildren();
+    const auto traitSet = join->getTraitSet();
+    auto outputOriginIds = traitSet.get<OutputOriginIdsTrait>();
+    const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
+    PRECONDITION(std::ranges::size(*outputOriginIds) == 1, "Expected one output origin id");
 
-    auto outputSchema = join.getOutputSchema();
-    auto outputOriginId = outputOriginIds.get()[0];
+    const auto& leftOperator = children[0];
+    const auto& rightOperator = children[1];
+
+    const auto logicalOutputSchema = join.getOutputSchema();
+    const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);
+    auto outputOriginId = (*outputOriginIds)[0];
     auto logicalJoinFunction = join->getJoinFunction();
-    auto windowType = NES::as<Windowing::TimeBasedWindowType>(join->getWindowType());
-    auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(join.get(), windowType);
-    auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
-    const auto inputOriginIds
-        = join.getChildren()
+    auto windowType = join->getWindowType();
+    const auto& joinTimeCharacteristicsVariant = join->getJoinTimeCharacteristics();
+    auto characteristicsAreBound
+        = std::holds_alternative<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
+    PRECONDITION(characteristicsAreBound, "Expected the join time characteristics to be bound");
+    const auto& [timeStampFieldLeft, timeStampFieldRight]
+        = std::get<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
+
+    auto combinedFieldMappingVec = join->getChildren()
+        | std::views::transform([](const auto& child)
+                                { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
+        | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
+    auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
+
+    auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
+    const auto inputOriginIds = join.getChildren()
         | std::views::transform(
-              [](const auto& child)
-              {
-                  auto childOutputOriginIds = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
-                  PRECONDITION(childOutputOriginIds.has_value(), "Expected the outputOriginIds trait of the child to be set");
-                  return childOutputOriginIds.value().get();
-              })
+                                    [](const auto& child)
+                                    {
+                                        auto childOutputOriginIds = child.getTraitSet().template get<OutputOriginIdsTrait>();
+                                        return *childOutputOriginIds;
+                                    })
         | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
     /// Our current hash join implementation uses a hash table that requires each key to be 100% identical in terms of no. fields and data types.
     /// Therefore, we need to create map operators that extend and cast the fields to the correct data types.
-    auto [leftJoinFields, rightJoinFields]
-        = getJoinFieldExtensionsLeftRight(join->getLeftSchema(), join->getRightSchema(), logicalJoinFunction);
-    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields, memoryLayoutType);
-    auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields, memoryLayoutType);
+    auto [leftJoinFields, rightJoinFields] = getJoinFieldExtensionsLeftRight(leftOperator, rightOperator, logicalJoinFunction);
+    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(leftOperator, leftJoinFields, memoryLayoutType);
+    auto [newRightInputSchema, rightMapOperators] = addMapOperators(rightOperator, rightJoinFields, memoryLayoutType);
     auto leftBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema, memoryLayoutType);
+        conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeInBytes(), newLeftInputSchema, memoryLayoutType);
     auto rightBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema, memoryLayoutType);
+        conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeInBytes(), newRightInputSchema, memoryLayoutType);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
 
     /// Creating the hash join operator handler and slice store
     auto handlerId = getNextOperatorHandlerId();
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
+        windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
         {
@@ -332,24 +352,24 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     const HJBuildPhysicalOperator leftBuildOperator{
         handlerId,
         JoinBuildSideType::Left,
-        timeStampFieldLeft.toTimeFunction(),
+        TimeFunction::create(timeStampFieldLeft),
         leftBufferRef,
         leftHashMapOptions,
         std::move(sliceStoreRefLeft)};
     const HJBuildPhysicalOperator rightBuildOperator{
         handlerId,
         JoinBuildSideType::Right,
-        timeStampFieldRight.toTimeFunction(),
+        TimeFunction::create(timeStampFieldRight),
         rightBufferRef,
         rightHashMapOptions,
         std::move(sliceStoreRefRight)};
 
     /// Creating the hash join probe
-    auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, outputSchema);
+    auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, physicalOutputSchema);
     auto probeOperator = HJProbePhysicalOperator(
         handlerId,
         physicalJoinFunction,
-        join->getWindowMetaData(),
+        WindowMetaData{join->getStartField(), join->getEndField()},
         joinSchema,
         leftBufferRef,
         rightBufferRef,
@@ -361,7 +381,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),
         newLeftInputSchema,
-        outputSchema,
+        physicalOutputSchema,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,
@@ -371,7 +391,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(rightBuildOperator),
         newRightInputSchema,
-        outputSchema,
+        physicalOutputSchema,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,
@@ -380,8 +400,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),
-        outputSchema,
-        outputSchema,
+        physicalOutputSchema,
+        physicalOutputSchema,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,

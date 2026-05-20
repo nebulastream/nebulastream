@@ -17,12 +17,15 @@
 #include <cstdint>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/OutputFormatterBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
@@ -39,18 +42,18 @@ namespace NES
 
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat(
     const uint64_t bufferSize,
-    const Schema& schema,
+    const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::string& outputFormatterType,
-    const std::unordered_map<std::string, std::string>& config)
+    const std::unordered_map<Identifier, std::string>& config)
 {
     std::vector<OutputFormatterBufferRef::Field> fields;
     std::vector<Record::RecordFieldIdentifier> fieldNames;
-    fields.reserve(schema.getNumberOfFields());
-    fieldNames.reserve(schema.getNumberOfFields());
+    fields.reserve(std::ranges::size(schema));
+    fieldNames.reserve(std::ranges::size(schema));
     for (const auto& field : schema)
     {
-        fields.emplace_back(field.name, field.dataType);
-        fieldNames.emplace_back(field.name);
+        fields.emplace_back(field.getFullyQualifiedName(), field.getDataType());
+        fieldNames.emplace_back(field.getFullyQualifiedName());
     }
 
     /// Create the output formatter descriptor
@@ -65,23 +68,23 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
     return std::make_shared<OutputFormatterBufferRef>(OutputFormatterBufferRef{std::move(fields), outputFormatter, bufferSize});
 }
 
-std::shared_ptr<TupleBufferRef>
-LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema, const MemoryLayoutType layoutType)
+std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
+    const uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, const MemoryLayoutType layoutType)
 {
-    PRECONDITION(schema.hasFields(), "We can not lower an empty schema!");
+    PRECONDITION(!std::ranges::empty(schema), "We can not lower an empty schema!");
 
-    /// For now, we assume that the fields lie in the exact same order as in the Schema. Later on, we can have a separate optimizer phase
+    /// For now, we assume that the fields lie in the exact same order as in the Schema<Field, Unordered>. Later on, we can have a separate optimizer phase
     /// that can change the order, alignment or even the datatype implementation, e.g., u32 instead of u8.
     switch (layoutType)
     {
         case MemoryLayoutType::ROW_LAYOUT: {
             std::vector<RowTupleBufferRef::Field> fields;
-            fields.reserve(schema.getNumberOfFields());
+            fields.reserve(std::ranges::size(schema));
             uint64_t fieldOffset = 0;
             for (const auto& field : schema)
             {
-                fields.emplace_back(field.name, field.dataType, fieldOffset);
-                fieldOffset += field.dataType.getSizeInBytesWithNull();
+                fields.emplace_back(field.getFullyQualifiedName(), field.getDataType(), fieldOffset);
+                fieldOffset += field.getDataType().getSizeInBytesWithNull();
             }
             const auto tupleSize = std::accumulate(
                 fields.begin(),
@@ -97,17 +100,18 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
                 schema.begin(),
                 schema.end(),
                 0UL,
-                [](auto size, const Schema::Field& field) { return size + field.dataType.getSizeInBytesWithNull(); });
+                [](auto size, const QualifiedUnboundField& field) { return size + field.getDataType().getSizeInBytesWithNull(); });
             INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
 
             const uint64_t capacity = bufferSize / tupleSize;
             std::vector<ColumnTupleBufferRef::Field> fields;
-            fields.reserve(schema.getNumberOfFields());
+            fields.reserve(std::ranges::size(schema));
             uint64_t columnOffset = 0;
             for (const auto& field : schema)
             {
-                fields.emplace_back(field.name, field.dataType, field.dataType.getSizeInBytesWithNull(), columnOffset);
-                columnOffset += (field.dataType.getSizeInBytesWithNull() * capacity);
+                fields.emplace_back(
+                    field.getFullyQualifiedName(), field.getDataType(), field.getDataType().getSizeInBytesWithNull(), columnOffset);
+                columnOffset += (field.getDataType().getSizeInBytesWithNull() * capacity);
             }
 
             return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});

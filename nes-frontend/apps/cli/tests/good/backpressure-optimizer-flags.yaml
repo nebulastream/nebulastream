@@ -37,7 +37,7 @@ sinks:
   - name: print_sink
     host: worker-1:8080
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     type: Print
     config:

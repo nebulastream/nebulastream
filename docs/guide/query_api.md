@@ -128,21 +128,21 @@ CREATE LOGICAL SOURCE lrb(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
-  'localhost:9090' AS `SOURCE`.`HOST`, 
-  'localhost' as `SOURCE`.SOCKET_HOST,
-  50501 as `SOURCE`.SOCKET_PORT,
-  65536 as `SOURCE`.SOCKET_BUFFER_SIZE,
-  100 as `SOURCE`.FLUSH_INTERVAL_MS,
-  60 as `SOURCE`.CONNECT_TIMEOUT_SECONDS,
-  'CSV' as PARSER.`TYPE`,
+  'localhost:9090' AS "SOURCE"."HOST", 
+  'localhost' as "SOURCE".SOCKET_HOST,
+  50501 as "SOURCE".SOCKET_PORT,
+  65536 as "SOURCE".SOCKET_BUFFER_SIZE,
+  100 as "SOURCE".FLUSH_INTERVAL_MS,
+  60 as "SOURCE".CONNECT_TIMEOUT_SECONDS,
+  'CSV' as PARSER."TYPE",
   '\n' as PARSER.TUPLE_DELIMITER,
   ',' as PARSER.FIELD_DELIMITER
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
-  'localhost:9090' AS `SOURCE`.`HOST`,
-  'lrb.json' as `SOURCE`.FILE_PATH,
-  'JSON' as PARSER.`TYPE`
+  'localhost:9090' AS "SOURCE"."HOST",
+  'lrb.json' as "SOURCE".FILE_PATH,
+  'JSON' as PARSER."TYPE"
 );
 
 CREATE SINK csv_sink(
@@ -153,11 +153,11 @@ CREATE SINK csv_sink(
   positionDiv5280 INT32,
   lrb.avgSpeed FLOAT64
 ) TYPE File SET(
-  'localhost:9090' AS `SINK`.`HOST`, 
-  '<path>' as `SINK`.FILE_PATH,
-  'CSV' as `SINK`.OUTPUT_FORMAT,
-  FALSE as `SINK`.APPEND,
-  FALSE as `PARSER`.QUOTE_STRINGS
+  'localhost:9090' AS "SINK"."HOST", 
+  '<path>' as "SINK".FILE_PATH,
+  'CSV' as "SINK".OUTPUT_FORMAT,
+  FALSE as "SINK".APPEND,
+  FALSE as "PARSER".QUOTE_STRINGS
 );
 
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
@@ -215,21 +215,21 @@ Supported physical source types:
 In our example, we define two physical sources that both feed the `lrb` logical source:
 ```sql
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
-  'localhost:9090' AS `SOURCE`.`HOST`, 
-  'localhost' as `SOURCE`.SOCKET_HOST,
-  50501 as `SOURCE`.SOCKET_PORT,
-  65536 as `SOURCE`.SOCKET_BUFFER_SIZE,
-  100 as `SOURCE`.FLUSH_INTERVAL_MS,
-  60 as `SOURCE`.CONNECT_TIMEOUT_SECONDS,
-  'CSV' as PARSER.`TYPE`,
+  'localhost:9090' AS "SOURCE"."HOST", 
+  'localhost' as "SOURCE".SOCKET_HOST,
+  50501 as "SOURCE".SOCKET_PORT,
+  65536 as "SOURCE".SOCKET_BUFFER_SIZE,
+  100 as "SOURCE".FLUSH_INTERVAL_MS,
+  60 as "SOURCE".CONNECT_TIMEOUT_SECONDS,
+  'CSV' as PARSER."TYPE",
   '\n' as PARSER.TUPLE_DELIMITER,
   ',' as PARSER.FIELD_DELIMITER
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
-  'localhost:9090' AS `SOURCE`.`HOST`,
-  'lrb.json' as `SOURCE`.FILE_PATH,
-  'JSON' as PARSER.`TYPE`
+  'localhost:9090' AS "SOURCE"."HOST",
+  'lrb.json' as "SOURCE".FILE_PATH,
+  'JSON' as PARSER."TYPE"
 );
 ```
 As you can see, one source reads CSV-formatted data from a TCP socket, while the other reads JSON-formatted data from a file.
@@ -267,10 +267,10 @@ CREATE SINK csv_sink(
   positionDiv5280 INT32,
   lrb.avgSpeed FLOAT64
 ) TYPE File SET(
-  'localhost:9090' AS `SINK`.`HOST`, 
-  '<path>' as `SINK`.FILE_PATH,
-  'CSV' as `SINK`.OUTPUT_FORMAT,
-  FALSE as `SINK`.APPEND
+  'localhost:9090' AS "SINK"."HOST", 
+  '<path>' as "SINK".FILE_PATH,
+  'CSV' as "SINK".OUTPUT_FORMAT,
+  FALSE as "SINK".APPEND
 );
 ```
 The sink name (`csv_sink`) must match the name used in the query's `INTO` clause.
@@ -297,7 +297,7 @@ Input formatters convert byte streams from source connectors into the native in-
 The format is specified via `PARSER.*` parameters in each physical source:
 ```sql
 CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
-  'CSV' as PARSER.`TYPE`,
+  'CSV' as PARSER."TYPE",
   '\n' as PARSER.TUPLE_DELIMITER,
   ',' as PARSER.FIELD_DELIMITER,
   ...
@@ -320,8 +320,8 @@ represents strings.
 All required parameters can be specified via `PARSER.*` in each sink.
 ```sql
 CREATE SINK sink_name TYPE FILE SET(
-       'CSV' as `SINK`.OUTPUT_FORMAT,
-       TRUE as `PARSER`.QUOTE_STRINGS,
+       'CSV' as "SINK".OUTPUT_FORMAT,
+       TRUE as "PARSER".QUOTE_STRINGS,
        ...
 );
 ```
