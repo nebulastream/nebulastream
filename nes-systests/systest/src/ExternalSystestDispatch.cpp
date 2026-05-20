@@ -973,6 +973,11 @@ std::unique_ptr<ExternalSystestDispatchGuard> maybeDispatchExternalSystest(Syste
     ///                                    registrars read this; the source
     ///                                    config's serveruri / connection
     ///                                    string is rewritten from it).
+    ///   NES_EXTERNAL_PORT_<NAME>       — allocated host port on its own, for
+    ///                                    sources whose config takes host and
+    ///                                    port separately (e.g. ODBC, whose
+    ///                                    ATTACH-time test loader reads it to
+    ///                                    rewrite the descriptor's `db_port`).
     /// `NES_EXTERNAL_HOST` is the host address the in-process test reaches
     /// the broker at; 127.0.0.1 on the host, host.docker.internal inside the
     /// CLion dev-container toolchain.
@@ -988,6 +993,7 @@ std::unique_ptr<ExternalSystestDispatchGuard> maybeDispatchExternalSystest(Syste
         setEnvOrThrow(fmt::format("{}_PORT", endpointUpper).c_str(), std::to_string(hostPort));
         setEnvOrThrow(fmt::format("{}_CONTAINER_PORT", endpointUpper).c_str(), std::to_string(endpoint.containerPort));
         setEnvOrThrow(fmt::format("NES_EXTERNAL_ENDPOINT_{}", endpointUpper).c_str(), fmt::format("{}:{}", externalHost, hostPort));
+        setEnvOrThrow(fmt::format("NES_EXTERNAL_PORT_{}", endpointUpper).c_str(), std::to_string(hostPort));
         allocations.emplace_back(endpoint.name, hostPort);
     }
 

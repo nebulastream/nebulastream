@@ -18,6 +18,8 @@ RUN apt-get update -y && apt-get install -y \
         bats-support \
         bats-assert \
         bats-file \
+        unixodbc-dev \
+        odbc-postgresql \
         openjdk-21-jre-headless
 
 # Additional testing libraries for bats are discovered via the BATS_LIB_PATH environemnt

@@ -1,0 +1,32 @@
+# name: ODBCSource/ODBC.test
+# description: Reads a PostgreSQL table over ODBC. The `# requires: odbc` directive makes the in-binary dispatcher bring up the PostgreSQL container declared in systest-profile/compose.snippet.yaml before the test runs in-process; init-db.sql creates an empty `measurements` table on first boot. The rows under `ATTACH INLINE` are seeded into that table by the ODBC InlineData registrar (ODBCTestLoader.cpp), which also rewrites the descriptor's db_host / db_port to the dispatcher-allocated endpoint — the same registrar mechanism the MQTT source uses. The source uses the NATIVE input formatter because it writes already-typed tuples straight into the buffer, then EOS-es via poll-retry exhaustion once the table yields no new rows.
+# requires: odbc
+
+CREATE LOGICAL SOURCE odbc_measurements(id INT32 NOT NULL, label VARSIZED NOT NULL, reading INT64 NOT NULL, score FLOAT64 NOT NULL);
+
+CREATE PHYSICAL SOURCE FOR odbc_measurements TYPE ODBC SET(
+    "NATIVE" AS INPUT_FORMATTER.`TYPE`,
+    "odbc_database" AS `SOURCE`.db_host,
+    "5432" AS `SOURCE`.db_port,
+    "nebulastream" AS `SOURCE`.database,
+    "nes" AS `SOURCE`.username,
+    "nes" AS `SOURCE`.password,
+    "PostgreSQL Unicode" AS `SOURCE`.driver,
+    "measurements" AS `SOURCE`.sync_table,
+    "id" AS `SOURCE`.id_column,
+    "SELECT id, label, reading, score FROM measurements" AS `SOURCE`.query,
+    "100" AS `SOURCE`.poll_interval_ms);
+ATTACH INLINE
+1,alpha,100,1.5
+2,beta,200,2.5
+3,gamma,300,3.5
+4,delta,400,4.5
+5,epsilon,500,5.5
+
+SELECT id, label, reading, score FROM odbc_measurements INTO File();
+----
+1 alpha 100 1.5
+2 beta 200 2.5
+3 gamma 300 3.5
+4 delta 400 4.5
+5 epsilon 500 5.5
