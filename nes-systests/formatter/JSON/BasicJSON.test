@@ -2,11 +2,11 @@
 # description: tests general input formatter behavior
 # groups: [Formatter, JSON]
 
-CREATE LOGICAL SOURCE jsonStream(KEY UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE LOGICAL SOURCE jsonStream(KEY UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL, letter CHAR NOT NULL);
 CREATE PHYSICAL SOURCE FOR jsonStream TYPE File SET("JSON" AS INPUT_FORMATTER.`TYPE`);
 ATTACH INLINE
-{"KEY":1, "VALUE":1, "NAME":"john"}
-{"KEY":1, "VALUE":2, "NAME":"max"}
+{"KEY":1, "VALUE":1, "NAME":"john", "LETTER":"a"}
+{"KEY":1, "VALUE":2, "NAME":"max", "LETTER":"b"}
 
 CREATE LOGICAL SOURCE jsonStreamWrongDataTypes(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR jsonStreamWrongDataTypes TYPE File SET("JSON" AS INPUT_FORMATTER.`TYPE`);
@@ -47,7 +47,7 @@ ATTACH INLINE
 CREATE SINK keySink(jsonStream.key UINT64 NOT NULL) TYPE File;
 CREATE SINK valueSink(jsonStream.value UINT64 NOT NULL) TYPE File;
 CREATE SINK nameSink(jsonStream.name VARSIZED NOT NULL) TYPE File;
-CREATE SINK allFieldsSink(jsonStream.key UINT64 NOT NULL, jsonStream.value UINT64 NOT NULL, jsonStream.name VARSIZED NOT NULL) TYPE File;
+CREATE SINK allFieldsSink(jsonStream.key UINT64 NOT NULL, jsonStream.value UINT64 NOT NULL, jsonStream.name VARSIZED NOT NULL, jsonStream.letter CHAR NOT NULL) TYPE File;
 CREATE SINK allFieldsWrongFieldNameSink(jsonStreamWrongFieldName.key UINT64 NOT NULL, jsonStreamWrongFieldName.value UINT64 NOT NULL, jsonStreamWrongFieldName.name VARSIZED NOT NULL) TYPE File;
 CREATE SINK allFieldsWrongDataTypeSink(jsonStreamWrongDataTypes.key UINT64 NOT NULL, jsonStreamWrongDataTypes.value UINT64 NOT NULL, jsonStreamWrongDataTypes.name VARSIZED NOT NULL) TYPE File;
 
@@ -68,8 +68,8 @@ max
 
 SELECT * FROM jsonStream INTO allFieldsSink;
 ----
-1,1,john
-1,2,max
+1,1,john,a
+1,2,max,b
 
 SELECT * FROM jsonStreamWrongDataTypes INTO allFieldsWrongDataTypeSink;
 ----

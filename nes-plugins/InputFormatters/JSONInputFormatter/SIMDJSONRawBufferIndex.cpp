@@ -40,7 +40,6 @@
 #include <InputFormatIndexer.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
-#include <SIMDJSONParsingUtil.hpp>
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
@@ -65,74 +64,6 @@ SIMDJSONRawBufferIndex::hasNext(const nautilus::val<uint64_t>&, const nautilus::
     return not lastTuple;
 }
 
-void writeValueToRecord(
-    const DataType dataType,
-    Record& record,
-    const std::string& fieldName,
-    const nautilus::val<FieldIndex>& fieldIndex,
-    const nautilus::val<RawBufferIndex*>& rawBufferIndex,
-    const nautilus::val<const InputFormatIndexer*>& indexer)
-{
-    switch (dataType.type)
-    {
-        case DataType::Type::INT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::INT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::INT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::INT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<float>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<double>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::CHAR: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<char>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<bool>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseJsonVarSized(fieldIndex, rawBufferIndex, indexer, dataType.nullable));
-            return;
-        }
-        case DataType::Type::UNDEFINED:
-            throw NotImplemented("Cannot parse undefined type.");
-    }
-    std::unreachable();
-}
-
 Record SIMDJSONRawBufferIndex::readSpanningRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<int8_t*>&,
@@ -154,8 +85,20 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
 
         auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
         const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
-        writeValueToRecord(
-            fieldDataType, record, fieldName, fieldIndex, rawBufferIndex, nautilus::val<const InputFormatIndexer*>(&indexer));
+        if (fieldDataType.type == DataType::Type::UNDEFINED)
+        {
+            throw NotImplemented("Cannot parse undefined type.");
+        }
+
+        parseJsonIntoVarVal(
+            fieldDataType,
+            fieldName,
+            indexer.getParserType(fieldDataType.type),
+            indexer.getNullValues(),
+            record,
+            fieldIndex,
+            rawBufferIndex,
+            nautilus::val<const InputFormatIndexer*>(&indexer));
     }
     /// Increment iterator and return record
     nautilus::invoke(
