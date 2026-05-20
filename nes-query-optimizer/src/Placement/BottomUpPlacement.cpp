@@ -73,7 +73,7 @@ LogicalOperator addPlacementTrait(const LogicalOperator& op, const std::unordere
     INVARIANT(addedTrait, "There should not have been a placement trait");
 
     return op.withTraitSet(oldTraitSet)
-        .withChildren(
+        .withChildrenUnsafe(
             op.getChildren()
             | std::views::transform(
                 [&placement](const LogicalOperator& child) -> LogicalOperator { return addPlacementTrait(child, placement); })

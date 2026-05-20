@@ -26,7 +26,6 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -57,20 +56,20 @@ tryGetDelimiter(const std::unordered_map<std::string, std::string>& config, cons
 struct ConfigParametersCSVInputFormatIndexer
 {
     static inline const DescriptorConfig::ConfigParameter<bool> ALLOW_COMMAS_IN_STRINGS{
-        "allow_commas_in_strings",
+        "ALLOW_COMMAS_IN_STRINGS",
         true,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(ALLOW_COMMAS_IN_STRINGS, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<char> TUPLE_DELIMITER{
-        "tuple_delimiter",
+        "TUPLE_DELIMITER",
         '\n',
-        [](const std::unordered_map<std::string, std::string>& config) { return tryGetDelimiter(config, "tuple_delimiter", '\n'); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return tryGetDelimiter(config, "TUPLE_DELIMITER", '\n'); }};
 
     static inline const DescriptorConfig::ConfigParameter<char> FIELD_DELIMITER{
-        "field_delimiter",
+        "FIELD_DELIMITER",
         ',',
-        [](const std::unordered_map<std::string, std::string>& config) { return tryGetDelimiter(config, "field_delimiter", ','); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return tryGetDelimiter(config, "FIELD_DELIMITER", ','); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(

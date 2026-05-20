@@ -76,7 +76,7 @@ private:
 struct ConfigParametersNetworkSource
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "channel",
+        "CHANNEL",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
         {
@@ -90,7 +90,7 @@ struct ConfigParametersNetworkSource
         }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
-        "bind",
+        "BIND",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
         {
@@ -107,7 +107,7 @@ struct ConfigParametersNetworkSource
     /// When a user explicitly sets receiver_queue_size=0, the lambda rejects it with an error.
     /// The default value (0) is returned directly by the config system, bypassing the lambda.
     static inline const DescriptorConfig::ConfigParameter<size_t> RECEIVER_QUEUE_SIZE{
-        "receiver_queue_size",
+        "RECEIVER_QUEUE_SIZE",
         size_t{0},
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
         {

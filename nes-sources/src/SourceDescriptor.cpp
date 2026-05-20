@@ -23,7 +23,6 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -65,6 +64,11 @@ std::string SourceDescriptor::getSourceType() const
 InputFormatterDescriptor SourceDescriptor::getInputFormatterDescriptor() const
 {
     return inputFormatterDescriptor;
+}
+
+std::string SourceDescriptor::getInputFormatType() const
+{
+    return inputFormatterDescriptor.getInputFormatterType();
 }
 
 Host SourceDescriptor::getHost() const

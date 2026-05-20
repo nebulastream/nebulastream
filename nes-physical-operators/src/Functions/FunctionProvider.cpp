@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <Functions/CastFieldPhysicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
@@ -28,20 +29,22 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Schema/Binder.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 namespace NES::QueryCompilation
 {
-PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
+PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait)
 {
     /// 1. Recursively lower the children of the function node.
     std::vector<PhysicalFunction> childFunctions;
     std::vector<DataType> inputTypes;
     for (const auto& child : logicalFunction.getChildren())
     {
-        childFunctions.emplace_back(lowerFunction(child));
+        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait));
         inputTypes.emplace_back(child.getDataType());
     }
 
@@ -49,7 +52,9 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     /// due to them not simply getting a childFunction as a parameter.
     if (const auto fieldAccessFunction = logicalFunction.tryGetAs<FieldAccessLogicalFunction>())
     {
-        return FieldAccessPhysicalFunction(fieldAccessFunction->get().getFieldName());
+        const auto mappedName = fieldMappingTrait.getMapping(unbind(fieldAccessFunction.value()->getField()));
+        INVARIANT(mappedName.has_value(), "Can not find mapping for {}", fieldAccessFunction.value()->getField());
+        return FieldAccessPhysicalFunction(mappedName.value());
     }
     if (const auto constantValueFunction = logicalFunction.tryGetAs<ConstantValueLogicalFunction>())
     {

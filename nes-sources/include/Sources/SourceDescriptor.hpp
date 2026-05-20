@@ -26,9 +26,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -97,7 +95,7 @@ public:
     static constexpr size_t INVALID_MAX_INFLIGHT_BUFFERS = 0;
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<size_t> MAX_INFLIGHT_BUFFERS{
-        "max_inflight_buffers",
+        "MAX_INFLIGHT_BUFFERS",
         INVALID_MAX_INFLIGHT_BUFFERS,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
 
@@ -134,7 +132,7 @@ namespace NES::detail
 {
 struct ReflectedSourceDescriptor
 {
-    uint64_t physicalSourceId = 0;
+    uint64_t physicalSourceId;
     LogicalSource logicalSource;
     std::string type;
     Host host;

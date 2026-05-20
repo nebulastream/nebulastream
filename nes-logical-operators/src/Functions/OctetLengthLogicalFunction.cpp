@@ -16,27 +16,25 @@
 
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp> /// NOLINT(misc-include-cleaner)
+#include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h> /// NOLINT(misc-include-cleaner)
 
 namespace NES
 {
 
-/// NOLINTNEXTLINE(modernize-pass-by-value)
-OctetLengthLogicalFunction::OctetLengthLogicalFunction(const LogicalFunction& child)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)), child(child)
+OctetLengthLogicalFunction::OctetLengthLogicalFunction(LogicalFunction child) : child(std::move(child))
 {
 }
 
@@ -50,33 +48,22 @@ std::string OctetLengthLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("OCTET_LENGTH({})", child.explain(verbosity));
 }
 
+LogicalFunction OctetLengthLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+{
+    auto copy = *this;
+    copy.child = child.withInferredDataType(schema);
+    if (not copy.child.getDataType().isType(DataType::Type::VARSIZED))
+    {
+        throw DifferentFieldTypeExpected("OCTET_LENGTH expects a VARSIZED input but got {}", copy.child.getDataType());
+    }
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+    copy.dataType.nullable = copy.child.getDataType().nullable;
+    return copy;
+}
+
 DataType OctetLengthLogicalFunction::getDataType() const
 {
     return dataType;
-};
-
-OctetLengthLogicalFunction OctetLengthLogicalFunction::withDataType(const DataType& dataType) const
-{
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
-LogicalFunction OctetLengthLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    std::vector<LogicalFunction> newChildren;
-    for (auto& chr : getChildren())
-    {
-        newChildren.push_back(chr.withInferredDataType(schema));
-    }
-    INVARIANT(newChildren.size() == 1, "OctetLengthLogicalFunction expects exactly one child but has {}", newChildren.size());
-    if (not newChildren[0].getDataType().isType(DataType::Type::VARSIZED))
-    {
-        throw DifferentFieldTypeExpected("OCTET_LENGTH expects a VARSIZED input but got {}", newChildren[0].getDataType());
-    }
-    auto newDataType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
-    newDataType.nullable = newChildren[0].getDataType().nullable;
-    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> OctetLengthLogicalFunction::getChildren() const
@@ -86,12 +73,12 @@ std::vector<LogicalFunction> OctetLengthLogicalFunction::getChildren() const
 
 OctetLengthLogicalFunction OctetLengthLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 1, "OctetLengthLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
 };
 
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::string_view OctetLengthLogicalFunction::getType() const
 {
     return NAME;
@@ -106,12 +93,7 @@ OctetLengthLogicalFunction
 Unreflector<OctetLengthLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [child] = context.unreflect<detail::ReflectedOctetLengthLogicalFunction>(reflected);
-
-    if (!child.has_value())
-    {
-        throw CannotDeserialize("OctetLengthLogicalFunction is missing its child");
-    }
-    return OctetLengthLogicalFunction{child.value()};
+    return OctetLengthLogicalFunction(std::move(child));
 }
 
 LogicalFunctionRegistryReturnType

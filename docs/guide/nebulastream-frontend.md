@@ -82,20 +82,20 @@ CREATE LOGICAL SOURCE endless(ts UINT64);
 CREATE PHYSICAL SOURCE FOR endless
 TYPE Generator
 SET(
-    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-    'CSV' as INPUT_FORMATTER.`TYPE`,
-    'emit_rate 10' AS `SOURCE`.GENERATOR_RATE_CONFIG,
-    10000000 AS `SOURCE`.MAX_RUNTIME_MS,
-    1 AS `SOURCE`.SEED,
-    'SEQUENCE UINT64 0 10000000 1' AS `SOURCE`.GENERATOR_SCHEMA
+    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'CSV' as INPUT_FORMATTER."TYPE",
+    'emit_rate 10' AS "SOURCE".GENERATOR_RATE_CONFIG,
+    10000000 AS "SOURCE".MAX_RUNTIME_MS,
+    1 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 0 10000000 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 
 -- 3. Create a sink (file output)
 CREATE SINK someSink(ENDLESS.TS UINT64)
 TYPE File
 SET(
-    'out.csv' as `SINK`.FILE_PATH,
-    'CSV' as `SINK`.OUTPUT_FORMAT
+    'out.csv' as "SINK".FILE_PATH,
+    'CSV' as "SINK".OUTPUT_FORMAT
 );
 
 -- 4. Check queries (should be empty initially)
@@ -173,22 +173,22 @@ CREATE LOGICAL SOURCE endless(ts UINT64);
 CREATE PHYSICAL SOURCE FOR endless
 TYPE Generator
 SET(
-    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-    'CSV' as INPUT_FORMATTER.`TYPE`,
-    'emit_rate 10' AS `SOURCE`.GENERATOR_RATE_CONFIG,
-    10000000 AS `SOURCE`.MAX_RUNTIME_MS,
-    "sink-node:8080" AS `SOURCE`.`HOST`,  -- Specify target host (gRPC address)
-    1 AS `SOURCE`.SEED,
-    'SEQUENCE UINT64 0 10000000 1' AS `SOURCE`.GENERATOR_SCHEMA
+    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'CSV' as INPUT_FORMATTER."TYPE",
+    'emit_rate 10' AS "SOURCE".GENERATOR_RATE_CONFIG,
+    10000000 AS "SOURCE".MAX_RUNTIME_MS,
+    "sink-node:8080" AS "SOURCE"."HOST",  -- Specify target host (gRPC address)
+    1 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 0 10000000 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 
 -- 4. Create sink with host specification
 CREATE SINK someSink(ENDLESS.TS UINT64)
 TYPE File
 SET(
-    'out.csv' as `SINK`.FILE_PATH,
-    'CSV' as `SINK`.OUTPUT_FORMAT,
-    "sink-node:8080" AS `SINK`.`HOST`  -- Specify target host (gRPC address)
+    'out.csv' as "SINK".FILE_PATH,
+    'CSV' as "SINK".OUTPUT_FORMAT,
+    "sink-node:8080" AS "SINK"."HOST"  -- Specify target host (gRPC address)
 );
 
 -- 5. Deploy query
@@ -203,28 +203,28 @@ Query status shows one global query status as well as potentially multiple local
 -- worker creation (multi-statement)
 CREATE WORKER "sink-node:8080" SET ('sink-node:9090' AS DATA);
 CREATE WORKER "source-node-1:8080" SET ('source-node-1:9090' AS DATA,
-    "intermediate-node-1:8080" AS `DOWNSTREAM`);
+    "intermediate-node-1:8080" AS "DOWNSTREAM");
 CREATE WORKER "source-node-2:8080" SET ('source-node-2:9090' AS DATA,
-    "intermediate-node-1:8080" AS `DOWNSTREAM`);
+    "intermediate-node-1:8080" AS "DOWNSTREAM");
 CREATE WORKER "source-node-3:8080" SET ('source-node-3:9090' AS DATA,
-    "intermediate-node-2:8080" AS `DOWNSTREAM`);
+    "intermediate-node-2:8080" AS "DOWNSTREAM");
 CREATE WORKER "source-node-4:8080" SET ('source-node-4:9090' AS DATA,
-    "intermediate-node-2:8080" AS `DOWNSTREAM`);
+    "intermediate-node-2:8080" AS "DOWNSTREAM");
 CREATE WORKER "source-node-5:8080" SET ('source-node-5:9090' AS DATA,
-    "intermediate-node-2:8080" AS `DOWNSTREAM`);
+    "intermediate-node-2:8080" AS "DOWNSTREAM");
 CREATE WORKER "intermediate-node-1:8080" SET ('intermediate-node-1:9090' AS DATA,
-    "sink-node:8080" AS `DOWNSTREAM`);
+    "sink-node:8080" AS "DOWNSTREAM");
 CREATE WORKER "intermediate-node-2:8080" SET ('intermediate-node-2:9090' AS DATA,
-    "sink-node:8080" AS `DOWNSTREAM`);
+    "sink-node:8080" AS "DOWNSTREAM");
 
 -- Deploy multiple queries to different nodes
 SELECT ID, VALUE, TIMESTAMP
-FROM Generator(..., "source-node-1:8080" AS `SOURCE`.`HOST`, ...)
-INTO Print("sink-node:8080" AS `SINK`.`HOST`, ...);
+FROM Generator(..., "source-node-1:8080" AS "SOURCE"."HOST", ...)
+INTO Print("sink-node:8080" AS "SINK"."HOST", ...);
 
 SELECT ID, VALUE, TIMESTAMP
-FROM Generator(..., "source-node-5:8080" AS `SOURCE`.`HOST`, ...)
-INTO Print("sink-node:8080" AS `SINK`.`HOST`, ...);
+FROM Generator(..., "source-node-5:8080" AS "SOURCE"."HOST", ...)
+INTO Print("sink-node:8080" AS "SINK"."HOST", ...);
 
 -- Verify query distribution
 SHOW QUERIES;

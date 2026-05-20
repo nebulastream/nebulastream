@@ -32,6 +32,7 @@
 #include <InferenceRuntime.hpp>
 #include <val_ptr.hpp>
 
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Arena.hpp>
 #include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
@@ -104,8 +105,8 @@ void infer(ThreadLocalRuntimeWrapper* twl, WorkerThreadId thread)
 
 InferModelPhysicalOperator::InferModelPhysicalOperator(
     CompiledModel model,
-    std::vector<std::string> inputFieldNames,
-    std::vector<std::string> outputFieldNames,
+    std::vector<QualifiedIdentifier> inputFieldNames,
+    std::vector<QualifiedIdentifier> outputFieldNames,
     bool varsizedInput,
     bool varsizedOutput)
     : inputFieldNames(std::move(inputFieldNames))

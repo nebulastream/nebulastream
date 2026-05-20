@@ -14,6 +14,9 @@
 
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 
+#include <cstddef>
+#include <functional>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -23,20 +26,34 @@
 #include <fmt/ranges.h>
 
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/OriginIdAssigner.hpp>
+#include <Schema/Binder.hpp>
+#include <Schema/Field.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/DynamicBase.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
+
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(WeakLogicalOperator self, SourceDescriptor sourceDescriptor)
     : ManagedByOperator(std::move(self)), sourceDescriptor(std::move(sourceDescriptor))
 {
+    inferLocalSchema();
+}
+
+TypedLogicalOperator<SourceDescriptorLogicalOperator> SourceDescriptorLogicalOperator::create(SourceDescriptor sourceDescriptor)
+{
+    return TypedLogicalOperator<SourceDescriptorLogicalOperator>{std::move(sourceDescriptor)};
 }
 
 std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
@@ -44,17 +61,22 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+void SourceDescriptorLogicalOperator::inferLocalSchema()
 {
-    PRECONDITION(false, "Schema is already given by SourceDescriptor. No call ot InferSchema needed");
-    return *this;
+    outputSchema = *sourceDescriptor.getLogicalSource().getSchema() | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>();
+}
+
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSchema() const
+{
+    auto copy = *this;
+    copy.inferLocalSchema();
+    return copy;
 }
 
 bool SourceDescriptorLogicalOperator::operator==(const SourceDescriptorLogicalOperator& rhs) const
 {
     const bool descriptorsEqual = sourceDescriptor == rhs.sourceDescriptor;
-    return descriptorsEqual && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
-        && getTraitSet() == rhs.getTraitSet();
+    return descriptorsEqual && traitSet == rhs.traitSet;
 }
 
 std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -78,21 +100,25 @@ TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
     return traitSet;
 }
 
-SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
     copy.children = std::move(children);
     return copy;
 }
 
-std::vector<Schema> SourceDescriptorLogicalOperator::getInputSchemas() const
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    return {*sourceDescriptor.getLogicalSource().getSchema()};
-};
+    auto copy = *this;
+    copy.children = std::move(children);
+    copy.inferLocalSchema();
+    return copy;
+}
 
-Schema SourceDescriptorLogicalOperator::getOutputSchema() const
+Schema<Field, Unordered> SourceDescriptorLogicalOperator::getOutputSchema() const
 {
-    return {*sourceDescriptor.getLogicalSource().getSchema()};
+    PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return NES::bind(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> SourceDescriptorLogicalOperator::getChildren() const
@@ -105,16 +131,42 @@ SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
     return sourceDescriptor;
 }
 
+Schema<Field, Ordered> SourceDescriptorLogicalOperator::getOrderedOutputSchema(ChildOutputOrderProvider) const
+{
+    return bind(self.lock(), *sourceDescriptor.getLogicalSource().getSchema());
+}
+
+const detail::DynamicBase* SourceDescriptorLogicalOperator::getDynamicBase() const
+{
+    return static_cast<const OriginIdAssigner*>(this);
+}
+
+Unreflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))
+{
+}
+
 Reflected Reflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::operator()(
     const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op) const
 {
-    return reflect(op->getSourceDescriptor());
+    return reflect(
+        detail::ReflectedSourceDescriptorLogicalOperator{.operatorId = op.getId(), .sourceDescriptor = op->getSourceDescriptor()});
 }
 
 TypedLogicalOperator<SourceDescriptorLogicalOperator>
 Unreflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto sourceDescriptor = context.unreflect<SourceDescriptor>(rfl);
-    return TypedLogicalOperator<SourceDescriptorLogicalOperator>{std::move(sourceDescriptor)};
+    auto [id, sourceDescriptor] = context.unreflect<detail::ReflectedSourceDescriptorLogicalOperator>(rfl);
+    if (const auto children = plan->getChildrenFor(id, context); !children.empty())
+    {
+        throw CannotDeserialize("SourceDescriptorLogicalOperator requires no children, but got {}", children.size());
+    }
+    return SourceDescriptorLogicalOperator::create(std::move(sourceDescriptor));
 }
+
+}
+
+std::size_t std::hash<NES::SourceDescriptorLogicalOperator>::operator()(
+    const NES::SourceDescriptorLogicalOperator& sourceDescriptorLogicalOperator) const
+{
+    return std::hash<NES::SourceDescriptor>{}(sourceDescriptorLogicalOperator.getSourceDescriptor());
 }
