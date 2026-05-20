@@ -37,7 +37,7 @@
 #include <InputFormatIndexer.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
+#include <ValueDeserializerUtil.hpp>
 #include <static.hpp>
 
 namespace NES
@@ -89,6 +89,19 @@ public:
         , fieldDataTypes(std::move(fieldDataTypes))
         , nullValues({})
     {
+        deserializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
+        deserializerTypes[DataType::Type::UINT16] = "DefaultUINT16";
+        deserializerTypes[DataType::Type::UINT32] = "DefaultUINT32";
+        deserializerTypes[DataType::Type::UINT64] = "DefaultUINT64";
+        deserializerTypes[DataType::Type::INT8] = "DefaultINT8";
+        deserializerTypes[DataType::Type::INT16] = "DefaultINT16";
+        deserializerTypes[DataType::Type::INT32] = "DefaultINT32";
+        deserializerTypes[DataType::Type::INT64] = "DefaultINT64";
+        deserializerTypes[DataType::Type::FLOAT32] = "DefaultF32";
+        deserializerTypes[DataType::Type::FLOAT64] = "DefaultF64";
+        deserializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
+        deserializerTypes[DataType::Type::CHAR] = "DefaultCHAR";
+        deserializerTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -121,8 +134,6 @@ public:
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const override { return {&tupleDelimiter, 1}; }
 
     [[nodiscard]] std::string_view getFieldDelimitingBytes() const override { return ""; }
-
-    [[nodiscard]] QuotationType getQuotationType() const override { return QuotationType::DOUBLE_QUOTE; }
 
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 

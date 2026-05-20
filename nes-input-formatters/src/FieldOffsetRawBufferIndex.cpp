@@ -17,17 +17,20 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <vector>
 #include <function.hpp>
 #include <static.hpp>
 
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatter.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
+#include <ValueDeserializer.hpp>
+#include <ValueDeserializerUtil.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -89,8 +92,14 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-        parseRawValueIntoRecord(
-            fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues(), indexer.getQuotationType());
+
+        /// Retrieve value deserializer for the field and deserialize the value.
+        /// These are the temporary defaults for our CSV format. Later, these arguments will be set by the user in the source definition.
+        const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = false, .hasTrailingSpaces = false};
+        const std::unique_ptr<ValueDeserializer> deserializer
+            = provideValueDeserializer(indexer.getDeserializerType(fieldDataType.type), deserializerConfig);
+        const VarVal deserializedVal = deserializer->deserializeToVarVal(fieldAddress, fieldSize, indexer.getNullValues());
+        record.write(fieldName, deserializedVal);
     }
     return record;
 }

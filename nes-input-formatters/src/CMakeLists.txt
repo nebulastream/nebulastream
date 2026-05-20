@@ -10,12 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(ValueDeserializers)
 add_source_files(nes-input-formatters
         InputFormatIndexer.cpp
         SequenceShredder.cpp
         SpanningTupleBuffer.cpp
         SpanningTupleBufferState.cpp
-        RawValueParser.cpp
+        ValueDeserializerUtil.cpp
         InputFormatter.cpp
         FieldOffsetRawBufferIndex.cpp
         InputFormatterDescriptor.cpp
