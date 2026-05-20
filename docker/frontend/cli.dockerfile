@@ -2,14 +2,15 @@
 ARG TAG=latest
 ARG RUNTIME_TAG=${TAG}
 FROM nebulastream/nes-development:${TAG} AS build
-ARG BUILD_TYPE=RelWithDebInfo
+ARG BUILD_TYPE
+ARG NES_INFERENCE_BACKENDS=ALL
 
 USER root
 ADD . /home/ubuntu/src
 RUN --mount=type=cache,id=ccache,target=/ccache \
     export CCACHE_DIR=/ccache && \
     cd /home/ubuntu/src \
-    && cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 \
+    && cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 -DNES_INFERENCE_BACKENDS=${NES_INFERENCE_BACKENDS} \
     && cmake --build build --target nes-cli -j \
     && mkdir /tmp/bin \
     && find build -name 'nes-cli' -type f -exec mv --target-directory=/tmp/bin {} +

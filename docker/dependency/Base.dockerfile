@@ -24,6 +24,9 @@ RUN apt update -y && apt install \
     make \
     libssl-dev \
     openssl \
+    python3 \
+    python3-pip \
+    python3-venv \
     ccache \
     ninja-build \
     pkg-config \

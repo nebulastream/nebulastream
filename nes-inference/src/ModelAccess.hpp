@@ -31,7 +31,19 @@ struct ModelAccess
     static ImportedModel
     makeImported(RefCountedByteBuffer buf, std::string fnName, std::vector<size_t> inShape, std::vector<size_t> outShape)
     {
-        return ImportedModel{std::move(buf), std::move(fnName), std::move(inShape), std::move(outShape)};
+        return ImportedModel{
+            ModelBackend::IREE, std::move(buf), RefCountedByteBuffer{}, std::move(fnName), std::move(inShape), std::move(outShape)};
+    }
+
+    static ImportedModel makeImported(
+        RefCountedByteBuffer buf,
+        RefCountedByteBuffer auxBuf,
+        std::string fnName,
+        std::vector<size_t> inShape,
+        std::vector<size_t> outShape)
+    {
+        return ImportedModel{
+            ModelBackend::OPENVINO, std::move(buf), std::move(auxBuf), std::move(fnName), std::move(inShape), std::move(outShape)};
     }
 
     static CompiledModel compileFrom(ImportedModel imported, RefCountedByteBuffer buf)

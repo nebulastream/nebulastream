@@ -14,31 +14,26 @@
 
 #pragma once
 
-#include <expected>
-#include <filesystem>
-#include <string>
-
+#include <cstddef>
+#include <openvino/core/shape.hpp>
+#include <openvino/core/type/element_type.hpp>
+#include <openvino/runtime/infer_request.hpp>
 #include <Model.hpp>
+#include <RuntimeBackend.hpp>
 
 namespace NES
 {
-
-struct ImportError
+class OpenVinoRuntimeBackend final : public RuntimeBackend
 {
-    std::string message;
+public:
+    RuntimeMetadata setup(const CompiledModel& model) override;
+    void infer(std::byte* inputBuffer, size_t, std::byte* outputBuffer, size_t outputBufferSize) override;
+
+private:
+    ov::InferRequest inferRequest;
+    ov::element::Type inputElementType;
+    ov::Shape inputShape;
+    ov::element::Type outputElementType;
+    ov::Shape outputShape;
 };
-
-struct CompileError
-{
-    std::string message;
-};
-
-/// Import a model from a file.
-[[nodiscard]] ModelBackend defaultModelBackend();
-std::expected<ImportedModel, ImportError> importModel(const std::filesystem::path& modelPath);
-std::expected<ImportedModel, ImportError> importModel(const std::filesystem::path& modelPath, ModelBackend backend);
-
-/// Compile a previously imported model so it can be executed by the runtime.
-std::expected<CompiledModel, CompileError> compileModel(const ImportedModel& imported);
-
 }

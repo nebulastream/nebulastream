@@ -1,0 +1,116 @@
+Subject: [PATCH] fix-arm
+---
+Index: arm_compute/runtime/NEON/functions/NEFillBorder.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/arm_compute/runtime/NEON/functions/NEFillBorder.h b/arm_compute/runtime/NEON/functions/NEFillBorder.h
+--- a/arm_compute/runtime/NEON/functions/NEFillBorder.h	(revision 94f2a2cf17fb81c85e7eec2ed859355cf91d8b11)
++++ b/arm_compute/runtime/NEON/functions/NEFillBorder.h	(date 1778839566712)
+@@ -31,6 +31,7 @@
+ #include "arm_compute/core/PixelValue.h"
+ #include "arm_compute/core/Types.h"
+ #include "arm_compute/runtime/IFunction.h"
++#include "src/core/NEON/kernels/NEFillBorderKernel.h"
+ 
+ #include <memory>
+ 
+Index: src/runtime/CPP/CPPScheduler.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/runtime/CPP/CPPScheduler.cpp b/src/runtime/CPP/CPPScheduler.cpp
+--- a/src/runtime/CPP/CPPScheduler.cpp	(revision 94f2a2cf17fb81c85e7eec2ed859355cf91d8b11)
++++ b/src/runtime/CPP/CPPScheduler.cpp	(date 1778835902995)
+@@ -34,6 +34,7 @@
+ 
+ #include <atomic>
+ #include <condition_variable>
++#include <exception>
+ #include <iostream>
+ #include <list>
+ #include <memory>
+Index: src/runtime/NEON/functions/NEDepthwiseConvolutionLayer.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/runtime/NEON/functions/NEDepthwiseConvolutionLayer.cpp b/src/runtime/NEON/functions/NEDepthwiseConvolutionLayer.cpp
+--- a/src/runtime/NEON/functions/NEDepthwiseConvolutionLayer.cpp	(revision 94f2a2cf17fb81c85e7eec2ed859355cf91d8b11)
++++ b/src/runtime/NEON/functions/NEDepthwiseConvolutionLayer.cpp	(date 1778837979801)
+@@ -36,7 +36,6 @@
+ 
+ namespace arm_compute
+ {
+-NEDepthwiseConvolutionLayer::~NEDepthwiseConvolutionLayer() = default;
+ 
+ struct NEDepthwiseConvolutionLayer::NEDepthwiseConvolutionLayerOptimizedInternal::Impl
+ {
+@@ -220,6 +219,7 @@
+     : _impl(std::make_unique<Impl>())
+ {
+ }
++NEDepthwiseConvolutionLayer::NEDepthwiseConvolutionLayerGeneric::~NEDepthwiseConvolutionLayerGeneric() = default;
+ 
+ void NEDepthwiseConvolutionLayer::NEDepthwiseConvolutionLayerGeneric::configure(ITensor             *input,
+                                                                                 const ITensor       *weights,
+@@ -311,11 +311,6 @@
+     _impl->op->run(pack);
+ }
+ 
+-NEDepthwiseConvolutionLayer::NEDepthwiseConvolutionLayer(std::shared_ptr<IMemoryManager> memory_manager)
+-    : _memory_group(std::move(memory_manager)), _impl(std::make_unique<Impl>())
+-{
+-}
+-
+ #ifndef DOXYGEN_SKIP_THIS
+ struct NEDepthwiseConvolutionLayer::NEDepthwiseConvolutionLayer::Impl
+ {
+@@ -324,6 +319,11 @@
+     NEDepthwiseConvolutionLayerGeneric           func_generic{};
+     std::shared_ptr<cpu::CpuDepthwiseConv2d>     op{nullptr};
+ };
++NEDepthwiseConvolutionLayer::NEDepthwiseConvolutionLayer(std::shared_ptr<IMemoryManager> memory_manager)
++    : _memory_group(std::move(memory_manager)), _impl(std::make_unique<Impl>())
++{
++}
++NEDepthwiseConvolutionLayer::~NEDepthwiseConvolutionLayer() = default;
+ #endif // DOXYGEN_SKIP_THIS
+ 
+ void NEDepthwiseConvolutionLayer::configure(ITensor                   *input,
+Index: arm_compute/runtime/RuntimeContext.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/arm_compute/runtime/RuntimeContext.h b/arm_compute/runtime/RuntimeContext.h
+--- a/arm_compute/runtime/RuntimeContext.h	(revision 94f2a2cf17fb81c85e7eec2ed859355cf91d8b11)
++++ b/arm_compute/runtime/RuntimeContext.h	(date 1778835394621)
+@@ -30,6 +30,8 @@
+ 
+ #include "arm_compute/runtime/IRuntimeContext.h"
+ 
++#include "arm_compute/runtime/IScheduler.h"
++
+ #include <memory>
+ 
+ namespace arm_compute
+Index: arm_compute/runtime/NEON/functions/NEDepthwiseConvolutionLayer.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/arm_compute/runtime/NEON/functions/NEDepthwiseConvolutionLayer.h b/arm_compute/runtime/NEON/functions/NEDepthwiseConvolutionLayer.h
+--- a/arm_compute/runtime/NEON/functions/NEDepthwiseConvolutionLayer.h	(revision 94f2a2cf17fb81c85e7eec2ed859355cf91d8b11)
++++ b/arm_compute/runtime/NEON/functions/NEDepthwiseConvolutionLayer.h	(date 1778836730571)
+@@ -224,7 +224,7 @@
+         /** Default move assignment operator */
+         NEDepthwiseConvolutionLayerGeneric &operator=(NEDepthwiseConvolutionLayerGeneric &&) = default;
+         /** Default destructor */
+-        ~NEDepthwiseConvolutionLayerGeneric() = default;
++        ~NEDepthwiseConvolutionLayerGeneric();
+         /** Initialize the function's source, destination, weights and convolution information.
+          *
+          * @param[in, out] input            Source tensor. Data type supported: QASYMM8/QASYMM8_SIGNED/F16/F32. (Written to only for border filling).

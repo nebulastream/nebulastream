@@ -16,32 +16,26 @@
 
 #include <expected>
 #include <filesystem>
-#include <optional>
 
+#include <BackendTool.hpp>
 #include <Inference.hpp>
-#include <IreeTool.hpp>
 #include <Model.hpp>
 
 namespace NES
 {
 
-/// Wraps the `iree-compile` tool. Internal — exposed to consumers through the
-/// free function `compileIreeModel` in `Inference.hpp`.
-class IreeCompiler
+/// Wraps the `iree-import-onnx` tool. Internal — exposed to consumers through
+/// the free function `importOnnxModel` in `Inference.hpp`.
+class IreeImporter
 {
 public:
-    IreeCompiler();
+    IreeImporter();
 
-    [[nodiscard]] bool available() const
-    {
-        return !discovery.path.empty() && discovery.version.has_value() && *discovery.version == expectedIreeVersion;
-    }
+    [[nodiscard]] bool available() const { return !discovery.path.empty(); }
 
     [[nodiscard]] const std::filesystem::path& path() const { return discovery.path; }
 
-    [[nodiscard]] std::optional<IreeVersion> version() const { return discovery.version; }
-
-    [[nodiscard]] std::expected<CompiledModel, CompileError> compile(const ImportedModel& imported) const;
+    [[nodiscard]] std::expected<ImportedModel, ImportError> importOnnx(const std::filesystem::path& onnxPath) const;
 
 private:
     detail::ToolDiscovery discovery;

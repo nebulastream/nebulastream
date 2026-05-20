@@ -40,6 +40,7 @@
 #include <fmt/ranges.h>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <Model.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -251,13 +252,9 @@ ModelInfo toModelInfo(const RegisteredModel& model)
 ///
 /// The order matters:
 ///   1. Reject duplicate names before doing any work — the catalog does not
-///      replace an existing entry, and registration is not cheap (it reads
-///      the ONNX file, shells out to `iree-import-onnx`, and validates the
-///      declared schema against the model's tensor shape).
+///      replace an existing entry, and registration is not cheap
 ///   2. Hand the request to the catalog, which performs the remaining
-///      validation (file existence, ONNX-only, single tensor input/output,
-///      schema-vs-signature compatibility) and stores the resulting
-///      `RegisteredModel`.
+///      backend-specific validation and stores the resulting `RegisteredModel`.
 std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::operator()(const CreateModelStatement& statement)
 {
     if (modelCatalog->hasModel(statement.name))
@@ -265,9 +262,16 @@ std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::oper
         return std::unexpected{ModelAlreadyExists(statement.name)};
     }
 
+    const auto backend = parseModelBackend(statement.backend);
+    if (!backend)
+    {
+        return std::unexpected{InvalidStatement("MODEL backend must be either IREE or OPENVINO but got '{}'", statement.backend)};
+    }
+
     try
     {
-        modelCatalog->registerModel(statement.name, statement.path, ModelSchema{.inputs = statement.inputs, .outputs = statement.outputs});
+        modelCatalog->registerModel(
+            statement.name, statement.path, ModelSchema{.inputs = statement.inputs, .outputs = statement.outputs}, *backend);
     }
     catch (const Exception& e)
     {

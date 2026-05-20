@@ -3,6 +3,7 @@ ARG TAG=latest
 ARG RUNTIME_TAG=${TAG}
 FROM nebulastream/nes-development:${TAG} AS build
 ARG BUILD_TYPE=RelWithDebInfo
+ARG NES_INFERENCE_BACKENDS=ALL
 
 USER root
 ADD . /home/ubuntu/src

@@ -74,7 +74,7 @@ createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identi
 
 createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
 
-createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
+createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING (BACKEND modelBackend=identifier)? ')'
                        INPUT '(' modelInputField (',' modelInputField)* ')'
                        OUTPUT '(' modelOutputField (',' modelOutputField)* ')';
 modelInputField: identifier typeDefinition;
@@ -520,6 +520,7 @@ EXPLAIN: 'EXPLAIN' | 'explain';
 MODEL: 'MODEL';
 MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';
+BACKEND: 'BACKEND' | 'backend';
 INPUT: 'INPUT';
 OUTPUT: 'OUTPUT';
 

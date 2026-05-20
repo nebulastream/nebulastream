@@ -1,0 +1,101 @@
+Subject: [PATCH] fix-libcxx
+---
+Index: src/core/include/openvino/core/any.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/core/include/openvino/core/any.hpp b/src/core/include/openvino/core/any.hpp
+--- a/src/core/include/openvino/core/any.hpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/src/core/include/openvino/core/any.hpp	(date 1778508132489)
+@@ -14,6 +14,7 @@
+ #include <string>
+ #include <typeindex>
+ #include <typeinfo>
++#include <type_traits>
+ #include <unordered_map>
+ #include <utility>
+ 
+Index: docs/articles_en/assets/snippets/ov_infer_request.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/docs/articles_en/assets/snippets/ov_infer_request.cpp b/docs/articles_en/assets/snippets/ov_infer_request.cpp
+--- a/docs/articles_en/assets/snippets/ov_infer_request.cpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/docs/articles_en/assets/snippets/ov_infer_request.cpp	(date 1778524353326)
+@@ -4,6 +4,8 @@
+ 
+ // ! [ov:include]
+ #include <openvino/openvino.hpp>
++
++#include <exception>
+ // ! [ov:include]
+ 
+ int main() {
+Index: src/common/util/src/file_util.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/common/util/src/file_util.cpp b/src/common/util/src/file_util.cpp
+--- a/src/common/util/src/file_util.cpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/src/common/util/src/file_util.cpp	(date 1778496196101)
+@@ -9,6 +9,7 @@
+ #include <algorithm>
+ #include <cstdlib>
+ #include <cstring>
++#include <exception>
+ #include <fstream>
+ #include <sstream>
+ 
+Index: src/core/src/op/constant.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/core/src/op/constant.cpp b/src/core/src/op/constant.cpp
+--- a/src/core/src/op/constant.cpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/src/core/src/op/constant.cpp	(date 1778515723112)
+@@ -7,6 +7,7 @@
+ #include <cmath>
+ #include <cstdio>
+ #include <cstring>
++#include <iterator>
+ #include <sstream>
+ 
+ #include "compare.hpp"
+Index: src/inference/src/dev/iplugin.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/inference/src/dev/iplugin.cpp b/src/inference/src/dev/iplugin.cpp
+--- a/src/inference/src/dev/iplugin.cpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/src/inference/src/dev/iplugin.cpp	(date 1778518661385)
+@@ -4,6 +4,8 @@
+ 
+ #include "openvino/runtime/iplugin.hpp"
+ 
++#include <iterator>
++
+ #include "core_impl.hpp"
+ #include "openvino/op/convert.hpp"
+ #include "openvino/op/util/op_types.hpp"
+Index: src/bindings/c/src/ov_infer_request.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/bindings/c/src/ov_infer_request.cpp b/src/bindings/c/src/ov_infer_request.cpp
+--- a/src/bindings/c/src/ov_infer_request.cpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/src/bindings/c/src/ov_infer_request.cpp	(date 1778522515907)
+@@ -3,6 +3,8 @@
+ //
+ #include "openvino/c/ov_infer_request.h"
+ 
++#include <exception>
++
+ #include "common.h"
+ 
+ void ov_infer_request_free(ov_infer_request_t* infer_request) {

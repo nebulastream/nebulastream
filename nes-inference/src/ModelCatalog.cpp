@@ -27,11 +27,17 @@
 #include <DataTypes/Schema.hpp>
 #include <ErrorHandling.hpp>
 #include <Inference.hpp>
+#include <Model.hpp>
 
 namespace NES
 {
 
 void ModelCatalog::registerModel(std::string name, std::filesystem::path path, ModelSchema schema)
+{
+    registerModel(std::move(name), std::move(path), std::move(schema), defaultModelBackend());
+}
+
+void ModelCatalog::registerModel(std::string name, std::filesystem::path path, ModelSchema schema, ModelBackend backend)
 {
     if (!std::filesystem::exists(path))
     {
@@ -40,7 +46,7 @@ void ModelCatalog::registerModel(std::string name, std::filesystem::path path, M
 
     /// Coordinator-side: only import the model — signature is scraped during
     /// import. The compile step runs later on the worker, during lowering.
-    auto imported = importModel(path);
+    auto imported = importModel(path, backend);
     if (!imported)
     {
         throw NES::CannotLoadModel("Failed to import model '{}': {}", name, imported.error().message);
