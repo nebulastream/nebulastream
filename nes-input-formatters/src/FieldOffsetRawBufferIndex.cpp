@@ -26,8 +26,8 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatter.hpp>
+#include <InputParserUtil.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -90,7 +90,7 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
         parseRawValueIntoRecord(
-            fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues(), indexer.getQuotationType());
+            fieldDataType, indexer.getParserType(fieldDataType.type), record, fieldAddress, fieldSize, fieldName, indexer.getNullValues());
     }
     return record;
 }

@@ -34,8 +34,8 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatterDescriptor.hpp>
+#include <InputParserUtil.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
 #include <static.hpp>
 
 namespace NES
@@ -87,6 +87,22 @@ public:
         , fieldDataTypes(std::move(fieldDataTypes))
         , nullValues({})
     {
+        /// JSON wraps textual values in quotes, which affects CHAR and VARSIZED parsers
+        parserTypes[DataType::Type::UINT8] = "DefaultUINT8";
+        parserTypes[DataType::Type::UINT16] = "DefaultUINT16";
+        parserTypes[DataType::Type::UINT32] = "DefaultUINT32";
+        parserTypes[DataType::Type::UINT64] = "DefaultUINT64";
+        parserTypes[DataType::Type::INT8] = "DefaultINT8";
+        parserTypes[DataType::Type::INT16] = "DefaultINT16";
+        parserTypes[DataType::Type::INT32] = "DefaultINT32";
+        parserTypes[DataType::Type::INT64] = "DefaultINT64";
+        parserTypes[DataType::Type::FLOAT32] = "DefaultF32";
+        parserTypes[DataType::Type::FLOAT64] = "DefaultF64";
+        parserTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
+        parserTypes[DataType::Type::CHAR] = "QuotedCHAR";
+        parserTypes[DataType::Type::VARSIZED] = "QuotedVARSIZED";
+        /// Placeholder for UNDEFINED. Will throw an error if any field is UNDEFINED typed.
+        parserTypes[DataType::Type::UNDEFINED] = "";
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -126,8 +142,6 @@ public:
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const override { return {&tupleDelimiter, 1}; }
 
     [[nodiscard]] std::string_view getFieldDelimitingBytes() const override { return ""; }
-
-    [[nodiscard]] QuotationType getQuotationType() const override { return QuotationType::DOUBLE_QUOTE; }
 
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 
