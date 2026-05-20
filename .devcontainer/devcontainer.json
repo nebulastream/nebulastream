@@ -13,7 +13,8 @@
     "source=nes-codex-config-${devcontainerId},target=/root/.codex,type=volume",
     "source=nes-pi-config-${devcontainerId},target=/root/.pi,type=volume",
     "source=nes-test-file-cache-${devcontainerId},target=/test-file-cache,type=volume",
-    "source=nes-worktrees-${devcontainerId},target=/worktrees,type=volume"
+    "source=nes-worktrees-${devcontainerId},target=/worktrees,type=volume",
+    "source=${localEnv:XDG_RUNTIME_DIR}/docker.sock,target=/var/run/docker-rootless.sock,type=bind",
   ],
   "runArgs": ["--env-file", "${localWorkspaceFolder}/.devcontainer/.secrets.env"],
   "containerEnv": {
@@ -31,6 +32,9 @@
       "installZsh": true,
       "configureZshAsDefaultShell": true,
       "username": "root"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "socketPath": "/var/run/docker-rootless.sock"
     },
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
