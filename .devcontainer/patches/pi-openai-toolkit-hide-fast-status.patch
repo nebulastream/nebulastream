@@ -1,0 +1,21 @@
+diff --git a/src/codex-fast/extension.ts b/src/codex-fast/extension.ts
+--- a/src/codex-fast/extension.ts
++++ b/src/codex-fast/extension.ts
+@@ -59,7 +59,7 @@
+ 		const id = currentSessionId;
+ 		const eligible = id && await eligibleModel(ctx, model);
+ 		if (epoch !== statusEpoch || sessionId(ctx) !== id) return;
+-		if (ctx.hasUI) ctx.ui.setStatus(CODEX_FAST_STATUS_KEY, eligible ? "Fast " + (enabled ? "ON" : "OFF") : "Fast N/A");
++		if (ctx.hasUI) ctx.ui.setStatus(CODEX_FAST_STATUS_KEY, undefined);
+ 	}
+ 
+ 	pi.on("session_start", async (_event, ctx) => { restore(ctx); await refreshStatus(ctx); });
+@@ -95,7 +95,7 @@
+ 			}
+ 			enabled = next;
+ 			statusEpoch++;
+-			ctx.ui.setStatus(CODEX_FAST_STATUS_KEY, "Fast " + (next ? "ON" : "OFF"));
++			ctx.ui.setStatus(CODEX_FAST_STATUS_KEY, undefined);
+ 			notify(ctx, next
+ 				? "Fast ON for this session's next Codex requests; may increase usage/cost. Backend acceptance is not verified."
+ 				: "Fast OFF for this session's next Codex requests (Standard). No configuration file changed.");
