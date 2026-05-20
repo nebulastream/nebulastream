@@ -29,7 +29,7 @@ namespace NES
 /// For a specific InputFormatter, config parameters may be added by creating a ConfigParameters<Type> struct in the respective header.
 class InputFormatterDescriptor final : public Descriptor
 {
-    static constexpr std::string_view TYPE_STRING{"type"};
+    static constexpr std::string_view TYPE_STRING{"TYPE"};
 
 public:
     explicit InputFormatterDescriptor(std::string inputFormatterType, DescriptorConfig::Config config);

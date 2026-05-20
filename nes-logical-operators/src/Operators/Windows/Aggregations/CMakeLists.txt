@@ -20,3 +20,10 @@ add_plugin(Max AggregationLogicalFunction nes-logical-operators MaxAggregationLo
 add_plugin(Median AggregationLogicalFunction nes-logical-operators MedianAggregationLogicalFunction.cpp)
 add_plugin(Min AggregationLogicalFunction nes-logical-operators MinAggregationLogicalFunction.cpp)
 add_plugin(Sum AggregationLogicalFunction nes-logical-operators SumAggregationLogicalFunction.cpp)
+
+add_unreflection_plugin(AggregationLogicalFunction Avg)
+add_unreflection_plugin(AggregationLogicalFunction Count)
+add_unreflection_plugin(AggregationLogicalFunction Max)
+add_unreflection_plugin(AggregationLogicalFunction Median)
+add_unreflection_plugin(AggregationLogicalFunction Min)
+add_unreflection_plugin(AggregationLogicalFunction Sum)

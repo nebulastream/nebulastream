@@ -92,7 +92,7 @@ public:
     [[nodiscard]] static std::string_view getName();
     [[nodiscard]] std::set<std::type_index> dependsOn() const;
     [[nodiscard]] std::set<std::type_index> requiredBy() const;
-    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
     bool operator==(const LogicalSourceExpansionRule& other) const;
 
 private:

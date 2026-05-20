@@ -30,13 +30,13 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: stream$p1
+      - name: p1
         type: FLOAT32
-      - name: stream$p2
+      - name: p2
         type: FLOAT32
-      - name: stream$p3
+      - name: p3
         type: FLOAT32
-      - name: stream$p4
+      - name: p4
         type: FLOAT32
     type: Void
     config: { }

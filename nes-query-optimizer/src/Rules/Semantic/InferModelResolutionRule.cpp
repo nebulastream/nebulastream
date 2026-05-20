@@ -19,6 +19,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <utility>
+
 #include <Operators/InferModelLogicalOperator.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -44,17 +45,9 @@ LogicalPlan InferModelResolutionRule::apply(LogicalPlan queryPlan) const
         }
 
         auto loaded = modelCatalog->load(modelName);
-        auto inputFieldNames = op.getInputFieldNames();
-        if (inputFieldNames.empty())
-        {
-            for (const auto& field : loaded.getSchema().inputs.getFields())
-            {
-                inputFieldNames.push_back(field.name);
-            }
-        }
-        auto inferModelOp = TypedLogicalOperator<InferModelLogicalOperator>{std::move(loaded), std::move(inputFieldNames)};
+        auto inferModelOp = TypedLogicalOperator<InferModelLogicalOperator>{std::move(loaded)};
         /// Preserve children from the original operator
-        auto replacement = LogicalOperator{inferModelOp->withChildren(op.getChildren())};
+        auto replacement = LogicalOperator{inferModelOp->withChildrenUnsafe(op.getChildren())};
 
         auto replaceResult = replaceSubtree(queryPlan, inferModelNameOp.getId(), replacement);
         INVARIANT(replaceResult.has_value(), "Failed to replace InferModelNameLogicalOperator with InferModelLogicalOperator");

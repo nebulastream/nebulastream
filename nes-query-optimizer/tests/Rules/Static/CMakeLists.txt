@@ -12,3 +12,5 @@
 
 add_nes_optimizer_test(DecideJoinTypesTest DecideJoinTypesTest.cpp)
 add_nes_optimizer_test(DecideMemoryLayoutTest DecideMemoryLayoutTest.cpp)
+add_nes_optimizer_test(CalcTargetOrderTest CalcTargetOrderTest.cpp)
+add_nes_optimizer_test(DecideFieldMappingsTest DecideFieldMappingsTest.cpp)

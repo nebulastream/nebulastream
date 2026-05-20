@@ -24,9 +24,11 @@
 #include <utility>
 #include <vector>
 
+#include <ranges>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -43,11 +45,11 @@ namespace NES
 struct ConfigParametersSIMDJSON
 {
     static inline const DescriptorConfig::ConfigParameter<char> TUPLE_DELIMITER{
-        "tuple_delimiter",
+        "TUPLE_DELIMITER",
         '\n',
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<char>
         {
-            const auto it = config.find("tuple_delimiter");
+            const auto it = config.find("TUPLE_DELIMITER");
             if (it == config.end())
             {
                 return '\n';
@@ -78,7 +80,7 @@ public:
     explicit SIMDJSONInputFormatIndexer(
         Private,
         const char tupleDelimiter,
-        std::vector<Record::RecordFieldIdentifier> fieldNamesInJson,
+        std::vector<Identifier> fieldNamesInJson,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
         std::vector<DataType> fieldDataTypes)
         : tupleDelimiter(tupleDelimiter)
@@ -92,18 +94,11 @@ public:
     /// Delegate constructor that applies preconditions before safely calling the constructor
     static std::unique_ptr<SIMDJSONInputFormatIndexer> create(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
     {
-        /// We expect the names in the json file to not be source qualified
-        std::vector<Record::RecordFieldIdentifier> fieldNamesInJson;
+        /// JSON keys are unqualified — take the trailing identifier of each (possibly source-qualified) name.
+        std::vector<Identifier> fieldNamesInJson;
         for (const auto& fieldName : tupleBufferRef.getAllFieldNames())
         {
-            if (const auto& qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
-            {
-                fieldNamesInJson.emplace_back(fieldName.substr(qualifierPosition + 1));
-            }
-            else
-            {
-                fieldNamesInJson.emplace_back(fieldName);
-            }
+            fieldNamesInJson.emplace_back(*std::ranges::rbegin(fieldName));
         }
 
         auto fieldNamesOutput = tupleBufferRef.getAllFieldNames();
@@ -138,7 +133,7 @@ public:
         return fieldNamesOutput[fieldIndex];
     }
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& fieldIndex) const
+    [[nodiscard]] const Identifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& fieldIndex) const
     {
         return fieldNamesInJson[fieldIndex];
     }
@@ -159,7 +154,7 @@ protected:
 
 private:
     char tupleDelimiter;
-    std::vector<Record::RecordFieldIdentifier> fieldNamesInJson;
+    std::vector<Identifier> fieldNamesInJson;
     std::vector<Record::RecordFieldIdentifier> fieldNamesOutput;
     std::vector<DataType> fieldDataTypes;
     std::vector<std::string> nullValues;

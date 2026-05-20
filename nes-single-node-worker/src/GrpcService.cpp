@@ -15,6 +15,7 @@
 #include <GrpcService.hpp>
 
 #include <chrono>
+#include <cstddef>
 #include <exception>
 #include <string>
 #include <utility>
@@ -55,22 +56,38 @@ std::string sanitizeForGrpcMetadata(const std::string& value)
     return result;
 }
 
+/// gRPC has a total trailing-metadata soft limit of 8192 bytes (by default).
+/// With several entries (trace, what, grpc-message) each entry costs key+value+32 bytes overhead.
+/// Cap each value at 2000 bytes so the combined metadata stays well under the limit.
+constexpr std::size_t GRPC_METADATA_VALUE_MAX = 2000;
+
+std::string truncateForGrpcMetadata(const std::string& value)
+{
+    auto sanitized = sanitizeForGrpcMetadata(value);
+    if (sanitized.size() > GRPC_METADATA_VALUE_MAX)
+    {
+        sanitized.resize(GRPC_METADATA_VALUE_MAX);
+        sanitized += "...[truncated]";
+    }
+    return sanitized;
+}
+
 grpc::Status handleError(const std::exception& exception, grpc::ServerContext* context)
 {
     NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(ErrorCode::UnknownException));
-    context->AddTrailingMetadata("what", sanitizeForGrpcMetadata(exception.what()));
-    context->AddTrailingMetadata("trace", sanitizeForGrpcMetadata(formatStacktrace(cpptrace::from_current_exception(), false)));
-    return {grpc::INTERNAL, sanitizeForGrpcMetadata(exception.what())};
+    context->AddTrailingMetadata("what", truncateForGrpcMetadata(exception.what()));
+    context->AddTrailingMetadata("trace", truncateForGrpcMetadata(formatStacktrace(cpptrace::from_current_exception(), false)));
+    return {grpc::INTERNAL, truncateForGrpcMetadata(exception.what())};
 }
 
 grpc::Status handleError(const Exception& exception, grpc::ServerContext* context)
 {
     NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
-    context->AddTrailingMetadata("what", sanitizeForGrpcMetadata(exception.what()));
-    context->AddTrailingMetadata("trace", sanitizeForGrpcMetadata(formatStacktrace(exception.trace(), false)));
-    return {grpc::INTERNAL, sanitizeForGrpcMetadata(exception.what())};
+    context->AddTrailingMetadata("what", truncateForGrpcMetadata(exception.what()));
+    context->AddTrailingMetadata("trace", truncateForGrpcMetadata(formatStacktrace(exception.trace(), false)));
+    return {grpc::INTERNAL, truncateForGrpcMetadata(exception.what())};
 }
 
 grpc::Status handleError(grpc::ServerContext* context)

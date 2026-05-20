@@ -28,6 +28,8 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -103,11 +105,13 @@ class TestTupleBufferView;
 class TestTupleBufferRecordView;
 class FieldView;
 
+using TestSchema = Schema<UnqualifiedUnboundField, Ordered>;
+
 /// Entry point. Holds schema config.
 class TestTupleBuffer
 {
 public:
-    explicit TestTupleBuffer(const Schema& schema);
+    explicit TestTupleBuffer(TestSchema schema);
 
     /// Wraps an existing TupleBuffer for schema-aware access.
     /// bufferProvider required for VARSIZED (string) field support.
@@ -115,7 +119,7 @@ public:
     TestTupleBufferView open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider = nullptr);
 
 private:
-    Schema schema;
+    TestSchema schema;
 };
 
 /// View over a TupleBuffer. Supports append and indexed record access.
@@ -140,7 +144,7 @@ private:
 
     struct Impl
     {
-        Schema schema;
+        TestSchema schema;
         TupleBuffer&
             buffer; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) intentional reference: Impl always outlived by the TupleBuffer it wraps
         AbstractBufferProvider* bufferProvider;
@@ -286,14 +290,13 @@ template <typename... Args>
 void TestTupleBufferView::append(Args&&... values)
 {
     static_assert(sizeof...(Args) > 0, "append requires at least one argument");
-    if (sizeof...(Args) != impl->schema.getNumberOfFields())
+    if (sizeof...(Args) != impl->schema.size())
     {
-        throw TestException("append requires exactly {} arguments, got {}", impl->schema.getNumberOfFields(), sizeof...(Args));
+        throw TestException("append requires exactly {} arguments, got {}", impl->schema.size(), sizeof...(Args));
     }
-    const auto& fields = impl->schema.getFields();
-    size_t idx = 0;
+    auto fieldIt = impl->schema.begin();
     const std::array<std::optional<FieldValue>, sizeof...(Args)> fieldValues{
-        toFieldValue(std::forward<Args>(values), fields[idx++].dataType.type)...};
+        toFieldValue(std::forward<Args>(values), (fieldIt++)->getDataType().type)...};
     appendImpl(fieldValues);
 }
 

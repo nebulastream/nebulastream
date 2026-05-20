@@ -29,7 +29,7 @@ ATTACH INLINE
 6,purchase,1050
 
 # Sink schema must match projected output
-CREATE SINK sink(`USER_ID` INT64 NOT NULL, `ACTION` VARSIZED NOT NULL, `TIMESTAMP` INT64 NOT NULL) TYPE File;
+CREATE SINK sink(user_id INT64 NOT NULL, action VARSIZED NOT NULL, timestamp INT64 NOT NULL) TYPE File;
 
 # Query under test
 SELECT user_id, action, timestamp FROM web_events

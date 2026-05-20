@@ -14,8 +14,12 @@
 
 #include <Operators/InferModelLogicalOperator.hpp>
 
+#include <algorithm>
 #include <cstddef>
+#include <functional>
+#include <iterator>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -26,8 +30,13 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Binder.hpp>
+#include <Schema/Field.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -38,10 +47,15 @@
 namespace NES
 {
 
-InferModelLogicalOperator::InferModelLogicalOperator(
-    WeakLogicalOperator self, RegisteredModel model, std::vector<std::string> inputFieldNames)
-    : ManagedByOperator(std::move(self)), model(std::move(model)), inputFieldNames(std::move(inputFieldNames))
+InferModelLogicalOperator::InferModelLogicalOperator(WeakLogicalOperator self, RegisteredModel model)
+    : ManagedByOperator(std::move(self)), model(std::move(model))
 {
+}
+
+InferModelLogicalOperator::InferModelLogicalOperator(WeakLogicalOperator self, RegisteredModel model, LogicalOperator child)
+    : ManagedByOperator(std::move(self)), model(std::move(model)), child(std::move(child))
+{
+    inferLocalSchema();
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
@@ -55,100 +69,70 @@ const RegisteredModel& InferModelLogicalOperator::getModel() const
     return model;
 }
 
-std::vector<std::string> InferModelLogicalOperator::getInputFieldNames() const
-{
-    return inputFieldNames;
-}
-
-std::vector<std::string> InferModelLogicalOperator::getOutputFieldNames() const
-{
-    return model.getSchema().outputs.getFieldNames();
-}
-
-bool InferModelLogicalOperator::hasVarsizedInput() const
-{
-    const auto& inputs = model.getSchema().inputs;
-    return inputs.getNumberOfFields() > 0 && inputs.getFieldAt(0).dataType.isType(DataType::Type::VARSIZED);
-}
-
-bool InferModelLogicalOperator::hasVarsizedOutput() const
-{
-    const auto& outputs = model.getSchema().outputs;
-    return outputs.getNumberOfFields() > 0 && outputs.getFieldAt(0).dataType.isType(DataType::Type::VARSIZED);
-}
-
 bool InferModelLogicalOperator::operator==(const InferModelLogicalOperator& rhs) const
 {
-    return model == rhs.model && inputFieldNames == rhs.inputFieldNames && getOutputSchema() == rhs.getOutputSchema()
-        && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
+    return model == rhs.model && getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
 std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
 {
+    const auto inputNames = model.getSchema().inputs
+        | std::views::transform([](const UnqualifiedUnboundField& field) { return fmt::format("{}", field.getFullyQualifiedName()); });
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "INFER_MODEL(opId: {}, inputFields: [{}], traitSet: {})", opId, fmt::join(inputFieldNames, ", "), traitSet.explain(verbosity));
+            "INFER_MODEL(opId: {}, inputFields: [{}], traitSet: {})", opId, fmt::join(inputNames, ", "), traitSet.explain(verbosity));
     }
-    return fmt::format("INFER_MODEL(inputFields: [{}])", fmt::join(inputFieldNames, ", "));
+    return fmt::format("INFER_MODEL(inputFields: [{}])", fmt::join(inputNames, ", "));
 }
 
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
-InferModelLogicalOperator InferModelLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+void InferModelLogicalOperator::inferLocalSchema()
 {
-    auto copy = *this;
-    if (inputSchemas.empty())
-    {
-        throw CannotInferSchema("InferModel requires at least one input schema");
-    }
-    copy.inputSchema = inputSchemas.at(0);
+    PRECONDITION(child.has_value(), "InferModel requires a child for local schema inference");
+    const auto childOutput = child->getOutputSchema();
 
     const auto& modelInputs = model.getSchema().inputs;
     const auto& modelOutputs = model.getSchema().outputs;
 
-    /// Check input field count matches model inputs
-    if (inputFieldNames.size() != modelInputs.getNumberOfFields())
+    /// Verify the child's schema contains a matching, non-nullable, same-typed field for every model input.
+    for (const auto& modelInput : modelInputs)
     {
-        throw CannotInferSchema(
-            "Model expects {} inputs, but {} input field names were provided", modelInputs.getNumberOfFields(), inputFieldNames.size());
-    }
-
-    /// Check type compatibility for each input field and resolve to its fully qualified
-    /// name (`source$field`) so the runtime record lookup, which matches strictly, can find it.
-    for (size_t i = 0; i < inputFieldNames.size(); ++i)
-    {
-        const auto& fieldName = inputFieldNames[i];
-        const auto field = copy.inputSchema.getFieldByName(fieldName);
+        const auto field = childOutput[modelInput.getFullyQualifiedName()];
         if (!field.has_value())
         {
-            throw CannotInferSchema("Field '{}' not found in input schema", fieldName);
+            throw CannotInferSchema("Field '{}' not found in input schema", modelInput.getFullyQualifiedName());
         }
-        if (field->dataType.nullable)
+        if (field->getDataType().nullable)
         {
-            throw CannotInferSchema("Field '{}' is nullable, but model inputs must not be nullable", fieldName);
+            throw CannotInferSchema("Field '{}' is nullable, but model inputs must not be nullable", modelInput.getFullyQualifiedName());
         }
-        if (field->dataType.type != modelInputs.getFieldAt(i).dataType.type)
+        if (field->getDataType().type != modelInput.getDataType().type)
         {
-            throw CannotInferSchema("Type mismatch for field '{}': schema has a different type than model expects", fieldName);
+            throw CannotInferSchema(
+                "Type mismatch for field '{}': schema has a different type than model expects", modelInput.getFullyQualifiedName());
         }
-        copy.inputFieldNames[i] = field->name;
     }
 
-    /// Build output schema: start from input schema, then append/replace model output fields
-    copy.outputSchema = copy.inputSchema;
-    for (const auto& field : modelOutputs.getFields())
+    auto outputFields = childOutput | RangeUnbinder{} | std::ranges::to<std::vector>();
+    std::ranges::copy(modelOutputs, std::back_inserter(outputFields));
+    auto outputSchemaOrCollisions = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(outputFields);
+    if (!outputSchemaOrCollisions.has_value())
     {
-        if (copy.outputSchema.getFieldByName(field.name).has_value())
-        {
-            /// Field already exists — replace its type in-place
-            [[maybe_unused]] const bool replaced = copy.outputSchema.replaceTypeOfField(field.name, field.dataType);
-        }
-        else
-        {
-            copy.outputSchema = copy.outputSchema.addField(field.name, field.dataType);
-        }
+        throw CannotInferSchema(
+            "InferModel output schema has name collisions between child fields and model outputs: "
+            + Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(outputSchemaOrCollisions.error()));
     }
+    outputSchema = std::move(outputSchemaOrCollisions).value();
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
+InferModelLogicalOperator InferModelLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(child.has_value(), "InferModel requires a child");
+    auto copy = *this;
+    copy.child = copy.child->withInferredSchema();
+    copy.inferLocalSchema();
     return copy;
 }
 
@@ -164,52 +148,85 @@ InferModelLogicalOperator InferModelLogicalOperator::withTraitSet(TraitSet newTr
     return copy;
 }
 
-InferModelLogicalOperator InferModelLogicalOperator::withChildren(std::vector<LogicalOperator> newChildren) const
+InferModelLogicalOperator InferModelLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> newChildren) const
 {
+    PRECONDITION(newChildren.size() == 1, "Can only set exactly one child for InferModel, got {}", newChildren.size());
     auto copy = *this;
-    copy.children = std::move(newChildren);
+    copy.child = std::move(newChildren.front());
     return copy;
 }
 
-std::vector<Schema> InferModelLogicalOperator::getInputSchemas() const
+InferModelLogicalOperator InferModelLogicalOperator::withChildren(std::vector<LogicalOperator> newChildren) const
 {
-    return {inputSchema};
+    PRECONDITION(newChildren.size() == 1, "Can only set exactly one child for InferModel, got {}", newChildren.size());
+    auto copy = *this;
+    copy.child = std::move(newChildren.front());
+    copy.inferLocalSchema();
+    return copy;
 }
 
-Schema InferModelLogicalOperator::getOutputSchema() const
+Schema<Field, Unordered> InferModelLogicalOperator::getOutputSchema() const
 {
-    return outputSchema;
+    return NES::bind(self.lock(), outputSchema);
+}
+
+Schema<Field, Ordered> InferModelLogicalOperator::getOrderedOutputSchema(const ChildOutputOrderProvider orderProvider) const
+{
+    PRECONDITION(child.has_value(), "InferModel requires a child to derive its ordered output schema");
+
+    /// Concatenate child's ordered output and the model's ordered outputs; collisions are an error,
+    std::vector<UnqualifiedUnboundField> fields = orderProvider(child.value()) | RangeUnbinder{} | std::ranges::to<std::vector>();
+    std::ranges::copy(model.getSchema().outputs, std::back_inserter(fields));
+    auto orderedOrCollisions = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(fields));
+    if (!orderedOrCollisions.has_value())
+    {
+        throw CannotInferSchema(
+            "InferModel output schema has name collisions between child fields and model outputs: "
+            + Schema<UnqualifiedUnboundField, Ordered>::createCollisionString(orderedOrCollisions.error()));
+    }
+    return NES::bind(self.lock(), std::move(orderedOrCollisions).value());
 }
 
 std::vector<LogicalOperator> InferModelLogicalOperator::getChildren() const
 {
-    return children;
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
+}
+
+LogicalOperator InferModelLogicalOperator::getChild() const
+{
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
 }
 
 Reflected
 Reflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const TypedLogicalOperator<InferModelLogicalOperator>& op) const
 {
-    return reflect(
-        detail::ReflectedInferModelLogicalOperator{.model = reflect(op->getModel()), .inputFieldNames = op->getInputFieldNames()});
+    return reflect(detail::ReflectedInferModelLogicalOperator{.operatorId = op.getId(), .model = reflect(op->getModel())});
+}
+
+Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))
+{
 }
 
 TypedLogicalOperator<InferModelLogicalOperator>
 Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [model, inputFieldNames] = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
-    return TypedLogicalOperator<InferModelLogicalOperator>{context.unreflect<RegisteredModel>(model), std::move(inputFieldNames)};
+    auto [operatorId, model] = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
+    auto children = plan->getChildrenFor(operatorId, context);
+    if (children.size() != 1)
+    {
+        throw CannotDeserialize("InferModelLogicalOperator requires exactly one child, but got {}", children.size());
+    }
+    return TypedLogicalOperator<InferModelLogicalOperator>{context.unreflect<RegisteredModel>(model), std::move(children.at(0))};
 }
 
-/// generated registry interface requires by-value argument
-LogicalOperatorRegistryReturnType
-/// NOLINTNEXTLINE(performance-unnecessary-value-param)
-LogicalOperatorGeneratedRegistrar::RegisterInferModelLogicalOperator(LogicalOperatorRegistryArguments arguments)
-{
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<TypedLogicalOperator<InferModelLogicalOperator>>(arguments.reflected);
-    }
-    PRECONDITION(false, "Operator is only built directly or via reflection, not using the registry");
-    std::unreachable();
 }
+
+std::size_t std::hash<NES::InferModelLogicalOperator>::operator()(const NES::InferModelLogicalOperator& op) const noexcept
+{
+    return std::hash<std::string>{}(op.getModel().getName());
 }

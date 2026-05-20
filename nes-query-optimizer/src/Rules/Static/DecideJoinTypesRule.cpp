@@ -147,6 +147,6 @@ LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperato
     {
         tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
     }
-    return logicalOperator.withChildren(children).withTraitSet(traitSet);
+    return logicalOperator.withChildrenUnsafe(children).withTraitSet(traitSet);
 }
 }
