@@ -69,6 +69,7 @@ EXCEPTION(UnknownModelName, 2040, "unknown model name")
 EXCEPTION(ModelAlreadyExists, 2041, "model already exists")
 EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 EXCEPTION(UnknownOutputParserType, 2043, "unknown output parser type")
+EXCEPTION(UnknownInputParserType, 2044, "unknown input parser type")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")

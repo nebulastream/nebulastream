@@ -22,12 +22,13 @@
 #include <static.hpp>
 
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatter.hpp>
+#include <InputParserUtil.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -89,8 +90,13 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-        parseRawValueIntoRecord(
-            fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues(), indexer.getQuotationType());
+
+        /// Retrieve input parser for the field and parse the value.
+        /// These are the temporary defaults for our CSV format. Later, these arguments will be set by the user in the source definition.
+        const InputParserConfig parserConfig{.nullable = fieldDataType.nullable, .quotedText = false, .hasTrailingSpace = false};
+        const std::unique_ptr<InputParser> parser = provideInputParser(indexer.getParserType(fieldDataType.type), parserConfig);
+        const VarVal parsedVal = parser->parseToVarVal(fieldAddress, fieldSize, indexer.getNullValues());
+        record.write(fieldName, parsedVal);
     }
     return record;
 }
