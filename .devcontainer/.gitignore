@@ -1,0 +1,6 @@
+# Independently managed Pi setup repository (cloned by setup-pi.sh).
+/pi/
+
+# Generated Python skill caches.
+__pycache__/
+*.py[cod]
