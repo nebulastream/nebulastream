@@ -1,0 +1,60 @@
+{
+  "name": "NebulaStream Development (Thin)",
+  "build": {
+    "dockerfile": "../docker/dependency/Thin.dockerfile",
+    "context": "../"
+  },
+  "mounts": [
+    "source=${localEnv:XDG_RUNTIME_DIR}/docker.sock,target=/var/run/docker-rootless.sock,type=bind",
+    "source=nes-vcpkg-binary-cache,target=/vcpkg-binary-cache,type=volume",
+    "source=nes-vcpkg-downloads,target=/vcpkg_input/vcpkg_repository/downloads,type=volume",
+    "source=nes-ccache,target=/ccache,type=volume",
+    "source=nes-claude-config,target=/root/.claude,type=volume",
+    "source=nes-omp-config,target=/root/.omp,type=volume",
+    "source=nes-codex-config,target=/root/.codex,type=volume",
+    "source=nes-pi-config,target=/root/.pi,type=volume",
+    "source=nes-test-file-cache,target=/test-file-cache,type=volume",
+    "source=nes-worktrees,target=/worktrees,type=volume"
+  ],
+  "runArgs": ["--env-file", "${localWorkspaceFolder}/.devcontainer/.secrets.env"],
+  "containerEnv": {
+    "NES_DEVCONTAINER": "1",
+    "EDITOR": "vim",
+    "VCPKG_DEFAULT_BINARY_CACHE": "/vcpkg-binary-cache",
+    "CCACHE_DIR": "/ccache",
+    "VCPKG_BINARY_SOURCES": "clear;default,readwrite;http,https://pub-162f068cdd4a45d192dedb5f886cd825.r2.dev/{sha}.zip,read"
+  },
+  "containerUser": "root",
+  "remoteUser": "root",
+  "updateRemoteUserUID": false,
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "username": "root"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "socketPath": "/var/run/docker-rootless.sock"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools"
+      ]
+    }
+  },
+  "initializeCommand": "test -f .devcontainer/.secrets.env || touch .devcontainer/.secrets.env",
+  "postCreateCommand": {
+    "setup": "chown -R root:root /root/.claude /root/.omp /root/.codex /root/.pi && ([ ! -f /root/.claude.json ] && [ -f /root/.claude/.claude-bootstrap.json ] && cp /root/.claude/.claude-bootstrap.json /root/.claude.json && chmod 600 /root/.claude.json || true) && (gh auth status >/dev/null 2>&1 && gh auth setup-git && git config --global user.name \"$(gh api user --jq .name)\" && git config --global user.email \"$(gh api user --jq '.email // .login + \"@users.noreply.github.com\"')\") || true",
+    "systest-plugin": "bash \"${containerWorkspaceFolder}/.devcontainer/install-systest-plugin.sh\"",
+    "index-mcp-plugin": "bash \"${containerWorkspaceFolder}/.devcontainer/install-index-mcp-plugin.sh\"",
+    "pi-extensions": "bash \"${containerWorkspaceFolder}/.devcontainer/setup-pi.sh\""
+  },
+  "postStartCommand": "chown -R root:root /vcpkg_input /ccache /vcpkg-binary-cache /root/.claude /root/.omp /root/.codex /root/.pi /test-file-cache /worktrees && /usr/local/bin/nes-thin-entrypoint.sh",
+  "waitFor": "postCreateCommand"
+}

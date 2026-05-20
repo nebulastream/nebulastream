@@ -21,3 +21,6 @@ debug*
 
 # Python virtual environment
 venv
+
+# Independently managed Pi setup checkout (installed after container creation)
+.devcontainer/pi
