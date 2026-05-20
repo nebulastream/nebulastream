@@ -18,9 +18,17 @@ ATTACH INLINE
 {"KEY":5, "NAME":"max2"}
 {"KEY":6, "NAME":null}
 
+CREATE LOGICAL SOURCE nullableCharStream(letter CHAR);
+CREATE PHYSICAL SOURCE FOR nullableCharStream TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"LETTER": "a"}
+{"LETTER": null}
+{"LETTER": "b"}
+
 
 CREATE SINK keySink(key UINT64 NOT NULL) TYPE File;
 CREATE SINK keySinkWithNulls(key UINT64 NOT NULL) TYPE File;
+CREATE SINK letterSink(letter CHAR) TYPE File;
 CREATE SINK allFieldsSink(key UINT64 NOT NULL, value UINT64, name VARSIZED) TYPE File;
 
 SELECT KEY FROM jsonStream WHERE NOT ISNULL(value) INTO keySink;
@@ -40,6 +48,11 @@ SELECT * FROM jsonStreamWithNulls WHERE ISNULL(value) INTO allFieldsSink;
 5,NULL,max2
 6,NULL,NULL
 
+SELECT * FROM nullableCharStream INTO letterSink;
+----
+a
+NULL
+b
 
 SELECT * FROM jsonStreamWithNulls WHERE NOT ISNULL(value) INTO allFieldsSink;
 ----
