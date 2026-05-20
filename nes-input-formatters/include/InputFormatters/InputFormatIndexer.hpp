@@ -18,11 +18,15 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
-#include <RawBufferIndex.hpp>
+#include <magic_enum/magic_enum.hpp>
 
-#include <RawValueParser.hpp>
+#include <DataTypes/DataType.hpp>
+#include <Interface/Record.hpp>
+#include <ErrorHandling.hpp>
+#include <RawBufferIndex.hpp>
 
 namespace NES
 {
@@ -42,13 +46,32 @@ public:
 
     [[nodiscard]] virtual std::string_view getTupleDelimitingBytes() const = 0;
     [[nodiscard]] virtual std::string_view getFieldDelimitingBytes() const = 0;
-    [[nodiscard]] virtual QuotationType getQuotationType() const = 0;
     [[nodiscard]] virtual const std::vector<std::string>& getNullValues() const = 0;
+
+    /// Get the deserializer type for a specific field. The datatype of the field determines the default, which the user may
+    /// override for this particular field.
+    [[nodiscard]] const std::string&
+    getDeserializerType(const Record::RecordFieldIdentifier& fieldName, const DataType::Type& dataType) const
+    {
+        if (const auto it = fieldDeserializerTypes.find(fieldName); it != fieldDeserializerTypes.end())
+        {
+            return it->second;
+        }
+        if (const auto it = deserializerTypes.find(dataType); it != deserializerTypes.end())
+        {
+            return it->second;
+        }
+        throw UnknownValueDeserializerType("No ValueDeserializer configured for DataType {}", magic_enum::enum_name(dataType));
+    }
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatIndexer& indexer);
 
 protected:
     /// Implemented by children of InputFormatIndexer. Called by '<<'. Allows to use '<<' on abstract InputFormatIndexer.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
+    /// Stores the default deserializer type for each datatype.
+    std::unordered_map<DataType::Type, std::string> deserializerTypes;
+    /// Stores the deserializer type that the user configured for a specific field. Takes precedence over the datatype default.
+    std::unordered_map<Record::RecordFieldIdentifier, std::string> fieldDeserializerTypes;
 };
 }

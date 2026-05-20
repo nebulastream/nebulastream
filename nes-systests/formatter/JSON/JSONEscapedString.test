@@ -1,0 +1,47 @@
+# name: JSON/JSONEscapedString.test
+# description: JSON input must decode escape sequences before producing string values
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE escapedJson(value VARSIZED NOT NULL, letter CHAR NOT NULL);
+CREATE PHYSICAL SOURCE FOR escapedJson TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"VALUE":"ABC", "LETTER":"x"}
+{"VALUE":"quote\"and\\backslash", "LETTER":"\""}
+{"VALUE":"plain", "LETTER":"y"}
+
+# 'decoded' and 'raw' hold the very same JSON string, but 'raw' opts out of the JSON deserializer and therefore keeps the
+# escape sequences of the raw JSON text.
+CREATE LOGICAL SOURCE optedOutJson(decoded VARSIZED NOT NULL, raw VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR optedOutJson TYPE File SET(
+'JSON' AS INPUT_FORMATTER."TYPE",
+'raw:DefaultVARSIZED' as "INPUT_FORMATTER".VALUE_DESERIALIZERS
+);
+ATTACH INLINE
+{"DECODED":"A\u0042C", "RAW":"A\u0042C"}
+
+CREATE LOGICAL SOURCE nullableEscapedJson(value VARSIZED, letter CHAR);
+CREATE PHYSICAL SOURCE FOR nullableEscapedJson TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"VALUE":"ABC", "LETTER":"x"}
+{"VALUE":null, "LETTER":null}
+{"VALUE":"plain", "LETTER":"y"}
+
+# Description: The escape sequences of a JSON string belong to its encoding, not to its value.
+# Both fields of a record are decoded, so this also covers that the scratch memory of a record is not reused within the record.
+SELECT value, letter FROM escapedJson INTO File();
+----
+ABC,x
+quote"and\backslash,"
+plain,y
+
+# Description: Escaped strings and NULL values combine.
+SELECT value, letter FROM nullableEscapedJson INTO File();
+----
+ABC,x
+NULL,NULL
+plain,y
+
+# Description: The JSON deserializer can be turned off for a single field, which then yields the undecoded JSON text.
+SELECT decoded, raw FROM optedOutJson INTO File();
+----
+ABC,A\u0042C

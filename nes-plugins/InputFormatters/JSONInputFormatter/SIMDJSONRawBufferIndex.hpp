@@ -25,7 +25,7 @@
 #include <simdjson.h>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
-#include <InputFormatIndexer.hpp>
+#include <Arena.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 #include <val_arith.hpp>
@@ -35,7 +35,6 @@
 
 namespace NES
 {
-
 class SIMDJSONRawBufferIndex final : public RawBufferIndex
 {
 public:
@@ -51,7 +50,8 @@ public:
         const nautilus::val<uint64_t>& /*recordIndex*/,
         const InputFormatIndexer& indexer,
         nautilus::val<RawBufferIndex*> rawBufferIndex,
-        const TupleBufferRef& bufferRef) const override;
+        const TupleBufferRef& bufferRef,
+        const ArenaRef& arena) const override;
 
     [[nodiscard]] TupleDelimiterOffsets getTupleDelimiterOffsets() const override
     {
@@ -80,5 +80,4 @@ private:
     std::shared_ptr<simdjson::ondemand::document_stream> docStream;
     simdjson::ondemand::document_stream::iterator docStreamIterator;
 };
-
 }
