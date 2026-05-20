@@ -35,6 +35,7 @@
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 #include <static.hpp>
+#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -86,6 +87,23 @@ public:
         , fieldDataTypes(std::move(fieldDataTypes))
         , nullValues({""})
     {
+        deserializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
+        deserializerTypes[DataType::Type::UINT16] = "DefaultUINT16";
+        deserializerTypes[DataType::Type::UINT32] = "DefaultUINT32";
+        deserializerTypes[DataType::Type::UINT64] = "DefaultUINT64";
+        deserializerTypes[DataType::Type::INT8] = "DefaultINT8";
+        deserializerTypes[DataType::Type::INT16] = "DefaultINT16";
+        deserializerTypes[DataType::Type::INT32] = "DefaultINT32";
+        deserializerTypes[DataType::Type::INT64] = "DefaultINT64";
+        deserializerTypes[DataType::Type::FLOAT32] = "DefaultF32";
+        deserializerTypes[DataType::Type::FLOAT64] = "DefaultF64";
+        deserializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
+        deserializerTypes[DataType::Type::CHAR] = "DefaultCHAR";
+        deserializerTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
+        /// NestedJSON allows to use structs and arrays
+        deserializerTypes[DataType::Type::STRUCT] = "JSONSTRUCT";
+        deserializerTypes[DataType::Type::FIXEDSIZED] = "JSONFIXEDSIZED";
+        deserializerTypes[DataType::Type::VARARRAY] = "JSONVARARRAY";
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor

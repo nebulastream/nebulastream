@@ -10,19 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(ValueDeserializers)
-add_source_files(nes-input-formatters
-        InputFormatIndexer.cpp
-        SequenceShredder.cpp
-        SpanningTupleBuffer.cpp
-        SpanningTupleBufferState.cpp
-        ValueDeserializerUtil.cpp
-        InputFormatter.cpp
-        FieldOffsetRawBufferIndex.cpp
-        InputFormatterDescriptor.cpp
-        InputFormatterValidationProvider.cpp
-)
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+add_plugin_as_library(JSONSTRUCT ValueDeserializer nested_json_value_deserializer_plugin src/NestedJSONValueDeserializers.cpp)
+add_plugin(JSONFIXEDSIZED ValueDeserializer src/NestedJSONValueDeserializers.cpp)
+add_plugin(JSONVARARRAY ValueDeserializer src/NestedJSONValueDeserializers.cpp)
 
-# Register plugins
-add_plugin(CSV InputFormatIndexer CSVInputFormatIndexer.cpp)
-add_plugin(CSV InputFormatterValidation CSVInputFormatIndexer.cpp)
+target_include_directories(nested_json_value_deserializer_plugin
+        PUBLIC include
+        PRIVATE .
+)
