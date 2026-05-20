@@ -32,7 +32,7 @@ import numpy as np
 from PIL import Image
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-BUILD_DIR = REPO_ROOT / "cmake-build-debug-docker-nes-development-local-libstd"
+BUILD_DIR = REPO_ROOT / "cmake-build-relwithdebinfo"
 NES_REPL = BUILD_DIR / "nes-frontend" / "apps" / "nes-repl-embedded"
 
 DEMO_DIR = Path(__file__).resolve().parent

@@ -411,7 +411,7 @@ nautilus::val<uint64_t> DefaultFIXEDSIZEDOutputParser::parseAndWrite(
     const std::unordered_map<DataType::Type, std::string>&,
     const DataType&) const
 {
-    throw UnknownDataType("FIXEDSIZED does not have a default output parser implementation.");
+    throw NotImplemented("FIXEDSIZED does not have a default output parser implementation.");
 }
 
 nautilus::val<uint64_t> DefaultSTRUCTOutputParser::parseAndWrite(
@@ -423,7 +423,7 @@ nautilus::val<uint64_t> DefaultSTRUCTOutputParser::parseAndWrite(
     const std::unordered_map<DataType::Type, std::string>&,
     const DataType&) const
 {
-    throw UnknownDataType("STRUCT does not have a default output parser implementation.");
+    throw NotImplemented("STRUCT does not have a default output parser implementation.");
 }
 
 nautilus::val<uint64_t> DefaultUNDEFINEDOutputParser::parseAndWrite(

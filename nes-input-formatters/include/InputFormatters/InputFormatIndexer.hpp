@@ -16,11 +16,12 @@
 
 #include <memory>
 #include <string_view>
+#include <unordered_map>
+#include <vector>
 
+#include <DataTypes/DataType.hpp>
+#include <InputParserUtil.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawTupleBuffer.hpp>
-
-#include <RawValueParser.hpp>
 
 namespace NES
 {
@@ -42,10 +43,31 @@ public:
     [[nodiscard]] virtual std::string_view getFieldDelimitingBytes() const = 0;
     [[nodiscard]] virtual const std::vector<std::string>& getNullValues() const = 0;
 
+    /// Get the parser type for a specific datatype
+    [[nodiscard]] std::string getParserType(const DataType::Type& dataType) const { return parserTypes.at(dataType); }
+
     friend std::ostream& operator<<(std::ostream& out, const InputFormatIndexer& indexer);
 
 protected:
     /// Implemented by children of InputFormatIndexer. Called by '<<'. Allows to use '<<' on abstract InputFormatIndexer.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
+    /// Stores the configured parser for each datatype.
+    std::unordered_map<DataType::Type, std::string> parserTypes
+        = {{DataType::Type::UINT8, "DefaultUINT8"},
+           {DataType::Type::UINT16, "DefaultUINT16"},
+           {DataType::Type::UINT32, "DefaultUINT32"},
+           {DataType::Type::UINT64, "DefaultUINT64"},
+           {DataType::Type::INT8, "DefaultINT8"},
+           {DataType::Type::INT16, "DefaultINT16"},
+           {DataType::Type::INT32, "DefaultINT32"},
+           {DataType::Type::INT64, "DefaultINT64"},
+           {DataType::Type::FLOAT32, "DefaultF32"},
+           {DataType::Type::FLOAT64, "DefaultF64"},
+           {DataType::Type::CHAR, "DefaultCHAR"},
+           {DataType::Type::BOOLEAN, "DefaultBOOL"},
+           {DataType::Type::VARSIZED, "DefaultVARSIZED"},
+           {DataType::Type::FIXEDSIZED, "DefaultFIXEDSIZED"},
+           {DataType::Type::STRUCT, "DefaultSTRUCT"},
+           {DataType::Type::UNDEFINED, "DefaultUNDEFINED"}};
 };
 }

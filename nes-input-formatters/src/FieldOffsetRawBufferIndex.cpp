@@ -21,8 +21,11 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatter.hpp>
+#include <InputParserUtil.hpp>
 #include <RawBufferIndex.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -79,7 +82,8 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-        parseRawValueIntoRecord(fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues());
+        parseRawValueIntoRecord(
+            fieldDataType, indexer.getParserType(fieldDataType.type), record, fieldAddress, fieldSize, fieldName, indexer.getNullValues());
     }
     return record;
 }

@@ -34,8 +34,8 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatterDescriptor.hpp>
+#include <InputParserUtil.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
 #include <static.hpp>
 
 namespace NES

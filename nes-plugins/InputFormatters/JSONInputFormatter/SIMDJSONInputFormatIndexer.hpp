@@ -35,9 +35,11 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatterDescriptor.hpp>
+#include <InputParserUtil.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 #include <static.hpp>
+#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -88,6 +90,9 @@ public:
         , fieldDataTypes(std::move(fieldDataTypes))
         , nullValues({""})
     {
+        /// JSON wraps textual values in quotes, which affects the parsers
+        parserTypes[DataType::Type::CHAR] = "QuotedCHAR";
+        parserTypes[DataType::Type::VARSIZED] = "QuotedVARSIZED";
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
