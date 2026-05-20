@@ -33,6 +33,7 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
@@ -68,7 +69,7 @@ SIMDJSONRawBufferIndex::hasNext(const nautilus::val<uint64_t>&, const nautilus::
 void writeValueToRecord(
     const DataType dataType,
     Record& record,
-    const std::string& fieldName,
+    const QualifiedIdentifier& fieldName,
     const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<RawBufferIndex*>& rawBufferIndex,
     const nautilus::val<const InputFormatIndexer*>& indexer)

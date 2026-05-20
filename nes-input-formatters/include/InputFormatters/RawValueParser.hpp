@@ -24,6 +24,7 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/Record.hpp>
 #include <Util/Strings.hpp>
 #include <Arena.hpp>
@@ -55,7 +56,7 @@ void parseRawValueIntoRecord(
     Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
-    const std::string& fieldName,
+    const QualifiedIdentifier& fieldName,
     const std::vector<std::string>& nullValues,
     QuotationType quotationType);
 

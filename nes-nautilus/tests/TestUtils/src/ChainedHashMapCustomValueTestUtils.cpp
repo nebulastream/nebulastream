@@ -62,7 +62,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
                 [&](const nautilus::val<AbstractHashMapEntry*>& entry)
                 {
                     const ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
-                    const nautilus::val<uint64_t> tupleSize = tupleLayout->getTupleSize();
+                    const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
                     nautilus::invoke(
                         +[](AbstractBufferProvider* bufferManager, TupleBuffer* pagedVectorMemArea, const uint64_t tupleSize)
                         {

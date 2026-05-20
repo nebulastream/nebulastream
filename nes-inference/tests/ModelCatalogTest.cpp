@@ -22,8 +22,14 @@
 
 #include <BaseUnitTest.hpp>
 
+#include <ranges>
+#include <string_view>
+#include <utility>
+#include <vector>
+
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -37,15 +43,30 @@ DataType dt(DataType::Type type)
     return DataType{type, DataType::NULLABLE::NOT_NULLABLE};
 }
 
-/// Build a Schema with N auto-named fields of the given type.
-Schema fields(size_t count, DataType::Type type)
+/// Build a ModelFieldList with N auto-named fields of the given type.
+ModelFieldList fields(size_t count, DataType::Type type)
 {
-    Schema schema;
+    std::vector<UnqualifiedUnboundField> fieldVec;
+    fieldVec.reserve(count);
     for (size_t i = 0; i < count; ++i)
     {
-        schema = schema.addField(fmt::format("f{}", i), dt(type));
+        fieldVec.emplace_back(Identifier::parse(fmt::format("f{}", i)), dt(type));
     }
-    return schema;
+    return std::move(fieldVec) | std::ranges::to<ModelFieldList>();
+}
+
+ModelFieldList singleField(std::string_view name, DataType type)
+{
+    return std::vector{UnqualifiedUnboundField{Identifier::parse(std::string{name}), std::move(type)}} | std::ranges::to<ModelFieldList>();
+}
+
+/// Returns a copy of `schema` with the first field replaced by one of the same name but `replacementType`.
+/// Schema is immutable, so we rebuild from scratch.
+ModelFieldList replaceFirstFieldType(const ModelFieldList& schema, DataType replacementType)
+{
+    auto fields = schema | std::ranges::to<std::vector>();
+    fields.front() = UnqualifiedUnboundField{fields.front().getFullyQualifiedName(), std::move(replacementType)};
+    return std::move(fields) | std::ranges::to<ModelFieldList>();
 }
 
 std::filesystem::path identityPath()
@@ -79,16 +100,15 @@ TEST_F(ModelCatalogTest, RegistersModelWithVarsizedSingleFieldOnBothSides)
         "identity-varsized",
         identityPath(),
         ModelSchema{
-            .inputs = Schema{}.addField("blob_in", dt(DataType::Type::VARSIZED)),
-            .outputs = Schema{}.addField("blob_out", dt(DataType::Type::VARSIZED))}));
+            .inputs = singleField("blob_in", dt(DataType::Type::VARSIZED)),
+            .outputs = singleField("blob_out", dt(DataType::Type::VARSIZED))}));
     EXPECT_TRUE(catalog.hasModel("identity-varsized"));
 }
 
 TEST_F(ModelCatalogTest, RejectsNonFloat32NonVarsizedInputType)
 {
     ModelCatalog catalog;
-    auto ins = fields(100, DataType::Type::FLOAT32);
-    ASSERT_TRUE(ins.replaceTypeOfField("f0", dt(DataType::Type::INT32)));
+    auto ins = replaceFirstFieldType(fields(100, DataType::Type::FLOAT32), dt(DataType::Type::INT32));
     ASSERT_EXCEPTION_ERRORCODE(
         catalog.registerModel("m", identityPath(), ModelSchema{.inputs = ins, .outputs = fields(100, DataType::Type::FLOAT32)}),
         NES::ErrorCode::CannotLoadModel);
@@ -97,8 +117,7 @@ TEST_F(ModelCatalogTest, RejectsNonFloat32NonVarsizedInputType)
 TEST_F(ModelCatalogTest, RejectsNonFloat32NonVarsizedOutputType)
 {
     ModelCatalog catalog;
-    auto outs = fields(100, DataType::Type::FLOAT32);
-    ASSERT_TRUE(outs.replaceTypeOfField("f0", dt(DataType::Type::INT64)));
+    auto outs = replaceFirstFieldType(fields(100, DataType::Type::FLOAT32), dt(DataType::Type::INT64));
     ASSERT_EXCEPTION_ERRORCODE(
         catalog.registerModel("m", identityPath(), ModelSchema{.inputs = fields(100, DataType::Type::FLOAT32), .outputs = outs}),
         NES::ErrorCode::CannotLoadModel);
@@ -107,13 +126,12 @@ TEST_F(ModelCatalogTest, RejectsNonFloat32NonVarsizedOutputType)
 TEST_F(ModelCatalogTest, RejectsVarsizedMixedWithSiblings)
 {
     ModelCatalog catalog;
+    auto mixedInputs
+        = std::
+              vector{UnqualifiedUnboundField{Identifier::parse("blob"), dt(DataType::Type::VARSIZED)}, UnqualifiedUnboundField{Identifier::parse("tail"), dt(DataType::Type::FLOAT32)}}
+        | std::ranges::to<ModelFieldList>();
     ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel(
-            "m",
-            identityPath(),
-            ModelSchema{
-                .inputs = Schema{}.addField("blob", dt(DataType::Type::VARSIZED)).addField("tail", dt(DataType::Type::FLOAT32)),
-                .outputs = fields(100, DataType::Type::FLOAT32)}),
+        catalog.registerModel("m", identityPath(), ModelSchema{.inputs = mixedInputs, .outputs = fields(100, DataType::Type::FLOAT32)}),
         NES::ErrorCode::CannotLoadModel);
 }
 

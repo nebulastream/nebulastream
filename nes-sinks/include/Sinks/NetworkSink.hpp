@@ -81,29 +81,29 @@ private:
 struct ConfigParametersNetworkSink
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> DATA_ENDPOINT{
-        "data_endpoint",
+        "DATA_ENDPOINT",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DATA_ENDPOINT, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
-        "bind",
+        "BIND",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(BIND, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "channel",
+        "CHANNEL",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
 
     /// Per-channel sender queue size override. 0 means use the worker-level default.
     static inline const DescriptorConfig::ConfigParameter<size_t> SENDER_QUEUE_SIZE{
-        "sender_queue_size",
+        "SENDER_QUEUE_SIZE",
         size_t{0},
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SENDER_QUEUE_SIZE, config); }};
 
     /// Per-channel max pending acks override. 0 means use the worker-level default.
     static inline const DescriptorConfig::ConfigParameter<size_t> MAX_PENDING_ACKS{
-        "max_pending_acks",
+        "MAX_PENDING_ACKS",
         size_t{0},
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_PENDING_ACKS, config); }};
 

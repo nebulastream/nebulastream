@@ -171,44 +171,21 @@ PagedVectorRef::PagedVectorRef(NautilusBuffer pagedVectorBuffer, std::shared_ptr
 {
 }
 
-Schema::Field DefaultPagedVectorTupleLayout::getFieldAt(uint64_t pos) const
-{
-    INVARIANT(
-        pos < getNumberOfFields(), "Failed trying to access field at pos {} but schema has only {} fields.", pos, getNumberOfFields());
-    return schema.getFieldAt(pos);
-}
-
-std::vector<Record::RecordFieldIdentifier> DefaultPagedVectorTupleLayout::getAllFieldNames() const
-{
-    return schema.getFields() | std::views::transform([](const Schema::Field& field) { return field.name; })
-        | std::ranges::to<std::vector>();
-}
-
-size_t DefaultPagedVectorTupleLayout::getTupleSize() const
-{
-    size_t totalTupleSize = 0;
-    const auto fields = schema.getFields();
-    for (const auto& field : fields)
-    {
-        totalTupleSize += field.dataType.getSizeInBytesWithNull();
-    }
-    return totalTupleSize;
-}
-
-size_t DefaultPagedVectorTupleLayout::getNumberOfFields() const
-{
-    return schema.getNumberOfFields();
-}
-
 Record DefaultPagedVectorTupleLayout::readRecord(const nautilus::val<int8_t*> recordMemAddress, LoadVarSizedFunction loadFunction) const
 {
-    const auto& fields = schema.getFields();
-    const auto numFields = schema.getNumberOfFields();
+    const auto numFields = std::ranges::size(schema);
     Record record;
     uint64_t fieldOffset = 0;
     for (nautilus::static_val<uint64_t> i = 0; i < numFields; ++i)
     {
-        const auto& [name, dataType] = fields.at(i);
+        auto fieldOpt = schema[i];
+        INVARIANT(
+            fieldOpt.has_value(),
+            "Failed trying to access field at pos {} but schema has only {} fields.",
+            static_cast<size_t>(i),
+            std::ranges::size(schema));
+        const auto name = fieldOpt->getFullyQualifiedName();
+        const auto dataType = fieldOpt->getDataType();
         auto fieldAddress = recordMemAddress + nautilus::val<uint64_t>(fieldOffset);
 
         nautilus::val<bool> null = false;
@@ -235,12 +212,18 @@ Record DefaultPagedVectorTupleLayout::readRecord(const nautilus::val<int8_t*> re
 void DefaultPagedVectorTupleLayout::writeRecord(
     const Record& record, nautilus::val<std::int8_t*> memoryForRecord, AllocateVarSizedFunction allocateVarSized)
 {
-    const auto& fields = schema.getFields();
-    const auto numFields = schema.getNumberOfFields();
+    const auto numFields = std::ranges::size(schema);
     uint64_t fieldOffset = 0;
     for (nautilus::static_val<uint64_t> i = 0; i < numFields; ++i)
     {
-        const auto& [name, dataType] = fields.at(i);
+        const auto fieldOpt = schema[i];
+        INVARIANT(
+            fieldOpt.has_value(),
+            "Failed trying to access field at pos {} but schema has only {} fields.",
+            static_cast<size_t>(i),
+            std::ranges::size(schema));
+        const auto name = fieldOpt->getFullyQualifiedName();
+        const auto dataType = fieldOpt->getDataType();
         if (not record.hasField(name))
         {
             /// Skipping any fields that are not part of the record

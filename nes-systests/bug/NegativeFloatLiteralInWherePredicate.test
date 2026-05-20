@@ -10,7 +10,7 @@ ATTACH INLINE
 0.25
 1.0
 
-CREATE SINK sinkStream(stream.doublee FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkStream(doublee FLOAT64 NOT NULL) TYPE File;
 
 SELECT *
 FROM stream
@@ -28,7 +28,7 @@ ATTACH INLINE
 0
 1
 
-CREATE SINK sinkIntStream(intStream.value INT64 NOT NULL) TYPE File;
+CREATE SINK sinkIntStream(value INT64 NOT NULL) TYPE File;
 
 SELECT *
 FROM intStream

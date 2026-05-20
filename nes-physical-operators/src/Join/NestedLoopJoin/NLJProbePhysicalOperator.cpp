@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
@@ -31,16 +32,17 @@
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -114,8 +116,8 @@ void NLJProbePhysicalOperator::performNLJ(
     const nautilus::val<Timestamp>& windowStart,
     const nautilus::val<Timestamp>& windowEnd) const
 {
-    const auto outerFields = outerTupleLayout.getAllFieldNames();
-    const auto innerFields = innerTupleLayout.getAllFieldNames();
+    const auto outerFields = getOrderedFieldNames(outerTupleLayout.getSchema());
+    const auto innerFields = getOrderedFieldNames(innerTupleLayout.getSchema());
 
     for (auto outerIt = outerPagedVector.begin(); outerIt != outerPagedVector.end(); ++outerIt)
     {

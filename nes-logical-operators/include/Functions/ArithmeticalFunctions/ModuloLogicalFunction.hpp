@@ -20,7 +20,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -32,13 +34,12 @@ class ModuloLogicalFunction final
 public:
     static constexpr std::string_view NAME = "Mod";
 
-    ModuloLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
+    ModuloLogicalFunction(LogicalFunction left, LogicalFunction right);
 
     [[nodiscard]] bool operator==(const ModuloLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] ModuloLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] ModuloLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

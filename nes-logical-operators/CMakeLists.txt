@@ -29,6 +29,9 @@ create_unreflection_registry(LogicalFunction nes-logical-operators
 create_unreflection_registry(LogicalOperator nes-logical-operators
         "TypedLogicalOperator<\${PLUGIN_NAME}LogicalOperator>"
         "\${PLUGIN_NAME}LogicalOperator.hpp")
+create_unreflection_registry(AggregationLogicalFunction nes-logical-operators
+        "\${PLUGIN_NAME}AggregationLogicalFunction"
+        "\${PLUGIN_NAME}AggregationLogicalFunction.hpp")
 
 # Set Sources and Headers
 add_subdirectory(src)

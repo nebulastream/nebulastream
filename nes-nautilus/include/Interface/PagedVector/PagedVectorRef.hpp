@@ -21,7 +21,9 @@
 
 #include <functional>
 #include <utility>
+
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
@@ -49,12 +51,7 @@ class PagedVectorTupleLayout
 {
 public:
     virtual ~PagedVectorTupleLayout() = default;
-    [[nodiscard]] virtual const std::vector<Schema::Field>& getFields() const = 0;
-    [[nodiscard]] virtual Schema::Field getFieldAt(uint64_t pos) const = 0;
-    [[nodiscard]] virtual std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const = 0;
-    [[nodiscard]] virtual size_t getNumberOfFields() const = 0;
-    [[nodiscard]] virtual size_t getTupleSize() const = 0;
-
+    [[nodiscard]] virtual const Schema<QualifiedUnboundField, Ordered>& getSchema() const = 0;
     /// @brief Reads a record from the specified memory address. The address is expected to point at the beginning of the record to be read.
     /// The LoadFunction handles the varsized data loading, as it is stored in a separate buffer.
     [[nodiscard]] virtual Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSizedFunction) const = 0;
@@ -69,20 +66,12 @@ public:
 struct DefaultPagedVectorTupleLayout final : PagedVectorTupleLayout
 {
 private:
-    Schema schema;
+    Schema<QualifiedUnboundField, Ordered> schema;
 
 public:
-    explicit DefaultPagedVectorTupleLayout(const Schema& schema) : schema(schema) { }
+    explicit DefaultPagedVectorTupleLayout(const Schema<QualifiedUnboundField, Ordered>& schema) : schema(schema) { }
 
-    [[nodiscard]] const std::vector<Schema::Field>& getFields() const override { return schema.getFields(); }
-
-    [[nodiscard]] Schema::Field getFieldAt(uint64_t pos) const override;
-
-    [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
-
-    [[nodiscard]] size_t getTupleSize() const override;
-
-    [[nodiscard]] size_t getNumberOfFields() const override;
+    [[nodiscard]] const Schema<QualifiedUnboundField, Ordered>& getSchema() const override { return schema; }
 
     [[nodiscard]] Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSizedFunction loadFunc) const override;
 

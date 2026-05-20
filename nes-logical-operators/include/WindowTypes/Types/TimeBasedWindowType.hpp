@@ -14,40 +14,61 @@
 
 #pragma once
 
+#include <cstddef>
+#include <functional>
 #include <memory>
+#include <ostream>
+#include <variant>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
-#include <WindowTypes/Types/WindowType.hpp>
+
+#include <Util/Logger/Formatter.hpp>
+#include <WindowTypes/Types/SlidingWindow.hpp>
+#include <WindowTypes/Types/TumblingWindow.hpp>
 
 namespace NES::Windowing
 {
 
-class TimeBasedWindowType : public WindowType
+/// A wrapper around a variant of tumbling and sliding time-based windows for convenience
+struct TimeBasedWindowType
 {
-public:
-    explicit TimeBasedWindowType(TimeCharacteristic timeCharacteristic);
-
-    ~TimeBasedWindowType() override = default;
-
-    [[nodiscard]] TimeCharacteristic getTimeCharacteristic() const;
-
+    explicit TimeBasedWindowType(std::variant<TumblingWindow, SlidingWindow> underlying);
     /// @brief method to get the window size
     /// @return size of window
-    [[nodiscard]] virtual TimeMeasure getSize() const = 0;
+    [[nodiscard]] TimeMeasure getSize() const;
 
     /// @brief method to get the window slide
     /// @return slide of the window
-    [[nodiscard]] virtual TimeMeasure getSlide() const = 0;
+    [[nodiscard]] TimeMeasure getSlide() const;
+    bool operator==(const TimeBasedWindowType& otherWindowType) const;
+    friend std::ostream& operator<<(std::ostream& os, const TimeBasedWindowType& windowType);
+    [[nodiscard]] const std::variant<TumblingWindow, SlidingWindow>& getUnderlying() const;
 
-    /// @brief Infer dataType of time based window type
-    /// @param schema : the schema of the window
-    /// @return true if success else false
-    bool inferStamp(const Schema& schema) override;
+private:
+    std::variant<TumblingWindow, SlidingWindow> underlying;
+};
+}
 
-protected:
-    TimeCharacteristic timeCharacteristic;
+namespace NES
+{
+template <>
+struct Reflector<Windowing::TimeBasedWindowType>
+{
+    Reflected operator()(const Windowing::TimeBasedWindowType& window) const;
 };
 
+template <>
+struct Unreflector<Windowing::TimeBasedWindowType>
+{
+    Windowing::TimeBasedWindowType operator()(const Reflected& reflected, const ReflectionContext& context) const;
+};
 }
+
+template <>
+struct std::hash<NES::Windowing::TimeBasedWindowType>
+{
+    std::size_t operator()(const NES::Windowing::TimeBasedWindowType& window) const noexcept;
+};
+
+FMT_OSTREAM(NES::Windowing::TimeBasedWindowType);

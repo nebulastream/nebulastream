@@ -66,15 +66,6 @@ private:
 /// Get all parent operators of the target operator
 [[nodiscard]] std::vector<LogicalOperator> getParents(const LogicalPlan& plan, const LogicalOperator& target);
 
-/// Replace `target` with `replacement`, keeping target's children
-[[nodiscard]] std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, OperatorId target, LogicalOperator replacement);
-
-/// Replace `target` with `replacement`, keeping the children that are already inside `replacement`
-[[nodiscard]] std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, OperatorId target, const LogicalOperator& replacement);
-
-/// Adds a new operator to the plan and promotes it as new root by reparenting existing root operators and replacing the current roots
-[[nodiscard]] LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot);
-
 [[nodiscard]] LogicalPlan addRootOperators(const LogicalPlan& plan, const std::vector<LogicalOperator>& rootsToAdd);
 
 template <LogicalOperatorConcept T>

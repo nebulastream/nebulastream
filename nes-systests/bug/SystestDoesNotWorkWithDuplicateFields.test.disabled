@@ -16,7 +16,7 @@ ATTACH INLINE
 6
 7
 
-CREATE SINK stream_sink(stream.id UINT64, stream.id UINT64)  TYPE File;
+CREATE SINK stream_sink(id UINT64, id UINT64)  TYPE File;
 
 SELECT id, id FROM stream INTO stream_sink
 ----

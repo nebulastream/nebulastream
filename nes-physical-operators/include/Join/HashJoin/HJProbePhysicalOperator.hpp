@@ -22,8 +22,8 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
 

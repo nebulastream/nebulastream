@@ -15,7 +15,9 @@
 #pragma once
 
 #include <unordered_map>
+
 #include <DataTypes/VarVal.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 
 namespace NES
 {
@@ -25,7 +27,7 @@ namespace NES
 class Record
 {
 public:
-    using RecordFieldIdentifier = std::string;
+    using RecordFieldIdentifier = QualifiedIdentifier;
     explicit Record() = default;
     explicit Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& recordFields);
     ~Record() = default;

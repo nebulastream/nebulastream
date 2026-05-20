@@ -23,6 +23,8 @@
 #include <vector>
 
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -74,7 +76,7 @@ struct ShowSinksStatementResult
 struct DropLogicalSourceStatementResult
 {
     LogicalSourceName dropped;
-    Schema schema;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
 };
 
 struct DropPhysicalSourceStatementResult
@@ -126,8 +128,8 @@ struct ModelInfo
 {
     std::string name;
     std::string path;
-    Schema inputSchema;
-    Schema outputSchema;
+    Schema<UnqualifiedUnboundField, Ordered> inputSchema;
+    Schema<UnqualifiedUnboundField, Ordered> outputSchema;
 };
 
 using CreateModelStatementResult = ModelInfo;
