@@ -89,7 +89,7 @@ jobs:
           docker_password: ${{ secrets.DOCKER_SECRET }}
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
-            ctest --test-dir build -j -LE "Systest|DockerCompose" --output-on-failure --output-junit build/junit-unit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+            ctest --test-dir build -j -LE "Systest|DockerCompose|coordinator-tests" --output-on-failure --output-junit build/junit-unit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
 
       - uses: ./.github/steps/run-in-container
         name: Run System Tests
