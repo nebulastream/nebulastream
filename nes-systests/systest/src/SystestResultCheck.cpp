@@ -730,6 +730,15 @@ private:
 
 QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
 {
+    /// A pull-based sink capture (e.g. ODBC) produces its result file lazily:
+    /// run its finalizer now -- the query has stopped, so reading the external
+    /// system back is guaranteed to observe every written row -- before the
+    /// result file is loaded. A no-op for every non-capture query.
+    if (runningQuery.systestQuery.finalizeResultFile)
+    {
+        runningQuery.systestQuery.finalizeResultFile();
+    }
+
     /// Get result for running query
     const auto queryResult = loadQueryResult(runningQuery.systestQuery);
     if (not queryResult.has_value())
