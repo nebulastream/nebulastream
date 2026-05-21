@@ -288,7 +288,8 @@ function(add_external_systest_profile)
         endif ()
 
         add_test(NAME ${_ctest_name}
-            COMMAND $<TARGET_FILE:systest> --testLocation ${_test_file})
+            COMMAND $<TARGET_FILE:systest> --testLocation ${_test_file}
+                    --workingDir ${CMAKE_BINARY_DIR}/nes-systests/working-dir-external/${_ctest_name})
         set_tests_properties(${_ctest_name} PROPERTIES LABELS "DockerCompose")
     endforeach ()
 endfunction()

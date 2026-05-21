@@ -275,7 +275,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
     {
         /// Read the configuration
         std::filesystem::remove_all(config.workingDir.getValue());
-        std::filesystem::create_directory(config.workingDir.getValue());
+        std::filesystem::create_directories(config.workingDir.getValue());
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
         Systest::SystestBinder binder{
