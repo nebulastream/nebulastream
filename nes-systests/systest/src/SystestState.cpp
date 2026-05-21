@@ -18,11 +18,13 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <expected> /// NOLINT(misc-include-cleaner)
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -47,6 +49,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <ExternalSystestDispatch.hpp>
 #include <SystestRunner.hpp>
 
 namespace
@@ -64,6 +67,10 @@ struct DiscoveryFilters
     std::unordered_set<std::string> excludedGroups;
     std::unordered_set<std::string> explicitlyExcludedGroups;
     std::unordered_set<std::string> disabledTestFiles;
+    /// Profile names the caller declares as satisfied (`--accept-requires`).
+    /// Tests with `# requires:` lines are kept only when every requirement
+    /// appears here.
+    std::unordered_set<std::string> acceptedRequires;
 };
 
 DiscoveryFilters createDiscoveryFilters(const NES::SystestConfiguration& config)
@@ -82,7 +89,21 @@ DiscoveryFilters createDiscoveryFilters(const NES::SystestConfiguration& config)
         .includedGroups = std::move(includedGroups),
         .excludedGroups = std::move(excludedGroups),
         .explicitlyExcludedGroups = std::move(explicitlyExcludedGroups),
-        .disabledTestFiles = toLowerSet(config.disabledTestFiles.getValues(), [](const auto& option) { return option.getValue(); })};
+        .disabledTestFiles = toLowerSet(config.disabledTestFiles.getValues(), [](const auto& option) { return option.getValue(); }),
+        .acceptedRequires = toLowerSet(config.acceptRequires.getValues(), [](const auto& option) { return option.getValue(); })};
+}
+
+std::optional<std::string> unsatisfiedRequirement(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
+{
+    if (!testFile.requirement)
+    {
+        return std::nullopt;
+    }
+    if (filters.acceptedRequires.contains(NES::toLowerCase(*testFile.requirement)))
+    {
+        return std::nullopt;
+    }
+    return testFile.requirement;
 }
 
 bool hasMatchingGroup(const NES::Systest::TestFile& testFile, const std::unordered_set<std::string>& groups)
@@ -142,6 +163,19 @@ std::optional<std::string> getDisabledTestFileSkipReason(const NES::Systest::Tes
         "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n", testFile.getLogFilePath());
 }
 
+std::optional<std::string> getUnsatisfiedRequiresSkipReason(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
+{
+    const auto missing = unsatisfiedRequirement(testFile, filters);
+    if (!missing)
+    {
+        return std::nullopt;
+    }
+    return fmt::format(
+        "Skipping file://{} because it requires external profile `{}` not listed in --accept-requires.\n",
+        testFile.getLogFilePath(),
+        *missing);
+}
+
 std::optional<std::string> getSkipReason(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
 {
     if (const auto skipReason = getIncludedGroupSkipReason(testFile, filters))
@@ -153,6 +187,10 @@ std::optional<std::string> getSkipReason(const NES::Systest::TestFile& testFile,
         return skipReason;
     }
     if (const auto skipReason = getDisabledTestFileSkipReason(testFile, filters))
+    {
+        return skipReason;
+    }
+    if (const auto skipReason = getUnsatisfiedRequiresSkipReason(testFile, filters))
     {
         return skipReason;
     }
@@ -251,10 +289,21 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
     return groups;
 }
 
+/// Forwarder so TestFile's constructors don't pull `ExternalSystestDispatch.hpp`
+/// into every translation unit that touches a TestFile member-initializer.
+/// The dispatcher's reader is the single source of truth for the
+/// `# requires:` grammar — see ExternalSystestDispatch.cpp.
+/// NOLINTNEXTLINE(misc-use-anonymous-namespace): TU-local helper; `static` is the historical convention used by sibling files in this directory.
+static std::optional<std::string> readRequirement(const TestFile& testfile)
+{
+    return NES::Systest::readRequirementFromHeader(testfile.file);
+}
+
 TestFile::TestFile(
     const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
     : file(weakly_canonical(file))
     , groups(readGroups(*this))
+    , requirement(readRequirement(*this))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog)) { };
 
@@ -266,6 +315,7 @@ TestFile::TestFile(
     : file(weakly_canonical(file))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this))
+    , requirement(readRequirement(*this))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog)) { };
 
@@ -345,6 +395,28 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         });
 
     return testMap;
+}
+
+std::map<std::string, std::vector<std::filesystem::path>> discoverExternalTests(const SystestConfiguration& config)
+{
+    std::map<std::string, std::vector<std::filesystem::path>> byProfile;
+    if (not config.directlySpecifiedTestFiles.getValue().empty())
+    {
+        return byProfile;
+    }
+    const auto testMap = discoverTestsRecursively(config.testsDiscoverDir.getValue(), config.testFileExtension.getValue());
+    for (const auto& [_, testFile] : testMap)
+    {
+        if (testFile.requirement)
+        {
+            byProfile[*testFile.requirement].push_back(testFile.file);
+        }
+    }
+    for (auto& [_, files] : byProfile)
+    {
+        std::ranges::sort(files);
+    }
+    return byProfile;
 }
 
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
@@ -427,27 +499,34 @@ std::string RunningQuery::getThroughput() const
     return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
 }
 
-std::string TestFile::getLogFilePath() const
+std::string toHostPath(const std::filesystem::path& path)
 {
-    if (const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT"))
+    const char* hostNebulaStreamRoot
+        = std::getenv("HOST_NEBULASTREAM_ROOT"); /// NOLINT(concurrency-mt-unsafe): runs in single-threaded test-startup code.
+    if (hostNebulaStreamRoot == nullptr)
     {
-        auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
-
-        auto filePathIter = file.begin();
-        if (const auto it = std::ranges::find(file, commonFolder); it != file.end())
-        {
-            filePathIter = std::next(it);
-        }
-
-        std::filesystem::path resultPath(hostNebulaStreamRoot);
-        for (; filePathIter != file.end(); ++filePathIter)
-        {
-            resultPath /= *filePathIter;
-        }
-
-        return resultPath.string();
+        return path.string();
     }
 
-    return std::filesystem::path(file);
+    const auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
+
+    auto filePathIter = path.begin();
+    if (const auto it = std::ranges::find(path, commonFolder); it != path.end())
+    {
+        filePathIter = std::next(it);
+    }
+
+    std::filesystem::path resultPath(hostNebulaStreamRoot);
+    for (; filePathIter != path.end(); ++filePathIter)
+    {
+        resultPath /= *filePathIter;
+    }
+
+    return resultPath.string();
+}
+
+std::string TestFile::getLogFilePath() const
+{
+    return toHostPath(file);
 }
 }

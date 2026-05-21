@@ -1,0 +1,33 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Profile manifest read by the in-binary external_systest dispatcher
+# (nes-systests/systest/src/ExternalSystestDispatch.cpp). A .test file
+# selects this profile via `# requires: <name>`; the dispatcher allocates
+# one free host port per endpoint, then exports:
+#   <ENDPOINT>_PORT                     — host port (for compose `${...}` substitution)
+#   <ENDPOINT>_CONTAINER_PORT           — container-side port from `container_port:` below
+#   NES_EXTERNAL_ENDPOINT_<ENDPOINT>    — "<host>:<port>" pair
+#   NES_EXTERNAL_PORT_<ENDPOINT>        — host port on its own
+#   NES_EXTERNAL_HOST                   — host address the test process reaches the
+#                                         container at (127.0.0.1 on the host,
+#                                         host.docker.internal in the dev-container).
+#
+# ODBC's `ATTACH`-time test loader (ODBCTestLoader.cpp) reads NES_EXTERNAL_HOST
+# and NES_EXTERNAL_PORT_DATABASE to rewrite the source descriptor's db_host /
+# db_port, then seeds the table from the `.test` file's ATTACH rows — the same
+# InlineData / FileData registrar mechanism the MQTT source uses.
+
+name: odbc
+endpoints:
+  - name: database
+    container_port: 5432

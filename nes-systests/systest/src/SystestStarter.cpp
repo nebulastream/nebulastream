@@ -36,6 +36,7 @@
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
+#include <ExternalSystestDispatch.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
@@ -77,6 +78,11 @@ void configureArgumentParser(ArgumentParser& program)
     program.add_argument("-g", "--groups").help("run a specific test groups").nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
+        .nargs(argparse::nargs_pattern::at_least_one);
+    program.add_argument("--accept-requires")
+        .help("external-dependency profile(s) the caller has already brought up; satisfies matching `# requires:` "
+              "headers. The in-binary external_systest dispatcher sets this for itself before running the test in "
+              "the same process. Pass this from the CLI only if you have started the profile's compose stack out-of-band.")
         .nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("--disableConfigFile")
         .default_value(defaultDisableConfigPath)
@@ -323,6 +329,7 @@ void applyGroupSelection(const ArgumentParser& program, NES::SystestConfiguratio
         config.excludedGroupsProvidedOnCommandLine = true;
     }
     addSequenceOptionValues(program, "--exclude-groups", config.excludeGroups);
+    addSequenceOptionValues(program, "--accept-requires", config.acceptRequires);
 }
 
 void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfiguration& config)
@@ -465,6 +472,23 @@ void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfigu
     if (program.is_used("--list"))
     {
         std::cout << NES::Systest::loadTestFileMap(config);
+        const auto externalTests = NES::Systest::discoverExternalTests(config);
+        if (not externalTests.empty())
+        {
+            std::cout << "\nExternal-dependency Test Files (require an external profile to be brought up):\n";
+            for (const auto& [profile, files] : externalTests)
+            {
+                std::cout << "  requires `" << profile << "`:\n";
+                for (const auto& file : files)
+                {
+                    std::cout << "    file://" << file.c_str() << "\n";
+                }
+            }
+            std::cout << "\nRun these via `ctest -R <profile>-<test>-systest-external` (the\n"
+                         "`add_external_systest_profile()` macro in CMakeLists registers one entry per file),\n"
+                         "or invoke `systest --testLocation <file>` directly to let the in-binary dispatcher\n"
+                         "bring up the profile's compose stack on the fly.\n";
+        }
         std::exit(0); ///NOLINT(concurrency-mt-unsafe)
     }
 
@@ -504,6 +528,16 @@ int main(int argc, const char** argv)
     NES::Thread::initializeThread(NES::Host("systest"), "main");
 
     auto config = parseConfiguration(argc, argv);
+
+    /// Pre-executor hook: if this run is a single .test file declaring
+    /// `# requires:` and the caller hasn't already satisfied it via
+    /// --accept-requires, bring up the broker docker stack and mark the
+    /// requirement satisfied. The test then runs *in this process* (so
+    /// CLion's debug button hits breakpoints normally — same UX as a
+    /// non-external systest). The returned RAII guard tears the stack down
+    /// when main() exits.
+    const auto externalGuard = NES::Systest::maybeDispatchExternalSystest(config);
+
     NES::SystestExecutor executor(std::move(config));
     const auto result = executor.executeSystests();
 

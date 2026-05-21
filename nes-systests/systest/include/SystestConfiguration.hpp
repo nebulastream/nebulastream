@@ -63,6 +63,12 @@ public:
     SequenceOption<StringOption> testGroups = {"test_groups", "test groups to run"};
     SequenceOption<StringOption> excludeGroups = {"exclude_groups", "test groups to exclude"};
     SequenceOption<StringOption> disabledTestFiles = {"disabled_test_files", "test files to disable"};
+    /// External-dependency profiles the caller has already brought up (e.g. an
+    /// MQTT broker via docker-compose). Tests declaring `# requires: <profile>`
+    /// are kept only when every requirement is listed here; the external bats
+    /// runner injects this via `--accept-requires <profile>`.
+    SequenceOption<StringOption> acceptRequires
+        = {"accept_requires", "external-dependency profiles currently satisfied (matched against `# requires:` headers)"};
     StringOption workerConfig = {"worker_config", "", "used worker config file (.yaml)"};
     StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
     BoolOption remoteWorker = {"remote_worker", "false", "use remote worker"};

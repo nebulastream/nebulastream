@@ -1,0 +1,20 @@
+# name: MQTTSource/MQTT.test
+# description: Reads ATTACH-declared rows from an MQTT broker. The MQTT InlineData registrar spawns a publisher thread that waits for the source's presence announcement on <topic>/_nes_presence (a generic source feature, opt-in via the `presencetopic` knob), then publishes the rows and disconnects. The source EOS-es via heartbeat-absence (flushIntervalMs × maxFlushRetries) once the publisher has gone away.
+# requires: mqtt
+CREATE LOGICAL SOURCE mqtt_source(id INT32, value INT32, timestamp UINT64);
+
+CREATE PHYSICAL SOURCE FOR mqtt_source TYPE MQTT SET("JSON" AS INPUT_FORMATTER.`TYPE`, "mqtt_broker" AS `SOURCE`.serveruri, "test/data" AS `SOURCE`.topic, "100" AS `SOURCE`.flushintervalms);
+ATTACH INLINE
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+{"ID": 1, "VALUE": 2, "TIMESTAMP": 3}
+
+SELECT id, value, timestamp FROM mqtt_source INTO File();
+----
+1 2 3
+1 2 3
+1 2 3
+1 2 3
+1 2 3

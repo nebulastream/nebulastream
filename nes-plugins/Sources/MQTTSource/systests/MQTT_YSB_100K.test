@@ -1,0 +1,13 @@
+# name: MQTTSource/MQTT_YSB_100K.test
+# description: Reads the ysb1k 100K JSON fixture (1114 rows) through an MQTT broker. The FileData registrar streams the JSONL line-by-line through a publisher thread that waits for the source's presence announcement on <topic>/_nes_presence before sending. The source EOS-es via heartbeat-absence after the publisher disconnects.
+# requires: mqtt
+CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
+
+CREATE PHYSICAL SOURCE FOR ysb1k TYPE MQTT SET("JSON" AS INPUT_FORMATTER.`TYPE`, "mqtt_broker" AS `SOURCE`.serveruri, "test/ysb1k" AS `SOURCE`.topic, "100" AS `SOURCE`.flushintervalms, "30" AS `SOURCE`.maxflushretries);
+ATTACH FILE small/ysb/ysb1k_100K.jsonl
+
+CREATE SINK ysb1kChecksum(ysb1k.user_id UINT64, ysb1k.page_id UINT64, ysb1k.campaign_id UINT64, ysb1k.ad_type UINT64, ysb1k.event_type UINT64, ysb1k.current_ms UINT64, ysb1k.ip UINT64, ysb1k.d1 UINT64, ysb1k.d2 UINT64, ysb1k.d3 UINT32, ysb1k.d4 UINT16) TYPE Checksum;
+
+SELECT * FROM ysb1k INTO ysb1kChecksum;
+----
+1114 5155724

@@ -1,0 +1,76 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# MQTT profile for external_systest. Standalone — no base compose file,
+# the broker is the only service. Brought up + torn down directly by the
+# in-binary dispatcher in ExternalSystestDispatch.cpp; the systest binary
+# itself runs the test in-process, connecting to the broker over a host
+# port (so CLion's debugger can follow the test execution).
+#
+# Env vars expanded by docker compose at up-time (exported by the
+# dispatcher before spawning `docker compose`):
+#   PROFILE_VOLUME — name of a docker-managed volume that the dispatcher
+#                    populated with this directory's contents (mosquitto.conf
+#                    and any aux files). Mounted read-only at /profile inside
+#                    the broker container. Using a volume rather than a host
+#                    bind mount sidesteps the dev-container-vs-host path
+#                    mismatch that would otherwise hit when systest runs
+#                    inside the CLion docker toolchain.
+#   BROKER_PORT    — random free port on the host the dispatcher allocated
+#                    for the `broker` endpoint declared in profile.yaml. The
+#                    dispatcher also sets BROKER_CONTAINER_PORT to the
+#                    `container_port:` value from profile.yaml — the snippet
+#                    references both, keeping profile.yaml as the single
+#                    source of truth for which port the broker listens on
+#                    inside its container. Finally it sets
+#                    NES_EXTERNAL_ENDPOINT_BROKER=<host>:${BROKER_PORT} so the
+#                    MQTT registrars rewrite the source's serveruri to that
+#                    endpoint.
+
+services:
+  mqtt_broker:
+    image: eclipse-mosquitto:2.0
+    command: ["/usr/sbin/mosquitto", "-c", "/profile/mosquitto.conf"]
+    volumes:
+      - profile:/profile:ro
+    # The port-publish intentionally binds to all interfaces (0.0.0.0). When
+    # the systest binary runs inside the CLion dev-container toolchain it
+    # reaches the broker via `host.docker.internal`, which on Linux resolves
+    # to the host's docker bridge gateway IP — that is a non-loopback host
+    # interface. A `127.0.0.1:${BROKER_PORT}:...` bind would block the dev
+    # container from reaching the broker. The exposure window is the test's
+    # runtime (seconds) on a developer machine; acceptable trade-off.
+    #
+    # The container-side port comes from profile.yaml via the dispatcher's
+    # ${BROKER_CONTAINER_PORT} export, so changing the broker's listen port
+    # only requires touching profile.yaml.
+    ports:
+      - "${BROKER_PORT}:${BROKER_CONTAINER_PORT}"
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "healthcheck", "-m", "test", "-q", "1"]
+      # Mosquitto comes up in <1s on a local machine. start_interval (poll
+      # rate during start_period) is what determines when --wait unblocks;
+      # tightening it from the 5s default saves most of the compose-up
+      # latency we used to see.
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+      start_interval: 200ms
+
+# Logical volume name `profile` is bound to the externally-created docker
+# volume the dispatcher staged. Compose's schema requires the volumes key
+# to be a literal identifier, so the variable substitution lives on `name:`.
+volumes:
+  profile:
+    external: true
+    name: ${PROFILE_VOLUME}

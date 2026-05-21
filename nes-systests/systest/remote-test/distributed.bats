@@ -12,90 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+source "$NES_BATS_LIB"
+
 setup_file() {
-  # Clean up leaked containers and networks from previous crashed runs
-  for net in $(docker network ls --filter label=nes-test=systest-remote -q 2>/dev/null); do
-    docker network inspect "$net" -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
-  done
-  docker network prune -f --filter label=nes-test=systest-remote 2>/dev/null || true
+  nes_cleanup_leaked_resources systest-remote
 
-  # Validate SYSTEST environment variable once for all tests
-  if [ -z "$SYSTEST" ]; then
-    echo "ERROR: SYSTEST environment variable must be set" >&2
-    echo "Usage: SYSTEST=/path/to/nebucli bats nebucli.bats" >&2
-    exit 1
-  fi
+  nes_require_env NES_SYSTEST
+  nes_require_env NES_WORKER
+  nes_require_env NES_DIR
+  nes_require_env NES_TEST_TMP_DIR
+  nes_require_env DATADIR
+  nes_require_env NES_RUNTIME_BASE_IMAGE
+  nes_require_executable "$NES_SYSTEST"
+  nes_require_executable "$NES_WORKER"
 
-  if [ -z "$NEBULASTREAM" ]; then
-    echo "ERROR: NEBULASTREAM environment variable must be set" >&2
-    echo "Usage: NEBULASTREAM=/path/to/nes-single-node-worker bats nebucli.bats" >&2
-    exit 1
-  fi
+  nes_build_runtime_image WORKER_IMAGE nes-worker-systest \
+    "$NES_WORKER" nes-single-node-worker
+  nes_build_app_image SYSTEST_IMAGE nes-systest-image \
+    "$NES_SYSTEST" systest
 
-  if [ -z "$NES_DIR" ]; then
-    echo "ERROR: NES_DIR environment variable must be set" >&2
-    echo "Usage: NES_DIR=/path/to/nebulastream" >&2
-    exit 1
-  fi
-
-  if [ -z "$NES_TEST_TMP_DIR" ]; then
-    echo "ERROR: NES_TEST_TMP_DIR environment variable must be set" >&2
-    echo "Usage: NES_TEST_TMP_DIR=/path/to/build/test-tmp" >&2
-    exit 1
-  fi
-
-  if [ -z "$DATADIR" ]; then
-    echo "ERROR: DATADIR environment variable must be set" >&2
-    echo "Usage: DATADIR=/path/to/testdata bats systest_remote_test.bats" >&2
-    exit 1
-  fi
-
-  if [ ! -f "$SYSTEST" ]; then
-    echo "ERROR: SYSTEST file does not exist: $SYSTEST" >&2
-    exit 1
-  fi
-
-  if [ ! -f "$NEBULASTREAM" ]; then
-    echo "ERROR: NEBULASTREAM file does not exist: $NEBULASTREAM" >&2
-    exit 1
-  fi
-
-  if [ ! -x "$SYSTEST" ]; then
-    echo "ERROR: SYSTEST file is not executable: $SYSTEST" >&2
-    exit 1
-  fi
-
-  if [ ! -x "$NEBULASTREAM" ]; then
-    echo "ERROR: NEBULASTREAM file is not executable: $NEBULASTREAM" >&2
-    exit 1
-  fi
-
-  if [ -z "$NES_RUNTIME_BASE_IMAGE" ]; then
-    echo "ERROR: NES_RUNTIME_BASE_IMAGE environment variable must be set" >&2
-    exit 1
-  fi
-
-  # Build Docker images with unique tags to avoid collisions when test suites run in parallel
-  local suffix=$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')
-  export WORKER_IMAGE="nes-worker-systest-${suffix}"
-  # Use minimal build context with only the required binary to avoid sending
-  # the entire build directory to the Docker daemon on each build.
-  local worker_ctx=$(mktemp -d)
-  cp $(realpath $NEBULASTREAM) "$worker_ctx/nes-single-node-worker"
-  docker build --load -t $WORKER_IMAGE -f - "$worker_ctx" <<EOF
-    FROM $NES_RUNTIME_BASE_IMAGE
-    COPY nes-single-node-worker /usr/bin
-    ENTRYPOINT ["nes-single-node-worker"]
-EOF
-  rm -rf "$worker_ctx"
-  export SYSTEST_IMAGE="nes-systest-image-${suffix}"
-  local systest_ctx=$(mktemp -d)
-  cp $(realpath $SYSTEST) "$systest_ctx/systest"
-  docker build --load -t $SYSTEST_IMAGE -f - "$systest_ctx" <<EOF
-    FROM $NES_RUNTIME_BASE_IMAGE
-    COPY systest /usr/bin
-EOF
-  rm -rf "$systest_ctx"
   export CONTAINER_WORKDIR="/$(cat /proc/sys/kernel/random/uuid)"
   # Will contain the test data
   export TESTDATA_VOLUME=$(docker volume create)
@@ -121,8 +56,6 @@ EOF
     | docker exec -i $volume_host_container tar -xf - -C /config/nes-systests
   docker stop -t0 $volume_host_container
 
-  echo "# Using SYSTEST: $SYSTEST" >&3
-  echo "# Using NEBULASTREAM: $NEBULASTREAM" >&3
   echo "# Using NES_DIR: $NES_DIR" >&3
   echo "# Using WORKER_IMAGE: $WORKER_IMAGE" >&3
   echo "# Using SYSTEST_IMAGE: $SYSTEST_IMAGE" >&3
@@ -132,9 +65,7 @@ EOF
 }
 
 teardown_file() {
-  # Clean up any global resources if needed
   echo "# Test suite completed" >&3
-
   docker volume rm $TESTDATA_VOLUME || true
   docker volume rm $TESTCONFIG_VOLUME || true
   docker rmi $WORKER_IMAGE || true
@@ -197,7 +128,7 @@ function setup_distributed() {
   return $exit_code
 }
 
-DOCKER_SYSTEST() {
+docker_systest() {
   docker compose exec systest systest --log-path $CONTAINER_WORKDIR/systest.log --data /data  --workingDir $CONTAINER_WORKDIR/systest-workdir "$@" >&3
 }
 
@@ -210,13 +141,13 @@ fi
 
 @test "two node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
-  run DOCKER_SYSTEST -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
+  run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
 @test "8 node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
-  run DOCKER_SYSTEST -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
+  run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
   [ "$status" -eq 0 ]
 }
 
@@ -225,6 +156,6 @@ fi
     skip "Large tests disabled (ENABLE_LARGE_TESTS=$ENABLE_LARGE_TESTS)"
   fi
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
-  run DOCKER_SYSTEST -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
+  run docker_systest -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
   [ "$status" -eq 0 ]
 }

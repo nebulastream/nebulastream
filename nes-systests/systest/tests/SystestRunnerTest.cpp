@@ -96,6 +96,7 @@ NES::Systest::SystestQuery makeQuery(
         .planInfoOrException = planInfoOrException,
         .expectedResultsOrExpectedError = std::move(expected),
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
+        .finalizeResultFile = {},
         .configurationOverride = NES::Systest::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
         .runAfter = std::move(runAfter)};

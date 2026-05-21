@@ -1,0 +1,26 @@
+# name: MQTTSource/MQTTRuntime_PublisherDisconnect.test
+# description: The InlineData provider's test publisher publishes a partial prefix of the ATTACH content and then disconnects mid-stream — verifying that the source delivers the partial result and EOSes via heartbeat-absence rather than hanging or raising an error. Engineered with the test publisher's `_test_disconnect_after_n_tuples` knob: ATTACH has five rows, the publisher only sends the first three, then disconnects. flushintervalms × maxflushretries (100 × 3 = 300ms) bounds the heartbeat-EOS so the test completes promptly. This is a positive result-shape test, not an ERROR test — the source is supposed to handle this case cleanly.
+# requires: mqtt
+# groups: [Negative, Runtime]
+
+
+CREATE LOGICAL SOURCE mqtt_publisher_disconnect(id INT32, value INT32, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR mqtt_publisher_disconnect TYPE MQTT SET(
+    "JSON" AS INPUT_FORMATTER.`TYPE`,
+    "mqtt_broker" AS `SOURCE`.serveruri,
+    "test/runtime/publisher_disconnect" AS `SOURCE`.topic,
+    "100" AS `SOURCE`.flushintervalms,
+    "3" AS `SOURCE`.maxflushretries,
+    "3" AS `SOURCE`._test_disconnect_after_n_tuples);
+ATTACH INLINE
+{"ID": 1, "VALUE": 10, "TIMESTAMP": 100}
+{"ID": 2, "VALUE": 20, "TIMESTAMP": 200}
+{"ID": 3, "VALUE": 30, "TIMESTAMP": 300}
+{"ID": 4, "VALUE": 40, "TIMESTAMP": 400}
+{"ID": 5, "VALUE": 50, "TIMESTAMP": 500}
+
+SELECT id, value, timestamp FROM mqtt_publisher_disconnect INTO File();
+----
+1 10 100
+2 20 200
+3 30 300

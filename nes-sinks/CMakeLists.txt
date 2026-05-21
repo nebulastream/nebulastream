@@ -29,4 +29,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sinks REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(Sink SinkValidation)
+create_registries_for_component(Sink SinkValidation SinkCapture)

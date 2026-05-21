@@ -20,9 +20,11 @@
 #include <cstdlib>
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <initializer_list>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -198,6 +200,12 @@ struct SystestQuery
     std::expected<PlanInfo, Exception> planInfoOrException;
     std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
+    /// Invoked once by the result check, after the query has stopped and before
+    /// its result file is read. A pull-based sink capture (ODBC) sets this to a
+    /// closure that reads the external system back into the result file; the
+    /// query being Stopped guarantees the read observes every written row.
+    /// Empty for every other query. See SinkCaptureRegistryArguments::resultFinalizer.
+    std::function<void()> finalizeResultFile;
     ConfigurationOverride configurationOverride;
     std::optional<DistributedLogicalPlan> differentialQueryPlan;
     std::optional<std::pair<TestName, SystestQueryId>> runAfter;
@@ -234,6 +242,11 @@ struct TestFile
     std::filesystem::path file;
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
+    /// External-dependency profile declared via `# requires: <profile>` in
+    /// the header. Exactly one requires-line is allowed per test; multiple
+    /// lines are a parse error. A test with a set `requirement` is excluded
+    /// from discovery unless `--accept-requires <profile>` matches.
+    std::optional<std::string> requirement;
     std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
@@ -247,6 +260,24 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
 /// load test file map objects from files defined in systest config
 TestFileMap loadTestFileMap(const SystestConfiguration& config);
+
+/// Translate an in-container path to its host equivalent using
+/// `HOST_NEBULASTREAM_ROOT`. The env var holds the host's checkout path
+/// (e.g. `/home/rudi/dima/nebulastream-public`); the in-container view of
+/// the same checkout lives at a different prefix (e.g.
+/// `/tmp/nebulastream-public/...`). We find the common basename in
+/// `path` and rebase everything from there onto the env var's value.
+/// Used so that `file://...` links printed to stdout are clickable from
+/// the host (CLion build window, etc.). Returns `path` unchanged when the
+/// env var is not set.
+std::string toHostPath(const std::filesystem::path& path);
+
+/// External-dependency tests are filtered out of normal discovery (their
+/// `# requires:` directive isn't satisfied). This helper returns them
+/// grouped by profile name so `--list` can surface them in a separate
+/// section — otherwise they would silently disappear, which makes
+/// "where is my new MQTT test?" a confusing question.
+std::map<std::string, std::vector<std::filesystem::path>> discoverExternalTests(const SystestConfiguration& config);
 
 }
 

@@ -154,6 +154,34 @@ following settings:
 This configuration assumes ccache is using the default directory of `$HOME/.cache/ccache`. You can create additional
 docker-based toolchains if you plan to experiment with different sanitizer.
 
+#### Docker-in-container toolchain options
+
+Tests that spawn their own docker stacks (notably `external_systest` for
+plugins that talk to MQTT brokers, databases, etc.) need the dev container
+to (a) reach the host docker daemon, and (b) reach ports the daemon publishes
+on the host. After `install-local-docker-environment.sh` has been run, the
+image already has a `docker` group with the host's GID baked in, so the
+CLion toolchain just needs:
+
+```
+-v /var/run/docker.sock:/var/run/docker.sock --group-add docker --add-host=host.docker.internal:host-gateway
+```
+
+- `-v /var/run/docker.sock:/var/run/docker.sock` + `--group-add docker`
+  expose the daemon socket so the in-process external_systest dispatcher can
+  drive `docker compose`.
+- `--add-host=host.docker.internal:host-gateway` makes `host.docker.internal`
+  resolvable inside the dev container, which is how the in-process test
+  reaches the broker port that the host daemon publishes. Without this
+  flag the dispatcher fails fast post-up with a targeted diagnostic.
+
+Adapt the socket path for rootless setups (e.g. `-v $XDG_RUNTIME_DIR/docker.sock:/var/run/docker.sock`).
+`install-local-docker-environment.sh` prints the exact line for the local
+machine when it finishes. On macOS the script forces rootless mode, no
+`--group-add` is needed (the container user is `root`), and Docker Desktop
+sets `host.docker.internal` up automatically (the `--add-host` flag is
+harmless but redundant).
+
 Lastly, you need to create a new CMake profile which uses the newly created docker-based toolchain:
 
 ![CLion-CMake-Settings](../resources/SetupDockerCmakeClion.png)

@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -51,7 +52,9 @@
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDataProvider.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/SchemaFormatter.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -197,6 +200,10 @@ public:
         this->additionalSourceThreads = std::move(additionalSourceThreads);
     }
 
+    void setCaptureResultFile(std::filesystem::path resultFile) { captureResultFile = std::move(resultFile); }
+
+    void setResultFinalizer(std::function<void()> resultFinalizer) { this->resultFinalizer = std::move(resultFinalizer); }
+
     void setConfigurationOverrides(std::vector<ConfigurationOverride> overrides) { configurationOverrides = std::move(overrides); }
 
     void setQueryDefinition(std::string queryDefinition) { this->queryDefinition = std::move(queryDefinition); }
@@ -260,6 +267,17 @@ public:
         else
         {
             sinkOutputSchema = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).getOutputSchema();
+        }
+
+        /// A sink-capture query has no File sink to emit the result-file schema
+        /// header -- the capture subscriber appends only the drained body. Write
+        /// the header now, the first point the inferred output schema exists, so
+        /// the body lines up under an identically-formatted header.
+        if (captureResultFile.has_value())
+        {
+            create_directories(captureResultFile->parent_path());
+            std::ofstream headerOut(captureResultFile.value(), std::ios::trunc);
+            headerOut << SchemaFormatter{std::make_shared<const Schema>(sinkOutputSchema.value())}.getFormattedSchema();
         }
     }
 
@@ -343,6 +361,7 @@ public:
                  .planInfoOrException = planInfoTemplate,
                  .expectedResultsOrExpectedError = expectedResultsValue,
                  .additionalSourceThreads = additionalSourceThreads.value(),
+                 .finalizeResultFile = resultFinalizer,
                  .configurationOverride = std::move(configurationOverride),
                  .differentialQueryPlan = optimizedDifferentialQueryPlan,
                  .runAfter = runAfter});
@@ -366,6 +385,14 @@ private:
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
+    /// Result-file path of a sink-capture query; set by setInlineSink when the
+    /// query writes `INTO <Type>(...)` for an external sink under test. When
+    /// present, setOptimizedPlan writes the schema header there.
+    std::optional<std::filesystem::path> captureResultFile;
+    /// Result finalizer of a pull-based sink-capture query (ODBC); set by
+    /// setInlineSink. Copied into every built SystestQuery so the result check
+    /// can run it once the query has stopped. Empty for non-capture queries.
+    std::function<void()> resultFinalizer;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
     std::optional<DistributedLogicalPlan> optimizedDifferentialQueryPlan;
@@ -728,10 +755,12 @@ struct SystestBinder::Impl
     }
 
     LogicalOperator setInlineSink(
+        SystestQueryBuilder& currentBuilder,
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
         const SystestQueryId& currentQueryNumberInTest,
-        const TypedLogicalOperator<InlineSinkLogicalOperator>& sinkOperator) const
+        const TypedLogicalOperator<InlineSinkLogicalOperator>& sinkOperator,
+        const std::shared_ptr<std::vector<std::jthread>>& sourceThreads) const
     {
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
@@ -752,6 +781,27 @@ struct SystestBinder::Impl
         if (toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM")
         {
             formatConfig["quote_strings"] = "true";
+        }
+
+        /// An external sink under test (e.g. MQTT): route the config through its
+        /// capture registrar, which rewrites the connection knobs to the
+        /// dispatcher endpoint and attaches a subscriber -- alongside the source
+        /// publisher threads in `sourceThreads` -- that drains the external
+        /// system into resultFile as the query runs. setOptimizedPlan writes the
+        /// schema header there once schema inference has run.
+        if (SinkDataProvider::hasCaptureFor(sinkOperator->getSinkType()))
+        {
+            /// A pull-based capture (ODBC) fills `resultFinalizer` with a closure
+            /// the result check runs once the query has stopped; a push-based one
+            /// (MQTT) leaves it empty. See SinkCaptureRegistryArguments.
+            auto resultFinalizer = std::make_shared<std::function<void()>>();
+            sinkConfig = SinkDataProvider::provideSinkCapture(
+                sinkOperator->getSinkType(), std::move(sinkConfig), resultFile, sourceThreads, resultFinalizer);
+            currentBuilder.setCaptureResultFile(resultFile);
+            if (*resultFinalizer)
+            {
+                currentBuilder.setResultFinalizer(std::move(*resultFinalizer));
+            }
         }
 
         auto sinkDescriptor = sltSinkProvider.getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig, formatConfig);
@@ -796,14 +846,16 @@ struct SystestBinder::Impl
         SystestQueryBuilder& currentBuilder,
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
-        const SystestQueryId& currentQueryNumberInTest) const
+        const SystestQueryId& currentQueryNumberInTest,
+        const std::shared_ptr<std::vector<std::jthread>>& sourceThreads) const
     {
         std::vector<LogicalOperator> newRoots;
         for (const auto& rootOperator : plan.getRootOperators())
         {
             if (auto inlineSink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); inlineSink.has_value())
             {
-                newRoots.emplace_back(setInlineSink(testFileName, sltSinkProvider, currentQueryNumberInTest, inlineSink.value()));
+                newRoots.emplace_back(setInlineSink(
+                    currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest, inlineSink.value(), sourceThreads));
             }
             else if (auto namedSink = rootOperator.tryGetAs<SinkLogicalOperator>(); namedSink.has_value())
             {
@@ -824,6 +876,7 @@ struct SystestBinder::Impl
         const std::string_view& testFileName,
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
         SLTSinkFactory& sltSinkProvider,
+        const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
         const SystestQueryId& currentQueryNumberInTest,
         const std::vector<ConfigurationOverride>& configOverrides,
@@ -839,7 +892,7 @@ struct SystestBinder::Impl
         try
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-            setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest, sourceThreads);
             plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
             setInlineSources(plan);
             currentBuilder.setBoundPlan(std::move(plan));
@@ -876,6 +929,7 @@ struct SystestBinder::Impl
         const std::string_view& testFileName,
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
         SLTSinkFactory& sltSinkProvider,
+        const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         std::string leftQuery,
         std::string rightQuery,
         const SystestQueryId currentQueryNumberInTest,
@@ -893,8 +947,8 @@ struct SystestBinder::Impl
             auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(leftQuery);
             auto rightPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rightQuery);
 
-            setSinks(leftPlan, currentTest, testFileName, sltSinkProvider, currentQueryNumberInTest);
-            setSinks(rightPlan, currentTest, differentialTestResultFileName, sltSinkProvider, currentQueryNumberInTest);
+            setSinks(leftPlan, currentTest, testFileName, sltSinkProvider, currentQueryNumberInTest, sourceThreads);
+            setSinks(rightPlan, currentTest, differentialTestResultFileName, sltSinkProvider, currentQueryNumberInTest, sourceThreads);
 
             setInlineSources(leftPlan);
             setInlineSources(rightPlan);
@@ -958,7 +1012,14 @@ struct SystestBinder::Impl
                 auto mergedConfigOverrides = mergeConfigurations(configOverrides, globalConfigOverrides);
                 lastMergedConfigOverrides = mergedConfigOverrides;
                 queryCallback(
-                    testFileName, plans, sltSinkProvider, query, currentQueryNumberInTest, mergedConfigOverrides, sequentialExecution);
+                    testFileName,
+                    plans,
+                    sltSinkProvider,
+                    sourceThreads,
+                    query,
+                    currentQueryNumberInTest,
+                    mergedConfigOverrides,
+                    sequentialExecution);
                 configOverrides = {ConfigurationOverride{}};
             });
 
@@ -1005,6 +1066,7 @@ struct SystestBinder::Impl
                     testFileName,
                     plans,
                     sltSinkProvider,
+                    sourceThreads,
                     std::move(leftQuery),
                     std::move(rightQuery),
                     std::move(currentQueryNumberInTest),

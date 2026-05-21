@@ -171,6 +171,160 @@ FROM input
 INTO output1; 
 ```
 
+## External-Dependency Tests
+
+Some sources, sinks, and plugins need to talk to real external systems
+(MQTT brokers, databases, etc.) to be exercised meaningfully. Those tests
+declare an external **profile** in their header and live in the plugin's
+own directory tree. The systest binary brings the profile's docker-compose
+stack up before the test runs and tears it down on exit; the test itself
+still runs in-process, so the CLion debug button hits breakpoints exactly
+as it does for any other systest.
+
+### When to use `# requires:`
+
+If a test cannot pass without an external system process running, declare
+the profile it needs in the test header:
+
+```
+# name: MQTTSource/MQTT.test
+# description: …
+# requires: mqtt
+```
+
+Exactly one `# requires:` directive is allowed per test (`mqtt`, `postgres`,
+…). A test with this directive is excluded from broad discovery
+(`-g <group>`, directory runs) unless the caller has already brought up the
+profile and passes `--accept-requires <profile>`. Direct
+`--testLocation <file>` invocations let the dispatcher bring the profile
+up itself — see below.
+
+### Co-located layout
+
+Each plugin keeps its `.test` files and its profile next to the source
+code. The MQTT plugin is the reference layout:
+
+```
+nes-plugins/Sources/MQTTSource/
+├── CMakeLists.txt
+├── MQTTSource.cpp
+├── systest-profile/
+│   ├── profile.yaml          # endpoints + profile name
+│   ├── compose.snippet.yaml  # docker compose stack the dispatcher drives
+│   └── mosquitto.conf        # any aux config the snippet references
+└── systests/
+    ├── MQTT.test             # `# requires: mqtt`
+    ├── MQTT_YSB_100K.test
+    └── …
+```
+
+The dispatcher locates the profile by convention (`<plugin>/systest-profile`
+relative to the `.test` file). A non-standard layout can override this
+with a `# profile-dir: <relative or absolute path>` directive in the test
+header.
+
+### `profile.yaml`
+
+Declares the profile name (must match the `.test` files' `# requires:`
+value) and the list of named endpoints the dispatcher allocates host
+ports for. Example:
+
+```yaml
+name: mqtt
+endpoints:
+  - name: broker
+    container_port: 1883
+```
+
+Endpoint names and the profile name must match `[A-Za-z][A-Za-z0-9_]*` —
+they become env-var suffixes. `container_port` is the port the service
+listens on inside its container; the dispatcher exports it as
+`<NAME>_CONTAINER_PORT` so `compose.snippet.yaml` can reference it without
+duplicating the number.
+
+### Generated env vars
+
+When dispatch fires, the following are exported into the compose stack's
+environment and into the in-process test:
+
+| Variable | Meaning |
+| --- | --- |
+| `PROFILE_VOLUME` | Name of a docker-managed volume populated with `systest-profile/*` (mounted into the broker container at `/profile`). |
+| `NES_EXTERNAL_HOST` | Host the in-process test reaches the profile's services at — `127.0.0.1` on the host, `host.docker.internal` inside the dev-container toolchain. |
+| `<NAME>_PORT` | Free host port the dispatcher allocated for the `<NAME>` endpoint (use on the host side of `compose.snippet.yaml`'s `ports:` mapping). |
+| `<NAME>_CONTAINER_PORT` | Container-side port from `profile.yaml`. |
+| `NES_EXTERNAL_ENDPOINT_<NAME>` | Pre-joined `<NES_EXTERNAL_HOST>:<<NAME>_PORT>` pair. Plugin registrars read this and rewrite their source's connection URI. |
+
+### `compose.snippet.yaml`
+
+A standalone docker-compose file: services, volumes, etc. The dispatcher
+spawns it with `docker compose -p nes-systest-<profile>-<pid> -f
+<snippet> up -d --wait` and tears it down on exit. The profile dir is
+mounted into the broker container at `/profile`, populated from a docker
+volume the dispatcher stages — this sidesteps the host-vs-dev-container
+path mismatch a bind mount would hit. A minimal MQTT snippet:
+
+```yaml
+services:
+  mqtt_broker:
+    image: eclipse-mosquitto:2.0
+    command: ["/usr/sbin/mosquitto", "-c", "/profile/mosquitto.conf"]
+    volumes:
+      - profile:/profile:ro
+    ports:
+      - "${BROKER_PORT}:${BROKER_CONTAINER_PORT}"
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "healthcheck", "-m", "ok", "-q", "1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+      start_interval: 200ms
+volumes:
+  profile:
+    external: true
+    name: ${PROFILE_VOLUME}
+```
+
+### Registering with CTest
+
+Add the macro to the plugin's `CMakeLists.txt` once per profile dir:
+
+```cmake
+add_external_systest_profile(
+    PROFILE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/systest-profile
+)
+```
+
+The macro globs every `*.test` file under `<PROFILE_DIR>/../systests` (or
+the optional `TEST_DIR` argument), validates each header declares the
+matching `# requires: <profile-name>`, and registers one CTest entry per
+file: `<profile>-<test-stem>-systest-external`. Adding a new test file
+under `systests/` is automatically picked up by CI; nothing else needs
+editing.
+
+The macro is gated on `ENABLE_DOCKER_TESTS` and is a no-op otherwise, so
+the call needs no `if()` guard.
+
+### Three ways to run
+
+| How | What happens |
+| --- | --- |
+| CLion gutter / `systest --testLocation <file>` | The dispatcher detects `# requires:`, brings up the profile's compose stack on a free host port, runs the test in-process, and tears the stack down. CLion's debug button hits source breakpoints normally. |
+| `ctest -R '<profile>-.*-systest-external'` | Same path, driven by the macro-generated CTest entries. This is what CI runs. |
+| Broad discovery (`-g <group>`, directory runs) | External tests are **filtered out** by default — they need their profile to be brought up first. Use `systest --list <dir>` to see them surfaced separately, or pass `--accept-requires <profile>` if you have already started the compose stack yourself. |
+
+### Dev-container networking
+
+When the systest binary runs inside the CLion docker toolchain, it
+reaches the broker via `host.docker.internal` rather than `127.0.0.1`.
+This requires the dev container to be started with
+`--add-host=host.docker.internal:host-gateway`. The
+`install-local-docker-environment.sh` script prints the exact line and
+the `.claude/skills/nes-build/in-docker.sh` helper already includes the
+flag. The dispatcher's post-up reachability probe fails fast with a
+targeted diagnostic if the flag is missing.
+
 ## Run tests
 
 ### Via Plugin

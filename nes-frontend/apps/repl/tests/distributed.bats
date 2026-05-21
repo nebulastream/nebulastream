@@ -12,145 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-setup_file() {
-  # Clean up leaked containers and networks from previous crashed runs
-  for net in $(docker network ls --filter label=nes-test=distributed-repl -q 2>/dev/null); do
-    docker network inspect "$net" -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
-  done
-  docker network prune -f --filter label=nes-test=distributed-repl 2>/dev/null || true
-  # Remove all containers (running or stopped) referencing test images
-  # from previous runs, so those images can later be deleted
-  for img in $(docker images --filter reference='nes-worker-repl-test-*' --filter reference='nes-repl-image-*' -q 2>/dev/null); do
-    docker ps -aq --filter ancestor="$img" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
-  done
-  docker images --filter reference='nes-worker-repl-test-*' --filter reference='nes-repl-image-*' -q | xargs -r docker image rm -f 2>/dev/null || true
+source "$NES_BATS_LIB"
 
-  # Validate environment variables
-  if [ -z "$NES_REPL" ]; then
-    echo "ERROR: NES_CLI environment variable must be set" >&2
-    echo "Usage: NES_CLI=/path/to/nebucli bats nebucli.bats" >&2
-    exit 1
-  fi
+setup_file()    { nes_distributed_setup_file "$NES_REPL"; }
+teardown_file() { nes_distributed_teardown_file; }
+setup()         { nes_distributed_setup; }
+teardown()      { nes_distributed_teardown; }
 
-  if [ -z "$NEBULASTREAM" ]; then
-    echo "ERROR: NEBULASTREAM environment variable must be set" >&2
-    echo "Usage: NEBULASTREAM=/path/to/nes-single-node-worker bats nebucli.bats" >&2
-    exit 1
-  fi
-
-  if [ -z "$NES_REPL_TESTDATA" ]; then
-    echo "ERROR: NES_REPL_TESTDATA environment variable must be set" >&2
-    echo "Usage: NES_REPL_TESTDATA=/path/to/repl/testdata" >&2
-    exit 1
-  fi
-
-  if [ -z "$NES_TEST_TMP_DIR" ]; then
-    echo "ERROR: NES_TEST_TMP_DIR environment variable must be set" >&2
-    echo "Usage: NES_TEST_TMP_DIR=/path/to/build/test-tmp" >&2
-    exit 1
-  fi
-
-  if [ ! -f "$NES_REPL" ]; then
-    echo "ERROR: NES_CLI file does not exist: $NES_REPL" >&2
-    exit 1
-  fi
-
-  if [ ! -f "$NEBULASTREAM" ]; then
-    echo "ERROR: NEBULASTREAM file does not exist: $NEBULASTREAM" >&2
-    exit 1
-  fi
-
-  if [ ! -x "$NES_REPL" ]; then
-    echo "ERROR: NES_CLI file is not executable: $NES_REPL" >&2
-    exit 1
-  fi
-
-  if [ ! -x "$NEBULASTREAM" ]; then
-    echo "ERROR: NEBULASTREAM file is not executable: $NEBULASTREAM" >&2
-    exit 1
-  fi
-
-  if [ -z "$NES_RUNTIME_BASE_IMAGE" ]; then
-    echo "ERROR: NES_RUNTIME_BASE_IMAGE environment variable must be set" >&2
-    exit 1
-  fi
-
-  # Build Docker images with unique tags to avoid collisions when test suites run in parallel
-  local suffix=$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')
-  export WORKER_IMAGE="nes-worker-repl-test-${suffix}"
-  # Use minimal build context with only the required binary to avoid sending
-  # the entire build directory to the Docker daemon on each build.
-  local worker_ctx=$(mktemp -d)
-  cp $(realpath $NEBULASTREAM) "$worker_ctx/nes-single-node-worker"
-  docker build --load -t $WORKER_IMAGE -f - "$worker_ctx" <<EOF
-    FROM $NES_RUNTIME_BASE_IMAGE
-    COPY nes-single-node-worker /usr/bin
-    ENTRYPOINT ["nes-single-node-worker"]
-EOF
-  rm -rf "$worker_ctx"
-  export REPL_IMAGE="nes-repl-image-${suffix}"
-  local repl_ctx=$(mktemp -d)
-  cp $(realpath $NES_REPL) "$repl_ctx/nes-repl"
-  docker build --load -t $REPL_IMAGE -f - "$repl_ctx" <<EOF
-    FROM $NES_RUNTIME_BASE_IMAGE
-    COPY nes-repl /usr/bin
-EOF
-  rm -rf "$repl_ctx"
-
-  # Print environment info for debugging
-  echo "# Using NES_REPL: $NES_REPL" >&3
-  echo "# Using NEBULASTREAM: $NEBULASTREAM" >&3
-  echo "# Using WORKER_IMAGE: $WORKER_IMAGE" >&3
-  echo "# Using REPL_IMAGE: $REPL_IMAGE" >&3
-}
-
-teardown_file() {
-  echo "# Test suite completed" >&3
-  docker rmi $WORKER_IMAGE || true
-  docker rmi $REPL_IMAGE || true
-}
-
-setup() {
-  # Create temp directory within the mounted workspace (not /tmp)
-  # so it's accessible from docker-compose containers running on the host
-  mkdir -p "$NES_TEST_TMP_DIR"
-  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
-  cp -r "$NES_REPL_TESTDATA" "$TMP_DIR"
-  cd "$TMP_DIR" || exit
-  echo "# Using TEST_DIR: $TMP_DIR" >&3
-
-  volume=$(docker volume create)
-  volume_host_container=$(docker run -d --rm -v $volume:/data alpine sleep infinite)
-  docker cp . $volume_host_container:/data
-  docker stop -t0 $volume_host_container
-  export TEST_VOLUME=$volume
-  echo "# Using test volume: $TEST_VOLUME" >&3
-}
-
-sync_workdir() {
-  volume_host_container=$(docker run -d --rm -v $TEST_VOLUME:/data alpine sleep infinite)
-  docker cp $volume_host_container:/data/. .
-  docker stop -t0 $volume_host_container
-}
-
-teardown() {
-  sync_workdir || true
-  docker compose down -v || true
-  docker volume rm $TEST_VOLUME || true
-}
-
-function setup_distributed() {
-  tests/util/create_compose.sh "$1" >docker-compose.yaml
-  local compose_output exit_code=0
-  compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
-  if [ "$exit_code" -ne 0 ]; then
-    echo "# [docker compose up] (status=$exit_code):" >&3
-    while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
-  fi
-  return $exit_code
-}
-
-DOCKER_NES_REPL() {
+docker_nes_repl() {
   # In Docker-out-of-Docker environments, docker exec tears down the exec
   # session when its stdin pipe closes, even if the process is still running.
   # Work around this by: (1) piping from tail to keep stdin open until
@@ -159,37 +28,15 @@ DOCKER_NES_REPL() {
   tail -f /dev/null | docker compose exec nes-repl bash -c "nes-repl -f JSON ${ADDITIONAL_NEBULI_FLAGS} </workdir/$1"
 }
 
-assert_json_equal() {
-  local expected="$1"
-  local actual="$2"
-
-  diff <(echo "$expected" | jq --sort-keys .) \
-    <(echo "$actual" | jq --sort-keys .)
-}
-
-assert_json_contains() {
-  local expected="$1"
-  local actual="$2"
-
-  local result=$(echo "$actual" | jq --argjson exp "$expected" 'contains($exp)')
-
-  if [ "$result" != "true" ]; then
-    echo "JSON subset check failed"
-    echo "Expected (subset): $expected"
-    echo "Actual: $actual"
-    return 1
-  fi
-}
-
 @test "launch query from topology" {
   setup_distributed tests/topologies/8-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/good/test_large_distributed.sql
+  run docker_nes_repl tests/sql-file-tests/good/test_large_distributed.sql
   [ "$status" -eq 0 ]
 
   assert_json_equal '[{"worker":"sink-node:8080"}]' "${lines[0]}"
   assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[1]}"
   assert_json_equal '[{"host":"sink-node:8080","input_formatter_config":{"allow_commas_in_strings":true,"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[2]}"
-  assert_json_equal '[{"format_config":{},"host":"sink-node:8080","schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"output_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[3]}"
+  assert_json_equal '[{"format_config":{},"host":"sink-node:8080","schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"backpressure_lower_threshold": 200},{"backpressure_upper_threshold": 1000},{"file_path":"out.csv"},{"output_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[3]}"
   assert_json_equal '[]' "${lines[4]}"
   QUERY_ID=$(echo ${lines[5]} | jq -r '.[0].query_id')
 
@@ -203,7 +50,7 @@ assert_json_contains() {
 
 @test "launch multiple queries" {
   setup_distributed tests/topologies/1-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries_distributed.sql
+  run docker_nes_repl tests/sql-file-tests/good/multiple_queries_distributed.sql
   [ "$status" -eq 0 ]
 }
 
@@ -212,7 +59,7 @@ assert_json_contains() {
     skip "IREE tools not available (ENABLE_IREE_TESTS=$ENABLE_IREE_TESTS)"
   fi
   setup_distributed tests/topologies/1-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/good/create_model.sql
+  run docker_nes_repl tests/sql-file-tests/good/create_model.sql
   [ "$status" -eq 0 ]
 
   # lines[0]: CREATE MODEL result — eagerly loaded, returns full metadata
@@ -229,7 +76,7 @@ assert_json_contains() {
 
 @test "launch bad query should fail" {
   setup_distributed tests/topologies/1-node.yaml
-  run DOCKER_NES_REPL tests/sql-file-tests/bad/integer_literal_in_query_without_type_distributed.sql
+  run docker_nes_repl tests/sql-file-tests/bad/integer_literal_in_query_without_type_distributed.sql
   [ "$status" -ne 0 ]
 
   sync_workdir
@@ -240,7 +87,7 @@ assert_json_contains() {
   setup_distributed tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
-  ADDITIONAL_NEBULI_FLAGS="--on-exit WAIT_FOR_QUERY_TERMINATION" run DOCKER_NES_REPL tests/sql-file-tests/good/non_infinite_query.sql
+  ADDITIONAL_NEBULI_FLAGS="--on-exit WAIT_FOR_QUERY_TERMINATION" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]
@@ -281,7 +128,7 @@ assert_json_contains() {
   setup_distributed tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
-  ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run DOCKER_NES_REPL tests/sql-file-tests/good/non_infinite_query.sql
+  ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]
@@ -301,7 +148,7 @@ assert_json_contains() {
   setup_distributed tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
-  run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries_distributed.sql
+  run docker_nes_repl tests/sql-file-tests/good/multiple_queries_distributed.sql
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]

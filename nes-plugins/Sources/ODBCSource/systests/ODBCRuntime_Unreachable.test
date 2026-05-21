@@ -1,0 +1,23 @@
+# name: ODBCSource/ODBCRuntime_Unreachable.test
+# description: Runtime error — the ODBC source cannot reach the database. The test declares `# requires: odbc` so the dispatcher still brings up the PostgreSQL container (every file under the profile's systests/ dir must declare the directive), but the physical source deliberately points at 127.0.0.1:1 — a port with nothing listening — instead of the dispatcher-allocated endpoint. There is no `ATTACH` block, so the ODBC test loader never runs and never rewrites db_host / db_port: the dead descriptor stands. SQLDriverConnect fails fast with connection-refused, ODBCConnection::checkError throws RunningRoutineFailure, and the source-thread routine surfaces that as error code 4001.
+# requires: odbc
+# groups: [Negative, Runtime]
+
+CREATE LOGICAL SOURCE odbc_unreachable(id INT32 NOT NULL, label VARSIZED NOT NULL, reading INT64 NOT NULL, score FLOAT64 NOT NULL);
+
+CREATE PHYSICAL SOURCE FOR odbc_unreachable TYPE ODBC SET(
+    "NATIVE" AS INPUT_FORMATTER.`TYPE`,
+    "127.0.0.1" AS `SOURCE`.db_host,
+    "1" AS `SOURCE`.db_port,
+    "nebulastream" AS `SOURCE`.database,
+    "nes" AS `SOURCE`.username,
+    "nes" AS `SOURCE`.password,
+    "PostgreSQL Unicode" AS `SOURCE`.driver,
+    "measurements" AS `SOURCE`.sync_table,
+    "id" AS `SOURCE`.id_column,
+    "SELECT id, label, reading, score FROM measurements" AS `SOURCE`.query,
+    "100" AS `SOURCE`.poll_interval_ms);
+
+SELECT id, label, reading, score FROM odbc_unreachable INTO File();
+----
+ERROR 4001

@@ -23,6 +23,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
 
@@ -135,5 +136,95 @@ TEST_F(SystestStateTest, DirectlySpecifiedTestFileOverridesDisabledTestFiles)
 
     ASSERT_EQ(testMap.size(), 1);
     EXPECT_TRUE(testMap.contains(std::filesystem::weakly_canonical(joinFile)));
+}
+
+TEST_F(SystestStateTest, TestWithUnsatisfiedRequiresIsSkippedDuringDiscovery)
+{
+    const TemporaryDirectory tempDir;
+    const auto plainFile = tempDir.get() / "plain.test";
+    const auto externalFile = tempDir.get() / "external.test";
+    writeTextFile(plainFile, "# groups: [misc]\n");
+    writeTextFile(externalFile, "# requires: mqtt\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.testFileExtension = ".test";
+
+    const auto testMap = loadTestFileMap(config);
+
+    ASSERT_EQ(testMap.size(), 1);
+    EXPECT_TRUE(testMap.contains(std::filesystem::weakly_canonical(plainFile)));
+}
+
+TEST_F(SystestStateTest, AcceptRequiresKeepsMatchingTestInDiscovery)
+{
+    const TemporaryDirectory tempDir;
+    const auto externalFile = tempDir.get() / "external.test";
+    writeTextFile(externalFile, "# requires: mqtt\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.testFileExtension = ".test";
+    config.acceptRequires.add("mqtt");
+
+    const auto testMap = loadTestFileMap(config);
+
+    ASSERT_EQ(testMap.size(), 1);
+    EXPECT_TRUE(testMap.contains(std::filesystem::weakly_canonical(externalFile)));
+}
+
+TEST_F(SystestStateTest, AcceptRequiresIsCaseInsensitive)
+{
+    const TemporaryDirectory tempDir;
+    const auto externalFile = tempDir.get() / "external.test";
+    writeTextFile(externalFile, "# requires: MQTT\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.testFileExtension = ".test";
+    config.acceptRequires.add("mqtt");
+
+    const auto testMap = loadTestFileMap(config);
+
+    ASSERT_EQ(testMap.size(), 1);
+}
+
+TEST_F(SystestStateTest, RejectsMultipleRequiresDirectives)
+{
+    const TemporaryDirectory tempDir;
+    const auto multiFile = tempDir.get() / "multi.test";
+    writeTextFile(multiFile, "# requires: mqtt\n# requires: postgres\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.testFileExtension = ".test";
+    config.acceptRequires.add("mqtt");
+
+    EXPECT_THROW(loadTestFileMap(config), NES::Exception);
+}
+
+TEST_F(SystestStateTest, RequiresHeaderRecognisedAmongOtherDirectives)
+{
+    const TemporaryDirectory tempDir;
+    const auto testFile = tempDir.get() / "mixed.test";
+    writeTextFile(
+        testFile,
+        "# name: mixed\n"
+        "# description: example with both groups and requires\n"
+        "# groups: [Misc]\n"
+        "# requires: mqtt\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.testFileExtension = ".test";
+    config.acceptRequires.add("mqtt");
+
+    const auto testMap = loadTestFileMap(config);
+
+    ASSERT_EQ(testMap.size(), 1);
+    const auto& parsed = testMap.at(std::filesystem::weakly_canonical(testFile));
+    EXPECT_EQ(parsed.groups, std::vector<std::string>{"Misc"});
+    ASSERT_TRUE(parsed.requirement.has_value());
+    EXPECT_EQ(*parsed.requirement, "mqtt"); /// NOLINT(bugprone-unchecked-optional-access): guarded by the ASSERT_TRUE on the previous line.
 }
 }
