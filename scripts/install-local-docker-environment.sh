@@ -56,6 +56,19 @@ usage() {
     exit 1
 }
 
+# Query Docker Hub for tags that share the given dependency hash on the given arch.
+# Prints one tag per line on stdout; prints nothing when no tags exist (or when curl is unavailable).
+list_hash_alternatives() {
+    local hash="$1"
+    local arch="$2"
+    command -v curl >/dev/null 2>&1 || return 0
+    curl -fsSL "https://hub.docker.com/v2/repositories/nebulastream/nes-development/tags/?name=${hash}&page_size=100" 2>/dev/null \
+        | grep -o '"name":"[^"]*"' \
+        | cut -d'"' -f4 \
+        | grep "^${hash}-${arch}-" \
+        | sort -u || true
+}
+
 # If set we built rebuilt all docker images locally
 NON_INTERACTIVE=0
 BUILD_LOCAL=0
@@ -267,6 +280,78 @@ if [[ "$DISABLE_VCPKG_CACHE" -eq 1 ]]; then
   unset VCPKG_CACHE_ACCESS_KEY
 fi
 
+### If we plan to base on a remote image, make sure it actually exists. If not, see
+### whether any image for the same hash exists under a different (stdlib, sanitizer)
+### combo and let the user pick one or fall through to a local dependency rebuild.
+if [ $BUILD_LOCAL -eq 0 ]; then
+  if ! docker manifest inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 ; then
+    echo -e "${RED}Remote development image nebulastream/nes-development:${TAG} does not exist.${NC}"
+    ALTERNATIVE_TAGS=()
+    while IFS= read -r alt_line; do
+      ALTERNATIVE_TAGS+=("$alt_line")
+    done < <(list_hash_alternatives "$HASH" "$ARCH")
+
+    if [ ${#ALTERNATIVE_TAGS[@]} -eq 0 ]; then
+      echo "No images found on Docker Hub for hash ${HASH} on ${ARCH}."
+      if [ "$NON_INTERACTIVE" = 1 ]; then
+        echo "Build locally with the -l option, or open a PR (draft) and let CI build the development image."
+        exit 1
+      fi
+      read -p "Rebuild dependencies locally now? This is slow and equivalent to -l. [y/N] " -r
+      if [[ $REPLY =~ ^([yY][eE][sS]|[yY])$ ]]; then
+        BUILD_LOCAL=1
+      else
+        echo "Aborting. Re-run with -l, or open a PR (draft) and let CI build the development image."
+        exit 1
+      fi
+    else
+      echo "However, the following images exist for hash ${HASH} on ${ARCH}:"
+      for i in "${!ALTERNATIVE_TAGS[@]}"; do
+        alt_tag="${ALTERNATIVE_TAGS[$i]}"
+        alt_suffix="${alt_tag#${HASH}-${ARCH}-}"
+        alt_stdlib="${alt_suffix%-*}"
+        alt_sanitizer="${alt_suffix##*-}"
+        case "$alt_sanitizer" in
+          none) alt_flag="--no-sanitizer" ;;
+          *)    alt_flag="--${alt_sanitizer}" ;;
+        esac
+        printf "  [%d] --%-10s %-15s (tag: %s)\n" "$((i+1))" "$alt_stdlib" "$alt_flag" "$alt_tag"
+      done
+
+      if [ "$NON_INTERACTIVE" = 1 ]; then
+        echo "Re-run with one of the above flag combinations, or use -l to rebuild dependencies locally."
+        exit 1
+      fi
+
+      echo "  [r] Rebuild dependencies locally (slow, equivalent to -l)"
+      echo "  [q] Abort"
+      read -p "Enter choice [1-${#ALTERNATIVE_TAGS[@]}, r, q]: " -r CHOICE
+      case "$CHOICE" in
+        r|R)
+          BUILD_LOCAL=1
+          echo "Will rebuild dependencies locally."
+          ;;
+        q|Q|"")
+          echo "Aborting."
+          exit 1
+          ;;
+        *)
+          if [[ "$CHOICE" =~ ^[0-9]+$ ]] && [ "$CHOICE" -ge 1 ] && [ "$CHOICE" -le "${#ALTERNATIVE_TAGS[@]}" ]; then
+            TAG="${ALTERNATIVE_TAGS[$((CHOICE-1))]}"
+            sel_suffix="${TAG#${HASH}-${ARCH}-}"
+            STDLIB="${sel_suffix%-*}"
+            SANITIZER="${sel_suffix##*-}"
+            echo "Using ${STDLIB} with sanitizer ${SANITIZER} (tag: ${TAG})"
+          else
+            echo "Invalid choice."
+            exit 1
+          fi
+          ;;
+      esac
+    fi
+  fi
+fi
+
 if [ $BUILD_LOCAL -eq 1 ]; then
   echo "Building local docker images using hash: ${HASH}."
   echo "This might take a while..."
@@ -310,12 +395,6 @@ if [ $BUILD_LOCAL -eq 1 ]; then
                --build-arg ROOTLESS=${USE_ROOTLESS} \
                --build-arg TAG=default .
 else
-  if ! docker manifest inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 ; then
-   echo -e "${RED}Remote image development image for hash ${TAG} does not exist.
-Either build locally with the -l option, or open a PR (draft) and let the CI build the development image${NC}"
-   exit 1
-  fi
-
   echo "Basing local development image on remote on nebulastream/nes-development:${TAG}"
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
                -t ${FINAL_IMAGE_NAME} \
