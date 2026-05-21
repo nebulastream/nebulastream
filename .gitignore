@@ -58,6 +58,7 @@ scripts/__pycache__
 .nix/gdb
 
 
-# Ignore Claude specific files and all possible combinations of Claude.md
+# Ignore Claude/Codex specific files and all possible combinations of Claude/Agents.md
 .claude/
+.codex/
 [Cc][Ll][Aa][Uu][Dd][Ee].md
