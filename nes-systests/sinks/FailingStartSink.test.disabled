@@ -1,0 +1,21 @@
+# name: sinks/FailingStartSink.test
+# description: Disabled reproducer for a teardown deadlock when a downstream sink throws in start(). FailingStartSink is a test-only sink plugin that binds cleanly and throws CannotOpenSink (4004) from start(); the expected query error is emitted before teardown. While the engine bug exists, the query can then hang during cleanup because the upstream NetworkSink flush waits for a downstream NetworkSource that never came up.
+# groups: [Negative, Runtime]
+#
+# ============================================================================
+# DISABLED -- renamed to `.test.disabled` so the normal systest runner skips it.
+#
+# This intentionally mirrors the disabled MQTT sink runtime test without any
+# MQTT, Docker, broker, or sink-capture dependency. Re-enable this file by
+# dropping the `.disabled` suffix once NetworkSink::stop() / SenderChannel::flush()
+# bails out when the downstream peer never starts.
+# ============================================================================
+
+SELECT id, value, timestamp
+FROM File(
+    'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+    'CSV' AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
+INTO FailingStart();
+----
+ERROR 4004
