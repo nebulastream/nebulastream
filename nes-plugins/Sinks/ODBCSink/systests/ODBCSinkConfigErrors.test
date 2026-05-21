@@ -1,0 +1,63 @@
+# name: ODBCSink/ODBCSinkConfigErrors.test
+# description: Descriptor-time validation errors for the ODBC sink. Each `SELECT ... INTO ODBC(...)` is bound per query, so the resulting exception is attached to the individual query and `ERROR <code>` matches it. The ODBC SinkCapture registrar (ODBCSinkCapture.cpp) is invoked before the sink descriptor is built: a missing `table` is rejected before the registrar opens its read connection, a missing `database` while it assembles the connection string -- both before any network call -- and an unknown key passes the registrar and is rejected by ODBCSink::validateAndFormat. The PostgreSQL container still comes up via `# requires: odbc` -- every file under the profile's systests/ dir must declare the directive -- but the missing-key cases never reach it.
+# requires: odbc
+# groups: [Negative, Config]
+
+
+# Case 1: missing required `table`. The SinkCapture registrar requires `table`
+# before it opens the capture read connection; absent, it throws
+# InvalidConfigParameter (1000).
+SELECT id, value, timestamp
+FROM File(
+    'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+    'CSV' AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
+INTO ODBC(
+    'odbc_database' AS `SINK`.db_host,
+    '5432' AS `SINK`.db_port,
+    'nebulastream' AS `SINK`.database,
+    'nes' AS `SINK`.username,
+    'nes' AS `SINK`.password,
+    'PostgreSQL Unicode' AS `SINK`.driver);
+----
+ERROR 1000
+
+
+# Case 2: missing required `database`. The registrar requires it while
+# assembling the ODBC connection string, before SQLDriverConnect; absent, it
+# throws InvalidConfigParameter (1000).
+SELECT id, value, timestamp
+FROM File(
+    'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+    'CSV' AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
+INTO ODBC(
+    'odbc_database' AS `SINK`.db_host,
+    '5432' AS `SINK`.db_port,
+    'nes' AS `SINK`.username,
+    'nes' AS `SINK`.password,
+    'PostgreSQL Unicode' AS `SINK`.driver,
+    'sink_output' AS `SINK`.`table`);
+----
+ERROR 1000
+
+
+# Case 3: unknown config key. The registrar ignores keys it does not read and
+# connects fine; ODBCSink::validateAndFormat then rejects any key not in
+# ConfigParametersODBCSink::parameterMap with InvalidConfigParameter (1000).
+SELECT id, value, timestamp
+FROM File(
+    'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+    'CSV' AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
+INTO ODBC(
+    'odbc_database' AS `SINK`.db_host,
+    '5432' AS `SINK`.db_port,
+    'nebulastream' AS `SINK`.database,
+    'nes' AS `SINK`.username,
+    'nes' AS `SINK`.password,
+    'PostgreSQL Unicode' AS `SINK`.driver,
+    'sink_output' AS `SINK`.`table`,
+    'anything' AS `SINK`.notAKnownKey);
+----
+ERROR 1000
