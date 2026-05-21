@@ -1,0 +1,33 @@
+# name: MQTTSink/MQTTSinkConfigErrors.test
+# description: Descriptor-time validation errors for the MQTT sink. Each `SELECT ... INTO MQTT(...)` is bound per query, so the resulting exception is attached to the individual query and `ERROR <code>` matches it. The MQTT SinkCapture registrar (MQTTTestSubscriber.cpp) is invoked before the sink descriptor is built: a missing `topic` is rejected by the registrar's own required-key check before it ever contacts the broker, while an unknown key passes the registrar and is rejected by MQTTSink::validateAndFormat. (`server_uri` cannot be exercised this way: the registrar's applyDispatchOverrides always injects the dispatcher-allocated endpoint, so it is never actually absent.) The broker comes up via `# requires: mqtt` -- every file under the profile's systests/ dir must declare the directive.
+# requires: mqtt
+# groups: [Negative, Config]
+
+
+# Case 1: missing required `topic`. The SinkCapture registrar's readEndpoint
+# requires `topic`; absent, it throws InvalidConfigParameter (1000) before the
+# capture subscriber is built.
+SELECT id, value, timestamp
+FROM File(
+    'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+    'CSV' AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
+INTO MQTT('mqtt_broker' AS `SINK`.server_uri);
+----
+ERROR 1000
+
+
+# Case 2: unknown config key. The registrar ignores keys it does not read and
+# connects fine; MQTTSink::validateAndFormat then rejects any key not in
+# ConfigParametersMQTTSink::parameterMap with InvalidConfigParameter (1000).
+SELECT id, value, timestamp
+FROM File(
+    'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+    'CSV' AS INPUT_FORMATTER.`TYPE`,
+    SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
+INTO MQTT(
+    'mqtt_broker' AS `SINK`.server_uri,
+    'nebulastream/sink/unknown_key' AS `SINK`.topic,
+    'anything' AS `SINK`.notAKnownKey);
+----
+ERROR 1000

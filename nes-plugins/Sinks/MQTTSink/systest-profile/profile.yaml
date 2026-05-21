@@ -1,0 +1,29 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Profile manifest read by the in-binary external_systest dispatcher
+# (nes-systests/systest/src/ExternalSystestDispatch.cpp). A .test file
+# selects this profile via `# requires: <name>`; the dispatcher allocates
+# one free host port per endpoint, then exports:
+#   <ENDPOINT>_PORT                     — host port (for compose `${...}` substitution)
+#   NES_EXTERNAL_ENDPOINT_<ENDPOINT>    — "<host>:<port>" pair (for plugin registrars)
+#   NES_EXTERNAL_HOST                   — host address the test process should
+#                                         use to reach the broker; 127.0.0.1 on
+#                                         the host, host.docker.internal inside
+#                                         the CLion dev-container toolchain.
+# Endpoint names are uppercased; the MQTT plugin reads
+# NES_EXTERNAL_ENDPOINT_BROKER.
+
+name: mqtt
+endpoints:
+  - name: broker
+    container_port: 1883

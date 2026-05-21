@@ -1,0 +1,54 @@
+# name: MQTTSink/MQTTSinkRuntime_Unreachable.test
+# description: Runtime error -- the MQTT sink cannot reach the broker. The SinkCapture registrar (MQTTTestSubscriber.cpp) wires its capture subscriber to the real dispatcher-allocated broker, then -- via the test-only `_test_sink_uri_override` knob -- rewrites the sink's server_uri to a reserved local port with nothing listening. The knob is consumed and erased before MQTTSink::validateAndFormat runs, so the descriptor binds cleanly; the failure happens at runtime when MQTTSink::start() connects. paho's connect throws mqtt::exception, which start() rethrows as CannotOpenSink (4004). Using the knob keeps the failure deterministic across sanitizer builds and CI runners, where a reserved port / invalid host otherwise behave differently. The broker comes up via `# requires: mqtt` -- the capture subscriber needs it -- but the sink under test never reaches it.
+# requires: mqtt
+# groups: [Negative, Runtime]
+#
+# ============================================================================
+# DISABLED -- renamed to `.test.disabled` so the systest runner skips it.
+#
+# This test is correct and the MQTT sink behaves as intended: start() throws
+# CannotOpenSink (4004) and the query surfaces exactly that expected error. The
+# problem is downstream of the test -- it deadlocks the engine's query teardown.
+#
+# The query is multi-pipeline -- `File scan -> NetworkSink -> NetworkSource ->
+# MQTTSink`. When MQTTSink::start() throws, that downstream pipeline dies before
+# its NetworkSource drains anything. Teardown then runs, on a worker thread:
+#
+#     NetworkSink::stop()                         nes-sinks/src/NetworkSink.cpp:81
+#       -> flush_sender_channel()                 [C++ -> Rust bridge]
+#         -> SenderChannel::flush()               network/src/sender/sender.rs
+#           -> tokio park -- blocks forever
+#
+# flush() waits for the sender's pending buffers to be acked by a peer that is
+# already gone, with no timeout and no dead-peer detection. The worker thread is
+# stuck there; the main thread then deadlocks joining it in ~QuerySubmitter. The
+# query result (ERROR 4004) is printed *before* teardown, so the run prints
+# "PASSED" and then hangs indefinitely.
+#
+# This is a pre-existing engine bug, not a fault of this test or the MQTT sink:
+# no sink before the MQTT/ODBC sinks could throw in start() in a way a systest
+# exercised. The ODBC runtime sibling (ODBCSinkRuntime_NoSuchTable.test) does
+# NOT hit this -- ODBCSink::start() succeeds and fails later in execute(), so
+# its pipeline's NetworkSource is alive and the flush drains normally.
+#
+# Re-enable: drop the `.disabled` suffix once NetworkSink::stop() /
+# SenderChannel::flush() bails out (timeout or dead-peer detection) when the
+# downstream peer never came up.
+# ============================================================================
+
+
+CREATE LOGICAL SOURCE input(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR input TYPE File;
+ATTACH INLINE
+1,1,12
+1,2,23
+1,3,34
+1,4,45
+1,5,56
+
+SELECT id, value, timestamp FROM input INTO MQTT(
+    'mqtt_broker' AS `SINK`.server_uri,
+    'nebulastream/sink/unreachable' AS `SINK`.topic,
+    'tcp://127.0.0.1:1' AS `SINK`._test_sink_uri_override);
+----
+ERROR 4004
