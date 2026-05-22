@@ -83,13 +83,21 @@ mod runtime {
         }
     }
 
+    enum PropagateAbortion {
+        /// Send an abortion signal to the downstream receiver.
+        Propagate,
+        /// Do not send anything to the downstream receiver. The receiver will attempt to reconnect.
+        Ignore,
+    }
+
     struct NetworkSink {
         data_endpoint: String,
         channel_id: String,
         config_override: SenderConfig,
         tuple_size: usize,
-        service: Option<Arc<SharedSenderService>>,
+        propagate_abortion: PropagateAbortion,
         channel: Option<SenderChannel>,
+        service: Option<Arc<SharedSenderService>>,
     }
 
     #[async_trait]
@@ -141,7 +149,7 @@ mod runtime {
                 .map_err(|e| e.to_string())
         }
 
-        async fn stop(&mut self) -> Result<()> {
+        async fn stop(mut self: Box<Self>) -> Result<()> {
             let Some(channel) = self.channel.take() else {
                 return Ok(());
             };
@@ -149,6 +157,18 @@ mod runtime {
                 warn!("NetworkSink could not send close signal to downstream receiver");
             };
             Ok(())
+        }
+        async fn error(mut self: Box<Self>, error_message: String) {
+            let Some(channel) = self.channel.take() else {
+                return;
+            };
+
+            match self.propagate_abortion {
+                PropagateAbortion::Propagate => {
+                    let _ = channel.error(error_message).await;
+                }
+                PropagateAbortion::Ignore => {}
+            }
         }
     }
 
@@ -201,6 +221,7 @@ mod runtime {
                     sender_queue_size: read_usize(value, SENDER_QUEUE_SIZE),
                     max_pending_acks: read_usize(value, MAX_PENDING_ACKS),
                 },
+                propagate_abortion: PropagateAbortion::Ignore,
                 tuple_size: read_usize(value, TUPLE_SIZE),
                 service: None,
                 channel: None,

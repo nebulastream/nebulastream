@@ -3,25 +3,38 @@ use linkme::distributed_slice;
 use nes_buffer_runtime::TupleBuffer;
 use nes_io_runtime::IORuntime;
 use nes_sink_validation::ConfigOptions;
-use tokio::sync::mpsc::Receiver;
+use scopeguard::ScopeGuard;
+use tokio::sync::mpsc;
 use tokio::sync::oneshot;
-use tracing::{Instrument, info};
+use tracing::{Instrument, error, info, warn};
 
 pub type Result<T> = core::result::Result<T, String>;
-pub type Controller = tokio::sync::mpsc::Sender<SinkCommand>;
+pub type DataChannel = mpsc::Sender<SinkDataCommand>;
+pub type TerminationSignal = oneshot::Sender<SinkTerminationCommand>;
 
 #[async_trait]
 pub trait AsyncSink {
     async fn start(&mut self) -> Result<()>;
     async fn execute(&mut self, buffer: TupleBuffer) -> Result<()>;
     async fn flush(&mut self) -> Result<()>;
-    async fn stop(&mut self) -> Result<()>;
+    async fn stop(self: Box<Self>) -> Result<()>;
+    async fn error(self: Box<Self>, error_message: String) {
+        warn!(
+            "Sink was aborted with an error, but no action was taken: {}",
+            error_message
+        );
+    }
 }
 
-pub enum SinkCommand {
+pub enum SinkDataCommand {
     Flush(usize),
     Data(TupleBuffer),
-    Close,
+}
+
+#[derive(Debug)]
+pub enum SinkTerminationCommand {
+    Error(String, oneshot::Sender<()>),
+    Close(oneshot::Sender<Result<()>>),
 }
 
 pub type SinkCreateFn = dyn Fn(&ConfigOptions) -> Box<dyn AsyncSink + Send> + Sync + Send;
@@ -41,32 +54,52 @@ pub struct SinkContext {
 /// it always gets a chance to release them via `stop()`.
 async fn run_sink(
     mut sink: Box<dyn AsyncSink + Send>,
-    commands: &mut Receiver<SinkCommand>,
+    commands: &mut mpsc::Receiver<SinkDataCommand>,
+    mut termination: oneshot::Receiver<SinkTerminationCommand>,
     context: &SinkContext,
-) -> Result<()> {
-    sink.start().await?;
-    let loop_result: Result<()> = async {
-        loop {
-            let command = commands
-                .recv()
-                .await
-                .expect("Controller should outlive the sink task");
-            match command {
-                SinkCommand::Data(buffer) => sink.execute(buffer).await?,
-                SinkCommand::Flush(epoch) => {
-                    sink.flush().await?;
-                    (context.on_flush)(epoch);
+) -> core::result::Result<(), (oneshot::Receiver<SinkTerminationCommand>, Box<dyn AsyncSink + Send>, String)> {
+    if let Err(e) = sink.start().await {
+        return Err((termination, sink, e.to_string()));
+    }
+
+    loop {
+        tokio::select! {
+                biased;
+                termination = &mut termination => {
+                    return match termination.expect("Sink commands channel closed unexpectedly") {
+                        SinkTerminationCommand::Error(message, done) => {
+                            sink.error(message).await;
+                            let _ = done.send(());
+                            Ok(())
+                        }
+                        SinkTerminationCommand::Close(done) => {
+                            let result = sink.stop().await;
+                            if let Err(result) = done.send(result) {
+                                if let Err(message) = result {
+                                    warn!("Could not report sink close result back to the sink runtime: {message}") ;
+                                }
+                            };
+                            Ok(())
+                        },
+                    }
                 }
-                SinkCommand::Close => {
-                    info!("Sink was requested to close");
-                    return Ok(());
+                data = commands.recv() => {
+                    match data.expect("Sink commands channel closed unexpectedly") {
+                        SinkDataCommand::Flush(epoch) => {
+                            if let Err(e) = sink.flush().await {
+                                return Err((termination, sink, e.to_string()));
+                            }
+                            (context.on_flush)(epoch);
+                        }
+                        SinkDataCommand::Data(buffer) => {
+                            if let Err(e) = sink.execute(buffer).await {
+                                return Err((termination, sink, e.to_string()));
+                            }
+                        },
+                    }
                 }
             }
-        }
     }
-    .await;
-    let stop_result = sink.stop().await;
-    loop_result.and(stop_result)
 }
 
 fn construct_sink(name: &str, config: &ConfigOptions) -> Box<dyn AsyncSink + Send> {
@@ -90,30 +123,37 @@ pub fn start_sink(
     config: &ConfigOptions,
     runtime: IORuntime,
     context: SinkContext,
-) -> Result<(Controller, oneshot::Receiver<()>)> {
+) -> Result<(DataChannel, TerminationSignal)> {
     let (controller, mut rx) = tokio::sync::mpsc::channel(16);
     let (stop_sender, stop_signal) = oneshot::channel();
     let sink = construct_sink(name, config);
 
     let task = async move {
-        let abort_guard = scopeguard::guard((), |_| {
-            panic!("Sink Task was aborted.");
-        });
-
-        match run_sink(sink, &mut rx, &context).await {
+        match run_sink(sink, &mut rx, stop_signal, &context).await {
             Ok(()) => {}
-            Err(error_message) => (context.on_error)(error_message),
+            Err((stop_signal, sink, error_message)) => {
+                (context.on_error)(error_message);
+                match stop_signal.await.expect("Sink commands channel closed unexpectedly") {
+                    SinkTerminationCommand::Error(message, done) => {
+                        sink.error(message).await;
+                        let _ = done.send(());
+                    }
+                    SinkTerminationCommand::Close(done) => {
+                        let result = sink.stop().await;
+                        if let Err(result) = done.send(result) {
+                            if let Err(message) = result {
+                                warn!("Could not report sink close result back to the sink runtime: {message}") ;
+                            }
+                        };
+                    },
+                }
+            },
         }
         info!("Sink has stopped");
-        rx.close();
-        let _ = stop_sender.send(());
-
-        // Sink stopped itself; disarm the abort-detection guard.
-        scopeguard::ScopeGuard::into_inner(abort_guard);
     }
     .in_current_span();
 
     runtime.handle().spawn(task);
 
-    Ok((controller, stop_signal))
+    Ok((controller, stop_sender))
 }

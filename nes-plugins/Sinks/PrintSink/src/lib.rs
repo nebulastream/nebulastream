@@ -102,7 +102,7 @@ mod runtime {
                 .map_err(|e| format!("Could not flush stdout: {}", e))
         }
 
-        async fn stop(&mut self) -> Result<()> {
+        async fn stop(self: Box<Self>) -> Result<()> {
             //noop
             Ok(())
         }

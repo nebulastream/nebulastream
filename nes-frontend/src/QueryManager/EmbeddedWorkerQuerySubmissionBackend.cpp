@@ -31,10 +31,15 @@
 
 namespace NES
 {
-auto updateWorkerNodeIdForScope(const Host& workerNodeId)
+
+/// We run the operations on the single node worker in a dedicated thread, to not use the driving applications log context.
+auto runInSingleNodeWorkerThread(const Host& id, auto fn)
 {
-    const auto currentWorkerNodeId = std::exchange(Thread::WorkerNodeId, workerNodeId);
-    return scope_guard::make_scope_exit([=]() { Thread::WorkerNodeId = currentWorkerNodeId; });
+    std::optional<std::invoke_result_t<decltype(fn)>> result;
+    {
+        Thread thread("main", id, [&]() { result = fn(); });
+    }
+    return std::move(*result);
 }
 
 EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
@@ -51,9 +56,11 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
                  mergedConfig.grpcAddressUri.setValue(config.host.getRawValue());
                  mergedConfig.dataAddress.setValue(config.dataAddress);
 
-                 const LogContext logContext("create", config.host);
-                 auto guard = updateWorkerNodeIdForScope(config.host);
-                 return SingleNodeWorker(mergedConfig, config.host);
+                 std::optional<SingleNodeWorker> worker;
+                 {
+                     Thread thread("control", config.host, [&]() { worker = SingleNodeWorker(mergedConfig, config.host); });
+                 }
+                 return std::move(*worker);
              }()}
     , config(std::move(config))
 {
@@ -61,32 +68,32 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
 
 std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(LogicalPlan plan)
 {
-    auto guard = updateWorkerNodeIdForScope(config.host);
-    return worker.registerQuery(plan);
+    return runInSingleNodeWorkerThread(config.host, [&]() { return worker.registerQuery(plan); });
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(QueryId queryId)
 {
-    auto guard = updateWorkerNodeIdForScope(config.host);
-    return worker.startQuery(queryId);
+    return runInSingleNodeWorkerThread(config.host, [&]() { return worker.startQuery(queryId); });
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)
 {
-    auto guard = updateWorkerNodeIdForScope(config.host);
-    return worker.stopQuery(queryId, QueryTerminationType::Graceful);
+    return runInSingleNodeWorkerThread(config.host, [&]() { return worker.stopQuery(queryId, QueryTerminationType::Graceful); });
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const
 {
-    auto guard = updateWorkerNodeIdForScope(config.host);
-    return worker.getQueryStatus(queryId);
+    return runInSingleNodeWorkerThread(config.host, [&]() { return worker.getQueryStatus(queryId); });
 }
 
 std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
 {
-    auto guard = updateWorkerNodeIdForScope(config.host);
-    return worker.getWorkerStatus(after);
+    return runInSingleNodeWorkerThread(config.host, [&]() { return worker.getWorkerStatus(after); });
+}
+
+EmbeddedWorkerQuerySubmissionBackend::~EmbeddedWorkerQuerySubmissionBackend()
+{
+    Thread thread("control", config.host, [&]() { [[maybe_unused]] auto destroy = std::move(worker); });
 }
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)

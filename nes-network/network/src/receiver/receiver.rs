@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
+use super::control::*;
 use crate::channel::Communication;
 use crate::protocol::*;
+use crate::receiver::channel::DataQueueItem;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::runtime::Handle;
 use tokio::sync::oneshot;
 use tracing::{Instrument, error, info_span, warn};
 
-use super::control::*;
-
 pub struct ReceiverChannel {
-    queue: async_channel::Receiver<TupleBuffer>,
+    queue: async_channel::Receiver<DataQueueItem>,
 }
 
 pub enum ReceiverChannelResult {
@@ -36,10 +36,12 @@ impl ReceiverChannel {
         self.queue.close();
     }
     pub async fn receive(&self) -> ReceiverChannelResult {
-        let Ok(buffer) = self.queue.recv().await else {
-            return ReceiverChannelResult::Closed;
-        };
-        ReceiverChannelResult::Ok(buffer)
+        let data_queue_item = self.queue.recv().await.expect("Should outlive");
+        match data_queue_item {
+            DataQueueItem::Data(buffer) => ReceiverChannelResult::Ok(buffer),
+            DataQueueItem::Error(error) => ReceiverChannelResult::Error(Error::from(error)),
+            DataQueueItem::Close => ReceiverChannelResult::Closed,
+        }
     }
 }
 

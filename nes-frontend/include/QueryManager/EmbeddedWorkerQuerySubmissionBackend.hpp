@@ -36,6 +36,7 @@ public:
     std::expected<void, Exception> stop(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
+    ~EmbeddedWorkerQuerySubmissionBackend() override;
 
 private:
     SingleNodeWorker worker;

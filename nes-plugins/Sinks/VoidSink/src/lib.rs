@@ -70,7 +70,7 @@ mod runtime {
             Ok(())
         }
 
-        async fn stop(&mut self) -> Result<()> {
+        async fn stop(self: Box<Self>) -> Result<()> {
             //noop
             Ok(())
         }

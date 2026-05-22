@@ -15,7 +15,6 @@
 use super::control::*;
 use crate::channel::Communication;
 use crate::protocol::*;
-use crate::sender::channel::{ChannelCommand, ChannelCommandQueue};
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::runtime::Handle;
@@ -40,77 +39,7 @@ impl Default for SenderConfig {
     }
 }
 
-/// A handle to a registered network channel for sending tuple buffers.
-///
-/// `SenderChannel` represents an active data channel to a specific `ReceiverChannel`.
-/// Each channel maintains its own dedicated network connection with independent
-/// backpressure and flow control. Send and flush operations are async and apply
-/// backpressure by parking the caller when the internal queue is full.
-pub struct SenderChannel {
-    queue: ChannelCommandQueue,
-}
-impl SenderChannel {
-    /// Sends a tuple buffer through this channel, awaiting queue capacity.
-    ///
-    /// Returns `Err(buffer)` if the channel has been closed.
-    pub async fn send_data(&self, buffer: TupleBuffer) -> std::result::Result<(), TupleBuffer> {
-        match self.queue.send(ChannelCommand::Data(buffer)).await {
-            Ok(()) => Ok(()),
-            Err(async_channel::SendError(ChannelCommand::Data(buffer))) => Err(buffer),
-            Err(_) => unreachable!(),
-        }
-    }
-
-    /// Drains the channel and resolves once the receiver has acknowledged
-    /// every buffer submitted before this call.
-    ///
-    /// Sends a `Flush` command to the channel handler. While the flush is
-    /// pending, the handler stops reading further commands from the queue and
-    /// only resumes once both `pending_writes` and `wait_for_ack` are empty —
-    /// i.e. once every preceding buffer has been delivered and acked.
-    ///
-    /// # Returns
-    ///
-    /// - `Ok(())`: every buffer submitted before this call has been acked.
-    /// - `Err(_)`: the channel handler is no longer running (network service
-    ///   shut down, handler terminated due to a network error, cancellation,
-    ///   or remote close). Delivery of the in-flight buffers could not be
-    ///   confirmed.
-    ///
-    /// Concurrent callers are serialised by the FIFO command queue: each
-    /// `flush` resolves only after every buffer that was already in the queue
-    /// at the time its own `Flush` command was dequeued has been acked.
-    pub async fn flush(&self) -> Result<()> {
-        let (tx, rx) = oneshot::channel();
-        self.queue
-            .send(ChannelCommand::Flush(tx))
-            .await
-            .map_err(|_| "Network Service Closed")?;
-        rx.await.map_err(|_| "Network Service Closed".into())
-    }
-
-    /// Closes this channel and propagates the close signal to the `ReceiverChannel`.
-    ///
-    /// This method initiates graceful shutdown of the channel. The channel handler
-    /// will attempt to send a `Close` message to the receiver before terminating
-    /// the connection.
-    ///
-    /// # Returns
-    ///
-    /// - `true`: The channel was successfully closed
-    /// - `false`: The channel was already closed
-    ///
-    /// Note: The return value only indicates whether the local queue was closed,
-    /// not whether the close signal was successfully propagated to the receiver.
-    pub async fn close(self) -> Result<bool> {
-        let (tx, rx) = oneshot::channel();
-        self.queue
-            .send(ChannelCommand::Close(tx))
-            .await
-            .map_err(|_| "Network Service Closed")?;
-        Ok(rx.await.map_err(|_| "Network Service Closed")?)
-    }
-}
+pub use crate::sender::channel::SenderChannel;
 
 pub type Result<T> = std::result::Result<T, Error>;
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -292,8 +221,7 @@ impl<C: Communication + 'static> NetworkService<C> {
             .await
             .map_err(|_| "Network Service Closed")?;
 
-        let internal = rx.await.map_err(|_| "Network Service Closed")?;
-        Ok(SenderChannel { queue: internal })
+        Ok(rx.await.map_err(|_| "Network Service Closed")?)
     }
 
     /// Shuts down the network service and all active channels.

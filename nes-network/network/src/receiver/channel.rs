@@ -28,6 +28,8 @@ pub(super) type Error = Box<dyn std::error::Error + Send + Sync>;
 enum ChannelHandlerStatus {
     /// The channel handler has received a ChannelClose message from the other side.
     ClosedByOtherSide,
+    /// The channel handler has received a ChannelError message from the other side.
+    ClosedByOtherSideWithError(String),
     /// The channel handler has noticed that the DataQueue has been closed, which indicates that
     /// the software side wants to terminate the connection. The ChannelHandler has propagated this
     /// to the other side.
@@ -38,7 +40,12 @@ enum ChannelHandlerStatus {
     /// NetworkService shutdown or the control connection stopped.
     Cancelled,
 }
-pub(super) type DataQueue = async_channel::Sender<TupleBuffer>;
+pub(super) type DataQueue = async_channel::Sender<DataQueueItem>;
+pub(super) enum DataQueueItem {
+    Data(TupleBuffer),
+    Error(String),
+    Close,
+}
 
 async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     cancellation_token: CancellationToken,
@@ -57,7 +64,7 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
             let sequence = pending_buffer.sequence();
             select! {
                 _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
-                write_queue_result = buffer_queue.send(pending_buffer) => {
+                write_queue_result = buffer_queue.send(DataQueueItem::Data(pending_buffer)) => {
                     match write_queue_result {
                         Ok(_) => {
                             trace!("accepted data for sequence number {sequence:?}.");
@@ -113,8 +120,13 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
                     // channel by closing the queue, which will interrupt any blocking reads.
                     // Returning `ClosedByOtherSide` will not cause any retries.
                     DataChannelRequest::Close => {
+                        buffer_queue.send(DataQueueItem::Close).await.ok();
                         return Ok(ChannelHandlerStatus::ClosedByOtherSide);
                     },
+                    DataChannelRequest::Error(message) => {
+                        buffer_queue.send(DataQueueItem::Error(message.clone())).await.ok();
+                        return Ok(ChannelHandlerStatus::ClosedByOtherSideWithError(message));
+                    }
                 }
             }
         }
@@ -178,6 +190,9 @@ pub(super) fn create_channel_handler<
                 }
                 ChannelHandlerStatus::ClosedBySoftware => {
                     info!("Channel Closed by software.");
+                }
+                ChannelHandlerStatus::ClosedByOtherSideWithError(message) => {
+                    info!("Channel Closed by other side with error: {message}.");
                 }
                 ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(e) => {
                     info!("Channel Closed by software.");

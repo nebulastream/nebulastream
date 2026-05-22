@@ -182,10 +182,9 @@ std::shared_ptr<RunningSource> RunningSource::create(
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
-        runningSource->source->start(
-            std::move(queryId),
-            emitFunction(queryId, runningSource, successors, controller, emitter),
-            asyncEmit(queryId, runningSource, std::move(successors), controller, emitter));
+        auto sync = emitFunction(queryId, runningSource, successors, controller, emitter);
+        auto async = asyncEmit(std::move(queryId), runningSource, std::move(successors), controller, emitter);
+        runningSource->source->start(std::move(queryId), std::move(sync), std::move(async));
     }
     return runningSource;
 }
@@ -196,10 +195,26 @@ RunningSource::~RunningSource()
     {
         LogContext logContext("Source", source->getSourceId());
         ENGINE_LOG_DEBUG("Stopping Running Source");
-        if (source->tryStop(std::chrono::milliseconds(0)) == SourceReturnType::TryStopResult::TIMEOUT)
+        ///TODO: This effectivly blocks the current thread... The proper solution is to ensure that the RunningSource is
+        ///      never destructed before it has been stopped. A stopping query plan may still have running sources, which
+        ///      at least have been instructed to stop.
+
+        auto backoff = std::chrono::milliseconds(1);
+        for (size_t i = 0; i < 20; i++)
         {
-            ENGINE_LOG_DEBUG("Source was requested to stop. Stop will happen asynchronously.");
+            if (source->tryStop(std::chrono::milliseconds(0)) == SourceReturnType::TryStopResult::TIMEOUT)
+            {
+                NES_DEBUG("Shit not working");
+                std::this_thread::sleep_for(backoff);
+                backoff *= 2;
+                backoff = std::min(backoff, std::chrono::milliseconds(250));
+            }
+            else
+            {
+                return;
+            }
         }
+        INVARIANT(false, "Source did not stop in time the source does not seem to respect the stop request");
     }
 }
 

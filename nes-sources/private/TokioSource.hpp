@@ -75,6 +75,7 @@ private:
     BackpressureListener backpressureHandler;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     SourceRuntimeConfiguration runtimeConfiguration;
+    std::atomic_bool gracefulStop = false;
 };
 
 } // namespace NES

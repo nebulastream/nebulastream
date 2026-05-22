@@ -248,7 +248,8 @@ struct TokioSinkContext
         }
         else
         {
-            NES_WARNING("Sink forced termination");
+            sink_fail(*handle, "Query Failed");
+            NES_DEBUG("Sink was aborted");
         }
     }
 };
@@ -341,7 +342,7 @@ void TokioSink::stop(PipelineExecutionContext& pec)
     if (!context->flushEpoch)
     {
         NES_DEBUG("Start flush");
-        auto epoch = flush(*context->handle);
+        auto epoch = sink_flush(*context->handle);
         if (epoch == 0)
         {
             NES_DEBUG("Could not flush, queue is full");

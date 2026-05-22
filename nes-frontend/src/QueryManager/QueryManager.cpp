@@ -54,7 +54,7 @@ DistributedQueryId uniqueDistributedQueryId(const QueryManagerState& state)
 }
 }
 
-std::expected<DistributedQuery, Exception> QueryManager::getQuery(DistributedQueryId query) const
+std::expected<DistributedQuery, Exception> QueryManager::getQuery(const DistributedQueryId& query) const
 {
     const auto it = state.queries.find(query);
     if (it == state.queries.end())
@@ -119,8 +119,10 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
         throw QueryAlreadyRegistered("{}", plan.getQueryId());
     }
 
+    LogContext distributedQueryLogContext("query", id);
     for (const auto& [host, localPlans] : plan)
     {
+        LogContext workerQueryContext("worker", host);
         INVARIANT(backends.contains(host), "Plan was assigned to a node ({}) that is not part of the cluster", host);
         for (auto localPlan : localPlans)
         {
@@ -150,7 +152,8 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
 std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQueryId queryId)
 {
-    auto queryResult = getQuery(std::move(queryId));
+    LogContext distributedQueryLogContext("query", queryId);
+    auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
         return std::unexpected(std::vector{queryResult.error()});
@@ -161,6 +164,8 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
     const std::chrono::steady_clock::time_point queryStartTimestamp = std::chrono::steady_clock::now();
     for (const auto& [host, localQueryId] : query.iterate())
     {
+        LogContext workerQueryContext("worker", host);
+        LogContext localQueryIdContext("localQuery", localQueryId);
         try
         {
             INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
@@ -248,6 +253,7 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
 
 std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManager::status(const DistributedQueryId& queryId) const
 {
+    LogContext distributedQueryLogContext("query", queryId);
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
@@ -259,6 +265,8 @@ std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManag
 
     for (const auto& [host, localQueryId] : query.iterate())
     {
+        LogContext workerQueryContext("worker", host);
+        LogContext localQueryIdContext("localQuery", localQueryId);
         try
         {
             INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
@@ -287,6 +295,7 @@ std::expected<DistributedWorkerStatus, Exception> QueryManager::workerStatus(std
     DistributedWorkerStatus distributedStatus;
     for (const auto& [wId, backend] : backends)
     {
+        LogContext workerQueryContext("worker", wId);
         distributedStatus.workerStatus.try_emplace(wId, backend->workerStatus(after));
     }
     return distributedStatus;
@@ -312,7 +321,8 @@ std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
 
 std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryId queryId)
 {
-    auto queryResult = getQuery(std::move(queryId));
+    LogContext distributedQueryLogContext("query", queryId);
+    auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
         return std::unexpected(std::vector{queryResult.error()});
@@ -323,6 +333,8 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
 
     for (const auto& [host, localQueryId] : query.iterate())
     {
+        LogContext workerQueryContext("worker", host);
+        LogContext localQueryIdContext("localQuery", localQueryId);
         try
         {
             INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
@@ -346,7 +358,8 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
     {
         return std::unexpected{exceptions};
     }
-    NES_DEBUG("Stopping query {} was successful.", queryId);
+
+    NES_DEBUG("Stopping query was successful.");
     state.queries.erase(queryId);
     return {};
 }

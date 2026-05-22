@@ -115,7 +115,7 @@ public:
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
-    [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
+    [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(const DistributedQueryId& query) const;
 };
 
 }

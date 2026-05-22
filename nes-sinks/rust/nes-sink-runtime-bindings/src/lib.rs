@@ -5,10 +5,10 @@ use cxx::SharedPtr;
 pub use nes_buffer_bindings::*;
 use nes_buffer_runtime::TupleBuffer;
 use nes_io_runtime_bindings::current_io_runtime;
-use nes_sink_runtime::{SinkCommand, SinkContext};
+use nes_sink_runtime::{SinkContext, SinkDataCommand, SinkTerminationCommand};
 use nes_sink_validation::{ConfigOptions, validate};
 use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering::SeqCst;
+use std::sync::atomic::Ordering::Relaxed;
 use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::oneshot::error::TryRecvError;
 use tracing::{Level, span};
@@ -48,7 +48,7 @@ pub mod ffi {
         ) -> Result<Box<SinkHandle>>;
 
         unsafe fn try_write(handle: &SinkHandle, buffer: *mut MemorySegment) -> WriteResult;
-        unsafe fn flush(handle: &SinkHandle) -> usize;
+        unsafe fn sink_flush(handle: &SinkHandle) -> usize;
 
         /// Drives the sink towards termination and reports completion.
         ///
@@ -58,7 +58,8 @@ pub mod ffi {
         /// acknowledged; callers must call again later. Mirrors the
         /// `source_stop` pattern: the handle must not be dropped until this
         /// returns `true`, otherwise the rust sink task panics.
-        fn sink_stop(handle: &mut SinkHandle) -> bool;
+        fn sink_stop(handle: &mut SinkHandle) -> Result<bool>;
+        fn sink_fail(handle: &mut SinkHandle, message: String);
     }
 }
 
@@ -66,8 +67,10 @@ unsafe impl Send for ffi::SinkContext {}
 unsafe impl Sync for ffi::SinkContext {}
 
 struct SinkHandle {
-    controller: nes_sink_runtime::Controller,
-    stop_signal: tokio::sync::oneshot::Receiver<()>,
+    controller: nes_sink_runtime::DataChannel,
+    stop_signal: Option<nes_sink_runtime::TerminationSignal>,
+    stop_done_signal: Option<tokio::sync::oneshot::Receiver<core::result::Result<(), String>>>,
+    epoch_counter: AtomicUsize,
 }
 
 fn create_handle(
@@ -96,49 +99,72 @@ fn create_handle(
     };
     Ok(Box::new(SinkHandle {
         controller,
-        stop_signal,
+        stop_signal: Some(stop_signal),
+        stop_done_signal: None,
+        epoch_counter: AtomicUsize::new(0),
     }))
 }
 
 unsafe fn try_write(handle: &SinkHandle, buffer: *mut ffi::MemorySegment) -> WriteResult {
     let buffer = unsafe { TupleBuffer::from_raw(buffer) };
-    match handle.controller.try_send(SinkCommand::Data(buffer)) {
+    match handle.controller.try_send(SinkDataCommand::Data(buffer)) {
         Ok(_) => WriteResult::Ok,
         Err(TrySendError::Full(_)) => WriteResult::Full,
         Err(TrySendError::Closed(_)) => panic!("Channel should not be closed"),
     }
 }
 
-static EPOCH_COUNTER: AtomicUsize = AtomicUsize::new(1);
-unsafe fn flush(handle: &SinkHandle) -> usize {
-    let epoch = EPOCH_COUNTER.fetch_add(1, SeqCst);
-    match handle.controller.try_send(SinkCommand::Flush(epoch)) {
+unsafe fn sink_flush(handle: &SinkHandle) -> usize {
+    let epoch = handle.epoch_counter.fetch_add(1, Relaxed);
+    match handle.controller.try_send(SinkDataCommand::Flush(epoch)) {
         Ok(_) => epoch,
         Err(TrySendError::Full(_)) => 0,
         Err(TrySendError::Closed(_)) => panic!("Channel should not be closed"),
     }
 }
 
-fn sink_stop(handle: &mut SinkHandle) -> bool {
-    match handle.stop_signal.try_recv() {
-        Ok(()) => true,
-        Err(TryRecvError::Empty) => match handle.controller.try_send(SinkCommand::Close) {
-            // Sender accepted or queue full → close is either in flight or already pending.
-            // Either way the task will terminate; the caller must keep polling.
-            Ok(_) | Err(TrySendError::Full(_)) => false,
-            Err(TrySendError::Closed(_)) => {
-                // The task finished and dropped the receiver between our
-                // try_recv and try_send; the stop signal must have been
-                // sent before the task exited.
-                handle
-                    .stop_signal
-                    .try_recv()
-                    .expect("The stop signal should have been sent before closing the sink");
-                true
+fn sink_stop(handle: &mut SinkHandle) -> Result<bool, String> {
+    match handle.stop_signal.take() {
+        Some(stop_signal) => {
+            let (stop_sender, mut stop_done) = tokio::sync::oneshot::channel();
+            stop_signal
+                .send(SinkTerminationCommand::Close(stop_sender))
+                .expect("Sink channel should not be closed");
+            match stop_done.try_recv() {
+                Ok(r) => r.map(|_| true),
+                Err(TryRecvError::Closed) => {
+                    panic!("Sink channel should not be closed");
+                }
+                Err(TryRecvError::Empty) => {
+                    handle.stop_done_signal = Some(stop_done);
+                    Ok(false)
+                }
             }
-        },
-        Err(TryRecvError::Closed) => {
-            panic!("Stop signal should have been sent before closing the sink");
+        }
+        None => {
+            match handle
+                .stop_done_signal.as_mut()
+                .expect("stop_signal done should have been set, if the previous call has returned false")
+                .try_recv() {
+                Ok(r) => r.map(|_| true),
+                Err(TryRecvError::Closed) => {
+                    panic!("Sink channel should not be closed");
+                }
+                Err(TryRecvError::Empty) => {
+                    Ok(false)
+                }
+            }
         }
     }
+}
+
+fn sink_fail(handle: &mut SinkHandle, message: String) {
+    let (stop_sender, _) = tokio::sync::oneshot::channel();
+    let Some(stop_signal) = handle.stop_signal.take() else {
+        return;
+    };
+
+    stop_signal
+        .send(SinkTerminationCommand::Error(message, stop_sender))
+        .expect("Sink channel should not be closed");
 }

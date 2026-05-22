@@ -239,7 +239,10 @@ NES::TokioSource::TokioSource(
 {
 }
 
-NES::TokioSource::~TokioSource() = default;
+NES::TokioSource::~TokioSource()
+{
+    INVARIANT(gracefulStop, "TokioSource was not stopped gracefully");
+}
 
 bool NES::TokioSource::start(
     QueryId queryId, NES::SourceReturnType::EmitFunction&&, NES::SourceReturnType::AsyncEmitFunction&& asyncEmitFunction)
@@ -271,6 +274,7 @@ void NES::TokioSource::stop()
 
 NES::SourceReturnType::TryStopResult NES::TokioSource::tryStop(std::chrono::milliseconds)
 {
+    NES_DEBUG("Stopping tokio source");
     if (!context)
     {
         return SourceReturnType::TryStopResult::NOT_RUNNING;
@@ -278,6 +282,7 @@ NES::SourceReturnType::TryStopResult NES::TokioSource::tryStop(std::chrono::mill
 
     if (::source_stop(*context->handle))
     {
+        gracefulStop = true;
         context.reset();
         return SourceReturnType::TryStopResult::SUCCESS;
     }
@@ -286,4 +291,3 @@ NES::SourceReturnType::TryStopResult NES::TokioSource::tryStop(std::chrono::mill
         return SourceReturnType::TryStopResult::TIMEOUT;
     }
 }
-

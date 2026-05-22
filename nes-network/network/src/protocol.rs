@@ -102,6 +102,7 @@ pub enum ControlChannelResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DataChannelRequest {
     Data(TupleBuffer),
+    Error(String),
     Close,
 }
 

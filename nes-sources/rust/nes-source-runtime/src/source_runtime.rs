@@ -4,6 +4,7 @@ use nes_buffer_runtime::{BufferProvider, TupleBuffer};
 use nes_io_runtime::IORuntime;
 use nes_source_validation::ConfigOptions;
 use std::pin::Pin;
+use std::result;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
 #[cfg(tokio_unstable)]
@@ -19,7 +20,7 @@ pub type EmitFunction = Box<dyn Fn(SourceResult) -> BoxFuture<Result<()>> + Send
 pub trait AsyncEmitter {
     async fn eos(&mut self);
     async fn error(&mut self, error_message: String);
-    async fn data(&mut self, result: TupleBuffer) -> Result<()>;
+    async fn data(&mut self, result: TupleBuffer);
 }
 
 pub enum SourceResult {
@@ -57,6 +58,24 @@ pub type SourceCreateFn = dyn Fn(&ConfigOptions) -> Box<dyn AsyncSource + Send> 
 #[distributed_slice]
 pub static SOURCE_CREATION_FUNCTIONS: [(&'static str, &'static SourceCreateFn)];
 
+async fn race_against_stop_signal<R, Fn: Future<Output = R>>(
+    commands: &mut Receiver<SourceCommand>,
+    f: Fn,
+) -> Option<R> {
+    // Cancellation Safety: If the stop signal cancels the original future, we may lose data,
+    // however, since the source is terminated anyway, we are never going to call the future again.
+    select! {
+        result = commands.recv() => {
+            match result {
+                Some(SourceCommand::Stop) => None,
+                None => unreachable!("Controller should outlive the source task"),
+            }
+        }
+        result = f => {
+            Some(result)
+        }
+    }
+}
 async fn run_source(
     mut source: Box<dyn AsyncSource + Send>,
     origin_id: u64,
@@ -67,34 +86,42 @@ async fn run_source(
     source.start().await?;
     let adds_metadata = source.adds_metadata();
     let mut sequence_number: u64 = 1; // INITIAL sequence number (matches DataHandler behavior)
-    'run: loop {
-        select! {
-            result = source.receive(&mut buffer_provider) => {
-                match result? {
-                    SourceResult::Data(mut buffer, size) => {
-                        if !adds_metadata {
-                            buffer.set_origin_id(origin_id);
-                            buffer.set_sequence_number(sequence_number);
-                            sequence_number += 1;
-                            buffer.set_chunk_number(1); // INITIAL_CHUNK_NUMBER
-                            buffer.set_last_chunk(true);
-                            buffer.set_number_of_tuples(size);
-                        }
-                        emit.data(buffer).await.expect("Bridge thread should remain alive");
-                    },
-                    SourceResult::EoS => {
-                        info!("EoS received, stopping source");
-                        emit.eos().await;
-                        break 'run;
-                    }
+    loop {
+        let Some(result) =
+            race_against_stop_signal(commands, source.receive(&mut buffer_provider)).await
+        else {
+            info!("Source was requested to stop");
+            break;
+        };
+
+        match result? {
+            SourceResult::Data(mut buffer, size) => {
+                if !adds_metadata {
+                    buffer.set_origin_id(origin_id);
+                    buffer.set_sequence_number(sequence_number);
+                    sequence_number += 1;
+                    buffer.set_chunk_number(1); // INITIAL_CHUNK_NUMBER
+                    buffer.set_last_chunk(true);
+                    buffer.set_number_of_tuples(size);
                 }
+
+                if race_against_stop_signal(commands, emit.data(buffer))
+                    .await
+                    .is_none()
+                {
+                    info!("Source was requested to stop, while emitting data.");
+                    break;
+                };
             }
-            command = commands.recv() => {
-                match command.expect("Controller should outlive the source task") {
-                    SourceCommand::Stop => {
-                        info!("Source was requested to stop");
-                        break 'run;}
-                }
+            SourceResult::EoS => {
+                info!("EoS received, stopping source");
+                if race_against_stop_signal(commands, emit.eos())
+                    .await
+                    .is_none()
+                {
+                    info!("Source was requested to stop, while emitting eos.");
+                };
+                break;
             }
         }
     }
@@ -126,10 +153,6 @@ pub fn start_source<T: AsyncEmitter + Send + 'static>(
         query_context.query_id, query_context.source_id
     );
     let task = async move {
-        let log_on_source_drop = scopeguard::guard((), |_| {
-            panic!("Source Task was aborted.");
-        });
-
         match run_source(
             source,
             query_context.source_id,
@@ -147,9 +170,6 @@ pub fn start_source<T: AsyncEmitter + Send + 'static>(
         info!("Source has stopped");
         let _ = stop_sender.send(emit);
         rx.close();
-
-        // source stops itself, it can no longer be aborted
-        scopeguard::ScopeGuard::into_inner(log_on_source_drop);
     }
     .in_current_span();
 

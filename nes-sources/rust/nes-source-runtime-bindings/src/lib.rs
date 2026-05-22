@@ -11,7 +11,7 @@ use nes_source_runtime::{AsyncEmitter, QueryContext, SourceCommand};
 use nes_source_validation::{ConfigOptions, validate};
 use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::oneshot::error::TryRecvError;
-use tracing::{Level, span};
+use tracing::{Level, span, info};
 
 #[cxx::bridge]
 pub mod ffi {
@@ -132,12 +132,11 @@ impl AsyncEmitter for Emitter {
         .await
     }
 
-    async fn data(&mut self, data: TupleBuffer) -> nes_source_runtime::Result<()> {
+    async fn data(&mut self, data: TupleBuffer) {
         async_operation(move |done, ctx| unsafe {
             ffi::source_on_data(self.context.pin_mut_unchecked(), data.leak(), done, ctx)
         })
         .await;
-        Ok(())
     }
 }
 
@@ -177,6 +176,7 @@ fn source_create_handle(
 }
 
 fn source_stop(handle: &mut RustSourceHandle) -> bool {
+    info!("Stopping source");
     match handle.stop_signal.try_recv() {
         Ok(emitter) => {
             let _ = emitter;

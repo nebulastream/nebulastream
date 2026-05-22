@@ -16,6 +16,7 @@ use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::{HashMap, VecDeque};
+use std::convert::Infallible;
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
@@ -26,16 +27,26 @@ use tracing::{Instrument, Span, debug, info, info_span, trace, warn};
 use super::control::*;
 pub type Result<T> = std::result::Result<T, Error>;
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
-/// Status returned when the channel handler terminates.
+/// Terminal status returned by `ChannelHandler::run`. Every variant is a
+/// *graceful* termination: the spawn wrapper in `create_channel_handler`
+/// treats all three as "do not retry". Hard errors are returned via the
+/// `Err` arm of `run` and trigger retry separately.
 enum ChannelHandlerStatus {
-    /// The receiver sent a Close message, initiating shutdown.
+    /// Receiver sent `DataChannelResponse::Close`; we acked it by exiting.
     ClosedByOtherSide,
-    /// The local software closed the channel (via `SenderChannel::close()`),
-    /// and the Close message was successfully sent to the receiver.
+    /// Local software triggered termination via one of:
+    /// - `SenderChannel::close()` — explicit graceful shutdown
+    /// - `SenderChannel::error()` — propagate an error to the receiver
+    /// - dropping the `SenderChannel` without calling either (observed by
+    ///   the handler as a `Cancellation` on the recv channel)
+    /// In each case the wire-level termination message (`Close` or `Error`)
+    /// was successfully sent and, where applicable, the software-facing
+    /// `done` oneshot was acknowledged.
     ClosedBySoftware,
-    /// The local software closed the channel, but sending the Close message
-    /// to the receiver failed. This can happen if the network connection was
-    /// already broken when attempting to propagate the close signal.
+    /// Same trigger as `ClosedBySoftware`, but the wire-level termination
+    /// message could not be sent — typically because the network connection
+    /// was already broken. The software-facing `done` oneshot (if any) has
+    /// been signalled with `false`.
     ClosedBySoftwareButFailedToPropagate(Error),
 }
 
@@ -88,80 +99,311 @@ async fn create_channel<C: Communication>(
     }
 }
 
-/// Commands sent from `SenderChannel` to the channel handler task.
-pub(super) enum ChannelCommand {
-    /// Send a data buffer through the channel.
+/// Non-terminal commands carried on the bounded data queue from
+/// `SenderChannel` to the handler. Both variants are processed in FIFO
+/// order; backpressure is applied by the bounded channel's capacity.
+enum ChannelData {
+    /// Enqueue a buffer for transmission. The handler appends to
+    /// `pending_writes` and feeds it to the wire as soon as flow-control
+    /// allows.
     Data(TupleBuffer),
-    /// Drain the channel: resolves once every buffer submitted before this
-    /// command has been delivered and acknowledged. While a `Flush` is pending,
-    /// the handler stops reading further commands from the queue and only
-    /// resumes once both `pending_writes` and `wait_for_ack` are empty.
+    /// Resolve `done` once every buffer submitted before this command has
+    /// been delivered and acknowledged. While a flush is pending, the
+    /// handler stops reading further `ChannelData` commands; it continues
+    /// to drain `pending_writes` and `wait_for_ack` until both are empty,
+    /// at which point `done` is signalled and reads resume.
     Flush(oneshot::Sender<()>),
-    Close(oneshot::Sender<bool>),
 }
-pub(super) type ChannelCommandQueue = async_channel::Sender<ChannelCommand>;
-pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCommand>;
+
+/// Terminal commands carried on the one-shot termination channel. Mutually
+/// exclusive with each other (oneshot consumes the sender) and with any
+/// further `ChannelData` traffic (since `close`/`error` consume `self`).
+enum ChannelTermination {
+    /// Graceful close: send `DataChannelRequest::Close` on the wire, then
+    /// signal `done` with whether propagation succeeded.
+    Close(oneshot::Sender<bool>),
+    /// Propagate an error string to the receiver as
+    /// `DataChannelRequest::Error(msg)`, then signal `done` with whether
+    /// propagation succeeded.
+    Error(String, oneshot::Sender<bool>),
+}
+
+/// Unified event type produced by `SenderChannelListener::recv()`.
+enum ChannelCommand {
+    /// A queued data-path command (Data or Flush).
+    Data(ChannelData),
+    /// A termination command (Close or Error).
+    Terminate(ChannelTermination),
+    /// The `SenderChannel` was dropped without invoking either `close()` or
+    /// `error()`. Surfaces as either the data queue being closed with no
+    /// senders, or the termination oneshot's sender being dropped without
+    /// sending. The handler treats this as an implicit graceful close.
+    Cancellation,
+}
+
+/// A handle to a registered network channel for sending tuple buffers.
+///
+/// `SenderChannel` represents an active data channel to a specific
+/// `ReceiverChannel`. Each channel maintains its own dedicated network
+/// connection with independent backpressure and flow control.
+///
+/// The handle is split into two communication paths to the handler:
+/// - `queue`: a bounded async channel for the data path (`Data`, `Flush`).
+///   Backpressure is applied by parking `send_data`/`flush` when full.
+/// - `termination`: a oneshot for terminal commands (`Close`, `Error`).
+///   Consuming the oneshot consumes `self`, so termination is exactly-once
+///   and mutually exclusive with any subsequent data send.
+///
+/// Dropping `SenderChannel` without calling `close()` or `error()` is a
+/// supported path: the handler observes the drop as a `Cancellation` and
+/// performs an implicit graceful close.
+pub struct SenderChannel {
+    queue: ChannelCommandQueue,
+    termination: tokio::sync::oneshot::Sender<ChannelTermination>,
+}
+
+/// Handler-side counterpart to `SenderChannel`. Multiplexes the data queue
+/// and the termination oneshot into a single `ChannelCommand` stream via
+/// `recv`.
+pub(crate) struct SenderChannelListener {
+    queue: ChannelCommandQueueListener,
+    termination: tokio::sync::oneshot::Receiver<ChannelTermination>,
+}
+
+impl SenderChannelListener {
+    /// Awaits the next `ChannelCommand`.
+    ///
+    /// Biased select: termination wins ties so that a Close issued while
+    /// the data queue is also ready is observed without an extra trip
+    /// through the data path. The oneshot is polled by `&mut` so the
+    /// receiver is not consumed across calls; the queue's `recv` is
+    /// cancel-safe (the buffered item stays in the queue if the select's
+    /// other branch fires first).
+    ///
+    /// A `Cancellation` is produced when either side of `SenderChannel`
+    /// has been dropped (oneshot sender gone, or all queue senders gone
+    /// with the queue empty).
+    async fn recv(&mut self) -> ChannelCommand {
+        select! {
+            biased;
+            termination = &mut self.termination => {
+                match termination {
+                    Ok(termination) => ChannelCommand::Terminate(termination),
+                    Err(_) => ChannelCommand::Cancellation,
+                }
+            }
+            data = self.queue.recv() => {
+                match data {
+                    Ok(data) => ChannelCommand::Data(data),
+                    Err(_) => ChannelCommand::Cancellation,
+                }
+            }
+        }
+    }
+}
+
+impl SenderChannel {
+    pub(crate) fn new(capacity: usize) -> (Self, SenderChannelListener) {
+        let (sender, queue) = async_channel::bounded(capacity);
+        let (termination_sender, termination_receiver) = oneshot::channel();
+        (
+            SenderChannel {
+                queue: sender,
+                termination: termination_sender,
+            },
+            SenderChannelListener {
+                queue,
+                termination: termination_receiver,
+            },
+        )
+    }
+    /// Sends a tuple buffer through this channel, awaiting queue capacity.
+    ///
+    /// Returns `Err(buffer)` if the data queue has been closed (handler
+    /// terminated and dropped the receiver). The second match arm is
+    /// `unreachable!()` because `send_data` only ever submits `Data`
+    /// variants — `async_channel::SendError` echoes back the item that
+    /// failed, which can only be `Data`.
+    pub async fn send_data(&self, buffer: TupleBuffer) -> std::result::Result<(), TupleBuffer> {
+        match self.queue.send(ChannelData::Data(buffer)).await {
+            Ok(()) => Ok(()),
+            Err(async_channel::SendError(ChannelData::Data(buffer))) => Err(buffer),
+            Err(_) => unreachable!("send_data only submits ChannelData::Data variants"),
+        }
+    }
+
+    /// Drains the channel and resolves once the receiver has acknowledged
+    /// every buffer submitted before this call.
+    ///
+    /// Sends a `Flush` command to the channel handler. While the flush is
+    /// pending, the handler stops reading further commands from the queue and
+    /// only resumes once both `pending_writes` and `wait_for_ack` are empty —
+    /// i.e. once every preceding buffer has been delivered and acked.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(())`: every buffer submitted before this call has been acked.
+    /// - `Err(_)`: the channel handler is no longer running (network service
+    ///   shut down, handler terminated due to a network error, cancellation,
+    ///   or remote close). Delivery of the in-flight buffers could not be
+    ///   confirmed.
+    ///
+    /// Concurrent callers are serialised by the FIFO command queue: each
+    /// `flush` resolves only after every buffer that was already in the queue
+    /// at the time its own `Flush` command was dequeued has been acked.
+    pub async fn flush(&self) -> crate::sender::Result<()> {
+        let (tx, rx) = oneshot::channel();
+        self.queue
+            .send(ChannelData::Flush(tx))
+            .await
+            .map_err(|_| "Network Service Closed")?;
+        rx.await.map_err(|_| "Network Service Closed".into())
+    }
+
+    /// Closes this channel and propagates a `Close` to the `ReceiverChannel`.
+    ///
+    /// Consumes `self`: the data queue's sender is dropped, and the
+    /// termination oneshot is fired. The handler completes any work
+    /// already dequeued (including a pending flush) only insofar as the
+    /// outer event loop reaches it before observing the close — pending
+    /// data still sitting in `pending_writes` is *not* drained before the
+    /// wire `Close` is sent.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(true)`: the handler sent `DataChannelRequest::Close` on the
+    ///   wire successfully.
+    /// - `Ok(false)`: the close was observed, but propagation to the
+    ///   receiver failed (e.g. the network connection was already broken).
+    /// - `Err(_)`: the channel handler is no longer running, so the close
+    ///   was never observed.
+    pub async fn close(self) -> crate::sender::Result<bool> {
+        let (tx, rx) = oneshot::channel();
+        self.termination
+            .send(ChannelTermination::Close(tx))
+            .map_err(|_| "Network Service Closed")?;
+        Ok(rx.await.map_err(|_| "Network Service Closed")?)
+    }
+
+    /// Propagates an error string to the receiver and terminates the channel.
+    ///
+    /// Consumes `self`. The handler sends `DataChannelRequest::Error(message)`
+    /// on the wire. Otherwise identical to `close()` in lifecycle: any
+    /// buffers still in `pending_writes` are not drained first.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(true)`: the error message was sent on the wire successfully.
+    /// - `Ok(false)`: propagation to the receiver failed.
+    /// - `Err(_)`: the handler is no longer running.
+    pub async fn error(self, message: String) -> crate::sender::Result<bool> {
+        let (tx, rx) = oneshot::channel();
+        self.termination
+            .send(ChannelTermination::Error(message, tx))
+            .map_err(|_| "Network Service Closed")?;
+        rx.await.map_err(|_| "Network Service Closed".into())
+    }
+}
+
+pub(super) type ChannelCommandQueue = async_channel::Sender<ChannelData>;
+pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelData>;
 
 /// Core event loop handler for a sender-side data channel.
 ///
 /// `ChannelHandler` implements a reliable, ordered data transmission protocol with
 /// acknowledgment-based flow control. It manages three concurrent event sources:
 ///
-/// 1. **Software commands** (`queue`) - Data and flush requests from `SenderChannel`
-/// 2. **Network responses** (`reader`) - Acks/Nacks from the `ReceiverChannel`
-/// 3. **Pending sends** - Buffers ready to be transmitted to the receiver
+/// 1. **Software commands** (`queue: SenderChannelListener`) — Data, Flush,
+///    Close, Error, and implicit Cancellation
+/// 2. **Network responses** (`reader`) — Acks/Nacks/Close from the `ReceiverChannel`
+/// 3. **Pending sends** — buffers ready to be transmitted to the receiver
 ///
 /// # Flow Control - Sliding Window Protocol
 ///
 /// The handler maintains two queues for flow control:
-/// - `pending_writes`: Buffers queued for sending but not yet transmitted
-/// - `wait_for_ack`: Buffers that have been sent and are awaiting acknowledgment (max: `MAX_PENDING_ACKS`)
+/// - `pending_writes`: buffers queued for sending but not yet transmitted
+/// - `wait_for_ack`: buffers that have been sent and are awaiting acknowledgment
+///   (max: `config.max_pending_acks`)
 ///
-/// When `wait_for_ack` reaches `MAX_PENDING_ACKS`, the handler stops sending new
-/// buffers until acknowledgments are received, providing network-level backpressure.
+/// When `wait_for_ack` reaches `max_pending_acks`, the handler stops reading
+/// new commands from the software queue until acks drain the window, providing
+/// network-level backpressure.
 ///
 /// # Reliability - Retry Logic
 ///
-/// - **Ack received**: Buffer is removed from `wait_for_ack` (successful delivery)
-/// - **Nack received**: Buffer is moved from `wait_for_ack` back to `pending_writes` for retry
-/// - **Send failure**: Buffer is returned to `pending_writes` for retry
+/// - **Ack received**: buffer is removed from `wait_for_ack` (successful delivery)
+/// - **Nack received**: buffer is moved from `wait_for_ack` back to `pending_writes` for retry
+/// - **Send failure**: buffer stays in `pending_writes` for retry (cancel-safe)
 ///
 /// # Lifecycle
 ///
-/// The handler runs until one of these conditions:
-/// - Receiver sends a Close message
-/// - Software closes the channel via `SenderChannel::close()`
-/// - Unrecoverable error occurs
+/// The handler runs until exactly one of:
+/// - the receiver sends `DataChannelResponse::Close` → `ClosedByOtherSide`
+/// - the software issues `Close` / `Error` / drops the `SenderChannel` →
+///   `ClosedBySoftware[ButFailedToPropagate]`
+/// - an unrecoverable network or protocol error → `Err`, triggers retry
 pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
     pending_writes: VecDeque<TupleBuffer>,
     wait_for_ack: HashMap<OriginSequenceNumber, TupleBuffer>,
+    /// When `Some`, a terminal command (Close/Error/Cancellation) has been
+    /// dequeued. The main loop drains this at the top of the next iteration
+    /// by returning the matching `ErrorOrStatus` variant. Once observed,
+    /// `run_internal` does not return to the event loop.
+    pending_close: Option<PendingClose>,
     /// When `Some`, a flush is in progress: command-queue reads are paused
     /// until both `pending_writes` and `wait_for_ack` drain, at which point
     /// the waker is signalled and reads resume.
-    pending_close: Option<oneshot::Sender<bool>>,
     pending_flush: Option<oneshot::Sender<()>>,
     writer: DataChannelSenderWriter<W>,
     reader: DataChannelSenderReader<R>,
-    queue: ChannelCommandQueueListener,
-    max_pending_acks: usize,
+    queue: SenderChannelListener,
+    config: ChannelConfig,
 }
 
+/// Internal latch for "a terminal command has been received, exit on the
+/// next iteration". `Cancellation` is represented directly by an
+/// `ErrorOrStatus::ClosedBySoftwareCancellation` returned from
+/// `handle_request` rather than going through this enum, because it has no
+/// software-facing `done` oneshot to reply on.
+enum PendingClose {
+    Error(String, oneshot::Sender<bool>),
+    Graceful(oneshot::Sender<bool>),
+}
+
+/// Internal return type used by `run_internal` to communicate why the event
+/// loop is exiting. Every variant except `Error` corresponds 1:1 to a
+/// software-initiated termination path; `Error` covers wire-level failures
+/// that will trigger a retry one layer up.
 enum ErrorOrStatus {
-    /// The receiver sent a Close message, initiating shutdown.
+    /// Receiver sent `DataChannelResponse::Close`.
     ClosedByOtherSide,
-    /// The local software closed the channel (via `SenderChannel::close()`),
-    /// and the Close message was successfully sent to the receiver.
+    /// `SenderChannel::close()` was invoked; `done` must be signalled with
+    /// the propagation result once the wire `Close` has been attempted.
     ClosedBySoftware(oneshot::Sender<bool>),
+    /// `SenderChannel` was dropped without calling `close`/`error`. No
+    /// software-facing oneshot to reply on; `run` still attempts to
+    /// propagate a wire `Close` so the receiver sees a clean shutdown.
+    ClosedBySoftwareCancellation,
+    /// `SenderChannel::error(msg)` was invoked; `done` must be signalled
+    /// with the propagation result.
+    ClosedBySoftwareWithError(String, oneshot::Sender<bool>),
+    /// Wire/protocol failure. The spawn wrapper translates this into a
+    /// `RetryChannel` request to the connection controller.
     Error(Error),
 }
 type InternalResult<T> = std::result::Result<T, ErrorOrStatus>;
 
+#[derive(Clone)]
+pub struct ChannelConfig {
+    pub max_pending_acks: usize,
+}
+
 impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     pub fn new(
-        queue: ChannelCommandQueueListener,
+        queue: SenderChannelListener,
         reader: DataChannelSenderReader<R>,
         writer: DataChannelSenderWriter<W>,
-        max_pending_acks: usize,
+        config: ChannelConfig,
     ) -> Self {
         Self {
             pending_writes: Default::default(),
@@ -171,24 +413,34 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             reader,
             writer,
             queue,
-            max_pending_acks,
+            config,
         }
     }
-    /// Handles commands from the `SenderChannel` (software side).
+    /// Dispatches a `ChannelCommand` received from `SenderChannelListener`.
     ///
-    /// # Commands
+    /// - `Data(Data)`: append to `pending_writes` for transmission.
+    /// - `Data(Flush)`: stash `done` in `pending_flush`. The outer loop
+    ///   stops reading further commands (`should_read_from_software` gate)
+    ///   until `pending_writes` and `wait_for_ack` are both empty, at
+    ///   which point `done` is signalled and reads resume.
+    /// - `Terminate(Close)` / `Terminate(Error)`: latch the terminal
+    ///   command in `pending_close`. The next iteration of `run_internal`
+    ///   drains it and exits the loop.
+    /// - `Cancellation`: the `SenderChannel` was dropped without
+    ///   `close`/`error`. No `done` oneshot exists, so we short-circuit
+    ///   the latch and return `ClosedBySoftwareCancellation` directly.
     ///
-    /// - `Data`: Queues the buffer in `pending_writes` for transmission.
-    /// - `Flush`: Stores the waker in `pending_flush`. The main loop stops
-    ///   reading further commands until `pending_writes` and `wait_for_ack`
-    ///   are both empty, at which point the waker is signalled.
+    /// The `debug_assert!` on `pending_flush` is structurally guaranteed
+    /// by the outer `should_read_from_software` gate: this function is
+    /// only called when `!flushing`, so a second `Flush` cannot arrive
+    /// while the previous one is still pending.
     async fn handle_request(
         &mut self,
         channel_control_message: ChannelCommand,
     ) -> InternalResult<()> {
         match channel_control_message {
-            ChannelCommand::Data(data) => self.pending_writes.push_back(data),
-            ChannelCommand::Flush(done) => {
+            ChannelCommand::Data(ChannelData::Data(data)) => self.pending_writes.push_back(data),
+            ChannelCommand::Data(ChannelData::Flush(done)) => {
                 debug_assert!(
                     self.pending_flush.is_none(),
                     "BUG: received Flush while another flush is pending — \
@@ -196,7 +448,15 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 );
                 self.pending_flush = Some(done);
             }
-            ChannelCommand::Close(done) => self.pending_close = Some(done),
+            ChannelCommand::Terminate(ChannelTermination::Close(done)) => {
+                self.pending_close = Some(PendingClose::Graceful(done))
+            }
+            ChannelCommand::Terminate(ChannelTermination::Error(message, done)) => {
+                self.pending_close = Some(PendingClose::Error(message, done))
+            }
+            ChannelCommand::Cancellation => {
+                return Err(ErrorOrStatus::ClosedBySoftwareCancellation);
+            }
         }
         Ok(())
     }
@@ -247,28 +507,23 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         Ok(())
     }
 
-    /// Attempts to send the next pending TupleBuffer to the receiver.
+    /// Feeds the front of `pending_writes` to the network writer and, on
+    /// success, moves the buffer into `wait_for_ack` keyed by its sequence
+    /// number.
     ///
-    /// # Behavior
+    /// # Cancel safety
     ///
-    /// 1. Clones the front buffer from `pending_writes` and feeds it to the network writer
-    /// 2. On success: Moves the buffer from `pending_writes` to `wait_for_ack`
-    /// 3. On failure: Buffer stays in `pending_writes` for retry
+    /// The buffer remains in `pending_writes` until `feed()` returns `Ok`.
+    /// This matters because this future is one branch of the outer
+    /// `select!`, and a losing branch is dropped at its `.await` point. If
+    /// we moved the buffer into `wait_for_ack` before `feed()` succeeded,
+    /// a drop would strand it there without it ever reaching the wire —
+    /// the receiver would never ack it.
     ///
-    /// # Cancel Safety
-    ///
-    /// The buffer remains in `pending_writes` until `feed()` succeeds. This is
-    /// critical because this future is used inside `select!`, which drops
-    /// non-winning branches at `.await` points. If the buffer were moved to
-    /// `wait_for_ack` before `feed()`, a drop would strand it there without
-    /// ever being sent — the receiver would never ack it.
-    /// Attempts to send the next pending buffer to the receiver.
-    ///
-    /// IMPORTANT: The buffer stays in `pending_writes` until `feed()` succeeds.
-    /// This is critical because `select!` can drop this future at any `.await`
-    /// point. If we moved the buffer to `wait_for_ack` before `feed()` and the
-    /// future was dropped, the buffer would be stranded in `wait_for_ack`
-    /// without ever being sent — the receiver would never ack it.
+    /// Failure of `feed()` is non-fatal: the buffer stays in
+    /// `pending_writes` and will be retried on the next iteration. A hard
+    /// network error surfaces later via `read_from_other_side` (returning
+    /// `Connection Lost`) or `flush_writes`.
     async fn send_pending(
         writer: &mut DataChannelSenderWriter<W>,
         pending_writes: &mut VecDeque<TupleBuffer>,
@@ -313,6 +568,10 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         }
     }
 
+    async fn read_from_software(software: &mut SenderChannelListener) -> ChannelCommand {
+        software.recv().await
+    }
+
     async fn flush_writes(writer: &mut DataChannelSenderWriter<W>) -> InternalResult<()> {
         if writer.flush().await.is_err() {
             return Err(ErrorOrStatus::Error("Connection Lost".into()));
@@ -320,97 +579,141 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         Ok(())
     }
 
-    /// Main event loop that multiplexes between software commands, network responses, and pending sends.
+    /// Main event loop multiplexing software commands, network responses,
+    /// and pending sends.
     ///
-    /// This method implements the core logic of the sliding window protocol. It uses
-    /// a single `tokio::select!` with `if` guards to conditionally enable branches
-    /// based on the current state:
+    /// Implements the sliding-window protocol via a single `select!` with
+    /// `if` guards that conditionally enable branches based on state:
     ///
-    /// - `should_send_pending`: Sends buffered data when `pending_writes` is non-empty
-    /// - `should_read_from_software`: Accepts new commands when `wait_for_ack` < `max_pending_acks`
-    ///   AND no flush is pending
-    /// - `should_read_from_other_side`: Reads acks when `wait_for_ack` is non-empty
+    /// - `should_send_pending`: send buffered data when `pending_writes` is non-empty.
+    /// - `should_read_from_software`: accept new commands when
+    ///   `wait_for_ack.len() < max_pending_acks` *and* no flush is pending.
+    ///   This combined gate also means termination (Close/Error/Cancellation)
+    ///   is not observed while a flush is in flight — see `recv` for the
+    ///   biased ordering inside the gate.
+    /// - `should_read_from_other_side`: read acks when `wait_for_ack` is non-empty.
     ///
-    /// When there is no pending data to send, the codec buffer is flushed before
-    /// entering `select!` so the receiver can see previously fed data and send acks.
+    /// When there is nothing left to send, the codec buffer is flushed
+    /// before entering `select!` so the receiver actually sees the data
+    /// fed earlier and can send acks.
     ///
     /// # Flush handling
     ///
-    /// When a `Flush` command is received, the waker is stashed in `pending_flush`
-    /// and command-queue reads are paused. The loop continues to drain
-    /// `pending_writes` (via `send_pending`) and `wait_for_ack` (via incoming
-    /// acks). Once both are empty, the waker is signalled at the top of the
-    /// next iteration and command-queue reads resume.
-    async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
-        loop {
-            if self.pending_close.is_some() {
-                return Err(ErrorOrStatus::ClosedBySoftware(
-                    self.pending_close.take().unwrap(),
-                ));
-            }
+    /// On `Flush`, the `done` oneshot is stashed in `pending_flush` and
+    /// command-queue reads are paused. The loop continues to drain
+    /// `pending_writes` (via `send_pending`) and `wait_for_ack` (via
+    /// incoming acks). Once both are empty, `done` is signalled at the
+    /// top of the next iteration and reads resume.
+    ///
+    /// # Termination
+    ///
+    /// Terminal commands set `pending_close` (or, for Cancellation, return
+    /// `ClosedBySoftwareCancellation` immediately). At the top of each
+    /// iteration `pending_close` is consumed and the loop exits with the
+    /// matching `ErrorOrStatus`.
+    async fn run_internal(&mut self) -> ErrorOrStatus {
+        let outcome: InternalResult<Infallible> = async {
+            loop {
+                if let Some(pending_close) = self.pending_close.take() {
+                    return match pending_close {
+                        PendingClose::Error(msg, done) => {
+                            Err(ErrorOrStatus::ClosedBySoftwareWithError(msg, done))
+                        }
+                        PendingClose::Graceful(done) => Err(ErrorOrStatus::ClosedBySoftware(done)),
+                    };
+                }
 
-            // Resolve any pending flush as soon as the channel is fully drained.
-            if self.pending_flush.is_some()
-                && self.pending_writes.is_empty()
-                && self.wait_for_ack.is_empty()
-            {
-                let _ = self.pending_flush.take().unwrap().send(());
-            }
+                // Resolve any pending flush as soon as the channel is fully drained.
+                if self.pending_flush.is_some()
+                    && self.pending_writes.is_empty()
+                    && self.wait_for_ack.is_empty()
+                {
+                    let _ = self.pending_flush.take().unwrap().send(());
+                }
 
-            let flushing = self.pending_flush.is_some();
-            let should_read_from_software =
-                !flushing && self.wait_for_ack.len() < self.max_pending_acks;
-            let should_read_from_other_side = !self.wait_for_ack.is_empty();
-            let should_send_pending = !self.pending_writes.is_empty();
+                let flushing = self.pending_flush.is_some();
+                let should_read_from_software =
+                    !flushing && self.wait_for_ack.len() < self.config.max_pending_acks;
+                let should_read_from_other_side = !self.wait_for_ack.is_empty();
+                let should_send_pending = !self.pending_writes.is_empty();
 
-            // When there's nothing left to send, flush the codec buffer so the
-            // receiver actually sees the data we fed earlier and can send Acks.
-            if !should_send_pending {
-                Self::flush_writes(&mut self.writer).await?;
-            }
+                // When there's nothing left to send, flush the codec buffer so the
+                // receiver actually sees the data we fed earlier and can send Acks.
+                if !should_send_pending {
+                    Self::flush_writes(&mut self.writer).await?;
+                }
 
-            select! {
-                response = Self::read_from_other_side(&mut self.reader), if should_read_from_other_side => {
-                    self.handle_response(response?)?;
-                },
-                request = self.queue.recv(), if should_read_from_software => {
-                    self.handle_request(request.expect("Queue should not have been closed")).await?;
-                },
-                send_result = Self::send_pending(&mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack), if should_send_pending => {
-                    send_result?;
-                },
-                _ = tokio::time::sleep(Duration::from_secs(10)) => {
-                    warn!("No progress for 10 seconds (pending: {}, wait_for_ack: {}, flushing: {})",
-                        self.pending_writes.len(), self.wait_for_ack.len(), flushing);
-                },
+                select! {
+                    response = Self::read_from_other_side(&mut self.reader), if should_read_from_other_side => {
+                        self.handle_response(response?)?;
+                    },
+                    request = Self::read_from_software(&mut self.queue), if should_read_from_software => {
+                        self.handle_request(request).await?;
+                    },
+                    send_result = Self::send_pending(&mut self.writer, &mut self.pending_writes, &mut self.wait_for_ack), if should_send_pending => {
+                        send_result?;
+                    },
+                    _ = tokio::time::sleep(Duration::from_secs(10)) => {
+                        warn!("No progress for 10 seconds (pending: {}, wait_for_ack: {}, flushing: {})",
+                            self.pending_writes.len(), self.wait_for_ack.len(), flushing);
+                    },
+                }
             }
         }
+        .await;
+        match outcome {
+            Err(reason) => reason,
+            Ok(never) => match never {},
+        }
     }
-    /// Runs the channel handler and performs cleanup when it terminates.
+    /// Runs the event loop and performs the wire-level termination
+    /// handshake on exit.
     ///
-    /// This method wraps `run_internal` and handles the graceful shutdown sequence.
-    /// The internal event loop is designed to always terminate with a status (never
-    /// returning `Ok`), so we expect an error and extract the status from it.
+    /// The match maps each terminal `ErrorOrStatus` to its wire-side action:
     ///
-    /// # Close Signal Propagation
+    /// | Variant                              | Wire message sent           | Reply to `done`     |
+    /// |--------------------------------------|-----------------------------|----------------------|
+    /// | `Error(e)`                           | none (giving up writer)     | n/a (no `done`)     |
+    /// | `ClosedByOtherSide`                  | none (peer already closed)  | n/a                 |
+    /// | `ClosedBySoftware(done)`             | `DataChannelRequest::Close` | `true` on success, `false` on writer error or drop via scopeguard |
+    /// | `ClosedBySoftwareWithError(msg,done)`| `DataChannelRequest::Error` | as above            |
+    /// | `ClosedBySoftwareCancellation`       | `DataChannelRequest::Close` | n/a (no `done`)     |
     ///
-    /// When the software closes the channel (via `SenderChannel::close()`), the
-    /// `read_from_software` method detects the closed queue and returns
-    /// `ClosedBySoftwareButFailedToPropagate` (it doesn't have access to the writer).
-    ///
-    /// This method "fixes up" that status by attempting to send a `Close` message
-    /// to the receiver, converting the status to either:
-    /// - `ClosedBySoftware`: Close signal successfully sent
-    /// - `ClosedBySoftwareButFailedToPropagate(e)`: Sending failed (e.g., network down)
-    /// - `Cancelled`: Cancellation token triggered during close attempt
-    async fn run(&mut self) -> Result<ChannelHandlerStatus> {
-        let status = match self
-            .run_internal()
-            .await
-            .expect_err("Handler should have not terminated by its own.")
-        {
-            ErrorOrStatus::Error(e) => return Err(e),
+    /// All software-initiated variants collapse to `ChannelHandlerStatus::ClosedBySoftware`
+    /// on successful propagation, or `ClosedBySoftwareButFailedToPropagate(e)` on writer
+    /// error. The spawn wrapper treats both as graceful and does not retry.
+    async fn run(
+        mut self,
+    ) -> core::result::Result<ChannelHandlerStatus, (SenderChannelListener, Error)> {
+        let status = match self.run_internal().await {
+            ErrorOrStatus::Error(e) => return Err((self.queue, e)),
             ErrorOrStatus::ClosedByOtherSide => ChannelHandlerStatus::ClosedByOtherSide,
+            ErrorOrStatus::ClosedBySoftwareWithError(msg, done) => {
+                let mut done = Some(done);
+                let error_failed_on_drop = scopeguard::guard((), |_| {
+                    let _ = done.take().unwrap().send(false);
+                });
+
+                let result = self.writer.send(DataChannelRequest::Error(msg)).await;
+                scopeguard::ScopeGuard::into_inner(error_failed_on_drop);
+                let done = done.take().unwrap();
+                if let Err(e) = result {
+                    let _ = done.send(false);
+                    ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(e.into())
+                } else {
+                    let _ = done.send(true);
+                    ChannelHandlerStatus::ClosedBySoftware
+                }
+            }
+            ErrorOrStatus::ClosedBySoftwareCancellation => {
+                info!("Channel closed by software (cancel)");
+                let result = self.writer.send(DataChannelRequest::Close).await;
+                if let Err(e) = result {
+                    ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(e.into())
+                } else {
+                    ChannelHandlerStatus::ClosedBySoftware
+                }
+            }
             ErrorOrStatus::ClosedBySoftware(done) => {
                 let mut done = Some(done);
                 let close_failed_on_drop = scopeguard::guard((), |_| {
@@ -455,7 +758,7 @@ async fn channel_handler(
     this_connection: ThisConnectionIdentifier,
     target_connection: ConnectionIdentifier,
     communication: impl Communication,
-) -> Result<ChannelHandlerStatus> {
+) -> core::result::Result<ChannelHandlerStatus, (PendingChannel, Error)> {
     debug!(
         "Channel negotiated. Connecting to {target_connection} on channel {}",
         pending_channel.id
@@ -463,45 +766,47 @@ async fn channel_handler(
     let (reader, writer) = match create_channel(
         this_connection,
         target_connection.clone(),
-        pending_channel.id,
+        pending_channel.id.clone(),
         communication,
     )
     .await
     {
         Ok((reader, writer)) => (reader, writer),
         Err(e) => {
-            return Err(format!("Could not create channel to {target_connection}: {e:?}").into());
+            return Err((
+                pending_channel,
+                format!("Could not create channel to {target_connection}: {e:?}").into(),
+            ));
         }
     };
 
-    let mut handler = ChannelHandler::new(
-        pending_channel.queue,
-        reader,
-        writer,
-        pending_channel.max_pending_acks,
-    );
-    handler.run().await
+    let PendingChannel { queue, id, config } = pending_channel;
+
+    let mut handler = ChannelHandler::new(queue, reader, writer, config.clone());
+
+    handler
+        .run()
+        .await
+        .map_err(|(queue, e)| (PendingChannel { queue, id, config }, e))
 }
 
 /// Spawns a channel handler task with automatic error recovery.
 ///
-/// This function spawns a background task that runs `channel_handler`. If the
-/// handler terminates with an error (not a graceful status), it automatically
-/// attempts to re-establish the channel, providing resilience against transient
-/// network failures.
+/// Runs `channel_handler` on a fresh tokio task. If it terminates with an
+/// `Err((pending_channel, _))`, a `RetryChannel` message is sent to the
+/// connection controller, which re-spawns the establishment attempt with
+/// exponential backoff.
 ///
-/// # Error Recovery
+/// # Graceful termination (no retry)
 ///
-/// When the channel fails with an error, a `RetryChannel` message is sent to
-/// the connection controller, which will spawn a new attempt to establish the
-/// channel with exponential backoff.
-///
-/// # Graceful Termination
-///
-/// The following statuses do NOT trigger retry:
-/// - `ClosedByOtherSide`: Receiver closed the channel
-/// - `ClosedBySoftware`: Software called `SenderChannel::close()`
-/// - `Cancelled`: Cancellation token was triggered
+/// All variants of `ChannelHandlerStatus` are considered graceful:
+/// - `ClosedByOtherSide`: receiver sent `DataChannelResponse::Close`.
+/// - `ClosedBySoftware`: software invoked `close()` / `error()`, or
+///   dropped `SenderChannel`; wire termination propagated.
+/// - `ClosedBySoftwareButFailedToPropagate(e)`: same trigger, but the
+///   wire termination could not be sent (network down). Logged as a
+///   warning but still treated as terminal — there is nothing more to
+///   do because the channel state is gone software-side.
 pub(super) fn create_channel_handler(
     this_connection: ThisConnectionIdentifier,
     target_connection: ConnectionIdentifier,
@@ -509,30 +814,35 @@ pub(super) fn create_channel_handler(
     communication: impl Communication + 'static,
     controller: NetworkingConnectionController,
 ) {
+    let channel_id = pending_channel.id.clone();
     tokio::spawn(
         {
             let this_connection = this_connection.clone();
             let target_connection = target_connection.clone();
-            let pending_channel = pending_channel.clone();
             async move {
                 let channel_handler_result = channel_handler(
-                    pending_channel.clone(),
+                    pending_channel,
                     this_connection,
                     target_connection,
                     communication,
                 )
                 .await;
 
-                let Ok(status) = channel_handler_result else {
-                    // If the channel has terminated due to an Error, the channel will be restarted.
-                    // It does not really matter if this succeeds or not. If the channel or
-                    // controller was terminated, then this channel wouldn't be restarted anyway.
-                    let _ = controller
-                        .send(NetworkingConnectionControlCommand::RetryChannel(
-                            pending_channel,
-                        ))
-                        .await;
-                    return;
+                let status = match channel_handler_result {
+                    Ok(status) => status,
+                    Err((pending_channel, error)) => {
+                        // If the channel has terminated due to an Error, the channel will be restarted.
+                        warn!("Channel failed with error: {error}. Retrying...");
+
+                        // It does not really matter if this succeeds or not. If the channel or
+                        // controller was terminated, then this channel wouldn't be restarted anyway.
+                        let _ = controller
+                            .send(NetworkingConnectionControlCommand::RetryChannel(
+                                pending_channel,
+                            ))
+                            .await;
+                        return;
+                    }
                 };
 
                 match status {
@@ -550,6 +860,6 @@ pub(super) fn create_channel_handler(
                 }
             }
         }
-        .instrument(info_span!(parent: Span::current(),"channel", channel = %pending_channel.id)),
+        .instrument(info_span!(parent: Span::current(),"channel", channel = %channel_id)),
     );
 }

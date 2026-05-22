@@ -80,7 +80,7 @@ mod runtime {
                 .map_err(|e| e.to_string())
         }
 
-        async fn stop(&mut self) -> Result<()> {
+        async fn stop(self: Box<FileSink>) -> Result<()> {
             //noop
             Ok(())
         }

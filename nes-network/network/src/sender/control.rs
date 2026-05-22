@@ -13,7 +13,7 @@
 */
 
 use super::SenderConfig;
-use super::channel::{ChannelCommandQueue, ChannelCommandQueueListener, create_channel_handler};
+use super::channel::{ChannelCommandQueue, ChannelCommandQueueListener, create_channel_handler, SenderChannel, SenderChannelListener, ChannelConfig};
 use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use crate::util::ScopedTask;
@@ -36,14 +36,13 @@ pub type Error = Box<dyn std::error::Error + Send + Sync>;
 /// but is currently (re)connecting. Once the connection is established, the channel
 /// handler will read from the queue and transmit data over the network. Note that the
 /// software side of the queue may already be in use, buffering messages until the connection is ready.
-#[derive(Clone)]
 pub(super) struct PendingChannel {
     /// The software-facing unique identifier for this channel
     pub id: ChannelIdentifier,
     /// Command queue for receiving commands to send on this channel
-    pub queue: ChannelCommandQueueListener,
+    pub queue: SenderChannelListener,
     /// Maximum number of buffers that can be in-flight (sent but not yet acknowledged).
-    pub max_pending_acks: usize,
+    pub config: ChannelConfig,
 }
 
 /// Control commands sent to the network service dispatcher.
@@ -57,7 +56,7 @@ pub(super) enum NetworkServiceControlCommand {
     RegisterChannel(
         ConnectionIdentifier,
         ChannelIdentifier,
-        oneshot::Sender<ChannelCommandQueue>,
+        oneshot::Sender<SenderChannel>,
         SenderConfig,
     ),
 }
@@ -77,7 +76,7 @@ pub(super) enum NetworkingConnectionControlCommand {
     /// The SenderConfig provides queue sizing and flow control parameters.
     RegisterChannel(
         ChannelIdentifier,
-        oneshot::Sender<ChannelCommandQueue>,
+        oneshot::Sender<SenderChannel>,
         SenderConfig,
     ),
     /// Retry establishing a channel after a failure. This reuses the existing
@@ -436,12 +435,12 @@ async fn connection_handler<C: Communication + 'static>(
     while let Ok(control_message) = listener.recv().await {
         match control_message {
             NetworkingConnectionControlCommand::RegisterChannel(channel, response, config) => {
-                let (sender, queue) = async_channel::bounded(config.sender_queue_size);
+                let (sender, queue) = SenderChannel::new(config.sender_queue_size);
 
                 let pending_channel = PendingChannel {
                     id: channel,
                     queue,
-                    max_pending_acks: config.max_pending_acks,
+                    config: ChannelConfig{max_pending_acks: config.max_pending_acks},
                 };
 
                 tokio::spawn(

@@ -134,7 +134,8 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
             }
         }
 
-        const LogContext context("queryId", plan.getQueryId());
+        const LogContext queryIdContext("queryId", plan.getQueryId());
+        const LogContext actionContext("action", "register");
 
         listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         const DumpMode dumpMode(
@@ -161,6 +162,8 @@ std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noe
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+        LogContext queryIdContext("queryId", queryId);
+        LogContext actionContext("action", "startQuery");
         nodeEngine->startQuery(queryId);
         __itt_task_end(workerDomain);
         return {};
@@ -179,6 +182,8 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, Quer
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+        LogContext queryIdContext("queryId", queryId);
+        LogContext actionContext("action", "stopQuery");
         nodeEngine->stopQuery(queryId, type);
         __itt_task_end(workerDomain);
         return {};
