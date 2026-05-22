@@ -101,7 +101,7 @@ where
 
     let result = operation(
         |context: Box<AsyncCompletionContext>, result: ffi::AsyncCompletionResult| {
-            context.0.send(result).expect("should be alive")
+            let _ = context.0.send(result);
         },
         completion_context,
     );

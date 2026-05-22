@@ -643,6 +643,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     Self::flush_writes(&mut self.writer).await?;
                 }
 
+                info!("Pending writes: {}, wait_for_ack: {}, flushing: {}", self.pending_writes.len(), self.wait_for_ack.len(), flushing);
+                debug!(
+                    "should_read_from_software: {}, should_read_from_other_side: {}, should_send_pending: {}",
+                    should_read_from_software, should_read_from_other_side, should_send_pending
+                );
+
                 select! {
                     response = Self::read_from_other_side(&mut self.reader), if should_read_from_other_side => {
                         self.handle_response(response?)?;

@@ -86,9 +86,11 @@ async fn run_sink(
                 data = commands.recv() => {
                     match data.expect("Sink commands channel closed unexpectedly") {
                         SinkDataCommand::Flush(epoch) => {
+                            info!("Received flush command for epoch {}", epoch);
                             if let Err(e) = sink.flush().await {
                                 return Err((termination, sink, e.to_string()));
                             }
+                            info!("Flush is done");
                             (context.on_flush)(epoch);
                         }
                         SinkDataCommand::Data(buffer) => {

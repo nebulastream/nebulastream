@@ -120,12 +120,18 @@ bool BackpressureReleased::await_suspend(std::coroutine_handle<> h) noexcept
 
     fmt::println(stderr, "Backpressure Detected");
     // Still closed; register waker while holding state lock so release()
-    // cannot miss us.
+    // cannot miss us. The shared waker carries a cancellation flag the
+    // awaiter's destructor sets if the parent frame dies before fire.
+    waker = std::make_shared<BackpressureWaker>();
+    waker->handle = h;
     channel->wakers.wlock()->emplace_back(
-        [h]
+        [w = waker]
         {
-            fmt::println(stderr, "Backpressure Released");
-            h.resume();
+            if (!w->cancelled.load(std::memory_order_acquire))
+            {
+                fmt::println(stderr, "Backpressure Released");
+                w->handle.resume();
+            }
             return true;
         });
     return true;

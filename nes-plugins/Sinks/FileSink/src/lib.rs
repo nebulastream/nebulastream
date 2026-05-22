@@ -72,12 +72,13 @@ mod runtime {
         }
 
         async fn flush(&mut self) -> Result<()> {
-            self.file
-                .as_mut()
-                .unwrap()
-                .flush()
-                .await
-                .map_err(|e| e.to_string())
+            Ok(())
+            // self.file
+            //     .as_mut()
+            //     .unwrap()
+            //     .flush()
+            //     .await
+            //     .map_err(|e| e.to_string())
         }
 
         async fn stop(self: Box<FileSink>) -> Result<()> {

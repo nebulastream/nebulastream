@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <atomic>
+#include <coroutine>
 #include <memory>
 #include <stop_token>
 #include <utility>
@@ -22,6 +24,15 @@
 struct Channel;
 class BackpressureListener;
 class BackpressureController;
+
+/// Per-suspension waker registered with the channel. Holds the suspended coroutine handle and a
+/// cancellation flag. The flag is set by the awaiter's destructor when the awaiting frame is
+/// destroyed before backpressure releases, so the channel never resumes a dangling handle.
+struct BackpressureWaker
+{
+    std::coroutine_handle<> handle;
+    std::atomic<bool> cancelled{false};
+};
 
 /// This is the entrypoint to a backpressure channel. It creates a pair of connected Backpressure Controller and BackpressureListener.
 /// A Backpressure Controller controls the Backpressure, and a BackpressureListener only allows further progress if there is no backpressure.
@@ -57,6 +68,23 @@ public:
 struct BackpressureReleased
 {
     std::shared_ptr<Channel> channel;
+    std::shared_ptr<BackpressureWaker> waker; /// non-null only after we actually suspended
+
+    explicit BackpressureReleased(std::shared_ptr<Channel> channel) : channel(std::move(channel)) { }
+    ~BackpressureReleased() noexcept
+    {
+        if (waker)
+        {
+            waker->cancelled.store(true, std::memory_order_release);
+        }
+    }
+
+    /// Awaiters are materialized in place in the parent coroutine frame; never moved/copied after
+    /// construction. Forbidding moves makes the cancellation-on-destruction contract unambiguous.
+    BackpressureReleased(const BackpressureReleased&) = delete;
+    BackpressureReleased(BackpressureReleased&&) = delete;
+    BackpressureReleased& operator=(const BackpressureReleased&) = delete;
+    BackpressureReleased& operator=(BackpressureReleased&&) = delete;
 
     bool await_ready() noexcept;
     bool await_suspend(std::coroutine_handle<> h) noexcept;

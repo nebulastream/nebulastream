@@ -354,6 +354,7 @@ void TokioSink::stop(PipelineExecutionContext& pec)
     }
     if (context->epochCounter < context->flushEpoch)
     {
+        sink_sanity_check(*context->handle);
         NES_DEBUG("Repeating until flush ack");
         pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
         return;

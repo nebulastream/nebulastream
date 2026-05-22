@@ -66,7 +66,7 @@ mod runtime {
     use nes_sink_validation::ConfigOptions;
     use std::str::FromStr;
     use std::sync::Arc;
-    use tracing::warn;
+    use tracing::{info, warn};
 
     /// Owns a retain-counted `TupleBuffer` alongside the number of valid bytes,
     /// and exposes the valid slice as `&[u8]` so `bytes::Bytes::from_owner` can
@@ -141,6 +141,7 @@ mod runtime {
         }
 
         async fn flush(&mut self) -> Result<()> {
+            info!("Flushing Network Channel: {}", self.channel_id);
             self.channel
                 .as_ref()
                 .unwrap()

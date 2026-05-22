@@ -60,6 +60,7 @@ pub mod ffi {
         /// returns `true`, otherwise the rust sink task panics.
         fn sink_stop(handle: &mut SinkHandle) -> Result<bool>;
         fn sink_fail(handle: &mut SinkHandle, message: String);
+        fn sink_sanity_check(handle: &mut SinkHandle);
     }
 }
 
@@ -101,7 +102,7 @@ fn create_handle(
         controller,
         stop_signal: Some(stop_signal),
         stop_done_signal: None,
-        epoch_counter: AtomicUsize::new(0),
+        epoch_counter: AtomicUsize::new(1),
     }))
 }
 
@@ -167,4 +168,8 @@ fn sink_fail(handle: &mut SinkHandle, message: String) {
     stop_signal
         .send(SinkTerminationCommand::Error(message, stop_sender))
         .expect("Sink channel should not be closed");
+}
+
+fn sink_sanity_check(handle: &mut SinkHandle) {
+    handle.stop_signal.as_mut().expect("should still be alive");
 }
