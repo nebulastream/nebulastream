@@ -14,13 +14,7 @@
 #include <Aggregation/AggregationSlice.hpp>
 
 #include <cstdint>
-#include <memory>
-#include <utility>
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
-#include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
 
 namespace NES

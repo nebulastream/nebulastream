@@ -151,27 +151,58 @@ std::optional<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSliceBySl
 void SpillableTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
     DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(newGlobalWaterMark);
-    /// Erase backend records for spilled slices the base GC has now dropped. Use the base (non-unspilling)
-    /// lookup so checking presence does not rebuild the very slice we are trying to drop.
-    auto keys = spilledKeys.wlock();
-    for (auto it = keys->begin(); it != keys->end();)
+
+    /// Collect the spilled keys the base GC has now dropped (using the base, non-unspilling lookup so the presence
+    /// check does not rebuild the very slice we are dropping), then release the spilledKeys lock BEFORE touching the
+    /// backend or emittedKeys. Never hold two of our locks at once — the trigger path acquires spilledKeys and
+    /// emittedKeys independently, so nesting them here would be a lock-order inversion (H1).
+    std::vector<SliceEnd> droppedKeys;
     {
-        if (!DefaultTimeBasedSliceStore::getSliceBySliceEnd(*it).has_value())
+        auto keys = spilledKeys.wlock();
+        for (auto it = keys->begin(); it != keys->end();)
         {
-            NES_TRACE("Erasing backend record for garbage-collected slice {}", *it);
-            backend->erase(*it);
-            emittedKeys.wlock()->erase(*it);
-            it = keys->erase(it);
-        }
-        else
-        {
-            ++it;
+            if (!DefaultTimeBasedSliceStore::getSliceBySliceEnd(*it).has_value())
+            {
+                droppedKeys.push_back(*it);
+                it = keys->erase(it);
+            }
+            else
+            {
+                ++it;
+            }
         }
     }
+    for (const auto droppedKey : droppedKeys)
+    {
+        NES_TRACE("Erasing backend record for garbage-collected slice {}", droppedKey);
+        backend->erase(droppedKey);
+        emittedKeys.wlock()->erase(droppedKey);
+    }
+}
+
+void SpillableTimeBasedSliceStore::deleteState()
+{
+    /// Drop all on-disk records and tracked state before the base clears its in-memory maps. (Locks taken one at a
+    /// time — see the H1 note in garbageCollectSlicesAndWindows.)
+    std::vector<SliceEnd> keysToErase;
+    {
+        auto keys = spilledKeys.wlock();
+        keysToErase.assign(keys->begin(), keys->end());
+        keys->clear();
+    }
+    emittedKeys.wlock()->clear();
+    for (const auto sliceEnd : keysToErase)
+    {
+        backend->erase(sliceEnd);
+    }
+    DefaultTimeBasedSliceStore::deleteState();
 }
 
 void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
 {
+    /// NOTE (M1, Increment B): this emittedKeys check and the spill below are not one atomic step. Under the
+    /// single-threaded Increment A driver that is correct; multi-thread hardening must take a combined lock so a
+    /// concurrent trigger cannot mark the slice emitted between the check and the spill (defeating the guard).
     if (emittedKeys.rlock()->contains(sliceEnd))
     {
         throw SpillStoreFailure(
@@ -185,6 +216,11 @@ void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
     }
     auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(opt.value());
     INVARIANT(spillable != nullptr, "forceSpill on a non-spillable slice {}", sliceEnd);
+    if (!spillable->isResident())
+    {
+        NES_DEBUG("forceSpill: slice {} is already spilled, no-op", sliceEnd);
+        return;
+    }
     NES_DEBUG("Spilling slice {} ({} bytes resident)", sliceEnd, residentBytesOf(*spillable));
     spillable->spill(*backend);
     spilledKeys.wlock()->insert(sliceEnd);

@@ -78,6 +78,9 @@ public:
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) override;
     /// Erases backend records for spilled slices that the base GC has dropped.
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
+    /// Erases all backend records + clears tracked sets before delegating, so an explicit deleteState() (not just
+    /// destruction) leaves no orphaned on-disk records or stale residency bookkeeping.
+    void deleteState() override;
 
     /// O1: stash the query-lifetime buffer provider used to rebuild spilled maps on unspill. Set once
     /// (called from setupSliceStoreProxy); the store unit test calls it directly.
