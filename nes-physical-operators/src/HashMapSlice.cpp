@@ -80,4 +80,27 @@ uint64_t HashMapSlice::getNumberOfTuples() const
         uint64_t{0},
         [](uint64_t runningSum, const auto& hashMap) { return runningSum + (hashMap ? hashMap->getNumberOfTuples() : 0); });
 }
+
+HashMap* HashMapSlice::getHashMapPtr(const WorkerThreadId workerThreadId) const
+{
+    const auto pos = workerThreadId % hashMaps.size();
+    INVARIANT(pos < hashMaps.size(), "The worker thread id should be smaller than the number of hashmaps");
+    return hashMaps[pos].get();
+}
+
+HashMap* HashMapSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId)
+{
+    const auto pos = workerThreadId % hashMaps.size();
+    INVARIANT(pos < hashMaps.size(), "The worker thread id should be smaller than the number of hashmaps");
+
+    if (hashMaps.at(pos) == nullptr)
+    {
+        hashMaps.at(pos) = std::make_unique<ChainedHashMap>(
+            createNewHashMapSliceArgs.keySize,
+            createNewHashMapSliceArgs.valueSize,
+            createNewHashMapSliceArgs.numberOfBuckets,
+            createNewHashMapSliceArgs.pageSize);
+    }
+    return hashMaps[pos].get();
+}
 }

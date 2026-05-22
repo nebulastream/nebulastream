@@ -52,7 +52,10 @@ struct SlicesAndState
     WindowInfoState windowState;
 };
 
-class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
+/// Not `final`: SpillableTimeBasedSliceStore subclasses this to add out-of-core spill/unspill. The
+/// WindowSlicesStoreInterface methods are already virtual (overridden here), so the subclass re-overrides
+/// the read paths without any further `virtual` keyword.
+class DefaultTimeBasedSliceStore : public WindowSlicesStoreInterface
 {
 public:
     DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, SliceCacheConfiguration sliceCacheConfiguration);

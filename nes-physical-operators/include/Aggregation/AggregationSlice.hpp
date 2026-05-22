@@ -32,10 +32,8 @@ public:
     AggregationSlice(
         SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
 
-    /// Returns the pointer to the underlying hashmap.
-    /// IMPORTANT: This method should only be used for passing the hashmap to the nautilus executable.
-    [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId);
+    /// getHashMapPtr / getHashMapPtrOrCreate are inherited from HashMapSlice (the Route-B virtual seam) — the base
+    /// implementation is identical to the former AggregationSlice override, so no override is needed here.
 };
 
 }

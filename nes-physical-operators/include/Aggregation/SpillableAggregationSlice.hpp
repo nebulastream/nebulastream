@@ -43,17 +43,17 @@ public:
         SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
 
     /// Returns the worker's hashmap pointer (for the Nautilus executable). Precondition: resident.
-    [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const override;
     /// Returns the worker's hashmap, lazily creating it. Precondition: resident.
-    [[nodiscard]] HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId);
+    [[nodiscard]] HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId) override;
 
     /// True while the maps live in memory; false after spill() until unspill().
     [[nodiscard]] bool isResident() const;
 
     /// Total tuples across all worker maps. While spilled, returns the count snapshotted at spill
-    /// time instead of the freed maps. Shadows HashMapSlice::getNumberOfTuples (non-virtual); callers
-    /// holding a SpillableAggregationSlice get this spill-aware variant.
-    [[nodiscard]] uint64_t getNumberOfTuples() const;
+    /// time instead of the freed maps. Overrides the virtual HashMapSlice::getNumberOfTuples, so the
+    /// spill-aware count is returned even through a HashMapSlice& (e.g. the store's budget accounting).
+    [[nodiscard]] uint64_t getNumberOfTuples() const override;
 
     /// Serializes every resident map to `backend` and frees it. No-op if already spilled.
     void spill(SpillBackend& backend);

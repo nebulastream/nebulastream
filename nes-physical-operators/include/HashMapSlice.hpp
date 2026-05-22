@@ -77,7 +77,14 @@ public:
     /// In our current implementation, we expect one hashmap per worker thread. Thus, we return the number of hashmaps == number of worker threads.
     [[nodiscard]] uint64_t getNumberOfHashMaps() const;
 
-    [[nodiscard]] uint64_t getNumberOfTuples() const;
+    /// Total tuples across all worker maps. Virtual so a spillable subclass can report a snapshot while its maps are freed.
+    [[nodiscard]] virtual uint64_t getNumberOfTuples() const;
+
+    /// Returns the worker's hashmap pointer (for the Nautilus executable). Virtual: the Route-B seam so consumers
+    /// dispatch polymorphically through HashMapSlice& regardless of the concrete slice type.
+    [[nodiscard]] virtual HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
+    /// Returns the worker's hashmap, lazily creating it. Virtual seam (see getHashMapPtr).
+    [[nodiscard]] virtual HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId);
 
 protected:
     std::vector<std::unique_ptr<HashMap>> hashMaps;

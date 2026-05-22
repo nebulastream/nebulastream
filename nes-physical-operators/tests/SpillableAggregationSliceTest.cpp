@@ -31,6 +31,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <Aggregation/AggregationSlice.hpp>
 #include <Aggregation/SpillableAggregationSlice.hpp>
 #include <Engine.hpp>
 #include <HashMapSlice.hpp>
@@ -235,6 +236,42 @@ TEST_F(SpillableAggregationSliceTest, spillAndUnspillEmptySliceIsNoOp)
     slice.unspill(backend, *bufferManager);
     EXPECT_TRUE(slice.isResident());
     EXPECT_EQ(slice.getNumberOfTuples(), 0U);
+}
+
+/// --- D1 seam (Route B): getHashMapPtr / getHashMapPtrOrCreate / getNumberOfTuples are virtual on HashMapSlice
+/// and dispatch polymorphically through a HashMapSlice& regardless of the concrete slice type. ---
+
+TEST_F(SpillableAggregationSliceTest, seamDispatchSpillableViaBaseRef)
+{
+    SpillableAggregationSlice slice(Timestamp(0), Timestamp(100), makeArgs(), NUMBER_OF_HASH_MAPS);
+    populate(slice, WorkerThreadId(0), 12, 0);
+    HashMapSlice& base = slice;
+    /// Through the base ref we reach the spillable override (resident → returns the worker map).
+    EXPECT_NE(base.getHashMapPtr(WorkerThreadId(0)), nullptr);
+    EXPECT_EQ(base.getHashMapPtr(WorkerThreadId(0)), slice.getHashMapPtr(WorkerThreadId(0)));
+    EXPECT_EQ(base.getNumberOfTuples(), 12U);
+}
+
+TEST_F(SpillableAggregationSliceTest, seamDispatchGetNumberOfTuplesSpilledViaBaseRef)
+{
+    SpillableAggregationSlice slice(Timestamp(0), Timestamp(100), makeArgs(), NUMBER_OF_HASH_MAPS);
+    populate(slice, WorkerThreadId(0), 9, 0);
+    HashMapSlice& base = slice;
+    InMemorySpillBackend backend;
+    slice.spill(backend);
+    /// The virtual override must return the spill-time snapshot through HashMapSlice& — the base accumulate
+    /// would return 0 once the maps are freed. This is the load-bearing reason getNumberOfTuples is virtual.
+    EXPECT_EQ(base.getNumberOfTuples(), 9U);
+}
+
+TEST_F(SpillableAggregationSliceTest, seamDispatchAggregationSliceInheritsBase)
+{
+    AggregationSlice slice(Timestamp(0), Timestamp(100), makeArgs(), NUMBER_OF_HASH_MAPS);
+    HashMapSlice& base = slice;
+    /// AggregationSlice dropped its overrides; the inherited base impl lazily creates and returns the worker map.
+    auto* const created = base.getHashMapPtrOrCreate(WorkerThreadId(0));
+    EXPECT_NE(created, nullptr);
+    EXPECT_EQ(base.getHashMapPtr(WorkerThreadId(0)), created);
 }
 
 }

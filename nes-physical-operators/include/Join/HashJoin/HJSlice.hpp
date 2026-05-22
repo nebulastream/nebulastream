@@ -31,6 +31,10 @@ class HJSlice final : public HashMapSlice
 public:
     HJSlice(
         SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
+    /// Bring the base (single-arg) seam accessors into scope so HJSlice's two-arg overloads do not hide the
+    /// now-virtual HashMapSlice::getHashMapPtr* (-Woverloaded-virtual). HJSlice callers use the two-arg form.
+    using HashMapSlice::getHashMapPtr;
+    using HashMapSlice::getHashMapPtrOrCreate;
     [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
     [[nodiscard]] HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide);
     [[nodiscard]] uint64_t getNumberOfHashMapsForSide() const;
