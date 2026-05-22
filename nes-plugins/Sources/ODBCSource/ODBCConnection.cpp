@@ -14,34 +14,42 @@
 
 #include <ODBCConnection.hpp>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
-#include <cstring>
-#include <exception>
+#include <cstdlib>
 #include <format>
-#include <memory>
-#include <ostream>
-#include <ranges>
-#include <stop_token>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <utility>
 #include <vector>
-#include <netdb.h>
 #include <sql.h>
 #include <sqlext.h>
 #include <sqltypes.h>
+#include <sqlucode.h>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
+/// The ODBC C API speaks in `SQLCHAR*` (an unsigned-char alias) and non-const
+/// `SQLCHAR*` parameters even for input-only strings. Bridging NebulaStream's
+/// `std::string` / `char` buffers to it unavoidably requires reinterpret_cast
+/// between the char signedness and, for the input-string parameters the driver
+/// promises not to mutate, const_cast. Both checks are silenced file-wide for
+/// that C-API boundary; every cast here is mandated by the unixODBC headers.
+/// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-type-const-cast)
 namespace
 {
 
@@ -54,20 +62,30 @@ size_t rawTypeSize(const NES::DataType::Type type)
 
 uint64_t timestampStructToUnix(const SQL_TIMESTAMP_STRUCT& ts)
 {
-    using namespace std::chrono;
+    using std::chrono::day;
+    using std::chrono::duration_cast;
+    using std::chrono::hours;
+    using std::chrono::minutes;
+    using std::chrono::month;
+    using std::chrono::seconds;
+    using std::chrono::sys_days;
+    using std::chrono::year;
 
     /// Create a time_point from the timestamp components
     const auto date = sys_days{year{ts.year} / month{ts.month} / day{ts.day}};
     const auto timeOfDay = hours{ts.hour} + minutes{ts.minute} + seconds{ts.second};
-    const auto tp = date + timeOfDay;
+    const auto timePoint = date + timeOfDay;
 
     /// Convert to Unix timestamp (seconds since epoch)
-    const auto unix_seconds = duration_cast<seconds>(tp.time_since_epoch()).count();
+    const auto unixSeconds = duration_cast<seconds>(timePoint.time_since_epoch()).count();
 
-    return static_cast<uint64_t>(unix_seconds);
+    return static_cast<uint64_t>(unixSeconds);
 }
 
-void checkError(const SQLRETURN ret, const SQLSMALLINT handleType, const SQLHANDLE handle, const std::string& operation)
+/// Length of an ODBC SQLSTATE buffer: five status characters plus a null terminator.
+constexpr std::size_t sqlStateBufferSize = 6;
+
+void checkError(const SQLRETURN ret, const SQLSMALLINT handleType, SQLHANDLE handle, const std::string& operation)
 {
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
     {
@@ -75,16 +93,28 @@ void checkError(const SQLRETURN ret, const SQLSMALLINT handleType, const SQLHAND
         errorMsg << operation << " failed:\n";
 
         SQLSMALLINT recNum = 1;
-        SQLCHAR sqlState[6];
-        SQLCHAR message[SQL_MAX_MESSAGE_LENGTH];
-        SQLINTEGER nativeError;
-        SQLSMALLINT textLength;
+        std::array<SQLCHAR, sqlStateBufferSize> sqlState{};
+        std::array<SQLCHAR, SQL_MAX_MESSAGE_LENGTH> message{};
+        SQLINTEGER nativeError = 0;
+        SQLSMALLINT textLength = 0;
 
         /// Get all diagnostic records
-        while (SQLGetDiagRec(handleType, handle, recNum, sqlState, &nativeError, message, sizeof(message), &textLength) == SQL_SUCCESS)
+        while (SQLGetDiagRec(
+                   handleType,
+                   handle,
+                   recNum,
+                   sqlState.data(),
+                   &nativeError,
+                   message.data(),
+                   static_cast<SQLSMALLINT>(message.size()),
+                   &textLength)
+               == SQL_SUCCESS)
         {
             errorMsg << std::format(
-                "  [{}] {} (Native Error: {})\n", reinterpret_cast<char*>(sqlState), reinterpret_cast<char*>(message), nativeError);
+                "  [{}] {} (Native Error: {})\n",
+                reinterpret_cast<char*>(sqlState.data()),
+                reinterpret_cast<char*>(message.data()),
+                nativeError);
             recNum++;
         }
 
@@ -95,12 +125,20 @@ void checkError(const SQLRETURN ret, const SQLSMALLINT handleType, const SQLHAND
     if (ret == SQL_SUCCESS_WITH_INFO)
     {
         SQLSMALLINT recNum = 1;
-        std::array<unsigned char, 6> sqlState{};
+        std::array<unsigned char, sqlStateBufferSize> sqlState{};
         std::array<unsigned char, SQL_MAX_MESSAGE_LENGTH> message{};
-        SQLINTEGER nativeError;
-        SQLSMALLINT textLength;
+        SQLINTEGER nativeError = 0;
+        SQLSMALLINT textLength = 0;
 
-        while (SQLGetDiagRec(handleType, handle, recNum, sqlState.data(), &nativeError, message.data(), sizeof(message), &textLength)
+        while (SQLGetDiagRec(
+                   handleType,
+                   handle,
+                   recNum,
+                   sqlState.data(),
+                   &nativeError,
+                   message.data(),
+                   static_cast<SQLSMALLINT>(message.size()),
+                   &textLength)
                == SQL_SUCCESS)
         {
             NES_DEBUG("Warning: [{}] {}", reinterpret_cast<char*>(sqlState.data()), reinterpret_cast<char*>(message.data()));
@@ -198,8 +236,12 @@ namespace NES
 
 ODBCConnection::ODBCConnection()
 {
-    setenv("ODBCSYSINI", "/etc", 1);
-    setenv("ODBCINI", "/etc/odbc.ini", 1);
+    /// `setenv` runs once at ODBCConnection construction, before any worker thread reads the env; it is the POSIX
+    /// global declared by <cstdlib>'s underlying <stdlib.h>, hence the include-cleaner silencing alongside the C-API casts.
+    /// NOLINTNEXTLINE(concurrency-mt-unsafe, misc-include-cleaner)
+    ::setenv("ODBCSYSINI", "/etc", 1);
+    /// NOLINTNEXTLINE(concurrency-mt-unsafe, misc-include-cleaner): see above.
+    ::setenv("ODBCINI", "/etc/odbc.ini", 1);
 
     /// Allocate environment handle
     SQLRETURN ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);
@@ -247,16 +289,27 @@ void ODBCConnection::fetchColumns(std::string_view connectionString)
     SQLSMALLINT numCols = 0;
     SQLNumResultCols(hstmt, &numCols);
 
+    /// Upper bound on a column name length the ODBC driver writes into colName.
+    constexpr std::size_t columnNameBufferSize = 256;
     for (SQLSMALLINT i = 1; i <= numCols; i++)
     {
-        SQLCHAR colName[256];
+        std::array<SQLCHAR, columnNameBufferSize> colName{};
         SQLSMALLINT nameLength = 0;
         SQLSMALLINT dataType = 0;
         SQLULEN columnSize = 0;
         SQLSMALLINT decimalDigits = 0;
         SQLSMALLINT nullable = 0;
 
-        SQLDescribeCol(hstmt, i, colName, sizeof(colName), &nameLength, &dataType, &columnSize, &decimalDigits, &nullable);
+        SQLDescribeCol(
+            hstmt,
+            i,
+            colName.data(),
+            static_cast<SQLSMALLINT>(colName.size()),
+            &nameLength,
+            &dataType,
+            &columnSize,
+            &decimalDigits,
+            &nullable);
         /// fetchedSchema.columnTypes.emplace_back(getColumnType(dataType));
         fetchedSchema.columnTypes.emplace_back(getTypeInfo(dataType, columnSize));
         ++fetchedSchema.numColumns;
@@ -270,7 +323,7 @@ void ODBCConnection::fetchColumns(std::string_view connectionString)
         NES_DEBUG(
             "Fetched ODBC column {}: name={} nesType={} nesTypeSize={} sqlColumnSize={} nullable={}",
             i,
-            std::string_view(reinterpret_cast<char*>(&colName), nameLength),
+            std::string_view(reinterpret_cast<char*>(colName.data()), nameLength),
             magic_enum::enum_name(fetchedSchema.columnTypes.back().nesType),
             fetchedSchema.columnTypes.back().nesTypeSize,
             fetchedSchema.columnTypes.back().sqlColumnSize,
@@ -309,8 +362,10 @@ void ODBCConnection::connect(
 {
     this->idColumn = std::string{idColumn};
 
-    SQLCHAR outConnectionString[1024];
-    SQLSMALLINT outConnectionStringLength;
+    /// Buffer the driver writes the resolved (post-connect) connection string into.
+    constexpr std::size_t outConnectionStringBufferSize = 1024;
+    std::array<SQLCHAR, outConnectionStringBufferSize> outConnectionString{};
+    SQLSMALLINT outConnectionStringLength = 0;
 
     NES_DEBUG("Attempting ODBC connection with: {}", connectionString);
 
@@ -319,15 +374,15 @@ void ODBCConnection::connect(
         nullptr,
         reinterpret_cast<SQLCHAR*>(const_cast<char*>(connectionString.c_str())),
         SQL_NTS,
-        outConnectionString,
-        sizeof(outConnectionString),
+        outConnectionString.data(),
+        static_cast<SQLSMALLINT>(outConnectionString.size()),
         &outConnectionStringLength,
         SQL_DRIVER_NOPROMPT);
 
     checkError(ret, SQL_HANDLE_DBC, hdbc, "Connect to database");
 
     NES_DEBUG("Successfully connected to the database via ODBC.");
-    NES_DEBUG("Connection string used: {}", reinterpret_cast<char*>(outConnectionString));
+    NES_DEBUG("Connection string used: {}", reinterpret_cast<char*>(outConnectionString.data()));
 
     /// Allocate statement handle
     ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
@@ -356,7 +411,12 @@ SQLRETURN ODBCConnection::readVarSized(
     if (auto varSizedBuffer = bufferProvider.getUnpooledBuffer(typeInfo.sqlColumnSize))
     {
         const auto ret = SQLGetData(
-            hstmt, colIdx, SQL_C_CHAR, varSizedBuffer.value().getAvailableMemoryArea<char>().data(), typeInfo.sqlColumnSize, &indicator);
+            hstmt,
+            colIdx,
+            SQL_C_CHAR,
+            varSizedBuffer.value().getAvailableMemoryArea<char>().data(),
+            static_cast<SQLLEN>(typeInfo.sqlColumnSize),
+            &indicator);
         checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
         INVARIANT(indicator != SQL_NULL_DATA, "not supporting null data for varsized");
         const auto childBufferIdx = buffer.storeChildBuffer(varSizedBuffer.value());
@@ -505,3 +565,5 @@ ODBCPollStatus ODBCConnection::executeQuery(
     return ODBCPollStatus::NEW_ROWS;
 }
 }
+
+/// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-type-const-cast)

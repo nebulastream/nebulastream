@@ -40,6 +40,12 @@
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
 
+/// The ODBC C API speaks in `SQLCHAR*` (an unsigned-char alias) even for
+/// input-only strings. Bridging NebulaStream's `std::string` / `char` buffers
+/// to it unavoidably requires reinterpret_cast across the char signedness. The
+/// check is silenced file-wide for that C-API boundary; every cast here is
+/// mandated by the unixODBC headers.
+/// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
 namespace NES
 {
 
@@ -106,10 +112,10 @@ std::string buildInsert(const std::string_view table, const std::string_view row
             values.push_back(',');
         }
         values.push_back('\'');
-        for (const char ch : field)
+        for (const char character : field)
         {
-            values.push_back(ch);
-            if (ch == '\'')
+            values.push_back(character);
+            if (character == '\'')
             {
                 values.push_back('\'');
             }
@@ -295,3 +301,5 @@ SinkRegistryReturnType RegisterODBCSink(SinkRegistryArguments sinkRegistryArgume
 }
 
 }
+
+/// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)

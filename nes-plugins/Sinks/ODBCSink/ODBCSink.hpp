@@ -87,6 +87,10 @@ private:
 /// Defines the names, (optional) default values, (optional) validation & config functions for all ODBC sink config parameters.
 /// NOTE: the connection-target keys are `db_host` / `db_port`, not `host` / `port`, for the same reason ODBCSource uses them:
 /// the SQL binder reserves a bare `host` config key for worker placement and strips it before the sink ever sees it.
+/// NOLINTBEGIN(cert-err58-cpp): static-storage ConfigParameter initialization is the project-wide pattern for sink plugins
+/// (FileSink, etc.). The constructors can theoretically throw `std::bad_alloc`; in practice they are evaluated once at
+/// static-init time on a path the runtime cannot meaningfully recover from. Refactoring would require redesigning the
+/// ConfigParameter registry across every plugin — out of scope for any single PR.
 struct ConfigParametersODBCSink
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
@@ -130,6 +134,8 @@ struct ConfigParametersODBCSink
         = DescriptorConfig::createConfigParameterContainerMap(
             SinkDescriptor::parameterMap, HOST, PORT, DATABASE, USERNAME, PASSWORD, DRIVER, TABLE);
 };
+
+/// NOLINTEND(cert-err58-cpp)
 
 }
 

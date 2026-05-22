@@ -66,6 +66,12 @@
 #include <ODBCSink.hpp>
 #include <SinkCaptureRegistry.hpp>
 
+/// The ODBC C API speaks in `SQLCHAR*` (an unsigned-char alias) even for
+/// input-only strings. Bridging NebulaStream's `std::string` / `char` buffers
+/// to it unavoidably requires reinterpret_cast across the char signedness. The
+/// check is silenced file-wide for that C-API boundary; every cast here is
+/// mandated by the unixODBC headers.
+/// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
 namespace NES
 {
 
@@ -292,8 +298,8 @@ void writeResultFile(const std::filesystem::path& resultFile, const std::vector<
     }
     std::string header;
     {
-        std::ifstream in(resultFile);
-        std::getline(in, header);
+        std::ifstream input(resultFile);
+        std::getline(input, header);
     }
     if (header.empty())
     {
@@ -326,6 +332,9 @@ SinkCaptureRegistryReturnType SinkCaptureGeneratedRegistrar::RegisterODBCSinkCap
     /// exception may escape into the runner: a failed read is logged and leaves
     /// the result file header-only, which the result check reports as a
     /// mismatch. The connection is kept alive by this closure and freed with it.
+    /// The body catches every std::exception; the only residual throw clang-tidy
+    /// can see is the logging call inside the handler, which in practice does not throw.
+    /// NOLINTNEXTLINE(bugprone-exception-escape)
     *args.resultFinalizer = [conn = std::move(conn), table, resultFile = args.resultFile]
     {
         try
@@ -342,3 +351,5 @@ SinkCaptureRegistryReturnType SinkCaptureGeneratedRegistrar::RegisterODBCSinkCap
 }
 
 }
+
+/// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)

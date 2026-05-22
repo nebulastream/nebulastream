@@ -57,6 +57,12 @@
 #include <InlineDataRegistry.hpp>
 #include <ODBCSource.hpp>
 
+/// The ODBC C API takes non-const `SQLCHAR*` even for input-only strings and
+/// reports diagnostics into unsigned-char buffers. Bridging NebulaStream's
+/// `std::string` / `char` storage to it unavoidably requires reinterpret_cast
+/// across the char signedness. The check is silenced file-wide for that C-API
+/// boundary; every cast here is mandated by the unixODBC headers.
+/// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
 namespace NES
 {
 
@@ -119,9 +125,12 @@ struct SeedConnection
     }
 };
 
+/// Length of an ODBC SQLSTATE buffer: five status characters plus a null terminator.
+constexpr std::size_t sqlStateBufferSize = 6;
+
 /// Throw with every ODBC diagnostic record attached, so a failed connect or
 /// INSERT surfaces the PostgreSQL message rather than a bare return code.
-void throwOnOdbcError(const SQLRETURN ret, const SQLSMALLINT handleType, const SQLHANDLE handle, const std::string_view operation)
+void throwOnOdbcError(const SQLRETURN ret, const SQLSMALLINT handleType, SQLHANDLE handle, const std::string_view operation)
 {
     if (SQL_SUCCEEDED(ret))
     {
@@ -129,7 +138,7 @@ void throwOnOdbcError(const SQLRETURN ret, const SQLSMALLINT handleType, const S
     }
     std::string diagnostics;
     SQLSMALLINT recNum = 1;
-    std::array<SQLCHAR, 6> sqlState = {};
+    std::array<SQLCHAR, sqlStateBufferSize> sqlState = {};
     std::array<SQLCHAR, SQL_MAX_MESSAGE_LENGTH> message = {};
     SQLINTEGER nativeError = 0;
     SQLSMALLINT textLength = 0;
@@ -182,10 +191,10 @@ std::string buildInsert(const std::string_view table, const std::string_view row
             values.push_back(',');
         }
         values.push_back('\'');
-        for (const char ch : field)
+        for (const char character : field)
         {
-            values.push_back(ch);
-            if (ch == '\'')
+            values.push_back(character);
+            if (character == '\'')
             {
                 values.push_back('\'');
             }
@@ -302,3 +311,5 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterODBCFileData(File
 }
 
 }
+
+/// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)

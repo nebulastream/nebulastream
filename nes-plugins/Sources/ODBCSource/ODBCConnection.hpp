@@ -14,10 +14,8 @@
 
 #pragma once
 
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <ostream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -58,7 +56,7 @@ public:
     ODBCConnection();
     ~ODBCConnection();
 
-    size_t getFetchedSizeOfRow() const { return fetchedSchema.sizeOfRow; }
+    [[nodiscard]] size_t getFetchedSizeOfRow() const { return fetchedSchema.sizeOfRow; }
 
     void fetchColumns(std::string_view connectionString);
 
@@ -74,6 +72,9 @@ public:
     template <typename T>
     SQLRETURN readVal(const size_t colIdx, NES::TupleBuffer& buffer, const TypeInfo& typeInfo, SQLLEN& indicator) const
     {
+        /// Writing a native value of type T into the raw byte storage of the tuple buffer; reinterpreting the char*
+        /// cursor as a T* is the only way to place it there.
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         T* val = reinterpret_cast<T*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]);
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + typeInfo.nesTypeSize);
         return SQLGetData(hstmt, colIdx, typeInfo.sqlType, val, typeInfo.nesTypeSize, &indicator);

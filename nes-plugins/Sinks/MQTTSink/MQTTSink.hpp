@@ -84,6 +84,10 @@ private:
 };
 
 /// Defines the names, (optional) default values, (optional) validation & config functions for all MQTT sink config parameters.
+/// NOLINTBEGIN(cert-err58-cpp): static-storage ConfigParameter initialization is the project-wide pattern for sink plugins
+/// (FileSink, etc.). The constructors can theoretically throw `std::bad_alloc`; in practice they are evaluated once at
+/// static-init time on a path the runtime cannot meaningfully recover from. Refactoring would require redesigning the
+/// ConfigParameter registry across every plugin — out of scope for any single PR.
 struct ConfigParametersMQTTSink
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
@@ -136,6 +140,8 @@ struct ConfigParametersMQTTSink
         = DescriptorConfig::createConfigParameterContainerMap(
             SinkDescriptor::parameterMap, SERVER_URI, CLIENT_ID, TOPIC, QOS, RETAINED, MAX_OUTSTANDING_MESSAGES);
 };
+
+/// NOLINTEND(cert-err58-cpp)
 
 }
 

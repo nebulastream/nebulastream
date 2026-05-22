@@ -52,7 +52,6 @@
 
 #include <mqtt/async_client.h>
 #include <mqtt/connect_options.h>
-#include <mqtt/exception.h>
 #include <mqtt/message.h>
 
 #include <Sources/SourceDataProvider.hpp>
@@ -95,7 +94,11 @@ Endpoint readEndpoint(const PhysicalSourceConfig& cfg)
     };
     const auto dataTopic = require(ConfigParametersMQTTSource::TOPIC);
     const auto qos = src.contains(ConfigParametersMQTTSource::QOS) ? std::stoi(src.at(ConfigParametersMQTTSource::QOS)) : 1;
-    return {require(ConfigParametersMQTTSource::SERVER_URI), dataTopic, dataTopic + "/_nes_presence", qos};
+    return {
+        .serverURI = require(ConfigParametersMQTTSource::SERVER_URI),
+        .dataTopic = dataTopic,
+        .presenceTopic = dataTopic + "/_nes_presence",
+        .qos = qos};
 }
 
 /// The in-binary dispatcher (ExternalSystestDispatch.cpp) exports

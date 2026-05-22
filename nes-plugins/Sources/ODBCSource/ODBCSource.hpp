@@ -29,7 +29,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ODBCConnection.hpp>
 
 namespace NES
@@ -85,6 +84,10 @@ private:
 /// NOTE: the connection-target keys are `db_host` / `db_port`, not `host` / `port`: the SQL binder reserves a bare `host`
 /// config key for worker placement and strips it before the source ever sees it (see StatementBinder; TCPSource does the
 /// same with `socket_host`).
+/// NOLINTBEGIN(cert-err58-cpp): static-storage ConfigParameter initialization is the project-wide pattern for source plugins
+/// (TCPSource, FileSource, etc.). The constructors can theoretically throw `std::bad_alloc`; in practice they are evaluated
+/// once at static-init time on a path the runtime cannot meaningfully recover from. Refactoring would require redesigning the
+/// ConfigParameter registry across every plugin — out of scope for any single PR.
 struct ConfigParametersODBC
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
@@ -166,5 +169,7 @@ struct ConfigParametersODBC
             MAX_RETRIES,
             READ_ONLY_NEW_ROWS);
 };
+
+/// NOLINTEND(cert-err58-cpp)
 
 }

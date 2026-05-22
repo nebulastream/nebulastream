@@ -40,13 +40,13 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <unordered_map>
 #include <utility>
 
@@ -86,7 +86,7 @@ Endpoint readEndpoint(const std::unordered_map<std::string, std::string>& cfg)
         return it->second;
     };
     const auto qos = cfg.contains(ConfigParametersMQTTSink::QOS) ? std::stoi(cfg.at(ConfigParametersMQTTSink::QOS)) : 1;
-    return {require(ConfigParametersMQTTSink::SERVER_URI), require(ConfigParametersMQTTSink::TOPIC), qos};
+    return {.serverURI = require(ConfigParametersMQTTSink::SERVER_URI), .topic = require(ConfigParametersMQTTSink::TOPIC), .qos = qos};
 }
 
 /// The in-binary dispatcher (ExternalSystestDispatch.cpp) exports
@@ -204,7 +204,7 @@ SinkCaptureRegistryReturnType SinkCaptureGeneratedRegistrar::RegisterMQTTSinkCap
     /// draining itself (the callback does, eagerly, on paho's thread); it just
     /// keeps the subscriber alive for the run and disconnects when the test
     /// file is done and ~jthread requests stop.
-    args.serverThreads->push_back(std::jthread(
+    args.serverThreads->emplace_back(
         [client = std::move(client)](const std::stop_token& stopToken)
         {
             std::mutex mutex;
@@ -222,7 +222,7 @@ SinkCaptureRegistryReturnType SinkCaptureGeneratedRegistrar::RegisterMQTTSinkCap
             {
                 NES_ERROR("MQTT capture: disconnect failed: {}", e.what());
             }
-        }));
+        });
 
     /// The capture subscriber above is wired to the real broker; now point the
     /// MQTTSink under test at the test-only override endpoint so its start()
