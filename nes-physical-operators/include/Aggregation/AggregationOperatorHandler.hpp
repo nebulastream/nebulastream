@@ -61,7 +61,8 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        uint64_t maxNumberOfBuckets);
+        uint64_t maxNumberOfBuckets,
+        bool spillEnabled = false);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
@@ -77,6 +78,8 @@ protected:
         PipelineExecutionContext* pipelineCtx) override;
     folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;
     uint64_t maxNumberOfBuckets;
+    /// When true, getCreateNewSlicesFunction emits SpillableAggregationSlice (paired with a SpillableTimeBasedSliceStore).
+    bool spillEnabled;
 };
 
 }

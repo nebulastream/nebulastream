@@ -25,6 +25,8 @@
 #include <utility>
 #include <vector>
 #include <Aggregation/AggregationSlice.hpp>
+#include <Aggregation/SpillableAggregationSlice.hpp>
+#include <HashMapSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -43,11 +45,13 @@ AggregationOperatorHandler::AggregationOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    const uint64_t maxNumberOfBuckets)
+    const uint64_t maxNumberOfBuckets,
+    const bool spillEnabled)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
     , setupAlreadyCalled(false)
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
+    , spillEnabled(spillEnabled)
 {
 }
 
@@ -59,10 +63,16 @@ AggregationOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArgu
     auto newHashMapArgs = dynamic_cast<const CreateNewHashMapSliceArgs&>(newSlicesArguments);
     newHashMapArgs.numberOfBuckets = std::clamp(rollingAverageNumberOfKeys.rlock()->getAverage(), 1UL, maxNumberOfBuckets);
     return std::function(
-        [outputOriginId = outputOriginId, numberOfWorkerThreads = numberOfWorkerThreads, copyOfNewHashMapArgs = newHashMapArgs](
-            SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+        [outputOriginId = outputOriginId,
+         numberOfWorkerThreads = numberOfWorkerThreads,
+         copyOfNewHashMapArgs = newHashMapArgs,
+         spillEnabled = spillEnabled](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             NES_TRACE("Creating new aggregation slice with for slice {}-{} for output origin {}", sliceStart, sliceEnd, outputOriginId);
+            if (spillEnabled)
+            {
+                return {std::make_shared<SpillableAggregationSlice>(sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
+            }
             return {std::make_shared<AggregationSlice>(sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
         });
 }
@@ -79,10 +89,12 @@ void AggregationOperatorHandler::triggerSlices(
         uint64_t totalNumberOfTuples = 0;
         for (const auto& slice : allSlices)
         {
-            const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
-            for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
+            /// Route-B seam: operate on the polymorphic HashMapSlice so this works for both AggregationSlice and
+            /// SpillableAggregationSlice. The store has already unspilled any spilled slice on the read path (D3).
+            const auto hashMapSlice = std::dynamic_pointer_cast<HashMapSlice>(slice);
+            for (uint64_t hashMapIdx = 0; hashMapIdx < hashMapSlice->getNumberOfHashMaps(); ++hashMapIdx)
             {
-                if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
+                if (auto* hashMap = hashMapSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
                     (hashMap != nullptr) and hashMap->getNumberOfTuples() > 0)
                 {
                     /// As the hashmap has one value per key, we can use the number of tuples for the number of keys

@@ -44,6 +44,7 @@
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <SliceStore/SpillableTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
@@ -157,14 +158,6 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 
 LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
 {
-    /// Phase 1 (skeleton): the spillable, out-of-core slice store is not implemented yet. Refuse fail-fast when it is
-    /// requested rather than silently falling back to the in-memory store. Phase 4 replaces this guard with the
-    /// construction of a SpillableTimeBasedSliceStore at the slice-store site below.
-    if (conf.spill.enabled.getValue())
-    {
-        throw NotImplemented("Spillable (out-of-core) slice store is not implemented yet (Phase 1 skeleton)");
-    }
-
     PRECONDITION(logicalOperator.tryGetAs<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
     PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 1, "Expected one child");
     auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
@@ -231,13 +224,42 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         pageSize,
         numberOfBuckets);
 
-    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
+    const bool spillEnabled = conf.spill.enabled.getValue();
+    /// Base-typed handle: SpillableTimeBasedSliceStore (out-of-core) and DefaultTimeBasedSliceStore (in-memory) share
+    /// the same createSliceStoreRef; the JIT build hot path only ever touches resident slices, so the ref is reused as-is.
+    std::unique_ptr<DefaultTimeBasedSliceStore> sliceAndWindowStore;
+    if (spillEnabled)
+    {
+        /// The RocksDB backend is built inside nes-physical-operators (via the store's static factory) so this
+        /// lowering rule never links rocksdb; it passes only SpillConfig values across the seam.
+        auto backend = SpillableTimeBasedSliceStore::makeRocksDBBackend(
+            conf.spill.rocksdbPath.getValue() + "/agg-" + std::to_string(handlerId.getRawValue()), conf.spill.compression.getValue());
+        sliceAndWindowStore = std::make_unique<SpillableTimeBasedSliceStore>(
+            windowType->getSize().getTime(),
+            windowType->getSlide().getTime(),
+            conf.sliceCacheConfiguration,
+            std::move(backend),
+            entriesPerPage,
+            pageSize,
+            conf.spill.softThresholdMB.getValue() * 1024ULL * 1024ULL,
+            conf.spill.hardThresholdMB.getValue() * 1024ULL * 1024ULL);
+        NES_INFO(
+            "Lowering windowed aggregation handlerId={} with out-of-core spill enabled (rocksdb at {})",
+            handlerId,
+            conf.spill.rocksdbPath.getValue());
+    }
+    else
+    {
+        sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
+            windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
+    }
     auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
         [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
         {
-            auto& aggregationSlice = dynamic_cast<AggregationSlice&>(slice);
-            auto* ptr = aggregationSlice.getHashMapPtrOrCreate(workerThreadId);
+            /// Route-B seam: works for both AggregationSlice and SpillableAggregationSlice. Build-path slices are
+            /// always resident, so getHashMapPtrOrCreate is safe here.
+            auto& hashMapSlice = dynamic_cast<HashMapSlice&>(slice);
+            auto* ptr = hashMapSlice.getHashMapPtrOrCreate(workerThreadId);
             return {reinterpret_cast<const std::byte*>(ptr), sizeof(ChainedHashMap)};
         },
         [hashMapOptions](WindowBasedOperatorHandler& handler)
@@ -252,7 +274,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto handler = std::make_shared<AggregationOperatorHandler>(
-        inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
+        inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets, spillEnabled);
     const AggregationBuildPhysicalOperator build{
         handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapOptions};
     const AggregationProbePhysicalOperator probe{hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData};
