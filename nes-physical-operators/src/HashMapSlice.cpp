@@ -72,10 +72,12 @@ uint64_t HashMapSlice::getNumberOfHashMaps() const
 
 uint64_t HashMapSlice::getNumberOfTuples() const
 {
+    /// Per-worker maps are created lazily (and are freed when a slice is spilled), so entries can be
+    /// null — skip them rather than dereferencing.
     return std::accumulate(
         hashMaps.begin(),
         hashMaps.end(),
-        0,
-        [](uint64_t runningSum, const auto& hashMap) { return runningSum + hashMap->getNumberOfTuples(); });
+        uint64_t{0},
+        [](uint64_t runningSum, const auto& hashMap) { return runningSum + (hashMap ? hashMap->getNumberOfTuples() : 0); });
 }
 }

@@ -18,4 +18,5 @@ add_source_files(nes-physical-operators
         AggregationOperatorHandler.cpp
         AggregationProbePhysicalOperator.cpp
         AggregationSlice.cpp
+        SpillableAggregationSlice.cpp
 )
