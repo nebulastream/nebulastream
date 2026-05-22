@@ -20,7 +20,10 @@ get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
 # Add Library
 add_library(nes-physical-operators ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
 find_package(OpenSSL REQUIRED)
-target_link_libraries(nes-physical-operators PUBLIC nes-sources nes-sinks nes-nautilus nes-input-formatter-provider PRIVATE nes-inference-runtime OpenSSL::Crypto)
+# RocksDB backs the out-of-core spill store (SliceStore/RocksDBSpillBackend). Linked PRIVATE: the
+# public headers forward-declare rocksdb::DB, so RocksDB is an implementation detail of this target.
+find_package(RocksDB CONFIG REQUIRED)
+target_link_libraries(nes-physical-operators PUBLIC nes-sources nes-sinks nes-nautilus nes-input-formatter-provider PRIVATE nes-inference-runtime OpenSSL::Crypto RocksDB::rocksdb)
 target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

@@ -49,6 +49,13 @@
     "nlohmann-json",
     "reflectcpp",
     "replxx",
+    {
+      "name": "rocksdb",
+      "features": [
+        "lz4",
+        "zstd"
+      ]
+    },
     "scope-guard",
     "simdjson",
     "spdlog",

@@ -15,6 +15,7 @@ add_source_files(nes-physical-operators
         DefaultTimeBasedSliceStore.cpp
         DefaultTimeBasedSliceStoreRef.cpp
         SliceSerializer.cpp
+        RocksDBSpillBackend.cpp
 )
 
 add_subdirectory(SliceCache)
