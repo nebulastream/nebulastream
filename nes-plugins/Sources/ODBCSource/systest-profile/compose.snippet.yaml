@@ -14,10 +14,16 @@
 # Brought up + torn down by the in-binary dispatcher in ExternalSystestDispatch.cpp;
 # the systest binary runs the test in-process and connects over a host port.
 #
-# PostgreSQL runs every `*.sql` file in /docker-entrypoint-initdb.d on first
-# boot, *before* it accepts TCP connections, so the `pg_isready` healthcheck
-# (and `docker compose up --wait`) only passes once the schema is seeded. That
-# removes the need for a separate init service.
+# PostgreSQL's first-boot init (initdb + every `*.sql` in
+# /docker-entrypoint-initdb.d) runs against a *temporary* server that listens
+# on the Unix socket only (`listen_addresses=''`) — it never opens a TCP port.
+# The real, TCP-listening server starts only after that init finishes. The
+# healthcheck below therefore probes over TCP (`pg_isready -h 127.0.0.1`): a
+# socket-based `pg_isready` reports "accepting" during the temp-server window
+# and would let `docker compose up --wait` return before the schema is seeded
+# and before the port the systest connects to is open. TCP-probing makes the
+# healthcheck (and `--wait`) pass only once the real server is up and seeded —
+# no separate init service needed.
 #
 # Env vars expanded by docker compose at up-time (exported by the dispatcher):
 #   PROFILE_VOLUME — docker-managed volume the dispatcher populated with this
@@ -44,13 +50,17 @@ services:
     ports:
       - "${DATABASE_PORT}:${DATABASE_CONTAINER_PORT}"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nes -d nebulastream"]
+      # `-h 127.0.0.1` forces a TCP probe — see the note above: a socket-based
+      # `pg_isready` passes during postgres' temp-server init phase and lets
+      # `docker compose up --wait` return before the real server's port is open.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U nes -d nebulastream"]
       interval: 3s
       timeout: 3s
       retries: 20
-      # Postgres first-boot runs initdb + the seed script before opening the
-      # port; give it generous headroom under sanitizer / loaded-CI conditions.
-      start_period: 10s
+      # initdb + the seed script run before the real (TCP) server opens its
+      # port; give that first-boot window generous headroom under sanitizer /
+      # loaded-CI conditions before healthcheck failures start counting.
+      start_period: 30s
       start_interval: 500ms
 
 # Logical volume name `profile` is bound to the externally-created docker
