@@ -23,6 +23,7 @@
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
+#include <SliceStore/SpillableTimeBasedSliceStore.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -123,6 +124,14 @@ void setupSliceStoreProxy(
     const auto startOfEntries = sliceStore->allocateSpaceForSliceCache(
         self->sliceCache->getCacheMemorySize(), pipelineCtx->getPipelineId(), *pipelineCtx->getBufferManager());
     self->sliceCache->setStartOfEntries(startOfEntries);
+
+    /// O1: if this is an out-of-core store, stash the query-lifetime buffer provider so it can rebuild spilled
+    /// maps on unspill (the trigger/read path has no buffer provider of its own). The single sanctioned concrete
+    /// cast — at setup, never on the per-trigger read path — so Route B's "no scattered concrete casts" holds.
+    if (auto* spillableStore = dynamic_cast<SpillableTimeBasedSliceStore*>(sliceStore))
+    {
+        spillableStore->setBufferProvider(pipelineCtx->getBufferManager());
+    }
 }
 
 void DefaultTimeBasedSliceStoreRef::setupSliceStore(const nautilus::val<PipelineExecutionContext*>& pipelineCtx)

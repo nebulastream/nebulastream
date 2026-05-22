@@ -25,6 +25,7 @@ add_nes_physical_operator_test(InMemorySpillBackendTest InMemorySpillBackendTest
 add_nes_physical_operator_test(SliceSerializerTest SliceSerializerTest.cpp)
 add_nes_physical_operator_test(RocksDBSpillBackendTest RocksDBSpillBackendTest.cpp)
 add_nes_physical_operator_test(SpillableAggregationSliceTest SpillableAggregationSliceTest.cpp)
+add_nes_physical_operator_test(SpillableTimeBasedSliceStoreTest SpillableTimeBasedSliceStoreTest.cpp)
 
 if (ENABLE_IREE_TESTS)
     add_definitions(-DINFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata")
