@@ -163,6 +163,7 @@ function(add_e2e_test)
     endif()
 
     set(_env_pairs
+        NES_CTEST_NAME=${ARG_NAME}
         NES_DIR=${CMAKE_SOURCE_DIR}
         NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
         NES_BATS_LIB=${CMAKE_SOURCE_DIR}/scripts/testing/distributed_bats_lib.bash

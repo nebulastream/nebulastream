@@ -14,7 +14,7 @@
 
 source "$NES_BATS_LIB"
 
-setup_file()    { nes_distributed_setup_file "$NES_REPL"; }
+setup_file()    { nes_distributed_setup_file repl; }
 teardown_file() { nes_distributed_teardown_file; }
 setup()         { nes_distributed_setup; }
 teardown()      { nes_distributed_teardown; }
@@ -29,7 +29,7 @@ docker_nes_repl() {
 }
 
 @test "launch query from topology" {
-  setup_distributed tests/topologies/8-node.yaml
+  setup_distributed repl tests/topologies/8-node.yaml
   run docker_nes_repl tests/sql-file-tests/good/test_large_distributed.sql
   [ "$status" -eq 0 ]
 
@@ -49,14 +49,14 @@ docker_nes_repl() {
 }
 
 @test "launch multiple queries" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed repl tests/topologies/1-node.yaml
   run docker_nes_repl tests/sql-file-tests/good/multiple_queries_distributed.sql
   [ "$status" -eq 0 ]
 }
 
 #bats test_tags=IREE
 @test "create model show and drop lifecycle" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed repl tests/topologies/1-node.yaml
   run docker_nes_repl tests/sql-file-tests/good/create_model.sql
   [ "$status" -eq 0 ]
 
@@ -73,7 +73,7 @@ docker_nes_repl() {
 }
 
 @test "launch bad query should fail" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed repl tests/topologies/1-node.yaml
   run docker_nes_repl tests/sql-file-tests/bad/integer_literal_in_query_without_type_distributed.sql
   [ "$status" -ne 0 ]
 
@@ -82,7 +82,7 @@ docker_nes_repl() {
 }
 
 @test "launch query and wait for query termination on exit behavior" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed repl tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
   ADDITIONAL_NEBULI_FLAGS="--on-exit WAIT_FOR_QUERY_TERMINATION" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
@@ -96,7 +96,7 @@ docker_nes_repl() {
 }
 
 @test "WAIT_FOR_QUERY_TERMINATION exits cleanly on SIGTERM" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed repl tests/topologies/1-node.yaml
 
   # non_infinite_query.sql configures the source to produce data for 10000ms,
   # so WAIT_FOR_QUERY_TERMINATION would normally make nes-repl block ~10s.
@@ -123,7 +123,7 @@ docker_nes_repl() {
 }
 
 @test "launch query and terminate query on exit behavior" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed repl tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
   ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
@@ -143,7 +143,7 @@ docker_nes_repl() {
 }
 
 @test "default on-exit behavior should keep queries alive" {
-  setup_distributed tests/topologies/1-node.yaml
+  setup_distributed repl tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
   run docker_nes_repl tests/sql-file-tests/good/multiple_queries_distributed.sql

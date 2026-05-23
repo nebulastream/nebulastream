@@ -15,21 +15,8 @@
 source "$NES_BATS_LIB"
 
 setup_file() {
-  nes_cleanup_leaked_resources systest-remote
-
-  nes_require_env NES_SYSTEST
-  nes_require_env NES_WORKER
-  nes_require_env NES_DIR
-  nes_require_env NES_TEST_TMP_DIR
-  nes_require_env DATADIR
-  nes_require_env NES_RUNTIME_BASE_IMAGE
-  nes_require_executable "$NES_SYSTEST"
-  nes_require_executable "$NES_WORKER"
-
-  nes_build_runtime_image WORKER_IMAGE nes-worker-systest \
-    "$NES_WORKER" nes-single-node-worker
-  nes_build_app_image SYSTEST_IMAGE nes-systest-image \
-    "$NES_SYSTEST" systest
+  nes_distributed_setup_file systest
+  nes_require_env NES_DIR DATADIR
 
   export CONTAINER_WORKDIR="/$(cat /proc/sys/kernel/random/uuid)"
   # Will contain the test data
@@ -65,11 +52,9 @@ setup_file() {
 }
 
 teardown_file() {
-  echo "# Test suite completed" >&3
   docker volume rm $TESTDATA_VOLUME || true
   docker volume rm $TESTCONFIG_VOLUME || true
-  docker rmi $WORKER_IMAGE || true
-  docker rmi $SYSTEST_IMAGE || true
+  nes_distributed_teardown_file
 }
 
 INSTANCE_PID=0
@@ -77,9 +62,7 @@ setup() {
   # Deterministic per-test working dir (see distributed_bats_lib.bash for the
   # rationale — coverage harvest relies on stable paths across reruns).
   mkdir -p "$NES_TEST_TMP_DIR"
-  local _bats_file=${BATS_TEST_FILENAME##*/}
-  _bats_file=${_bats_file%.bats}
-  export TMP_DIR="$NES_TEST_TMP_DIR/${_bats_file}/${BATS_TEST_NAME}"
+  export TMP_DIR="$NES_TEST_TMP_DIR/${NES_CTEST_NAME}/${BATS_TEST_NAME}"
   rm -rf "$TMP_DIR"
   mkdir -p "$TMP_DIR"
 
@@ -101,39 +84,6 @@ teardown() {
   docker volume rm $TEST_VOLUME || true
 }
 
-function setup_distributed() {
-  # Extract per-worker configs from the topology YAML and copy them into the test volume.
-  local topology="$1"
-  local worker_count=$(yq '.workers | length' "$topology")
-  local config_dir=$(mktemp -d)
-
-  for i in $(seq 0 $((worker_count - 1))); do
-    local has_config=$(yq ".workers[$i] | has(\"config\")" "$topology")
-    if [ "$has_config" = "true" ]; then
-      local host=$(yq -r ".workers[$i].host" "$topology" | cut -d':' -f1)
-      yq ".workers[$i].config" "$topology" > "$config_dir/$host.yaml"
-    fi
-  done
-
-  # Copy config files into the test volume
-  if [ -n "$(ls -A "$config_dir")" ]; then
-    local volume_host=$(docker run -d --rm -v $TEST_VOLUME:/vol alpine sleep infinite)
-    docker exec $volume_host mkdir -p /vol/configs
-    tar -cf - -C "$config_dir" . | docker exec -i $volume_host tar -xf - -C /vol/configs
-    docker stop -t0 $volume_host
-  fi
-  rm -rf "$config_dir"
-
-  $NES_DIR/nes-systests/systest/remote-test/create_compose.sh "$1" >docker-compose.yaml
-  local compose_output exit_code=0
-  compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
-  if [ "$exit_code" -ne 0 ]; then
-    echo "# [docker compose up] (status=$exit_code):" >&3
-    while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
-  fi
-  return $exit_code
-}
-
 docker_systest() {
   docker compose exec systest systest --log-path $CONTAINER_WORKDIR/systest.log --data /data  --workingDir $CONTAINER_WORKDIR/systest-workdir "$@" >&3
 }
@@ -146,13 +96,13 @@ if [ "$ENABLE_IREE_TESTS" != "ON" ]; then
 fi
 
 @test "two node systest" {
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
+  setup_distributed systest $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
   run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
 @test "8 node systest" {
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
+  setup_distributed systest $NES_DIR/nes-systests/configs/topologies/8-node.yaml
   run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
   [ "$status" -eq 0 ]
 }
@@ -161,7 +111,7 @@ fi
   if [ "$ENABLE_LARGE_TESTS" != "ON" ]; then
     skip "Large tests disabled (ENABLE_LARGE_TESTS=$ENABLE_LARGE_TESTS)"
   fi
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
+  setup_distributed systest $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
   run docker_systest -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
   [ "$status" -eq 0 ]
 }
