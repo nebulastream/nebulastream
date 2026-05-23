@@ -36,8 +36,6 @@
 namespace NES
 {
 
-
-
 struct TokioSinkContext;
 class SinkBackpressureHandler;
 
@@ -48,6 +46,7 @@ public:
     TokioSink(
         BackpressureController backpressureController,
         SinkDescriptor descriptor,
+        std::chrono::milliseconds stopTimeout = std::chrono::milliseconds(1000),
         size_t upperThreshold = 20,
         size_t lowerThreshold = 10);
     ~TokioSink() override;
@@ -66,6 +65,7 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
+    std::chrono::milliseconds stopTimeout;
     SinkDescriptor descriptor;
     std::unique_ptr<TokioSinkContext> context;
     std::unique_ptr<SinkBackpressureHandler> backpressureHandler;

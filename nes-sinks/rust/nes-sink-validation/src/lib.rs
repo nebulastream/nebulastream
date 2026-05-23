@@ -9,7 +9,10 @@ pub type ValidatorEntry = (&'static str, &'static [ConfigDefinition]);
 #[distributed_slice]
 pub static SINK_VALIDATOR: [ValidatorEntry];
 
-static GLOBAL_SINK_VALIDATIONS: &[ConfigDefinition] = &[];
+static GLOBAL_SINK_VALIDATIONS: &[ConfigDefinition] = &[ConfigDefinition::with_default(
+    "stop_flush_timeout_ms",
+    ConfigOptionsType::Number(1_000),
+)];
 
 fn find(name: &str) -> Option<&'static [ConfigDefinition]> {
     SINK_VALIDATOR

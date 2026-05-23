@@ -56,6 +56,20 @@ __itt_string_handle* asyncWriteCallbackTask = __itt_string_handle_create("Blocke
     return __itt_id_make(reinterpret_cast<void*>(pthread_self()), counter++);
 }
 
+coro::task<void> runAsyncEmitWork(
+    QueryId queryId, std::vector<std::shared_ptr<RunningQueryPlanNode>> successors, WorkEmitter& emitter, SourceReturnType::Data data)
+{
+    for (auto successor : successors)
+    {
+        co_await emitter.emitWorkAsync(
+            queryId,
+            std::move(successor),
+            std::move(data.buffer),
+            TaskCallback{TaskCallback::OnComplete([onComplete = std::move(data.onComplete)] { onComplete(); })});
+    }
+    co_return;
+}
+
 /// Free coroutine function so that captured state (queryId, successor, source) lives in the
 /// coroutine frame rather than in a lambda closure. A coroutine *lambda*'s closure object is not
 /// stored in the frame — the frame references it via the implicit `this`. If the closure owner
@@ -63,7 +77,7 @@ __itt_string_handle* asyncWriteCallbackTask = __itt_string_handle_create("Blocke
 /// backpressure or the admission queue, the captures become dangling.
 coro::task<void> runAsyncEmit(
     QueryId queryId,
-    std::shared_ptr<RunningQueryPlanNode> successor,
+    std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::weak_ptr<RunningSource> source,
     QueryLifetimeController& controller,
     WorkEmitter& emitter,
@@ -78,13 +92,7 @@ coro::task<void> runAsyncEmit(
     co_await std::visit(
         Overloaded{
             [&](SourceReturnType::Data data)
-            {
-                return emitter.emitWorkAsync(
-                    queryId,
-                    std::move(successor),
-                    std::move(data.buffer),
-                    TaskCallback{TaskCallback::OnComplete([onComplete = std::move(data.onComplete)] { onComplete(); })});
-            },
+            { return runAsyncEmitWork(std::move(queryId), std::move(successors), emitter, std::move(data)); },
             [&](SourceReturnType::EoS) { return controller.initializeSourceStopAsync(queryId, sourceId, source); },
             [&](SourceReturnType::Error error)
             { return controller.initializeSourceFailureAsync(queryId, sourceId, source, std::move(error.ex)); }},
@@ -98,10 +106,7 @@ SourceReturnType::AsyncEmitFunction asyncEmit(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    INVARIANT(successors.size() == 1, "I dont know how to implement that");
-    auto successor = std::move(successors.at(0));
-
-    return [&controller, successor = std::move(successor), source = std::move(source), &emitter, queryId](
+    return [&controller, successor = std::move(successors), source = std::move(source), &emitter, queryId](
                const OriginId sourceId, SourceReturnType::SourceReturnType event)
     { return runAsyncEmit(queryId, successor, source, controller, emitter, sourceId, std::move(event)); };
 }

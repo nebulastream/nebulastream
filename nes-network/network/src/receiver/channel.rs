@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 use super::control::*;
 use crate::protocol::*;
 use futures::SinkExt;
+use std::collections::VecDeque;
+use std::convert::Infallible;
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
@@ -39,6 +40,10 @@ enum ChannelHandlerStatus {
     /// The channel handler has been canceled via the CancellationToken, most likely due to
     /// NetworkService shutdown or the control connection stopped.
     Cancelled,
+    /// The channel handler has received a network error. Not to be confused with the
+    /// ClosedByOtherSideWithError, which is an error transmitted via the network but originated on
+    /// the other side, instead of the network failing.
+    NetworkError(String),
 }
 pub(super) type DataQueue = async_channel::Sender<DataQueueItem>;
 pub(super) enum DataQueueItem {
@@ -47,89 +52,92 @@ pub(super) enum DataQueueItem {
     Close,
 }
 
+async fn send_to_other_side<W: AsyncWrite + Unpin>(
+    cancellation_token: &CancellationToken,
+    connection_writer: &mut DataChannelReceiverWriter<W>,
+    response: DataChannelResponse,
+) -> core::result::Result<(), ChannelHandlerStatus> {
+    let result = cancellation_token
+        .run_until_cancelled(connection_writer.send(response))
+        .await;
+
+    match result {
+        None => Err(ChannelHandlerStatus::Cancelled),
+        Some(Ok(_)) => Ok(()),
+        Some(Err(e)) => {
+            error!("Failed to send data to other side: {e}");
+            Err(ChannelHandlerStatus::NetworkError(e.to_string()))
+        }
+    }
+}
+
+async fn read_from_other_side<R: AsyncRead + Unpin>(
+    cancellation_token: &CancellationToken,
+    connection_reader: &mut DataChannelReceiverReader<R>,
+) -> core::result::Result<DataChannelRequest, ChannelHandlerStatus> {
+    let result = cancellation_token
+        .run_until_cancelled(connection_reader.next())
+        .await;
+
+    match result {
+        None => Err(ChannelHandlerStatus::Cancelled),
+        Some(None) => Err(ChannelHandlerStatus::NetworkError("Connection Lost".into())),
+        Some(Some(Err(e))) => Err(ChannelHandlerStatus::NetworkError(
+            format!("Connection Error: {e}").into(),
+        )),
+        Some(Some(Ok(r))) => Ok(r),
+    }
+}
+
 async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     cancellation_token: CancellationToken,
     buffer_queue: &mut DataQueue,
     mut connection_reader: DataChannelReceiverReader<R>,
     mut connection_writer: DataChannelReceiverWriter<W>,
-) -> Result<ChannelHandlerStatus> {
-    let mut pending_buffer: Option<TupleBuffer> = None;
+) -> core::result::Result<Infallible, ChannelHandlerStatus> {
     loop {
-        // First: Push received data to the registered channel. The channel handler will not receive
-        // further data from the network if the registered channel cannot accept it. This implements
-        // backpressure.
-        // The `queue` is capable of buffering a limited amount of data, which should reduce the
-        // amount of accidental backpressure
-        if let Some(pending_buffer) = pending_buffer.take() {
-            let sequence = pending_buffer.sequence();
-            select! {
-                _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
-                write_queue_result = buffer_queue.send(DataQueueItem::Data(pending_buffer)) => {
-                    match write_queue_result {
-                        Ok(_) => {
-                            trace!("accepted data for sequence number {sequence:?}.");
-                            // The registered channel has accepted the data, acknowledge the sequence
-                            // number.
-                            let Some(result) = cancellation_token.run_until_cancelled(connection_writer.send(DataChannelResponse::AckData(sequence))).await else {
-                                return Ok(ChannelHandlerStatus::Cancelled);
-                            };
-                            // TODO: What should we do with the information that the sequence number
-                            //       should have been acknowledged?
-                            result?
-                        },
-                        Err(_) => {
-                            // The registered channel has closed the `queue`. This implicitly closes
-                            // the Channel.
-                            let Some(result) = cancellation_token.run_until_cancelled(connection_writer.send(DataChannelResponse::Close)).await else {
-                                return Ok(ChannelHandlerStatus::Cancelled);
-                            };
-
-                            if let Err(e) = result {
-                                // TODO: What should we do if the Close has not been received on the other side.
-                                //       If that is the case the other side will attempt to reconnect.
-                                //       The Control socket will reject the channel registration. It
-                                //       could be worthwhile to investigate if a Tombstone could inform
-                                //       the other side that this channel has been permanently closed.
-                                return Ok(ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(e.into()))
-                            }
-
-                            return Ok(ChannelHandlerStatus::ClosedBySoftware);
-                        }
+        let request = read_from_other_side(&cancellation_token, &mut connection_reader).await?;
+        match request {
+            // Received data will be pushed to the registered channel on the next iteration
+            DataChannelRequest::Data(buffer) => {
+                info!("received data for sequence number {:?}.", buffer.sequence());
+                let sequence = buffer.sequence();
+                match buffer_queue.send(DataQueueItem::Data(buffer)).await {
+                    Ok(_) => {
+                        info!("acked data for sequence number {:?}.", sequence);
+                        send_to_other_side(
+                            &cancellation_token,
+                            &mut connection_writer,
+                            DataChannelResponse::AckData(sequence),
+                        )
+                        .await?;
                     }
-                },
-            }
-        }
-
-        // If all data has been pushed to the registered channel, the DataChannel waits for new data
-        // from the other side.
-        select! {
-            _ = cancellation_token.cancelled() => return Ok(ChannelHandlerStatus::Cancelled),
-            _ = tokio::time::sleep(Duration::from_secs(10)) => {
-                warn!("No data received from sender for 10 seconds");
-            },
-            request = connection_reader.next() => pending_buffer = {
-                // Reader next could fail if the connection aborts, in which case the channel fails,
-                // but will be retried after a delay. See @create_channel_handler
-                match request.ok_or("Connection Lost")?.map_err(|e| e)? {
-                    // Received data will be pushed to the registered channel on the next iteration
-                    DataChannelRequest::Data(buffer) => {
-                        trace!("received data for sequence number {:?}.", buffer.sequence());
-                        Some(buffer)
-                    },
-                    // The other side has closed the channel. This is propagated to the registered
-                    // channel by closing the queue, which will interrupt any blocking reads.
-                    // Returning `ClosedByOtherSide` will not cause any retries.
-                    DataChannelRequest::Close => {
-                        buffer_queue.send(DataQueueItem::Close).await.ok();
-                        return Ok(ChannelHandlerStatus::ClosedByOtherSide);
-                    },
-                    DataChannelRequest::Error(message) => {
-                        buffer_queue.send(DataQueueItem::Error(message.clone())).await.ok();
-                        return Ok(ChannelHandlerStatus::ClosedByOtherSideWithError(message));
+                    Err(_) => {
+                        send_to_other_side(
+                            &cancellation_token,
+                            &mut connection_writer,
+                            DataChannelResponse::Close,
+                        )
+                        .await?;
+                        return Err(ChannelHandlerStatus::ClosedBySoftware);
                     }
                 }
             }
-        }
+            // The other side has closed the channel. This is propagated to the registered
+            // channel by closing the queue, which will interrupt any blocking reads.
+            // Returning `ClosedByOtherSide` will not cause any retries.
+            DataChannelRequest::Close => {
+                buffer_queue.send(DataQueueItem::Close).await.ok();
+                return Err(ChannelHandlerStatus::ClosedByOtherSide);
+            }
+            DataChannelRequest::Error(message) => {
+                buffer_queue
+                    .send(DataQueueItem::Error(message.clone()))
+                    .await
+                    .ok();
+                return Err(ChannelHandlerStatus::ClosedByOtherSideWithError(message));
+            }
+        };
     }
 }
 
@@ -167,9 +175,8 @@ pub(super) fn create_channel_handler<
             )
             .await;
 
-            let status = match channel_handler_result {
-                Ok(status) => status,
-                Err(e) => {
+            match channel_handler_result.unwrap_err() {
+                ChannelHandlerStatus::NetworkError(e) => {
                     error!("Channel Failed: {e}. Retrying");
                     control
                         .send(NetworkServiceControlCommand::RetryChannel(
@@ -181,9 +188,6 @@ pub(super) fn create_channel_handler<
                         .expect("ReceiverServer should not have closed while a channel is active");
                     return;
                 }
-            };
-
-            match status {
                 ChannelHandlerStatus::ClosedByOtherSide => {
                     info!("Channel Closed by other side.");
                     return;

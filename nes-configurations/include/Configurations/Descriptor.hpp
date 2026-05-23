@@ -297,6 +297,7 @@ struct Descriptor
     template <typename ConfigParameter>
     auto getFromConfig(const ConfigParameter& configParameter) const
     {
+        NES_DEBUG("Config: {}", toStringConfig());
         const auto& value = config.at(configParameter);
         if constexpr (ConfigParameter::isEnumWrapper())
         {

@@ -200,25 +200,26 @@ static DescriptorConfig::Config addHeader(DescriptorConfig::Config config, std::
 struct TokioSinkContext
 {
     std::optional<size_t> flushEpoch;
-    std::atomic_size_t epochCounter{0};
+    std::shared_ptr<folly::Synchronized<std::optional<std::string>>> asyncError = std::make_shared<folly::Synchronized<std::optional<std::string>>>();
+    std::shared_ptr<std::atomic_size_t> epochCounter = std::make_shared<std::atomic_size_t>(0);
     std::atomic_bool gracefulStop{false};
+    std::optional<std::chrono::steady_clock::time_point> stopDeadline;
 
-    folly::Synchronized<std::optional<std::string>> asyncError;
 
     std::shared_ptr<SinkContext> context;
     rust::Box<SinkHandle> handle;
 
     TokioSinkContext(const QueryId& queryId, PipelineId pipelineId, const std::string& sinkType, const SinkDescriptor& descriptor)
         : context(std::make_shared<SinkContext>(
-              [this](std::string_view error)
+              [asyncError = this->asyncError](std::string_view error)
               {
                   NES_ERROR("Sink Failed: {}", error);
-                  this->asyncError.wlock()->emplace(error);
+                  asyncError->wlock()->emplace(error);
               },
-              [this](size_t epoch)
+              [epochCounter = this->epochCounter](size_t epoch)
               {
                   NES_DEBUG("Sink Flushed: {}", epoch);
-                  update_maximum(this->epochCounter, epoch);
+                  update_maximum(*epochCounter, epoch);
               }))
         , handle(create_handle(
               QueryContext{
@@ -234,7 +235,7 @@ struct TokioSinkContext
     /// Throws CannotOpenSink if the async sink task reported an error via on_error.
     void throwIfAsyncError() const
     {
-        if (auto err = *asyncError.rlock())
+        if (auto err = *asyncError->rlock())
         {
             throw CannotOpenSink("TokioSink failed: {}", *err);
         }
@@ -254,8 +255,14 @@ struct TokioSinkContext
     }
 };
 
-TokioSink::TokioSink(BackpressureController backpressureController, SinkDescriptor descriptor, size_t upperThreshold, size_t lowerThreshold)
+TokioSink::TokioSink(
+    BackpressureController backpressureController,
+    SinkDescriptor descriptor,
+    std::chrono::milliseconds stopTimeout,
+    size_t upperThreshold,
+    size_t lowerThreshold)
     : Sink(std::move(backpressureController))
+    , stopTimeout(stopTimeout)
     , descriptor(descriptor)
     , context(nullptr)
     , backpressureHandler(std::make_unique<SinkBackpressureHandler>(upperThreshold, lowerThreshold))
@@ -318,6 +325,18 @@ void TokioSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
 void TokioSink::stop(PipelineExecutionContext& pec)
 {
     context->throwIfAsyncError();
+    if (!context->stopDeadline)
+    {
+        context->stopDeadline = std::chrono::steady_clock::now() + stopTimeout;
+    }
+    else if (std::chrono::steady_clock::now() > *context->stopDeadline)
+    {
+        throw CannotFlushSink(
+            "TokioSink failed to drain/flush/close within {} ms (flush epoch acked: {}/{}); aborting stop()",
+            stopTimeout.count(),
+            context->epochCounter->load(),
+            context->flushEpoch.value_or(0));
+    }
     auto currentBuffer = backpressureHandler->popFront();
     while (currentBuffer)
     {
@@ -352,7 +371,7 @@ void TokioSink::stop(PipelineExecutionContext& pec)
         NES_DEBUG("Waiting for flush ack: {}", epoch);
         context->flushEpoch = epoch;
     }
-    if (context->epochCounter < context->flushEpoch)
+    if (*context->epochCounter < context->flushEpoch)
     {
         sink_sanity_check(*context->handle);
         NES_DEBUG("Repeating until flush ack");

@@ -265,11 +265,12 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
         auto [s, ctrl] = std::visit(
             Overloaded{
                 [&](SourceDescriptor desc) { return getTestSource(backpressureListener, desc.sourceId, bm); },
-                [&](AsyncSourceDescriptor desc) { return getAsyncTestSource(desc.sourceId, bm); },
-                [](auto) -> std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
+                [&](AsyncSourceDescriptor desc)
                 {
-                    std::terminate();
-                }},
+                    throw std::runtime_error("Async sources are not supported");
+                    return getTestSource(backpressureListener, desc.sourceId, bm);
+                },
+                [](auto) -> std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>> { std::terminate(); }},
             source.second);
         sourceIds.emplace(source.first, s->getSourceId());
         sources.emplace_back(std::move(s), std::move(successors));

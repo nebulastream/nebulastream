@@ -634,7 +634,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                 let flushing = self.pending_flush.is_some();
                 let should_read_from_software =
                     !flushing && self.wait_for_ack.len() < self.config.max_pending_acks;
-                let should_read_from_other_side = !self.wait_for_ack.is_empty();
+                let should_read_from_other_side = true;
                 let should_send_pending = !self.pending_writes.is_empty();
 
                 // When there's nothing left to send, flush the codec buffer so the

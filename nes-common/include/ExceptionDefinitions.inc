@@ -89,6 +89,7 @@ EXCEPTION(RunningRoutineFailure, 4001, "error in running routine of SourceThread
 EXCEPTION(CannotOpenSource, 4002, "failed to open a source")
 EXCEPTION(FormattingError, 4003, "error during formatting")
 EXCEPTION(CannotOpenSink, 4004, "failed to open a sink")
+EXCEPTION(CannotFlushSink, 4005, "failed to flush a sink during stop")
 
 /// 5XXX API errors
 EXCEPTION(QueryNotFound, 5000, "query is not registered")
