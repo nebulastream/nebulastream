@@ -94,6 +94,16 @@ protected:
 
     std::unique_ptr<SpillableTimeBasedSliceStore> makeStore(InMemorySpillBackend** backendOut) const
     {
+        /// Default thresholds are large enough that automatic eviction never fires, so the existing single-spill
+        /// tests are unaffected.
+        return makeStoreWithThresholds(1024ULL * 1024ULL, 2ULL * 1024ULL * 1024ULL, backendOut);
+    }
+
+    /// PR-2 (Increment B): construct a store with caller-chosen soft/hard thresholds so the synchronous hard-eviction
+    /// loop is deterministically drivable from the unit test (the eviction tests need tiny thresholds).
+    std::unique_ptr<SpillableTimeBasedSliceStore>
+    makeStoreWithThresholds(const uint64_t softThresholdBytes, const uint64_t hardThresholdBytes, InMemorySpillBackend** backendOut) const
+    {
         auto backend = std::make_unique<InMemorySpillBackend>();
         *backendOut = backend.get();
         auto store = std::make_unique<SpillableTimeBasedSliceStore>(
@@ -103,8 +113,8 @@ protected:
             std::move(backend),
             entriesPerPage(),
             PAGE_SIZE,
-            /*softThresholdBytes*/ 1024ULL * 1024ULL,
-            /*hardThresholdBytes*/ 2ULL * 1024ULL * 1024ULL);
+            softThresholdBytes,
+            hardThresholdBytes);
         store->setBufferProvider(bufferManager);
         return store;
     }
@@ -313,6 +323,178 @@ TEST_F(SpillableTimeBasedSliceStoreTest, gcPrunesCreatedSlices)
     store->garbageCollectSlicesAndWindows(Timestamp(WINDOW_SIZE * 10));
 
     EXPECT_EQ(store->createdSlicesSizeForTest(), 0U);
+    EXPECT_EQ(store->residentBytes(), 0U);
+}
+
+/// PR-2 (Increment B): the synchronous hard-eviction loop spills COLD slices oldest-first until resident memory is
+/// back under the hard threshold, stops as soon as it is, writes exactly the spilled slices to the backend, and
+/// leaves the still-resident slices untouched.
+TEST_F(SpillableTimeBasedSliceStoreTest, hardEvictsOldestColdFirst)
+{
+    InMemorySpillBackend* backend = nullptr;
+    /// One populated slice (3 tuples → one page == PAGE_SIZE) is exactly one threshold "unit". Hard = 2 pages: once
+    /// three populated slices exist (3 pages) we are over hard and must spill back down to <= 2 pages (i.e. spill 1).
+    auto store = makeStoreWithThresholds(/*soft*/ PAGE_SIZE, /*hard*/ 2ULL * PAGE_SIZE, &backend);
+
+    const auto sliceA = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto sliceB = store->getSlicesOrCreate(Timestamp(150), spillableSliceFactory())[0];
+    const auto sliceC = store->getSlicesOrCreate(Timestamp(250), spillableSliceFactory())[0];
+    populate(sliceA, WorkerThreadId(0), 3, 0);
+    populate(sliceB, WorkerThreadId(0), 3, 100);
+    populate(sliceC, WorkerThreadId(0), 3, 200);
+    const uint64_t perSlice = store->residentBytesOf(*sliceA);
+    ASSERT_EQ(perSlice, PAGE_SIZE);
+    ASSERT_EQ(store->residentBytes(), 3U * PAGE_SIZE);
+
+    /// Make all three slices COLD (sliceEnd < watermark) WITHOUT emitting them (the base feeders couple
+    /// watermark-advance to emit; seeding the watermark is the only way to a cold-but-unemitted slice).
+    store->setLastSeenWatermarkForTest(Timestamp(WINDOW_SIZE * 10));
+    store->spillColdSlicesUnderHardForTest();
+
+    /// Exactly one slice was spilled (the oldest, sliceA) — the loop stops once resident <= hard.
+    EXPECT_LE(store->residentBytes(), 2ULL * PAGE_SIZE);
+    EXPECT_EQ(store->residentBytes(), 2ULL * PAGE_SIZE);
+    EXPECT_EQ(store->spillCountForTest(), 1U);
+    EXPECT_FALSE(store->isSliceResident(sliceA->getSliceEnd())); /// oldest spilled FIRST
+    EXPECT_TRUE(store->isSliceResident(sliceB->getSliceEnd()));
+    EXPECT_TRUE(store->isSliceResident(sliceC->getSliceEnd()));
+    EXPECT_TRUE(backend->contains(sliceA->getSliceEnd(), WorkerThreadId(0)));
+    EXPECT_FALSE(backend->contains(sliceB->getSliceEnd(), WorkerThreadId(0)));
+    EXPECT_FALSE(backend->contains(sliceC->getSliceEnd(), WorkerThreadId(0)));
+    EXPECT_EQ(backend->sliceCount(), 1U);
+}
+
+/// PR-2 (Increment B, O-B5 hard): over the hard budget but no COLD candidate (every slice is still filling — none is
+/// past the watermark) → proceed over-budget, no throw, no spill, resident unchanged.
+TEST_F(SpillableTimeBasedSliceStoreTest, hardNoColdCandidateProceeds)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithThresholds(/*soft*/ PAGE_SIZE, /*hard*/ 2ULL * PAGE_SIZE, &backend);
+
+    const auto sliceA = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto sliceB = store->getSlicesOrCreate(Timestamp(150), spillableSliceFactory())[0];
+    const auto sliceC = store->getSlicesOrCreate(Timestamp(250), spillableSliceFactory())[0];
+    populate(sliceA, WorkerThreadId(0), 3, 0);
+    populate(sliceB, WorkerThreadId(0), 3, 100);
+    populate(sliceC, WorkerThreadId(0), 3, 200);
+    const uint64_t before = store->residentBytes();
+    ASSERT_EQ(before, 3U * PAGE_SIZE);
+
+    /// Watermark left at 0 → no slice is cold → nothing is a spill candidate even though we are over hard.
+    EXPECT_NO_THROW(store->spillColdSlicesUnderHardForTest());
+
+    EXPECT_EQ(store->spillCountForTest(), 0U);
+    EXPECT_EQ(store->residentBytes(), before);
+    EXPECT_EQ(backend->sliceCount(), 0U);
+}
+
+/// PR-2 (Increment B, O-B5 terminal): every slice is COLD and we are STILL over the hard budget after spilling them
+/// all → proceed, no throw, resident minimized to 0.
+TEST_F(SpillableTimeBasedSliceStoreTest, hardStillOverAfterAllColdSpilled)
+{
+    InMemorySpillBackend* backend = nullptr;
+    /// Hard = 0 bytes: even after every cold slice is spilled (resident == 0) the loop's "resident > hard" check
+    /// can only ever be satisfied while resident > 0; once all cold slices are gone it must break, not throw.
+    auto store = makeStoreWithThresholds(/*soft*/ 0, /*hard*/ 0, &backend);
+
+    const auto sliceA = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto sliceB = store->getSlicesOrCreate(Timestamp(150), spillableSliceFactory())[0];
+    populate(sliceA, WorkerThreadId(0), 3, 0);
+    populate(sliceB, WorkerThreadId(0), 3, 100);
+    ASSERT_GT(store->residentBytes(), 0U);
+
+    store->setLastSeenWatermarkForTest(Timestamp(WINDOW_SIZE * 10));
+    EXPECT_NO_THROW(store->spillColdSlicesUnderHardForTest());
+
+    /// Both cold slices spilled; resident minimized; the loop terminated (no infinite spin, no throw).
+    EXPECT_EQ(store->spillCountForTest(), 2U);
+    EXPECT_EQ(store->residentBytes(), 0U);
+    EXPECT_FALSE(store->isSliceResident(sliceA->getSliceEnd()));
+    EXPECT_FALSE(store->isSliceResident(sliceB->getSliceEnd()));
+}
+
+/// PR-2 (Increment B): an EMITTED slice is never chosen by the eviction scan even when it is cold and over budget
+/// (the !emittedKeys filter holds), so its raw HashMap* stays valid for the async probe.
+TEST_F(SpillableTimeBasedSliceStoreTest, emittedSliceNeverSpilledUnderEviction)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithThresholds(/*soft*/ 0, /*hard*/ 0, &backend);
+
+    const auto sliceEmitted = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto emittedEnd = sliceEmitted->getSliceEnd();
+    populate(sliceEmitted, WorkerThreadId(0), 3, 0);
+    const auto sliceCold = store->getSlicesOrCreate(Timestamp(150), spillableSliceFactory())[0];
+    const auto coldEnd = sliceCold->getSliceEnd();
+    populate(sliceCold, WorkerThreadId(0), 3, 100);
+
+    /// Emit the first slice via a trigger feeder (marks it emitted). The window [0,100) triggers at watermark > 100.
+    const auto triggered = store->getTriggerableWindowSlices(Timestamp(WINDOW_SIZE + 1));
+    ASSERT_TRUE(triggeredContains(triggered, emittedEnd));
+
+    /// Now both slices are cold (watermark past both); the eviction scan must skip the emitted one and spill only the
+    /// non-emitted cold one.
+    store->setLastSeenWatermarkForTest(Timestamp(WINDOW_SIZE * 10));
+    store->spillColdSlicesUnderHardForTest();
+
+    EXPECT_TRUE(store->isSliceResident(emittedEnd)); /// emitted slice never spilled
+    EXPECT_FALSE(store->isSliceResident(coldEnd)); /// the non-emitted cold slice was spilled
+    EXPECT_FALSE(backend->contains(emittedEnd, WorkerThreadId(0)));
+    EXPECT_TRUE(backend->contains(coldEnd, WorkerThreadId(0)));
+}
+
+/// PR-2 (Increment B): forceSpill twice is idempotent through the spill counter — a real spill bumps the counter
+/// exactly once; the already-spilled second call is a no-op (no second backend write, no second count).
+TEST_F(SpillableTimeBasedSliceStoreTest, doubleForceSpillCountsOnce)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+    const auto slice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto sliceEnd = slice->getSliceEnd();
+    populate(slice, WorkerThreadId(0), 12, 0);
+
+    store->forceSpill(sliceEnd);
+    EXPECT_EQ(store->spillCountForTest(), 1U);
+    EXPECT_NO_THROW(store->forceSpill(sliceEnd)); /// already spilled → no-op, no second count
+    EXPECT_EQ(store->spillCountForTest(), 1U);
+    EXPECT_EQ(backend->sliceCount(), 1U);
+}
+
+/// PR-1 review coverage gap: deleteState() clears createdSlices (direct coverage of the createdSlices.wlock()->clear()
+/// line, which other tests only exercise implicitly through destruction).
+TEST_F(SpillableTimeBasedSliceStoreTest, deleteStateClearsCreatedSlices)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+    for (const uint64_t ts : {50ULL, 150ULL, 250ULL})
+    {
+        const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+        populate(slice, WorkerThreadId(0), 4, ts);
+    }
+    ASSERT_EQ(store->createdSlicesSizeForTest(), 3U);
+
+    store->deleteState();
+
+    EXPECT_EQ(store->createdSlicesSizeForTest(), 0U);
+    EXPECT_EQ(store->residentBytes(), 0U);
+}
+
+/// PR-1 review coverage gap (and M1 evidence): two getSlicesOrCreate at the SAME timestamp record the slice only ONCE
+/// (the base returns the existing slice on the second call; recordCreatedSlice must not double-track it).
+TEST_F(SpillableTimeBasedSliceStoreTest, recordCreatedSliceIdempotent)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+    const auto first = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto second = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    EXPECT_EQ(first->getSliceEnd(), second->getSliceEnd());
+    EXPECT_EQ(store->createdSlicesSizeForTest(), 1U);
+}
+
+/// PR-1 review coverage gap: residentBytes() on a freshly constructed store (no slices) is 0.
+TEST_F(SpillableTimeBasedSliceStoreTest, residentBytesEmptyStoreIsZero)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
     EXPECT_EQ(store->residentBytes(), 0U);
 }
 

@@ -20,6 +20,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <string>
@@ -54,12 +55,19 @@ namespace NES
 /// reuses the inherited createSliceStoreRef + SliceCache + DefaultTimeBasedSliceStoreRef unchanged (the build
 /// hot path only ever touches resident slices).
 ///
-/// Increment B (PR-1, this layer): self-tracks every created slice in `createdSlices`
+/// Increment B (PR-1): self-tracks every created slice in `createdSlices`
 /// (folly::Synchronized<map<SliceEnd, weak_ptr<Slice>>>, weak_ptr so the base GC still frees the slice) via a
 /// getSlicesOrCreate override that records AFTER the base call returns; learns the build watermark monotonically
 /// (`lastSeenWatermark`) in the trigger feeders; and exposes a store-wide residentBytes() (Σ over createdSlices).
 /// `createdSlices` is pruned of expired weak_ptrs in garbageCollectSlicesAndWindows and cleared in deleteState.
-/// Automatic soft/hard-threshold eviction and the background spiller (multi-thread hardening) land in PR-2/PR-3;
+///
+/// Increment B (PR-2, this layer): adds the SYNCHRONOUS hard-threshold eviction policy on the worker path. When
+/// getSlicesOrCreate NEWLY tracks a slice and store-wide residentBytes() exceeds the hard threshold, the worker
+/// thread itself spills COLD slices (sliceEnd < lastSeenWatermark, resident, not emitted, not in-flight) oldest-first
+/// until back under hard or no cold candidate remains (O-B5: proceed over-budget, never throw, never block). All
+/// eviction decisions are serialized by an OUTER `evictionMutex` + a per-slice `spillInProgress` reservation set; ALL
+/// RocksDB I/O (spill()) happens OUTSIDE the mutex (uniform no-I/O-under-lock). forceSpill now shares this serializer.
+/// The background spiller (soft threshold), the trigger-wait condvar, and the store-owned lifecycle land in PR-3;
 /// this layer is still single-threaded beyond the base's per-map folly::Synchronized guarantees.
 class SpillableTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
 {
@@ -120,13 +128,19 @@ public:
     /// weak_ptrs; touches no private base map.
     [[nodiscard]] uint64_t residentBytes() const;
 
-    /// --- PR-1 test hooks (deterministic drive points; no production behavior; public so the unit test can call
+    /// --- PR-1/PR-2 test hooks (deterministic drive points; no production behavior; public so the unit test can call
     /// them directly, mirroring how the test already drives setBufferProvider/forceSpill). ---
     /// Seed the learned build watermark directly so a cold-but-unemitted slice is producible without driving the
-    /// base trigger feeders (which couple watermark-advance to emit). Increment-B eviction tests rely on this.
+    /// base trigger feeders (which couple watermark-advance to emit). Exercised by the PR-2 eviction tests
+    /// (hardEvictsOldestColdFirst / hardStillOverAfterAllColdSpilled / emittedSliceNeverSpilledUnderEviction).
     void setLastSeenWatermarkForTest(Timestamp watermark);
     /// Number of currently tracked entries in `createdSlices` (incl. not-yet-pruned expired weak_ptrs).
     [[nodiscard]] std::size_t createdSlicesSizeForTest() const;
+    /// PR-2: run the synchronous hard-eviction loop directly (evictUntilUnderHard()), so the policy is drivable
+    /// without the background thread (added in PR-3).
+    void spillColdSlicesUnderHardForTest();
+    /// PR-2: monotonic count of real spills performed (eviction path + forceSpill), for tight test assertions.
+    [[nodiscard]] std::size_t spillCountForTest() const;
 
 private:
     /// For each returned slice: unspill if non-resident (dropping it from spilledKeys) and record it emitted.
@@ -134,16 +148,34 @@ private:
 
     /// O-B1 self-track: record a freshly created slice in `createdSlices` keyed by its SliceEnd, holding only a
     /// weak_ptr so the base GC's shared_ptr drop still frees the slice (the eviction scan locks each weak_ptr).
-    void recordCreatedSlice(const std::shared_ptr<Slice>& slice);
+    /// Returns true ONLY on a true insertion (a NEW SliceEnd); false when the base re-returned an already-tracked
+    /// slice (SliceCache hit / insert race), so the caller can gate budget checks on a genuine new slice (M1).
+    bool recordCreatedSlice(const std::shared_ptr<Slice>& slice);
+
+    /// PR-2 eviction policy (single-thread this PR; the background thread is wired in PR-3). All take/release
+    /// `evictionMutex` internally; RocksDB I/O (spill()) is performed OUTSIDE the mutex.
+    /// Picks the oldest COLD, resident, non-emitted, non-in-flight slice, reserves it in `spillInProgress`, and
+    /// returns its SliceEnd; std::nullopt if no candidate. Snapshots createdSlices under one rlock, releases it,
+    /// then evaluates predicates (never nests createdSlices with the folly set locks).
+    std::optional<SliceEnd> pickAndReserveColdSlice();
+    /// Marks a reserved slice spilled: inserts into spilledKeys, clears its reservation. (Condvar notify is PR-3.)
+    void finalizeSpill(SliceEnd end);
+    /// Reserve → lock the spillable → spill (I/O OUTSIDE evictionMutex) → finalize. Returns false only when there is
+    /// no cold candidate; an expired weak_ptr between reserve and lookup is treated as progress (returns true).
+    bool spillOneColdSlice();
+    /// Synchronous worker-path hard backstop (O-B2 hard): spill cold slices until resident <= hard or none remain.
+    /// O-B5: proceeds over-budget with a NES_WARNING; never throws, never blocks.
+    void evictUntilUnderHard();
 
     std::unique_ptr<SpillBackend> backend;
     folly::Synchronized<std::shared_ptr<AbstractBufferProvider>> bufferProvider;
     const uint64_t entriesPerPage;
     const uint64_t pageSize;
-    /// Recorded now (plumbed from SpillConfig) but not yet enforced: Increment A spills only via forceSpill.
-    /// Automatic soft/hard-threshold-driven eviction is Increment B (O4). [[maybe_unused]] until then.
+    /// Soft threshold drives the background spiller (PR-3). PR-2 does not read it yet, so it stays [[maybe_unused]]
+    /// until then (-Wunused-private-field would otherwise fire).
     [[maybe_unused]] const uint64_t softThresholdBytes;
-    [[maybe_unused]] const uint64_t hardThresholdBytes;
+    /// Hard threshold: the synchronous worker-path backstop (PR-2 evictUntilUnderHard). Now enforced.
+    const uint64_t hardThresholdBytes;
     /// SliceEnds whose maps are currently spilled — drives isSliceResident() and GC backend-erase.
     folly::Synchronized<std::set<SliceEnd>> spilledKeys;
     /// SliceEnds returned by a trigger feeder (emitted to the async probe) — forceSpill refuses these.
@@ -153,8 +185,24 @@ private:
     /// weak_ptr so the base GC still frees the slice; the eviction scan locks each weak_ptr and skips expired entries.
     folly::Synchronized<std::map<SliceEnd, std::weak_ptr<Slice>>> createdSlices;
     /// Learned build watermark (monotonic). Stores the raw underlying value so the atomic is lock-free. A lagging
-    /// value only ever under-selects cold slices (safe). Bumped via CAS-max in the trigger feeders.
+    /// value only ever under-selects cold slices (safe) — it can never cause a hot slice to be spilled (PLAN
+    /// O-B-watermark safety argument), so memory_order_relaxed on the CAS-max load/store is intentional and must
+    /// NOT be strengthened to seq_cst by a later reader. Bumped via CAS-max in the trigger feeders.
     std::atomic<Timestamp::Underlying> lastSeenWatermark{Timestamp(0).getRawValue()};
+
+    /// O-B3 (PR-2): the OUTER eviction serializer. It guards ONLY in-memory eviction decisions — pick-cold,
+    /// confirm-not-emitted, reserve (insert spillInProgress), mark-spilled, clear-reservation. ALL RocksDB I/O
+    /// (spill()) happens OUTSIDE this mutex, protected by the per-slice spillInProgress reservation (uniform
+    /// no-I/O-under-lock). Lock order is always evictionMutex → (createdSlices | one folly set); the base
+    /// slices/windows maps are NEVER taken under it. mutable: residentBytes()/dtor may need it. (The condvar +
+    /// background thread that complete this model land in PR-3.)
+    mutable std::mutex evictionMutex;
+    /// Per-slice reservation set (O-B3): a SliceEnd here has an in-flight spill; the eviction scan and forceSpill
+    /// both skip it. ALWAYS accessed under evictionMutex (a plain set — evictionMutex already guards it).
+    std::set<SliceEnd> spillInProgress;
+    /// Monotonic count of real spills performed (eviction path + forceSpill). Atomic so it is safe to read from
+    /// tests without evictionMutex; bumped right after a successful spill() I/O.
+    std::atomic<std::size_t> spillCount{0};
 };
 
 }

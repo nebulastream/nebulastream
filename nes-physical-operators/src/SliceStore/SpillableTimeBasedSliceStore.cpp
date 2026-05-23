@@ -14,13 +14,13 @@
 
 #include <SliceStore/SpillableTimeBasedSliceStore.hpp>
 
-#include <algorithm>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <string>
@@ -97,15 +97,32 @@ std::vector<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSlicesOrCre
     /// The base lock is already released on return (DefaultTimeBasedSliceStore::getSlicesOrCreate), so recording the
     /// created slice afterwards never nests our `createdSlices` lock with the base maps.
     auto result = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, createNewSlice);
+    /// tumbling window ⇒ always exactly one slice per timestamp (new or existing — this also runs on a SliceCache hit
+    /// that re-returns the already-created slice), got {}.
     INVARIANT(result.size() == 1, "tumbling slice store expects exactly one slice per (timestamp), got {}", result.size());
-    recordCreatedSlice(result[0]);
+    /// M1: gate the hard-threshold check on a GENUINELY NEW slice. recordCreatedSlice returns false on a cache-hit /
+    /// insert-race re-return of an already-tracked slice; re-running residentBytes()/eviction there would spuriously
+    /// re-arm the budget against a slice already accounted for.
+    if (recordCreatedSlice(result[0]))
+    {
+        if (const auto resident = residentBytes(); resident > hardThresholdBytes)
+        {
+            NES_DEBUG(
+                "Hard threshold crossed (resident={} > hard={}); synchronous spill on worker path", resident, hardThresholdBytes);
+            evictUntilUnderHard();
+        }
+    }
     return result;
 }
 
-void SpillableTimeBasedSliceStore::recordCreatedSlice(const std::shared_ptr<Slice>& slice)
+bool SpillableTimeBasedSliceStore::recordCreatedSlice(const std::shared_ptr<Slice>& slice)
 {
-    NES_TRACE("Recording created slice {} for self-tracking", slice->getSliceEnd());
-    createdSlices.wlock()->insert_or_assign(slice->getSliceEnd(), std::weak_ptr<Slice>(slice));
+    const auto [it, inserted] = createdSlices.wlock()->insert_or_assign(slice->getSliceEnd(), std::weak_ptr<Slice>(slice));
+    if (inserted)
+    {
+        NES_TRACE("Recording created slice {} for self-tracking", slice->getSliceEnd());
+    }
+    return inserted;
 }
 
 void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
@@ -250,30 +267,149 @@ void SpillableTimeBasedSliceStore::deleteState()
 
 void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
 {
-    /// NOTE (M1, Increment B): this emittedKeys check and the spill below are not one atomic step. Under the
-    /// single-threaded Increment A driver that is correct; multi-thread hardening must take a combined lock so a
-    /// concurrent trigger cannot mark the slice emitted between the check and the spill (defeating the guard).
-    if (emittedKeys.rlock()->contains(sliceEnd))
+    /// M1 (Increment A TOCTOU, closed in PR-2): the emitted-check and the reservation now happen atomically under
+    /// evictionMutex, sharing the serializer with the eviction path so a concurrent trigger cannot mark the slice
+    /// emitted between the check and the reserve. The spill() I/O is performed OUTSIDE the mutex (uniform
+    /// no-I/O-under-lock), protected by the spillInProgress reservation.
+    std::shared_ptr<SpillableAggregationSlice> spillable;
     {
-        throw SpillStoreFailure(
-            "refusing to spill slice {} that has been emitted to the probe (async-probe-drain invariant)", sliceEnd);
+        std::unique_lock lock(evictionMutex);
+        if (emittedKeys.rlock()->contains(sliceEnd))
+        {
+            throw SpillStoreFailure(
+                "refusing to spill slice {} that has been emitted to the probe (async-probe-drain invariant)", sliceEnd);
+        }
+        if (spillInProgress.contains(sliceEnd))
+        {
+            /// Another path already reserved this slice for an in-flight spill — do not double-write.
+            NES_DEBUG("forceSpill: slice {} already has an in-flight spill, no-op", sliceEnd);
+            return;
+        }
+        auto opt = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd);
+        if (!opt.has_value())
+        {
+            NES_DEBUG("forceSpill: no slice for sliceEnd {}", sliceEnd);
+            return;
+        }
+        spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(opt.value());
+        INVARIANT(spillable != nullptr, "forceSpill on a non-spillable slice {}", sliceEnd);
+        if (!spillable->isResident())
+        {
+            NES_DEBUG("forceSpill: slice {} is already spilled, no-op", sliceEnd);
+            return;
+        }
+        spillInProgress.insert(sliceEnd);
     }
-    auto opt = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd);
-    if (!opt.has_value())
-    {
-        NES_DEBUG("forceSpill: no slice for sliceEnd {}", sliceEnd);
-        return;
-    }
-    auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(opt.value());
-    INVARIANT(spillable != nullptr, "forceSpill on a non-spillable slice {}", sliceEnd);
-    if (!spillable->isResident())
-    {
-        NES_DEBUG("forceSpill: slice {} is already spilled, no-op", sliceEnd);
-        return;
-    }
+    /// I/O OUTSIDE evictionMutex, protected by the reservation.
     NES_DEBUG("Spilling slice {} ({} bytes resident)", sliceEnd, residentBytesOf(*spillable));
     spillable->spill(*backend);
-    spilledKeys.wlock()->insert(sliceEnd);
+    ++spillCount;
+    finalizeSpill(sliceEnd);
+}
+
+std::optional<SliceEnd> SpillableTimeBasedSliceStore::pickAndReserveColdSlice()
+{
+    std::unique_lock lock(evictionMutex);
+    const auto wm = lastSeenWatermark.load(std::memory_order_relaxed);
+
+    /// Snapshot (end, weak) pairs under ONE createdSlices rlock, then RELEASE it before evaluating the predicates —
+    /// never nest createdSlices with the folly set locks (spilledKeys/emittedKeys) and never take a base map under
+    /// evictionMutex (NH1). The map is sorted ascending by SliceEnd, so this snapshot is already oldest-first.
+    std::vector<std::pair<SliceEnd, std::weak_ptr<Slice>>> snapshot;
+    createdSlices.withRLock(
+        [&](const auto& tracked)
+        {
+            snapshot.reserve(tracked.size());
+            for (const auto& [end, weak] : tracked)
+            {
+                snapshot.emplace_back(end, weak);
+            }
+        });
+
+    for (const auto& [end, weak] : snapshot)
+    {
+        if (end.getRawValue() >= wm)
+        {
+            /// Not cold yet (still within the build watermark). Ascending order ⇒ no later entry is cold either, but
+            /// keep scanning for clarity — the predicate short-circuits cheaply.
+            continue;
+        }
+        if (spillInProgress.contains(end))
+        {
+            continue;
+        }
+        const auto slice = weak.lock();
+        if (slice == nullptr)
+        {
+            continue;
+        }
+        const auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(slice);
+        if (spillable == nullptr || !spillable->isResident() || !isSliceResident(end))
+        {
+            continue;
+        }
+        if (emittedKeys.rlock()->contains(end))
+        {
+            continue;
+        }
+        spillInProgress.insert(end);
+        NES_DEBUG("Reserved cold slice {} for spill", end);
+        return end;
+    }
+    return std::nullopt;
+}
+
+void SpillableTimeBasedSliceStore::finalizeSpill(const SliceEnd end)
+{
+    std::unique_lock lock(evictionMutex);
+    spilledKeys.wlock()->insert(end);
+    spillInProgress.erase(end);
+    NES_DEBUG("Spilled cold slice {}; resident now {}", end, residentBytes());
+}
+
+bool SpillableTimeBasedSliceStore::spillOneColdSlice()
+{
+    const auto picked = pickAndReserveColdSlice();
+    if (!picked.has_value())
+    {
+        return false;
+    }
+    /// Lock the spillable OUTSIDE evictionMutex. If it expired between reserve and lookup, clear the reservation and
+    /// report progress (the slice is gone, so the budget already dropped).
+    const auto opt = DefaultTimeBasedSliceStore::getSliceBySliceEnd(*picked);
+    std::shared_ptr<SpillableAggregationSlice> spillable;
+    if (opt.has_value())
+    {
+        spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(opt.value());
+    }
+    if (spillable == nullptr)
+    {
+        std::unique_lock lock(evictionMutex);
+        spillInProgress.erase(*picked);
+        return true;
+    }
+    /// I/O OUTSIDE evictionMutex, protected by the reservation.
+    spillable->spill(*backend);
+    ++spillCount;
+    finalizeSpill(*picked);
+    return true;
+}
+
+void SpillableTimeBasedSliceStore::evictUntilUnderHard()
+{
+    /// O-B5 (hard): proceed over-budget, never throw, never block. Stop once back under hard OR no cold candidate
+    /// remains (then the only resident state is genuinely-needed filling/emitted memory we are forbidden to spill).
+    while (residentBytes() > hardThresholdBytes)
+    {
+        if (!spillOneColdSlice())
+        {
+            NES_WARNING(
+                "Over hard budget ({} > {}) but no COLD slice to evict; proceeding over-budget",
+                residentBytes(),
+                hardThresholdBytes);
+            break;
+        }
+    }
 }
 
 bool SpillableTimeBasedSliceStore::isSliceResident(const SliceEnd sliceEnd) const
@@ -332,6 +468,16 @@ void SpillableTimeBasedSliceStore::setLastSeenWatermarkForTest(const Timestamp w
 std::size_t SpillableTimeBasedSliceStore::createdSlicesSizeForTest() const
 {
     return createdSlices.rlock()->size();
+}
+
+void SpillableTimeBasedSliceStore::spillColdSlicesUnderHardForTest()
+{
+    evictUntilUnderHard();
+}
+
+std::size_t SpillableTimeBasedSliceStore::spillCountForTest() const
+{
+    return spillCount.load();
 }
 
 }
