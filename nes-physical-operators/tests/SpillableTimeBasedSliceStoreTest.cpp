@@ -282,6 +282,61 @@ TEST_F(SpillableTimeBasedSliceStoreTest, unspillOnTriggerableReadRestoresEntries
     EXPECT_EQ(sortedEntries(*dynamic_cast<SpillableAggregationSlice*>(slice.get()), WorkerThreadId(0)), expected);
 }
 
+/// Phase 0b: getMetrics() counts + times spill and unspill, tracks peak resident, and a spill/unspill round-trip of the
+/// same slice restores exactly the bytes it freed.
+TEST_F(SpillableTimeBasedSliceStoreTest, metricsRecordSpillRestoreAndPeak)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+    const auto slice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto sliceEnd = slice->getSliceEnd();
+    populate(slice, WorkerThreadId(0), 30, 0);
+
+    /// residentBytes() is the peak-sampling point; call it while the slice is resident.
+    const auto residentNow = store->residentBytes();
+    ASSERT_GT(residentNow, 0U);
+
+    const auto m0 = store->getMetrics();
+    EXPECT_EQ(m0.slicesSpilled, 0U);
+    EXPECT_EQ(m0.slicesUnspilled, 0U);
+    EXPECT_EQ(m0.bytesSpilled, 0U);
+    EXPECT_EQ(m0.bytesRestored, 0U);
+    EXPECT_EQ(m0.spillSampleCount, 0U);
+    EXPECT_EQ(m0.restoreSampleCount, 0U);
+    /// Empty-sample state: every percentile field is the percentileOfSorted empty-vector guard (0), not garbage.
+    EXPECT_EQ(m0.spillLatencyP50Us, 0U);
+    EXPECT_EQ(m0.spillLatencyP95Us, 0U);
+    EXPECT_EQ(m0.spillLatencyP99Us, 0U);
+    EXPECT_EQ(m0.spillLatencyMaxUs, 0U);
+    EXPECT_EQ(m0.restoreLatencyP50Us, 0U);
+    EXPECT_EQ(m0.restoreLatencyMaxUs, 0U);
+    EXPECT_GE(m0.peakResidentBytes, residentNow); /// peak captured by the residentBytes() call above
+
+    store->forceSpill(sliceEnd);
+    ASSERT_FALSE(store->isSliceResident(sliceEnd));
+    const auto m1 = store->getMetrics();
+    EXPECT_EQ(m1.slicesSpilled, 1U);
+    EXPECT_GT(m1.bytesSpilled, 0U);
+    EXPECT_EQ(m1.spillSampleCount, 1U);
+    EXPECT_EQ(m1.slicesUnspilled, 0U);
+    /// Single sample ⇒ every spill percentile collapses to that one value (== max). Guards the nearest-rank clamp at n==1.
+    EXPECT_EQ(m1.spillLatencyP50Us, m1.spillLatencyMaxUs);
+    EXPECT_EQ(m1.spillLatencyP95Us, m1.spillLatencyMaxUs);
+    EXPECT_EQ(m1.spillLatencyP99Us, m1.spillLatencyMaxUs);
+    /// Peak is a monotone high-water mark: spilling (which lowers resident bytes) must NEVER lower the recorded peak.
+    EXPECT_GE(m1.peakResidentBytes, m0.peakResidentBytes);
+
+    /// The window [0,100) triggers beyond its end → the store unspills the slice before returning it.
+    const auto triggered = store->getTriggerableWindowSlices(Timestamp(WINDOW_SIZE * 2));
+    ASSERT_TRUE(triggeredContains(triggered, sliceEnd));
+    const auto m2 = store->getMetrics();
+    EXPECT_EQ(m2.slicesUnspilled, 1U);
+    EXPECT_GT(m2.bytesRestored, 0U);
+    EXPECT_EQ(m2.restoreSampleCount, 1U);
+    /// A round-trip of the SAME slice re-materializes exactly the footprint it freed.
+    EXPECT_EQ(m2.bytesRestored, m2.bytesSpilled);
+}
+
 TEST_F(SpillableTimeBasedSliceStoreTest, residentBytesExactness)
 {
     InMemorySpillBackend* backend = nullptr;

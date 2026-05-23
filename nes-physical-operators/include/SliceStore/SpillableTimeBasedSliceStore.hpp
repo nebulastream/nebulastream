@@ -166,6 +166,23 @@ public:
     /// PR-2: monotonic count of real spills performed (eviction path + forceSpill), for tight test assertions.
     [[nodiscard]] std::size_t spillCountForTest() const;
 
+    /// Phase 0b instrumentation snapshot. Counts are monotonic over the store's lifetime; latency percentiles are
+    /// computed from per-operation samples in MICROSECONDS. `slicesSpilled` reuses the monotonic spillCount. A zero
+    /// sample count reports zero percentiles. Read it from the eval driver (and it is logged once when the spiller stops).
+    struct SpillMetrics
+    {
+        std::uint64_t slicesSpilled;
+        std::uint64_t slicesUnspilled;
+        std::uint64_t bytesSpilled; ///< Σ resident bytes freed by spills (footprint measured at spill time).
+        std::uint64_t bytesRestored; ///< Σ resident bytes re-materialized by unspills.
+        std::uint64_t peakResidentBytes; ///< max residentBytes() observed across the store's lifetime.
+        std::uint64_t spillLatencyP50Us, spillLatencyP95Us, spillLatencyP99Us, spillLatencyMaxUs;
+        std::uint64_t restoreLatencyP50Us, restoreLatencyP95Us, restoreLatencyP99Us, restoreLatencyMaxUs;
+        std::uint64_t spillSampleCount, restoreSampleCount;
+    };
+    /// Snapshot the spill/restore instrumentation: lock-free counters + a brief lock over the latency-sample vectors.
+    [[nodiscard]] SpillMetrics getMetrics() const;
+
 private:
     /// For each returned slice: unspill if non-resident (dropping it from spilledKeys) and record it emitted.
     void unspillAndMarkEmitted(std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& windowSlices);
@@ -206,6 +223,17 @@ private:
     /// reservation when the spill() I/O throws (a leak would deadlock the PR-3 condvar wait on that SliceEnd).
     /// Idempotent (set erase).
     void releaseReservation(SliceEnd end);
+
+    /// Phase 0b: record one spill — bumps spillCount + bytesSpilled and appends the latency sample (microseconds).
+    /// Called right after the spill() I/O at every spill site, IN PLACE OF the bare ++spillCount, so the documented
+    /// "spillCount >= finalized spills" ordering (bumped just before finalizeSpill) is preserved. Called OUTSIDE
+    /// evictionMutex; the latency vector has its own lock, so there is no nesting with evictionMutex.
+    void recordSpillSample(std::chrono::steady_clock::duration latency, std::uint64_t bytes);
+    /// Phase 0b: record one unspill — bumps slicesUnspilled + bytesRestored and appends the latency sample. Called right
+    /// after the unspill() I/O at every unspill site (trigger read, late-write pin, random-access). OUTSIDE evictionMutex.
+    void recordUnspillSample(std::chrono::steady_clock::duration latency, std::uint64_t bytes);
+    /// Phase 0b: log the metrics snapshot once, when the spiller is stopped+joined (from stopSpiller).
+    void logMetrics() const;
 
     /// RAII guard that releases a spill reservation on scope exit unless committed (defined in the .cpp). Declared as a
     /// private nested type so it can call releaseReservation without widening that helper's visibility.
@@ -276,6 +304,16 @@ private:
     /// Monotonic count of real spills performed (eviction path + forceSpill). Atomic so it is safe to read from
     /// tests without evictionMutex; bumped right after a successful spill() I/O.
     std::atomic<std::size_t> spillCount{0};
+    /// Phase 0b instrumentation. Counters are atomics (lock-free reads from the eval driver/tests). Latency samples (in
+    /// microseconds) are guarded by their own folly::Synchronized — appended OUTSIDE evictionMutex at the I/O sites, so
+    /// they never nest with evictionMutex. `slicesSpilled` in the snapshot reuses `spillCount` above.
+    std::atomic<std::uint64_t> slicesUnspilled{0};
+    std::atomic<std::uint64_t> bytesSpilled{0};
+    std::atomic<std::uint64_t> bytesRestored{0};
+    /// CAS-max'd in residentBytes() (a const method), hence mutable; relaxed ordering (a monotone high-water mark).
+    mutable std::atomic<std::uint64_t> peakResidentBytes{0};
+    folly::Synchronized<std::vector<std::uint64_t>> spillLatenciesUs;
+    folly::Synchronized<std::vector<std::uint64_t>> restoreLatenciesUs;
     /// Store-owned background spiller. Declared LAST so reverse-order member destruction joins it FIRST — but the dtor
     /// also calls stopSpiller() explicitly so the loop is stopped before backend/bufferProvider (declared earlier) die.
     std::jthread spiller;

@@ -14,6 +14,7 @@
 
 #include <SliceStore/SpillableTimeBasedSliceStore.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -53,6 +54,20 @@ namespace NES
 namespace
 {
 constexpr std::chrono::milliseconds SPILLER_POLL_INTERVAL{100};
+
+/// Phase 0b: nearest-rank pXX (p in 0..100) of an already-SORTED ascending sample vector. Returns 0 if empty.
+/// rank = ceil(p*n/100) computed in integer arithmetic, clamped to [1, n]; the value is sorted[rank - 1].
+std::uint64_t percentileOfSorted(const std::vector<std::uint64_t>& sorted, const unsigned p)
+{
+    if (sorted.empty())
+    {
+        return 0;
+    }
+    const auto n = sorted.size();
+    std::size_t rank = ((static_cast<std::size_t>(p) * n) + 99) / 100;
+    rank = std::clamp<std::size_t>(rank, 1, n);
+    return sorted[rank - 1];
+}
 }
 
 /// RAII reservation-release guard: erases `end` from the store's spillInProgress (under evictionMutex, via
@@ -266,7 +281,11 @@ void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
                 /// success-path cleanup below. Commit only after the spilledKeys.erase succeeds so the success path does
                 /// not double-erase the reservation (the manual block below + the guard would otherwise both run).
                 ReservationGuard unspillGuard{*this, sliceEnd};
+                const auto unspillStart = std::chrono::steady_clock::now();
                 spillable->unspill(*backend, *provider); /// I/O OUTSIDE evictionMutex (slice is emitted ⇒ no spiller race)
+                /// residentBytesOf measured AFTER unspill() — the bytes re-materialized into the pool (mirror of the spill
+                /// sites, which read the footprint freed BEFORE spill(); reading here before unspill() would yield 0).
+                recordUnspillSample(std::chrono::steady_clock::now() - unspillStart, residentBytesOf(*spillable));
                 spilledKeys.wlock()->erase(sliceEnd);
                 /// Release the footprint-reader fence + wake anyone waiting on this sliceEnd.
                 {
@@ -319,7 +338,11 @@ void SpillableTimeBasedSliceStore::pinAndUnspillForLateWrite(const std::shared_p
         /// and the exception propagates out of getSlicesOrCreate as a query error (NOT a process terminate); the pin
         /// stays (harmless — the slice remains spilled, and a later emit/GC will retry/clean it).
         ReservationGuard unspillGuard{*this, sliceEnd};
+        const auto unspillStart = std::chrono::steady_clock::now();
         spillable->unspill(*backend, *provider);
+        /// residentBytesOf measured AFTER unspill() — the bytes re-materialized into the pool (mirror of the spill sites,
+        /// which read the footprint freed BEFORE spill(); reading here before unspill() would yield 0).
+        recordUnspillSample(std::chrono::steady_clock::now() - unspillStart, residentBytesOf(*spillable));
         spilledKeys.wlock()->erase(sliceEnd);
         {
             std::unique_lock lock(evictionMutex);
@@ -401,7 +424,11 @@ std::optional<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSliceBySl
                 /// notify) on the throw path; committed after the manual erase below so the success path does not
                 /// double-erase.
                 ReservationGuard unspillGuard{*this, sliceEnd};
+                const auto unspillStart = std::chrono::steady_clock::now();
                 spillable->unspill(*backend, *provider);
+                /// residentBytesOf measured AFTER unspill() — the bytes re-materialized into the pool (mirror of the spill
+                /// sites, which read the footprint freed BEFORE spill(); reading here before unspill() would yield 0).
+                recordUnspillSample(std::chrono::steady_clock::now() - unspillStart, residentBytesOf(*spillable));
                 spilledKeys.wlock()->erase(sliceEnd);
                 {
                     std::unique_lock lock(evictionMutex);
@@ -553,12 +580,14 @@ void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
     /// set committed so the guard does not double-erase. (The pre-insert SpillStoreFailure for emitted slices throws
     /// BEFORE reserving, so that path needs no guard.)
     ReservationGuard guard{*this, sliceEnd};
-    NES_DEBUG("Spilling slice {} ({} bytes resident)", sliceEnd, residentBytesOf(*spillable));
+    const auto residentBefore = residentBytesOf(*spillable); /// footprint freed by the spill (0 after spill())
+    NES_DEBUG("Spilling slice {} ({} bytes resident)", sliceEnd, residentBefore);
+    const auto spillStart = std::chrono::steady_clock::now();
     spillable->spill(*backend); /// if this throws, the guard releases the reservation, then the exception propagates
-    /// L3: ++spillCount advances just BEFORE finalizeSpill inserts into spilledKeys, so spillCountForTest() reads ">=
-    /// finalized spills" (see spillOneColdSlice). PR-3's stress test must assert spillCountForTest() > 0, not an exact
-    /// equality tied to spilledKeys size.
-    ++spillCount;
+    /// L3: recordSpillSample bumps spillCount just BEFORE finalizeSpill inserts into spilledKeys, so spillCountForTest()
+    /// reads ">= finalized spills" (see spillOneColdSlice). PR-3's stress test must assert spillCountForTest() > 0, not an
+    /// exact equality tied to spilledKeys size.
+    recordSpillSample(std::chrono::steady_clock::now() - spillStart, residentBefore);
     finalizeSpill(sliceEnd); /// finalizeSpill already erased the reservation
     guard.committed = true; /// do not double-erase
 }
@@ -681,6 +710,8 @@ bool SpillableTimeBasedSliceStore::spillOneColdSlice()
     /// I/O OUTSIDE evictionMutex, protected by the reservation. O-B5: the eviction path must NEVER propagate — if the
     /// spill() I/O throws, swallow it, but the reservation MUST be released (the guard does that) so the slice is not
     /// stuck in-flight forever. Proceed over-budget rather than crash a worker.
+    const auto residentBefore = residentBytesOf(*spillable); /// footprint freed by the spill (0 after spill())
+    const auto spillStart = std::chrono::steady_clock::now();
     try
     {
         spillable->spill(*backend);
@@ -690,10 +721,10 @@ bool SpillableTimeBasedSliceStore::spillOneColdSlice()
         NES_WARNING("spill of cold slice {} failed: {}; reservation released, proceeding over-budget", *picked, e.what());
         return false; /// guard releases the reservation
     }
-    /// L3: ++spillCount is bumped here, just BEFORE finalizeSpill inserts into spilledKeys. So spillCountForTest()
-    /// momentarily reads "one ahead" of the finalized-spill set. The PR-3 stress test must treat spillCountForTest()
-    /// as ">= finalized spills" (assert > 0), NOT an exact equality tied to spilledKeys size.
-    ++spillCount;
+    /// L3: recordSpillSample bumps spillCount here, just BEFORE finalizeSpill inserts into spilledKeys. So
+    /// spillCountForTest() momentarily reads "one ahead" of the finalized-spill set. The PR-3 stress test must treat
+    /// spillCountForTest() as ">= finalized spills" (assert > 0), NOT an exact equality tied to spilledKeys size.
+    recordSpillSample(std::chrono::steady_clock::now() - spillStart, residentBefore);
     finalizeSpill(*picked); /// finalizeSpill already erased the reservation
     guard.committed = true; /// do not double-erase
     return true;
@@ -753,23 +784,32 @@ uint64_t SpillableTimeBasedSliceStore::residentBytes() const
     /// see spillerLoop, which releases evictionMutex before each residentBytes() call). residentBytesOf is read WHILE
     /// holding evictionMutex: an unreserved slice cannot transition INTO spillInProgress (and thus cannot begin a
     /// concurrent spill()/unspill() that frees its maps) while we hold the lock, so the footprint read is race-free.
-    std::unique_lock lock(evictionMutex);
     uint64_t sum = 0;
-    createdSlices.withRLock(
-        [&](const auto& tracked)
-        {
-            for (const auto& [end, weak] : tracked)
+    {
+        std::unique_lock lock(evictionMutex);
+        createdSlices.withRLock(
+            [&](const auto& tracked)
             {
-                if (spillInProgress.contains(end))
+                for (const auto& [end, weak] : tracked)
                 {
-                    continue; /// in-flight spill/unspill mutating this slice's maps — skip (footprint transitioning to/from 0)
+                    if (spillInProgress.contains(end))
+                    {
+                        continue; /// in-flight spill/unspill mutating this slice's maps — skip (footprint transitioning to/from 0)
+                    }
+                    if (const auto slice = weak.lock())
+                    {
+                        sum += residentBytesOf(*slice);
+                    }
                 }
-                if (const auto slice = weak.lock())
-                {
-                    sum += residentBytesOf(*slice);
-                }
-            }
-        });
+            });
+    } /// release evictionMutex BEFORE the peak CAS — sum is already computed, so the CAS must not lengthen this hot lock.
+    /// Phase 0b: maintain the peak resident high-water mark (CAS-max, relaxed — a monotone statistic, not a fence).
+    /// residentBytes() is the natural sampling point: the spiller loop + hard-eviction call it on every cycle. The CAS
+    /// takes no further locks, so running it outside evictionMutex keeps lock-ordering trivially intact and cuts contention.
+    auto observedPeak = peakResidentBytes.load(std::memory_order_relaxed);
+    while (sum > observedPeak && !peakResidentBytes.compare_exchange_weak(observedPeak, sum, std::memory_order_relaxed))
+    {
+    }
     return sum;
 }
 
@@ -792,6 +832,81 @@ void SpillableTimeBasedSliceStore::spillColdSlicesUnderHardForTest()
 std::size_t SpillableTimeBasedSliceStore::spillCountForTest() const
 {
     return spillCount.load();
+}
+
+void SpillableTimeBasedSliceStore::recordSpillSample(const std::chrono::steady_clock::duration latency, const std::uint64_t bytes)
+{
+    /// Count is bumped here (just before finalizeSpill at every spill site). relaxed — a monotone statistic, matching the
+    /// sibling counters (bytesSpilled/slicesUnspilled/bytesRestored); no fence needed and none wanted on the spill hot path.
+    spillCount.fetch_add(1, std::memory_order_relaxed);
+    bytesSpilled.fetch_add(bytes, std::memory_order_relaxed);
+    const auto us = static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(latency).count());
+    spillLatenciesUs.wlock()->push_back(us);
+}
+
+void SpillableTimeBasedSliceStore::recordUnspillSample(const std::chrono::steady_clock::duration latency, const std::uint64_t bytes)
+{
+    slicesUnspilled.fetch_add(1, std::memory_order_relaxed);
+    bytesRestored.fetch_add(bytes, std::memory_order_relaxed);
+    const auto us = static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(latency).count());
+    restoreLatenciesUs.wlock()->push_back(us);
+}
+
+SpillableTimeBasedSliceStore::SpillMetrics SpillableTimeBasedSliceStore::getMetrics() const
+{
+    /// Copy the sample vectors under their own locks, then sort the copies ONCE (percentiles + max read off the sorted
+    /// copy). Brief lock, no nesting with evictionMutex.
+    ///
+    /// NON-TRANSACTIONAL SNAPSHOT: the counters and the two sample vectors are read with independent (relaxed) atomics and
+    /// per-vector locks, NOT under one combined lock. During a concurrent spill/unspill burst an observer may therefore see
+    /// e.g. slicesSpilled one ahead of spillSampleCount (count bumped before the sample is pushed). This is intentional —
+    /// metrics are best-effort observability, not a consistent transaction; callers must not assert exact cross-field
+    /// equality under concurrency (the single-threaded tests can, because no writer races them).
+    auto spillSamples = *spillLatenciesUs.rlock();
+    auto restoreSamples = *restoreLatenciesUs.rlock();
+    std::sort(spillSamples.begin(), spillSamples.end());
+    std::sort(restoreSamples.begin(), restoreSamples.end());
+
+    SpillMetrics m{};
+    m.slicesSpilled = spillCount.load(std::memory_order_relaxed);
+    m.slicesUnspilled = slicesUnspilled.load(std::memory_order_relaxed);
+    m.bytesSpilled = bytesSpilled.load(std::memory_order_relaxed);
+    m.bytesRestored = bytesRestored.load(std::memory_order_relaxed);
+    m.peakResidentBytes = peakResidentBytes.load(std::memory_order_relaxed);
+    m.spillSampleCount = spillSamples.size();
+    m.restoreSampleCount = restoreSamples.size();
+    m.spillLatencyP50Us = percentileOfSorted(spillSamples, 50);
+    m.spillLatencyP95Us = percentileOfSorted(spillSamples, 95);
+    m.spillLatencyP99Us = percentileOfSorted(spillSamples, 99);
+    m.spillLatencyMaxUs = spillSamples.empty() ? 0 : spillSamples.back();
+    m.restoreLatencyP50Us = percentileOfSorted(restoreSamples, 50);
+    m.restoreLatencyP95Us = percentileOfSorted(restoreSamples, 95);
+    m.restoreLatencyP99Us = percentileOfSorted(restoreSamples, 99);
+    m.restoreLatencyMaxUs = restoreSamples.empty() ? 0 : restoreSamples.back();
+    return m;
+}
+
+void SpillableTimeBasedSliceStore::logMetrics() const
+{
+    const auto m = getMetrics();
+    NES_INFO(
+        "Spill metrics: spilled {} slices / {} bytes, restored {} slices / {} bytes, peak resident {} bytes; spill "
+        "latency us p50={} p95={} p99={} max={} (n={}); restore latency us p50={} p95={} p99={} max={} (n={})",
+        m.slicesSpilled,
+        m.bytesSpilled,
+        m.slicesUnspilled,
+        m.bytesRestored,
+        m.peakResidentBytes,
+        m.spillLatencyP50Us,
+        m.spillLatencyP95Us,
+        m.spillLatencyP99Us,
+        m.spillLatencyMaxUs,
+        m.spillSampleCount,
+        m.restoreLatencyP50Us,
+        m.restoreLatencyP95Us,
+        m.restoreLatencyP99Us,
+        m.restoreLatencyMaxUs,
+        m.restoreSampleCount);
 }
 
 void SpillableTimeBasedSliceStore::spillerLoop(std::stop_token stopToken)
@@ -863,6 +978,9 @@ void SpillableTimeBasedSliceStore::stopSpiller()
         spiller.request_stop();
         spillerCv.notify_all();
         spiller.join();
+        /// Phase 0b: the spiller has stopped — emit the run's spill/restore instrumentation exactly once (joinable() is
+        /// false on any subsequent stopSpiller call, so the dtor+deleteState double-call cannot double-log).
+        logMetrics();
     }
 }
 
