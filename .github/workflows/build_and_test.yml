@@ -70,8 +70,11 @@ jobs:
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
             echo "=== sccache config before build ==="
+            sccache --start-server
             sccache --show-stats
             cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.cmake_flags }}
+            echo "=== sccache heartbeat before cmake --build ==="
+            sccache --show-stats
             cmake --build build -j -- -k 0
             echo "=== sccache stats after build ==="
             sccache --show-stats
