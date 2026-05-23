@@ -527,6 +527,10 @@ void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
             throw SpillStoreFailure(
                 "refusing to spill slice {} that has been emitted to the probe (async-probe-drain invariant)", sliceEnd);
         }
+        /// Increment C note: forceSpill deliberately does NOT consult pinnedKeys. It is the Increment-A manual/test-only
+        /// driver, never wired on a production hot path, and pinnedKeys is only populated when emitLag > 0 (the
+        /// emit-decouple late-write guard). If forceSpill is ever put on a live path, it MUST add the pinnedKeys check
+        /// (mirroring pickAndReserveColdSlice) or it would re-spill a cached late-touched slice → dangling SliceCache ptr.
         if (spillInProgress.contains(sliceEnd))
         {
             /// Another path already reserved this slice for an in-flight spill — do not double-write.

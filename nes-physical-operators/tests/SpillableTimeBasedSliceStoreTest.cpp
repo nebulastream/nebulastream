@@ -930,6 +930,16 @@ TEST_F(SpillableTimeBasedSliceStoreTest, lateWriteIntoSpilledRetainedSliceUnspil
     /// Contents intact: the spill→unspill round-trip preserved the original 3 entries and the 2 late ones were appended.
     const auto after = sortedEntries(*dynamic_cast<SpillableAggregationSlice*>(lateSlice.get()), WorkerThreadId(0));
     EXPECT_EQ(after.size(), expectedBefore.size() + 2);
+
+    /// Pin hand-off via the emit path: advance the frontier so the lagged cutoff passes bandEnd (100 < 500-300=200),
+    /// emitting the late-touched slice. unspillAndMarkEmitted runs the pinnedKeys.erase and moves the slice into the
+    /// emitted regime — after which forceSpill refuses it (async-probe-drain), confirming the late-write pin was
+    /// correctly handed off to emittedKeys rather than stranding the slice. (The pin's removal is otherwise masked by
+    /// emittedKeys, which dominates the same pickAndReserveColdSlice skip, so this asserts the emit transition itself.)
+    const auto emitted = store->getTriggerableWindowSlices(Timestamp(500));
+    EXPECT_TRUE(triggeredContains(emitted, bandEnd));
+    EXPECT_TRUE(store->isSliceResident(bandEnd)); /// emit unspills+keeps it resident for the async probe
+    ASSERT_EXCEPTION_ERRORCODE(store->forceSpill(bandEnd), ErrorCode::SpillStoreFailure);
 }
 
 }
