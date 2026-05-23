@@ -82,6 +82,8 @@ TEST_F(SpillConfigTest, defaults)
     EXPECT_EQ(config.softThresholdMB.getValue(), 256U);
     EXPECT_EQ(config.hardThresholdMB.getValue(), 384U);
     EXPECT_EQ(config.compression.getValue(), "lz4");
+    /// Increment C: emit lag defaults to 0 (no retention ⇒ byte-identical to pre-Increment-C behavior).
+    EXPECT_EQ(config.emitLag.getValue(), 0U);
 }
 
 /// Test B — command-line overrides flow through every field.
@@ -89,12 +91,17 @@ TEST_F(SpillConfigTest, commandLineOverride)
 {
     SpillConfig config;
     config.overwriteConfigWithCommandLineInput(
-        {{"enabled", "true"}, {"rocksdb_path", "/data/spill"}, {"soft_threshold_mb", "100"}, {"compression", "zstd"}});
+        {{"enabled", "true"},
+         {"rocksdb_path", "/data/spill"},
+         {"soft_threshold_mb", "100"},
+         {"compression", "zstd"},
+         {"emit_lag", "5000"}});
 
     EXPECT_TRUE(config.enabled.getValue());
     EXPECT_EQ(config.rocksdbPath.getValue(), "/data/spill");
     EXPECT_EQ(config.softThresholdMB.getValue(), 100U);
     EXPECT_EQ(config.compression.getValue(), "zstd");
+    EXPECT_EQ(config.emitLag.getValue(), 5000U);
     /// Untouched field keeps its default.
     EXPECT_EQ(config.hardThresholdMB.getValue(), 384U);
 }
@@ -107,7 +114,8 @@ TEST_F(SpillConfigTest, yamlRoundTrip)
         "rocksdb_path: \"/var/nes/spill\"\n"
         "soft_threshold_mb: \"128\"\n"
         "hard_threshold_mb: \"256\"\n"
-        "compression: \"none\"\n");
+        "compression: \"none\"\n"
+        "emit_lag: \"5000\"\n");
 
     SpillConfig config;
     config.overwriteConfigWithYAMLFileInput(yamlPath.string());
@@ -117,6 +125,7 @@ TEST_F(SpillConfigTest, yamlRoundTrip)
     EXPECT_EQ(config.softThresholdMB.getValue(), 128U);
     EXPECT_EQ(config.hardThresholdMB.getValue(), 256U);
     EXPECT_EQ(config.compression.getValue(), "none");
+    EXPECT_EQ(config.emitLag.getValue(), 5000U);
 }
 
 /// Test D — nested embedding in QueryExecutionConfiguration. This is the binding the
@@ -126,16 +135,20 @@ TEST_F(SpillConfigTest, embeddedDefaultsInQueryExecutionConfiguration)
     const QueryExecutionConfiguration qec;
     EXPECT_FALSE(qec.spill.enabled.getValue());
     EXPECT_EQ(qec.spill.rocksdbPath.getValue(), "/tmp/nes-spill");
+    EXPECT_EQ(qec.spill.emitLag.getValue(), 0U);
 }
 
 /// Test E — nested command-line override reaches the embedded spill sub-config.
 TEST_F(SpillConfigTest, embeddedCommandLineOverride)
 {
     QueryExecutionConfiguration qec;
-    qec.overwriteConfigWithCommandLineInput({{"spill.enabled", "true"}, {"spill.soft_threshold_mb", "64"}});
+    qec.overwriteConfigWithCommandLineInput(
+        {{"spill.enabled", "true"}, {"spill.soft_threshold_mb", "64"}, {"spill.emit_lag", "2000"}});
 
     EXPECT_TRUE(qec.spill.enabled.getValue());
     EXPECT_EQ(qec.spill.softThresholdMB.getValue(), 64U);
+    /// Increment C: the auto-derived dotted key spill.emit_lag reaches the embedded sub-config.
+    EXPECT_EQ(qec.spill.emitLag.getValue(), 2000U);
 }
 
 /// Test F — nested YAML override reaches the embedded spill sub-config.
@@ -144,13 +157,15 @@ TEST_F(SpillConfigTest, embeddedYamlOverride)
     const auto yamlPath = writeTempYaml(
         "spill:\n"
         "  enabled: \"true\"\n"
-        "  compression: \"zstd\"\n");
+        "  compression: \"zstd\"\n"
+        "  emit_lag: \"2000\"\n");
 
     QueryExecutionConfiguration qec;
     qec.overwriteConfigWithYAMLFileInput(yamlPath.string());
 
     EXPECT_TRUE(qec.spill.enabled.getValue());
     EXPECT_EQ(qec.spill.compression.getValue(), "zstd");
+    EXPECT_EQ(qec.spill.emitLag.getValue(), 2000U);
 }
 
 }

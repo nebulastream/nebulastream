@@ -53,10 +53,16 @@ public:
     /// RocksDB block compression for spilled slices (Phase 3+).
     StringOption compression = {"compression", "lz4", "Compression for spilled slices [lz4|zstd|none]."};
 
+    /// Event-time emit/retention lag L (same unit as the window/watermark, ms). Results emit on a watermark of
+    /// globalWatermark - emit_lag, so completed windows in [globalWatermark - L, globalWatermark) are RETAINED and
+    /// become spillable (Increment C, emit-decouple). 0 = today's behavior (emit wm == global wm).
+    UIntOption emitLag
+        = {"emit_lag", "0", "Event-time emit/retention lag L (ms); retain+spill completed windows behind the watermark. 0 = no lag."};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&enabled, &rocksdbPath, &softThresholdMB, &hardThresholdMB, &compression};
+        return {&enabled, &rocksdbPath, &softThresholdMB, &hardThresholdMB, &compression, &emitLag};
     }
 };
 
