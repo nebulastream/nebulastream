@@ -59,6 +59,11 @@ class ThrowingSpillBackend final : public SpillBackend
 public:
     std::atomic<bool> failPut{true};
     std::atomic<std::size_t> putCount{0};
+    /// L1 (PR-3): `failGet` injects a throw on the UNSPILL path (SpillableAggregationSlice::unspill calls backend.get()),
+    /// mirroring `failPut` for the spill path. Lets a test drive the unspill-throws path that the unspill ReservationGuard
+    /// must survive without leaking the spillInProgress reservation. Default false so existing tests' get() stays a no-op.
+    std::atomic<bool> failGet{false};
+    std::atomic<std::size_t> getCount{0};
 
     void put(const SliceEnd /*sliceEnd*/, const WorkerThreadId /*workerThreadId*/, std::span<const std::byte> /*record*/) override
     {
@@ -71,6 +76,11 @@ public:
 
     std::optional<SpillRecord> get(const SliceEnd /*sliceEnd*/, const WorkerThreadId /*workerThreadId*/) override
     {
+        ++getCount;
+        if (failGet.load())
+        {
+            throw std::runtime_error("injected unspill I/O failure");
+        }
         return std::nullopt;
     }
 
@@ -601,6 +611,78 @@ TEST_F(SpillableTimeBasedSliceStoreTest, evictionReleasesReservationAndSwallowsW
     EXPECT_NO_THROW(store->forceSpill(sliceEnd));
     EXPECT_EQ(store->spillCountForTest(), 1U);
     EXPECT_FALSE(store->isSliceResident(sliceEnd));
+}
+
+/// PR-3 review L1: when unspill() throws on the random-access read path (getSliceBySliceEnd → SpillableAggregationSlice::
+/// unspill → backend.get()), the spillInProgress reservation (footprint-reader fence) MUST still be released — the
+/// ReservationGuard guarantees this on the throw path. A leaked reservation (the pre-fix bug) would make the slice
+/// invisible to residentBytes() forever AND make any future access to this sliceEnd hang forever on spillerCv.wait. This
+/// is the MORE reachable of the two L1 sites (the slice is NOT emitted). The test proves release by: (1) the unspill
+/// throw propagates, (2) a SUBSEQUENT getSliceBySliceEnd of the SAME sliceEnd does not hang and, with get() now
+/// succeeding, completes the unspill and restores residency. If the reservation had leaked, step (2)'s wait predicate
+/// (!spillInProgress.contains(sliceEnd)) would never become true and the single-threaded test would deadlock.
+TEST_F(SpillableTimeBasedSliceStoreTest, getSliceBySliceEndReleasesReservationWhenUnspillThrows)
+{
+    auto backendOwned = std::make_unique<ThrowingSpillBackend>();
+    auto* const backend = backendOwned.get();
+    /// put succeeds (so we can spill the slice first); thresholds large so no auto-eviction interferes.
+    backend->failPut.store(false);
+    auto store = makeStoreWithBackend(std::move(backendOwned), /*soft*/ 1024ULL * 1024ULL, /*hard*/ 2ULL * 1024ULL * 1024ULL);
+
+    const auto slice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    populate(slice, WorkerThreadId(0), 5, 0);
+    const auto sliceEnd = slice->getSliceEnd();
+
+    /// Spill it so the next read needs an unspill (slice becomes non-resident).
+    store->forceSpill(sliceEnd);
+    ASSERT_FALSE(store->isSliceResident(sliceEnd));
+
+    /// Random-access read with get() throwing → unspill() throws → the exception propagates out of getSliceBySliceEnd.
+    backend->failGet.store(true);
+    EXPECT_ANY_THROW(store->getSliceBySliceEnd(sliceEnd));
+    EXPECT_GT(backend->getCount.load(), 0U); /// it really attempted the unspill
+    EXPECT_FALSE(store->isSliceResident(sliceEnd)); /// unspill did not complete → still non-resident
+
+    /// Reservation released despite the throw: with get() now succeeding, a retry does NOT hang (no leaked spillInProgress
+    /// entry to wait on) and completes the unspill, flipping the slice back to resident.
+    backend->failGet.store(false);
+    std::optional<std::shared_ptr<Slice>> retry;
+    EXPECT_NO_THROW(retry = store->getSliceBySliceEnd(sliceEnd));
+    ASSERT_TRUE(retry.has_value());
+    EXPECT_TRUE(store->isSliceResident(sliceEnd));
+}
+
+/// PR-3 review L1: same defensive RAII fix on the trigger path (unspillAndMarkEmitted). If unspill() throws while
+/// restoring an emitted slice on trigger, the reservation must still be released so it does not stay stale in
+/// spillInProgress for the store's lifetime. The slice is already emitted here (so a re-trigger is unusual in the
+/// tumbling-window model), which is why this is the less-reachable site — but the guard makes it correct regardless.
+/// Proof of release: after the throwing trigger, a getSliceBySliceEnd of the same sliceEnd (with get() now succeeding)
+/// does not hang and completes — which it could not do if the trigger had leaked the reservation.
+TEST_F(SpillableTimeBasedSliceStoreTest, unspillAndMarkEmittedReleasesReservationWhenUnspillThrows)
+{
+    auto backendOwned = std::make_unique<ThrowingSpillBackend>();
+    auto* const backend = backendOwned.get();
+    backend->failPut.store(false); /// allow the initial spill
+    auto store = makeStoreWithBackend(std::move(backendOwned), /*soft*/ 1024ULL * 1024ULL, /*hard*/ 2ULL * 1024ULL * 1024ULL);
+
+    const auto slice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    populate(slice, WorkerThreadId(0), 5, 0);
+    const auto sliceEnd = slice->getSliceEnd();
+
+    store->forceSpill(sliceEnd);
+    ASSERT_FALSE(store->isSliceResident(sliceEnd));
+
+    /// Trigger the window [0,100): unspillAndMarkEmitted runs the unspill, get() throws → exception propagates.
+    backend->failGet.store(true);
+    EXPECT_ANY_THROW(store->getTriggerableWindowSlices(Timestamp(WINDOW_SIZE * 2)));
+    EXPECT_GT(backend->getCount.load(), 0U);
+
+    /// Reservation released despite the throw: a subsequent access of the same sliceEnd does not hang and completes.
+    backend->failGet.store(false);
+    std::optional<std::shared_ptr<Slice>> retry;
+    EXPECT_NO_THROW(retry = store->getSliceBySliceEnd(sliceEnd));
+    ASSERT_TRUE(retry.has_value());
+    EXPECT_TRUE(store->isSliceResident(sliceEnd));
 }
 
 }

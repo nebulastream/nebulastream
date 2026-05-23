@@ -240,6 +240,13 @@ void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
             {
                 INVARIANT(provider != nullptr, "buffer provider must be stashed before an unspill-on-read");
                 NES_DEBUG("Unspilling slice {} on trigger read", sliceEnd);
+                /// L1: mirror the PR-2 spill guard on the unspill path. If unspill() throws, the spillInProgress
+                /// reservation (the footprint-reader fence) must STILL be released — a leak would make residentBytes()
+                /// permanently skip this slice AND hang any future spillerCv.wait on this sliceEnd forever. The guard's
+                /// release runs under evictionMutex (via releaseReservation) and notifies spillerCv, exactly matching the
+                /// success-path cleanup below. Commit only after the spilledKeys.erase succeeds so the success path does
+                /// not double-erase the reservation (the manual block below + the guard would otherwise both run).
+                ReservationGuard unspillGuard{*this, sliceEnd};
                 spillable->unspill(*backend, *provider); /// I/O OUTSIDE evictionMutex (slice is emitted ⇒ no spiller race)
                 spilledKeys.wlock()->erase(sliceEnd);
                 /// Release the footprint-reader fence + wake anyone waiting on this sliceEnd.
@@ -248,6 +255,7 @@ void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
                     spillInProgress.erase(sliceEnd);
                 }
                 spillerCv.notify_all();
+                unspillGuard.committed = true; /// success: reservation already erased above, do not double-erase
             }
         }
     }
@@ -309,6 +317,12 @@ std::optional<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSliceBySl
                 auto provider = bufferProvider.copy();
                 INVARIANT(provider != nullptr, "buffer provider must be stashed before an unspill-on-read");
                 NES_DEBUG("Unspilling slice {} on getSliceBySliceEnd", sliceEnd);
+                /// L1: same RAII fix as unspillAndMarkEmitted, but MORE reachable here — this slice is NOT emitted, so a
+                /// leaked reservation on an unspill() throw would make every future access to this sliceEnd (trigger or
+                /// probe) wait forever on spillerCv. The guard releases the reservation (under evictionMutex, with a
+                /// notify) on the throw path; committed after the manual erase below so the success path does not
+                /// double-erase.
+                ReservationGuard unspillGuard{*this, sliceEnd};
                 spillable->unspill(*backend, *provider);
                 spilledKeys.wlock()->erase(sliceEnd);
                 {
@@ -316,6 +330,7 @@ std::optional<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSliceBySl
                     spillInProgress.erase(sliceEnd);
                 }
                 spillerCv.notify_all();
+                unspillGuard.committed = true; /// success: reservation already erased above, do not double-erase
             }
         }
     }
@@ -697,17 +712,26 @@ void SpillableTimeBasedSliceStore::spillerLoop(std::stop_token stopToken)
             break;
         }
         /// Spill cold slices down to soft. O-B5: if nothing cold is available, log once and go back to waiting.
-        while (residentBytes() > softThresholdBytes)
+        /// L2: capture the budget check once per iteration and reuse it in the no-candidate log — residentBytes() takes
+        /// evictionMutex and scans createdSlices, so calling it a second time only to format the trace line doubles the
+        /// lock contention on the spiller path when trace logging is enabled. No behavior change (same authoritative
+        /// value drives the condition and the message).
+        uint64_t resident = residentBytes();
+        while (resident > softThresholdBytes)
         {
             if (!spillOneColdSlice())
             {
-                NES_TRACE("Over soft ({} > {}) but no cold candidate; spiller sleeping", residentBytes(), softThresholdBytes);
+                NES_TRACE("Over soft ({} > {}) but no cold candidate; spiller sleeping", resident, softThresholdBytes);
                 break;
             }
             if (stopToken.stop_requested())
             {
                 break;
             }
+            /// A slice was spilled this iteration — re-read the (now-lower) budget for the next loop condition. This is
+            /// the single authoritative read per iteration that L2 deduplicates; it replaces the original condition-only
+            /// residentBytes() call so the loop still drains down to soft.
+            resident = residentBytes();
         }
     }
 }
