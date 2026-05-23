@@ -14,7 +14,11 @@
 
 #include <SliceStore/SpillableTimeBasedSliceStore.hpp>
 
+#include <algorithm>
+#include <atomic>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -87,6 +91,23 @@ void SpillableTimeBasedSliceStore::setBufferProvider(std::shared_ptr<AbstractBuf
         });
 }
 
+std::vector<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSlicesOrCreate(
+    const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
+{
+    /// The base lock is already released on return (DefaultTimeBasedSliceStore::getSlicesOrCreate), so recording the
+    /// created slice afterwards never nests our `createdSlices` lock with the base maps.
+    auto result = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, createNewSlice);
+    INVARIANT(result.size() == 1, "tumbling slice store expects exactly one slice per (timestamp), got {}", result.size());
+    recordCreatedSlice(result[0]);
+    return result;
+}
+
+void SpillableTimeBasedSliceStore::recordCreatedSlice(const std::shared_ptr<Slice>& slice)
+{
+    NES_TRACE("Recording created slice {} for self-tracking", slice->getSliceEnd());
+    createdSlices.wlock()->insert_or_assign(slice->getSliceEnd(), std::weak_ptr<Slice>(slice));
+}
+
 void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& windowSlices)
 {
@@ -119,6 +140,13 @@ SpillableTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalW
 {
     auto result = DefaultTimeBasedSliceStore::getTriggerableWindowSlices(globalWatermark);
     unspillAndMarkEmitted(result);
+    /// O-B-watermark: learn the build watermark monotonically (CAS-max). Slices ending before it are cold. A lagging
+    /// value only under-selects cold slices (safe — never spills something the engine still considers hot).
+    auto current = lastSeenWatermark.load(std::memory_order_relaxed);
+    const auto incoming = globalWatermark.getRawValue();
+    while (incoming > current && !lastSeenWatermark.compare_exchange_weak(current, incoming, std::memory_order_relaxed))
+    {
+    }
     return result;
 }
 
@@ -127,6 +155,9 @@ SpillableTimeBasedSliceStore::getAllNonTriggeredSlices()
 {
     auto result = DefaultTimeBasedSliceStore::getAllNonTriggeredSlices();
     unspillAndMarkEmitted(result);
+    /// Deliberately do NOT bump lastSeenWatermark here: this is the terminate path, where the spiller is quiesced
+    /// before deleteState, so cold-selection is moot. Leaving it unchanged keeps the learned watermark a pure
+    /// build-progress signal (O-B-watermark).
     return result;
 }
 
@@ -178,6 +209,23 @@ void SpillableTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestam
         backend->erase(droppedKey);
         emittedKeys.wlock()->erase(droppedKey);
     }
+
+    /// Prune self-tracked entries whose slice the base GC has dropped (weak_ptr now expired). Taken on its own —
+    /// never nested with the spilledKeys/emittedKeys locks (H1) — so it can run after they have been released.
+    {
+        auto tracked = createdSlices.wlock();
+        for (auto it = tracked->begin(); it != tracked->end();)
+        {
+            if (it->second.expired())
+            {
+                it = tracked->erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
 }
 
 void SpillableTimeBasedSliceStore::deleteState()
@@ -195,6 +243,8 @@ void SpillableTimeBasedSliceStore::deleteState()
     {
         backend->erase(sliceEnd);
     }
+    /// Drop all self-tracking bookkeeping before the base clears its in-memory maps. (Spiller-quiesce is added in PR-3.)
+    createdSlices.wlock()->clear();
     DefaultTimeBasedSliceStore::deleteState();
 }
 
@@ -252,6 +302,36 @@ uint64_t SpillableTimeBasedSliceStore::residentBytesOf(const Slice& slice) const
         }
     }
     return bytes;
+}
+
+uint64_t SpillableTimeBasedSliceStore::residentBytes() const
+{
+    /// Read-only snapshot (O-B-residentBytes): lock `createdSlices`, lock() each weak_ptr, skip expired entries, and
+    /// sum the existing per-slice footprint (0 for spilled). Touches no private base map; tolerates slight staleness.
+    uint64_t sum = 0;
+    createdSlices.withRLock(
+        [&](const auto& tracked)
+        {
+            for (const auto& [end, weak] : tracked)
+            {
+                if (const auto slice = weak.lock())
+                {
+                    sum += residentBytesOf(*slice);
+                }
+            }
+        });
+    return sum;
+}
+
+void SpillableTimeBasedSliceStore::setLastSeenWatermarkForTest(const Timestamp watermark)
+{
+    /// Test hook: seed the learned watermark directly (not monotonic-guarded — the test owns ordering).
+    lastSeenWatermark.store(watermark.getRawValue(), std::memory_order_relaxed);
+}
+
+std::size_t SpillableTimeBasedSliceStore::createdSlicesSizeForTest() const
+{
+    return createdSlices.rlock()->size();
 }
 
 }

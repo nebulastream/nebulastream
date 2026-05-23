@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include <atomic>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -46,11 +49,18 @@ namespace NES
 /// be spilled afterwards (async-probe-drain invariant) — forceSpill rejects it.
 ///
 /// Implementation note: the base `windows`/`slices` maps are private, so this subclass deliberately uses only
-/// the public WindowSlicesStoreInterface API plus two of its own tracked sets (`spilledKeys` for residency +
-/// GC backend-erase, `emittedKeys` for the async-probe-drain guard). It reuses the inherited createSliceStoreRef
-/// + SliceCache + DefaultTimeBasedSliceStoreRef unchanged (the build hot path only ever touches resident slices).
+/// the public WindowSlicesStoreInterface API plus its own tracked sets (`spilledKeys` for residency + GC
+/// backend-erase, `emittedKeys` for the async-probe-drain guard) and a self-tracking `createdSlices` map. It
+/// reuses the inherited createSliceStoreRef + SliceCache + DefaultTimeBasedSliceStoreRef unchanged (the build
+/// hot path only ever touches resident slices).
 ///
-/// Not thread-safe beyond the base's per-map folly::Synchronized guarantees; multi-thread hardening is Increment B.
+/// Increment B (PR-1, this layer): self-tracks every created slice in `createdSlices`
+/// (folly::Synchronized<map<SliceEnd, weak_ptr<Slice>>>, weak_ptr so the base GC still frees the slice) via a
+/// getSlicesOrCreate override that records AFTER the base call returns; learns the build watermark monotonically
+/// (`lastSeenWatermark`) in the trigger feeders; and exposes a store-wide residentBytes() (Σ over createdSlices).
+/// `createdSlices` is pruned of expired weak_ptrs in garbageCollectSlicesAndWindows and cleared in deleteState.
+/// Automatic soft/hard-threshold eviction and the background spiller (multi-thread hardening) land in PR-2/PR-3;
+/// this layer is still single-threaded beyond the base's per-map folly::Synchronized guarantees.
 class SpillableTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
 {
 public:
@@ -68,6 +78,13 @@ public:
     /// dependency of nes-physical-operators — the lowering rule (nes-query-compiler) passes only SpillConfig values
     /// and never links rocksdb.
     static std::unique_ptr<SpillBackend> makeRocksDBBackend(const std::string& rocksdbPath, const std::string& compression);
+
+    /// Self-track every created slice (O-B1): delegate to the base, then record the created slice (tumbling ⇒
+    /// exactly one) in `createdSlices` so the Increment-B eviction scan can enumerate cold slices without
+    /// touching the private base maps. Signature mirrors the base override exactly.
+    std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
+        Timestamp timestamp,
+        const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
 
     /// D3 unspill-on-read: every slice returned is unspilled (if non-resident) and recorded as emitted (its raw
     /// HashMap* will be snapshotted for the async probe → it must not be spilled afterwards).
@@ -98,9 +115,26 @@ public:
     /// spilled slice (its maps are freed). Exact for fixed-size entries.
     [[nodiscard]] uint64_t residentBytesOf(const Slice& slice) const;
 
+    /// Store-wide resident footprint (O-B-residentBytes): Σ over the self-tracked `createdSlices` of
+    /// residentBytesOf(*slice) (0 for spilled). Read-only snapshot: locks `createdSlices` only, skips expired
+    /// weak_ptrs; touches no private base map.
+    [[nodiscard]] uint64_t residentBytes() const;
+
+    /// --- PR-1 test hooks (deterministic drive points; no production behavior; public so the unit test can call
+    /// them directly, mirroring how the test already drives setBufferProvider/forceSpill). ---
+    /// Seed the learned build watermark directly so a cold-but-unemitted slice is producible without driving the
+    /// base trigger feeders (which couple watermark-advance to emit). Increment-B eviction tests rely on this.
+    void setLastSeenWatermarkForTest(Timestamp watermark);
+    /// Number of currently tracked entries in `createdSlices` (incl. not-yet-pruned expired weak_ptrs).
+    [[nodiscard]] std::size_t createdSlicesSizeForTest() const;
+
 private:
     /// For each returned slice: unspill if non-resident (dropping it from spilledKeys) and record it emitted.
     void unspillAndMarkEmitted(std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& windowSlices);
+
+    /// O-B1 self-track: record a freshly created slice in `createdSlices` keyed by its SliceEnd, holding only a
+    /// weak_ptr so the base GC's shared_ptr drop still frees the slice (the eviction scan locks each weak_ptr).
+    void recordCreatedSlice(const std::shared_ptr<Slice>& slice);
 
     std::unique_ptr<SpillBackend> backend;
     folly::Synchronized<std::shared_ptr<AbstractBufferProvider>> bufferProvider;
@@ -114,6 +148,13 @@ private:
     folly::Synchronized<std::set<SliceEnd>> spilledKeys;
     /// SliceEnds returned by a trigger feeder (emitted to the async probe) — forceSpill refuses these.
     folly::Synchronized<std::set<SliceEnd>> emittedKeys;
+
+    /// O-B1 self-track: created slices keyed by SliceEnd (map sorted ascending ⇒ oldest-first scan is begin()→end()).
+    /// weak_ptr so the base GC still frees the slice; the eviction scan locks each weak_ptr and skips expired entries.
+    folly::Synchronized<std::map<SliceEnd, std::weak_ptr<Slice>>> createdSlices;
+    /// Learned build watermark (monotonic). Stores the raw underlying value so the atomic is lock-free. A lagging
+    /// value only ever under-selects cold slices (safe). Bumped via CAS-max in the trigger feeders.
+    std::atomic<Timestamp::Underlying> lastSeenWatermark{Timestamp(0).getRawValue()};
 };
 
 }

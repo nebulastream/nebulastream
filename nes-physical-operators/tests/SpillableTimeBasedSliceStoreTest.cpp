@@ -260,4 +260,60 @@ TEST_F(SpillableTimeBasedSliceStoreTest, forceSpillUnknownSliceIsNoOp)
     EXPECT_EQ(backend->sliceCount(), 0U);
 }
 
+/// PR-1 (Increment B): store-wide residentBytes() = Σ over self-tracked createdSlices of residentBytesOf
+/// (0 for spilled). Spilling one tracked slice drops the sum by exactly that slice's prior footprint.
+TEST_F(SpillableTimeBasedSliceStoreTest, residentBytesIsStoreWideSum)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+
+    /// Three tumbling slices in distinct windows, distinct tuple counts → distinct footprints.
+    const auto sliceA = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto sliceB = store->getSlicesOrCreate(Timestamp(150), spillableSliceFactory())[0];
+    const auto sliceC = store->getSlicesOrCreate(Timestamp(250), spillableSliceFactory())[0];
+    populate(sliceA, WorkerThreadId(0), 3, 0);
+    populate(sliceB, WorkerThreadId(0), 7, 100);
+    populate(sliceC, WorkerThreadId(0), 11, 200);
+
+    const uint64_t bytesA = store->residentBytesOf(*sliceA);
+    const uint64_t bytesB = store->residentBytesOf(*sliceB);
+    const uint64_t bytesC = store->residentBytesOf(*sliceC);
+    EXPECT_GT(bytesA, 0U);
+    EXPECT_GT(bytesB, 0U);
+    EXPECT_GT(bytesC, 0U);
+
+    EXPECT_EQ(store->residentBytes(), bytesA + bytesB + bytesC);
+
+    /// Spilling the middle slice frees its maps → its footprint becomes 0, the store-wide sum drops by exactly bytesB.
+    store->forceSpill(sliceB->getSliceEnd());
+    EXPECT_FALSE(store->isSliceResident(sliceB->getSliceEnd()));
+    EXPECT_EQ(store->residentBytes(), bytesA + bytesC);
+}
+
+/// PR-1 (Increment B): garbageCollectSlicesAndWindows prunes createdSlices entries whose weak_ptr expired
+/// because the base GC dropped the slice's last shared_ptr.
+TEST_F(SpillableTimeBasedSliceStoreTest, gcPrunesCreatedSlices)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+
+    /// Create three slices but DO NOT retain the returned shared_ptrs beyond this scope, so once the base GC
+    /// erases them from its `slices` map the only remaining handle is createdSlices' weak_ptr.
+    for (const uint64_t ts : {50ULL, 150ULL, 250ULL})
+    {
+        const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+        populate(slice, WorkerThreadId(0), 4, ts);
+    }
+    EXPECT_EQ(store->createdSlicesSizeForTest(), 3U);
+    EXPECT_GT(store->residentBytes(), 0U);
+
+    /// Trigger the windows so they are EMITTED_TO_PROBE, then GC past every (sliceEnd + windowSize). The base
+    /// drops the slices; the override must then prune the expired weak_ptr entries from createdSlices.
+    store->getTriggerableWindowSlices(Timestamp(WINDOW_SIZE * 5));
+    store->garbageCollectSlicesAndWindows(Timestamp(WINDOW_SIZE * 10));
+
+    EXPECT_EQ(store->createdSlicesSizeForTest(), 0U);
+    EXPECT_EQ(store->residentBytes(), 0U);
+}
+
 }
