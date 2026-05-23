@@ -241,11 +241,13 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             entriesPerPage,
             pageSize,
             conf.spill.softThresholdMB.getValue() * 1024ULL * 1024ULL,
-            conf.spill.hardThresholdMB.getValue() * 1024ULL * 1024ULL);
+            conf.spill.hardThresholdMB.getValue() * 1024ULL * 1024ULL,
+            conf.spill.emitLag.getValue()); /// Increment C: event-time emit lag L (ms); raw ms, unit-consistent with window size. Default 0.
         NES_INFO(
-            "Lowering windowed aggregation handlerId={} with out-of-core spill enabled (rocksdb at {})",
+            "Lowering windowed aggregation handlerId={} with out-of-core spill enabled (rocksdb at {}, emit_lag={}ms)",
             handlerId,
-            conf.spill.rocksdbPath.getValue());
+            conf.spill.rocksdbPath.getValue(),
+            conf.spill.emitLag.getValue());
     }
     else
     {

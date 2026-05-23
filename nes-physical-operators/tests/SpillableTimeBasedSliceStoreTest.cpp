@@ -143,8 +143,13 @@ protected:
 
     /// PR-2 (Increment B): construct a store with caller-chosen soft/hard thresholds so the synchronous hard-eviction
     /// loop is deterministically drivable from the unit test (the eviction tests need tiny thresholds).
-    std::unique_ptr<SpillableTimeBasedSliceStore>
-    makeStoreWithThresholds(const uint64_t softThresholdBytes, const uint64_t hardThresholdBytes, InMemorySpillBackend** backendOut) const
+    /// Increment C: trailing `emitLag` (default 0) so the emit-decouple tests can request an event-time lag without
+    /// touching existing callers (which keep the 3-arg form ⇒ emitLag 0 ⇒ pre-Increment-C behavior).
+    std::unique_ptr<SpillableTimeBasedSliceStore> makeStoreWithThresholds(
+        const uint64_t softThresholdBytes,
+        const uint64_t hardThresholdBytes,
+        InMemorySpillBackend** backendOut,
+        const uint64_t emitLag = 0) const
     {
         auto backend = std::make_unique<InMemorySpillBackend>();
         *backendOut = backend.get();
@@ -156,7 +161,8 @@ protected:
             entriesPerPage(),
             PAGE_SIZE,
             softThresholdBytes,
-            hardThresholdBytes);
+            hardThresholdBytes,
+            emitLag);
         store->setBufferProvider(bufferManager);
         return store;
     }
@@ -683,6 +689,247 @@ TEST_F(SpillableTimeBasedSliceStoreTest, unspillAndMarkEmittedReleasesReservatio
     EXPECT_NO_THROW(retry = store->getSliceBySliceEnd(sliceEnd));
     ASSERT_TRUE(retry.has_value());
     EXPECT_TRUE(store->isSliceResident(sliceEnd));
+}
+
+/// ===========================================================================================================
+/// Increment C — emit-decouple (lagged emit watermark) tests.
+/// emitLag (L, event-time ms) shifts the EMIT cutoff to (globalWatermark - L) while quiescence/cold-pick keeps the
+/// TRUE globalWatermark. Completed windows in [globalWatermark - L, globalWatermark) are RETAINED (cold but unemitted)
+/// and become spillable — fixing the E0 finding that cold ≡ emitted left the spillable set empty. emitLag == 0 is
+/// byte-identical to pre-Increment-C. (Base emits windows with windowEnd < watermark — DefaultTimeBasedSliceStore.cpp:119.)
+/// ===========================================================================================================
+
+/// C-T1: with emitLag == 0 the emit cutoff equals the base's (windowEnd < watermark). Identity at the boundary.
+TEST_F(SpillableTimeBasedSliceStoreTest, emitLagZeroEmitsIdenticallyToBaseline)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithThresholds(1024ULL * 1024ULL, 2ULL * 1024ULL * 1024ULL, &backend, /*emitLag*/ 0);
+    const auto sliceA = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];  /// window [0,100), end 100
+    const auto sliceB = store->getSlicesOrCreate(Timestamp(150), spillableSliceFactory())[0]; /// window [100,200), end 200
+    populate(sliceA, WorkerThreadId(0), 3, 0);
+    populate(sliceB, WorkerThreadId(0), 3, 100);
+
+    /// Boundary: at watermark == windowEnd the window does NOT emit (windowEnd >= watermark breaks).
+    EXPECT_FALSE(triggeredContains(store->getTriggerableWindowSlices(Timestamp(100)), sliceA->getSliceEnd()));
+    /// At watermark 150: window end 100 emits, window end 200 does not — exactly the base cutoff.
+    const auto triggered = store->getTriggerableWindowSlices(Timestamp(150));
+    EXPECT_TRUE(triggeredContains(triggered, sliceA->getSliceEnd()));
+    EXPECT_FALSE(triggeredContains(triggered, sliceB->getSliceEnd()));
+}
+
+/// C-T2: emitLag > 0 DEFERS emission by the lag band. A window in [watermark - L, watermark) is retained, then emits
+/// once the frontier advances L past its end.
+TEST_F(SpillableTimeBasedSliceStoreTest, emitLagDefersEmissionByLagBand)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithThresholds(1024ULL * 1024ULL, 2ULL * 1024ULL * 1024ULL, &backend, /*emitLag*/ WINDOW_SIZE);
+    const auto sliceA = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];  /// end 100
+    const auto sliceB = store->getSlicesOrCreate(Timestamp(150), spillableSliceFactory())[0]; /// end 200
+    const auto sliceC = store->getSlicesOrCreate(Timestamp(250), spillableSliceFactory())[0]; /// end 300
+    populate(sliceA, WorkerThreadId(0), 3, 0);
+    populate(sliceB, WorkerThreadId(0), 3, 100);
+    populate(sliceC, WorkerThreadId(0), 3, 200);
+
+    /// True watermark 250, L = 100 ⇒ lagged emit cutoff 150 ⇒ only window end 100 emits; ends 200 (in the retained
+    /// band [150,250)) and 300 (still hot) do NOT.
+    const auto first = store->getTriggerableWindowSlices(Timestamp(250));
+    EXPECT_TRUE(triggeredContains(first, sliceA->getSliceEnd()));
+    EXPECT_FALSE(triggeredContains(first, sliceB->getSliceEnd()));
+    EXPECT_FALSE(triggeredContains(first, sliceC->getSliceEnd()));
+
+    /// Advance the frontier to 350 ⇒ lagged cutoff 250 ⇒ the previously-retained window end 200 now emits (deferred).
+    const auto second = store->getTriggerableWindowSlices(Timestamp(350));
+    EXPECT_TRUE(triggeredContains(second, sliceB->getSliceEnd()));
+}
+
+/// C-T3 (headline correctness, OPEN #5): deferring emission changes only TIMING, not VALUES. The same input stream run
+/// through an L=0 store and an L>0 store yields identical per-window aggregate contents (after draining both at EOS).
+TEST_F(SpillableTimeBasedSliceStoreTest, emitLagDifferentialIdenticalResults)
+{
+    /// Fold every emitted/drained slice's sorted entries, keyed by sliceEnd. Large thresholds ⇒ no spilling interferes;
+    /// this isolates the emit-timing behavior.
+    auto run = [this](const uint64_t emitLag) -> std::map<SliceEnd, std::vector<Entry>>
+    {
+        InMemorySpillBackend* backend = nullptr;
+        auto store = makeStoreWithThresholds(1024ULL * 1024ULL, 2ULL * 1024ULL * 1024ULL, &backend, emitLag);
+        std::map<SliceEnd, std::vector<Entry>> emitted;
+        auto collect = [&](const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& triggered)
+        {
+            for (const auto& [windowInfo, slices] : triggered)
+            {
+                for (const auto& slice : slices)
+                {
+                    emitted[slice->getSliceEnd()] = sortedEntries(*dynamic_cast<SpillableAggregationSlice*>(slice.get()), WorkerThreadId(0));
+                }
+            }
+        };
+        /// Identical input stream: four tumbling windows (ends 100,200,300,400), distinct deterministic payloads.
+        for (const uint64_t ts : {50ULL, 150ULL, 250ULL, 350ULL})
+        {
+            const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+            populate(slice, WorkerThreadId(0), 3, ts);
+        }
+        /// Identical watermark progression.
+        for (const uint64_t watermark : {150ULL, 250ULL, 350ULL, 450ULL})
+        {
+            collect(store->getTriggerableWindowSlices(Timestamp(watermark)));
+        }
+        /// EOS: flush whatever is still retained (L>0 holds back a tail; L=0 already emitted everything).
+        store->incrementNumberOfInputPipelines();
+        collect(store->getAllNonTriggeredSlices());
+        return emitted;
+    };
+
+    const auto baseline = run(/*emitLag*/ 0);
+    const auto lagged = run(/*emitLag*/ WINDOW_SIZE);
+    EXPECT_EQ(baseline.size(), 4U); /// all four windows accounted for
+    EXPECT_EQ(baseline, lagged);    /// identical contents — only the emission timing differed
+}
+
+/// C-T4 (LOCKED #8): the terminate path flushes the ENTIRE retained backlog regardless of emitLag — a deferred window
+/// must never be lost. With a lag so large nothing emits via triggers, EOS must still drain every window.
+TEST_F(SpillableTimeBasedSliceStoreTest, emitLagBacklogFullyFlushedOnTerminate)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithThresholds(1024ULL * 1024ULL, 2ULL * 1024ULL * 1024ULL, &backend, /*emitLag*/ 10000);
+    std::vector<SliceEnd> created;
+    for (const uint64_t ts : {50ULL, 150ULL, 250ULL})
+    {
+        const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+        populate(slice, WorkerThreadId(0), 3, ts);
+        created.push_back(slice->getSliceEnd());
+    }
+
+    /// Huge lag ⇒ lagged cutoff clamps to 0 ⇒ NOTHING emits via the trigger even at a high true watermark.
+    EXPECT_TRUE(store->getTriggerableWindowSlices(Timestamp(5000)).empty());
+
+    /// Terminate: every retained window must be flushed (and unspilled-to-resident on the way out).
+    store->incrementNumberOfInputPipelines();
+    const auto drained = store->getAllNonTriggeredSlices();
+    std::vector<SliceEnd> drainedEnds;
+    for (const auto& [windowInfo, slices] : drained)
+    {
+        for (const auto& slice : slices)
+        {
+            drainedEnds.push_back(slice->getSliceEnd());
+            EXPECT_TRUE(store->isSliceResident(slice->getSliceEnd()));
+        }
+    }
+    std::ranges::sort(drainedEnds);
+    std::ranges::sort(created);
+    EXPECT_EQ(drainedEnds, created); /// the whole backlog, nothing orphaned
+}
+
+/// C-T5 (the E0 → fixed proof): emitLag > 0 makes the cold-AND-unemitted set NON-EMPTY (the retained band), so the
+/// spiller finally engages on a real trigger drive (NOT the setLastSeenWatermarkForTest seeding hook). The emitted
+/// window and the still-hot window are never spilled.
+TEST_F(SpillableTimeBasedSliceStoreTest, emitLagMakesColdSetNonEmptyAndSpillerEngages)
+{
+    InMemorySpillBackend* backend = nullptr;
+    /// Tiny thresholds so the synchronous hard-eviction has work to do once the band is cold-but-unemitted.
+    auto store = makeStoreWithThresholds(/*soft*/ PAGE_SIZE, /*hard*/ 2ULL * PAGE_SIZE, &backend, /*emitLag*/ 3ULL * WINDOW_SIZE);
+    std::vector<std::shared_ptr<Slice>> slices;
+    for (const uint64_t ts : {50ULL, 150ULL, 250ULL, 350ULL, 450ULL}) /// ends 100,200,300,400,500
+    {
+        const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+        populate(slice, WorkerThreadId(0), 3, ts);
+        slices.push_back(slice);
+    }
+
+    /// Drive the PRODUCTION trigger to true watermark 450 (L=300 ⇒ lagged cutoff 150). Only window end 100 emits;
+    /// ends 200/300/400 are retained (cold by true wm 450, unemitted by lagged cutoff 150); end 500 is still hot.
+    const auto triggered = store->getTriggerableWindowSlices(Timestamp(450));
+    EXPECT_TRUE(triggeredContains(triggered, slices[0]->getSliceEnd()));   /// end 100 emitted
+    EXPECT_FALSE(triggeredContains(triggered, slices[1]->getSliceEnd()));  /// end 200 retained
+
+    store->spillColdSlicesUnderHardForTest();
+
+    /// The spiller engaged on the retained band (≥1 real spill). The oldest band slice (end 200) is spilled; the
+    /// emitted slice (end 100, async-probe-drain) and the hot slice (end 500, not cold) are never spilled.
+    EXPECT_GE(store->spillCountForTest(), 1U);
+    EXPECT_FALSE(store->isSliceResident(slices[1]->getSliceEnd())); /// oldest band slice spilled
+    EXPECT_TRUE(store->isSliceResident(slices[0]->getSliceEnd()));  /// emitted slice never spilled
+    EXPECT_TRUE(store->isSliceResident(slices[4]->getSliceEnd()));  /// hot slice never spilled
+    EXPECT_TRUE(backend->contains(slices[1]->getSliceEnd(), WorkerThreadId(0)));
+    EXPECT_FALSE(backend->contains(slices[0]->getSliceEnd(), WorkerThreadId(0)));
+}
+
+/// C-T6 (the E0 empty-set, regression for emitLag == 0): with no lag every cold window is ALSO emitted, so the
+/// cold-AND-unemitted set is empty and nothing spills — the exact E0 finding, reproduced as a unit invariant.
+TEST_F(SpillableTimeBasedSliceStoreTest, emitLagZeroColdSetEmptyNoSpill)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithThresholds(/*soft*/ PAGE_SIZE, /*hard*/ 2ULL * PAGE_SIZE, &backend, /*emitLag*/ 0);
+    for (const uint64_t ts : {50ULL, 150ULL, 250ULL, 350ULL, 450ULL})
+    {
+        const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+        populate(slice, WorkerThreadId(0), 3, ts);
+    }
+
+    /// True watermark 450, L=0 ⇒ every window with end < 450 is emitted; cold ≡ emitted ⇒ no spill candidate.
+    store->getTriggerableWindowSlices(Timestamp(450));
+    store->spillColdSlicesUnderHardForTest();
+
+    EXPECT_EQ(store->spillCountForTest(), 0U);
+    EXPECT_EQ(backend->sliceCount(), 0U);
+}
+
+/// C-T7 (clamp, R1): a true watermark below emitLag must SATURATE the lagged emit watermark to 0 (Timestamp::operator-
+/// is a raw unsigned subtract that would otherwise wrap and spuriously emit). Nothing emits, nothing terminates.
+TEST_F(SpillableTimeBasedSliceStoreTest, emitLagUnderflowClampsToZeroEmit)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithThresholds(1024ULL * 1024ULL, 2ULL * 1024ULL * 1024ULL, &backend, /*emitLag*/ 10ULL * WINDOW_SIZE);
+    const auto slice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0]; /// end 100
+    populate(slice, WorkerThreadId(0), 3, 0);
+
+    /// True watermark 100 < emitLag 1000 ⇒ lagged clamps to 0 ⇒ empty trigger, no wrap, no spurious emission.
+    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> triggered;
+    EXPECT_NO_THROW(triggered = store->getTriggerableWindowSlices(Timestamp(100)));
+    EXPECT_TRUE(triggered.empty());
+    EXPECT_FALSE(triggeredContains(triggered, slice->getSliceEnd()));
+}
+
+/// C-T8 (PR3, the late-write guard): a late/out-of-order record into a retained band window whose slice has been
+/// SPILLED must NOT terminate. getSlicesOrCreate unspills it on the worker thread before the write AND pins it, so a
+/// subsequent eviction cannot re-spill it while its raw HashMap* is cached. Contents survive the spill→unspill→append.
+TEST_F(SpillableTimeBasedSliceStoreTest, lateWriteIntoSpilledRetainedSliceUnspillsPinsAndDoesNotTerminate)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithThresholds(/*soft*/ PAGE_SIZE, /*hard*/ 2ULL * PAGE_SIZE, &backend, /*emitLag*/ 3ULL * WINDOW_SIZE);
+    std::vector<std::shared_ptr<Slice>> slices;
+    for (const uint64_t ts : {50ULL, 150ULL, 250ULL, 350ULL}) /// ends 100,200,300,400
+    {
+        const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+        populate(slice, WorkerThreadId(0), 3, ts);
+        slices.push_back(slice);
+    }
+    const auto bandEnd = slices[0]->getSliceEnd(); /// window [0,100)
+    const auto expectedBefore = sortedEntries(*dynamic_cast<SpillableAggregationSlice*>(slices[0].get()), WorkerThreadId(0));
+    ASSERT_EQ(expectedBefore.size(), 3U);
+
+    /// True watermark 400, L=300 ⇒ lagged cutoff 100 ⇒ window end 100 is cold (100 < 400) but NOT emitted (100 is not
+    /// < 100): it sits in the retained band. Spilling drives it to disk (oldest cold-unemitted first).
+    store->getTriggerableWindowSlices(Timestamp(400));
+    store->spillColdSlicesUnderHardForTest();
+    ASSERT_FALSE(store->isSliceResident(bandEnd)); /// the band slice is now spilled
+
+    /// LATE WRITE: a record for event-time 50 (window [0,100)) arrives → cache miss → getSlicesOrCreate returns the
+    /// existing SPILLED slice. Without the guard, the following getHashMapPtrOrCreate (inside populate) would trip
+    /// INVARIANT(resident) → std::terminate. The guard must have unspilled it.
+    const auto lateSlice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    EXPECT_EQ(lateSlice->getSliceEnd(), bandEnd);
+    EXPECT_TRUE(store->isSliceResident(bandEnd)); /// guard unspilled it before the write
+    EXPECT_NO_THROW(populate(lateSlice, WorkerThreadId(0), 2, 1000)); /// the late write itself must not terminate
+
+    /// The PIN must prevent re-spilling while the slice is cached: force the synchronous hard-eviction again — the
+    /// late-touched band slice stays resident (the spiller/eviction skip pinned slices), closing the re-spill race.
+    store->spillColdSlicesUnderHardForTest();
+    EXPECT_TRUE(store->isSliceResident(bandEnd)); /// pinned ⇒ never re-spilled
+
+    /// Contents intact: the spill→unspill round-trip preserved the original 3 entries and the 2 late ones were appended.
+    const auto after = sortedEntries(*dynamic_cast<SpillableAggregationSlice*>(lateSlice.get()), WorkerThreadId(0));
+    EXPECT_EQ(after.size(), expectedBefore.size() + 2);
 }
 
 }

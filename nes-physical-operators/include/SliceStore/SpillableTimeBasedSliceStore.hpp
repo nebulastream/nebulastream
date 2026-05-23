@@ -100,7 +100,8 @@ public:
         uint64_t entriesPerPage,
         uint64_t pageSize,
         uint64_t softThresholdBytes,
-        uint64_t hardThresholdBytes);
+        uint64_t hardThresholdBytes,
+        uint64_t emitLag = 0);
 
     /// Builds a durable RocksDB-backed SpillBackend. Defined in this translation unit so RocksDB stays a PRIVATE
     /// dependency of nes-physical-operators — the lowering rule (nes-query-compiler) passes only SpillConfig values
@@ -165,6 +166,17 @@ private:
     /// For each returned slice: unspill if non-resident (dropping it from spilledKeys) and record it emitted.
     void unspillAndMarkEmitted(std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& windowSlices);
 
+    /// Increment C late-write guard. Called from getSlicesOrCreate ONLY for a record whose window is already COLD
+    /// (sliceEnd < the true frontier) under emit_lag > 0 — i.e. a late/out-of-order write into the retained band
+    /// [frontier - L, frontier). The base early-returns the existing (possibly spilled) slice; the worker then writes
+    /// to it via getHashMapPtrOrCreate, which terminates on a spilled slice (INVARIANT(resident)). This (a) unspills the
+    /// slice on the worker thread BEFORE the write and (b) PINS it (`pinnedKeys`) so neither the background spiller nor
+    /// the synchronous hard-eviction can re-spill it while its raw HashMap* is (re)cached in the per-worker SliceCache —
+    /// a later cache HIT is JIT-generated and cannot be intercepted, so the slice must stay resident until it emits, at
+    /// which point emittedKeys takes over and the pin is dropped. Unspill I/O happens OUTSIDE evictionMutex under a
+    /// ReservationGuard (LOCKED #7). No-op for a non-spillable slice. Never marks the slice emitted (it is still filling).
+    void pinAndUnspillForLateWrite(const std::shared_ptr<Slice>& slice);
+
     /// O-B1 self-track: record a freshly created slice in `createdSlices` keyed by its SliceEnd, holding only a
     /// weak_ptr so the base GC's shared_ptr drop still frees the slice (the eviction scan locks each weak_ptr).
     /// Returns true ONLY on a true insertion (a NEW SliceEnd); false when the base re-returned an already-tracked
@@ -212,6 +224,11 @@ private:
     const uint64_t softThresholdBytes;
     /// Hard threshold: the synchronous worker-path backstop (PR-2 evictUntilUnderHard). Now enforced.
     const uint64_t hardThresholdBytes;
+    /// Increment C emit-decouple: event-time emit lag L (ms). The EMIT cutoff in getTriggerableWindowSlices uses
+    /// globalWatermark - emitLag (saturating), while quiescence/cold-pick (lastSeenWatermark) uses the TRUE
+    /// globalWatermark — so completed windows in [globalWatermark - L, globalWatermark) are retained and become
+    /// spillable. 0 = byte-identical to pre-Increment-C (emit wm == global wm).
+    const uint64_t emitLag;
     /// SliceEnds whose maps are currently spilled — drives isSliceResident() and GC backend-erase.
     folly::Synchronized<std::set<SliceEnd>> spilledKeys;
     /// SliceEnds returned by a trigger feeder (emitted to the async probe) — forceSpill refuses these.
@@ -242,6 +259,11 @@ private:
     /// both skip it, and unspillAndMarkEmitted WAITs on spillerCv until it leaves. ALWAYS accessed under evictionMutex
     /// (a plain set — evictionMutex already guards it).
     std::set<SliceEnd> spillInProgress;
+    /// Increment C: SliceEnds of retained-band slices that a LATE write has re-activated (their raw HashMap* is cached on
+    /// a worker). pickAndReserveColdSlice skips these so neither the spiller nor hard-eviction re-spills a slice whose
+    /// cached pointer would then dangle — the slice stays resident until it emits (then emittedKeys takes over and the
+    /// pin is dropped) or is garbage-collected. ALWAYS accessed under evictionMutex (a plain set, like spillInProgress).
+    std::set<SliceEnd> pinnedKeys;
     /// Set true (under evictionMutex) by stopSpiller before join: pickAndReserveColdSlice returns nullopt while it is
     /// set, so the spiller stops picking and the loop drains promptly. Read under evictionMutex.
     bool quiesced = false;

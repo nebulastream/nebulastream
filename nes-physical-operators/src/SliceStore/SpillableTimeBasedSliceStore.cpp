@@ -101,23 +101,27 @@ SpillableTimeBasedSliceStore::SpillableTimeBasedSliceStore(
     const uint64_t entriesPerPage,
     const uint64_t pageSize,
     const uint64_t softThresholdBytes,
-    const uint64_t hardThresholdBytes)
+    const uint64_t hardThresholdBytes,
+    const uint64_t emitLag)
     : DefaultTimeBasedSliceStore(windowSize, windowSlide, std::move(sliceCacheConfiguration))
     , backend(std::move(backend))
     , entriesPerPage(entriesPerPage)
     , pageSize(pageSize)
     , softThresholdBytes(softThresholdBytes)
     , hardThresholdBytes(hardThresholdBytes)
+    , emitLag(emitLag)
 {
     PRECONDITION(this->backend != nullptr, "SpillableTimeBasedSliceStore requires a non-null SpillBackend");
     PRECONDITION(entriesPerPage > 0, "entriesPerPage must be > 0");
     PRECONDITION(pageSize > 0, "pageSize must be > 0");
     NES_DEBUG(
-        "Constructed SpillableTimeBasedSliceStore (entriesPerPage={}, pageSize={}, softThresholdBytes={}, hardThresholdBytes={})",
+        "Constructed SpillableTimeBasedSliceStore (entriesPerPage={}, pageSize={}, softThresholdBytes={}, hardThresholdBytes={}, "
+        "emitLag={})",
         entriesPerPage,
         pageSize,
         softThresholdBytes,
-        hardThresholdBytes);
+        hardThresholdBytes,
+        emitLag);
 }
 
 SpillableTimeBasedSliceStore::~SpillableTimeBasedSliceStore()
@@ -163,6 +167,15 @@ std::vector<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSlicesOrCre
     /// tumbling window ⇒ always exactly one slice per timestamp (new or existing — this also runs on a SliceCache hit
     /// that re-returns the already-created slice), got {}.
     INVARIANT(result.size() == 1, "tumbling slice store expects exactly one slice per (timestamp), got {}", result.size());
+    /// Increment C late-write guard: a record whose window is already COLD (sliceEnd < the true frontier) is a
+    /// late/out-of-order write into the retained band [frontier - L, frontier). The base just early-returned the existing
+    /// (possibly spilled) slice; the worker is about to write to it (and cache its raw HashMap*). Unspill + pin it here,
+    /// BEFORE that write, so it cannot be (re-)spilled while cached. Gated on emitLag > 0 AND coldness ⇒ a strict no-op
+    /// for L == 0 (byte-identical to pre-Increment-C) and for the normal hot/current build path.
+    if (emitLag > 0 && result[0]->getSliceEnd().getRawValue() < lastSeenWatermark.load(std::memory_order_relaxed))
+    {
+        pinAndUnspillForLateWrite(result[0]);
+    }
     /// M1: gate the hard-threshold check on a GENUINELY NEW slice. recordCreatedSlice returns false on a cache-hit /
     /// insert-race re-return of an already-tracked slice; re-running residentBytes()/eviction there would spuriously
     /// re-arm the budget against a slice already accounted for.
@@ -226,6 +239,9 @@ void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
                 }
                 /// Claim it BEFORE releasing the mutex: the spiller can never (re-)pick an emitted slice.
                 emittedKeys.wlock()->insert(sliceEnd);
+                /// Increment C: emitted now ⇒ emittedKeys protects it; drop any (now-redundant) late-write pin so
+                /// pinnedKeys stays bounded by live, unemitted, late-touched slices.
+                pinnedKeys.erase(sliceEnd);
                 /// If it is spilled we will unspill it OUTSIDE the lock. Reserve it in spillInProgress for the duration
                 /// so a concurrent residentBytes() SKIPS this slice while unspill() is rebuilding its maps (the read
                 /// would otherwise race the map mutation). No spiller can pick it (it is emitted), so the reservation is
@@ -261,13 +277,72 @@ void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
     }
 }
 
+void SpillableTimeBasedSliceStore::pinAndUnspillForLateWrite(const std::shared_ptr<Slice>& slice)
+{
+    auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(slice);
+    if (spillable == nullptr)
+    {
+        return;
+    }
+    const auto sliceEnd = spillable->getSliceEnd();
+    bool needsUnspill = false;
+    {
+        std::unique_lock lock(evictionMutex);
+        /// PIN first: once pinned, pickAndReserveColdSlice (background spiller + synchronous hard-eviction) skips this
+        /// slice, so after we make it resident it STAYS resident until it emits — closing the re-spill race (the worker
+        /// caches its raw HashMap* and a later cache HIT is JIT, uninterceptable). Idempotent (a plain set insert).
+        pinnedKeys.insert(sliceEnd);
+        if (spillInProgress.contains(sliceEnd))
+        {
+            /// A spill of this slice is in flight — wait it out before unspilling (cannot unspill mid-spill). The pin
+            /// already ensures no NEW spill can start after we wake.
+            NES_TRACE("Late write into slice {} waiting on in-flight spill", sliceEnd);
+            spillerCv.wait(lock, [&] { return !spillInProgress.contains(sliceEnd); });
+        }
+        needsUnspill = !spillable->isResident();
+        if (needsUnspill)
+        {
+            /// Reserve for the unspill duration so a concurrent residentBytes() SKIPS this slice while unspill() rebuilds
+            /// its maps (same footprint-reader fence as the trigger/random-access unspill paths).
+            spillInProgress.insert(sliceEnd);
+        }
+    }
+    if (needsUnspill)
+    {
+        auto provider = bufferProvider.copy();
+        INVARIANT(provider != nullptr, "buffer provider must be stashed before an unspill-on-write");
+        NES_DEBUG("Unspilling + pinning slice {} on late write into the retained band", sliceEnd);
+        /// I/O OUTSIDE evictionMutex (LOCKED #7). If unspill() throws (I/O failure), the guard releases the reservation
+        /// and the exception propagates out of getSlicesOrCreate as a query error (NOT a process terminate); the pin
+        /// stays (harmless — the slice remains spilled, and a later emit/GC will retry/clean it).
+        ReservationGuard unspillGuard{*this, sliceEnd};
+        spillable->unspill(*backend, *provider);
+        spilledKeys.wlock()->erase(sliceEnd);
+        {
+            std::unique_lock lock(evictionMutex);
+            spillInProgress.erase(sliceEnd);
+        }
+        spillerCv.notify_all();
+        unspillGuard.committed = true; /// success: reservation already erased above, do not double-erase
+    }
+}
+
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
 SpillableTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
 {
-    auto result = DefaultTimeBasedSliceStore::getTriggerableWindowSlices(globalWatermark);
+    /// Increment C emit-decouple: drive the EMIT cutoff with a SATURATING globalWatermark - emitLag (clamp to 0 so an
+    /// early-stream watermark < L cannot wrap Timestamp::operator-, which is a raw unsigned subtract), while keeping the
+    /// TRUE globalWatermark for quiescence/cold-pick below. The base store retains completed windows in
+    /// [globalWatermark - L, globalWatermark) — they stay cold-but-unemitted, so the spiller can finally evict them.
+    /// With emitLag == 0 the lagged watermark equals the true watermark ⇒ byte-identical to pre-Increment-C.
+    const auto rawWatermark = globalWatermark.getRawValue();
+    const auto laggedEmitWatermark = Timestamp(rawWatermark >= emitLag ? rawWatermark - emitLag : 0);
+    NES_TRACE("Emit-lagged trigger: true wm={}, emitLag={}, lagged emit wm={}", rawWatermark, emitLag, laggedEmitWatermark.getRawValue());
+    auto result = DefaultTimeBasedSliceStore::getTriggerableWindowSlices(laggedEmitWatermark);
     unspillAndMarkEmitted(result);
-    /// O-B-watermark: learn the build watermark monotonically (CAS-max). Slices ending before it are cold. A lagging
-    /// value only under-selects cold slices (safe — never spills something the engine still considers hot).
+    /// O-B-watermark: learn the build watermark monotonically (CAS-max) from the TRUE globalWatermark (NOT the lagged
+    /// emit watermark) — quiescence/cold-selection must track the real frontier so the retained band is spillable.
+    /// Slices ending before it are cold. A lagging value only under-selects cold slices (safe — never spills hot).
     auto current = lastSeenWatermark.load(std::memory_order_relaxed);
     const auto incoming = globalWatermark.getRawValue();
     while (incoming > current && !lastSeenWatermark.compare_exchange_weak(current, incoming, std::memory_order_relaxed))
@@ -367,6 +442,16 @@ void SpillableTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestam
         backend->erase(droppedKey);
         emittedKeys.wlock()->erase(droppedKey);
     }
+    /// Increment C: drop late-write pins for GC'd slices. Taken on its own — evictionMutex is never nested with the
+    /// folly set locks above (the eviction-mutex lock-order invariant), so this runs after they are released.
+    if (!droppedKeys.empty())
+    {
+        std::unique_lock lock(evictionMutex);
+        for (const auto droppedKey : droppedKeys)
+        {
+            pinnedKeys.erase(droppedKey);
+        }
+    }
 
     /// Prune self-tracked entries whose slice the base GC has dropped (weak_ptr now expired). Taken on its own —
     /// never nested with the spilledKeys/emittedKeys locks (H1) — so it can run after they have been released.
@@ -401,6 +486,11 @@ void SpillableTimeBasedSliceStore::deleteState()
         keys->clear();
     }
     emittedKeys.wlock()->clear();
+    /// Increment C: clear late-write pins (spiller already quiesced above, so no concurrent pickAndReserveColdSlice).
+    {
+        std::unique_lock lock(evictionMutex);
+        pinnedKeys.clear();
+    }
     for (const auto sliceEnd : keysToErase)
     {
         backend->erase(sliceEnd);
@@ -527,6 +617,12 @@ std::optional<SliceEnd> SpillableTimeBasedSliceStore::pickAndReserveColdSlice()
         if (emittedKeys.rlock()->contains(end))
         {
             /// Emitted to the async probe — must never be spilled, but a later cold slice may still qualify, so continue.
+            continue;
+        }
+        if (pinnedKeys.contains(end))
+        {
+            /// Increment C: a late write re-activated this band slice (its raw HashMap* is cached on a worker), so it must
+            /// stay resident until it emits — not a spill candidate. A later cold slice may still qualify, so continue.
             continue;
         }
         spillInProgress.insert(end);
