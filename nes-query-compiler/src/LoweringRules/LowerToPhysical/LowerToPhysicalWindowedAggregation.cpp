@@ -232,7 +232,10 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         /// The RocksDB backend is built inside nes-physical-operators (via the store's static factory) so this
         /// lowering rule never links rocksdb; it passes only SpillConfig values across the seam.
         auto backend = SpillableTimeBasedSliceStore::makeRocksDBBackend(
-            conf.spill.rocksdbPath.getValue() + "/agg-" + std::to_string(handlerId.getRawValue()), conf.spill.compression.getValue());
+            conf.spill.rocksdbPath.getValue() + "/agg-" + std::to_string(handlerId.getRawValue()),
+            conf.spill.compression.getValue(),
+            conf.spill.writeBufferSizeMB.getValue() * 1024ULL * 1024ULL, /// Phase 0a: MB→bytes; 0 = RocksDB default
+            conf.spill.blockCacheSizeMB.getValue() * 1024ULL * 1024ULL);
         sliceAndWindowStore = std::make_unique<SpillableTimeBasedSliceStore>(
             windowType->getSize().getTime(),
             windowType->getSlide().getTime(),
@@ -244,10 +247,13 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             conf.spill.hardThresholdMB.getValue() * 1024ULL * 1024ULL,
             conf.spill.emitLag.getValue()); /// Increment C: event-time emit lag L (ms); raw ms, unit-consistent with window size. Default 0.
         NES_INFO(
-            "Lowering windowed aggregation handlerId={} with out-of-core spill enabled (rocksdb at {}, emit_lag={}ms)",
+            "Lowering windowed aggregation handlerId={} with out-of-core spill enabled (rocksdb at {}, emit_lag={}ms, "
+            "write_buffer={}MB, block_cache={}MB; 0=RocksDB default)",
             handlerId,
             conf.spill.rocksdbPath.getValue(),
-            conf.spill.emitLag.getValue());
+            conf.spill.emitLag.getValue(),
+            conf.spill.writeBufferSizeMB.getValue(),
+            conf.spill.blockCacheSizeMB.getValue());
     }
     else
     {

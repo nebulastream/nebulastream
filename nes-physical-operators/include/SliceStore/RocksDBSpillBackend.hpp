@@ -47,9 +47,15 @@ class RocksDBSpillBackend final : public SpillBackend
 {
 public:
     /// Opens (creating if absent) a RocksDB instance at `path`. `compression` is one of
-    /// "lz4", "zstd", or "none". Throws SpillStoreFailure if the database cannot be opened
-    /// or the compression name is unknown.
-    explicit RocksDBSpillBackend(const std::string& path, const std::string& compression = "lz4");
+    /// "lz4", "zstd", or "none". `writeBufferSizeBytes` sets the RocksDB write-buffer (memtable) size and
+    /// `blockCacheSizeBytes` the block cache; either being 0 leaves RocksDB's own default in place
+    /// (behavior-preserving). Throws SpillStoreFailure if the database cannot be opened or the compression
+    /// name is unknown.
+    explicit RocksDBSpillBackend(
+        const std::string& path,
+        const std::string& compression = "lz4",
+        std::size_t writeBufferSizeBytes = 0,
+        std::size_t blockCacheSizeBytes = 0);
     ~RocksDBSpillBackend() override;
 
     void put(SliceEnd sliceEnd, WorkerThreadId workerThreadId, std::span<const std::byte> record) override;

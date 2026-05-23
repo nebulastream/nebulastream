@@ -132,10 +132,13 @@ SpillableTimeBasedSliceStore::~SpillableTimeBasedSliceStore()
     stopSpiller();
 }
 
-std::unique_ptr<SpillBackend>
-SpillableTimeBasedSliceStore::makeRocksDBBackend(const std::string& rocksdbPath, const std::string& compression)
+std::unique_ptr<SpillBackend> SpillableTimeBasedSliceStore::makeRocksDBBackend(
+    const std::string& rocksdbPath,
+    const std::string& compression,
+    const std::size_t writeBufferSizeBytes,
+    const std::size_t blockCacheSizeBytes)
 {
-    return std::make_unique<RocksDBSpillBackend>(rocksdbPath, compression);
+    return std::make_unique<RocksDBSpillBackend>(rocksdbPath, compression, writeBufferSizeBytes, blockCacheSizeBytes);
 }
 
 void SpillableTimeBasedSliceStore::setBufferProvider(std::shared_ptr<AbstractBufferProvider> provider)

@@ -53,6 +53,16 @@ public:
     /// RocksDB block compression for spilled slices (Phase 3+).
     StringOption compression = {"compression", "lz4", "Compression for spilled slices [lz4|zstd|none]."};
 
+    /// RocksDB write-buffer (memtable) size in MB (Phase 0a). RocksDB's untuned default (~64 MB per instance) is a
+    /// fixed memory tax under a tight cap (see E0). 0 = leave RocksDB's own default (behavior-preserving).
+    UIntOption writeBufferSizeMB
+        = {"write_buffer_size_mb", "0", "RocksDB write-buffer (memtable) size in MB for spilled slices; 0 = RocksDB default."};
+
+    /// RocksDB block-cache size in MB (Phase 0a). Bounds the read-cache footprint of the spill backend.
+    /// 0 = leave RocksDB's own default (behavior-preserving).
+    UIntOption blockCacheSizeMB
+        = {"block_cache_size_mb", "0", "RocksDB block-cache size in MB for the spill backend; 0 = RocksDB default."};
+
     /// Event-time emit/retention lag L (same unit as the window/watermark, ms). Results emit on a watermark of
     /// globalWatermark - emit_lag, so completed windows in [globalWatermark - L, globalWatermark) are RETAINED and
     /// become spillable (Increment C, emit-decouple). 0 = today's behavior (emit wm == global wm).
@@ -62,7 +72,7 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&enabled, &rocksdbPath, &softThresholdMB, &hardThresholdMB, &compression, &emitLag};
+        return {&enabled, &rocksdbPath, &softThresholdMB, &hardThresholdMB, &compression, &writeBufferSizeMB, &blockCacheSizeMB, &emitLag};
     }
 };
 

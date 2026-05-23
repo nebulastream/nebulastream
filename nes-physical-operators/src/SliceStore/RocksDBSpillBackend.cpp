@@ -25,11 +25,14 @@
 #include <ErrorHandling.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SpillBackend.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <rocksdb/cache.h>
 #include <rocksdb/db.h>
 #include <rocksdb/iterator.h>
 #include <rocksdb/options.h>
 #include <rocksdb/slice.h>
 #include <rocksdb/status.h>
+#include <rocksdb/table.h>
 #include <rocksdb/write_batch.h>
 
 namespace NES
@@ -89,11 +92,39 @@ rocksdb::CompressionType toCompressionType(const std::string& compression)
 }
 }
 
-RocksDBSpillBackend::RocksDBSpillBackend(const std::string& path, const std::string& compression)
+RocksDBSpillBackend::RocksDBSpillBackend(
+    const std::string& path,
+    const std::string& compression,
+    const std::size_t writeBufferSizeBytes,
+    const std::size_t blockCacheSizeBytes)
 {
     rocksdb::Options options;
     options.create_if_missing = true;
     options.compression = toCompressionType(compression);
+
+    /// Phase 0a: cap RocksDB's memory tax under a tight cgroup budget. 0 = leave RocksDB's own default.
+    constexpr std::size_t sanityCapBytes = 4ULL * 1024 * 1024 * 1024; /// 4 GiB — a misconfig guard, not a hard limit
+    if (writeBufferSizeBytes > sanityCapBytes || blockCacheSizeBytes > sanityCapBytes)
+    {
+        NES_WARNING(
+            "RocksDB spill memory budget unusually large (write_buffer={}B, block_cache={}B, sanity cap {}B) — check spill config",
+            writeBufferSizeBytes,
+            blockCacheSizeBytes,
+            sanityCapBytes);
+    }
+    if (writeBufferSizeBytes > 0)
+    {
+        options.write_buffer_size = writeBufferSizeBytes;
+    }
+    if (blockCacheSizeBytes > 0)
+    {
+        rocksdb::BlockBasedTableOptions tableOptions;
+        /// NewLRUCache is the supported cache factory in the pinned RocksDB build (its LRUCacheOptions has no
+        /// single-arg capacity ctor); the "deprecated" comment in cache.h is not a -Werror trigger here.
+        tableOptions.block_cache = rocksdb::NewLRUCache(blockCacheSizeBytes);
+        /// NewBlockBasedTableFactory returns a raw owning pointer; table_factory (a shared_ptr) takes ownership.
+        options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(tableOptions));
+    }
 
     rocksdb::DB* rawDb = nullptr;
     if (const auto status = rocksdb::DB::Open(options, path, &rawDb); !status.ok())
@@ -101,6 +132,12 @@ RocksDBSpillBackend::RocksDBSpillBackend(const std::string& path, const std::str
         throw SpillStoreFailure("failed to open RocksDB at '{}': {}", path, status.ToString());
     }
     db.reset(rawDb);
+    NES_DEBUG(
+        "Opened RocksDB spill backend at '{}' (compression={}, write_buffer={}B, block_cache={}B; 0=RocksDB default)",
+        path,
+        compression,
+        writeBufferSizeBytes,
+        blockCacheSizeBytes);
 }
 
 RocksDBSpillBackend::~RocksDBSpillBackend() = default;

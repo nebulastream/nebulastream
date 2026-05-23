@@ -106,7 +106,11 @@ public:
     /// Builds a durable RocksDB-backed SpillBackend. Defined in this translation unit so RocksDB stays a PRIVATE
     /// dependency of nes-physical-operators — the lowering rule (nes-query-compiler) passes only SpillConfig values
     /// and never links rocksdb.
-    static std::unique_ptr<SpillBackend> makeRocksDBBackend(const std::string& rocksdbPath, const std::string& compression);
+    static std::unique_ptr<SpillBackend> makeRocksDBBackend(
+        const std::string& rocksdbPath,
+        const std::string& compression,
+        std::size_t writeBufferSizeBytes = 0,
+        std::size_t blockCacheSizeBytes = 0);
 
     /// Self-track every created slice (O-B1): delegate to the base, then record the created slice (tumbling ⇒
     /// exactly one) in `createdSlices` so the Increment-B eviction scan can enumerate cold slices without

@@ -170,4 +170,42 @@ TEST_F(RocksDBSpillBackendTest, rejectsUnknownCompression)
     ASSERT_EXCEPTION_ERRORCODE(RocksDBSpillBackend(badPath, "bogus"), ErrorCode::SpillStoreFailure);
 }
 
+/// Phase 0a: explicit write_buffer_size + block_cache (bytes) are accepted and do not alter correctness —
+/// records still round-trip durably across reopen. (The options bound RocksDB's memory tax; behavior is unchanged.)
+TEST_F(RocksDBSpillBackendTest, honorsExplicitMemoryBudgetAndRoundTrips)
+{
+    constexpr std::size_t writeBufferBytes = 4ULL * 1024 * 1024; /// 4 MiB
+    constexpr std::size_t blockCacheBytes = 8ULL * 1024 * 1024; /// 8 MiB
+    const SliceEnd sliceEnd{Timestamp(7)};
+    const WorkerThreadId workerThreadId{1};
+    const SpillRecord record = makeRecord({4, 2, 4, 2});
+
+    {
+        RocksDBSpillBackend backend(dbPath.string(), "lz4", writeBufferBytes, blockCacheBytes);
+        backend.put(sliceEnd, workerThreadId, record);
+        const auto fetched = backend.get(sliceEnd, workerThreadId);
+        ASSERT_TRUE(fetched.has_value());
+        EXPECT_EQ(*fetched, record);
+    } /// closed
+
+    /// Reopen with the DEFAULT (0,0) budget: persisted data must be independent of the memory-budget options.
+    RocksDBSpillBackend reopened(dbPath.string());
+    const auto fetched = reopened.get(sliceEnd, workerThreadId);
+    ASSERT_TRUE(fetched.has_value());
+    EXPECT_EQ(*fetched, record);
+}
+
+/// Zero budgets (the default) leave RocksDB's own defaults in place and behave exactly like the 2-arg ctor.
+TEST_F(RocksDBSpillBackendTest, zeroMemoryBudgetIsBehaviorPreserving)
+{
+    RocksDBSpillBackend backend(dbPath.string(), "lz4", 0, 0);
+    const SliceEnd sliceEnd{Timestamp(3)};
+    const WorkerThreadId workerThreadId{0};
+    backend.put(sliceEnd, workerThreadId, makeRecord({1, 1, 1}));
+
+    const auto fetched = backend.get(sliceEnd, workerThreadId);
+    ASSERT_TRUE(fetched.has_value());
+    EXPECT_EQ(*fetched, makeRecord({1, 1, 1}));
+}
+
 }
