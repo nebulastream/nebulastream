@@ -49,6 +49,16 @@ runs:
       run: |
         set -euo pipefail
 
+        # Defaults raised over sccache's built-ins: the S3 handshake can take
+        # longer than the 10s startup default under ninja's parallel launch,
+        # which manifests as "Timed out waiting for server startup" on the
+        # first compile. Idle timeout is bumped so the daemon survives the
+        # CMake configure + Rust crate compile gap before ninja kicks off.
+        {
+          echo "SCCACHE_STARTUP_TIMEOUT=60"
+          echo "SCCACHE_IDLE_TIMEOUT=1800"
+        } >> "$GITHUB_ENV"
+
         # Decide mode: remote requires all four S3 inputs to be non-empty.
         if [[ -n "$IN_BUCKET" && -n "$IN_ENDPOINT" && -n "$IN_ACCESS_KEY" && -n "$IN_SECRET_KEY" ]]; then
           echo "::notice::sccache configured for remote S3 cache (bucket=$IN_BUCKET)"
