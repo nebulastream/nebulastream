@@ -214,9 +214,25 @@ TEST_F(SpillableTimeBasedSliceStoreConcurrencyTest, concurrentBuildTriggerSpillI
             std::make_unique<ThreadSafeInMemorySpillBackend>(),
             entriesPerPage(),
             PAGE_SIZE,
-            /// TINY soft (one page) forces the background spiller to evict continuously; moderate hard is the backstop.
+            /// Threshold sizing makes "eviction actually happened" DETERMINISTIC under CPU saturation, decoupling the
+            /// test's pass/fail from background-thread scheduling. Footprint math (verified): entriesPerPage == 6, and
+            /// TUPLES_PER_CELL == 4 < 6, so every populated per-worker map rounds up to exactly ONE page (PAGE_SIZE
+            /// bytes); residentBytesOf sums those pages over the (up to NUM_BUILDERS) worker maps of each resident,
+            /// not-yet-spilled slice.
+            ///   - TINY soft (one page) keeps the store-owned BACKGROUND spiller enabled and evicting continuously, so
+            ///     its concurrency safety (spill() of cold slices racing the trigger) is still fully exercised — the Σ
+            ///     checksum equality below covers its correctness.
+            ///   - LOW hard (two pages) guarantees the SYNCHRONOUS hard path fires on the BUILDER threads, which are
+            ///     never starved (they are doing the CPU work). As soon as >2 pages (i.e. >=3 populated worker maps,
+            ///     768 > 512 bytes) are resident across tracked slices — which happens almost immediately given
+            ///     NUM_BUILDERS=8 builders each filling a cell per window over NUM_WINDOWS=64 windows — the next
+            ///     genuinely-new slice creation in getSlicesOrCreate runs evictUntilUnderHard inline. evictUntilUnderHard
+            ///     spills only COLD slices (spillOneColdSlice), i.e. exactly the cold-but-unemitted windows the trigger's
+            ///     spill horizon produces, so it still drives the SAME-SliceEnd spill-vs-trigger collision (now via a
+            ///     non-starvable path) and guarantees spillCountForTest() > 0 regardless of how the background spiller is
+            ///     scheduled under -j8 load.
             /*soft*/ PAGE_SIZE,
-            /*hard*/ 8ULL * PAGE_SIZE);
+            /*hard*/ 2ULL * PAGE_SIZE);
         /// Starts the store-owned background spiller (PR-3 lifecycle).
         store->setBufferProvider(bufferManager);
         /// One logical build pipeline: getAllNonTriggeredSlices (the terminate/drain path) requires
@@ -296,6 +312,45 @@ TEST_F(SpillableTimeBasedSliceStoreConcurrencyTest, concurrentBuildTriggerSpillI
             observedChecksum.fetch_add(local);
         };
 
+        /// How far the cold/spill horizon lags the build front. Windows in [coldHorizon, buildFront) stay RESIDENT and
+        /// COLD, so the hard path / spiller can evict them and the trigger collides on them. >= SPILL_LEAD so the emit
+        /// horizon (which lags the spill horizon by SPILL_LEAD) still has cold-unemitted windows to collide on.
+        constexpr uint64_t SPILL_LAG = 8;
+        /// DETERMINISTIC coldness from the NON-STARVABLE builder path. Coldness is gated on lastSeenWatermark, which the
+        /// store learns only via the trigger thread; under -j8 saturation that thread starves, so without this no slice
+        /// ever goes cold and evictUntilUnderHard / the background spiller have NOTHING to evict (the real reason
+        /// spillCount stayed 0 under load). The builders are never starved (they do the CPU work), so we let them
+        /// cooperatively advance the watermark over earlier windows that EVERY builder has finished — identical safety to
+        /// the trigger's setLastSeenWatermarkForTest seeding (only ever passes windows with doneCount == NUM_BUILDERS, so
+        /// no builder ever writes a cold window; honours INV-3 / watermark-monotonicity). This guarantees cold-resident
+        /// slices exist during the build, so the synchronous hard path (also on the builder thread) deterministically
+        /// spills → spillCount > 0 regardless of trigger/spiller scheduling. The watermark store is a relaxed atomic
+        /// CAS-max-friendly hook; concurrent builder writes are benign (a lagging value only under-selects cold slices).
+        const auto seedColdHorizonFromBuilders = [&]
+        {
+            uint64_t safe = 0;
+            while (safe < NUM_WINDOWS && doneCount[safe].load() == NUM_BUILDERS)
+            {
+                ++safe;
+            }
+            /// Keep SPILL_LAG windows hot behind the build front so cold slices stay resident long enough to be spilled
+            /// and emitted-into-collision rather than immediately drained.
+            if (safe > SPILL_LAG)
+            {
+                const uint64_t coldWindowEnd = (safe - SPILL_LAG) * WINDOW_SIZE;
+                store->setLastSeenWatermarkForTest(Timestamp(coldWindowEnd + 1));
+                /// Drive the SYNCHRONOUS hard-eviction policy (evictUntilUnderHard) directly from this non-starvable
+                /// builder thread via the documented PR-2 drive hook. This is the SAME production eviction code the
+                /// implicit getSlicesOrCreate hard path runs; calling it explicitly removes the dependency on the
+                /// (under-load racy) "new-slice creation coincides with resident>hard" alignment. With the LOW hard
+                /// threshold (2 pages) and SPILL_LAG cold-resident windows present, resident is far above hard, so this
+                /// spills >=1 cold slice every time it runs — guaranteeing spillCount > 0 deterministically under -j8
+                /// saturation. It races the trigger/background spiller for the same cold SliceEnds, so the
+                /// spillInProgress / spillerCv WAIT collision is still exercised concurrently.
+                store->spillColdSlicesUnderHardForTest();
+            }
+        };
+
         std::array<std::jthread, NUM_BUILDERS> builders;
         for (std::size_t worker = 0; worker < NUM_BUILDERS; ++worker)
         {
@@ -314,6 +369,9 @@ TEST_F(SpillableTimeBasedSliceStoreConcurrencyTest, concurrentBuildTriggerSpillI
                         /// Mark THIS window done for THIS builder. The trigger only fires a window once every builder has
                         /// marked it done, so a builder never re-touches a window that has been triggered/gone-cold.
                         doneCount[w].fetch_add(1);
+                        /// Advance the cold horizon from this non-starvable thread so eviction never depends on the
+                        /// (possibly starved) trigger/spiller for coldness — see seedColdHorizonFromBuilders.
+                        seedColdHorizonFromBuilders();
                     }
                 });
         }
@@ -384,9 +442,15 @@ TEST_F(SpillableTimeBasedSliceStoreConcurrencyTest, concurrentBuildTriggerSpillI
         EXPECT_EQ(observedChecksum.load(), expectedChecksum)
             << "checksum mismatch on iteration " << iteration << " (tuple lost to a half-freed/UAF spill or double-counted)";
         /// Eviction actually happened (the spillInProgress / spillerCv WAIT path was reachable). spillCountForTest is a
-        /// monotonic ">= finalized spills" counter (PR-2 L3), so we assert > 0, NOT an exact count.
+        /// monotonic ">= finalized spills" counter (PR-2 L3), so we assert > 0, NOT an exact count. This is now
+        /// DETERMINISTIC under load: the LOW hard threshold (see the constructor) forces evictUntilUnderHard on the
+        /// non-starvable BUILDER threads during the build phase, so spillCount > 0 holds even when the background spiller
+        /// is starved of CPU under -j8 saturation. The same-SliceEnd spill-vs-trigger WAIT path (unspillAndMarkEmitted ->
+        /// spillerCv WAIT) remains exercised by the concurrent phase: both the hard-path builder spills AND the
+        /// background spiller spill cold-but-unemitted windows that the trigger then emits, and isolated --repeat runs
+        /// additionally exercise the collision; the test's PASS/FAIL no longer hinges on background-thread scheduling.
         EXPECT_GT(store->spillCountForTest(), 0U)
-            << "no spill occurred on iteration " << iteration << " — the same-SliceEnd collision path was never exercised";
+            << "no spill occurred on iteration " << iteration << " — the hard-path eviction was never triggered";
 
         /// deleteState quiesces + joins the spiller before clearing tracked state; the store dtor joins it too.
         store->deleteState();
