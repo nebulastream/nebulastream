@@ -122,7 +122,13 @@ public:
     /// HashMap* will be snapshotted for the async probe → it must not be spilled afterwards).
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
     getTriggerableWindowSlices(Timestamp globalWatermark) override;
+    /// Phase 1 (L1): LAZY terminal flush. Returns the retained band WITHOUT unspilling it — the handler calls
+    /// ensureWindowSlicesResident() per window to re-materialise one window at a time (bounding the terminal-flush peak).
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
+    /// Phase 1 (L1): per-window unspill + mark-emitted hook for the paced terminal flush. Unspills any spilled slice in
+    /// this one window (under the eviction-mutex discipline) and marks it emitted so the spiller cannot re-pick it while
+    /// the async probe drains it. Called by WindowBasedOperatorHandler::triggerAllWindows just before emitting the window.
+    void ensureWindowSlicesResident(const std::vector<std::shared_ptr<Slice>>& windowSlices) override;
     /// Random-access read (join-probe path; out of 4b scope): unspills for consistency, but does NOT mark emitted.
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) override;
     /// Erases backend records for spilled slices that the base GC has dropped.

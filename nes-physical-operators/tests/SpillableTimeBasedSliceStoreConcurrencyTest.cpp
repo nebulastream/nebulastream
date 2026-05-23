@@ -433,9 +433,15 @@ TEST_F(SpillableTimeBasedSliceStoreConcurrencyTest, concurrentBuildTriggerSpillI
         }
         trigger.join();
 
-        /// Drain anything not yet triggered (windows still filling/cold at the end). getAllNonTriggeredSlices unspills
-        /// and emits, so every returned slice must again be resident; fold it into the checksum exactly once.
+        /// Drain anything not yet triggered (windows still filling/cold at the end). Phase 1 (L1): getAllNonTriggeredSlices
+        /// is now LAZY — it returns the band possibly STILL spilled so the terminal flush can re-materialise one window at
+        /// a time. Mirror the handler's paced flush: ensureWindowSlicesResident per window (unspill + mark emitted) before
+        /// folding each window into the checksum exactly once. Every returned slice is resident afterwards.
         const auto drained = store->getAllNonTriggeredSlices();
+        for (const auto& [windowInfo, slices] : drained)
+        {
+            store->ensureWindowSlicesResident(slices);
+        }
         foldTriggered(drained);
 
         /// THE UAF DETECTOR: every inserted contribution accounted for exactly once across triggered + drained.

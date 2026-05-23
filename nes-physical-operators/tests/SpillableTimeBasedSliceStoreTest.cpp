@@ -854,16 +854,26 @@ TEST_F(SpillableTimeBasedSliceStoreTest, emitLagBacklogFullyFlushedOnTerminate)
         populate(slice, WorkerThreadId(0), 3, ts);
         created.push_back(slice->getSliceEnd());
     }
+    /// Spill the WHOLE retained backlog first, so the terminal flush must re-materialise every window from disk via the
+    /// Phase-1 paced ensureWindowSlicesResident path — proving nothing is orphaned even when every window starts spilled.
+    for (const auto end : created)
+    {
+        store->forceSpill(end);
+        ASSERT_FALSE(store->isSliceResident(end));
+    }
 
     /// Huge lag ⇒ lagged cutoff clamps to 0 ⇒ NOTHING emits via the trigger even at a high true watermark.
     EXPECT_TRUE(store->getTriggerableWindowSlices(Timestamp(5000)).empty());
 
-    /// Terminate: every retained window must be flushed (and unspilled-to-resident on the way out).
+    /// Terminate (Phase 1 L1): getAllNonTriggeredSlices is LAZY — it returns the band still spilled; the handler
+    /// re-materialises one window at a time via ensureWindowSlicesResident. Mirror that here, then assert every window is
+    /// flushed AND resident on the way out.
     store->incrementNumberOfInputPipelines();
-    const auto drained = store->getAllNonTriggeredSlices();
+    auto drained = store->getAllNonTriggeredSlices();
     std::vector<SliceEnd> drainedEnds;
-    for (const auto& [windowInfo, slices] : drained)
+    for (auto& [windowInfo, slices] : drained)
     {
+        store->ensureWindowSlicesResident(slices); /// paced re-materialise: one window at a time
         for (const auto& slice : slices)
         {
             drainedEnds.push_back(slice->getSliceEnd());
@@ -873,6 +883,124 @@ TEST_F(SpillableTimeBasedSliceStoreTest, emitLagBacklogFullyFlushedOnTerminate)
     std::ranges::sort(drainedEnds);
     std::ranges::sort(created);
     EXPECT_EQ(drainedEnds, created); /// the whole backlog, nothing orphaned
+}
+
+/// ── Phase 1 (L1) — paced terminal flush. getAllNonTriggeredSlices is now LAZY (does NOT eagerly unspill the whole
+/// band); the handler unspills ONE window at a time via the new ensureWindowSlicesResident hook just before emitting it,
+/// bounding the terminal-flush unspill peak (Option 1). These prove the store-side mechanism; the end-to-end process-RSS
+/// win is measured out-of-gate by the Phase-0c harness. ──────────────────────────────────────────────────────────────
+
+/// P1-T1 (RED proof, existing API only): the terminal drain returns SPILLED slices STILL spilled — it no longer
+/// re-materialises the whole retained band up front. Pre-Phase-1 this FAILS (getAllNonTriggeredSlices eagerly unspilled
+/// every slice). All windows must still be present (nothing dropped by going lazy).
+TEST_F(SpillableTimeBasedSliceStoreTest, terminalFlushReturnsSlicesStillSpilled)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+    std::vector<SliceEnd> ends;
+    for (const uint64_t ts : {50ULL, 150ULL, 250ULL})
+    {
+        const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+        populate(slice, WorkerThreadId(0), 5, ts);
+        ends.push_back(slice->getSliceEnd());
+    }
+    for (const auto end : ends)
+    {
+        store->forceSpill(end);
+        ASSERT_FALSE(store->isSliceResident(end));
+    }
+
+    store->incrementNumberOfInputPipelines();
+    const auto drained = store->getAllNonTriggeredSlices();
+    for (const auto end : ends)
+    {
+        EXPECT_FALSE(store->isSliceResident(end)); /// lazy: NOT unspilled by the terminal drain itself
+        EXPECT_TRUE(triggeredContains(drained, end)); /// ...but every window is still returned
+    }
+}
+
+/// P1-T2 (the peak-bounding mechanism): ensureWindowSlicesResident unspills ONLY the window it is handed; the rest of
+/// the band stays on disk, so at most one window's footprint is re-materialised at a time.
+TEST_F(SpillableTimeBasedSliceStoreTest, ensureWindowSlicesResidentUnspillsOnlyThatWindow)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+    for (const uint64_t ts : {50ULL, 150ULL, 250ULL})
+    {
+        const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+        populate(slice, WorkerThreadId(0), 5, ts);
+        store->forceSpill(slice->getSliceEnd());
+    }
+
+    store->incrementNumberOfInputPipelines();
+    auto drained = store->getAllNonTriggeredSlices();
+    ASSERT_EQ(drained.size(), 3U);
+    std::vector<std::vector<std::shared_ptr<Slice>>> windows; /// ordered by windowEnd (map ordering)
+    for (auto& [windowInfo, slices] : drained)
+    {
+        windows.push_back(slices);
+    }
+    store->ensureWindowSlicesResident(windows[0]);
+    EXPECT_TRUE(store->isSliceResident(windows[0].front()->getSliceEnd()));
+    EXPECT_FALSE(store->isSliceResident(windows[1].front()->getSliceEnd()));
+    EXPECT_FALSE(store->isSliceResident(windows[2].front()->getSliceEnd()));
+}
+
+/// P1-T3 (correct + complete): the full paced drain (ensure every window) yields the SAME window set and per-window
+/// contents as before spilling — pacing the unspill loses nothing and duplicates nothing.
+TEST_F(SpillableTimeBasedSliceStoreTest, pacedTerminalFlushFullDrainCorrectAndComplete)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+    std::map<SliceEnd, std::vector<Entry>> expected;
+    std::vector<std::shared_ptr<Slice>> slices;
+    for (const uint64_t ts : {50ULL, 150ULL, 250ULL})
+    {
+        const auto slice = store->getSlicesOrCreate(Timestamp(ts), spillableSliceFactory())[0];
+        populate(slice, WorkerThreadId(0), 5, ts);
+        expected[slice->getSliceEnd()] = sortedEntries(*dynamic_cast<SpillableAggregationSlice*>(slice.get()), WorkerThreadId(0));
+        slices.push_back(slice);
+    }
+    for (const auto& s : slices)
+    {
+        store->forceSpill(s->getSliceEnd());
+        ASSERT_FALSE(store->isSliceResident(s->getSliceEnd()));
+    }
+
+    store->incrementNumberOfInputPipelines();
+    auto drained = store->getAllNonTriggeredSlices();
+    std::map<SliceEnd, std::vector<Entry>> got;
+    for (auto& [windowInfo, windowSlices] : drained)
+    {
+        store->ensureWindowSlicesResident(windowSlices); /// paced: one window at a time, just before reading it
+        for (const auto& s : windowSlices)
+        {
+            EXPECT_TRUE(store->isSliceResident(s->getSliceEnd()));
+            got[s->getSliceEnd()] = sortedEntries(*dynamic_cast<SpillableAggregationSlice*>(s.get()), WorkerThreadId(0));
+        }
+    }
+    EXPECT_EQ(got, expected); /// same windows, same contents
+}
+
+/// P1-T4 (invariant preserved): ensureWindowSlicesResident marks each window emitted, so the async-probe-drain guard
+/// still holds — an emitted slice can never be re-spilled (forceSpill rejects it). This proves the mark-emitted step did
+/// not get lost when it moved out of getAllNonTriggeredSlices into the per-window hook.
+TEST_F(SpillableTimeBasedSliceStoreTest, ensureWindowSlicesResidentMarksEmittedAndPreventsRespill)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+    const auto slice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto sliceEnd = slice->getSliceEnd();
+    populate(slice, WorkerThreadId(0), 5, 0);
+    store->forceSpill(sliceEnd);
+
+    store->incrementNumberOfInputPipelines();
+    auto drained = store->getAllNonTriggeredSlices();
+    ASSERT_EQ(drained.size(), 1U);
+    store->ensureWindowSlicesResident(drained.begin()->second);
+    EXPECT_TRUE(store->isSliceResident(sliceEnd));
+    /// Emitted now ⇒ the spiller / hard-eviction can never touch it again.
+    ASSERT_EXCEPTION_ERRORCODE(store->forceSpill(sliceEnd), ErrorCode::SpillStoreFailure);
 }
 
 /// C-T5 (the E0 → fixed proof): emitLag > 0 makes the cold-AND-unemitted set NON-EMPTY (the retained band), so the

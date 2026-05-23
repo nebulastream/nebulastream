@@ -228,7 +228,19 @@ bool SpillableTimeBasedSliceStore::recordCreatedSlice(const std::shared_ptr<Slic
 void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& windowSlices)
 {
-    /// PR-3 trigger-WAIT (closes the spill-vs-emit / spill-vs-trigger UAF). For each returned spillable slice:
+    /// Batch form used by the STEADY-STATE emit path (getTriggerableWindowSlices). Delegates to the per-window primitive
+    /// ensureWindowSlicesResident so the steady path and the Phase-1 paced terminal flush share exactly ONE unspill+
+    /// mark-emitted code path. The terminal path (triggerAllWindows) instead calls ensureWindowSlicesResident directly,
+    /// one window at a time, so it never re-materialises the whole retained band at once.
+    for (auto& [windowInfo, slices] : windowSlices)
+    {
+        ensureWindowSlicesResident(slices);
+    }
+}
+
+void SpillableTimeBasedSliceStore::ensureWindowSlicesResident(const std::vector<std::shared_ptr<Slice>>& windowSlices)
+{
+    /// PR-3 trigger-WAIT (closes the spill-vs-emit / spill-vs-trigger UAF). For each spillable slice in THIS window:
     ///   1. under evictionMutex, WAIT on spillerCv until no in-flight spill of this sliceEnd remains, THEN insert it
     ///      into emittedKeys BEFORE releasing the mutex — so no NEW spill of this slice can start after the wait (the
     ///      spiller's pickAndReserveColdSlice rejects emitted slices), and a slice mid-spill cannot be handed to the
@@ -236,65 +248,63 @@ void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
     ///   2. OUTSIDE the mutex, if the slice is non-resident (it was fully spilled before we claimed it), unspill it
     ///      (uniform no-I/O-under-lock) — this cannot race a spiller because the slice is now emitted.
     /// The slice always ends resident+emitted. (See the eviction-mutex invariant on evictionMutex.)
+    NES_DEBUG("ensureWindowSlicesResident: ensuring {} slice(s) resident for one window", windowSlices.size());
     auto provider = bufferProvider.copy();
-    for (auto& [windowInfo, slices] : windowSlices)
+    for (const auto& slice : windowSlices)
     {
-        for (auto& slice : slices)
+        auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(slice);
+        if (spillable == nullptr)
         {
-            auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(slice);
-            if (spillable == nullptr)
+            continue;
+        }
+        const auto sliceEnd = spillable->getSliceEnd();
+        bool needsUnspill = false;
+        {
+            std::unique_lock lock(evictionMutex);
+            if (spillInProgress.contains(sliceEnd))
             {
-                continue;
+                NES_TRACE("Trigger of slice {} waiting on in-flight spill", sliceEnd);
+                spillerCv.wait(lock, [&] { return !spillInProgress.contains(sliceEnd); });
             }
-            const auto sliceEnd = spillable->getSliceEnd();
-            bool needsUnspill = false;
-            {
-                std::unique_lock lock(evictionMutex);
-                if (spillInProgress.contains(sliceEnd))
-                {
-                    NES_TRACE("Trigger of slice {} waiting on in-flight spill", sliceEnd);
-                    spillerCv.wait(lock, [&] { return !spillInProgress.contains(sliceEnd); });
-                }
-                /// Claim it BEFORE releasing the mutex: the spiller can never (re-)pick an emitted slice.
-                emittedKeys.wlock()->insert(sliceEnd);
-                /// Increment C: emitted now ⇒ emittedKeys protects it; drop any (now-redundant) late-write pin so
-                /// pinnedKeys stays bounded by live, unemitted, late-touched slices.
-                pinnedKeys.erase(sliceEnd);
-                /// If it is spilled we will unspill it OUTSIDE the lock. Reserve it in spillInProgress for the duration
-                /// so a concurrent residentBytes() SKIPS this slice while unspill() is rebuilding its maps (the read
-                /// would otherwise race the map mutation). No spiller can pick it (it is emitted), so the reservation is
-                /// purely to fence the footprint reader.
-                needsUnspill = !spillable->isResident();
-                if (needsUnspill)
-                {
-                    spillInProgress.insert(sliceEnd);
-                }
-            }
+            /// Claim it BEFORE releasing the mutex: the spiller can never (re-)pick an emitted slice.
+            emittedKeys.wlock()->insert(sliceEnd);
+            /// Increment C: emitted now ⇒ emittedKeys protects it; drop any (now-redundant) late-write pin so
+            /// pinnedKeys stays bounded by live, unemitted, late-touched slices.
+            pinnedKeys.erase(sliceEnd);
+            /// If it is spilled we will unspill it OUTSIDE the lock. Reserve it in spillInProgress for the duration
+            /// so a concurrent residentBytes() SKIPS this slice while unspill() is rebuilding its maps (the read
+            /// would otherwise race the map mutation). No spiller can pick it (it is emitted), so the reservation is
+            /// purely to fence the footprint reader.
+            needsUnspill = !spillable->isResident();
             if (needsUnspill)
             {
-                INVARIANT(provider != nullptr, "buffer provider must be stashed before an unspill-on-read");
-                NES_DEBUG("Unspilling slice {} on trigger read", sliceEnd);
-                /// L1: mirror the PR-2 spill guard on the unspill path. If unspill() throws, the spillInProgress
-                /// reservation (the footprint-reader fence) must STILL be released — a leak would make residentBytes()
-                /// permanently skip this slice AND hang any future spillerCv.wait on this sliceEnd forever. The guard's
-                /// release runs under evictionMutex (via releaseReservation) and notifies spillerCv, exactly matching the
-                /// success-path cleanup below. Commit only after the spilledKeys.erase succeeds so the success path does
-                /// not double-erase the reservation (the manual block below + the guard would otherwise both run).
-                ReservationGuard unspillGuard{*this, sliceEnd};
-                const auto unspillStart = std::chrono::steady_clock::now();
-                spillable->unspill(*backend, *provider); /// I/O OUTSIDE evictionMutex (slice is emitted ⇒ no spiller race)
-                /// residentBytesOf measured AFTER unspill() — the bytes re-materialized into the pool (mirror of the spill
-                /// sites, which read the footprint freed BEFORE spill(); reading here before unspill() would yield 0).
-                recordUnspillSample(std::chrono::steady_clock::now() - unspillStart, residentBytesOf(*spillable));
-                spilledKeys.wlock()->erase(sliceEnd);
-                /// Release the footprint-reader fence + wake anyone waiting on this sliceEnd.
-                {
-                    std::unique_lock lock(evictionMutex);
-                    spillInProgress.erase(sliceEnd);
-                }
-                spillerCv.notify_all();
-                unspillGuard.committed = true; /// success: reservation already erased above, do not double-erase
+                spillInProgress.insert(sliceEnd);
             }
+        }
+        if (needsUnspill)
+        {
+            INVARIANT(provider != nullptr, "buffer provider must be stashed before an unspill-on-read");
+            NES_DEBUG("Unspilling slice {} on trigger read", sliceEnd);
+            /// L1: mirror the PR-2 spill guard on the unspill path. If unspill() throws, the spillInProgress
+            /// reservation (the footprint-reader fence) must STILL be released — a leak would make residentBytes()
+            /// permanently skip this slice AND hang any future spillerCv.wait on this sliceEnd forever. The guard's
+            /// release runs under evictionMutex (via releaseReservation) and notifies spillerCv, exactly matching the
+            /// success-path cleanup below. Commit only after the spilledKeys.erase succeeds so the success path does
+            /// not double-erase the reservation (the manual block below + the guard would otherwise both run).
+            ReservationGuard unspillGuard{*this, sliceEnd};
+            const auto unspillStart = std::chrono::steady_clock::now();
+            spillable->unspill(*backend, *provider); /// I/O OUTSIDE evictionMutex (slice is emitted ⇒ no spiller race)
+            /// residentBytesOf measured AFTER unspill() — the bytes re-materialized into the pool (mirror of the spill
+            /// sites, which read the footprint freed BEFORE spill(); reading here before unspill() would yield 0).
+            recordUnspillSample(std::chrono::steady_clock::now() - unspillStart, residentBytesOf(*spillable));
+            spilledKeys.wlock()->erase(sliceEnd);
+            /// Release the footprint-reader fence + wake anyone waiting on this sliceEnd.
+            {
+                std::unique_lock lock(evictionMutex);
+                spillInProgress.erase(sliceEnd);
+            }
+            spillerCv.notify_all();
+            unspillGuard.committed = true; /// success: reservation already erased above, do not double-erase
         }
     }
 }
@@ -383,10 +393,14 @@ SpillableTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalW
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> SpillableTimeBasedSliceStore::getAllNonTriggeredSlices()
 {
     auto result = DefaultTimeBasedSliceStore::getAllNonTriggeredSlices();
-    unspillAndMarkEmitted(result);
+    /// Phase 1 (L1): LAZY terminal flush. Do NOT unspill the whole retained band here — that re-materialised every
+    /// completed window into the buffer pool at once (the terminal-flush memory peak ≈ whole band). Instead return the
+    /// band still-spilled; WindowBasedOperatorHandler::triggerAllWindows calls ensureWindowSlicesResident() per window,
+    /// unspilling + emitting ONE window at a time so the unspill peak is bounded to a single window's footprint.
     /// Deliberately do NOT bump lastSeenWatermark here: this is the terminate path, where the spiller is quiesced
     /// before deleteState, so cold-selection is moot. Leaving it unchanged keeps the learned watermark a pure
     /// build-progress signal (O-B-watermark).
+    NES_TRACE("getAllNonTriggeredSlices: returning {} windows (lazy; unspilled per-window by the handler)", result.size());
     return result;
 }
 

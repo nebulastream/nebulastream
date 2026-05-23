@@ -90,9 +90,23 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
 
 void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pipelineCtx)
 {
-    const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
-    NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
-    triggerSlices(slicesAndWindowInfo, pipelineCtx);
+    /// Phase 1 (L1) paced terminal flush. getAllNonTriggeredSlices() now returns the retained band possibly STILL
+    /// spilled (out-of-core stores defer the unspill so the whole band is not re-materialised at once). We therefore
+    /// ensure-resident and trigger ONE window at a time: each window is unspilled (ensureWindowSlicesResident) right
+    /// before it is emitted (triggerSlices), bounding the terminal-flush unspill peak to a single window's footprint.
+    /// For in-memory stores ensureWindowSlicesResident is a no-op, so behaviour there is unchanged.
+    auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
+    NES_TRACE("Triggering {} windows (paced, one at a time) for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
+    for (auto& [windowInfo, slices] : slicesAndWindowInfo)
+    {
+        sliceAndWindowStore->ensureWindowSlicesResident(slices);
+        /// One single-entry map per window reuses the existing triggerSlices(map) contract unchanged (shared with the
+        /// steady-state path and the join handlers). The per-window heap allocation is intentional + cheap: this runs once
+        /// per window on the end-of-stream terminal flush only. Avoiding it would require a new single-(window,slices)
+        /// triggerSlices overload across all three handler implementations — out of proportion here.
+        std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> oneWindow{{windowInfo, slices}};
+        triggerSlices(oneWindow, pipelineCtx);
+    }
 }
 
 }

@@ -81,7 +81,19 @@ public:
     /// Retrieves all current non-deleted slices that have not been triggered yet
     /// This method returns for each window all slices that have not been triggered yet, regardless of any watermark timestamp
     /// Additionally, it returns a sequence number per window that is incremented for each window and thus, it can be used to set it in the emitted tuple buffer for the probe operator.
+    ///
+    /// CONTRACT (out-of-core, Phase 1 L1): the slices returned by getAllNonTriggeredSlices() are NOT guaranteed resident.
+    /// An out-of-core store may hand them back still spilled so the terminal flush can re-materialise the retained band
+    /// ONE window at a time instead of all at once (bounding the terminal-flush memory peak). The caller MUST therefore
+    /// call ensureWindowSlicesResident(windowSlices) for a window before dereferencing that window's slice HashMap*s.
     virtual std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() = 0;
+
+    /// Ensures the given window's slices are resident (in memory) and ready to be read/emitted, unspilling them from the
+    /// out-of-core backend if necessary and marking them emitted so they are not concurrently re-spilled. Called per
+    /// window by the terminal-flush loop just before that window's slices are dereferenced, so an out-of-core store
+    /// re-materialises only one window's footprint at a time. Default = no-op: in-memory stores keep all slices resident,
+    /// so there is nothing to do.
+    virtual void ensureWindowSlicesResident(const std::vector<std::shared_ptr<Slice>>& windowSlices) { (void)windowSlices; }
 
     /// Garbage collect all slices and windows that are not valid anymore
     /// It is open for the implementation to delete the slices in this call or to mark them for deletion
