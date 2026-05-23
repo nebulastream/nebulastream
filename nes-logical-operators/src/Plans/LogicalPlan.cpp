@@ -79,7 +79,7 @@ LogicalPlan& LogicalPlan::operator=(const LogicalPlan& other)
 }
 
 LogicalPlan::LogicalPlan(LogicalPlan&& other) noexcept
-    : queryId(other.queryId), rootOperators(std::move(other.rootOperators)), originalSql(std::move(other.originalSql))
+    : queryId(std::move(other.queryId)), rootOperators(std::move(other.rootOperators)), originalSql(std::move(other.originalSql))
 {
 }
 
