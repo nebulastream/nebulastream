@@ -15,6 +15,8 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -23,7 +25,9 @@
 #include <mutex>
 #include <optional>
 #include <set>
+#include <stop_token>
 #include <string>
+#include <thread>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -61,17 +65,33 @@ namespace NES
 /// (`lastSeenWatermark`) in the trigger feeders; and exposes a store-wide residentBytes() (Σ over createdSlices).
 /// `createdSlices` is pruned of expired weak_ptrs in garbageCollectSlicesAndWindows and cleared in deleteState.
 ///
-/// Increment B (PR-2, this layer): adds the SYNCHRONOUS hard-threshold eviction policy on the worker path. When
-/// getSlicesOrCreate NEWLY tracks a slice and store-wide residentBytes() exceeds the hard threshold, the worker
-/// thread itself spills COLD slices (sliceEnd < lastSeenWatermark, resident, not emitted, not in-flight) oldest-first
-/// until back under hard or no cold candidate remains (O-B5: proceed over-budget, never throw, never block). All
-/// eviction decisions are serialized by an OUTER `evictionMutex` + a per-slice `spillInProgress` reservation set; ALL
-/// RocksDB I/O (spill()) happens OUTSIDE the mutex (uniform no-I/O-under-lock). forceSpill now shares this serializer.
-/// The background spiller (soft threshold), the trigger-wait condvar, and the store-owned lifecycle land in PR-3;
-/// this layer is still single-threaded beyond the base's per-map folly::Synchronized guarantees.
+/// Increment B (PR-2): adds the SYNCHRONOUS hard-threshold eviction policy on the worker path. When getSlicesOrCreate
+/// NEWLY tracks a slice and store-wide residentBytes() exceeds the hard threshold, the worker thread itself spills COLD
+/// slices (sliceEnd < lastSeenWatermark, resident, not emitted, not in-flight) oldest-first until back under hard or no
+/// cold candidate remains (O-B5: proceed over-budget, never throw, never block). All eviction decisions are serialized
+/// by an OUTER `evictionMutex` + a per-slice `spillInProgress` reservation set; ALL RocksDB I/O (spill()) happens
+/// OUTSIDE the mutex (uniform no-I/O-under-lock). forceSpill shares this serializer.
+///
+/// Increment B (PR-3, this layer): turns the store MULTI-THREAD-SAFE. A store-owned background `std::jthread` spiller
+/// (declared LAST, so reverse-order member destruction joins it first) preemptively spills the oldest COLD slices once
+/// resident memory crosses the SOFT threshold, woken by `spillerCv` (paired with `evictionMutex`) on a cache-miss
+/// getSlicesOrCreate / trigger-feeder cadence, with a bounded SPILLER_POLL_INTERVAL wait_for safety net. It is started
+/// lazily at the end of setBufferProvider (idempotent via `spillerStarted`) and stopped+joined FIRST in both the dtor
+/// and deleteState (before backend/bufferProvider die / before the base clears state). The eviction-mutex invariant
+/// (verbatim): evictionMutex covers ONLY in-memory decisions — pick-cold, confirm-not-emitted, reserve, mark-emitted,
+/// clear-reservation. ALL RocksDB I/O — both spill() and unspill() — happens OUTSIDE evictionMutex, protected by the
+/// per-slice spillInProgress reservation; the rare spill-vs-trigger-same-slice collision is handled by a condvar wait.
+/// A trigger that wants a mid-spill slice WAITs on spillerCv under evictionMutex until the spiller finalizes, claims it
+/// in emittedKeys BEFORE releasing the mutex (so the spiller can never re-pick it), then unspills it OUTSIDE the mutex —
+/// a triggered slice always ends resident+emitted, never half-freed. Lock order is always evictionMutex → (createdSlices
+/// | one folly set); the base slices/windows maps are NEVER taken under it.
 class SpillableTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
 {
 public:
+    /// PR-3 lifecycle: stop+join the background spiller FIRST (before backend/bufferProvider are destroyed and before
+    /// the base dtor runs deleteState), so the loop can never touch a half-destroyed store.
+    ~SpillableTimeBasedSliceStore() override;
+
     SpillableTimeBasedSliceStore(
         uint64_t windowSize,
         uint64_t windowSlide,
@@ -91,8 +111,7 @@ public:
     /// exactly one) in `createdSlices` so the Increment-B eviction scan can enumerate cold slices without
     /// touching the private base maps. Signature mirrors the base override exactly.
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
-        Timestamp timestamp,
-        const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
+        Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
 
     /// D3 unspill-on-read: every slice returned is unspilled (if non-resident) and recorded as emitted (its raw
     /// HashMap* will be snapshotted for the async probe → it must not be spilled afterwards).
@@ -176,13 +195,21 @@ private:
     /// private nested type so it can call releaseReservation without widening that helper's visibility.
     struct ReservationGuard;
 
+    /// PR-3 background-spiller lifecycle + loop body. startSpiller is idempotent (spillerStarted CAS); stopSpiller is
+    /// idempotent (safe to call from BOTH the dtor and deleteState). spillerLoop runs on the store-owned jthread: it
+    /// blocks on spillerCv (bounded by SPILLER_POLL_INTERVAL) until resident memory crosses soft or stop is requested,
+    /// then spills cold slices down to soft — NEVER holding evictionMutex across spillOneColdSlice (which manages its
+    /// own locks + I/O outside the mutex).
+    void startSpiller();
+    void stopSpiller();
+    void spillerLoop(std::stop_token stopToken);
+
     std::unique_ptr<SpillBackend> backend;
     folly::Synchronized<std::shared_ptr<AbstractBufferProvider>> bufferProvider;
     const uint64_t entriesPerPage;
     const uint64_t pageSize;
-    /// Soft threshold drives the background spiller (PR-3). PR-2 does not read it yet, so it stays [[maybe_unused]]
-    /// until then (-Wunused-private-field would otherwise fire).
-    [[maybe_unused]] const uint64_t softThresholdBytes;
+    /// Soft threshold drives the background spiller (PR-3 spillerLoop / getSlicesOrCreate soft signal). Now read.
+    const uint64_t softThresholdBytes;
     /// Hard threshold: the synchronous worker-path backstop (PR-2 evictUntilUnderHard). Now enforced.
     const uint64_t hardThresholdBytes;
     /// SliceEnds whose maps are currently spilled — drives isSliceResident() and GC backend-erase.
@@ -199,20 +226,33 @@ private:
     /// NOT be strengthened to seq_cst by a later reader. Bumped via CAS-max in the trigger feeders.
     std::atomic<Timestamp::Underlying> lastSeenWatermark{Timestamp(0).getRawValue()};
 
-    /// O-B3 (PR-2): the OUTER eviction serializer. It guards ONLY in-memory eviction decisions — pick-cold,
-    /// confirm-not-emitted, reserve (insert spillInProgress), mark-spilled, clear-reservation. ALL RocksDB I/O
-    /// (spill()) happens OUTSIDE this mutex, protected by the per-slice spillInProgress reservation (uniform
-    /// no-I/O-under-lock). Lock order is always evictionMutex → (createdSlices | one folly set); the base
-    /// slices/windows maps are NEVER taken under it. mutable: the dtor and stopSpiller (PR-3) will take it from a const
-    /// context (residentBytes() does NOT take it — it only locks createdSlices). (The condvar + background thread that
-    /// complete this model land in PR-3.)
+    /// O-B3: the OUTER eviction serializer. It guards ONLY in-memory eviction decisions — pick-cold, confirm-not-emitted,
+    /// reserve (insert spillInProgress), mark-spilled, mark-emitted, clear-reservation, and the `quiesced` flag. The
+    /// eviction-mutex invariant (verbatim): evictionMutex covers ONLY in-memory decisions; ALL RocksDB I/O — both spill()
+    /// and unspill() — happens OUTSIDE evictionMutex, protected by the per-slice spillInProgress reservation; the rare
+    /// spill-vs-trigger-same-slice collision is handled by a condvar wait. Lock order is always evictionMutex →
+    /// (createdSlices | one folly set); the base slices/windows maps are NEVER taken under it. mutable: the dtor and
+    /// stopSpiller take it from a const context (residentBytes() does NOT take it — it only locks createdSlices).
     mutable std::mutex evictionMutex;
+    /// Spiller wakeup + trigger-wait condvar (paired with evictionMutex). The background spiller blocks on it (woken by
+    /// the soft-signal at the getSlicesOrCreate / trigger cadences, bounded by SPILLER_POLL_INTERVAL); a trigger that
+    /// wants a mid-spill slice WAITs on it until finalizeSpill notifies. ALWAYS used with evictionMutex held.
+    std::condition_variable spillerCv;
     /// Per-slice reservation set (O-B3): a SliceEnd here has an in-flight spill; the eviction scan and forceSpill
-    /// both skip it. ALWAYS accessed under evictionMutex (a plain set — evictionMutex already guards it).
+    /// both skip it, and unspillAndMarkEmitted WAITs on spillerCv until it leaves. ALWAYS accessed under evictionMutex
+    /// (a plain set — evictionMutex already guards it).
     std::set<SliceEnd> spillInProgress;
+    /// Set true (under evictionMutex) by stopSpiller before join: pickAndReserveColdSlice returns nullopt while it is
+    /// set, so the spiller stops picking and the loop drains promptly. Read under evictionMutex.
+    bool quiesced = false;
+    /// Start-once guard for the background spiller (belt-and-braces with setBufferProvider's "already stashed → return").
+    std::atomic<bool> spillerStarted{false};
     /// Monotonic count of real spills performed (eviction path + forceSpill). Atomic so it is safe to read from
     /// tests without evictionMutex; bumped right after a successful spill() I/O.
     std::atomic<std::size_t> spillCount{0};
+    /// Store-owned background spiller. Declared LAST so reverse-order member destruction joins it FIRST — but the dtor
+    /// also calls stopSpiller() explicitly so the loop is stopped before backend/bufferProvider (declared earlier) die.
+    std::jthread spiller;
 };
 
 }

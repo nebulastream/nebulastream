@@ -15,6 +15,8 @@
 #include <SliceStore/SpillableTimeBasedSliceStore.hpp>
 
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -24,9 +26,12 @@
 #include <mutex>
 #include <optional>
 #include <set>
+#include <stop_token>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
+#include <Aggregation/SpillableAggregationSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -36,12 +41,19 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Aggregation/SpillableAggregationSlice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
 
 namespace NES
 {
+
+/// O-B2 reconciled divergence 2: the background spiller's bounded wait_for is ONLY a safety net behind the condvar
+/// (which is primary), so it never adds latency on the loaded path — it just re-checks the stop token and drains a
+/// store that stopped creating slices but is still over soft.
+namespace
+{
+constexpr std::chrono::milliseconds SPILLER_POLL_INTERVAL{100};
+}
 
 /// RAII reservation-release guard: erases `end` from the store's spillInProgress (under evictionMutex, via
 /// releaseReservation) on scope exit UNLESS `committed` was set. Used to guarantee a reserved-but-not-finalized slice
@@ -57,7 +69,9 @@ struct SpillableTimeBasedSliceStore::ReservationGuard
     ReservationGuard& operator=(const ReservationGuard&) = delete;
     ReservationGuard(ReservationGuard&&) = delete;
     ReservationGuard& operator=(ReservationGuard&&) = delete;
+
     ReservationGuard(SpillableTimeBasedSliceStore& store, const SliceEnd end) : store(store), end(end) { }
+
     ~ReservationGuard()
     {
         if (!committed)
@@ -69,8 +83,14 @@ struct SpillableTimeBasedSliceStore::ReservationGuard
 
 void SpillableTimeBasedSliceStore::releaseReservation(const SliceEnd end)
 {
-    std::unique_lock lock(evictionMutex);
-    spillInProgress.erase(end);
+    {
+        std::unique_lock lock(evictionMutex);
+        spillInProgress.erase(end);
+    }
+    /// PR-3: a reservation can be released WITHOUT finalizing (spill() threw, or the weak_ptr expired between reserve
+    /// and lookup). A trigger WAITing on this sliceEnd in unspillAndMarkEmitted is only woken by a notify, and on these
+    /// non-finalize paths finalizeSpill never runs — so notify here too, or the waiter would hang forever.
+    spillerCv.notify_all();
 }
 
 SpillableTimeBasedSliceStore::SpillableTimeBasedSliceStore(
@@ -100,6 +120,14 @@ SpillableTimeBasedSliceStore::SpillableTimeBasedSliceStore(
         hardThresholdBytes);
 }
 
+SpillableTimeBasedSliceStore::~SpillableTimeBasedSliceStore()
+{
+    /// PR-3 teardown: stop+join the spiller BEFORE backend/bufferProvider (declared earlier ⇒ destroyed AFTER `spiller`,
+    /// but we must not rely on that for correctness during the base dtor's deleteState) and before the base dtor runs.
+    /// stopSpiller is idempotent — deleteState() may already have joined it.
+    stopSpiller();
+}
+
 std::unique_ptr<SpillBackend>
 SpillableTimeBasedSliceStore::makeRocksDBBackend(const std::string& rocksdbPath, const std::string& compression)
 {
@@ -120,6 +148,10 @@ void SpillableTimeBasedSliceStore::setBufferProvider(std::shared_ptr<AbstractBuf
             stashed = std::move(provider);
             NES_DEBUG("Stashed buffer provider for spillable slice store");
         });
+    /// PR-3: start the store-owned background spiller lazily once the buffer provider is available (unspill-on-spiller
+    /// needs it only on the trigger path, but starting here keeps the lifecycle in one place). Idempotent: the
+    /// "already stashed → return" branch above plus startSpiller's CAS guard prevent a double start.
+    startSpiller();
 }
 
 std::vector<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSlicesOrCreate(
@@ -138,9 +170,15 @@ std::vector<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSlicesOrCre
     {
         if (const auto resident = residentBytes(); resident > hardThresholdBytes)
         {
-            NES_DEBUG(
-                "Hard threshold crossed (resident={} > hard={}); synchronous spill on worker path", resident, hardThresholdBytes);
+            NES_DEBUG("Hard threshold crossed (resident={} > hard={}); synchronous spill on worker path", resident, hardThresholdBytes);
             evictUntilUnderHard();
+        }
+        /// PR-3 soft signal: only when NOT already over hard (the hard branch already spilled inline). A cheap compare
+        /// that wakes the background spiller — it does NOT spill on the worker path, keeping the worker latency-bounded.
+        else if (resident > softThresholdBytes)
+        {
+            NES_TRACE("Soft threshold crossed (resident={} > soft={}); waking spiller", resident, softThresholdBytes);
+            spillerCv.notify_one();
         }
     }
     return result;
@@ -159,13 +197,14 @@ bool SpillableTimeBasedSliceStore::recordCreatedSlice(const std::shared_ptr<Slic
 void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& windowSlices)
 {
-    /// PR-3 OBLIGATION (deliberately NOT done in PR-2): this function does NOT take evictionMutex and does NOT WAIT on
-    /// an in-flight spill of the slice. PR-2 hardened only forceSpill into the serializer (its emitted-check + reserve
-    /// are atomic under evictionMutex); unspillAndMarkEmitted was left for PR-3, which MUST wrap the per-slice body in
-    /// evictionMutex and, while spillInProgress.contains(sliceEnd), WAIT on spillerCv before inserting into emittedKeys
-    /// + unspilling (see PLAN PR-3 unspillAndMarkEmitted rewrite). The emitted-mark insert here is NOT yet serialized
-    /// against a concurrent eviction — this is safe ONLY under the current single-threaded PR-2 contract. No behavior
-    /// change in PR-2.
+    /// PR-3 trigger-WAIT (closes the spill-vs-emit / spill-vs-trigger UAF). For each returned spillable slice:
+    ///   1. under evictionMutex, WAIT on spillerCv until no in-flight spill of this sliceEnd remains, THEN insert it
+    ///      into emittedKeys BEFORE releasing the mutex — so no NEW spill of this slice can start after the wait (the
+    ///      spiller's pickAndReserveColdSlice rejects emitted slices), and a slice mid-spill cannot be handed to the
+    ///      probe half-freed (we waited the spill out);
+    ///   2. OUTSIDE the mutex, if the slice is non-resident (it was fully spilled before we claimed it), unspill it
+    ///      (uniform no-I/O-under-lock) — this cannot race a spiller because the slice is now emitted.
+    /// The slice always ends resident+emitted. (See the eviction-mutex invariant on evictionMutex.)
     auto provider = bufferProvider.copy();
     for (auto& [windowInfo, slices] : windowSlices)
     {
@@ -177,15 +216,39 @@ void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
                 continue;
             }
             const auto sliceEnd = spillable->getSliceEnd();
-            if (!spillable->isResident())
+            bool needsUnspill = false;
+            {
+                std::unique_lock lock(evictionMutex);
+                if (spillInProgress.contains(sliceEnd))
+                {
+                    NES_TRACE("Trigger of slice {} waiting on in-flight spill", sliceEnd);
+                    spillerCv.wait(lock, [&] { return !spillInProgress.contains(sliceEnd); });
+                }
+                /// Claim it BEFORE releasing the mutex: the spiller can never (re-)pick an emitted slice.
+                emittedKeys.wlock()->insert(sliceEnd);
+                /// If it is spilled we will unspill it OUTSIDE the lock. Reserve it in spillInProgress for the duration
+                /// so a concurrent residentBytes() SKIPS this slice while unspill() is rebuilding its maps (the read
+                /// would otherwise race the map mutation). No spiller can pick it (it is emitted), so the reservation is
+                /// purely to fence the footprint reader.
+                needsUnspill = !spillable->isResident();
+                if (needsUnspill)
+                {
+                    spillInProgress.insert(sliceEnd);
+                }
+            }
+            if (needsUnspill)
             {
                 INVARIANT(provider != nullptr, "buffer provider must be stashed before an unspill-on-read");
                 NES_DEBUG("Unspilling slice {} on trigger read", sliceEnd);
-                spillable->unspill(*backend, *provider);
+                spillable->unspill(*backend, *provider); /// I/O OUTSIDE evictionMutex (slice is emitted ⇒ no spiller race)
                 spilledKeys.wlock()->erase(sliceEnd);
+                /// Release the footprint-reader fence + wake anyone waiting on this sliceEnd.
+                {
+                    std::unique_lock lock(evictionMutex);
+                    spillInProgress.erase(sliceEnd);
+                }
+                spillerCv.notify_all();
             }
-            /// Returned to the trigger path → its raw HashMap* will be snapshotted for the async probe; never spill now.
-            emittedKeys.wlock()->insert(sliceEnd);
         }
     }
 }
@@ -202,11 +265,13 @@ SpillableTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalW
     while (incoming > current && !lastSeenWatermark.compare_exchange_weak(current, incoming, std::memory_order_relaxed))
     {
     }
+    /// PR-3: a freshly advanced watermark may have just turned previously-hot slices cold — wake the spiller so it can
+    /// preemptively evict them (the soft-budget background path) instead of waiting for the next slice-creation tick.
+    spillerCv.notify_one();
     return result;
 }
 
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-SpillableTimeBasedSliceStore::getAllNonTriggeredSlices()
+std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> SpillableTimeBasedSliceStore::getAllNonTriggeredSlices()
 {
     auto result = DefaultTimeBasedSliceStore::getAllNonTriggeredSlices();
     unspillAndMarkEmitted(result);
@@ -221,14 +286,37 @@ std::optional<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSliceBySl
     auto opt = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd);
     if (opt.has_value())
     {
-        if (auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(opt.value());
-            spillable != nullptr && !spillable->isResident())
+        if (auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(opt.value()); spillable != nullptr)
         {
-            auto provider = bufferProvider.copy();
-            INVARIANT(provider != nullptr, "buffer provider must be stashed before an unspill-on-read");
-            NES_DEBUG("Unspilling slice {} on getSliceBySliceEnd", sliceEnd);
-            spillable->unspill(*backend, *provider);
-            spilledKeys.wlock()->erase(sliceEnd);
+            /// PR-3: random-access read (join-probe path; out of 4b scope) must be concurrency-safe too. WAIT out any
+            /// in-flight spill of this slice, then RESERVE it so neither a concurrent spiller pick nor a residentBytes()
+            /// footprint read races the unspill() map rebuild. The reservation is released after the I/O.
+            bool needsUnspill = false;
+            {
+                std::unique_lock lock(evictionMutex);
+                if (spillInProgress.contains(sliceEnd))
+                {
+                    spillerCv.wait(lock, [&] { return !spillInProgress.contains(sliceEnd); });
+                }
+                needsUnspill = !spillable->isResident();
+                if (needsUnspill)
+                {
+                    spillInProgress.insert(sliceEnd);
+                }
+            }
+            if (needsUnspill)
+            {
+                auto provider = bufferProvider.copy();
+                INVARIANT(provider != nullptr, "buffer provider must be stashed before an unspill-on-read");
+                NES_DEBUG("Unspilling slice {} on getSliceBySliceEnd", sliceEnd);
+                spillable->unspill(*backend, *provider);
+                spilledKeys.wlock()->erase(sliceEnd);
+                {
+                    std::unique_lock lock(evictionMutex);
+                    spillInProgress.erase(sliceEnd);
+                }
+                spillerCv.notify_all();
+            }
         }
     }
     return opt;
@@ -285,6 +373,10 @@ void SpillableTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestam
 
 void SpillableTimeBasedSliceStore::deleteState()
 {
+    /// PR-3: quiesce + join the background spiller FIRST, so it can never spill/reserve a slice while we are tearing
+    /// down the tracked state below (and never touch backend/bufferProvider mid-clear). Idempotent with the dtor.
+    NES_TRACE("Quiescing spiller before deleteState");
+    stopSpiller();
     /// Drop all on-disk records and tracked state before the base clears its in-memory maps. (Locks taken one at a
     /// time — see the H1 note in garbageCollectSlicesAndWindows.)
     std::vector<SliceEnd> keysToErase;
@@ -362,6 +454,12 @@ void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
 std::optional<SliceEnd> SpillableTimeBasedSliceStore::pickAndReserveColdSlice()
 {
     std::unique_lock lock(evictionMutex);
+    /// PR-3: once quiesced (stopSpiller before join / before deleteState) the spiller must stop picking, so the loop
+    /// drains promptly and never reserves a slice the store is about to tear down.
+    if (quiesced)
+    {
+        return std::nullopt;
+    }
     const auto wm = lastSeenWatermark.load(std::memory_order_relaxed);
 
     /// Snapshot (end, weak) pairs under ONE createdSlices rlock, then RELEASE it before evaluating the predicates —
@@ -433,6 +531,10 @@ void SpillableTimeBasedSliceStore::finalizeSpill(const SliceEnd end)
         spilledKeys.wlock()->insert(end);
         spillInProgress.erase(end);
     }
+    /// PR-3: notify any trigger WAITing on this slice's in-flight spill (unspillAndMarkEmitted's spillerCv.wait). The
+    /// reservation is now cleared, so its predicate (!spillInProgress.contains(end)) becomes true. notify_all because
+    /// multiple triggers could be waiting on distinct sliceEnds sharing this single condvar.
+    spillerCv.notify_all();
     NES_DEBUG("Spilled cold slice {}", end);
 }
 
@@ -488,9 +590,7 @@ void SpillableTimeBasedSliceStore::evictUntilUnderHard()
         if (!spillOneColdSlice())
         {
             NES_WARNING(
-                "Over hard budget ({} > {}) but no COLD slice to evict; proceeding over-budget",
-                residentBytes(),
-                hardThresholdBytes);
+                "Over hard budget ({} > {}) but no COLD slice to evict; proceeding over-budget", residentBytes(), hardThresholdBytes);
             break;
         }
     }
@@ -504,8 +604,7 @@ bool SpillableTimeBasedSliceStore::isSliceResident(const SliceEnd sliceEnd) cons
 uint64_t SpillableTimeBasedSliceStore::residentBytesOf(const Slice& slice) const
 {
     /// A spilled slice has freed its maps → zero resident footprint (the on-disk copy is not counted).
-    if (const auto* spillable = dynamic_cast<const SpillableAggregationSlice*>(&slice);
-        spillable != nullptr && !spillable->isResident())
+    if (const auto* spillable = dynamic_cast<const SpillableAggregationSlice*>(&slice); spillable != nullptr && !spillable->isResident())
     {
         return 0;
     }
@@ -514,8 +613,7 @@ uint64_t SpillableTimeBasedSliceStore::residentBytesOf(const Slice& slice) const
     uint64_t bytes = 0;
     for (uint64_t worker = 0; worker < hashMapSlice->getNumberOfHashMaps(); ++worker)
     {
-        if (const auto* map = hashMapSlice->getHashMapPtr(WorkerThreadId(static_cast<WorkerThreadId::Underlying>(worker)));
-            map != nullptr)
+        if (const auto* map = hashMapSlice->getHashMapPtr(WorkerThreadId(static_cast<WorkerThreadId::Underlying>(worker))); map != nullptr)
         {
             const uint64_t tuples = map->getNumberOfTuples();
             bytes += ((tuples + entriesPerPage - 1) / entriesPerPage) * pageSize;
@@ -526,14 +624,28 @@ uint64_t SpillableTimeBasedSliceStore::residentBytesOf(const Slice& slice) const
 
 uint64_t SpillableTimeBasedSliceStore::residentBytes() const
 {
-    /// Read-only snapshot (O-B-residentBytes): lock `createdSlices`, lock() each weak_ptr, skip expired entries, and
-    /// sum the existing per-slice footprint (0 for spilled). Touches no private base map; tolerates slight staleness.
+    /// O-B-residentBytes, made concurrency-safe for PR-3. The per-slice footprint read (residentBytesOf →
+    /// HashMapSlice::getHashMapPtr / getNumberOfTuples) dereferences the slice's `hashMaps`, which spill()/unspill()
+    /// mutate (and free) OUTSIDE evictionMutex while a slice is reserved in spillInProgress (spill) or being
+    /// unspilled-on-read (also reserved in spillInProgress, see unspillAndMarkEmitted / getSliceBySliceEnd). To avoid a
+    /// data race / the resident-INVARIANT trip, we hold evictionMutex while snapshotting BOTH the tracked slices and
+    /// the in-flight reservation set, then SKIP any slice that is in-flight (its footprint is transitioning to/from 0
+    /// anyway) and read only the stable, non-reserved slices. Lock order evictionMutex → createdSlices (consistent).
+    /// CALLER CONTRACT: must NOT already hold evictionMutex (the spiller loop computes resident bytes WITHOUT the lock —
+    /// see spillerLoop, which releases evictionMutex before each residentBytes() call). residentBytesOf is read WHILE
+    /// holding evictionMutex: an unreserved slice cannot transition INTO spillInProgress (and thus cannot begin a
+    /// concurrent spill()/unspill() that frees its maps) while we hold the lock, so the footprint read is race-free.
+    std::unique_lock lock(evictionMutex);
     uint64_t sum = 0;
     createdSlices.withRLock(
         [&](const auto& tracked)
         {
             for (const auto& [end, weak] : tracked)
             {
+                if (spillInProgress.contains(end))
+                {
+                    continue; /// in-flight spill/unspill mutating this slice's maps — skip (footprint transitioning to/from 0)
+                }
                 if (const auto slice = weak.lock())
                 {
                     sum += residentBytesOf(*slice);
@@ -562,6 +674,69 @@ void SpillableTimeBasedSliceStore::spillColdSlicesUnderHardForTest()
 std::size_t SpillableTimeBasedSliceStore::spillCountForTest() const
 {
     return spillCount.load();
+}
+
+void SpillableTimeBasedSliceStore::spillerLoop(std::stop_token stopToken)
+{
+    /// O-B2 soft path: block on spillerCv (woken by the getSlicesOrCreate soft signal / trigger feeder / stopSpiller),
+    /// bounded by SPILLER_POLL_INTERVAL as a safety net so a store that stopped creating slices but is still over soft
+    /// is still drained and the stop token is re-checked promptly.
+    ///
+    /// IMPORTANT (deadlock avoidance): residentBytes() itself acquires evictionMutex, so it must NEVER be called while
+    /// this loop holds evictionMutex. The wait therefore uses a plain timed wait_for with NO predicate touching
+    /// residentBytes(); the budget is evaluated AFTER the lock is released. spillOneColdSlice likewise manages its own
+    /// locks and does its I/O outside the mutex, so it is always called with the loop NOT holding evictionMutex.
+    while (!stopToken.stop_requested())
+    {
+        {
+            std::unique_lock lock(evictionMutex);
+            spillerCv.wait_for(lock, SPILLER_POLL_INTERVAL, [&] { return stopToken.stop_requested(); });
+        }
+        if (stopToken.stop_requested())
+        {
+            break;
+        }
+        /// Spill cold slices down to soft. O-B5: if nothing cold is available, log once and go back to waiting.
+        while (residentBytes() > softThresholdBytes)
+        {
+            if (!spillOneColdSlice())
+            {
+                NES_TRACE("Over soft ({} > {}) but no cold candidate; spiller sleeping", residentBytes(), softThresholdBytes);
+                break;
+            }
+            if (stopToken.stop_requested())
+            {
+                break;
+            }
+        }
+    }
+}
+
+void SpillableTimeBasedSliceStore::startSpiller()
+{
+    bool expected = false;
+    if (spillerStarted.compare_exchange_strong(expected, true))
+    {
+        spiller = std::jthread([this](std::stop_token stopToken) { spillerLoop(std::move(stopToken)); });
+        NES_DEBUG("Started background spiller thread (soft={}B, hard={}B)", softThresholdBytes, hardThresholdBytes);
+    }
+}
+
+void SpillableTimeBasedSliceStore::stopSpiller()
+{
+    /// Idempotent: callable from BOTH the dtor and deleteState. Setting `quiesced` first makes pickAndReserveColdSlice
+    /// bail so the loop drains; then request_stop + notify wakes the wait_for, and join blocks until the loop exits.
+    {
+        std::unique_lock lock(evictionMutex);
+        quiesced = true;
+    }
+    if (spiller.joinable())
+    {
+        NES_DEBUG("Stopping and joining background spiller thread");
+        spiller.request_stop();
+        spillerCv.notify_all();
+        spiller.join();
+    }
 }
 
 }
