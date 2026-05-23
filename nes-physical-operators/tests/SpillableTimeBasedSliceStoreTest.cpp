@@ -13,11 +13,15 @@
 */
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <functional>
 #include <memory>
+#include <optional>
+#include <span>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -37,6 +41,7 @@
 #include <HashMapSlice.hpp>
 #include <SliceStore/InMemorySpillBackend.hpp>
 #include <SliceStore/Slice.hpp>
+#include <SliceStore/SpillBackend.hpp>
 #include <SliceStore/SpillableTimeBasedSliceStore.hpp>
 #include <SliceCacheConfiguration.hpp>
 
@@ -44,6 +49,33 @@ namespace NES::Testing
 {
 
 using Entry = std::pair<uint64_t, std::vector<std::byte>>; /// (hash, key+value payload bytes)
+
+/// Throw-injection backend (H1/H2 regression): every put() throws while `failPut` is set, simulating an I/O failure
+/// (RocksDB error, bad_alloc) mid-spill. Clearing `failPut` lets a subsequent spill of the same slice succeed, which is
+/// how the test proves the reservation was RELEASED (not leaked) after the throw — a leaked reservation would make the
+/// retry a no-op ("already has an in-flight spill").
+class ThrowingSpillBackend final : public SpillBackend
+{
+public:
+    std::atomic<bool> failPut{true};
+    std::atomic<std::size_t> putCount{0};
+
+    void put(const SliceEnd /*sliceEnd*/, const WorkerThreadId /*workerThreadId*/, std::span<const std::byte> /*record*/) override
+    {
+        ++putCount;
+        if (failPut.load())
+        {
+            throw std::runtime_error("injected spill I/O failure");
+        }
+    }
+
+    std::optional<SpillRecord> get(const SliceEnd /*sliceEnd*/, const WorkerThreadId /*workerThreadId*/) override
+    {
+        return std::nullopt;
+    }
+
+    void erase(const SliceEnd /*sliceEnd*/) override { }
+};
 
 /// Increment A: drives SpillableTimeBasedSliceStore directly (single thread) to prove the spill lifetime model:
 /// force-spill a COLD slice, trigger it, observe unspill-on-read, and that the backend was used. True end-to-end
@@ -106,6 +138,25 @@ protected:
     {
         auto backend = std::make_unique<InMemorySpillBackend>();
         *backendOut = backend.get();
+        auto store = std::make_unique<SpillableTimeBasedSliceStore>(
+            WINDOW_SIZE,
+            WINDOW_SLIDE,
+            SliceCacheConfiguration{},
+            std::move(backend),
+            entriesPerPage(),
+            PAGE_SIZE,
+            softThresholdBytes,
+            hardThresholdBytes);
+        store->setBufferProvider(bufferManager);
+        return store;
+    }
+
+    /// H1/H2 regression: construct a store with a caller-supplied backend (e.g. ThrowingSpillBackend) and tiny
+    /// thresholds, so the spill exception paths are drivable. Mirrors makeStoreWithThresholds but does not assume the
+    /// InMemorySpillBackend type.
+    std::unique_ptr<SpillableTimeBasedSliceStore> makeStoreWithBackend(
+        std::unique_ptr<SpillBackend> backend, const uint64_t softThresholdBytes, const uint64_t hardThresholdBytes) const
+    {
         auto store = std::make_unique<SpillableTimeBasedSliceStore>(
             WINDOW_SIZE,
             WINDOW_SLIDE,
@@ -352,7 +403,6 @@ TEST_F(SpillableTimeBasedSliceStoreTest, hardEvictsOldestColdFirst)
     store->spillColdSlicesUnderHardForTest();
 
     /// Exactly one slice was spilled (the oldest, sliceA) — the loop stops once resident <= hard.
-    EXPECT_LE(store->residentBytes(), 2ULL * PAGE_SIZE);
     EXPECT_EQ(store->residentBytes(), 2ULL * PAGE_SIZE);
     EXPECT_EQ(store->spillCountForTest(), 1U);
     EXPECT_FALSE(store->isSliceResident(sliceA->getSliceEnd())); /// oldest spilled FIRST
@@ -496,6 +546,61 @@ TEST_F(SpillableTimeBasedSliceStoreTest, residentBytesEmptyStoreIsZero)
     InMemorySpillBackend* backend = nullptr;
     auto store = makeStore(&backend);
     EXPECT_EQ(store->residentBytes(), 0U);
+}
+
+/// PR-2 review H2: when spill() throws during forceSpill, the exception is re-thrown (throwing contract preserved) AND
+/// the spill reservation is RELEASED — so a subsequent forceSpill of the SAME slice actually retries the spill instead
+/// of no-op'ing as "already in-flight". A leaked reservation (the pre-fix bug) would make the retry a silent no-op.
+TEST_F(SpillableTimeBasedSliceStoreTest, forceSpillReleasesReservationWhenSpillThrows)
+{
+    auto backendOwned = std::make_unique<ThrowingSpillBackend>();
+    auto* const backend = backendOwned.get();
+    auto store = makeStoreWithBackend(std::move(backendOwned), /*soft*/ PAGE_SIZE, /*hard*/ 2ULL * PAGE_SIZE);
+
+    const auto slice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    populate(slice, WorkerThreadId(0), 3, 0);
+    const auto sliceEnd = slice->getSliceEnd();
+
+    /// First forceSpill: put() throws → the exception propagates (throwing contract preserved).
+    EXPECT_ANY_THROW(store->forceSpill(sliceEnd));
+    EXPECT_EQ(store->spillCountForTest(), 0U); /// spillCount only bumps AFTER a successful spill()
+    EXPECT_TRUE(store->isSliceResident(sliceEnd)); /// the spill never completed → still resident
+
+    /// The reservation must have been released: a second forceSpill retries (NOT a no-op). With put() now succeeding the
+    /// spill completes; if the reservation had leaked, this call would have returned early as "already in-flight".
+    backend->failPut.store(false);
+    EXPECT_NO_THROW(store->forceSpill(sliceEnd));
+    EXPECT_EQ(store->spillCountForTest(), 1U);
+    EXPECT_FALSE(store->isSliceResident(sliceEnd));
+    EXPECT_EQ(backend->putCount.load(), 2U); /// once (threw) + once (succeeded)
+}
+
+/// PR-2 review H1: when spill() throws on the eviction path, O-B5 requires the eviction path to SWALLOW (never throw,
+/// proceed over-budget) AND release the reservation. The synchronous hard loop must not propagate, spillCount stays 0,
+/// the slice stays resident, and the reservation is released (proven by a follow-up forceSpill succeeding).
+TEST_F(SpillableTimeBasedSliceStoreTest, evictionReleasesReservationAndSwallowsWhenSpillThrows)
+{
+    auto backendOwned = std::make_unique<ThrowingSpillBackend>();
+    auto* const backend = backendOwned.get();
+    /// hard=0 ⇒ any resident slice is over-budget, so the eviction loop will try (and fail) to spill it.
+    auto store = makeStoreWithBackend(std::move(backendOwned), /*soft*/ 0, /*hard*/ 0);
+
+    const auto slice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    populate(slice, WorkerThreadId(0), 3, 0);
+    const auto sliceEnd = slice->getSliceEnd();
+    store->setLastSeenWatermarkForTest(Timestamp(WINDOW_SIZE * 10)); /// make it cold
+
+    /// O-B5: the eviction path must NEVER throw — even though every put() fails, the loop swallows and proceeds.
+    EXPECT_NO_THROW(store->spillColdSlicesUnderHardForTest());
+    EXPECT_EQ(store->spillCountForTest(), 0U); /// nothing finalized
+    EXPECT_TRUE(store->isSliceResident(sliceEnd)); /// spill failed → still resident
+    EXPECT_GT(backend->putCount.load(), 0U); /// it really attempted the spill
+
+    /// Reservation released despite the throw: a forceSpill (now succeeding) completes instead of no-op'ing.
+    backend->failPut.store(false);
+    EXPECT_NO_THROW(store->forceSpill(sliceEnd));
+    EXPECT_EQ(store->spillCountForTest(), 1U);
+    EXPECT_FALSE(store->isSliceResident(sliceEnd));
 }
 
 }

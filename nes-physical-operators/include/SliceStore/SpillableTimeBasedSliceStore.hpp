@@ -166,6 +166,15 @@ private:
     /// Synchronous worker-path hard backstop (O-B2 hard): spill cold slices until resident <= hard or none remain.
     /// O-B5: proceeds over-budget with a NES_WARNING; never throws, never blocks.
     void evictUntilUnderHard();
+    /// Release a spill reservation: erase `end` from spillInProgress under evictionMutex. Used by the RAII
+    /// ReservationGuard (defined in the .cpp) to guarantee a reserved-but-not-finalized slice never leaks its
+    /// reservation when the spill() I/O throws (a leak would deadlock the PR-3 condvar wait on that SliceEnd).
+    /// Idempotent (set erase).
+    void releaseReservation(SliceEnd end);
+
+    /// RAII guard that releases a spill reservation on scope exit unless committed (defined in the .cpp). Declared as a
+    /// private nested type so it can call releaseReservation without widening that helper's visibility.
+    struct ReservationGuard;
 
     std::unique_ptr<SpillBackend> backend;
     folly::Synchronized<std::shared_ptr<AbstractBufferProvider>> bufferProvider;
@@ -194,8 +203,9 @@ private:
     /// confirm-not-emitted, reserve (insert spillInProgress), mark-spilled, clear-reservation. ALL RocksDB I/O
     /// (spill()) happens OUTSIDE this mutex, protected by the per-slice spillInProgress reservation (uniform
     /// no-I/O-under-lock). Lock order is always evictionMutex → (createdSlices | one folly set); the base
-    /// slices/windows maps are NEVER taken under it. mutable: residentBytes()/dtor may need it. (The condvar +
-    /// background thread that complete this model land in PR-3.)
+    /// slices/windows maps are NEVER taken under it. mutable: the dtor and stopSpiller (PR-3) will take it from a const
+    /// context (residentBytes() does NOT take it — it only locks createdSlices). (The condvar + background thread that
+    /// complete this model land in PR-3.)
     mutable std::mutex evictionMutex;
     /// Per-slice reservation set (O-B3): a SliceEnd here has an in-flight spill; the eviction scan and forceSpill
     /// both skip it. ALWAYS accessed under evictionMutex (a plain set — evictionMutex already guards it).

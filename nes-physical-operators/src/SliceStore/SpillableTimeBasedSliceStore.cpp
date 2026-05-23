@@ -17,6 +17,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <map>
 #include <memory>
@@ -41,6 +42,36 @@
 
 namespace NES
 {
+
+/// RAII reservation-release guard: erases `end` from the store's spillInProgress (under evictionMutex, via
+/// releaseReservation) on scope exit UNLESS `committed` was set. Used to guarantee a reserved-but-not-finalized slice
+/// never leaks its reservation when the spill() I/O throws — a leak would deadlock the PR-3 condvar wait on that
+/// SliceEnd. The success path calls finalizeSpill() (which already erases the reservation) and then sets `committed`,
+/// so the guard never double-erases.
+struct SpillableTimeBasedSliceStore::ReservationGuard
+{
+    SpillableTimeBasedSliceStore& store;
+    SliceEnd end;
+    bool committed = false;
+    ReservationGuard(const ReservationGuard&) = delete;
+    ReservationGuard& operator=(const ReservationGuard&) = delete;
+    ReservationGuard(ReservationGuard&&) = delete;
+    ReservationGuard& operator=(ReservationGuard&&) = delete;
+    ReservationGuard(SpillableTimeBasedSliceStore& store, const SliceEnd end) : store(store), end(end) { }
+    ~ReservationGuard()
+    {
+        if (!committed)
+        {
+            store.releaseReservation(end);
+        }
+    }
+};
+
+void SpillableTimeBasedSliceStore::releaseReservation(const SliceEnd end)
+{
+    std::unique_lock lock(evictionMutex);
+    spillInProgress.erase(end);
+}
 
 SpillableTimeBasedSliceStore::SpillableTimeBasedSliceStore(
     const uint64_t windowSize,
@@ -128,6 +159,13 @@ bool SpillableTimeBasedSliceStore::recordCreatedSlice(const std::shared_ptr<Slic
 void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& windowSlices)
 {
+    /// PR-3 OBLIGATION (deliberately NOT done in PR-2): this function does NOT take evictionMutex and does NOT WAIT on
+    /// an in-flight spill of the slice. PR-2 hardened only forceSpill into the serializer (its emitted-check + reserve
+    /// are atomic under evictionMutex); unspillAndMarkEmitted was left for PR-3, which MUST wrap the per-slice body in
+    /// evictionMutex and, while spillInProgress.contains(sliceEnd), WAIT on spillerCv before inserting into emittedKeys
+    /// + unspilling (see PLAN PR-3 unspillAndMarkEmitted rewrite). The emitted-mark insert here is NOT yet serialized
+    /// against a concurrent eviction — this is safe ONLY under the current single-threaded PR-2 contract. No behavior
+    /// change in PR-2.
     auto provider = bufferProvider.copy();
     for (auto& [windowInfo, slices] : windowSlices)
     {
@@ -267,12 +305,25 @@ void SpillableTimeBasedSliceStore::deleteState()
 
 void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
 {
-    /// M1 (Increment A TOCTOU, closed in PR-2): the emitted-check and the reservation now happen atomically under
-    /// evictionMutex, sharing the serializer with the eviction path so a concurrent trigger cannot mark the slice
-    /// emitted between the check and the reserve. The spill() I/O is performed OUTSIDE the mutex (uniform
-    /// no-I/O-under-lock), protected by the spillInProgress reservation.
-    std::shared_ptr<SpillableAggregationSlice> spillable;
+    /// Lock-order fix: DefaultTimeBasedSliceStore::getSliceBySliceEnd acquires the base `slices` rlock. The LOCKED rule
+    /// is "base slices/windows are NEVER taken under evictionMutex". So the slice LOOKUP is done BEFORE acquiring
+    /// evictionMutex; only the emitted-check + in-flight-check + reserve happen inside the mutex, and the spill() I/O is
+    /// performed OUTSIDE it (uniform no-I/O-under-lock). The shared_ptr returned by the lookup keeps the slice alive
+    /// across the critical section, so re-reading it after acquiring the mutex needs no second base touch.
+    auto opt = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd);
+    if (!opt.has_value())
     {
+        NES_DEBUG("forceSpill: no slice for sliceEnd {}", sliceEnd);
+        return;
+    }
+    auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(opt.value());
+    INVARIANT(spillable != nullptr, "forceSpill on a non-spillable slice {}", sliceEnd);
+
+    {
+        /// M1 (Increment A TOCTOU, closed in PR-2): the emitted-check and the reservation happen atomically under
+        /// evictionMutex, sharing the serializer with the eviction path so a concurrent trigger cannot mark the slice
+        /// emitted between the check and the reserve. isResident() reads the slice's own flag (no base lock), so it is
+        /// safe to evaluate under evictionMutex.
         std::unique_lock lock(evictionMutex);
         if (emittedKeys.rlock()->contains(sliceEnd))
         {
@@ -285,14 +336,6 @@ void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
             NES_DEBUG("forceSpill: slice {} already has an in-flight spill, no-op", sliceEnd);
             return;
         }
-        auto opt = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd);
-        if (!opt.has_value())
-        {
-            NES_DEBUG("forceSpill: no slice for sliceEnd {}", sliceEnd);
-            return;
-        }
-        spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(opt.value());
-        INVARIANT(spillable != nullptr, "forceSpill on a non-spillable slice {}", sliceEnd);
         if (!spillable->isResident())
         {
             NES_DEBUG("forceSpill: slice {} is already spilled, no-op", sliceEnd);
@@ -300,11 +343,20 @@ void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
         }
         spillInProgress.insert(sliceEnd);
     }
-    /// I/O OUTSIDE evictionMutex, protected by the reservation.
+    /// I/O OUTSIDE evictionMutex, protected by the reservation. H2: forceSpill PRESERVES its throwing contract, so on a
+    /// spill() failure we still RE-THROW — but the reservation MUST be released first (a leak would deadlock the PR-3
+    /// condvar wait on this SliceEnd). The guard erases it on the throw path; on success finalizeSpill erases it and we
+    /// set committed so the guard does not double-erase. (The pre-insert SpillStoreFailure for emitted slices throws
+    /// BEFORE reserving, so that path needs no guard.)
+    ReservationGuard guard{*this, sliceEnd};
     NES_DEBUG("Spilling slice {} ({} bytes resident)", sliceEnd, residentBytesOf(*spillable));
-    spillable->spill(*backend);
+    spillable->spill(*backend); /// if this throws, the guard releases the reservation, then the exception propagates
+    /// L3: ++spillCount advances just BEFORE finalizeSpill inserts into spilledKeys, so spillCountForTest() reads ">=
+    /// finalized spills" (see spillOneColdSlice). PR-3's stress test must assert spillCountForTest() > 0, not an exact
+    /// equality tied to spilledKeys size.
     ++spillCount;
-    finalizeSpill(sliceEnd);
+    finalizeSpill(sliceEnd); /// finalizeSpill already erased the reservation
+    guard.committed = true; /// do not double-erase
 }
 
 std::optional<SliceEnd> SpillableTimeBasedSliceStore::pickAndReserveColdSlice()
@@ -315,6 +367,8 @@ std::optional<SliceEnd> SpillableTimeBasedSliceStore::pickAndReserveColdSlice()
     /// Snapshot (end, weak) pairs under ONE createdSlices rlock, then RELEASE it before evaluating the predicates —
     /// never nest createdSlices with the folly set locks (spilledKeys/emittedKeys) and never take a base map under
     /// evictionMutex (NH1). The map is sorted ascending by SliceEnd, so this snapshot is already oldest-first.
+    /// evictionMutex is held across the whole snapshot+predicate scan (PLAN-mandated): a concurrent emitted-mark or
+    /// reservation cannot race the predicate evaluation between the check and spillInProgress.insert.
     std::vector<std::pair<SliceEnd, std::weak_ptr<Slice>>> snapshot;
     createdSlices.withRLock(
         [&](const auto& tracked)
@@ -330,26 +384,36 @@ std::optional<SliceEnd> SpillableTimeBasedSliceStore::pickAndReserveColdSlice()
     {
         if (end.getRawValue() >= wm)
         {
-            /// Not cold yet (still within the build watermark). Ascending order ⇒ no later entry is cold either, but
-            /// keep scanning for clarity — the predicate short-circuits cheaply.
-            continue;
+            /// Not cold (sliceEnd >= watermark). The snapshot is ascending by SliceEnd, so NO later entry can be cold
+            /// either — stop scanning. (This is the ONLY break: it is the single failure that monotonically rules out
+            /// all remaining candidates. Every other predicate below uses `continue`, because a later cold slice may
+            /// still qualify; breaking on one of those would skip valid candidates.)
+            break;
         }
         if (spillInProgress.contains(end))
         {
+            /// Already reserved by another in-flight spill — a LATER cold slice may still qualify, so continue.
             continue;
         }
         const auto slice = weak.lock();
         if (slice == nullptr)
         {
+            /// Base GC dropped this slice — a later cold slice may still qualify, so continue.
             continue;
         }
         const auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(slice);
+        /// L1: BOTH residency checks are intentional. spillable->isResident() reads the slice's own internal flag;
+        /// isSliceResident(end) reads spilledKeys. They must agree for a correctly-tracked slice, but checking both
+        /// defends the spill path against any transient divergence between the two residency-tracking mechanisms
+        /// (e.g. a spill that flipped the flag but had not yet inserted into spilledKeys). A non-spillable / already
+        /// non-resident slice is not a candidate, but a later cold slice may still qualify — so continue.
         if (spillable == nullptr || !spillable->isResident() || !isSliceResident(end))
         {
             continue;
         }
         if (emittedKeys.rlock()->contains(end))
         {
+            /// Emitted to the async probe — must never be spilled, but a later cold slice may still qualify, so continue.
             continue;
         }
         spillInProgress.insert(end);
@@ -361,10 +425,15 @@ std::optional<SliceEnd> SpillableTimeBasedSliceStore::pickAndReserveColdSlice()
 
 void SpillableTimeBasedSliceStore::finalizeSpill(const SliceEnd end)
 {
-    std::unique_lock lock(evictionMutex);
-    spilledKeys.wlock()->insert(end);
-    spillInProgress.erase(end);
-    NES_DEBUG("Spilled cold slice {}; resident now {}", end, residentBytes());
+    /// M2: keep the evictionMutex scope to the in-memory mutation ONLY (spilledKeys.insert + spillInProgress.erase).
+    /// residentBytes() does a full createdSlices scan (rlock + per-slice weak_ptr::lock); calling it under
+    /// evictionMutex inflates the hold time the PR-3 spiller/workers contend on, so keep it out of the lock here.
+    {
+        std::unique_lock lock(evictionMutex);
+        spilledKeys.wlock()->insert(end);
+        spillInProgress.erase(end);
+    }
+    NES_DEBUG("Spilled cold slice {}", end);
 }
 
 bool SpillableTimeBasedSliceStore::spillOneColdSlice()
@@ -374,8 +443,11 @@ bool SpillableTimeBasedSliceStore::spillOneColdSlice()
     {
         return false;
     }
-    /// Lock the spillable OUTSIDE evictionMutex. If it expired between reserve and lookup, clear the reservation and
-    /// report progress (the slice is gone, so the budget already dropped).
+    /// The reservation is now held; the guard erases it on EVERY path that does not finalize (expired weak_ptr,
+    /// spill() throw) so spillInProgress can never leak a SliceEnd (H1).
+    ReservationGuard guard{*this, *picked};
+    /// Lock the spillable OUTSIDE evictionMutex. If it expired between reserve and lookup, the guard clears the
+    /// reservation and we report progress (the slice is gone, so the budget already dropped).
     const auto opt = DefaultTimeBasedSliceStore::getSliceBySliceEnd(*picked);
     std::shared_ptr<SpillableAggregationSlice> spillable;
     if (opt.has_value())
@@ -384,14 +456,26 @@ bool SpillableTimeBasedSliceStore::spillOneColdSlice()
     }
     if (spillable == nullptr)
     {
-        std::unique_lock lock(evictionMutex);
-        spillInProgress.erase(*picked);
-        return true;
+        return true; /// guard releases the reservation
     }
-    /// I/O OUTSIDE evictionMutex, protected by the reservation.
-    spillable->spill(*backend);
+    /// I/O OUTSIDE evictionMutex, protected by the reservation. O-B5: the eviction path must NEVER propagate — if the
+    /// spill() I/O throws, swallow it, but the reservation MUST be released (the guard does that) so the slice is not
+    /// stuck in-flight forever. Proceed over-budget rather than crash a worker.
+    try
+    {
+        spillable->spill(*backend);
+    }
+    catch (const std::exception& e)
+    {
+        NES_WARNING("spill of cold slice {} failed: {}; reservation released, proceeding over-budget", *picked, e.what());
+        return false; /// guard releases the reservation
+    }
+    /// L3: ++spillCount is bumped here, just BEFORE finalizeSpill inserts into spilledKeys. So spillCountForTest()
+    /// momentarily reads "one ahead" of the finalized-spill set. The PR-3 stress test must treat spillCountForTest()
+    /// as ">= finalized spills" (assert > 0), NOT an exact equality tied to spilledKeys size.
     ++spillCount;
-    finalizeSpill(*picked);
+    finalizeSpill(*picked); /// finalizeSpill already erased the reservation
+    guard.committed = true; /// do not double-erase
     return true;
 }
 
