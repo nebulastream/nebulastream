@@ -30,6 +30,7 @@
 #include <thread>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
@@ -41,6 +42,8 @@
 
 namespace NES
 {
+
+class SpillableAggregationSlice;
 
 /// Out-of-core variant of DefaultTimeBasedSliceStore (Phase 4b, Increment A — single-threaded spike).
 ///
@@ -101,7 +104,13 @@ public:
         uint64_t pageSize,
         uint64_t softThresholdBytes,
         uint64_t hardThresholdBytes,
-        uint64_t emitLag = 0);
+        uint64_t emitLag = 0,
+        uint64_t numberOfPartitions = 1);
+
+    /// 2d: number of grace-hash partitions for the terminal partitioned-emit path. 1 (default) = no partitioning; the
+    /// handler then delegates terminal emit to the byte-identical base path. P>1 routes the terminal flush through
+    /// claimWindowForPartitionedEmit + streamWindowPartition so each emitted chunk materialises only 1/P of a window.
+    [[nodiscard]] uint64_t getNumberOfPartitions() const { return numberOfPartitions; }
 
     /// Builds a durable RocksDB-backed SpillBackend. Defined in this translation unit so RocksDB stays a PRIVATE
     /// dependency of nes-physical-operators — the lowering rule (nes-query-compiler) passes only SpillConfig values
@@ -129,6 +138,26 @@ public:
     /// this one window (under the eviction-mutex discipline) and marks it emitted so the spiller cannot re-pick it while
     /// the async probe drains it. Called by WindowBasedOperatorHandler::triggerAllWindows just before emitting the window.
     void ensureWindowSlicesResident(const std::vector<std::shared_ptr<Slice>>& windowSlices) override;
+
+    /// 2d partitioned terminal-emit, step 1 (CLAIM). For each spillable slice in this one window, run the SAME claim
+    /// discipline as ensureWindowSlicesResident's claim half (shared via claimSliceForEmit): under evictionMutex WAIT
+    /// spillerCv until no in-flight spill of this sliceEnd remains, then insert it into emittedKeys + erase any
+    /// pinnedKeys BEFORE releasing the mutex — so the background spiller (which is LIVE during the terminal flush) can
+    /// never (re-)pick the slice. UNLIKE ensureWindowSlicesResident, this does NOT unspill: the partitioned path reads
+    /// state at 1/P granularity via streamWindowPartition and leaves spilled slices spilled. Post: every slice in the
+    /// window is emitted-claimed and its residency is now stable (the spiller cannot touch it), so the subsequent
+    /// streamWindowPartition reads run safely OUTSIDE evictionMutex.
+    void claimWindowForPartitionedEmit(const std::vector<std::shared_ptr<Slice>>& windowSlices);
+
+    /// 2d partitioned terminal-emit, step 2 (STREAM one partition). For the fixed `partition`, collect that partition's
+    /// per-(slice,worker) maps across all slices of the window: a spilled slice streams its partition blob whole
+    /// (streamEmitByPartition, stays spilled); a resident slice is filtered in memory (materializeResidentPartition,
+    /// stays resident). PRECONDITION: claimWindowForPartitionedEmit ran first for this window, so the slices' residency
+    /// is stable and this runs OUTSIDE evictionMutex with no spiller race. The caller OWNS the returned maps (they are
+    /// freshly built and NOT slice-owned, L8). Returns the maps for exactly this one partition (skip-empty: a worker
+    /// contributing nothing to the partition produces no map).
+    [[nodiscard]] std::vector<std::unique_ptr<HashMap>>
+    streamWindowPartition(const std::vector<std::shared_ptr<Slice>>& windowSlices, uint64_t partition);
     /// Random-access read (join-probe path; out of 4b scope): unspills for consistency, but does NOT mark emitted.
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) override;
     /// Erases backend records for spilled slices that the base GC has dropped.
@@ -192,6 +221,15 @@ public:
 private:
     /// For each returned slice: unspill if non-resident (dropping it from spilledKeys) and record it emitted.
     void unspillAndMarkEmitted(std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& windowSlices);
+
+    /// The load-bearing CLAIM half of the trigger discipline, extracted from ensureWindowSlicesResident so the steady
+    /// (unspill) path and the 2d partitioned path share ONE copy of the concurrency-sensitive logic. Under evictionMutex:
+    /// WAIT spillerCv until no in-flight spill of this slice's sliceEnd remains, then emittedKeys.insert + pinnedKeys.erase
+    /// BEFORE releasing the mutex (so the spiller can never re-pick the now-emitted slice). It deliberately does NOT touch
+    /// spillInProgress — that reservation is the UNSPILL path's footprint-reader fence, not part of the claim (a wrong
+    /// fence here is a spill-vs-emit UAF). Returns `needsUnspill = !isResident()` so ensureWindowSlicesResident can run
+    /// its unspill half; the partitioned path discards the return (it streams instead of unspilling).
+    [[nodiscard]] bool claimSliceForEmit(const std::shared_ptr<SpillableAggregationSlice>& spillable);
 
     /// Increment C late-write guard. Called from getSlicesOrCreate ONLY for a record whose window is already COLD
     /// (sliceEnd < the true frontier) under emit_lag > 0 — i.e. a late/out-of-order write into the retained band
@@ -267,6 +305,9 @@ private:
     /// globalWatermark — so completed windows in [globalWatermark - L, globalWatermark) are retained and become
     /// spillable. 0 = byte-identical to pre-Increment-C (emit wm == global wm).
     const uint64_t emitLag;
+    /// 2d: grace-hash partition count for the terminal partitioned-emit path (see getNumberOfPartitions). 1 = the base
+    /// (byte-identical) terminal flush; P>1 routes terminal emit through claimWindowForPartitionedEmit + streamWindowPartition.
+    const uint64_t numberOfPartitions;
     /// SliceEnds whose maps are currently spilled — drives isSliceResident() and GC backend-erase.
     folly::Synchronized<std::set<SliceEnd>> spilledKeys;
     /// SliceEnds returned by a trigger feeder (emitted to the async probe) — forceSpill refuses these.

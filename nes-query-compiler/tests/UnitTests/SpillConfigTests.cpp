@@ -87,6 +87,8 @@ TEST_F(SpillConfigTest, defaults)
     /// Phase 0a: RocksDB memory knobs default to 0 = leave RocksDB's own defaults (behavior-preserving).
     EXPECT_EQ(config.writeBufferSizeMB.getValue(), 0U);
     EXPECT_EQ(config.blockCacheSizeMB.getValue(), 0U);
+    /// 2d: grace-hash partition count defaults to 1 (no partitioning ⇒ byte-identical terminal emit).
+    EXPECT_EQ(config.numberOfPartitions.getValue(), 1U);
 }
 
 /// Test B — command-line overrides flow through every field.
@@ -165,6 +167,26 @@ TEST_F(SpillConfigTest, embeddedCommandLineOverride)
     EXPECT_EQ(qec.spill.emitLag.getValue(), 2000U);
     /// Phase 0a: the auto-derived dotted key spill.write_buffer_size_mb reaches the embedded sub-config.
     EXPECT_EQ(qec.spill.writeBufferSizeMB.getValue(), 32U);
+}
+
+/// 2d — the number_of_partitions knob parses a set value via the command line.
+TEST_F(SpillConfigTest, numberOfPartitionsParsesSetValue)
+{
+    SpillConfig config;
+    config.overwriteConfigWithCommandLineInput({{"number_of_partitions", "8"}});
+    EXPECT_EQ(config.numberOfPartitions.getValue(), 8U);
+    /// Untouched fields keep their defaults (the knob is independent).
+    EXPECT_FALSE(config.enabled.getValue());
+}
+
+/// 2d — the nested dotted key spill.number_of_partitions reaches the embedded sub-config (the binding the lowering reads).
+TEST_F(SpillConfigTest, numberOfPartitionsEmbeddedCommandLineOverride)
+{
+    QueryExecutionConfiguration qec;
+    /// Defaults to 1 before any override.
+    EXPECT_EQ(qec.spill.numberOfPartitions.getValue(), 1U);
+    qec.overwriteConfigWithCommandLineInput({{"spill.number_of_partitions", "16"}});
+    EXPECT_EQ(qec.spill.numberOfPartitions.getValue(), 16U);
 }
 
 /// Test F — nested YAML override reaches the embedded spill sub-config.

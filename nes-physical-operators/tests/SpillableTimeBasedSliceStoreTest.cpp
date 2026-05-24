@@ -171,6 +171,28 @@ protected:
         return store;
     }
 
+    /// 2d: construct a store with a caller-chosen partition count (and large thresholds so automatic eviction never
+    /// fires) to drive the partitioned terminal-emit primitives directly.
+    std::unique_ptr<SpillableTimeBasedSliceStore> makeStoreWithPartitions(const uint64_t numberOfPartitions, InMemorySpillBackend** backendOut)
+        const
+    {
+        auto backend = std::make_unique<InMemorySpillBackend>();
+        *backendOut = backend.get();
+        auto store = std::make_unique<SpillableTimeBasedSliceStore>(
+            WINDOW_SIZE,
+            WINDOW_SLIDE,
+            SliceCacheConfiguration{},
+            std::move(backend),
+            entriesPerPage(),
+            PAGE_SIZE,
+            1024ULL * 1024ULL,
+            2ULL * 1024ULL * 1024ULL,
+            /*emitLag=*/0,
+            numberOfPartitions);
+        store->setBufferProvider(bufferManager);
+        return store;
+    }
+
     /// H1/H2 regression: construct a store with a caller-supplied backend (e.g. ThrowingSpillBackend) and tiny
     /// thresholds, so the spill exception paths are drivable. Mirrors makeStoreWithThresholds but does not assume the
     /// InMemorySpillBackend type.
@@ -1127,6 +1149,169 @@ TEST_F(SpillableTimeBasedSliceStoreTest, lateWriteIntoSpilledRetainedSliceUnspil
     EXPECT_TRUE(triggeredContains(emitted, bandEnd));
     EXPECT_TRUE(store->isSliceResident(bandEnd)); /// emit unspills+keeps it resident for the async probe
     ASSERT_EXCEPTION_ERRORCODE(store->forceSpill(bandEnd), ErrorCode::SpillStoreFailure);
+}
+
+/// --- 2d: partitioned terminal-emit primitives (claimWindowForPartitionedEmit + streamWindowPartition) ---
+
+namespace
+{
+/// (hash, payload) of any ChainedHashMap (resident worker map or a freshly-materialised partition map), order-independent.
+void collectAnyMap(const ChainedHashMap* map, std::vector<Entry>& out, const uint64_t payloadSize)
+{
+    if (map != nullptr && map->getNumberOfTuples() > 0)
+    {
+        for (uint64_t chain = 0; chain < map->getNumberOfChains(); ++chain)
+        {
+            for (const auto* entry = map->getStartOfChain(chain); entry != nullptr; entry = entry->next)
+            {
+                const auto* const payload = reinterpret_cast<const std::byte*>(entry) + sizeof(ChainedHashMapEntry);
+                out.emplace_back(entry->hash, std::vector<std::byte>(payload, payload + payloadSize));
+            }
+        }
+    }
+}
+}
+
+/// Drive the 2d partitioned terminal-emit primitives over ONE window that mixes a SPILLED and a RESIDENT slice. The
+/// PRIMARY correctness proof is: the union of the per-partition streamed maps over ALL P partitions equals the full
+/// window aggregate exactly (key-disjoint + complete — every original (hash,payload) appears once, none added/dropped).
+/// Secondary: the resident slice stays resident and the spilled slice stays spilled across streaming, the streamed
+/// entry COUNT equals the full window (no double-count / no loss), and — after the claim marks both slices emitted —
+/// they cannot be re-spilled (the live spiller is fenced off). (The skip-empty + contiguous-renumber emit semantics are
+/// proven deterministically in AggregationOperatorHandlerRegistryTest's Group D, which forces empties via pigeonhole;
+/// here P=8 over many keys may or may not leave a residue empty, so this test does NOT assert on the empty count.)
+TEST_F(SpillableTimeBasedSliceStoreTest, partitionedEmitUnionEqualsWindowMixedResidentAndSpilled)
+{
+    constexpr uint64_t P = 8;
+    const uint64_t payloadSize = entrySize() - sizeof(ChainedHashMapEntry);
+
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithPartitions(P, &backend);
+
+    /// Two distinct slices (each its own tumbling window/slice); we then drive the store primitives over a manually-built
+    /// vector that contains BOTH, exercising the resident and spilled branches of streamWindowPartition in one call.
+    const auto residentSlice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    populate(residentSlice, WorkerThreadId(0), 40, 0);
+    populate(residentSlice, WorkerThreadId(1), 25, 1000);
+
+    const auto spilledSlice = store->getSlicesOrCreate(Timestamp(150), spillableSliceFactory())[0];
+    populate(spilledSlice, WorkerThreadId(0), 33, 5000);
+    populate(spilledSlice, WorkerThreadId(2), 12, 9000);
+
+    /// Capture the full expected entry set across BOTH slices' workers before spilling.
+    std::vector<Entry> expected;
+    for (const auto& slice : {residentSlice, spilledSlice})
+    {
+        const auto* const sp = dynamic_cast<const SpillableAggregationSlice*>(slice.get());
+        for (uint64_t w = 0; w < NUMBER_OF_HASH_MAPS; ++w)
+        {
+            collectAnyMap(dynamic_cast<const ChainedHashMap*>(sp->getHashMapPtr(WorkerThreadId(w))), expected, payloadSize);
+        }
+    }
+    std::ranges::sort(expected, [](const Entry& a, const Entry& b) { return a.first != b.first ? a.first < b.first : a.second < b.second; });
+    ASSERT_FALSE(expected.empty());
+
+    /// Spill ONE of the two slices P-way so the window mixes a spilled + a resident slice.
+    store->forceSpill(spilledSlice->getSliceEnd());
+    ASSERT_FALSE(store->isSliceResident(spilledSlice->getSliceEnd()));
+    ASSERT_TRUE(store->isSliceResident(residentSlice->getSliceEnd()));
+
+    const std::vector<std::shared_ptr<Slice>> window{residentSlice, spilledSlice};
+
+    /// CLAIM: marks both slices emitted (fences the live spiller). Residency is unchanged by the claim.
+    store->claimWindowForPartitionedEmit(window);
+    EXPECT_TRUE(store->isSliceResident(residentSlice->getSliceEnd()));
+    EXPECT_FALSE(store->isSliceResident(spilledSlice->getSliceEnd()));
+
+    /// STREAM each partition and union the entries. Streaming a partition must NEVER change either slice's residency.
+    std::vector<Entry> unioned;
+    for (uint64_t p = 0; p < P; ++p)
+    {
+        auto maps = store->streamWindowPartition(window, p);
+        for (const auto& map : maps)
+        {
+            collectAnyMap(dynamic_cast<const ChainedHashMap*>(map.get()), unioned, payloadSize);
+        }
+        /// Streaming is a 1/P read-out, not an unspill: residency is invariant across every partition.
+        EXPECT_TRUE(store->isSliceResident(residentSlice->getSliceEnd()));
+        EXPECT_FALSE(store->isSliceResident(spilledSlice->getSliceEnd()));
+    }
+
+    /// PRIMARY correctness proof (key-disjoint + complete): the multiset of streamed (hash,payload) entries over all P
+    /// partitions equals the full window aggregate EXACTLY — nothing added, dropped, or double-counted by partitioning.
+    /// The COUNT check fires first so a loss/duplication is reported as a count mismatch even before the content compare.
+    ASSERT_EQ(unioned.size(), expected.size())
+        << "partitioned stream produced " << unioned.size() << " entries but the window holds " << expected.size();
+    std::ranges::sort(unioned, [](const Entry& a, const Entry& b) { return a.first != b.first ? a.first < b.first : a.second < b.second; });
+    ASSERT_EQ(unioned, expected) << "union of the P streamed partitions != the full window aggregate (key-disjoint+complete violated)";
+
+    /// The claim marked both slices emitted ⇒ forceSpill must refuse them (async-probe-drain invariant), proving the
+    /// spiller is fenced off the claimed window.
+    ASSERT_EXCEPTION_ERRORCODE(store->forceSpill(residentSlice->getSliceEnd()), ErrorCode::SpillStoreFailure);
+}
+
+/// H1 regression guard (no data loss across a store spill→unspill round-trip at P>1). The store's spill sites now write
+/// P blobs AND the store's unspill sites read all P blobs; if the unspill site were left at P=1 it would read only
+/// partition 0 and silently lose partitions 1..P-1. With P=8 and keys spanning multiple partitions, force-spill a slice
+/// (writes P-way), then re-materialise it through a STORE unspill path (ensureWindowSlicesResident, the terminal-flush
+/// per-window primitive) and assert EVERY original key is restored — without the unspill-site fix this fails (only ~1/P
+/// keys present). Spanning multiple partitions is guaranteed: hash=(i+1)*2654435761 and 2654435761%8==1 ⇒ the keys
+/// cover residues 0..7, so several partition blobs exist and the P-consistent unspill must merge them all.
+TEST_F(SpillableTimeBasedSliceStoreTest, storeSpillUnspillRoundTripPreservesAllKeysAtPGreaterThanOne)
+{
+    constexpr uint64_t P = 8;
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithPartitions(P, &backend);
+
+    const auto slice = store->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    /// keys land across all 8 residues, so the spill writes multiple non-empty partition blobs per worker.
+    populate(slice, WorkerThreadId(0), 40, 0);
+    populate(slice, WorkerThreadId(1), 23, 1000);
+    auto* const spillable = dynamic_cast<SpillableAggregationSlice*>(slice.get());
+    const auto expected0 = sortedEntries(*spillable, WorkerThreadId(0));
+    const auto expected1 = sortedEntries(*spillable, WorkerThreadId(1));
+    ASSERT_EQ(expected0.size(), 40U);
+    ASSERT_EQ(expected1.size(), 23U);
+
+    /// Spill P-way (the store now passes numberOfPartitions): each worker map is split into P blobs.
+    store->forceSpill(slice->getSliceEnd());
+    ASSERT_FALSE(store->isSliceResident(slice->getSliceEnd()));
+    /// Sanity: worker 0 (40 keys) wrote MORE THAN ONE partition blob — confirming the spill actually partitioned the
+    /// worker map rather than writing a single P=1 blob. (If only partition 0 existed, the P fix would be a no-op here.)
+    uint64_t worker0Blobs = 0;
+    for (PartitionId p = 0; p < P; ++p)
+    {
+        if (backend->contains(slice->getSliceEnd(), WorkerThreadId(0), p))
+        {
+            ++worker0Blobs;
+        }
+    }
+    EXPECT_GT(worker0Blobs, 1U);
+
+    /// Re-materialise via a STORE unspill path. ensureWindowSlicesResident claims + unspills with the store's own P.
+    store->ensureWindowSlicesResident({slice});
+    ASSERT_TRUE(store->isSliceResident(slice->getSliceEnd()));
+
+    /// NO DATA LOSS: every original key/value of every worker is back, exactly once. A P=1 unspill of P-way blobs would
+    /// restore only partition 0 (~1/P of the keys) and these EXPECT_EQ would fail — that is the regression this guards.
+    EXPECT_EQ(sortedEntries(*spillable, WorkerThreadId(0)), expected0);
+    EXPECT_EQ(sortedEntries(*spillable, WorkerThreadId(1)), expected1);
+    EXPECT_EQ(spillable->getNumberOfTuples(), expected0.size() + expected1.size());
+}
+
+/// P==1 store: getNumberOfPartitions() reports 1 (the default), confirming the byte-identical fast-path is selected.
+TEST_F(SpillableTimeBasedSliceStoreTest, defaultStoreReportsSinglePartition)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStore(&backend);
+    EXPECT_EQ(store->getNumberOfPartitions(), 1U);
+}
+
+TEST_F(SpillableTimeBasedSliceStoreTest, configuredStoreReportsPartitionCount)
+{
+    InMemorySpillBackend* backend = nullptr;
+    auto store = makeStoreWithPartitions(8, &backend);
+    EXPECT_EQ(store->getNumberOfPartitions(), 8U);
 }
 
 }

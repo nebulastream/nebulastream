@@ -70,9 +70,13 @@
 
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationSlice.hpp>
+#include <Aggregation/SpillableAggregationSlice.hpp>
 #include <BaseUnitTest.hpp>
 #include <HashMapSlice.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <SliceCacheConfiguration.hpp>
+#include <SliceStore/InMemorySpillBackend.hpp>
+#include <SliceStore/SpillableTimeBasedSliceStore.hpp>
 
 namespace NES::Testing
 {
@@ -509,6 +513,183 @@ TEST_F(AggregationOperatorHandlerRegistryTest, emptyWindowRegistersNothing)
     EXPECT_EQ(handler->pendingChunkCount(), 0U);
     EXPECT_EQ(handler->numReleasedChunks(), 1U);
     EXPECT_EQ(handler->numReleasedChunks(), handler->numRegisteredChunks());
+}
+
+/// ==================== Group D — 2d partitioned terminal emit via triggerAllWindows (P>1) ====================
+///
+/// Drives the REAL handler->triggerAllWindows() over a SpillableTimeBasedSliceStore configured with P>1, with the
+/// window's slice SPILLED P-way (forceSpill) so the emit path exercises the spilled-stream branch. 3 distinct keys over
+/// P=8 residues: by pigeonhole at most 3 partitions can be non-empty, so K < P is GUARANTEED (skip-empty proven
+/// deterministically). The keys are chosen so they land in DISTINCT residues (hash=(i+1)*2654435761 and 2654435761%8==1
+/// ⇒ residue==(i+1)%8, so i=0,1,2 → residues 1,2,3), so K==3 > 1 is also guaranteed — proving REAL partitioning happens
+/// (before the H1 unspill/spill-P fix the store spilled P-way but a P=1 read collapsed everything to one partition).
+/// Asserts the REVISED L3 skip-empty + contiguous-renumber contract end-to-end:
+///   - K chunks emitted, 1 < K < P (real partitioning AND skip-empty: empty partitions are NOT emitted);
+///   - chunk numbers are contiguous INITIAL..INITIAL+K-1, with lastChunk set ONLY on the highest-numbered (K-th) chunk;
+///   - every emitted chunk carries >=1 tuple (no empty/null map ever reaches the probe);
+///   - the UNION of the K chunks' per-worker input-map contents == the full window aggregate (key-disjoint + complete);
+///   - leak-totality: registered==released after probe drain AND again after stop().
+TEST_F(AggregationOperatorHandlerRegistryTest, partitionedTriggerEmitsKContiguousChunksAndSkipsEmpty)
+{
+    constexpr uint64_t KEY_SIZE_LOCAL = 8;
+    constexpr uint64_t VALUE_SIZE_LOCAL = 8;
+    constexpr uint64_t PAGE_SIZE_LOCAL = 256;
+    constexpr uint64_t NUMBER_OF_BUCKETS_LOCAL = 16;
+    constexpr uint64_t NUMBER_OF_HASH_MAPS_LOCAL = 4;
+    constexpr uint64_t WINDOW_SIZE_LOCAL = 100;
+    constexpr uint64_t P = 8; /// FEWER distinct keys than P below ⇒ at least P-keys partitions empty by pigeonhole.
+    constexpr uint64_t DISTINCT_KEYS = 3; /// 3 keys in distinct residues ⇒ 1 < K==3 < 8 GUARANTEED (real split + skip-empty).
+    const uint64_t entrySizeLocal = sizeof(ChainedHashMapEntry) + KEY_SIZE_LOCAL + VALUE_SIZE_LOCAL;
+    const uint64_t entriesPerPageLocal = PAGE_SIZE_LOCAL / entrySizeLocal;
+    const uint64_t payloadSize = entrySizeLocal - sizeof(ChainedHashMapEntry);
+
+    using Entry = std::pair<uint64_t, std::vector<std::byte>>; /// (hash, key+value payload)
+    auto collectFromMap = [&](const ChainedHashMap* map, std::vector<Entry>& out)
+    {
+        if (map != nullptr && map->getNumberOfTuples() > 0)
+        {
+            for (uint64_t chain = 0; chain < map->getNumberOfChains(); ++chain)
+            {
+                for (const auto* entry = map->getStartOfChain(chain); entry != nullptr; entry = entry->next)
+                {
+                    const auto* const payload = reinterpret_cast<const std::byte*>(entry) + sizeof(ChainedHashMapEntry);
+                    out.emplace_back(entry->hash, std::vector<std::byte>(payload, payload + payloadSize));
+                }
+            }
+        }
+    };
+    auto sortEntries = [](std::vector<Entry>& v)
+    { std::ranges::sort(v, [](const Entry& a, const Entry& b) { return a.first != b.first ? a.first < b.first : a.second < b.second; }); };
+
+    auto sliceArgs = [&]
+    {
+        auto noopCleanup = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(
+            std::function<void(nautilus::val<HashMap*>)>([](nautilus::val<HashMap*>) { }));
+        return CreateNewHashMapSliceArgs({std::move(noopCleanup)}, KEY_SIZE_LOCAL, VALUE_SIZE_LOCAL, PAGE_SIZE_LOCAL, NUMBER_OF_BUCKETS_LOCAL);
+    };
+
+    auto backend = std::make_unique<InMemorySpillBackend>();
+    auto store = std::make_unique<SpillableTimeBasedSliceStore>(
+        WINDOW_SIZE_LOCAL,
+        WINDOW_SIZE_LOCAL,
+        SliceCacheConfiguration{},
+        std::move(backend),
+        entriesPerPageLocal,
+        PAGE_SIZE_LOCAL,
+        /*soft*/ 1024ULL * 1024ULL,
+        /*hard*/ 2ULL * 1024ULL * 1024ULL,
+        /*emitLag*/ 0,
+        /*numberOfPartitions*/ P);
+    store->setBufferProvider(bufferManager);
+    auto* const storePtr = store.get();
+
+    /// One window (one tumbling slice). Populate one worker map with DISTINCT_KEYS distinct keys.
+    const auto slice = storePtr->getSlicesOrCreate(Timestamp(50), [&](const SliceStart s, const SliceEnd e)
+        -> std::vector<std::shared_ptr<Slice>> { return {std::make_shared<SpillableAggregationSlice>(s, e, sliceArgs(), NUMBER_OF_HASH_MAPS_LOCAL)}; })[0];
+    {
+        auto* const map = dynamic_cast<ChainedHashMap*>(dynamic_cast<SpillableAggregationSlice*>(slice.get())->getHashMapPtrOrCreate(WorkerThreadId(0)));
+        for (uint64_t i = 0; i < DISTINCT_KEYS; ++i)
+        {
+            const uint64_t hash = (i + 1) * 2654435761ULL;
+            auto* const entry = static_cast<ChainedHashMapEntry*>(map->insertEntry(hash, bufferManager.get()));
+            auto* const payload = reinterpret_cast<std::byte*>(entry) + sizeof(ChainedHashMapEntry);
+            const uint64_t key = i;
+            const uint64_t value = (i * 7) + 1;
+            std::memcpy(payload, &key, sizeof(key));
+            std::memcpy(payload + sizeof(key), &value, sizeof(value));
+        }
+    }
+
+    /// Capture the full window's expected (hash,payload) set BEFORE spilling.
+    std::vector<Entry> expected;
+    collectFromMap(dynamic_cast<const ChainedHashMap*>(dynamic_cast<const SpillableAggregationSlice*>(slice.get())->getHashMapPtr(WorkerThreadId(0))), expected);
+    sortEntries(expected);
+    ASSERT_EQ(expected.size(), DISTINCT_KEYS);
+
+    /// Spill the slice P-way so triggerAllWindows exercises the spilled-stream branch (few keys are still spillable).
+    storePtr->forceSpill(slice->getSliceEnd());
+    ASSERT_FALSE(storePtr->isSliceResident(slice->getSliceEnd()));
+
+    const std::vector<OriginId> inputOrigins{OriginId(1)};
+    auto handler = std::make_unique<AggregationOperatorHandler>(
+        inputOrigins, OriginId(2), std::move(store), /*maxNumberOfBuckets*/ NUMBER_OF_BUCKETS_LOCAL, /*spillEnabled*/ true);
+
+    folly::Synchronized<std::vector<TupleBuffer>> buffers;
+    MockedPipelineContext ctx{buffers, bufferManager};
+    handler->start(ctx, /*localStateVariableId*/ 0);
+
+    /// getAllNonTriggeredSlices() (reached via the partitioned triggerAllWindows) decrements numberOfActiveInputPipelines
+    /// and PRECONDITIONs it > 0, so arm it once first (mirrors SpillableTimeBasedSliceStoreTest.cpp:897-898).
+    storePtr->incrementNumberOfInputPipelines();
+    handler->triggerAllWindows(&ctx);
+
+    /// K = number of emitted chunks = number of non-empty partitions. The 3 keys land in 3 DISTINCT residues, so K==3.
+    const auto emitted = *buffers.rlock();
+    const auto K = emitted.size();
+    ASSERT_GT(K, 1U); /// REAL partitioning happened — the spilled state was split across MULTIPLE chunks (H1 proof).
+    ASSERT_LE(K, DISTINCT_KEYS); /// at most one non-empty partition per distinct key
+    ASSERT_LT(K, P); /// skip-empty: >=1 of the 8 partitions was empty and therefore NOT emitted (pigeonhole, 3 < 8)
+    EXPECT_EQ(handler->numRegisteredChunks(), K); /// one registered chunk per non-empty partition
+    EXPECT_EQ(handler->pendingChunkCount(), K);
+
+    /// Contiguous chunk numbers [INITIAL, INITIAL+K-1]; lastChunk ONLY on the highest; collect the union of contents.
+    std::vector<uint64_t> chunkNumbers;
+    std::vector<Entry> unioned;
+    uint64_t totalTuples = 0;
+    uint64_t lastChunkCount = 0;
+    uint64_t highestChunkWithLast = 0;
+    const auto windowSeq = emitted.front().getSequenceNumber();
+    for (const auto& buffer : emitted)
+    {
+        chunkNumbers.push_back(buffer.getChunkNumber().getRawValue());
+        totalTuples += buffer.getNumberOfTuples();
+        if (buffer.isLastChunk())
+        {
+            ++lastChunkCount;
+            highestChunkWithLast = buffer.getChunkNumber().getRawValue();
+        }
+        EXPECT_EQ(buffer.getSequenceNumber(), windowSeq); /// one window ⇒ ALL K chunks share one sequence number
+        /// Every emitted chunk has >=1 tuple (skip-empty ⇒ no empty/null map ever reaches the probe).
+        EXPECT_GT(buffer.getNumberOfTuples(), 0U);
+
+        /// Read the EmittedAggregationWindow out of the buffer and union its per-worker input maps' contents — the SAME
+        /// maps the probe combines (handler-owned in chunkRegistry; the buffer carries non-owning raw pointers).
+        const auto* const window = reinterpret_cast<const EmittedAggregationWindow*>(buffer.getAvailableMemoryArea().data());
+        for (uint64_t h = 0; h < window->numberOfHashMaps; ++h)
+        {
+            collectFromMap(dynamic_cast<const ChainedHashMap*>(window->hashMaps[h]), unioned);
+        }
+    }
+    std::ranges::sort(chunkNumbers);
+    for (uint64_t j = 0; j < K; ++j)
+    {
+        EXPECT_EQ(chunkNumbers[j], ChunkNumber::INITIAL + j); /// contiguous renumber from INITIAL, no gaps
+    }
+    EXPECT_EQ(lastChunkCount, 1U); /// exactly one lastChunk
+    EXPECT_EQ(highestChunkWithLast, ChunkNumber::INITIAL + (K - 1)); /// ...and it is the highest-numbered chunk
+
+    /// PRIMARY correctness proof: total tuples AND the unioned contents over the K chunks equal the full window aggregate
+    /// (key-disjoint + complete — every key emitted exactly once across the K chunks, nothing added/dropped/duplicated).
+    EXPECT_EQ(totalTuples, DISTINCT_KEYS);
+    ASSERT_EQ(unioned.size(), expected.size()) << "K chunks streamed " << unioned.size() << " entries; window holds " << expected.size();
+    sortEntries(unioned);
+    ASSERT_EQ(unioned, expected) << "union of the K emitted chunks != the full window aggregate (key-disjoint+complete violated)";
+
+    /// Probe drain: release every emitted chunk's (seq,chunk) key. Leak-totality after drain.
+    for (const auto& buffer : emitted)
+    {
+        handler->releaseChunk(buffer.getSequenceNumber(), buffer.getChunkNumber());
+    }
+    EXPECT_EQ(handler->pendingChunkCount(), 0U);
+    EXPECT_EQ(handler->numReleasedChunks(), handler->numRegisteredChunks());
+
+    /// stop() sweep is a no-op now (all drained), and re-confirms leak-totality after teardown.
+    handler->stop(QueryTerminationType::Graceful, ctx);
+    EXPECT_EQ(handler->pendingChunkCount(), 0U);
+    EXPECT_EQ(handler->numReleasedChunks(), handler->numRegisteredChunks());
+
+    /// deleteState() to quiesce the store's background spiller cleanly before teardown.
+    storePtr->deleteState();
 }
 
 }

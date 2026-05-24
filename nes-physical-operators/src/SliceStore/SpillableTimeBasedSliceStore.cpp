@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <exception>
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -117,7 +118,8 @@ SpillableTimeBasedSliceStore::SpillableTimeBasedSliceStore(
     const uint64_t pageSize,
     const uint64_t softThresholdBytes,
     const uint64_t hardThresholdBytes,
-    const uint64_t emitLag)
+    const uint64_t emitLag,
+    const uint64_t numberOfPartitions)
     : DefaultTimeBasedSliceStore(windowSize, windowSlide, std::move(sliceCacheConfiguration))
     , backend(std::move(backend))
     , entriesPerPage(entriesPerPage)
@@ -125,18 +127,27 @@ SpillableTimeBasedSliceStore::SpillableTimeBasedSliceStore(
     , softThresholdBytes(softThresholdBytes)
     , hardThresholdBytes(hardThresholdBytes)
     , emitLag(emitLag)
+    , numberOfPartitions(numberOfPartitions)
 {
     PRECONDITION(this->backend != nullptr, "SpillableTimeBasedSliceStore requires a non-null SpillBackend");
     PRECONDITION(entriesPerPage > 0, "entriesPerPage must be > 0");
     PRECONDITION(pageSize > 0, "pageSize must be > 0");
+    /// M1: PartitionId is uint16_t and the emit/spill paths static_cast partition indices to it; a value above the
+    /// uint16_t range would wrap silently and corrupt the key encoding, so reject it up front.
+    PRECONDITION(
+        numberOfPartitions >= 1 && numberOfPartitions <= std::numeric_limits<uint16_t>::max(),
+        "numberOfPartitions must be in [1, {}], got {}",
+        std::numeric_limits<uint16_t>::max(),
+        numberOfPartitions);
     NES_DEBUG(
         "Constructed SpillableTimeBasedSliceStore (entriesPerPage={}, pageSize={}, softThresholdBytes={}, hardThresholdBytes={}, "
-        "emitLag={})",
+        "emitLag={}, numberOfPartitions={})",
         entriesPerPage,
         pageSize,
         softThresholdBytes,
         hardThresholdBytes,
-        emitLag);
+        emitLag,
+        numberOfPartitions);
 }
 
 SpillableTimeBasedSliceStore::~SpillableTimeBasedSliceStore()
@@ -238,6 +249,29 @@ void SpillableTimeBasedSliceStore::unspillAndMarkEmitted(
     }
 }
 
+bool SpillableTimeBasedSliceStore::claimSliceForEmit(const std::shared_ptr<SpillableAggregationSlice>& spillable)
+{
+    /// The CLAIM half of the trigger discipline, extracted from ensureWindowSlicesResident so the steady (unspill) path
+    /// AND the 2d partitioned terminal-emit path share ONE copy of this load-bearing logic (a wrong fence here is a
+    /// spill-vs-emit UAF — the spiller is LIVE during the whole terminal flush).
+    const auto sliceEnd = spillable->getSliceEnd();
+    std::unique_lock lock(evictionMutex);
+    if (spillInProgress.contains(sliceEnd))
+    {
+        NES_TRACE("Trigger of slice {} waiting on in-flight spill", sliceEnd);
+        spillerCv.wait(lock, [&] { return !spillInProgress.contains(sliceEnd); });
+    }
+    /// Claim it BEFORE releasing the mutex: the spiller's pickAndReserveColdSlice rejects emitted slices, so once it is
+    /// in emittedKeys no NEW spill of this slice can start after we wake.
+    emittedKeys.wlock()->insert(sliceEnd);
+    /// Increment C: emitted now ⇒ emittedKeys protects it; drop any (now-redundant) late-write pin so pinnedKeys stays
+    /// bounded by live, unemitted, late-touched slices.
+    pinnedKeys.erase(sliceEnd);
+    /// Report whether the now-claimed slice still needs unspilling. Deliberately do NOT touch spillInProgress here: that
+    /// reservation is the UNSPILL path's footprint-reader fence, set by the caller only when it actually unspills.
+    return !spillable->isResident();
+}
+
 void SpillableTimeBasedSliceStore::ensureWindowSlicesResident(const std::vector<std::shared_ptr<Slice>>& windowSlices)
 {
     /// PR-3 trigger-WAIT (closes the spill-vs-emit / spill-vs-trigger UAF). For each spillable slice in THIS window:
@@ -258,31 +292,19 @@ void SpillableTimeBasedSliceStore::ensureWindowSlicesResident(const std::vector<
             continue;
         }
         const auto sliceEnd = spillable->getSliceEnd();
-        bool needsUnspill = false;
-        {
-            std::unique_lock lock(evictionMutex);
-            if (spillInProgress.contains(sliceEnd))
-            {
-                NES_TRACE("Trigger of slice {} waiting on in-flight spill", sliceEnd);
-                spillerCv.wait(lock, [&] { return !spillInProgress.contains(sliceEnd); });
-            }
-            /// Claim it BEFORE releasing the mutex: the spiller can never (re-)pick an emitted slice.
-            emittedKeys.wlock()->insert(sliceEnd);
-            /// Increment C: emitted now ⇒ emittedKeys protects it; drop any (now-redundant) late-write pin so
-            /// pinnedKeys stays bounded by live, unemitted, late-touched slices.
-            pinnedKeys.erase(sliceEnd);
-            /// If it is spilled we will unspill it OUTSIDE the lock. Reserve it in spillInProgress for the duration
-            /// so a concurrent residentBytes() SKIPS this slice while unspill() is rebuilding its maps (the read
-            /// would otherwise race the map mutation). No spiller can pick it (it is emitted), so the reservation is
-            /// purely to fence the footprint reader.
-            needsUnspill = !spillable->isResident();
-            if (needsUnspill)
-            {
-                spillInProgress.insert(sliceEnd);
-            }
-        }
+        /// CLAIM (shared with the 2d partitioned path via claimSliceForEmit): wait out any in-flight spill, mark the
+        /// slice emitted + drop its pin under evictionMutex. Returns whether the now-claimed slice still needs unspilling.
+        bool needsUnspill = claimSliceForEmit(spillable);
         if (needsUnspill)
         {
+            /// Reserve the slice in spillInProgress for the unspill duration so a concurrent residentBytes() SKIPS it
+            /// while unspill() rebuilds its maps (the footprint-reader fence). The slice is already emitted-claimed, so
+            /// no spiller can pick it between the claim above and this reservation. (This reservation is the UNSPILL
+            /// path's fence ONLY — the claim deliberately does not touch spillInProgress.)
+            {
+                std::unique_lock lock(evictionMutex);
+                spillInProgress.insert(sliceEnd);
+            }
             INVARIANT(provider != nullptr, "buffer provider must be stashed before an unspill-on-read");
             NES_DEBUG("Unspilling slice {} on trigger read", sliceEnd);
             /// L1: mirror the PR-2 spill guard on the unspill path. If unspill() throws, the spillInProgress
@@ -293,7 +315,9 @@ void SpillableTimeBasedSliceStore::ensureWindowSlicesResident(const std::vector<
             /// not double-erase the reservation (the manual block below + the guard would otherwise both run).
             ReservationGuard unspillGuard{*this, sliceEnd};
             const auto unspillStart = std::chrono::steady_clock::now();
-            spillable->unspill(*backend, *provider); /// I/O OUTSIDE evictionMutex (slice is emitted ⇒ no spiller race)
+            /// 2d: unspill with the SAME P the spiller wrote (numberOfPartitions) — a P=1 read of P-way blobs would
+            /// silently drop partitions 1..P-1. Spill and unspill MUST be P-consistent across the store.
+            spillable->unspill(*backend, *provider, numberOfPartitions); /// I/O OUTSIDE evictionMutex (slice emitted ⇒ no spiller race)
             /// residentBytesOf measured AFTER unspill() — the bytes re-materialized into the pool (mirror of the spill
             /// sites, which read the footprint freed BEFORE spill(); reading here before unspill() would yield 0).
             recordUnspillSample(std::chrono::steady_clock::now() - unspillStart, residentBytesOf(*spillable));
@@ -307,6 +331,78 @@ void SpillableTimeBasedSliceStore::ensureWindowSlicesResident(const std::vector<
             unspillGuard.committed = true; /// success: reservation already erased above, do not double-erase
         }
     }
+}
+
+void SpillableTimeBasedSliceStore::claimWindowForPartitionedEmit(const std::vector<std::shared_ptr<Slice>>& windowSlices)
+{
+    /// 2d CLAIM step. Run the shared claim discipline (claimSliceForEmit) on every spillable slice of this window so the
+    /// LIVE background spiller can never (re-)pick them. We discard the needsUnspill return: the partitioned path reads
+    /// state at 1/P granularity in streamWindowPartition and leaves spilled slices spilled (no unspill round-trip).
+    NES_DEBUG(
+        "claimWindowForPartitionedEmit: claiming {} slice(s) for partitioned emit (P={})", windowSlices.size(), numberOfPartitions);
+    for (const auto& slice : windowSlices)
+    {
+        auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(slice);
+        if (spillable == nullptr)
+        {
+            continue;
+        }
+        /// Claim + mark emitted (return discarded: no unspill on this path). Post: residency is stable; the spiller is
+        /// fenced off this slice, so streamWindowPartition below runs safely OUTSIDE evictionMutex.
+        (void)claimSliceForEmit(spillable);
+    }
+}
+
+std::vector<std::unique_ptr<HashMap>>
+SpillableTimeBasedSliceStore::streamWindowPartition(const std::vector<std::shared_ptr<Slice>>& windowSlices, const uint64_t partition)
+{
+    /// 2d STREAM step. PRECONDITION: claimWindowForPartitionedEmit already ran for this window, so every slice is
+    /// emitted-claimed and its residency is stable — there is no spiller race and we run OUTSIDE evictionMutex.
+    PRECONDITION(partition < numberOfPartitions, "partition {} out of range for P={}", partition, numberOfPartitions);
+    auto provider = bufferProvider.copy();
+    INVARIANT(provider != nullptr, "buffer provider must be stashed before a partitioned terminal emit");
+
+    std::vector<std::unique_ptr<HashMap>> windowPartitionMaps;
+    for (const auto& slice : windowSlices)
+    {
+        auto spillable = std::dynamic_pointer_cast<SpillableAggregationSlice>(slice);
+        if (spillable == nullptr)
+        {
+            continue;
+        }
+        if (spillable->isResident())
+        {
+            /// Resident slice: filter its worker maps in memory (slice stays resident, maps untouched).
+            auto maps = spillable->materializeResidentPartition(*provider, numberOfPartitions, static_cast<PartitionId>(partition));
+            for (auto& map : maps)
+            {
+                windowPartitionMaps.push_back(std::move(map));
+            }
+        }
+        else
+        {
+            /// Spilled slice: stream this partition's blob whole (slice stays spilled — a 1/P-resident read-out).
+            spillable->streamEmitByPartition(
+                *backend,
+                *provider,
+                numberOfPartitions,
+                static_cast<PartitionId>(partition),
+                [&](std::vector<std::unique_ptr<HashMap>> maps)
+                {
+                    for (auto& map : maps)
+                    {
+                        windowPartitionMaps.push_back(std::move(map));
+                    }
+                });
+        }
+    }
+    NES_TRACE(
+        "streamWindowPartition: partition={} of P={} collected {} worker map(s) across {} slice(s)",
+        partition,
+        numberOfPartitions,
+        windowPartitionMaps.size(),
+        windowSlices.size());
+    return windowPartitionMaps;
 }
 
 void SpillableTimeBasedSliceStore::pinAndUnspillForLateWrite(const std::shared_ptr<Slice>& slice)
@@ -349,7 +445,8 @@ void SpillableTimeBasedSliceStore::pinAndUnspillForLateWrite(const std::shared_p
         /// stays (harmless — the slice remains spilled, and a later emit/GC will retry/clean it).
         ReservationGuard unspillGuard{*this, sliceEnd};
         const auto unspillStart = std::chrono::steady_clock::now();
-        spillable->unspill(*backend, *provider);
+        /// 2d: P-consistent unspill (see ensureWindowSlicesResident) — read all P blobs the spiller wrote, not just p=0.
+        spillable->unspill(*backend, *provider, numberOfPartitions);
         /// residentBytesOf measured AFTER unspill() — the bytes re-materialized into the pool (mirror of the spill sites,
         /// which read the footprint freed BEFORE spill(); reading here before unspill() would yield 0).
         recordUnspillSample(std::chrono::steady_clock::now() - unspillStart, residentBytesOf(*spillable));
@@ -439,7 +536,8 @@ std::optional<std::shared_ptr<Slice>> SpillableTimeBasedSliceStore::getSliceBySl
                 /// double-erase.
                 ReservationGuard unspillGuard{*this, sliceEnd};
                 const auto unspillStart = std::chrono::steady_clock::now();
-                spillable->unspill(*backend, *provider);
+                /// 2d: P-consistent unspill (see ensureWindowSlicesResident) — read all P blobs the spiller wrote, not just p=0.
+                spillable->unspill(*backend, *provider, numberOfPartitions);
                 /// residentBytesOf measured AFTER unspill() — the bytes re-materialized into the pool (mirror of the spill
                 /// sites, which read the footprint freed BEFORE spill(); reading here before unspill() would yield 0).
                 recordUnspillSample(std::chrono::steady_clock::now() - unspillStart, residentBytesOf(*spillable));
@@ -597,7 +695,9 @@ void SpillableTimeBasedSliceStore::forceSpill(const SliceEnd sliceEnd)
     const auto residentBefore = residentBytesOf(*spillable); /// footprint freed by the spill (0 after spill())
     NES_DEBUG("Spilling slice {} ({} bytes resident)", sliceEnd, residentBefore);
     const auto spillStart = std::chrono::steady_clock::now();
-    spillable->spill(*backend); /// if this throws, the guard releases the reservation, then the exception propagates
+    /// 2d: spill P-way (numberOfPartitions). unspill sites read with the same P, so the round-trip is lossless; at P=1
+    /// this is byte-identical to the historic single-blob spill.
+    spillable->spill(*backend, numberOfPartitions); /// if this throws, the guard releases the reservation, then the exception propagates
     /// L3: recordSpillSample bumps spillCount just BEFORE finalizeSpill inserts into spilledKeys, so spillCountForTest()
     /// reads ">= finalized spills" (see spillOneColdSlice). PR-3's stress test must assert spillCountForTest() > 0, not an
     /// exact equality tied to spilledKeys size.
@@ -728,7 +828,9 @@ bool SpillableTimeBasedSliceStore::spillOneColdSlice()
     const auto spillStart = std::chrono::steady_clock::now();
     try
     {
-        spillable->spill(*backend);
+        /// 2d: background spiller spills P-way (numberOfPartitions); every store unspill site reads with the same P so
+        /// partitions 1..P-1 are never silently lost. At P=1 this is the historic single-blob spill.
+        spillable->spill(*backend, numberOfPartitions);
     }
     catch (const std::exception& e)
     {

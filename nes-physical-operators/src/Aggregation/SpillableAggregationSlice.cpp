@@ -228,6 +228,67 @@ void SpillableAggregationSlice::streamEmitByPartition(
     emit(std::move(collected));
 }
 
+std::vector<std::unique_ptr<HashMap>> SpillableAggregationSlice::materializeResidentPartition(
+    AbstractBufferProvider& bufferProvider, const uint64_t numberOfPartitions, const PartitionId partition) const
+{
+    /// The caller (2d resident-slice path) guarantees the slice is resident before invoking this; a spilled slice has
+    /// freed its maps, so dereferencing them would be a contract violation, not user input.
+    PRECONDITION(resident, "materializeResidentPartition called on a spilled slice; stream the spilled blobs instead");
+    PRECONDITION(numberOfPartitions >= 1, "numberOfPartitions must be at least 1");
+    PRECONDITION(
+        static_cast<uint64_t>(partition) < numberOfPartitions,
+        "partition {} out of range for P={}",
+        static_cast<uint64_t>(partition),
+        numberOfPartitions);
+
+    const uint64_t entrySize = entrySizeFor(createNewHashMapSliceArgs);
+    const uint64_t payloadSize = entrySize - sizeof(ChainedHashMapEntry);
+
+    /// Build one fresh map per worker holding ONLY that worker's entries routed to `partition`. Reuse the exact
+    /// entry-iteration + insertEntry/payload-memcpy shape used by deserialize/unspill's merge (replayEntriesInto), but
+    /// filtered by `hash % P == partition` — the same routing partitionedSerialize uses on the spill path.
+    std::vector<std::unique_ptr<HashMap>> collected;
+    for (uint64_t pos = 0; pos < hashMaps.size(); ++pos)
+    {
+        const auto* const src = dynamic_cast<const ChainedHashMap*>(hashMaps[pos].get());
+        if (src == nullptr || src->getNumberOfTuples() == 0)
+        {
+            continue; /// worker never created a map / empty — contributes nothing to any partition
+        }
+        /// A fresh map with the SAME layout as the source (so the spilled and resident partitions are byte-comparable).
+        auto dst = ChainedHashMap::createNewMapWithSameConfiguration(*src);
+        for (uint64_t chain = 0; chain < src->getNumberOfChains(); ++chain)
+        {
+            for (const auto* entry = src->getStartOfChain(chain); entry != nullptr; entry = entry->next)
+            {
+                if (entry->hash % numberOfPartitions != static_cast<uint64_t>(partition))
+                {
+                    continue; /// routed to a different partition
+                }
+                auto* const inserted = static_cast<ChainedHashMapEntry*>(dst->insertEntry(entry->hash, &bufferProvider));
+                /// insertEntry rents a page; null means the pool is exhausted. The memcpy below would deref null, so guard.
+                /// A resource/contract violation on a constrained device, not user input → INVARIANT (terminate) is correct.
+                INVARIANT(inserted != nullptr, "insertEntry returned null: bufferProvider exhausted during resident partition filter");
+                const auto* const srcPayload = reinterpret_cast<const std::byte*>(entry) + sizeof(ChainedHashMapEntry);
+                auto* const dstPayload = reinterpret_cast<std::byte*>(inserted) + sizeof(ChainedHashMapEntry);
+                std::memcpy(dstPayload, srcPayload, payloadSize);
+            }
+        }
+        /// Skip-empty: a worker that routed no entry to this partition produces no map (matches the write-side policy).
+        if (dst->getNumberOfTuples() > 0)
+        {
+            collected.push_back(std::move(dst));
+        }
+    }
+
+    NES_TRACE(
+        "materializeResidentPartition: sliceEnd={} partition={} materialized {} worker maps (slice stays resident)",
+        getSliceEnd().getRawValue(),
+        static_cast<uint64_t>(partition),
+        collected.size());
+    return collected;
+}
+
 void SpillableAggregationSlice::mergePartitionsInto(
     std::unique_ptr<HashMap>& base,
     SpillBackend& backend,

@@ -118,6 +118,13 @@ public:
     /// Sweeps any chunks left in the registry (undrained at teardown), then forwards to the base.
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
+    /// 2d: terminal flush. P==1 (or an in-memory store) delegates VERBATIM to WindowBasedOperatorHandler::triggerAllWindows
+    /// (byte-identical to today). P>1 (a SpillableTimeBasedSliceStore configured with number_of_partitions>1) routes each
+    /// window through the partitioned terminal-emit path: claim the window, then for each grace-hash partition materialise
+    /// only 1/P of the window state and emit the K NON-EMPTY partitions as K contiguous chunks (REVISED L3 skip-empty +
+    /// contiguous-renumber) so no empty map ever reaches the (un-guardable, JIT) probe.
+    void triggerAllWindows(PipelineExecutionContext* pipelineCtx) override;
+
     /// Diagnostic/test accessors for the chunk registry (used by the leak-totality test).
     [[nodiscard]] uint64_t numRegisteredChunks() const { return chunksRegistered.load(std::memory_order_relaxed); }
     [[nodiscard]] uint64_t numReleasedChunks() const { return chunksReleased.load(std::memory_order_relaxed); }
@@ -127,6 +134,24 @@ protected:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) override;
+
+    /// 2d: the shared emit core, extracted from triggerSlices so both the P==1 path (one INITIAL/lastChunk=true chunk,
+    /// empty inputMaps) and the P>1 partitioned path (one chunk per non-empty partition) route through ONE place. It
+    /// registers the chunk's handler-owned maps (finalAccumulator + inputMaps) in chunkRegistry keyed by (seq,chunk),
+    /// allocates the recycle-only emit buffer, sets its metadata (chunk/lastChunk/numberOfTuples per-args; originId/seq/
+    /// watermark as today), placement-news the trivially-destructible EmittedAggregationWindow carrying only raw pointers,
+    /// and emits the buffer. `inputMaps` (the freshly-materialised partition maps, empty at P==1) are MOVED into the
+    /// registry so the handler owns them (L8); `allHashMapPtrs` are the raw pointers the probe combines.
+    void emitChunk(
+        const WindowInfo& windowInfo,
+        SequenceNumber sequenceNumber,
+        ChunkNumber chunkNumber,
+        bool lastChunk,
+        std::unique_ptr<HashMap> finalAccumulator,
+        std::vector<std::unique_ptr<HashMap>> inputMaps,
+        const std::vector<HashMap*>& allHashMapPtrs,
+        uint64_t numberOfTuples,
+        PipelineExecutionContext* pipelineCtx);
     folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;
     uint64_t maxNumberOfBuckets;
     /// When true, getCreateNewSlicesFunction emits SpillableAggregationSlice (paired with a SpillableTimeBasedSliceStore).

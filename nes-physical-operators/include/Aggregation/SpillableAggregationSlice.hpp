@@ -85,6 +85,17 @@ public:
         PartitionId partition,
         const std::function<void(std::vector<std::unique_ptr<HashMap>>)>& emit) const;
 
+    /// Pure, read-only in-memory analogue of `streamEmitByPartition` for a RESIDENT slice (2d). For the fixed
+    /// `partition`, builds a fresh per-worker `ChainedHashMap` containing ONLY this worker's entries whose
+    /// `hash % numberOfPartitions == partition`, renting pages from `bufferProvider`. The slice is NOT modified
+    /// (`resident` stays true) and the source maps are untouched — the caller OWNS the returned maps (they are freshly
+    /// built and NOT slice-owned, L8). A worker contributing no entry to this partition produces no map (skip-empty,
+    /// mirroring the write-side SKIP-EMPTY policy). The `hash % P` routing matches `partitionedSerialize`, so the
+    /// resident and spilled streaming paths produce identical partitions — the differential P=1-vs-P>1 gate relies on
+    /// this. Precondition: the slice is resident (a spilled slice has freed its maps; stream the spilled blobs instead).
+    [[nodiscard]] std::vector<std::unique_ptr<HashMap>>
+    materializeResidentPartition(AbstractBufferProvider& bufferProvider, uint64_t numberOfPartitions, PartitionId partition) const;
+
     /// Rebuilds the spilled maps from `backend`, renting pages from `bufferProvider`. No-op if resident.
     ///
     /// `numberOfPartitions == 1` (the default) keeps the historic single-blob path. `numberOfPartitions

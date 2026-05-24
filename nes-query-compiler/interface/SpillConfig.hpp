@@ -69,10 +69,28 @@ public:
     UIntOption emitLag
         = {"emit_lag", "0", "Event-time emit/retention lag L (ms); retain+spill completed windows behind the watermark. 0 = no lag."};
 
+    /// Number of grace-hash partitions for spilled window state at terminal emit (Phase 2, 2d). 1 (default) bypasses
+    /// partitioning entirely and is byte-identical to the non-partitioned emit; P>1 splits each spilled worker map by
+    /// `hash % P` so each emitted chunk materialises only 1/P of the window state at a time (textbook grace-hash).
+    UIntOption numberOfPartitions
+        = {"number_of_partitions",
+           "1",
+           "Number of grace-hash partitions for spilled window state at terminal emit; 1 (default) = no partitioning "
+           "(byte-identical to non-partitioned emit)."};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&enabled, &rocksdbPath, &softThresholdMB, &hardThresholdMB, &compression, &writeBufferSizeMB, &blockCacheSizeMB, &emitLag};
+        return {
+            &enabled,
+            &rocksdbPath,
+            &softThresholdMB,
+            &hardThresholdMB,
+            &compression,
+            &writeBufferSizeMB,
+            &blockCacheSizeMB,
+            &emitLag,
+            &numberOfPartitions};
     }
 };
 

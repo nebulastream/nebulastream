@@ -245,15 +245,20 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             pageSize,
             conf.spill.softThresholdMB.getValue() * 1024ULL * 1024ULL,
             conf.spill.hardThresholdMB.getValue() * 1024ULL * 1024ULL,
-            conf.spill.emitLag.getValue()); /// Increment C: event-time emit lag L (ms); raw ms, unit-consistent with window size. Default 0.
+            conf.spill.emitLag.getValue(), /// Increment C: event-time emit lag L (ms); raw ms, unit-consistent with window size. Default 0.
+            /// 2d: grace-hash partition count for the terminal partitioned-emit path. NOTE: this is the SPILL-config knob
+            /// (conf.spill.numberOfPartitions), NOT the unrelated query-level bucket knob conf.numberOfPartitions used for
+            /// numberOfBuckets above. 1 (default) keeps the byte-identical non-partitioned terminal flush.
+            conf.spill.numberOfPartitions.getValue());
         NES_INFO(
             "Lowering windowed aggregation handlerId={} with out-of-core spill enabled (rocksdb at {}, emit_lag={}ms, "
-            "write_buffer={}MB, block_cache={}MB; 0=RocksDB default)",
+            "write_buffer={}MB, block_cache={}MB, number_of_partitions={}; 0=RocksDB default)",
             handlerId,
             conf.spill.rocksdbPath.getValue(),
             conf.spill.emitLag.getValue(),
             conf.spill.writeBufferSizeMB.getValue(),
-            conf.spill.blockCacheSizeMB.getValue());
+            conf.spill.blockCacheSizeMB.getValue(),
+            conf.spill.numberOfPartitions.getValue());
     }
     else
     {

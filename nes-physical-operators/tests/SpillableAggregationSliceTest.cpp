@@ -464,4 +464,121 @@ TEST_F(SpillableAggregationSliceTest, spillPWayThenFullUnspillReproducesOriginal
     EXPECT_EQ(slice.getHashMapPtr(WorkerThreadId(2)), nullptr); /// never populated -> still absent
 }
 
+/// --- 2d: materializeResidentPartition (pure read-only in-memory partition filter for a RESIDENT slice) ---
+
+/// The union over all P partitions must equal the full resident window (disjoint + complete); the slice stays resident
+/// and its source maps are untouched.
+TEST_F(SpillableAggregationSliceTest, materializeResidentPartitionUnionEqualsResidentAndStaysResident)
+{
+    constexpr uint64_t P = 4;
+    SpillableAggregationSlice slice(Timestamp(0), Timestamp(100), makeArgs(), NUMBER_OF_HASH_MAPS);
+    populate(slice, WorkerThreadId(0), 40, 0);
+    populate(slice, WorkerThreadId(1), 25, 1000);
+    populate(slice, WorkerThreadId(3), 13, 5000);
+
+    /// Full resident entry set across all workers, captured before partitioning.
+    std::vector<Entry> expected;
+    for (const auto w : {WorkerThreadId(0), WorkerThreadId(1), WorkerThreadId(3)})
+    {
+        collectFromMap(dynamic_cast<const ChainedHashMap*>(slice.getHashMapPtr(w)), expected);
+    }
+    sortEntries(expected);
+    ASSERT_FALSE(expected.empty());
+
+    std::vector<Entry> unioned;
+    for (PartitionId p = 0; p < P; ++p)
+    {
+        auto maps = slice.materializeResidentPartition(*bufferManager, P, p);
+        for (const auto& map : maps)
+        {
+            collectFromMap(dynamic_cast<const ChainedHashMap*>(map.get()), unioned);
+        }
+        /// The filter is read-only: the slice never leaves residency.
+        EXPECT_TRUE(slice.isResident());
+    }
+    sortEntries(unioned);
+    /// Disjoint + complete: every original entry appears exactly once across the partitions.
+    EXPECT_EQ(unioned, expected);
+
+    /// The source worker maps are unchanged (filter copied entries out, did not mutate the slice).
+    EXPECT_EQ(sortedEntries(slice, WorkerThreadId(0)).size(), 40U);
+    EXPECT_EQ(sortedEntries(slice, WorkerThreadId(1)).size(), 25U);
+    EXPECT_EQ(sortedEntries(slice, WorkerThreadId(3)).size(), 13U);
+}
+
+/// An empty partition (P large enough that some residue receives no entry from any worker) produces NO map.
+TEST_F(SpillableAggregationSliceTest, materializeResidentPartitionEmptyPartitionProducesNoMap)
+{
+    /// One worker, a single entry: only one partition can be non-empty, so the others must be empty (no map).
+    constexpr uint64_t P = 8;
+    SpillableAggregationSlice slice(Timestamp(0), Timestamp(100), makeArgs(), NUMBER_OF_HASH_MAPS);
+    populate(slice, WorkerThreadId(0), 1, 0);
+
+    uint64_t nonEmptyPartitions = 0;
+    uint64_t totalEntries = 0;
+    for (PartitionId p = 0; p < P; ++p)
+    {
+        auto maps = slice.materializeResidentPartition(*bufferManager, P, p);
+        if (!maps.empty())
+        {
+            ++nonEmptyPartitions;
+            for (const auto& map : maps)
+            {
+                totalEntries += map->getNumberOfTuples();
+            }
+        }
+    }
+    /// Exactly one partition holds the single entry; every other partition returned an EMPTY vector (skip-empty).
+    EXPECT_EQ(nonEmptyPartitions, 1U);
+    EXPECT_EQ(totalEntries, 1U);
+}
+
+/// The resident filter and the spilled stream must produce the SAME partition (the differential P=1-vs-P>1 gate relies
+/// on resident and spilled paths being identical). Materialise partition p from the resident slice, then spill a copy
+/// P-way and stream the same p — the entry sets must match exactly.
+TEST_F(SpillableAggregationSliceTest, materializeResidentPartitionMatchesSpilledStream)
+{
+    constexpr uint64_t P = 4;
+    constexpr PartitionId TARGET = 1;
+
+    /// Resident slice: filter partition TARGET in memory.
+    SpillableAggregationSlice resident(Timestamp(0), Timestamp(100), makeArgs(), NUMBER_OF_HASH_MAPS);
+    populate(resident, WorkerThreadId(0), 40, 0);
+    populate(resident, WorkerThreadId(1), 25, 1000);
+    std::vector<Entry> fromResident;
+    {
+        auto maps = resident.materializeResidentPartition(*bufferManager, P, TARGET);
+        for (const auto& map : maps)
+        {
+            collectFromMap(dynamic_cast<const ChainedHashMap*>(map.get()), fromResident);
+        }
+    }
+    sortEntries(fromResident);
+
+    /// An identically-populated copy: spill P-way, then stream the same partition off disk.
+    SpillableAggregationSlice spilledCopy(Timestamp(0), Timestamp(100), makeArgs(), NUMBER_OF_HASH_MAPS);
+    populate(spilledCopy, WorkerThreadId(0), 40, 0);
+    populate(spilledCopy, WorkerThreadId(1), 25, 1000);
+    InMemorySpillBackend backend;
+    spilledCopy.spill(backend, P);
+    ASSERT_FALSE(spilledCopy.isResident());
+    std::vector<Entry> fromSpilled;
+    spilledCopy.streamEmitByPartition(
+        backend,
+        *bufferManager,
+        P,
+        TARGET,
+        [&](std::vector<std::unique_ptr<HashMap>> maps)
+        {
+            for (const auto& map : maps)
+            {
+                collectFromMap(dynamic_cast<const ChainedHashMap*>(map.get()), fromSpilled);
+            }
+        });
+    sortEntries(fromSpilled);
+
+    /// Same routing (hash % P) ⇒ the resident filter and the spilled stream yield the identical partition.
+    EXPECT_EQ(fromResident, fromSpilled);
+}
+
 }
