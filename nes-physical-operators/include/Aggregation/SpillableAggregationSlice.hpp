@@ -15,6 +15,9 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
+#include <memory>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -56,12 +59,51 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const override;
 
     /// Serializes every resident map to `backend` and frees it. No-op if already spilled.
-    void spill(SpillBackend& backend);
+    ///
+    /// `numberOfPartitions == 1` (the default) keeps the historic single-blob path: each worker map is
+    /// serialized whole and written under partition 0, byte-identical to the pre-partitioning behaviour.
+    /// `numberOfPartitions > 1` grace-hash-splits each worker map by `hash % P` into P self-contained
+    /// blobs (SliceSerializer::partitionedSerialize) and writes each non-empty blob under its partition
+    /// id; empty partition blobs are skipped at write (SKIP-EMPTY, L3). A worker's map is only freed
+    /// after all of that worker's puts succeed, mirroring the per-worker order of the P==1 path (L5).
+    void spill(SpillBackend& backend, uint64_t numberOfPartitions = 1);
+
+    /// Streaming, partition-granular read-out that LEAVES THE SLICE SPILLED (a 1/P-resident emit path,
+    /// the dual of partition-at-spill). For the fixed `partition`, deserializes that partition's blob for
+    /// every worker (whole, no filtering) and hands the collected per-worker maps to `emit`, which takes
+    /// OWNERSHIP of them (they are freshly deserialized and NOT slice-owned, L8). The slice is not
+    /// modified and `resident` stays false, so successive partitions can be streamed one at a time while
+    /// only 1/P of the slice's state is materialised at once.
+    ///
+    /// Dependency (2d): the caller guarantees the slice is already spilled before invoking this — hence
+    /// the `!resident` precondition. Workers whose partition blob is absent (skip-empty at write)
+    /// contribute nothing for that partition.
+    void streamEmitByPartition(
+        SpillBackend& backend,
+        AbstractBufferProvider& bufferProvider,
+        uint64_t numberOfPartitions,
+        PartitionId partition,
+        const std::function<void(std::vector<std::unique_ptr<HashMap>>)>& emit) const;
 
     /// Rebuilds the spilled maps from `backend`, renting pages from `bufferProvider`. No-op if resident.
-    void unspill(SpillBackend& backend, AbstractBufferProvider& bufferProvider);
+    ///
+    /// `numberOfPartitions == 1` (the default) keeps the historic single-blob path. `numberOfPartitions
+    /// > 1` merges all P partition blobs of each worker back into one map: because a group key's hash is
+    /// fixed it lands in exactly one partition, so keys are disjoint across partitions and the merge is a
+    /// pure insert with no per-key aggregate-combine. Absent partition blobs (skip-empty) are skipped.
+    void unspill(SpillBackend& backend, AbstractBufferProvider& bufferProvider, uint64_t numberOfPartitions = 1);
 
 private:
+    /// Deserializes `partition`'s blob into `base` if present, then merges every other partition blob of
+    /// `worker` into `base` by replaying its entries (keys are disjoint across partitions, so this is a
+    /// pure insert). Used by unspill() for the P>1 full-window rebuild.
+    void mergePartitionsInto(
+        std::unique_ptr<HashMap>& base,
+        SpillBackend& backend,
+        AbstractBufferProvider& bufferProvider,
+        WorkerThreadId worker,
+        uint64_t numberOfPartitions) const;
+
     bool resident = true;
     /// Tuple count captured at spill() time, so getNumberOfTuples() works while non-resident.
     uint64_t spilledTupleCount = 0;
