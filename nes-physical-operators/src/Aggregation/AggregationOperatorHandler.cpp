@@ -180,8 +180,14 @@ HashMap* AggregationOperatorHandler::registerChunk(
     chunkRegistry.withWLock(
         [&](auto& registry)
         {
-            const auto [it, inserted]
-                = registry.emplace(std::pair{sequenceNumber, chunkNumber}, ChunkMaps{std::move(inputs), std::move(finalAccumulator)});
+            /// Designated initializers pin field-by-name so a future reorder of ChunkMaps cannot silently swap the
+            /// accumulator and the inputs vector (which would null the probe's finalHashMapPtr).
+            const auto [it, inserted] = registry.emplace(
+                std::pair{sequenceNumber, chunkNumber},
+                ChunkMaps{.inputs = std::move(inputs), .finalAccumulator = std::move(finalAccumulator)});
+            /// Keys are unique by construction: sequenceNumber is minted monotonically per triggered window and
+            /// chunkNumber is unique per chunk within a window (INITIAL at P=1; INITIAL+p from 2d). A duplicate is a
+            /// genuine logic error (a window triggered twice), so terminating via INVARIANT is correct.
             INVARIANT(inserted, "Duplicate chunk registration for sequenceNumber {} chunkNumber {}", sequenceNumber, chunkNumber);
         });
     chunksRegistered.fetch_add(1, std::memory_order_relaxed);

@@ -21,6 +21,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <folly/Synchronized.h>
@@ -74,6 +75,14 @@ struct EmittedAggregationWindow
     uint64_t numberOfHashMaps;
     HashMap** hashMaps; /// Non-owning pointers to the hash maps the probe combines (slice-owned at P=1)
 };
+
+/// Guards the load-bearing invariant of 2c0: this object is placement-new'd into a recycle-only TupleBuffer whose
+/// recycler NEVER runs content destructors. Any non-trivial member added here would silently leak on every normal query
+/// teardown (the exact bug EMITTEDWINDOW-LIFETIME-AUDIT.md found and this refactor fixed). Keep it trivially destructible.
+static_assert(
+    std::is_trivially_destructible_v<EmittedAggregationWindow>,
+    "EmittedAggregationWindow must stay trivially destructible: it lives in a recycle-only buffer that never runs a "
+    "content destructor. Owned heap belongs in AggregationOperatorHandler::chunkRegistry, not here.");
 
 class AggregationOperatorHandler final : public WindowBasedOperatorHandler
 {

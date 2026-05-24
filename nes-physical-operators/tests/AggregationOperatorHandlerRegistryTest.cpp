@@ -36,6 +36,7 @@
 ///    from SpillableAggregationSliceTest.cpp:71-94, applied here to AggregationSlice (shares the HashMapSlice base).
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -44,6 +45,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -168,6 +170,9 @@ public:
     void deleteState() override { nonTriggered.clear(); }
     void incrementNumberOfInputPipelines() override { }
     [[nodiscard]] uint64_t getWindowSize() const override { return 1; }
+
+    /// ensureWindowSlicesResident is intentionally NOT overridden: the base no-op is correct here because this stub's
+    /// test slices are always in-memory resident (never spilled), so there is nothing to re-materialise before emit.
 
 private:
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> nonTriggered;
@@ -333,6 +338,101 @@ TEST_F(AggregationOperatorHandlerRegistryTest, releaseAbsentKeyIsNoop)
     EXPECT_EQ(handler->pendingChunkCount(), 0U);
     EXPECT_EQ(handler->numRegisteredChunks(), 0U);
     EXPECT_EQ(handler->numReleasedChunks(), 0U);
+}
+
+/// ==================== Group C — concurrent registry mutation (thread-safety gate) ====================
+///
+/// The registry is folly::Synchronized and the counters are atomics; in production registerChunk (build worker),
+/// releaseChunk (probe worker), and stop() (teardown) race on different threads. The single-threaded Group A/B cases
+/// leave that thread-safety claim unverified. These cases drive the same mechanism from multiple threads but keep the
+/// FINAL assertion deterministic (ordering via thread joins, no sleeps, no liveness asserts), so the leak-totality
+/// invariant — pendingChunkCount()==0 AND numReleasedChunks()==numRegisteredChunks()==N — is a hard, non-flaky gate.
+
+/// Concurrent DISJOINT release: pre-register N chunks, then T threads each release a disjoint partition of the keys.
+/// No two threads touch the same key, so the registry erase + atomic counters are exercised under contention without
+/// any timing dependence; after all joins the registry must be empty and every chunk released exactly once.
+TEST_F(AggregationOperatorHandlerRegistryTest, concurrentDisjointReleaseBalances)
+{
+    auto handler = makeHandler(std::make_unique<StubSliceStore>());
+    constexpr uint64_t N = 200;
+    constexpr uint64_t NUM_THREADS = 4;
+
+    for (uint64_t i = 0; i < N; ++i)
+    {
+        handler->registerChunk(SequenceNumber(i + 1), ChunkNumber(ChunkNumber::INITIAL), makeAccumulator());
+    }
+    ASSERT_EQ(handler->pendingChunkCount(), N);
+    ASSERT_EQ(handler->numRegisteredChunks(), N);
+
+    /// Partition [0, N) across threads by stride so each thread owns a disjoint, interleaved subset of the key space.
+    std::vector<std::jthread> releasers;
+    releasers.reserve(NUM_THREADS);
+    for (uint64_t t = 0; t < NUM_THREADS; ++t)
+    {
+        releasers.emplace_back(
+            [&handler, t]
+            {
+                for (uint64_t i = t; i < N; i += NUM_THREADS)
+                {
+                    handler->releaseChunk(SequenceNumber(i + 1), ChunkNumber(ChunkNumber::INITIAL));
+                }
+            });
+    }
+    releasers.clear(); /// join all jthreads (dtor joins) — establishes ordering for the final assertion
+
+    EXPECT_EQ(handler->pendingChunkCount(), 0U);
+    EXPECT_EQ(handler->numReleasedChunks(), N);
+    EXPECT_EQ(handler->numReleasedChunks(), handler->numRegisteredChunks());
+}
+
+/// Concurrent register-vs-release race: thread A registers keys [0, N); thread B repeatedly drains whatever keys are
+/// currently present, looping until A has finished AND the registry is empty. Producer/consumer overlap is real (no
+/// sleeps), but the loop's termination condition (A done && registry empty) makes the post-join assertion
+/// deterministic: every registered key has been released exactly once regardless of interleaving.
+TEST_F(AggregationOperatorHandlerRegistryTest, concurrentRegisterVsReleaseDrainsAll)
+{
+    auto handler = makeHandler(std::make_unique<StubSliceStore>());
+    constexpr uint64_t N = 200;
+    std::atomic<bool> registerDone{false};
+    std::atomic<uint64_t> highestRegistered{0}; /// count of keys A has registered so far (release only chases these)
+
+    std::jthread producer(
+        [&handler, &registerDone, &highestRegistered]
+        {
+            for (uint64_t i = 0; i < N; ++i)
+            {
+                handler->registerChunk(SequenceNumber(i + 1), ChunkNumber(ChunkNumber::INITIAL), makeAccumulator());
+                highestRegistered.store(i + 1, std::memory_order_release);
+            }
+            registerDone.store(true, std::memory_order_release);
+        });
+
+    std::jthread consumer(
+        [&handler, &registerDone, &highestRegistered]
+        {
+            uint64_t next = 0; /// next key index to attempt to release; releaseChunk on an absent key is a safe no-op
+            while (true)
+            {
+                const uint64_t available = highestRegistered.load(std::memory_order_acquire);
+                while (next < available)
+                {
+                    handler->releaseChunk(SequenceNumber(next + 1), ChunkNumber(ChunkNumber::INITIAL));
+                    ++next;
+                }
+                if (registerDone.load(std::memory_order_acquire) && next >= N)
+                {
+                    break; /// A finished and we have attempted release of every key it produced
+                }
+            }
+        });
+
+    producer.join();
+    consumer.join();
+
+    EXPECT_EQ(handler->pendingChunkCount(), 0U);
+    EXPECT_EQ(handler->numRegisteredChunks(), N);
+    EXPECT_EQ(handler->numReleasedChunks(), N);
+    EXPECT_EQ(handler->numReleasedChunks(), handler->numRegisteredChunks());
 }
 
 /// ==================== Group B — integration via the emit path (triggerAllWindows) ====================
