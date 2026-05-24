@@ -156,16 +156,26 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         }
     }
 
-    /// As we are creating a new hash map for the probe operator, we have to reset/destroy the final hash map of the emitted aggregation window
+    /// 2c0: the final accumulator (and, from 2d, the per-partition input maps) for this chunk are owned by the
+    /// AggregationOperatorHandler::chunkRegistry, NOT by this recycle-only emit buffer. Now that the probe has fully
+    /// combined and lowered them, release the registry entry keyed by (sequenceNumber, chunkNumber) so the owned maps are
+    /// freed exactly once on drain completion. The emitted buffer itself owns no heap, so dropping it (e.g. on teardown)
+    /// cannot leak; stop() sweeps any chunk whose probe never ran. See EMITTEDWINDOW-LIFETIME-AUDIT.md.
+    const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     nautilus::invoke(
-        +[](EmittedAggregationWindow* emittedAggregationWindow)
+        +[](OperatorHandler* operatorHandler, EmittedAggregationWindow* emittedAggregationWindow)
         {
+            auto* const aggregationHandler = dynamic_cast<AggregationOperatorHandler*>(operatorHandler);
+            PRECONDITION(aggregationHandler != nullptr, "AggregationProbe operator handler must be an AggregationOperatorHandler");
             NES_TRACE(
-                "Resetting final hash map of emitted aggregation window start at {} and end at {}",
+                "Releasing emitted aggregation chunk seq={} chunk={} (window start {} end {})",
+                emittedAggregationWindow->sequenceNumber,
+                emittedAggregationWindow->chunkNumber,
                 emittedAggregationWindow->windowInfo.windowStart,
                 emittedAggregationWindow->windowInfo.windowEnd);
-            emittedAggregationWindow->finalHashMap.reset();
+            aggregationHandler->releaseChunk(emittedAggregationWindow->sequenceNumber, emittedAggregationWindow->chunkNumber);
         },
+        operatorHandlerRef,
         aggregationWindowRef);
 }
 

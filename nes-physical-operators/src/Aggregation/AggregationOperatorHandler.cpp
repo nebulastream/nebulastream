@@ -139,9 +139,21 @@ void AggregationOperatorHandler::triggerSlices(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
 
+        /// 2c0: the final accumulator is owned by the handler's chunkRegistry (NOT the recycle-only emit buffer), keyed by
+        /// (sequenceNumber, chunkNumber); it is freed when the probe finishes draining this chunk (releaseChunk) or swept
+        /// by stop() at teardown. The emitted buffer carries only the raw, non-owning accumulator pointer, which keeps the
+        /// buffer trivially destructible so a dropped-undrained buffer cannot leak. A window with no non-empty slices has a
+        /// null accumulator and registers nothing (byte-identical to the previous null unique_ptr being moved in).
+        HashMap* finalHashMapPtr = nullptr;
+        if (finalHashMap)
+        {
+            finalHashMapPtr = registerChunk(windowInfo.sequenceNumber, ChunkNumber(ChunkNumber::INITIAL), std::move(finalHashMap));
+        }
+
         /// Writing all necessary information for the aggregation probe to the buffer via the placement new constructor
         auto tmp = tupleBuffer.getAvailableMemoryArea();
-        new (tmp.data()) EmittedAggregationWindow{windowInfo.windowInfo, std::move(finalHashMap), allHashMaps};
+        new (tmp.data()) EmittedAggregationWindow{
+            windowInfo.windowInfo, finalHashMapPtr, windowInfo.sequenceNumber, ChunkNumber(ChunkNumber::INITIAL), allHashMaps};
 
 
         /// Dispatching the buffer to the probe operator via the task queue.
@@ -154,6 +166,58 @@ void AggregationOperatorHandler::triggerSlices(
             tupleBuffer.getSequenceNumber(),
             tupleBuffer.getOriginId());
     }
+}
+
+HashMap* AggregationOperatorHandler::registerChunk(
+    const SequenceNumber sequenceNumber,
+    const ChunkNumber chunkNumber,
+    std::unique_ptr<HashMap> finalAccumulator,
+    std::vector<std::unique_ptr<HashMap>> inputs)
+{
+    /// Capture the raw pointer + input count BEFORE moving the owned maps into the registry.
+    HashMap* const rawAccumulator = finalAccumulator.get();
+    const auto numInputs = inputs.size();
+    chunkRegistry.withWLock(
+        [&](auto& registry)
+        {
+            const auto [it, inserted]
+                = registry.emplace(std::pair{sequenceNumber, chunkNumber}, ChunkMaps{std::move(inputs), std::move(finalAccumulator)});
+            INVARIANT(inserted, "Duplicate chunk registration for sequenceNumber {} chunkNumber {}", sequenceNumber, chunkNumber);
+        });
+    chunksRegistered.fetch_add(1, std::memory_order_relaxed);
+    NES_TRACE("Registered aggregation chunk seq={} chunk={} with {} input maps", sequenceNumber, chunkNumber, numInputs);
+    return rawAccumulator;
+}
+
+void AggregationOperatorHandler::releaseChunk(const SequenceNumber sequenceNumber, const ChunkNumber chunkNumber)
+{
+    const auto erased
+        = chunkRegistry.withWLock([&](auto& registry) { return registry.erase(std::pair{sequenceNumber, chunkNumber}); });
+    if (erased > 0)
+    {
+        chunksReleased.fetch_add(1, std::memory_order_relaxed);
+        NES_TRACE("Released aggregation chunk seq={} chunk={}", sequenceNumber, chunkNumber);
+    }
+}
+
+void AggregationOperatorHandler::stop(
+    const QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext)
+{
+    /// Teardown safety net: any chunk still in the registry was emitted but never drained (e.g. the buffer was dropped on
+    /// engine teardown without the probe running). Freeing them here makes the design leak-total by construction.
+    const auto swept = chunkRegistry.withWLock(
+        [](auto& registry) -> std::size_t
+        {
+            const auto count = registry.size();
+            registry.clear();
+            return count;
+        });
+    if (swept > 0)
+    {
+        chunksReleased.fetch_add(swept, std::memory_order_relaxed);
+        NES_DEBUG("Swept {} undrained aggregation chunk(s) from the registry at stop()", swept);
+    }
+    WindowBasedOperatorHandler::stop(queryTerminationType, pipelineExecutionContext);
 }
 
 }
