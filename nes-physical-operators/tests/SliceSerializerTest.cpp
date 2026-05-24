@@ -232,4 +232,108 @@ TEST_F(SliceSerializerTest, rejectsEntryCountOverflow)
     ASSERT_EXCEPTION_ERRORCODE(SliceSerializer::deserialize(record, *bufferManager), ErrorCode::CannotDeserialize);
 }
 
+/// 2a (i): the P partitions are disjoint AND complete — every entry of the full map appears in
+/// exactly one partition, with identical (hash, payload). Round-tripped through deserialize.
+TEST_F(SliceSerializerTest, partitionedSplitIsDisjointAndComplete)
+{
+    constexpr uint64_t COUNT = 50;
+    constexpr uint64_t PARTITIONS = 4;
+
+    ChainedHashMap original{KEY_SIZE, VALUE_SIZE, NUMBER_OF_BUCKETS, PAGE_SIZE};
+    populate(original, COUNT);
+
+    const auto records = SliceSerializer::partitionedSerialize(original, entrySize(), PAGE_SIZE, NUMBER_OF_BUCKETS, PARTITIONS);
+    ASSERT_EQ(records.size(), PARTITIONS);
+
+    /// Collect the union of all partitions' entries (and confirm no key appears twice).
+    std::vector<Entry> unionEntries;
+    uint64_t totalTuples = 0;
+    for (const auto& record : records)
+    {
+        const auto restored = SliceSerializer::deserialize(record, *bufferManager);
+        totalTuples += restored->getNumberOfTuples();
+        const auto partitionEntries = sortedEntries(*restored);
+        unionEntries.insert(unionEntries.end(), partitionEntries.begin(), partitionEntries.end());
+    }
+
+    /// Completeness: union size equals the original tuple count (no drops).
+    EXPECT_EQ(totalTuples, COUNT);
+
+    std::ranges::sort(
+        unionEntries, [](const Entry& a, const Entry& b) { return a.first != b.first ? a.first < b.first : a.second < b.second; });
+
+    /// Disjoint + complete: the sorted union equals the full serialize entry set exactly,
+    /// which (with equal sizes) also proves no entry is duplicated across partitions.
+    const auto expected = sortedEntries(original);
+    EXPECT_EQ(unionEntries, expected);
+}
+
+/// 2a (ii): partitions with zero entries are tolerated — a sparse map across many partitions
+/// leaves some record[p] with numEntries == 0, which deserialize must read back as an empty map.
+TEST_F(SliceSerializerTest, partitionedEmptyPartitionsTolerated)
+{
+    constexpr uint64_t COUNT = 3; /// fewer keys than partitions, so some partitions are guaranteed empty
+    constexpr uint64_t PARTITIONS = 8;
+
+    ChainedHashMap original{KEY_SIZE, VALUE_SIZE, NUMBER_OF_BUCKETS, PAGE_SIZE};
+    populate(original, COUNT);
+
+    const auto records = SliceSerializer::partitionedSerialize(original, entrySize(), PAGE_SIZE, NUMBER_OF_BUCKETS, PARTITIONS);
+    ASSERT_EQ(records.size(), PARTITIONS);
+
+    uint64_t emptyPartitions = 0;
+    uint64_t totalTuples = 0;
+    for (const auto& record : records)
+    {
+        const auto restored = SliceSerializer::deserialize(record, *bufferManager);
+        const auto tuples = restored->getNumberOfTuples();
+        totalTuples += tuples;
+        if (tuples == 0)
+        {
+            ++emptyPartitions;
+            EXPECT_EQ(sortedEntries(*restored).size(), 0U);
+        }
+    }
+
+    EXPECT_EQ(totalTuples, COUNT);
+    EXPECT_GT(emptyPartitions, 0U); /// at least one partition must be empty with COUNT < PARTITIONS
+}
+
+/// 2a (iii): numberOfPartitions == 1 takes the fast-path and returns a single record that is
+/// byte-for-byte equal to serialize() (L1).
+TEST_F(SliceSerializerTest, partitionedSingleIsByteIdenticalToSerialize)
+{
+    ChainedHashMap original{KEY_SIZE, VALUE_SIZE, NUMBER_OF_BUCKETS, PAGE_SIZE};
+    populate(original, 20);
+
+    const SpillRecord expected = SliceSerializer::serialize(original, entrySize(), PAGE_SIZE, NUMBER_OF_BUCKETS);
+    const auto records = SliceSerializer::partitionedSerialize(original, entrySize(), PAGE_SIZE, NUMBER_OF_BUCKETS, 1);
+
+    ASSERT_EQ(records.size(), 1U);
+    EXPECT_EQ(records[0], expected);
+}
+
+/// 2a (iv): numberOfPartitions == 0 is invalid and throws CannotSerialize.
+TEST_F(SliceSerializerTest, partitionedRejectsZeroPartitions)
+{
+    ChainedHashMap original{KEY_SIZE, VALUE_SIZE, NUMBER_OF_BUCKETS, PAGE_SIZE};
+    populate(original, 5);
+
+    ASSERT_EXCEPTION_ERRORCODE(
+        SliceSerializer::partitionedSerialize(original, entrySize(), PAGE_SIZE, NUMBER_OF_BUCKETS, 0), ErrorCode::CannotSerialize);
+}
+
+/// 2a (v): a too-small entrySize on the multi-partition path (P > 1) is rejected directly by
+/// partitionedSerialize's own guard, not only via the delegated serialize() fast-path.
+TEST_F(SliceSerializerTest, partitionedRejectsTooSmallEntrySize)
+{
+    constexpr uint64_t PARTITIONS = 4;
+    ChainedHashMap original{KEY_SIZE, VALUE_SIZE, NUMBER_OF_BUCKETS, PAGE_SIZE};
+    populate(original, 5);
+
+    ASSERT_EXCEPTION_ERRORCODE(
+        SliceSerializer::partitionedSerialize(original, sizeof(ChainedHashMapEntry), PAGE_SIZE, NUMBER_OF_BUCKETS, PARTITIONS),
+        ErrorCode::CannotSerialize);
+}
+
 }

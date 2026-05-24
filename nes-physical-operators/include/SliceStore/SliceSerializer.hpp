@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <vector>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/SpillBackend.hpp>
@@ -57,6 +58,16 @@ public:
     /// values the map was constructed with. Throws CannotSerialize if `entrySize` is smaller
     /// than an entry header.
     static SpillRecord serialize(const ChainedHashMap& map, uint64_t entrySize, uint64_t pageSize, uint64_t numberOfBuckets);
+
+    /// P-way grace-hash split of `map` by `hash % numberOfPartitions`. Returns exactly
+    /// `numberOfPartitions` records; record[p] is a complete NSS1 record holding only the
+    /// entries whose hash maps to partition p (numEntries may be 0). numberOfPartitions==1
+    /// returns a single record byte-identical to serialize(). Two-pass (L4): pass 1 counts
+    /// entries per partition, pass 2 appends each entry's [hash][payload] to its partition.
+    /// deserialize() reads any record back whole, with no filtering. Throws CannotSerialize if
+    /// `entrySize` is smaller than an entry header or `numberOfPartitions` is 0.
+    static std::vector<SpillRecord> partitionedSerialize(
+        const ChainedHashMap& map, uint64_t entrySize, uint64_t pageSize, uint64_t numberOfBuckets, uint64_t numberOfPartitions);
 
     /// Decode a record produced by serialize() into a fresh ChainedHashMap, renting pages
     /// from `bufferProvider`. Throws CannotDeserialize on a malformed or truncated record.
