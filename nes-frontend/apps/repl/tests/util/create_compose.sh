@@ -59,6 +59,15 @@ if [ -z "$REPL_IMAGE" ]; then
   exit 1
 fi
 
+# When CODE_COVERAGE=ON, add_e2e_test sets LLVM_PROFILE_FILE on the host. Pass
+# it through to every service so instrumented binaries inside containers
+# write *.profraw into their cwd (mounted from TEST_VOLUME, synced back to
+# the host TMP_DIR by sync_workdir).
+COVERAGE_ENV_LINE=""
+if [ -n "$LLVM_PROFILE_FILE" ]; then
+  COVERAGE_ENV_LINE="      LLVM_PROFILE_FILE: \"$LLVM_PROFILE_FILE\""
+fi
+
 # Start building the compose file
 cat <<EOF
 services:
@@ -66,7 +75,9 @@ services:
     image: $REPL_IMAGE
     pull_policy: never
     stop_grace_period: 0s
-    working_dir: /workdir
+${COVERAGE_ENV_LINE:+    environment:
+$COVERAGE_ENV_LINE
+}    working_dir: /workdir
     command: ["sleep", "infinity"]
     volumes:
       - $TEST_VOLUME:/workdir
@@ -88,7 +99,9 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     image: $WORKER_IMAGE
     pull_policy: never
     working_dir: /workdir/$HOST_NAME
-    healthcheck:
+${COVERAGE_ENV_LINE:+    environment:
+$COVERAGE_ENV_LINE
+}    healthcheck:
       test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$HOST_PORT", "-connect-timeout", "5s" ]
       interval: 2s
       timeout: 10s
