@@ -59,16 +59,17 @@ namespace NES::Testing
 class ThreadSafeInMemorySpillBackend final : public SpillBackend
 {
 public:
-    void put(const SliceEnd sliceEnd, const WorkerThreadId workerThreadId, std::span<const std::byte> record) override
+    void put(const SliceEnd sliceEnd, const WorkerThreadId workerThreadId, std::span<const std::byte> record, const PartitionId partition = 0)
+        override
     {
         std::lock_guard lock(mutex);
-        delegate.put(sliceEnd, workerThreadId, record);
+        delegate.put(sliceEnd, workerThreadId, record, partition);
     }
 
-    std::optional<SpillRecord> get(const SliceEnd sliceEnd, const WorkerThreadId workerThreadId) override
+    std::optional<SpillRecord> get(const SliceEnd sliceEnd, const WorkerThreadId workerThreadId, const PartitionId partition = 0) override
     {
         std::lock_guard lock(mutex);
-        return delegate.get(sliceEnd, workerThreadId);
+        return delegate.get(sliceEnd, workerThreadId, partition);
     }
 
     void erase(const SliceEnd sliceEnd) override

@@ -72,6 +72,21 @@ TEST_F(NullSpillBackendTest, eraseIsNoOp)
     EXPECT_NO_THROW(backend.erase(SliceEnd(Timestamp(123))));
 }
 
+/// Phase 2 (2b) — put/get with an explicit partition arg stays a no-op: writes are discarded
+/// per partition and every partitioned get reports a miss.
+TEST_F(NullSpillBackendTest, partitionedPutGetStaysNoOp)
+{
+    NullSpillBackend backend;
+    const std::vector<std::byte> payload{std::byte{42}};
+
+    EXPECT_NO_THROW(backend.put(SliceEnd(Timestamp(123)), WorkerThreadId(0), std::span<const std::byte>{payload}, 1));
+    EXPECT_NO_THROW(backend.put(SliceEnd(Timestamp(123)), WorkerThreadId(0), std::span<const std::byte>{payload}, 2));
+
+    EXPECT_FALSE(backend.get(SliceEnd(Timestamp(123)), WorkerThreadId(0), 1).has_value());
+    EXPECT_FALSE(backend.get(SliceEnd(Timestamp(123)), WorkerThreadId(0), 2).has_value());
+    EXPECT_FALSE(backend.get(SliceEnd(Timestamp(123)), WorkerThreadId(0), 0).has_value()); /// default partition
+}
+
 /// Test D — interface contract: NullSpillBackend is a SpillBackend and is usable
 /// polymorphically through the interface pointer (the way later phases consume it).
 TEST_F(NullSpillBackendTest, satisfiesInterfaceContract)

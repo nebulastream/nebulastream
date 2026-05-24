@@ -42,7 +42,8 @@ namespace
 {
 constexpr std::size_t SLICE_END_BYTES = sizeof(uint64_t);
 constexpr std::size_t WORKER_BYTES = sizeof(uint32_t);
-constexpr std::size_t KEY_BYTES = SLICE_END_BYTES + WORKER_BYTES;
+constexpr std::size_t PARTITION_BYTES = sizeof(PartitionId);
+constexpr std::size_t KEY_BYTES = SLICE_END_BYTES + WORKER_BYTES + PARTITION_BYTES;
 
 /// Appends `value` to `out` in big-endian order, so lexicographic key order matches numeric order.
 template <std::unsigned_integral T>
@@ -55,7 +56,9 @@ void appendBigEndian(std::string& out, const T value)
     }
 }
 
-/// 8-byte big-endian slice-end prefix shared by every per-thread record of one slice.
+/// 8-byte big-endian slice-end prefix shared by every per-(worker, partition) record of one slice.
+/// Deliberately the SLICE_END_BYTES prefix only (NOT extended by the partition suffix): erase(SliceEnd)
+/// sweeps this prefix and so still collects every (worker, partition) record of the slice unchanged.
 std::string slicePrefix(const SliceEnd sliceEnd)
 {
     std::string prefix;
@@ -64,13 +67,16 @@ std::string slicePrefix(const SliceEnd sliceEnd)
     return prefix;
 }
 
-/// Full 12-byte key for a single (sliceEnd, workerThreadId) record.
-std::string recordKey(const SliceEnd sliceEnd, const WorkerThreadId workerThreadId)
+/// Full 14-byte key for a single (sliceEnd, workerThreadId, partition) record:
+/// `<sliceEnd:8 BE><worker:4 BE><partition:2 BE>`. The 2-byte partition suffix goes AFTER the
+/// worker bytes, keeping one worker's partitions key-contiguous and the slice prefix unchanged.
+std::string recordKey(const SliceEnd sliceEnd, const WorkerThreadId workerThreadId, const PartitionId partition)
 {
     std::string key;
     key.reserve(KEY_BYTES);
     appendBigEndian(key, sliceEnd.getRawValue());
     appendBigEndian(key, workerThreadId.getRawValue());
+    appendBigEndian(key, partition);
     return key;
 }
 
@@ -142,9 +148,16 @@ RocksDBSpillBackend::RocksDBSpillBackend(
 
 RocksDBSpillBackend::~RocksDBSpillBackend() = default;
 
-void RocksDBSpillBackend::put(const SliceEnd sliceEnd, const WorkerThreadId workerThreadId, std::span<const std::byte> record)
+void RocksDBSpillBackend::put(
+    const SliceEnd sliceEnd, const WorkerThreadId workerThreadId, std::span<const std::byte> record, const PartitionId partition)
 {
-    const std::string key = recordKey(sliceEnd, workerThreadId);
+    NES_TRACE(
+        "RocksDB spill put: sliceEnd={}, worker={}, partition={}, bytes={}",
+        sliceEnd.getRawValue(),
+        workerThreadId.getRawValue(),
+        partition,
+        record.size());
+    const std::string key = recordKey(sliceEnd, workerThreadId, partition);
     const rocksdb::Slice value(reinterpret_cast<const char*>(record.data()), record.size());
     if (const auto status = db->Put(rocksdb::WriteOptions(), key, value); !status.ok())
     {
@@ -152,9 +165,14 @@ void RocksDBSpillBackend::put(const SliceEnd sliceEnd, const WorkerThreadId work
     }
 }
 
-std::optional<SpillRecord> RocksDBSpillBackend::get(const SliceEnd sliceEnd, const WorkerThreadId workerThreadId)
+std::optional<SpillRecord> RocksDBSpillBackend::get(const SliceEnd sliceEnd, const WorkerThreadId workerThreadId, const PartitionId partition)
 {
-    const std::string key = recordKey(sliceEnd, workerThreadId);
+    NES_TRACE(
+        "RocksDB spill get: sliceEnd={}, worker={}, partition={}",
+        sliceEnd.getRawValue(),
+        workerThreadId.getRawValue(),
+        partition);
+    const std::string key = recordKey(sliceEnd, workerThreadId, partition);
     std::string value;
     const auto status = db->Get(rocksdb::ReadOptions(), key, &value);
     if (status.IsNotFound())

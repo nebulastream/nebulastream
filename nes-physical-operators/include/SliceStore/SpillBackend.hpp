@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <span>
 #include <vector>
@@ -28,8 +29,16 @@ namespace NES
 /// Distinct from the non-owning std::span<const std::byte> accepted by put().
 using SpillRecord = std::vector<std::byte>;
 
+/// Partition index of a spilled blob within one (sliceEnd, workerThreadId) state.
+/// Partition-at-spill (grace-hash) splits the per-worker map into P self-contained
+/// blobs by `hash % P`; each is addressed by a distinct partition id. uint16_t
+/// (P <= 65535) is ample for an edge device and keeps the RocksDB key narrow.
+/// Defaults to 0 throughout, the single-partition (P==1) state, so non-partitioned
+/// callers are source-compatible.
+using PartitionId = std::uint16_t;
+
 /// Disk-side dual of the in-memory slice store: a key/value store for spilled
-/// window slices, keyed by (SliceEnd, WorkerThreadId).
+/// window slices, keyed by (SliceEnd, WorkerThreadId, PartitionId).
 ///
 /// A slice is uniquely identified by its end timestamp (SliceEnd = Timestamp);
 /// there is no SliceId type in NebulaStream. Per-thread state is keyed by
@@ -50,15 +59,19 @@ public:
     SpillBackend(SpillBackend&&) = delete;
     SpillBackend& operator=(SpillBackend&&) = delete;
 
-    /// Persist the bytes of the slice ending at `sliceEnd` for `workerThreadId`.
-    virtual void put(SliceEnd sliceEnd, WorkerThreadId workerThreadId, std::span<const std::byte> record) = 0;
+    /// Persist the bytes of the slice ending at `sliceEnd` for (`workerThreadId`, `partition`).
+    /// The key is (SliceEnd, WorkerThreadId, PartitionId); `partition` defaults to 0, the
+    /// single-partition state used by every non-partitioned caller.
+    /// TODO(future): an optional WriteBatch overload would let the P puts of one worker form a
+    /// single atomic durable group (L5 future hardening); not required here.
+    virtual void put(SliceEnd sliceEnd, WorkerThreadId workerThreadId, std::span<const std::byte> record, PartitionId partition = 0) = 0;
 
-    /// Retrieve the bytes previously persisted for (sliceEnd, workerThreadId),
-    /// or std::nullopt if nothing is stored for that key.
+    /// Retrieve the bytes previously persisted for (sliceEnd, workerThreadId, partition),
+    /// or std::nullopt if nothing is stored for that key. `partition` defaults to 0.
     /// TODO(Phase 3): the owning SpillRecord return forces a copy out of the backend's
     /// buffer (e.g. RocksDB pinned slice). Revisit for a move-only / pinned-view return
     /// before the RocksDB backend lands, since this signature is its public contract.
-    virtual std::optional<SpillRecord> get(SliceEnd sliceEnd, WorkerThreadId workerThreadId) = 0;
+    virtual std::optional<SpillRecord> get(SliceEnd sliceEnd, WorkerThreadId workerThreadId, PartitionId partition = 0) = 0;
 
     /// Remove every per-thread record for the slice ending at `sliceEnd`.
     /// Idempotent: erasing a slice with no stored records is a well-defined no-op.

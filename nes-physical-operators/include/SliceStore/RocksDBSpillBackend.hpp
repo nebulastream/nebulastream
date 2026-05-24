@@ -33,10 +33,10 @@ namespace NES
 
 /// Durable, RocksDB-backed SpillBackend (Phase 3).
 ///
-/// Records are stored under a 12-byte big-endian key `<sliceEnd:8><workerThreadId:4>`. The
-/// big-endian layout makes all per-thread records of one slice a contiguous key range, so
-/// erase(SliceEnd) is a single prefix sweep. RocksDB owns block compression (lz4 by default),
-/// matching the microbenchmark configuration.
+/// Records are stored under a 14-byte big-endian key `<sliceEnd:8><workerThreadId:4><partition:2>`. The
+/// big-endian layout makes all per-(worker, partition) records of one slice a contiguous key range, so
+/// erase(SliceEnd) is a single prefix sweep on the unchanged 8-byte sliceEnd prefix. RocksDB owns block
+/// compression (lz4 by default), matching the microbenchmark configuration.
 ///
 /// Thread-safety: a single instance is safe for concurrent put/get/erase, because the underlying
 /// rocksdb::DB is internally synchronised for concurrent reads and writes.
@@ -58,8 +58,8 @@ public:
         std::size_t blockCacheSizeBytes = 0);
     ~RocksDBSpillBackend() override;
 
-    void put(SliceEnd sliceEnd, WorkerThreadId workerThreadId, std::span<const std::byte> record) override;
-    std::optional<SpillRecord> get(SliceEnd sliceEnd, WorkerThreadId workerThreadId) override;
+    void put(SliceEnd sliceEnd, WorkerThreadId workerThreadId, std::span<const std::byte> record, PartitionId partition = 0) override;
+    std::optional<SpillRecord> get(SliceEnd sliceEnd, WorkerThreadId workerThreadId, PartitionId partition = 0) override;
     void erase(SliceEnd sliceEnd) override;
 
 private:

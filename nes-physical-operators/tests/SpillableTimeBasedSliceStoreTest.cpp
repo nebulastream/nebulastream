@@ -65,7 +65,11 @@ public:
     std::atomic<bool> failGet{false};
     std::atomic<std::size_t> getCount{0};
 
-    void put(const SliceEnd /*sliceEnd*/, const WorkerThreadId /*workerThreadId*/, std::span<const std::byte> /*record*/) override
+    void put(
+        const SliceEnd /*sliceEnd*/,
+        const WorkerThreadId /*workerThreadId*/,
+        std::span<const std::byte> /*record*/,
+        const PartitionId /*partition*/ = 0) override
     {
         ++putCount;
         if (failPut.load())
@@ -74,7 +78,7 @@ public:
         }
     }
 
-    std::optional<SpillRecord> get(const SliceEnd /*sliceEnd*/, const WorkerThreadId /*workerThreadId*/) override
+    std::optional<SpillRecord> get(const SliceEnd /*sliceEnd*/, const WorkerThreadId /*workerThreadId*/, const PartitionId /*partition*/ = 0) override
     {
         ++getCount;
         if (failGet.load())

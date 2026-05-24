@@ -31,9 +31,14 @@ namespace NES
 class NullSpillBackend final : public SpillBackend
 {
 public:
-    void put(SliceEnd /*sliceEnd*/, WorkerThreadId /*workerThreadId*/, std::span<const std::byte> /*record*/) override { }
+    void put(SliceEnd /*sliceEnd*/, WorkerThreadId /*workerThreadId*/, std::span<const std::byte> /*record*/, PartitionId /*partition*/ = 0) override
+    {
+    }
 
-    std::optional<SpillRecord> get(SliceEnd /*sliceEnd*/, WorkerThreadId /*workerThreadId*/) override { return std::nullopt; }
+    std::optional<SpillRecord> get(SliceEnd /*sliceEnd*/, WorkerThreadId /*workerThreadId*/, PartitionId /*partition*/ = 0) override
+    {
+        return std::nullopt;
+    }
 
     void erase(SliceEnd /*sliceEnd*/) override { }
 };
