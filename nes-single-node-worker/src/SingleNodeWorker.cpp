@@ -40,6 +40,7 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
+#include <PercentileTaskLatencyListener.hpp>
 #include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryStatus.hpp>
@@ -71,6 +72,10 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         googleTracePrinter->start();
         listener->addListener(googleTracePrinter);
     }
+
+    /// Always register the per-task latency listener so that a standard systest run emits the
+    /// "Task latency us:" line at query stop without any additional configuration.
+    listener->addQueryEngineListener(std::make_shared<PercentileTaskLatencyListener>());
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
