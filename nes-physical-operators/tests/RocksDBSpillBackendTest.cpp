@@ -435,4 +435,129 @@ TEST_F(RocksDBSpillBackendTest, nullAndInMemoryBackendsReturnNulloptStats)
         << "InMemorySpillBackend must return nullopt from getBackendStats()";
 }
 
+// ============================================================================
+// H2: write-stall fields — writeStallMicros + writeStallCount
+// ----------------------------------------------------------------------------
+// These tests verify that BackendStats exposes the two new H2 fields and that
+// they satisfy the invariants required for hypothesis testing:
+//   1. The fields are present and readable (not a compile error).
+//   2. writeStallMicros is non-decreasing across additional puts.
+//   3. writeStallCount is non-decreasing across additional puts.
+//   4. Both fields are 0 when no stalls occurred (valid outcome for H2: "< 5%").
+//
+// Note: in a short unit-test run RocksDB will almost certainly NOT stall
+// (stalls require the write path to outpace compaction under sustained load).
+// The tests therefore assert >= 0 (the field is present and non-negative) and
+// monotonicity (non-decreasing), NOT a specific non-zero value.  A non-zero
+// value from a longer / memory-constrained production run is what the eval
+// harness uses to compute the stall fraction for H2.
+// ============================================================================
+
+/// H2 (a): getBackendStats() returns the writeStallMicros and writeStallCount
+/// fields after writes; both are >= 0 (unsigned — always true, but the test
+/// documents the field presence contract explicitly).
+///
+/// GREEN contract:
+///   - stats is non-nullopt.
+///   - writeStallMicros >= 0 (field exists; 0 = no stalls — valid for H2).
+///   - writeStallCount  >= 0 (field exists; 0 = no stall events — valid).
+///   - writeStallMicros == 0 implies writeStallCount == 0 (duration-count
+///     consistency: you cannot have stall events without stall time).
+TEST_F(RocksDBSpillBackendTest, writeStallFieldsPresentAfterWrites)
+{
+    RocksDBSpillBackend backend(dbPath.string());
+
+    constexpr int NUM_RECORDS = 30;
+    for (int i = 0; i < NUM_RECORDS; ++i)
+    {
+        backend.put(
+            SliceEnd{Timestamp(static_cast<uint64_t>(i + 1))},
+            WorkerThreadId{0},
+            makeRecord({0xDE, 0xAD, 0xBE, 0xEF}));
+    }
+
+    const auto stats = backend.getBackendStats();
+    ASSERT_TRUE(stats.has_value()) << "RocksDBSpillBackend must return a BackendStats";
+
+    /// Both fields are std::uint64_t — they satisfy >= 0 by type; the assertion
+    /// documents that the fields are readable and are the expected unsigned type.
+    /// EXPECT_GE on uint64_t with 0U prevents signed/unsigned comparison warnings.
+    EXPECT_GE(stats->writeStallMicros, 0U)
+        << "writeStallMicros must be a non-negative cumulative duration";
+    EXPECT_GE(stats->writeStallCount, 0U)
+        << "writeStallCount must be a non-negative event count";
+
+    /// Duration-count consistency: stall events require non-zero duration and vice versa.
+    /// If stall count > 0, there must have been some stall time; if stall time > 0,
+    /// at least one stall event must have been recorded.
+    if (stats->writeStallMicros == 0)
+    {
+        EXPECT_EQ(stats->writeStallCount, 0U)
+            << "writeStallCount must be 0 when writeStallMicros == 0 (no duration, no events)";
+    }
+    if (stats->writeStallCount == 0)
+    {
+        EXPECT_EQ(stats->writeStallMicros, 0U)
+            << "writeStallMicros must be 0 when writeStallCount == 0 (no events, no duration)";
+    }
+}
+
+/// H2 (b): writeStallMicros and writeStallCount are non-decreasing (monotone)
+/// as more puts are issued.  RocksDB tickers and histogram counts never decrease
+/// within a DB lifetime; this test verifies the property over two snapshots.
+///
+/// GREEN contract:
+///   - statsAfterMore->writeStallMicros >= statsAfterFirst->writeStallMicros
+///   - statsAfterMore->writeStallCount  >= statsAfterFirst->writeStallCount
+TEST_F(RocksDBSpillBackendTest, writeStallFieldsAreNonDecreasingAcrossMorePuts)
+{
+    RocksDBSpillBackend backend(dbPath.string());
+
+    /// First batch — snapshot the stall counters.
+    for (int i = 0; i < 5; ++i)
+    {
+        backend.put(
+            SliceEnd{Timestamp(static_cast<uint64_t>(i + 1))},
+            WorkerThreadId{0},
+            makeRecord({0x01, 0x02}));
+    }
+    const auto statsAfterFirst = backend.getBackendStats();
+    ASSERT_TRUE(statsAfterFirst.has_value());
+    const std::uint64_t stallMicrosAfterFirst = statsAfterFirst->writeStallMicros;
+    const std::uint64_t stallCountAfterFirst = statsAfterFirst->writeStallCount;
+
+    /// Second batch — counters must be >= the first snapshot (monotone).
+    for (int i = 5; i < 20; ++i)
+    {
+        backend.put(
+            SliceEnd{Timestamp(static_cast<uint64_t>(i + 1))},
+            WorkerThreadId{0},
+            makeRecord({0xAA, 0xBB, 0xCC}));
+    }
+    const auto statsAfterMore = backend.getBackendStats();
+    ASSERT_TRUE(statsAfterMore.has_value());
+
+    EXPECT_GE(statsAfterMore->writeStallMicros, stallMicrosAfterFirst)
+        << "writeStallMicros must be non-decreasing (RocksDB STALL_MICROS ticker never resets)";
+    EXPECT_GE(statsAfterMore->writeStallCount, stallCountAfterFirst)
+        << "writeStallCount must be non-decreasing (WRITE_STALL histogram count never resets)";
+}
+
+/// H2 (c): the Null/InMemory backends continue to return nullopt — the H2 fields
+/// in BackendStats must not break the existing nullopt contract for non-RocksDB
+/// backends.  Keeps E1-PR2 test (c) intact while confirming H2 fields compile.
+///
+/// This test is structurally identical to nullAndInMemoryBackendsReturnNulloptStats
+/// but is named for H2 to make the regression intent explicit in the test report.
+TEST_F(RocksDBSpillBackendTest, writeStallFieldsAbsentForNullAndInMemoryBackends)
+{
+    const std::unique_ptr<SpillBackend> nullBackend = std::make_unique<NullSpillBackend>();
+    EXPECT_FALSE(nullBackend->getBackendStats().has_value())
+        << "NullSpillBackend must still return nullopt after H2 fields were added to BackendStats";
+
+    const std::unique_ptr<SpillBackend> inMemBackend = std::make_unique<InMemorySpillBackend>();
+    EXPECT_FALSE(inMemBackend->getBackendStats().has_value())
+        << "InMemorySpillBackend must still return nullopt after H2 fields were added to BackendStats";
+}
+
 }

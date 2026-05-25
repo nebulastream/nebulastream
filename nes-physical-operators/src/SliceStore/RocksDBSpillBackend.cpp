@@ -267,6 +267,24 @@ std::optional<BackendStats> RocksDBSpillBackend::getBackendStats() const
     stats.blockCacheHit = statistics->getTickerCount(rocksdb::BLOCK_CACHE_HIT);
     stats.blockCacheMiss = statistics->getTickerCount(rocksdb::BLOCK_CACHE_MISS);
 
+    /// --- H2: write-stall duration and occurrence count ---
+    ///
+    /// STALL_MICROS (ticker): cumulative wall-clock microseconds that Put/Write callers
+    /// spent blocked waiting for compaction or flush backpressure.  It is a plain
+    /// byte/count ticker, populated at kExceptDetailedTimers — no stats-level change
+    /// needed (compare: DB_MUTEX_WAIT_MICROS explicitly documents it requires kAll;
+    /// STALL_MICROS has no such annotation in rocksdb/statistics.h).
+    stats.writeStallMicros = statistics->getTickerCount(rocksdb::STALL_MICROS);
+
+    /// WRITE_STALL (histogram): each interval where the write path was throttled or
+    /// stopped produces one histogram sample.  HistogramData.count is therefore the
+    /// number of stall events.  The histogram is available at kExceptDetailedTimers
+    /// (FILE_READ_GET_MICROS and siblings are the ones that require a higher level;
+    /// WRITE_STALL has no such annotation in the installed statistics.h header).
+    rocksdb::HistogramData stallHist{};
+    statistics->histogramData(rocksdb::WRITE_STALL, &stallHist);
+    stats.writeStallCount = stallHist.count;
+
     return stats;
 }
 

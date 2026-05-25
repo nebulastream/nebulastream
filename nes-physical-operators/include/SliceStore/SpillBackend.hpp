@@ -29,7 +29,7 @@ namespace NES
 /// Distinct from the non-owning std::span<const std::byte> accepted by put().
 using SpillRecord = std::vector<std::byte>;
 
-/// E1-PR2: backend-level I/O statistics reported at query stop via getBackendStats().
+/// E1-PR2/H2: backend-level I/O statistics reported at query stop via getBackendStats().
 /// Fields that are not applicable to a given backend should be zero (the default).
 ///
 /// Write-amplification formula (RocksDB-specific):
@@ -47,6 +47,13 @@ using SpillRecord = std::vector<std::byte>;
 /// sstFootprintBytes = rocksdb.total-sst-files-size (includes all SST files, live + stale).
 /// Cache counters (blockCacheHit / blockCacheMiss) are the BLOCK_CACHE_HIT / BLOCK_CACHE_MISS
 /// tickers; both are 0 when no block cache is configured.
+///
+/// H2 write-stall fields:
+///   writeStallMicros = rocksdb::STALL_MICROS ticker (cumulative blocked micros).
+///   writeStallCount  = WRITE_STALL histogram count (number of stall intervals).
+/// Both are collected at kExceptDetailedTimers — no stats-level change required.
+/// A stall fraction for H2 is computed as writeStallMicros / total_runtime_micros
+/// by the eval harness (not here — the backend sees only the RocksDB-side duration).
 struct BackendStats
 {
     std::uint64_t sstFootprintBytes{0};  ///< On-disk SST footprint (total, incl. stale)
@@ -56,6 +63,25 @@ struct BackendStats
     std::uint64_t bytesWritten{0};      ///< WAL-path bytes per Put/Write (includes key + RocksDB record overhead), not pure user payload
     std::uint64_t blockCacheHit{0};     ///< Block cache hits  (BLOCK_CACHE_HIT; 0 = no cache)
     std::uint64_t blockCacheMiss{0};    ///< Block cache misses (BLOCK_CACHE_MISS; 0 = no cache)
+
+    /// H2: write-stall instrumentation.
+    ///
+    /// writeStallMicros — rocksdb::STALL_MICROS ticker: cumulative wall-clock
+    /// microseconds that DB::Put/DB::Write callers spent blocked waiting for
+    /// compaction or flush backpressure to subside.  This is a plain byte/count
+    /// ticker collected at kExceptDetailedTimers (no extra stats level needed —
+    /// unlike DB_MUTEX_WAIT_MICROS which requires kAll).  A value of 0 means no
+    /// stalls occurred during the run; non-zero values allow computing H2's
+    /// "stall fraction = writeStallMicros / total_runtime_micros".
+    ///
+    /// writeStallCount — number of distinct stall intervals derived from the
+    /// WRITE_STALL histogram's `count` field via statistics->histogramData().
+    /// The histogram is populated at kExceptDetailedTimers (no annotation
+    /// requiring a higher level in statistics.h, unlike the FILE_READ_* group).
+    /// Provides the occurrence count separate from the duration, useful for
+    /// distinguishing "many short stalls" from "one long stall".
+    std::uint64_t writeStallMicros{0};  ///< Cumulative write-stall time (STALL_MICROS ticker; 0 = no stalls)
+    std::uint64_t writeStallCount{0};   ///< Number of stall events (WRITE_STALL histogram count; 0 = no stalls)
 };
 
 /// Partition index of a spilled blob within one (sliceEnd, workerThreadId) state.

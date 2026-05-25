@@ -1066,14 +1066,16 @@ void SpillableTimeBasedSliceStore::logMetrics() const
     {
         NES_INFO(
             "RocksDB stats: sst_footprint_bytes={} write_amp={:.4f} bytes_flushed={} bytes_compacted={} bytes_written={}"
-            " block_cache_hit={} block_cache_miss={}",
+            " block_cache_hit={} block_cache_miss={} write_stall_micros={} write_stall_count={}",
             backendStats->sstFootprintBytes,
             backendStats->writeAmplification,
             backendStats->bytesFlushed,
             backendStats->bytesCompacted,
             backendStats->bytesWritten,
             backendStats->blockCacheHit,
-            backendStats->blockCacheMiss);
+            backendStats->blockCacheMiss,
+            backendStats->writeStallMicros,
+            backendStats->writeStallCount);
     }
 }
 
