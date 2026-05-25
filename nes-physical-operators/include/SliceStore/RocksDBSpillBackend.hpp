@@ -26,6 +26,7 @@
 namespace rocksdb
 {
 class DB;
+class Statistics;
 }
 
 namespace NES
@@ -62,7 +63,21 @@ public:
     std::optional<SpillRecord> get(SliceEnd sliceEnd, WorkerThreadId workerThreadId, PartitionId partition = 0) override;
     void erase(SliceEnd sliceEnd) override;
 
+    /// E1-PR2: returns RocksDB internal I/O statistics accumulated since the DB was opened.
+    /// Reads FLUSH_WRITE_BYTES, COMPACT_WRITE_BYTES, BYTES_WRITTEN, BLOCK_CACHE_HIT,
+    /// BLOCK_CACHE_MISS tickers from the Statistics object, and rocksdb.total-sst-files-size
+    /// via GetProperty.  The write-amplification formula is documented on BackendStats.
+    /// Returns std::nullopt only if statistics collection was not initialised (should not
+    /// happen in practice — the constructor always sets options.statistics).
+    [[nodiscard]] std::optional<BackendStats> getBackendStats() const override;
+
 private:
+    /// E1-PR2: holds the Statistics object created at open time (shared with options.statistics).
+    /// Kept as a separate member so tickers can be read after Open() returns the DB handle.
+    /// rocksdb::Statistics is forward-declared above; the full type is only needed in the .cpp.
+    // `statistics` declared before `db`: db must be destroyed first (its destructor may
+    // write stats during background-work drain; destroying statistics first would be use-after-free).
+    std::shared_ptr<rocksdb::Statistics> statistics;
     std::unique_ptr<rocksdb::DB> db;
 };
 

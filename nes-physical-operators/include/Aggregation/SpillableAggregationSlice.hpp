@@ -78,7 +78,13 @@ public:
     /// Dependency (2d): the caller guarantees the slice is already spilled before invoking this — hence
     /// the `!resident` precondition. Workers whose partition blob is absent (skip-empty at write)
     /// contribute nothing for that partition.
-    void streamEmitByPartition(
+    ///
+    /// E1-PR1 (O2): returns the total raw bytes read from the backend for this partition across all
+    /// workers (Σ record.size() for every present blob). The owning store uses this to record a restore
+    /// sample (bytes + wall-clock latency) so getMetrics() reflects the partition read-back cost.
+    /// Absent blobs (skip-empty) contribute 0 bytes. Return value MAY be discarded (callers that only
+    /// care about the emit side-effect, e.g. slice-level tests, need not capture it).
+    uint64_t streamEmitByPartition(
         SpillBackend& backend,
         AbstractBufferProvider& bufferProvider,
         uint64_t numberOfPartitions,

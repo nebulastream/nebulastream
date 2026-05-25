@@ -382,7 +382,13 @@ SpillableTimeBasedSliceStore::streamWindowPartition(const std::vector<std::share
         else
         {
             /// Spilled slice: stream this partition's blob whole (slice stays spilled — a 1/P-resident read-out).
-            spillable->streamEmitByPartition(
+            /// E1-PR1: time the backend read OUTSIDE any lock (LOCKED #6; the claim step above already released
+            /// evictionMutex and we are NOT holding it here — same discipline as recordSpillSample/recordUnspillSample
+            /// at the spill/unspill sites). The call returns the raw bytes fetched from the backend for this
+            /// partition; we record one restore sample per partition blob read-back so getMetrics() reflects the
+            /// partitioned read-back cost on the headline P>1 path.
+            const auto streamStart = std::chrono::steady_clock::now();
+            const uint64_t bytesRead = spillable->streamEmitByPartition(
                 *backend,
                 *provider,
                 numberOfPartitions,
@@ -394,6 +400,22 @@ SpillableTimeBasedSliceStore::streamWindowPartition(const std::vector<std::share
                         windowPartitionMaps.push_back(std::move(map));
                     }
                 });
+            const auto streamLatency = std::chrono::steady_clock::now() - streamStart;
+            /// Only record when there were bytes to account for. An all-empty partition is a no-op from the
+            /// backend's perspective; recording a zero-byte sample would inflate restoreSampleCount without meaning.
+            if (bytesRead > 0)
+            {
+                NES_DEBUG(
+                    "streamWindowPartition: sliceEnd={} partition={} read {} bytes from backend in {} us",
+                    spillable->getSliceEnd(),
+                    partition,
+                    bytesRead,
+                    std::chrono::duration_cast<std::chrono::microseconds>(streamLatency).count());
+                /// Use recordPartitionRestoreSample (not recordUnspillSample) so partitionRestoreCount
+                /// is incremented instead of slicesUnspilled — keeping slicesUnspilled accurate for
+                /// full-resident restores only (trigger/late-write paths).
+                recordPartitionRestoreSample(streamLatency, bytesRead);
+            }
         }
     }
     NES_TRACE(
@@ -968,6 +990,16 @@ void SpillableTimeBasedSliceStore::recordUnspillSample(const std::chrono::steady
     restoreLatenciesUs.wlock()->push_back(us);
 }
 
+void SpillableTimeBasedSliceStore::recordPartitionRestoreSample(const std::chrono::steady_clock::duration latency, const std::uint64_t bytes)
+{
+    /// Increments partitionRestoreCount (NOT slicesUnspilled) so the two counters remain orthogonal:
+    /// slicesUnspilled = full-resident restores; partitionRestoreCount = P>1 streaming blob reads.
+    partitionRestoreCount.fetch_add(1, std::memory_order_relaxed);
+    bytesRestored.fetch_add(bytes, std::memory_order_relaxed);
+    const auto us = static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(latency).count());
+    restoreLatenciesUs.wlock()->push_back(us);
+}
+
 SpillableTimeBasedSliceStore::SpillMetrics SpillableTimeBasedSliceStore::getMetrics() const
 {
     /// Copy the sample vectors under their own locks, then sort the copies ONCE (percentiles + max read off the sorted
@@ -999,6 +1031,7 @@ SpillableTimeBasedSliceStore::SpillMetrics SpillableTimeBasedSliceStore::getMetr
     m.restoreLatencyP95Us = percentileOfSorted(restoreSamples, 95);
     m.restoreLatencyP99Us = percentileOfSorted(restoreSamples, 99);
     m.restoreLatencyMaxUs = restoreSamples.empty() ? 0 : restoreSamples.back();
+    m.partitionRestoreCount = partitionRestoreCount.load(std::memory_order_relaxed);
     return m;
 }
 
@@ -1007,7 +1040,7 @@ void SpillableTimeBasedSliceStore::logMetrics() const
     const auto m = getMetrics();
     NES_INFO(
         "Spill metrics: spilled {} slices / {} bytes, restored {} slices / {} bytes, peak resident {} bytes; spill "
-        "latency us p50={} p95={} p99={} max={} (n={}); restore latency us p50={} p95={} p99={} max={} (n={})",
+        "latency us p50={} p95={} p99={} max={} (n={}); restore latency us p50={} p95={} p99={} max={} (n={}) partition_restores={}",
         m.slicesSpilled,
         m.bytesSpilled,
         m.slicesUnspilled,
@@ -1022,7 +1055,26 @@ void SpillableTimeBasedSliceStore::logMetrics() const
         m.restoreLatencyP95Us,
         m.restoreLatencyP99Us,
         m.restoreLatencyMaxUs,
-        m.restoreSampleCount);
+        m.restoreSampleCount,
+        m.partitionRestoreCount);
+
+    /// E1-PR2: emit a second stable one-liner with RocksDB internal I/O stats if the backend
+    /// exposes them (RocksDBSpillBackend does; NullSpillBackend / InMemorySpillBackend return
+    /// nullopt and produce no line here).  The tag "RocksDB stats:" is grep-stable for the
+    /// eval harness (run-rss-part.sh) and matches the Output contract in DESIGN-BRIEF.md §PR2.
+    if (const auto backendStats = backend->getBackendStats(); backendStats.has_value())
+    {
+        NES_INFO(
+            "RocksDB stats: sst_footprint_bytes={} write_amp={:.4f} bytes_flushed={} bytes_compacted={} bytes_written={}"
+            " block_cache_hit={} block_cache_miss={}",
+            backendStats->sstFootprintBytes,
+            backendStats->writeAmplification,
+            backendStats->bytesFlushed,
+            backendStats->bytesCompacted,
+            backendStats->bytesWritten,
+            backendStats->blockCacheHit,
+            backendStats->blockCacheMiss);
+    }
 }
 
 void SpillableTimeBasedSliceStore::spillerLoop(std::stop_token stopToken)

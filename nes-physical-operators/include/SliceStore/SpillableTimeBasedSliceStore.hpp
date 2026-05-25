@@ -207,13 +207,20 @@ public:
     struct SpillMetrics
     {
         std::uint64_t slicesSpilled;
+        /// Number of FULL unspills (trigger-path and late-write pin). On the P>1 streaming path slices are read back
+        /// partition-by-partition without ever being made fully resident; those reads are counted in
+        /// `partitionRestoreCount` instead so `slicesUnspilled` reflects only genuine full-resident restores.
         std::uint64_t slicesUnspilled;
         std::uint64_t bytesSpilled; ///< Σ resident bytes freed by spills (footprint measured at spill time).
-        std::uint64_t bytesRestored; ///< Σ resident bytes re-materialized by unspills.
+        std::uint64_t bytesRestored; ///< Σ bytes read back (full-unspill: resident bytes; streaming: serialized blob bytes).
         std::uint64_t peakResidentBytes; ///< max residentBytes() observed across the store's lifetime.
         std::uint64_t spillLatencyP50Us, spillLatencyP95Us, spillLatencyP99Us, spillLatencyMaxUs;
         std::uint64_t restoreLatencyP50Us, restoreLatencyP95Us, restoreLatencyP99Us, restoreLatencyMaxUs;
         std::uint64_t spillSampleCount, restoreSampleCount;
+        /// Number of per-partition blob reads on the P>1 streaming path (streamWindowPartition). Each non-empty
+        /// partition blob streamed increments this counter; a full 4-partition read of one slice counts as 4 here.
+        /// Appended to the logMetrics() line as `partition_restores={}`.
+        std::uint64_t partitionRestoreCount;
     };
     /// Snapshot the spill/restore instrumentation: lock-free counters + a brief lock over the latency-sample vectors.
     [[nodiscard]] SpillMetrics getMetrics() const;
@@ -275,7 +282,12 @@ private:
     void recordSpillSample(std::chrono::steady_clock::duration latency, std::uint64_t bytes);
     /// Phase 0b: record one unspill — bumps slicesUnspilled + bytesRestored and appends the latency sample. Called right
     /// after the unspill() I/O at every unspill site (trigger read, late-write pin, random-access). OUTSIDE evictionMutex.
+    /// Counts FULL unspills (trigger/late-write) only — does NOT cover the P>1 streaming path (see recordPartitionRestoreSample).
     void recordUnspillSample(std::chrono::steady_clock::duration latency, std::uint64_t bytes);
+    /// E1-PR1: record one per-partition blob read on the P>1 streaming path. Increments `partitionRestoreCount` and
+    /// `bytesRestored`, and appends a restore-latency sample — but does NOT touch `slicesUnspilled`, keeping that counter
+    /// accurate for full-resident restores only. Called OUTSIDE evictionMutex (same discipline as recordUnspillSample).
+    void recordPartitionRestoreSample(std::chrono::steady_clock::duration latency, std::uint64_t bytes);
     /// Phase 0b: log the metrics snapshot once, when the spiller is stopped+joined (from stopSpiller).
     void logMetrics() const;
 
@@ -357,6 +369,9 @@ private:
     std::atomic<std::uint64_t> slicesUnspilled{0};
     std::atomic<std::uint64_t> bytesSpilled{0};
     std::atomic<std::uint64_t> bytesRestored{0};
+    /// E1-PR1: counts per-partition blob reads on the P>1 streaming path. Distinct from slicesUnspilled so that
+    /// full-resident restores and partition-blob streaming reads are reported separately in logMetrics().
+    std::atomic<std::uint64_t> partitionRestoreCount{0};
     /// CAS-max'd in residentBytes() (a const method), hence mutable; relaxed ordering (a monotone high-water mark).
     mutable std::atomic<std::uint64_t> peakResidentBytes{0};
     folly::Synchronized<std::vector<std::uint64_t>> spillLatenciesUs;

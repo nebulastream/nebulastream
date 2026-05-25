@@ -31,6 +31,7 @@
 #include <rocksdb/iterator.h>
 #include <rocksdb/options.h>
 #include <rocksdb/slice.h>
+#include <rocksdb/statistics.h>
 #include <rocksdb/status.h>
 #include <rocksdb/table.h>
 #include <rocksdb/write_batch.h>
@@ -132,6 +133,15 @@ RocksDBSpillBackend::RocksDBSpillBackend(
         options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(tableOptions));
     }
 
+    /// E1-PR2: enable RocksDB internal statistics so we can read write-amplification and
+    /// block-cache ticker counts at query stop. The shared_ptr is stored as a member so that
+    /// getBackendStats() can call getTickerCount() after Open() returns. kExceptDetailedTimers
+    /// is the default StatsLevel; it collects all byte/count tickers (FLUSH_WRITE_BYTES,
+    /// COMPACT_WRITE_BYTES, BYTES_WRITTEN, BLOCK_CACHE_HIT/MISS) without the lock-timing
+    /// overhead of kAll — a safe default for production workloads.
+    statistics = rocksdb::CreateDBStatistics();
+    options.statistics = statistics;
+
     rocksdb::DB* rawDb = nullptr;
     if (const auto status = rocksdb::DB::Open(options, path, &rawDb); !status.ok())
     {
@@ -208,6 +218,56 @@ void RocksDBSpillBackend::erase(const SliceEnd sliceEnd)
     {
         throw SpillStoreFailure("failed to erase spill records: {}", status.ToString());
     }
+}
+
+std::optional<BackendStats> RocksDBSpillBackend::getBackendStats() const
+{
+    /// E1-PR2: guard in case statistics was somehow not initialised (should not happen
+    /// because the constructor always calls CreateDBStatistics before Open).
+    if (!statistics)
+    {
+        return std::nullopt;
+    }
+
+    BackendStats stats;
+
+    /// --- Byte-flow tickers (all collected at kExceptDetailedTimers level) ---
+    /// FLUSH_WRITE_BYTES: bytes written from memtable to L0 SST files during flush.
+    stats.bytesFlushed = statistics->getTickerCount(rocksdb::FLUSH_WRITE_BYTES);
+    /// COMPACT_WRITE_BYTES: bytes written to SST files by compaction jobs.
+    stats.bytesCompacted = statistics->getTickerCount(rocksdb::COMPACT_WRITE_BYTES);
+    /// BYTES_WRITTEN: uncompressed user bytes issued via DB::Put/DB::Write.
+    stats.bytesWritten = statistics->getTickerCount(rocksdb::BYTES_WRITTEN);
+
+    /// --- Write amplification ---
+    /// Formula: (bytesFlushed + bytesCompacted) / max(1, bytesFlushed)
+    /// Meaning: every byte that enters L0 via a flush may be rewritten additional
+    /// times by compaction; the ratio captures that extra write cost.
+    /// Guard: if no flushes have occurred yet bytesFlushed == 0, so report 0.0 to
+    /// avoid a misleading divide-by-zero result (the run is simply too short to flush).
+    if (stats.bytesFlushed > 0)
+    {
+        stats.writeAmplification =
+            static_cast<double>(stats.bytesFlushed + stats.bytesCompacted) / static_cast<double>(stats.bytesFlushed);
+    }
+
+    /// --- On-disk SST footprint ---
+    /// "rocksdb.total-sst-files-size" returns the total size (bytes) of ALL SST files,
+    /// including obsolete (not-yet-compacted-away) ones. This is the worst-case disk
+    /// footprint the backend currently occupies. GetIntProperty writes directly into a
+    /// uint64_t, which is the canonical API for numeric properties.
+    std::uint64_t sstSize = 0;
+    if (db->GetIntProperty("rocksdb.total-sst-files-size", &sstSize))
+    {
+        stats.sstFootprintBytes = sstSize;
+    }
+
+    /// --- Block cache hit / miss (optional nicety; zero if no cache was configured) ---
+    /// BLOCK_CACHE_HIT / BLOCK_CACHE_MISS accumulate all cache probes (index, filter, data).
+    stats.blockCacheHit = statistics->getTickerCount(rocksdb::BLOCK_CACHE_HIT);
+    stats.blockCacheMiss = statistics->getTickerCount(rocksdb::BLOCK_CACHE_MISS);
+
+    return stats;
 }
 
 }

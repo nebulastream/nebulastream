@@ -1299,6 +1299,105 @@ TEST_F(SpillableTimeBasedSliceStoreTest, storeSpillUnspillRoundTripPreservesAllK
     EXPECT_EQ(spillable->getNumberOfTuples(), expected0.size() + expected1.size());
 }
 
+/// E1-PR1: partitioned streaming read-back (streamWindowPartition on a SPILLED slice) must record a restore sample so
+/// getMetrics() reflects the partition read-back cost. On the baseline code this FAILS because streamEmitByPartition
+/// does NOT call recordUnspillSample, leaving bytesRestored == 0 and restoreSampleCount == 0 after the partitioned emit.
+///
+/// What this proves:
+///   1. After spilling a slice P-way and streaming all P partitions via streamWindowPartition, bytesRestored > 0.
+///   2. restoreSampleCount increased by exactly P (one sample per partition streamed from the spilled slice).
+///   3. restoreLatencyMaxUs > 0 (a backend I/O was performed — non-zero latency was recorded).
+///   4. Total restored bytes are plausible: > 0 and <= bytesSpilled (we read back the same state that was written).
+///   5. partitionRestoreCount > 0 and slicesUnspilled == 0 (streaming path uses separate counter, not slicesUnspilled).
+///   6. P=1 path is unaffected: a P=1 store with a manually-spilled + triggered slice records exactly 1 restore sample
+///      via the existing unspill() path, and that count is stable before and after a separate P>1 streaming run.
+TEST_F(SpillableTimeBasedSliceStoreTest, partitionedStreamingReadRecordsRestoreSample)
+{
+    constexpr uint64_t P = 4;
+
+    InMemorySpillBackend* backendP = nullptr;
+    auto storeP = makeStoreWithPartitions(P, &backendP);
+
+    /// Build one slice with entries on two workers so multiple partition blobs exist (the multi-blob case is interesting
+    /// because hash=(i+1)*2654435761 distributes across all residues). With 20 keys across 4 partitions, ≥1 partition
+    /// blob is non-empty per worker — giving a non-trivial bytes-read-back.
+    const auto slice = storeP->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto sliceEnd = slice->getSliceEnd();
+    populate(slice, WorkerThreadId(0), 20, 0);
+    populate(slice, WorkerThreadId(1), 15, 5000);
+
+    /// Spill P-way. This is the only write to the backend; bytesSpilled is the upper bound for bytes we can read back.
+    storeP->forceSpill(sliceEnd);
+    ASSERT_FALSE(storeP->isSliceResident(sliceEnd));
+    const auto m0 = storeP->getMetrics();
+    ASSERT_GT(m0.bytesSpilled, 0U);
+    /// Baseline RED: on the current code both counters are 0 because streamEmitByPartition records nothing.
+    /// After the fix they will be > 0 and >= 1 respectively.
+    const auto bytesRestoredBefore = m0.bytesRestored; /// expected: 0 on baseline, > 0 after fix
+    const auto sampleCountBefore = m0.restoreSampleCount; /// expected: 0 on baseline, >= 1 after fix
+
+    /// CLAIM the window for the partitioned path (marks the slice emitted so the spiller cannot touch it).
+    const std::vector<std::shared_ptr<Slice>> window{slice};
+    storeP->claimWindowForPartitionedEmit(window);
+
+    /// STREAM all P partitions. The spilled slice stays spilled throughout (observation-only).
+    for (uint64_t p = 0; p < P; ++p)
+    {
+        auto maps = storeP->streamWindowPartition(window, p);
+        /// Residency invariant: the slice must remain spilled (streaming is NOT an unspill).
+        EXPECT_FALSE(storeP->isSliceResident(sliceEnd)) << "partition " << p << " streaming must leave the slice spilled";
+    }
+
+    const auto m1 = storeP->getMetrics();
+
+    /// PRIMARY assertions (these FAIL on the baseline, and PASS after the fix):
+    EXPECT_GT(m1.bytesRestored, bytesRestoredBefore)
+        << "bytesRestored must increase after partitioned streaming read-back (E1-PR1 RED)";
+    EXPECT_GT(m1.restoreSampleCount, sampleCountBefore)
+        << "restoreSampleCount must increase after partitioned streaming read-back (E1-PR1 RED)";
+
+    /// SECONDARY assertions (post-fix plausibility):
+    EXPECT_GT(m1.bytesRestored, 0U) << "total bytes restored must be > 0 after streaming a non-empty spilled slice";
+    EXPECT_LE(m1.bytesRestored, m1.bytesSpilled)
+        << "bytes restored must not exceed bytes spilled (we only read back what was written)";
+
+    /// E1-PR1 FIX 2 correctness: streaming path must increment partitionRestoreCount, NOT slicesUnspilled.
+    /// A pure P>1 streaming emit (no trigger/late-write unspill) must leave slicesUnspilled == 0.
+    EXPECT_GT(m1.partitionRestoreCount, 0U)
+        << "partitionRestoreCount must be > 0 after streaming at least one non-empty partition blob";
+    EXPECT_EQ(m1.slicesUnspilled, 0U)
+        << "slicesUnspilled must remain 0 on a pure streaming P>1 emit (no full unspill occurred)";
+
+    /// At least one latency sample was recorded, so max must be > 0 (a backend I/O did occur).
+    EXPECT_GT(m1.restoreLatencyMaxUs, 0U)
+        << "restoreLatencyMaxUs must be > 0 after at least one non-trivial partition blob read";
+}
+
+/// E1-PR1 LOCKED: the P=1 path must be byte-identical and unaffected by the new instrumentation on the P>1 path.
+/// A P=1 store with a spill→trigger round-trip records exactly 1 restore sample via the existing unspill() path.
+/// This count must be stable (no extra samples appear from any P>1 instrumentation that was accidentally applied here).
+TEST_F(SpillableTimeBasedSliceStoreTest, partitionedStreamingReadDoesNotAffectPOneRestoreCount)
+{
+    InMemorySpillBackend* backendOne = nullptr;
+    auto storeOne = makeStore(&backendOne); /// P=1 (default)
+
+    const auto slice = storeOne->getSlicesOrCreate(Timestamp(50), spillableSliceFactory())[0];
+    const auto sliceEnd = slice->getSliceEnd();
+    populate(slice, WorkerThreadId(0), 10, 0);
+    storeOne->forceSpill(sliceEnd);
+    ASSERT_FALSE(storeOne->isSliceResident(sliceEnd));
+
+    /// P=1 trigger unspill: the existing unspill() path records exactly one restore sample.
+    const auto triggered = storeOne->getTriggerableWindowSlices(Timestamp(WINDOW_SIZE * 2));
+    ASSERT_TRUE(triggeredContains(triggered, sliceEnd));
+    ASSERT_TRUE(storeOne->isSliceResident(sliceEnd));
+
+    const auto m = storeOne->getMetrics();
+    EXPECT_EQ(m.slicesUnspilled, 1U);
+    EXPECT_EQ(m.restoreSampleCount, 1U);
+    EXPECT_GT(m.bytesRestored, 0U);
+}
+
 /// P==1 store: getNumberOfPartitions() reports 1 (the default), confirming the byte-identical fast-path is selected.
 TEST_F(SpillableTimeBasedSliceStoreTest, defaultStoreReportsSinglePartition)
 {

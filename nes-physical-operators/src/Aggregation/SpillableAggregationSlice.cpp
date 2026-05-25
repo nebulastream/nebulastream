@@ -184,7 +184,7 @@ void SpillableAggregationSlice::spill(SpillBackend& backend, const uint64_t numb
     resident = false;
 }
 
-void SpillableAggregationSlice::streamEmitByPartition(
+uint64_t SpillableAggregationSlice::streamEmitByPartition(
     SpillBackend& backend,
     AbstractBufferProvider& bufferProvider,
     const uint64_t numberOfPartitions,
@@ -206,12 +206,20 @@ void SpillableAggregationSlice::streamEmitByPartition(
     ///
     /// Collect this partition's blob for every worker (deserialized whole, no filtering). A worker whose
     /// blob is absent (skip-empty at write, or never populated) simply contributes nothing.
+    ///
+    /// E1-PR1 (O2): accumulate the raw bytes fetched from the backend so the owning store can record a
+    /// restore sample (bytes + wall-clock latency) without a second backend round-trip. Absent blobs
+    /// contribute 0 bytes (they are not read at all). The count is returned to the store, which owns
+    /// SpillMetrics and calls recordUnspillSample() OUTSIDE any lock.
     std::vector<std::unique_ptr<HashMap>> collected;
+    uint64_t bytesRead = 0;
     for (uint64_t pos = 0; pos < hashMaps.size(); ++pos)
     {
         const auto worker = WorkerThreadId(static_cast<WorkerThreadId::Underlying>(pos));
         if (auto record = backend.get(getSliceEnd(), worker, partition); record.has_value())
         {
+            /// Accumulate raw blob bytes BEFORE move/deserialize (the record is consumed by deserialize).
+            bytesRead += record->size();
             /// deserialize returns unique_ptr<ChainedHashMap>; the implicit upcast to unique_ptr<HashMap>
             /// is safe because HashMap has a virtual destructor.
             collected.push_back(SliceSerializer::deserialize(*record, bufferProvider));
@@ -219,13 +227,17 @@ void SpillableAggregationSlice::streamEmitByPartition(
     }
 
     NES_TRACE(
-        "streamEmitByPartition: sliceEnd={} partition={} materialized {} worker maps (slice stays spilled)",
+        "streamEmitByPartition: sliceEnd={} partition={} materialized {} worker map(s), bytesRead={} (slice stays spilled)",
         getSliceEnd().getRawValue(),
         static_cast<uint64_t>(partition),
-        collected.size());
+        collected.size(),
+        bytesRead);
 
     /// Hand ownership to the consumer; the slice is NOT modified and stays spilled (resident == false).
     emit(std::move(collected));
+
+    /// E1-PR1: return the bytes read so the store can record a restore sample for this partition's read-back.
+    return bytesRead;
 }
 
 std::vector<std::unique_ptr<HashMap>> SpillableAggregationSlice::materializeResidentPartition(

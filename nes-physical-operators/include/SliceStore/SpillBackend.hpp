@@ -29,6 +29,35 @@ namespace NES
 /// Distinct from the non-owning std::span<const std::byte> accepted by put().
 using SpillRecord = std::vector<std::byte>;
 
+/// E1-PR2: backend-level I/O statistics reported at query stop via getBackendStats().
+/// Fields that are not applicable to a given backend should be zero (the default).
+///
+/// Write-amplification formula (RocksDB-specific):
+///   writeAmplification = (bytesFlushed + bytesCompacted) / bytesFlushed
+/// where:
+///   bytesFlushed   = rocksdb::FLUSH_WRITE_BYTES  (bytes written by memtable flushes)
+///   bytesCompacted = rocksdb::COMPACT_WRITE_BYTES (bytes written by compaction jobs)
+///   bytesWritten   = rocksdb::BYTES_WRITTEN       (WAL-path bytes per Put/Write)
+///
+/// Rationale: flushed bytes represent the "useful" data written to L0; every additional
+/// byte written by compaction is amplification relative to that first flush step. The
+/// formula matches the write_amp column in the microbenchmark's parse_write_amp logic.
+/// Guard: writeAmplification = 0.0 when bytesFlushed == 0 (no-flush sentinel — no flushes yet).
+///
+/// sstFootprintBytes = rocksdb.total-sst-files-size (includes all SST files, live + stale).
+/// Cache counters (blockCacheHit / blockCacheMiss) are the BLOCK_CACHE_HIT / BLOCK_CACHE_MISS
+/// tickers; both are 0 when no block cache is configured.
+struct BackendStats
+{
+    std::uint64_t sstFootprintBytes{0};  ///< On-disk SST footprint (total, incl. stale)
+    double writeAmplification{0.0};     ///< (bytesFlushed + bytesCompacted) / bytesFlushed; reported as 0.0 when bytesFlushed == 0 (no-flush sentinel)
+    std::uint64_t bytesFlushed{0};      ///< Bytes written by memtable flush (FLUSH_WRITE_BYTES)
+    std::uint64_t bytesCompacted{0};    ///< Bytes written by compaction (COMPACT_WRITE_BYTES)
+    std::uint64_t bytesWritten{0};      ///< WAL-path bytes per Put/Write (includes key + RocksDB record overhead), not pure user payload
+    std::uint64_t blockCacheHit{0};     ///< Block cache hits  (BLOCK_CACHE_HIT; 0 = no cache)
+    std::uint64_t blockCacheMiss{0};    ///< Block cache misses (BLOCK_CACHE_MISS; 0 = no cache)
+};
+
 /// Partition index of a spilled blob within one (sliceEnd, workerThreadId) state.
 /// Partition-at-spill (grace-hash) splits the per-worker map into P self-contained
 /// blobs by `hash % P`; each is addressed by a distinct partition id. uint16_t
@@ -76,6 +105,13 @@ public:
     /// Remove every per-thread record for the slice ending at `sliceEnd`.
     /// Idempotent: erasing a slice with no stored records is a well-defined no-op.
     virtual void erase(SliceEnd sliceEnd) = 0;
+
+    /// E1-PR2: return backend-level I/O statistics accumulated since the DB was opened.
+    /// Returns std::nullopt for backends that do not collect statistics (NullSpillBackend,
+    /// InMemorySpillBackend).  RocksDBSpillBackend overrides this with real ticker data.
+    /// The caller (SpillableTimeBasedSliceStore::logMetrics) emits the result as a
+    /// stable `RocksDB stats:` NES_INFO line at query stop; nullopt → no extra line.
+    [[nodiscard]] virtual std::optional<BackendStats> getBackendStats() const { return std::nullopt; }
 };
 
 }

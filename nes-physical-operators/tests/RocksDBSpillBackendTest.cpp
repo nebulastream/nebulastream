@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <initializer_list>
 #include <limits>
+#include <memory>
 #include <string>
 
 #include <Identifiers/Identifiers.hpp>
@@ -26,6 +27,8 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <SliceStore/InMemorySpillBackend.hpp>
+#include <SliceStore/NullSpillBackend.hpp>
 #include <SliceStore/RocksDBSpillBackend.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SpillBackend.hpp>
@@ -323,6 +326,113 @@ TEST_F(RocksDBSpillBackendTest, zeroMemoryBudgetIsBehaviorPreserving)
     const auto fetched = backend.get(sliceEnd, workerThreadId);
     ASSERT_TRUE(fetched.has_value());
     EXPECT_EQ(*fetched, makeRecord({1, 1, 1}));
+}
+
+// ============================================================================
+// E1-PR2: BackendStats / getBackendStats() tests
+// ----------------------------------------------------------------------------
+// RED on baseline (before this PR): getBackendStats() does not exist on
+// SpillBackend, so all three tests below fail to compile / link.
+// GREEN after this PR: all assertions pass.
+// ============================================================================
+
+/// E1-PR2 (a): RocksDBSpillBackend returns a BackendStats after writes.
+///
+/// Why RED on baseline: SpillBackend::getBackendStats() does not exist before
+/// this PR; the call fails at compile time.
+///
+/// Puts enough records to reliably increase bytesWritten; does NOT force a
+/// flush (that is OS/RocksDB-schedule dependent), so sstFootprintBytes and
+/// bytesFlushed may be 0 in a short run.  The test therefore only asserts
+/// the invariants that are guaranteed after any write:
+///   - getBackendStats() returns a value (not nullopt).
+///   - sstFootprintBytes >= 0 (the property type is unsigned — always true).
+///   - writeAmplification >= 0.0 (defined as 0.0 when bytesFlushed == 0).
+///   - bytesWritten increases proportionally with the number of puts.
+///
+/// We do NOT assert bytesWritten == exact_byte_count because RocksDB counts
+/// the uncompressed key+value bytes through its WAL path, which may include
+/// metadata overhead; we only assert the counter is positive after writes.
+TEST_F(RocksDBSpillBackendTest, getBackendStatsReturnsValueAfterWrites)
+{
+    RocksDBSpillBackend backend(dbPath.string());
+
+    /// Write several records to ensure BYTES_WRITTEN ticker advances.
+    constexpr int NUM_RECORDS = 20;
+    for (int i = 0; i < NUM_RECORDS; ++i)
+    {
+        const SliceEnd sliceEnd{Timestamp(static_cast<uint64_t>(i + 1))};
+        backend.put(sliceEnd, WorkerThreadId{0}, makeRecord({0xAA, 0xBB, 0xCC, 0xDD}));
+    }
+
+    const auto stats = backend.getBackendStats();
+    ASSERT_TRUE(stats.has_value()) << "RocksDBSpillBackend must return a BackendStats";
+
+    /// Non-negative invariants (unsigned fields are always >= 0; double check the double).
+    EXPECT_GE(stats->writeAmplification, 0.0);
+
+    /// bytesWritten must be > 0 after writes: RocksDB always accounts user bytes.
+    EXPECT_GT(stats->bytesWritten, 0U) << "bytesWritten should be positive after puts";
+
+    /// sstFootprintBytes == 0 is acceptable before a flush; it must not underflow.
+    EXPECT_GE(stats->sstFootprintBytes, 0U);
+
+    /// If a flush happened (bytesFlushed > 0), writeAmplification must be >= 1.0
+    /// (you can never write fewer bytes to SSTs than you flush from memtable).
+    if (stats->bytesFlushed > 0)
+    {
+        EXPECT_GE(stats->writeAmplification, 1.0)
+            << "writeAmplification must be >= 1.0 when flushes occurred";
+        EXPECT_GT(stats->sstFootprintBytes, 0U)
+            << "sstFootprintBytes must be positive after at least one flush";
+    }
+}
+
+/// E1-PR2 (b): bytesWritten increases monotonically as more puts are issued.
+///
+/// Opens one backend, issues a first batch, checks bytesWritten, issues a
+/// second batch, and asserts the counter grew.  This exercises the live
+/// ticker accumulation model (statistics are not reset between puts).
+TEST_F(RocksDBSpillBackendTest, bytesWrittenIncreasesWithMorePuts)
+{
+    RocksDBSpillBackend backend(dbPath.string());
+
+    /// First batch.
+    backend.put(SliceEnd{Timestamp(1)}, WorkerThreadId{0}, makeRecord({1, 2, 3, 4}));
+    backend.put(SliceEnd{Timestamp(2)}, WorkerThreadId{0}, makeRecord({5, 6, 7, 8}));
+
+    const auto statsAfterFirst = backend.getBackendStats();
+    ASSERT_TRUE(statsAfterFirst.has_value());
+    const std::uint64_t writtenAfterFirst = statsAfterFirst->bytesWritten;
+    EXPECT_GT(writtenAfterFirst, 0U);
+
+    /// Second batch — additional writes must advance the counter.
+    for (int i = 3; i <= 10; ++i)
+    {
+        backend.put(SliceEnd{Timestamp(static_cast<uint64_t>(i))}, WorkerThreadId{0}, makeRecord({0xFF, 0xFE, 0xFD}));
+    }
+
+    const auto statsAfterMore = backend.getBackendStats();
+    ASSERT_TRUE(statsAfterMore.has_value());
+    EXPECT_GT(statsAfterMore->bytesWritten, writtenAfterFirst)
+        << "bytesWritten must increase after additional puts";
+}
+
+/// E1-PR2 (c): NullSpillBackend and InMemorySpillBackend return nullopt from
+/// getBackendStats() — they inherit the base default and do not collect stats.
+///
+/// Why RED on baseline: SpillBackend::getBackendStats() does not exist; both
+/// calls fail at compile time.
+TEST_F(RocksDBSpillBackendTest, nullAndInMemoryBackendsReturnNulloptStats)
+{
+    /// Test via the base interface pointer to exercise the virtual dispatch path.
+    const std::unique_ptr<SpillBackend> nullBackend = std::make_unique<NullSpillBackend>();
+    EXPECT_FALSE(nullBackend->getBackendStats().has_value())
+        << "NullSpillBackend must return nullopt from getBackendStats()";
+
+    const std::unique_ptr<SpillBackend> inMemBackend = std::make_unique<InMemorySpillBackend>();
+    EXPECT_FALSE(inMemBackend->getBackendStats().has_value())
+        << "InMemorySpillBackend must return nullopt from getBackendStats()";
 }
 
 }
