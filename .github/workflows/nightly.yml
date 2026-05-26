@@ -38,6 +38,16 @@ jobs:
     with:
       head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
 
+  nix-build:
+    name: "Run Nix Build"
+    needs: [ fetch-current-main-commit ]
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/nix-build.yml
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+
   full-clang-tidy:
     needs: [ fetch-current-main-commit, get-dev-images ]
     uses: ./.github/workflows/clang_tidy_full.yml
