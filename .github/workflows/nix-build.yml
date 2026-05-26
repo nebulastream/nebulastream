@@ -8,6 +8,10 @@ on:
         required: true
         description: "ref of the branch"
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   nix-build:
     name: "Nix Build"
@@ -22,9 +26,7 @@ jobs:
           submodules: recursive
 
       - uses: DeterminateSystems/nix-installer-action@main
-
-      - name: Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: Configure via devShell
         run: |
