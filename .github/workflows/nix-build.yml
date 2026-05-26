@@ -7,6 +7,12 @@ on:
         type: string
         required: true
         description: "ref of the branch"
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        type: string
+        required: false
+        description: "ref of the branch"
 
 permissions:
   contents: read
@@ -21,7 +27,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.head_sha }}
+          ref: ${{ inputs.head_sha || github.sha }}
           fetch-depth: 0
           submodules: recursive
 
