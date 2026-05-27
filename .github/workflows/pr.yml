@@ -96,5 +96,6 @@ jobs:
     needs: [ smoke-tests ]
     name: "Run Nix Build"
     uses: ./.github/workflows/nix-build.yml
+    secrets: inherit
     with:
       head_sha: ${{ github.event.pull_request.head.sha }}
