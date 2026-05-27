@@ -203,7 +203,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         {
             const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
                 writeValueToBuffer,
-                nautilus::val<const char*>{"NULL"},
+                nautilus::val<const char*>{"null"},
                 currentRemainingSize,
                 recordBuffer.getReference(),
                 bufferProvider,
