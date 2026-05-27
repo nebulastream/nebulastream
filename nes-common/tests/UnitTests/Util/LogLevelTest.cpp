@@ -21,17 +21,34 @@
 
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include <BaseUnitTest.hpp>
 
 namespace NES
 {
+namespace
+{
+int markArgumentEvaluated(bool& argumentEvaluated)
+{
+    argumentEvaluated = true;
+    return 0;
+}
+}
 
-class LogLevelTest : public Testing::BaseUnitTest
+class LogLevelTest : public testing::Test
 {
 };
 
+TEST_F(LogLevelTest, suppressUnusedWarningDoesNotEvaluateArguments)
+{
+    bool argumentEvaluated = false;
+    SUPPRESS_UNUSED_WARNING(markArgumentEvaluated(argumentEvaluated));
+    EXPECT_FALSE(argumentEvaluated);
+}
+
 TEST_F(LogLevelTest, testLogLevel)
 {
+#if defined(NES_BENCHMARKS_NATIVE_MODE)
+    GTEST_SKIP() << "Skipping log emission in native benchmark builds";
+#endif
     constexpr auto filePath = "LogLevelTest.log";
     Logger::setupLogging(filePath, LogLevel::LOG_TRACE);
 

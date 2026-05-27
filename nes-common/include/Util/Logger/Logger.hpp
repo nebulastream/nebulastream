@@ -122,7 +122,10 @@ struct LogCaller<LogLevel::LOG_WARNING>
 #define SUPPRESS_UNUSED_WARNING(...) \
     do \
     { \
-        [](auto&&... args) { ((void)args, ...); }(__VA_ARGS__); \
+        if (false) \
+        { \
+            [](auto&&... args) { ((void)args, ...); }(__VA_ARGS__); \
+        } \
     } while (0)
 
 
