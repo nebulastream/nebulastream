@@ -18,5 +18,6 @@ function(add_nes_distributed_test)
 endfunction()
 
 add_nes_distributed_test(distributed-query-status-test UnitTests/DistributedQueryTest.cpp)
+add_nes_distributed_test(distributed-query-plan-test UnitTests/DistributedLogicalPlanTest.cpp)
 add_nes_distributed_test(network-topology-test UnitTests/NetworkTopologyTest.cpp)
 add_nes_distributed_test(WorkerCatalogTest UnitTests/WorkerCatalogTest.cpp)

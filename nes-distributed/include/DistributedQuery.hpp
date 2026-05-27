@@ -32,6 +32,8 @@
 #include <QueryStatus.hpp>
 #include <WorkerStatus.hpp>
 
+#include "DistributedLogicalPlan.hpp"
+
 namespace NES
 {
 using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">;
@@ -115,6 +117,7 @@ struct DistributedQueryStatusSnapshot
 class DistributedQuery
 {
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
+    DistributedLogicalPlan plan;
 
 public:
     [[nodiscard]] auto iterate() const
@@ -136,9 +139,12 @@ public:
     bool operator==(const DistributedQuery& other) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const DistributedQuery& query);
-    DistributedQuery() = default;
 
-    explicit DistributedQuery(std::unordered_map<Host, std::vector<QueryId>> localQueries);
+    const DistributedLogicalPlan& getPlan() const;
+
+    DistributedLogicalPlan& getPlan();
+
+    explicit DistributedQuery(std::unordered_map<Host, std::vector<QueryId>> localQueries, DistributedLogicalPlan plan);
 };
 
 std::ostream& operator<<(std::ostream& ostream, const DistributedQuery& query);

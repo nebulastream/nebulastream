@@ -23,9 +23,11 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <coro/coro.hpp>
 #include <fmt/format.h>
-#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -68,9 +70,71 @@ public:
 
     [[nodiscard]] auto end() const { return localPlans.end(); }
 
+    [[nodiscard]] auto begin() { return localPlans.begin(); }
+
+    [[nodiscard]] auto end() { return localPlans.end(); }
+
+    bool operator==(const DistributedLogicalPlan&) const = default;
+
 private:
     DistributedQueryId queryId{DistributedQueryId::INVALID};
     std::unordered_map<Host, std::vector<LogicalPlan>> localPlans;
     LogicalPlan globalPlan;
 };
+
+inline coro::generator<std::vector<std::pair<Host, LogicalPlan>>> topologicalSort(const DistributedLogicalPlan& globalPlan)
+{
+    std::vector<std::pair<Host, LogicalPlan>> plansByNode;
+    for (const auto& [host, plans] : globalPlan)
+    {
+        for (const auto& plan : plans)
+        {
+            plansByNode.emplace_back(host, plan);
+        }
+    }
+
+    std::unordered_set<std::string> usedChannels;
+
+    const auto isReady = [&](const auto& hostAndPlan)
+    {
+        const auto sources = getOperatorByType<SourceDescriptorLogicalOperator>(hostAndPlan.second);
+        return std::ranges::all_of(
+            sources,
+            [&](const TypedLogicalOperator<SourceDescriptorLogicalOperator>& source)
+            {
+                return UppercaseString(source->getSourceDescriptor().getSourceType()) != UppercaseString("NETWORK")
+                    || usedChannels.contains(
+                        std::get<std::string>(source->getSourceDescriptor().getConfig().at(UppercaseString("CHANNEL"))));
+            });
+    };
+
+    while (!plansByNode.empty())
+    {
+        /// Move all plans whose network inputs are satisfied to the front; the suffix `[mid, end)` is still waiting.
+        const auto mid = std::ranges::partition(plansByNode, isReady).begin();
+        if (mid == plansByNode.begin())
+        {
+            /// No progress this round — remaining plans depend on channels that will never be produced.
+            co_return;
+        }
+
+        std::vector<std::pair<Host, LogicalPlan>> ready(std::make_move_iterator(plansByNode.begin()), std::make_move_iterator(mid));
+        plansByNode.erase(plansByNode.begin(), mid);
+
+        auto newUsedChannels = ready
+            | std::views::transform([](const auto& hostAndPlan) { return getOperatorByType<SinkLogicalOperator>(hostAndPlan.second); })
+            | std::views::join
+            | std::views::filter([](const TypedLogicalOperator<SinkLogicalOperator>& sink)
+                                 { return UppercaseString(sink->getSinkDescriptor()->getSinkType()) == UppercaseString("NETWORK"); })
+            | std::views::transform(
+                                   [](const TypedLogicalOperator<SinkLogicalOperator>& sink)
+                                   { return std::get<std::string>(sink->getSinkDescriptor()->getConfig().at(UppercaseString("CHANNEL"))); })
+            | std::ranges::to<std::vector>();
+
+        usedChannels.insert(newUsedChannels.begin(), newUsedChannels.end());
+
+        co_yield std::move(ready);
+    }
+}
+
 }
