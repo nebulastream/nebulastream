@@ -258,11 +258,9 @@ struct TokioSinkContext
 TokioSink::TokioSink(
     BackpressureController backpressureController,
     SinkDescriptor descriptor,
-    std::chrono::milliseconds stopTimeout,
     size_t upperThreshold,
     size_t lowerThreshold)
     : Sink(std::move(backpressureController))
-    , stopTimeout(stopTimeout)
     , descriptor(descriptor)
     , context(nullptr)
     , backpressureHandler(std::make_unique<SinkBackpressureHandler>(upperThreshold, lowerThreshold))
@@ -325,18 +323,6 @@ void TokioSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
 void TokioSink::stop(PipelineExecutionContext& pec)
 {
     context->throwIfAsyncError();
-    if (!context->stopDeadline)
-    {
-        context->stopDeadline = std::chrono::steady_clock::now() + stopTimeout;
-    }
-    else if (std::chrono::steady_clock::now() > *context->stopDeadline)
-    {
-        throw CannotFlushSink(
-            "TokioSink failed to drain/flush/close within {} ms (flush epoch acked: {}/{}); aborting stop()",
-            stopTimeout.count(),
-            context->epochCounter->load(),
-            context->flushEpoch.value_or(0));
-    }
     auto currentBuffer = backpressureHandler->popFront();
     while (currentBuffer)
     {
