@@ -42,7 +42,7 @@ QualifiedIdentifier bindQualifiedIdentifier(AntlrSQLParser::IdentifierChainConte
 ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 std::unordered_map<Identifier, std::string> parseInputFormatterConfig(const ConfigMap& configOptions);
-std::unordered_map<std::string, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions);
+std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions);
 std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions);
 std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions);
 std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSourceSchema(ConfigMap configOptions);

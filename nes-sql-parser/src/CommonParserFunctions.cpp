@@ -156,13 +156,13 @@ configOptionToValue(const std::pair<const Identifier, std::variant<Literal, Sche
 }
 
 /// Collects all literal config options that live under any of the given top-level prefixes into a single key-value map.
-std::unordered_map<std::string, std::string>
+std::unordered_map<Identifier, std::string>
 collectConfigBlock(const ConfigMap& configOptions, const std::initializer_list<std::string_view> prefixes)
 {
-    auto config = std::unordered_map<std::string, std::string>{};
+    auto config = std::unordered_map<Identifier, std::string>{};
     for (const auto prefix : prefixes)
     {
-        if (const auto configIter = configOptions.find(std::string{prefix}); configIter != configOptions.end())
+        if (const auto configIter = configOptions.find(Identifier::parse(std::string{prefix})); configIter != configOptions.end())
         {
             for (const auto& entry : configIter->second | std::views::transform(configOptionToValue))
             {
@@ -182,7 +182,7 @@ std::unordered_map<Identifier, std::string> parseInputFormatterConfig(const Conf
     return collectConfigBlock(configOptions, {"INPUT_FORMATTER"});
 }
 
-std::unordered_map<std::string, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
+std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
 {
     return collectConfigBlock(configOptions, {"OUTPUT_FORMATTER"});
 }

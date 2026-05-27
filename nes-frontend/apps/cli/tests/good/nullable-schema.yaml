@@ -26,12 +26,12 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: GENERATOR_SOURCE$id
+      - name: id
         type: UINT64
-      - name: GENERATOR_SOURCE$value
+      - name: value
         type: FLOAT64
         nullable: true
-      - name: GENERATOR_SOURCE$label
+      - name: label
         type: UINT64
         nullable: false
     type: Void

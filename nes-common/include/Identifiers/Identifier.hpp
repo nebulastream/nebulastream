@@ -386,15 +386,18 @@ public:
         }
         if constexpr (Extent != std::dynamic_extent)
         {
-            if (std::ranges::size(identifiers) == Extent)
+            if (std::ranges::size(identifiers) != Extent)
             {
                 return std::unexpected{InvalidIdentifier("Expected {} identifiers, but got {}", Extent, std::ranges::size(identifiers))};
             }
             std::array<Identifier, Extent> identifiersArray{};
             std::copy(identifiers.begin(), identifiers.end(), identifiersArray.begin());
             return std::expected<QualifiedIdentifierBase<Extent>, Exception>{QualifiedIdentifierBase<Extent>{std::move(identifiersArray)}};
-        } else if constexpr (Extent == std::dynamic_extent){
-            return std::expected<QualifiedIdentifierBase<std::dynamic_extent>, Exception>{QualifiedIdentifierBase<std::dynamic_extent>{std::move(identifiers)}};
+        }
+        else if constexpr (Extent == std::dynamic_extent)
+        {
+            return std::expected<QualifiedIdentifierBase<std::dynamic_extent>, Exception>{
+                QualifiedIdentifierBase<std::dynamic_extent>{std::move(identifiers)}};
         }
         std::unreachable();
     }

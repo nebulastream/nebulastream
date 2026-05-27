@@ -67,6 +67,11 @@ InputFormatterDescriptor SourceDescriptor::getInputFormatterDescriptor() const
     return inputFormatterDescriptor;
 }
 
+std::string SourceDescriptor::getInputFormatType() const
+{
+    return inputFormatterDescriptor.getInputFormatterType();
+}
+
 Host SourceDescriptor::getHost() const
 {
     return host;

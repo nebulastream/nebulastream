@@ -171,7 +171,7 @@ bool compareFiles(const std::filesystem::path& file1, const std::filesystem::pat
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const DescriptorConfig::Config& parserConfiguration,
-    const Schema& schema,
+    const Schema<UnqualifiedUnboundField, Ordered>& schema,
     MemoryLayoutType memoryLayoutType,
     size_t sizeOfFormattedBuffers,
     bool isCompiled);

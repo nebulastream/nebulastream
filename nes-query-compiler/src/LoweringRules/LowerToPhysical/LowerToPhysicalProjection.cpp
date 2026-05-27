@@ -70,9 +70,11 @@ NES::ScanPhysicalOperator createScanOperator(
     const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
     if (sourceDescriptorOpt.has_value())
     {
-        if (NES::toUpperCase(sourceDescriptorOpt.value().getInputFormatterType()) != "NATIVE")
+        if (NES::toUpperCase(sourceDescriptorOpt.value().getInputFormatType()) != "NATIVE")
         {
-            return NES::ScanPhysicalOperator(provideInputFormatter(inputFormatterConfig, memoryProvider), std::move(inputFieldNames));
+            return NES::ScanPhysicalOperator(
+                provideInputFormatter(sourceDescriptorOpt.value().getInputFormatterDescriptor(), memoryProvider),
+                std::move(inputFieldNames));
         }
     }
     return NES::ScanPhysicalOperator(memoryProvider, std::move(inputFieldNames));

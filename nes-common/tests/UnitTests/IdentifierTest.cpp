@@ -189,7 +189,8 @@ TEST_F(IdentifierTest, IdSpanLookup)
     EXPECT_FALSE(idMap.contains(std::span{idList32.begin(), idList32.end()}));
 }
 
-TEST_F(IdentifierTest, CreateQualifiedSizeCheck) {
+TEST_F(IdentifierTest, CreateQualifiedSizeCheck)
+{
     const auto id1 = Identifier::parse("test1");
     const auto id2 = Identifier::parse("test2");
     const auto correctCreated = QualifiedIdentifierBase<2>::tryCreate(std::vector{id1, id2});
@@ -204,6 +205,7 @@ TEST_F(IdentifierTest, CreateQualifiedSizeCheck) {
     EXPECT_TRUE(dynamic.has_value());
     EXPECT_EQ(dynamic.value(), correctCreated.value());
 }
+
 ///NOLINTEND(bugprone-unchecked-optional-access)
 
 }

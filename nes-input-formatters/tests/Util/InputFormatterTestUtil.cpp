@@ -164,24 +164,14 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const size_t sizeOfFormattedBuffers,
     const bool isCompiled)
 {
-    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
-    return createInputFormatter(validatedParserConfiguration, schema, memoryLayoutType, sizeOfFormattedBuffers, isCompiled);
-}
-
-std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const DescriptorConfig::Config&
-    const Schema<UnqualifiedUnboundField, Ordered>& schema,
-    const MemoryLayoutType memoryLayoutType,
-    const size_t sizeOfFormattedBuffers,
-    const bool isCompiled)
-{
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
     const auto qualifiedSchema = schema | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>();
 
     auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, qualifiedSchema, memoryLayoutType);
     auto inputFormatterType = std::get<std::string>(parserConfiguration.at("type"));
     auto scanOp = ScanPhysicalOperator(
-        provideInputFormatter(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider), qualifiedSchema.getUniqueFieldNames());
+        provideInputFormatter(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider),
+        qualifiedSchema.getUniqueFieldNames());
     scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
 
     auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(scanOp));

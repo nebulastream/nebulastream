@@ -226,7 +226,8 @@ public:
                 | std::ranges::to<std::unordered_map<Identifier, std::string>>();
         }
         std::unordered_map<Identifier, std::string> formatOptions{};
-        if (const auto formatConfigIter = configOptions.find(Identifier::parse("OUTPUT_FORMATTER")); formatConfigIter != configOptions.end())
+        if (const auto formatConfigIter = configOptions.find(Identifier::parse("OUTPUT_FORMATTER"));
+            formatConfigIter != configOptions.end())
         {
             formatOptions = formatConfigIter->second
                 | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })

@@ -36,6 +36,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <InputFormatterProvider.hpp>
@@ -83,14 +84,20 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
             UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
     }
 
-    if (not parserConfig.contains(InputFormatterDescriptor::getTypeString()))
+    std::unordered_map<std::string, std::string> parserConfigStringMap;
+    parserConfigStringMap.reserve(parserConfig.size());
+    for (const auto& [key, value] : parserConfig)
+    {
+        parserConfigStringMap.emplace(toLowerCase(key.asCanonicalString()), value);
+    }
+    if (not parserConfigStringMap.contains(InputFormatterDescriptor::getTypeString()))
     {
         return std::unexpected{InvalidConfigParameter("Source config does not contain input formatter type")};
     }
-    const std::string inputFormat = parserConfig.at(InputFormatterDescriptor::getTypeString());
+    const std::string inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
     const auto parserConfigObject = (toUpperCase(inputFormat) == "NATIVE")
         ? DescriptorConfig::Config{}
-        : InputFormatterValidationProvider::provide(inputFormat, parserConfig);
+        : InputFormatterValidationProvider::provide(inputFormat, parserConfigStringMap);
     if (not parserConfigObject.has_value())
     {
         return std::unexpected{UnknownSourceType(
@@ -160,14 +167,20 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
         return std::nullopt;
     }
 
-    if (not parserConfigMap.contains(InputFormatterDescriptor::getTypeString()))
+    std::unordered_map<std::string, std::string> parserConfigStringMap;
+    parserConfigStringMap.reserve(parserConfigMap.size());
+    for (const auto& [key, value] : parserConfigMap)
+    {
+        parserConfigStringMap.emplace(toLowerCase(key.asCanonicalString()), value);
+    }
+    if (not parserConfigStringMap.contains(InputFormatterDescriptor::getTypeString()))
     {
         throw InvalidConfigParameter("Source config does not contain input formatter type");
     }
-    const std::string inputFormat = parserConfigMap.at(InputFormatterDescriptor::getTypeString());
+    const std::string inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
     const auto parserConfigObject = (toUpperCase(inputFormat) == "NATIVE")
         ? DescriptorConfig::Config{}
-        : InputFormatterValidationProvider::provide(inputFormat, parserConfigMap);
+        : InputFormatterValidationProvider::provide(inputFormat, parserConfigStringMap);
     if (not parserConfigObject.has_value())
     {
         throw UnknownSourceType(
