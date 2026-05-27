@@ -32,15 +32,15 @@ CREATE LOGICAL SOURCE sensor(
 
 ## Output Formatting
 
-NULL values are rendered as the string `NULL` in both CSV and JSON output.
+NULL values are rendered as the string `NULL` in CSV output and as `null` in JSON output.
 
 ```csv
 1,NULL,berlin
 2,25,NULL
 ```
 ```json
-{"ts": 1, "temperature": "NULL", "location" :  "berlin"}
-{"ts": 2, "temperature": "25", "location" :  "NULL"}
+{"ts": 1, "temperature": null, "location": "berlin"}
+{"ts": 2, "temperature": 25, "location": null}
 ```
 
 ---
