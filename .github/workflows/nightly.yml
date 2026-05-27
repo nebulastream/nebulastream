@@ -45,6 +45,7 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/nix-build.yml
+    secrets: inherit
     with:
       head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
 

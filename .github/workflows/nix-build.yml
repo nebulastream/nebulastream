@@ -7,6 +7,15 @@ on:
         type: string
         required: true
         description: "ref of the branch"
+    secrets:
+      SCCACHE_CACHE_BUCKET:
+        required: false
+      SCCACHE_CACHE_ENDPOINT:
+        required: false
+      SCCACHE_CACHE_ACCESS_KEY:
+        required: false
+      SCCACHE_CACHE_SECRET_KEY:
+        required: false
   workflow_dispatch:
     inputs:
       head_sha:
@@ -37,13 +46,41 @@ jobs:
           use-flakehub: false
           use-gha-cache: true
 
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+
+      - name: Install sccache
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=0.14.0
+          case "$(uname -m)" in
+            x86_64) target=x86_64-unknown-linux-musl ;;
+            aarch64) target=aarch64-unknown-linux-musl ;;
+            *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+          esac
+          install_dir="$RUNNER_TEMP/sccache"
+          mkdir -p "$install_dir"
+          curl -fsSL "https://github.com/mozilla/sccache/releases/download/v${version}/sccache-v${version}-${target}.tar.gz" \
+            | tar xz -C "$install_dir" --strip-components=1 "sccache-v${version}-${target}/sccache"
+          chmod +x "$install_dir/sccache"
+          echo "SCCACHE_BIN=$install_dir/sccache" >> "$GITHUB_ENV"
+          "$install_dir/sccache" --version
+
       - name: Configure via devShell
         run: |
-          ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -G Ninja -S . -B cmake-build-nix
+          ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -DUSE_BUILD_CACHE=OFF -DCMAKE_C_COMPILER_LAUNCHER="$SCCACHE_BIN" -DCMAKE_CXX_COMPILER_LAUNCHER="$SCCACHE_BIN" -G Ninja -S . -B cmake-build-nix
 
       - name: Build via devShell
         run: |
+          "$SCCACHE_BIN" --show-stats
           ./.nix/nix-cmake.sh --build cmake-build-nix --target nes-single-node-worker -j"$(nproc)"
+          "$SCCACHE_BIN" --show-stats
+          "$SCCACHE_BIN" --stop-server
 
       - name: Upload build artifacts on failure
         if: failure()
