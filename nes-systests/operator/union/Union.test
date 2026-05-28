@@ -49,16 +49,16 @@ SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink;
 2,2,2003
 
 # Union with projection to fixup the schema
-SELECT * FROM stream UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink;
+SELECT id, timestamp FROM stream UNION SELECT id2 as id, timestamp FROM stream3 INTO File();
 ----
-1,1,1000
-1,1,1001
-1,1,1002
-1,1,1003
-2,2,3000
-2,2,3001
-2,2,3002
-2,2,3003
+1,1000
+1,1001
+1,1002
+1,1003
+2,3000
+2,3001
+2,3002
+2,3003
 
 CREATE SINK sink2(timestamp UINT64 NOT NULL, origin UINT8 NOT NULL)  TYPE File;
 # Union with selection to fixup the schema and projection of constant into the schema
@@ -72,7 +72,7 @@ SELECT timestamp, UINT8(1) as origin FROM stream UNION SELECT timestamp, UINT8(2
 1001,2
 
 # nested union with projection to fixup the schema
-SELECT * FROM stream UNION SELECT * FROM stream2 UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink;
+SELECT id, value, timestamp FROM stream UNION SELECT id, value, timestamp FROM stream2 UNION SELECT id2 as id, value, timestamp FROM stream3 INTO sink;
 ----
 1,1,1000
 1,1,1001
