@@ -637,6 +637,7 @@
           pkg-config
           git
           ccache
+          mold
         ];
 
         # LLVM toolchain with versioned symlinks for vcpkg
@@ -670,7 +671,6 @@
             tools = [
               llvm.llvm
               clangWithVersions
-              llvm.lld
               llvm.libcxx
               llvm.clang-tools # clang-format, clang-tidy
             ];
