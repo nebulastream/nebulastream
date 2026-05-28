@@ -16,14 +16,19 @@
 #include <Phases/RuleBasedOptimizer.hpp>
 
 #include <utility>
+
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/RuleManager.hpp>
+#include <Rules/Semantic/OriginIdInferenceRule.hpp>
 #include <Rules/Static/DecideFieldMappings.hpp>
 #include <Rules/Static/DecideFieldOrder.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
@@ -39,7 +44,10 @@ RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryO
     ruleManager.addRule(RedundantProjectionRemovalRule{});
     ruleManager.addRule(DecideFieldMappings{});
     ruleManager.addRule(DecideFieldOrder{});
+    ruleManager.addRule(OriginIdInferenceRule{});
+    ruleManager.addRule(FixedPlanStructureBarrier{});
 
+    NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
     ruleSequence = ruleManager.getSequence();
 }
 
