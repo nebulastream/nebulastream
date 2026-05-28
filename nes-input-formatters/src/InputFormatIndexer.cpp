@@ -12,30 +12,14 @@
     limitations under the License.
 */
 
-#pragma once
+#include <InputFormatIndexer.hpp>
 
-#include <string>
-
-#include <Configurations/Descriptor.hpp>
-#include <Traits/Trait.hpp>
-#include <Util/Reflection.hpp>
-#include <Util/Registry.hpp>
+#include <ostream>
 
 namespace NES
 {
-
-using TraitRegistryReturnType = Trait;
-
-struct TraitRegistryArguments
+std::ostream& operator<<(std::ostream& out, const InputFormatIndexer& indexer)
 {
-    Reflected reflected;
-};
-
-class TraitRegistry : public BaseRegistry<TraitRegistry, std::string, TraitRegistryReturnType, TraitRegistryArguments>
-{
-};
+    return indexer.toString(out);
 }
-
-#define INCLUDED_FROM_REGISTRY_TRAIT
-#include <TraitGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_TRAIT
+}

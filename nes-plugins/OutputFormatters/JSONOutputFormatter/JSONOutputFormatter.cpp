@@ -20,9 +20,11 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <simdjson.h>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -36,7 +38,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <nlohmann/json.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
@@ -51,6 +52,16 @@ namespace NES
 {
 namespace
 {
+/// Escapes a raw byte string into a quoted JSON string literal. simdjson's string builder performs
+/// RFC 8259-conformant escaping (\b \f \n \r \t \" \\ short forms, \uXXXX for the remaining control
+/// characters) with a SIMD fast path that scans for characters needing escaping.
+std::string escapeAsJsonString(std::string_view input)
+{
+    simdjson::builder::string_builder builder;
+    builder.escape_and_append_with_quotes(input);
+    return std::string{builder.view().value()};
+}
+
 uint64_t writePreValueContents(
     const bool isFirstField,
     const char* fieldIdentifier,
@@ -67,18 +78,6 @@ uint64_t writePreValueContents(
     return writeValueToBuffer(preValueContentString.c_str(), remainingSpace, buffer, bufferProvider, bufferAddress);
 }
 
-uint64_t writeBool(
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    const bool value,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    /// JSON booleans need to be represented by true/false instead of 1/0
-    const std::string valueAsString = value ? "true" : "false";
-    return writeValueToBuffer(valueAsString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
 uint64_t writeChar(
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
@@ -87,7 +86,7 @@ uint64_t writeChar(
     AbstractBufferProvider* bufferProvider)
 {
     /// Chars are treated as strings in JSON
-    const std::string charAsJsonString = nlohmann::json(std::string(1, content)).dump();
+    const std::string charAsJsonString = escapeAsJsonString(std::string_view(&content, 1));
     return writeValueToBuffer(charAsJsonString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
@@ -99,8 +98,9 @@ uint64_t writeVarsized(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    /// Use nlohmann json library to delimit all special characters in the string
-    const std::string jsonFormattedString = nlohmann::json(std::string(reinterpret_cast<const char*>(varSizedContent), contentSize)).dump();
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) -- int8_t buffer reinterpreted as char* for string_view
+    const auto* const contentChars = reinterpret_cast<const char*>(varSizedContent);
+    const std::string jsonFormattedString = escapeAsJsonString(std::string_view(contentChars, contentSize));
     return writeValueToBuffer(jsonFormattedString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
@@ -115,18 +115,6 @@ void writeValue(
 {
     switch (fieldType.type)
     {
-        case DataType::Type::BOOLEAN: {
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeBool,
-                fieldPointer + written,
-                currentRemainingSize,
-                value.getRawValueAs<nautilus::val<bool>>(),
-                recordBuffer.getReference(),
-                bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
         case DataType::Type::CHAR: {
             const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
                 writeChar,
@@ -163,7 +151,8 @@ void writeValue(
         case DataType::Type::UINT32:
         case DataType::Type::UINT64:
         case DataType::Type::FLOAT32:
-        case DataType::Type::FLOAT64: {
+        case DataType::Type::FLOAT64:
+        case DataType::Type::BOOLEAN: {
             const nautilus::val<uint64_t> amountWritten
                 = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
             written += amountWritten;
@@ -214,7 +203,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         {
             const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
                 writeValueToBuffer,
-                nautilus::val<const char*>{"NULL"},
+                nautilus::val<const char*>{"null"},
                 currentRemainingSize,
                 recordBuffer.getReference(),
                 bufferProvider,

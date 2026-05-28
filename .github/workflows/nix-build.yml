@@ -7,24 +7,35 @@ on:
         type: string
         required: true
         description: "ref of the branch"
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        type: string
+        required: false
+        description: "ref of the branch"
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   nix-build:
     name: "Nix Build"
-    timeout-minutes: 60
+    timeout-minutes: 90
     runs-on: [ ubuntu-latest ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.head_sha }}
+          ref: ${{ inputs.head_sha || github.sha }}
           fetch-depth: 0
           submodules: recursive
 
       - uses: DeterminateSystems/nix-installer-action@main
-
-      - name: Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+        with:
+          use-flakehub: false
+          use-gha-cache: true
 
       - name: Configure via devShell
         run: |

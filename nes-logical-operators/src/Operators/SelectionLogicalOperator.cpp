@@ -32,16 +32,15 @@
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
-
-#include <Util/Reflection.hpp>
 
 namespace NES
 {
 
-SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : predicate(std::move(predicate))
+SelectionLogicalOperator::SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate)
+    : ManagedByOperator(std::move(self)), predicate(std::move(predicate))
 {
 }
 
@@ -132,21 +131,17 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
+Reflected
+Reflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const
 {
-    return reflect(detail::ReflectedSelectionLogicalOperator{std::make_optional(op.getPredicate())});
+    return reflect(detail::ReflectedSelectionLogicalOperator{op->getPredicate()});
 }
 
-SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& rfl) const
+TypedLogicalOperator<SelectionLogicalOperator>
+Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [predicate] = unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
-
-    if (!predicate.has_value())
-    {
-        throw CannotDeserialize("Failed to deserialize selection logical operator");
-    }
-
-    return SelectionLogicalOperator(predicate.value());
+    auto [predicate] = context.unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
+    return TypedLogicalOperator<SelectionLogicalOperator>{predicate};
 }
 
 LogicalOperatorRegistryReturnType
@@ -154,7 +149,7 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOpera
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<SelectionLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<SelectionLogicalOperator>>(arguments.reflected);
     }
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
     std::unreachable();

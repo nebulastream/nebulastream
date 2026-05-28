@@ -14,53 +14,69 @@
 
 #include <SIMDJSONInputFormatIndexer.hpp>
 
+#include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <utility>
 
+#include <Configurations/Descriptor.hpp>
 #include <fmt/format.h>
 #include <InputFormatIndexerRegistry.hpp>
-#include <InputFormatterTupleBufferRef.hpp>
-#include <SIMDJSONFIF.hpp>
+#include <InputFormatterValidationRegistry.hpp>
+#include <RawBufferIndex.hpp>
+#include <RawTupleBuffer.hpp>
+#include <SIMDJSONRawBufferIndex.hpp>
 
 namespace NES
 {
 
-void SIMDJSONInputFormatIndexer::indexRawBuffer(
-    SIMDJSONFIF& fieldIndexFunction, const RawTupleBuffer& rawBuffer, const SIMDJSONMetaData& metaData)
+std::unique_ptr<RawBufferIndex> SIMDJSONInputFormatIndexer::indexRawBuffer(const std::string_view rawBuffer) const
 {
-    const auto offsetOfFirstTuple = static_cast<FieldIndex>(rawBuffer.getBufferView().find(TUPLE_DELIMITER));
+    auto rawBufferIndex = std::make_unique<SIMDJSONRawBufferIndex>();
+
+    const auto offsetOfFirstTuple = static_cast<FieldIndex>(rawBuffer.find(TUPLE_DELIMITER));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTuple' to a value larger than the buffer size to tell
     /// the InputFormatter that there was no tuple delimiter in the buffer and return
     if (offsetOfFirstTuple == static_cast<FieldIndex>(std::string::npos))
     {
-        fieldIndexFunction.markNoTupleDelimiters();
-        return;
+        rawBufferIndex->markNoTupleDelimiters();
+        return rawBufferIndex;
     }
 
     /// If the buffer contains at least one delimiter, check if it contains more and index all tuples between the tuple delimiters
     const auto startIdxOfNextTuple = offsetOfFirstTuple + DELIMITER_SIZE;
 
-    const auto jsonSV = rawBuffer.getBufferView().substr(startIdxOfNextTuple);
-    const auto [isNoTuple, truncatedBytes] = fieldIndexFunction.indexJSON(jsonSV);
-    const auto offsetOfLastTuple
-        = (isNoTuple) ? offsetOfFirstTuple : rawBuffer.getBufferView().size() - truncatedBytes - metaData.getTupleDelimitingBytes().size();
+    const auto jsonSV = rawBuffer.substr(startIdxOfNextTuple);
+    const auto [isNoTuple, truncatedBytes] = rawBufferIndex->indexJSON(jsonSV);
+    const auto offsetOfLastTuple = static_cast<FieldIndex>(
+        (isNoTuple) ? offsetOfFirstTuple : rawBuffer.size() - truncatedBytes - this->getTupleDelimitingBytes().size());
 
-    fieldIndexFunction.markWithTupleDelimiters(offsetOfFirstTuple, offsetOfLastTuple);
+    rawBufferIndex->markWithTupleDelimiters(offsetOfFirstTuple, offsetOfLastTuple);
+    return rawBufferIndex;
 }
 
-std::ostream& operator<<(std::ostream& os, const SIMDJSONInputFormatIndexer&)
+std::ostream& SIMDJSONInputFormatIndexer::toString(std::ostream& str) const
 {
-    return os << fmt::format(
-               "SIMDJSONInputFormatIndexer(tupleDelimiter: {}, fieldDelimiter: {})",
-               SIMDJSONInputFormatIndexer::TUPLE_DELIMITER,
-               SIMDJSONInputFormatIndexer::FIELD_DELIMITER);
+    return str << fmt::format("SIMDJSONInputFormatIndexer(tupleDelimiter: {})", SIMDJSONInputFormatIndexer::TUPLE_DELIMITER);
+}
+
+DescriptorConfig::Config SIMDJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<ConfigParametersSIMDJSON>(std::move(config), NAME);
 }
 
 InputFormatIndexerRegistryReturnType RegisterJSONInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
-    return arguments.createInputFormatterWithIndexer(SIMDJSONInputFormatIndexer{});
+    return arguments.createInputFormatterWithIndexer(
+        SIMDJSONInputFormatIndexer::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
 }
 
+InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterJSONInputFormatterValidation(
+    InputFormatterValidationRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
+{
+    return SIMDJSONInputFormatIndexer::validateAndFormat(arguments.config);
+}
 }

@@ -31,7 +31,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -97,23 +96,15 @@ Reflected Reflector<RoundLogicalFunction>::operator()(const RoundLogicalFunction
     return reflect(detail::ReflectedRoundLogicalFunction{.child = function.child});
 }
 
-RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflected& reflected) const
+RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [child] = unreflect<detail::ReflectedRoundLogicalFunction>(reflected);
-    if (!child.has_value())
-    {
-        throw CannotDeserialize("Missing child function");
-    }
-    return RoundLogicalFunction(child.value());
+    auto [child] = context.unreflect<detail::ReflectedRoundLogicalFunction>(reflected);
+    return RoundLogicalFunction(child);
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<RoundLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

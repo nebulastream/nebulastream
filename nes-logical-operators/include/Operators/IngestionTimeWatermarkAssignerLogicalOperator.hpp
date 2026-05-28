@@ -28,10 +28,10 @@
 namespace NES
 {
 
-class IngestionTimeWatermarkAssignerLogicalOperator final
+class IngestionTimeWatermarkAssignerLogicalOperator final : public ManagedByOperator
 {
 public:
-    IngestionTimeWatermarkAssignerLogicalOperator();
+    explicit IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self);
 
     [[nodiscard]] bool operator==(const IngestionTimeWatermarkAssignerLogicalOperator& rhs) const;
 
@@ -49,7 +49,6 @@ public:
 
     [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
-
 protected:
     static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
 
@@ -57,18 +56,21 @@ protected:
     TraitSet traitSet;
     Schema inputSchema;
     Schema outputSchema;
+
+    friend Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>;
 };
 
 template <>
-struct Reflector<IngestionTimeWatermarkAssignerLogicalOperator>
+struct Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>
 {
-    Reflected operator()(const IngestionTimeWatermarkAssignerLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>
+struct Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>
 {
-    IngestionTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
+    TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>
+    operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<IngestionTimeWatermarkAssignerLogicalOperator>);

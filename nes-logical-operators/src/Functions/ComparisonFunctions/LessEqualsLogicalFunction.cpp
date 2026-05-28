@@ -31,7 +31,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -98,24 +97,16 @@ Reflected Reflector<LessEqualsLogicalFunction>::operator()(const LessEqualsLogic
     return reflect(detail::ReflectedLessEqualsLogicalFunction{.left = function.left, .right = function.right});
 }
 
-LessEqualsLogicalFunction Unreflector<LessEqualsLogicalFunction>::operator()(const Reflected& reflected) const
+LessEqualsLogicalFunction
+Unreflector<LessEqualsLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [left, right] = unreflect<detail::ReflectedLessEqualsLogicalFunction>(reflected);
-
-    if (!left.has_value() || !right.has_value())
-    {
-        throw CannotDeserialize("LessEqualsLogicalFunction is missing a child");
-    }
-    return {left.value(), right.value()};
+    auto [left, right] = context.unreflect<detail::ReflectedLessEqualsLogicalFunction>(reflected);
+    return {left, right};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterLessEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<LessEqualsLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("LessEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());

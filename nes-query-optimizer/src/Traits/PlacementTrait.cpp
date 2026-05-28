@@ -25,17 +25,9 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
-#include <TraitRegisty.hpp>
 
 namespace NES
 {
-/// Required for plugin registration, no implementation necessary
-TraitRegistryReturnType
-TraitGeneratedRegistrar::RegisterPlacementTrait(TraitRegistryArguments arguments) /// NOLINT(performance-unnecessary-value-param)
-{
-    return unreflect<PlacementTrait>(arguments.reflected);
-}
-
 PlacementTrait::PlacementTrait(Host host) : onNode(std::move(host))
 {
 }
@@ -65,9 +57,9 @@ Reflected Reflector<PlacementTrait>::operator()(const PlacementTrait& trait) con
     return reflect(detail::ReflectedPlacementTrait{trait.onNode});
 }
 
-PlacementTrait Unreflector<PlacementTrait>::operator()(const Reflected& reflected) const
+PlacementTrait Unreflector<PlacementTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onNode] = unreflect<detail::ReflectedPlacementTrait>(reflected);
+    auto [onNode] = context.unreflect<detail::ReflectedPlacementTrait>(reflected);
     return PlacementTrait{onNode};
 }
 

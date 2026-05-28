@@ -113,21 +113,28 @@ std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
 }
 
 InlineSinkLogicalOperator::InlineSinkLogicalOperator(
+    WeakLogicalOperator self,
     std::string type,
     const Schema& schema,
     std::unordered_map<std::string, std::string> config,
     std::unordered_map<std::string, std::string> formatConfig)
-    : schema(schema), sinkType(std::move(type)), sinkConfig(std::move(config)), formatConfig(std::move(formatConfig))
+    : ManagedByOperator(std::move(self))
+    , schema(schema)
+    , sinkType(std::move(type))
+    , sinkConfig(std::move(config))
+    , formatConfig(std::move(formatConfig))
 {
 }
 
-Reflected Reflector<InlineSinkLogicalOperator>::operator()(const InlineSinkLogicalOperator&) const
+Reflected
+Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(const TypedLogicalOperator<InlineSinkLogicalOperator>&) const
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();
 }
 
-InlineSinkLogicalOperator Unreflector<InlineSinkLogicalOperator>::operator()(const Reflected&) const
+TypedLogicalOperator<InlineSinkLogicalOperator>
+Unreflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();

@@ -69,6 +69,7 @@ jobs:
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
           echo "=== sccache config before build ==="
+          sccache --start-server
           sccache --show-stats
           cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}}  -- -k 0
           echo "=== sccache stats after build ==="

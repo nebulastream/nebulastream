@@ -129,7 +129,7 @@ public:
             return ConfigMap{};
         }();
 
-        const auto parserConfig = getParserConfig(configOptions);
+        const auto parserConfig = parseInputFormatterConfig(configOptions);
         auto sourceConfig = getSourceConfig(configOptions);
 
         /// "host" determines worker placement, not source behavior — extract it from the config map into a dedicated field.
@@ -229,7 +229,7 @@ public:
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
         std::unordered_map<std::string, std::string> formatOptions{};
-        if (const auto formatConfigIter = configOptions.find("PARSER"); formatConfigIter != configOptions.end())
+        if (const auto formatConfigIter = configOptions.find("OUTPUT_FORMATTER"); formatConfigIter != configOptions.end())
         {
             formatOptions
                 = formatConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })

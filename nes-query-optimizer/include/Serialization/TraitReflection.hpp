@@ -19,7 +19,7 @@
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <TraitRegisty.hpp>
+#include <TraitUnreflectionRegistry.hpp>
 
 namespace NES::detail
 {
@@ -60,13 +60,11 @@ struct Reflector<TypedTrait<detail::ErasedTrait>>
 template <>
 struct Unreflector<TypedTrait<>>
 {
-    TypedTrait<> operator()(const Reflected& rfl) const
+    TypedTrait<> operator()(const Reflected& rfl, const ReflectionContext& context) const
     {
-        auto [name, data] = unreflect<detail::ReflectedTrait>(rfl);
+        auto [name, data] = context.unreflect<detail::ReflectedTrait>(rfl);
 
-        TraitRegistryArguments argument;
-        argument.reflected = data;
-        auto trait = TraitRegistry::instance().create(name, argument);
+        auto trait = TraitUnreflectionRegistry::instance().unreflect(name, data, context);
         if (!trait.has_value())
         {
             throw CannotDeserialize("Failed to unreflect trait of type {}", name);

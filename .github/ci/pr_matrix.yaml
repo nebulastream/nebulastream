@@ -89,7 +89,7 @@ jobs:
   - name: "{arch} {stdlib} {build_type} (unit+systest+docker)"
     arch: [x64, arm64]
     stdlib: [libcxx, libstdcxx]
-    build_type: [RelWithDebInfo, Release]
+    build_type: [RelWithDebInfo, Release, Benchmark]
     sanitizer: none
     runner: github-{arch}
     tests: [unit, systest, docker]

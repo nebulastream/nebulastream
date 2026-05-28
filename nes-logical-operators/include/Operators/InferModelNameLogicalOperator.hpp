@@ -31,10 +31,10 @@ namespace NES
 
 /// Name-based ML inference operator that holds a model name string for deferred model resolution.
 /// Schema inference requires the actual model; attempting withInferredSchema throws CannotInferSchema.
-class InferModelNameLogicalOperator
+class InferModelNameLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit InferModelNameLogicalOperator(std::string modelName, std::vector<std::string> inputFieldNames);
+    explicit InferModelNameLogicalOperator(WeakLogicalOperator self, std::string modelName, std::vector<std::string> inputFieldNames);
 
     [[nodiscard]] std::string getModelName() const;
     [[nodiscard]] std::vector<std::string> getInputFieldNames() const;
@@ -69,15 +69,15 @@ private:
 };
 
 template <>
-struct Reflector<InferModelNameLogicalOperator>
+struct Reflector<TypedLogicalOperator<InferModelNameLogicalOperator>>
 {
-    Reflected operator()(const InferModelNameLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<InferModelNameLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<InferModelNameLogicalOperator>
+struct Unreflector<TypedLogicalOperator<InferModelNameLogicalOperator>>
 {
-    InferModelNameLogicalOperator operator()(const Reflected& rfl) const;
+    TypedLogicalOperator<InferModelNameLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<InferModelNameLogicalOperator>);

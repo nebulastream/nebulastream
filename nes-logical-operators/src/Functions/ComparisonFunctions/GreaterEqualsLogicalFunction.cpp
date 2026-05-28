@@ -31,7 +31,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -98,23 +97,16 @@ Reflected Reflector<GreaterEqualsLogicalFunction>::operator()(const GreaterEqual
     return reflect(detail::ReflectedGreaterEqualsLogicalFunction{.left = function.left, .right = function.right});
 }
 
-GreaterEqualsLogicalFunction Unreflector<GreaterEqualsLogicalFunction>::operator()(const Reflected& reflected) const
+GreaterEqualsLogicalFunction
+Unreflector<GreaterEqualsLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [left, right] = unreflect<detail::ReflectedGreaterEqualsLogicalFunction>(reflected);
-    if (!left.has_value() || !right.has_value())
-    {
-        throw CannotDeserialize("Missing child function");
-    }
-    return {left.value(), right.value()};
+    auto [left, right] = context.unreflect<detail::ReflectedGreaterEqualsLogicalFunction>(reflected);
+    return {left, right};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<GreaterEqualsLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("GreaterEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());

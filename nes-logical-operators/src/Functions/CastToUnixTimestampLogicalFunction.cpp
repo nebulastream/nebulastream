@@ -102,25 +102,16 @@ Reflected Reflector<CastToUnixTimestampLogicalFunction>::operator()(const CastTo
     return reflect(detail::ReflectedCastToUnixTimestampLogicalFunction{.child = function.child});
 }
 
-CastToUnixTimestampLogicalFunction Unreflector<CastToUnixTimestampLogicalFunction>::operator()(const Reflected& reflected) const
+CastToUnixTimestampLogicalFunction
+Unreflector<CastToUnixTimestampLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [function] = unreflect<detail::ReflectedCastToUnixTimestampLogicalFunction>(reflected);
-
-    if (!function.has_value())
-    {
-        throw CannotDeserialize("Failed to deserialize child of CastToUnixTimestampLogicalFunction");
-    }
-    return CastToUnixTimestampLogicalFunction(std::move(function.value()));
+    auto [function] = context.unreflect<detail::ReflectedCastToUnixTimestampLogicalFunction>(reflected);
+    return CastToUnixTimestampLogicalFunction{std::move(function)};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterCastToUnixTsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<CastToUnixTimestampLogicalFunction>(arguments.reflected);
-    }
-
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("CastToUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());

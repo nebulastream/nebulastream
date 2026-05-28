@@ -40,10 +40,11 @@
 namespace NES
 {
 
-class WindowedAggregationLogicalOperator final : public OriginIdAssigner
+class WindowedAggregationLogicalOperator final : public OriginIdAssigner, public ManagedByOperator
 {
 public:
     WindowedAggregationLogicalOperator(
+        WeakLogicalOperator self,
         std::vector<FieldAccessLogicalFunction> groupingKey,
         std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions,
         std::shared_ptr<Windowing::WindowType> windowType);
@@ -91,18 +92,20 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+
+    friend Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>;
 };
 
 template <>
-struct Reflector<WindowedAggregationLogicalOperator>
+struct Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>
 {
-    Reflected operator()(const WindowedAggregationLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<WindowedAggregationLogicalOperator>
+struct Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>
 {
-    WindowedAggregationLogicalOperator operator()(const Reflected& reflected) const;
+    TypedLogicalOperator<WindowedAggregationLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<WindowedAggregationLogicalOperator>);

@@ -27,7 +27,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 
@@ -144,7 +144,7 @@ struct Reflector<Schema::Field>
 template <>
 struct Unreflector<Schema::Field>
 {
-    Schema::Field operator()(const Reflected& rfl) const;
+    Schema::Field operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 template <>
@@ -156,7 +156,7 @@ struct Reflector<Schema>
 template <>
 struct Unreflector<Schema>
 {
-    Schema operator()(const Reflected& rfl) const;
+    Schema operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 }

@@ -115,21 +115,28 @@ std::vector<LogicalOperator> InlineSourceLogicalOperator::getChildren() const
 }
 
 InlineSourceLogicalOperator::InlineSourceLogicalOperator(
+    WeakLogicalOperator self,
     std::string type,
     const Schema& schema,
     std::unordered_map<std::string, std::string> sourceConfig,
     std::unordered_map<std::string, std::string> parserConfig)
-    : schema(schema), sourceType(std::move(type)), sourceConfig(std::move(sourceConfig)), parserConfig(std::move(parserConfig))
+    : ManagedByOperator(std::move(self))
+    , schema(schema)
+    , sourceType(std::move(type))
+    , sourceConfig(std::move(sourceConfig))
+    , parserConfig(std::move(parserConfig))
 {
 }
 
-Reflected Reflector<InlineSourceLogicalOperator>::operator()(const InlineSourceLogicalOperator&) const
+Reflected
+Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(const TypedLogicalOperator<InlineSourceLogicalOperator>&) const
 {
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();
 }
 
-InlineSourceLogicalOperator Unreflector<InlineSourceLogicalOperator>::operator()(const Reflected&) const
+TypedLogicalOperator<InlineSourceLogicalOperator>
+Unreflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();

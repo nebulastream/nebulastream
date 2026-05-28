@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Traits/ImplementationTypeTrait.hpp>
+#include <Traits/JoinImplementationTypeTrait.hpp>
 
 #include <cstddef>
 #include <string_view>
@@ -26,15 +26,9 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <TraitRegisty.hpp>
 
 namespace NES
 {
-/// Required for plugin registration, no implementation necessary
-TraitRegistryReturnType TraitGeneratedRegistrar::RegisterJoinImplementationTypeTrait(TraitRegistryArguments arguments)
-{
-    return unreflect<JoinImplementationTypeTrait>(arguments.reflected);
-}
 
 JoinImplementationTypeTrait::JoinImplementationTypeTrait(const JoinImplementation implementationType)
     : implementationType(implementationType)
@@ -71,9 +65,10 @@ Reflected Reflector<JoinImplementationTypeTrait>::operator()(const JoinImplement
     return reflect(detail::ReflectedImplementationTypeTrait{trait.implementationType});
 }
 
-JoinImplementationTypeTrait Unreflector<JoinImplementationTypeTrait>::operator()(const Reflected& reflected) const
+JoinImplementationTypeTrait
+Unreflector<JoinImplementationTypeTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [joinImplementationType] = unreflect<detail::ReflectedImplementationTypeTrait>(reflected);
+    auto [joinImplementationType] = context.unreflect<detail::ReflectedImplementationTypeTrait>(reflected);
     return JoinImplementationTypeTrait{joinImplementationType};
 }
 

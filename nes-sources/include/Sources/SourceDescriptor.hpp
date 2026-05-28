@@ -33,25 +33,15 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
+#include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
 class SourceCatalog;
 class OperatorSerializationUtil;
-
-struct ParserConfig
-{
-    std::string parserType;
-    std::string tupleDelimiter;
-    std::string fieldDelimiter;
-    bool allowCommasInStrings{};
-    friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
-    friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
-    static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
-};
 
 class SourceDescriptor final : public Descriptor
 {
@@ -71,7 +61,8 @@ public:
 
     [[nodiscard]] LogicalSource getLogicalSource() const;
     [[nodiscard]] std::string getSourceType() const;
-    [[nodiscard]] ParserConfig getParserConfig() const;
+    [[nodiscard]] std::string getInputFormatType() const;
+    [[nodiscard]] InputFormatterDescriptor getInputFormatterDescriptor() const;
 
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
@@ -88,7 +79,7 @@ private:
     LogicalSource logicalSource;
     std::string sourceType;
     Host host;
-    ParserConfig parserConfig;
+    InputFormatterDescriptor inputFormatterDescriptor;
 
 
     /// Used by Sources to create a valid SourceDescriptor.
@@ -98,7 +89,7 @@ private:
         std::string_view sourceType,
         Host host,
         DescriptorConfig::Config config,
-        ParserConfig parserConfig);
+        const InputFormatterDescriptor& inputFormatterDescriptor);
 
 public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
@@ -125,7 +116,7 @@ struct Reflector<SourceDescriptor>
 template <>
 struct Unreflector<SourceDescriptor>
 {
-    SourceDescriptor operator()(const Reflected& rfl) const;
+    SourceDescriptor operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 }
@@ -147,10 +138,9 @@ struct ReflectedSourceDescriptor
     LogicalSource logicalSource;
     std::string type;
     Host host;
-    ParserConfig parserConfig;
+    InputFormatterDescriptor inputFormatterDescriptor;
     Reflected config;
 };
 }
 
 FMT_OSTREAM(NES::SourceDescriptor);
-FMT_OSTREAM(NES::ParserConfig);

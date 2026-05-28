@@ -37,14 +37,13 @@
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
 
 EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(
-    LogicalFunction onField, const Windowing::TimeUnit& unit)
-    : onField(std::move(onField)), unit(unit)
+    WeakLogicalOperator self, LogicalFunction onField, const Windowing::TimeUnit& unit)
+    : ManagedByOperator(std::move(self)), onField(std::move(onField)), unit(unit)
 {
 }
 
@@ -124,22 +123,18 @@ std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChild
     return children;
 }
 
-Reflected Reflector<EventTimeWatermarkAssignerLogicalOperator>::operator()(const EventTimeWatermarkAssignerLogicalOperator& op) const
+Reflected Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::operator()(
+    const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op) const
 {
-    return reflect(detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{.onField = op.onField, .timeUnit = op.unit});
+    return reflect(detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{.onField = op->onField, .timeUnit = op->unit});
 }
 
-EventTimeWatermarkAssignerLogicalOperator
-Unreflector<EventTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected& reflected) const
+TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>
+Unreflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::operator()(
+    const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, timeUnit] = unreflect<detail::ReflectedEventTimeWatermarkAssignerLogicalOperator>(reflected);
-
-    if (!onField.has_value())
-    {
-        throw CannotDeserialize("EventTimeWatermarkAssignerLogicalOperator is missing onField function");
-    }
-
-    return EventTimeWatermarkAssignerLogicalOperator{onField.value(), timeUnit};
+    auto [onField, timeUnit] = context.unreflect<detail::ReflectedEventTimeWatermarkAssignerLogicalOperator>(reflected);
+    return TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>{onField, timeUnit};
 }
 
 LogicalOperatorRegistryReturnType
@@ -147,7 +142,7 @@ LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOper
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<EventTimeWatermarkAssignerLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>(arguments.reflected);
     }
 
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");

@@ -33,13 +33,12 @@
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Windowing/WindowMetaData.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
 class SerializableOperator;
 
-class JoinLogicalOperator final : public OriginIdAssigner
+class JoinLogicalOperator final : public OriginIdAssigner, public ManagedByOperator
 {
 public:
     enum class JoinType : uint8_t
@@ -48,7 +47,8 @@ public:
         CARTESIAN_PRODUCT
     };
 
-    explicit JoinLogicalOperator(LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType);
+    explicit JoinLogicalOperator(
+        WeakLogicalOperator self, LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType);
 
     [[nodiscard]] LogicalFunction getJoinFunction() const;
     [[nodiscard]] Schema getLeftSchema() const;
@@ -86,19 +86,19 @@ private:
     TraitSet traitSet;
     Schema leftInputSchema, rightInputSchema, outputSchema;
 
-    friend Reflector<JoinLogicalOperator>;
+    friend Reflector<TypedLogicalOperator<JoinLogicalOperator>>;
 };
 
 template <>
-struct Reflector<JoinLogicalOperator>
+struct Reflector<TypedLogicalOperator<JoinLogicalOperator>>
 {
-    Reflected operator()(const JoinLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<JoinLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<JoinLogicalOperator>
+struct Unreflector<TypedLogicalOperator<JoinLogicalOperator>>
 {
-    JoinLogicalOperator operator()(const Reflected& reflected) const;
+    TypedLogicalOperator<JoinLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);
@@ -108,7 +108,7 @@ namespace NES::detail
 {
 struct ReflectedJoinLogicalOperator
 {
-    std::optional<LogicalFunction> joinFunction;
+    LogicalFunction joinFunction;
     Reflected windowType;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
 };

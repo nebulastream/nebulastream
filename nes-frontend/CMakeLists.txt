@@ -26,13 +26,14 @@ find_package(highs CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
 find_package(replxx CONFIG REQUIRED)
+find_package(reflectcpp CONFIG REQUIRED)
 
 target_include_directories(nes-frontend-lib
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 target_link_libraries(nes-frontend-lib
-        PUBLIC nes-logical-operators nes-sql-parser nes-single-node-worker-interface nes-query-optimizer
+        PUBLIC nes-logical-operators nes-sql-parser nes-single-node-worker-interface nes-query-optimizer reflectcpp::reflectcpp
         PRIVATE yaml-cpp::yaml-cpp
 )
 
@@ -45,7 +46,7 @@ target_include_directories(nes-frontend-embedded-lib
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 target_link_libraries(nes-frontend-embedded-lib
-        PUBLIC nes-logical-operators nes-single-node-worker-lib nes-sql-parser nes-single-node-worker-interface nes-query-optimizer
+        PUBLIC nes-logical-operators nes-single-node-worker-lib nes-sql-parser nes-single-node-worker-interface nes-query-optimizer reflectcpp::reflectcpp
         PRIVATE nes-sql-parser yaml-cpp::yaml-cpp
 )
 

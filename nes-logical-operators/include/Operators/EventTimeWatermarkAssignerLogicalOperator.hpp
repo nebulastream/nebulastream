@@ -35,10 +35,10 @@
 namespace NES
 {
 
-class EventTimeWatermarkAssignerLogicalOperator
+class EventTimeWatermarkAssignerLogicalOperator : public ManagedByOperator
 {
 public:
-    EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
+    EventTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self, LogicalFunction onField, const Windowing::TimeUnit& unit);
 
     LogicalFunction onField;
     Windowing::TimeUnit unit;
@@ -65,18 +65,21 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+
+    friend Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>;
 };
 
 template <>
-struct Reflector<EventTimeWatermarkAssignerLogicalOperator>
+struct Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>
 {
-    Reflected operator()(const EventTimeWatermarkAssignerLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<EventTimeWatermarkAssignerLogicalOperator>
+struct Unreflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>
 {
-    EventTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
+    TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>
+    operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
@@ -86,7 +89,7 @@ namespace NES::detail
 {
 struct ReflectedEventTimeWatermarkAssignerLogicalOperator
 {
-    std::optional<LogicalFunction> onField;
+    LogicalFunction onField;
     Windowing::TimeUnit timeUnit;
 };
 }

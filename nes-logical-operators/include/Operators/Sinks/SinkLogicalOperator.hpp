@@ -20,6 +20,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -33,13 +34,13 @@
 namespace NES
 {
 
-struct SinkLogicalOperator final
+struct SinkLogicalOperator final : public ManagedByOperator
 {
     /// During deserialization, we don't need to know/use the name of the sink anymore.
-    SinkLogicalOperator() = default;
+    explicit SinkLogicalOperator(WeakLogicalOperator self);
     /// During query parsing, we require the name of the sink and need to assign it an id.
-    explicit SinkLogicalOperator(std::string sinkName);
-    explicit SinkLogicalOperator(SinkDescriptor sinkDescriptor);
+    explicit SinkLogicalOperator(WeakLogicalOperator self, std::string sinkName);
+    explicit SinkLogicalOperator(WeakLogicalOperator self, SinkDescriptor sinkDescriptor);
 
     [[nodiscard]] bool operator==(const SinkLogicalOperator& rhs) const;
 
@@ -85,18 +86,20 @@ private:
     std::optional<SinkDescriptor> sinkDescriptor;
 
     friend class OperatorSerializationUtil;
+
+    friend Reflector<TypedLogicalOperator<SinkLogicalOperator>>;
 };
 
 template <>
-struct Reflector<SinkLogicalOperator>
+struct Reflector<TypedLogicalOperator<SinkLogicalOperator>>
 {
-    Reflected operator()(const SinkLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<SinkLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<SinkLogicalOperator>
+struct Unreflector<TypedLogicalOperator<SinkLogicalOperator>>
 {
-    SinkLogicalOperator operator()(const Reflected& reflected) const;
+    TypedLogicalOperator<SinkLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SinkLogicalOperator>);

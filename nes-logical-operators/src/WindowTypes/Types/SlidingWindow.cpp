@@ -72,9 +72,10 @@ Reflected Reflector<Windowing::SlidingWindow>::operator()(const Windowing::Slidi
         .size = slidingWindow.getSize(), .slide = slidingWindow.getSlide(), .timeCharacteristic = slidingWindow.getTimeCharacteristic()});
 }
 
-Windowing::SlidingWindow Unreflector<Windowing::SlidingWindow>::operator()(const Reflected& reflected) const
+Windowing::SlidingWindow
+Unreflector<Windowing::SlidingWindow>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [size, slide, timeCharacteristics] = unreflect<detail::ReflectedSlidingWindow>(reflected);
+    auto [size, slide, timeCharacteristics] = context.unreflect<detail::ReflectedSlidingWindow>(reflected);
     return {timeCharacteristics, size, slide};
 }
 }

@@ -31,8 +31,6 @@
 #include <fmt/ranges.h>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include <SerializableVariantDescriptor.pb.h>
-#include <TraitRegisty.hpp>
 
 namespace NES
 {
@@ -94,11 +92,6 @@ size_t OutputOriginIdsTrait::size() const
     return originIds.size();
 }
 
-TraitRegistryReturnType TraitGeneratedRegistrar::RegisterOutputOriginIdsTrait(TraitRegistryArguments arguments)
-{
-    return unreflect<OutputOriginIdsTrait>(arguments.reflected);
-}
-
 Reflected Reflector<OutputOriginIdsTrait>::operator()(const OutputOriginIdsTrait& trait) const
 {
     detail::ReflectedOutputOriginIdsTrait reflected;
@@ -110,9 +103,9 @@ Reflected Reflector<OutputOriginIdsTrait>::operator()(const OutputOriginIdsTrait
     return reflect(reflected);
 }
 
-OutputOriginIdsTrait Unreflector<OutputOriginIdsTrait>::operator()(const Reflected& reflected) const
+OutputOriginIdsTrait Unreflector<OutputOriginIdsTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [reflectedOriginIds] = unreflect<detail::ReflectedOutputOriginIdsTrait>(reflected);
+    auto [reflectedOriginIds] = context.unreflect<detail::ReflectedOutputOriginIdsTrait>(reflected);
 
     std::vector<OriginId> originIds;
     originIds.reserve(reflectedOriginIds.size());

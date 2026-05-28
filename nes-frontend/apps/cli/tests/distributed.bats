@@ -12,235 +12,77 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-setup_file() {
-  # Clean up leaked containers and networks from previous crashed runs
-  for net in $(docker network ls --filter label=nes-test=distributed-cli -q 2>/dev/null); do
-    docker network inspect "$net" -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
-  done
-  docker network prune -f --filter label=nes-test=distributed-cli 2>/dev/null || true
-  # Remove all containers (running or stopped) referencing test images
-  # from previous runs, so those images can later be deleted
-  for img in $(docker images --filter reference='nes-worker-cli-test-*' --filter reference='nes-cli-image-*' -q 2>/dev/null); do
-    docker ps -aq --filter ancestor="$img" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
-  done
-  docker images --filter reference='nes-worker-cli-test-*' --filter reference='nes-cli-image-*' -q | xargs -r docker image rm -f 2>/dev/null || true
+source "$NES_BATS_LIB"
 
-  # Validate environment variables
-  if [ -z "$NES_CLI" ]; then
-    echo "ERROR: NES_CLI environment variable must be set" >&2
-    echo "Usage: NES_CLI=/path/to/nebucli bats nebucli.bats" >&2
-    exit 1
-  fi
-
-  if [ -z "$NEBULASTREAM" ]; then
-    echo "ERROR: NEBULASTREAM environment variable must be set" >&2
-    echo "Usage: NEBULASTREAM=/path/to/nes-single-node-worker bats nebucli.bats" >&2
-    exit 1
-  fi
-
-  if [ -z "$NES_CLI_TESTDATA" ]; then
-    echo "ERROR: NES_CLI_TESTDATA environment variable must be set" >&2
-    echo "Usage: NES_CLI_TESTDATA=/path/to/cli/testdata" >&2
-    exit 1
-  fi
-
-  if [ -z "$NES_TEST_TMP_DIR" ]; then
-    echo "ERROR: NES_TEST_TMP_DIR environment variable must be set" >&2
-    echo "Usage: NES_TEST_TMP_DIR=/path/to/build/test-tmp" >&2
-    exit 1
-  fi
-
-  if [ ! -f "$NES_CLI" ]; then
-    echo "ERROR: NES_CLI file does not exist: $NES_CLI" >&2
-    exit 1
-  fi
-
-  if [ ! -f "$NEBULASTREAM" ]; then
-    echo "ERROR: NEBULASTREAM file does not exist: $NEBULASTREAM" >&2
-    exit 1
-  fi
-
-  if [ ! -x "$NES_CLI" ]; then
-    echo "ERROR: NES_CLI file is not executable: $NES_CLI" >&2
-    exit 1
-  fi
-
-  if [ ! -x "$NEBULASTREAM" ]; then
-    echo "ERROR: NEBULASTREAM file is not executable: $NEBULASTREAM" >&2
-    exit 1
-  fi
-
-  if [ -z "$NES_RUNTIME_BASE_IMAGE" ]; then
-    echo "ERROR: NES_RUNTIME_BASE_IMAGE environment variable must be set" >&2
-    exit 1
-  fi
-
-  # Build Docker images with unique tags to avoid collisions when test suites run in parallel
-  local suffix=$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')
-  export WORKER_IMAGE="nes-worker-cli-test-${suffix}"
-  local worker_ctx=$(mktemp -d)
-  cp $(realpath $NEBULASTREAM) "$worker_ctx/nes-single-node-worker"
-  docker build --load -t $WORKER_IMAGE -f - "$worker_ctx" <<EOF
-    FROM $NES_RUNTIME_BASE_IMAGE
-    COPY nes-single-node-worker /usr/bin
-    ENTRYPOINT ["nes-single-node-worker"]
-EOF
-  rm -rf "$worker_ctx"
-  export CLI_IMAGE="nes-cli-image-${suffix}"
-  local cli_ctx=$(mktemp -d)
-  cp $(realpath $NES_CLI) "$cli_ctx/nes-cli"
-  docker build --load -t $CLI_IMAGE -f - "$cli_ctx" <<EOF
-    FROM $NES_RUNTIME_BASE_IMAGE
-    COPY nes-cli /usr/bin
-EOF
-  rm -rf "$cli_ctx"
-
-  # Print environment info for debugging
-  echo "# Using NES_CLI: $NES_CLI" >&3
-  echo "# Using NEBULASTREAM: $NEBULASTREAM" >&3
-  echo "# Using WORKER_IMAGE: $WORKER_IMAGE" >&3
-  echo "# Using CLI_IMAGE: $CLI_IMAGE" >&3
-}
-
-teardown_file() {
-  echo "# Test suite completed" >&3
-  docker rmi $WORKER_IMAGE || true
-  docker rmi $CLI_IMAGE || true
-}
-
-setup() {
-  # Create temp directory within the mounted workspace (not /tmp)
-  # so it's accessible from docker-compose containers running on the host
-  mkdir -p "$NES_TEST_TMP_DIR"
-  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
-  cp -r "$NES_CLI_TESTDATA" "$TMP_DIR"
-  cd "$TMP_DIR" || exit
-  echo "# Using TEST_DIR: $TMP_DIR" >&3
-
-  volume=$(docker volume create)
-  volume_host_container=$(docker run -d --rm -v $volume:/data alpine sleep infinite)
-  docker cp . $volume_host_container:/data
-  docker stop -t0 $volume_host_container
-  export TEST_VOLUME=$volume
-  echo "# Using test volume: $TEST_VOLUME" >&3
-}
-
-sync_workdir() {
-  volume_host_container=$(docker run -d --rm -v $TEST_VOLUME:/data alpine sleep infinite)
-  docker cp $volume_host_container:/data/. .
-  docker stop -t0 $volume_host_container
-}
-
-teardown() {
-  sync_workdir || true
-  docker compose down -v || true
-  docker volume rm $TEST_VOLUME || true
-}
-
-function setup_distributed() {
-  tests/util/create_compose.sh "$1" > docker-compose.yaml
-  local compose_output exit_code=0
-  compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
-  if [ "$exit_code" -ne 0 ]; then
-    echo "# [docker compose up] (status=$exit_code):" >&3
-    while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
-  fi
-  return $exit_code
-}
-
-DOCKER_NES_CLI() {
-  # docker compose exec v2 disconnects the session when its stdin reaches EOF
-  # (docker/compose#10418). In bats subshells stdin is closed, so we pipe from
-  # tail to keep the connection alive.
-  tail -f /dev/null | docker compose exec -T nes-cli nes-cli "$@"
-}
-
-assert_json_equal() {
-  local expected="$1"
-  local actual="$2"
-
-  diff <(echo "$expected" | jq --sort-keys .) \
-    <(echo "$actual" | jq --sort-keys .)
-}
-
-assert_json_contains() {
-  local expected="$1"
-  local actual="$2"
-
-  local result=$(echo "$actual" | jq --argjson exp "$expected" 'contains($exp)')
-
-  if [ "$result" != "true" ]; then
-    echo "JSON subset check failed"
-    echo "Expected (subset): $expected"
-    echo "Actual: $actual"
-    return 1
-  fi
-}
+setup_file()    { nes_distributed_setup_file "$NES_CLI"; }
+teardown_file() { nes_distributed_teardown_file; }
+setup()         { nes_distributed_setup; }
+teardown()      { nes_distributed_teardown; }
 
 @test "launch query from topology" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
 }
 
 @test "launch multiple query from topology" {
   setup_distributed tests/good/multiple-select-gen-into-void.yaml
 
-  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml start
+  run docker_nes_cli -t tests/good/multiple-select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
   [ ${#lines[@]} -eq 8 ]
 
   query_ids=("${lines[@]}")
 
-  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[0]}"
+  run docker_nes_cli -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[0]}"
   [ "$status" -eq 0 ]
 
-  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[1]}" "${query_ids[2]}" "${query_ids[3]}" "${query_ids[4]}" "${query_ids[5]}"
+  run docker_nes_cli -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[1]}" "${query_ids[2]}" "${query_ids[3]}" "${query_ids[4]}" "${query_ids[5]}"
   [ "$status" -eq 0 ]
 
-  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[6]}" "${query_ids[7]}"
+  run docker_nes_cli -t tests/good/multiple-select-gen-into-void.yaml stop "${query_ids[6]}" "${query_ids[7]}"
   [ "$status" -eq 0 ]
 }
 
 @test "launch query from commandline" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 }
 
 @test "launch bad query from commandline" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'selectaaa DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'selectaaa DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 1 ]
 }
 
 @test "launch and stop query" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   sleep 1
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml stop "$QUERY_ID"
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
 @test "launch and monitor query" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   sleep 1
 
-  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
@@ -250,15 +92,15 @@ assert_json_contains() {
 @test "launch and monitor distributed queries" {
   setup_distributed tests/good/distributed-query-deployment.yaml
 
-  run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  run docker_nes_cli -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   for i in $(seq 1 20); do
     sleep 1
-    run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
+    run docker_nes_cli -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
     [ "$status" -eq 0 ]
     QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
     if [ "$QUERY_STATUS" = "Running" ]; then
@@ -272,37 +114,37 @@ assert_json_contains() {
 @test "launch and monitor distributed queries crazy join" {
   setup_distributed tests/good/chained-joins.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   sleep 1
 
-  run DOCKER_NES_CLI status "$QUERY_ID"
+  run docker_nes_cli status "$QUERY_ID"
   echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
   QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 
-  run DOCKER_NES_CLI stop "$QUERY_ID"
+  run docker_nes_cli stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
 @test "launch and monitor distributed queries crazy join with a fast source" {
   setup_distributed tests/good/chained-joins-one-fast-source.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
 
   # Output should be a query ID (human-readable name)
-  [[ "$output" =~ ^[a-z_]+$ ]]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
   # Poll until the fast source has stopped and the query becomes PartiallyStopped
   for i in $(seq 1 20); do
     sleep 1
-    run DOCKER_NES_CLI status "$QUERY_ID"
+    run docker_nes_cli status "$QUERY_ID"
     [ "$status" -eq 0 ]
     QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
     if [ "$QUERY_STATUS" = "PartiallyStopped" ]; then
@@ -316,7 +158,7 @@ assert_json_contains() {
   echo "${output}" | jq -e '(. | length) == 10' # 1 global + 9 local
   [ "$QUERY_STATUS" = "PartiallyStopped" ]
 
-  run DOCKER_NES_CLI stop "$QUERY_ID"
+  run docker_nes_cli stop "$QUERY_ID"
   [ "$status" -eq 0 ]
 }
 
@@ -325,7 +167,7 @@ assert_json_contains() {
 
   docker compose stop worker-1
 
-  run DOCKER_NES_CLI -d start
+  run docker_nes_cli -d start
 
   sync_workdir
   grep "(5001) : query registration call failed; Status: UNAVAILABLE" nes-cli.log
@@ -333,14 +175,14 @@ assert_json_contains() {
 
   docker compose up -d --wait worker-1
   # now it should work
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
 }
 
 @test "worker goes offline during processing" {
   setup_distributed tests/good/chained-joins.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
@@ -350,7 +192,7 @@ assert_json_contains() {
   # This would cause the query to fail as it was unexpectedly stopped. If we kill the worker: upstream and downstream
   # will wait for the "crashed" worker to return. However this test does not test that as it is currently not possible.
   docker compose kill worker-1
-  run DOCKER_NES_CLI status "$QUERY_ID"
+  run docker_nes_cli status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
@@ -405,7 +247,7 @@ EOF
 @test "worker goes offline and comes back during processing" {
   setup_distributed tests/good/chained-joins.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
@@ -413,7 +255,7 @@ EOF
 
   # Simulate a crash by killing worker-1.
   docker compose kill worker-1
-  run DOCKER_NES_CLI status "$QUERY_ID"
+  run docker_nes_cli status "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   sleep 1
@@ -424,7 +266,7 @@ EOF
 # The query running on worker-1 is terminated and on restart it is not restarted, this will cause subsequent status
 # request to find that the previous local query id is not registered on worker-1, currently this is falsely reported as a ConnectionError.
 
-  run DOCKER_NES_CLI status "$QUERY_ID"
+  run docker_nes_cli status "$QUERY_ID"
   [ "$status" -eq 0 ]
   EXPECTED_STATUS_OUTPUT=$(cat <<EOF
 [
@@ -448,18 +290,18 @@ EOF
 @test "worker status" {
   setup_distributed tests/good/select-gen-into-void.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
   sleep 1
 
-  run DOCKER_NES_CLI status $query_id
+  run docker_nes_cli status $query_id
   [ $status -eq 0 ]
   assert_json_contains "[{\"query_id\":\"$query_id\", \"query_status\":\"Running\", \"running\": {}, \"started\": {}}]" "$output"
 
   local_query_id=$(echo "$output" | jq -r '.[1].local_query_id')
-  run DOCKER_NES_CLI status
+  run docker_nes_cli status
   [ $status -eq 0 ]
 
   # Expect to find the local query in the worker status
@@ -469,7 +311,7 @@ EOF
 @test "back pressure using worker config" {
   setup_distributed tests/good/backpressure-worker-config.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
@@ -482,7 +324,7 @@ EOF
     fi
   done
 
-  run DOCKER_NES_CLI stop $query_id
+  run docker_nes_cli stop $query_id
   # 0 means there is no overwrite and the worker default will be picked.
   grep "host: worker-2:8080" worker-2/singleNodeWorker.log
   grep "max_pending_acks: 0" worker-2/singleNodeWorker.log
@@ -494,7 +336,7 @@ EOF
 @test "back pressure using optimizer flags" {
   setup_distributed tests/good/backpressure-optimizer-flags.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
@@ -507,7 +349,7 @@ EOF
     fi
   done
 
-  run DOCKER_NES_CLI stop $query_id
+  run docker_nes_cli stop $query_id
   grep "host: worker-2:8080" worker-2/singleNodeWorker.log
   grep "max_pending_acks: 25" worker-2/singleNodeWorker.log
   grep "sender_queue_size: 32" worker-2/singleNodeWorker.log
@@ -518,7 +360,7 @@ EOF
 @test "order of worker termination when backpressure is applied. terminate sink" {
   setup_distributed tests/good/backpressure-worker-config.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
@@ -546,7 +388,7 @@ EOF
   grep "NetworkSink was closed by other side" worker-2/singleNodeWorker.log
   grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
 
-  run DOCKER_NES_CLI status $query_id
+  run docker_nes_cli status $query_id
   [ $status -eq 0 ]
 
   expected_json=$(cat <<EOF
@@ -572,7 +414,7 @@ EOF
 @test "order of worker termination when backpressure is applied. terminate source" {
   setup_distributed tests/good/backpressure-worker-config.yaml
 
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ $status -eq 0 ]
   query_id=$output
 
@@ -589,7 +431,7 @@ EOF
   docker compose stop worker-2
   sleep 2
 
-  run DOCKER_NES_CLI status $query_id
+  run docker_nes_cli status $query_id
   [ $status -eq 0 ]
 
   expected_json=$(cat <<EOF
@@ -620,13 +462,13 @@ EOF
 
 @test "launch query using 3-nodes topology" {
   setup_distributed tests/good/3-nodes.yaml
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 0 ]
 }
 
 @test "placement fails with reversed downstream edges" {
   setup_distributed tests/bad/3-nodes-reversed-edges.yaml
-  run DOCKER_NES_CLI start
+  run docker_nes_cli start
   [ "$status" -eq 1 ]
 
   sync_workdir

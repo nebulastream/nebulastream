@@ -64,7 +64,6 @@
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
@@ -708,10 +707,10 @@ struct SystestBinder::Impl
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
-                const InlineSourceLogicalOperator newOperator{
+                const TypedLogicalOperator<InlineSourceLogicalOperator> newOperator{
                     inlineSource.value()->getSourceType(), inlineSource.value()->getSchema(), sourceConfig, parserConfig};
 
-                return newOperator.withChildren(newChildren);
+                return newOperator->withChildren(newChildren);
             }
         }
 
@@ -760,9 +759,9 @@ struct SystestBinder::Impl
         {
             throw InvalidConfigParameter("Failed to create inline sink of type {}", sinkOperator->getSinkType());
         }
-        const auto newOperator = SinkLogicalOperator{sinkDescriptor.value()};
+        const auto newOperator = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor.value()};
 
-        return newOperator.withChildren(sinkOperator->getChildren());
+        return newOperator->withChildren(sinkOperator->getChildren());
     }
 
     LogicalOperator setNamedSink(
@@ -787,9 +786,9 @@ struct SystestBinder::Impl
             currentBuilder.setException(sinkExpected.error());
         }
 
-        const auto newOperator = SinkLogicalOperator{sinkExpected.value()};
+        const auto newOperator = TypedLogicalOperator<SinkLogicalOperator>{sinkExpected.value()};
 
-        return newOperator.withChildren(sinkOperator->getChildren());
+        return newOperator->withChildren(sinkOperator->getChildren());
     }
 
     void setSinks(

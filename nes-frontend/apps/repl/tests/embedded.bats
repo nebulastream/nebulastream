@@ -12,87 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-setup_file() {
-  # Validate SYSTEST environment variable once for all tests
-  if [ -z "$NES_REPL" ]; then
-    echo "ERROR: NES_REPL environment variable must be set" >&2
-    echo "Usage: NES_REPL=/path/to/nes-repl bats nes-repl.bats" >&2
-    exit 1
-  fi
+source "$NES_BATS_LIB"
 
-  if [ -z "$NES_REPL_TESTDATA" ]; then
-    echo "ERROR: NES_REPL_TESTDATA environment variable must be set" >&2
-    echo "Usage: NES_REPL_TESTDATA=/path/to/nes-repl/testdata" >&2
-    exit 1
-  fi
+NES_REPL="$NES_REPL_EMBEDDED"
 
-  if [ -z "$NES_TEST_TMP_DIR" ]; then
-    echo "ERROR: NES_TEST_TMP_DIR environment variable must be set" >&2
-    echo "Usage: NES_TEST_TMP_DIR=/path/to/tmp" >&2
-    exit 1
-  fi
-
-  if [ -z "$SYSTEST_TESTDATA" ]; then
-    echo "ERROR: SYSTEST_TESTDATA environment variable must be set" >&2
-    echo "Usage: SYSTEST_TESTDATA=/path/to/nes-systest/testdata" >&2
-    exit 1
-  fi
-
-  if [ ! -f "$NES_REPL" ]; then
-    echo "ERROR: NES_REPL file does not exist: $NES_REPL" >&2
-    exit 1
-  fi
-
-  if [ ! -x "$NES_REPL" ]; then
-    echo "ERROR: NES_REPL file is not executable: $NES_REPL" >&2
-    exit 1
-  fi
-
-  # Print environment info for debugging
-  echo "# Using NES_REPL: $NES_REPL" >&3
-}
-
-teardown_file() {
-  # Clean up any global resources if needed
-  echo "# Test suite completed" >&3
-}
-
-setup() {
-  mkdir -p "$NES_TEST_TMP_DIR"
-  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
-
-  ln -s "$NES_REPL_TESTDATA" "$TMP_DIR"
-  ln -s "$SYSTEST_TESTDATA" "$TMP_DIR"
-  cd "$TMP_DIR" || exit
-
-  echo "# Using TEST_DIR: $TMP_DIR" >&3
-}
+setup_file()    { nes_offline_setup_file; }
+teardown_file() { nes_offline_teardown_file; }
+setup()         { nes_offline_setup; }
 
 @test "nes-repl shows help" {
   run $NES_REPL --help
   [ "$status" -eq 0 ]
-}
-
-assert_json_equal() {
-  local expected="$1"
-  local actual="$2"
-
-  diff <(echo "$expected" | jq --sort-keys .) \
-    <(echo "$actual" | jq --sort-keys .)
-}
-
-assert_json_contains() {
-  local expected="$1"
-  local actual="$2"
-
-  local result=$(echo "$actual" | jq --argjson exp "$expected" 'contains($exp)')
-
-  if [ "$result" != "true" ]; then
-    echo "JSON subset check failed"
-    echo "Expected (subset): $expected"
-    echo "Actual: $actual"
-    return 1
-  fi
 }
 
 @test "basic test" {
@@ -102,7 +32,7 @@ assert_json_contains() {
   [ ${#lines[@]} -eq 8 ]
 
   assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[0]}"
-  assert_json_equal '[{"host":"localhost:8080","parser_config":{"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[1]}"
+  assert_json_equal '[{"host":"localhost:8080","input_formatter_config":{"allow_commas_in_strings":true,"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[1]}"
   assert_json_equal '[{"format_config":{},"host":"localhost:8080","schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"output_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[2]}"
   assert_json_equal '[]' "${lines[3]}"
   QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')

@@ -29,7 +29,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <TraitRegisty.hpp>
 
 namespace NES
 {
@@ -63,20 +62,14 @@ std::string_view MemoryLayoutTypeTrait::getName() const
     return NAME;
 }
 
-/// Required for plugin registration, no implementation necessary
-TraitRegistryReturnType TraitGeneratedRegistrar::RegisterMemoryLayoutTypeTrait(TraitRegistryArguments arguments)
-{
-    return unreflect<MemoryLayoutTypeTrait>(arguments.reflected);
-}
-
 Reflected Reflector<MemoryLayoutTypeTrait>::operator()(const MemoryLayoutTypeTrait& trait) const
 {
     return reflect(detail::ReflectedMemoryLayoutTypeTrait{trait.memoryLayout});
 }
 
-MemoryLayoutTypeTrait Unreflector<MemoryLayoutTypeTrait>::operator()(const Reflected& reflected) const
+MemoryLayoutTypeTrait Unreflector<MemoryLayoutTypeTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [memoryLayout] = unreflect<detail::ReflectedMemoryLayoutTypeTrait>(reflected);
+    auto [memoryLayout] = context.unreflect<detail::ReflectedMemoryLayoutTypeTrait>(reflected);
     return MemoryLayoutTypeTrait{memoryLayout};
 }
 }

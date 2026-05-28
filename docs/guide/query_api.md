@@ -134,15 +134,15 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
   65536 as `SOURCE`.SOCKET_BUFFER_SIZE,
   100 as `SOURCE`.FLUSH_INTERVAL_MS,
   60 as `SOURCE`.CONNECT_TIMEOUT_SECONDS,
-  'CSV' as PARSER.`TYPE`,
-  '\n' as PARSER.TUPLE_DELIMITER,
-  ',' as PARSER.FIELD_DELIMITER
+  'CSV' as INPUT_FORMATTER.`TYPE`,
+  '\n' as INPUT_FORMATTER.TUPLE_DELIMITER,
+  ',' as INPUT_FORMATTER.FIELD_DELIMITER
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
   'localhost:9090' AS `SOURCE`.`HOST`,
   'lrb.json' as `SOURCE`.FILE_PATH,
-  'JSON' as PARSER.`TYPE`
+  'JSON' as INPUT_FORMATTER.`TYPE`
 );
 
 CREATE SINK csv_sink(
@@ -157,7 +157,7 @@ CREATE SINK csv_sink(
   '<path>' as `SINK`.FILE_PATH,
   'CSV' as `SINK`.OUTPUT_FORMAT,
   FALSE as `SINK`.APPEND,
-  FALSE as `PARSER`.QUOTE_STRINGS
+  FALSE as `OUTPUT_FORMATTER`.QUOTE_STRINGS
 );
 
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
@@ -221,15 +221,15 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
   65536 as `SOURCE`.SOCKET_BUFFER_SIZE,
   100 as `SOURCE`.FLUSH_INTERVAL_MS,
   60 as `SOURCE`.CONNECT_TIMEOUT_SECONDS,
-  'CSV' as PARSER.`TYPE`,
-  '\n' as PARSER.TUPLE_DELIMITER,
-  ',' as PARSER.FIELD_DELIMITER
+  'CSV' as INPUT_FORMATTER.`TYPE`,
+  '\n' as INPUT_FORMATTER.TUPLE_DELIMITER,
+  ',' as INPUT_FORMATTER.FIELD_DELIMITER
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
   'localhost:9090' AS `SOURCE`.`HOST`,
   'lrb.json' as `SOURCE`.FILE_PATH,
-  'JSON' as PARSER.`TYPE`
+  'JSON' as INPUT_FORMATTER.`TYPE`
 );
 ```
 As you can see, one source reads CSV-formatted data from a TCP socket, while the other reads JSON-formatted data from a file.
@@ -246,7 +246,7 @@ creationTS,vehicle,speed,highway,lane,direction,position
 
 Each physical source requires configuration for:
 - The specific connector (e.g., file path or TCP socket details) via `SOURCE.*` parameters.
-- The data's input format (e.g., `CSV` or `JSON`) and delimiters via `PARSER.*` parameters.
+- The data's input format (e.g., `CSV` or `JSON`) and delimiters via `INPUT_FORMATTER.*` parameters.
 
 The query itself remains completely decoupled from these physical details.
 You can add, remove, or change physical sources without touching the query logic.
@@ -285,7 +285,7 @@ For a `File` sink, this includes the file path and the data format for the outpu
 The `HOST` configuration parameter specifies the worker node which hosts the physical source/sink.
 
 - The sink itself can be configured via `SINK.*` parameters.
-- The output formatter can be configured via `PARSER.*` parameters.
+- The output formatter can be configured via `OUTPUT_FORMATTER.*` parameters.
 ---
 ## Input Formatters
 Tuples can arrive in a variety of formats.
@@ -294,12 +294,12 @@ We distinguish two broad categories:
 - Binary formats (Avro, Parquet, Protobuf, etc.)
 
 Input formatters convert byte streams from source connectors into the native in-memory representation used by query-compiled operators.
-The format is specified via `PARSER.*` parameters in each physical source:
+The format is specified via `INPUT_FORMATTER.*` parameters in each physical source:
 ```sql
 CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
-  'CSV' as PARSER.`TYPE`,
-  '\n' as PARSER.TUPLE_DELIMITER,
-  ',' as PARSER.FIELD_DELIMITER,
+  'CSV' as INPUT_FORMATTER.`TYPE`,
+  '\n' as INPUT_FORMATTER.TUPLE_DELIMITER,
+  ',' as INPUT_FORMATTER.FIELD_DELIMITER,
   ...
 );
 ```
@@ -317,11 +317,11 @@ Out-of-the-box available output formats are:
 
 Some output formats may be configurable via parameters. For instance, the bool parameter `QUOTE_STRINGS` controls how the CSVOutputFormatter
 represents strings.
-All required parameters can be specified via `PARSER.*` in each sink.
+All required parameters can be specified via `OUTPUT_FORMATTER.*` in each sink.
 ```sql
 CREATE SINK sink_name TYPE FILE SET(
        'CSV' as `SINK`.OUTPUT_FORMAT,
-       TRUE as `PARSER`.QUOTE_STRINGS,
+       TRUE as `OUTPUT_FORMATTER`.QUOTE_STRINGS,
        ...
 );
 ```

@@ -503,31 +503,39 @@ int main(int argc, const char** argv)
     const auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::Host("systest"), "main");
 
-    auto config = parseConfiguration(argc, argv);
-    NES::SystestExecutor executor(std::move(config));
-    const auto result = executor.executeSystests();
-
-    switch (result.returnType)
+    CPPTRACE_TRY
     {
-        case SystestExecutorResult::ReturnType::SUCCESS: {
-            const auto endTime = std::chrono::high_resolution_clock::now();
-            const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-            fmt::print(
-                "{}\nTotal execution time: {} ms ({:.3f} seconds)\n",
-                result.outputMessage,
-                duration.count(),
-                std::chrono::duration_cast<std::chrono::duration<double>>(duration).count());
-            return 0;
+        auto config = parseConfiguration(argc, argv);
+        NES::SystestExecutor executor(std::move(config));
+        const auto result = executor.executeSystests();
+
+        switch (result.returnType)
+        {
+            case SystestExecutorResult::ReturnType::SUCCESS: {
+                const auto endTime = std::chrono::high_resolution_clock::now();
+                const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+                fmt::print(
+                    "{}\nTotal execution time: {} ms ({:.3f} seconds)\n",
+                    result.outputMessage,
+                    duration.count(),
+                    std::chrono::duration_cast<std::chrono::duration<double>>(duration).count());
+                return 0;
+            }
+            case SystestExecutorResult::ReturnType::FAILED: {
+                auto endTime = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+                PRECONDITION(result.errorCode, "Returning with as 'FAILED_WITH_EXCEPTION_CODE', but did not provide error code");
+                NES_ERROR("{}", result.outputMessage);
+                std::cout << result.outputMessage << '\n';
+                std::cout << "Total execution time: " << duration.count() << " ms ("
+                          << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
+                return result.errorCode.value();
+            }
         }
-        case SystestExecutorResult::ReturnType::FAILED: {
-            auto endTime = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-            PRECONDITION(result.errorCode, "Returning with as 'FAILED_WITH_EXCEPTION_CODE', but did not provide error code");
-            NES_ERROR("{}", result.outputMessage);
-            std::cout << result.outputMessage << '\n';
-            std::cout << "Total execution time: " << duration.count() << " ms ("
-                      << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
-            return result.errorCode.value();
-        }
+    }
+    CPPTRACE_CATCH(const NES::Exception& e)
+    {
+        NES::tryLogCurrentException();
+        return NES::getCurrentErrorCode();
     }
 }

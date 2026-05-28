@@ -42,11 +42,45 @@ endif ()
 
 include(FetchContent)
 set(CORROSION_NO_HOSTBUILD ON CACHE BOOL "Enable proper incremental builds for Rust targets")
-FetchContent_Declare(
-        Corrosion
-        GIT_REPOSITORY https://github.com/nebulastream/corrosion.git
-        GIT_TAG v0.6.1-always-dirty-fix
-)
+### Prefer fetching Corrosion from GitHub when reachable; fall back to a pre-cloned copy at
+### $CORROSION_SRC (baked into the Docker development image) so offline builds still work.
+set(_NES_CORROSION_GIT_REPO "https://github.com/nebulastream/corrosion.git")
+set(_NES_CORROSION_GIT_TAG "v0.6.1-always-dirty-fix")
+set(_NES_CORROSION_USE_LOCAL FALSE)
+if (DEFINED ENV{CORROSION_SRC} AND EXISTS "$ENV{CORROSION_SRC}/CMakeLists.txt")
+    execute_process(
+            COMMAND git ls-remote --exit-code ${_NES_CORROSION_GIT_REPO} HEAD
+            RESULT_VARIABLE _NES_CORROSION_REMOTE_CHECK
+            OUTPUT_QUIET
+            ERROR_QUIET
+            TIMEOUT 5
+    )
+    if (NOT _NES_CORROSION_REMOTE_CHECK EQUAL 0)
+        set(_NES_CORROSION_USE_LOCAL TRUE)
+    endif ()
+endif ()
+
+if (_NES_CORROSION_USE_LOCAL)
+    message(STATUS "Corrosion: GitHub unreachable, using pre-cloned copy at $ENV{CORROSION_SRC}")
+    FetchContent_Declare(Corrosion SOURCE_DIR "$ENV{CORROSION_SRC}")
+    ### When the GitHub probe failed we are offline; write a build-tree-local cargo config
+    ### so every cargo invocation rooted in the build dir (workspace build, the cxxbridge-cmd
+    ### install Corrosion runs, anything else Corrosion may add) uses the pre-populated
+    ### $CARGO_HOME registry instead of trying (and failing) to update the crates.io index.
+    ### We do not enable offline mode unconditionally because builds that use -Zbuild-std
+    ### (sanitizers) need crates that the workspace lockfile does not pin (e.g. rustc-demangle)
+    ### and must be able to fetch them when online.
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/.cargo")
+    file(WRITE "${CMAKE_BINARY_DIR}/.cargo/config.toml" "[net]\noffline = true\n")
+else ()
+    message(STATUS "Corrosion: fetching ${_NES_CORROSION_GIT_TAG} from ${_NES_CORROSION_GIT_REPO}")
+    FetchContent_Declare(
+            Corrosion
+            GIT_REPOSITORY ${_NES_CORROSION_GIT_REPO}
+            GIT_TAG ${_NES_CORROSION_GIT_TAG}
+    )
+    file(REMOVE "${CMAKE_BINARY_DIR}/.cargo/config.toml")
+endif ()
 
 FetchContent_MakeAvailable(Corrosion)
 

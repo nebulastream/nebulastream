@@ -16,107 +16,124 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <optional>
 #include <ostream>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
-#include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
-#include <InputFormatterTupleBufferRef.hpp>
+#include <InputFormatterDescriptor.hpp>
+#include <RawBufferIndex.hpp>
 #include <RawValueParser.hpp>
 #include <static.hpp>
 
 namespace NES
 {
 
-constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
-
-struct CSVMetaData
+/// Resolves a single-byte delimiter parameter, unescaping textual escape sequences such as "\n" or "\t" first.
+inline std::optional<char>
+tryGetDelimiter(const std::unordered_map<std::string, std::string>& config, const std::string_view key, const char defaultValue)
 {
+    const auto it = config.find(std::string{key});
+    if (it == config.end())
+    {
+        return defaultValue;
+    }
+    const auto unescaped = unescapeSpecialCharacters(it->second);
+    return (unescaped.size() == 1) ? std::optional<char>{unescaped.front()} : std::nullopt;
+}
+
+struct ConfigParametersCSVInputFormatIndexer
+{
+    static inline const DescriptorConfig::ConfigParameter<bool> ALLOW_COMMAS_IN_STRINGS{
+        "allow_commas_in_strings",
+        true,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(ALLOW_COMMAS_IN_STRINGS, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<char> TUPLE_DELIMITER{
+        "tuple_delimiter",
+        '\n',
+        [](const std::unordered_map<std::string, std::string>& config) { return tryGetDelimiter(config, "tuple_delimiter", '\n'); }};
+
+    static inline const DescriptorConfig::ConfigParameter<char> FIELD_DELIMITER{
+        "field_delimiter",
+        ',',
+        [](const std::unordered_map<std::string, std::string>& config) { return tryGetDelimiter(config, "field_delimiter", ','); }};
+
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(
+            InputFormatterDescriptor::parameterMap, ALLOW_COMMAS_IN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
+};
+
+class CSVInputFormatIndexer : public InputFormatIndexer
+{
+    /// Passkey idiom (to enforce checks before calling the constructor)
+    struct Private
+    {
+        explicit Private() = default;
+    };
+
+public:
+    static constexpr std::string_view NAME = "CSV";
     static constexpr size_t SIZE_OF_TUPLE_DELIMITER = 1;
     static constexpr size_t SIZE_OF_FIELD_DELIMITER = 1;
 
-    explicit CSVMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
-        : tupleDelimiter(config.tupleDelimiter.front())
-        , fieldDelimiter(config.fieldDelimiter.front())
-        , fieldNames(tupleBufferRef.getAllFieldNames())
-        , fieldDataTypes(tupleBufferRef.getAllDataTypes())
+    explicit CSVInputFormatIndexer(
+        Private, const char tupleDelimiter, const char fieldDelimiter, const bool allowCommasInStrings, const size_t numberOfFields)
+        : tupleDelimiter(tupleDelimiter)
+        , fieldDelimiter(fieldDelimiter)
+        , allowCommasInStrings(allowCommasInStrings)
+        , numberOfFields(numberOfFields)
         , nullValues({""})
     {
-        PRECONDITION(
-            config.tupleDelimiter.size() == SIZE_OF_TUPLE_DELIMITER,
-            "Delimiters must be of size '1 byte', but the tuple delimiter was {} (size {})",
-            config.tupleDelimiter,
-            config.tupleDelimiter.size());
-        PRECONDITION(
-            config.fieldDelimiter.size() == SIZE_OF_FIELD_DELIMITER,
-            "Delimiters must be of size '1 byte', but the field delimiter was {} (size {})",
-            config.fieldDelimiter,
-            config.fieldDelimiter.size());
-    };
-
-    [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return {&tupleDelimiter, SIZE_OF_TUPLE_DELIMITER}; }
-
-    [[nodiscard]] std::string_view getFieldDelimitingBytes() const { return {&fieldDelimiter, SIZE_OF_FIELD_DELIMITER}; }
-
-    [[nodiscard]] char getTupleDelimiter() const { return tupleDelimiter; }
-
-    [[nodiscard]] char getFieldDelimiter() const { return fieldDelimiter; }
-
-    static QuotationType getQuotationType() { return QuotationType::NONE; }
-
-    [[nodiscard]] const std::vector<std::string>& getNullValues() const { return nullValues; }
-
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
-    {
-        PRECONDITION(i < fieldNames.size(), "Trying to access position, larger than the size of fieldNames {}", fieldNames.size());
-        return fieldNames[i];
     }
 
-    [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const
+    /// Delegate constructor that applies preconditions before safely calling the constructor
+    static std::unique_ptr<CSVInputFormatIndexer> create(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
     {
-        PRECONDITION(
-            i < fieldDataTypes.size(), "Trying to access position, larger than the size of fieldDataTypes {}", fieldDataTypes.size());
-        return fieldDataTypes[i];
+        return std::make_unique<CSVInputFormatIndexer>(
+            Private{},
+            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER),
+            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER),
+            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS),
+            tupleBufferRef.getAllDataTypes().size());
     }
 
-    [[nodiscard]] uint64_t getNumberOfFields() const
-    {
-        INVARIANT(fieldNames.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
-        return fieldNames.size();
-    }
+    ~CSVInputFormatIndexer() override = default;
+
+    [[nodiscard]] std::unique_ptr<RawBufferIndex> indexRawBuffer(std::string_view rawBuffer) const override;
+
+    [[nodiscard]] std::string_view getTupleDelimitingBytes() const override { return {&tupleDelimiter, SIZE_OF_TUPLE_DELIMITER}; }
+
+    [[nodiscard]] std::string_view getFieldDelimitingBytes() const override { return {&fieldDelimiter, SIZE_OF_FIELD_DELIMITER}; }
+
+    [[nodiscard]] QuotationType getQuotationType() const override { return QuotationType::NONE; }
+
+    [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
+
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+protected:
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     char tupleDelimiter;
     char fieldDelimiter;
-    std::vector<Record::RecordFieldIdentifier> fieldNames;
-    std::vector<DataType> fieldDataTypes;
-    std::vector<std::string> nullValues;
-};
-
-class CSVInputFormatIndexer : public InputFormatIndexer<CSVInputFormatIndexer>
-{
-public:
-    using IndexerMetaData = CSVMetaData;
-    using FieldIndexFunctionType = FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>;
-
-    explicit CSVInputFormatIndexer(const bool allowCommasInStrings) : allowCommasInStrings(allowCommasInStrings) { };
-    ~CSVInputFormatIndexer() = default;
-
-
-    void indexRawBuffer(
-        FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const;
-
-    friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
-
-private:
     bool allowCommasInStrings{};
+    size_t numberOfFields;
+    std::vector<std::string> nullValues;
 };
 
 }

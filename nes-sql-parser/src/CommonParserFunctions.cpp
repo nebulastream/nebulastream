@@ -18,6 +18,7 @@
 #include <cctype>
 #include <cstdint>
 #include <cstring>
+#include <initializer_list>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -134,19 +135,37 @@ configOptionToValue(const std::pair<const std::string, std::variant<Literal, Sch
     const auto value = literalToString(std::get<Literal>(entry.second));
     return std::make_pair(toLowerCase(entry.first), value);
 }
+
+/// Collects all literal config options that live under any of the given top-level prefixes into a single key-value map.
+std::unordered_map<std::string, std::string>
+collectConfigBlock(const ConfigMap& configOptions, const std::initializer_list<std::string_view> prefixes)
+{
+    auto config = std::unordered_map<std::string, std::string>{};
+    for (const auto prefix : prefixes)
+    {
+        if (const auto configIter = configOptions.find(std::string{prefix}); configIter != configOptions.end())
+        {
+            for (const auto& entry : configIter->second | std::views::transform(configOptionToValue))
+            {
+                if (entry.has_value())
+                {
+                    config.insert_or_assign(entry->first, entry->second);
+                }
+            }
+        }
+    }
+    return config;
+}
 } /// namespace
 
-std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions)
+std::unordered_map<std::string, std::string> parseInputFormatterConfig(const ConfigMap& configOptions)
 {
-    auto parserConfig = std::unordered_map<std::string, std::string>{};
+    return collectConfigBlock(configOptions, {"INPUT_FORMATTER"});
+}
 
-    if (const auto parserConfigIter = configOptions.find("PARSER"); parserConfigIter != configOptions.end())
-    {
-        parserConfig = parserConfigIter->second | std::views::transform(configOptionToValue)
-            | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<std::string, std::string>>();
-    }
-    return parserConfig;
+std::unordered_map<std::string, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
+{
+    return collectConfigBlock(configOptions, {"OUTPUT_FORMATTER"});
 }
 
 std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions)

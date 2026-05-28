@@ -31,7 +31,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterTupleBufferRefProvider.hpp>
+#include <InputFormatterProvider.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
@@ -58,11 +58,10 @@ createScanOperator(const NES::LogicalOperator& projectionOp, const size_t buffer
     const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
     if (sourceOperators.size() == 1)
     {
-        const auto inputFormatterConfig = sourceOperators.front().getParserConfig();
-        if (NES::toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
+        const auto inputFormatterConfig = sourceOperators.front().getInputFormatterDescriptor();
+        if (NES::toUpperCase(inputFormatterConfig.getInputFormatterType()) != "NATIVE")
         {
-            return NES::ScanPhysicalOperator(
-                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema.getFieldNames());
+            return NES::ScanPhysicalOperator(provideInputFormatter(inputFormatterConfig, memoryProvider), inputSchema.getFieldNames());
         }
     }
     return NES::ScanPhysicalOperator(memoryProvider, inputSchema.getFieldNames());

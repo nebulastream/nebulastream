@@ -39,14 +39,49 @@ if (BATS STREQUAL "BATS-NOTFOUND")
     set(ENABLE_BATS_TESTS OFF CACHE BOOL "Runs testcases that require bats" FORCE)
     message(WARNING "Bats not found. Disabling Bats based e2e tests. You can install Bats via apt install bats")
 else ()
-    set(ENABLE_BATS_TESTS ON CACHE BOOL "Runs testcases that require bats" FORCE)
-    message(STATUS "Bats tests enabled: using ${BATS}")
+    # Smoke test to verify bats can load the helper libraries we depend on.
+    set(_bats_libs_check_script "${CMAKE_BINARY_DIR}/check_bats_libs.bats")
+    file(WRITE "${_bats_libs_check_script}" [[
+@test "bats helper libraries loadable" {
+  bats_load_library bats-support
+  bats_load_library bats-assert
+  bats_load_library bats-file
+}
+]])
+    execute_process(
+        COMMAND ${BATS} ${_bats_libs_check_script}
+        RESULT_VARIABLE _bats_libs_check
+        OUTPUT_VARIABLE _bats_libs_output
+        ERROR_VARIABLE  _bats_libs_output
+    )
+    if (NOT _bats_libs_check EQUAL 0)
+        set(ENABLE_BATS_TESTS OFF CACHE BOOL "Runs testcases that require bats" FORCE)
+        message(WARNING
+            "Bats found at ${BATS} but helper libraries are not loadable "
+            "(BATS_LIB_PATH=$ENV{BATS_LIB_PATH}). Install via: "
+            "apt install bats-support bats-assert bats-file, or adjust the "
+            "BATS_LIB_PATH environment variable to point at their install dir.\n"
+            "${_bats_libs_output}"
+        )
+    else ()
+        set(ENABLE_BATS_TESTS ON CACHE BOOL "Runs testcases that require bats" FORCE)
+        message(STATUS "Bats tests enabled: ${BATS}")
+    endif ()
 endif ()
 
-# Check if IREE tools are available for inference-backed physical operator tests
+# Check if IREE tools are available for inference-backed physical operator tests.
+# Auto-detect by default, but honor a user-provided -DENABLE_IREE_TESTS=ON/OFF.
 find_program(IREE_IMPORT_ONNX iree-import-onnx)
 find_program(IREE_COMPILE iree-compile)
 if (IREE_IMPORT_ONNX STREQUAL "IREE_IMPORT_ONNX-NOTFOUND" OR IREE_COMPILE STREQUAL "IREE_COMPILE-NOTFOUND")
+    if (DEFINED ENABLE_IREE_TESTS AND ENABLE_IREE_TESTS)
+        message(FATAL_ERROR
+            "ENABLE_IREE_TESTS=ON but IREE tools were not found.\n"
+            "  iree-import-onnx: ${IREE_IMPORT_ONNX}\n"
+            "  iree-compile: ${IREE_COMPILE}\n"
+            "  Install the IREE toolchain and ensure iree-import-onnx and iree-compile are in PATH, or pass -DENABLE_IREE_TESTS=OFF."
+        )
+    endif ()
     set(ENABLE_IREE_TESTS OFF CACHE BOOL "Build tests that require iree-import-onnx and iree-compile" FORCE)
     message(WARNING
         "IREE tools not found. Disabling IREE inference tests.\n"
@@ -55,6 +90,12 @@ if (IREE_IMPORT_ONNX STREQUAL "IREE_IMPORT_ONNX-NOTFOUND" OR IREE_COMPILE STREQU
         "  To enable, install the IREE toolchain and ensure iree-import-onnx and iree-compile are in PATH."
     )
 else ()
-    set(ENABLE_IREE_TESTS ON CACHE BOOL "Build tests that require iree-import-onnx and iree-compile" FORCE)
-    message(STATUS "IREE inference tests enabled")
+    if (NOT DEFINED ENABLE_IREE_TESTS)
+        set(ENABLE_IREE_TESTS ON CACHE BOOL "Build tests that require iree-import-onnx and iree-compile")
+    endif ()
+    if (ENABLE_IREE_TESTS)
+        message(STATUS "IREE inference tests enabled")
+    else ()
+        message(STATUS "IREE inference tests disabled (user override)")
+    endif ()
 endif ()

@@ -36,7 +36,7 @@
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterTupleBufferRefProvider.hpp>
+#include <InputFormatterProvider.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
@@ -103,15 +103,15 @@ PhysicalOperator createScanOperator(
     }
 
     const auto memoryProvider = LowerSchemaProvider::lowerSchema(configuredBufferSize, inputSchema.value(), memoryLayout.value());
-    /// Instantiate the scan with an InputFormatterTupleBufferRef, if the prior operatior is a source operator that contains a source descriptor
-    /// with a parser type other than "NATIVE" (NATIVE data does not require formatting)
+    /// Instantiate the scan with an InputFormatter, if the prior operator is a source operator that contains a source
+    /// descriptor with a parser type other than "NATIVE" (NATIVE data does not require formatting)
     if (prevPipeline.isSourcePipeline())
     {
-        const auto inputFormatterConfig = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
-        if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
+        const auto inputFormatterConfig
+            = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getInputFormatterDescriptor();
+        if (toUpperCase(inputFormatterConfig.getInputFormatterType()) != "NATIVE")
         {
-            return ScanPhysicalOperator(
-                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema->getFieldNames());
+            return ScanPhysicalOperator(provideInputFormatter(inputFormatterConfig, memoryProvider), inputSchema->getFieldNames());
         }
     }
     return ScanPhysicalOperator(memoryProvider, inputSchema->getFieldNames());
@@ -289,8 +289,11 @@ void buildPipelineRecursively(
         const auto sinkFormat = sink->getDescriptor().getFormatType();
         if (currentPipeline->isSourcePipeline())
         {
-            const auto sourceFormat = toUpperCase(
-                currentPipeline->getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig().parserType);
+            const auto sourceFormat = toUpperCase(currentPipeline->getRootOperator()
+                                                      .get<SourcePhysicalOperator>()
+                                                      .getDescriptor()
+                                                      .getInputFormatterDescriptor()
+                                                      .getInputFormatterType());
 
             /// Add a formatting pipeline if the source-sink pipelines do not simply forward natively formatted data
             /// Otherwise, even if both formats are, e.g., 'CSV', the source 'blindly' ingest buffers until they are full, meaning buffers

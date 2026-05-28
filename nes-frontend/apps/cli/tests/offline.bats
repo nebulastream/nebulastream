@@ -12,84 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This File contains all offline tests for nebucli. Offline tests are tests which do not require a worker and are
-# completely local to nebucli
+# Offline tests for nebucli. Run the binary directly without a worker / docker.
 
-setup_file() {
-  # Validate SYSTEST environment variable once for all tests
-  if [ -z "$NES_CLI" ]; then
-    echo "ERROR: NES_CLI environment variable must be set" >&2
-    echo "Usage: NES_CLI=/path/to/nebucli bats nebucli.bats" >&2
-    exit 1
-  fi
+source "$NES_BATS_LIB"
 
-  if [ -z "$NES_CLI_TESTDATA" ]; then
-    echo "ERROR: NES_CLI_TESTDATA environment variable must be set" >&2
-    echo "Usage: NES_CLI_TESTDATA=/path/to/cli/testdata" >&2
-    exit 1
-  fi
-
-  if [ ! -f "$NES_CLI" ]; then
-    echo "ERROR: NES_CLI file does not exist: $NES_CLI" >&2
-    exit 1
-  fi
-
-  if [ ! -x "$NES_CLI" ]; then
-    echo "ERROR: NES_CLI file is not executable: $NES_CLI" >&2
-    exit 1
-  fi
-
-  # Print environment info for debugging
-  echo "# Using NES_CLI: $NES_CLI" >&3
-  echo "# Using NES_CLI_TESTDATA: $NES_CLI_TESTDATA" >&3
-}
-
-teardown_file() {
-  # Clean up any global resources if needed
-  echo "# Test suite completed" >&3
-}
+setup_file()    { nes_offline_setup_file; }
+teardown_file() { nes_offline_teardown_file; }
 
 setup() {
-  mkdir -p "$NES_TEST_TMP_DIR"
-  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
-
-  # Override XDG_STATE_HOME to prevent polluting user's actual state directory
+  nes_offline_setup
+  # Override XDG_STATE_HOME to prevent polluting the user's actual state dir.
   export XDG_STATE_HOME="$TMP_DIR/.xdg-state"
   mkdir -p "$XDG_STATE_HOME"
-
-  cp -r "$NES_CLI_TESTDATA" "$TMP_DIR"
-  cd "$TMP_DIR" || exit
-
-  echo "# Using TEST_DIR: $TMP_DIR" >&3
   echo "# Using XDG_STATE_HOME: $XDG_STATE_HOME" >&3
 }
 
 teardown() {
-  # Clean up temporary directory
   if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then
     rm -rf "$TMP_DIR"
-  fi
-}
-
-assert_json_equal() {
-  local expected="$1"
-  local actual="$2"
-
-  diff <(echo "$expected" | jq --sort-keys .) \
-    <(echo "$actual" | jq --sort-keys .)
-}
-
-assert_json_contains() {
-  local expected="$1"
-  local actual="$2"
-
-  local result=$(echo "$actual" | jq --argjson exp "$expected" 'contains($exp)')
-
-  if [ "$result" != "true" ]; then
-    echo "JSON subset check failed"
-    echo "Expected (subset): $expected"
-    echo "Actual: $actual"
-    return 1
   fi
 }
 
@@ -108,6 +48,7 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 }
 
+#bats test_tags=IREE
 @test "nebucli dump with model inference topology" {
   run $NES_CLI -t tests/good/infer-model.yaml dump
   [ "$status" -eq 0 ]
@@ -274,7 +215,7 @@ physical:
     host: worker-1:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -402,7 +343,7 @@ bad_topology() {
   local f=$(bad_topology 's/type: CSV/input_format: CSV/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Parser configuration must contain: type"* ]]
+  [[ "$output" == *"Source config does not contain input formatter type"* ]]
 }
 
 @test "error: unregistered source type reports type name" {
@@ -492,5 +433,32 @@ bad_topology() {
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
   [[ "$output" == *"only-digit names are reserved"* ]]
+}
+
+# --- Nullable schema field tests ---
+# Schema fields accept an optional `nullable: <bool>` flag (defaults to false).
+# These tests pin: (1) `true`/`false`/omitted all parse, (2) the schema-field
+# keyset includes `nullable` so it's not rejected as unknown, (3) a non-bool
+# value is rejected with the right error.
+
+@test "nullable: dump succeeds with mixed nullable schema fields" {
+  run $NES_CLI -t tests/good/nullable-schema.yaml dump
+  [ "$status" -eq 0 ]
+}
+
+@test "nullable: appears in the schema-field accepted-keys list" {
+  # Trip the unknown-key check by adding a bogus sibling of `nullable`. The
+  # error message lists the accepted keys, which must now include `nullable`.
+  local f=$(bad_topology '/^logical:/,/^[a-z]/s/        type: FLOAT64/        type: FLOAT64\n        bogus_key: true/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unknown key 'bogus_key'"* ]]
+  [[ "$output" == *"name, type, nullable"* ]]
+}
+
+@test "nullable: non-bool value is rejected" {
+  run $NES_CLI -d -t tests/bad/invalid_nullable_value.yaml dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Invalid value for 'nullable'"* ]]
 }
 

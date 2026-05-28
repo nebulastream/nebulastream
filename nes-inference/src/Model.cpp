@@ -62,9 +62,9 @@ Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model) const
         .outputShape = std::make_optional(model.getOutputShape())});
 }
 
-ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl) const
+ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto reflected = unreflect<detail::ReflectedImportedModel>(rfl);
+    auto reflected = context.unreflect<detail::ReflectedImportedModel>(rfl);
     const auto mlir = reflected.mlir.value_or(std::string{});
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) char-to-byte for buffer construction
     const auto* mlirBytes = reinterpret_cast<const std::byte*>(mlir.data());
@@ -85,9 +85,9 @@ Reflected Reflector<RegisteredModel>::operator()(const RegisteredModel& model) c
         .outputs = std::make_optional(model.getSchema().outputs)});
 }
 
-RegisteredModel Unreflector<RegisteredModel>::operator()(const Reflected& rfl) const
+RegisteredModel Unreflector<RegisteredModel>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto reflected = unreflect<detail::ReflectedRegisteredModel>(rfl);
+    auto reflected = context.unreflect<detail::ReflectedRegisteredModel>(rfl);
     if (!reflected.name.has_value() || !reflected.path.has_value() || !reflected.imported.has_value() || !reflected.inputs.has_value()
         || !reflected.outputs.has_value())
     {
@@ -100,7 +100,7 @@ RegisteredModel Unreflector<RegisteredModel>::operator()(const Reflected& rfl) c
     return RegisteredModel{
         std::move(reflected.name).value(),
         std::filesystem::path(std::move(reflected.path).value()),
-        Unreflector<ImportedModel>{}(reflected.imported.value()),
+        context.unreflect<ImportedModel>(reflected.imported.value()),
         std::move(schema)};
 }
 

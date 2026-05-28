@@ -45,16 +45,19 @@
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
 
 WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
+    WeakLogicalOperator self,
     std::vector<FieldAccessLogicalFunction> groupingKey,
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions,
     std::shared_ptr<Windowing::WindowType> windowType)
-    : aggregationFunctions(std::move(aggregationFunctions)), windowType(std::move(windowType)), groupingKey(std::move(groupingKey))
+    : ManagedByOperator(std::move(self))
+    , aggregationFunctions(std::move(aggregationFunctions))
+    , windowType(std::move(windowType))
+    , groupingKey(std::move(groupingKey))
 {
 }
 
@@ -257,24 +260,26 @@ const WindowMetaData& WindowedAggregationLogicalOperator::getWindowMetaData() co
     return windowMetaData;
 }
 
-Reflected Reflector<WindowedAggregationLogicalOperator>::operator()(const WindowedAggregationLogicalOperator& op) const
+Reflected Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
+    const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const
 {
     std::vector<std::pair<std::string, Reflected>> windowAggregations;
 
-    for (const auto& agg : op.getWindowAggregation())
+    for (const auto& agg : op->getWindowAggregation())
     {
         windowAggregations.emplace_back(agg->getName(), agg->reflect());
     }
 
     return reflect(detail::ReflectedWindowAggregationLogicalOperator{
-        .aggregations = windowAggregations, .keys = op.getGroupingKeys(), .windowType = reflectWindowType(*op.getWindowType())});
+        .aggregations = windowAggregations, .keys = op->getGroupingKeys(), .windowType = reflectWindowType(*op->getWindowType())});
 }
 
-WindowedAggregationLogicalOperator Unreflector<WindowedAggregationLogicalOperator>::operator()(const Reflected& reflected) const
+TypedLogicalOperator<WindowedAggregationLogicalOperator> Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
+    const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [aggregations, keys, windowTypeReflected] = unreflect<detail::ReflectedWindowAggregationLogicalOperator>(reflected);
+    auto [aggregations, keys, windowTypeReflected] = context.unreflect<detail::ReflectedWindowAggregationLogicalOperator>(reflected);
 
-    auto windowType = unreflectWindowType(windowTypeReflected);
+    auto windowType = unreflectWindowType(windowTypeReflected, context);
 
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions;
 
@@ -290,7 +295,7 @@ WindowedAggregationLogicalOperator Unreflector<WindowedAggregationLogicalOperato
     }
 
 
-    return {keys, aggregationFunctions, windowType};
+    return TypedLogicalOperator<WindowedAggregationLogicalOperator>{keys, aggregationFunctions, windowType};
 }
 
 LogicalOperatorRegistryReturnType
@@ -298,7 +303,7 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<WindowedAggregationLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<WindowedAggregationLogicalOperator>>(arguments.reflected);
     }
 
     PRECONDITION(false, "Expected arguments are missing");

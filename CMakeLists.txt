@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.21.0)
+cmake_minimum_required(VERSION 3.24.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
@@ -201,9 +201,6 @@ set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
-
-find_package(nlohmann_json REQUIRED)
-set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
 
 if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)

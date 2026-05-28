@@ -10,14 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_definitions(-DINFERENCE_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/testdata")
+if (ENABLE_IREE_TESTS)
+    add_definitions(-DINFERENCE_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/testdata")
 
-function(add_nes_test_inference)
-    add_nes_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-inference)
-    target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
-endfunction()
+    function(add_nes_test_inference)
+        add_nes_test(${ARGN})
+        set(TARGET_NAME ${ARGV0})
+        target_link_libraries(${TARGET_NAME} nes-inference)
+        target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+    endfunction()
 
-add_nes_test_inference(ModelLoaderTest ModelLoaderTest.cpp)
-add_nes_test_inference(ModelCatalogTest ModelCatalogTest.cpp)
+    add_nes_test_inference(ModelLoaderTest ModelLoaderTest.cpp)
+    add_nes_test_inference(ModelCatalogTest ModelCatalogTest.cpp)
+endif ()

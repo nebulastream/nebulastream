@@ -34,10 +34,10 @@ namespace NES
 {
 
 /// Selection operator, which contains an function as a predicate.
-class SelectionLogicalOperator
+class SelectionLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit SelectionLogicalOperator(LogicalFunction predicate);
+    explicit SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate);
 
     [[nodiscard]] LogicalFunction getPredicate() const;
 
@@ -76,18 +76,20 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+
+    friend Reflector<TypedLogicalOperator<SelectionLogicalOperator>>;
 };
 
 template <>
-struct Reflector<SelectionLogicalOperator>
+struct Reflector<TypedLogicalOperator<SelectionLogicalOperator>>
 {
-    Reflected operator()(const SelectionLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<SelectionLogicalOperator>
+struct Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>
 {
-    SelectionLogicalOperator operator()(const Reflected& rfl) const;
+    TypedLogicalOperator<SelectionLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);
@@ -97,6 +99,6 @@ namespace NES::detail
 {
 struct ReflectedSelectionLogicalOperator
 {
-    std::optional<LogicalFunction> predicate;
+    LogicalFunction predicate;
 };
 }

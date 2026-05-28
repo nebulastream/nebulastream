@@ -15,7 +15,13 @@ RUN apt-get update -y && apt-get install -y \
         jq \
         yq \
         bats \
+        bats-support \
+        bats-assert \
+        bats-file \
         openjdk-21-jre-headless
+
+# Additional testing libraries for bats are discovered via the BATS_LIB_PATH environemnt
+ENV BATS_LIB_PATH=/usr/lib/bats
 
 # The vcpkg port of antlr requires the jar to be available somewhere
 ADD --checksum=sha256:eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76 --chmod=744 \
@@ -95,6 +101,45 @@ RUN python3 -m venv /opt/iree && \
     ln -s /opt/iree/bin/iree-compile /usr/local/bin/iree-compile && \
     ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
     iree-compile --version
+
+# Pre-clone Corrosion at the exact ref CMake will request, so offline configures inside the
+# container can fall back to it when GitHub is unreachable. EnableRust.cmake probes GitHub
+# first and only uses CORROSION_SRC when the probe fails. Tracks the nebulastream fork that
+# avoids always-dirty Rust target rebuilds.
+ENV CORROSION_GIT_REPO=https://github.com/nebulastream/corrosion.git \
+    CORROSION_VERSION=v0.6.1-always-dirty-fix \
+    CORROSION_SRC=/opt/corrosion
+RUN git clone --depth 1 --branch ${CORROSION_VERSION} \
+        ${CORROSION_GIT_REPO} ${CORROSION_SRC} && \
+    chmod -R a+rX ${CORROSION_SRC}
+
+# Pre-fetch every crate pinned in nes-network/Cargo.lock into $CARGO_HOME so cargo can build
+# offline. Only manifests + lockfile are copied (filtered by .dockerignore); stub lib sources
+# let cargo resolve the workspace without the real source tree.
+COPY nes-network /tmp/nes-network
+RUN set -eux; \
+    find /tmp/nes-network -name Cargo.toml | while read m; do \
+        d=$(dirname "$m"); \
+        mkdir -p "$d/src"; \
+        echo 'fn _stub() {}' > "$d/src/lib.rs"; \
+        echo 'fn _stub() {}' > "$d/lib.rs"; \
+    done; \
+    cd /tmp/nes-network && cargo fetch --locked; \
+    # Corrosion runs `cargo install cxxbridge-cmd --version <cxx-version> --locked` at build \
+    # time to generate the cxx C++/Rust bindings. Pre-install it here with the same `--locked` \
+    # so its .crate sources and the transitive deps pinned by cxxbridge-cmd's bundled \
+    # Cargo.lock end up in $CARGO_HOME for offline builds. Without `--locked` here, cargo \
+    # resolves transitive deps freely and may cache different patch versions than the \
+    # `--locked` install at runtime asks for, leading to offline download failures. \
+    # The version is read from Cargo.lock so the cxxbridge-cmd version always matches the \
+    # workspace-pinned cxx crate. \
+    CXX_VERSION=$(awk '/^name = "cxx"$/{f=1; next} f && /^version = /{gsub(/"/,"",$3); print $3; exit}' Cargo.lock); \
+    test -n "$CXX_VERSION"; \
+    echo "Pre-installing cxxbridge-cmd ${CXX_VERSION}"; \
+    cargo install cxxbridge-cmd --version "${CXX_VERSION}" --locked --root /tmp/cxxbridge-stage; \
+    rm -rf /tmp/cxxbridge-stage; \
+    cd / && rm -rf /tmp/nes-network; \
+    chmod -R a+rwX ${CARGO_HOME}
 
 # Install Docker CLI and Docker Compose for Docker-in-Docker testing
 RUN apt-get update && \

@@ -15,3 +15,9 @@ add_plugin(Equals LogicalFunction nes-logical-operators EqualsLogicalFunction.cp
 add_plugin(Negate LogicalFunction nes-logical-operators NegateLogicalFunction.cpp)
 add_plugin(Or LogicalFunction nes-logical-operators OrLogicalFunction.cpp)
 add_plugin(IsNull LogicalFunction nes-logical-operators IsNullCheckLogicalFunction.cpp)
+
+add_unreflection_plugin(LogicalFunction And)
+add_unreflection_plugin(LogicalFunction Equals)
+add_unreflection_plugin(LogicalFunction Negate)
+add_unreflection_plugin(LogicalFunction Or)
+add_unreflection_plugin(LogicalFunction IsNullCheck KEY IsNull)

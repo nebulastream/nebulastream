@@ -70,8 +70,11 @@ jobs:
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
             echo "=== sccache config before build ==="
+            sccache --start-server
             sccache --show-stats
             cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.cmake_flags }}
+            echo "=== sccache heartbeat before cmake --build ==="
+            sccache --show-stats
             cmake --build build -j -- -k 0
             echo "=== sccache stats after build ==="
             sccache --show-stats
@@ -126,10 +129,16 @@ jobs:
           files: build/junit-unit.xml,build/junit-systest.xml,build/junit-docker.xml
 
   # Log level tests — verifies the NES_LOG_LEVEL compile-time flag works across all build types.
+  # Fanned out one job per build_type so each shard only loops the 6 log levels and fits the
+  # 40-min wall-clock cap even on fork PRs (which run without remote sccache credentials).
   build-and-test-log-level:
-    name: "Log Level Tests"
+    name: "Log Level Tests (${{ matrix.build_type }})"
     timeout-minutes: 40
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, RelWithDebInfo, Release, Benchmark]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -150,21 +159,96 @@ jobs:
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
           run: |
-            for BUILD_TYPE in Debug RelWithDebInfo Release Benchmark; do
-              for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
-                echo "=== ${BUILD_TYPE} / ${LOG_LEVEL} ==="
-                cmake -GNinja -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DNES_LOG_LEVEL=$LOG_LEVEL
-                cmake --build build --target nes-common-tests -j -- -k 0
-                ctest --test-dir build -j --output-on-failure --output-junit build/junit-log-${BUILD_TYPE}-${LOG_LEVEL}.xml --timeout 600 -R "testLogLevel"
-                cmake --build build --target clean
-              done
+            for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
+              echo "=== ${{ matrix.build_type }} / ${LOG_LEVEL} ==="
+              cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=$LOG_LEVEL
+              cmake --build build --target nes-common-tests -j -- -k 0
+              ctest --test-dir build -j --output-on-failure --output-junit build/junit-log-${{ matrix.build_type }}-${LOG_LEVEL}.xml --timeout 600 -R "testLogLevel"
+              cmake --build build --target clean
             done
+
+  clean-build-and-test-linux:
+    # Ensures the build works from a clean build directory and that the dev image
+    # still supports network-isolated builds.
+    name: "Clean build and tests"
+    timeout-minutes: 80
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        build_type: [ 'Debug' ]
+        sanitizer: [ 'none' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      - uses: ./.github/steps/prepare-github
+        name: Preparing Github Runners
+        with:
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+      - uses: ./.github/steps/run-in-container
+        name: Configure, build and test (online)
+        with:
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+          run: |
+            source .github/.env/test-${{ matrix.sanitizer }}.env
+            rm -rf build
+            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+            MOLD_JOBS=1 cmake --build build -j -- -k 0
+            ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 1200
+      - name: Offline clean build and tests (--network=none)
+        # Validates that the dev image still supports network-isolated builds: the offline-rust
+        # pre-fetch and the Corrosion ls-remote fallback in EnableRust.cmake should let a vanilla
+        # `cmake` + `cmake --build` + `ctest` cycle succeed without network. Runs on the host so
+        # `$(pwd)` resolves to the real workspace path and bind-mounts cleanly into the offline
+        # container — same pattern as run-in-container, just without sccache plumbing.
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}"
+          docker run --rm --network=none \
+            -v "$(pwd)":"$(pwd)" -w "$(pwd)" \
+            -u "$(id -u):$(id -g)" -e HOME="$(pwd)" \
+            "$IMAGE" \
+            bash -c '
+              set -euo pipefail
+              rm -rf build-offline
+              cmake -GNinja -B build-offline
+              cmake --build build-offline -j
+              # Exclude DockerCompose-labeled tests: they need /var/run/docker.sock to spin
+              # up sibling containers, which `--network=none` (and the missing socket bind)
+              # makes impossible. They are not testing offline-build behavior.
+              ctest --test-dir build-offline -j --output-on-failure --timeout 1200 -LE DockerCompose
+            '
+      - uses: actions/upload-artifact@v4
+        # Upload all log and stat files if any of the tests has failed.
+        name: Upload Test Logs on Failure
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
+          path: |
+            build/**/*.log
+            build/**/*.stats
+            build-offline/**/*.log
+            build-offline/**/*.stats
 
   # Aggregate gate for branch protection. Only this job needs to be required —
   # if any matrix entry or the log-level job fails/cancels/skips, this fails too.
   done:
     name: Done
-    needs: [build-and-test, build-and-test-log-level]
+    needs: [build-and-test, build-and-test-log-level, clean-build-and-test-linux]
     if: always()
     runs-on: ubuntu-24.04
     steps:
@@ -176,6 +260,10 @@ jobs:
           fi
           if [[ "${{ needs.build-and-test-log-level.result }}" != "success" ]]; then
             echo "build-and-test-log-level result: ${{ needs.build-and-test-log-level.result }}"
+            exit 1
+          fi
+          if [[ "${{ needs.clean-build-and-test-linux.result }}" != "success" ]]; then
+            echo "clean-build-and-test-linux result: ${{ needs.clean-build-and-test-linux.result }}"
             exit 1
           fi
 

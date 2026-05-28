@@ -37,7 +37,9 @@
 namespace NES
 {
 
-UnionLogicalOperator::UnionLogicalOperator() = default;
+UnionLogicalOperator::UnionLogicalOperator(WeakLogicalOperator self) : ManagedByOperator(std::move(self))
+{
+}
 
 std::string_view UnionLogicalOperator::getName() const noexcept
 {
@@ -146,14 +148,15 @@ UnionLogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputS
     return copy;
 }
 
-Reflected Reflector<UnionLogicalOperator>::operator()(const UnionLogicalOperator&) const
+Reflected Reflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(const TypedLogicalOperator<UnionLogicalOperator>&) const
 {
     return reflect(true);
 }
 
-UnionLogicalOperator Unreflector<UnionLogicalOperator>::operator()(const Reflected&) const
+TypedLogicalOperator<UnionLogicalOperator>
+Unreflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
-    return UnionLogicalOperator();
+    return TypedLogicalOperator<UnionLogicalOperator>{};
 }
 
 LogicalOperatorRegistryReturnType
@@ -161,15 +164,15 @@ LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorR
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<UnionLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<UnionLogicalOperator>>(arguments.reflected);
     }
-    auto logicalOperator = UnionLogicalOperator();
+    auto logicalOperator = TypedLogicalOperator<UnionLogicalOperator>{};
     if (arguments.inputSchemas.empty())
     {
         throw CannotDeserialize("Union expects at least one child but got {} inputSchemas!", arguments.inputSchemas.size());
     }
-    auto logicalOp = logicalOperator.setInputSchemas(std::move(arguments.inputSchemas)).setOutputSchema(arguments.outputSchema);
-    return logicalOp;
+    auto withSchemas = logicalOperator->setInputSchemas(std::move(arguments.inputSchemas)).setOutputSchema(arguments.outputSchema);
+    return TypedLogicalOperator<UnionLogicalOperator>{withSchemas};
 }
 
 }

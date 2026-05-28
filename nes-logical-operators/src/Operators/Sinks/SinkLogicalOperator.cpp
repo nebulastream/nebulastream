@@ -39,10 +39,17 @@
 namespace NES
 {
 
-SinkLogicalOperator::SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) { };
+SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self) : ManagedByOperator(std::move(self))
+{
+}
 
-SinkLogicalOperator::SinkLogicalOperator(SinkDescriptor sinkDescriptor)
-    : sinkName(sinkDescriptor.getSinkName()), sinkDescriptor(std::move(sinkDescriptor))
+SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, std::string sinkName)
+    : ManagedByOperator(std::move(self)), sinkName(std::move(sinkName))
+{
+}
+
+SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, SinkDescriptor sinkDescriptor)
+    : ManagedByOperator(std::move(self)), sinkName(sinkDescriptor.getSinkName()), sinkDescriptor(std::move(sinkDescriptor))
 {
 }
 
@@ -197,14 +204,15 @@ SinkLogicalOperator SinkLogicalOperator::withSinkDescriptor(SinkDescriptor sinkD
     return newOperator;
 }
 
-Reflected Reflector<SinkLogicalOperator>::operator()(const SinkLogicalOperator& op) const
+Reflected Reflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const TypedLogicalOperator<SinkLogicalOperator>& op) const
 {
-    return reflect(detail::ReflectedSinkLogicalOperator{.sinkDescriptor = op.getSinkDescriptor(), .sinkName = op.getSinkName()});
+    return reflect(detail::ReflectedSinkLogicalOperator{.sinkDescriptor = op->getSinkDescriptor(), .sinkName = op->getSinkName()});
 }
 
-SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected& reflected) const
+TypedLogicalOperator<SinkLogicalOperator>
+Unreflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [descriptor, name] = unreflect<detail::ReflectedSinkLogicalOperator>(reflected);
+    auto [descriptor, name] = context.unreflect<detail::ReflectedSinkLogicalOperator>(reflected);
     if (descriptor.has_value())
     {
         if (descriptor->getSinkName() != name)
@@ -216,8 +224,8 @@ SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected
                 name);
         }
 
-        return SinkLogicalOperator{descriptor.value()};
+        return TypedLogicalOperator<SinkLogicalOperator>{descriptor.value()};
     }
-    return SinkLogicalOperator{name};
+    return TypedLogicalOperator<SinkLogicalOperator>{name};
 }
 }

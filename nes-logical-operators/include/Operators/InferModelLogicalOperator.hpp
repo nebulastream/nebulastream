@@ -36,10 +36,10 @@ namespace NES
 /// field schema so the two cannot drift — plus the list of upstream field
 /// names bound to the model's inputs. Compilation to executable bytecode is
 /// deferred to worker-side lowering (`LowerToPhysicalInferModel`).
-class InferModelLogicalOperator
+class InferModelLogicalOperator : public ManagedByOperator
 {
 public:
-    InferModelLogicalOperator(RegisteredModel model, std::vector<std::string> inputFieldNames);
+    InferModelLogicalOperator(WeakLogicalOperator self, RegisteredModel model, std::vector<std::string> inputFieldNames);
 
     [[nodiscard]] const RegisteredModel& getModel() const;
     [[nodiscard]] std::vector<std::string> getInputFieldNames() const;
@@ -80,15 +80,15 @@ private:
 };
 
 template <>
-struct Reflector<InferModelLogicalOperator>
+struct Reflector<TypedLogicalOperator<InferModelLogicalOperator>>
 {
-    Reflected operator()(const InferModelLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<InferModelLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<InferModelLogicalOperator>
+struct Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>
 {
-    InferModelLogicalOperator operator()(const Reflected& rfl) const;
+    TypedLogicalOperator<InferModelLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<InferModelLogicalOperator>);
@@ -99,7 +99,7 @@ namespace NES::detail
 {
 struct ReflectedInferModelLogicalOperator
 {
-    std::optional<Reflected> model;
-    std::optional<std::vector<std::string>> inputFieldNames;
+    Reflected model;
+    std::vector<std::string> inputFieldNames;
 };
 }

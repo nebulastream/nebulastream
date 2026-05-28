@@ -85,7 +85,7 @@ struct Reflector<RegisteredModel>
 template <>
 struct Unreflector<RegisteredModel>
 {
-    RegisteredModel operator()(const Reflected& rfl) const;
+    RegisteredModel operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 /// Manages model registration and stores imported model bodies keyed by name.

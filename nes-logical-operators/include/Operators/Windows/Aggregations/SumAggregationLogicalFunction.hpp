@@ -74,7 +74,7 @@ struct Reflector<SumAggregationLogicalFunction>
 template <>
 struct Unreflector<SumAggregationLogicalFunction>
 {
-    SumAggregationLogicalFunction operator()(const Reflected& reflected) const;
+    SumAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 }
 

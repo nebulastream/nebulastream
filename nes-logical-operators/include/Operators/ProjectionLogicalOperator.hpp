@@ -34,7 +34,7 @@ namespace NES
 {
 
 /// Combines both selecting the fields to project and renaming/mapping of fields
-class ProjectionLogicalOperator
+class ProjectionLogicalOperator : public ManagedByOperator
 {
 public:
     class Asterisk
@@ -48,7 +48,7 @@ public:
     };
 
     using Projection = std::pair<std::optional<FieldIdentifier>, LogicalFunction>;
-    ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk);
+    ProjectionLogicalOperator(WeakLogicalOperator self, std::vector<Projection> projections, Asterisk asterisk);
 
     [[nodiscard]] const std::vector<Projection>& getProjections() const;
 
@@ -96,19 +96,19 @@ private:
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
 
-    friend Reflector<ProjectionLogicalOperator>;
+    friend Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>;
 };
 
 template <>
-struct Reflector<ProjectionLogicalOperator>
+struct Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>
 {
-    Reflected operator()(const ProjectionLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<ProjectionLogicalOperator>
+struct Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>
 {
-    ProjectionLogicalOperator operator()(const Reflected& reflected) const;
+    TypedLogicalOperator<ProjectionLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);
@@ -120,7 +120,7 @@ namespace NES::detail
 struct ReflectedProjectionLogicalOperator
 {
     bool asterisk;
-    std::vector<std::pair<std::optional<std::string>, std::optional<LogicalFunction>>> projections;
+    std::vector<std::pair<std::optional<std::string>, LogicalFunction>> projections;
 };
 
 }

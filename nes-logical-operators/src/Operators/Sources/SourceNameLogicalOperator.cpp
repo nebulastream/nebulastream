@@ -36,12 +36,13 @@
 namespace NES
 {
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName) : logicalSourceName(std::move(logicalSourceName))
+SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName)
+    : ManagedByOperator(std::move(self)), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, Schema schema)
-    : logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
+SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName, const Schema& schema)
+    : ManagedByOperator(std::move(self)), logicalSourceName(std::move(logicalSourceName)), schema(schema)
 {
 }
 
@@ -128,13 +129,15 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-Reflected Reflector<SourceNameLogicalOperator>::operator()(const SourceNameLogicalOperator&) const
+Reflected
+Reflector<TypedLogicalOperator<SourceNameLogicalOperator>>::operator()(const TypedLogicalOperator<SourceNameLogicalOperator>&) const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();
 }
 
-SourceNameLogicalOperator Unreflector<SourceNameLogicalOperator>::operator()(const Reflected&) const
+TypedLogicalOperator<SourceNameLogicalOperator>
+Unreflector<TypedLogicalOperator<SourceNameLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();

@@ -41,7 +41,6 @@
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -60,8 +59,8 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
 }
 }
 
-ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk)
-    : projections(std::move(projections)), asterisk(asterisk.value)
+ProjectionLogicalOperator::ProjectionLogicalOperator(WeakLogicalOperator self, std::vector<Projection> projections, Asterisk asterisk)
+    : ManagedByOperator(std::move(self)), projections(std::move(projections)), asterisk(asterisk.value)
 {
 }
 
@@ -225,11 +224,12 @@ std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogicalOperator& op) const
+Reflected
+Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op) const
 {
     detail::ReflectedProjectionLogicalOperator reflected;
 
-    for (auto [identifierOpt, function] : op.getProjections())
+    for (auto [identifierOpt, function] : op->getProjections())
     {
         /// Only serialize identifiers that differ from the auto-derived name (i.e. explicit AS aliases).
         std::optional<std::string> identifier;
@@ -241,31 +241,28 @@ Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogic
                 identifier = identifierOpt->getFieldName();
             }
         }
-        reflected.projections.emplace_back(identifier, std::make_optional(function));
+        reflected.projections.emplace_back(identifier, function);
     }
 
-    reflected.asterisk = op.asterisk;
+    reflected.asterisk = op->asterisk;
 
     return reflect(reflected);
 }
 
-ProjectionLogicalOperator Unreflector<ProjectionLogicalOperator>::operator()(const Reflected& reflected) const
+TypedLogicalOperator<ProjectionLogicalOperator>
+Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [asterisk, projections] = unreflect<detail::ReflectedProjectionLogicalOperator>(reflected);
+    auto [asterisk, projections] = context.unreflect<detail::ReflectedProjectionLogicalOperator>(reflected);
 
     std::vector<ProjectionLogicalOperator::Projection> parsedProjections;
+    parsedProjections.reserve(projections.size());
 
     for (auto [identifier, function] : projections)
     {
-        if (!function.has_value())
-        {
-            throw CannotDeserialize("Failed to deserialize projection function");
-        }
-
-        parsedProjections.emplace_back(identifier, function.value());
+        parsedProjections.emplace_back(identifier, function);
     }
 
-    return {std::move(parsedProjections), ProjectionLogicalOperator::Asterisk(asterisk)};
+    return TypedLogicalOperator<ProjectionLogicalOperator>{std::move(parsedProjections), ProjectionLogicalOperator::Asterisk(asterisk)};
 }
 
 LogicalOperatorRegistryReturnType
@@ -273,7 +270,7 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOper
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<ProjectionLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<ProjectionLogicalOperator>>(arguments.reflected);
     }
 
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
