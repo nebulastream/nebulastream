@@ -21,6 +21,7 @@
 #include <typeinfo>
 #include <vector>
 #include <Rules/Rule.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <gtest/gtest.h>
 
 namespace NES
@@ -155,6 +156,26 @@ TEST_F(RuleManagerTest, FailureOnSequencingWithMissingRule)
     manager.addRule(AvailableRule3{});
 
     ASSERT_ANY_THROW({ auto sequence = manager.getSequence(); });
+}
+
+TEST_F(RuleManagerTest, Explain)
+{
+    RuleManager<std::nullptr_t> manager;
+
+    manager.addRule(ThirdTestRule{});
+    manager.addRule(FourthTestRule{});
+    manager.addRule(FirstTestRule{});
+    manager.addRule(SecondTestRule{});
+
+    ASSERT_EQ(manager.explain(ExplainVerbosity::Short), "RuleManager(FirstTestRule, SecondTestRule, ThirdTestRule, FourthTestRule)");
+    ASSERT_EQ(
+        manager.explain(ExplainVerbosity::Debug),
+        "RuleManager(\n"
+        "\t[1] RULE(FirstTestRule) DEPENDS_ON() REQUIRED_BY()\n"
+        "\t[2] RULE(SecondTestRule) DEPENDS_ON(FirstTestRule) REQUIRED_BY()\n"
+        "\t[3] RULE(ThirdTestRule) DEPENDS_ON(FirstTestRule, SecondTestRule) REQUIRED_BY(FourthTestRule)\n"
+        "\t[4] RULE(FourthTestRule) DEPENDS_ON(SecondTestRule) REQUIRED_BY()\n"
+        ")");
 }
 
 

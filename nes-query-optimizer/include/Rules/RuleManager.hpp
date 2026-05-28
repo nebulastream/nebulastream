@@ -16,11 +16,15 @@
 
 #include <cstddef>
 #include <queue>
+#include <ranges>
 #include <set>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
+
 #include <Rules/Rule.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -33,7 +37,7 @@ namespace NES
  * Rules are registered via addRule(). Each rule may declare dependencies on other rule
  * types through Rule::dependsOn() and Rule::requiredBy(). The RuleManager builds a directed
  * acyclic graph (DAG) from these declarations and performs a topological sort when
- * getSequence() is called.
+ * getSequence() is called. The order of rules that don't depend on each other is nondeterministic.
  *
  * Constraints:
  * - At most one rule per concrete type may be registered.
@@ -124,8 +128,35 @@ public:
         {
             throw InvalidOptimizerRuleset("cycle detected in rule dependencies");
         }
-
         return sequence;
+    }
+
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const
+    {
+        const auto seq = getSequence();
+
+        if (verbosity == ExplainVerbosity::Short)
+        {
+            return fmt::format(
+                "RuleManager({})", fmt::join(seq | std::views::transform([](const auto& rule) { return rule.getName(); }), ", "));
+        }
+
+        std::string out = "RuleManager(\n";
+        for (size_t i = 0; i < seq.size(); ++i)
+        {
+            const auto& rule = seq[i];
+            out += fmt::format(
+                "\t[{}] RULE({}) DEPENDS_ON({}) REQUIRED_BY({})\n",
+                i + 1,
+                rule.getName(),
+                fmt::join(
+                    rule.dependsOn() | std::views::transform([this](std::type_index ruleType) { return rules.at(ruleType).getName(); }),
+                    ", "),
+                fmt::join(
+                    rule.requiredBy() | std::views::transform([this](std::type_index ruleType) { return rules.at(ruleType).getName(); }),
+                    ", "));
+        }
+        return out + ")";
     }
 
 private:
