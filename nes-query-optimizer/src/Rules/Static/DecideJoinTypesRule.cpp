@@ -31,6 +31,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -96,7 +97,7 @@ std::string_view DecideJoinTypesRule::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> DecideJoinTypesRule::dependsOn() const
 {
-    return {};
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
