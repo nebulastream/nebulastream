@@ -22,6 +22,7 @@
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
@@ -44,7 +45,7 @@ std::string_view DecideMemoryLayoutRule::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> DecideMemoryLayoutRule::dependsOn() const
 {
-    return {typeid(DecideJoinTypesRule), typeid(RedundantUnionRemovalRule)};
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

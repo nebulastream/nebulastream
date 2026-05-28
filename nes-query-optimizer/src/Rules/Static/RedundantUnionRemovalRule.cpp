@@ -21,10 +21,12 @@
 #include <typeinfo>
 #include <utility>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Static/DecideFieldMappings.hpp>
 #include <Rules/Static/DecideFieldOrder.hpp>
 
@@ -52,7 +54,7 @@ std::set<std::type_index> RedundantUnionRemovalRule::dependsOn() const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> RedundantUnionRemovalRule::requiredBy() const
 {
-    return {typeid(DecideFieldMappings), typeid(DecideFieldOrder)};
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 bool RedundantUnionRemovalRule::operator==(const RedundantUnionRemovalRule&) const
