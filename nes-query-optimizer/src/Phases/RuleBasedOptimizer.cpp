@@ -25,6 +25,7 @@
 #include <Rules/Static/DecideFieldOrder.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
+#include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -46,6 +47,7 @@ RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryO
     ruleManager.addRule(DecideFieldOrder{});
     ruleManager.addRule(OriginIdInferenceRule{});
     ruleManager.addRule(FixedPlanStructureBarrier{});
+    ruleManager.addRule(PredicatePushdownRule{});
 
     NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
     ruleSequence = ruleManager.getSequence();
