@@ -33,6 +33,7 @@
 #include <Operators/Reorderer.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
@@ -127,7 +128,7 @@ std::string_view DecideFieldOrder::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> DecideFieldOrder::dependsOn() const
 {
-    return {};
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

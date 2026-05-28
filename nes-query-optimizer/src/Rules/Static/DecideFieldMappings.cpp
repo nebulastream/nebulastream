@@ -25,6 +25,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -32,6 +33,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Schema/Field.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -195,7 +197,7 @@ std::string_view DecideFieldMappings::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> DecideFieldMappings::dependsOn() const
 {
-    return {};
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

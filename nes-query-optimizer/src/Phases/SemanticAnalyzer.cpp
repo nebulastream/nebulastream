@@ -25,9 +25,10 @@
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
-#include <Rules/Semantic/OriginIdInferenceRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
@@ -45,9 +46,9 @@ SemanticAnalyzer::SemanticAnalyzer(
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
     ruleManager.addRule(InferModelResolutionRule{this->modelCatalog});
     ruleManager.addRule(TypeInferenceRule{});
-    ruleManager.addRule(OriginIdInferenceRule{});
     ruleManager.addRule(CalcTargetOrderRule{});
 
+    NES_DEBUG("semantic analysers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
     this->ruleSequence = ruleManager.getSequence();
 }
 
