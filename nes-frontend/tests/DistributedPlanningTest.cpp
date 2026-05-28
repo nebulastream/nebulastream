@@ -542,7 +542,7 @@ workers:
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan0).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[0].get().getSourceDescriptor().getSourceType(), "NETWORK");
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[1].get().getSourceDescriptor().getSourceType(), "NETWORK");
-    EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(plan0).size(), 1);
+    EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(plan0).size(), 1);
     EXPECT_EQ(flatten(plan0).size(), 5);
 
     const auto plan1 = plan[Host("source-node0:8080")].front();
@@ -556,7 +556,7 @@ workers:
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan2).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan2).front().get().getSinkDescriptor()->getSinkType(), "NETWORK");
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan2).size(), 1);
-    EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(plan2).size(), 1);
+    EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(plan2).size(), 1);
     EXPECT_EQ(flatten(plan2).size(), 3);
 }
 

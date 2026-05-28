@@ -29,6 +29,7 @@
 #include <Rules/Static/ProjectionPushdownRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
+#include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
@@ -50,6 +51,7 @@ RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryO
     ruleManager.addRule(OriginIdInferenceRule{});
     ruleManager.addRule(FixedPlanStructureBarrier{});
     ruleManager.addRule(PredicatePushdownRule{});
+    ruleManager.addRule(WatermarkAssignerPushdownRule{});
     ruleManager.addRule(ProjectionPushdownRule{});
 
     NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
