@@ -17,6 +17,7 @@ add_source_files(nes-query-optimizer
         RedundantUnionRemovalRule.cpp
         RedundantProjectionRemovalRule.cpp
         ProjectionPushdownRule.cpp
+        WatermarkAssignerPushdownRule.cpp
         DecideFieldMappings.cpp
         DecideFieldOrder.cpp
         OriginIdInferenceRule.cpp)
