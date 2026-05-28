@@ -75,7 +75,7 @@ std::set<std::type_index> InferModelResolutionRule::dependsOn() const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> InferModelResolutionRule::requiredBy() const
 {
-    return {typeid(TypeInferenceRule), typeid(OriginIdInferenceRule)};
+    return {typeid(TypeInferenceRule)};
 }
 
 bool InferModelResolutionRule::operator==(const InferModelResolutionRule& other) const

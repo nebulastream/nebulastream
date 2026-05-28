@@ -22,11 +22,13 @@
 #include <utility>
 #include <vector>
 
+
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Static/DecideFieldMappings.hpp>
 #include <Rules/Static/DecideFieldOrder.hpp>
 #include <Schema/Binder.hpp>
@@ -54,7 +56,7 @@ std::set<std::type_index> RedundantProjectionRemovalRule::dependsOn() const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> RedundantProjectionRemovalRule::requiredBy() const
 {
-    return {typeid(DecideFieldMappings), typeid(DecideFieldOrder)};
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemovalRule&) const
