@@ -20,7 +20,7 @@
 #include <unordered_map>
 
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
 
 namespace NES
 {

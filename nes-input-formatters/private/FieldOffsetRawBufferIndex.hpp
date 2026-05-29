@@ -20,8 +20,8 @@
 #include <cstdlib>
 #include <vector>
 
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
 #include <InputFormatter.hpp>
 #include <RawBufferIndex.hpp>
 #include <val_arith.hpp>

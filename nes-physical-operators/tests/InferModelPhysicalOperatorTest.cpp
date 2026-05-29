@@ -38,7 +38,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>

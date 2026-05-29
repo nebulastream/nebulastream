@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 #include <algorithm>
 #include <bit>
@@ -22,8 +22,8 @@
 #include <memory>
 #include <span>
 #include <string>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Interface/Hash/HashFunction.hpp>
+#include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <ErrorHandling.hpp>
 

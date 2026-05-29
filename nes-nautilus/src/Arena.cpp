@@ -14,7 +14,7 @@
 
 #include <Arena.hpp>
 
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <DataTypes/VariableSizedData.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val.hpp>

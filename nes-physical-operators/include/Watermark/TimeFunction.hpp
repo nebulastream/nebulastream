@@ -15,11 +15,11 @@
 
 #include <memory>
 #include <DataTypes/TimeUnit.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 
 namespace NES

@@ -22,11 +22,11 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/HashMap.hpp>
+#include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/ExecutionMode.hpp>

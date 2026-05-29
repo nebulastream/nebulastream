@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
+#include <Interface/BufferRef/ColumnTupleBufferRef.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -19,10 +19,10 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/static.hpp>
 #include <nautilus/val_ptr.hpp>

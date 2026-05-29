@@ -37,8 +37,8 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>

@@ -24,8 +24,8 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>

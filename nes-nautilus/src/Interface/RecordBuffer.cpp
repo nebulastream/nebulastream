@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Interface/RecordBuffer.hpp>
 
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
-#include <Nautilus/Interface/TupleBufferProxyFunctions.hpp>
+#include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/TimestampRef.hpp>
+#include <Interface/TupleBufferProxyFunctions.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/function.hpp>

@@ -20,9 +20,9 @@
 #include <utility>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>

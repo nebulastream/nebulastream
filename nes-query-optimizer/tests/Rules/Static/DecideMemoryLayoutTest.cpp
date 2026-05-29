@@ -28,8 +28,8 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Iterators/BFSIterator.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>

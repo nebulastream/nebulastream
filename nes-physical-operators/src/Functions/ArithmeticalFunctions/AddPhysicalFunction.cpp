@@ -14,8 +14,8 @@
 #include <Functions/ArithmeticalFunctions/AddPhysicalFunction.hpp>
 
 #include <utility>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>

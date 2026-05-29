@@ -19,7 +19,7 @@
 #include <typeindex>
 #include <typeinfo>
 
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>

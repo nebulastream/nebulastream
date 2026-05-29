@@ -28,7 +28,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/TypeTraits.hpp>

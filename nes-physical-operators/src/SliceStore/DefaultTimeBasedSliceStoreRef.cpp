@@ -17,8 +17,8 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>

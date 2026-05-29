@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Interface/Hash/HashFunction.hpp>
 
 #include <vector>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <static.hpp>
 
 namespace NES

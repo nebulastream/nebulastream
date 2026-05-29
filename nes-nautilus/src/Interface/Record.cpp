@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 
 #include <cstdint>
 #include <numeric>
 #include <ostream>
 #include <string>
 #include <unordered_map>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <std/ostream.h>
 #include <ErrorHandling.hpp>
 #include <static.hpp>

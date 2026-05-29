@@ -30,12 +30,11 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/VariableSizedAccessRef.hpp>
-#include <Nautilus/Util.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
+#include <Interface/VariableSizedAccessRef.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -47,6 +46,7 @@
 #include <nautilus/std/sstream.h>
 #include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
+#include <Util.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 

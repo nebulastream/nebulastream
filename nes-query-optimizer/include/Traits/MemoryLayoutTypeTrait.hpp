@@ -18,7 +18,7 @@
 #include <string>
 #include <string_view>
 #include <typeinfo>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/ReflectionFwd.hpp>

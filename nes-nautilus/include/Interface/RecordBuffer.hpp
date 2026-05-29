@@ -15,9 +15,9 @@
 #pragma once
 
 #include <cstdint>
+#include <DataTypes/VarVal.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Interface/NESStrongTypeRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <val.hpp>

@@ -10,4 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Nautilus)
+add_source_files(nes-nautilus
+        Util.cpp
+        Arena.cpp
+)
+
+add_subdirectory(DataTypes)
+add_subdirectory(Interface)

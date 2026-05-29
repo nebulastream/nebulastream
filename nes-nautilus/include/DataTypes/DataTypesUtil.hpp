@@ -19,7 +19,7 @@
 #include <functional>
 #include <unordered_map>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>

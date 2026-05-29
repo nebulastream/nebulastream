@@ -24,9 +24,9 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
+#include <Interface/Record.hpp>
 #include <std/cstring.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>

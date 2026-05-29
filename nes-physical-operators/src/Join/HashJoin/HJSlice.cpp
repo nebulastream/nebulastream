@@ -18,9 +18,9 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>

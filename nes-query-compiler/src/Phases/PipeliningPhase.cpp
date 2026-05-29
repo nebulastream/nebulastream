@@ -27,9 +27,9 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/RowTupleBufferRef.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>

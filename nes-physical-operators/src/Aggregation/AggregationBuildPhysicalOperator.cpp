@@ -23,9 +23,9 @@
 #include <Aggregation/AggregationSlice.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/HashMap/HashMap.hpp>
+#include <Interface/Record.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <CompilationContext.hpp>

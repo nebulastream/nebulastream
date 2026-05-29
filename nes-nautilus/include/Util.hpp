@@ -18,7 +18,7 @@
 #include <memory>
 #include <utility>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/val.hpp>

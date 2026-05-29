@@ -18,9 +18,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
+#include <Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES

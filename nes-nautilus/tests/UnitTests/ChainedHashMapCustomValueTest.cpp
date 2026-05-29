@@ -24,12 +24,12 @@
 #include <tuple>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>

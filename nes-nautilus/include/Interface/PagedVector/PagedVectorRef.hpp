@@ -17,9 +17,9 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
 
 #include <algorithm>
 #include <array>
@@ -26,13 +26,13 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/VariableSizedAccessRef.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
+#include <Interface/VariableSizedAccessRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>

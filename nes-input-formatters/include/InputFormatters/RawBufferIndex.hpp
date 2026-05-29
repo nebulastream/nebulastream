@@ -18,8 +18,8 @@
 #include <cstdint>
 #include <vector>
 
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
 #include <RawTupleBuffer.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>

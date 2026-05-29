@@ -19,8 +19,8 @@
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 

@@ -14,7 +14,7 @@
 
 #pragma once
 #include <cstdint>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Interface/Hash/HashFunction.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES

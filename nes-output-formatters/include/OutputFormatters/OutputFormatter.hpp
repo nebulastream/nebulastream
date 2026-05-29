@@ -20,9 +20,9 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>

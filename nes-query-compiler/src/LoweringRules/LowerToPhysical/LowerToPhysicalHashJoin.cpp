@@ -35,6 +35,12 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Hash/MurMur3HashFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
@@ -42,12 +48,6 @@
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
