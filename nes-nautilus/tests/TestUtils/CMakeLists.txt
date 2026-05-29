@@ -16,6 +16,7 @@ add_library(nes-nautilus-test-util STATIC
         src/TestTupleBuffer.cpp
         src/TestablePagedVector.cpp
         src/TestableChainedHashMap.cpp
+        src/TestableBloomFilter.cpp
 )
 
 target_include_directories(nes-nautilus-test-util PUBLIC
