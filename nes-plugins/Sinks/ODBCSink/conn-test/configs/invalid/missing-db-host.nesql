@@ -1,0 +1,11 @@
+-- Invalid: `db_host` is required (no default in ConfigParametersODBCSink), so
+-- DescriptorConfig::validateAndFormat rejects this at bind time with
+-- INVALID_CONFIG_PARAMETER (1000).
+CREATE SINK conntest_sink (a INTEGER NOT NULL, b INTEGER NOT NULL, c INTEGER NOT NULL) TYPE ODBC SET (
+    '5432'               AS `SINK`.db_port,
+    'nebulastream'       AS `SINK`.database,
+    'nes'                AS `SINK`.username,
+    'nes'                AS `SINK`.password,
+    'PostgreSQL Unicode' AS `SINK`.driver,
+    'conntest_sink_tbl'  AS `SINK`.`table`,
+    'CSV'                AS `SINK`.OUTPUT_FORMAT);

@@ -1,0 +1,27 @@
+-- A valid ODBC sink configuration (Postgres over the PostgreSQL Unicode driver).
+--
+-- Config-key grammar matches ConfigParametersODBCSink in
+-- nes-plugins/Sinks/ODBCSink/ODBCSink.hpp: db_host / db_port / database /
+-- username / password / driver / table. `table` is a reserved word, so it is
+-- backticked. `output_format` is set to `Native`, so the sink receives the
+-- engine's native tuple layout and binds each column by type. Host/port are
+-- concrete literals — binding never connects.
+--
+-- This schema is the single source of truth for the native round-trip: the
+-- conn-test framework parses it, GENERATES typed rows for it, encodes them into
+-- the `.nes` the harness drains through the sink, creates the matching Postgres
+-- table, and reads the rows back for a typed multiset compare. Adding another
+-- `valid/*.nesql` with a different schema works out of the box — no fixture to
+-- regenerate. All columns are NOT NULL (a nullable column adds a leading
+-- null-flag byte and shifts the row stride; the generator/writer model NOT NULL
+-- only). The columns exercise the typed path the old CSV-split sink got wrong:
+-- two VARSIZED columns, mixed INT16/INT32 widths, and a FLOAT64.
+CREATE SINK conntest_sink (num_records INT16 NOT NULL, activity_sec INT32 NOT NULL, application VARSIZED NOT NULL, device VARSIZED NOT NULL, subscribers INT16 NOT NULL, volume_total_bytes FLOAT64 NOT NULL) TYPE ODBC SET (
+    'localhost'          AS `SINK`.db_host,
+    '5432'               AS `SINK`.db_port,
+    'nebulastream'       AS `SINK`.database,
+    'nes'                AS `SINK`.username,
+    'nes'                AS `SINK`.password,
+    'PostgreSQL Unicode' AS `SINK`.driver,
+    'conntest_sink_tbl'  AS `SINK`.`table`,
+    'Native'             AS `SINK`.OUTPUT_FORMAT);

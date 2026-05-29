@@ -1,0 +1,21 @@
+-- A second valid ODBC sink configuration with a DIFFERENT, simpler schema than
+-- basic.nesql — three columns including a nullable SCALAR (`reading`) AND a
+-- nullable VARSIZED (`note`), both declared without NOT NULL. It exists to prove
+-- the conn-test is schema-driven: the framework parses THIS schema, generates
+-- rows for it (with the nullable columns NULL on a deterministic fraction of
+-- rows), feeds them to the harness as JSONL, creates the matching table, and reads
+-- back — all from the config, no fixture.
+--
+-- The harness decodes the JSONL into native engine buffers through the engine's own
+-- JSON input formatter (nullable columns included — a `null` becomes a NULL tuple
+-- field), so nullable SCALAR and VARSIZED columns round-trip without any Python-side
+-- layout handling. `output_format` is `Native`.
+CREATE SINK conntest_sink (sensor_id INT32 NOT NULL, reading FLOAT64, note VARSIZED) TYPE ODBC SET (
+    'localhost'          AS `SINK`.db_host,
+    '5432'               AS `SINK`.db_port,
+    'nebulastream'       AS `SINK`.database,
+    'nes'                AS `SINK`.username,
+    'nes'                AS `SINK`.password,
+    'PostgreSQL Unicode' AS `SINK`.driver,
+    'conntest_sink_tbl'  AS `SINK`.`table`,
+    'Native'             AS `SINK`.OUTPUT_FORMAT);
