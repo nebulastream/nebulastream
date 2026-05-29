@@ -27,8 +27,8 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>

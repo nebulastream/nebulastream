@@ -23,8 +23,8 @@
 #include <vector>
 
 #include <simdjson.h>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
 #include <InputFormatIndexer.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>

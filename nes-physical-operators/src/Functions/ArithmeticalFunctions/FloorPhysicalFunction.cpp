@@ -16,9 +16,9 @@
 
 #include <utility>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <std/cmath.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>

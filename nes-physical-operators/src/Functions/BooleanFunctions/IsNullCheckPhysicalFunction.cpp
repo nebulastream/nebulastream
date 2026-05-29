@@ -14,9 +14,9 @@
 #include <Functions/BooleanFunctions/IsNullCheckPhysicalFunction.hpp>
 
 #include <utility>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>

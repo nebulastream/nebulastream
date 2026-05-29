@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -23,11 +23,11 @@
 #include <vector>
 
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
-#include <Nautilus/Interface/BufferRef/OutputFormatterBufferRef.hpp>
-#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/BufferRef/ColumnTupleBufferRef.hpp>
+#include <Interface/BufferRef/OutputFormatterBufferRef.hpp>
+#include <Interface/BufferRef/RowTupleBufferRef.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/OutputFormatterProvider.hpp>

@@ -23,9 +23,9 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>

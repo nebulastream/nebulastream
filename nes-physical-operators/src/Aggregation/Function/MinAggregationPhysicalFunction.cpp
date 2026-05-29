@@ -20,12 +20,12 @@
 #include <utility>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Util.hpp>
+#include <Interface/Record.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
+#include <Util.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>

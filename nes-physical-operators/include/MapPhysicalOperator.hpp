@@ -16,7 +16,7 @@
 #include <memory>
 #include <optional>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 

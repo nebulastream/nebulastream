@@ -19,7 +19,7 @@
 #include <ostream>
 #include <unordered_map>
 #include <utility>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cpptrace/from_current.hpp>

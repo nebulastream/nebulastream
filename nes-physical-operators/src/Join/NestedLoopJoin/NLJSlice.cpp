@@ -20,8 +20,8 @@
 #include <numeric>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <SliceStore/Slice.hpp>
 
 namespace NES

@@ -26,10 +26,10 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <fmt/format.h>

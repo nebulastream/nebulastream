@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
 #include <InputFormatter.hpp>

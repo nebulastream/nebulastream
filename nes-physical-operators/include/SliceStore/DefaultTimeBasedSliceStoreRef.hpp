@@ -20,7 +20,7 @@
 #include <span>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>

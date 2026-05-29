@@ -21,9 +21,9 @@
 #include <function.hpp>
 #include <static.hpp>
 
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <DataTypes/DataTypesUtil.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatter.hpp>
 #include <RawBufferIndex.hpp>

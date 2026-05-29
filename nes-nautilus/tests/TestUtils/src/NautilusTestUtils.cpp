@@ -28,15 +28,14 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Util.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Hash/HashFunction.hpp>
+#include <Interface/Hash/MurMur3HashFunction.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -50,6 +49,7 @@
 #include <nautilus/val_ptr.hpp>
 #include <std/sstream.h>
 #include <ErrorHandling.hpp>
+#include <Util.hpp>
 
 namespace NES::TestUtils
 {

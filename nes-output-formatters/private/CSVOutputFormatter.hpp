@@ -24,9 +24,9 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Formatter.hpp>

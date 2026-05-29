@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <val_bool.hpp>

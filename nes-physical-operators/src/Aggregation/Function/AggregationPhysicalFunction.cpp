@@ -17,9 +17,9 @@
 #include <cstdint>
 #include <utility>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypesUtil.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
 

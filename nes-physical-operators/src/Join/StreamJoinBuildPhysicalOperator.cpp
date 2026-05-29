@@ -15,8 +15,8 @@
 
 #include <memory>
 #include <utility>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>

@@ -16,8 +16,8 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Time/Timestamp.hpp>

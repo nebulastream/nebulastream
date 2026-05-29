@@ -16,10 +16,10 @@
 #include <initializer_list>
 #include <memory>
 #include <unordered_map>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/BooleanFunctions/AndPhysicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrPhysicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>

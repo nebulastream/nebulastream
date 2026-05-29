@@ -16,8 +16,8 @@
 
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
 #include <HashMapSlice.hpp>
 

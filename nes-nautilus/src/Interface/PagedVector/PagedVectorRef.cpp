@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/function.hpp>

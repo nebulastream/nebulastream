@@ -18,12 +18,12 @@
 #include <memory>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
 

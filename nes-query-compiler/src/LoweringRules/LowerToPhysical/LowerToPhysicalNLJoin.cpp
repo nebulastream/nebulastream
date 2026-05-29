@@ -30,6 +30,9 @@
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
@@ -37,9 +40,6 @@
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>

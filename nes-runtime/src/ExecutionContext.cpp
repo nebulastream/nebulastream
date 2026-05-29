@@ -19,12 +19,12 @@
 #include <span>
 #include <string>
 #include <utility>
+#include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>

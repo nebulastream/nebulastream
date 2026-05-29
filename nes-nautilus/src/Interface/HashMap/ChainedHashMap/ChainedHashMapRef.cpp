@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -21,13 +21,13 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/HashMap/HashMapRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <Interface/Hash/HashFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/HashMap.hpp>
+#include <Interface/HashMap/HashMapRef.hpp>
+#include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/static.hpp>

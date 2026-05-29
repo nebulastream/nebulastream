@@ -20,7 +20,7 @@
 #include <span>
 #include <type_traits>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <SliceCacheConfiguration.hpp>
 #include <val_concepts.hpp>

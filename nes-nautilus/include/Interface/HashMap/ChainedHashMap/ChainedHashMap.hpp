@@ -21,8 +21,8 @@
 #include <span>
 #include <utility>
 #include <vector>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Interface/Hash/HashFunction.hpp>
+#include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
