@@ -47,3 +47,14 @@ gh act -W .github/workflows/pr.yml -P self-hosted=catthehacker/ubuntu:runner-lat
 - https://nektosact.com/
 - https://nektosact.com/installation/gh.html
 - https://cli.github.com/
+
+## Compile-Time Regression Workflow
+
+The compile-time regression workflow measures compilation time every night to track slowly
+increasing build times and allows analyzing pending PRs before merging.
+
+It can be invoked via the gh CLI. Local support via `act` is currently not implemented.
+
+```
+gh workflow run .github/workflows/compile-time-regression.yml --field branch="your-branch"
+```
