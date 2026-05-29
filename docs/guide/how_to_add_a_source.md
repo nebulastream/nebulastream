@@ -76,11 +76,10 @@ target_link_libraries(mqtt-source-validation-plugin-library PRIVATE PahoMqttCpp:
 ```
 Notes:
 - Plugin name, Registry type, and Registry name are fixed and must match internal expectations.
-- The output library name is freely chosen
+- The output library name is freely chosen.
 - Use `FetchContent` for third-party dependencies not already included in our internal `vcpkg/vcpkg.json`.
 
-Both plugins will be compiled into a library that is linked against the source registry.
-Upon activation of the plugins, CMake will generate a `Registrar` type for each registry, which passes the registration function (source plugin) or validation function (validation plugin) for our `MQTTSource` to the source registry.
+For a detailed explanation of the plugin system, CMake macros, and how registries work, see `guide/extensibility.md`.
 We will look into the construction/validation more closely in the next section.
 
 ## 3. Validation & Construction
