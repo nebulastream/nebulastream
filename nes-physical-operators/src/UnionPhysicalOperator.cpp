@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <UnionPhysicalOperator.hpp>
+
 #include <optional>
 #include <utility>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <PhysicalOperator.hpp>
-#include <UnionPhysicalOperator.hpp>
 
 namespace NES
 {

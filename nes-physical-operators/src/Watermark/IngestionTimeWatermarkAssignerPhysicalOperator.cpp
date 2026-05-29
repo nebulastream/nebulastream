@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
+
 #include <optional>
 #include <utility>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
