@@ -34,3 +34,6 @@ endif()
 
 add_nes_unit_test(TestTupleBufferTest "TestTupleBufferTest.cpp")
 target_link_libraries(TestTupleBufferTest nes-nautilus-test-util)
+
+add_nes_unit_test(bloom-filter-unit-tests "UnitTests/BloomFilterTest.cpp")
+target_link_libraries(bloom-filter-unit-tests nes-nautilus-test-util)
