@@ -1,0 +1,17 @@
+-- A valid MQTT sink configuration.
+--
+-- `server_uri`, `topic`, and `output_format` are the load-bearing keys;
+-- `qos` defaults to 1. Config-key grammar matches ConfigParametersMQTTSink in
+-- nes-plugins/Sinks/MQTTSink/MQTTSink.hpp. The endpoint is a concrete literal —
+-- binding never connects, which is why config validation needs no live broker.
+--
+-- OUTPUT_FORMAT is descriptor-only in conn-test: the harness runs no formatter
+-- (in the real engine, formatting is lowered out of the descriptor and
+-- query-compiled). MQTTSink is a byte pipe; the runner puts JSONL on the wire
+-- directly. The token must stay non-Native so the harness takes the record-stream
+-- path (not the .nes path), and 'JSON' is the honest name for what's on the wire.
+CREATE SINK conntest_sink (value VARSIZED NOT NULL) TYPE MQTT SET (
+    'tcp://localhost:1883' AS `SINK`.server_uri,
+    'demo/topic'           AS `SINK`.topic,
+    '1'                    AS `SINK`.qos,
+    'JSON'                 AS `SINK`.OUTPUT_FORMAT);

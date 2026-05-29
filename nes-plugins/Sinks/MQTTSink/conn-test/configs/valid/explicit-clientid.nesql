@@ -1,0 +1,14 @@
+-- basic.nesql with an explicit `client_id`. Every other sink config omits the
+-- key, so the sink always takes its generate-a-UUID default; this config pins
+-- the other branch — the user-supplied id is parsed (CLIENT_ID in
+-- ConfigParametersMQTTSink) and used verbatim at connect time. The sink-side
+-- loader never rewrites client_id (unlike the source loader), so the literal
+-- here is what the paho client really connects with; scenarios run
+-- sequentially within the plugin group, so the fixed id cannot collide with
+-- itself.
+CREATE SINK conntest_sink (value VARSIZED NOT NULL) TYPE MQTT SET (
+    'tcp://localhost:1883'  AS `SINK`.server_uri,
+    'demo/topic'            AS `SINK`.topic,
+    'conntest-explicit-id'  AS `SINK`.client_id,
+    '1'                     AS `SINK`.qos,
+    'JSON'                  AS `SINK`.OUTPUT_FORMAT);
