@@ -140,13 +140,12 @@ jobs:
       run_reason: "Nightly Benchmark"
 
   create-nightly-image:
-    needs: [ build-and-test ]
-    if: ${{ !github.event.act && inputs.ref == 'main' }}
+    if: ${{ !github.event.act }}
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit
     with:
       head_sha: "main"
-      dockerhub-tag: "nightly"
+      dockerhub-tag: "latest"
 
   send-zulip-msg-on-failure:
     needs: [ compile-time-regression, create-nightly-image, large-tests, full-clang-tidy ]
