@@ -157,6 +157,5 @@ void MQTTSink::stop(Runtime::Execution::PipelineExecutionContext&)
 
 ## 5. Testing
 
-Currently, there is no way to test sinks easily, especially ones that require external systems to be booted up.
-However, you can write unit tests if you require any additional logic that does not revolve around I/O.
-In the near future, we plan to integrate a toolkit for containerized testing of sources/sinks that interact with external systems.
+Testing sinks follows the same approach as sources: unit tests for non-I/O logic are possible, while
+testing against external systems is limited. See `guide/how_to_add_a_source.md` for details.
