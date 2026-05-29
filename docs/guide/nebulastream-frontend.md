@@ -529,13 +529,7 @@ Each model entry requires:
 - `input` - List of input fields with name and type (must match the model's input tensor)
 - `output` - List of output fields with name and type (must match the model's output tensor)
 
-The equivalent SQL syntax is:
-
-```sql
-CREATE MODEL iris ('/path/to/iris.onnx')
-INPUT (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32)
-OUTPUT (setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32);
-```
+For the equivalent SQL syntax and full usage examples, see `guide/query_api.md`.
 
 **Example: Complete Topology with Model Inference**
 
