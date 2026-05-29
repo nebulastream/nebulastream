@@ -1,0 +1,37 @@
+# MQTT data-service topology for the conn-test harness (sink side). Owned by the
+# MQTT sink plugin's conn-test surface (`nes-plugins/Sinks/MQTTSink/conn-test/`);
+# the `conntest` CLI discovers it via the `nes-plugins/**/conn-test/compose.yaml`
+# glob (see `nes-conn-test/runner/conntest_runner/cli.py`).
+#
+# This file declares ONLY the plugin's data service. The framework's `runner`
+# service is merged on top from `nes-conn-test/runner/runner.compose.yaml` (one
+# copy for all plugins). Identical wiring to the MQTT *source* compose — the only
+# difference is the bind-mount path of mosquitto.conf.
+#
+# * `broker` — eclipse-mosquitto:2.0. The sink publishes the harness's bytes
+#   here (`tcp://broker:1883`); the loader's read-back uses a persistent
+#   (clean_session=False) subscription so the broker queues the sink's QoS-1
+#   publishes for collection after the run — `persistence true` +
+#   `max_queued_messages 0` in mosquitto.conf keep that queue intact.
+#
+# The loader's `compose_service` / `compose_port` (broker / 1883) must match the
+# service declared here; discovery validates this at collection time (§5.5).
+#
+# Required env var (set by the `conntest` CLI): HOST_NEBULASTREAM_ROOT.
+
+services:
+  broker:
+    image: eclipse-mosquitto:2.0
+    command: ["/usr/sbin/mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]
+    volumes:
+      - ${HOST_NEBULASTREAM_ROOT}/nes-plugins/Sinks/MQTTSink/conn-test/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      # `--wait` blocks on this healthcheck. mosquitto_pub returns 0 only after a
+      # successful CONNECT + PUBLISH + PUBACK, so `--wait` unblocks when the
+      # broker is actually accepting MQTT.
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "healthcheck", "-m", "test", "-q", "1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+      start_interval: 200ms

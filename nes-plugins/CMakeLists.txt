@@ -21,6 +21,7 @@ activate_optional_plugin("Sources/GeneratorSource" ON)
 activate_optional_plugin("Sources/MQTTSource" ON)
 activate_optional_plugin("Sources/ODBCSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
+activate_optional_plugin("Sinks/MQTTSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
 
