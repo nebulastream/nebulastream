@@ -1,0 +1,23 @@
+-- A valid ODBC sink configuration (Postgres over the PostgreSQL Unicode driver).
+--
+-- Config-key grammar matches ConfigParametersODBCSink in
+-- nes-plugins/Sinks/ODBCSink/ODBCSink.hpp: db_host / db_port / database /
+-- username / password / driver / table. `table` is a reserved word, so it is
+-- backticked. `output_format` is set to `Native`, so the sink receives the
+-- engine's native tuple layout and binds each column by type (the conn-test
+-- harness feeds it native tuples to match). Host/port are concrete literals —
+-- binding never connects.
+--
+-- The schema deliberately mixes types to exercise the typed path: a VARSIZED
+-- column that carries embedded commas / quotes (the bug the old CSV-split sink
+-- got wrong), a FLOAT64, and a nullable VARSIZED (`note`, no NOT NULL) so SQL
+-- NULL round-trips as NULL rather than an empty string.
+CREATE SINK conntest_sink (id INTEGER NOT NULL, label VARSIZED NOT NULL, score FLOAT64 NOT NULL, note VARSIZED) TYPE ODBC SET (
+    'localhost'          AS `SINK`.db_host,
+    '5432'               AS `SINK`.db_port,
+    'nebulastream'       AS `SINK`.database,
+    'nes'                AS `SINK`.username,
+    'nes'                AS `SINK`.password,
+    'PostgreSQL Unicode' AS `SINK`.driver,
+    'conntest_sink_tbl'  AS `SINK`.`table`,
+    'Native'             AS `SINK`.OUTPUT_FORMAT);

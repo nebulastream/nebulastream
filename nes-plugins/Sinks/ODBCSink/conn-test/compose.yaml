@@ -1,0 +1,40 @@
+# ODBC data-service topology for the conn-test harness (sink side). Owned by the
+# ODBC sink plugin's conn-test surface (`nes-plugins/Sinks/ODBCSink/conn-test/`);
+# the `conntest` CLI discovers it via the `nes-plugins/**/conn-test/compose.yaml`
+# glob (see `nes-conn-test/runner/conntest_runner/cli.py`).
+#
+# This file declares ONLY the plugin's data service. The framework's `runner`
+# service is merged on top from `nes-conn-test/runner/runner.compose.yaml` (one
+# copy for all plugins). Identical wiring to the ODBC *source* compose — the only
+# difference is the bind-mount path of init-db.sql.
+#
+# * `db` — postgres:16-alpine. The harness reaches it via the `PostgreSQL
+#   Unicode` driver registered at /etc/odbcinst.ini by the dev image, exactly as
+#   the ODBC source does; the sink INSERTs rows the loader then reads back over
+#   TCP via psycopg. The per-test target tables are created by the loader's
+#   prepare() — init-db.sql only needs to let pg_isready pass — so unlike the
+#   source there is no template table to seed.
+#
+# The loader's `compose_service` / `compose_port` (db / 5432) must match the
+# service declared here; discovery validates this at collection time (§5.5).
+#
+# Required env var (set by the `conntest` CLI): HOST_NEBULASTREAM_ROOT.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nes
+      POSTGRES_PASSWORD: nes
+      POSTGRES_DB: nebulastream
+    volumes:
+      - ${HOST_NEBULASTREAM_ROOT}/nes-plugins/Sinks/ODBCSink/conn-test/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      # `--wait` blocks on this healthcheck. pg_isready returns 0 only after
+      # Postgres has finished its init scripts and accepts connections.
+      test: ["CMD-SHELL", "pg_isready -U nes -d nebulastream"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+      start_interval: 500ms

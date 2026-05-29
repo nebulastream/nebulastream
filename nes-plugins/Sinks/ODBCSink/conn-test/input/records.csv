@@ -1,0 +1,12 @@
+1,"a,b",2.5,hello
+2,o'brien,-1.25,
+3,"she said ""hi""",0.0,world
+4,plain,3.75,"x,y"
+5,trailing space ,100.5,
+6,"semi;colon",-42.0,note6
+7,"line one",7.25,"has,comma,note"
+8,empty-note-next,0.5,
+9,"quote'and,comma",12.0,n9
+10,simple,256.75,n10
+11,"a,b,c,d",-0.5,
+12,last,9999.5,done

@@ -6,6 +6,16 @@ resolution-markers = [
     "python_full_version < '3.15'",
 ]
 
+[manifest]
+members = [
+    "conntest-plugin-mqttsink",
+    "conntest-plugin-mqttsource",
+    "conntest-plugin-odbcsink",
+    "conntest-plugin-odbcsource",
+    "conntest-runner",
+    "nebulastream-conntest-workspace",
+]
+
 [[package]]
 name = "ast-serialize"
 version = "0.5.0"
@@ -56,11 +66,32 @@ wheels = [
 ]
 
 [[package]]
-name = "conntest-runner"
-version = "0.1.0"
-source = { editable = "." }
+name = "conntest-plugin-mqttsink"
+version = "0"
+source = { virtual = "nes-plugins/Sinks/MQTTSink/conn-test" }
 dependencies = [
     { name = "paho-mqtt" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "paho-mqtt", specifier = ">=2,<3" }]
+
+[[package]]
+name = "conntest-plugin-mqttsource"
+version = "0"
+source = { virtual = "nes-plugins/Sources/MQTTSource/conn-test" }
+dependencies = [
+    { name = "paho-mqtt" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "paho-mqtt", specifier = ">=2,<3" }]
+
+[[package]]
+name = "conntest-plugin-odbcsink"
+version = "0"
+source = { virtual = "nes-plugins/Sinks/ODBCSink/conn-test" }
+dependencies = [
     { name = "psycopg", extra = ["binary"] },
 ]
 
@@ -92,10 +123,6 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "paho-mqtt", specifier = ">=1.6,<3" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },
-]
 
 [package.metadata.requires-dev]
 dev = [
