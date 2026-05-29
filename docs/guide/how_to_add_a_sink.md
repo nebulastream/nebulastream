@@ -157,5 +157,6 @@ void MQTTSink::stop(Runtime::Execution::PipelineExecutionContext&)
 
 ## 5. Testing
 
-Testing sinks follows the same approach as sources: unit tests for non-I/O logic are possible, while
-testing against external systems is limited. See `guide/how_to_add_a_source.md` for details.
+Testing sinks follows the same approach as sources: write unit tests for logic that does not revolve
+around I/O. Testing against an external system is not easily possible today; the connector tests will
+cover it once they land. See `standards/testing_guidelines.md` for which layer applies to what.
