@@ -79,8 +79,14 @@ jobs:
         run: |
           "$SCCACHE_BIN" --show-stats
           ./.nix/nix-cmake.sh --build cmake-build-nix --target nes-single-node-worker -j"$(nproc)"
+          ./.nix/nix-cmake.sh --build cmake-build-nix --target systest -j"$(nproc)"
           "$SCCACHE_BIN" --show-stats
           "$SCCACHE_BIN" --stop-server
+
+      - name: Run system tests via devShell
+        run: |
+          source .github/.env/test-none.env
+          ./.nix/nix-run.sh ctest --test-dir cmake-build-nix -j -L Systest --output-on-failure --output-junit cmake-build-nix/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
 
       - name: Upload build artifacts on failure
         if: failure()
