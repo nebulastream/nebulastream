@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/DeltaLogicalOperator.hpp>
 #include <CommonParserFunctions.hpp>
 
 namespace NES::Parsers
@@ -73,6 +74,11 @@ void AntlrSQLHelper::addProjection(std::optional<FieldIdentifier> identifier, Lo
 std::vector<AntlrSQLHelper::Projection>& AntlrSQLHelper::getProjections()
 {
     return projectionBuilder;
+}
+
+std::vector<DeltaLogicalOperator::DeltaExpression>& AntlrSQLHelper::getDeltaExpressions()
+{
+    return deltaExpressionBuilder;
 }
 
 }

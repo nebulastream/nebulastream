@@ -18,6 +18,7 @@ endfunction()
 
 add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp")
 add_nes_logical_operators_test(nes-projection-logical-operator-test "ProjectionLogicalOperatorTest.cpp")
+add_nes_logical_operators_test(delta-logical-operator-test "DeltaLogicalOperatorTest.cpp")
 
 if (ENABLE_IREE_TESTS)
     add_nes_logical_operators_test(infer-model-logical-operator-test "InferModelLogicalOperatorTest.cpp")

@@ -33,6 +33,12 @@ public:
     /// Adds all fields from the other record to this record. This will overwrite existing fields.
     void reassignFields(const Record& other);
     const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
+    /// Access the underlying VarVal.
+    VarVal& at(const RecordFieldIdentifier& recordFieldIdentifier);
+
+    /// Replace the VarVals value for `recordFieldIdentifier` with varVal and returns the old value.
+    /// This function requires the underlying type of the existing and new varVal to be equal.
+    VarVal exchange(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& newValue);
     void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal);
     nautilus::val<uint64_t> getNumberOfFields() const;
     [[nodiscard]] bool hasField(const RecordFieldIdentifier& fieldName) const;

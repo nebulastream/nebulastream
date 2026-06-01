@@ -160,6 +160,7 @@ relationPrimary
     | inlineTable                             #inlineTableDefault2
     | inlineSource                            #inlineDefinedSource
     | modelInferenceSource tableAlias         #modelInferenceRelation
+    | deltaSource                             #deltaDefinedSource
     ;
 
 modelInferenceSource
@@ -174,6 +175,19 @@ modelInferenceInput
 
 inlineSource
     : type=identifier '(' parameters=namedConfigExpressionSeq ')'
+    ;
+
+deltaSource
+    : DELTA '(' deltaInput ',' deltaExpressions+=deltaExpression (',' deltaExpressions+=deltaExpression)* ')'
+    ;
+
+deltaInput
+    : source=identifier
+    | '(' query ')'
+    ;
+
+deltaExpression
+    : field=identifier AS alias=identifier
     ;
 
 schema: SCHEMA schemaDefinition
@@ -522,7 +536,7 @@ MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';
 INPUT: 'INPUT';
 OUTPUT: 'OUTPUT';
-
+DELTA: 'DELTA' | 'delta';
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************
 /// End of the keywords list

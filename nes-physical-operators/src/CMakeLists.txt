@@ -13,6 +13,8 @@
 add_source_files(nes-physical-operators
         PhysicalPlan.cpp
         MapPhysicalOperator.cpp
+        DeltaPhysicalOperator.cpp
+        DeltaOperatorHandler.cpp
         SelectionPhysicalOperator.cpp
         UnionPhysicalOperator.cpp
         UnionRenamePhysicalOperator.cpp

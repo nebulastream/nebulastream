@@ -1,0 +1,109 @@
+# name: function/CaseWhen.test
+# description: Tests for the CASE WHEN function
+# groups: [Function, FunctionCaseWhen]
+
+CREATE LOGICAL SOURCE intersection(id INT32, traffic_density FLOAT32);
+CREATE PHYSICAL SOURCE FOR intersection TYPE File;
+ATTACH INLINE
+1,0.5
+2,0.1
+3,0.9
+4,0.6
+5,0.3
+
+CREATE SINK signal(intersection.id INT32, signal VARSIZED NOT NULL) TYPE File;
+
+# TODO step-1: write a minimal conditional query.
+#   - Project the id column and a derived "signal" column from `intersection`, into the `signal` sink.
+#   - The signal should be "GO" when traffic_density > 0.7, else "STOP".
+#   - Below the `----` separator, list the expected output rows (one per input row, in input order).
+#   - Useful function: Conditional(cond, then, else)
+#   - Useful literal types: FLOAT32(x), VARSIZED("..."), INT64(x)
+
+CREATE LOGICAL SOURCE intersection2(id INT32, traffic_density FLOAT32, emergency_vehicle_detected BOOLEAN, pedestrian_waiting BOOLEAN);
+CREATE PHYSICAL SOURCE FOR intersection2 TYPE File;
+ATTACH INLINE
+1,0.5,true,false
+2,0.1,false,true
+3,0.9,false,false
+4,0.6,false,false
+5,0.3,false,false
+6,0.1,true,true
+7,0.9,false,true
+8,0.6,false,true
+9,0.3,false,true
+10,0.95,true,false
+
+CREATE SINK traffic_light(intersection2.id INT32, signal_command VARSIZED NOT NULL) TYPE File;
+
+# All five branches are taken: emergency, pedestrian+low density, high density, medium density, and default.
+# Rows 6-10 test priority ordering when multiple conditions could match:
+#   Row 6: emergency + pedestrian both true -> first branch (emergency) wins
+#   Row 7: pedestrian=true but density too high for branch 2, falls through to branch 3
+#   Row 8: pedestrian=true but density too high for branch 2, density not > 0.8, falls to branch 4
+#   Row 9: pedestrian=true but density not < 0.2, density not > 0.5, falls to default
+#   Row 10: emergency=true with high density -> branch 1 wins over branch 3
+SELECT id,
+       Conditional(emergency_vehicle_detected, VARSIZED("ALL_RED_EMERGENCY"),
+                   pedestrian_waiting AND traffic_density < FLOAT32(0.2), VARSIZED("PEDESTRIAN_WALK"),
+                   traffic_density > FLOAT32(0.8), VARSIZED("GREEN_EXTENDED"),
+                   traffic_density > FLOAT32(0.5), VARSIZED("GREEN_STANDARD"),
+                   VARSIZED("FLASHING_YELLOW"))
+       AS signal_command
+FROM intersection2
+INTO traffic_light;
+----
+1,ALL_RED_EMERGENCY
+2,PEDESTRIAN_WALK
+3,GREEN_EXTENDED
+4,GREEN_STANDARD
+5,FLASHING_YELLOW
+6,ALL_RED_EMERGENCY
+7,GREEN_EXTENDED
+8,GREEN_STANDARD
+9,FLASHING_YELLOW
+10,ALL_RED_EMERGENCY
+
+CREATE SINK code_sink(intersection2.id INT32, code INT64 NOT NULL) TYPE File;
+
+# Result-type coverage: Conditional with a non-VARSIZED (INT64) result.
+SELECT id,
+       Conditional(emergency_vehicle_detected, INT64(1000), INT64(2000)) AS code
+FROM intersection2
+INTO code_sink;
+----
+1,1000
+2,2000
+3,2000
+4,2000
+5,2000
+6,1000
+7,2000
+8,2000
+9,2000
+10,1000
+
+# ERROR CASES
+
+# Condition operand is not BOOLEAN (INT32 instead).
+SELECT Conditional(id, VARSIZED("yes"), VARSIZED("no")) AS signal
+FROM intersection
+INTO File();
+----
+Error 2006
+
+# Non-BOOLEAN condition at a later index (first condition is BOOLEAN, second is INT32).
+SELECT Conditional(emergency_vehicle_detected, VARSIZED("A"),
+                   id, VARSIZED("B"),
+                   VARSIZED("C")) AS signal
+FROM intersection2
+INTO File();
+----
+Error 2006
+
+# Result branches must share the default's type (INT32 result vs VARSIZED default).
+SELECT Conditional(emergency_vehicle_detected, id, VARSIZED("hello")) AS signal
+FROM intersection2
+INTO File();
+----
+Error 2006

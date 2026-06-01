@@ -10,12 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_unit_test(statement-binder-test "StatementBinderTest.cpp")
-target_link_libraries(statement-binder-test nes-sql-parser nes-frontend-lib)
-target_compile_definitions(statement-binder-test PRIVATE INFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata")
-if (ENABLE_IREE_TESTS)
-    target_compile_definitions(statement-binder-test PRIVATE NES_HAVE_IREE_TESTS=1)
-endif ()
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
-add_nes_unit_test(delta-parser-test "DeltaParserTest.cpp")
-target_link_libraries(delta-parser-test nes-sql-parser nes-frontend-lib)
+add_plugin(Conditional LogicalFunction nes-logical-operators ConditionalLogicalFunction.cpp)
+add_plugin(Conditional PhysicalFunction nes-physical-operators ConditionalPhysicalFunction.cpp)
+
+add_unreflection_plugin(LogicalFunction Conditional)
+target_include_directories(nes-logical-operators-LogicalFunction-unreflection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+if (NES_ENABLES_TESTS)
+    add_subdirectory(tests)
+endif()

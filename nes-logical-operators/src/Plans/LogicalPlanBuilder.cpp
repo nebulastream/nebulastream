@@ -29,6 +29,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/DeltaLogicalOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
@@ -70,6 +71,12 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(
         INVALID_QUERY_ID,
         {TypedLogicalOperator<InlineSourceLogicalOperator>{
             std::move(inlineSourceType), schema, std::move(sourceConfig), std::move(parserConfig)}});
+}
+
+LogicalPlan LogicalPlanBuilder::addDelta(std::vector<DeltaLogicalOperator::DeltaExpression> deltaExpressions, const LogicalPlan& queryPlan)
+{
+    NES_TRACE("LogicalPlanBuilder: add delta operator to query plan");
+    return promoteOperatorToRoot(queryPlan, TypedLogicalOperator<DeltaLogicalOperator>{std::move(deltaExpressions)});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
