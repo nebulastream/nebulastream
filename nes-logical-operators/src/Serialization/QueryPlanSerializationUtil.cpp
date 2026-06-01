@@ -59,7 +59,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         alreadySerialized.insert(itr.getId());
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         auto reflectedOperator = OperatorSerializationUtil::serializeOperator(itr);
-        const auto serializedString = rfl::json::write(*reflect(reflectedOperator));
+        const auto serializedString = rfl::json::write(*ReflectionContext{}.reflect(reflectedOperator));
         serializableQueryPlan.add_reflectedoperators(serializedString);
     }
 

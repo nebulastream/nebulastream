@@ -51,7 +51,7 @@ std::string TraitSet::explain(ExplainVerbosity verbosity) const
             ", "));
 }
 
-Reflected Reflector<TraitSet>::operator()(const TraitSet& traitSet) const
+Reflected Reflector<TraitSet>::operator()(const TraitSet& traitSet, const ReflectionContext& context) const
 {
     detail::ReflectedTraitSet reflectedTraitSet;
 
@@ -60,7 +60,7 @@ Reflected Reflector<TraitSet>::operator()(const TraitSet& traitSet) const
         reflectedTraitSet.traits.emplace_back(trait);
     }
 
-    return reflect(reflectedTraitSet);
+    return context.reflect(reflectedTraitSet);
 }
 
 TraitSet Unreflector<TraitSet>::operator()(const Reflected& reflected, const ReflectionContext& context) const

@@ -113,9 +113,11 @@ std::string_view FieldAccessLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function) const
+Reflected
+Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .dataType = function.getDataType()});
+    return context.reflect(
+        detail::ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .dataType = function.getDataType()});
 }
 
 FieldAccessLogicalFunction

@@ -23,11 +23,11 @@ namespace NES
 template <typename T>
 struct Reflector<std::optional<T>>
 {
-    Reflected operator()(const std::optional<T>& data) const
+    Reflected operator()(const std::optional<T>& data, const ReflectionContext& context) const
     {
         if (data.has_value())
         {
-            return reflect(data.value());
+            return context.reflect(data.value());
         }
         return Reflected{std::nullopt};
     }

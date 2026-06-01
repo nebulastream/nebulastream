@@ -56,6 +56,7 @@ concept LogicalFunctionConcept = requires(
     std::vector<LogicalFunction> children,
     DataType dataType,
     Schema schema,
+    const ReflectionContext& context,
     const T& rhs) {
     /// Returns a string representation of the function
     { thisFunction.explain(verbosity) } -> std::convertible_to<std::string>;
@@ -79,7 +80,7 @@ concept LogicalFunctionConcept = requires(
     { thisFunction.getType() } -> std::convertible_to<std::string_view>;
 
     /// Serialize the function to a Reflected object
-    { NES::reflect(thisFunction) } -> std::same_as<Reflected>;
+    { context.reflect(thisFunction) } -> std::same_as<Reflected>;
 
     /// Compares this function with another for equality
     { thisFunction == rhs } -> std::convertible_to<bool>;
@@ -99,7 +100,7 @@ struct ErasedLogicalFunction
     [[nodiscard]] virtual std::vector<LogicalFunction> getChildren() const = 0;
     [[nodiscard]] virtual LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const = 0;
     [[nodiscard]] virtual std::string_view getType() const = 0;
-    [[nodiscard]] virtual Reflected reflect() const = 0;
+    [[nodiscard]] virtual Reflected reflect(const ReflectionContext& context) const = 0;
     [[nodiscard]] virtual bool equals(const ErasedLogicalFunction& other) const = 0;
 
     friend bool operator==(const ErasedLogicalFunction& lhs, const ErasedLogicalFunction& rhs) { return lhs.equals(rhs); }
@@ -297,7 +298,7 @@ struct FunctionModel : ErasedLogicalFunction
         return impl.withChildren(children);
     }
 
-    [[nodiscard]] Reflected reflect() const override { return NES::reflect(impl); }
+    [[nodiscard]] Reflected reflect(const ReflectionContext& context) const override { return context.reflect(impl); }
 
     [[nodiscard]] std::string_view getType() const override { return impl.getType(); }
 

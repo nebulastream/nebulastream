@@ -57,7 +57,7 @@ private:
 template <>
 struct Reflector<IsNullCheckLogicalFunction>
 {
-    Reflected operator()(const IsNullCheckLogicalFunction& function) const;
+    Reflected operator()(const IsNullCheckLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

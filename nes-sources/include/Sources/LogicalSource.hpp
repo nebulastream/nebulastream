@@ -54,7 +54,7 @@ private:
 template <>
 struct Reflector<LogicalSource>
 {
-    Reflected operator()(const LogicalSource& logicalSource) const;
+    Reflected operator()(const LogicalSource& logicalSource, const ReflectionContext& context) const;
 };
 
 template <>

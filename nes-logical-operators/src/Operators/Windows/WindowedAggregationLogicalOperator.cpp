@@ -261,17 +261,17 @@ const WindowMetaData& WindowedAggregationLogicalOperator::getWindowMetaData() co
 }
 
 Reflected Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
-    const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const
+    const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op, const ReflectionContext& context) const
 {
     std::vector<std::pair<std::string, Reflected>> windowAggregations;
 
     for (const auto& agg : op->getWindowAggregation())
     {
-        windowAggregations.emplace_back(agg->getName(), agg->reflect());
+        windowAggregations.emplace_back(agg->getName(), agg->reflect(context));
     }
 
-    return reflect(detail::ReflectedWindowAggregationLogicalOperator{
-        .aggregations = windowAggregations, .keys = op->getGroupingKeys(), .windowType = reflectWindowType(*op->getWindowType())});
+    return context.reflect(detail::ReflectedWindowAggregationLogicalOperator{
+        .aggregations = windowAggregations, .keys = op->getGroupingKeys(), .windowType = reflectWindowType(*op->getWindowType(), context)});
 }
 
 TypedLogicalOperator<WindowedAggregationLogicalOperator> Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(

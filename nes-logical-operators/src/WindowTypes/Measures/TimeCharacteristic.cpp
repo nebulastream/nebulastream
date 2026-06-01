@@ -96,9 +96,10 @@ struct ReflectedTimeCharacteristic
     Windowing::TimeUnit timeUnit;
 };
 
-Reflected Reflector<Windowing::TimeCharacteristic>::operator()(const Windowing::TimeCharacteristic& characteristic) const
+Reflected Reflector<Windowing::TimeCharacteristic>::operator()(
+    const Windowing::TimeCharacteristic& characteristic, const ReflectionContext& context) const
 {
-    return reflect(ReflectedTimeCharacteristic{
+    return context.reflect(ReflectedTimeCharacteristic{
         .field = characteristic.field, .type = characteristic.getType(), .timeUnit = characteristic.getTimeUnit()});
 }
 

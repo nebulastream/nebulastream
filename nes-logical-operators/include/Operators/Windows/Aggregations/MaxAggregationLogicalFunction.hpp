@@ -42,7 +42,7 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    [[nodiscard]] Reflected reflect() const;
+    /// [[nodiscard]] Reflected reflect(const ReflectionContext& context) const; samuelGG
     [[nodiscard]] MaxAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
     [[nodiscard]] MaxAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
     [[nodiscard]] MaxAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
@@ -63,12 +63,10 @@ private:
     FieldAccessLogicalFunction asField;
 };
 
-static_assert(WindowAggregationFunctionConcept<MaxAggregationLogicalFunction>);
-
 template <>
 struct Reflector<MaxAggregationLogicalFunction>
 {
-    Reflected operator()(const MaxAggregationLogicalFunction& function) const;
+    Reflected operator()(const MaxAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
@@ -76,6 +74,9 @@ struct Unreflector<MaxAggregationLogicalFunction>
 {
     MaxAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
+
+static_assert(WindowAggregationFunctionConcept<MaxAggregationLogicalFunction>);
+
 }
 
 namespace NES::detail

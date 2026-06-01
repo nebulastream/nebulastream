@@ -54,7 +54,7 @@ private:
 template <>
 struct Reflector<CastToTypeLogicalFunction>
 {
-    Reflected operator()(const CastToTypeLogicalFunction& function) const;
+    Reflected operator()(const CastToTypeLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

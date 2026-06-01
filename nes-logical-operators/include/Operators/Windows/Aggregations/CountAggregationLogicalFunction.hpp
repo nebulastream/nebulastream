@@ -44,7 +44,7 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    [[nodiscard]] Reflected reflect() const;
+    ///[[nodiscard]] Reflected reflect(const ReflectionContext& context) const; samuelGG
     [[nodiscard]] CountAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
     [[nodiscard]] CountAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
     [[nodiscard]] CountAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
@@ -66,12 +66,10 @@ private:
     FieldAccessLogicalFunction asField;
 };
 
-static_assert(WindowAggregationFunctionConcept<CountAggregationLogicalFunction>);
-
 template <>
 struct Reflector<CountAggregationLogicalFunction>
 {
-    Reflected operator()(const CountAggregationLogicalFunction& function) const;
+    Reflected operator()(const CountAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
@@ -79,6 +77,8 @@ struct Unreflector<CountAggregationLogicalFunction>
 {
     CountAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
+
+static_assert(WindowAggregationFunctionConcept<CountAggregationLogicalFunction>);
 
 }
 

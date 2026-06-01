@@ -36,7 +36,7 @@ public:
 
     [[nodiscard]] std::string_view getName() const noexcept;
     [[nodiscard]] std::string toString() const;
-    [[nodiscard]] Reflected reflect() const;
+    /// [[nodiscard]] Reflected reflect(const ReflectionContext& context) const; Samuel GG
     [[nodiscard]] DataType getInputStamp() const;
     [[nodiscard]] DataType getPartialAggregateStamp() const;
     [[nodiscard]] DataType getFinalAggregateStamp() const;
@@ -62,12 +62,10 @@ private:
     FieldAccessLogicalFunction asField;
 };
 
-static_assert(WindowAggregationFunctionConcept<MinAggregationLogicalFunction>);
-
 template <>
 struct Reflector<MinAggregationLogicalFunction>
 {
-    Reflected operator()(const MinAggregationLogicalFunction& function) const;
+    Reflected operator()(const MinAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
@@ -75,6 +73,9 @@ struct Unreflector<MinAggregationLogicalFunction>
 {
     MinAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
+
+static_assert(WindowAggregationFunctionConcept<MinAggregationLogicalFunction>);
+
 }
 
 namespace NES::detail

@@ -73,7 +73,7 @@ struct Unreflector<ConcatLogicalFunction>
 template <>
 struct Reflector<ConcatLogicalFunction>
 {
-    Reflected operator()(const ConcatLogicalFunction& function) const;
+    Reflected operator()(const ConcatLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<ConcatLogicalFunction>);

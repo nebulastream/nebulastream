@@ -53,9 +53,9 @@ bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs)
     return !(lhs == rhs);
 }
 
-Reflected Reflector<LogicalSource>::operator()(const LogicalSource& logicalSource) const
+Reflected Reflector<LogicalSource>::operator()(const LogicalSource& logicalSource, const ReflectionContext& context) const
 {
-    return reflect(std::pair{logicalSource.getLogicalSourceName(), *logicalSource.getSchema()});
+    return context.reflect(std::pair{logicalSource.getLogicalSourceName(), *logicalSource.getSchema()});
 }
 
 LogicalSource Unreflector<LogicalSource>::operator()(const Reflected& rfl, const ReflectionContext& context) const

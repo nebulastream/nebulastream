@@ -93,9 +93,9 @@ std::string EqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} = {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& function) const
+Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedEqualsLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedEqualsLogicalFunction{.left = function.left, .right = function.right});
 }
 
 EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

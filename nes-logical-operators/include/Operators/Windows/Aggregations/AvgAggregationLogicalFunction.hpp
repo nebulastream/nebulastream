@@ -41,7 +41,7 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    [[nodiscard]] Reflected reflect() const;
+    ///[[nodiscard]] Reflected reflect(const ReflectionContext& context) const; samuelGG
     [[nodiscard]] AvgAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
     [[nodiscard]] AvgAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
     [[nodiscard]] AvgAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
@@ -62,12 +62,10 @@ private:
     FieldAccessLogicalFunction asField;
 };
 
-static_assert(WindowAggregationFunctionConcept<AvgAggregationLogicalFunction>);
-
 template <>
 struct Reflector<AvgAggregationLogicalFunction>
 {
-    Reflected operator()(const AvgAggregationLogicalFunction& function) const;
+    Reflected operator()(const AvgAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
@@ -75,6 +73,9 @@ struct Unreflector<AvgAggregationLogicalFunction>
 {
     AvgAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
+
+static_assert(WindowAggregationFunctionConcept<AvgAggregationLogicalFunction>);
+
 }
 
 namespace NES::detail

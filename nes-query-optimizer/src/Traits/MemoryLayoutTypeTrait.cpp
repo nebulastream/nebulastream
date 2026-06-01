@@ -62,9 +62,9 @@ std::string_view MemoryLayoutTypeTrait::getName() const
     return NAME;
 }
 
-Reflected Reflector<MemoryLayoutTypeTrait>::operator()(const MemoryLayoutTypeTrait& trait) const
+Reflected Reflector<MemoryLayoutTypeTrait>::operator()(const MemoryLayoutTypeTrait& trait, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedMemoryLayoutTypeTrait{trait.memoryLayout});
+    return context.reflect(detail::ReflectedMemoryLayoutTypeTrait{trait.memoryLayout});
 }
 
 MemoryLayoutTypeTrait Unreflector<MemoryLayoutTypeTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const

@@ -62,7 +62,7 @@ private:
 template <>
 struct Reflector<OctetLengthLogicalFunction>
 {
-    Reflected operator()(const OctetLengthLogicalFunction& function) const;
+    Reflected operator()(const OctetLengthLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

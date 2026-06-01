@@ -88,14 +88,11 @@ MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredStamp(c
         .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
 }
 
-Reflected MaxAggregationLogicalFunction::reflect() const
+Reflected
+Reflector<MaxAggregationLogicalFunction>::operator()(const MaxAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<MaxAggregationLogicalFunction>::operator()(const MaxAggregationLogicalFunction& function) const
-{
-    return reflect(detail::ReflectedMaxAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return context.reflect(
+        detail::ReflectedMaxAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
 MaxAggregationLogicalFunction

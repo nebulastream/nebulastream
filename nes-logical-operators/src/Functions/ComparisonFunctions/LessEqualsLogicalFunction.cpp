@@ -92,9 +92,10 @@ std::string_view LessEqualsLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<LessEqualsLogicalFunction>::operator()(const LessEqualsLogicalFunction& function) const
+Reflected
+Reflector<LessEqualsLogicalFunction>::operator()(const LessEqualsLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedLessEqualsLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedLessEqualsLogicalFunction{.left = function.left, .right = function.right});
 }
 
 LessEqualsLogicalFunction

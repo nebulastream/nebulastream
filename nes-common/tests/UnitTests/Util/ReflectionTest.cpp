@@ -64,9 +64,9 @@ struct InnerDataDeserializationConfig
 template <>
 struct Reflector<InnerData>
 {
-    Reflected operator()(const InnerData& data) const
+    Reflected operator()(const InnerData& data, const ReflectionContext& context) const
     {
-        return reflect(detail::ReflectedInnerData{.value = data.value, .optionalField = data.optionalField});
+        return context.reflect(detail::ReflectedInnerData{.value = data.value, .optionalField = data.optionalField});
     }
 };
 
@@ -105,9 +105,9 @@ TEST(ReflectionTest, NestedContextPropagation)
 {
     const OuterData outer{.name = "outer", .inner = InnerData{.value = "inner", .optionalField = 99}, .count = 5};
 
-    auto reflected = reflect(outer);
-
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = true}};
+
+    auto reflected = context.reflect(outer);
 
     auto deserialized = context.unreflect<OuterData>(reflected);
 
@@ -122,9 +122,9 @@ TEST(ReflectionTest, NestedContextPropagationExcludesOptionalField)
 {
     const OuterData outer{.name = "outer", .inner = InnerData{.value = "inner", .optionalField = 99}, .count = 5};
 
-    auto reflected = reflect(outer);
-
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = false}};
+
+    auto reflected = context.reflect(outer);
 
     auto deserialized = context.unreflect<OuterData>(reflected);
 
@@ -141,9 +141,9 @@ TEST(ReflectionTest, VectorSerialization)
         InnerData{.value = "second", .optionalField = 2},
         InnerData{.value = "third", .optionalField = std::nullopt}};
 
-    auto reflected = reflect(vec);
-
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = true}};
+
+    auto reflected = context.reflect(vec);
 
     auto deserialized = context.unreflect<std::vector<InnerData>>(reflected);
 
@@ -160,9 +160,9 @@ TEST(ReflectionTest, OptionalSerialization)
 {
     const std::optional<InnerData> opt = InnerData{.value = "test", .optionalField = 42};
 
-    auto reflected = reflect(opt);
-
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = true}};
+
+    auto reflected = context.reflect(opt);
 
     auto deserialized = context.unreflect<std::optional<InnerData>>(reflected);
 
@@ -175,9 +175,9 @@ TEST(ReflectionTest, OptionalEmpty)
 {
     const std::optional<InnerData> opt = std::nullopt;
 
-    auto reflected = reflect(opt);
-
     const auto context = ReflectionContext{InnerDataDeserializationConfig{.includeOptionalField = true}};
+
+    auto reflected = context.reflect(opt);
 
     auto deserialized = context.unreflect<std::optional<InnerData>>(reflected);
 
@@ -187,8 +187,8 @@ TEST(ReflectionTest, OptionalEmpty)
 TEST(ReflectionTest, VariantSerialization)
 {
     const std::variant<InnerData, int> variant = InnerData{.value = "test", .optionalField = 42};
-    auto reflected = reflect(variant);
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = true}};
+    auto reflected = context.reflect(variant);
     auto deserialized = context.unreflect<std::variant<InnerData, int>>(reflected);
     ASSERT_TRUE(std::holds_alternative<InnerData>(deserialized));
     EXPECT_EQ(std::get<InnerData>(deserialized).value, "test");
@@ -198,8 +198,8 @@ TEST(ReflectionTest, VariantSerialization)
 TEST(ReflectionTest, PairSerialization)
 {
     const std::pair<InnerData, int> pair = std::pair{InnerData{.value = "test", .optionalField = 42}, 123};
-    auto reflected = reflect(pair);
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = true}};
+    auto reflected = context.reflect(pair);
     auto deserialized = context.unreflect<std::pair<InnerData, int>>(reflected);
     EXPECT_EQ(std::get<0>(deserialized).value, "test");
     EXPECT_EQ(std::get<0>(deserialized).optionalField.value(), 42);
@@ -212,8 +212,8 @@ TEST(ReflectionTest, MapSerialization)
         = {{"first", InnerData{.value = "first", .optionalField = 1}},
            {"second", InnerData{.value = "second", .optionalField = 2}},
            {"third", InnerData{.value = "third", .optionalField = std::nullopt}}};
-    auto reflected = reflect(map);
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = true}};
+    auto reflected = context.reflect(map);
     auto deserialized = context.unreflect<std::unordered_map<std::string, InnerData>>(reflected);
     ASSERT_EQ(deserialized.size(), 3);
     EXPECT_EQ(deserialized.at("first").value, "first");
@@ -233,8 +233,8 @@ TEST(ReflectionTest, EnumSerialization)
         Third
     };
     const TestEnum testEnum = TestEnum::Second;
-    auto reflected = reflect(testEnum);
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = true}};
+    auto reflected = context.reflect(testEnum);
     auto deserialized = context.unreflect<TestEnum>(reflected);
     EXPECT_EQ(deserialized, TestEnum::Second);
 }
@@ -243,9 +243,8 @@ TEST(ReflectionTest, MissingConfig)
 {
     const OuterData outer{.name = "outer", .inner = InnerData{.value = "inner", .optionalField = 99}, .count = 5};
 
-    auto reflected = reflect(outer);
-
     const ReflectionContext context{};
+    auto reflected = context.reflect(outer);
 
     EXPECT_ANY_THROW(context.unreflect<OuterData>(reflected));
 }
@@ -256,8 +255,8 @@ TEST(ReflectionTest, UnsignedConversion)
     /// C++ guarantees that for any uint64_t u static_cast<uint64_t>(static_cast<int64_t>(u)) == u ,
     /// but this test makes sure that no code of reflectcpp or us breaks this.
     constexpr uint64_t unsignedInput = std::dynamic_extent - 1;
-    const auto reflected = reflect(unsignedInput);
     const ReflectionContext context{};
+    const auto reflected = context.reflect(unsignedInput);
     const auto deserialized = context.unreflect<uint64_t>(reflected);
     EXPECT_EQ(deserialized, unsignedInput);
 }

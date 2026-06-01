@@ -56,7 +56,7 @@ struct JoinImplementationTypeTrait final
 template <>
 struct Reflector<JoinImplementationTypeTrait>
 {
-    Reflected operator()(const JoinImplementationTypeTrait& trait) const;
+    Reflected operator()(const JoinImplementationTypeTrait& trait, const ReflectionContext& context) const;
 };
 
 template <>

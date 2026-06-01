@@ -91,9 +91,9 @@ std::string FloorLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("FLOOR({})", child.explain(verbosity));
 }
 
-Reflected Reflector<FloorLogicalFunction>::operator()(const FloorLogicalFunction& function) const
+Reflected Reflector<FloorLogicalFunction>::operator()(const FloorLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedFloorLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedFloorLogicalFunction{.child = function.child});
 }
 
 FloorLogicalFunction Unreflector<FloorLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

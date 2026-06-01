@@ -92,7 +92,7 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunc
     std::unreachable();
 }
 
-Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction&) const
+Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction&, const ReflectionContext&) const
 {
     PRECONDITION(false, "CastToTypeLogicalFunction not expected to be reflected");
     std::unreachable();

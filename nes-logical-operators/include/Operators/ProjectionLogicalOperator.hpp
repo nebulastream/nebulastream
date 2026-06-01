@@ -102,7 +102,7 @@ private:
 template <>
 struct Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op) const;
+    Reflected operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op, const ReflectionContext& context) const;
 };
 
 template <>

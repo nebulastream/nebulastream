@@ -103,9 +103,9 @@ LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) c
     return withDataType(newDataType).withChildren(newChildren);
 }
 
-Reflected Reflector<AndLogicalFunction>::operator()(const AndLogicalFunction& function) const
+Reflected Reflector<AndLogicalFunction>::operator()(const AndLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedAndLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedAndLogicalFunction{.left = function.left, .right = function.right});
 }
 
 AndLogicalFunction Unreflector<AndLogicalFunction>::operator()(const Reflected& rfl, const ReflectionContext& context) const

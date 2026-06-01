@@ -78,7 +78,7 @@ private:
 template <>
 struct Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<InlineSinkLogicalOperator>& op) const;
+    Reflected operator()(const TypedLogicalOperator<InlineSinkLogicalOperator>& op, const ReflectionContext& context) const;
 };
 
 template <>

@@ -92,9 +92,9 @@ std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("ABS({})", child.explain(verbosity));
 }
 
-Reflected Reflector<AbsoluteLogicalFunction>::operator()(const AbsoluteLogicalFunction& function) const
+Reflected Reflector<AbsoluteLogicalFunction>::operator()(const AbsoluteLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedAbsoluteLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedAbsoluteLogicalFunction{.child = function.child});
 }
 
 AbsoluteLogicalFunction Unreflector<AbsoluteLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

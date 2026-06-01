@@ -56,7 +56,7 @@ private:
 template <>
 struct Reflector<SqrtLogicalFunction>
 {
-    Reflected operator()(const SqrtLogicalFunction& function) const;
+    Reflected operator()(const SqrtLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

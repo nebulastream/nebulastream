@@ -67,6 +67,7 @@ concept LogicalOperatorConcept = requires(
     OperatorId operatorId,
     std::vector<LogicalOperator> children,
     TraitSet traitSet,
+    const ReflectionContext& context,
     const T& rhs,
     std::vector<Schema> inputSchemas) {
     /// Returns a string representation of the operator
@@ -88,7 +89,7 @@ concept LogicalOperatorConcept = requires(
     { thisOperator.getName() } noexcept -> std::convertible_to<std::string_view>;
 
     /// Serialize the operator to a Reflected object
-    { NES::reflect(wrapped) } -> std::same_as<Reflected>;
+    { context.reflect(wrapped) } -> std::same_as<Reflected>;
 
     /// Returns the trait set of the operator
     { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
@@ -121,7 +122,7 @@ struct ErasedLogicalOperator : std::enable_shared_from_this<ErasedLogicalOperato
     [[nodiscard]] virtual LogicalOperator withChildren(std::vector<LogicalOperator> children) const = 0;
     [[nodiscard]] virtual LogicalOperator withTraitSet(TraitSet traitSet) const = 0;
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
-    [[nodiscard]] virtual Reflected reflect() const = 0;
+    [[nodiscard]] virtual Reflected reflect(const ReflectionContext& context) const = 0;
     [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
     [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
     [[nodiscard]] virtual Schema getOutputSchema() const = 0;
@@ -509,9 +510,9 @@ struct OperatorModel : ErasedLogicalOperator
 
     [[nodiscard]] std::string_view getName() const noexcept override { return impl.getName(); }
 
-    [[nodiscard]] Reflected reflect() const override
+    [[nodiscard]] Reflected reflect(const ReflectionContext& context) const override
     {
-        return Reflector<TypedLogicalOperator<OperatorType>>{}(TypedLogicalOperator<OperatorType>{this->shared_from_this()});
+        return Reflector<TypedLogicalOperator<OperatorType>>{}(TypedLogicalOperator<OperatorType>{this->shared_from_this()}, context);
     }
 
     [[nodiscard]] TraitSet getTraitSet() const override { return impl.getTraitSet(); }
@@ -569,8 +570,16 @@ private:
         }
     }
 };
-
 }
+
+template <>
+struct Reflector<NES::detail::ErasedLogicalOperator>
+{
+    Reflected operator()(const NES::detail::ErasedLogicalOperator& op, const ReflectionContext& context) const
+    {
+        return op.reflect(context);
+    }
+};
 
 #define SELF_REF \
     template <LogicalOperatorConcept T> \

@@ -335,7 +335,7 @@ struct Descriptor
 
     [[nodiscard]] DescriptorConfig::Config getConfig() const { return config; }
 
-    [[nodiscard]] Reflected getReflectedConfig() const;
+    [[nodiscard]] Reflected getReflectedConfig(const ReflectionContext& context) const;
     static DescriptorConfig::Config unreflectConfig(const Reflected& rfl, const ReflectionContext& context);
 
 protected:

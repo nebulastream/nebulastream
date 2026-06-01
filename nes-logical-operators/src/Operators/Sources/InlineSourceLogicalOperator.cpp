@@ -128,8 +128,8 @@ InlineSourceLogicalOperator::InlineSourceLogicalOperator(
 {
 }
 
-Reflected
-Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(const TypedLogicalOperator<InlineSourceLogicalOperator>&) const
+Reflected Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(
+    const TypedLogicalOperator<InlineSourceLogicalOperator>&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();

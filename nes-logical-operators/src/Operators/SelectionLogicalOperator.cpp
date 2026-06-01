@@ -131,10 +131,10 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected
-Reflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(
+    const TypedLogicalOperator<SelectionLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedSelectionLogicalOperator{op->getPredicate()});
+    return context.reflect(detail::ReflectedSelectionLogicalOperator{op->getPredicate()});
 }
 
 TypedLogicalOperator<SelectionLogicalOperator>

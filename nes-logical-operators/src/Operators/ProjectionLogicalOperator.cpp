@@ -224,8 +224,8 @@ std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected
-Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(
+    const TypedLogicalOperator<ProjectionLogicalOperator>& op, const ReflectionContext& context) const
 {
     detail::ReflectedProjectionLogicalOperator reflected;
 
@@ -246,7 +246,7 @@ Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const Typ
 
     reflected.asterisk = op->asterisk;
 
-    return reflect(reflected);
+    return context.reflect(reflected);
 }
 
 TypedLogicalOperator<ProjectionLogicalOperator>

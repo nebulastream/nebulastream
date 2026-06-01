@@ -52,11 +52,6 @@ std::string_view CountAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
-Reflected CountAggregationLogicalFunction::reflect() const
-{
-    return NES::reflect(this);
-}
-
 CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
@@ -92,9 +87,11 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
     throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
 }
 
-Reflected Reflector<CountAggregationLogicalFunction>::operator()(const CountAggregationLogicalFunction& function) const
+Reflected Reflector<CountAggregationLogicalFunction>::operator()(
+    const CountAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedCountAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return context.reflect(
+        detail::ReflectedCountAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
 CountAggregationLogicalFunction

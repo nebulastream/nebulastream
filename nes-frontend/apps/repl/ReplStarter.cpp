@@ -115,7 +115,7 @@ std::ostream& printStatementResult(std::ostream& os, NES::StatementOutputFormat 
         case NES::StatementOutputFormat::TEXT:
             return os << toText(result);
         case NES::StatementOutputFormat::JSON:
-            return os << rfl::json::write(NES::rowsToJsonArray(result)) << '\n';
+            return os << rfl::json::write(NES::rowsToJsonArray(result, NES::ReflectionContext{})) << '\n';
     }
     std::unreachable();
 }

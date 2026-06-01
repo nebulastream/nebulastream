@@ -60,9 +60,10 @@ std::string_view JoinImplementationTypeTrait::getName() const
     return NAME;
 }
 
-Reflected Reflector<JoinImplementationTypeTrait>::operator()(const JoinImplementationTypeTrait& trait) const
+Reflected
+Reflector<JoinImplementationTypeTrait>::operator()(const JoinImplementationTypeTrait& trait, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedImplementationTypeTrait{trait.implementationType});
+    return context.reflect(detail::ReflectedImplementationTypeTrait{trait.implementationType});
 }
 
 JoinImplementationTypeTrait

@@ -52,9 +52,9 @@ std::string_view PlacementTrait::getName() const /// NOLINT(readability-convert-
     return NAME;
 }
 
-Reflected Reflector<PlacementTrait>::operator()(const PlacementTrait& trait) const
+Reflected Reflector<PlacementTrait>::operator()(const PlacementTrait& trait, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedPlacementTrait{trait.onNode});
+    return context.reflect(detail::ReflectedPlacementTrait{trait.onNode});
 }
 
 PlacementTrait Unreflector<PlacementTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const

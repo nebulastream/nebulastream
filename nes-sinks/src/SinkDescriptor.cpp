@@ -128,15 +128,15 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
     return lhs.sinkName == rhs.sinkName;
 }
 
-Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
+Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedSinkDescriptor{
+    return context.reflect(detail::ReflectedSinkDescriptor{
         .sinkName = descriptor.sinkName,
         .schema = *descriptor.schema,
         .sinkType = descriptor.sinkType,
         .host = descriptor.host,
         .formatConfig = descriptor.formatConfig,
-        .config = descriptor.getReflectedConfig(),
+        .config = descriptor.getReflectedConfig(context),
     });
 }
 

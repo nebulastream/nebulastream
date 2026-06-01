@@ -91,9 +91,9 @@ std::string_view PowLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<PowLogicalFunction>::operator()(const PowLogicalFunction& function) const
+Reflected Reflector<PowLogicalFunction>::operator()(const PowLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedPowLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedPowLogicalFunction{.left = function.left, .right = function.right});
 }
 
 PowLogicalFunction Unreflector<PowLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

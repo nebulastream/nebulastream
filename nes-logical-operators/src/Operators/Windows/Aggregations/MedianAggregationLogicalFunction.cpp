@@ -86,14 +86,11 @@ MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredS
         .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp));
 }
 
-Reflected MedianAggregationLogicalFunction::reflect() const
+Reflected Reflector<MedianAggregationLogicalFunction>::operator()(
+    const MedianAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<MedianAggregationLogicalFunction>::operator()(const MedianAggregationLogicalFunction& function) const
-{
-    return reflect(detail::ReflectedMedianAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return context.reflect(
+        detail::ReflectedMedianAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
 MedianAggregationLogicalFunction

@@ -164,7 +164,7 @@ TEST_F(InferModelLogicalOperatorTest, ReflectionRoundTrip)
 {
     const auto op = makeOp();
 
-    const auto reflected = reflect(op);
+    const auto reflected = ReflectionContext{}.reflect(op);
     const auto restored = ReflectionContext{}.unreflect<TypedLogicalOperator<InferModelLogicalOperator>>(reflected);
 
     /// Verify preserved state

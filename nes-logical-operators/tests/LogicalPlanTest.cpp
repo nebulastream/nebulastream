@@ -190,13 +190,13 @@ struct TestTrait final : DefaultTrait<TestTrait>
 template <>
 struct Reflector<TestTrait>
 {
-    Reflected operator()(const TestTrait&) const { return Reflected{}; };
+    Reflected operator()(const TestTrait&, const ReflectionContext&) const { return Reflected{}; };
 };
 
 template <>
 struct Unreflector<TestTrait>
 {
-    TestTrait operator()(const Reflected&) const { return TestTrait{}; };
+    TestTrait operator()(const Reflected&, const ReflectionContext&) const { return TestTrait{}; };
 };
 
 TEST_F(LogicalPlanTest, AddTraits)
@@ -309,7 +309,7 @@ private:
 template <>
 struct Reflector<TypedLogicalOperator<TestOperatorWithSelfAccess>>
 {
-    Reflected operator()(const TypedLogicalOperator<TestOperatorWithSelfAccess>&) const { return Reflected{}; };
+    Reflected operator()(const TypedLogicalOperator<TestOperatorWithSelfAccess>&, const ReflectionContext&) const { return Reflected{}; };
 };
 
 template <>

@@ -83,14 +83,11 @@ MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredStamp(c
         .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
 }
 
-Reflected MinAggregationLogicalFunction::reflect() const
+Reflected
+Reflector<MinAggregationLogicalFunction>::operator()(const MinAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<MinAggregationLogicalFunction>::operator()(const MinAggregationLogicalFunction& function) const
-{
-    return reflect(detail::ReflectedMinAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return context.reflect(
+        detail::ReflectedMinAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
 MinAggregationLogicalFunction

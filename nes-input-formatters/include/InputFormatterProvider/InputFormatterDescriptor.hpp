@@ -61,7 +61,7 @@ private:
 template <>
 struct Reflector<InputFormatterDescriptor>
 {
-    Reflected operator()(const InputFormatterDescriptor& inputFormatterDescriptor) const;
+    Reflected operator()(const InputFormatterDescriptor& inputFormatterDescriptor, const ReflectionContext& context) const;
 };
 
 template <>
