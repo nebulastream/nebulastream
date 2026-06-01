@@ -1,0 +1,54 @@
+# MQTT data-service topology for the conn-test harness. Owned by the MQTT
+# plugin's conn-test surface (`nes-plugins/Sources/MQTTSource/conn-test/`);
+# the `conntest` CLI discovers it via the `nes-plugins/**/conn-test/
+# compose.yaml` glob (see `nes-conn-test/runner/conntest_runner/cli.py`).
+#
+# This file declares ONLY the plugin's data service(s). The framework's
+# `runner` service (the dev-image container that hosts pytest +
+# conntest-harness) lives once in `nes-conn-test/runner/runner.compose.yaml`
+# and is merged on top at run time — it used to be a ~45-line stanza
+# copy-pasted into every plugin file (docker-setup-v3 §5.1).
+#
+# * `broker` — the eclipse-mosquitto:2.0 MQTT broker under test. The
+#   service name doubles as the DNS-resolvable host the harness connects
+#   to (`tcp://broker:1883`) over the compose-internal bridge. The runner
+#   is created on this same project network by `docker compose run`, so
+#   the name resolves with no host-side networking hacks (no `--add-host`,
+#   no `host.docker.internal`, no host-port discovery, no self-attach).
+#
+# The loader's `compose_service` / `compose_port` (broker / 1883) must
+# match the service declared here; discovery validates this at collection
+# time (cli/discovery §5.5) so a typo fails fast instead of as a
+# `broker:1883` connect timeout.
+#
+# Required env var (set by the `conntest` CLI):
+#
+#   HOST_NEBULASTREAM_ROOT  host path to the repo root. `docker compose`
+#                           runs against the host daemon, which resolves
+#                           bind-mount *sources* from the host — so the
+#                           mosquitto.conf source must be an absolute host
+#                           path.
+
+services:
+  broker:
+    image: eclipse-mosquitto:2.0
+    command: ["/usr/sbin/mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]
+    volumes:
+      # Bind-mount the catalog's mosquitto.conf into the standard
+      # mosquitto config dir, read-only. Absolute host path because
+      # `docker compose` runs against the host daemon; the daemon
+      # resolves bind paths from the host.
+      - ${HOST_NEBULASTREAM_ROOT}/nes-plugins/Sources/MQTTSource/conn-test/${CONNTEST_SETUP_FILE:?CONNTEST_SETUP_FILE required}:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      # `--wait` blocks on this healthcheck. mosquitto_pub returns 0
+      # only after a successful CONNECT + PUBLISH + PUBACK, so `--wait`
+      # unblocks when the broker is actually accepting MQTT.
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "healthcheck", "-m", "test", "-q", "1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+      # Tight start_interval (the poll rate during start_period) makes
+      # `--wait` unblock within ~200ms of the broker coming up rather
+      # than the 5s-default interval.
+      start_interval: 200ms

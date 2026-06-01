@@ -1,0 +1,19 @@
+-- A persistent-session MQTT source config for the reconnect scenario.
+-- clean_session=false + a fixed client_id make the broker keep the
+-- subscription and queue QoS-1 messages across a disconnect, so a toxiproxy
+-- cut+restore (or a process respawn) resumes delivery without re-subscribing.
+-- serveruri and topic are rewritten by the loader; the rest is authored
+-- literally.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE MQTT SET (
+    'localhost'            AS `SOURCE`.host,
+    'tcp://localhost:1883' AS `SOURCE`.serveruri,
+    'demo/topic'           AS `SOURCE`.topic,
+    '1'                    AS `SOURCE`.qos,
+    '200'                  AS `SOURCE`.flushintervalms,
+    '10'                   AS `SOURCE`.maxflushretries,
+    'false'                AS `SOURCE`.cleansession,
+    'conntest-reconnect'   AS `SOURCE`.client_id,
+    'Native'               AS INPUT_FORMATTER.`TYPE`
+);

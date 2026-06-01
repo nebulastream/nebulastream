@@ -1,0 +1,10 @@
+-- Invalid: `topic` is required, so DescriptorConfig::validateAndFormat rejects
+-- this at bind time with INVALID_CONFIG_PARAMETER (1000).
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE MQTT SET (
+    'localhost'            AS `SOURCE`.host,
+    'tcp://localhost:1883' AS `SOURCE`.serveruri,
+    '1'                    AS `SOURCE`.qos,
+    'Native'               AS INPUT_FORMATTER.`TYPE`
+);

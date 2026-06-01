@@ -1,0 +1,22 @@
+-- A valid MQTT source configuration.
+--
+-- The config keys (`serveruri`, `topic`, `qos`) match ConfigParametersMQTTSource
+-- in nes-plugins/Sources/MQTTSource/MQTTSource.hpp. `SOURCE` and `TYPE` are
+-- reserved words, so the binder requires backticks. `SOURCE`.host is a
+-- worker-placement hint; the broker endpoint itself lives in `serveruri`.
+-- INPUT_FORMATTER.`TYPE` is mandatory (a physical source must name a formatter).
+-- The endpoint is a concrete literal — binding never connects.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE MQTT SET (
+    'localhost'            AS `SOURCE`.host,
+    'tcp://localhost:1883' AS `SOURCE`.serveruri,
+    'demo/topic'           AS `SOURCE`.topic,
+    '1'                    AS `SOURCE`.qos,
+    -- Idle end-of-stream budget: keep the source polling for ~2s (200ms × 10)
+    -- before it declares EoS, so a just-published message has time to arrive
+    -- over paho's network thread rather than the source giving up first.
+    '200'                  AS `SOURCE`.flushintervalms,
+    '10'                   AS `SOURCE`.maxflushretries,
+    'Native'               AS INPUT_FORMATTER.`TYPE`
+);
