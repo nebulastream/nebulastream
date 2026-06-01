@@ -59,22 +59,45 @@ DeltaPhysicalOperator::DeltaPhysicalOperator(
 {
 }
 
-void DeltaPhysicalOperator::open(ExecutionContext&, RecordBuffer&) const
+void DeltaPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    /// TODO step-4: open the delta operator.
-    ///   * Allocate a DeltaState as local operator state.
-    ///   * Initialize previousRecord by writing the min value for each delta expression's target field.
-    ///   * Forward to openChild.
-    throw NotImplemented("TODO step-4: implement DeltaPhysicalOperator::open");
+    ctx.setLocalOperatorState(id, std::make_unique<DeltaState>());
+    auto* state = dynamic_cast<DeltaState*>(ctx.getLocalState(id));
+
+    /// Initialize previous record with min values for each delta field.
+    for (const auto& expr : nautilus::static_iterable(deltaExpressions))
+    {
+        state->previousRecord.write(expr.targetField, createNautilusMinValue(expr.targetDataType.type));
+    }
+
+    openChild(ctx, recordBuffer);
 }
 
-void DeltaPhysicalOperator::execute(ExecutionContext&, Record&) const
+void DeltaPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    /// TODO step-4: execute the delta operator on a single record.
-    ///   * On the first record of the buffer: store the current values into previousRecord and drop the record.
-    ///   * On subsequent records: compute current - previous for each delta expression, update previousRecord,
-    ///     write the delta into record, and forward to executeChild.
-    throw NotImplemented("TODO step-4: implement DeltaPhysicalOperator::execute");
+    auto* state = dynamic_cast<DeltaState*>(ctx.getLocalState(id));
+
+    if (state->isFirstRecord)
+    {
+        /// First record of this buffer: store current values and drop the record.
+        for (const auto& expr : nautilus::static_iterable(deltaExpressions))
+        {
+            auto currentValue = expr.readFunction.execute(record, ctx.pipelineMemoryProvider.arena);
+            state->previousRecord.exchange(expr.targetField, currentValue);
+        }
+        state->isFirstRecord = false;
+    }
+    else
+    {
+        /// Subsequent records: compute delta, update previous values, and forward.
+        for (const auto& expr : nautilus::static_iterable(deltaExpressions))
+        {
+            auto currentValue = expr.readFunction.execute(record, ctx.pipelineMemoryProvider.arena);
+            auto previousValue = state->previousRecord.exchange(expr.targetField, currentValue);
+            record.write(expr.targetField, currentValue - previousValue);
+        }
+        executeChild(ctx, record);
+    }
 }
 
 void DeltaPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
