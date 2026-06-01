@@ -57,7 +57,7 @@ private:
 template <>
 struct Reflector<AddLogicalFunction>
 {
-    Reflected operator()(const AddLogicalFunction& function) const;
+    Reflected operator()(const AddLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

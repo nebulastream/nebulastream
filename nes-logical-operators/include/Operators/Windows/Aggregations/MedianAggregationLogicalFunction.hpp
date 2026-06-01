@@ -40,7 +40,6 @@ public:
 
     [[nodiscard]] MedianAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] static std::string_view getName() noexcept;
-    [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] DataType getAggregateType() const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
@@ -57,7 +56,7 @@ private:
 template <>
 struct Reflector<MedianAggregationLogicalFunction>
 {
-    Reflected operator()(const MedianAggregationLogicalFunction& function) const;
+    Reflected operator()(const MedianAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

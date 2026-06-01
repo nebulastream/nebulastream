@@ -71,9 +71,9 @@ TimeUnit TimeUnit::Days()
 
 namespace NES
 {
-Reflected Reflector<Windowing::TimeUnit>::operator()(const Windowing::TimeUnit& timeUnit) const
+Reflected Reflector<Windowing::TimeUnit>::operator()(const Windowing::TimeUnit& timeUnit, const ReflectionContext& context) const
 {
-    return reflect(timeUnit.getMillisecondsConversionMultiplier());
+    return context.reflect(timeUnit.getMillisecondsConversionMultiplier());
 }
 
 Windowing::TimeUnit Unreflector<Windowing::TimeUnit>::operator()(const Reflected& reflected, const ReflectionContext& context) const

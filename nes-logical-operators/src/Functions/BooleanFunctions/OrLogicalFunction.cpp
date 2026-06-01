@@ -90,9 +90,9 @@ LogicalFunction OrLogicalFunction::withInferredDataType(const Schema<Field, Unor
     return copy;
 }
 
-Reflected Reflector<OrLogicalFunction>::operator()(const OrLogicalFunction& function) const
+Reflected Reflector<OrLogicalFunction>::operator()(const OrLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedOrLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedOrLogicalFunction{.left = function.left, .right = function.right});
 }
 
 OrLogicalFunction Unreflector<OrLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

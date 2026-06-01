@@ -126,8 +126,8 @@ Identifier SourceNameLogicalOperator::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-Reflected
-Reflector<TypedLogicalOperator<SourceNameLogicalOperator>>::operator()(const TypedLogicalOperator<SourceNameLogicalOperator>&) const
+Reflected Reflector<TypedLogicalOperator<SourceNameLogicalOperator>>::operator()(
+    const TypedLogicalOperator<SourceNameLogicalOperator>&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();

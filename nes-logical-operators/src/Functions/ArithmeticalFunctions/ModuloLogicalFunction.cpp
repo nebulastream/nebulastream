@@ -96,9 +96,9 @@ std::string ModuloLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} % {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-Reflected Reflector<ModuloLogicalFunction>::operator()(const ModuloLogicalFunction& function) const
+Reflected Reflector<ModuloLogicalFunction>::operator()(const ModuloLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedModuloLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedModuloLogicalFunction{.left = function.left, .right = function.right});
 }
 
 ModuloLogicalFunction Unreflector<ModuloLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

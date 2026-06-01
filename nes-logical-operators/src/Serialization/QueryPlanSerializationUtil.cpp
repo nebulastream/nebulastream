@@ -73,7 +73,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
             .config = itr->reflect(),
             .traitSet = itr->getTraitSet()};
 
-        const auto serializedString = rfl::json::write(*reflect(reflectedOperator));
+        const auto serializedString = rfl::json::write(*ReflectionContext{}.reflect(reflectedOperator));
         serializableQueryPlan.add_reflectedoperators(serializedString);
     }
 

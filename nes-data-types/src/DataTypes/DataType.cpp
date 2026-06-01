@@ -371,9 +371,9 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     return std::nullopt;
 }
 
-Reflected Reflector<DataType>::operator()(const DataType& field) const
+Reflected Reflector<DataType>::operator()(const DataType& field, const ReflectionContext& context) const
 {
-    return reflect(std::make_pair(field.type, field.nullable));
+    return context.reflect(std::make_pair(field.type, field.nullable));
 }
 
 DataType Unreflector<DataType>::operator()(const Reflected& rfl, const ReflectionContext& context) const

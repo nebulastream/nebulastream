@@ -95,9 +95,9 @@ std::string_view SubLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<SubLogicalFunction>::operator()(const SubLogicalFunction& function) const
+Reflected Reflector<SubLogicalFunction>::operator()(const SubLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedSubLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedSubLogicalFunction{.left = function.left, .right = function.right});
 }
 
 SubLogicalFunction Unreflector<SubLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

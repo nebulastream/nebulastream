@@ -106,7 +106,7 @@ struct ReflectedEventTimeWatermarkAssignerLogicalOperator
 template <>
 struct Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op) const;
+    Reflected operator()(const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op, const ReflectionContext& context) const;
 };
 
 template <>

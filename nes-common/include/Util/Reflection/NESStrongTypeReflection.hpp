@@ -28,7 +28,10 @@ namespace NES
 template <typename T, typename Tag, T Invalid, T Initial>
 struct Reflector<NESStrongType<T, Tag, Invalid, Initial>>
 {
-    Reflected operator()(const NESStrongType<T, Tag, Invalid, Initial>& data) const { return reflect(data.getRawValue()); }
+    Reflected operator()(const NESStrongType<T, Tag, Invalid, Initial>& data, const ReflectionContext& context) const
+    {
+        return context.reflect(data.getRawValue());
+    }
 };
 
 template <typename T, typename Tag, T Invalid, T Initial>
@@ -43,7 +46,10 @@ struct Unreflector<NESStrongType<T, Tag, Invalid, Initial>>
 template <typename Tag, StringLiteral Invalid>
 struct Reflector<NESStrongStringType<Tag, Invalid>>
 {
-    Reflected operator()(const NESStrongStringType<Tag, Invalid>& data) const { return reflect(data.getRawValue()); }
+    Reflected operator()(const NESStrongStringType<Tag, Invalid>& data, const ReflectionContext& context) const
+    {
+        return context.reflect(data.getRawValue());
+    }
 };
 
 template <typename Tag, StringLiteral Invalid>
@@ -58,7 +64,10 @@ struct Unreflector<NESStrongStringType<Tag, Invalid>>
 template <typename Tag>
 struct Reflector<NESStrongUUIDType<Tag>>
 {
-    Reflected operator()(const NESStrongUUIDType<Tag>& data) const { return reflect(data.getRawValue()); }
+    Reflected operator()(const NESStrongUUIDType<Tag>& data, const ReflectionContext& context) const
+    {
+        return context.reflect(data.getRawValue());
+    }
 };
 
 template <typename Tag>

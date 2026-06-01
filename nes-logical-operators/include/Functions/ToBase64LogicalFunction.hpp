@@ -63,7 +63,7 @@ private:
 template <>
 struct Reflector<ToBase64LogicalFunction>
 {
-    Reflected operator()(const ToBase64LogicalFunction& function) const;
+    Reflected operator()(const ToBase64LogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

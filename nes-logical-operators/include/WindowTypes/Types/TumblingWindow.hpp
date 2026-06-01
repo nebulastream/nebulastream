@@ -52,7 +52,7 @@ namespace NES
 template <>
 struct Reflector<Windowing::TumblingWindow>
 {
-    Reflected operator()(const Windowing::TumblingWindow& tumblingWindow) const;
+    Reflected operator()(const Windowing::TumblingWindow& tumblingWindow, const ReflectionContext& context) const;
 };
 
 template <>

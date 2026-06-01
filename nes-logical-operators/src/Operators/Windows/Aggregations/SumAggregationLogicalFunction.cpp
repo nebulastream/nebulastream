@@ -118,14 +118,10 @@ bool SumAggregationLogicalFunction::operator==(const SumAggregationLogicalFuncti
     return inputFunction == other.inputFunction && aggregateType == other.aggregateType;
 }
 
-Reflected SumAggregationLogicalFunction::reflect() const
+Reflected
+Reflector<SumAggregationLogicalFunction>::operator()(const SumAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<SumAggregationLogicalFunction>::operator()(const SumAggregationLogicalFunction& function) const
-{
-    return reflect(function.getInputFunction());
+    return context.reflect(function.getInputFunction());
 }
 
 SumAggregationLogicalFunction

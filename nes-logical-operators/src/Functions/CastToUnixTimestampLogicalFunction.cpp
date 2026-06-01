@@ -99,9 +99,10 @@ std::string CastToUnixTimestampLogicalFunction::explain(ExplainVerbosity) const
     return fmt::format("Cast to unix timestamp (ms), outputType={}", outputType);
 }
 
-Reflected Reflector<CastToUnixTimestampLogicalFunction>::operator()(const CastToUnixTimestampLogicalFunction& function) const
+Reflected Reflector<CastToUnixTimestampLogicalFunction>::operator()(
+    const CastToUnixTimestampLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedCastToUnixTimestampLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedCastToUnixTimestampLogicalFunction{.child = function.child});
 }
 
 CastToUnixTimestampLogicalFunction

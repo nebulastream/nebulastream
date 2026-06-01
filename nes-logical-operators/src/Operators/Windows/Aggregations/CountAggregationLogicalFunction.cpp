@@ -80,11 +80,6 @@ bool CountAggregationLogicalFunction::operator==(const CountAggregationLogicalFu
     return inputFunction == other.inputFunction;
 }
 
-Reflected CountAggregationLogicalFunction::reflect() const
-{
-    return NES::reflect(this);
-}
-
 CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
 {
     if (includeNullValues)
@@ -109,9 +104,10 @@ struct ReflectedCountAggregationLogicalFunction
 };
 }
 
-Reflected Reflector<CountAggregationLogicalFunction>::operator()(const CountAggregationLogicalFunction& function) const
+Reflected Reflector<CountAggregationLogicalFunction>::operator()(
+    const CountAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedCountAggregationLogicalFunction{
+    return context.reflect(detail::ReflectedCountAggregationLogicalFunction{
         .inputFunction = function.getInputFunction(), .includeNullValues = function.shallIncludeNullValues()});
 }
 

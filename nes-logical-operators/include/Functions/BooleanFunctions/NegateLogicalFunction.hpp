@@ -58,7 +58,7 @@ private:
 template <>
 struct Reflector<NegateLogicalFunction>
 {
-    Reflected operator()(const NegateLogicalFunction& function) const;
+    Reflected operator()(const NegateLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

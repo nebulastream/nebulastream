@@ -86,9 +86,10 @@ std::string_view IsNullCheckLogicalFunction::getType()
     return NAME;
 }
 
-Reflected Reflector<IsNullCheckLogicalFunction>::operator()(const IsNullCheckLogicalFunction& function) const
+Reflected
+Reflector<IsNullCheckLogicalFunction>::operator()(const IsNullCheckLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedIsNullCheckLogicalFunction{.child = std::make_optional<LogicalFunction>(function.child)});
+    return context.reflect(detail::ReflectedIsNullCheckLogicalFunction{.child = std::make_optional<LogicalFunction>(function.child)});
 }
 
 IsNullCheckLogicalFunction

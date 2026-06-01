@@ -100,9 +100,9 @@ std::string AddLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} + {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-Reflected Reflector<AddLogicalFunction>::operator()(const AddLogicalFunction& function) const
+Reflected Reflector<AddLogicalFunction>::operator()(const AddLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedAddLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedAddLogicalFunction{.left = function.left, .right = function.right});
 }
 
 AddLogicalFunction Unreflector<AddLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
