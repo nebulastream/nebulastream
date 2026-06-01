@@ -50,7 +50,7 @@ namespace NES
 template <>
 struct Reflector<Windowing::TimeMeasure>
 {
-    Reflected operator()(const Windowing::TimeMeasure& measure) const;
+    Reflected operator()(const Windowing::TimeMeasure& measure, const ReflectionContext& context) const;
 };
 
 template <>

@@ -28,11 +28,11 @@ namespace NES
 template <typename T1, typename T2>
 struct Reflector<std::pair<T1, T2>>
 {
-    Reflected operator()(const std::pair<T1, T2>& data) const
+    Reflected operator()(const std::pair<T1, T2>& data, const ReflectionContext& context) const
     {
         std::vector<rfl::Generic> arr;
-        arr.push_back(*reflect(data.first));
-        arr.push_back(*reflect(data.second));
+        arr.push_back(*context.reflect(data.first));
+        arr.push_back(*context.reflect(data.second));
         return Reflected{rfl::Generic::Array{std::move(arr)}};
     }
 };

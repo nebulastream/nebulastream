@@ -28,13 +28,13 @@ namespace NES
 template <typename T>
 struct Reflector<std::vector<T>>
 {
-    Reflected operator()(const std::vector<T>& data) const
+    Reflected operator()(const std::vector<T>& data, const ReflectionContext& context) const
     {
         std::vector<rfl::Generic> result;
         result.reserve(data.size());
         for (const auto& element : data)
         {
-            auto reflected = reflect(element);
+            auto reflected = context.reflect(element);
             result.push_back(reflected);
         }
         return Reflected{rfl::Generic::Array{std::move(result)}};

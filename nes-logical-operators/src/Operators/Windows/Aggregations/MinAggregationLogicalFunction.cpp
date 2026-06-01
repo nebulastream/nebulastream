@@ -93,14 +93,10 @@ MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredType(co
     return MinAggregationLogicalFunction{newInputFunction, newInputFunction->getDataType()};
 }
 
-Reflected MinAggregationLogicalFunction::reflect() const
+Reflected
+Reflector<MinAggregationLogicalFunction>::operator()(const MinAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<MinAggregationLogicalFunction>::operator()(const MinAggregationLogicalFunction& function) const
-{
-    return reflect(function.getInputFunction());
+    return context.reflect(function.getInputFunction());
 }
 
 MinAggregationLogicalFunction

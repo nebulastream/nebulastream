@@ -97,7 +97,7 @@ private:
 template <>
 struct Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<InlineSourceLogicalOperator>&) const;
+    Reflected operator()(const TypedLogicalOperator<InlineSourceLogicalOperator>&, const ReflectionContext& context) const;
 };
 
 template <>

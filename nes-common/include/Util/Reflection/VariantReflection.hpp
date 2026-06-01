@@ -33,11 +33,11 @@ namespace NES
 template <typename... Ts>
 struct Reflector<std::variant<Ts...>>
 {
-    Reflected operator()(const std::variant<Ts...>& data) const
+    Reflected operator()(const std::variant<Ts...>& data, const ReflectionContext& context) const
     {
         rfl::Generic::Object obj;
         obj["index"] = rfl::Generic{static_cast<int64_t>(data.index())};
-        std::visit([&obj](const auto& value) { obj["value"] = *reflect(value); }, data);
+        std::visit([&obj, &context](const auto& value) { obj["value"] = *context.reflect(value); }, data);
         return Reflected{rfl::Generic::Object{std::move(obj)}};
     }
 };

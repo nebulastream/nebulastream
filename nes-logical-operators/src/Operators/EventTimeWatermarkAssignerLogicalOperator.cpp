@@ -171,9 +171,9 @@ Windowing::TimeUnit EventTimeWatermarkAssignerLogicalOperator::getUnit() const
 }
 
 Reflected Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::operator()(
-    const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op) const
+    const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{
+    return context.reflect(detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{
         .operatorId = op.getId(), .onField = op->getOnField(), .timeUnit = op->getUnit()});
 }
 

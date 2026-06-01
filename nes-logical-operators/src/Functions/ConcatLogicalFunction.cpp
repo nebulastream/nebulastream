@@ -96,9 +96,9 @@ std::string_view ConcatLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<ConcatLogicalFunction>::operator()(const ConcatLogicalFunction& function) const
+Reflected Reflector<ConcatLogicalFunction>::operator()(const ConcatLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedConcatLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedConcatLogicalFunction{.left = function.left, .right = function.right});
 }
 
 ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

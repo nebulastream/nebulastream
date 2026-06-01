@@ -94,14 +94,10 @@ MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredType(co
     return MaxAggregationLogicalFunction{newInputFunction, newInputFunction->getDataType()};
 }
 
-Reflected MaxAggregationLogicalFunction::reflect() const
+Reflected
+Reflector<MaxAggregationLogicalFunction>::operator()(const MaxAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<MaxAggregationLogicalFunction>::operator()(const MaxAggregationLogicalFunction& function) const
-{
-    return reflect(function.getInputFunction());
+    return context.reflect(function.getInputFunction());
 }
 
 MaxAggregationLogicalFunction

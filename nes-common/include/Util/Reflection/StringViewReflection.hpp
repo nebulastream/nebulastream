@@ -23,7 +23,7 @@ namespace NES
 template <>
 struct Reflector<std::string_view>
 {
-    Reflected operator()(const std::string_view data) const { return reflect(std::string(data)); }
+    Reflected operator()(const std::string_view data, const ReflectionContext& context) const { return context.reflect(std::string(data)); }
 };
 
 /// No Unreflector so that we don't get a dangling reference

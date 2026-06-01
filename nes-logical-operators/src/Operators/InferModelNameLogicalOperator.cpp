@@ -141,9 +141,9 @@ LogicalOperator InferModelNameLogicalOperator::getChild() const
 }
 
 Reflected Reflector<TypedLogicalOperator<InferModelNameLogicalOperator>>::operator()(
-    const TypedLogicalOperator<InferModelNameLogicalOperator>& op) const
+    const TypedLogicalOperator<InferModelNameLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(
+    return context.reflect(
         detail::ReflectedInferModelNameLogicalOperator{.operatorId = op.getId(), .modelName = std::make_optional(op->getModelName())});
 }
 

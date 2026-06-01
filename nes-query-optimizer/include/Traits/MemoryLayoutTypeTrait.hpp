@@ -50,7 +50,7 @@ struct MemoryLayoutTypeTrait final
 template <>
 struct Reflector<MemoryLayoutTypeTrait>
 {
-    Reflected operator()(const MemoryLayoutTypeTrait& trait) const;
+    Reflected operator()(const MemoryLayoutTypeTrait& trait, const ReflectionContext& context) const;
 };
 
 template <>

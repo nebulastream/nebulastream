@@ -49,7 +49,7 @@ namespace NES
 template <>
 struct Reflector<Windowing::SlidingWindow>
 {
-    Reflected operator()(const Windowing::SlidingWindow& slidingWindow) const;
+    Reflected operator()(const Windowing::SlidingWindow& slidingWindow, const ReflectionContext& context) const;
 };
 
 template <>

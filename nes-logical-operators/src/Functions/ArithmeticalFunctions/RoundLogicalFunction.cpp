@@ -90,9 +90,9 @@ std::string_view RoundLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<RoundLogicalFunction>::operator()(const RoundLogicalFunction& function) const
+Reflected Reflector<RoundLogicalFunction>::operator()(const RoundLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedRoundLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedRoundLogicalFunction{.child = function.child});
 }
 
 RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
