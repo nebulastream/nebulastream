@@ -1,0 +1,170 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[project]
+name = "conntest-runner"
+version = "0.1.0"
+requires-python = ">=3.12"
+# The framework core has no runtime dependencies of its own; connector
+# plugins add the libraries they need on top.
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+# Tooling for the format gate (`nes-conn-test/runner/check.sh`): ruff for lint
+# + format, mypy for strict typing, pytest (+ pytest-cov, added now so a
+# `--cov-fail-under` floor can be ratcheted in later) for the test battery.
+# Resolved from `uv.lock` by the uv the dev image already ships, so adding
+# these does not require a Development.dockerfile bump.
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.9",
+    "mypy>=1.15",
+    "pytest-cov>=6.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/conntest_runner"]
+
+# --- Ruff: lint (`ruff check`) + format (`ruff format`) ----------------------
+# `select = ["ALL"]` is the `-Wall -Wextra` opt-out model: every stable rule is
+# on, and each `ignore` below is a deliberate, justified opt-out. Linting is
+# scoped to changed files by `check.sh`; ruff applies per-file-ignores by path
+# even when handed a subset, so the scope does not weaken these relaxations.
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # Mutually-exclusive docstring rules. We keep the formatter-compatible
+    # branch (D211 no-blank-before-class, D212 summary-on-first-line) and turn
+    # off the conflicting alternatives.
+    "D203",    # one-blank-line-before-class (conflicts with D211)
+    "D213",    # multi-line-summary-second-line (conflicts with D212)
+    # Google convention documents __init__ args in the *class* docstring and
+    # treats dunder methods as self-evident, so requiring a separate docstring
+    # on each would only add noise. (All other D rules stay on for the package.)
+    "D105",    # undocumented-magic-method (dunders)
+    "D107",    # undocumented-public-init (__init__; documented on the class)
+    # Formatter-owned. `ruff format` already enforces trailing commas and
+    # string layout; leaving these lint rules on would fight the formatter.
+    "COM812",  # missing-trailing-comma
+    "ISC001",  # single-line-implicit-string-concatenation
+    # The repo's own marker-comment gate owns this policy (format + tracking
+    # issue), so ruff's overlapping marker rules are off here.
+    "FIX002",  # fires on any line bearing such a marker
+    "TD002",   # wants an author on the marker
+    "TD003",   # wants a tracking link on the marker
+    # Pragmatic relaxations.
+    "ANN401",  # any-type — allowed where a dynamic type is genuinely needed
+    "PLR0913", # too-many-arguments — orchestrator entry points take many knobs
+    "EM101",   # raw-string-in-exception
+    "EM102",   # f-string-in-exception
+    "TRY003",  # raise-vanilla-args — long messages live at the raise site
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests: asserts are the point (S101), magic values are fixtures (PLR2004),
+# they poke internals (SLF001), pytest discovers them without `__init__.py`
+# (INP001), and fixture params look unused to the linter (ARG001). Test code
+# is exempt from the docstring/annotation bar the package holds (D1, ANN).
+"tests/**" = ["S101", "D1", "ANN", "PLR2004", "SLF001", "INP001", "ARG001"]
+# conftest is pytest plumbing, not public API.
+"conftest.py" = ["D1", "ANN", "INP001"]
+# cli.py is the host orchestrator: it prints user-facing output (T20) and
+# shells out to docker/git by design (S603 subprocess, S607 partial path).
+"src/conntest_runner/cli.py" = ["T20", "S603", "S607"]
+# The out-of-tree plugin files live in `conn-test/` dirs that are loaded
+# dynamically (importlib), not imported as packages — `__init__.py` would be
+# wrong, so INP001 is a false positive here. The leading-slash glob matches
+# the absolute paths `check.sh` hands ruff; these files sit outside this
+# config's directory, where a relative `**/...` key cannot reach them.
+"/**/conn-test/*.py" = ["INP001"]
+# sv_fmt.py is an lldb pretty-printer written against lldb's untyped C++
+# callback API: type annotations and docstrings would be noise, and it is
+# excluded from the mypy gate too. Same leading-slash absolute glob (it lives
+# at nes-conn-test/sv_fmt.py, outside this config's directory).
+"/**/sv_fmt.py" = ["ANN", "D", "INP001", "ARG001"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+
+# --- mypy: the strict type gate ----------------------------------------------
+# Python has no compiler, so mypy is where contract violations are caught. Run
+# whole-package (not diff-scoped) but only when conn-test Python changed — see
+# `check.sh`. `explicit_package_bases` + `namespace_packages` let the
+# out-of-tree, `__init__`-less plugin files be passed as loose files.
+[tool.mypy]
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+enable_error_code = [
+    "redundant-expr",
+    "truthy-bool",
+    "ignore-without-code",
+    "possibly-undefined",
+    "unused-awaitable",
+]
+mypy_path = "src"
+explicit_package_bases = true
+namespace_packages = true
+
+[[tool.mypy.overrides]]
+# sv_fmt.py is an lldb pretty-printer driven by lldb's untyped C++ callback
+# API; strict typing is not meaningful there.
+module = "sv_fmt"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+# lldb has no type stubs and is imported by the framework's own sv_fmt.py
+# pretty-printer — a framework file, not a plugin — so its acknowledgement
+# stays here. Plugin loaders do NOT belong in this list: a connector that
+# imports an untyped client library (paho, psycopg, …) declares the
+# acknowledgement inline at its own import site
+# (`import … # type: ignore[import-untyped]`), keeping the whole connector
+# self-contained in its conn-test/ dir. mypy checks each plugin dir in its
+# own process (see check.sh), so the inline ignore is correctly scoped.
+module = ["lldb.*"]
+ignore_missing_imports = true
+
+# --- Pyright: editor-only, NOT a CI gate -------------------------------------
+# Gives IDEs the same strictness signal mypy enforces in CI, without being a
+# second gate to keep green.
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+include = ["src/conntest_runner", "tests", "conftest.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# No pythonpath hack: conntest_runner is an editable install (src/ layout), and
+# pytest's rootdir insertion makes tests/_conformance_shared importable.
+# Fail on unknown markers / config keys, and treat an unexpected xpass as a
+# failure (a fixed bug whose xfail was left behind).
+addopts = "--strict-markers --strict-config"
+xfail_strict = true
+# Warnings are errors, so a new or unexpected warning fails the suite.
+filterwarnings = ["error"]

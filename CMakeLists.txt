@@ -172,6 +172,53 @@ message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 message(STATUS "CMAKE_CXX_FLAGS_BENCHMARK: ${CMAKE_CXX_FLAGS_BENCHMARK}")
 
+# -fdebug-prefix-map: rewrite source paths in debug info from the dev
+# container's bind-mount path (CMAKE_SOURCE_DIR, e.g. /tmp/<repo> when CLion
+# configures via the Docker toolchain) to the developer's *host* repo path, so
+# CLion gutter breakpoints across the whole repo match the debug info with no
+# per-target <mappings>.
+#
+# The host path cannot be discovered from inside the container (CMake sees only
+# the bind-mount; on Docker Desktop the host fs lives in a VM), and CLion does
+# not expand $ProjectFileDir$ into a Docker-toolchain CMake configure (JetBrains
+# CPP-9915). So it must be supplied as HOST_NEBULASTREAM_ROOT — set it in CLion's
+# CMake profile Environment (Settings > Build, Execution, Deployment > CMake), or
+# export it when configuring from a shell. Two warnings guard the common
+# mistakes: unset, and a value whose last path component does not match this
+# checkout (a stale entry pointing at another clone). CI leaves it unset.
+set(NES_HOST_REPO_ROOT "$ENV{HOST_NEBULASTREAM_ROOT}"
+        CACHE INTERNAL "Host repo root for debug-info path rewriting" FORCE)
+if (NES_HOST_REPO_ROOT STREQUAL "")
+    if (DEFINED ENV{CI} OR DEFINED ENV{GITHUB_ACTIONS})
+        message(STATUS
+                "HOST_NEBULASTREAM_ROOT unset (CI) — debug info keeps container "
+                "paths; expected on CI.")
+    else ()
+        message(WARNING
+                "HOST_NEBULASTREAM_ROOT is not set — debug info keeps container "
+                "paths (${CMAKE_SOURCE_DIR}/...), so CLion breakpoints will NOT "
+                "bind and 'ConnTest Debug' detaches immediately.\n"
+                "  Fix: set it to this repo's host path in your CLion CMake "
+                "profile Environment (Settings > Build, Execution, Deployment > "
+                "CMake), or export it when configuring, then reconfigure:\n"
+                "      HOST_NEBULASTREAM_ROOT=<absolute host path to this repo>")
+    endif ()
+else ()
+    get_filename_component(_NES_SRC_NAME "${CMAKE_SOURCE_DIR}" NAME)
+    get_filename_component(_NES_HOST_NAME "${NES_HOST_REPO_ROOT}" NAME)
+    if (NOT _NES_HOST_NAME STREQUAL _NES_SRC_NAME)
+        message(WARNING
+                "HOST_NEBULASTREAM_ROOT (${NES_HOST_REPO_ROOT}) does not match "
+                "this checkout (${CMAKE_SOURCE_DIR}): its last path component "
+                "differs, so it likely points at another clone. Debug-info paths "
+                "are rewritten to it anyway — CLion breakpoints bind only if that "
+                "really is this repo's host path.")
+    endif ()
+    add_compile_options("-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=${NES_HOST_REPO_ROOT}")
+    message(STATUS
+            "debug-info path rewrite ${CMAKE_SOURCE_DIR} -> ${NES_HOST_REPO_ROOT}")
+endif ()
+
 
 # Find Protobuf installation
 # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
@@ -270,6 +317,10 @@ project_enable_format()
 if (CODE_COVERAGE)
     set(NES_COVERAGE_DIRECTORIES ${NES_DIRECTORIES})
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-systests")
+    # 'nes-conn-test' is a test component whose targets are not gtest binaries and have no eponymous target
+    list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-conn-test")
+    # 'nes-test-infra' ships only Python/YAML; it declares no C++ targets
+    list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-test-infra")
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-frontend")
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-single-node-worker")
     # 'nes-optional-plugins' is not a target on its own, the plugins are part of other targets

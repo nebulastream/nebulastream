@@ -1,0 +1,28 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Framework-generic fault-injection sidecar (design §7). Merged with -f
+# alongside the plugin + runner compose files only when a plugin declares a
+# needs="link" scenario. toxiproxy is a TCP forwarder controlled over HTTP at
+# toxiproxy:8474 by compose DNS — the same trust model as broker:1883, with no
+# docker socket and no container ids. The runner reroutes the connector's
+# endpoint to toxiproxy:<port> and cut()s/restore()s the proxy to sever and
+# heal the connection deterministically.
+#
+# Official image (first-party provenance, multi-arch incl. arm64, GHCR avoids
+# Docker Hub anonymous pull-rate limits). It is a from-scratch image with no
+# shell or nc, so there is no container healthcheck: the runner's Link.create()
+# polls the HTTP control API until it answers before creating the proxy.
+services:
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    command: ["-host=0.0.0.0"]

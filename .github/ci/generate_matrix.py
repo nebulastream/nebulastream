@@ -121,6 +121,7 @@ def expand_job(job, runners, default_cmake_flags=""):
                 "run_unit": "unit" in tests,
                 "run_systest": "systest" in tests,
                 "run_docker": "docker" in tests,
+                "run_conntest": "conntest" in tests,
             }
         )
 

@@ -206,6 +206,11 @@ python3 scripts/check_preamble.py || FAIL=1
 
 DISTANCE_MERGE_BASE=$DISTANCE_MERGE_BASE python3 scripts/check_todos.py || FAIL=1
 
+# Python gate for the conn-test framework (ruff lint + format, mypy strict).
+# Scoped to changed conn-test Python; a no-op (no uv) when none changed.
+# Forwards the mode (-i fixes in place) and the merge-base distance.
+DISTANCE_MERGE_BASE=$DISTANCE_MERGE_BASE nes-conn-test/runner/check.sh "${1-}" || FAIL=1
+
 # error code uniqueness check
 DUPLICATES=$(sed -nE 's/^[[:space:]]*EXCEPTION\([^,]+,[[:space:]]*([0-9]+)[[:space:]]*,.*$/\1/p' nes-common/include/ExceptionDefinitions.inc | sort -n | uniq -d)
 if [ -n "$DUPLICATES" ]

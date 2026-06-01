@@ -109,6 +109,47 @@ jobs:
             source .github/.env/test-${{ matrix.sanitizer }}.env
             ctest --test-dir build -j 1 -L DockerCompose --output-on-failure --output-junit build/junit-docker.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
 
+      - name: Run Conn Tests
+        if: ${{ matrix.run_conntest }}
+        shell: bash
+        run: |
+          set -x
+          source .github/.env/test-${{ matrix.sanitizer }}.env
+          # docker-setup-v3 §6: conntest runs ON THE VM (it has docker,
+          # docker compose, and python3) and drives compose; pytest runs in
+          # the per-plugin `runner` container that compose CREATES on the
+          # broker network. No `run-in-container` wrapper, and — decisively —
+          # no `docker network connect $HOSTNAME` self-attach (the v2 bug
+          # that failed on the runner VM, where $HOSTNAME is not a container).
+          #
+          # Set ONLY the per-lane toggles here. The suppressions= paths are
+          # NOT set here anymore: conntest discovers each connector's
+          # conn-test/*.{lsan,tsan}-supp, merges them, and sets
+          # LSAN_OPTIONS / TSAN_OPTIONS itself (see _apply_plugin_suppressions).
+          # The `external_symbolizer_path` is injected INSIDE the runner by
+          # conntest — llvm-symbolizer lives in the dev image, not on this VM.
+          # Stock broker/db images never receive these.
+          case "${{ matrix.sanitizer }}" in
+              address)
+                  export ASAN_OPTIONS="detect_leaks=1"
+                  ;;
+              undefined)
+                  # Non-empty so the runner's symbolizer injection fires.
+                  export UBSAN_OPTIONS="print_stacktrace=1"
+                  ;;
+          esac
+          # Sanitizer overhead lifts the per-test READY budget; 60s gives
+          # the harness comfortable headroom while capping wasted CI time
+          # if something is genuinely stuck.
+          export CONNTEST_READY_TIMEOUT_S=60
+          # `conntest ci` runs the no-broker meta tests once + the broker-tier
+          # conformance battery for every plugin, writing
+          # build/junit-conntest*.xml (picked up by the codecov glob below).
+          # $PWD is the checkout (the step's default working directory).
+          python3 nes-conn-test/runner/conntest ci \
+              --build-dir="$PWD/build" \
+              --image="nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}"
+
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !cancelled() && !github.event.act }}
@@ -126,7 +167,7 @@ jobs:
           slug: nebulastream/nebulastream
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}
-          files: build/junit-unit.xml,build/junit-systest.xml,build/junit-docker.xml
+          files: build/junit-unit.xml,build/junit-systest.xml,build/junit-docker.xml,build/junit-conntest*.xml
 
   # Log level tests — verifies the NES_LOG_LEVEL compile-time flag works across all build types.
   # Fanned out one job per build_type so each shard only loops the 6 log levels and fits the

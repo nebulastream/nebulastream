@@ -4,3 +4,7 @@
 *.zip binary
 *.nes binary
 *.bin binary
+
+# conn-test config-validation files are NebulaStream SQL-dialect snippets;
+# render them with SQL highlighting on GitHub.
+*.nesql linguist-language=SQL
