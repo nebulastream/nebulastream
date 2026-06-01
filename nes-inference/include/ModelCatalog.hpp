@@ -85,7 +85,7 @@ public:
 template <>
 struct Reflector<RegisteredModel>
 {
-    Reflected operator()(const RegisteredModel& model) const;
+    Reflected operator()(const RegisteredModel& model, const ReflectionContext& context) const;
 };
 
 template <>

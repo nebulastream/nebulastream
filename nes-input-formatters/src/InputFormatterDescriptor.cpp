@@ -40,12 +40,13 @@ std::ostream& operator<<(std::ostream& out, const InputFormatterDescriptor& inpu
     return out << fmt::format("InputFormatterDescriptor: (Config: {})", inputFormatterDescriptor.toStringConfig());
 }
 
-Reflected Reflector<InputFormatterDescriptor>::operator()(const InputFormatterDescriptor& inputFormatterDescriptor) const
+Reflected Reflector<InputFormatterDescriptor>::operator()(
+    const InputFormatterDescriptor& inputFormatterDescriptor, const ReflectionContext& context) const
 {
     const detail::ReflectedInputFormatterDescriptor descriptor{
-        .inputFormatterType = inputFormatterDescriptor.inputFormatterType, .config = inputFormatterDescriptor.getReflectedConfig()};
+        .inputFormatterType = inputFormatterDescriptor.inputFormatterType, .config = inputFormatterDescriptor.getReflectedConfig(context)};
 
-    return reflect(descriptor);
+    return context.reflect(descriptor);
 }
 
 InputFormatterDescriptor Unreflector<InputFormatterDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const

@@ -84,9 +84,10 @@ std::string_view OctetLengthLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<OctetLengthLogicalFunction>::operator()(const OctetLengthLogicalFunction& function) const
+Reflected
+Reflector<OctetLengthLogicalFunction>::operator()(const OctetLengthLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedOctetLengthLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedOctetLengthLogicalFunction{.child = function.child});
 }
 
 OctetLengthLogicalFunction

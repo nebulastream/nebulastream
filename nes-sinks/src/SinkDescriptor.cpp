@@ -346,9 +346,9 @@ InlineSinkDescriptor Unreflector<InlineSinkDescriptor>::operator()(const Reflect
     return InlineSinkDescriptor{sinkId, schema, sinkType, host, unreflectedFormatConfig, Descriptor::unreflectConfig(config, context)};
 }
 
-Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
+Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor, const ReflectionContext& context) const
 {
-    return reflect(descriptor.underlying);
+    return context.reflect(descriptor.underlying);
 }
 
 SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const

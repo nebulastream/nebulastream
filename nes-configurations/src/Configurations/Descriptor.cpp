@@ -178,7 +178,7 @@ struct ReflectedDescriptorConfig
     std::unordered_map<std::string, std::pair<std::string, Reflected>> config;
 };
 
-Reflected Descriptor::getReflectedConfig() const
+Reflected Descriptor::getReflectedConfig(const ReflectionContext& context) const
 {
     ReflectedDescriptorConfig reflectedConfig;
 
@@ -189,21 +189,21 @@ Reflected Descriptor::getReflectedConfig() const
     {
         std::visit(
             Overloaded{
-                [&](const int32_t val) { reflectedConfig.config[key] = std::make_pair("int32_t", reflect(val)); },
-                [&](const uint32_t val) { reflectedConfig.config[key] = std::make_pair("uint32_t", reflect(val)); },
-                [&](const int64_t val) { reflectedConfig.config[key] = std::make_pair("int64_t", reflect(val)); },
-                [&](const uint64_t val) { reflectedConfig.config[key] = std::make_pair("uint64_t", reflect(val)); },
-                [&](const bool val) { reflectedConfig.config[key] = std::make_pair("bool", reflect(val)); },
-                [&](const char val) { reflectedConfig.config[key] = std::make_pair("char", reflect(val)); },
-                [&](const float val) { reflectedConfig.config[key] = std::make_pair("float", reflect(val)); },
-                [&](const double val) { reflectedConfig.config[key] = std::make_pair("double", reflect(val)); },
-                [&](const std::string& val) { reflectedConfig.config[key] = std::make_pair("string", reflect(val)); },
-                [&](const EnumWrapper& val) { reflectedConfig.config[key] = std::make_pair("EnumWrapper", reflect(val)); }},
+                [&](const int32_t val) { reflectedConfig.config[key] = std::make_pair("int32_t", context.reflect(val)); },
+                [&](const uint32_t val) { reflectedConfig.config[key] = std::make_pair("uint32_t", context.reflect(val)); },
+                [&](const int64_t val) { reflectedConfig.config[key] = std::make_pair("int64_t", context.reflect(val)); },
+                [&](const uint64_t val) { reflectedConfig.config[key] = std::make_pair("uint64_t", context.reflect(val)); },
+                [&](const bool val) { reflectedConfig.config[key] = std::make_pair("bool", context.reflect(val)); },
+                [&](const char val) { reflectedConfig.config[key] = std::make_pair("char", context.reflect(val)); },
+                [&](const float val) { reflectedConfig.config[key] = std::make_pair("float", context.reflect(val)); },
+                [&](const double val) { reflectedConfig.config[key] = std::make_pair("double", context.reflect(val)); },
+                [&](const std::string& val) { reflectedConfig.config[key] = std::make_pair("string", context.reflect(val)); },
+                [&](const EnumWrapper& val) { reflectedConfig.config[key] = std::make_pair("EnumWrapper", context.reflect(val)); }},
             value);
     }
     ///NOLINTEND(clang-analyzer-core.CallAndMessage)
 
-    return reflect(reflectedConfig);
+    return context.reflect(reflectedConfig);
 }
 
 DescriptorConfig::Config Descriptor::unreflectConfig(const Reflected& rfl, const ReflectionContext& context)

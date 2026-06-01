@@ -49,12 +49,12 @@ struct
 };
 }
 
-Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model) const
+Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model, const ReflectionContext& context) const
 {
     const auto data = model.getData();
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-char for textual MLIR serialization
     std::string mlir(reinterpret_cast<const char*>(data.data()), data.size());
-    return reflect(detail::ReflectedImportedModel{
+    return context.reflect(detail::ReflectedImportedModel{
         .mlir = std::make_optional(std::move(mlir)),
         .functionName = std::make_optional(model.getFunctionName()),
         .inputShape = std::make_optional(model.getInputShape()),
@@ -74,12 +74,12 @@ ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl, const
         reflected.outputShape.value_or(std::vector<size_t>{})};
 }
 
-Reflected Reflector<RegisteredModel>::operator()(const RegisteredModel& model) const
+Reflected Reflector<RegisteredModel>::operator()(const RegisteredModel& model, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedRegisteredModel{
+    return context.reflect(detail::ReflectedRegisteredModel{
         .name = std::make_optional(model.getName()),
         .path = std::make_optional(model.getPath().string()),
-        .imported = std::make_optional(Reflector<ImportedModel>{}(model.getImported())),
+        .imported = std::make_optional(Reflector<ImportedModel>{}(model.getImported(), context)),
         .inputs = std::make_optional(model.getSchema().inputs),
         .outputs = std::make_optional(model.getSchema().outputs)});
 }

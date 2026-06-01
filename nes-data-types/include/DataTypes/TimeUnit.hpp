@@ -55,7 +55,7 @@ namespace NES
 template <>
 struct Reflector<Windowing::TimeUnit>
 {
-    Reflected operator()(const Windowing::TimeUnit& timeUnit) const;
+    Reflected operator()(const Windowing::TimeUnit& timeUnit, const ReflectionContext& context) const;
 };
 
 template <>

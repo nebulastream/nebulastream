@@ -40,7 +40,6 @@ public:
 
     [[nodiscard]] MinAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] std::string_view getName() const noexcept;
-    [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] DataType getAggregateType() const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
@@ -56,7 +55,7 @@ private:
 template <>
 struct Reflector<MinAggregationLogicalFunction>
 {
-    Reflected operator()(const MinAggregationLogicalFunction& function) const;
+    Reflected operator()(const MinAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

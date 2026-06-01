@@ -108,7 +108,7 @@ public:
 template <>
 struct Reflector<SourceDescriptor>
 {
-    Reflected operator()(const SourceDescriptor& sourceDescriptor) const;
+    Reflected operator()(const SourceDescriptor& sourceDescriptor, const ReflectionContext& context) const;
 };
 
 template <>

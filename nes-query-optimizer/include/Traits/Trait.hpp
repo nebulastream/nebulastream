@@ -49,14 +49,14 @@ using Trait = TypedTrait<>;
 /// Traits are used to annotate logical operators with additional properties
 /// that can be used during query optimization.
 template <typename T>
-concept TraitConcept = requires(const T& thisTrait, ExplainVerbosity verbosity, const T& rhs) {
+concept TraitConcept = requires(const T& thisTrait, ExplainVerbosity verbosity, const ReflectionContext& context, const T& rhs) {
     /// Returns the type information of this trait.
     /// @return const std::type_info& The type information of this trait.
     { thisTrait.getType() } -> std::convertible_to<const std::type_info&>;
     { thisTrait.getName() } -> std::convertible_to<std::string_view>;
 
     /// Serialize the function to a Reflected object
-    { NES::reflect(thisTrait) } -> std::same_as<Reflected>;
+    { context.reflect(thisTrait) } -> std::same_as<Reflected>;
 
     /// Returns a string representation of the function
     { thisTrait.explain(verbosity) } -> std::convertible_to<std::string>;
@@ -80,7 +80,7 @@ struct ErasedTrait
 
     [[nodiscard]] virtual const std::type_info& getType() const = 0;
     [[nodiscard]] virtual std::string_view getName() const = 0;
-    [[nodiscard]] virtual Reflected reflect() const = 0;
+    [[nodiscard]] virtual Reflected reflect(const ReflectionContext& context) const = 0;
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
     [[nodiscard]] virtual size_t hash() const = 0;
     [[nodiscard]] virtual bool equals(const ErasedTrait& other) const = 0;
@@ -310,7 +310,7 @@ struct TraitModel : ErasedTrait
 
     [[nodiscard]] std::string_view getName() const override { return impl.getName(); }
 
-    [[nodiscard]] Reflected reflect() const override { return NES::reflect(impl); }
+    [[nodiscard]] Reflected reflect(const ReflectionContext& context) const override { return context.reflect(impl); }
 
 private:
     template <typename T>

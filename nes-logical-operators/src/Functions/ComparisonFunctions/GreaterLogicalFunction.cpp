@@ -90,9 +90,9 @@ std::string_view GreaterLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<GreaterLogicalFunction>::operator()(const GreaterLogicalFunction& function) const
+Reflected Reflector<GreaterLogicalFunction>::operator()(const GreaterLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedGreaterLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedGreaterLogicalFunction{.left = function.left, .right = function.right});
 }
 
 GreaterLogicalFunction Unreflector<GreaterLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

@@ -146,9 +146,9 @@ std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getC
 }
 
 Reflected Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>::operator()(
-    const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op) const
+    const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(op.getId());
+    return context.reflect(op.getId());
 }
 
 Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>::Unreflector(ContextType operatorMapping)

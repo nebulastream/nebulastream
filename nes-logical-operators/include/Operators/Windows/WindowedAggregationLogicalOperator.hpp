@@ -166,7 +166,7 @@ private:
 template <>
 struct Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const;
+    Reflected operator()(const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op, const ReflectionContext& context) const;
 };
 
 template <>

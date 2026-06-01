@@ -84,9 +84,10 @@ std::string_view CharLengthLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<CharLengthLogicalFunction>::operator()(const CharLengthLogicalFunction& function) const
+Reflected
+Reflector<CharLengthLogicalFunction>::operator()(const CharLengthLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedCharLengthLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedCharLengthLogicalFunction{.child = function.child});
 }
 
 CharLengthLogicalFunction

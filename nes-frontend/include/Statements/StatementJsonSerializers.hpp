@@ -50,47 +50,48 @@
 namespace NES::detail
 {
 
-inline rfl::Generic toFrontendGeneric(const DataType& dataType)
+inline rfl::Generic toFrontendGeneric(const DataType& dataType, const ReflectionContext& context)
 {
-    return reflect(std::string(magic_enum::enum_name(dataType.type)));
+    return context.reflect(std::string(magic_enum::enum_name(dataType.type)));
 }
 
 /// reflectcpp's native handler for Identifier (via Reflector<Identifier>) emits `[original-string, case-sensitive-bool]`.
 /// The historical frontend JSON shape is the canonical (case-folded) string — override here.
-inline rfl::Generic toFrontendGeneric(const Identifier& identifier)
+inline rfl::Generic toFrontendGeneric(const Identifier& identifier, const ReflectionContext& context)
 {
-    return reflect(identifier.asCanonicalString());
+    return context.reflect(identifier.asCanonicalString());
 }
 
-inline rfl::Generic toFrontendGeneric(const UnqualifiedUnboundField& field)
+inline rfl::Generic toFrontendGeneric(const UnqualifiedUnboundField& field, const ReflectionContext& context)
 {
     rfl::Object<rfl::Generic> obj;
-    obj["name"] = reflect(field.getFullyQualifiedName());
+    obj["name"] = context.reflect(field.getFullyQualifiedName());
     obj["type"] = toFrontendGeneric(field.getDataType());
     return obj;
 }
 
-inline rfl::Generic toFrontendGeneric(const Schema<UnqualifiedUnboundField, Ordered>& schema)
+/// Historical shape: an outer array wrapping the array of fields.
+inline rfl::Generic toFrontendGeneric(const Schema<UnqualifiedUnboundField, Ordered>& schema, const ReflectionContext& context)
 {
     rfl::Generic::Array fields;
     fields.reserve(schema.size());
     for (const auto& field : schema)
     {
-        fields.emplace_back(toFrontendGeneric(field));
+        fields.emplace_back(toFrontendGeneric(field, context));
     }
     return fields;
 }
 
 /// reflectcpp's native std::unordered_map handler outputs a flat JSON object. The historical layout
 /// for DescriptorConfig::Config is a sorted array of single-key objects, so we override it here.
-inline rfl::Generic toFrontendGeneric(const DescriptorConfig::Config& config)
+inline rfl::Generic toFrontendGeneric(const DescriptorConfig::Config& config, const ReflectionContext& context)
 {
     rfl::Generic::Array entries;
     const auto ordered = config | std::ranges::to<std::map<std::string, DescriptorConfig::ConfigType>>();
     for (const auto& [key, val] : ordered)
     {
         rfl::Object<rfl::Generic> entry;
-        entry[key] = std::visit([](auto&& arg) -> rfl::Generic { return reflect(arg); }, val);
+        entry[key] = std::visit([&context](auto&& arg) -> rfl::Generic { return *context.reflect(arg); }, val);
         entries.emplace_back(std::move(entry));
     }
     return entries;
@@ -100,10 +101,10 @@ inline rfl::Generic toFrontendGeneric(const DescriptorConfig::Config& config)
 /// around DescriptorConfig::Config) into a doubly-nested, type-tagged object. The historical layout is a
 /// flat object: the formatter type under "type", then each remaining config parameter. char-typed
 /// delimiters become single-character strings, matching the previous nlohmann output.
-inline rfl::Generic toFrontendGeneric(const InputFormatterDescriptor& descriptor)
+inline rfl::Generic toFrontendGeneric(const InputFormatterDescriptor& descriptor, const ReflectionContext& context)
 {
     rfl::Object<rfl::Generic> obj;
-    obj["type"] = reflect(descriptor.getInputFormatterType());
+    obj["type"] = context.reflect(descriptor.getInputFormatterType());
     const auto ordered = descriptor.getConfig() | std::ranges::to<std::map<std::string, DescriptorConfig::ConfigType>>();
     for (const auto& [key, val] : ordered)
     {
@@ -112,15 +113,15 @@ inline rfl::Generic toFrontendGeneric(const InputFormatterDescriptor& descriptor
             continue;
         }
         obj[key] = std::visit(
-            [](auto&& arg) -> rfl::Generic
+            [&context](auto&& arg) -> rfl::Generic
             {
                 if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, char>)
                 {
-                    return reflect(std::string(1, arg));
+                    return context.reflect(std::string(1, arg));
                 }
                 else
                 {
-                    return reflect(arg);
+                    return context.reflect(arg);
                 }
             },
             val);
@@ -129,12 +130,12 @@ inline rfl::Generic toFrontendGeneric(const InputFormatterDescriptor& descriptor
 }
 
 template <typename Clock, typename Duration>
-rfl::Generic toFrontendGeneric(const std::chrono::time_point<Clock, Duration>& timepoint)
+rfl::Generic toFrontendGeneric(const std::chrono::time_point<Clock, Duration>& timepoint, const ReflectionContext& context)
 {
     rfl::Object<rfl::Generic> obj;
-    obj["since_epoch"] = reflect(std::chrono::duration_cast<std::chrono::microseconds>(timepoint.time_since_epoch()).count());
-    obj["unit"] = reflect(std::string("microseconds"));
-    obj["formatted"] = reflect(fmt::format("{}", timepoint));
+    obj["since_epoch"] = context.reflect(std::chrono::duration_cast<std::chrono::microseconds>(timepoint.time_since_epoch()).count());
+    obj["unit"] = context.reflect(std::string("microseconds"));
+    obj["formatted"] = context.reflect(fmt::format("{}", timepoint));
     return obj;
 }
 
@@ -142,33 +143,33 @@ rfl::Generic toFrontendGeneric(const std::chrono::time_point<Clock, Duration>& t
 /// underlying integer value the default reflection chain would emit.
 template <typename T>
 requires std::is_enum_v<T>
-rfl::Generic toFrontendGeneric(const T& value)
+rfl::Generic toFrontendGeneric(const T& value, const ReflectionContext& context)
 {
-    return reflect(std::string(magic_enum::enum_name(value)));
+    return context.reflect(std::string(magic_enum::enum_name(value)));
 }
 
 /// Fallback for any type without a specific overload. Routes through the existing reflection chain
 /// (rfl::to_generic + NES::Reflector partial specialization), which already handles primitives,
 /// optionals, variants, maps, and NES strong-typed identifiers in a way compatible with the frontend output.
 template <typename T>
-rfl::Generic toFrontendGeneric(const T& value)
+rfl::Generic toFrontendGeneric(const T& value, const ReflectionContext& context)
 {
-    return reflect(value);
+    return context.reflect(value);
 }
 
 template <typename T>
-void appendField(rfl::Object<rfl::Generic>& target, std::string_view fieldName, const T& field)
+void appendField(rfl::Object<rfl::Generic>& target, std::string_view fieldName, const T& field, const ReflectionContext& context)
 {
     if constexpr (Optional<T>)
     {
         if (field.has_value())
         {
-            target[std::string(fieldName)] = toFrontendGeneric(*field);
+            target[std::string(fieldName)] = toFrontendGeneric(*field, context);
         }
     }
     else
     {
-        target[std::string(fieldName)] = toFrontendGeneric(field);
+        target[std::string(fieldName)] = toFrontendGeneric(field, context);
     }
 }
 
@@ -180,7 +181,8 @@ namespace NES
 /// Converts a (column-names, rows-of-tuples) pair as produced by StatementOutputAssembler into a
 /// JSON array of objects. Optional fields with no value are omitted.
 template <size_t N, typename... Ts>
-rfl::Generic::Array rowsToJsonArray(const std::pair<std::array<std::string_view, N>, std::vector<std::tuple<Ts...>>>& assembled)
+rfl::Generic::Array rowsToJsonArray(
+    const std::pair<std::array<std::string_view, N>, std::vector<std::tuple<Ts...>>>& assembled, const ReflectionContext& context)
 {
     rfl::Generic::Array rows;
     rows.reserve(assembled.second.size());
@@ -188,7 +190,7 @@ rfl::Generic::Array rowsToJsonArray(const std::pair<std::array<std::string_view,
     {
         rfl::Object<rfl::Generic> obj;
         [&]<size_t... Is>(std::index_sequence<Is...>)
-        { (detail::appendField(obj, assembled.first[Is], std::get<Is>(row)), ...); }(std::index_sequence_for<Ts...>{});
+        { (detail::appendField(obj, assembled.first[Is], std::get<Is>(row), context), ...); }(std::index_sequence_for<Ts...>{});
         rows.emplace_back(std::move(obj));
     }
     return rows;

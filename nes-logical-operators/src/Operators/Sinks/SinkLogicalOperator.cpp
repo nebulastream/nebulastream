@@ -258,9 +258,10 @@ SinkLogicalOperator SinkLogicalOperator::withSinkDescriptor(SinkDescriptor sinkD
     return newOperator;
 }
 
-Reflected Reflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const TypedLogicalOperator<SinkLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(
+    const TypedLogicalOperator<SinkLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedSinkLogicalOperator{
+    return context.reflect(detail::ReflectedSinkLogicalOperator{
         .operatorId = op.getId(), .sinkDescriptor = op->getSinkDescriptor(), .sinkName = op->getSinkName()});
 }
 

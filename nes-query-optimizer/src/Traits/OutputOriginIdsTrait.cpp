@@ -92,7 +92,7 @@ size_t OutputOriginIdsTrait::size() const
     return originIds.size();
 }
 
-Reflected Reflector<OutputOriginIdsTrait>::operator()(const OutputOriginIdsTrait& trait) const
+Reflected Reflector<OutputOriginIdsTrait>::operator()(const OutputOriginIdsTrait& trait, const ReflectionContext& context) const
 {
     detail::ReflectedOutputOriginIdsTrait reflected;
     for (const auto& originId : trait.originIds)
@@ -100,7 +100,7 @@ Reflected Reflector<OutputOriginIdsTrait>::operator()(const OutputOriginIdsTrait
         reflected.originIds.emplace_back(originId.getRawValue());
     }
 
-    return reflect(reflected);
+    return context.reflect(reflected);
 }
 
 OutputOriginIdsTrait Unreflector<OutputOriginIdsTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const

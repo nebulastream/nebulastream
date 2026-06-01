@@ -146,9 +146,9 @@ Unreflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::Unreflector(
 }
 
 Reflected Reflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::operator()(
-    const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op) const
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(
+    return context.reflect(
         detail::ReflectedSourceDescriptorLogicalOperator{.operatorId = op.getId(), .sourceDescriptor = op->getSourceDescriptor()});
 }
 

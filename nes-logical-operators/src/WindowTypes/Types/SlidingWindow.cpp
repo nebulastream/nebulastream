@@ -61,9 +61,10 @@ std::size_t std::hash<NES::Windowing::SlidingWindow>::operator()(const NES::Wind
 namespace NES
 {
 
-Reflected Reflector<Windowing::SlidingWindow>::operator()(const Windowing::SlidingWindow& slidingWindow) const
+Reflected
+Reflector<Windowing::SlidingWindow>::operator()(const Windowing::SlidingWindow& slidingWindow, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedSlidingWindow{.size = slidingWindow.getSize(), .slide = slidingWindow.getSlide()});
+    return context.reflect(detail::ReflectedSlidingWindow{.size = slidingWindow.getSize(), .slide = slidingWindow.getSlide()});
 }
 
 Windowing::SlidingWindow

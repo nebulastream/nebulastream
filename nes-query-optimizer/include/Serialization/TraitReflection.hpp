@@ -36,24 +36,24 @@ namespace NES
 template <>
 struct Reflector<detail::ErasedTrait>
 {
-    Reflected operator()(const detail::ErasedTrait& erased) const { return erased.reflect(); }
+    Reflected operator()(const detail::ErasedTrait& erased, const ReflectionContext& context) const { return erased.reflect(context); }
 };
 
 template <TraitConcept Checked>
 struct Reflector<TypedTrait<Checked>>
 {
-    Reflected operator()(const TypedTrait<Checked>& trait) const
+    Reflected operator()(const TypedTrait<Checked>& trait, const ReflectionContext& context) const
     {
-        return reflect(detail::ReflectedTrait{std::string{trait.getName()}, reflect(*trait)});
+        return context.reflect(detail::ReflectedTrait{std::string{trait.getName()}, context.reflect(*trait)});
     }
 };
 
 template <>
 struct Reflector<TypedTrait<detail::ErasedTrait>>
 {
-    Reflected operator()(const TypedTrait<detail::ErasedTrait>& trait) const
+    Reflected operator()(const TypedTrait<detail::ErasedTrait>& trait, const ReflectionContext& context) const
     {
-        return reflect(detail::ReflectedTrait{.type = std::string{trait.getName()}, .config = trait->reflect()});
+        return context.reflect(detail::ReflectedTrait{.type = std::string{trait.getName()}, .config = trait->reflect(context)});
     }
 };
 
@@ -73,8 +73,8 @@ struct Unreflector<TypedTrait<>>
     }
 };
 
-static_assert(requires(Trait trait) {
-    { reflect(trait) } -> std::same_as<Reflected>;
+static_assert(requires(Trait trait, const ReflectionContext& context) {
+    { context.reflect(trait) } -> std::same_as<Reflected>;
 });
 
 

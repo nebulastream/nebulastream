@@ -20,10 +20,10 @@
 
 namespace NES
 {
-Reflected Reflector<TypedLogicalFunction<>>::operator()(const TypedLogicalFunction<>& function) const
+Reflected Reflector<TypedLogicalFunction<>>::operator()(const TypedLogicalFunction<>& function, const ReflectionContext& context) const
 {
-    return reflect(
-        detail::ReflectedLogicalFunction{.functionType = std::string{function.getType()}, .functionConfig = function->reflect()});
+    return context.reflect(
+        detail::ReflectedLogicalFunction{.functionType = std::string{function.getType()}, .functionConfig = function->reflect(context)});
 }
 
 TypedLogicalFunction<> Unreflector<TypedLogicalFunction<>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
