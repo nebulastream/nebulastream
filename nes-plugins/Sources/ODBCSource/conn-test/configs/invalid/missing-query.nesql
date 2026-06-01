@@ -1,0 +1,20 @@
+-- Invalid: `query` is mandatory (no default in ConfigParametersODBC), so
+-- DescriptorConfig::validateAndFormat rejects this at bind time with
+-- INVALID_CONFIG_PARAMETER (1000).
+CREATE LOGICAL SOURCE conntest_rows (
+    k INT64 NOT NULL,
+    a INT32 NOT NULL,
+    b INT64 NOT NULL,
+    c FLOAT64 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR conntest_rows TYPE ODBC SET (
+    'NATIVE'             AS INPUT_FORMATTER.`TYPE`,
+    'localhost'          AS `SOURCE`.db_host,
+    '5432'               AS `SOURCE`.db_port,
+    'nebulastream'       AS `SOURCE`.database,
+    'nes'                AS `SOURCE`.username,
+    'nes'                AS `SOURCE`.password,
+    'PostgreSQL Unicode' AS `SOURCE`.driver
+    -- query intentionally absent
+);

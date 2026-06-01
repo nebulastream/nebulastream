@@ -1,0 +1,50 @@
+# ODBC data-service topology for the conn-test harness. Owned by the ODBC
+# plugin's conn-test surface (`nes-plugins/Sources/ODBCSource/conn-test/`);
+# the `conntest` CLI discovers it via the `nes-plugins/**/conn-test/
+# compose.yaml` glob (see `nes-conn-test/runner/conntest_runner/cli.py`).
+#
+# This file declares ONLY the plugin's data service. The framework's
+# `runner` service is merged on top from
+# `nes-conn-test/runner/runner.compose.yaml` (one copy for all plugins;
+# docker-setup-v3 §5.1) — identical wiring to MQTT's runner, which is
+# exactly why it no longer lives here.
+#
+# * `db` — postgres:16-alpine seeded by init-db.sql at first boot. The
+#   harness reaches it via the `PostgreSQL Unicode` driver registered at
+#   /etc/odbcinst.ini by the dev image's `odbc-postgresql` apt package;
+#   ODBCConnection exports `ODBCSYSINI=/etc` / `ODBCINI=/etc/odbc.ini` so
+#   the manager finds odbcinst.ini without a per-test odbc.ini. `db:5432`
+#   resolves over the compose-internal DNS — same shape as MQTT's
+#   `broker:1883`.
+#
+# Topology is framework-owned: discovery derives the connector endpoint
+# (`db:5432`) from the sole service name and its `expose:` port here, so the
+# loader declares no compose_service / compose_port.
+#
+# Required env var (set by the `conntest` CLI): HOST_NEBULASTREAM_ROOT.
+
+services:
+  db:
+    image: postgres:16-alpine
+    expose: ["5432"]  # the framework derives the connector endpoint from this
+    environment:
+      POSTGRES_USER: nes
+      POSTGRES_PASSWORD: nes
+      POSTGRES_DB: nebulastream
+    volumes:
+      - ${HOST_NEBULASTREAM_ROOT}/nes-plugins/Sources/ODBCSource/conn-test/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      # `--wait` blocks on this healthcheck. pg_isready returns 0 only
+      # after Postgres has finished running every *.sql in
+      # /docker-entrypoint-initdb.d and accepts TCP connections — so
+      # `--wait` unblocks once init completes, independent of any table
+      # (the loader creates the per-test tables ad-hoc).
+      test: ["CMD-SHELL", "pg_isready -U nes -d nebulastream"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+      # Tight start_interval (the poll rate during start_period) makes
+      # `--wait` unblock within ~500ms of postgres coming up rather
+      # than the 3s-default interval.
+      start_interval: 500ms
