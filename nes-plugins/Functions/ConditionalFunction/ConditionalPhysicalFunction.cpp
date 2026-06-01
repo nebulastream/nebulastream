@@ -40,14 +40,16 @@ ConditionalPhysicalFunction::ConditionalPhysicalFunction(std::vector<PhysicalFun
     }
 }
 
-VarVal ConditionalPhysicalFunction::execute(const Record&, ArenaRef&) const
+VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    /// TODO step-3: evaluate the Conditional function.
-    ///   * Iterate over whenThenFns at compile time using nautilus::static_iterable.
-    ///   * Use a structured binding `const auto& [when, then]` to destructure each WhenThenExpr.
-    ///   * If when.execute(...) evaluates to true, execute and return the corresponding then function.
-    ///   * If no WHEN matches, execute and return elseFn.
-    throw NotImplemented("TODO step-3: implement ConditionalPhysicalFunction::execute");
+    for (const auto& [when, then] : nautilus::static_iterable(whenThenFns))
+    {
+        if (when.execute(record, arena))
+        {
+            return then.execute(record, arena);
+        }
+    }
+    return elseFn.execute(record, arena);
 }
 
 PhysicalFunctionRegistryReturnType
