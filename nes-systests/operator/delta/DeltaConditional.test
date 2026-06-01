@@ -1,0 +1,33 @@
+# name: operator/delta/DeltaConditional.test
+# description: DELTA combined with Conditional (CASE WHEN) to classify queue-length deltas
+# groups: [Delta, Function, FunctionCaseWhen]
+
+CREATE LOGICAL SOURCE stream(timestamp UINT64 NOT NULL, intersection_id UINT64 NOT NULL, queue_length UINT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1000,1,5
+1001,1,20
+1002,1,18
+1003,1,5
+1004,1,30
+1005,1,28
+
+CREATE SINK classification(stream.timestamp UINT64 NOT NULL, stream.intersection_id UINT64 NOT NULL, classification VARSIZED NOT NULL) TYPE File;
+
+# Classify the per-row queue-length delta:
+#   delta >  10  -> PRIORITY
+#   delta < -10  -> RESTRICT
+#   otherwise    -> STANDARD
+# The first input row is dropped by DELTA (no predecessor), so the output starts at timestamp 1001.
+SELECT timestamp, intersection_id,
+       Conditional(delta_queue > INT32(10), VARSIZED("PRIORITY"),
+                   delta_queue < INT32(-10), VARSIZED("RESTRICT"),
+                   VARSIZED("STANDARD")) AS classification
+FROM DELTA(stream, queue_length AS delta_queue)
+INTO classification;
+----
+1001,1,PRIORITY
+1002,1,STANDARD
+1003,1,RESTRICT
+1004,1,PRIORITY
+1005,1,STANDARD
