@@ -31,6 +31,7 @@
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
@@ -60,6 +61,11 @@ LogicalPlan RuleBasedOptimizer::optimize(LogicalPlan plan) const
     for (const auto& rule : ruleSequence)
     {
         plan = rule.apply(std::move(plan));
+
+        /// TODO #1644: Remove the `replaceSubtree` anti-pattern from optimization rules since it can cause invalid query plans
+        /// and require manual `.withInferredSchema` calls as the one below.
+        INVARIANT(plan.getRootOperators().size() == 1, "we currently only support only single root plans");
+        plan = plan.withRootOperators({plan.getRootOperators().at(0).withInferredSchema()});
     }
     return plan;
 }
