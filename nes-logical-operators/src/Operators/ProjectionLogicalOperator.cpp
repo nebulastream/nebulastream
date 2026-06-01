@@ -254,14 +254,14 @@ Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const R
 {
     auto [asterisk, projections] = context.unreflect<detail::ReflectedProjectionLogicalOperator>(reflected);
 
-    std::vector<ProjectionLogicalOperator::Projection> parsedProjections;
-    parsedProjections.reserve(projections.size());
-
-    for (auto [identifier, function] : projections)
-    {
-        parsedProjections.emplace_back(identifier, function);
-    }
-
+    auto parsedProjections = projections
+        | std::views::transform(
+                                 [](const auto& proj)
+                                 {
+                                     const auto& [identifier, function] = proj;
+                                     return ProjectionLogicalOperator::Projection{identifier, function};
+                                 })
+        | std::ranges::to<std::vector>();
     return TypedLogicalOperator<ProjectionLogicalOperator>{std::move(parsedProjections), ProjectionLogicalOperator::Asterisk(asterisk)};
 }
 
