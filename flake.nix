@@ -811,6 +811,9 @@
               cmakeFlags = cmakeFlagsList;
               shellHook = ''
                 unset NES_PREBUILT_VCPKG_ROOT
+                if [ -n "''${CMAKE_LIBRARY_PATH:-}" ]; then
+                  export LD_LIBRARY_PATH="''${CMAKE_LIBRARY_PATH}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+                fi
               '' + ccacheShellHook;
             }
           );
