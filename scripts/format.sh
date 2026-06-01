@@ -14,6 +14,18 @@
 
 set -eo pipefail
 
+# Git aborts on a repository directory owned by a different uid than the
+# caller (CVE-2022-24765, "detected dubious ownership"). Inside the dev
+# container the bind-mounted checkout is host-owned while git runs as the
+# container user, so the rev-parse on the next line — and every git call
+# after it — fails. Whitelist this checkout (path derived from the script's
+# own location, since rev-parse would itself trip the guard). No-op when the
+# owner already matches, and de-duplicated so repeated runs do not pile up
+# identical entries in the global config.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+git config --global --get-all safe.directory 2>/dev/null | grep -qxF "${REPO_ROOT}" \
+    || git config --global --add safe.directory "${REPO_ROOT}"
+
 cd "$(git rev-parse --show-toplevel)"
 
 # We have to set the pager to cat, because otherwise the output is paged and the script hangs for git grep commands.
