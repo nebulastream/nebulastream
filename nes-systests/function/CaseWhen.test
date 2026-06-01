@@ -13,12 +13,18 @@ ATTACH INLINE
 
 CREATE SINK signal(intersection.id INT32, signal VARSIZED NOT NULL) TYPE File;
 
-# TODO step-1: write a minimal conditional query.
-#   - Project the id column and a derived "signal" column from `intersection`, into the `signal` sink.
-#   - The signal should be "GO" when traffic_density > 0.7, else "STOP".
-#   - Below the `----` separator, list the expected output rows (one per input row, in input order).
-#   - Useful function: Conditional(cond, then, else)
-#   - Useful literal types: FLOAT32(x), VARSIZED("..."), INT64(x)
+# Minimal conditional: single condition with default (if-else branch)
+SELECT id,
+       Conditional(traffic_density > FLOAT32(0.7), VARSIZED("GO"), VARSIZED("STOP"))
+       AS signal
+FROM intersection
+INTO signal;
+----
+1,STOP
+2,STOP
+3,GO
+4,STOP
+5,STOP
 
 CREATE LOGICAL SOURCE intersection2(id INT32, traffic_density FLOAT32, emergency_vehicle_detected BOOLEAN, pedestrian_waiting BOOLEAN);
 CREATE PHYSICAL SOURCE FOR intersection2 TYPE File;
