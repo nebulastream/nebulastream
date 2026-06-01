@@ -82,14 +82,41 @@ std::string ConditionalLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return result;
 }
 
-LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema&) const
+LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    /// TODO step-2: infer the data type of this Conditional function.
-    ///   * Recursively call withInferredDataType on every child.
-    ///   * Validate: even-indexed children (0, 2, ...) are conditions, must be BOOLEAN.
-    ///   * Validate: odd-indexed children (1, 3, ...) and the last child (default) must share the same type.
-    ///   * Return withChildren(inferred).withDataType(resultType).
-    throw NotImplemented("TODO step-2: implement ConditionalLogicalFunction::withInferredDataType");
+    std::vector<LogicalFunction> inferredChildren;
+    inferredChildren.reserve(children.size());
+    for (const auto& child : children)
+    {
+        inferredChildren.push_back(child.withInferredDataType(schema));
+    }
+    /// Even indexes (0, 2, 4, ...) are conditions and must be BOOLEAN.
+    for (std::size_t i = 0; i + 1 < inferredChildren.size(); i += 2)
+    {
+        if (not inferredChildren.at(i).getDataType().isType(DataType::Type::BOOLEAN))
+        {
+            throw DifferentFieldTypeExpected(
+                "ConditionalLogicalFunction: condition at index {} must be BOOLEAN, but was: {}",
+                i,
+                inferredChildren.at(i).getDataType());
+        }
+    }
+
+    /// Odd indexes (1, 3, 5, ...) are results and must have the same type as the default (last element).
+    const auto& resultType = inferredChildren.back().getDataType();
+    for (std::size_t i = 1; i + 1 < inferredChildren.size(); i += 2)
+    {
+        if (inferredChildren.at(i).getDataType() != resultType)
+        {
+            throw DifferentFieldTypeExpected(
+                "ConditionalLogicalFunction: result at index {} has type {}, but expected {} (matching default)",
+                i,
+                inferredChildren.at(i).getDataType(),
+                resultType);
+        }
+    }
+
+    return withChildren(inferredChildren).withDataType(resultType);
 }
 
 Reflected Reflector<ConditionalLogicalFunction>::operator()(const ConditionalLogicalFunction& function) const
