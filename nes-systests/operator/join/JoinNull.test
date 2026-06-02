@@ -2,6 +2,8 @@
 # description: Test join operator with null values
 # groups: [WindowOperators, Join, NullHandling]
 
+GlobalConfiguration worker.default_query_execution.bloom_filter.enable_bloom_filter: [true, false]
+
 # Source definitions
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64, timestamp1 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;

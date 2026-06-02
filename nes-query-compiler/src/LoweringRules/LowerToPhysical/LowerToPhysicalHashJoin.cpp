@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <string>
@@ -42,6 +43,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -95,6 +97,24 @@ struct FieldNamesExtension
     Field oldField;
     QualifiedUnboundField newField;
 };
+
+/// Sizing of the join's in-map BloomFilter, or nullopt when it is switched off.
+///
+/// Sized for maxNumberOfBuckets, not for the numberOfBuckets these options carry: the operator handler
+/// re-sizes every slice's bucket count from its rolling key average (clamped to maxNumberOfBuckets), while
+/// these params are a trace-time constant folded into the compiled probe and therefore fixed for the whole
+/// query. Sizing for the upper bound keeps the filter useful across that range; it costs a fixed bit area per
+/// hash map (~9% of the chains array at the same cardinality). Size it per slice only once the sizing stops
+/// being a trace-time constant.
+std::optional<Nautilus::Interface::BloomFilterParams> createBloomFilterParams(const QueryExecutionConfiguration& conf)
+{
+    if (not conf.bloomFilterConfiguration.enableBloomFilter.getValue())
+    {
+        return std::nullopt;
+    }
+    return Nautilus::Interface::BloomFilterParams{
+        conf.maxNumberOfBuckets.getValue(), conf.bloomFilterConfiguration.falsePositiveRate.getValue()};
+}
 
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
 getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalOperator& rightChild, const LogicalFunction& joinFunction)
@@ -255,7 +275,8 @@ HashMapOptions createHashMapOptions(
         keySize,
         valueSize,
         pageSize,
-        numberOfBuckets};
+        numberOfBuckets,
+        createBloomFilterParams(conf)};
     return hashMapOptions;
 }
 }
@@ -329,7 +350,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
                 hashMapOptions.pageSize,
                 hashMapOptions.numberOfBuckets,
                 &bufferProvider,
-                JoinBuildSideType::Left};
+                JoinBuildSideType::Left,
+                hashMapOptions.bloomFilterParams};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
@@ -346,7 +368,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
                 hashMapOptions.pageSize,
                 hashMapOptions.numberOfBuckets,
                 &bufferProvider,
-                JoinBuildSideType::Right};
+                JoinBuildSideType::Right,
+                hashMapOptions.bloomFilterParams};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     /// Create the trigger strategy based on join type — determines what probe tasks are emitted at runtime

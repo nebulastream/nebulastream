@@ -76,7 +76,13 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             auto buffer = parent->loadChildBuffer(bufferIndex);
             const auto chm = ChainedHashMap::load(buffer);
             /// get a buffer and for the final hash map with the same config
-            auto neededFinalBufferSize = ChainedHashMap::calculateBufferSizeFromChains(chm.getNumberOfChains());
+            const ChainedHashMapConfig finalConfig{
+                .entrySize = chm.getEntrySize(),
+                .numberOfBuckets = chm.getNumberOfBuckets(),
+                .pageSize = chm.getPageSize(),
+                .bloomFilter = chm.getBloomFilterParams()};
+            auto neededFinalBufferSize
+                = ChainedHashMap::calculateBufferSizeFromChains(chm.getNumberOfChains(), finalConfig.bloomFilterMemAreaSize());
             std::optional<TupleBuffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
             if (not finalHashMapTupleBuffer.has_value())
             {
@@ -84,7 +90,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             }
             /// initialize the final hash map tuple buffer
             *finalHashMapBuffer = finalHashMapTupleBuffer.value();
-            ChainedHashMap::init(*finalHashMapBuffer, chm.getEntrySize(), chm.getNumberOfBuckets(), chm.getPageSize());
+            ChainedHashMap::init(*finalHashMapBuffer, finalConfig);
         },
         recordBuffer.getReference(),
         executionCtx.pipelineMemoryProvider.bufferProvider,
@@ -98,7 +104,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         hashMapOptions.fieldKeys,
         hashMapOptions.fieldValues,
         hashMapOptions.entriesPerPage,
-        hashMapOptions.entrySize};
+        hashMapOptions.entrySize,
+        hashMapOptions.bloomFilterParams};
 
     for (nautilus::val<uint64_t> curHashMapIdx = 0; curHashMapIdx < numberOfHashMaps; ++curHashMapIdx)
     {
@@ -120,7 +127,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             hashMapOptions.fieldKeys,
             hashMapOptions.fieldValues,
             hashMapOptions.entriesPerPage,
-            hashMapOptions.entrySize};
+            hashMapOptions.entrySize,
+            hashMapOptions.bloomFilterParams};
         for (const auto entry : currentMap)
         {
             const ChainedHashMapRef::ChainedEntryRef entryRef{

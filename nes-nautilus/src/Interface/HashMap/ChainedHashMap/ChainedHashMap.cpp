@@ -60,53 +60,17 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
     return capacity;
 }
 
-void ChainedHashMap::init(TupleBuffer& tupleBuffer, const uint64_t entrySize, const uint64_t numberOfBuckets, const uint64_t pageSize)
+uint64_t ChainedHashMapConfig::bufferSize() const
 {
-    PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
-    const uint64_t entriesPerPage = pageSize / entrySize;
-    const uint64_t numberOfChains = calcCapacity(numberOfBuckets, assumedLoadFactor);
-    PRECONDITION(
-        entriesPerPage > 0,
-        "At least one entry has to fit on a page. Pagesize is set to small for pageSize {} and entry size {}",
-        pageSize,
-        entrySize);
-    PRECONDITION(
-        numberOfChains > 0,
-        "Number of chains has to be greater than 0. Number of chains is set to small for number of chains {}",
-        numberOfChains);
-    PRECONDITION(
-        (numberOfChains & (numberOfChains - 1)) == 0,
-        "Number of chains has to be a power of 2. Number of chains is set to small for number of chains {}",
-        numberOfChains);
-    PRECONDITION(
-        tupleBuffer.getBufferSize() >= sizeof(Header) + (numberOfChains + 1) * sizeof(ChainedHashMapEntry*),
-        "Buffer of size {} is not big enough to hold the header ({} bytes) plus {} chain pointers ({} bytes each)",
-        tupleBuffer.getBufferSize(),
-        sizeof(Header),
-        numberOfChains + 1,
-        sizeof(ChainedHashMapEntry*));
-
-    /// Create object
-    ChainedHashMap chm{tupleBuffer};
-
-    /// Initialize header
-    new (tupleBuffer.getAvailableMemoryArea<Header>().data())
-        Header{numberOfBuckets, numberOfChains, pageSize, entrySize, entriesPerPage, numberOfChains - 1};
-
-    /// Initialize chains array
-    auto chainsArray = chm.chains();
-    std::ranges::fill(chainsArray, nullptr);
-    chainsArray[numberOfChains]
-        = reinterpret_cast<ChainedHashMapEntry*>(&chainsArray[numberOfChains]); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    return ChainedHashMap::calculateBufferSizeFromBuckets(numberOfBuckets, bloomFilterMemAreaSize());
 }
 
-void ChainedHashMap::init(
-    TupleBuffer& tupleBuffer, const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
+void ChainedHashMap::init(TupleBuffer& tupleBuffer, const ChainedHashMapConfig& config)
 {
-    const uint64_t entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
+    const auto [entrySize, numberOfBuckets, pageSize, bloomFilter] = config;
+    PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     const uint64_t entriesPerPage = pageSize / entrySize;
     const uint64_t numberOfChains = calcCapacity(numberOfBuckets, assumedLoadFactor);
-    PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     PRECONDITION(
         entriesPerPage > 0,
         "At least one entry has to fit on a page. Pagesize is set to small for pageSize {} and entry size {}",
@@ -121,25 +85,30 @@ void ChainedHashMap::init(
         "Number of chains has to be a power of 2. Number of chains is set to small for number of chains {}",
         numberOfChains);
     PRECONDITION(
-        tupleBuffer.getBufferSize() >= sizeof(Header) + (numberOfChains + 1) * sizeof(ChainedHashMapEntry*),
-        "Buffer of size {} is not big enough to hold the header ({} bytes) plus {} chain pointers ({} bytes each)",
+        tupleBuffer.getBufferSize() >= calculateBufferSizeFromChains(numberOfChains, config.bloomFilterMemAreaSize()),
+        "Buffer of size {} is not big enough to hold the header ({} bytes) plus {} chain pointers ({} bytes each) plus {} bytes of "
+        "BloomFilter bits",
         tupleBuffer.getBufferSize(),
         sizeof(Header),
         numberOfChains + 1,
-        sizeof(ChainedHashMapEntry*));
+        sizeof(ChainedHashMapEntry*),
+        config.bloomFilterMemAreaSize());
 
     /// Create object
     ChainedHashMap chm{tupleBuffer};
 
     /// Initialize header
     new (tupleBuffer.getAvailableMemoryArea<Header>().data())
-        Header{numberOfBuckets, numberOfChains, pageSize, entrySize, entriesPerPage, numberOfChains - 1};
+        Header{numberOfBuckets, numberOfChains, pageSize, entrySize, entriesPerPage, numberOfChains - 1, bloomFilter};
 
     /// Initialize chains array
     auto chainsArray = chm.chains();
     std::ranges::fill(chainsArray, nullptr);
     chainsArray[numberOfChains]
         = reinterpret_cast<ChainedHashMapEntry*>(&chainsArray[numberOfChains]); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+
+    /// Zero the inline BloomFilter bit area so no spurious bits are seen before the first add().
+    std::ranges::fill(chm.bloomBits(), uint64_t{0});
 }
 
 ChainedHashMap ChainedHashMap::load(const TupleBuffer& tupleBuffer)
@@ -337,6 +306,11 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     return header().varSizedSpaceIndex;
 }
 
+uint64_t* ChainedHashMap::getBloomFilterMemArea()
+{
+    return bloomBits().data();
+}
+
 TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const
 {
     auto storageBufferIdx = getStorageBufferIdx();
@@ -362,15 +336,15 @@ TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
     return page;
 }
 
-uint64_t ChainedHashMap::calculateBufferSizeFromBuckets(uint64_t numberOfBuckets)
+uint64_t ChainedHashMap::calculateBufferSizeFromBuckets(uint64_t numberOfBuckets, uint64_t bloomFilterMemAreaSize)
 {
     const uint64_t numberOfChains = calcCapacity(numberOfBuckets, assumedLoadFactor);
-    return calculateBufferSizeFromChains(numberOfChains);
+    return calculateBufferSizeFromChains(numberOfChains, bloomFilterMemAreaSize);
 }
 
-uint64_t ChainedHashMap::calculateBufferSizeFromChains(uint64_t numberOfChains)
+uint64_t ChainedHashMap::calculateBufferSizeFromChains(uint64_t numberOfChains, uint64_t bloomFilterMemAreaSize)
 {
-    return sizeof(Header) + ((numberOfChains + 1) * sizeof(uint64_t));
+    return sizeof(Header) + ((numberOfChains + 1) * sizeof(ChainedHashMapEntry*)) + bloomFilterMemAreaSize;
 }
 
 [[nodiscard]] uint64_t ChainedHashMap::getNumberOfPages() const

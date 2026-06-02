@@ -25,6 +25,7 @@
 #include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <BloomFilterConfiguration.hpp>
 #include <SliceCacheConfiguration.hpp>
 
 namespace NES
@@ -75,6 +76,8 @@ public:
 
     SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
 
+    BloomFilterConfiguration bloomFilterConfiguration = {"bloom_filter", "Configuration for the hash maps' in-map BloomFilter"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -85,7 +88,8 @@ private:
             &numberOfRecordsPerKey,
             &maxNumberOfBuckets,
             &operatorBufferSize,
-            &sliceCacheConfiguration};
+            &sliceCacheConfiguration,
+            &bloomFilterConfiguration};
     }
 };
 

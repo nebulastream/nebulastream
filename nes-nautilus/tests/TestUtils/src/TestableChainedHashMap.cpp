@@ -25,6 +25,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -70,8 +71,9 @@ TestableChainedHashMap::TestableChainedHashMap(
     EngineMode mode,
     uint64_t numberOfBuckets,
     size_t numKeyFields,
-    uint64_t numEntriesPerPage)
-    : dataTypes(fieldTypes), entriesPerPage(numEntriesPerPage), bufferManager(bufferManager)
+    uint64_t numEntriesPerPage,
+    const std::optional<Nautilus::Interface::BloomFilterParams>& bloomFilterParams)
+    : dataTypes(fieldTypes), entriesPerPage(numEntriesPerPage), bufferManager(bufferManager), bloomFilterParams(bloomFilterParams)
 {
     PRECONDITION(
         numKeyFields <= fieldTypes.size(),
@@ -103,14 +105,15 @@ TestableChainedHashMap::TestableChainedHashMap(
     /// ChainedEntryMemoryProvider::createFieldOffsets), so fieldKeys is reusable as-is for probe entries.
     probeEntrySize = sizeof(ChainedHashMapEntry) + keySize;
 
-    auto chainedHashMapBufferOpt = bufferManager.getUnpooledBuffer(ChainedHashMap::calculateBufferSizeFromBuckets(numberOfBuckets));
+    const ChainedHashMapConfig hashMapConfig{
+        .entrySize = entrySize, .numberOfBuckets = numberOfBuckets, .pageSize = pageSize, .bloomFilter = bloomFilterParams};
+    auto chainedHashMapBufferOpt = bufferManager.getUnpooledBuffer(hashMapConfig.bufferSize());
     if (not chainedHashMapBufferOpt.has_value())
     {
-        throw BufferAllocationFailure(
-            "No unpooled TupleBuffer of size {} available!", ChainedHashMap::calculateBufferSizeFromBuckets(numberOfBuckets));
+        throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", hashMapConfig.bufferSize());
     }
     chainedHashMapBuffer = chainedHashMapBufferOpt.value();
-    ChainedHashMap::init(chainedHashMapBuffer, entrySize, numberOfBuckets, pageSize);
+    ChainedHashMap::init(chainedHashMapBuffer, hashMapConfig);
 
     insertFn.emplace(engine->registerFunction(std::function(
         [dataTypes = dataTypes,
@@ -119,6 +122,7 @@ TestableChainedHashMap::TestableChainedHashMap(
          fieldValues = fieldValues,
          capturedEntriesPerPage = entriesPerPage,
          capturedEntrySize = entrySize,
+         bloomFilterParams = bloomFilterParams,
          hashFn = MurMur3HashFunction{}](
             nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
         {
@@ -128,7 +132,8 @@ TestableChainedHashMap::TestableChainedHashMap(
                 fieldKeys,
                 fieldValues,
                 nautilus::val<uint64_t>(capturedEntriesPerPage),
-                nautilus::val<uint64_t>(capturedEntrySize)};
+                nautilus::val<uint64_t>(capturedEntrySize),
+                bloomFilterParams};
             std::ignore = chmRef.findOrCreateEntry(
                 record,
                 hashFn,
@@ -156,6 +161,7 @@ TestableChainedHashMap::TestableChainedHashMap(
          capturedEntriesPerPage = entriesPerPage,
          capturedEntrySize = entrySize,
          capturedProbeEntrySize = probeEntrySize,
+         bloomFilterParams = bloomFilterParams,
          hashFn = MurMur3HashFunction{}](
             nautilus::val<TupleBuffer*> chainedHashMapBuffer,
             nautilus::val<TupleBuffer*> probeBuffer,
@@ -166,7 +172,7 @@ TestableChainedHashMap::TestableChainedHashMap(
             const Record keyRecord = buildRecordFromAnyVec(keyIn, keyProjections, keyDataTypes);
 
             ChainedHashMapRef probeMapRef{
-                probeBuffer, fieldKeys, {}, nautilus::val<uint64_t>(1), nautilus::val<uint64_t>(capturedProbeEntrySize)};
+                probeBuffer, fieldKeys, {}, nautilus::val<uint64_t>(1), nautilus::val<uint64_t>(capturedProbeEntrySize), std::nullopt};
             const auto probeEntry
                 = probeMapRef.findOrCreateEntry(keyRecord, hashFn, [](const nautilus::val<AbstractHashMapEntry*>&) { }, bm);
 
@@ -175,7 +181,8 @@ TestableChainedHashMap::TestableChainedHashMap(
                 fieldKeys,
                 fieldValues,
                 nautilus::val<uint64_t>(capturedEntriesPerPage),
-                nautilus::val<uint64_t>(capturedEntrySize)};
+                nautilus::val<uint64_t>(capturedEntrySize),
+                bloomFilterParams};
             const auto foundEntry = chmRef.findEntry(probeEntry);
             const nautilus::val<bool> found = (foundEntry != nullptr);
             if (found)
@@ -196,7 +203,9 @@ TestableChainedHashMap::TestableChainedHashMap(
          fieldValueNames = fieldValueNames,
          fieldValueTypes = fieldValueTypes,
          capturedEntriesPerPage = entriesPerPage,
-         capturedEntrySize = entrySize](nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<std::vector<AnyVec>*> outVector)
+         capturedEntrySize = entrySize,
+         bloomFilterParams
+         = bloomFilterParams](nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<std::vector<AnyVec>*> outVector)
         {
             /// begin() calls getPage(0) via invoke which fails on an empty CHM, so guard first.
             const auto numTuples = nautilus::invoke(
@@ -211,7 +220,8 @@ TestableChainedHashMap::TestableChainedHashMap(
                 fieldKeys,
                 fieldValues,
                 nautilus::val<uint64_t>(capturedEntriesPerPage),
-                nautilus::val<uint64_t>(capturedEntrySize)};
+                nautilus::val<uint64_t>(capturedEntrySize),
+                bloomFilterParams};
 
             for (const auto entry : chmRef)
             {
@@ -242,13 +252,15 @@ void TestableChainedHashMap::put(const AnyVec& key, const AnyVec& value)
 
 std::optional<AnyVec> TestableChainedHashMap::at(const AnyVec& key)
 {
-    auto probeBufferOpt = bufferManager.getUnpooledBuffer(ChainedHashMap::calculateBufferSizeFromBuckets(1));
+    /// The throwaway probe map only ever holds the single key being looked up, so it needs no BloomFilter.
+    const ChainedHashMapConfig probeConfig{.entrySize = probeEntrySize, .numberOfBuckets = 1, .pageSize = probeEntrySize};
+    auto probeBufferOpt = bufferManager.getUnpooledBuffer(probeConfig.bufferSize());
     if (not probeBufferOpt.has_value())
     {
-        throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", ChainedHashMap::calculateBufferSizeFromBuckets(1));
+        throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", probeConfig.bufferSize());
     }
     auto probeBuffer = probeBufferOpt.value();
-    ChainedHashMap::init(probeBuffer, probeEntrySize, 1, probeEntrySize);
+    ChainedHashMap::init(probeBuffer, probeConfig);
 
     AnyVec out(valueDataTypes.size());
     /// const_cast: lookupFn's signature requires AnyVec* even though the trace lambda only reads from it.

@@ -15,7 +15,9 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -34,8 +36,10 @@ struct CreateNewHJSliceArgs final : CreateNewHashMapSliceArgs
         const uint64_t pageSize,
         const uint64_t numberOfBuckets,
         AbstractBufferProvider* bufferProvider,
-        const JoinBuildSideType joinBuildSide)
-        : CreateNewHashMapSliceArgs{keySize, valueSize, pageSize, numberOfBuckets, bufferProvider}, joinBuildSide(joinBuildSide)
+        const JoinBuildSideType joinBuildSide,
+        const std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams)
+        : CreateNewHashMapSliceArgs{keySize, valueSize, pageSize, numberOfBuckets, bufferProvider, bloomFilterParams}
+        , joinBuildSide(joinBuildSide)
     {
     }
 
