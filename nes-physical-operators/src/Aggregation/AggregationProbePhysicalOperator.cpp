@@ -84,7 +84,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             }
             /// initialize the final hash map tuple buffer
             *finalHashMapBuffer = finalHashMapTupleBuffer.value();
-            std::ignore = ChainedHashMap::init(*finalHashMapBuffer, chm.getEntrySize(), chm.getNumberOfBuckets(), chm.getPageSize());
+            std::ignore = ChainedHashMap::init(
+            *finalHashMapBuffer, chm.getEntrySize(), chm.getNumberOfBuckets(), chm.getPageSize(), chm.getBloomFilterMemAreaSize());
         },
         recordBuffer.getReference(),
         executionCtx.pipelineMemoryProvider.bufferProvider,
@@ -98,7 +99,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         hashMapOptions.fieldKeys,
         hashMapOptions.fieldValues,
         hashMapOptions.entriesPerPage,
-        hashMapOptions.entrySize);
+        hashMapOptions.entrySize,
+        hashMapOptions.bloomFilter);
 
     for (nautilus::val<uint64_t> curHashMapIdx = 0; curHashMapIdx < numberOfHashMaps; ++curHashMapIdx)
     {
@@ -120,7 +122,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             hashMapOptions.fieldKeys,
             hashMapOptions.fieldValues,
             hashMapOptions.entriesPerPage,
-            hashMapOptions.entrySize);
+            hashMapOptions.entrySize,
+            hashMapOptions.bloomFilter);
         for (const auto entry : currentMap)
         {
             const ChainedHashMapRef::ChainedEntryRef entryRef(

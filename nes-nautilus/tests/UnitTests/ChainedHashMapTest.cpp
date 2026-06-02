@@ -31,6 +31,7 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -691,8 +692,9 @@ public:
         EngineMode mode,
         uint64_t numberOfBuckets,
         size_t numKeyFields,
-        uint64_t numEntriesPerPage)
-        : dataTypes(fieldTypes), entriesPerPage(numEntriesPerPage), bufferManager(bufferManager)
+        uint64_t numEntriesPerPage,
+        const Nautilus::Interface::BloomFilterParams& bloomFilterParams = {})
+        : dataTypes(fieldTypes), entriesPerPage(numEntriesPerPage), bufferManager(bufferManager), bloomFilterParams(bloomFilterParams)
     {
         const auto schema = createSchemaFromDataTypes(dataTypes);
         projections = schema.getFieldNames();
@@ -719,7 +721,8 @@ public:
                 "No unpooled TupleBuffer of size {} available!", ChainedHashMap::calculateBufferSizeFromBuckets(numberOfBuckets));
         }
         chainedHashMapBuffer = chainedHashMapBufferOpt.value();
-        std::ignore = ChainedHashMap::init(chainedHashMapBuffer, entrySize, numberOfBuckets, pageSize);
+        std::ignore
+            = ChainedHashMap::init(chainedHashMapBuffer, entrySize, numberOfBuckets, pageSize, bloomFilterParams.allocationByteCount());
 
         const auto numKeyProjections = keyDataTypes.size();
 
@@ -738,6 +741,7 @@ public:
              fieldValues = fieldValues,
              capturedEntriesPerPage = entriesPerPage,
              capturedEntrySize = entrySize,
+             bloomFilter = createBloomFilterRef(),
              hashFn = MurMur3HashFunction{}](
                 nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
             {
@@ -752,7 +756,8 @@ public:
                     fieldKeys,
                     fieldValues,
                     nautilus::val<uint64_t>(capturedEntriesPerPage),
-                    nautilus::val<uint64_t>(capturedEntrySize));
+                    nautilus::val<uint64_t>(capturedEntrySize),
+                    bloomFilter);
                 std::ignore = chmRef.findOrCreateEntry(
                     record,
                     hashFn,
@@ -803,7 +808,11 @@ public:
             })));
 
         readAllFn.emplace(engine->registerFunction(std::function(
-            [fieldKeys = fieldKeys, fieldValues = fieldValues, capturedEntriesPerPage = entriesPerPage, capturedEntrySize = entrySize](
+            [fieldKeys = fieldKeys,
+             fieldValues = fieldValues,
+             capturedEntriesPerPage = entriesPerPage,
+             capturedEntrySize = entrySize,
+             bloomFilter = createBloomFilterRef()](
                 nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<std::vector<AnyVec>*> outVector)
             {
                 /// begin() calls getPage(0) via invoke which fails on an empty CHM, so guard first.
@@ -819,7 +828,8 @@ public:
                     fieldKeys,
                     fieldValues,
                     nautilus::val<uint64_t>(capturedEntriesPerPage),
-                    nautilus::val<uint64_t>(capturedEntrySize));
+                    nautilus::val<uint64_t>(capturedEntrySize),
+                    bloomFilter);
 
                 for (const auto entry : chmRef)
                 {
@@ -893,11 +903,22 @@ private:
     TupleBuffer chainedHashMapBuffer;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     AbstractBufferProvider& bufferManager;
+    /// Sizing for the optional in-map BloomFilter. Defaults to disabled (hashCount == 0 -> NoOp), so the
+    /// CHM behaves exactly as before unless a test opts in via the constructor.
+    Nautilus::Interface::BloomFilterParams bloomFilterParams;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::unique_ptr<nautilus::engine::NautilusEngine> engine;
     std::optional<nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, AnyVec*>> insertFn;
     std::optional<nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, AnyVec*>> readAtFn;
     std::optional<nautilus::engine::CallableFunction<void, TupleBuffer*, std::vector<AnyVec>*>> readAllFn;
+
+    /// Builds the ChainedHashMapRef's BloomFilterRef from bloomFilterParams. The CHM reuses each entry's
+    /// stored 64-bit hash, so no HashFunction is needed. hashCount == 0 yields the disabled NoOp variant.
+    [[nodiscard]] Nautilus::Interface::BloomFilterRef createBloomFilterRef() const
+    {
+        return Nautilus::Interface::BloomFilterRef::create(
+            bloomFilterParams.hashCount > 0, bloomFilterParams.bitCount, bloomFilterParams.hashCount, nullptr);
+    }
 
     struct FieldOffsets
     {
@@ -957,6 +978,17 @@ void verifyRandomAccess(
 
 } /// anonymous namespace
 
+/// Generates random *enabled* BloomFilter sizing. The lower bit-count end is deliberately tiny (saturated
+/// -> high false-positive rate) and the upper end sparse, stressing that correctness holds at any FP rate:
+/// a BloomFilter must never yield a false negative, so a CHM with the filter enabled must dedup and iterate
+/// to exactly the same result as the disabled run for any sizing.
+static Nautilus::Interface::BloomFilterParams genBloomFilterParams()
+{
+    const auto bitCount = *rc::gen::inRange<uint64_t>(64, 1U << 20U);
+    const auto hashCount = *rc::gen::inRange<uint64_t>(1, 11);
+    return {.bitCount = bitCount, .hashCount = hashCount};
+}
+
 /// Builds a reference vector tracking only the first-seen record per unique key in insertion order,
 /// mirroring CHM's first-write-wins deduplication and sequential page-slot allocation order.
 static std::vector<AnyVec>
@@ -991,7 +1023,9 @@ buildUniqueKeyReference(TestableChainedHashMap& chainedHashMap, const std::vecto
 }
 
 /// Verify CHM deduplicates correctly and positional readAt(i) returns the i-th first-seen unique-key entry.
-static void insertAndIterateKeysProperty(EngineMode mode)
+/// When enableBloomFilter is set, the in-map BloomFilter is enabled at random sizing; a pass proves the
+/// results are identical to the disabled run, i.e. the filter never produced a false negative.
+static void insertAndIterateKeysProperty(EngineMode mode, bool enableBloomFilter = false)
 {
     const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, MAX_SCHEMA_FIELDS);
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
@@ -999,19 +1033,24 @@ static void insertAndIterateKeysProperty(EngineMode mode)
     const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
     const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
     const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
+    const auto bloomFilterParams = enableBloomFilter ? genBloomFilterParams() : Nautilus::Interface::BloomFilterParams{};
 
     NES_INFO(
-        "Property insertAndIterateKeys: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, field_types={}",
+        "Property insertAndIterateKeys: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, "
+        "bloomBits={}, bloomHashes={}, field_types={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
         numKeyFields,
         numberOfBuckets,
         numEntriesPerPage,
+        bloomFilterParams.bitCount,
+        bloomFilterParams.hashCount,
         fmt::join(fieldTypes, ", "));
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, pooledBufferCountFor(bufferSize));
-    TestableChainedHashMap chainedHashMap(fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage);
+    TestableChainedHashMap chainedHashMap(
+        fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage, bloomFilterParams);
     const auto uniqueReference = buildUniqueKeyReference(chainedHashMap, fieldTypes, numberOfItems);
 
     NES_INFO("insertAndIterateKeys: CHM has {} entries, {} unique keys", chainedHashMap.size(), uniqueReference.size());
@@ -1020,7 +1059,9 @@ static void insertAndIterateKeysProperty(EngineMode mode)
 }
 
 /// Verify CHM iteration via toVector() returns every stored entry with the correct key+value pair.
-static void insertAndIterateRecordsProperty(EngineMode mode)
+/// When enableBloomFilter is set, the in-map BloomFilter is enabled at random sizing; a pass proves the
+/// stored entries are identical to the disabled run, i.e. the filter never produced a false negative.
+static void insertAndIterateRecordsProperty(EngineMode mode, bool enableBloomFilter = false)
 {
     const auto fieldTypes = *genDataTypeSchema(ALL_VALUE_TYPES, 1, MAX_SCHEMA_FIELDS);
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
@@ -1028,20 +1069,24 @@ static void insertAndIterateRecordsProperty(EngineMode mode)
     const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
     const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
     const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
+    const auto bloomFilterParams = enableBloomFilter ? genBloomFilterParams() : Nautilus::Interface::BloomFilterParams{};
 
     NES_INFO(
         "Property insertAndIterateRecords: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, "
-        "field_types={}",
+        "bloomBits={}, bloomHashes={}, field_types={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
         numKeyFields,
         numberOfBuckets,
         numEntriesPerPage,
+        bloomFilterParams.bitCount,
+        bloomFilterParams.hashCount,
         fmt::join(fieldTypes, ", "));
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, pooledBufferCountFor(bufferSize));
-    TestableChainedHashMap chainedHashMap(fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage);
+    TestableChainedHashMap chainedHashMap(
+        fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage, bloomFilterParams);
     const auto uniqueReference = buildUniqueKeyReference(chainedHashMap, fieldTypes, numberOfItems);
 
     NES_INFO("insertAndIterateRecords: CHM has {} entries, {} unique keys", chainedHashMap.size(), uniqueReference.size());
@@ -1082,6 +1127,33 @@ RC_GTEST_PROP(ChainedHashMapPropertyTest, insertAndIterateRecordsInterpreter, ()
 {
     Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
     insertAndIterateRecordsProperty(EngineMode::Interpreter);
+}
+
+/// Same properties, but with the in-map BloomFilter enabled at random sizing. findOrCreateEntry consults
+/// the filter in findChain; a false negative would re-insert an existing key and break dedup, so a pass
+/// proves the results are identical to the disabled runs above for the randomly-chosen filter sizing.
+RC_GTEST_PROP(ChainedHashMapPropertyTest, insertAndIterateKeysWithBloomFilterCompiler, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndIterateKeysProperty(EngineMode::Compiler, true);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, insertAndIterateKeysWithBloomFilterInterpreter, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndIterateKeysProperty(EngineMode::Interpreter, true);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, insertAndIterateRecordsWithBloomFilterCompiler, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndIterateRecordsProperty(EngineMode::Compiler, true);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, insertAndIterateRecordsWithBloomFilterInterpreter, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndIterateRecordsProperty(EngineMode::Interpreter, true);
 }
 
 }

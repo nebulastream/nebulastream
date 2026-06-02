@@ -18,6 +18,7 @@
 #include <functional>
 #include <vector>
 #include <DataTypes/VarVal.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -111,7 +112,8 @@ public:
         std::vector<FieldOffsets> fieldsKey,
         std::vector<FieldOffsets> fieldsValue,
         const nautilus::val<uint64_t>& entriesPerPage,
-        const nautilus::val<uint64_t>& entrySize);
+        const nautilus::val<uint64_t>& entrySize,
+        Nautilus::Interface::BloomFilterRef bloomFilter);
     ChainedHashMapRef(const ChainedHashMapRef& other);
     ChainedHashMapRef& operator=(const ChainedHashMapRef& other);
     ~ChainedHashMapRef() override = default;
@@ -143,5 +145,6 @@ private:
     std::vector<FieldOffsets> fieldValues;
     nautilus::val<uint64_t> entriesPerPage;
     nautilus::val<uint64_t> entrySize;
+    Nautilus::Interface::BloomFilterRef bloomFilter;
 };
 }

@@ -71,7 +71,8 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         hashMapOptions.fieldKeys,
         hashMapOptions.fieldValues,
         hashMapOptions.entriesPerPage,
-        hashMapOptions.entrySize};
+        hashMapOptions.entrySize,
+        hashMapOptions.bloomFilter};
 
     /// Calling the key functions to add/update the keys to the record
     nautilus::val<bool> containsNullInKey{false};

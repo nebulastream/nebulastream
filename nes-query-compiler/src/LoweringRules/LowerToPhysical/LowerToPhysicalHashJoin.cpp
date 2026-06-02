@@ -37,6 +37,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -237,7 +238,9 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
         keySize,
         valueSize,
         pageSize,
-        numberOfBuckets};
+        numberOfBuckets,
+        /// HashJoin does not yet enable the ChainedHashMap's optional filter; pass a disabled one.
+        Nautilus::Interface::BloomFilterRef::createDisabled()};
     return hashMapOptions;
 }
 }
@@ -298,7 +301,12 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{
-                hashMapOptions.keySize, hashMapOptions.valueSize, hashMapOptions.pageSize, hashMapOptions.numberOfBuckets, &bufferProvider};
+                hashMapOptions.keySize,
+                hashMapOptions.valueSize,
+                hashMapOptions.pageSize,
+                hashMapOptions.numberOfBuckets,
+                &bufferProvider,
+                hashMapOptions.bloomFilter.params()};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
@@ -311,7 +319,12 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{
-                hashMapOptions.keySize, hashMapOptions.valueSize, hashMapOptions.pageSize, hashMapOptions.numberOfBuckets, &bufferProvider};
+                hashMapOptions.keySize,
+                hashMapOptions.valueSize,
+                hashMapOptions.pageSize,
+                hashMapOptions.numberOfBuckets,
+                &bufferProvider,
+                hashMapOptions.bloomFilter.params()};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto handler

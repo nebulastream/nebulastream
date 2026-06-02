@@ -322,6 +322,15 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
     {
         return nullptr;
     }
+    /// Before dereferencing the cache-cold chain, consult the in-map BloomFilter. A disabled filter is the
+    /// NoOp variant whose mightContain is constant-true, so the lookup simply proceeds as before.
+    const auto bloomFilterMemArea = invoke(
+        +[](TupleBuffer* tupleBuffer) { return ChainedHashMap::load(*tupleBuffer).getBloomFilterMemArea(); }, tupleBuffer);
+    if (not bloomFilter.mightContain(bloomFilterMemArea, hash))
+    {
+        return nullptr;
+    }
+
     const auto mask = invoke(
         +[](TupleBuffer* tupleBuffer)
         {
@@ -353,6 +362,13 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
         tupleBuffer,
         hash,
         bufferProvider);
+
+    /// Add the new entry's hash to the in-map BloomFilter (a NoOp for a disabled filter). Runs after
+    /// insertEntry(), which lazily allocates the bit area.
+    const auto bloomFilterMemArea = invoke(
+        +[](TupleBuffer* tupleBuffer) { return ChainedHashMap::load(*tupleBuffer).getBloomFilterMemArea(); }, tupleBuffer);
+    bloomFilter.add(bloomFilterMemArea, hash);
+
     return static_cast<nautilus::val<ChainedHashMapEntry*>>(newEntry);
 }
 
@@ -391,17 +407,19 @@ ChainedHashMapRef::ChainedHashMapRef(
     std::vector<FieldOffsets> fieldsKey,
     std::vector<FieldOffsets> fieldsValue,
     const nautilus::val<uint64_t>& entriesPerPage,
-    const nautilus::val<uint64_t>& entrySize)
+    const nautilus::val<uint64_t>& entrySize,
+    Nautilus::Interface::BloomFilterRef bloomFilter)
     : HashMapRef(tupleBuffer)
     , fieldKeys(std::move(fieldsKey))
     , fieldValues(std::move(fieldsValue))
     , entriesPerPage(entriesPerPage)
     , entrySize(entrySize)
+    , bloomFilter(std::move(bloomFilter))
 {
 }
 
 ChainedHashMapRef::ChainedHashMapRef(const ChainedHashMapRef& other)
-    : ChainedHashMapRef(other.tupleBuffer, other.fieldKeys, other.fieldValues, other.entriesPerPage, other.entrySize)
+    : ChainedHashMapRef(other.tupleBuffer, other.fieldKeys, other.fieldValues, other.entriesPerPage, other.entrySize, other.bloomFilter)
 {
 }
 
@@ -412,6 +430,7 @@ ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
     fieldValues = other.fieldValues;
     entriesPerPage = other.entriesPerPage;
     entrySize = other.entrySize;
+    bloomFilter = other.bloomFilter;
     return *this;
 }
 

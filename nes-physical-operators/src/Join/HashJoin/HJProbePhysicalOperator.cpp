@@ -109,7 +109,8 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
             leftHashMapOptions.fieldKeys,
             leftHashMapOptions.fieldValues,
             leftHashMapOptions.entriesPerPage,
-            leftHashMapOptions.entrySize};
+            leftHashMapOptions.entrySize,
+            leftHashMapOptions.bloomFilter};
 
 
         for (nautilus::val<uint64_t> rightHashMapIndex = 0; rightHashMapIndex < rightNumberOfHashMaps; ++rightHashMapIndex)
@@ -135,7 +136,8 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 rightHashMapOptions.fieldKeys,
                 rightHashMapOptions.fieldValues,
                 rightHashMapOptions.entriesPerPage,
-                rightHashMapOptions.entrySize};
+                rightHashMapOptions.entrySize,
+                rightHashMapOptions.bloomFilter};
 
 
             for (const auto rightEntry : rightHashMap)
