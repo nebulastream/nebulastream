@@ -40,6 +40,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Listeners/QueryLog.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -59,6 +60,36 @@ namespace NES::Systest
 {
 namespace
 {
+std::atomic<int64_t> queryCompilationSumNanoseconds{0};
+std::atomic<int64_t> queryRuntimeSumNanoseconds{0};
+
+void recordDuration(
+    std::atomic<int64_t>& totalNanoseconds,
+    const std::optional<std::chrono::system_clock::time_point>& start,
+    const std::optional<std::chrono::system_clock::time_point>& end)
+{
+    if (not start.has_value() || not end.has_value() || end.value() < start.value())
+    {
+        return;
+    }
+
+    const auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end.value() - start.value());
+    totalNanoseconds.fetch_add(elapsedTime.count());
+}
+
+void recordQueryCompilation(const LocalQueryStatus& queryStatus)
+{
+    recordDuration(
+        queryCompilationSumNanoseconds,
+        queryStatus.metrics.compiling,
+        queryStatus.metrics.running.has_value() ? queryStatus.metrics.running : queryStatus.metrics.stop);
+}
+
+void recordQueryRuntime(const LocalQueryStatus& queryStatus)
+{
+    recordDuration(queryRuntimeSumNanoseconds, queryStatus.metrics.running, queryStatus.metrics.stop);
+}
+
 template <typename ErrorCallable>
 void reportResult(
     std::shared_ptr<RunningQuery>& runningQuery,
@@ -115,6 +146,26 @@ void processQueryWithError(
         performanceMessageBuilder);
 }
 
+}
+
+void resetQueryCompilationMetrics()
+{
+    queryCompilationSumNanoseconds.store(0);
+}
+
+std::chrono::nanoseconds getQueryCompilationSum()
+{
+    return std::chrono::nanoseconds(queryCompilationSumNanoseconds.load());
+}
+
+void resetQueryRuntimeMetrics()
+{
+    queryRuntimeSumNanoseconds.store(0);
+}
+
+std::chrono::nanoseconds getQueryRuntimeSum()
+{
+    return std::chrono::nanoseconds(queryRuntimeSumNanoseconds.load());
 }
 
 /// NOLINTBEGIN(readability-function-cognitive-complexity)
@@ -274,6 +325,8 @@ std::vector<RunningQuery> runQueries(
             }
 
             auto& runningQuery = it->second;
+            recordQueryCompilation(queryStatus);
+            recordQueryRuntime(queryStatus);
 
             if (queryStatus.state == QueryState::Failed)
             {
@@ -426,6 +479,8 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         ranQueries.emplace_back(runningQueryPtr);
         submitter.startQuery(queryId);
         const auto summary = submitter.finishedQueries().at(0);
+        recordQueryCompilation(summary);
+        recordQueryRuntime(summary);
 
         if (summary.state == QueryState::Failed)
         {

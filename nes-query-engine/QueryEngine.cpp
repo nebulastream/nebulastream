@@ -575,6 +575,7 @@ bool ThreadPool::WorkerThread::operator()(CompilePipelineTask& compilePipeline) 
         pipeline->stage->compile(pec);
         const auto wasCompiled = pipeline->isCompiled.exchange(true);
         INVARIANT(!wasCompiled, "Pipeline {}-{} must not be compiled multiple times", compilePipeline.queryId, pipeline->id);
+        pool.statistic->onEvent(PipelineCompile{WorkerThread::id, compilePipeline.queryId, pipeline->id});
         return true;
     }
 
@@ -1003,6 +1004,7 @@ void QueryCatalog::start(
                           { return Starting{std::move(runningQueryPlan)}; })) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
     {
         listener->logQueryStatusChange(queryId, QueryState::Started, startTimestamp);
+        listener->logQueryStatusChange(queryId, QueryState::Compiling, std::chrono::system_clock::now());
     }
     else
     {

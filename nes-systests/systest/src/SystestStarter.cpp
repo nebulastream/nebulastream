@@ -30,6 +30,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
+#include <fmt/base.h>
 #include <fmt/format.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
@@ -38,6 +39,7 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
+#include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <Thread.hpp>
 
@@ -469,27 +471,31 @@ int main(int argc, const char** argv)
     NES::SystestExecutor executor(std::move(config));
     const auto result = executor.executeSystests();
 
+    const auto endTime = std::chrono::high_resolution_clock::now();
+    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    const auto compilationSumTime = NES::Systest::getQueryCompilationSum();
+    const auto runtimeSumTime = NES::Systest::getQueryRuntimeSum();
+    const auto totalWorkNanoseconds = compilationSumTime.count() + runtimeSumTime.count();
+    const auto compilationShare = totalWorkNanoseconds > 0
+        ? (100.0 * static_cast<double>(compilationSumTime.count()) / static_cast<double>(totalWorkNanoseconds))
+        : 0.0;
+    const auto totalExecutionTimeMessage = fmt::format(
+        "Total execution time: {} ms ({:.3f} seconds) [Compilation(sum): {} ms ({:.1f}%), Runtime(sum): {} ms]",
+        duration.count(),
+        std::chrono::duration_cast<std::chrono::duration<double>>(duration).count(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(compilationSumTime).count(),
+        compilationShare,
+        std::chrono::duration_cast<std::chrono::milliseconds>(runtimeSumTime).count());
+
     switch (result.returnType)
     {
-        case SystestExecutorResult::ReturnType::SUCCESS: {
-            const auto endTime = std::chrono::high_resolution_clock::now();
-            const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-            fmt::print(
-                "{}\nTotal execution time: {} ms ({:.3f} seconds)\n",
-                result.outputMessage,
-                duration.count(),
-                std::chrono::duration_cast<std::chrono::duration<double>>(duration).count());
+        case SystestExecutorResult::ReturnType::SUCCESS:
+            fmt::print("{}\n{}\n", result.outputMessage, totalExecutionTimeMessage);
             return 0;
-        }
-        case SystestExecutorResult::ReturnType::FAILED: {
-            auto endTime = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        case SystestExecutorResult::ReturnType::FAILED:
             PRECONDITION(result.errorCode, "Returning with as 'FAILED_WITH_EXCEPTION_CODE', but did not provide error code");
             NES_ERROR("{}", result.outputMessage);
-            std::cout << result.outputMessage << '\n';
-            std::cout << "Total execution time: " << duration.count() << " ms ("
-                      << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
+            std::cout << result.outputMessage << '\n' << totalExecutionTimeMessage << '\n';
             return result.errorCode.value();
-        }
     }
 }

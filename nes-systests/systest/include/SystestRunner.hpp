@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
@@ -100,5 +101,11 @@ void printQueryResultToStdOut(
     const std::string& errorMessage,
     SystestProgressTracker& progressTracker,
     std::string_view queryPerformanceMessage);
+
+void resetQueryCompilationMetrics();
+[[nodiscard]] std::chrono::nanoseconds getQueryCompilationSum();
+
+void resetQueryRuntimeMetrics();
+[[nodiscard]] std::chrono::nanoseconds getQueryRuntimeSum();
 
 }

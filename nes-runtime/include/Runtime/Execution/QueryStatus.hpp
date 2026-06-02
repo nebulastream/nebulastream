@@ -24,7 +24,8 @@ enum class QueryState : uint8_t
 {
     Registered,
     Started,
-    Running, /// Deployed->Running when calling start()
+    Compiling,
+    Running, /// Compiling->Running when pipeline compilation and startup completed
     Stopped, /// Running->Stopped when calling stop() and in Running state
     Failed,
 };
