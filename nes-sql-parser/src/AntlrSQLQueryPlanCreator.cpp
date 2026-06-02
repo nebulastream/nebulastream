@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLLexer.h>
@@ -39,6 +40,7 @@
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/IsNullCheckLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
@@ -168,6 +170,28 @@ static LogicalFunction createLogicalBinaryFunction(LogicalFunction leftFunction,
     }
 }
 
+static LogicalFunction createBetweenFunction(LogicalFunction valueFunction, LogicalFunction lowerFunction, LogicalFunction upperFunction)
+{
+    return AndLogicalFunction(
+        GreaterEqualsLogicalFunction(valueFunction, std::move(lowerFunction)),
+        LessEqualsLogicalFunction(std::move(valueFunction), std::move(upperFunction)));
+}
+
+static LogicalFunction createInFunction(LogicalFunction valueFunction, std::vector<LogicalFunction> candidateFunctions)
+{
+    if (candidateFunctions.empty())
+    {
+        throw InvalidQuerySyntax("IN predicate requires at least one candidate value");
+    }
+
+    LogicalFunction function = EqualsLogicalFunction(valueFunction, std::move(candidateFunctions.front()));
+    for (auto& candidateFunction : candidateFunctions | std::views::drop(1))
+    {
+        function = OrLogicalFunction(std::move(function), EqualsLogicalFunction(valueFunction, std::move(candidateFunction)));
+    }
+    return function;
+}
+
 void AntlrSQLQueryPlanCreator::enterSelectClause(AntlrSQLParser::SelectClauseContext* context)
 {
     helpers.top().isSelect = true;
@@ -241,6 +265,85 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
         const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
         helpers.top().functionBuilder.push_back(function);
     }
+}
+
+void AntlrSQLQueryPlanCreator::exitPredicated(AntlrSQLParser::PredicatedContext* context)
+{
+    auto* predicate = context->predicate();
+    if (predicate == nullptr)
+    {
+        AntlrSQLBaseListener::exitPredicated(context);
+        return;
+    }
+
+    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+    const auto popFunction = [&functions, predicate]()
+    {
+        if (functions.empty())
+        {
+            throw InvalidQuerySyntax("Predicate {} is missing an operand", predicate->getText());
+        }
+        auto function = std::move(functions.back());
+        functions.pop_back();
+        return function;
+    };
+
+    LogicalFunction function;
+    if (predicate->BETWEEN() != nullptr)
+    {
+        if (functions.size() < 3)
+        {
+            throw InvalidQuerySyntax("BETWEEN predicate requires a value, lower bound, and upper bound: {}", predicate->getText());
+        }
+        auto upperFunction = popFunction();
+        auto lowerFunction = popFunction();
+        auto valueFunction = popFunction();
+        function = createBetweenFunction(std::move(valueFunction), std::move(lowerFunction), std::move(upperFunction));
+        if (predicate->NOT() != nullptr)
+        {
+            function = NegateLogicalFunction(std::move(function));
+        }
+    }
+    else if (predicate->IN() != nullptr)
+    {
+        if (predicate->query() != nullptr)
+        {
+            throw UnsupportedQuery("IN subqueries are currently not supported: {}", predicate->getText());
+        }
+        const auto candidateCount = predicate->expression().size();
+        if (candidateCount == 0)
+        {
+            throw InvalidQuerySyntax("IN predicate requires at least one candidate value: {}", predicate->getText());
+        }
+        if (functions.size() < candidateCount + 1)
+        {
+            throw InvalidQuerySyntax("IN predicate {} is missing operands", predicate->getText());
+        }
+        const auto candidatesBegin = functions.end() - static_cast<std::ptrdiff_t>(candidateCount);
+        std::vector<LogicalFunction> candidateFunctions(candidatesBegin, functions.end());
+        functions.erase(candidatesBegin, functions.end());
+        auto valueFunction = popFunction();
+        function = createInFunction(std::move(valueFunction), std::move(candidateFunctions));
+        if (predicate->NOT() != nullptr)
+        {
+            function = NegateLogicalFunction(std::move(function));
+        }
+    }
+    else if (predicate->IS() != nullptr && predicate->nullNotnull() != nullptr)
+    {
+        function = IsNullCheckLogicalFunction(popFunction());
+        if (predicate->nullNotnull()->NOT() != nullptr)
+        {
+            function = NegateLogicalFunction(std::move(function));
+        }
+    }
+    else
+    {
+        throw UnsupportedQuery("Predicate is currently not supported: {}", predicate->getText());
+    }
+
+    functions.push_back(std::move(function));
+    AntlrSQLBaseListener::exitPredicated(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseContext* context)
