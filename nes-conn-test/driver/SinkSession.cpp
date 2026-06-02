@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <charconv>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -36,13 +35,11 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sinks/SinkProvider.hpp>
@@ -52,6 +49,7 @@
 #include <ControlChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <HarnessSinkPEC.hpp>
+#include <NativeFixture.hpp>
 #include <Report.hpp>
 #include <SessionCommand.hpp>
 
@@ -62,11 +60,10 @@
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 
-/// The session driver walks CSV records and tuple buffers with the canonical
-/// scanner short names (`i`/`n` for offset/length, `nl`/`sp` for separator
-/// positions, `wt` for the watchdog interval capture, `r`/`c`/`t` for
-/// row/column/tuple loop indices). Banding the file keeps the parser idiom
-/// intact; renaming each to a 3+-char name fights the reader.
+/// The session driver uses a few canonical short loop names — `nl` for a newline
+/// position (splitRecords), `i` for the batch loop index, and `t` for the
+/// per-worker thread index in the drain. Banding the file keeps these idiomatic;
+/// renaming each to a 3+-char name fights the reader.
 /// NOLINTBEGIN(readability-identifier-length)
 namespace NES::ConnTest
 {
@@ -94,277 +91,6 @@ std::vector<std::string> splitRecords(const std::string_view bytes)
     }
     return records;
 }
-
-/// Batch whole records up to `bufferSize`. A record is never torn across a
-/// buffer boundary so a row split mid-buffer would corrupt the round-trip.
-/// A single record larger than `bufferSize` becomes its own oversized batch;
-/// the caller rejects it.
-std::vector<std::string> batchRecords(const std::vector<std::string>& records, std::size_t begin, std::size_t end, std::size_t bufferSize)
-{
-    std::vector<std::string> batches;
-    std::string current;
-    for (std::size_t i = begin; i < end; ++i)
-    {
-        const auto& record = records[i];
-        if (!current.empty() && current.size() + record.size() > bufferSize)
-        {
-            batches.push_back(std::move(current));
-            current.clear();
-        }
-        current.append(record);
-    }
-    if (!current.empty())
-    {
-        batches.push_back(std::move(current));
-    }
-    return batches;
-}
-
-/// Parse one CSV record (RFC-4180-ish) into fields. A bare empty field is a
-/// SQL NULL (std::nullopt); a quoted empty field `""` is an empty string.
-/// Embedded commas and doubled quotes inside a quoted field are handled — the
-/// whole point of the native path is that a sink no longer naively splits text.
-/// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic): the parser walks `record` by index; bounds-checking subscript on string_view is what the loop already does.
-std::vector<std::optional<std::string>> parseCsvRecord(std::string_view record)
-{
-    while (!record.empty() && (record.back() == '\n' || record.back() == '\r'))
-    {
-        record.remove_suffix(1);
-    }
-    std::vector<std::optional<std::string>> fields;
-    std::size_t i = 0;
-    const std::size_t n = record.size();
-    while (true)
-    {
-        if (i < n && record[i] == '"')
-        {
-            std::string value;
-            ++i;
-            while (i < n)
-            {
-                if (record[i] == '"')
-                {
-                    if (i + 1 < n && record[i + 1] == '"')
-                    {
-                        value.push_back('"');
-                        i += 2;
-                        continue;
-                    }
-                    ++i;
-                    break;
-                }
-                value.push_back(record[i]);
-                ++i;
-            }
-            fields.emplace_back(std::move(value));
-        }
-        else
-        {
-            const std::size_t start = i;
-            while (i < n && record[i] != ',')
-            {
-                ++i;
-            }
-            const auto raw = record.substr(start, i - start);
-            if (raw.empty())
-            {
-                fields.emplace_back(std::nullopt);
-            }
-            else
-            {
-                fields.emplace_back(std::string(raw));
-            }
-        }
-        if (i >= n)
-        {
-            break;
-        }
-        /// record[i] is the field separator (or a stray char after a closing
-        /// quote); step over it. A trailing comma yields one final NULL field.
-        ++i;
-        if (i == n && record[i - 1] == ',')
-        {
-            fields.emplace_back(std::nullopt);
-            break;
-        }
-    }
-    return fields;
-}
-
-/// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-
-template <typename T>
-T parseInteger(const std::string& text)
-{
-    T value{};
-    const auto* first = text.data();
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic): canonical from_chars idiom; the [data, data+size) range is what the API takes.
-    const auto* last = text.data() + text.size();
-    const auto [ptr, ec] = std::from_chars(first, last, value);
-    if (ec != std::errc{} || ptr != last)
-    {
-        throw std::runtime_error(fmt::format("native sink fixture: '{}' is not an integer", text));
-    }
-    return value;
-}
-
-/// Convert one CSV cell to the native bytes of `dataType` at `dst`. Variable-
-/// sized values are copied into a child buffer of `parent`; the 16-byte field
-/// slot receives the VariableSizedAccess pointing at it (matching the engine's
-/// row layout, so the sink reads it back exactly as production would).
-void writeNativeField(
-    const NES::DataType& dataType, const std::string& text, std::byte* dst, NES::TupleBuffer& parent, NES::AbstractBufferProvider& pool)
-{
-    switch (dataType.type)
-    {
-        case NES::DataType::Type::INT8: {
-            const auto value = parseInteger<int8_t>(text);
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::INT16: {
-            const auto value = parseInteger<int16_t>(text);
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::INT32: {
-            const auto value = parseInteger<int32_t>(text);
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::INT64: {
-            const auto value = parseInteger<int64_t>(text);
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::UINT8: {
-            const auto value = parseInteger<uint8_t>(text);
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::UINT16: {
-            const auto value = parseInteger<uint16_t>(text);
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::UINT32: {
-            const auto value = parseInteger<uint32_t>(text);
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::UINT64: {
-            const auto value = parseInteger<uint64_t>(text);
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::FLOAT32: {
-            const auto value = static_cast<float>(std::stod(text));
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::FLOAT64: {
-            const auto value = std::stod(text);
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::BOOLEAN: {
-            const std::byte value{static_cast<unsigned char>((text == "true" || text == "1") ? 1 : 0)};
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::CHAR: {
-            const std::byte value{static_cast<unsigned char>(text.empty() ? 0 : text.front())};
-            std::memcpy(dst, &value, sizeof(value));
-            return;
-        }
-        case NES::DataType::Type::VARSIZED: {
-            const std::size_t length = text.size();
-            /// NOLINTNEXTLINE(bugprone-unchecked-optional-access): fail-fast: an empty optional means the buffer manager is exhausted, which is a fixture-builder bug, not a recoverable condition.
-            auto child = pool.getUnpooledBuffer(std::max<std::size_t>(length, 1)).value();
-            std::memcpy(child.getAvailableMemoryArea<char>().data(), text.data(), length);
-            child.setNumberOfTuples(length);
-            const auto index = parent.storeChildBuffer(child);
-            const NES::VariableSizedAccess access{index, NES::VariableSizedAccess::Size{length}};
-            std::memcpy(dst, &access, sizeof(NES::VariableSizedAccess));
-            return;
-        }
-        case NES::DataType::Type::UNDEFINED:
-            throw std::runtime_error("native sink fixture: field of UNDEFINED type cannot be encoded");
-    }
-}
-
-/// Encode `records[begin, end)` as native row-layout TupleBuffers under
-/// `schema`. Packs as many whole tuples as fit per pooled buffer; varsized
-/// values spill into child buffers. This is what the engine's native emit would
-/// hand the sink — the harness reproduces it so the conn-test exercises the
-/// real (non-formatted) path. Throws on a malformed fixture row.
-/// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic): tuple/offset walk over the native byte layout; rewriting with span::subspan obscures the per-field stride.
-std::vector<TupleBuffer> buildNativeUnits(
-    const std::vector<std::string>& records, std::size_t begin, std::size_t end, const Schema& schema, AbstractBufferProvider& pool)
-{
-    const std::size_t stride = schema.getSizeOfSchemaInBytes();
-    const auto& fields = schema.getFields();
-    const std::size_t bufferBytes = pool.getBufferSize();
-    const std::size_t tuplesPerBuffer = std::max<std::size_t>(1, bufferBytes / std::max<std::size_t>(stride, 1));
-
-    std::vector<TupleBuffer> units;
-    TupleBuffer current;
-    std::size_t inCurrent = 0;
-    const auto flush = [&]
-    {
-        if (inCurrent > 0)
-        {
-            current.setNumberOfTuples(inCurrent);
-            units.push_back(std::move(current));
-            inCurrent = 0;
-        }
-    };
-
-    for (std::size_t r = begin; r < end; ++r)
-    {
-        const auto cells = parseCsvRecord(records[r]);
-        if (cells.size() != fields.size())
-        {
-            throw std::runtime_error(fmt::format("native sink fixture: row has {} fields, schema has {}", cells.size(), fields.size()));
-        }
-        if (inCurrent == 0)
-        {
-            current = pool.getBufferBlocking();
-            std::memset(current.getAvailableMemoryArea<std::byte>().data(), 0, bufferBytes);
-        }
-        auto* tuple = current.getAvailableMemoryArea<std::byte>().data() + (inCurrent * stride);
-        std::size_t offset = 0;
-        for (std::size_t c = 0; c < fields.size(); ++c)
-        {
-            const auto& dataType = fields[c].dataType;
-            auto* fieldPtr = tuple + offset;
-            const auto& cell = cells[c];
-            const bool isNull = !cell.has_value();
-            if (dataType.nullable)
-            {
-                fieldPtr[0] = isNull ? std::byte{1} : std::byte{0};
-            }
-            else if (isNull)
-            {
-                throw std::runtime_error(fmt::format("native sink fixture: NULL in non-nullable field `{}`", fields[c].name));
-            }
-            if (!isNull)
-            {
-                writeNativeField(dataType, *cell, fieldPtr + (dataType.nullable ? 1 : 0), current, pool);
-            }
-            offset += dataType.getSizeInBytesWithNull();
-        }
-        ++inCurrent;
-        if (inCurrent == tuplesPerBuffer)
-        {
-            flush();
-        }
-    }
-    flush();
-    return units;
-}
-
-/// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 /// Holds the state that persists across commands within one sink session:
 /// the once-bound descriptor, the pool, the started sink (+ its backpressure
@@ -417,7 +143,7 @@ public:
             const auto quota = argOf(line);
             if (!quota)
             {
-                return errorReplyLine(harnessErrorInfo("write", "HarnessProtocol", fmt::format("WRITE needs a record count: {}", line)));
+                return errorReplyLine(harnessErrorInfo("write", "HarnessProtocol", fmt::format("WRITE needs a buffer count: {}", line)));
             }
             return write(*quota);
         }
@@ -488,6 +214,13 @@ private:
                 return errorReplyLine(harnessErrorInfo("start", "HarnessIO", ex.what()));
             }
         }
+        /// Materialize the input as a sequence of TupleBuffers up front (native:
+        /// the `.nes` buffers; formatted: the records batched by buffer size), so
+        /// START can report the buffer count and WRITE can step whole buffers.
+        if (!ensureLoaded())
+        {
+            return errorReplyLine(inputError.value());
+        }
         try
         {
             auto [controller, channelListener] = createBackpressureChannel();
@@ -519,74 +252,39 @@ private:
             return errorReplyLine(harnessErrorInfo("start", "HarnessIO", ex.what()));
         }
         started = true;
-        return R"({"ok":true,"phase":"start"})";
+        return fmt::format(R"({{"ok":true,"phase":"start","n_buffers":{}}})", units.size());
     }
 
-    /// WRITE <n>: write the next n input records THROUGH the sink, packed
-    /// into buffer-sized batches and drained by `numThreads` concurrent
-    /// workers (the concurrent scenario's TSan signal). Reply carries
-    /// units_written = records actually written.
-    std::string write(std::uint64_t numberOfRecords)
+    /// WRITE <n>: drain the next `n` buffers THROUGH the sink on `numThreads`
+    /// concurrent workers (the concurrent scenario's TSan signal). One TupleBuffer
+    /// is the unit — matching the engine's sink interface — so the runner steps
+    /// whole buffers (e.g. one per WRITE for the outage scenarios) rather than a
+    /// record count. The buffers were materialized at START. Reply carries
+    /// `units_written` = records in the delivered buffers, and `eos` = whether the
+    /// buffer stream is now exhausted.
+    std::string write(std::uint64_t numberOfBuffers)
     {
         if (!started || !sink)
         {
             return errorReplyLine(harnessErrorInfo("write", "HarnessProtocol", "START before WRITE"));
         }
-        if (!ensureInputLoaded())
+
+        std::vector<TupleBuffer> batch;
+        std::uint64_t recordsWritten = 0;
+        while (numberOfBuffers > 0 && unitCursor < units.size())
         {
-            return errorReplyLine(inputError.value());
+            recordsWritten += unitRecords[unitCursor];
+            batch.push_back(std::move(units[unitCursor]));
+            ++unitCursor;
+            --numberOfBuffers;
         }
 
-        /// `started` implies ensureBound() succeeded, so the descriptor is set;
-        /// bind it once and use the reference for the rest of WRITE.
-        const SinkDescriptor& boundDescriptor = descriptor.value();
-
-        const std::size_t begin = cursor;
-        const std::size_t end = std::min<std::size_t>(records.size(), begin + numberOfRecords);
-        cursor = end;
-        const std::uint64_t recordsTaken = end - begin;
-
-        std::vector<TupleBuffer> units;
-        /// A sink with no `output_format` (the default "Native") receives the
-        /// engine's native row layout, not formatted bytes — so build native
-        /// tuples from the CSV fixture under the bound schema. A non-Native sink
-        /// (e.g. CSV/JSON, as MQTTSink uses) still gets the formatted bytes
-        /// packed whole-record into buffers, the original behaviour.
-        /// G7 replaces this CSV→native build with native .nes input via the copied loader.
-        if (NES::toUpperCase(boundDescriptor.getFormatType()) == "NATIVE")
-        {
-            try
-            {
-                units = buildNativeUnits(records, begin, end, *boundDescriptor.getSchema(), *pool);
-            }
-            catch (const std::exception& ex)
-            {
-                return errorReplyLine(harnessErrorInfo("write", "HarnessIO", ex.what()));
-            }
-        }
-        else
-        {
-            for (auto& chunk : batchRecords(records, begin, end, options.bufferSize))
-            {
-                if (chunk.size() > pool->getBufferSize())
-                {
-                    return errorReplyLine(harnessErrorInfo(
-                        "write",
-                        "HarnessIO",
-                        fmt::format("record of {} bytes exceeds buffer-size {}", chunk.size(), pool->getBufferSize())));
-                }
-                auto buf = pool->getBufferBlocking();
-                std::memcpy(buf.getAvailableMemoryArea<char>().data(), chunk.data(), chunk.size());
-                buf.setNumberOfTuples(chunk.size());
-                units.push_back(std::move(buf));
-            }
-        }
-
-        if (auto drainError = drainThroughSink(std::move(units)))
+        if (auto drainError = drainThroughSink(std::move(batch)))
         {
             return errorReplyLine(*drainError);
         }
-        return fmt::format(R"({{"ok":true,"phase":"write","units_written":{}}})", recordsTaken);
+        const bool eos = unitCursor >= units.size();
+        return fmt::format(R"({{"ok":true,"phase":"write","units_written":{},"eos":{}}})", recordsWritten, eos ? "true" : "false");
     }
 
     /// Drain `units` THROUGH the sink on `numThreads` concurrent workers, with
@@ -722,26 +420,94 @@ private:
         return R"({"ok":true,"phase":"stop"})";
     }
 
-    bool ensureInputLoaded()
+    /// Materialize the input into `units` (the buffer sequence WRITE steps) plus
+    /// the per-buffer record count `unitRecords`. Called once at START so it can
+    /// report the buffer count. A "Native" sink (e.g. ODBCSink) loads the
+    /// runner-supplied `.nes` container directly (G7 — no CSV→native rebuild); a
+    /// formatted sink (CSV/JSON, e.g. MQTTSink) batches the records by buffer size.
+    /// An empty inputPath is the `empty` scenario — no buffers.
+    bool ensureLoaded()
     {
-        if (inputLoaded)
+        if (loaded)
         {
             return !inputError;
         }
-        inputLoaded = true;
+        loaded = true;
         if (options.inputPath.empty())
         {
-            records.clear(); /// empty scenario: nothing to write
-            return true;
+            return true; /// empty scenario: no buffers
         }
-        const auto bytes = slurpFile(options.inputPath);
-        if (!bytes)
+        const SinkDescriptor& boundDescriptor = descriptor.value();
+        try
         {
-            inputError = harnessErrorInfo("write", "HarnessIO", fmt::format("cannot read input file: {}", options.inputPath.string()));
+            if (NES::toUpperCase(boundDescriptor.getFormatType()) == "NATIVE")
+            {
+                const auto schema = boundDescriptor.getSchema();
+                units = loadNativeTupleBuffers(*pool, *schema, options.inputPath, getVarSizedFieldOffsets(*schema));
+                unitRecords.reserve(units.size());
+                for (const auto& unit : units)
+                {
+                    unitRecords.push_back(unit.getNumberOfTuples());
+                }
+            }
+            else
+            {
+                const auto bytes = slurpFile(options.inputPath);
+                if (!bytes)
+                {
+                    inputError
+                        = harnessErrorInfo("start", "HarnessIO", fmt::format("cannot read input file: {}", options.inputPath.string()));
+                    return false;
+                }
+                buildFormattedUnits(splitRecords(*bytes));
+            }
+        }
+        catch (const std::exception& ex)
+        {
+            inputError = harnessErrorInfo("start", "HarnessIO", ex.what());
             return false;
         }
-        records = splitRecords(*bytes);
         return true;
+    }
+
+    /// Pack whole records into buffer-sized formatted units. A record is never
+    /// torn across a buffer boundary, so each unit is a clean set of records —
+    /// the boundary the buffer-granular outage scenarios verify against. The byte
+    /// payload is what the sink consumes (numberOfTuples = byte count); the record
+    /// count is tracked separately in `unitRecords` for the WRITE reply.
+    void buildFormattedUnits(const std::vector<std::string>& records)
+    {
+        std::string current;
+        std::uint64_t currentRecords = 0;
+        const auto flush = [&]
+        {
+            if (current.empty())
+            {
+                return;
+            }
+            if (current.size() > pool->getBufferSize())
+            {
+                throw std::runtime_error(
+                    fmt::format("record batch of {} bytes exceeds buffer-size {}", current.size(), pool->getBufferSize()));
+            }
+            auto buf = pool->getBufferBlocking();
+            std::memcpy(buf.getAvailableMemoryArea<char>().data(), current.data(), current.size());
+            buf.setNumberOfTuples(current.size());
+            units.push_back(std::move(buf));
+            unitRecords.push_back(currentRecords);
+            current.clear();
+            currentRecords = 0;
+        };
+        for (const auto& record : records)
+        {
+            if (!current.empty() && current.size() + record.size() > options.bufferSize)
+            {
+                flush();
+            }
+            current.append(record);
+            ++currentRecords;
+        }
+        flush();
     }
 
     const SinkSessionOptions& options;
@@ -754,10 +520,16 @@ private:
     /// still alive matches the channel's "sinks outlive sources" contract.
     std::optional<BackpressureListener> listener;
     std::unique_ptr<NES::Sink> sink;
-    std::vector<std::string> records;
-    std::size_t cursor{0};
+    /// The input materialized as a TupleBuffer sequence WRITE steps through (G7):
+    /// native `.nes` buffers or formatted record-batches. `unitRecords[i]` is the
+    /// record count in `units[i]` (= tuples for native; the batched record count
+    /// for formatted, where numberOfTuples is the byte payload). `unitCursor` is
+    /// the next buffer to deliver.
+    std::vector<TupleBuffer> units;
+    std::vector<std::uint64_t> unitRecords;
+    std::size_t unitCursor{0};
     std::optional<ErrorInfo> inputError;
-    bool inputLoaded{false};
+    bool loaded{false};
     bool started{false};
     bool stopped{false};
 };

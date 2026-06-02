@@ -103,6 +103,10 @@ class Got:
     bytes: int = 0
     sha: str = ""
     eos: bool = False
+    # Sink WRITE: records actually written in this step (buffer-aligned).
+    units_written: int = 0
+    # Sink START: number of buffers the harness materialized from the input.
+    n_buffers: int = 0
 
 
 class ConnectorError(Exception):
@@ -149,6 +153,8 @@ def read_reply(line: str) -> Got:
             bytes=int(j.get("bytes", 0)),
             sha=str(j.get("sha", "")),
             eos=bool(j.get("eos", False)),
+            units_written=int(j.get("units_written", 0)),
+            n_buffers=int(j.get("n_buffers", 0)),
         )
     origin = j.get("origin")
     phase = str(j.get("phase", ""))

@@ -90,6 +90,8 @@ class Ctx:
     input: Any = None  # bound DataSource (File/Generate/_Records), runtime-provided
     link: Any = None  # Link (needs="link"), else None — runtime-provided, duck-typed
     _sink_written: list[Any] = field(default_factory=list)  # loaded datasets (runtime-shaped)
+    _n_buffers: int = 0  # sink: buffers the harness materialized (from START)
+    _buf_cursor: int = 0  # sink: buffers written so far
 
     @property
     def is_source(self) -> bool:
@@ -121,11 +123,16 @@ class Ctx:
             fn(target=self.target)
 
     def connect(self) -> None:
-        """Open the source / start the sink."""
+        """Open the source / start the sink.
+
+        For a sink, START reports how many buffers it materialized from the
+        input; remember it so the scenario can step whole buffers.
+        """
         if self.is_source:
             self.src.open()
         else:
-            self.snk.start()
+            self._n_buffers = self.snk.start().n_buffers
+            self._buf_cursor = 0
 
     def disconnect(self) -> None:
         """Close the source / stop the sink."""
@@ -140,10 +147,12 @@ class Ctx:
 
     # -- data transfer --------------------------------------------------
     def transfer(self, src: Any) -> None:
-        """Seed→fill→compare (source) / write→stash (sink).
+        """Seed→fill→compare (source) / write-all→stash (sink).
 
-        The sink read-back compare is deferred to finish() — it must run after
-        STOP drains the sink's delivery tokens.
+        For a sink this drains every remaining buffer (round_trip's whole-dataset
+        write); the multi-batch scenarios step buffers explicitly instead. The
+        sink read-back compare is deferred to finish() — it must run after STOP
+        drains the sink's delivery tokens.
         """
         data: Any = self.data.load(src)  # ByteData | RowData, correlated with the model at runtime
         if self.is_source:
@@ -151,9 +160,27 @@ class Ctx:
             result = self.src.fill(self.data.fill_quota(data))
             self.data.compare_fill(data, got=result.got, observed=result.observed)
         else:
-            model = cast("ByteModel", self.data)
-            self.snk.write(model.write_quota(data))
+            self.write_rest()
             self._sink_written.append(data)
+
+    def write_buffers(self, n: int) -> int:
+        """Sink: drain the next ``n`` buffers; return the records actually written."""
+        got = self.snk.write(n)
+        self._buf_cursor += n
+        return got.units_written
+
+    def write_rest(self) -> int:
+        """Sink: drain all buffers not yet written; return records written."""
+        return self.write_buffers(max(self._n_buffers - self._buf_cursor, 0))
+
+    def expect(self, src: Any) -> None:
+        """Sink: record that everything in ``src`` should be read back.
+
+        finish() multiset-compares the read-back against the union of these.
+        transfer() does this for round_trip; the buffer-stepping scenarios call
+        it explicitly since they write without going through transfer().
+        """
+        self._sink_written.append(self.data.load(src))
 
     def finish(self) -> None:
         """Read back what a sink wrote and multiset-compare.
@@ -246,10 +273,20 @@ def reconnect(ctx: Ctx) -> None:
     """
     ctx.setup()
     ctx.connect()
-    ctx.transfer(ctx.input.head())
-    ctx.link.cut()
-    ctx.link.restore()
-    ctx.transfer(ctx.input.tail())
+    if ctx.is_source:
+        ctx.transfer(ctx.input.head())
+        ctx.link.cut()
+        ctx.link.restore()
+        ctx.transfer(ctx.input.tail())
+    else:
+        # Sink: one buffer with the link up, the rest after sever+restore. A sink
+        # that recovers writes them all (finish compares everything); one that
+        # doesn't (ODBCSink) raises on the post-restore write — the declared ERROR.
+        ctx.write_buffers(1)
+        ctx.link.cut()
+        ctx.link.restore()
+        ctx.write_rest()
+        ctx.expect(ctx.input)
     ctx.disconnect()
     ctx.finish()
 
@@ -314,17 +351,18 @@ def outage_delivery(ctx: Ctx) -> None:
         ctx.data.compare_fill(expected, got=result.got, observed=result.observed)
         ctx.disconnect()
         return
-    # Sink: write the first batch with the link up, then write the second batch
-    # WHILE the link is cut (the sink client buffers it), restore, and read
-    # everything back. The during-the-cut write is a stronger, deterministic
-    # buffering test than writing after restore.
+    # Sink: write the first buffer with the link up, then the rest WHILE the link
+    # is cut (the sink client buffers them), restore, and read everything back.
+    # The during-the-cut write is a stronger, deterministic buffering test than
+    # writing after restore.
     ctx.setup()
     ctx.connect()
-    ctx.transfer(ctx.input.head())
+    ctx.write_buffers(1)  # first buffer, link up
     ctx.link.cut()
-    ctx.transfer(ctx.input.tail())  # buffered by the sink while offline
+    ctx.write_rest()  # buffered by the sink while offline
     ctx.link.restore()
     ctx.disconnect()  # stop → flush the buffer on reconnect
+    ctx.expect(ctx.input)  # expect every record back
     ctx.finish()
 
 
@@ -355,23 +393,28 @@ def outage_loss(ctx: Ctx) -> None:
         ctx.data.compare_fill(b, got=result.got, observed=result.observed)
         ctx.disconnect()
         return
-    # Sink: the second batch is written into a down proxy and lost.
+    # Sink: one buffer with the link up, then one buffer WHILE the link is cut so
+    # it physically cannot get through. A sink that does not buffer rejects that
+    # write with a connector error (the declared outcome). The loss is also
+    # confirmed positively: read_back must see exactly the first buffer's records
+    # — identified by the count the harness reports it actually wrote (the buffers
+    # preserve input order, so it is the first `kept_n` records).
     ctx.setup()
     ctx.connect()
     model = cast("ByteModel", ctx.data)  # a sink always drives a ByteModel
-    kept: Any = ctx.data.load(ctx.input.head())
-    dropped: Any = ctx.data.load(ctx.input.tail())
-    ctx.snk.write(model.write_quota(kept))  # delivered (link up)
+    kept_n = ctx.write_buffers(1)  # buffer 0, link up; records actually written
     ctx.link.cut()
     err = None
     try:
-        ctx.snk.write(model.write_quota(dropped))  # link down → rejected/lost
+        ctx.write_buffers(1)  # buffer 1 into the cut link → rejected/lost
     except ConnectorError as e:
         err = e  # captured, surfaced below as the declared outcome
     ctx.link.restore()
     ctx.disconnect()
-    received = ctx.loader.read_back(target=ctx.target, expect_records=len(kept.records()))
-    model.compare_readback(kept, _flatten(received))  # only the kept batch
+    received = ctx.loader.read_back(target=ctx.target, expect_records=kept_n)
+    kept_records = model.load(ctx.input).records()[:kept_n]  # buffer 0's records
+    expected = ByteData(b"\n".join(kept_records) + (b"\n" if kept_records else b""))
+    model.compare_readback(expected, _flatten(received))  # only the kept buffer
     if err is not None:
         raise err  # a non-buffering sink's rejection IS the declared outcome
 

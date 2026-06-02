@@ -59,10 +59,16 @@ _BROKEN_SCENARIOS = {
 _DEAD_ENDPOINT = "127.0.0.1:1"
 _GLOBAL_DEADLINE_S = float(os.environ.get("CONNTEST_GLOBAL_DEADLINE_S", "120"))
 
-# Sink drain tuning: the concurrent scenario's 8 threads x tiny buffers are the
-# TSan signal. Default is generous buffers, few threads.
+# Sink drain tuning (threads, buffer_size). The concurrent scenario's 8 threads x
+# tiny buffers are the TSan signal. The outage scenarios step whole buffers (write
+# one, cut, write the next), so the dataset must span >=2 buffers; for a formatted
+# sink a buffer is a buffer_size-bounded batch, so shrink it enough that the small
+# fixture splits (a native sink's .nes already has many buffers, so this is a
+# harmless no-op there). Default is generous buffers, few threads.
 _SINK_TUNING: dict[str, tuple[int, int]] = {
     "concurrent": (8, 128),
+    "outage_delivery": (4, 2048),
+    "outage_loss": (4, 2048),
 }
 
 
@@ -202,7 +208,12 @@ def test_scenario(
                 threads, buffer_size = _sink_tuning(scenario.name)
                 bound = scenario.data.bind(plugin.conn_test_dir)
                 input_path = tmp_path / "input.bytes"
-                input_path.write_bytes(bound.bytes())
+                # The model decides what the harness reads: formatted sinks get
+                # the source bytes; a native sink hands over a native `.nes`.
+                harness_bytes = (
+                    data_model.harness_input(bound) if data_model is not None else bound.bytes()
+                )
+                input_path.write_bytes(harness_bytes)
                 n_records = len(bound.records())
                 extra += [
                     f"--input-path={input_path}",

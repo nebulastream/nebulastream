@@ -323,12 +323,21 @@ class Sink(_Stepper):
         return self._command("VALIDATE")
 
     def start(self) -> Got:
-        """Run the START step (open the sink connection)."""
+        """Run the START step (open the sink connection).
+
+        The reply's ``n_buffers`` is how many buffers the harness materialized
+        from the input — the count the scenario steps through with WRITE.
+        """
         return self._command("START")
 
-    def write(self, quota: int) -> Got:
-        """Run a WRITE step that pushes ``quota`` tuples to the sink."""
-        return self._command(f"WRITE {quota}")
+    def write(self, buffers: int) -> Got:
+        """Run a WRITE step that drains the next ``buffers`` buffers to the sink.
+
+        One TupleBuffer is the unit (the engine's sink interface). The reply's
+        ``units_written`` is the record count in those buffers; ``eos`` is whether
+        the buffer stream is now exhausted.
+        """
+        return self._command(f"WRITE {buffers}")
 
     def stop(self) -> Got:
         """Run the STOP step (flush and close the sink connection)."""

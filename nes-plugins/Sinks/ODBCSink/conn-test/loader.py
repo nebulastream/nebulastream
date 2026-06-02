@@ -13,17 +13,18 @@
 """ODBC sink TestDataLoader for the conn-test harness.
 
 Discovered by the runner via the per-plugin ``conn-test/loader.py`` glob.
-Sink-side flow (inverse of the ODBC source): the harness parses the CSV fixture
-into NES *native* tuples under the sink's schema (the sink config sets
-``output_format=Native``) and drains them through ODBCSink, which binds each
-column to a typed ODBC parameter and INSERTs it. ``read_back`` then SELECTs the
-rows and re-renders them in the same canonical form for an order-insensitive
-multiset compare.
+Sink-side flow (inverse of the ODBC source): the harness loads the committed
+native ``.nes`` fixture (``input/records.nes``) into NES *native* tuples under
+the sink's schema (the sink config sets ``output_format=Native``) and drains
+them through ODBCSink, which binds each column to a typed ODBC parameter and
+INSERTs it. ``read_back`` then SELECTs the rows and re-renders them in the same
+canonical form for an order-insensitive multiset compare.
 
-The schema mixes types on purpose — a VARSIZED column carrying embedded commas /
-quotes, a FLOAT64, and a nullable VARSIZED — so the round-trip proves the typed
-path is correct where the old CSV-text sink was not: a comma inside a quoted
-field is one column (not two), and an empty field is SQL NULL (not ``''``).
+The fixture is the input-formatter ``Food`` dataset (so the ``.nes`` is a real
+engine artifact rather than a bespoke encoding): two VARSIZED string columns,
+mixed INT16/INT32 widths, and a FLOAT64 — enough to exercise the typed/varsized
+native path. ``harness_input`` hands the harness the ``.nes`` while ``load``
+parses the paired CSV only to derive the expected read-back multiset.
 
 The sink reads its endpoint from config (``db_host`` / ``db_port``); this loader
 talks to the same Postgres directly over TCP via psycopg to create the per-test
@@ -46,14 +47,24 @@ from conntest_runner.datamodel import ByteData, ByteModel
 from conntest_runner.naming import unique_token
 
 # The sink schema, in NES MemoryLayout order: (name, NES type, nullable). Mirror
-# of `configs/valid/basic.nesql`. `note` is the only nullable column.
+# of `configs/valid/basic.nesql` AND of the committed native fixture
+# `input/records.nes` (the input-formatter `Food` dataset). All columns are
+# NOT NULL — the harness loads `records.nes` byte-for-byte under this schema, and
+# a nullable column would shift the row stride. Two VARSIZED columns keep the
+# typed/varsized path under test.
 _SCHEMA: tuple[tuple[str, str, bool], ...] = (
-    ("id", "INT32", False),
-    ("label", "VARSIZED", False),
-    ("score", "FLOAT64", False),
-    ("note", "VARSIZED", True),
+    ("num_records", "INT16", False),
+    ("activity_sec", "INT32", False),
+    ("application", "VARSIZED", False),
+    ("device", "VARSIZED", False),
+    ("subscribers", "INT16", False),
+    ("volume_total_bytes", "FLOAT64", False),
 )
 _COLUMNS = tuple(name for name, _typ, _nullable in _SCHEMA)
+
+# The Food fixture is pipe-delimited; the harness reads the sibling `.nes`, while
+# this loader parses the CSV only to derive the expected read-back multiset.
+_CSV_DELIMITER = "|"
 
 # Canonical per-row encoding shared by the input side (``RowModel.load``) and
 # the read-back side. A unit separator that never occurs in the fixture keeps it
@@ -87,25 +98,32 @@ class OdbcSinkRowModel(ByteModel):
     Reuses ByteModel's record-multiset machinery (``write_quota`` =
     record count, ``compare_readback`` = multiset compare) but loads the CSV
     fixture as *typed rows* and emits each in the canonical encoding, so the
-    comparison is type-aware: an empty field is NULL, a quoted ``"a,b"`` is one
-    string column, and floats compare by value. The harness, fed the same raw
-    fixture via ``--input-path``, builds the matching native tuples.
+    comparison is type-aware: a string column stays one column and floats
+    compare by value. The harness reads the sibling native ``.nes`` (the same
+    data) via ``--input-path`` and pushes those tuples through the sink, so the
+    rows that land in the DB are exactly these.
     """
 
+    def harness_input(self, bound: Any) -> bytes:
+        """Native sink: hand the harness the committed `.nes`, not the CSV text.
+
+        The `.nes` sits next to the CSV fixture (``records.csv`` ->
+        ``records.nes``); the harness loads it directly into native tuples.
+        """
+        data: bytes = bound.path.with_suffix(".nes").read_bytes()
+        return data
+
     def load(self, src: Any) -> ByteData:
-        """Parse the bound CSV source (RFC-4180) into canonical typed rows."""
+        """Parse the bound CSV source into canonical typed rows (expected side)."""
         text = src.bytes().decode("utf-8")
         rows: list[bytes] = []
-        for cells in csv.reader(io.StringIO(text)):
+        for cells in csv.reader(io.StringIO(text), delimiter=_CSV_DELIMITER):
             if not cells:
                 continue
             values: list[Any] = []
-            for (_name, typ, nullable), cell in zip(_SCHEMA, cells, strict=False):
+            for (_name, typ, _nullable), cell in zip(_SCHEMA, cells, strict=False):
                 if typ == "VARSIZED":
-                    # An empty *unquoted* field is NULL; the fixture never uses a
-                    # quoted empty string, so csv's lost quote/empty distinction
-                    # does not matter (matches the harness's NULL convention).
-                    values.append(None if (nullable and cell == "") else cell)
+                    values.append(cell)
                 elif typ.startswith("FLOAT"):
                     values.append(float(cell))
                 else:
@@ -178,9 +196,12 @@ class OdbcSinkLoader:
         return {"db_host": host, "db_port": port, "table": target}
 
     def _create_sql(self, target: str) -> str:
+        # Column order matches _SCHEMA / the CREATE SINK; ODBCSink INSERTs
+        # positionally, so only count + coercion-compatibility matter.
         return (
             f'CREATE TABLE IF NOT EXISTS "{target}" '
-            "(id INTEGER, label TEXT, score DOUBLE PRECISION, note TEXT)"
+            "(num_records SMALLINT, activity_sec INTEGER, application TEXT, "
+            "device TEXT, subscribers SMALLINT, volume_total_bytes DOUBLE PRECISION)"
         )
 
     def setup(self, *, target: str) -> None:

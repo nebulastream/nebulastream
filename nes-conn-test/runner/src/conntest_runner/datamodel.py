@@ -278,6 +278,15 @@ class ByteModel:
         """Load a bound source into a `ByteData` dataset."""
         return ByteData(src.bytes())
 
+    def harness_input(self, bound: DataSource) -> bytes:
+        """Bytes the harness reads via ``--input-path``.
+
+        Default: the source bytes verbatim — a formatted sink packs these as
+        records. A native sink overrides this to hand over a native ``.nes``
+        container the harness loads directly (see ODBCSink's model).
+        """
+        return bound.bytes()
+
     def fill_quota(self, d: ByteData) -> int:
         """FILL quota in the native unit (bytes)."""
         return len(d.data)  # native unit = bytes
