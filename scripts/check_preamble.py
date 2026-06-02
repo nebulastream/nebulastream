@@ -89,6 +89,10 @@ VENDORED_FILES = {
     "nes-systests/utils/SystestPlugin/NES-Systest-Runner/gradlew.bat",
     "vcpkg/vcpkg-registry/ports/llvm/portfile.cmake",
     "vcpkg/vcpkg-registry/ports/cpptrace/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/libuuid/CMakeLists.txt",
+    "vcpkg/vcpkg-registry/ports/libuuid/config.linux.h",
+    "vcpkg/vcpkg-registry/ports/libuuid/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/libuuid/unofficial-libuuid-config.cmake.in",
 }
 
 if __name__ == "__main__":
