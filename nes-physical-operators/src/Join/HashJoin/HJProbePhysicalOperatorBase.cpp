@@ -75,7 +75,8 @@ HJProbePhysicalOperatorBase::pinHashMapBuffer(const nautilus::val<TupleBuffer*>&
 ChainedHashMapRef
 HJProbePhysicalOperatorBase::makeChainedHashMapRef(const nautilus::val<TupleBuffer*>& hashMapBufferRef, const HashMapOptions& options)
 {
-    return ChainedHashMapRef{hashMapBufferRef, options.fieldKeys, options.fieldValues, options.entriesPerPage, options.entrySize};
+    return ChainedHashMapRef{
+        hashMapBufferRef, options.fieldKeys, options.fieldValues, options.entriesPerPage, options.entrySize, options.bloomFilterParams};
 }
 
 namespace

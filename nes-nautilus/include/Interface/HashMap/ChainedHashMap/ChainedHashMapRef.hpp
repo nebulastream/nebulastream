@@ -16,8 +16,10 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <vector>
 #include <DataTypes/VarVal.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -113,12 +115,16 @@ public:
         nautilus::val<uint64_t> numberOfPages;
     };
 
+    /// Empty bloomFilterParams disable the in-map BloomFilter for this view; they must match how the underlying
+    /// map was initialised, since the bit area only exists (and only has that size) when ChainedHashMapConfig
+    /// requested one.
     ChainedHashMapRef(
         const nautilus::val<TupleBuffer*>& buffer,
         std::vector<FieldOffsets> fieldsKey,
         std::vector<FieldOffsets> fieldsValue,
         const nautilus::val<uint64_t>& entriesPerPage,
-        const nautilus::val<uint64_t>& entrySize);
+        const nautilus::val<uint64_t>& entrySize,
+        std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams);
     ChainedHashMapRef(const ChainedHashMapRef& other);
     ChainedHashMapRef& operator=(const ChainedHashMapRef& other);
     ~ChainedHashMapRef() override = default;
@@ -150,5 +156,7 @@ private:
     std::vector<FieldOffsets> fieldValues;
     nautilus::val<uint64_t> entriesPerPage;
     nautilus::val<uint64_t> entrySize;
+    /// Bound to the map's inline bit area at construction.
+    std::optional<Nautilus::Interface::BloomFilterRef> bloomFilter;
 };
 }

@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <utility>
@@ -198,7 +199,9 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         keySize,
         valueSize,
         pageSize,
-        numberOfBuckets);
+        numberOfBuckets,
+        /// Aggregation does not benefit of using the ChainedHashMap's optional filter.
+        std::nullopt);
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
