@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/Record.hpp>
@@ -43,7 +44,9 @@ public:
         EngineMode mode,
         uint64_t numberOfBuckets,
         size_t numKeyFields,
-        uint64_t numEntriesPerPage);
+        uint64_t numEntriesPerPage,
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations): matches the pre-existing default here.
+        const std::optional<Nautilus::Interface::BloomFilterParams>& bloomFilterParams = std::nullopt);
 
     ~TestableChainedHashMap() = default;
     TestableChainedHashMap(const TestableChainedHashMap&) = delete;
@@ -88,6 +91,9 @@ private:
     TupleBuffer chainedHashMapBuffer;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     AbstractBufferProvider& bufferManager;
+    /// Sizing for the optional in-map BloomFilter. Defaults to nullopt, so the CHM behaves exactly as
+    /// before unless a test opts in via the constructor.
+    std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::unique_ptr<nautilus::engine::NautilusEngine> engine;
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, AbstractBufferProvider*, AnyVec*)>> insertFn;

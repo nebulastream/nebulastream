@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -38,8 +40,17 @@ struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
         const uint64_t valueSize,
         const uint64_t pageSize,
         const uint64_t numberOfBuckets,
-        AbstractBufferProvider* bufferProvider)
-        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets), bufferProvider(bufferProvider)
+        AbstractBufferProvider* bufferProvider,
+        /// Defaults to no BloomFilter, so callers that do not use one (e.g. aggregation) allocate no
+        /// bloom-bit memory.
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations): matches the pre-existing default here.
+        const std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams = std::nullopt)
+        : keySize(keySize)
+        , valueSize(valueSize)
+        , pageSize(pageSize)
+        , numberOfBuckets(numberOfBuckets)
+        , bufferProvider(bufferProvider)
+        , bloomFilterParams(bloomFilterParams)
     {
     }
 
@@ -49,6 +60,7 @@ struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
     uint64_t pageSize;
     uint64_t numberOfBuckets;
     AbstractBufferProvider* bufferProvider;
+    std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams;
 };
 
 /// Whether a hash map buffer slot has been lazily allocated yet. Backed by uint8_t (not bool) so that
@@ -83,21 +95,17 @@ public:
     [[nodiscard]] uint64_t getNumHashMapsPerInputStream() const;
 
 protected:
-    /// We use this private struct to store the CreateNewHashMapSliceArgs parameters in a trivially-copyable way, that is also embedded in the header.
-    struct HashMapSliceParams
+    /// The CreateNewHashMapSliceArgs sizing, kept in the trivially-copyable form the lazy init needs.
+    static ChainedHashMapConfig toChainedHashMapConfig(const CreateNewHashMapSliceArgs& args)
     {
-        uint64_t keySize;
-        uint64_t valueSize;
-        uint64_t pageSize;
-        uint64_t numberOfBuckets;
+        return ChainedHashMapConfig{
+            .entrySize = sizeof(ChainedHashMapEntry) + args.keySize + args.valueSize,
+            .numberOfBuckets = args.numberOfBuckets,
+            .pageSize = args.pageSize,
+            .bloomFilter = args.bloomFilterParams};
+    }
 
-        explicit HashMapSliceParams(const CreateNewHashMapSliceArgs& args)
-            : keySize(args.keySize), valueSize(args.valueSize), pageSize(args.pageSize), numberOfBuckets(args.numberOfBuckets)
-        {
-        }
-    };
-
-    static_assert(std::is_trivially_copyable_v<HashMapSliceParams>);
+    static_assert(std::is_trivially_copyable_v<ChainedHashMapConfig>);
 
     /// @brief Returns the hash map buffer at childBufferIndex if it has already been lazily created, or nullptr
     /// otherwise. Never allocates, so it is safe to call without synchronization: it only ever reads state that
@@ -112,7 +120,7 @@ protected:
     uint64_t numHashMaps;
     uint64_t numInputStreams;
     uint64_t numHashmapsPerInputStream;
-    HashMapSliceParams params;
+    ChainedHashMapConfig hashMapConfig;
     /// the hash map buffers for the hash map slice
     std::vector<TupleBuffer> hashMapBuffers;
     /// Holds the state of whether individual tuplebuffers have been allocated.

@@ -19,11 +19,13 @@
 #include <exception>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VarVal.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
@@ -318,12 +320,17 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
 {
+    /// Before dereferencing the cache-cold chain, consult the in-map BloomFilter. Without a filter we go
+    /// straight to the chain walk, which costs nothing extra: the chains array is nullptr-filled by init().
+    if (bloomFilter and not bloomFilter->mightContain(hash))
+    {
+        return nullptr;
+    }
     return nautilus::invoke(
         +[](const TupleBuffer* buffer, const HashFunction::HashValue::raw_type hashValue) -> ChainedHashMapEntry*
         {
             ChainedHashMap chm = ChainedHashMap::load(*buffer);
-            const auto numberOfTuples = chm.getTotalNumberOfRecords();
-            if (numberOfTuples == 0)
+            if (chm.getTotalNumberOfRecords() == 0)
             {
                 return nullptr;
             }
@@ -346,6 +353,12 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
         buffer,
         hash,
         bufferProvider);
+
+    if (bloomFilter)
+    {
+        bloomFilter->add(hash);
+    }
+
     return static_cast<nautilus::val<ChainedHashMapEntry*>>(newEntry);
 }
 
@@ -384,17 +397,51 @@ ChainedHashMapRef::ChainedHashMapRef(
     std::vector<FieldOffsets> fieldsKey,
     std::vector<FieldOffsets> fieldsValue,
     const nautilus::val<uint64_t>& entriesPerPage,
-    const nautilus::val<uint64_t>& entrySize)
+    const nautilus::val<uint64_t>& entrySize,
+    const std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams)
     : HashMapRef(buffer)
     , fieldKeys(std::move(fieldsKey))
     , fieldValues(std::move(fieldsValue))
     , entriesPerPage(entriesPerPage)
     , entrySize(entrySize)
 {
+    /// The bit area lives inline in the map's buffer and is zeroed by init(), so its address is stable and
+    /// valid from here on. Resolving it once keeps the traced lookup path free of a per-call invoke.
+    if (bloomFilterParams)
+    {
+        bloomFilter.emplace(
+            invoke(
+                +[](TupleBuffer* buffer, const uint64_t bitCount, const uint64_t hashCount)
+                {
+                    auto chm = ChainedHashMap::load(*buffer);
+                    INVARIANT(chm.getBloomFilterParams().has_value(), "The hash map was initialised without a BloomFilter bit area");
+                    /// The traced probe folds bitCount into its modulo and unrolls hashCount, so a view sized
+                    /// differently from the map it is bound to would index outside the allocated bit area.
+                    INVARIANT(
+                        chm.getBloomFilterParams()->getBitCount() == bitCount and chm.getBloomFilterParams()->getHashCount() == hashCount,
+                        "BloomFilter sizing of the view ({} bits, {} hashes) does not match the map it is bound to ({} bits, {} hashes)",
+                        bitCount,
+                        hashCount,
+                        chm.getBloomFilterParams()->getBitCount(),
+                        chm.getBloomFilterParams()->getHashCount());
+                    return chm.getBloomFilterMemArea();
+                },
+                buffer,
+                nautilus::val<uint64_t>{bloomFilterParams->getBitCount()},
+                nautilus::val<uint64_t>{bloomFilterParams->getHashCount()}),
+            *bloomFilterParams);
+    }
 }
 
+/// Copies the already-bound bloomFilter rather than delegating to the ctor above, which would re-run its
+/// invokes and emit redundant traced calls per copy.
 ChainedHashMapRef::ChainedHashMapRef(const ChainedHashMapRef& other)
-    : ChainedHashMapRef(other.buffer, other.fieldKeys, other.fieldValues, other.entriesPerPage, other.entrySize)
+    : HashMapRef(other.buffer)
+    , fieldKeys(other.fieldKeys)
+    , fieldValues(other.fieldValues)
+    , entriesPerPage(other.entriesPerPage)
+    , entrySize(other.entrySize)
+    , bloomFilter(other.bloomFilter)
 {
 }
 
@@ -405,6 +452,7 @@ ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
     fieldValues = other.fieldValues;
     entriesPerPage = other.entriesPerPage;
     entrySize = other.entrySize;
+    bloomFilter = other.bloomFilter;
     return *this;
 }
 
