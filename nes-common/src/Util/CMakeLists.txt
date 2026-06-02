@@ -16,5 +16,6 @@ add_source_files(nes-common
         Files.cpp
         UUID.cpp
         Signal.cpp
+        Checksum.cpp
 )
 add_subdirectory(Logger)

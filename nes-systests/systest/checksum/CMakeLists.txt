@@ -12,12 +12,9 @@
 
 add_executable(checksum ChecksumStarter.cpp)
 
-add_library(systest-checksum Checksum.cpp)
-target_include_directories(systest-checksum PUBLIC .)
-
 add_nes_test(checksum-test ChecksumTest.cpp)
-target_link_libraries(checksum-test systest-checksum)
+target_link_libraries(checksum-test nes-common)
 
 find_package(argparse CONFIG REQUIRED)
-# nes-common provides the --version / -v build-info helper (NES::printVersion).
-target_link_libraries(checksum PRIVATE argparse::argparse systest-checksum nes-common)
+# nes-common provides the --version / -v build-info helper (NES::printVersion) and the Checksum implementation.
+target_link_libraries(checksum PRIVATE argparse::argparse nes-common)
