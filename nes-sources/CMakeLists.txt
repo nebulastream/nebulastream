@@ -22,6 +22,9 @@ target_include_directories(nes-sources PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
+# The built-in Generator source can populate fields from files under nes-systests/testdata/.
+target_compile_definitions(nes-sources PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
+
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sources REUSE_FROM nes-common)
 endif ()
