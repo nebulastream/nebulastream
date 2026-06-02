@@ -26,8 +26,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/Checksum.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <Checksum.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES

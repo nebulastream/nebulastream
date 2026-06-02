@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <ChecksumSink.hpp>
+#include <Sinks/ChecksumSink.hpp>
 
 #include <cstddef>
 #include <filesystem>

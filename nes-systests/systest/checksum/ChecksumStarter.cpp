@@ -17,8 +17,8 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <Util/Checksum.hpp>
 #include <argparse/argparse.hpp>
-#include <Checksum.hpp>
 
 int main(int argc, char* argv[])
 {
