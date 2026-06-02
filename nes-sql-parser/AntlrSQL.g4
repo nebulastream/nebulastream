@@ -455,7 +455,7 @@ IN: 'IN' | 'in';
 INNER: 'INNER' | 'inner';
 INSERT: 'INSERT' | 'insert';
 INTO: 'INTO' | 'into';
-IS: 'IS'  'is';
+IS: 'IS' | 'is';
 JOIN: 'JOIN' | 'join';
 LAST: 'LAST';
 LEFT: 'LEFT' | 'left';

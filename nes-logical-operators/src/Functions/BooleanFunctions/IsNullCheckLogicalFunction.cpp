@@ -46,7 +46,7 @@ bool IsNullCheckLogicalFunction::operator==(const IsNullCheckLogicalFunction& rh
 
 std::string IsNullCheckLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return fmt::format("NOT({})", child.explain(verbosity));
+    return fmt::format("ISNULL({})", child.explain(verbosity));
 }
 
 LogicalFunction IsNullCheckLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const

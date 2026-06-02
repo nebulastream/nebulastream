@@ -1,0 +1,45 @@
+# name: selection/SelectionPredicates.test
+# description: Selection tests for SQL predicate syntax
+# groups: [Selection]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value INT32, score FLOAT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1,10.5
+2,2,20.0
+3,3,
+4,,30.0
+5,5,40.0
+
+CREATE SINK idSink(id UINT64 NOT NULL) TYPE File;
+
+SELECT id FROM stream WHERE value BETWEEN INT32(2) AND INT32(5) INTO idSink;
+----
+2
+3
+5
+
+SELECT id FROM stream WHERE value NOT BETWEEN INT32(2) AND INT32(5) INTO idSink;
+----
+1
+
+SELECT id FROM stream WHERE value IN (INT32(1), INT32(5)) INTO idSink;
+----
+1
+5
+
+SELECT id FROM stream WHERE value NOT IN (INT32(1), INT32(5)) INTO idSink;
+----
+2
+3
+
+SELECT id FROM stream WHERE value IS NULL INTO idSink;
+----
+4
+
+SELECT id FROM stream WHERE value IS NOT NULL INTO idSink;
+----
+1
+2
+3
+5
