@@ -198,13 +198,7 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
 
     if (config.remoteWorker.getValue())
     {
-        runEndlessRemote(
-            queriesByOverride,
-            rng,
-            numberConcurrentQueries,
-            config.clusterConfig,
-            progressTracker,
-            querySubmitterOptions);
+        runEndlessRemote(queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, progressTracker, querySubmitterOptions);
     }
     else
     {
@@ -355,12 +349,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                                                           { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
                 : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
             auto failed = runQueriesAtRemoteWorker(
-                queries,
-                numberConcurrentQueries,
-                config.clusterConfig,
-                progressTracker,
-                performanceMessage,
-                querySubmitterOptions);
+                queries, numberConcurrentQueries, config.clusterConfig, progressTracker, performanceMessage, querySubmitterOptions);
             failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
         }
         else
