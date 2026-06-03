@@ -242,6 +242,7 @@ struct DefaultPEC final : PipelineExecutionContext
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
+    const QueryId& queryId;
     /// We want to ensure that the address of the TupleBuffer is always the same. If we would simply store the object directly in the vector,
     /// the address might change as the vector might be resized and thus, the object have a different address.
     std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
@@ -254,6 +255,7 @@ struct DefaultPEC final : PipelineExecutionContext
         size_t numberOfThreads,
         WorkerThreadId threadId,
         PipelineId pipelineId,
+        const QueryId& queryId,
         std::shared_ptr<AbstractBufferProvider> bm,
         std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
         std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
@@ -263,6 +265,7 @@ struct DefaultPEC final : PipelineExecutionContext
         , numberOfThreads(numberOfThreads)
         , threadId(threadId)
         , pipelineId(pipelineId)
+        , queryId(queryId)
     {
     }
 
@@ -331,6 +334,8 @@ struct DefaultPEC final : PipelineExecutionContext
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         operatorHandlers = std::addressof(handlers);
     }
+
+    [[nodiscard]] const QueryId& getQueryId() const override { return queryId; }
 };
 
 /// Lifetime of the ThreadPool:
@@ -525,6 +530,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
+            task.queryId,
             pool.bufferProvider,
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
@@ -582,6 +588,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
+            startPipeline.queryId,
             pool.bufferProvider,
             [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
             {
@@ -660,6 +667,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         pool.numberOfThreads(),
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
+        stopPipelineTask.queryId,
         pool.bufferProvider,
         [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
         {

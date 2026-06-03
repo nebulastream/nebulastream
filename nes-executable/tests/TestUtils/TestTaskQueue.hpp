@@ -103,6 +103,8 @@ public:
 
     [[nodiscard]] PipelineId getPipelineId() const override { return pipelineId; }
 
+    [[nodiscard]] const QueryId& getQueryId() const override { return INVALID_QUERY_ID; }
+
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override { return operatorHandlers; };
 
     void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& operatorHandlers) override
