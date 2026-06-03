@@ -204,6 +204,10 @@ PlacementModel createPlacementModel()
     checkError(Highs_setBoolOptionValue(highs, "log_to_console", 0), highs);
     checkError(Highs_setDoubleOptionValue(highs, "time_limit", 5.0), highs); /// NOLINT(readability-magic-numbers) 5 second time limit
     checkError(Highs_setDoubleOptionValue(highs, "mip_rel_gap", 0.01), highs); /// NOLINT(readability-magic-numbers) 1% optimality gap
+    /// Run fully on the calling thread: disable parallel code paths and prevent the HiGHS task
+    /// executor from spawning any worker threads.
+    checkError(Highs_setStringOptionValue(highs, "parallel", "off"), highs);
+    checkError(Highs_setIntOptionValue(highs, "threads", 1), highs);
     return PlacementModel{.highs = highs, .operatorPlacementMatrix = {}, .reverseIndex = {}};
 }
 
