@@ -22,9 +22,8 @@
 #include <stop_token>
 #include <utility>
 #include <ittnotify.h>
-
+#include <absl/functional/any_invocable.h>
 #include <folly/Synchronized.h>
-
 #include <ErrorHandling.hpp>
 
 /// Represents the state of the backpressure channel guarded by a mutex and communicated to the listener via the condition variable.
@@ -39,6 +38,7 @@ struct Channel
     };
 
     folly::Synchronized<State, std::mutex> stateMtx{OPEN};
+    folly::Synchronized<std::vector<absl::AnyInvocable<bool()>>> wakers;
     std::condition_variable_any change;
 };
 
@@ -50,8 +50,26 @@ BackpressureController::~BackpressureController()
 {
     if (channel)
     {
-        *channel->stateMtx.lock() = Channel::DESTROYED;
-        channel->change.notify_all();
+        std::vector<absl::AnyInvocable<bool()>> toFire;
+        bool wasClosed;
+        {
+            auto state = channel->stateMtx.lock();
+            const auto old = std::exchange(*state, Channel::DESTROYED);
+            INVARIANT(old != Channel::DESTROYED, "...");
+            wasClosed = (old == Channel::CLOSED);
+            if (wasClosed)
+            {
+                /// Move wakers out under the state lock so no one can register
+                /// into a stale OPEN->CLOSED window.
+                toFire = std::exchange(*channel->wakers.wlock(), {});
+            }
+        }
+        if (wasClosed)
+        {
+            channel->change.notify_all();
+            for (auto& w : toFire)
+                w(); /// fire outside the lock
+        }
     }
 }
 
@@ -64,15 +82,59 @@ bool BackpressureController::applyPressure()
 
 bool BackpressureController::releasePressure()
 {
-    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::OPEN);
-    INVARIANT(old != Channel::DESTROYED, "The Backpressure Controller is still alive thus the channel should not have been destroyed");
-    if (old == Channel::CLOSED)
+    std::vector<absl::AnyInvocable<bool()>> toFire;
+    bool wasClosed;
     {
-        /// The Backpressure Controller was opened, wake up all waiting BackpressureListeners
-        channel->change.notify_all();
-        return true;
+        auto state = channel->stateMtx.lock();
+        const auto old = std::exchange(*state, Channel::OPEN);
+        INVARIANT(old != Channel::DESTROYED, "...");
+        wasClosed = (old == Channel::CLOSED);
+        if (wasClosed)
+        {
+            /// Move wakers out under the state lock so no one can register
+            /// into a stale OPEN->CLOSED window.
+            toFire = std::exchange(*channel->wakers.wlock(), {});
+        }
     }
-    return false;
+    if (wasClosed)
+    {
+        channel->change.notify_all();
+        for (auto& w : toFire)
+            w(); /// fire outside the lock
+    }
+    return wasClosed;
+}
+
+bool BackpressureReleased::await_ready() noexcept
+{
+    return *channel->stateMtx.lock() == Channel::OPEN;
+}
+
+bool BackpressureReleased::await_suspend(std::coroutine_handle<> h) noexcept
+{
+    auto state = channel->stateMtx.lock();
+    if (*state == Channel::OPEN)
+    {
+        return false;
+    }
+
+    fmt::println(stderr, "Backpressure Detected");
+    /// Still closed; register waker while holding state lock so release()
+    /// cannot miss us. The shared waker carries a cancellation flag the
+    /// awaiter's destructor sets if the parent frame dies before fire.
+    waker = std::make_shared<BackpressureWaker>();
+    waker->handle = h;
+    channel->wakers.wlock()->emplace_back(
+        [w = waker]
+        {
+            if (!w->cancelled.load(std::memory_order_acquire))
+            {
+                fmt::println(stderr, "Backpressure Released");
+                w->handle.resume();
+            }
+            return true;
+        });
+    return true;
 }
 
 __itt_domain* backpressure = __itt_domain_create("engine.task");
@@ -102,6 +164,11 @@ void BackpressureListener::wait(const std::stop_token& stopToken) const
     __itt_task_end(backpressure);
 
     INVARIANT(!destroyed, "Backpressure Controller was destroyed before the BackpressureListener");
+}
+
+coro::task<void> BackpressureListener::waitAsync()
+{
+    co_await BackpressureReleased{channel};
 }
 
 std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()
