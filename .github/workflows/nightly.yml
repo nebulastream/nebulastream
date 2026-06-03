@@ -141,7 +141,10 @@ jobs:
       run_reason: "Nightly Benchmark"
 
   create-nightly-image:
-    if: ${{ !github.event.act }}
+    # Only publish the `:latest` release image when the nightly job actually runs on `main`
+    # (scheduled run, or a manual dispatch from the `main` branch). This prevents anyone
+    # triggering the nightly on a different branch from unintentionally overwriting `:latest`.
+    if: ${{ !github.event.act && github.ref == 'refs/heads/main' }}
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit
     with:
