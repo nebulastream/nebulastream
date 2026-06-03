@@ -400,14 +400,44 @@ Selections use the `WHERE` keyword to filter the input stream.
 SELECT * FROM s WHERE t == VARSIZED("sometext") INTO sink
 ```
 
-Predicates can be arbitrary compositions of functions:
+Predicates can combine functions, comparisons, and SQL predicate syntax with `AND`, `OR`, and `NOT`:
 
 ```sql
-SELECT * FROM s WHERE CEIL(speed) != UINT64(0) OR altitude == 0 INTO sink
+SELECT * FROM s WHERE CEIL(speed) != UINT64(0) OR altitude == UINT64(0) INTO sink
 ```
 
 ```sql
 SELECT * FROM transactions WHERE amount > FLOAT64(1000.0) AND status == VARSIZED("completed") INTO sink
+```
+
+`BETWEEN` is inclusive and supports `NOT BETWEEN`:
+
+```sql
+SELECT * FROM transactions WHERE amount BETWEEN FLOAT64(100.0) AND FLOAT64(1000.0) INTO sink
+```
+
+```sql
+SELECT * FROM transactions WHERE amount NOT BETWEEN FLOAT64(100.0) AND FLOAT64(1000.0) INTO sink
+```
+
+`IN` supports explicit, non-empty value lists and also supports `NOT IN`; `IN` subqueries are not supported:
+
+```sql
+SELECT * FROM s WHERE status IN (VARSIZED("queued"), VARSIZED("running")) INTO sink
+```
+
+```sql
+SELECT * FROM s WHERE status NOT IN (VARSIZED("failed"), VARSIZED("cancelled")) INTO sink
+```
+
+`IS NULL` and `IS NOT NULL` test nullable values:
+
+```sql
+SELECT * FROM s WHERE optional_value IS NULL INTO sink
+```
+
+```sql
+SELECT * FROM s WHERE optional_value IS NOT NULL INTO sink
 ```
 
 #### Union
@@ -626,16 +656,22 @@ Functions are either unary (one input) or binary (two inputs).
 
 #### **Boolean/Comparison**
 
-| Function           | Example                                          |
-|--------------------|--------------------------------------------------|
-| Logical `AND`      | `SELECT * FROM s WHERE a AND b INTO sink`        |
-| Logical `OR`       | `SELECT * FROM s WHERE a OR b INTO sink`         |
-| Equal              | `SELECT * FROM s WHERE a == INT32(42) INTO sink` |
-| Not Equal          | `SELECT * FROM s WHERE a != INT32(42) INTO sink` |
-| Greater            | `SELECT * FROM s WHERE a > b INTO sink`          |
-| Greater or Equal   | `SELECT * FROM s WHERE a >= b INTO sink`         |
-| Less Than          | `SELECT * FROM s WHERE a < b INTO sink`          |
-| Less Than or Equal | `SELECT * FROM s WHERE a <= b INTO sink`         |
+| Function           | Example                                                        |
+|--------------------|----------------------------------------------------------------|
+| Logical `AND`      | `SELECT * FROM s WHERE a AND b INTO sink`                      |
+| Logical `OR`       | `SELECT * FROM s WHERE a OR b INTO sink`                       |
+| Equal              | `SELECT * FROM s WHERE a == INT32(42) INTO sink`               |
+| Not Equal          | `SELECT * FROM s WHERE a != INT32(42) INTO sink`               |
+| Greater            | `SELECT * FROM s WHERE a > b INTO sink`                        |
+| Greater or Equal   | `SELECT * FROM s WHERE a >= b INTO sink`                       |
+| Less Than          | `SELECT * FROM s WHERE a < b INTO sink`                        |
+| Less Than or Equal | `SELECT * FROM s WHERE a <= b INTO sink`                       |
+| Between            | `SELECT * FROM s WHERE a BETWEEN INT32(1) AND INT32(5) INTO sink` |
+| Not Between        | `SELECT * FROM s WHERE a NOT BETWEEN INT32(1) AND INT32(5) INTO sink` |
+| In value list      | `SELECT * FROM s WHERE a IN (INT32(1), INT32(5)) INTO sink`    |
+| Not In value list  | `SELECT * FROM s WHERE a NOT IN (INT32(1), INT32(5)) INTO sink` |
+| Is Null            | `SELECT * FROM s WHERE a IS NULL INTO sink`                    |
+| Is Not Null        | `SELECT * FROM s WHERE a IS NOT NULL INTO sink`                |
 
 #### **Other**
 
