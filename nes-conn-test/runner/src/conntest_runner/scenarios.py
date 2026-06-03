@@ -30,15 +30,13 @@ declared `Expectation` into the pass/fail decision:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
-from conntest_runner.datamodel import ByteData
 from conntest_runner.protocol import ConnectorError, HarnessError, describe
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from conntest_runner.datamodel import ByteModel, RowModel
     from conntest_runner.discovery import Expectation
     from conntest_runner.harness import Sink, Source
 
@@ -83,12 +81,16 @@ class Ctx:
 
     kind: str  # "Sources" | "Sinks"
     loader: Any  # bound loader instance — runtime-provided, duck-typed
-    data: ByteModel | RowModel  # the data model
+    data: Any  # the data model (ByteModel | RowModel | NativeModel), duck-typed at runtime
     target: str
     source: Source | None = None
     sink: Sink | None = None
     input: Any = None  # bound DataSource (File/Generate/_Records), runtime-provided
     link: Any = None  # Link (needs="link"), else None — runtime-provided, duck-typed
+    # The native sink schema (parsed from the CREATE SINK), or None for a
+    # formatted/byte sink and for sources. A native sink's setup/read_back are
+    # schema-driven; the framework threads it through here.
+    schema: Any = None
     _sink_written: list[Any] = field(default_factory=list)  # loaded datasets (runtime-shaped)
     _n_buffers: int = 0  # sink: buffers the harness materialized (from START)
     _buf_cursor: int = 0  # sink: buffers written so far
@@ -112,14 +114,36 @@ class Ctx:
             raise RuntimeError("Ctx.snk used on a non-sink case")
         return self.sink
 
+    @property
+    def is_native(self) -> bool:
+        """Whether this case's model is a native-tuple (schema-driven) sink."""
+        return bool(getattr(self.data, "is_native", False))
+
+    def read_back(self, expect_records: int) -> Any:
+        """Read what the sink wrote, passing the schema for a native sink.
+
+        A native loader's read_back is schema-driven (it SELECTs the schema's
+        columns and returns typed rows); a formatted loader's is not.
+        """
+        if self.is_native:
+            return self.loader.read_back(
+                target=self.target, schema=self.schema, expect_records=expect_records
+            )
+        return self.loader.read_back(target=self.target, expect_records=expect_records)
+
     # -- lifecycle ------------------------------------------------------
     def setup(self) -> None:
         """Run the pre-connect backend hook (create table / register subscription).
 
-        Skipped when the loader declares none.
+        Skipped when the loader declares none. A native sink's setup is
+        schema-driven (it maps the schema to its backend's DDL).
         """
         fn = getattr(self.loader, "setup", None)
-        if callable(fn):
+        if not callable(fn):
+            return
+        if self.is_native:
+            fn(target=self.target, schema=self.schema)
+        else:
             fn(target=self.target)
 
     def connect(self) -> None:
@@ -185,33 +209,15 @@ class Ctx:
     def finish(self) -> None:
         """Read back what a sink wrote and multiset-compare.
 
-        No-op for sources (their compare happened in transfer).
+        No-op for sources (their compare happened in transfer). Shape-blind: the
+        model combines the written datasets, counts records, and verifies the
+        read-back — bytes for a formatted sink, typed rows for a native one.
         """
         if self.is_source:
             return
-        expected = _byte_data_concat(self._sink_written)
-        received = self.loader.read_back(target=self.target, expect_records=len(expected.records()))
-        model = cast("ByteModel", self.data)
-        model.compare_readback(expected, _flatten(received))
-
-
-def _flatten(payloads: list[bytes]) -> list[bytes]:
-    r"""Split each read-back payload on b'\\n' into whole records.
-
-    Sinks publish a TupleBuffer batch as one message;
-    """
-    return [r for p in payloads for r in p.split(b"\n") if r.strip()]
-
-
-def _byte_data_concat(datasets: list[Any]) -> ByteData:
-    """Concatenate the records of every WRITE in a sink scenario.
-
-    Yields one ByteData for the final read-back compare.
-    """
-    records: list[bytes] = []
-    for d in datasets:
-        records.extend(d.records())
-    return ByteData(b"\n".join(records) + (b"\n" if records else b""))
+        expected = self.data.combine(self._sink_written)
+        received = self.read_back(self.data.record_count(expected))
+        self.data.verify_readback(expected, received)
 
 
 # ── catalog ────────────────────────────────────────────────────────────
@@ -401,7 +407,7 @@ def outage_loss(ctx: Ctx) -> None:
     # preserve input order, so it is the first `kept_n` records).
     ctx.setup()
     ctx.connect()
-    model = cast("ByteModel", ctx.data)  # a sink always drives a ByteModel
+    model = ctx.data  # ByteModel or NativeModel — driven through shape-blind hooks
     kept_n = ctx.write_buffers(1)  # buffer 0, link up; records actually written
     ctx.link.cut()
     err = None
@@ -411,10 +417,11 @@ def outage_loss(ctx: Ctx) -> None:
         err = e  # captured, surfaced below as the declared outcome
     ctx.link.restore()
     ctx.disconnect()
-    received = ctx.loader.read_back(target=ctx.target, expect_records=kept_n)
-    kept_records = model.load(ctx.input).records()[:kept_n]  # buffer 0's records
-    expected = ByteData(b"\n".join(kept_records) + (b"\n" if kept_records else b""))
-    model.compare_readback(expected, _flatten(received))  # only the kept buffer
+    received = ctx.read_back(kept_n)
+    # The buffers preserve input order, so the kept rows are the first kept_n of
+    # the whole input dataset (buffer 0's records).
+    expected = model.prefix(model.load(ctx.input), kept_n)
+    model.verify_readback(expected, received)  # only the kept buffer
     if err is not None:
         raise err  # a non-buffering sink's rejection IS the declared outcome
 

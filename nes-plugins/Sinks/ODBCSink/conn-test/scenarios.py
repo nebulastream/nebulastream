@@ -10,14 +10,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Conn-test scenarios for the ODBC (Postgres) sink (pure data)."""
+"""Conn-test scenarios for the ODBC (Postgres) sink (pure data).
 
-from conntest_runner.datamodel import File
+The sink is NATIVE: the framework's ``NativeModel`` generates typed rows from
+the CREATE SINK schema, encodes them into a ``.nes`` the harness drains through
+ODBCSink, and keeps them as the read-back oracle. No CSV, no committed fixture —
+data is ``Generate(count=...)``d per case, so the row count (and thus the number
+of native buffers WRITE steps over) is fixed here. ``_ROWS`` is sized so the
+generated ``.nes`` spans several buffers, which the buffer-stepping
+outage/reconnect scenarios require (write one buffer, cut the link, write more).
+"""
+
+from conntest_runner.datamodel import Generate
 from conntest_runner.discovery import Scenario
 
+# Enough rows that the generated `.nes` packs into multiple native buffers (the
+# writer bounds each buffer's fixed region to 4096 bytes), so the buffer-granular
+# scenarios have >=2 buffers to step.
+_ROWS = 512
+
 SCENARIOS = [
-    Scenario("round_trip", config="valid/basic.nesql", data=File("input/records.csv")),
-    Scenario("concurrent", config="valid/basic.nesql", data=File("input/records.csv")),
+    Scenario("round_trip", config="valid/basic.nesql", data=Generate(count=_ROWS)),
+    Scenario("concurrent", config="valid/basic.nesql", data=Generate(count=_ROWS)),
     # Lifecycle-only: start → stop with an empty queue.
     Scenario("empty", config="valid/basic.nesql"),
     Scenario(
@@ -37,7 +51,7 @@ SCENARIOS = [
     Scenario(
         "reconnect",
         config="valid/basic.nesql",
-        data=File("input/records.csv"),
+        data=Generate(count=_ROWS),
         outcome="ERROR 4001",
         needs="link",
     ),
@@ -49,7 +63,7 @@ SCENARIOS = [
     Scenario(
         "outage_loss",
         config="valid/basic.nesql",
-        data=File("input/records.csv"),
+        data=Generate(count=_ROWS),
         outcome="ERROR 4001",
         needs="link",
     ),

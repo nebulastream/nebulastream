@@ -37,7 +37,9 @@ the observed native bytes and compares the multiset of rows
 from __future__ import annotations
 
 import hashlib
+import re
 import struct
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -273,6 +275,9 @@ class ByteModel:
 
     needs_observed = False
     native_row_width: int | None = None
+    # A formatted (byte-stream) sink: read_back returns raw record bytes and the
+    # framework verifies them as a record multiset. NativeModel flips this.
+    is_native = False
 
     def load(self, src: DataSource) -> ByteData:
         """Load a bound source into a `ByteData` dataset."""
@@ -307,6 +312,37 @@ class ByteModel:
     def compare_readback(self, d: ByteData, received: list[bytes]) -> None:
         """Compare a sink read-back as a multiset of records."""
         assert_multiset_equal(received, d.records())
+
+    # -- shape-blind sink-catalog hooks -------------------------------------
+    # The sink scenarios drive datasets through these so the catalog stays
+    # model-blind: a byte stream measures/slices/compares in records;
+    # NativeModel does the same in typed rows.
+    def input_record_count(self, bound: Any) -> int:
+        """Records the harness will materialize from ``bound`` (for buffer sizing)."""
+        return len(bound.records())
+
+    def record_count(self, d: ByteData) -> int:
+        """Records in a loaded dataset."""
+        return len(d.records())
+
+    def prefix(self, d: ByteData, n: int) -> ByteData:
+        """The first ``n`` records of ``d`` as a dataset (outage_loss's kept batch)."""
+        kept = d.records()[:n]
+        return ByteData(b"\n".join(kept) + (b"\n" if kept else b""))
+
+    def combine(self, datasets: list[ByteData]) -> ByteData:
+        """Concatenate the records of every WRITE into one expected dataset."""
+        records = [r for d in datasets for r in d.records()]
+        return ByteData(b"\n".join(records) + (b"\n" if records else b""))
+
+    def verify_readback(self, expected: ByteData, received: list[bytes]) -> None:
+        r"""Multiset-compare a sink read-back against ``expected``.
+
+        A sink publishes a TupleBuffer batch as one payload, so split each
+        read-back payload on ``\n`` into the whole records the compare counts.
+        """
+        flat = [r for p in received for r in p.split(b"\n") if r.strip()]
+        self.compare_readback(expected, flat)
 
 
 class RowModel:
@@ -354,3 +390,275 @@ class RowModel:
         observed_rows = self.decode(observed)
         # tuple vs tuple, normalized to lists for a stable sort/compare
         assert_multiset_equal([list(r) for r in observed_rows], [list(r) for r in d.rows])
+
+
+# ── native sinks: schema-driven generator + `.nes` writer + typed compare ──
+#
+# A native sink (e.g. ODBCSink, OUTPUT_FORMAT=Native) consumes the engine's
+# native TupleBuffer layout. The single source of truth is `NativeModel`: from
+# a schema (parsed out of the CREATE SINK) plus a size, it GENERATES typed rows
+# once, then serializes them two ways — a `.nes` container the harness loads and
+# drains through the sink, and the same rows kept in memory as the read-back
+# oracle. Both serializations derive from one in-memory list, so the oracle
+# cannot drift from what the sink was fed. The connector loader stays out of it:
+# it only maps the schema to its backend's DDL and SELECTs the rows back as
+# typed tuples — the framework owns generation, encoding, and the compare.
+
+# `(name, NES type, nullable)`, in MemoryLayout (declaration) order.
+NativeColumn = tuple[str, str, bool]
+
+# NES fixed-width field → little-endian struct code. VARSIZED is special (a
+# 16-byte VariableSizedAccess slot + an appended child payload); CHAR is a raw
+# byte we pack/unpack by hand.
+_FIXED_STRUCT: dict[str, str] = {
+    "INT8": "b",
+    "UINT8": "B",
+    "INT16": "h",
+    "UINT16": "H",
+    "INT32": "i",
+    "UINT32": "I",
+    "INT64": "q",
+    "UINT64": "Q",
+    "FLOAT32": "f",
+    "FLOAT64": "d",
+    "BOOLEAN": "?",
+    "CHAR": "c",
+}
+# A VARSIZED field occupies 16 bytes in the row: a `VariableSizedAccess`
+# (offset:u32, index:u32, size:u64). On load the engine rebuilds offset/index
+# from the child buffer it allocates, so only `size` is load-bearing on disk.
+_VARSIZED_WIDTH = 16
+_VARSIZED_SLOT = struct.Struct("<IIQ")
+
+# `.nes` container headers — verbatim from FileUtil.hpp / NativeFixture.hpp
+# (the writer/loader of the committed fixtures). Little-endian, packed.
+_NES_FILE_HEADER = struct.Struct("<QQ")  # numberOfBuffers, sizeOfBuffersInBytes
+_NES_BUFFER_HEADER = struct.Struct("<QQQQ")  # numTuples, numChildBuffers, seqNo, chunkNo
+# The writer bounds each buffer's fixed region to this many bytes (one `.nes`
+# "buffer" == one chunk the harness steps as a WRITE unit). Matching the C++
+# writer's 4096 keeps a generated dataset multi-buffer, which the outage/
+# reconnect scenarios need (write one buffer, cut the link, write the rest).
+_NES_BUFFER_BYTES = 4096
+# SequenceNumber::INITIAL == ChunkNumber::INITIAL == 1 (Identifiers.hpp). The
+# sink ignores both; we set them faithfully so the `.nes` is a real artifact.
+_SEQ_INITIAL = 1
+_CHUNK_INITIAL = 1
+
+_CREATE_SINK_RE = re.compile(
+    r"CREATE\s+SINK\s+\S+\s*\((?P<cols>[^)]*)\)\s*TYPE\b", re.IGNORECASE | re.DOTALL
+)
+
+
+def _field_width(typ: str) -> int:
+    """Bytes a NOT-NULL field of ``typ`` occupies in the packed row layout."""
+    return _VARSIZED_WIDTH if typ == "VARSIZED" else struct.calcsize(_FIXED_STRUCT[typ])
+
+
+def parse_sink_schema(nesql: str) -> list[NativeColumn]:
+    """Parse the column list of a ``CREATE SINK <name> (...) TYPE ...`` statement.
+
+    Returns ``(name, NES type, nullable)`` per column, in declaration order — the
+    same order the engine lays out a native tuple and the sink INSERTs
+    positionally. Names are unquoted (backticks/quotes stripped); types are
+    upper-cased. Raises ``ValueError`` if no CREATE SINK schema is found or a
+    column is malformed.
+    """
+    m = _CREATE_SINK_RE.search(nesql)
+    if not m:
+        raise ValueError("no `CREATE SINK <name> (...) TYPE ...` schema found in config")
+    columns: list[NativeColumn] = []
+    for raw in m.group("cols").split(","):
+        cell = raw.strip()
+        if not cell:
+            continue
+        tokens = cell.split()
+        if len(tokens) < 2:  # noqa: PLR2004  # a column is at least `<name> <TYPE>`
+            raise ValueError(f"malformed sink column {cell!r}: expected `<name> <TYPE> [NOT NULL]`")
+        name = tokens[0].strip('`"')
+        typ = tokens[1].upper()
+        nullable = "NOT NULL" not in " ".join(tokens[2:]).upper()
+        columns.append((name, typ, nullable))
+    if not columns:
+        raise ValueError("CREATE SINK schema has no columns")
+    return columns
+
+
+@dataclass(frozen=True)
+class NativeData:
+    """A loaded native dataset: the generated typed rows (the read-back oracle)."""
+
+    rows: list[tuple[Any, ...]]
+
+
+def _gen_value(name: str, typ: str, i: int, seed: int, col: int) -> Any:
+    """Deterministic value for row ``i``, column ``col`` of ``typ`` under ``seed``.
+
+    Small, type-correct, and round-trip-safe by construction: ints stay in
+    [0, 1000) so they fit every integer width and its SQL column; floats stay
+    in [0, 1000) (and FLOAT32 is pre-rounded to single precision so the `.nes`
+    payload and the oracle hold the exact value a REAL column returns); VARSIZED
+    is a short ASCII string; CHAR a single 'A'-'Z'.
+    """
+    n = (seed * 1_000_003 + i * 97 + col * 7) & 0x7FFFFFFF
+    if typ == "VARSIZED":
+        return f"{name[:12]}-{i}"
+    if typ == "CHAR":
+        return chr(ord("A") + (n % 26))
+    if typ == "BOOLEAN":
+        return (n % 2) == 0
+    if typ == "FLOAT32":
+        v = (n % 100_000) / 100.0
+        return struct.unpack("<f", struct.pack("<f", v))[0]  # round-trip to single precision
+    if typ == "FLOAT64":
+        return (n % 100_000) / 100.0
+    return n % 1000  # any integer type
+
+
+class NativeModel:
+    """Native-tuple sink shape: generate typed rows, write a `.nes`, compare rows.
+
+    Declared schema-less by the connector (``data_model = NativeModel()``); the
+    framework parses the schema from the CREATE SINK under test and ``bind``s a
+    concrete instance per case. The same generated rows are encoded to the `.nes`
+    the harness drains (``harness_input``) and kept as the oracle (``load``), so a
+    new valid config "just works": its schema drives both sides.
+    """
+
+    needs_observed = False
+    native_row_width: int | None = None
+    is_native = True
+
+    def __init__(self, schema: list[NativeColumn] | None = None, *, seed: int = 1) -> None:
+        self.schema = schema
+        self.seed = seed
+        if schema is not None and any(nullable for _n, _t, nullable in schema):
+            # The null flag is a leading byte that shifts the row stride; the
+            # generator/writer model NOT NULL only (as the committed fixtures
+            # did). Fail loudly so a nullable config is a clear, explicit gap
+            # rather than a silently-misaligned `.nes`.
+            bad = [n for n, _t, nullable in schema if nullable]
+            raise ValueError(f"NativeModel supports NOT NULL columns only; nullable: {bad}")
+
+    def bind(self, schema: list[NativeColumn]) -> NativeModel:
+        """Return a schema-bound model for one config case."""
+        return NativeModel(schema, seed=self.seed)
+
+    # -- generation (the single source of truth) ----------------------------
+    def _rows(self, count: int, seed: int) -> list[tuple[Any, ...]]:
+        assert self.schema is not None, "NativeModel used before bind(schema)"  # noqa: S101
+        return [
+            tuple(
+                _gen_value(name, typ, i, seed, col)
+                for col, (name, typ, _n) in enumerate(self.schema)
+            )
+            for i in range(count)
+        ]
+
+    def _seed_of(self, bound: Any) -> int:
+        return int(getattr(bound, "seed", self.seed))
+
+    def load(self, src: Any) -> NativeData:
+        """Generate the dataset a sink WRITE will deliver (== the `.nes` rows)."""
+        return NativeData(self._rows(int(src.count), self._seed_of(src)))
+
+    def harness_input(self, bound: Any) -> bytes:
+        """Encode the generated rows into a `.nes` container for ``--input-path``."""
+        return self.encode(self._rows(int(bound.count), self._seed_of(bound)))
+
+    def input_record_count(self, bound: Any) -> int:
+        """Tuples the harness will materialize (for buffer-count sizing)."""
+        return int(bound.count)
+
+    # -- `.nes` writer -------------------------------------------------------
+    def encode(self, rows: list[tuple[Any, ...]]) -> bytes:
+        """Serialize ``rows`` into the native `.nes` TupleBuffer container.
+
+        Mirrors FileUtil.hpp's writer: a file header, then one buffer per chunk
+        (its fixed region bounded to ``_NES_BUFFER_BYTES``) holding the packed
+        fixed-width tuples followed by the VARSIZED child payloads in
+        tuple-major, field order. The on-disk VARSIZED slot carries only its
+        ``size``; the loader rebuilds the child index/offset.
+        """
+        assert self.schema is not None, "NativeModel used before bind(schema)"  # noqa: S101
+        stride = sum(_field_width(t) for _n, t, _x in self.schema)
+        num_varsized = sum(1 for _n, t, _x in self.schema if t == "VARSIZED")
+        per_chunk = max(1, _NES_BUFFER_BYTES // stride)
+        chunks = [rows[k : k + per_chunk] for k in range(0, len(rows), per_chunk)] or [[]]
+
+        out = bytearray(_NES_FILE_HEADER.pack(len(chunks), _NES_BUFFER_BYTES))
+        for ci, chunk in enumerate(chunks):
+            fixed = bytearray()
+            payloads = bytearray()
+            for row in chunk:
+                for (_name, typ, _nullable), value in zip(self.schema, row, strict=True):
+                    if typ == "VARSIZED":
+                        blob = str(value).encode("utf-8")
+                        fixed += _VARSIZED_SLOT.pack(0, 0, len(blob))
+                        payloads += blob
+                    elif typ == "CHAR":
+                        fixed += str(value).encode("ascii")[:1].ljust(1, b"\x00")
+                    elif typ == "BOOLEAN":
+                        fixed += struct.pack("<?", bool(value))
+                    elif typ.startswith("FLOAT"):
+                        fixed += struct.pack("<" + _FIXED_STRUCT[typ], float(value))
+                    else:
+                        fixed += struct.pack("<" + _FIXED_STRUCT[typ], int(value))
+            out += _NES_BUFFER_HEADER.pack(
+                len(chunk), num_varsized * len(chunk), _SEQ_INITIAL + ci, _CHUNK_INITIAL
+            )
+            out += fixed
+            out += payloads
+        return bytes(out)
+
+    # -- shape-blind sink-catalog hooks -------------------------------------
+    def record_count(self, d: NativeData) -> int:
+        """Rows in a loaded dataset."""
+        return len(d.rows)
+
+    def prefix(self, d: NativeData, n: int) -> NativeData:
+        """The first ``n`` rows of ``d`` (outage_loss's kept batch)."""
+        return NativeData(d.rows[:n])
+
+    def combine(self, datasets: list[NativeData]) -> NativeData:
+        """Concatenate the rows of every WRITE into one expected dataset."""
+        return NativeData([r for d in datasets for r in d.rows])
+
+    # -- typed read-back compare --------------------------------------------
+    def _canon_field(self, typ: str, value: Any) -> tuple[str, Any]:
+        """Exact, type-keyed canonical token for one field (raw bytes for floats)."""
+        if typ in ("VARSIZED", "CHAR"):
+            return ("s", str(value))
+        if typ == "BOOLEAN":
+            return ("i", int(bool(value)))
+        if typ == "FLOAT32":
+            return ("f", struct.pack("<f", float(value)))
+        if typ == "FLOAT64":
+            return ("f", struct.pack("<d", float(value)))
+        return ("i", int(value))  # any integer type, coercing a DB Decimal/etc.
+
+    def _canon_row(self, row: tuple[Any, ...]) -> tuple[tuple[str, Any], ...]:
+        assert self.schema is not None, "NativeModel used before bind(schema)"  # noqa: S101
+        return tuple(
+            self._canon_field(typ, v) for (_n, typ, _x), v in zip(self.schema, row, strict=False)
+        )
+
+    def verify_readback(self, expected: NativeData, received: list[tuple[Any, ...]]) -> None:
+        """Multiset-compare the DB read-back (typed rows) against the oracle.
+
+        Coercion + canonicalization happen here (the one place), keyed by the
+        schema type, so the connector loader returns raw typed tuples and never
+        canonicalizes. On mismatch the diff shows the offending typed rows.
+        """
+        exp_by_canon = {self._canon_row(r): r for r in expected.rows}
+        obs_by_canon = {self._canon_row(tuple(r)): tuple(r) for r in received}
+        exp_counts = Counter(self._canon_row(r) for r in expected.rows)
+        obs_counts = Counter(self._canon_row(tuple(r)) for r in received)
+        if exp_counts == obs_counts:
+            return
+        only_exp = [exp_by_canon[c] for c in (exp_counts - obs_counts)]
+        only_obs = [obs_by_canon[c] for c in (obs_counts - exp_counts)]
+        raise AssertionError(
+            f"native sink read-back mismatch: {len(received)} rows observed vs "
+            f"{len(expected.rows)} expected\n  only in expected: {only_exp[:8]}\n"
+            f"  only in observed: {only_obs[:8]}"
+        )

@@ -35,6 +35,7 @@ from _conformance_shared import (  # noqa: F401
     require_connector_registered,
 )
 
+from conntest_runner.datamodel import parse_sink_schema
 from conntest_runner.discovery import binding_problems, discover_plugins, resolve_configs
 from conntest_runner.harness import Sink, Source
 from conntest_runner.link import Link
@@ -161,6 +162,20 @@ def test_scenario(
         test_id=config_path.stem, scenario=scenario.name, worker_id=worker_id
     )
 
+    # A native sink is schema-driven: parse the CREATE SINK schema and bind the
+    # model to it, so generation, the `.nes`, the table DDL, and the read-back
+    # all key off the config under test (a new valid config "just works"). The
+    # `config` scenario only VALIDATEs (and may bind invalid configs), so skip
+    # parsing there.
+    schema = None
+    if (
+        plugin.kind == "Sinks"
+        and getattr(data_model, "is_native", False)
+        and scenario.name != "config"
+    ):
+        schema = parse_sink_schema(config_path.read_text(encoding="utf-8"))
+        data_model = data_model.bind(schema)
+
     connector_ep, link = _resolve_connector_endpoint(plugin, scenario, worker_id)
 
     # config validation binds the pristine file; every other scenario renders.
@@ -214,7 +229,13 @@ def test_scenario(
                     data_model.harness_input(bound) if data_model is not None else bound.bytes()
                 )
                 input_path.write_bytes(harness_bytes)
-                n_records = len(bound.records())
+                # Records the harness will materialize — bytes-records for a
+                # formatted sink, generated tuple count for a native one.
+                n_records = (
+                    data_model.input_record_count(bound)
+                    if data_model is not None
+                    else len(bound.records())
+                )
                 extra += [
                     f"--input-path={input_path}",
                     f"--threads={threads}",
@@ -236,6 +257,7 @@ def test_scenario(
                 sink=stepper,
                 input=scenario_input,
                 link=link,
+                schema=schema,
             )
         run_case(get_scenario(scenario.name), ctx, expect)
     finally:

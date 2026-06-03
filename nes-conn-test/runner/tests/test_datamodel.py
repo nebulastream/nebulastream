@@ -23,12 +23,30 @@ from conntest_runner.datamodel import (
     ByteModel,
     File,
     Generate,
+    NativeModel,
     RowModel,
     assert_multiset_equal,
+    parse_sink_schema,
 )
 from conntest_runner.protocol import Got
 
 _ROW_SCHEMA = [("k", "INT64"), ("a", "INT32"), ("b", "INT64"), ("c", "FLOAT64")]
+
+# A native sink schema mixing widths, two VARSIZED columns, and a FLOAT64 —
+# the typed path the ODBC sink exercises.
+_NATIVE_SQL = (
+    "CREATE SINK conntest_sink (num_records INT16 NOT NULL, activity_sec INT32 NOT NULL, "
+    "application VARSIZED NOT NULL, device VARSIZED NOT NULL, subscribers INT16 NOT NULL, "
+    "volume_total_bytes FLOAT64 NOT NULL) TYPE ODBC SET ('localhost' AS `SINK`.db_host);"
+)
+_NATIVE_SCHEMA = [
+    ("num_records", "INT16", False),
+    ("activity_sec", "INT32", False),
+    ("application", "VARSIZED", False),
+    ("device", "VARSIZED", False),
+    ("subscribers", "INT16", False),
+    ("volume_total_bytes", "FLOAT64", False),
+]
 
 
 def test_byte_model_roundtrip_from_bin(tmp_path: Path) -> None:
@@ -104,3 +122,68 @@ def test_generate_rows_deterministic() -> None:
 def test_assert_multiset_equal_diff_message() -> None:
     with pytest.raises(AssertionError, match="multiset mismatch"):
         assert_multiset_equal([1, 2, 3], [1, 2, 4])
+
+
+# ── native sink model ───────────────────────────────────────────────────
+
+
+def test_parse_sink_schema() -> None:
+    schema = parse_sink_schema(_NATIVE_SQL)
+    assert schema == _NATIVE_SCHEMA
+
+
+def test_parse_sink_schema_strips_quotes_and_reads_nullable() -> None:
+    sql = 'CREATE SINK s (`a` INT32 NOT NULL, "b" VARSIZED, c FLOAT64 NOT NULL) TYPE ODBC SET ();'
+    assert parse_sink_schema(sql) == [
+        ("a", "INT32", False),
+        ("b", "VARSIZED", True),
+        ("c", "FLOAT64", False),
+    ]
+
+
+def test_native_model_generation_deterministic() -> None:
+    m = NativeModel().bind(_NATIVE_SCHEMA)
+    a = m.load(Generate(count=50))
+    b = m.load(Generate(count=50))
+    assert a.rows == b.rows
+    assert m.record_count(a) == 50
+    # Each row matches the schema arity and column kinds (str for VARSIZED).
+    assert all(len(r) == len(_NATIVE_SCHEMA) for r in a.rows)
+    assert all(isinstance(r[2], str) and isinstance(r[5], float) for r in a.rows)
+
+
+def test_native_model_input_is_the_oracle() -> None:
+    # The bytes handed to the harness and the read-back oracle come from the
+    # same generated rows — the single source of truth (no drift).
+    m = NativeModel().bind(_NATIVE_SCHEMA)
+    gen = Generate(count=33)
+    assert m.input_record_count(gen) == 33
+    assert len(m.harness_input(gen)) > 0  # a real `.nes` container
+    assert m.load(gen).rows == m.load(gen).rows
+
+
+def test_native_model_verify_readback_is_order_insensitive() -> None:
+    m = NativeModel().bind(_NATIVE_SCHEMA)
+    d = m.load(Generate(count=20))
+    received = list(reversed(d.rows))  # a SELECT may reorder
+    m.verify_readback(d, received)  # passes despite the shuffle
+
+
+def test_native_model_verify_readback_detects_missing_row() -> None:
+    m = NativeModel().bind(_NATIVE_SCHEMA)
+    d = m.load(Generate(count=20))
+    with pytest.raises(AssertionError, match="read-back mismatch"):
+        m.verify_readback(d, d.rows[:-1])  # one short
+
+
+def test_native_model_prefix_and_combine() -> None:
+    m = NativeModel().bind(_NATIVE_SCHEMA)
+    d = m.load(Generate(count=20))
+    assert m.record_count(m.prefix(d, 5)) == 5
+    assert m.prefix(d, 5).rows == d.rows[:5]
+    assert m.combine([m.prefix(d, 5), m.prefix(d, 3)]).rows == d.rows[:5] + d.rows[:3]
+
+
+def test_native_model_rejects_nullable_schema() -> None:
+    with pytest.raises(ValueError, match="NOT NULL"):
+        NativeModel().bind([("a", "INT32", True)])

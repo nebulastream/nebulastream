@@ -7,15 +7,15 @@
 -- engine's native tuple layout and binds each column by type. Host/port are
 -- concrete literals — binding never connects.
 --
--- The schema MUST byte-match the committed native fixture `input/records.nes`
--- (G7: the harness loads that `.nes` directly instead of rebuilding the layout
--- from CSV). The fixture is the input-formatter `Food` dataset, so the columns
--- are its schema, in order, ALL NOT NULL — a single nullable column would add a
--- null-flag byte and shift the row stride away from what `records.nes` encodes.
--- It still exercises the typed path the old CSV-split sink got wrong: two
--- VARSIZED columns, mixed INT16/INT32 widths, and a FLOAT64. (Nullable native
--- input stays supported by the harness loader; it is just not exercised until a
--- nullable fixture exists.)
+-- This schema is the single source of truth for the native round-trip: the
+-- conn-test framework parses it, GENERATES typed rows for it, encodes them into
+-- the `.nes` the harness drains through the sink, creates the matching Postgres
+-- table, and reads the rows back for a typed multiset compare. Adding another
+-- `valid/*.nesql` with a different schema works out of the box — no fixture to
+-- regenerate. All columns are NOT NULL (a nullable column adds a leading
+-- null-flag byte and shifts the row stride; the generator/writer model NOT NULL
+-- only). The columns exercise the typed path the old CSV-split sink got wrong:
+-- two VARSIZED columns, mixed INT16/INT32 widths, and a FLOAT64.
 CREATE SINK conntest_sink (num_records INT16 NOT NULL, activity_sec INT32 NOT NULL, application VARSIZED NOT NULL, device VARSIZED NOT NULL, subscribers INT16 NOT NULL, volume_total_bytes FLOAT64 NOT NULL) TYPE ODBC SET (
     'localhost'          AS `SINK`.db_host,
     '5432'               AS `SINK`.db_port,
