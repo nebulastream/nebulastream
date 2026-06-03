@@ -10,12 +10,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This component produces two libraries from one directory:
+#   nes-sources-validation — descriptor/catalog/validation types. Minimal deps.
+#                            Safe to link from validation-only binaries such as
+#                            nes-frontend.
+#   nes-sources            — runtime source machinery (Source, SourceThread,
+#                            rate control). Depends on validation.
+# Plugin registrations are split so SourceValidation plugins register against
+# nes-sources-validation and Source/InlineData/FileData plugins register against
+# nes-sources.
 add_subdirectory(src)
+get_source(nes-sources-validation NES_SOURCES_VALIDATION_SOURCE_FILES)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 
+add_library(nes-sources-validation ${NES_SOURCES_VALIDATION_SOURCE_FILES})
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
-# PUBLIC nes-input-formatter-provider: SourceDescriptor's public API exposes InputFormatterDescriptor by value.
-target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-executable nes-network-bindings nes-input-formatter-provider)
+
+target_link_libraries(nes-sources-validation
+        PUBLIC nes-common nes-configurations nes-data-types nes-input-formatter-provider)
+
+target_include_directories(nes-sources-validation
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        # FileSourceValidation.cpp / NetworkSourceValidation.cpp need the
+        # config structs + source name constants, which live in private/.
+        PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
+target_link_libraries(nes-sources
+        PUBLIC nes-sources-validation nes-common nes-configurations nes-memory nes-executable nes-network-bindings)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -23,9 +47,11 @@ target_include_directories(nes-sources PUBLIC
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
+    target_precompile_headers(nes-sources-validation REUSE_FROM nes-common)
     target_precompile_headers(nes-sources REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(Source SourceValidation FileData InlineData)
+create_registries_for_component(COMPONENT nes-sources-validation SourceValidation)
+create_registries_for_component(COMPONENT nes-sources Source FileData InlineData)
 
 add_tests_if_enabled(tests)

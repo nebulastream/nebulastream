@@ -10,25 +10,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(nes-sources-validation
+        SourceDescriptor.cpp
+        LogicalSource.cpp
+        SourceCatalog.cpp
+        SourceValidationProvider.cpp
+)
+
 add_source_files(nes-sources
         SourceThread.cpp
-        SourceDescriptor.cpp
         Source.cpp
         SourceHandle.cpp
         SourceProvider.cpp
         SourceDataProvider.cpp
-        SourceValidationProvider.cpp
-        LogicalSource.cpp
-        SourceCatalog.cpp
 )
 
-# Register plugins
+# Register plugins — runtime side (source class + systest adaptors)
 add_plugin(File Source FileSource.cpp)
-add_plugin(File SourceValidation FileSource.cpp)
-
-# Systest adaptors
 add_plugin(File InlineData FileSource.cpp)
 add_plugin(File FileData FileSource.cpp)
-
 add_plugin(Network Source NetworkSource.cpp)
-add_plugin(Network SourceValidation NetworkSource.cpp)
+
+# Register plugins — validation side. These TUs hold the Register*SourceValidation
+# function and must compile into nes-sources-validation so the validation library's
+# registrar can resolve them without pulling in any runtime symbols.
+add_plugin(File SourceValidation FileSourceValidation.cpp)
+add_plugin(Network SourceValidation NetworkSourceValidation.cpp)

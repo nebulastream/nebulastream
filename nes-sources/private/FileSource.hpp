@@ -23,16 +23,14 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <FileSourceConfig.hpp>
 
 namespace NES
 {
-
-static const auto SYSTEST_FILE_PATH_PARAMETER = Identifier::parse("FILE_PATH");
 
 class FileSource final : public Source
 {
@@ -54,26 +52,12 @@ public:
     /// Close file socket.
     void close() override;
 
-    /// validates and formats a string to string configuration
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
-
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     std::ifstream inputFile;
     std::string filePath;
     std::atomic<size_t> totalNumBytesRead;
-};
-
-struct ConfigParametersCSV
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "FILE_PATH",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, FILEPATH);
 };
 
 }

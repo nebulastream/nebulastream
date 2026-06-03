@@ -12,18 +12,24 @@
 
 add_subdirectory(SinksParsing)
 
-add_source_files(nes-sinks
+add_source_files(nes-sinks-validation
         SinkDescriptor.cpp
-        Sink.cpp
-        SinkProvider.cpp
         SinkCatalog.cpp
-        BackpressureHandler.cpp
 )
 
-# Register plugins
+add_source_files(nes-sinks
+        Sink.cpp
+        SinkProvider.cpp
+)
+
+# Register plugins — runtime side (Sink factory)
 add_plugin(File Sink FileSink.cpp)
-add_plugin(File SinkValidation FileSink.cpp)
 add_plugin(Print Sink PrintSink.cpp)
-add_plugin(Print SinkValidation PrintSink.cpp)
 add_plugin(Network Sink NetworkSink.cpp)
-add_plugin(Network SinkValidation NetworkSink.cpp)
+
+# Register plugins — validation side. Compile the dedicated validation TUs
+# into nes-sinks-validation so its registrar resolves Register*SinkValidation
+# without pulling runtime symbols.
+add_plugin(File SinkValidation FileSinkValidation.cpp)
+add_plugin(Print SinkValidation PrintSinkValidation.cpp)
+add_plugin(Network SinkValidation NetworkSinkValidation.cpp)

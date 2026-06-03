@@ -12,13 +12,11 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_plugin_as_library(Void Sink void_sink_plugin VoidSink.cpp)
-add_plugin_as_library(Void SinkValidation void_sink_validation_plugin VoidSink.cpp)
+add_plugin_as_library(Void SinkValidation void_sink_validation_plugin VoidSinkValidation.cpp)
 
 target_include_directories(void_sink_plugin
-        PUBLIC include
-        PRIVATE .
+        PUBLIC .
 )
 target_include_directories(void_sink_validation_plugin
-        PUBLIC include
-        PRIVATE .
+        PUBLIC .
 )

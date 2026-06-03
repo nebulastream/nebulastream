@@ -17,14 +17,17 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <deque>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/BackpressureHandler.hpp>
+#include <Sinks/NetworkSinkConfig.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <folly/Synchronized.h>
@@ -35,6 +38,29 @@
 
 namespace NES
 {
+class BackpressureHandler
+{
+    struct State
+    {
+        bool hasBackpressure = false;
+        std::deque<TupleBuffer> buffered;
+        SequenceNumber pendingSequenceNumber = INVALID<SequenceNumber>;
+        ChunkNumber pendingChunkNumber = INVALID<ChunkNumber>;
+    };
+
+    folly::Synchronized<State> stateLock;
+    size_t upperThreshold;
+    size_t lowerThreshold;
+
+public:
+    /// @param upperThreshold Number of buffered tuples at which backpressure is acquired.
+    /// @param lowerThreshold Number of buffered tuples at which backpressure is released.
+    explicit BackpressureHandler(size_t upperThreshold = 1, size_t lowerThreshold = 0); /// NOLINT(fuchsia-default-arguments-declarations)
+    std::optional<TupleBuffer> onFull(TupleBuffer buffer, BackpressureController& backpressureController);
+    std::optional<TupleBuffer> onSuccess(BackpressureController& backpressureController);
+    bool empty() const;
+};
+
 class NetworkSink final : public Sink
 {
 public:
@@ -58,8 +84,6 @@ public:
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec) override;
     void stop(PipelineExecutionContext& pec) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
-
 protected:
     std::ostream& toString(std::ostream& str) const override;
 
@@ -76,42 +100,5 @@ private:
     size_t maxPendingAcks;
     std::atomic_bool closed;
 };
-
-/// NOLINTBEGIN(cert-err58-cpp)
-struct ConfigParametersNetworkSink
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> DATA_ENDPOINT{
-        "DATA_ENDPOINT",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DATA_ENDPOINT, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
-        "BIND",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(BIND, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "CHANNEL",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
-
-    /// Per-channel sender queue size override. 0 means use the worker-level default.
-    static inline const DescriptorConfig::ConfigParameter<size_t> SENDER_QUEUE_SIZE{
-        "SENDER_QUEUE_SIZE",
-        size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SENDER_QUEUE_SIZE, config); }};
-
-    /// Per-channel max pending acks override. 0 means use the worker-level default.
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_PENDING_ACKS{
-        "MAX_PENDING_ACKS",
-        size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_PENDING_ACKS, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            SinkDescriptor::parameterMap, DATA_ENDPOINT, CHANNEL, BIND, SENDER_QUEUE_SIZE, MAX_PENDING_ACKS);
-};
-
-/// NOLINTEND(cert-err58-cpp)
 
 }

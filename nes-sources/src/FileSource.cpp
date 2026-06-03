@@ -28,6 +28,7 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
@@ -37,7 +38,6 @@
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
@@ -74,20 +74,10 @@ Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuff
     return FillTupleBufferResult::withBytes(numBytesRead);
 }
 
-DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
-}
-
 std::ostream& FileSource::toString(std::ostream& str) const
 {
     str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
     return str;
-}
-
-SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return FileSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
@@ -97,13 +87,13 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegi
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
+    const auto filePathParameter = Identifier::parse(std::string(SYSTEST_FILE_PATH_PARAMETER));
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(filePathParameter))
     {
         throw InvalidConfigParameter("Mock FileSource cannot use given inline data if a 'file_path' is set");
     }
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.try_emplace(
-        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.try_emplace(filePathParameter, systestAdaptorArguments.testFilePath.string());
 
 
     if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
@@ -121,13 +111,13 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
 
 FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
+    const auto filePathParameter = Identifier::parse(std::string(SYSTEST_FILE_PATH_PARAMETER));
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(filePathParameter))
     {
         throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
     }
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
-        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(filePathParameter, systestAdaptorArguments.testFilePath.string());
 
     return systestAdaptorArguments.physicalSourceConfig;
 }

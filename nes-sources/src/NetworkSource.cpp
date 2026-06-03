@@ -32,7 +32,6 @@
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
@@ -86,16 +85,6 @@ void NetworkSource::close()
     PRECONDITION(channel.has_value(), "Network Source was closed multiple times or never opened");
     close_receiver_channel(std::move(*channel));
     NES_DEBUG("Receiver channel closed: {}", channelId);
-}
-
-DescriptorConfig::Config NetworkSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersNetworkSource>(std::move(config), name());
-}
-
-SourceValidationRegistryReturnType RegisterNetworkSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return NetworkSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterNetworkSource(

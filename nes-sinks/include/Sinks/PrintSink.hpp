@@ -26,6 +26,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/PrintSinkConfig.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <BackpressureChannel.hpp>
@@ -50,30 +51,12 @@ public:
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
-
 protected:
     std::ostream& toString(std::ostream& str) const override;
 
 private:
     folly::Synchronized<std::ostream*> outputStream;
     uint32_t ingestion = 0;
-};
-
-struct ConfigParametersPrint
-{
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
-        "INGESTION",
-        0,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INGESTION, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "OUTPUT_FORMAT",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(INGESTION, OUTPUT_FORMAT);
 };
 
 }

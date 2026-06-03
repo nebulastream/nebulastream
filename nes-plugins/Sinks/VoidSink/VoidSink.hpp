@@ -14,12 +14,7 @@
 
 #pragma once
 
-#include <cstddef>
 #include <ostream>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -35,23 +30,16 @@ namespace NES
 class VoidSink final : public Sink
 {
 public:
-    static constexpr std::string_view NAME = "Void";
     explicit VoidSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "VoidSink"; }
 };
 
-struct ConfigParametersVoid
-{
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap();
-};
 }
 
 FMT_OSTREAM(NES::VoidSink);

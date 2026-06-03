@@ -33,6 +33,7 @@
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
+#include <ChecksumSinkValidation.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -80,8 +81,8 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 {
     NES_INFO("Checksum Sink completed. Checksum: {}", fmt::streamed(checksum));
 
-    outputFileStream << "Count:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE)
-                     << ",Checksum:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE) << '\n';
+    outputFileStream << "S$Count:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE)
+                     << ",S$Checksum:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE) << '\n';
     outputFileStream << checksum.numberOfTuples << "," << checksum.checksum << '\n';
     outputFileStream.close();
     isOpen = false;
@@ -102,16 +103,6 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
         /// Get the next buffer
         element = iterator.getNextElement();
     }
-}
-
-DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType RegisterChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return ChecksumSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
 SinkRegistryReturnType RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
