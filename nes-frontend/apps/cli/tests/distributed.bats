@@ -24,7 +24,6 @@ teardown()      { nes_distributed_teardown; }
   run docker_nes_cli -t tests/good/select-gen-into-void.yaml start
   [ "$status" -eq 0 ]
 }
-
 @test "launch multiple query from topology" {
   setup_distributed tests/good/multiple-select-gen-into-void.yaml
 
@@ -385,7 +384,7 @@ EOF
   done
 
   grep "Backpressure" worker-2/singleNodeWorker.log
-  grep "NetworkSink was closed by other side" worker-2/singleNodeWorker.log
+  grep "NetworkSink was closed by the downstream receiver" worker-2/singleNodeWorker.log
   grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
 
   run docker_nes_cli status $query_id
@@ -504,4 +503,25 @@ EOF
 
   QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
   [ "$QUERY_STATUS" = "Running" ]
+}
+
+#bats test_tags=bats:focus
+@test "test tokio sink" {
+  setup_distributed tests/good/tokio.yaml
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start
+  sync_workdir
+  cat nes-cli.log
+  [ "$status" -eq 0 ]
+
+  sleep 1
+
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  [ "$status" -eq 0 ]
+
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "Running" ]
+
+  sync_workdir
+
+  cat worker-1/test.csv >&3
 }

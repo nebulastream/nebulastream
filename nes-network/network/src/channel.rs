@@ -22,7 +22,7 @@
 //! to be agnostic to the underlying transport mechanism.
 
 use crate::memcom;
-use crate::memcom::{SimplexStreamWriter, memcom_bind, memcom_connect};
+use crate::memcom::{SimplexStreamWriter, memcom_bind, memcom_connect, memcom_unbind};
 use crate::protocol::{ConnectionIdentifier, ThisConnectionIdentifier};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
@@ -160,6 +160,7 @@ pub struct MemCom {
 pub struct MemComListener {
     // Receives channel pairs from the global memcom instance when remote peers connect
     incoming_connections: tokio::sync::mpsc::Receiver<memcom::Channel>,
+    this_connection_identifier: ThisConnectionIdentifier,
 }
 
 impl MemCom {
@@ -183,6 +184,13 @@ impl CommunicationListener for MemComListener {
         })
     }
 }
+impl Drop for MemComListener {
+    fn drop(&mut self) {
+        memcom_unbind(&self.this_connection_identifier.clone().into());
+        self.incoming_connections.close();
+    }
+}
+
 impl Communication for MemCom {
     type Listener = MemComListener;
     type Reader = ReadHalf<SimplexStream>;
@@ -192,7 +200,8 @@ impl Communication for MemCom {
         this_connection_identifier: ThisConnectionIdentifier,
     ) -> Result<MemComListener> {
         Ok(MemComListener {
-            incoming_connections: memcom_bind(this_connection_identifier.into()).await?,
+            incoming_connections: memcom_bind(this_connection_identifier.clone().into()).await?,
+            this_connection_identifier,
         })
     }
     async fn connect(

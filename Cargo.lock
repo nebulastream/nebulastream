@@ -9,6 +9,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "940b3a0ca603d1eade50a4846a2afffd5ef57a9feac2c0e2ec2e14f9ead76000"
 
 [[package]]
+name = "anyhow"
+version = "1.0.103"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
+
+[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -48,6 +54,9 @@ name = "bytes"
 version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "cc"
@@ -558,6 +567,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
+name = "ittapi"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f747957ed6f7508d3797b969f8670cb84e1003d3381cc8c17fd2de32169b4632"
+dependencies = [
+ "anyhow",
+ "ittapi-sys",
+ "log",
+]
+
+[[package]]
+name = "ittapi-sys"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68751873d5b6859ed725e1c34320708240ef0280c9b1e8a2656cef1dbadaf5dd"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -678,9 +707,14 @@ name = "nes_network"
 version = "0.1.0"
 dependencies = [
  "async-channel",
+ "bytes",
  "futures",
+ "ittapi",
+ "nes_io_runtime",
  "pin-project",
+ "scopeguard",
  "serde",
+ "serde_json",
  "tokio",
  "tokio-retry2",
  "tokio-serde",
@@ -688,16 +722,6 @@ dependencies = [
  "tokio-util",
  "tracing",
  "url",
-]
-
-[[package]]
-name = "nes_network_bindings"
-version = "0.1.0"
-dependencies = [
- "cxx",
- "nes_network",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -802,6 +826,36 @@ dependencies = [
  "cxx",
  "nes_source_validation",
  "serde_json",
+]
+
+[[package]]
+name = "network_sink"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "linkme",
+ "nes_buffer_bindings",
+ "nes_buffer_runtime",
+ "nes_io_runtime",
+ "nes_network",
+ "nes_sink_runtime",
+ "nes_sink_validation",
+ "tracing",
+]
+
+[[package]]
+name = "network_source"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "linkme",
+ "nes_buffer_runtime",
+ "nes_io_runtime",
+ "nes_network",
+ "nes_source_runtime",
+ "nes_source_validation",
+ "tracing",
 ]
 
 [[package]]

@@ -31,14 +31,13 @@ add_source_files(nes-sources
 # systest data adaptors (InlineData/FileData) remain on the C++ side.
 add_plugin(File InlineData FileSystestAdaptor.cpp)
 add_plugin(File FileData FileSystestAdaptor.cpp)
-add_plugin(Network Source NetworkSource.cpp)
 
 # Register plugins — validation side. These TUs hold the Register*SourceValidation
 # function and must compile into nes-sources-validation so the validation library's
 # registrar can resolve them without pulling in any runtime symbols.
-add_plugin(Network SourceValidation NetworkSourceValidation.cpp)
 add_plugin(Tokio SourceValidation TokioSourceValidation.cpp)
 
-# TokioSource C++ class (runtime). Tokio-backed sources register their
-# SourceValidation in TokioSourceValidation.cpp above.
+# Tokio source C++ class (runtime side). Tokio-backed sources register their
+# SourceValidation in TokioSourceValidation.cpp above; the runtime class below
+# is instantiated by the runtime source provider for all tokio-backed plugins.
 add_source_files(nes-sources TokioSource.cpp)

@@ -10,18 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[package]
-name = "nes_network_bindings"
-version = "0.1.0"
-edition = "2024"
-
-[lib]
-crate-type = ["rlib", "staticlib"]
-
-[dependencies]
-# Generate C++ bindings
-cxx = "1.0"
-
-tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time"] }
-nes_network = { path = "../network" }
-tracing = "0.1.41"
+target_link_rust_lib(nes-sinks-validation network_sink
+        NO_DEFAULT_FEATURES FEATURES validation)
+target_link_rust_lib(nes-sinks network_sink
+        NO_DEFAULT_FEATURES FEATURES runtime)

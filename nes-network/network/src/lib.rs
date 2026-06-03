@@ -17,5 +17,6 @@ pub mod channel;
 mod memcom;
 pub mod protocol;
 pub mod receiver;
+pub mod registry;
 pub mod sender;
 mod util;

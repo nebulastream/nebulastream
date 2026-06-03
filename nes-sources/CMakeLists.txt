@@ -13,9 +13,10 @@
 # This component produces two libraries from one directory:
 #   nes-sources-validation — descriptor/catalog/validation types. Minimal deps.
 #                            Safe to link from validation-only binaries such as
-#                            nes-frontend.
+#                            nes-frontend, where pulling the runtime would drag
+#                            in tokio/rand/io-runtime/etc.
 #   nes-sources            — runtime source machinery (Source, SourceThread,
-#                            rate control). Depends on validation.
+#                            TokioSource, rate control). Depends on validation.
 # Plugin registrations are split so SourceValidation plugins register against
 # nes-sources-validation and Source/InlineData/FileData plugins register against
 # nes-sources.
@@ -31,25 +32,20 @@ add_subdirectory(rust/nes-source-runtime-bindings)
 
 target_link_libraries(nes-sources-validation
         PUBLIC nes-common nes-configurations nes-data-types nes-source-validation-bindings)
-target_link_rust_lib(nes-sources-validation nes_source_validation_bindings)
 
 target_include_directories(nes-sources-validation
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/nes-input-formatters/include/InputFormatterProvider>
         $<INSTALL_INTERFACE:include/nebulastream/>
-        # FileSourceValidation.cpp / NetworkSourceValidation.cpp need the
-        # config structs + source name constants, which live in private/.
+        # FileSourceValidation.cpp needs ConfigParametersCSV + FileSource::NAME,
+        # which live in private/FileSource.hpp alongside the runtime class.
         PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
-# nes-network-bindings is retained for the legacy C++ NetworkSource; the TokioSource
-# bridge additionally links the io-runtime and source-runtime bindings.
 target_link_libraries(nes-sources
-        PUBLIC nes-sources-validation nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings
+        PUBLIC nes-sources-validation nes-common nes-configurations nes-data-types nes-memory nes-executable
         PRIVATE nes-input-formatter-provider nes-runtime nes-io-runtime nes-source-runtime-bindings nes-coro)
-target_link_rust_lib(nes-sources nes_network_bindings)
-target_link_rust_lib(nes-sources nes_source_runtime_bindings)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -64,4 +60,7 @@ endif ()
 create_registries_for_component(COMPONENT nes-sources-validation SourceValidation)
 create_registries_for_component(COMPONENT nes-sources Source FileData InlineData)
 
+
+target_link_rust_lib(nes-sources-validation nes_source_validation_bindings)
+target_link_rust_lib(nes-sources nes_source_runtime_bindings)
 add_tests_if_enabled(tests)

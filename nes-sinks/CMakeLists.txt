@@ -10,10 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Mirrors nes-sources: two targets built from one directory.
+# Mirrors nes-sources: two targets built from one directory. See that CMakeLists
+# for the rationale.
 #   nes-sinks-validation — SinkDescriptor / SinkCatalog / Register*SinkValidation
 #                          TUs. Minimal deps; safe for nes-frontend.
-#   nes-sinks            — runtime sinks (Sink, SinkProvider, per-sink
+#   nes-sinks            — runtime sinks (Sink, SinkProvider, TokioSink, per-sink
 #                          execution). Depends on validation.
 add_subdirectory(src)
 get_source(nes-sinks-validation NES_SINKS_VALIDATION_SOURCE_FILES)
@@ -34,18 +35,15 @@ target_include_directories(nes-sinks-validation PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
-# nes-network-bindings is retained for the legacy C++ NetworkSink; the TokioSink
-# bridge additionally links the io-runtime and sink-runtime bindings.
 target_link_libraries(nes-sinks
-        PUBLIC nes-sinks-validation nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings
+        PUBLIC nes-sinks-validation nes-common nes-configurations nes-data-types nes-memory nes-executable
         PRIVATE nes-io-runtime nes-sink-runtime-bindings)
-target_link_rust_lib(nes-sinks nes_network_bindings)
 target_link_rust_lib(nes-sinks nes_sink_runtime_bindings)
 
 target_include_directories(nes-sinks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>
-        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)

@@ -13,6 +13,7 @@
 */
 
 use crate::channel::Channel;
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 use std::net::SocketAddr;
@@ -101,6 +102,7 @@ pub enum ControlChannelResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DataChannelRequest {
     Data(TupleBuffer),
+    Error(String),
     Close,
 }
 
@@ -124,8 +126,8 @@ pub struct TupleBuffer {
     pub chunk_number: u64,
     pub number_of_tuples: u64,
     pub last_chunk: bool,
-    pub data: Vec<u8>,
-    pub child_buffers: Vec<Vec<u8>>,
+    pub data: Bytes,
+    pub child_buffers: Vec<Bytes>,
 }
 
 impl TupleBuffer {

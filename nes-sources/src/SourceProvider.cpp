@@ -42,9 +42,10 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
 {
     const auto& sourceType = sourceDescriptor.getSourceType();
 
+    SourceRuntimeConfiguration runtimeConfig{64};
+
     if (source_exists(sourceType))
     {
-        SourceRuntimeConfiguration runtimeConfig{64};
         return std::make_unique<TokioSource>(
             std::move(backpressureListener), sourceDescriptor, originId, bufferPool, std::move(runtimeConfig));
     }
@@ -54,13 +55,6 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceType, sourceArguments))
     {
-        /// The source-specific configuration of maxInflightBuffers takes priority.
-        /// If not specified (0), we take the NodeEngine-wide configuration.
-        const auto maxInflightBuffers = (sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS) > 0)
-            ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
-            : defaultMaxInflightBuffers;
-        SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
-
         return std::make_unique<SourceThreadHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     }

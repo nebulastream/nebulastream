@@ -12,28 +12,6 @@
     limitations under the License.
 */
 
-use tokio_util::sync::CancellationToken;
-
-/// Tracks a list of cancellation tokens, which are canceled when dropped.
-/// Useful for broadcasting a cancellation signal to a set of futures/tasks.
-/// When an `ActiveTokens` instance is dropped, all registered tokens are canceled,
-/// allowing for coordinated shutdown of multiple concurrent operations.
-#[derive(Default)]
-pub struct ActiveTokens {
-    tokens: Vec<CancellationToken>,
-}
-impl ActiveTokens {
-    pub fn add_token(&mut self, token: CancellationToken) {
-        self.tokens.push(token);
-        self.tokens.retain(|t| !t.is_cancelled());
-    }
-}
-impl Drop for ActiveTokens {
-    fn drop(&mut self) {
-        self.tokens.iter().for_each(|t| t.cancel());
-    }
-}
-
 /// Utility around a Tokio::JoinHandle. By default, JoinHandles are not aborted on drop.
 /// Using a custom drop implementation, a ScopedTask will invoke `abort` on a join handle if it is dropped.
 pub struct ScopedTask<T> {

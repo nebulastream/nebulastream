@@ -38,24 +38,33 @@
 #include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+#include <nes-io-runtime-bindings/lib.h>
+#include <rust/cxx.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
 #include <IORuntime.hpp>
-#include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <Thread.hpp>
 #include <WorkerStatus.hpp>
-
-extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 
 namespace
 {
 __itt_domain* workerDomain = __itt_domain_create("worker");
 __itt_string_handle* ittStartQuery = __itt_string_handle_create("Start");
 __itt_string_handle* ittStopQuery = __itt_string_handle_create("Stop");
+}
+
+namespace
+{
+/// Config-registry names. Must match the constants in
+/// nes-network/network/src/registry.rs (`SENDER_SERVICE_CONFIG` /
+/// `RECEIVER_SERVICE_CONFIG`).
+constexpr auto NES_NETWORK_SENDER_CONFIG = "nes-network-sender";
+constexpr auto NES_NETWORK_RECEIVER_CONFIG = "nes-network-receiver";
 }
 
 namespace NES
@@ -82,23 +91,24 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
-    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
-
     if (!configuration.dataAddress.getValue().empty())
     {
         const auto& networkConfig = configuration.workerConfiguration.network;
-        initNetworkServices(
-            configuration.dataAddress.getValue(),
-            host,
-            NetworkOptions{
-                .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
-                .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
-                .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
-                .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
-                .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
-            });
+        const auto& connectionAddr = configuration.dataAddress.getValue();
+        const auto senderConfig = fmt::format(
+            R"({{"this_connection":"{}","sender_queue_size":{},"max_pending_acks":{}}})",
+            connectionAddr,
+            networkConfig.senderQueueSize.getValue(),
+            networkConfig.maxPendingAcks.getValue());
+        const auto receiverConfig = fmt::format(
+            R"({{"this_connection":"{}","receiver_queue_size":{}}})", connectionAddr, networkConfig.receiverQueueSize.getValue());
+        ioRuntime->attachConfig(NES_NETWORK_RECEIVER_CONFIG, receiverConfig);
+        ioRuntime->attachConfig(NES_NETWORK_SENDER_CONFIG, senderConfig);
     }
+
+    NES_INFO("IORuntime constructed for worker {}", host.getRawValue());
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
+    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan) noexcept
