@@ -17,6 +17,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <coro/coro.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <QueryId.hpp>
@@ -33,6 +34,8 @@ public:
     virtual ~QueryLifetimeController() = default;
     virtual void initializeSourceFailure(QueryId, OriginId, std::weak_ptr<RunningSource>, Exception exception) = 0;
     virtual void initializeSourceStop(QueryId, OriginId, std::weak_ptr<RunningSource>) = 0;
+    virtual coro::task<void> initializeSourceFailureAsync(QueryId, OriginId, std::weak_ptr<RunningSource>, Exception exception) = 0;
+    virtual coro::task<void> initializeSourceStopAsync(QueryId, OriginId, std::weak_ptr<RunningSource>) = 0;
 };
 
 class WorkEmitter
@@ -50,6 +53,7 @@ public:
         TaskCallback,
         PipelineExecutionContext::ContinuationPolicy continuationPolicy)
         = 0;
+    virtual coro::task<void> emitWorkAsync(QueryId, std::shared_ptr<RunningQueryPlanNode> target, TupleBuffer, TaskCallback) = 0;
     virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback) = 0;
     virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
     virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback) = 0;

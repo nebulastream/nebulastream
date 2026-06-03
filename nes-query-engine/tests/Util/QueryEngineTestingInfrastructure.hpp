@@ -174,12 +174,18 @@ struct TestWorkEmitter : WorkEmitter
     MOCK_METHOD(void, emitPipelineStart, (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback), (override));
     MOCK_METHOD(void, emitPendingPipelineStop, (QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback), (override));
     MOCK_METHOD(void, emitPipelineStop, (QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback), (override));
+
+    coro::task<void> emitWorkAsync(QueryId, std::shared_ptr<RunningQueryPlanNode>, TupleBuffer, TaskCallback) override { co_return; }
 };
 
 struct TestQueryLifetimeController : QueryLifetimeController
 {
     MOCK_METHOD(void, initializeSourceFailure, (QueryId, OriginId, std::weak_ptr<RunningSource>, Exception), (override));
     MOCK_METHOD(void, initializeSourceStop, (QueryId, OriginId, std::weak_ptr<RunningSource>), (override));
+
+    coro::task<void> initializeSourceFailureAsync(QueryId, OriginId, std::weak_ptr<RunningSource>, Exception) override { co_return; }
+
+    coro::task<void> initializeSourceStopAsync(QueryId, OriginId, std::weak_ptr<RunningSource>) override { co_return; }
 };
 
 template <template <typename> class FutType, typename T>

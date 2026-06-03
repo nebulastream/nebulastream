@@ -15,12 +15,16 @@
 #pragma once
 
 #include <chrono>
+#include <coroutine>
 #include <cstddef>
 #include <optional>
 #include <semaphore>
 #include <stop_token>
 #include <utility>
 #include <ittnotify.h>
+#include <absl/functional/any_invocable.h>
+#include <coro/concepts/awaitable.hpp>
+#include <coro/task.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
@@ -44,6 +48,8 @@ static std::atomic<size_t> queue_depth_value{0};
         __itt_counter_set_value(queue_depth, &depth); \
     } while (false)
 
+using WakerCallback = absl::AnyInvocable<bool()>;
+
 /// The TaskQueue is a central component within the QueryEngine. External components like sources or users of the system can add new tasks
 /// to an admission queue which is bounded and will backpressure sources if necessary. Internally, WorkerThreads communicate via a shared
 /// internal queue, which is unbounded to deal with occasionally bursty loads like a large join. Access to the internal task queue is always
@@ -54,6 +60,7 @@ class TaskQueue
 {
     folly::UMPMCQueue<TaskType, true> internal;
     folly::MPMCQueue<TaskType> admission;
+    folly::UMPMCQueue<WakerCallback, false> waker;
 
     /// INVARIANT: internal.size() + admission.size() >= tasksAvailable
     std::counting_semaphore<> tasksAvailable{0};
@@ -78,11 +85,57 @@ class TaskQueue
         {
         }
 
+        WakerCallback wakerCallback;
+        while (waker.try_dequeue(wakerCallback))
+        {
+            if (wakerCallback())
+            {
+                break;
+            }
+        }
+
         return task;
     }
 
 public:
+    struct SuspendUntilSignaled
+    {
+        TaskQueue& queue;
+
+        bool await_ready() noexcept { return false; }
+
+        void await_suspend(std::coroutine_handle<> h) noexcept
+        {
+            queue.waker.enqueue(
+                [h]()
+                {
+                    h.resume();
+                    return true;
+                });
+        }
+
+        void await_resume() noexcept { }
+    };
+
+    static_assert(coro::concepts::awaitable<SuspendUntilSignaled>);
+
     explicit TaskQueue(size_t admissionTaskQueueSize) : admission(admissionTaskQueueSize) { }
+
+    /// NonBlocking Async Interface
+    template <typename T = TaskType>
+    coro::task<> addAdmissionTaskAsync(T&& task)
+    {
+        while (true)
+        {
+            if (admission.write(std::forward<T>(task)))
+            {
+                increase_count();
+                tasksAvailable.release();
+                co_return;
+            }
+            co_await SuspendUntilSignaled{*this};
+        }
+    }
 
     /// By design the admission queue is bounded, which could lead to writes being blocked.
     /// The stop token allows cancellation. In case the writing was canceled, this method returns false.

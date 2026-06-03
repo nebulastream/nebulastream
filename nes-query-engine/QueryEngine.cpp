@@ -348,6 +348,25 @@ class ThreadPool : public WorkEmitter, public QueryLifetimeController
 public:
     void addThread(const Host& host);
 
+    coro::task<void>
+    emitWorkAsync(QueryId qid, std::shared_ptr<RunningQueryPlanNode> target, TupleBuffer buffer, TaskCallback callback) override
+    {
+        ENGINE_LOG_DEBUG("Emitting work asynchronously for {}-{}", target->id, qid);
+
+        [[maybe_unused]] auto updatedCount = target->pendingTasks.fetch_add(1) + 1;
+        ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, target->id, updatedCount);
+        auto [complete, failure, success] = std::move(callback).take();
+        /// Create a new callback that wraps the reference count reducer
+        auto wrappedCallback = TaskCallback{
+            TaskCallback::OnComplete(injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) target, std::move(complete.callback))),
+            std::move(success),
+            TaskCallback::OnFailure(injectQueryFailure(target, std::move(failure.callback))),
+        };
+
+        auto task = WorkTask(qid, target->id, target, std::move(buffer), std::move(wrappedCallback));
+        co_await taskQueue.addAdmissionTaskAsync(std::move(task));
+    }
+
     bool emitWork(
         QueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
@@ -407,6 +426,31 @@ public:
             TaskCallback::OnFailure(injectQueryFailureUnsafe(*node, std::move(failure.callback))),
         };
         addInternalTask(StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
+    }
+
+    coro::task<void>
+    initializeSourceFailureAsync(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
+    {
+        auto task = FailSourceTask{
+            id,
+            std::move(source),
+            std::move(exception),
+            TaskCallback{TaskCallback::OnSuccess(
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); })}};
+        co_await taskQueue.addAdmissionTaskAsync(std::move(task));
+    }
+
+    coro::task<void> initializeSourceStopAsync(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
+    {
+        auto task = StopSourceTask{
+            id,
+            std::move(source),
+            0,
+            TaskCallback{TaskCallback::OnSuccess(
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); })}};
+        co_await taskQueue.addAdmissionTaskAsync(std::move(task));
     }
 
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
