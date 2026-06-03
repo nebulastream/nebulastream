@@ -160,6 +160,96 @@ TEST_F(StatementBinderTest, BindQueryWithUnaryMinusOnFieldInWherePredicate)
     EXPECT_EQ(predicate, "-1 * B < 0.5");
 }
 
+TEST_F(StatementBinderTest, BindQueryWithBetweenPredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b BETWEEN UINT32(1) AND UINT32(5) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "B >= 1 AND B <= 5");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithNotBetweenPredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b NOT BETWEEN UINT32(1) AND UINT32(5) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "NOT(B >= 1 AND B <= 5)");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithInPredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b IN (UINT32(1), UINT32(5), UINT32(8)) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "B = 1 OR B = 5 OR B = 8");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithNotInPredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b NOT IN (UINT32(1), UINT32(5)) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "NOT(B = 1 OR B = 5)");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithIsNullPredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b IS NULL INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "ISNULL(B)");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithIsNotNullPredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b IS NOT NULL INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "NOT(ISNULL(B))");
+}
+
 TEST_F(StatementBinderTest, Nullable)
 {
     const std::string createLogicalSourceStatement
