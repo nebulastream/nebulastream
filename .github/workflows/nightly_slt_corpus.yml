@@ -26,13 +26,9 @@ on:
 
 jobs:
   run-slt-corpus:
-    name: "Run SLT corpus ${{ matrix.suite }}"
+    name: "Run SLT corpus"
     timeout-minutes: 720
     runs-on: [ self-hosted, linux, Build, x64 ]
-    strategy:
-      fail-fast: false
-      matrix:
-        suite: [ between_1, between_10, between_100, between_1000 ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -74,59 +70,70 @@ jobs:
             sccache --stop-server
 
       - uses: ./.github/steps/run-in-container
-        name: Run SLT corpus
+        name: Run SLT corpus one file at a time
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-libcxx-none
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
           docker_password: ${{ secrets.DOCKER_SECRET }}
           run: |
             source .github/.env/test-none.env
-            suite=${{ matrix.suite }}
-            suite_dir="nightly-systest-corpus/${{ inputs.corpus_path }}/${suite}"
-            result_dir="build/nes-systests/nightly-slt-corpus/${suite}"
-            summary="${result_dir}/summary.tsv"
-            mkdir -p "${result_dir}"
-            printf "test\tstatus\telapsed_s\tlog\n" > "${summary}"
-            test_count=$(find "${suite_dir}" -type f -name "*.test" | wc -l)
+            suites="between_1 between_10 between_100 between_1000"
+            corpus_root="nightly-systest-corpus/${{ inputs.corpus_path }}"
+            result_root="build/nes-systests/nightly-slt-corpus"
+            summary="${result_root}/summary.tsv"
+            mkdir -p "${result_root}"
+            printf "suite\ttest\tstatus\telapsed_s\tlog\n" > "${summary}"
+            test_count=0
+            for suite in ${suites}; do
+              suite_dir="${corpus_root}/${suite}"
+              if [ ! -d "${suite_dir}" ]; then
+                echo "Suite directory does not exist: ${suite_dir}"
+                exit 1
+              fi
+              count=$(find "${suite_dir}" -maxdepth 1 -type f -name "*.test" | wc -l)
+              test_count=$((test_count + count))
+            done
             if [ "${test_count}" -eq 0 ]; then
-              echo "No .test files found in ${suite_dir}"
+              echo "No .test files found in ${corpus_root}"
               exit 1
             fi
             failures=0
-            while IFS= read -r test_file; do
-              test_name=$(basename "${test_file}" .test)
-              work_dir="${result_dir}/${test_name}"
-              log_file="${result_dir}/${test_name}.log"
-              mkdir -p "${work_dir}"
-              echo "::group::${suite}/${test_name}"
-              start_ts=$(date +%s)
-              set +e
-              timeout --kill-after=60s 45m build/nes-systests/systest/systest \
-                -t "${test_file}" \
-                --workingDir "${work_dir}" \
-                --skip-query-plan-serialization-validation \
-                -- \
-                --worker.default_query_execution.execution_mode=COMPILER \
-                2>&1 | tee "${log_file}"
-              code=${PIPESTATUS[0]}
-              set -e
-              end_ts=$(date +%s)
-              elapsed=$((end_ts - start_ts))
-              if [ "${code}" -eq 0 ]; then
-                status=passed
-              elif [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
-                status=timeout
-                failures=$((failures + 1))
-              else
-                status="failed_${code}"
-                failures=$((failures + 1))
-              fi
-              printf "%s\t%s\t%s\t%s\n" "${test_name}.test" "${status}" "${elapsed}" "${log_file}" | tee -a "${summary}"
-              if [ "${status}" != passed ]; then
-                tail -80 "${log_file}"
-              fi
-              echo "::endgroup::"
-            done < <(find "${suite_dir}" -type f -name "*.test" | sort)
+            completed=0
+            for suite in ${suites}; do
+              suite_dir="${corpus_root}/${suite}"
+              while IFS= read -r test_file; do
+                completed=$((completed + 1))
+                test_name=$(basename "${test_file}" .test)
+                work_dir="${result_root}/${suite}/${test_name}"
+                log_file="${result_root}/${suite}/${test_name}.log"
+                mkdir -p "${work_dir}"
+                echo "::group::${completed}/${test_count} ${suite}/${test_name}"
+                start_ts=$(date +%s)
+                set +e
+                timeout --kill-after=60s 45m build/nes-systests/systest/systest \
+                  -t "${test_file}" \
+                  --workingDir "${work_dir}" \
+                  --skip-query-plan-serialization-validation \
+                  -- \
+                  --worker.default_query_execution.execution_mode=COMPILER \
+                  2>&1 | tee "${log_file}"
+                code=${PIPESTATUS[0]}
+                set -e
+                end_ts=$(date +%s)
+                elapsed=$((end_ts - start_ts))
+                if [ "${code}" -eq 0 ]; then
+                  status=passed
+                elif [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
+                  status=timeout
+                  failures=$((failures + 1))
+                else
+                  status="failed_${code}"
+                  failures=$((failures + 1))
+                fi
+                printf "%s\t%s\t%s\t%s\t%s\n" "${suite}" "${test_name}.test" "${status}" "${elapsed}" "${log_file}" | tee -a "${summary}"
+                echo "::endgroup::"
+              done < <(find "${suite_dir}" -maxdepth 1 -type f -name "*.test" | sort)
+            done
             cat "${summary}"
             if [ "${failures}" -ne 0 ]; then
               exit 1
@@ -136,14 +143,14 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ always() && !cancelled() && !github.event.act }}
         with:
-          name: nightly-slt-corpus-summary-${{ matrix.suite }}
-          path: build/nes-systests/nightly-slt-corpus/${{ matrix.suite }}/summary.tsv
+          name: nightly-slt-corpus-summary
+          path: build/nes-systests/nightly-slt-corpus/summary.tsv
 
       - name: Upload SLT corpus logs on failure
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
-          name: nightly-slt-corpus-logs-${{ matrix.suite }}
+          name: nightly-slt-corpus-logs
           path: |
             build/nes-systests/SystemTest_*.log
-            build/nes-systests/nightly-slt-corpus/${{ matrix.suite }}/**
+            build/nes-systests/nightly-slt-corpus/**
