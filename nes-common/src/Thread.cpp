@@ -14,12 +14,31 @@
 
 #include <Thread.hpp>
 
+#include <functional>
 #include <string>
+#include <typeindex>
+#include <unordered_map>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {
 thread_local Host Thread::WorkerNodeId = Host("Not A Worker");
 thread_local std::string Thread::ThreadName = "unnamed";
+
+namespace detail
+{
+thread_local std::unordered_map<std::type_index, std::function<void()>> threadInitHooks;
+thread_local bool isNESThread = false;
+
+void applyThreadInitHooks(std::unordered_map<std::type_index, std::function<void()>> hooks)
+{
+    threadInitHooks = std::move(hooks);
+    for (const auto& [key, hook] : threadInitHooks)
+    {
+        hook();
+    }
+}
+}
 
 }

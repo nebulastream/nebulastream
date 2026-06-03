@@ -13,10 +13,13 @@
 */
 
 #pragma once
+#include <functional>
 #include <string>
 #include <thread>
-
+#include <typeindex>
+#include <unordered_map>
 #include <utility>
+#include <ittnotify.h>
 #include <Identifiers/Identifiers.hpp>
 #include <spdlog/spdlog.h>
 #include <ErrorHandling.hpp>
@@ -28,6 +31,17 @@ namespace detail
 ///POSIX limits the thread name to 16 bytes which includes null termination:
 ///https://man7.org/linux/man-pages/man3/pthread_setname_np.3.html
 constexpr size_t PTHREAD_NAME_LENGTH = 15;
+
+/// Thread-local hook map shared with WorkerLocalSingleton.
+/// Captured by NES::Thread at construction and replayed on child threads.
+/// Keyed by type_index so each WorkerLocalSingleton<T> gets exactly one slot.
+extern thread_local std::unordered_map<std::type_index, std::function<void()>> threadInitHooks;
+
+/// Set to true by NES::Thread on child threads. Used by WorkerLocalSingleton diagnostics.
+extern thread_local bool isNESThread;
+
+/// Apply a captured hook snapshot on a new thread.
+void applyThreadInitHooks(std::unordered_map<std::type_index, std::function<void()>> hooks);
 }
 
 /// `NES::Thread` is a wrapper around `std::jthread`. The main purpose is that it is a standardized way
@@ -49,10 +63,19 @@ public:
         /// The complexity of this function is caused by the combination of different ways a std::jthread can be created.
         /// 1. It can accept an addtional std::stop_token
         /// 2. The first parameter has to be the this ptr if the function is a member function
+        auto parentHooks = detail::threadInitHooks;
         thread = std::jthread(
-            []<typename FN2, typename... Args2>(std::stop_token token, Host worker_id, std::string name, FN2&& fn, Args2&&... args)
+            []<typename FN2, typename... Args2>(
+                std::stop_token token,
+                Host worker_id,
+                std::string name,
+                std::unordered_map<std::type_index, std::function<void()>> parentHooks,
+                FN2&& fn,
+                Args2&&... args)
             {
                 initializeThread(std::move(worker_id), std::move(name));
+                detail::applyThreadInitHooks(std::move(parentHooks));
+                detail::isNESThread = true;
                 if constexpr (std::is_member_function_pointer_v<FN2>)
                 {
                     [&token]<typename MemFN, typename ThisArg, typename... Args3>(MemFN memberFunction, ThisArg&& thisArg, Args3&&... args)
@@ -91,6 +114,7 @@ public:
             },
             worker_id,
             std::move(name),
+            std::move(parentHooks),
             std::forward<FN>(fn),
             std::forward<Args>(args)...);
     }
@@ -114,17 +138,28 @@ public:
     {
         WorkerNodeId = std::move(worker_id);
         ThreadName = std::move(name);
-        setThreadName(ThreadName);
+        if (WorkerNodeId.getRawValue() != Host::INVALID)
+        {
+            setThreadName(ThreadName, WorkerNodeId.getRawValue());
+        }
     }
 
     ///Sets the currents thread's name.
     ///threadName has to be non-empty and will be truncated to PTHREAD_NAME_LENGTH character
-    static void setThreadName(const std::string_view threadName)
+    static void setThreadName(const std::string_view threadName, const std::string_view worker = "")
     {
         PRECONDITION(!threadName.empty(), "Thread name cannot be empty");
         std::array<char, detail::PTHREAD_NAME_LENGTH + 1> truncatedStringName{};
         std::copy_n(threadName.begin(), std::min(detail::PTHREAD_NAME_LENGTH, threadName.size()), truncatedStringName.begin());
         pthread_setname_np(pthread_self(), truncatedStringName.data());
+        if (!worker.empty())
+        {
+            __itt_thread_set_name(fmt::format("{}@{}", threadName, worker).c_str());
+        }
+        else
+        {
+            __itt_thread_set_name(std::string(threadName).c_str());
+        }
     }
 };
 }
