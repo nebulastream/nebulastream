@@ -430,12 +430,13 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const SingleNodeWorkerConfiguration& configuration,
     std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
-    SystestProgressTracker& progressTracker)
+    SystestProgressTracker& progressTracker,
+    const QuerySubmitterOptions& querySubmitterOptions)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
     auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
-    QuerySubmitter submitter(std::move(worker));
+    QuerySubmitter submitter(std::move(worker), querySubmitterOptions);
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
     progressTracker.setTotalQueries(queries.size());
@@ -568,11 +569,13 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const QuerySubmitterOptions& querySubmitterOptions)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
+    QuerySubmitter submitter(
+        std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)), querySubmitterOptions);
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
@@ -581,7 +584,8 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const QuerySubmitterOptions& querySubmitterOptions)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
@@ -604,7 +608,7 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     progressTracker.setTotalQueries(queriesWithoutConfigurationOverrides.size());
 
     auto remoteQueryManager = std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
-    QuerySubmitter submitter(std::move(remoteQueryManager));
+    QuerySubmitter submitter(std::move(remoteQueryManager), querySubmitterOptions);
     return runQueries(queriesWithoutConfigurationOverrides, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 

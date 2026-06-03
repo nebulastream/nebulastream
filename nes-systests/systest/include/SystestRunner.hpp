@@ -39,6 +39,7 @@ namespace NES::Systest
 struct SystestQuery;
 struct RunningQuery;
 class QuerySubmitter;
+struct QuerySubmitterOptions;
 
 /// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
 static constexpr auto padSizeSuccess = 120;
@@ -71,7 +72,8 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const QuerySubmitterOptions& querySubmitterOptions);
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
@@ -80,7 +82,8 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const QuerySubmitterOptions& querySubmitterOptions);
 
 /// Serialized to BenchmarkResults.json via rfl::json::write. The field names below are the JSON keys.
 struct BenchmarkResult
@@ -100,7 +103,8 @@ struct BenchmarkResult
     const SingleNodeWorkerConfiguration& configuration,
     std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
-    SystestProgressTracker& progressTracker);
+    SystestProgressTracker& progressTracker,
+    const QuerySubmitterOptions& querySubmitterOptions);
 
 /// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
 /// function/arithmetical/FunctionDiv:4..................................Passed

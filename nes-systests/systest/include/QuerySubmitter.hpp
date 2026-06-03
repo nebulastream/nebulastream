@@ -26,11 +26,16 @@
 namespace NES::Systest
 {
 
+struct QuerySubmitterOptions
+{
+    bool validateQueryPlanSerialization = true;
+};
+
 /// Interface for submitting queries to a NebulaStream Worker.
 class QuerySubmitter
 {
 public:
-    explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager);
+    explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager, QuerySubmitterOptions options = {});
     std::expected<DistributedQueryId, Exception> startQuery(const DistributedLogicalPlan& plan);
     void stopQuery(const DistributedQueryId& query);
     DistributedQueryStatusSnapshot waitForQueryTermination(const DistributedQueryId& query);
@@ -40,6 +45,7 @@ public:
 
 private:
     UniquePtr<QueryManager> queryManager;
+    QuerySubmitterOptions querySubmitterOptions;
     std::unordered_set<DistributedQueryId> ids;
 };
 }
