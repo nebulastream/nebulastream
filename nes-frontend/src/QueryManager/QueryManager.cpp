@@ -54,7 +54,7 @@ DistributedQueryId uniqueDistributedQueryId(const QueryManagerState& state)
 }
 }
 
-std::expected<DistributedQuery, Exception> QueryManager::getQuery(DistributedQueryId query) const
+std::expected<DistributedQuery, Exception> QueryManager::getQuery(const DistributedQueryId& query) const
 {
     const auto it = state.queries.find(query);
     if (it == state.queries.end())
@@ -108,6 +108,12 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(const DistributedLogicalPlan& plan)
 {
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
+    std::unordered_map<Host, std::vector<LogicalPlan>> registeredPlans;
+    std::unordered_map<Host, std::vector<LogicalPlan>> plansByHost;
+    for (const auto& [host, localPlans] : plan)
+    {
+        plansByHost.emplace(host, localPlans);
+    }
 
     auto id = plan.getQueryId();
     if (id == DistributedQueryId(DistributedQueryId::INVALID))
@@ -122,20 +128,23 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     const std::chrono::steady_clock::time_point queryStartTimestamp = std::chrono::steady_clock::now();
     std::vector<Exception> exceptions;
 
-    for (const auto& [host, localPlans] : plan)
+    auto plansSorted = topologicalSort(std::move(plansByHost)) | std::ranges::to<std::vector>();
+    for (auto& localPlans : plansSorted | std::views::reverse)
     {
-        INVARIANT(backends.contains(host), "Plan was assigned to a node ({}) that is not part of the cluster", host);
-        for (auto localPlan : localPlans)
+        for (auto& [host, localPlan] : localPlans)
         {
             try
             {
+                INVARIANT(backends.contains(host), "Plan was assigned to a node ({}) that is not part of the cluster", host);
                 /// Set the distributed query ID on the local plan before sending to worker
                 localPlan.setQueryId(QueryId::createDistributed(id));
                 const auto result = backends.at(host).start(localPlan);
                 if (result)
                 {
                     NES_DEBUG("Starting query on node {} was successful.", host);
+                    localPlan.setQueryId(*result);
                     localQueries[host].emplace_back(*result);
+                    registeredPlans[host].emplace_back(localPlan);
                     continue;
                 }
                 exceptions.emplace_back(result.error());
@@ -153,6 +162,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     }
 
     this->state.queries.emplace(id, std::move(localQueries));
+    this->state.plans.emplace(id, std::move(registeredPlans));
 
     /// Poll until all local queries have advanced past Registered, so the caller can immediately
     /// observe a meaningful status after this function returns.

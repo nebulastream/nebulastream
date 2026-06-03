@@ -720,7 +720,8 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
-    const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
+    const auto queryManager = std::make_shared<NES::QueryManager>(
+        workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{.queries = state, .plans = {}});
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};

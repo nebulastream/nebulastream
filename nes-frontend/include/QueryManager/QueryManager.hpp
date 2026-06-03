@@ -51,6 +51,9 @@ using BackendProvider = absl::AnyInvocable<UniquePtr<QuerySubmissionBackend>(con
 struct QueryManagerState
 {
     std::unordered_map<DistributedQueryId, DistributedQuery> queries;
+    /// Per-query distributed plan (host -> local plans, with assigned query ids). Kept here in the
+    /// QueryManager rather than on DistributedQuery; used to drive topological start/stop ordering.
+    std::unordered_map<DistributedQueryId, std::unordered_map<Host, std::vector<LogicalPlan>>> plans;
 };
 
 /// Manages the lifecycle of distributed queries in a NebulaStream cluster.
@@ -113,7 +116,7 @@ public:
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
-    [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
+    [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(const DistributedQueryId& query) const;
 };
 
 }

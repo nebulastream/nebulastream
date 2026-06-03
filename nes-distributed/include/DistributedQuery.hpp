@@ -136,6 +136,7 @@ public:
     bool operator==(const DistributedQuery& other) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const DistributedQuery& query);
+
     DistributedQuery() = default;
 
     explicit DistributedQuery(std::unordered_map<Host, std::vector<QueryId>> localQueries);
