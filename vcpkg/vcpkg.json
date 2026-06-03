@@ -41,6 +41,7 @@
     "gtest",
     "highs",
     "ireeruntime",
+    "libcoro",
     "libcuckoo",
     "libuuid",
     "magic-enum",
