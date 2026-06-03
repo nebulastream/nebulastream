@@ -184,6 +184,25 @@ def test_native_model_prefix_and_combine() -> None:
     assert m.combine([m.prefix(d, 5), m.prefix(d, 3)]).rows == d.rows[:5] + d.rows[:3]
 
 
-def test_native_model_rejects_nullable_schema() -> None:
-    with pytest.raises(ValueError, match="NOT NULL"):
-        NativeModel().bind([("a", "INT32", True)])
+def test_native_model_rejects_nullable_varsized() -> None:
+    # A nullable scalar is fine; a nullable VARSIZED is not (loader offset).
+    NativeModel().bind([("a", "INT32", True)])  # no raise
+    with pytest.raises(ValueError, match="nullable VARSIZED"):
+        NativeModel().bind([("a", "VARSIZED", True)])
+
+
+def test_native_model_generates_and_compares_nulls() -> None:
+    schema = [("id", "INT32", False), ("reading", "FLOAT64", True), ("name", "VARSIZED", False)]
+    m = NativeModel().bind(schema)
+    d = m.load(Generate(count=200))
+    # the nullable column carries a deterministic mix of NULLs and values
+    nulls = sum(1 for r in d.rows if r[1] is None)
+    assert 0 < nulls < len(d.rows)
+    assert len(m.harness_input(Generate(count=200))) > 0  # encodes a real `.nes`
+    # NULLs compare equal across the round-trip, order-blind
+    m.verify_readback(d, list(reversed(d.rows)))
+    # flipping a value to NULL changes the multiset and is caught
+    corrupt = [(r[0], None, r[2]) if r[1] is not None else r for r in d.rows]
+    assert corrupt != d.rows
+    with pytest.raises(AssertionError, match="read-back mismatch"):
+        m.verify_readback(d, corrupt)

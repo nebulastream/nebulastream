@@ -30,7 +30,10 @@ from conntest_runner.discovery import Scenario
 _ROWS = 512
 
 SCENARIOS = [
-    Scenario("round_trip", config="valid/basic.nesql", data=Generate(count=_ROWS)),
+    # Native round-trip against EVERY valid config — basic.nesql and the
+    # nullable-column nullable.nesql — so each schema is generated, encoded,
+    # written, and read back end-to-end (the schema-driven path, no fixtures).
+    Scenario("round_trip", configs=[("valid/*.nesql", "OK")], data=Generate(count=_ROWS)),
     Scenario("concurrent", config="valid/basic.nesql", data=Generate(count=_ROWS)),
     # Lifecycle-only: start → stop with an empty queue.
     Scenario("empty", config="valid/basic.nesql"),

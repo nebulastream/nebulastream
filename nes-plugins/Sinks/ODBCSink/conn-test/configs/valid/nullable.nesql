@@ -1,0 +1,21 @@
+-- A second valid ODBC sink configuration with a DIFFERENT, simpler schema than
+-- basic.nesql — three columns including a NULLABLE one (`reading`, declared
+-- without NOT NULL). It exists to prove the conn-test is schema-driven: the
+-- framework parses THIS schema, generates rows for it (with the nullable column
+-- NULL on a deterministic fraction of rows), encodes the native `.nes`, creates
+-- the matching table, and reads back — all from the config, no fixture.
+--
+-- A nullable column adds a leading null-flag byte that widens its row slot by
+-- one, which the generator/writer account for. Only SCALAR columns are nullable
+-- here: the native loader reads each VARSIZED VariableSizedAccess at the field's
+-- start offset, so a nullable VARSIZED (whose flag byte would shift that offset)
+-- is intentionally not used. `output_format` is `Native`.
+CREATE SINK conntest_sink (sensor_id INT32 NOT NULL, reading FLOAT64, note VARSIZED NOT NULL) TYPE ODBC SET (
+    'localhost'          AS `SINK`.db_host,
+    '5432'               AS `SINK`.db_port,
+    'nebulastream'       AS `SINK`.database,
+    'nes'                AS `SINK`.username,
+    'nes'                AS `SINK`.password,
+    'PostgreSQL Unicode' AS `SINK`.driver,
+    'conntest_sink_tbl'  AS `SINK`.`table`,
+    'Native'             AS `SINK`.OUTPUT_FORMAT);

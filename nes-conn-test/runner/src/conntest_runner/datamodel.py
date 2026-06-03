@@ -449,9 +449,19 @@ _CREATE_SINK_RE = re.compile(
 )
 
 
-def _field_width(typ: str) -> int:
-    """Bytes a NOT-NULL field of ``typ`` occupies in the packed row layout."""
+def _value_width(typ: str) -> int:
+    """Bytes the value of ``typ`` occupies (without any null flag)."""
     return _VARSIZED_WIDTH if typ == "VARSIZED" else struct.calcsize(_FIXED_STRUCT[typ])
+
+
+def _field_width(typ: str, nullable: bool) -> int:
+    """Bytes a field of ``typ`` occupies in the packed row layout.
+
+    A nullable field carries a leading null-flag byte (engine row layout: the
+    flag precedes the value, matching ODBCSink's ``value = field + nullable``),
+    so it is one byte wider than its NOT NULL counterpart.
+    """
+    return _value_width(typ) + (1 if nullable else 0)
 
 
 def parse_sink_schema(nesql: str) -> list[NativeColumn]:
@@ -490,16 +500,20 @@ class NativeData:
     rows: list[tuple[Any, ...]]
 
 
-def _gen_value(name: str, typ: str, i: int, seed: int, col: int) -> Any:
+def _gen_value(name: str, typ: str, i: int, seed: int, col: int, nullable: bool) -> Any:
     """Deterministic value for row ``i``, column ``col`` of ``typ`` under ``seed``.
 
     Small, type-correct, and round-trip-safe by construction: ints stay in
     [0, 1000) so they fit every integer width and its SQL column; floats stay
     in [0, 1000) (and FLOAT32 is pre-rounded to single precision so the `.nes`
     payload and the oracle hold the exact value a REAL column returns); VARSIZED
-    is a short ASCII string; CHAR a single 'A'-'Z'.
+    is a short ASCII string; CHAR a single 'A'-'Z'. A nullable column is NULL on
+    a deterministic ~1-in-5 of its rows (so both the NULL and the value path are
+    exercised), returned as ``None``.
     """
     n = (seed * 1_000_003 + i * 97 + col * 7) & 0x7FFFFFFF
+    if nullable and n % 5 == 2:  # noqa: PLR2004  # ~20% NULL, deterministic
+        return None
     if typ == "VARSIZED":
         return f"{name[:12]}-{i}"
     if typ == "CHAR":
@@ -531,13 +545,15 @@ class NativeModel:
     def __init__(self, schema: list[NativeColumn] | None = None, *, seed: int = 1) -> None:
         self.schema = schema
         self.seed = seed
-        if schema is not None and any(nullable for _n, _t, nullable in schema):
-            # The null flag is a leading byte that shifts the row stride; the
-            # generator/writer model NOT NULL only (as the committed fixtures
-            # did). Fail loudly so a nullable config is a clear, explicit gap
-            # rather than a silently-misaligned `.nes`.
-            bad = [n for n, _t, nullable in schema if nullable]
-            raise ValueError(f"NativeModel supports NOT NULL columns only; nullable: {bad}")
+        # A nullable VARSIZED is unsupported: the native loader reads each
+        # VariableSizedAccess at the field's start offset (its prefix-sum walk
+        # uses getSizeInBytesWithNull), so a leading null-flag byte would shift
+        # the access by one. Nullable scalars are fine (their flag is just one
+        # more byte the loader copies verbatim). Fail loudly rather than emit a
+        # silently-misaligned `.nes`.
+        bad = [n for n, t, nullable in (schema or []) if nullable and t == "VARSIZED"]
+        if bad:
+            raise ValueError(f"NativeModel: nullable VARSIZED columns are unsupported: {bad}")
 
     def bind(self, schema: list[NativeColumn]) -> NativeModel:
         """Return a schema-bound model for one config case."""
@@ -548,8 +564,8 @@ class NativeModel:
         assert self.schema is not None, "NativeModel used before bind(schema)"  # noqa: S101
         return [
             tuple(
-                _gen_value(name, typ, i, seed, col)
-                for col, (name, typ, _n) in enumerate(self.schema)
+                _gen_value(name, typ, i, seed, col, nullable)
+                for col, (name, typ, nullable) in enumerate(self.schema)
             )
             for i in range(count)
         ]
@@ -580,7 +596,7 @@ class NativeModel:
         ``size``; the loader rebuilds the child index/offset.
         """
         assert self.schema is not None, "NativeModel used before bind(schema)"  # noqa: S101
-        stride = sum(_field_width(t) for _n, t, _x in self.schema)
+        stride = sum(_field_width(t, nullable) for _n, t, nullable in self.schema)
         num_varsized = sum(1 for _n, t, _x in self.schema if t == "VARSIZED")
         per_chunk = max(1, _NES_BUFFER_BYTES // stride)
         chunks = [rows[k : k + per_chunk] for k in range(0, len(rows), per_chunk)] or [[]]
@@ -590,7 +606,14 @@ class NativeModel:
             fixed = bytearray()
             payloads = bytearray()
             for row in chunk:
-                for (_name, typ, _nullable), value in zip(self.schema, row, strict=True):
+                for (_name, typ, nullable), value in zip(self.schema, row, strict=True):
+                    if nullable:
+                        # Leading null-flag byte (1 = NULL), then the value region
+                        # — which is zeroed (and contributes no payload) when NULL.
+                        fixed += b"\x01" if value is None else b"\x00"
+                        if value is None:
+                            fixed += b"\x00" * _value_width(typ)
+                            continue
                     if typ == "VARSIZED":
                         blob = str(value).encode("utf-8")
                         fixed += _VARSIZED_SLOT.pack(0, 0, len(blob))
@@ -626,6 +649,8 @@ class NativeModel:
     # -- typed read-back compare --------------------------------------------
     def _canon_field(self, typ: str, value: Any) -> tuple[str, Any]:
         """Exact, type-keyed canonical token for one field (raw bytes for floats)."""
+        if value is None:
+            return ("null", None)  # NULL — matches a DB NULL read back as None
         if typ in ("VARSIZED", "CHAR"):
             return ("s", str(value))
         if typ == "BOOLEAN":
