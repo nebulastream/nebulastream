@@ -34,6 +34,7 @@ std::vector<BaseOption*> SystestConfiguration::getOptions()
         &endlessMode,
         &excludeGroups,
         &remoteWorker,
-        &clusterConfigPath};
+        &clusterConfigPath,
+        &skipQueriesWithCustomConfig};
 }
 }

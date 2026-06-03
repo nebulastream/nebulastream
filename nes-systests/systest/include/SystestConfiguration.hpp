@@ -69,6 +69,10 @@ public:
     StringOption clusterConfigPath = {"cluster_config", TEST_CONFIGURATION_DIR "/topologies/two-node.yaml", "cluster configuration"};
     BoolOption showQueryPerformance = {"show_query_performance", "false", "print per-query performance timing in the console output"};
     BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
+    BoolOption skipQueriesWithCustomConfig
+        = {"skip_queries_with_custom_config",
+           "false",
+           "skip tests that declare a non-empty configuration override (per-query SET(...) block)"};
 
     bool excludeGroupsConfiguredInDisableConfig = false;
     bool excludedGroupsProvidedOnCommandLine = false;

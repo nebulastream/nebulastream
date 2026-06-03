@@ -114,6 +114,9 @@ void configureArgumentParser(ArgumentParser& program)
         .default_value(false)
         .implicit_value(true);
     program.add_argument("--show-query-performance").flag().help("print per-query performance timing in the console output");
+    program.add_argument("--skip-custom-config")
+        .flag()
+        .help("skip tests that declare a non-empty configuration override (per-query SET(...) block)");
 }
 
 void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration& config)
@@ -390,6 +393,11 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     if (program.is_used("--endless"))
     {
         config.endlessMode = true;
+    }
+
+    if (program.is_used("--skip-custom-config"))
+    {
+        config.skipQueriesWithCustomConfig = true;
     }
 }
 
