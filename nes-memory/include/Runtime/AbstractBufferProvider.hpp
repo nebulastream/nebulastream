@@ -18,6 +18,7 @@
 #include <optional>
 #include <vector>
 #include <Runtime/TupleBuffer.hpp>
+#include <coro/task.hpp>
 
 /// This enum reflects the different types of buffer managers in the system
 /// global: overall buffer manager
@@ -25,6 +26,7 @@
 /// fixed: buffer manager that we use for sources
 namespace NES
 {
+
 enum class BufferManagerType : uint8_t
 {
     GLOBAL,
@@ -52,6 +54,12 @@ public:
 
     /// Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
     virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
+
+    /// Coroutine that resolves to a pooled buffer, suspending until one becomes available.
+    /// This is the async counterpart of getBufferBlocking() used by the Rust runtime: instead
+    /// of blocking a thread it parks the awaiting coroutine and is resumed when a buffer is
+    /// recycled into the pool.
+    virtual coro::task<TupleBuffer> getBufferAsync() = 0;
 };
 
 }

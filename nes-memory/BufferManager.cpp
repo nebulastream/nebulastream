@@ -239,13 +239,72 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
     INVARIANT(
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
-    USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
-    INVARIANT(couldRecycleBuffer, "should always succeed");
+    std::coroutine_handle<> waiterToResume;
+    {
+        std::lock_guard lock(bufferWaitersMutex);
+        if (!bufferWaiters.empty())
+        {
+            /// Hand the freed segment directly to a parked coroutine rather than routing it through
+            /// the pool: prepare it exactly as getBufferNoBlocking() would, store the buffer in the
+            /// awaiter, and resume. The resumed coroutine is guaranteed a buffer and never retries.
+            auto* waiter = bufferWaiters.front();
+            bufferWaiters.pop_front();
+            USED_IN_DEBUG const auto prepared = segment->controlBlock->prepare(shared_from_this());
+            INVARIANT(prepared, "[BufferManager] handed-off buffer had an invalid reference counter");
+            /// Construct here (rather than optional::emplace) so the friend-only TupleBuffer
+            /// constructor is reached from BufferManager, then move into the awaiter's optional.
+            waiter->buffer = TupleBuffer(segment->controlBlock.get(), segment->ptr, segment->size);
+            waiterToResume = waiter->handle;
+        }
+        else
+        {
+            USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
+            INVARIANT(couldRecycleBuffer, "should always succeed");
+        }
+    }
+    /// Resume outside the lock: the releasing thread drives the resumed coroutine until it next
+    /// suspends (or returns), mirroring AsyncSemaphore::release().
+    if (waiterToResume)
+    {
+        waiterToResume.resume();
+    }
 }
 
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*, const AllocationThreadInfo&)
 {
     INVARIANT(false, "This method should not be called!");
+}
+
+bool BufferManager::BufferAvailableAwaiter::await_suspend(std::coroutine_handle<> awaiting) noexcept
+{
+    std::lock_guard lock(manager.bufferWaitersMutex);
+    /// Re-check under the lock: a buffer may have been returned to the pool between the fast-path
+    /// getBufferNoBlocking() in getBufferAsync() and acquiring the lock. Taking it here instead of
+    /// parking closes the lost-wakeup window against recyclePooledBuffer().
+    if (auto available = manager.getBufferNoBlocking())
+    {
+        buffer.emplace(std::move(*available));
+        return false;
+    }
+    handle = awaiting;
+    manager.bufferWaiters.push_back(this);
+    return true;
+}
+
+TupleBuffer BufferManager::BufferAvailableAwaiter::await_resume() noexcept
+{
+    return std::move(*buffer);
+}
+
+coro::task<TupleBuffer> BufferManager::getBufferAsync()
+{
+    /// Fast path: take a buffer straight from the pool without parking.
+    if (auto buffer = getBufferNoBlocking())
+    {
+        co_return std::move(*buffer);
+    }
+    /// Slow path: park until recyclePooledBuffer() hands us a buffer directly.
+    co_return co_await BufferAvailableAwaiter{*this};
 }
 
 size_t BufferManager::getBufferSize() const

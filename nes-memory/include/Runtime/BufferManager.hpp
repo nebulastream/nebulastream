@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <coroutine>
 #include <deque>
 #include <memory>
 #include <memory_resource>
@@ -114,6 +115,7 @@ public:
 
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
 
+    coro::task<TupleBuffer> getBufferAsync() override;
 
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
@@ -138,9 +140,29 @@ public:
     void recycleUnpooledBuffer(NES::detail::MemorySegment* segment, const AllocationThreadInfo&) override;
 
 private:
+    /// Awaiter that parks a coroutine until a buffer can be handed to it. When a buffer is recycled
+    /// and a coroutine is parked here, recyclePooledBuffer() prepares the freed segment, stores the
+    /// resulting buffer directly in the awaiter, and resumes it -- so a resumed coroutine is always
+    /// handed a buffer and never has to retry. await_suspend re-checks the pool under the lock, so a
+    /// buffer returned between the fast-path check and parking is taken rather than missed.
+    struct BufferAvailableAwaiter
+    {
+        BufferManager& manager;
+        std::optional<TupleBuffer> buffer{};
+        std::coroutine_handle<> handle{};
+
+        bool await_ready() const noexcept { return false; }
+
+        bool await_suspend(std::coroutine_handle<> awaiting) noexcept;
+        TupleBuffer await_resume() noexcept;
+    };
+
     std::vector<NES::detail::MemorySegment> allBuffers;
 
     folly::MPMCQueue<NES::detail::MemorySegment*> availableBuffers;
+
+    std::mutex bufferWaitersMutex;
+    std::deque<BufferAvailableAwaiter*> bufferWaiters;
 
     std::shared_ptr<NES::UnpooledChunksManager> unpooledChunksManager;
 

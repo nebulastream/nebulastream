@@ -117,6 +117,8 @@ struct DirtyBufferProvider : AbstractBufferProvider
         return std::move(*buffer);
     }
 
+    coro::task<TupleBuffer> getBufferAsync() override { co_return getBufferBlocking(); }
+
     std::optional<TupleBuffer> getBufferNoBlocking() override
     {
         auto buffer = bm->getBufferNoBlocking();
