@@ -32,11 +32,34 @@
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryStatus.hpp>
 
 namespace NES::Systest
 {
 
-QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : queryManager(std::move(queryManager))
+namespace
+{
+constexpr auto POLL_INTERVAL = std::chrono::milliseconds(25);
+
+/// Fabricate a snapshot that looks like a single Failed local query whose error is a timeout.
+/// The runner's normal failure reporting path picks it up via getGlobalQueryStatus()/coalesceException().
+DistributedQueryStatusSnapshot makeTimeoutSnapshot(const DistributedQueryId& query, std::chrono::milliseconds elapsed)
+{
+    auto exception = TestException("Systest query {} timed out after {}ms", query, elapsed.count());
+    LocalQueryStatusSnapshot local{};
+    local.queryId = INVALID_QUERY_ID;
+    local.state = QueryStatus::Failed;
+    local.metrics.error = exception;
+
+    DistributedQueryStatusSnapshot snapshot;
+    snapshot.queryId = query;
+    snapshot.localStatusSnapshots[Host("systest")].emplace(INVALID_QUERY_ID, std::move(local));
+    return snapshot;
+}
+}
+
+QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager, std::chrono::milliseconds queryTimeout)
+    : queryManager(std::move(queryManager)), queryTimeout(queryTimeout)
 {
 }
 
@@ -66,16 +89,13 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const Di
         return std::unexpected(CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker));
     }
 
-    auto result = queryManager->start(plan);
-
-
-    if (!result.has_value())
+    auto started = queryManager->start(plan);
+    if (!started.has_value())
     {
-        return std::unexpected(std::move(result.error().at(0)));
+        return std::unexpected(std::move(started.error().at(0)));
     }
-
-    ids.emplace(*result);
-    return result.value();
+    startedAt.emplace(*started, std::chrono::steady_clock::now());
+    return *started;
 }
 
 void QuerySubmitter::stopQuery(const DistributedQueryId& query)
@@ -88,9 +108,10 @@ void QuerySubmitter::stopQuery(const DistributedQueryId& query)
 
 DistributedQueryStatusSnapshot QuerySubmitter::waitForQueryTermination(const DistributedQueryId& query)
 {
+    const auto deadline = std::chrono::steady_clock::now() + queryTimeout;
     while (true)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        std::this_thread::sleep_for(POLL_INTERVAL);
         auto queryStatus = queryManager->status(query);
         if (!queryStatus.has_value())
         {
@@ -103,6 +124,12 @@ DistributedQueryStatusSnapshot QuerySubmitter::waitForQueryTermination(const Dis
         {
             return *queryStatus;
         }
+        if (std::chrono::steady_clock::now() >= deadline)
+        {
+            /// Best effort: try to stop the runaway query; ignore any failure since we're already in a failure path.
+            (void)queryManager->stop(query);
+            return makeTimeoutSnapshot(query, queryTimeout);
+        }
     }
 }
 
@@ -111,7 +138,8 @@ std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueries()
     while (true)
     {
         std::vector<std::pair<NES::DistributedQueryId, DistributedQueryStatusSnapshot>> results;
-        for (const auto& id : ids)
+        const auto now = std::chrono::steady_clock::now();
+        for (const auto& [id, startTime] : startedAt)
         {
             auto queryStatus = queryManager->status(id);
             if (!queryStatus.has_value())
@@ -124,17 +152,26 @@ std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueries()
                 || queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Failed)
             {
                 results.emplace_back(id, std::move(*queryStatus));
+                continue;
+            }
+
+            if (now - startTime >= queryTimeout)
+            {
+                /// Best effort: kick the worker to stop the query so resources are released.
+                /// Ignore any error since we already report the timeout as a failure below.
+                (void)queryManager->stop(id);
+                results.emplace_back(id, makeTimeoutSnapshot(id, queryTimeout));
             }
         }
         if (results.empty())
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            std::this_thread::sleep_for(POLL_INTERVAL);
             continue;
         }
 
         for (auto& id : results | std::views::keys)
         {
-            ids.erase(id);
+            startedAt.erase(id);
         }
 
         return results | std::views::values | std::ranges::to<std::vector>();
