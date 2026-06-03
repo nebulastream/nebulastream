@@ -200,6 +200,20 @@ bool recycleTupleBuffer(void* bufferPointer)
     return block->release();
 }
 
+detail::MemorySegment* toRust(TupleBuffer& buffer)
+{
+    return buffer.TupleBuffer::controlBlock->getOwner();
+}
+
+TupleBuffer fromRust(detail::MemorySegment* segment)
+{
+    TupleBuffer buffer;
+    buffer.controlBlock = segment->controlBlock.get();
+    buffer.ptr = segment->getPointer();
+    buffer.size = segment->size;
+    return buffer;
+}
+
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
 {
     /// Enable ADL to spell out to onlookers how swap should be used.
