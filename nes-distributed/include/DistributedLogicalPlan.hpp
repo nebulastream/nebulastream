@@ -14,19 +14,13 @@
 
 #pragma once
 
-#include <cstddef>
-#include <functional>
-#include <numeric>
-#include <ranges>
-#include <stdexcept>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <fmt/format.h>
-#include <DistributedQuery.hpp>
-#include <ErrorHandling.hpp>
+#include <coro/coro.hpp>
 
 namespace NES
 {
@@ -34,43 +28,39 @@ namespace NES
 class DistributedLogicalPlan
 {
 public:
-    DistributedLogicalPlan(std::unordered_map<Host, std::vector<LogicalPlan>> localPlans, LogicalPlan globalPlan)
-        : queryId(globalPlan.getQueryId().getDistributedQueryId()), localPlans(std::move(localPlans)), globalPlan(std::move(globalPlan))
-    {
-        PRECONDITION(not this->localPlans.empty(), "Input plan should not be empty");
-    }
+    DistributedLogicalPlan(std::unordered_map<Host, std::vector<LogicalPlan>> localPlans, LogicalPlan globalPlan);
 
     /// Subscript operator for accessing plans by worker id
-    const std::vector<LogicalPlan>& operator[](const Host& worker) const
-    {
-        if (const auto it = localPlans.find(worker); it != localPlans.end())
-        {
-            return it->second;
-        }
-        throw std::out_of_range(fmt::format("No plan found in decomposed plan under worker {}", worker));
-    }
+    const std::vector<LogicalPlan>& operator[](const Host& worker) const;
 
-    std::vector<LogicalPlan>& operator[](const Host& worker) { return localPlans.at(worker); }
+    std::vector<LogicalPlan>& operator[](const Host& worker);
 
-    [[nodiscard]] size_t size() const
-    {
-        return std::ranges::fold_left(
-            localPlans | std::views::values | std::views::transform(&std::vector<LogicalPlan>::size), 0, std::plus{});
-    }
+    [[nodiscard]] size_t size() const;
 
-    [[nodiscard]] const LogicalPlan& getGlobalPlan() const { return globalPlan; }
+    [[nodiscard]] const LogicalPlan& getGlobalPlan() const;
 
-    [[nodiscard]] const DistributedQueryId& getQueryId() const { return queryId; }
+    [[nodiscard]] const DistributedQueryId& getQueryId() const;
 
-    void setQueryId(DistributedQueryId queryId) { this->queryId = std::move(queryId); }
+    void setQueryId(DistributedQueryId queryId);
 
     [[nodiscard]] auto begin() const { return localPlans.begin(); }
 
     [[nodiscard]] auto end() const { return localPlans.end(); }
+
+    [[nodiscard]] auto begin() { return localPlans.begin(); }
+
+    [[nodiscard]] auto end() { return localPlans.end(); }
+
+    bool operator==(const DistributedLogicalPlan&) const = default;
 
 private:
     DistributedQueryId queryId{DistributedQueryId::INVALID};
     std::unordered_map<Host, std::vector<LogicalPlan>> localPlans;
     LogicalPlan globalPlan;
 };
+
+/// Generator that provides a topological sort of query plans. Each vector represents a set of query plans that on query plans on previous
+/// iterations.
+coro::generator<std::vector<std::pair<Host, LogicalPlan>>> topologicalSort(std::unordered_map<Host, std::vector<LogicalPlan>> localPlans);
+
 }

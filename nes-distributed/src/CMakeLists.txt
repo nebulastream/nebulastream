@@ -12,6 +12,7 @@
 
 add_source_files(nes-distributed
         DistributedQuery.cpp
+        DistributedLogicalPlan.cpp
         DistributedQueryIdGenerator.cpp
         NetworkTopology.cpp
         WorkerCatalog.cpp
