@@ -12,9 +12,13 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-package NES;
+fn main() {
+    println!("cargo::rustc-check-cfg=cfg(madsim)");
 
-message SerializableQueryId {
-    int64 id = 1;
+    tonic_build::configure()
+        .compile_protos(
+            &["../../grpc/SingleNodeWorkerRPCService.proto"],
+            &["../../grpc"],
+        )
+        .expect("failed to compile protos");
 }

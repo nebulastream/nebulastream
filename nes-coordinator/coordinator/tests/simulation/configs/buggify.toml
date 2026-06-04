@@ -1,0 +1,65 @@
+[[test]]
+title = "steady_state"
+timeout = 120
+buggify = true
+buggify_end = 80
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 10
+  end = 5
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 20
+  begin = 5
+  end = 40
+  create_weight = 3
+  drop_weight = 1
+
+[[test]]
+title = "worker_churn"
+timeout = 120
+buggify = true
+buggify_end = 80
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 20
+  end = 40
+  create_weight = 3
+  drop_weight = 2
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 20
+  begin = 5
+  end = 40
+  create_weight = 2
+  drop_weight = 1
+
+[[test]]
+title = "high_volume"
+timeout = 180
+buggify = true
+buggify_end = 120
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 30
+  end = 10
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 60
+  begin = 5
+  end = 60
+  create_weight = 5
+  drop_weight = 2
