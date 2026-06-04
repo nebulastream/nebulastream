@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds and tests the Rust crates that make up the coordinator catalog
-# (model + migration). Triggered on PRs that touch any of those crates
-# or this workflow, plus every push to main.
+# Builds and tests the Rust crates that make up the coordinator
+# (model, migration, controller, coordinator). Triggered on PRs that
+# touch any of those crates or this workflow, plus every push to main.
 name: Coordinator
 
 on:
@@ -20,16 +20,16 @@ on:
     paths:
       - 'Cargo.toml'
       - 'Cargo.lock'
-      - 'nes-coordinator/model/**'
-      - 'nes-coordinator/migration/**'
+      - 'nes-coordinator/**'
+      - 'grpc/**'
       - '.github/workflows/coordinator.yml'
   push:
     branches: [ main ]
     paths:
       - 'Cargo.toml'
       - 'Cargo.lock'
-      - 'nes-coordinator/model/**'
-      - 'nes-coordinator/migration/**'
+      - 'nes-coordinator/**'
+      - 'grpc/**'
       - '.github/workflows/coordinator.yml'
 
 concurrency:
@@ -43,8 +43,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ". -> target"
       - name: cargo test --workspace
         run: cargo test --workspace --locked
+      - name: cargo test --test simulation (madsim)
+        run: cargo test -p coordinator --test simulation --locked -- --test-threads=1
+        env:
+          RUSTFLAGS: --cfg madsim

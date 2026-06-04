@@ -1,0 +1,84 @@
+[[test]]
+title = "brief_pause_third"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 8
+  end = 9
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 11
+  begin = 4
+  end = 33
+  create_weight = 4
+  drop_weight = 1
+
+  # Pause about a third of workers mid-operation
+  [[test.workload]]
+  name = "Stall"
+  begin = 10
+  end = 25
+  pause_rate = 0.3
+
+[[test]]
+title = "prolonged_majority_pause"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 16
+  end = 13
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 24
+  begin = 6
+  end = 45
+  create_weight = 2
+  drop_weight = 1
+
+  # Half the workers frozen for a long window
+  [[test.workload]]
+  name = "Stall"
+  begin = 12
+  end = 38
+  pause_rate = 0.5
+
+[[test]]
+title = "pause_during_worker_cycling"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  # Workers continuously created and dropped
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 35
+  end = 32
+  create_weight = 2
+  drop_weight = 1
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 9
+  begin = 4
+  end = 33
+  create_weight = 1
+  drop_weight = 1
+
+  # Pause some workers while others are being added or removed
+  [[test.workload]]
+  name = "Stall"
+  begin = 8
+  end = 28
+  pause_rate = 0.4
