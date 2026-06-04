@@ -13,8 +13,22 @@
 */
 
 syntax = "proto3";
-package NES;
+package grpc.health.v1;
 
-message SerializableQueryId {
-    int64 id = 1;
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;
+  }
+  ServingStatus status = 1;
+}
+
+service Health {
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
 }
