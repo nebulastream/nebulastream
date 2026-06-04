@@ -1,0 +1,89 @@
+[[test]]
+title = "slow_network"
+timeout = 45
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 5
+  end = 7
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 14
+  begin = 4
+  end = 33
+  create_weight = 3
+  drop_weight = 1
+
+  # Moderate latency inflation plus light packet loss
+  [[test.workload]]
+  name = "Degradation"
+  begin = 10
+  end = 25
+  latency_lo_ms = 200
+  latency_hi_ms = 2000
+  loss_rate = 0.1
+
+[[test]]
+title = "high_loss_network"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 12
+  end = 12
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 20
+  begin = 6
+  end = 45
+  create_weight = 5
+  drop_weight = 2
+
+  # Heavy latency blowup plus 20% packet loss
+  [[test.workload]]
+  name = "Degradation"
+  begin = 8
+  end = 32
+  latency_lo_ms = 500
+  latency_hi_ms = 5000
+  loss_rate = 0.2
+
+[[test]]
+title = "degraded_during_worker_cycling"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  # Workers cycling while the network is degraded
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 28
+  end = 33
+  create_weight = 2
+  drop_weight = 1
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 16
+  begin = 5
+  end = 33
+  create_weight = 2
+  drop_weight = 1
+
+  [[test.workload]]
+  name = "Degradation"
+  begin = 5
+  end = 28
+  latency_lo_ms = 200
+  latency_hi_ms = 3000
+  loss_rate = 0.15

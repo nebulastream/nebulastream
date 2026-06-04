@@ -1,0 +1,64 @@
+# Combines multiple failure modes with overlapping timelines.
+# Workers cycle throughout, queries run concurrently,
+# and different faults overlap to create worst-case scenarios.
+
+[[test]]
+title = "compound_failures"
+timeout = 75
+buggify = false
+run_failure_workloads = false
+
+  # Workers continuously created and dropped throughout
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 33
+  end = 40
+  create_weight = 3
+  drop_weight = 1
+
+  # Queries overlap with every fault phase
+  [[test.workload]]
+  name = "Query"
+  num_ops = 18
+  begin = 5
+  end = 50
+  create_weight = 3
+  drop_weight = 1
+
+  # Phase 1: network degrades while queries start
+  [[test.workload]]
+  name = "Degradation"
+  begin = 8
+  end = 18
+  latency_lo_ms = 100
+  latency_hi_ms = 1500
+  loss_rate = 0.05
+
+  # Phase 2: partitions overlap with degraded network
+  [[test.workload]]
+  name = "NetworkPartition"
+  begin = 12
+  end = 22
+  partition_rate = 0.2
+
+  # Phase 3: kill workers after partitions heal — fragments must recover
+  [[test.workload]]
+  name = "Attrition"
+  begin = 20
+  kill_rate = 0.3
+  restart_delay_lo_secs = 2
+  restart_delay_hi_secs = 8
+
+  # Phase 4: stall surviving workers during recovery from attrition
+  [[test.workload]]
+  name = "Stall"
+  begin = 25
+  end = 40
+  pause_rate = 0.2
+
+  # Phase 5: swizzled whole-node clogs after partitions heal — asymmetric reconnect
+  [[test.workload]]
+  name = "SwizzleClog"
+  begin = 22
+  end = 38
+  swizzle_rate = 0.4
