@@ -22,6 +22,7 @@ members = [
     "nes-coordinator/model",
     "nes-coordinator/migration",
     "nes-coordinator/controller",
+    "nes-coordinator/coordinator",
 ]
 
 [workspace.package]
@@ -33,6 +34,7 @@ edition = "2024"
 nes_network = { path = "nes-network/network" }
 migration = { path = "nes-coordinator/migration" }
 model = { path = "nes-coordinator/model" }
+controller = { path = "nes-coordinator/controller" }
 
 anyhow = "1.0"
 async-channel = "2.3.1"
@@ -40,10 +42,13 @@ async-trait = "0.1"
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
 cxx = "1.0.194"
 futures = "0.3.31"
+inventory = "0.3"
+libtest-mimic = "0.8"
+madsim = { version = "0.2.34", features = ["macros"] }
 pin-project = "1.1.10"
 proptest = "1.5"
 proptest-derive = "0.5"
-prost = "0.13"
+prost = "=0.13.4"
 sea-orm = { version = "=1.1.1", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",
@@ -71,8 +76,18 @@ tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
 tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor", "json", "serde_json"] }
 tokio-stream = "0.1.17"
 tokio-util = { version = "0.7.13", features = ["codec"] }
-tonic = "0.13"
-tonic-build = "0.13"
+toml = "1.1.2"
 tracing = "0.1.44"
 tracing-subscriber = "0.3"
 url = { version = "2.5.4", features = ["serde"] }
+
+# The coordinator crates declare tokio and tonic inline as madsim facade
+# packages (same API, simulator backend under `--cfg madsim`, plain re-export
+# otherwise). They cannot inherit those from this table because workspace
+# inheritance cannot rename a package, and the entries here must stay the real
+# crates for the network and binding members. The dependency policy script
+# allows the madsim-* facades as the only inline exception.
+[patch.crates-io]
+sqlx = { git = "https://github.com/madsim-rs/sqlx.git", rev = "3efe6d0065963db2a2b7f30dee69f647e28dec81" }
+tokio-retry = { git = "https://github.com/madsim-rs/rust-tokio-retry.git", rev = "95e2fd3" }
+getrandom = { git = "https://github.com/madsim-rs/getrandom.git", rev = "e79a7ae" }
