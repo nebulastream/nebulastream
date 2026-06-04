@@ -17,7 +17,6 @@
 #include <optional>
 #include <span>
 #include <string>
-#include <typeindex>
 #include <unordered_map>
 #include <utility>
 #include <variant>

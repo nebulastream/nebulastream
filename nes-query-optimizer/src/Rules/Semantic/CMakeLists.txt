@@ -13,10 +13,10 @@
 add_source_files(nes-query-optimizer
         InlineSinkBindingRule.cpp
         InlineSourceBindingRule.cpp
-        SourceInferenceRule.cpp
         LogicalSourceExpansionRule.cpp
         OriginIdInferenceRule.cpp
         TypeInferenceRule.cpp
         SinkBindingRule.cpp
         InferModelResolutionRule.cpp
+        CalcTargetOrderRule.cpp
 )

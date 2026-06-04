@@ -45,9 +45,10 @@ public:
 
     template <std::ranges::input_range Range>
     requires std::is_same_v<std::ranges::range_value_t<Range>, Trait>
-    explicit TraitSet(Range traits)
+    explicit TraitSet(Range&& traits)
         : traitMap(
-              traits | std::views::transform([](const Trait& trait) { return std::make_pair(std::type_index{trait.getTypeInfo()}, trait); })
+              std::forward<Range>(traits)
+              | std::views::transform([](const Trait& trait) { return std::make_pair(std::type_index{trait.getTypeInfo()}, trait); })
               | std::ranges::to<std::unordered_map<std::type_index, Trait>>())
     {
     }
@@ -83,11 +84,18 @@ public:
         return success;
     }
 
+    template <TraitConcept TraitType>
+    void insert(TraitType trait)
+    {
+        const auto [iter, success] = traitMap.try_emplace(typeid(TraitType), std::move(trait));
+        PRECONDITION(success, "Trait {} already present", NAMEOF_TYPE(TraitType));
+    }
+
     friend bool operator==(const TraitSet& lhs, const TraitSet& rhs);
 
-    [[nodiscard]] auto begin() const { return traitMap.cbegin(); }
+    [[nodiscard]] auto begin() const { return std::views::values(traitMap).begin(); }
 
-    [[nodiscard]] auto end() const { return traitMap.cend(); }
+    [[nodiscard]] auto end() const { return std::views::values(traitMap).end(); }
 
     [[nodiscard]] std::size_t size() const;
 

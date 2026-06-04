@@ -72,6 +72,6 @@ LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOper
         | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
     auto traitSet = logicalOperator.getTraitSet();
     tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
-    return logicalOperator.withChildren(children).withTraitSet(traitSet);
+    return logicalOperator.withChildrenUnsafe(children).withTraitSet(traitSet);
 }
 }

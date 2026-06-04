@@ -24,7 +24,7 @@
 #include <InputFormatterTestUtil.hpp>
 #include <InputFormatterValidationProvider.hpp>
 
-/// NOLINTBEGIN(readability-magic-numbers)
+/// NOLINTBEGIN(readability-magic-numbers, bugprone-unchecked-optional-access)
 namespace NES
 {
 
@@ -53,7 +53,7 @@ TEST_F(SpecificSequenceTest, oneTupleWithTupleDelimiters)
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
@@ -72,7 +72,7 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOutOfOrder)
         .numRequiredBuffers = 3, /// 2 buffers for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
@@ -91,7 +91,7 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20, /// 8 bytes metadata, 12 bytes per formatted tuple
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
@@ -110,7 +110,7 @@ TEST_F(SpecificSequenceTest, DISABLED_testDelimiterThatIsMoreThanOneCharacter)
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tuple_delimiter", "--"}, {"field_delimiter", ","}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "--"}, {"FIELD_DELIMITER", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
@@ -130,7 +130,7 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers
         = 16, /// size of formatted tuple: 4 bytes, size of indexes: 8 bytes <-- 8 bytes metadata: 1 tuple per index buffer, 4 formatted buffers, 12 index buffers
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value(),
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{
@@ -153,7 +153,7 @@ TEST_F(SpecificSequenceTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter
         .numRequiredBuffers = 4, /// 3 buffers for raw data, 1 buffer from results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 28,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value(),
         .testSchema = {INT32, INT32, INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
@@ -174,7 +174,7 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
         .numRequiredBuffers = 6, /// 4 buffers for raw data, 2 buffer from results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 28,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value(),
         .testSchema = {INT32, INT32, INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
@@ -197,11 +197,11 @@ TEST_F(SpecificSequenceTest, simdJSONFirstObjectEndsAtBufferBoundary)
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 16,
-        .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"tuple_delimiter", "\n"}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"TUPLE_DELIMITER", "\n"}}).value(),
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(12)}}}},
-        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "\n{\"Field_0\":12}\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "\n{\"FIELD_0\":12}\n"}}});
 }
 
 /// SIMDJSON detects a complete tuple '{"Field_0":567}' in buffer 2, this leads to an empty spanning tuple between the ending '}'-byte
@@ -215,15 +215,15 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryLeading)
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"tuple_delimiter", "\n"}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"TUPLE_DELIMITER", "\n"}}).value(),
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
         = {WorkerThreadResults<TestTuple>{{{TestTuple(1234), TestTuple(567)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(89)}}}},
         .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"Field_0\":1234}"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"Field_0\":567}"},
-           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"Field_0\":89}\n"}}});
+        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"FIELD_0\":1234}"},
+           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"FIELD_0\":567}"},
+           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"FIELD_0\":89}\n"}}});
 }
 
 /// SIMDJSON detects a complete tuple '{"Field_0":567}' in buffer 3, this leads to an empty spanning tuple between the ending '}'-byte
@@ -237,17 +237,17 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryTrailing)
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"tuple_delimiter", "\n"}}).value(),
+        .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"TUPLE_DELIMITER", "\n"}}).value(),
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
         = {WorkerThreadResults<TestTuple>{{{TestTuple(89)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(1234), TestTuple(567)}}}},
 
         .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"Field_0\":1234}"},
-           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"Field_0\":89}\n"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"Field_0\":567}"}}});
+        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"FIELD_0\":1234}"},
+           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"FIELD_0\":89}\n"},
+           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"FIELD_0\":567}"}}});
 }
 }
 
-/// NOLINTEND(readability-magic-numbers)
+/// NOLINTEND(readability-magic-numbers, bugprone-unchecked-optional-access)

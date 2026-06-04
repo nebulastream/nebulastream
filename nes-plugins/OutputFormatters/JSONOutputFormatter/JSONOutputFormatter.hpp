@@ -54,6 +54,9 @@ public:
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
     friend std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter& format);
+
+private:
+    std::vector<std::string> canonicalFieldNames;
 };
 
 }

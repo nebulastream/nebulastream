@@ -106,7 +106,7 @@ LogicalPlan::LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOpera
 
 LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot)
 {
-    auto root = newRoot.withChildren(plan.getRootOperators());
+    auto root = newRoot.withChildrenUnsafe(plan.getRootOperators());
     return LogicalPlan(plan.getQueryId(), {std::move(root)}, plan.getOriginalSql());
 }
 
@@ -123,7 +123,7 @@ bool replaceOperatorRecursion(LogicalOperator& current, const OperatorId target,
 {
     if (current.getId() == target)
     {
-        replacement = replacement.withChildren(current.getChildren());
+        replacement = replacement.withChildrenUnsafe(current.getChildren());
         current = replacement;
         return true;
     }
@@ -138,7 +138,7 @@ bool replaceOperatorRecursion(LogicalOperator& current, const OperatorId target,
     }
     if (replaced)
     {
-        current = current.withChildren(children);
+        current = current.withChildrenUnsafe(children);
     }
     return replaced;
 }
@@ -152,7 +152,7 @@ std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, const Operat
     {
         if (root.getId() == target)
         {
-            replacement = replacement.withChildren(root.getChildren());
+            replacement = replacement.withChildrenUnsafe(root.getChildren());
             newRoots.push_back(replacement);
             replaced = true;
         }
@@ -189,7 +189,7 @@ bool replaceSubtreeRecursion(LogicalOperator& current, const OperatorId target, 
     }
     if (replaced)
     {
-        current = current.withChildren(std::move(children));
+        current = current.withChildrenUnsafe(std::move(children));
     }
     return replaced;
 }
@@ -355,7 +355,7 @@ bool LogicalPlan::operator==(const LogicalPlan& other) const
         auto [l, r] = work.top();
         work.pop();
 
-        if (l != r)
+        if (*l != *r)
         {
             return false;
         }

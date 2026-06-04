@@ -14,158 +14,407 @@
 
 #pragma once
 
+#include <Util/Logger/Logger.hpp>
+
+
+#include <algorithm>
+#include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <functional>
+#include <initializer_list>
 #include <optional>
 #include <ostream>
+#include <ranges>
+#include <span>
 #include <string>
-#include <string_view>
+#include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <Util/Logger/Formatter.hpp>
-#include <Util/ReflectionFwd.hpp>
-#include <folly/hash/Hash.h>
-#include <ErrorHandling.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Util/TypeTraits.hpp>
+#include <fmt/base.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
+#include <nameof.hpp>
 
 namespace NES
 {
 
+/// This class represents a container of fields, where we calculate for every field by which names its addressable unambiguously.
+/// Other than that, its interface is what you would expect of an std::vector or std::unordered_set of the specified field type.
+/// That includes using it like a range, both consuming it as one or constructing it with std::ranges::to.
+/// If you want to ensure that your schema has no name collisions, use tryCreateCollisionFree().
+/// You can use any type as a field type, as long as it has a method getFullyQualifiedName() that returns a QualifiedIdentifierBase<N>.
+template <typename FieldType, OrderType IsOrdered>
 class Schema
 {
+    static constexpr size_t IdListExtent
+        = NES::ExtractParameter<std::remove_cvref_t<decltype(std::declval<FieldType>().getFullyQualifiedName())>>::value;
+    using IdList = QualifiedIdentifierBase<IdListExtent>;
+    using FieldByNameType = std::unordered_map<IdList, FieldType>;
+    using CollisionsType = std::unordered_map<IdList, std::vector<FieldType>>;
+
+    using FieldContainer = std::conditional_t<IsOrdered.ordered, std::vector<FieldType>, std::unordered_set<FieldType>>;
+
+    static std::pair<FieldByNameType, CollisionsType> initialize(const FieldContainer& fields);
+
 public:
-    struct Field
+    Schema() = default;
+
+    explicit Schema(FieldContainer fields);
+
+    template <std::ranges::input_range Range>
+    requires(
+        std::same_as<FieldType, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<FieldType>>
+        && !std::same_as<Range, FieldContainer> && !std::same_as<Range, Schema>)
+    explicit Schema(Range&& input) noexcept;
+
+    Schema(std::initializer_list<FieldType> fields);
+
+    template <typename OtherFieldType>
+    requires(IdListExtent == std::dynamic_extent)
+    /// NOLINTNEXTLINE(google-explicit-constructor)
+    Schema(const Schema<OtherFieldType, IsOrdered>& other);
+
+    static std::expected<Schema, std::unordered_map<IdList, std::vector<FieldType>>> tryCreateCollisionFree(std::vector<FieldType> fields)
+    requires(IsOrdered.ordered);
+
+    static std::expected<Schema, std::unordered_map<IdList, std::vector<FieldType>>>
+    tryCreateCollisionFree(const std::vector<FieldType>& fields)
+    requires(!IsOrdered.ordered);
+
+    static std::string createCollisionString(const std::unordered_map<IdList, std::vector<FieldType>>& collisions);
+
+    /// Defined inline as hidden friends so that overload resolution can apply Schema's converting
+    /// constructor (e.g. comparing Schema<UnboundFieldBase<1>> with Schema<UnboundFieldBase<dynamic_extent>>).
+    /// A templated free-function operator== would require both sides to deduce the same FieldType
+    /// and would fail those mixed comparisons.
+    friend bool operator==(const Schema& lhs, const Schema& rhs) { return lhs.fields == rhs.fields; }
+
+    friend std::ostream& operator<<(std::ostream& os, const Schema& obj)
     {
-        Field() = default;
-        Field(std::string name, DataType dataType);
+        return os << fmt::format("Schema<{},{}>: (fields: ({})", NAMEOF_TYPE(FieldType), IsOrdered.ordered, fmt::join(obj.fields, ", "));
+    }
 
-        friend std::ostream& operator<<(std::ostream& os, const Field& field);
-        bool operator==(const Field&) const = default;
-        [[nodiscard]] std::string getUnqualifiedName() const;
+    [[nodiscard]] std::optional<FieldType> operator[](const IdList& name) const;
 
-        std::string name;
-        DataType dataType;
-    };
+    [[nodiscard]] std::optional<FieldType> operator[](size_t index) const
+    requires(IsOrdered.ordered);
 
-    /// TODO #764: move qualified field logic in central place and improve
-    struct QualifiedFieldName
-    {
-        explicit QualifiedFieldName(std::string streamName, std::string fieldName)
-            : streamName(std::move(streamName)), fieldName(std::move(fieldName))
-        {
-            PRECONDITION(not this->streamName.empty(), "Cannot create a QualifiedFieldName with an empty field name");
-            PRECONDITION(not this->fieldName.empty(), "Cannot create a QualifiedFieldName with an empty field name");
-        }
+    [[nodiscard]] std::optional<FieldType> getFieldByName(const IdList& fieldName) const;
 
-        std::string streamName;
-        std::string fieldName;
-    };
+    [[nodiscard]] bool contains(const IdList& qualifiedFieldName) const;
 
-    /// schema qualifier separator
-    constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
+    [[nodiscard]] bool contains(const FieldType& field) const;
 
-    explicit Schema() = default;
-    ~Schema() = default;
+    [[nodiscard]] std::vector<IdList> getUniqueFieldNames() const;
 
-    [[nodiscard]] bool operator==(const Schema& other) const = default;
-    friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
+    [[nodiscard]] size_t getSizeInBytes() const;
 
-    Schema addField(std::string name, const DataType& dataType);
-    Schema addField(std::string name, DataType::Type type);
-    Schema addField(std::string name, DataType::Type type, DataType::NULLABLE);
+    [[nodiscard]] auto begin() const -> decltype(std::declval<FieldContainer>().cbegin());
 
-    /// Replaces the type of the field
-    [[nodiscard]] bool replaceTypeOfField(const std::string& name, DataType type);
+    [[nodiscard]] auto end() const -> decltype(std::declval<FieldContainer>().cend());
 
-    /// @brief Returns the attribute field based on a qualified or unqualified field name.
-    /// If an unqualified field name is given (e.g., `getFieldByName("fieldName")`), the function will match attribute fields with any source name.
-    /// If a qualified field name is given (e.g., `getFieldByName("source$fieldName")`), the entire qualified field must match.
-    /// Note that this function does not return a field with an ambiguous field name.
-    [[nodiscard]] std::optional<Field> getFieldByName(const std::string& fieldName) const;
-
-    /// @Note: Raises a 'FieldNotFound' exception if the index is out of bounds.
-    [[nodiscard]] Field getFieldAt(size_t index) const;
-
-    [[nodiscard]] bool contains(const std::string& qualifiedFieldName) const;
-
-    /// get the qualifier of the source without ATTRIBUTE_NAME_SEPARATOR
-    [[nodiscard]] std::optional<std::string> getSourceNameQualifier() const;
-
-    /// method to get the qualifier of the source with ATTRIBUTE_NAME_SEPARATOR
-    [[nodiscard]] std::string getQualifierNameForSystemGeneratedFieldsWithSeparator() const;
-
-    [[nodiscard]] bool hasFields() const;
-    [[nodiscard]] size_t getNumberOfFields() const;
-    [[nodiscard]] std::vector<std::string> getFieldNames() const;
-    [[nodiscard]] const std::vector<Field>& getFields() const;
-    void appendFieldsFromOtherSchema(const Schema& otherSchema);
-    [[nodiscard]] bool renameField(const std::string& oldFieldName, std::string_view newFieldName);
-
-    [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
-
-    [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<Field>>().cbegin());
-    [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<Field>>().cend());
+    [[nodiscard]] auto size() const -> decltype(std::declval<FieldContainer>().size());
 
 private:
-    /// Manipulating fields requires us to update the size of the schema (in bytes) and the 'nameToFieldMap', which maps names of fields to
-    /// their corresponding indexes in the 'fields' vector. Thus, the below three members are private to prevent accidental manipulation.
-    std::vector<Field> fields;
-    size_t sizeOfSchemaInBytes{0};
-    std::unordered_map<std::string, size_t> nameToField;
+    FieldContainer fields;
+    FieldByNameType fieldsByName;
+    size_t sizeInBytes{};
 };
 
-/// Returns a copy of the input schema without any source qualifier on the schema fields
-Schema withoutSourceQualifier(const Schema& input);
+template <typename FieldType, OrderType IsOrdered>
+auto Schema<FieldType, IsOrdered>::initialize(const FieldContainer& fields) -> std::pair<FieldByNameType, CollisionsType>
+{
+    FieldByNameType fieldsByName{};
+    CollisionsType collisions{};
+    for (const auto& field : fields)
+    {
+        const auto& fullName = field.getFullyQualifiedName();
+        for (size_t i = 0; i < std::ranges::size(fullName); i++)
+        {
+            auto idSubSpan = std::span<const Identifier, IdListExtent>{std::ranges::begin(fullName) + i, std::ranges::size(fullName) - i};
+            IdList idSubList(idSubSpan);
+            if (auto existingCollisions = collisions.find(idSubList); existingCollisions == collisions.end())
+            {
+                if (auto existingIdList = fieldsByName.find(idSubList); existingIdList != fieldsByName.end())
+                {
+                    collisions.insert(std::pair{std::move(idSubList), std::vector<FieldType>{existingIdList->second, field}});
+                    fieldsByName.erase(existingIdList);
+                }
+                else
+                {
+                    fieldsByName.insert(std::pair{std::move(idSubList), field});
+                }
+            }
+            else
+            {
+                existingCollisions->second.push_back(field);
+            }
+        }
+    }
+    return std::pair{fieldsByName, collisions};
+}
 
-namespace detail
+template <typename FieldType, OrderType IsOrdered>
+Schema<FieldType, IsOrdered>::Schema(FieldContainer fields) : fields(std::move(fields))
 {
-struct ReflectedField
+    auto [fieldsByName, collisions] = initialize(this->fields);
+    if (!collisions.empty())
+    {
+        NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
+    }
+    this->fieldsByName = fieldsByName;
+    sizeInBytes = std::ranges::fold_left(
+        this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
+}
+
+template <typename FieldType, OrderType IsOrdered>
+template <std::ranges::input_range Range>
+requires(
+    std::same_as<FieldType, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<FieldType>>
+    && !std::same_as<Range, typename Schema<FieldType, IsOrdered>::FieldContainer> && !std::same_as<Range, Schema<FieldType, IsOrdered>>)
+Schema<FieldType, IsOrdered>::Schema(Range&& input) noexcept : fields{std::forward<Range>(input) | std::ranges::to<FieldContainer>()}
 {
-    std::string name;
-    DataType type;
+    auto [calculatedFieldsByName, collisions] = initialize(fields);
+    if (!collisions.empty())
+    {
+        NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
+    }
+    this->fieldsByName = std::move(calculatedFieldsByName);
+    sizeInBytes = std::ranges::fold_left(
+        this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
+}
+
+template <typename FieldType, OrderType IsOrdered>
+Schema<FieldType, IsOrdered>::Schema(std::initializer_list<FieldType> fields) : Schema{FieldContainer{std::move(fields)}}
+{
+}
+
+template <typename FieldType, OrderType IsOrdered>
+template <typename OtherFieldType>
+requires(Schema<FieldType, IsOrdered>::IdListExtent == std::dynamic_extent)
+Schema<FieldType, IsOrdered>::Schema(const Schema<OtherFieldType, IsOrdered>& other)
+    : Schema(other | std::views::transform([](const auto& field) { return FieldType{field}; }) | std::ranges::to<FieldContainer>())
+{
+}
+
+template <typename FieldType, OrderType IsOrdered>
+auto Schema<FieldType, IsOrdered>::tryCreateCollisionFree(std::vector<FieldType> fields)
+    -> std::expected<Schema, std::unordered_map<IdList, std::vector<FieldType>>>
+requires(IsOrdered.ordered)
+{
+    auto [fieldsByName, collisions] = initialize(fields);
+    if (!collisions.empty())
+    {
+        std::unordered_map<IdList, std::vector<FieldType>> collisionMap;
+        for (const auto& [idSpan, fieldRefs] : collisions)
+        {
+            std::vector<FieldType> fieldVec;
+            fieldVec.reserve(fieldRefs.size());
+            for (const auto& fieldRef : fieldRefs)
+            {
+                fieldVec.push_back(fieldRef);
+            }
+            collisionMap.emplace(IdList{idSpan}, std::move(fieldVec));
+        }
+        return std::unexpected{std::move(collisionMap)};
+    }
+    return Schema{std::move(fields)};
+}
+
+template <typename FieldType, OrderType IsOrdered>
+auto Schema<FieldType, IsOrdered>::tryCreateCollisionFree(const std::vector<FieldType>& fields)
+    -> std::expected<Schema, std::unordered_map<IdList, std::vector<FieldType>>>
+requires(!IsOrdered.ordered)
+{
+    auto fieldSet = fields | std::ranges::to<std::unordered_set<FieldType>>();
+    if (fieldSet.size() != fields.size())
+    {
+        auto collisions
+            = fieldSet | std::views::transform([&fields](const auto& field) { return std::pair{field, std::ranges::count(fields, field)}; })
+            | std::views::filter([](const auto& pair) { return pair.second > 1; })
+            | std::views::transform(
+                  [](const auto& pair)
+                  {
+                      return std::pair{
+                          pair.first.getFullyQualifiedName(), std::views::repeat(pair.first, pair.second) | std::ranges::to<std::vector>()};
+                  })
+            | std::ranges::to<std::unordered_map<IdList, std::vector<FieldType>>>();
+        return std::unexpected{collisions};
+    }
+    auto [fieldsByName, collisions] = initialize(fieldSet);
+    if (!collisions.empty())
+    {
+        std::unordered_map<IdList, std::vector<FieldType>> collisionMap;
+        for (const auto& [idSpan, fieldRefs] : collisions)
+        {
+            std::vector<FieldType> fieldVec;
+            fieldVec.reserve(fieldRefs.size());
+            for (const auto& fieldRef : fieldRefs)
+            {
+                fieldVec.push_back(fieldRef);
+            }
+            collisionMap.emplace(IdList{idSpan}, std::move(fieldVec));
+        }
+        return std::unexpected{std::move(collisionMap)};
+    }
+    return Schema{std::move(fieldSet)};
+}
+
+template <typename FieldType, OrderType IsOrdered>
+std::string Schema<FieldType, IsOrdered>::createCollisionString(const std::unordered_map<IdList, std::vector<FieldType>>& collisions)
+{
+    return fmt::format(
+        "{}",
+        fmt::join(
+            collisions
+                | std::views::transform(
+                    [](const auto& pair)
+                    {
+                        return fmt::format(
+                            "{} : ({})",
+                            pair.first,
+                            fmt::join(
+                                pair.second
+                                    | std::views::transform(
+                                        [](const FieldType& field) -> std::string
+                                        { return fmt::format("{}:{}", field.getFullyQualifiedName(), field.getDataType()); }),
+                                ", "));
+                    }),
+            ", "));
+}
+
+template <typename FieldType, OrderType IsOrdered>
+std::optional<FieldType> Schema<FieldType, IsOrdered>::operator[](const IdList& name) const
+{
+    auto iter = fieldsByName.find(name);
+    if (iter == fieldsByName.end())
+    {
+        return std::nullopt;
+    }
+    return iter->second;
+}
+
+template <typename FieldType, OrderType IsOrdered>
+std::optional<FieldType> Schema<FieldType, IsOrdered>::operator[](const size_t index) const
+requires(IsOrdered.ordered)
+{
+    if (index < std::ranges::size(fields))
+    {
+        return fields.at(index);
+    }
+    return std::nullopt;
+}
+
+template <typename FieldType, OrderType IsOrdered>
+std::optional<FieldType> Schema<FieldType, IsOrdered>::getFieldByName(const IdList& fieldName) const
+{
+    return (*this)[fieldName];
+}
+
+template <typename FieldType, OrderType IsOrdered>
+bool Schema<FieldType, IsOrdered>::contains(const IdList& qualifiedFieldName) const
+{
+    return fieldsByName.contains(qualifiedFieldName);
+}
+
+template <typename FieldType, OrderType IsOrdered>
+bool Schema<FieldType, IsOrdered>::contains(const FieldType& field) const
+{
+    if (const auto iter = fieldsByName.find(field.getFullyQualifiedName()); iter != fieldsByName.end())
+    {
+        return iter->second == field;
+    }
+    return false;
+}
+
+template <typename FieldType, OrderType IsOrdered>
+auto Schema<FieldType, IsOrdered>::getUniqueFieldNames() const -> std::vector<IdList>
+{
+    auto namesView = this->fields | std::views::transform([](const FieldType& field) { return field.getFullyQualifiedName(); });
+    return {namesView.begin(), namesView.end()};
+}
+
+template <typename FieldType, OrderType IsOrdered>
+size_t Schema<FieldType, IsOrdered>::getSizeInBytes() const
+{
+    return sizeInBytes;
+}
+
+template <typename FieldType, OrderType IsOrdered>
+auto Schema<FieldType, IsOrdered>::begin() const -> decltype(std::declval<FieldContainer>().cbegin())
+{
+    return fields.cbegin();
+}
+
+template <typename FieldType, OrderType IsOrdered>
+auto Schema<FieldType, IsOrdered>::end() const -> decltype(std::declval<FieldContainer>().cend())
+{
+    return fields.cend();
+}
+
+template <typename FieldType, OrderType IsOrdered>
+auto Schema<FieldType, IsOrdered>::size() const -> decltype(std::declval<FieldContainer>().size())
+{
+    return fields.size();
+}
+
+template <typename FieldType, OrderType IsOrdered>
+struct Reflector<Schema<FieldType, IsOrdered>>
+{
+    Reflected operator()(const Schema<FieldType, IsOrdered>& schema) const { return reflect(schema | std::ranges::to<std::vector>()); }
 };
 
-struct ReflectedSchema
+template <typename FieldType, OrderType IsOrdered>
+struct Unreflector<Schema<FieldType, IsOrdered>>
 {
-    std::vector<Schema::Field> fields;
+    Schema<FieldType, IsOrdered> operator()(const Reflected& data, const ReflectionContext& context) const
+    {
+        return context.unreflect<std::vector<FieldType>>(data) | std::ranges::to<Schema<FieldType, IsOrdered>>();
+    }
 };
 
 }
 
-template <>
-struct Reflector<Schema::Field>
+/// NOLINTBEGIN(cert-dcl58-cpp)
+template <typename FieldType, NES::OrderType IsOrdered>
+struct std::hash<NES::Schema<FieldType, IsOrdered>>
 {
-    Reflected operator()(const Schema::Field& field) const;
+    using SchemaAlias = NES::Schema<FieldType, IsOrdered>;
+
+    size_t operator()(const SchemaAlias& schema) const noexcept
+    {
+        if constexpr (IsOrdered.ordered)
+        {
+            return folly::hash::hash_range(schema.begin(), schema.end());
+        }
+        else
+        {
+            return folly::hash::commutative_hash_combine_range_generic(0, std::hash<FieldType>{}, schema.begin(), schema.end());
+        }
+    }
 };
 
-template <>
-struct Unreflector<Schema::Field>
+/// NOLINTEND(cert-dcl58-cpp)
+
+/// Opt out of the generic range formatter from <fmt/ranges.h> so that the
+/// Schema-specific ostream_formatter below is the only viable partial
+/// specialization. Without this, both formatters match formatter<Schema, char>
+/// (Schema is iterable and its element type is fmt::formattable), neither is
+/// more specialized, and fmt falls back to the primary template — whose
+/// default constructor is deleted, making Schema un-formattable.
+template <typename FieldType, NES::OrderType IsOrdered, typename Char>
+struct fmt::range_format_kind<NES::Schema<FieldType, IsOrdered>, Char>
+    : std::integral_constant<fmt::range_format, fmt::range_format::disabled>
 {
-    Schema::Field operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
-template <>
-struct Reflector<Schema>
+template <typename FieldType, NES::OrderType IsOrdered>
+struct fmt::formatter<NES::Schema<FieldType, IsOrdered>> : fmt::ostream_formatter
 {
-    Reflected operator()(const Schema& schema) const;
 };
-
-template <>
-struct Unreflector<Schema>
-{
-    Schema operator()(const Reflected& rfl, const ReflectionContext& context) const;
-};
-
-}
-
-template <>
-struct std::hash<NES::Schema::Field>
-{
-    size_t operator()(const NES::Schema::Field& field) const noexcept { return folly::hash::hash_combine(field.name, field.dataType); }
-};
-
-FMT_OSTREAM(NES::Schema);
-FMT_OSTREAM(NES::Schema::Field);

@@ -35,6 +35,7 @@
 #include <utility>
 #include <vector>
 
+
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Sinks/SinkCatalog.hpp>

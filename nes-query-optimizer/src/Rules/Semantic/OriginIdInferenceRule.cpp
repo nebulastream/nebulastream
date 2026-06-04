@@ -72,7 +72,7 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
         INVARIANT(success, "Failed to insert origin id trait, did another phase already assign them?");
     }
 
-    return visitingOperator.withTraitSet(traitSet).withChildren(newChildren);
+    return visitingOperator.withTraitSet(traitSet).withChildrenUnsafe(newChildren);
 }
 }
 

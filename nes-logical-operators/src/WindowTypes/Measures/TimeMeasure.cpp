@@ -15,6 +15,7 @@
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 
 #include <cstdint>
+#include <ostream>
 #include <string>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
@@ -22,34 +23,11 @@
 namespace NES::Windowing
 {
 
-TimeMeasure::TimeMeasure(uint64_t milliseconds) : milliSeconds(milliseconds)
+[[nodiscard]] std::ostream& operator<<(std::ostream& ostream, const TimeMeasure& measure)
 {
+    return ostream << fmt::format("TimeMeasure: {}ms", std::to_string(measure.milliSeconds));
 }
 
-uint64_t TimeMeasure::getTime() const
-{
-    return milliSeconds;
-}
-
-std::string TimeMeasure::toString() const
-{
-    return fmt::format("TimeMeasure: {}ms", std::to_string(milliSeconds));
-}
-
-bool TimeMeasure::operator<(const TimeMeasure& other) const
-{
-    return milliSeconds < other.milliSeconds;
-}
-
-bool TimeMeasure::operator<=(const TimeMeasure& other) const
-{
-    return milliSeconds <= other.milliSeconds;
-}
-
-bool TimeMeasure::operator==(const TimeMeasure& other) const
-{
-    return milliSeconds == other.milliSeconds;
-}
 
 }
 

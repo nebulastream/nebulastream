@@ -30,6 +30,7 @@
 #include <simdjson.h>
 
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -68,7 +69,7 @@ SIMDJSONRawBufferIndex::hasNext(const nautilus::val<uint64_t>&, const nautilus::
 void writeValueToRecord(
     const DataType dataType,
     Record& record,
-    const std::string& fieldName,
+    const QualifiedIdentifier& fieldName,
     const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<RawBufferIndex*>& rawBufferIndex,
     const nautilus::val<const InputFormatIndexer*>& indexer)

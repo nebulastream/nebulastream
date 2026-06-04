@@ -42,9 +42,9 @@ ATTACH INLINE
 1,,3000
 
 
-CREATE SINK sink0(stream.start UINT64 NOT NULL, stream.end UINT64 NOT NULL, stream.valueSum INT32) TYPE File;
-CREATE SINK sink1(stream.start UINT64 NOT NULL, stream.end UINT64 NOT NULL, stream.valueSum INT32, stream.valueMax INT32, stream.valueMin INT32, stream.valueAvg FLOAT64, stream.valueMedian FLOAT64) TYPE File;
-CREATE SINK sink2(stream2.start UINT64 NOT NULL, stream2.end UINT64 NOT NULL, stream2.id INT32, stream2.valueSum INT32, stream2.valueMin INT32, stream2.valueMax INT32, stream2.valueAvg FLOAT64, stream2.valueCount UINT64 NOT NULL, stream2.rowCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sink0(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT32) TYPE File;
+CREATE SINK sink1(start UINT64 NOT NULL, end UINT64 NOT NULL, valueSum INT32, valueMax INT32, valueMin INT32, valueAvg FLOAT64, valueMedian FLOAT64) TYPE File;
+CREATE SINK sink2(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32, valueSum INT32, valueMin INT32, valueMax INT32, valueAvg FLOAT64, valueCount UINT64 NOT NULL, rowCount UINT64 NOT NULL) TYPE File;
 
 
 # Checking if a sum over a tumbling window works with null values in the value field

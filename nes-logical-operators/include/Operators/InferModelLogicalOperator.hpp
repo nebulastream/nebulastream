@@ -14,14 +14,23 @@
 
 #pragma once
 
+#include <cstddef>
+#include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/Reorderer.hpp>
+#include <Schema/Field.hpp>
+#include <Serialization/ReflectedOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -30,36 +39,30 @@
 namespace NES
 {
 
-/// ML inference operator that evaluates a model over selected input fields and
-/// appends the model's output fields to the output schema. Holds a
+/// ML inference operator that evaluates a model over the child's matching output
+/// fields and appends the model's output fields to the output schema. Holds a
 /// `RegisteredModel` — which bundles the imported model and the validated
-/// field schema so the two cannot drift — plus the list of upstream field
-/// names bound to the model's inputs. Compilation to executable bytecode is
+/// field schema so the two cannot drift. Compilation to executable bytecode is
 /// deferred to worker-side lowering (`LowerToPhysicalInferModel`).
-class InferModelLogicalOperator : public ManagedByOperator
+class InferModelLogicalOperator : public Reorderer, public ManagedByOperator
 {
 public:
-    InferModelLogicalOperator(WeakLogicalOperator self, RegisteredModel model, std::vector<std::string> inputFieldNames);
+    InferModelLogicalOperator(WeakLogicalOperator self, RegisteredModel model);
+    InferModelLogicalOperator(WeakLogicalOperator self, RegisteredModel model, LogicalOperator child);
 
     [[nodiscard]] const RegisteredModel& getModel() const;
-    [[nodiscard]] std::vector<std::string> getInputFieldNames() const;
-    [[nodiscard]] std::vector<std::string> getOutputFieldNames() const;
-
-    /// True when the model's (single) input is of type VARSIZED. `withInferredSchema`
-    /// enforces that VARSIZED inputs/outputs cannot coexist with any sibling field.
-    [[nodiscard]] bool hasVarsizedInput() const;
-    [[nodiscard]] bool hasVarsizedOutput() const;
 
     [[nodiscard]] bool operator==(const InferModelLogicalOperator& rhs) const;
 
     [[nodiscard]] InferModelLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
 
+    [[nodiscard]] InferModelLogicalOperator withChildrenUnsafe(std::vector<LogicalOperator> children) const;
     [[nodiscard]] InferModelLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] Schema<Field, Unordered> getOutputSchema() const;
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
@@ -67,16 +70,21 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
-    [[nodiscard]] InferModelLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] InferModelLogicalOperator withInferredSchema() const;
+
+    [[nodiscard]] Schema<Field, Ordered> getOrderedOutputSchema(ChildOutputOrderProvider orderProvider) const override;
 
 private:
+    void inferLocalSchema();
+
     static constexpr std::string_view NAME = "InferModel";
     RegisteredModel model;
-    std::vector<std::string> inputFieldNames;
 
-    std::vector<LogicalOperator> children;
+    std::optional<LogicalOperator> child;
     TraitSet traitSet;
-    Schema inputSchema, outputSchema;
+    /// Stored as unbound to avoid reference cycles; bound on access via getOutputSchema().
+    /// The input schema is not cached — it's the child's output schema, fetched on demand.
+    Schema<UnqualifiedUnboundField, Unordered> outputSchema;
 };
 
 template <>
@@ -88,6 +96,9 @@ struct Reflector<TypedLogicalOperator<InferModelLogicalOperator>>
 template <>
 struct Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>
 {
+    using ContextType = std::shared_ptr<ReflectedPlan>;
+    ContextType plan;
+    explicit Unreflector(ContextType plan);
     TypedLogicalOperator<InferModelLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
@@ -99,7 +110,13 @@ namespace NES::detail
 {
 struct ReflectedInferModelLogicalOperator
 {
+    OperatorId operatorId{OperatorId::INVALID};
     Reflected model;
-    std::vector<std::string> inputFieldNames;
 };
 }
+
+template <>
+struct std::hash<NES::InferModelLogicalOperator>
+{
+    size_t operator()(const NES::InferModelLogicalOperator& op) const noexcept;
+};

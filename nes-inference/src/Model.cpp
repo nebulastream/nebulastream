@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
@@ -45,8 +44,8 @@ struct
     std::optional<std::string> name;
     std::optional<std::string> path;
     std::optional<Reflected> imported;
-    std::optional<Schema> inputs;
-    std::optional<Schema> outputs;
+    std::optional<ModelFieldList> inputs;
+    std::optional<ModelFieldList> outputs;
 };
 }
 

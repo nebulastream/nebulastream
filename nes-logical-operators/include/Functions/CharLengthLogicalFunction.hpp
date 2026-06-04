@@ -14,13 +14,14 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -28,27 +29,23 @@
 namespace NES
 {
 
-/// SQL CHAR_LENGTH: returns the number of characters (UTF-8 codepoints) in a VARSIZED text value.
+/// SQL CHAR_LENGTH: returns the number of characters in a VARSIZED text value.
 /// Takes a single VARSIZED child expression and produces a UINT64 length.
 class CharLengthLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "CHAR_LENGTH";
 
-    /// NOLINTNEXTLINE(modernize-pass-by-value)
-    explicit CharLengthLogicalFunction(const LogicalFunction& child);
+    explicit CharLengthLogicalFunction(LogicalFunction child);
 
     [[nodiscard]] bool operator==(const CharLengthLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] CharLengthLogicalFunction withDataType(const DataType& dataType) const;
-    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] CharLengthLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
@@ -72,13 +69,14 @@ struct Unreflector<CharLengthLogicalFunction>
 };
 
 static_assert(LogicalFunctionConcept<CharLengthLogicalFunction>);
+
 }
 
 namespace NES::detail
 {
 struct ReflectedCharLengthLogicalFunction
 {
-    std::optional<LogicalFunction> child;
+    LogicalFunction child;
 };
 }
 
