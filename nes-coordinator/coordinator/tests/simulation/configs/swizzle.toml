@@ -1,0 +1,70 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[[test]]
+title = "reshuffled_recovery"
+timeout = 75
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 6
+  end = 8
+  create_weight = 1
+  drop_weight = 0
+
+  # Many queries in flight so the swizzle has plenty of active fragments to disturb
+  [[test.workload]]
+  name = "Query"
+  num_ops = 22
+  begin = 3
+  end = 45
+  create_weight = 4
+  drop_weight = 1
+
+  # Half the workers clog at staggered times, heal in a reshuffled order
+  [[test.workload]]
+  name = "SwizzleClog"
+  begin = 12
+  end = 34
+  swizzle_rate = 0.5
+
+[[test]]
+title = "coordinator_in_the_mix"
+timeout = 75
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 14
+  end = 12
+  create_weight = 1
+  drop_weight = 0
+
+  # Fewer queries — the coordinator itself may briefly be unreachable
+  [[test.workload]]
+  name = "Query"
+  num_ops = 7
+  begin = 8
+  end = 50
+  create_weight = 3
+  drop_weight = 1
+
+  # Majority of nodes including the coordinator, long overlapping window
+  [[test.workload]]
+  name = "SwizzleClog"
+  begin = 14
+  end = 44
+  swizzle_rate = 0.6
+  include_coordinator = true
