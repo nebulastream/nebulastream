@@ -43,6 +43,7 @@
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 #include <Schema/Field.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
@@ -470,7 +471,7 @@ std::string_view ProjectionPushdownRule::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> ProjectionPushdownRule::dependsOn() const
 {
-    return {};
+    return {typeid(WatermarkAssignerPushdownRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
