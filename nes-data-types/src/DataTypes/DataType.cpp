@@ -355,7 +355,8 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
         {
             return {DataTypeProvider::provideDataType(Type::CHAR, isNullableResult)};
         }
-        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullableResult)};
+        NES_WARNING("Cannot join {} and {}", *this, otherDataType);
+        return std::nullopt;
     }
     if (this->type == Type::BOOLEAN)
     {
@@ -363,7 +364,8 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
         {
             return {DataTypeProvider::provideDataType(Type::BOOLEAN, isNullableResult)};
         }
-        return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullableResult)};
+        NES_WARNING("Cannot join {} and {}", *this, otherDataType);
+        return std::nullopt;
     }
     NES_WARNING("Cannot join {} and {}", *this, otherDataType);
     return std::nullopt;
