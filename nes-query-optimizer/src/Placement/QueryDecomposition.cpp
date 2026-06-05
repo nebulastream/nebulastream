@@ -218,7 +218,7 @@ LogicalOperator decomposePlanRecursive(DecompositionContext& context, const Logi
         assignedChildren.emplace_back(assignOperator(context, op, child));
     }
 
-    return op.withChildrenUnsafe({std::move(assignedChildren)});
+    return op.withChildren({std::move(assignedChildren)});
 }
 }
 
