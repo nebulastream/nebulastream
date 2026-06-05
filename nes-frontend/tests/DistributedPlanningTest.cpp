@@ -1071,9 +1071,11 @@ workers:
 
 TEST_F(DistributedPlanningTest, NotEnoughCapacities)
 {
+    /// The projection a * 2 - > a is required so to ensure the query optimization does not push down the outer predicate a > b down and combine it with  b > a.
+    /// If that would be the case, the assumptions about the number of operators would no longer hold.
     auto [opt, boundPlan] = loadAndBind(R"(
 query: |
-  SELECT * FROM (SELECT * FROM mock_source WHERE a > b) WHERE b > a INTO mock_sink
+  SELECT * FROM (SELECT a * UINT64(2) AS a, b FROM mock_source WHERE a > b) WHERE b > a INTO mock_sink
 
 sinks:
   - name: mock_sink

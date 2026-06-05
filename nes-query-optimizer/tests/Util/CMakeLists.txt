@@ -10,8 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_optimizer_test(DecideJoinTypesTest DecideJoinTypesTest.cpp)
-add_nes_optimizer_test(DecideMemoryLayoutTest DecideMemoryLayoutTest.cpp)
-add_nes_optimizer_test(CalcTargetOrderTest CalcTargetOrderTest.cpp)
-add_nes_optimizer_test(DecideFieldMappingsTest DecideFieldMappingsTest.cpp)
-add_nes_optimizer_test(PredicatePushdownTest PredicatePushdownTest.cpp)
+add_library(nes-query-optimizer-test-utils-lib OptimizerTestUtils.cpp)
+target_include_directories(nes-query-optimizer-test-utils-lib PUBLIC . ${CMAKE_SOURCE_DIR}/nes-query-optimizer/tests)
+target_link_libraries(nes-query-optimizer-test-utils-lib PUBLIC nes-common PRIVATE nes-query-optimizer nes-logical-operators nes-test-util)
