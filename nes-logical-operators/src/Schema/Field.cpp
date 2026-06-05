@@ -69,7 +69,8 @@ Field Unreflector<Field>::operator()(const Reflected& reflected, const Reflectio
 
 std::ostream& operator<<(std::ostream& os, const Field& field)
 {
-    return os << fmt::format("Field(name: {}, DataType: {})", field.name, field.dataType);
+    return os << fmt::format(
+               "Field(name: {}, DataType: {}, OperatorId: {})", field.name, field.dataType, field.producedBy->getOperatorId());
 }
 
 bool Field::operator==(const Field& other) const

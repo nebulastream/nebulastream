@@ -31,18 +31,32 @@ namespace NES
 void UnionRenamePhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     Record outputRecord;
-    for (nautilus::static_val<size_t> i = 0; i < inputFields.size(); ++i)
+    for (nautilus::static_val<size_t> i = 0; i < outputFields.size(); ++i)
     {
-        outputRecord.write(outputFields[i], record.read(inputFields[i]));
+        outputRecord.write(outputFields.at(i), record.read(identifierMap.at(outputFields.at(i))));
     }
     executeChild(ctx, outputRecord);
 }
 
 UnionRenamePhysicalOperator::UnionRenamePhysicalOperator(
-    std::vector<QualifiedIdentifier> inputFields, std::vector<QualifiedIdentifier> outputFields)
-    : inputFields(std::move(inputFields)), outputFields(std::move(outputFields))
+    const std::vector<QualifiedIdentifier>& inputFields, std::vector<QualifiedIdentifier> outputFields)
+    : outputFields(std::move(outputFields))
 {
-    PRECONDITION(this->inputFields.size() == this->outputFields.size(), "Input and output fields must have the same size");
+    INVARIANT(inputFields.size() == this->outputFields.size(), "Input and output fields must have the same size");
+
+    for (const auto& inputField : inputFields)
+    {
+        for (const auto& outputField : this->outputFields)
+        {
+            if (inputField == outputField)
+            {
+                PRECONDITION(!identifierMap.contains(inputField), "Input field cannot be mapped twice");
+                identifierMap.emplace(outputField, inputField);
+            }
+        }
+    }
+
+    INVARIANT(identifierMap.size() == inputFields.size(), "All input fields must be mapped");
 }
 
 std::optional<PhysicalOperator> UnionRenamePhysicalOperator::getChild() const
