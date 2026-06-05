@@ -49,22 +49,35 @@ const char* signalName(int signal)
 /// And resolving symbols would require fork/exec a new process with a dedicated binary which needs to be shipped alongside NebulaStream.
 /// For now the signal handler is unsafe and will potentially not work with a corrupted heap, which is still an improvement over not having
 /// any idea where the system has crashed.
-void SignalHandler(int signal)
+[[maybe_unused]] void SignalHandler(int signal)
 {
     fmt::print(stderr, "Caught signal {}\n", signalName(signal));
     printStackTrace();
     _exit(signal);
 }
 
-void registerSignalHandler(int signalNo, void (*handler)(int))
+[[maybe_unused]] void registerSignalHandler(int signalNo, void (*handler)(int))
 {
     std::ignore = signal(signalNo, handler);
 }
 }
 
+#if defined(__has_feature)
+    #if __has_feature(address_sanitizer)
+        #define NES_BUILT_WITH_ASAN 1
+    #endif
+#endif
+
 void NES::setupSignalHandlers()
 {
     cpptrace::register_terminate_handler();
+#ifdef NES_BUILT_WITH_ASAN
+    /// When built with AddressSanitizer, do NOT install our own SIGSEGV/SIGFPE handlers.
+    /// ASan installs its own handler that produces a precise report (faulting address, read/write,
+    /// and — for poisoned-heap accesses — allocation/free stacks). Overriding it with our cpptrace
+    /// handler would suppress that report. SIGABRT (used by ASan to terminate) is left untouched.
+#else
     registerSignalHandler(SIGSEGV, SignalHandler);
     registerSignalHandler(SIGFPE, SignalHandler);
+#endif
 }
