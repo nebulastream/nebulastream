@@ -124,6 +124,11 @@ void NodeEngine::startQuery(QueryId queryId)
     }
 }
 
+void NodeEngine::replaceQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
+{
+    queryEngine->replace(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider));
+}
+
 void NodeEngine::stopQuery(QueryId queryId)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");

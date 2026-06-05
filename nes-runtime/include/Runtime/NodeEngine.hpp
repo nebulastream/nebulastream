@@ -49,6 +49,7 @@ public:
         std::unique_ptr<SourceProvider> sourceProvider);
 
     void registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
+    void replaceQueryPlan( std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
     void startQuery(QueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.

@@ -37,6 +37,9 @@ public:
 
     grpc::Status RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response) override;
 
+    grpc::Status AdaptiveOptimization(
+        ::grpc::ServerContext* context, const ::AdaptiveOptimizationRequest* request, ::AdaptiveOptimizationResponse* response) override;
+
     explicit GRPCServer(SingleNodeWorker&& delegate) : delegate(std::move(delegate)) { }
 
 private:

@@ -109,8 +109,12 @@ LogicalOperator applyRecur(const LogicalOperator& visiting)
     }();
 
     auto traitSet = visiting.getTraitSet();
-    traitSet.insert(FieldOrderingTrait{unbind(outputOrder)});
-    return visiting.withTraitSet(std::move(traitSet)).withChildren(newChildren);
+    auto success = traitSet.tryInsert(FieldOrderingTrait{unbind(outputOrder)});
+
+    if (success)
+        return visiting.withTraitSet(std::move(traitSet)).withChildren(newChildren);
+
+    return visiting.withChildren(newChildren);
 }
 
 }
@@ -153,7 +157,7 @@ LogicalPlan DecideFieldOrder::apply(const LogicalPlan& queryPlan) const
     auto rootSink = queryPlan.getRootOperators()[0].getAs<SinkLogicalOperator>();
     auto oldRootChild = rootSink->getChild();
 
-    const auto newRootChild = [&]
+    auto newRootChild = [&]
     {
         if (std::ranges::size(oldRootChild->getChildren()) > 0)
         {
@@ -175,13 +179,24 @@ LogicalPlan DecideFieldOrder::apply(const LogicalPlan& queryPlan) const
             targetField.getFullyQualifiedName());
     }
     TraitSet rootChildTraitSet = newRootChild.getTraitSet();
-    rootChildTraitSet.insert(FieldOrderingTrait{targetSchema});
-    const auto rootChildWithTargetOrder = newRootChild.withTraitSet(TraitSet{rootChildTraitSet});
+    auto success = rootChildTraitSet.tryInsert(FieldOrderingTrait{targetSchema});
+
+    if (success)
+    {
+        newRootChild = newRootChild.withTraitSet(TraitSet{rootChildTraitSet});
+    }
+
 
     auto rootTraitSet = rootSink->getTraitSet();
-    rootTraitSet.insert(FieldOrderingTrait{Schema<UnqualifiedUnboundField, Ordered>{}});
+    success = rootTraitSet.tryInsert(FieldOrderingTrait{Schema<UnqualifiedUnboundField, Ordered>{}});
 
-    auto newRoot = rootSink.withChildren({rootChildWithTargetOrder}).withTraitSet(rootTraitSet);
-    return queryPlan.withRootOperators({std::move(newRoot)});
+    if (success)
+    {
+        rootSink = rootSink.withTraitSet(rootTraitSet);
+    }
+    rootSink = rootSink.withChildren({newRootChild});
+
+
+    return queryPlan.withRootOperators({std::move(rootSink)});
 }
 }

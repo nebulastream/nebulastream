@@ -25,6 +25,8 @@ service WorkerRPCService {
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
   rpc RequestStatus (WorkerStatusRequest) returns (WorkerStatusResponse) {}
+
+  rpc AdaptiveOptimization (AdaptiveOptimizationRequest) returns (AdaptiveOptimizationResponse) {}
 }
 
 message RegisterQueryRequest {
@@ -96,4 +98,13 @@ message WorkerStatusResponse {
   uint64 until_unix_timestamp_in_milli_seconds = 4;
   repeated ActiveQuery active_queries = 1;
   repeated TerminatedQuery terminated_queries = 2;
+}
+
+/// Adaptive Optimization
+
+message AdaptiveOptimizationRequest {
+}
+
+message AdaptiveOptimizationResponse {
+
 }

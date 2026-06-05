@@ -173,7 +173,7 @@ LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperato
     auto traitSet = logicalOperator->getTraitSet();
     const auto success = tryInsert(traitSet, std::move(fieldMappingTrait));
     /// If there is a good reason why we would want to run this multiple times we can also disable this check and replace the trait instance.
-    PRECONDITION(success, "Field mapping trait already set");
+    // PRECONDITION(success, "Field mapping trait already set");
     return logicalOperator.withTraitSet(std::move(traitSet)).withChildren(children);
 }
 

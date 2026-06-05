@@ -155,6 +155,12 @@ StartQueryTask::StartQueryTask(
 {
 }
 
+ReplaceQueryTask::ReplaceQueryTask(
+    QueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
+    : BaseTask(std::move(queryId), std::move(callback)), queryPlan(std::move(queryPlan)), catalog(std::move(catalog))
+{
+}
+
 PendingPipelineStopTask::PendingPipelineStopTask(
     QueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback)
     : BaseTask(std::move(queryId), std::move(callback)), attempts(attempts), pipeline(std::move(pipeline))

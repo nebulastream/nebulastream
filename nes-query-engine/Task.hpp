@@ -185,6 +185,15 @@ struct StartQueryTask : BaseTask
     std::weak_ptr<QueryCatalog> catalog;
 };
 
+struct ReplaceQueryTask : BaseTask
+{
+    ReplaceQueryTask(
+        QueryId queryId, std::unique_ptr<ExecutableQueryPlan> queryPlan, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback);
+
+    std::unique_ptr<ExecutableQueryPlan> queryPlan;
+    std::weak_ptr<QueryCatalog> catalog;
+};
+
 struct PendingPipelineStopTask : BaseTask
 {
     PendingPipelineStopTask(QueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback);
@@ -197,6 +206,7 @@ using Task = std::variant<
     WorkTask,
     StopQueryTask,
     StartQueryTask,
+    ReplaceQueryTask,
     FailSourceTask,
     StopSourceTask,
     PendingPipelineStopTask,

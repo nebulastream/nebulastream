@@ -24,6 +24,7 @@
 #include <Runtime/NodeEngine.hpp>
 
 #include <Util/Pointers.hpp>
+#include <AdaptiveOptimizer.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
@@ -43,6 +44,8 @@ class SingleNodeWorker
     SharedPtr<CompositeStatisticListener> listener;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
+    UniquePtr<AdaptiveOptimizer> adaptiveOptimizer;
+    std::unordered_map<QueryId, LogicalPlan> localQueryCatalog;
     SingleNodeWorkerConfiguration configuration;
 
 public:
@@ -70,6 +73,8 @@ public:
     /// Stops the Query and moves it into the StoppedState.
     /// @param queryId identifies the registered query
     std::expected<void, Exception> stopQuery(QueryId queryId) noexcept;
+
+    std::expected<void, Exception> adaptiveOptimization() noexcept;
 
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> getQueryStatus(QueryId queryId) const noexcept;

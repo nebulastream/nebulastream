@@ -182,6 +182,13 @@ public:
         const std::shared_ptr<QueryEngineStatisticListener>& statistic,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
+    void replace(
+        QueryId queryId,
+        std::unique_ptr<ExecutableQueryPlan> plan,
+        const std::shared_ptr<AbstractQueryStatusListener>& listener,
+        const std::shared_ptr<QueryEngineStatisticListener>& statistic,
+        QueryLifetimeController& controller,
+        WorkEmitter& emitter);
     void stopQuery(QueryId queryId);
 
     void clear()
@@ -436,6 +443,7 @@ public:
         bool operator()(WorkTask& task) const;
         bool operator()(StopQueryTask& stopQuery) const;
         bool operator()(StartQueryTask& startQuery) const;
+        bool operator()(ReplaceQueryTask& replaceQuery) const;
         bool operator()(StartPipelineTask& startPipeline) const;
         bool operator()(PendingPipelineStopTask& pendingPipelineStop) const;
         bool operator()(StopPipelineTask& stopPipelineTask) const;
@@ -693,6 +701,22 @@ bool ThreadPool::WorkerThread::operator()(StartQueryTask& startQuery) const
     return false;
 }
 
+bool ThreadPool::WorkerThread::operator()(ReplaceQueryTask& replaceQuery) const
+{
+    LogContext logContext("Task", fmt::format("{}", replaceQuery.queryId));
+    ENGINE_LOG_INFO("Replace Query Task for Query {}", replaceQuery.queryId);
+
+
+    if (auto queryCatalog = replaceQuery.catalog.lock())
+    {
+        queryCatalog->replace(replaceQuery.queryId, std::move(replaceQuery.queryPlan), pool.listener, pool.statistic, pool, pool);
+        /// Readd the line
+        /// pool.statistic->onEvent(QueryStart{WorkerThread::id, replaceQuery.queryId});
+        return true;
+    }
+    return false;
+}
+
 bool ThreadPool::WorkerThread::operator()(StopSourceTask& stopSource) const
 {
     LogContext logContext("Task", fmt::format("{}", stopSource.queryId));
@@ -799,23 +823,19 @@ void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan
         {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
 }
 
+void QueryEngine::replace(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
+{
+    threadPool->taskQueue.addAdmissionTaskBlocking(
+        {}, ReplaceQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
+}
+
 QueryEngine::~QueryEngine()
 {
     ThreadPool::WorkerThread::id = ThreadPool::terminatorThreadId;
     queryCatalog->clear();
 }
 
-void QueryCatalog::start(
-    QueryId queryId,
-    std::unique_ptr<ExecutableQueryPlan> plan,
-    const std::shared_ptr<AbstractQueryStatusListener>& listener,
-    const std::shared_ptr<QueryEngineStatisticListener>& statistic,
-    QueryLifetimeController& controller,
-    WorkEmitter& emitter)
-{
-    const std::scoped_lock lock(mutex);
-
-    struct RealQueryLifeTimeListener : QueryLifetimeListener
+struct RealQueryLifeTimeListener : QueryLifetimeListener
     {
         RealQueryLifeTimeListener(
             QueryId queryId, std::shared_ptr<AbstractQueryStatusListener> listener, std::shared_ptr<QueryEngineStatisticListener> statistic)
@@ -931,8 +951,18 @@ void QueryCatalog::start(
         std::shared_ptr<AbstractQueryStatusListener> listener;
         std::shared_ptr<QueryEngineStatisticListener> statistic;
         QueryId queryId;
-        WeakStateRef state;
+        QueryCatalog::WeakStateRef state;
     };
+
+void QueryCatalog::start(
+    QueryId queryId,
+    std::unique_ptr<ExecutableQueryPlan> plan,
+    const std::shared_ptr<AbstractQueryStatusListener>& listener,
+    const std::shared_ptr<QueryEngineStatisticListener>& statistic,
+    QueryLifetimeController& controller,
+    WorkEmitter& emitter)
+{
+    const std::scoped_lock lock(mutex);
 
     auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener, statistic);
     const auto startTimestamp = std::chrono::system_clock::now();
@@ -958,37 +988,99 @@ void QueryCatalog::start(
     }
 }
 
-void QueryCatalog::stopQuery(QueryId id)
+void QueryCatalog::replace(
+    QueryId queryId,
+    std::unique_ptr<ExecutableQueryPlan> plan,
+    const std::shared_ptr<AbstractQueryStatusListener>& listener,
+    const std::shared_ptr<QueryEngineStatisticListener>& statistic,
+    QueryLifetimeController& controller,
+    WorkEmitter& emitter)
 {
-    const std::unique_ptr<RunningQueryPlan> toBeDeleted;
+    const std::scoped_lock lock(mutex);
+    if (auto it = queryStates.find(queryId); it != queryStates.end())
     {
-        const std::scoped_lock lock(mutex);
-        if (auto it = queryStates.find(id); it != queryStates.end())
-        {
-            auto& state = *it->second;
-            absl::AnyInvocable<void()> cleanup;
-            bool didTransition = state.transition(
-                [&cleanup](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
-                {
-                    auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(starting.plan));
-                    cleanup = std::move(cb);
-                    return Stopping{std::move(stoppingQueryPlan)};
-                },
-                [&cleanup](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
-                {
-                    auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(running.plan));
-                    cleanup = std::move(cb);
-                    return Stopping{std::move(stoppingQueryPlan)};
-                });
-            if (didTransition)
+        auto& state = *it->second;
+        absl::AnyInvocable<void()> cleanup;
+        bool didTransition = state.transition(
+            [&cleanup](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
             {
-                cleanup();
+                auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(starting.plan));
+                cleanup = std::move(cb);
+                return Stopping{std::move(stoppingQueryPlan)};
+            },
+            [&cleanup](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+            {
+                auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(running.plan));
+                cleanup = std::move(cb);
+                return Stopping{std::move(stoppingQueryPlan)};
+            });
+
+        if (didTransition)
+        {
+
+            cleanup();
+
+            auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener, statistic);
+            const auto startTimestamp = std::chrono::system_clock::now();
+            auto newState = std::make_shared<StateRef>(Reserved{});
+            this->queryStates.insert_or_assign(queryId, newState);
+            queryListener->state = newState;
+
+            auto [runningQueryPlan, callback] = RunningQueryPlan::start(queryId, std::move(plan), controller, emitter, queryListener);
+
+            if (newState->transition([&](Reserved&&)
+                                  { return Starting{std::move(runningQueryPlan)}; })) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+            {
+                listener->logQueryStatusChange(queryId, QueryStatus::Started, startTimestamp);
+            }
+            else
+            {
+                /// The move did not happen.
+                INVARIANT(
+                    newState->is<Terminated>(),
+                    "Bug: There is no other option for the state. The only transition from reserved to Starting happens here. Starting will "
+                    "not transition into running until the callback is dropped.");
+                RunningQueryPlan::dispose(std::move(runningQueryPlan));
             }
         }
-        else
+    }
+    else
+    {
+        ENGINE_LOG_WARNING("Attempting to stop query {} failed. Query was not submitted to the engine.", queryId);
+    }
+
+
+}
+
+void QueryCatalog::stopQuery(QueryId id)
+{
+    const std::scoped_lock lock(mutex);
+    if (auto it = queryStates.find(id); it != queryStates.end())
+    {
+        auto& state = *it->second;
+        absl::AnyInvocable<void()> cleanup;
+        bool didTransition = state.transition(
+            [&cleanup](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+            {
+                auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(starting.plan));
+                cleanup = std::move(cb);
+                return Stopping{std::move(stoppingQueryPlan)};
+            },
+            [&cleanup](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+            {
+                auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(running.plan));
+                cleanup = std::move(cb);
+                return Stopping{std::move(stoppingQueryPlan)};
+            });
+        if (didTransition)
         {
-            ENGINE_LOG_WARNING("Attempting to stop query {} failed. Query was not submitted to the engine.", id);
+            cleanup();
         }
     }
+    else
+    {
+        ENGINE_LOG_WARNING("Attempting to stop query {} failed. Query was not submitted to the engine.", id);
+    }
 }
+
 }

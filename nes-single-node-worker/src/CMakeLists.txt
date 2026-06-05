@@ -15,4 +15,5 @@ add_source_files(nes-single-node-worker
         GrpcService.cpp
         GoogleEventTracePrinter.cpp
         CompositeStatisticListener.cpp
+        AdaptiveOptimizer.cpp
 )

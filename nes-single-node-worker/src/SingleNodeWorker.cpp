@@ -74,6 +74,8 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
+    localQueryCatalog.clear();
+    adaptiveOptimizer = std::make_unique<AdaptiveOptimizer>();
 
     if (!configuration.dataAddress.getValue().empty())
     {
@@ -122,6 +124,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
         nodeEngine->registerCompiledQueryPlan(plan.getQueryId(), std::move(result));
+        localQueryCatalog.emplace(plan.getQueryId(), plan);
         return plan.getQueryId();
     }
     CPPTRACE_CATCH(...)
@@ -152,6 +155,7 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noex
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->stopQuery(queryId);
+        localQueryCatalog.erase(queryId);
         return {};
     }
     CPPTRACE_CATCH(...)
@@ -159,6 +163,27 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noex
         return std::unexpected{wrapExternalException()};
     }
     std::unreachable();
+}
+
+std::expected<void, Exception> SingleNodeWorker::adaptiveOptimization() noexcept
+{
+
+    for (auto& plan : localQueryCatalog | std::views::values)
+    {
+        PlanStatistics statistics{};
+        auto result = adaptiveOptimizer->reoptimize(plan, statistics);
+
+        if (!result.has_value())
+        {
+            return std::unexpected{result.error()};
+        }
+        auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(result.value());
+        auto compiled = compiler->compileQuery(std::move(request));
+        nodeEngine->replaceQueryPlan(std::move(compiled));
+        plan = result.value();
+    }
+
+    return {};
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQueryStatus(QueryId queryId) const noexcept
