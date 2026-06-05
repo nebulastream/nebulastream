@@ -60,6 +60,15 @@
 
 namespace NES
 {
+namespace
+{
+LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot)
+{
+    auto root = newRoot.withChildrenUnsafe(plan.getRootOperators());
+    return LogicalPlan(plan.getQueryId(), {std::move(root)}, plan.getOriginalSql());
+}
+}
+
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 {
     NES_TRACE("LogicalPlanBuilder: create query plan for input source  {}", logicalSourceName);

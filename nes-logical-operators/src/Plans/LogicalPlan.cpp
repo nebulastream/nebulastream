@@ -104,118 +104,11 @@ LogicalPlan::LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOpera
 {
 }
 
-LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot)
-{
-    auto root = newRoot.withChildrenUnsafe(plan.getRootOperators());
-    return LogicalPlan(plan.getQueryId(), {std::move(root)}, plan.getOriginalSql());
-}
-
 LogicalPlan addRootOperators(const LogicalPlan& plan, const std::vector<LogicalOperator>& rootsToAdd)
 {
     auto rootOps = plan.getRootOperators();
     rootOps.insert(rootOps.end(), rootsToAdd.begin(), rootsToAdd.end());
     return plan.withRootOperators(rootOps);
-}
-
-namespace
-{
-bool replaceOperatorRecursion(LogicalOperator& current, const OperatorId target, LogicalOperator& replacement)
-{
-    if (current.getId() == target)
-    {
-        replacement = replacement.withChildrenUnsafe(current.getChildren());
-        current = replacement;
-        return true;
-    }
-    bool replaced = false;
-    auto children = current.getChildren();
-    for (auto& i : children)
-    {
-        if (replaceOperatorRecursion(i, target, replacement))
-        {
-            replaced = true;
-        }
-    }
-    if (replaced)
-    {
-        current = current.withChildrenUnsafe(children);
-    }
-    return replaced;
-}
-}
-
-std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, const OperatorId target, LogicalOperator replacement)
-{
-    bool replaced = false;
-    std::vector<LogicalOperator> newRoots;
-    for (auto root : plan.getRootOperators())
-    {
-        if (root.getId() == target)
-        {
-            replacement = replacement.withChildrenUnsafe(root.getChildren());
-            newRoots.push_back(replacement);
-            replaced = true;
-        }
-        else if (replaceOperatorRecursion(root, target, replacement))
-        {
-            newRoots.push_back(root);
-            replaced = true;
-        }
-    }
-    if (replaced)
-    {
-        return LogicalPlan(plan.getQueryId(), std::move(newRoots), plan.getOriginalSql());
-    }
-    return std::nullopt;
-}
-
-namespace
-{
-bool replaceSubtreeRecursion(LogicalOperator& current, const OperatorId target, const LogicalOperator& replacement)
-{
-    if (current.getId() == target)
-    {
-        current = replacement;
-        return true;
-    }
-    bool replaced = false;
-    auto children = current.getChildren();
-    for (auto& child : children)
-    {
-        if (replaceSubtreeRecursion(child, target, replacement))
-        {
-            replaced = true;
-        }
-    }
-    if (replaced)
-    {
-        current = current.withChildrenUnsafe(std::move(children));
-    }
-    return replaced;
-}
-}
-
-std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, const OperatorId target, const LogicalOperator& replacement)
-{
-    bool replaced = false;
-    std::vector<LogicalOperator> newRoots = plan.getRootOperators();
-    for (auto& root : newRoots)
-    {
-        if (root.getId() == target)
-        {
-            root = replacement;
-            replaced = true;
-        }
-        else if (replaceSubtreeRecursion(root, target, replacement))
-        {
-            replaced = true;
-        }
-    }
-    if (replaced)
-    {
-        return LogicalPlan(plan.getQueryId(), std::move(newRoots), plan.getOriginalSql());
-    }
-    return std::nullopt;
 }
 
 namespace

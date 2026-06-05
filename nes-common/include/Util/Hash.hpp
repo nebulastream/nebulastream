@@ -46,8 +46,8 @@ struct Hash
         return folly::hash::hash_range(array.begin(), array.end());
     }
 
-    template <typename K, typename V, typename Hash, typename KeyEqual>
-    [[nodiscard]] size_t operator()(const std::unordered_map<K, V, Hash, KeyEqual>& map) const noexcept
+    template <typename K, typename V, typename Hash, typename KeyEqual, typename Allocator>
+    [[nodiscard]] size_t operator()(const std::unordered_map<K, V, Hash, KeyEqual, Allocator>& map) const noexcept
     {
         return folly::hash::commutative_hash_combine_range(map.begin(), map.end());
     }

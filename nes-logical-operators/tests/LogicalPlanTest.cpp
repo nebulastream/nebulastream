@@ -122,43 +122,13 @@ TEST_F(LogicalPlanTest, CopyConstructor)
     EXPECT_EQ(copy.getRootOperators()[0], sourceOp);
 }
 
-TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
-{
-    const auto sourceOp = SourceNameLogicalOperator::create(Identifier::parse("source"));
-    const auto selectionOp = SelectionLogicalOperator::create(UnboundFieldAccessLogicalFunction{Identifier::parse("field")});
-    const auto plan = LogicalPlan(INVALID_QUERY_ID, {sourceOp});
-    const auto promoteResultPlan = promoteOperatorToRoot(plan, selectionOp);
-    EXPECT_EQ(promoteResultPlan.getRootOperators()[0], selectionOp);
-    EXPECT_EQ(promoteResultPlan.getRootOperators()[0].getChildren()[0], sourceOp);
-}
-
-TEST_F(LogicalPlanTest, ReplaceOperator)
-{
-    const auto sourceOp = SourceNameLogicalOperator::create(Identifier::parse("source"));
-    const auto sourceOp2 = SourceNameLogicalOperator::create(Identifier::parse("source2"));
-    const auto plan = LogicalPlan(INVALID_QUERY_ID, {sourceOp});
-    const auto result = replaceOperator(plan, sourceOp.getId(), sourceOp2);
-    EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(result->getRootOperators()[0], sourceOp2); ///NOLINT(bugprone-unchecked-optional-access)
-}
-
-TEST_F(LogicalPlanTest, replaceSubtree)
-{
-    const auto sourceOp = SourceNameLogicalOperator::create(Identifier::parse("source"));
-    const auto sourceOp2 = SourceNameLogicalOperator::create(Identifier::parse("source2"));
-    const auto plan = LogicalPlan(INVALID_QUERY_ID, {sourceOp});
-    const auto result = replaceSubtree(plan, sourceOp.getId(), sourceOp2);
-    EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(result->getRootOperators()[0].getId(), sourceOp2.getId()); ///NOLINT(bugprone-unchecked-optional-access)
-}
-
 TEST_F(LogicalPlanTest, GetParents)
 {
     const auto sourceOp = SourceNameLogicalOperator::create(Identifier::parse("source"));
-    const auto selectionOp = SelectionLogicalOperator::create(UnboundFieldAccessLogicalFunction(Identifier::parse("field")));
-    const auto plan = LogicalPlan(INVALID_QUERY_ID, {sourceOp});
-    const auto promoteResult = promoteOperatorToRoot(plan, selectionOp);
-    const auto parents = getParents(promoteResult, sourceOp);
+    const auto selectionOp
+        = SelectionLogicalOperator::create(UnboundFieldAccessLogicalFunction(Identifier::parse("field"))).withChildrenUnsafe({sourceOp});
+    const auto plan = LogicalPlan(INVALID_QUERY_ID, {selectionOp});
+    const auto parents = getParents(plan, sourceOp);
     EXPECT_EQ(parents.size(), 1);
     EXPECT_EQ(parents[0], selectionOp);
 }
