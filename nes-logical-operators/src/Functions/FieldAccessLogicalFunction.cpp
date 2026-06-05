@@ -29,7 +29,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Binder.hpp> /// NOLINT(misc-include-cleaner)
 #include <Schema/Field.hpp>
-#include <Schema/Schema.hpp> /// NOLINT(misc-include-cleaner)
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>

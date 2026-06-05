@@ -35,7 +35,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Schema/Schema.hpp> /// NOLINT(misc-include-cleaner)
 #include <folly/hash/Hash.h>
 #include <LogicalFunctionRegistry.hpp>
 
