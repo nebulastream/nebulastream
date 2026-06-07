@@ -174,7 +174,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     if (asterisk)
     {
         builder << "*";
-        if (projections.empty())
+        if (!projections.empty())
         {
             builder << ", ";
         }

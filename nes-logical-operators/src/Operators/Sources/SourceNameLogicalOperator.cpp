@@ -53,7 +53,7 @@ TypedLogicalOperator<SourceNameLogicalOperator> SourceNameLogicalOperator::creat
 
 bool SourceNameLogicalOperator::operator==(const SourceNameLogicalOperator& rhs) const
 {
-    return this->getName() == rhs.getName() && getTraitSet() == rhs.getTraitSet();
+    return this->logicalSourceName == rhs.logicalSourceName && getTraitSet() == rhs.getTraitSet();
 }
 
 SourceNameLogicalOperator SourceNameLogicalOperator::withInferredSchema() const

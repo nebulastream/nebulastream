@@ -54,16 +54,17 @@ Schema<Field, Ordered> applyRecursive(const LogicalOperator& visiting)
         | std::views::transform([](const auto& child) { return std::pair{child, applyRecursive(child)}; })
         | std::ranges::to<std::unordered_map>();
 
-    /// the unordered map above does not maintain the order of the children, so we have to go through them again
-    const auto orderedBoundInputSchema = visiting->getChildren()
-        | std::views::transform([&](const auto& child) { return childrenWithOutputOrder.at(child); }) | std::views::join
-        | std::ranges::to<Schema<Field, Ordered>>();
 
     if (const auto reorderer = visiting.tryGetAs<Reorderer>())
     {
         return reorderer.value()->get().getOrderedOutputSchema([&childrenWithOutputOrder](const LogicalOperator& child)
                                                                { return childrenWithOutputOrder.at(child); });
     }
+    /// the unordered map above does not maintain the order of the children, so we have to go through them again
+    const auto orderedBoundInputSchema = visiting->getChildren()
+        | std::views::transform([&](const auto& child) { return childrenWithOutputOrder.at(child); }) | std::views::join
+        | std::ranges::to<Schema<Field, Ordered>>();
+
     std::vector<Field> outputOrder;
     std::vector<Field> rest;
     const auto outputSchema = visiting.getOutputSchema();

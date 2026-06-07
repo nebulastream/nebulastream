@@ -167,7 +167,8 @@ InferModelLogicalOperator InferModelLogicalOperator::withChildren(std::vector<Lo
 
 Schema<Field, Unordered> InferModelLogicalOperator::getOutputSchema() const
 {
-    return NES::bind(self.lock(), outputSchema);
+    PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return NES::bind(self.lock(), outputSchema.value());
 }
 
 Schema<Field, Ordered> InferModelLogicalOperator::getOrderedOutputSchema(const ChildOutputOrderProvider orderProvider) const

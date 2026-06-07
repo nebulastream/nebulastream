@@ -148,7 +148,7 @@ std::string_view JoinLogicalOperator::getName() const noexcept
 bool JoinLogicalOperator::operator==(const JoinLogicalOperator& rhs) const
 {
     return getWindowType() == rhs.getWindowType() and getJoinFunction() == rhs.getJoinFunction() and outputSchema == rhs.outputSchema
-        and getTraitSet() == rhs.getTraitSet();
+        and getTraitSet() == rhs.getTraitSet() && joinType == rhs.joinType and timestampFields == rhs.timestampFields;
 }
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const

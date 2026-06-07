@@ -80,7 +80,6 @@ private:
     Windowing::TimeUnit unit;
     LogicalFunction onField;
 
-    /// TOOD make non-optional once all ctors require children
     std::optional<LogicalOperator> child;
 
     void inferLocalSchema();

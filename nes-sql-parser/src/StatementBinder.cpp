@@ -41,6 +41,7 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include "Traits/FieldMappingTrait.hpp"
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
@@ -271,12 +272,25 @@ public:
             outputs.emplace_back(
                 bindIdentifier(outputField->identifier()), bindDataType(outputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
         }
+        auto inputSchemaExp = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(inputs))
+                                  .transform_error(Schema<UnqualifiedUnboundField, Ordered>::createCollisionString);
+        auto outputSchemaExp = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(outputs))
+                                   .transform_error(Schema<UnqualifiedUnboundField, Ordered>::createCollisionString);
+
+        if (!inputSchemaExp.has_value())
+        {
+            throw FieldAlreadyExists("Field name collision in model input schema {}", inputSchemaExp.error());
+        }
+        if (!outputSchemaExp.has_value())
+        {
+            throw FieldAlreadyExists("Field name collision in model output schema {}", outputSchemaExp.error());
+        }
 
         return CreateModelStatement{
             .name = fmt::format("{}", modelName),
             .path = modelPath,
-            .inputs = std::move(inputs) | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>(),
-            .outputs = std::move(outputs) | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>()};
+            .inputs = std::move(inputSchemaExp).value(),
+            .outputs = std::move(outputSchemaExp).value()};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

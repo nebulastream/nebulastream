@@ -262,7 +262,8 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
         }
     }
 
-    return windowType == rhs.windowType && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
+    return windowType == rhs.windowType && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet
+        && timestampField == rhs.timestampField && startEndFields == rhs.startEndFields;
 }
 
 WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInferredSchema() const
@@ -421,12 +422,13 @@ WindowedAggregationLogicalOperator::getCharacteristic() const
 Reflected Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
     const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const
 {
-    return reflect(detail::ReflectedWindowAggregationLogicalOperator{
-        .operatorId = op.getId(),
-        .windowType = op->getWindowType(),
-        .groupingKeys = op->getGroupingKeysWithName(),
-        .aggregations = op->getWindowAggregation(),
-        .timestampField = op->getCharacteristic()});
+    return reflect(
+        detail::ReflectedWindowAggregationLogicalOperator{
+            .operatorId = op.getId(),
+            .windowType = op->getWindowType(),
+            .groupingKeys = op->getGroupingKeysWithName(),
+            .aggregations = op->getWindowAggregation(),
+            .timestampField = op->getCharacteristic()});
 }
 
 Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))

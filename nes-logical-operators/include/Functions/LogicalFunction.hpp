@@ -373,6 +373,7 @@ inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& lfn)
 
 namespace std
 {
+/// TODO #1658 implement proper hash hashing for logical functions
 template <>
 struct hash<NES::LogicalFunction>
 {

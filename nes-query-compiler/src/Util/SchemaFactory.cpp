@@ -34,7 +34,7 @@ Schema<QualifiedUnboundField, Ordered> createSchemaFromTraits(
     const Schema<UnqualifiedUnboundField, Ordered>& fieldOrdering)
 {
     PRECONDITION(fieldMappings.size() == fieldOrdering.size(), "FieldMappings and FieldOrdering must have the same size");
-    return fieldOrdering
+    const auto schema = fieldOrdering
         | std::views::transform(
                [&fieldMappings](const auto& field)
                {
@@ -43,6 +43,8 @@ Schema<QualifiedUnboundField, Ordered> createSchemaFromTraits(
                    return QualifiedUnboundField{foundMapping->second, field.getDataType()};
                })
         | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>();
+    PRECONDITION(std::ranges::size(schema) == fieldMappings.size(), "FieldMappings and FieldOrdering must have the same size, check field name collisions");
+    return schema;
 }
 
 Schema<QualifiedUnboundField, Ordered> createPhysicalOutputSchema(const TraitSet& traitSet)

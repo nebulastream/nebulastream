@@ -67,6 +67,7 @@ SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, LogicalOperat
     , sinkDescriptor(std::move(sinkDescriptor))
     , child(std::move(child))
 {
+    inferLocalSchema();
 }
 
 TypedLogicalOperator<SinkLogicalOperator> SinkLogicalOperator::create(Identifier sinkName)

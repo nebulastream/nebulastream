@@ -82,9 +82,7 @@ private:
 
     std::optional<LogicalOperator> child;
     TraitSet traitSet;
-    /// Stored as unbound to avoid reference cycles; bound on access via getOutputSchema().
-    /// The input schema is not cached — it's the child's output schema, fetched on demand.
-    Schema<UnqualifiedUnboundField, Unordered> outputSchema;
+    std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
 };
 
 template <>

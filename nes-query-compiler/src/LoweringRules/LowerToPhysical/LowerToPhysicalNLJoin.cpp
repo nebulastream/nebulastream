@@ -120,6 +120,11 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         | std::views::transform([](const auto& child)
                                 { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
+    PRECONDITION(
+        combinedFieldMappingVec.size()
+            == join->getChildren()[0].getTraitSet().get<FieldMappingTrait>()->getUnderlying().size()
+                + join.getChildren()[1].getTraitSet().get<FieldMappingTrait>()->getUnderlying().size(),
+        "Join output field mapping size is not equals the sum of its inputs, check for field name collisions.");
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
