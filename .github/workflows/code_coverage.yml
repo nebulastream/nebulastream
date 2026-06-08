@@ -53,7 +53,7 @@ jobs:
           cmake -DCODE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
           cmake --build build --target ccov-all-export
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         with:
           slug: nebulastream/nebulastream
           fail_ci_if_error: true
