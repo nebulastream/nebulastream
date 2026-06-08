@@ -78,8 +78,6 @@ EXCEPTION(DistributedFailure, 2303, "distributed failure")
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
 EXCEPTION(QueryNotRegistered, 3001, "query not registered")
-/// Todo #500: place holder until we can cleanly handle malformed string values (NULL/Undefined or similar)
-/// MUST be used as the central exception to report malformed string values.
 EXCEPTION(CannotFormatMalformedStringValue, 3002, "cannot format malformed string value")
 EXCEPTION(CannotAllocateBuffer, 3003, "cannot allocate buffer")
 EXCEPTION(SkippingDelayedTaskDuringShutdown, 3004, "skipping delayed task during shutdown")
