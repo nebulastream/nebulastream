@@ -91,9 +91,10 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
     {
         const auto numberOfExpectedSlices = sliceAssigner.getWindowSize() / sliceAssigner.getWindowSlide();
         const auto [it, success] = windowsWriteLocked->try_emplace(windowInfo, numberOfExpectedSlices);
-        INVARIANT(
-            it->second.windowState != WindowInfoState::EMITTED_TO_PROBE,
-            "We should not add slices to a window that has already been triggered.");
+        if (it->second.windowState == WindowInfoState::EMITTED_TO_PROBE)
+        {
+            throw WindowingError("We should not add slices to a window that has already been triggered.");
+        }
         it->second.windowState = WindowInfoState::WINDOW_FILLING;
         it->second.windowSlices.emplace_back(newSlice);
     }
