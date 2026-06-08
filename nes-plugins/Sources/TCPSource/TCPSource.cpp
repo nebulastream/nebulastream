@@ -29,6 +29,7 @@
 #include <sys/select.h>
 
 #include <cstdio>
+#include <span>
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h> /// For read
@@ -36,7 +37,6 @@
 #include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <span>
 #include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>

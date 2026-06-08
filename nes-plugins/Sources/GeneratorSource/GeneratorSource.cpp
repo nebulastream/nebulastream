@@ -20,6 +20,7 @@
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <span>
 #include <stop_token>
 #include <string>
 #include <thread>
@@ -28,7 +29,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <span>
 #include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
