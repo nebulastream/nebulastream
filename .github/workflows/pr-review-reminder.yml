@@ -13,7 +13,7 @@ jobs:
 
         steps:
             - name: Checkout repo
-              uses: actions/checkout@v2
+              uses: actions/checkout@v5
 
             - name: Use reminder action
               uses: LeoRaasch/my-github-actions/zulip-pr-reminder@v1

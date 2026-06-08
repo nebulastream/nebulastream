@@ -30,7 +30,7 @@ jobs:
     outputs:
       matrix: ${{ steps.gen.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
       - id: gen
@@ -45,7 +45,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
 
@@ -140,7 +140,7 @@ jobs:
       matrix:
         build_type: [Debug, RelWithDebInfo, Release, Benchmark]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
       - uses: ./.github/steps/setup-sccache
@@ -181,7 +181,7 @@ jobs:
         build_type: [ 'Debug' ]
         sanitizer: [ 'none' ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
       - uses: ./.github/steps/setup-sccache

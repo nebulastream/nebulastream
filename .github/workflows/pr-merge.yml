@@ -33,7 +33,7 @@ jobs:
     needs: [ get-dev-images ]
     if: ${{ github.event.pull_request.merged == true && needs.get-dev-images.outputs.build-dependency == true }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v44

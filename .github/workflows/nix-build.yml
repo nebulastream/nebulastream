@@ -34,7 +34,7 @@ jobs:
     runs-on: [ ubuntu-latest ]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha || github.sha }}
           fetch-depth: 0

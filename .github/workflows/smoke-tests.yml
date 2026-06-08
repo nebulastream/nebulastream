@@ -51,7 +51,7 @@ jobs:
         build_type: [ 'RelWithDebInfo' ]
         sanitizer: [ 'none' ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
       - name: Choose a number of concurrent jobs

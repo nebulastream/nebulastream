@@ -44,7 +44,7 @@ jobs:
       matrix:
         arch: [ x64, arm64 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
       - name: Set up Docker Buildx
