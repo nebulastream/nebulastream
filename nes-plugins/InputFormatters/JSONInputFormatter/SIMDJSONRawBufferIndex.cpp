@@ -166,8 +166,16 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
                 dynamic_cast<SIMDJSONRawBufferIndex*>(rawBufferIndexPtr) != nullptr, "rawBufferIndex must be a SIMDJSONRawBufferIndex");
             /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): type verified by PRECONDITION above.
             auto* simdJsonBufferIndex = static_cast<SIMDJSONRawBufferIndex*>(rawBufferIndexPtr);
-            ++simdJsonBufferIndex->docStreamIterator;
-            simdJsonBufferIndex->isAtLastTuple = simdJsonBufferIndex->docStreamIterator.at_end();
+            auto& activeIterator
+                = simdJsonBufferIndex->useExtraJSON ? simdJsonBufferIndex->extraDocStreamIterator : simdJsonBufferIndex->docStreamIterator;
+            ++activeIterator;
+            if (not simdJsonBufferIndex->useExtraJSON and activeIterator.at_end() and simdJsonBufferIndex->hasExtraJSON)
+            {
+                simdJsonBufferIndex->useExtraJSON = true;
+                simdJsonBufferIndex->isAtLastTuple = simdJsonBufferIndex->extraDocStreamIterator.at_end();
+                return;
+            }
+            simdJsonBufferIndex->isAtLastTuple = activeIterator.at_end();
         },
         rawBufferIndex);
     return record;
@@ -205,6 +213,25 @@ std::pair<bool, FieldIndex> SIMDJSONRawBufferIndex::indexJSON(const std::string_
     docStreamIterator = docStream->begin();
     isAtLastTuple = docStreamIterator == docStream->end();
     return {docStreamIterator.at_end(), docStream->truncated_bytes()};
+}
+
+void SIMDJSONRawBufferIndex::indexExtraJSON(const std::string_view jsonSV, const size_t batchSize)
+{
+    if (jsonSV.size() > batchSize)
+    {
+        throw CannotFormatSourceData("Size of raw buffer: {} exceeds SIMDJSONs configured batch_size: {}", jsonSV.size(), batchSize);
+    }
+    extraJSON = simdjson::padded_string(jsonSV);
+    extraParser = std::make_shared<simdjson::ondemand::parser>();
+    extraParser->threaded = false;
+    extraDocStream = std::make_shared<simdjson::ondemand::document_stream>(extraParser->iterate_many(extraJSON, batchSize));
+    extraDocStreamIterator = extraDocStream->begin();
+    hasExtraJSON = not extraDocStreamIterator.at_end();
+    if (isAtLastTuple and hasExtraJSON)
+    {
+        useExtraJSON = true;
+        isAtLastTuple = false;
+    }
 }
 
 }

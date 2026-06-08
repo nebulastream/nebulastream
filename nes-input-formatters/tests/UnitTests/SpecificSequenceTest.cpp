@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <cstdint>
+#include <string>
 #include <tuple>
 
 #include <Identifiers/Identifiers.hpp>
@@ -24,7 +26,7 @@
 #include <InputFormatterTestUtil.hpp>
 #include <InputFormatterValidationProvider.hpp>
 
-/// NOLINTBEGIN(readability-magic-numbers, bugprone-unchecked-optional-access)
+/// NOLINTBEGIN(readability-magic-numbers, bugprone-unchecked-optional-access, google-build-using-namespace)
 namespace NES
 {
 
@@ -195,13 +197,51 @@ TEST_F(SpecificSequenceTest, simdJSONFirstObjectEndsAtBufferBoundary)
     using TestTuple = std::tuple<int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
-        .sizeOfRawBuffers = 16,
+        .sizeOfRawBuffers = 128,
         .sizeOfFormattedBuffers = 16,
         .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"TUPLE_DELIMITER", "\n"}}).value(),
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(12)}}}},
         .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "\n{\"FIELD_0\":12}\n"}}});
+}
+
+TEST_F(SpecificSequenceTest, simdJSONObjectsInsideRequiredTailPaddingWithoutNextBuffer)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t>;
+    constexpr size_t rawBufferSize = 128;
+    const auto tuplesInUnsafeTail = "\n" + std::string(90, ' ') + "{\"FIELD_0\":1}\n{\"FIELD_0\":12}\n";
+
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 3,
+        .sizeOfRawBuffers = rawBufferSize,
+        .sizeOfFormattedBuffers = 16,
+        .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"TUPLE_DELIMITER", "\n"}}).value(),
+        .testSchema = {INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(1), TestTuple(12)}}}},
+        .rawBytesPerThread = {{.sequenceNumber = SequenceNumber(1), .rawBytes = tuplesInUnsafeTail}}});
+}
+
+TEST_F(SpecificSequenceTest, simdJSONFirstDelimiterInsideRequiredTailPadding)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t>;
+    constexpr size_t rawBufferSize = 128;
+    const auto tuplesInUnsafeTail = std::string(70, ' ') + "{\"FIELD_0\":1}\n{\"FIELD_0\":2}\n";
+
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 3,
+        .sizeOfRawBuffers = rawBufferSize,
+        .sizeOfFormattedBuffers = 16,
+        .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"TUPLE_DELIMITER", "\n"}}).value(),
+        .testSchema = {INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(1), TestTuple(2)}}}},
+        .rawBytesPerThread = {{.sequenceNumber = SequenceNumber(1), .rawBytes = tuplesInUnsafeTail}}});
 }
 
 /// SIMDJSON detects a complete tuple '{"Field_0":567}' in buffer 2, this leads to an empty spanning tuple between the ending '}'-byte
@@ -213,13 +253,13 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryLeading)
     using TestTuple = std::tuple<int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
-        .sizeOfRawBuffers = 16,
+        .sizeOfRawBuffers = 128,
         .sizeOfFormattedBuffers = 20,
         .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"TUPLE_DELIMITER", "\n"}}).value(),
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
-        = {WorkerThreadResults<TestTuple>{{{TestTuple(1234), TestTuple(567)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(89)}}}},
+        = {WorkerThreadResults<TestTuple>{{{TestTuple(1234)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(567), TestTuple(89)}}}},
         .rawBytesPerThread
         = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"FIELD_0\":1234}"},
            /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"FIELD_0\":567}"},
@@ -235,7 +275,7 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryTrailing)
     using TestTuple = std::tuple<int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
-        .sizeOfRawBuffers = 16,
+        .sizeOfRawBuffers = 128,
         .sizeOfFormattedBuffers = 20,
         .parserConfig = InputFormatterValidationProvider::provide("JSON", {{"TUPLE_DELIMITER", "\n"}}).value(),
         .testSchema = {INT32},
@@ -250,4 +290,4 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryTrailing)
 }
 }
 
-/// NOLINTEND(readability-magic-numbers, bugprone-unchecked-optional-access)
+/// NOLINTEND(readability-magic-numbers, bugprone-unchecked-optional-access, google-build-using-namespace)

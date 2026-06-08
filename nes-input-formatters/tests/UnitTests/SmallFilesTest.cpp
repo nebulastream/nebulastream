@@ -362,7 +362,7 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
+        .sizeOfRawBuffers = 128,
         .isCompiled = true});
 }
 
@@ -375,7 +375,7 @@ TEST_F(SmallFilesTest, testBimboDataJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
+        .sizeOfRawBuffers = 128,
         .isCompiled = true});
 }
 
@@ -388,7 +388,7 @@ TEST_F(SmallFilesTest, testFoodDataJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
+        .sizeOfRawBuffers = 128,
         .isCompiled = true});
 }
 
@@ -401,7 +401,7 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
         .hasSpanningTuples = true,
         .numberOfIterations = 1,
         .numberOfThreads = 8,
-        .sizeOfRawBuffers = 16,
+        .sizeOfRawBuffers = 128,
         .isCompiled = true});
 }
 

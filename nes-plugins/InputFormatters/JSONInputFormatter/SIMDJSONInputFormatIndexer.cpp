@@ -14,12 +14,14 @@
 
 #include <SIMDJSONInputFormatIndexer.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <simdjson.h>
 
 #include <Configurations/Descriptor.hpp>
 #include <fmt/format.h>
@@ -44,15 +46,30 @@ std::unique_ptr<RawBufferIndex> SIMDJSONInputFormatIndexer::indexRawBuffer(const
         return rawBufferIndex;
     }
 
-    /// If the buffer contains at least one delimiter, check if it contains more and index all tuples between the tuple delimiters
-    const auto startIdxOfNextTuple = offsetOfFirstTuple + DELIMITER_SIZE;
+    const auto numberOfIndexableBytes = rawBuffer.size() > simdjson::SIMDJSON_PADDING ? rawBuffer.size() - simdjson::SIMDJSON_PADDING : 0;
+    const auto indexableRawBuffer = rawBuffer.substr(0, numberOfIndexableBytes);
+    auto offsetOfLastIndexedTuple = offsetOfFirstTuple;
+    if (offsetOfFirstTuple < indexableRawBuffer.size())
+    {
+        const auto jsonSV = indexableRawBuffer.substr(offsetOfFirstTuple + DELIMITER_SIZE);
+        const auto [isNoTuple, truncatedBytes] = rawBufferIndex->indexJSON(jsonSV);
+        if (not isNoTuple)
+        {
+            offsetOfLastIndexedTuple
+                = static_cast<FieldIndex>(indexableRawBuffer.size() - truncatedBytes - this->getTupleDelimitingBytes().size());
+        }
+    }
 
-    const auto jsonSV = rawBuffer.substr(startIdxOfNextTuple);
-    const auto [isNoTuple, truncatedBytes] = rawBufferIndex->indexJSON(jsonSV);
-    const auto offsetOfLastTuple = static_cast<FieldIndex>(
-        (isNoTuple) ? offsetOfFirstTuple : rawBuffer.size() - truncatedBytes - this->getTupleDelimitingBytes().size());
+    const auto offsetOfLastTuple = static_cast<FieldIndex>(rawBuffer.rfind(TUPLE_DELIMITER));
+    if (offsetOfLastTuple > offsetOfLastIndexedTuple)
+    {
+        const auto startOfExtraJSON = offsetOfLastIndexedTuple + DELIMITER_SIZE;
+        rawBufferIndex->indexExtraJSON(
+            rawBuffer.substr(startOfExtraJSON, offsetOfLastTuple - startOfExtraJSON + DELIMITER_SIZE),
+            simdjson::ondemand::DEFAULT_BATCH_SIZE);
+    }
 
-    rawBufferIndex->markWithTupleDelimiters(offsetOfFirstTuple, offsetOfLastTuple);
+    rawBufferIndex->markWithTupleDelimiters(offsetOfFirstTuple, std::max(offsetOfLastIndexedTuple, offsetOfLastTuple));
     return rawBufferIndex;
 }
 
