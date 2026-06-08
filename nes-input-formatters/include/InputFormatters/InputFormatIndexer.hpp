@@ -41,6 +41,7 @@ public:
     /// past the content end. Defaults to 0 for indexers with no over-read; SIMD-based indexers (e.g. simdjson)
     /// pass their padding constant here.
     explicit InputFormatIndexer(std::size_t tailPadding = 0) noexcept : tailPaddingBytes(tailPadding) { }
+
     virtual ~InputFormatIndexer() = default;
 
     [[nodiscard]] virtual std::unique_ptr<RawBufferIndex> indexRawBuffer(std::string_view rawBuffer) const = 0;
