@@ -190,9 +190,12 @@ def _iter_simple_fields(impl):
                 continue
             ftype = f.type.strip_typedefs()
             if _is_std_string_type(ftype):
-                s = _read_std_string(impl[f.name])
-                if s is not None:
-                    yield (f.name, f'"{s}"')
+                field_val = impl[f.name]
+                # Only yield if the string is safely readable; this keeps us
+                # from handing GDB a corrupt value. We validate by reading it
+                # ourselves first (pure read, no execution).
+                if _read_std_string(field_val) is not None:
+                    yield (f.name, field_val)
         except Exception:
             continue
 
@@ -200,6 +203,16 @@ def _iter_simple_fields(impl):
 # ---------------------------------------------------------------------------
 # Pretty printers
 # ---------------------------------------------------------------------------
+
+def _collect_simple_fields_str(impl):
+    """Return a 'key: \"val\", key2: \"val2\"' string of simple std::string fields."""
+    parts = []
+    for fname, fval in _iter_simple_fields(impl):
+        parts.append(f'{fname}: {fval}')
+    return ', '.join(parts)
+
+
+
 
 class LogicalFunctionPrinter:
     """Renders a NES::LogicalFunction (predicate expression) as a tree node."""
@@ -218,7 +231,7 @@ class LogicalFunctionPrinter:
         if resolved is None:
             return
         impl, _, _ = resolved
-        # simple string fields of the function (e.g. field name, constant value)
+        # simple string fields of the function (e.g. field name)
         for fname, fval in _iter_simple_fields(impl):
             yield (fname, fval)
         # nested function children
@@ -253,11 +266,11 @@ class LogicalOperatorPrinter:
             return
         impl, _, _ = resolved
 
-        # 1) operator-specific simple string fields (sinkName, logicalSourceName, ...)
+        # operator-specific simple string fields (sinkName, logicalSourceName, ...)
         for fname, fval in _iter_simple_fields(impl):
             yield (fname, fval)
 
-        # 2) predicate function, if this operator has one (e.g. Selection)
+        # predicate function, if this operator has one (e.g. Selection)
         try:
             predicate = impl['predicate']
             yield ('predicate', predicate)
@@ -354,4 +367,4 @@ def register_nes_printers(obj):
 
 
 register_nes_printers(None)
-print('[NES] Query plan pretty printers loaded (phase 2: fields + predicate).')
+print('[NES] Query plan pretty printers loaded (phase 2c: fields as child rows + predicate).')
