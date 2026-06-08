@@ -42,7 +42,6 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    /// [[nodiscard]] Reflected reflect(const ReflectionContext& context) const; samuelGG
     [[nodiscard]] MaxAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
     [[nodiscard]] MaxAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
     [[nodiscard]] MaxAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;

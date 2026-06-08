@@ -36,7 +36,6 @@ public:
 
     [[nodiscard]] std::string_view getName() const noexcept;
     [[nodiscard]] std::string toString() const;
-    /// [[nodiscard]] Reflected reflect(const ReflectionContext& context) const; Samuel GG
     [[nodiscard]] DataType getInputStamp() const;
     [[nodiscard]] DataType getPartialAggregateStamp() const;
     [[nodiscard]] DataType getFinalAggregateStamp() const;

@@ -44,7 +44,6 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    ///[[nodiscard]] Reflected reflect(const ReflectionContext& context) const; samuelGG
     [[nodiscard]] CountAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
     [[nodiscard]] CountAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
     [[nodiscard]] CountAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
