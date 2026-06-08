@@ -40,18 +40,9 @@
 namespace NES
 {
 
-SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiterInBytes)
+SequenceShredder::SequenceShredder()
 {
-    /// This dummy manager only ever hands out a single pooled buffer, so it needs no unpooled budget.
-    constexpr uint32_t dummyBufferSize = 1;
-    constexpr NES::BufferAlignment bufferAlignment{64};
-    constexpr double unpooledMemoryFraction = 0.0;
-    auto dummyBuffer
-        = BufferManager::create(
-              dummyBufferSize, unpooledMemoryFraction, bufferAlignment, dummyBufferSize, std::make_shared<NesDefaultMemoryAllocator>())
-              ->getBufferBlocking();
-    dummyBuffer.setNumberOfTuples(sizeOfTupleDelimiterInBytes);
-    this->spanningTupleBuffer = std::make_unique<SpanningTupleBuffer>(INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER, std::move(dummyBuffer));
+    this->spanningTupleBuffer = std::make_unique<SpanningTupleBuffer>(INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER);
 }
 
 SequenceShredder::~SequenceShredder()

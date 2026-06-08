@@ -65,7 +65,7 @@ public:
         , inputFormatIndexer(std::move(inputFormatIndexer))
         , projections(memoryProvider->getAllFieldNames())
         , memoryProvider(std::move(memoryProvider))
-        , sequenceShredder(std::make_unique<SequenceShredder>(this->inputFormatIndexer->getTupleDelimitingBytes().size()))
+        , sequenceShredder(std::make_unique<SequenceShredder>())
     {
     }
 
