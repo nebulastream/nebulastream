@@ -20,6 +20,7 @@
 #include <future>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <stop_token>
 #include <string>
 #include <utility>
@@ -28,7 +29,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <span>
 #include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>

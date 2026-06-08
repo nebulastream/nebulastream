@@ -48,7 +48,8 @@ RawSource::RawSource(std::size_t tailPadding) noexcept : tailPadding(tailPadding
 Source::FillTupleBufferResult RawSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     const auto bufferSize = tupleBuffer.getBufferSize();
-    PRECONDITION(bufferSize > tailPadding, "TupleBuffer ({} B) smaller than required formatter tail padding ({} B)", bufferSize, tailPadding);
+    PRECONDITION(
+        bufferSize > tailPadding, "TupleBuffer ({} B) smaller than required formatter tail padding ({} B)", bufferSize, tailPadding);
     auto fullArea = tupleBuffer.getAvailableMemoryArea<std::byte>();
     const std::span<std::byte> writable{fullArea.data(), bufferSize - tailPadding};
     return fillRaw(writable, stopToken);
