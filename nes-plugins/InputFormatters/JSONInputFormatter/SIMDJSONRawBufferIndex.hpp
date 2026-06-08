@@ -72,7 +72,12 @@ public:
 
     std::pair<bool, FieldIndex> indexJSON(std::string_view jsonSV, size_t batchSize);
 
-    [[nodiscard]] simdjson::ondemand::document_stream::iterator getDocStreamIterator() const { return docStreamIterator; }
+    void indexExtraJSON(std::string_view jsonSV, size_t batchSize);
+
+    [[nodiscard]] simdjson::ondemand::document_stream::iterator getDocStreamIterator() const
+    {
+        return useExtraJSON ? extraDocStreamIterator : docStreamIterator;
+    }
 
     /// Copies a var-sized value out of simdjson's string buffer: at_pointer for a later field of the
     /// same tuple rewinds the parser and overwrites that buffer. A deque never relocates stored
@@ -80,13 +85,19 @@ public:
     const std::string& storeVarSizedValue(const std::string_view value) { return varSizedValues.emplace_back(value); }
 
 private:
-    bool isAtLastTuple{false};
+    bool isAtLastTuple{true};
+    bool useExtraJSON{false};
+    bool hasExtraJSON{false};
     FieldIndex offsetOfFirstTuple{};
     FieldIndex offsetOfLastTuple{};
     std::shared_ptr<simdjson::ondemand::parser> parser;
     std::shared_ptr<simdjson::ondemand::document_stream> docStream;
     simdjson::ondemand::document_stream::iterator docStreamIterator;
     std::deque<std::string> varSizedValues;
+    simdjson::padded_string extraJSON;
+    std::shared_ptr<simdjson::ondemand::parser> extraParser;
+    std::shared_ptr<simdjson::ondemand::document_stream> extraDocStream;
+    simdjson::ondemand::document_stream::iterator extraDocStreamIterator;
 };
 
 }
