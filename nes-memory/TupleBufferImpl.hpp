@@ -23,6 +23,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/Sanitizer.hpp>
 #include <include/Runtime/VariableSizedAccess.hpp>
 #include <TaggedPointer.hpp>
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -65,6 +66,11 @@ namespace detail
 {
 
 class MemorySegment;
+
+/// Size of the always-poisoned ASan redzone placed immediately before and after every pooled control
+/// block. Collapses to 0 (no layout change) when ASan is disabled. Kept a multiple of the 64-byte
+/// buffer alignment so the data region stays aligned.
+inline constexpr size_t CONTROL_BLOCK_REDZONE_SIZE = NES_ASAN_ENABLED ? 64UL : 0UL;
 
 #define PLACEHOLDER_LIKELY(cond) (cond) [[likely]]
 #define PLACEHOLDER_UNLIKELY(cond) (cond) [[unlikely]]
