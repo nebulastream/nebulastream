@@ -31,6 +31,8 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <span>
+#include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -45,7 +47,7 @@
 namespace NES
 {
 
-class GeneratorSource : public Source
+class GeneratorSource : public RawSource
 {
 public:
     constexpr static std::string_view NAME = "Generator";
@@ -58,14 +60,15 @@ public:
     GeneratorSource(GeneratorSource&&) = delete;
     GeneratorSource& operator=(GeneratorSource&&) = delete;
 
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
-
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     void close() override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+protected:
+    FillTupleBufferResult fillRaw(std::span<std::byte> out, const std::stop_token& stopToken) override;
 
 private:
     uint32_t seed;
