@@ -38,6 +38,7 @@
 #include <InputFormatterDescriptor.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawValueParser.hpp>
+#include <simdjson.h>
 #include <static.hpp>
 
 namespace NES
@@ -90,7 +91,8 @@ public:
         std::vector<std::string> jsonPointersToFields,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
         std::vector<DataType> fieldDataTypes)
-        : tupleDelimiter(tupleDelimiter)
+        : InputFormatIndexer(simdjson::SIMDJSON_PADDING)
+        , tupleDelimiter(tupleDelimiter)
         , jsonPointersToFields(std::move(jsonPointersToFields))
         , fieldNamesOutput(std::move(fieldNamesOutput))
         , fieldDataTypes(std::move(fieldDataTypes))
@@ -126,8 +128,6 @@ public:
     ~SIMDJSONInputFormatIndexer() override = default;
 
     [[nodiscard]] std::unique_ptr<RawBufferIndex> indexRawBuffer(std::string_view rawBuffer) const override;
-
-    [[nodiscard]] std::size_t requiredTailPadding() const noexcept override;
 
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const override { return {&tupleDelimiter, 1}; }
 
