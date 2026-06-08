@@ -121,22 +121,19 @@ void processQueryWithError(
                             [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
                     }));
 
-                auto unexpectedErrors = std::ranges::any_of(
-                    allExceptionByAddress | std::views::values,
-                    [&](const auto& exceptionRef) { return exceptionRef.get().code() != expectedError->code; });
-
-                if (unexpectedErrors)
-                {
-                    return fmt::format("Query had unexpected errors: {}", actualException);
-                }
-
-                auto expectedErrorOccurred = std::ranges::any_of(
+                /// The test passes if the expected error code is among the thrown exceptions. Additional errors are tolerated, because
+                /// a failure on one pipeline can raise secondary/cascading errors on connected pipelines
+                const auto expectedErrorOccurred = std::ranges::any_of(
                     allExceptionByAddress | std::views::values,
                     [&](const auto& exceptionRef) { return exceptionRef.get().code() == expectedError->code; });
 
                 if (!expectedErrorOccurred)
                 {
-                    return fmt::format("Expected error \"{}({})\"  to occur, but it did not!", expectedError->message, expectedError->code);
+                    return fmt::format(
+                        "Expected error \"{}({})\" to occur, but it did not! Actual: {}",
+                        expectedError->message,
+                        expectedError->code,
+                        actualException);
                 }
 
                 return std::string{};
