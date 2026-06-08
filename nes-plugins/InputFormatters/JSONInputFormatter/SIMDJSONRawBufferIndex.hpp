@@ -70,15 +70,26 @@ public:
 
     std::pair<bool, FieldIndex> indexJSON(std::string_view jsonSV, size_t batchSize);
 
-    [[nodiscard]] simdjson::ondemand::document_stream::iterator getDocStreamIterator() const { return docStreamIterator; }
+    void indexExtraJSON(std::string_view jsonSV, size_t batchSize);
+
+    [[nodiscard]] simdjson::ondemand::document_stream::iterator getDocStreamIterator() const
+    {
+        return useExtraJSON ? extraDocStreamIterator : docStreamIterator;
+    }
 
 private:
-    bool isAtLastTuple{false};
+    bool isAtLastTuple{true};
+    bool useExtraJSON{false};
+    bool hasExtraJSON{false};
     FieldIndex offsetOfFirstTuple{};
     FieldIndex offsetOfLastTuple{};
     std::shared_ptr<simdjson::ondemand::parser> parser;
     std::shared_ptr<simdjson::ondemand::document_stream> docStream;
     simdjson::ondemand::document_stream::iterator docStreamIterator;
+    simdjson::padded_string extraJSON;
+    std::shared_ptr<simdjson::ondemand::parser> extraParser;
+    std::shared_ptr<simdjson::ondemand::document_stream> extraDocStream;
+    simdjson::ondemand::document_stream::iterator extraDocStreamIterator;
 };
 
 }
