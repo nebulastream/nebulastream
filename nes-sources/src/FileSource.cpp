@@ -30,6 +30,8 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <span>
+#include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Files.hpp>
@@ -42,7 +44,9 @@
 namespace NES
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+FileSource::FileSource(const SourceDescriptor& sourceDescriptor)
+    : RawSource(RawSource::requiredTailPaddingFor(sourceDescriptor.getInputFormatterDescriptor().getInputFormatterType()))
+    , filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
 {
 }
 
@@ -61,10 +65,9 @@ void FileSource::close()
     this->inputFile.close();
 }
 
-Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult FileSource::fillRaw(std::span<std::byte> out, const std::stop_token&)
 {
-    this->inputFile.read(
-        tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
+    this->inputFile.read(reinterpret_cast<std::istream::char_type*>(out.data()), static_cast<std::streamsize>(out.size()));
     const auto numBytesRead = this->inputFile.gcount();
     this->totalNumBytesRead += numBytesRead;
     if (numBytesRead == 0)
