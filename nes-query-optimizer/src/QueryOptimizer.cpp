@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Operators/FaultTolerance/SNDeduplicationLogicalOperator.hpp>
 #include <QueryOptimizer.hpp>
 
 #include <Plans/LogicalPlan.hpp>
@@ -20,10 +21,27 @@
 namespace NES
 {
 
+#include <uuid/uuid.h>
+std::string generate_uuid() {
+    uuid_t bin;
+    uuid_generate_random(bin);
+    char str[37];
+    uuid_unparse_lower(bin, str);
+    return std::string(str);
+}
+
 DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
 {
+    auto root = plan.getRootOperators().at(0);
+    std::cout << root << std::endl;
+    auto uuid = generate_uuid();
+    auto filePath = "/home/benni/Desktop/nebulastream/benni/dedup/" + uuid + ".txt";
+    auto rootChild = SNDeduplicationLogicalOperator(WeakLogicalOperator{}, filePath).withChildren(root.getChildren());
+    root = root.withChildren({rootChild});
+    plan = plan.withRootOperators({root});
     plan = semanticAnalyzer.analyse(plan);
     plan = ruleBasedOptimization.optimize(plan);
+    std::cout << explain(plan, ExplainVerbosity::Debug) << std::endl;
     return operatorPlacement.place(plan);
 }
 
