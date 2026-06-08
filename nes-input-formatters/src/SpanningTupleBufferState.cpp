@@ -108,7 +108,13 @@ std::optional<StagedBuffer> SpanningTupleBufferEntry::tryClaimSpanningTuple(cons
 {
     if (this->atomicState.tryClaimSpanningTuple(abaItNumber))
     {
-        INVARIANT(this->trailingBufferRef.getReferenceCounter() != 0, "Tried to claim a trailing buffer with a nullptr");
+        /// The start-of-stream sentinel (very first entry, first iteration) owns no backing buffer (null data pointer). It
+        /// anchors the first leading spanning tuple but contributes no bytes, so we hand back an empty StagedBuffer for it.
+        if (!this->trailingBufferRef)
+        {
+            this->atomicState.setUsedTrailingBuffer();
+            return {StagedBuffer{}};
+        }
         const auto stagedBuffer
             = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
         this->atomicState.setUsedTrailingBuffer();
@@ -117,10 +123,10 @@ std::optional<StagedBuffer> SpanningTupleBufferEntry::tryClaimSpanningTuple(cons
     return std::nullopt;
 }
 
-void SpanningTupleBufferEntry::setStateOfFirstIndex(TupleBuffer dummyBuffer)
+void SpanningTupleBufferEntry::setStateOfFirstIndex()
 {
-    /// The first entry is a dummy that makes sure that we can resolve the first tuple in the first buffer
-    this->trailingBufferRef = std::move(dummyBuffer);
+    /// The first entry is a start-of-stream sentinel. It owns no buffer; it only carries the atomic state that lets the
+    /// SpanningTupleBuffer resolve the first tuple in the first buffer (acting as a virtual leading delimiter).
     this->atomicState.setStateOfFirstEntry();
     this->firstDelimiterOffset = 0;
     this->lastDelimiterOffset = 0;
