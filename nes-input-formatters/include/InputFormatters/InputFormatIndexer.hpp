@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -39,6 +40,11 @@ public:
     virtual ~InputFormatIndexer() = default;
 
     [[nodiscard]] virtual std::unique_ptr<RawBufferIndex> indexRawBuffer(std::string_view rawBuffer) const = 0;
+
+    /// Bytes the indexer may over-read past the logical end of its input as part of SIMD lookahead.
+    /// Callers that own the input memory must guarantee at least this many addressable bytes past the content end.
+    /// Defaults to 0 for indexers with no over-read; SIMD-based indexers (e.g. simdjson) override to return their padding constant.
+    [[nodiscard]] virtual std::size_t requiredTailPadding() const noexcept { return 0; }
 
     [[nodiscard]] virtual std::string_view getTupleDelimitingBytes() const = 0;
     [[nodiscard]] virtual std::string_view getFieldDelimitingBytes() const = 0;

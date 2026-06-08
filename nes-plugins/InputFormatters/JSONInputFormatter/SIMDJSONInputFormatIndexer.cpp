@@ -28,9 +28,15 @@
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SIMDJSONRawBufferIndex.hpp>
+#include <simdjson.h>
 
 namespace NES
 {
+
+std::size_t SIMDJSONInputFormatIndexer::requiredTailPadding() const noexcept
+{
+    return simdjson::SIMDJSON_PADDING;
+}
 
 std::unique_ptr<RawBufferIndex> SIMDJSONInputFormatIndexer::indexRawBuffer(const std::string_view rawBuffer) const
 {
