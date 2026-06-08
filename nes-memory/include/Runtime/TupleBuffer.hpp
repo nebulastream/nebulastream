@@ -197,9 +197,4 @@ private:
     uint32_t size = 0;
 };
 
-/**
- * @brief This method determines the control block based on the ptr to the data region and decrements the reference counter.
- * @param bufferPointer pointer to the data region of an buffer.
- */
-[[maybe_unused]] bool recycleTupleBuffer(void* bufferPointer);
 }

@@ -31,6 +31,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
+#include <sanitizer/asan_interface.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
@@ -83,14 +84,15 @@ size_t UnpooledChunksManager::getNumberOfUnpooledBuffers() const
     return numOfUnpooledBuffers;
 }
 
-std::pair<uint8_t*, uint8_t*>
-UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_t neededSize, const size_t alignment)
+std::pair<uint8_t*, uint8_t*> UnpooledChunksManager::allocateSpace(
+    const std::thread::id threadId, const size_t payloadSize, const size_t redzoneSize, const size_t alignment)
 {
     /// There exist two possibilities that can happen
     /// 1. We have enough space in an already allocated chunk or 2. we need to allocate a new chunk of memory
 
     const auto lockedLocalUnpooledBufferData = getChunk(threadId)->wlock();
-    const auto newRollingAverage = static_cast<size_t>(lockedLocalUnpooledBufferData->rollingAverage.add(neededSize));
+    const auto newRollingAverage = static_cast<size_t>(lockedLocalUnpooledBufferData->rollingAverage.add(payloadSize));
+    const auto neededSize = redzoneSize + payloadSize;
     auto& localLastAllocatedChunkKey = lockedLocalUnpooledBufferData->lastAllocateChunkKey;
     auto& localUnpooledBufferChunkStorage = lockedLocalUnpooledBufferData->chunks;
     if (localUnpooledBufferChunkStorage.contains(localLastAllocatedChunkKey))
@@ -115,22 +117,23 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     /// The last allocated chunk is not enough. Thus, we need to allocate a new chunk and insert it into the unpooled buffer storage
     /// The memory to allocate must be larger than bufferSize, while also taking the rolling average into account.
     /// For now, we allocate multiple localLastAllocateChunkKeyrolling averages. If this is too small for the current bufferSize, we allocate at least the bufferSize
-    const auto newAllocationSizeExact = std::max(neededSize, newRollingAverage * NUM_PRE_ALLOCATED_CHUNKS);
+    const auto budgetedAllocationSizeExact = std::max(payloadSize, newRollingAverage * NUM_PRE_ALLOCATED_CHUNKS);
+    const auto budgetedAllocationSize = (budgetedAllocationSizeExact + 4095U) & ~4095U; /// Round to the nearest multiple of 4KB (page size)
+    const auto newAllocationSizeExact = std::max(neededSize, (newRollingAverage + redzoneSize) * NUM_PRE_ALLOCATED_CHUNKS);
     const auto newAllocationSize = (newAllocationSizeExact + 4095U) & ~4095U; /// Round to the nearest multiple of 4KB (page size)
 
-    /// Enforce the global unpooled-memory budget before touching the allocator: optimistically reserve the bytes, and
-    /// roll the reservation back if we would breach the budget. This bounds unbounded operator state (hash maps, paged
-    /// vectors, var-sized data) so a runaway query fails cleanly instead of OOM-killing the whole worker process.
-    const auto bytesInUseBefore = currentlyAllocatedUnpooledBytes->fetch_add(newAllocationSize, std::memory_order_relaxed);
-    /// Underflow-safe budget check: bytesInUseBefore + newAllocationSize can wrap size_t (and SIZE_MAX is the
+    /// Enforce the global unpooled-memory budget before touching the allocator. ASan-only redzones are excluded so
+    /// instrumentation does not change whether the same logical workload fits the configured production budget.
+    const auto bytesInUseBefore = currentlyAllocatedUnpooledBytes->fetch_add(budgetedAllocationSize, std::memory_order_relaxed);
+    /// Underflow-safe budget check: bytesInUseBefore + budgetedAllocationSize can wrap size_t (and SIZE_MAX is the
     /// unbounded sentinel), and concurrent fetch_adds can transiently push bytesInUseBefore past the budget.
-    if (bytesInUseBefore >= unpooledMemoryBudgetInBytes || newAllocationSize > unpooledMemoryBudgetInBytes - bytesInUseBefore)
+    if (bytesInUseBefore >= unpooledMemoryBudgetInBytes || budgetedAllocationSize > unpooledMemoryBudgetInBytes - bytesInUseBefore)
     {
-        currentlyAllocatedUnpooledBytes->fetch_sub(newAllocationSize, std::memory_order_relaxed);
+        currentlyAllocatedUnpooledBytes->fetch_sub(budgetedAllocationSize, std::memory_order_relaxed);
         NES_WARNING(
             "Unpooled memory budget of {}B would be exceeded by a {}B chunk ({}B already in use); refusing allocation.",
             unpooledMemoryBudgetInBytes,
-            newAllocationSize,
+            budgetedAllocationSize,
             bytesInUseBefore);
         return {};
     }
@@ -138,10 +141,16 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     auto* const newlyAllocatedMemory = static_cast<uint8_t*>(memoryResource->allocate(newAllocationSize, alignment));
     if (newlyAllocatedMemory == nullptr)
     {
-        currentlyAllocatedUnpooledBytes->fetch_sub(newAllocationSize, std::memory_order_relaxed);
+        currentlyAllocatedUnpooledBytes->fetch_sub(budgetedAllocationSize, std::memory_order_relaxed);
         NES_WARNING("Could not allocate {} bytes for unpooled chunk!", newAllocationSize);
         return {};
     }
+
+    /// Poison the whole freshly allocated chunk. As buffers are carved out of it, only their data regions are
+    /// unpoisoned (see getUnpooledBuffer), so the unallocated tail and the per-buffer leading redzones stay
+    /// poisoned. The control blocks themselves are heap-allocated (wrapped) and thus protected by ASan's own
+    /// heap redzones. ASAN_* are no-ops without ASan.
+    ASAN_POISON_MEMORY_REGION(newlyAllocatedMemory, newAllocationSize);
 
     /// Updating the local last allocate chunk key and adding the new chunk to the local chunk storage
     localLastAllocatedChunkKey = newlyAllocatedMemory;
@@ -150,6 +159,7 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     auto& currentAllocatedChunk = localUnpooledBufferChunkStorage[localKeyForUnpooledBufferChunk];
     currentAllocatedChunk.startOfChunk = newlyAllocatedMemory;
     currentAllocatedChunk.totalSize = newAllocationSize;
+    currentAllocatedChunk.budgetedSize = budgetedAllocationSize;
     currentAllocatedChunk.usedSize += neededSize;
     currentAllocatedChunk.activeMemorySegments += 1;
     NES_TRACE("Created new chunk {} for tuple buffer {} of {}B", currentAllocatedChunk, fmt::ptr(localMemoryForNewTupleBuffer), neededSize);
@@ -161,14 +171,18 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
 {
     const auto threadId = std::this_thread::get_id();
 
-    /// The control block is heap-allocated (the wrapped MemorySegment constructor), so unlike the pooled
-    /// layout no space for it is reserved in the chunk; reserving sizeof(BufferControlBlock) bytes per buffer
-    /// would only waste memory. We must keep the data region aligned (ARM SIGBUSes on unaligned atomic access).
+    /// Each unpooled buffer occupies [ redzone | data region ] inside its chunk. Unlike the pooled layout,
+    /// no space is reserved for the control block here: it is heap-allocated (the wrapped MemorySegment
+    /// constructor), so reserving sizeof(BufferControlBlock) bytes per buffer would only waste memory. The
+    /// leading redzone is poisoned under ASan (see allocateSpace) to separate adjacent data regions and
+    /// collapses to 0 without ASan. We must keep the data region aligned (ARM SIGBUSes on unaligned atomic
+    /// access), so both the redzone and the data size are aligned.
     const auto alignedBufferSize = alignBufferSize(neededSize, alignment);
+    const auto redzoneSize = alignBufferSize(detail::CONTROL_BLOCK_REDZONE_SIZE, alignment);
 
     /// Getting space from the unpooled chunks manager
     const auto& [localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer]
-        = this->allocateSpace(threadId, alignedBufferSize, alignment);
+        = this->allocateSpace(threadId, alignedBufferSize, redzoneSize, alignment);
 
     /// allocateSpace returns a null pair when the budget is exhausted or the underlying allocation failed. Signal this
     /// to the caller as an empty optional (callers turn it into CannotAllocateBuffer/BufferAllocationFailure) instead of
@@ -181,14 +195,17 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
     /// Creating a new memory segment, and adding it to the unpooledMemorySegments
     const auto chunk = this->getChunk(threadId);
     auto memSegment = std::make_unique<detail::MemorySegment>(
-        localMemoryForNewTupleBuffer,
+        localMemoryForNewTupleBuffer + redzoneSize,
         alignedBufferSize,
         [copyOfMemoryResource = this->memoryResource,
          copyOLastChunkPtr = localKeyForUnpooledBufferChunk,
          copyOfChunk = chunk,
+         copyOfBufferSize = alignedBufferSize,
          copyOfAlignment = alignment,
          copyOfAllocatedBytes = currentlyAllocatedUnpooledBytes](detail::MemorySegment* memorySegment, BufferRecycler*)
         {
+            /// The buffer has been released: re-poison its data region to trap use-after-free until the chunk is freed.
+            ASAN_POISON_MEMORY_REGION(memorySegment->ptr, copyOfBufferSize);
             auto lockedLocalUnpooledBufferData = copyOfChunk->wlock();
             auto& curUnpooledChunk = lockedLocalUnpooledBufferData->chunks[copyOLastChunkPtr];
             INVARIANT(
@@ -204,9 +221,11 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
                 const auto& extractedChunkControlBlock = extractedChunk.mapped();
                 lockedLocalUnpooledBufferData->lastAllocateChunkKey = nullptr;
                 lockedLocalUnpooledBufferData.unlock();
+                /// Clear all poison (redzones + released data regions) before returning the chunk to the allocator.
+                ASAN_UNPOISON_MEMORY_REGION(extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize);
                 copyOfMemoryResource->deallocate(
                     extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize, copyOfAlignment);
-                copyOfAllocatedBytes->fetch_sub(extractedChunkControlBlock.totalSize, std::memory_order_relaxed);
+                copyOfAllocatedBytes->fetch_sub(extractedChunkControlBlock.budgetedSize, std::memory_order_relaxed);
             }
         });
 
@@ -219,6 +238,8 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
 
     if (leakedMemSegment->controlBlock->prepare(bufferRecycler))
     {
+        /// Hand the data region to the caller: unpoison it. The leading redzone before it stays poisoned.
+        ASAN_UNPOISON_MEMORY_REGION(leakedMemSegment->ptr, leakedMemSegment->size);
         return TupleBuffer{leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, leakedMemSegment->size};
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");

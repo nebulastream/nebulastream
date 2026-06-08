@@ -191,14 +191,6 @@ TupleBuffer TupleBuffer::loadChildBuffer(ChildBufferIndex bufferIndex) const noe
     return childBuffer;
 }
 
-bool recycleTupleBuffer(void* bufferPointer)
-{
-    PRECONDITION(bufferPointer, "invalid bufferPointer");
-    auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - sizeof(detail::BufferControlBlock));
-    return block->release();
-}
-
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
 {
     /// Enable ADL to spell out to onlookers how swap should be used.
