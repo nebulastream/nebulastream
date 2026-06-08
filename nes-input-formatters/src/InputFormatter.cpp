@@ -199,7 +199,7 @@ public:
         Arena& arenaRef,
         const size_t sizeOfTrailingSpanningTuple)
     {
-        allocateForTrailingSpanningTuple(arenaRef, sizeOfTrailingSpanningTuple);
+        allocateForTrailingSpanningTuple(arenaRef, sizeOfTrailingSpanningTuple, indexer.requiredTailPadding());
         const auto trailingSpanningTupleBuffers = std::span(stagedBuffers);
         processSpanningTuple(trailingSpanningTupleBuffers, tlIndexPhaseResult.trailingSpanningTuple, indexer);
         assignTrailingRawBufferIndex(indexer.indexRawBuffer(
@@ -216,7 +216,7 @@ public:
         {
             return;
         }
-        allocateForLeadingSpanningTuple(arenaRef, sizeOfLeadingSpanningTuple);
+        allocateForLeadingSpanningTuple(arenaRef, sizeOfLeadingSpanningTuple, indexer.requiredTailPadding());
         processSpanningTuple(leadingSpanningTupleBuffers, tlIndexPhaseResult.leadingSpanningTuple, indexer);
         assignLeadingRawBufferIndex(indexer.indexRawBuffer(
             {std::bit_cast<const char*>(tlIndexPhaseResult.leadingSpanningTuple.data()), tlIndexPhaseResult.leadingSpanningTuple.size()}));
@@ -237,17 +237,20 @@ public:
     }
 
 private:
-    static void allocateForLeadingSpanningTuple(Arena& arenaRef, const size_t sizeOfLeadingSpanningTuple)
+    /// Spanning-tuple allocations grow by the indexer's required tail padding so SIMD lookahead in the
+    /// downstream parse lands on bytes that are still inside the Arena allocation (and therefore unpoisoned
+    /// under ASan), not on the next allocation's redzone.
+    static void allocateForLeadingSpanningTuple(Arena& arenaRef, const size_t sizeOfLeadingSpanningTuple, const size_t tailPadding)
     {
         tlIndexPhaseResult.hasLeadingSpanningTupleBool = true;
-        auto byteSpan = arenaRef.allocateMemory(sizeOfLeadingSpanningTuple);
-        tlIndexPhaseResult.leadingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
+        auto byteSpan = arenaRef.allocateMemory(sizeOfLeadingSpanningTuple + tailPadding);
+        tlIndexPhaseResult.leadingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), sizeOfLeadingSpanningTuple);
     }
 
-    static void allocateForTrailingSpanningTuple(Arena& arenaRef, const size_t sizeOfTrailingSpanningTuple)
+    static void allocateForTrailingSpanningTuple(Arena& arenaRef, const size_t sizeOfTrailingSpanningTuple, const size_t tailPadding)
     {
-        auto byteSpan = arenaRef.allocateMemory(sizeOfTrailingSpanningTuple);
-        tlIndexPhaseResult.trailingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
+        auto byteSpan = arenaRef.allocateMemory(sizeOfTrailingSpanningTuple + tailPadding);
+        tlIndexPhaseResult.trailingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), sizeOfTrailingSpanningTuple);
     }
 };
 

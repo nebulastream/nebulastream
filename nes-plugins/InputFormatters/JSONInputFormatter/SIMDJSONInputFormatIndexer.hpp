@@ -118,6 +118,8 @@ public:
 
     [[nodiscard]] std::unique_ptr<RawBufferIndex> indexRawBuffer(std::string_view rawBuffer) const override;
 
+    [[nodiscard]] std::size_t requiredTailPadding() const noexcept override;
+
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const override { return {&tupleDelimiter, 1}; }
 
     [[nodiscard]] std::string_view getFieldDelimitingBytes() const override { return ""; }
