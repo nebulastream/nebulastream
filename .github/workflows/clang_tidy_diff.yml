@@ -47,7 +47,7 @@ jobs:
         id: increment
         run: echo "result=$((${{ inputs.number_of_commits }} + 1))" >> $GITHUB_OUTPUT
       - name: Checkout Branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: ${{ steps.increment.outputs.result }}
           ref: ${{ inputs.head_sha }}

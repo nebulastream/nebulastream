@@ -10,7 +10,7 @@ jobs:
       issues: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check that no TODO with closed Issue remains
         run: |
           TODO_LINES=$(mktemp)
