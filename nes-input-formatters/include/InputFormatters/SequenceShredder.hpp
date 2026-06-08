@@ -70,7 +70,7 @@ class SequenceShredder
     static constexpr size_t INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER = 1024;
 
 public:
-    explicit SequenceShredder(size_t sizeOfTupleDelimiterInBytes);
+    SequenceShredder();
     /// Destructor validates (final) state of spanning tuple buffer
     ~SequenceShredder();
 

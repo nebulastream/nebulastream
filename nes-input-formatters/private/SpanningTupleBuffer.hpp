@@ -76,7 +76,7 @@ public:
         SequenceNumber lastSequenceNumber = INVALID<SequenceNumber>;
     };
 
-    explicit SpanningTupleBuffer(size_t initialSize, TupleBuffer dummyBuffer);
+    explicit SpanningTupleBuffer(size_t initialSize);
 
     /// First, checks if the prior entry at the index of 'sequenceNumber' contains the expected prior ABA iteration number and is used up
     /// If not, returns as 'NOT_IN_RANGE'
