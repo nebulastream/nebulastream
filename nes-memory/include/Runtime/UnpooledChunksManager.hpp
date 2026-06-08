@@ -63,6 +63,7 @@ class UnpooledChunksManager
         struct ChunkControlBlock
         {
             size_t totalSize = 0;
+            size_t budgetedSize = 0;
             size_t usedSize = 0;
             uint8_t* startOfChunk = nullptr;
             std::vector<std::unique_ptr<NES::detail::MemorySegment>> unpooledMemorySegments;
@@ -91,8 +92,8 @@ class UnpooledChunksManager
 
     /// Returns two pointers wrapped in a pair
     /// std::get<0>: the key that is being used in the unordered_map of a ChunkControlBlock
-    /// std::get<1>: pointer to the memory address that is large enough for neededSize
-    std::pair<uint8_t*, uint8_t*> allocateSpace(std::thread::id threadId, size_t neededSize, size_t alignment);
+    /// std::get<1>: pointer to the memory address that is large enough for payloadSize plus redzoneSize
+    std::pair<uint8_t*, uint8_t*> allocateSpace(std::thread::id threadId, size_t payloadSize, size_t redzoneSize, size_t alignment);
 
     std::shared_ptr<folly::Synchronized<UnpooledChunk>> getChunk(std::thread::id threadId);
 
