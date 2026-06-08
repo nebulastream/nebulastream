@@ -27,11 +27,11 @@
 #include <string_view>
 #include <unordered_map>
 
+#include <span>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <span>
 #include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
