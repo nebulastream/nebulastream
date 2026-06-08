@@ -29,9 +29,21 @@
 namespace NES
 {
 
+namespace
+{
+/// Arena allocations are advanced in multiples of 8 bytes so that every allocation starts on an 8-byte
+/// boundary. The arena previously handed out tightly packed, unaligned pointers, which is unsafe for typed or
+/// atomic access (e.g. ARM SIGBUSes on unaligned atomic access).
+constexpr size_t ARENA_ALLOCATION_ALIGNMENT = 8;
+constexpr size_t alignToArenaGranularity(const size_t size)
+{
+    return (size + (ARENA_ALLOCATION_ALIGNMENT - 1)) & ~(ARENA_ALLOCATION_ALIGNMENT - 1);
+}
+}
+
 std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
 {
-    /// Case 1
+    /// Case 1: larger than a pooled buffer -> dedicated unpooled buffer.
     if (bufferProvider->getBufferSize() < sizeInBytes)
     {
         const auto unpooledBufferOpt = bufferProvider->getUnpooledBuffer(sizeInBytes);
@@ -44,26 +56,18 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
         return unpooledBuffers.back().getAvailableMemoryArea().subspan(0, sizeInBytes);
     }
 
-    if (fixedSizeBuffers.empty())
+    /// Case 2: no current buffer, or the request does not fit -> pull a fresh fixed-size buffer.
+    if (fixedSizeBuffers.empty() || lastAllocationSize < currentOffset + sizeInBytes)
     {
         fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
-        lastAllocationSize = bufferProvider->getBufferSize();
-        currentOffset += sizeInBytes;
-        return fixedSizeBuffers.back().getAvailableMemoryArea().subspan(0, sizeInBytes);
+        currentOffset = 0;
     }
 
-    /// Case 2
-    if (lastAllocationSize < currentOffset + sizeInBytes)
-    {
-        fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
-        this->currentOffset = 0;
-    }
-
-    /// Case 3
+    /// Case 3: bump-allocate from the current buffer, advancing the cursor by the aligned size.
     auto& lastBuffer = fixedSizeBuffers.back();
     lastAllocationSize = lastBuffer.getBufferSize();
     const auto result = lastBuffer.getAvailableMemoryArea().subspan(currentOffset, sizeInBytes);
-    currentOffset += sizeInBytes;
+    currentOffset += alignToArenaGranularity(sizeInBytes);
     return result;
 }
 
