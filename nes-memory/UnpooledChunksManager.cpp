@@ -139,19 +139,19 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
 {
     const auto threadId = std::this_thread::get_id();
 
-    /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
-    const auto alignedBufferSizePlusControlBlock = alignBufferSize(neededSize + sizeof(detail::BufferControlBlock), alignment);
+    /// The control block is heap-allocated (the wrapped MemorySegment constructor), so unlike the pooled
+    /// layout no space for it is reserved in the chunk; reserving sizeof(BufferControlBlock) bytes per buffer
+    /// would only waste memory. We must keep the data region aligned (ARM SIGBUSes on unaligned atomic access).
+    const auto alignedBufferSize = alignBufferSize(neededSize, alignment);
 
     /// Getting space from the unpooled chunks manager
     const auto& [localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer]
-        = this->allocateSpace(threadId, alignedBufferSizePlusControlBlock, alignment);
+        = this->allocateSpace(threadId, alignedBufferSize, alignment);
 
     /// Creating a new memory segment, and adding it to the unpooledMemorySegments
-    const auto alignedBufferSize = alignBufferSize(neededSize, alignment);
-    const auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), alignment);
     const auto chunk = this->getChunk(threadId);
     auto memSegment = std::make_unique<detail::MemorySegment>(
-        localMemoryForNewTupleBuffer + controlBlockSize,
+        localMemoryForNewTupleBuffer,
         alignedBufferSize,
         [copyOfMemoryResource = this->memoryResource,
          copyOLastChunkPtr = localKeyForUnpooledBufferChunk,
