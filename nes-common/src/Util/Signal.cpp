@@ -62,16 +62,10 @@ const char* signalName(int signal)
 }
 }
 
-#if defined(__has_feature)
-    #if __has_feature(address_sanitizer)
-        #define NES_BUILT_WITH_ASAN 1
-    #endif
-#endif
-
 void NES::setupSignalHandlers()
 {
     cpptrace::register_terminate_handler();
-#ifdef NES_BUILT_WITH_ASAN
+#if defined(__has_feature) && __has_feature(address_sanitizer)
     /// When built with AddressSanitizer, do NOT install our own SIGSEGV/SIGFPE handlers.
     /// ASan installs its own handler that produces a precise report (faulting address, read/write,
     /// and — for poisoned-heap accesses — allocation/free stacks). Overriding it with our cpptrace
