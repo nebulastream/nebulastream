@@ -26,6 +26,8 @@
 #include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <span>
+#include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
@@ -34,7 +36,7 @@ namespace NES
 
 static const auto SYSTEST_FILE_PATH_PARAMETER = Identifier::parse("FILE_PATH");
 
-class FileSource final : public Source
+class FileSource final : public RawSource
 {
 public:
     static constexpr std::string_view NAME = "File";
@@ -47,8 +49,6 @@ public:
     FileSource(FileSource&&) = delete;
     FileSource& operator=(FileSource&&) = delete;
 
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
-
     /// Open file socket.
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     /// Close file socket.
@@ -58,6 +58,9 @@ public:
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+
+protected:
+    FillTupleBufferResult fillRaw(std::span<std::byte> out, const std::stop_token& stopToken) override;
 
 private:
     std::ifstream inputFile;

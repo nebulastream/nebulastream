@@ -36,6 +36,8 @@
 #include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <span>
+#include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -54,7 +56,8 @@ namespace NES
 {
 
 TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
-    : errBuffer{}
+    : RawSource(RawSource::requiredTailPaddingFor(sourceDescriptor.getInputFormatterDescriptor().getInputFormatterType()))
+    , errBuffer{}
     , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
     , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
     , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
@@ -204,12 +207,12 @@ void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult TCPSource::fillRaw(std::span<std::byte> out, const std::stop_token&)
 {
     try
     {
         size_t numReceivedBytes = 0;
-        while (fillBuffer(tupleBuffer, numReceivedBytes))
+        while (fillBuffer(out, numReceivedBytes))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
@@ -226,17 +229,16 @@ Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffe
     }
 }
 
-bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
+bool TCPSource::fillBuffer(std::span<std::byte> out, size_t& numReceivedBytes)
 {
     const auto flushIntervalTimerStart = std::chrono::system_clock::now();
     bool flushIntervalPassed = false;
     bool readWasValid = true;
 
-    const size_t rawTBSize = tupleBuffer.getBufferSize();
+    const size_t rawTBSize = out.size();
     while (not flushIntervalPassed and numReceivedBytes < rawTBSize)
     {
-        const ssize_t bufferSizeReceived
-            = read(sockfd, tupleBuffer.getAvailableMemoryArea().data() + numReceivedBytes, rawTBSize - numReceivedBytes);
+        const ssize_t bufferSizeReceived = read(sockfd, out.data() + numReceivedBytes, rawTBSize - numReceivedBytes);
         numReceivedBytes += bufferSizeReceived;
         if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
         {
