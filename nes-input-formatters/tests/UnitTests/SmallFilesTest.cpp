@@ -222,7 +222,7 @@ public:
         /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
         const auto [backpressureController, fileSource] = InputFormatterTestUtil::createFileSource(
             sourceCatalog, testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
-        fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
+        fileSource->start(QueryId::invalid(), InputFormatterTestUtil::getEmitFunction(rawBuffers), {});
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);
         INVARIANT(
             fileSource->tryStop(std::chrono::milliseconds(1000)) == SourceReturnType::TryStopResult::SUCCESS, "Failed to stop source.");

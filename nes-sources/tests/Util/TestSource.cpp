@@ -23,6 +23,8 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <ranges>
+#include <semaphore>
 #include <stop_token>
 #include <string>
 #include <thread>
@@ -31,6 +33,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -38,6 +41,8 @@
 #include <Util/Overloaded.hpp>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
+#include <SourceThreadHandle.hpp>
 
 namespace
 {
@@ -234,7 +239,7 @@ NES::getTestSource(BackpressureListener backpressureListener, OriginId originId,
     auto testSource = std::make_unique<TestSource>(originId, ctrl);
     SourceRuntimeConfiguration runtimeConfig{DEFAULT_NUMBER_OF_LOCAL_BUFFERS};
 
-    auto sourceHandle = std::make_unique<SourceHandle>(
+    auto sourceHandle = std::make_unique<SourceThreadHandle>(
         std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource));
     return {std::move(sourceHandle), ctrl};
 }

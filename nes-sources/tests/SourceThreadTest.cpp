@@ -81,7 +81,7 @@ struct RecordingEmitFunction
                 if constexpr (std::same_as<T, SourceReturnType::Data>)
                 {
                     /// Release old Buffer
-                    return SourceReturnType::Data{deepCopyBuffer(emitted.buffer, bm)};
+                    return SourceReturnType::Data{deepCopyBuffer(emitted.buffer, bm), {}};
                 }
                 else
                 {
@@ -125,7 +125,7 @@ void verify_non_blocking_start(
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_non_block_start");
     auto calledStart = std::chrono::high_resolution_clock::now();
-    EXPECT_TRUE(sourceThread.start(std::move(emitFn)));
+    EXPECT_TRUE(sourceThread.start(QueryId::invalid(), std::move(emitFn)));
     auto startDone = std::chrono::high_resolution_clock::now();
     EXPECT_LT(startDone - calledStart, DEFAULT_TIMEOUT)
         << "Starting a SourceThread should be non blocking. We estimate a block with around 100 ms";

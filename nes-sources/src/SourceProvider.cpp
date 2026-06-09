@@ -24,6 +24,7 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
+#include <SourceThreadHandle.hpp>
 
 namespace NES
 {
@@ -47,7 +48,7 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
             : defaultMaxInflightBuffers;
         SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
-        return std::make_unique<SourceHandle>(
+        return std::make_unique<SourceThreadHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());

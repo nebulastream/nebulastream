@@ -55,17 +55,69 @@ __itt_string_handle* asyncWriteCallbackTask = __itt_string_handle_create("Blocke
     return __itt_id_make(reinterpret_cast<void*>(pthread_self()), counter++);
 }
 
-SourceReturnType::EmitFunction emitFunction(
+coro::task<void> runAsyncEmitWork(
+    QueryId queryId, std::vector<std::shared_ptr<RunningQueryPlanNode>> successors, WorkEmitter& emitter, SourceReturnType::Data data)
+{
+    for (auto successor : successors)
+    {
+        co_await emitter.emitWorkAsync(
+            queryId,
+            std::move(successor),
+            std::move(data.buffer),
+            TaskCallback{TaskCallback::OnComplete([onComplete = std::move(data.onComplete)] { onComplete(); })});
+    }
+    co_return;
+}
+
+/// Free coroutine function so that captured state (queryId, successor, source) lives in the
+/// coroutine frame rather than in a lambda closure. A coroutine *lambda*'s closure object is not
+/// stored in the frame — the frame references it via the implicit `this`. If the closure owner
+/// (e.g. DataHandler::emitFunction) is destroyed while an emit chain is still suspended in
+/// backpressure or the admission queue, the captures become dangling.
+coro::task<void> runAsyncEmit(
     QueryId queryId,
-    size_t numberOfInflightBuffers,
+    std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
+    std::weak_ptr<RunningSource> source,
+    QueryLifetimeController& controller,
+    WorkEmitter& emitter,
+    OriginId sourceId,
+    SourceReturnType::SourceReturnType event)
+{
+    __itt_task_begin(sourceDomain, __itt_null, __itt_null, asyncWriteTask);
+    SCOPE_EXIT
+    {
+        __itt_task_end(sourceDomain);
+    };
+    co_await std::visit(
+        Overloaded{
+            [&](SourceReturnType::Data data)
+            { return runAsyncEmitWork(std::move(queryId), std::move(successors), emitter, std::move(data)); },
+            [&](SourceReturnType::EoS) { return controller.initializeSourceStopAsync(queryId, sourceId, source); },
+            [&](SourceReturnType::Error error)
+            { return controller.initializeSourceFailureAsync(queryId, sourceId, source, std::move(error.ex)); }},
+        std::move(event));
+}
+
+SourceReturnType::AsyncEmitFunction asyncEmit(
+    QueryId queryId,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    auto availableBuffer = std::make_shared<std::counting_semaphore<>>(
-        std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
-    return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
+    return [&controller, successor = std::move(successors), source = std::move(source), &emitter, queryId](
+               const OriginId sourceId, SourceReturnType::SourceReturnType event)
+    { return runAsyncEmit(queryId, successor, source, controller, emitter, sourceId, std::move(event)); };
+}
+
+SourceReturnType::EmitFunction emitFunction(
+    QueryId queryId,
+    std::weak_ptr<RunningSource> source,
+    std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
+    QueryLifetimeController& controller,
+    WorkEmitter& emitter)
+{
+    return [&controller, successors = std::move(successors), source, &emitter, queryId](
                const OriginId sourceId,
                SourceReturnType::SourceReturnType event,
                const std::stop_token& stopToken) -> SourceReturnType::EmitResult
@@ -77,9 +129,6 @@ SourceReturnType::EmitFunction emitFunction(
                     for (const auto& successor : successors)
                     {
                         {
-                            /// release the semaphore in case the source wants to terminate
-                            const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
-                            availableBuffer->acquire();
                             if (stopToken.stop_requested())
                             {
                                 return SourceReturnType::EmitResult::STOP_REQUESTED;
@@ -91,7 +140,7 @@ SourceReturnType::EmitFunction emitFunction(
                             queryId,
                             successor,
                             data.buffer,
-                            TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })},
+                            TaskCallback{TaskCallback::OnComplete([callback = std::move(data.onComplete)] { callback(); })},
                             PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                             if (stopToken.stop_requested())
@@ -147,13 +196,14 @@ std::shared_ptr<RunningSource> RunningSource::create(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    const auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(onSourceStopped), std::move(onSourceFailure)));
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
-        runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+        auto sync = emitFunction(queryId, runningSource, successors, controller, emitter);
+        auto async = asyncEmit(std::move(queryId), runningSource, std::move(successors), controller, emitter);
+        runningSource->source->start(std::move(queryId), std::move(sync), std::move(async));
     }
     return runningSource;
 }
@@ -164,10 +214,26 @@ RunningSource::~RunningSource()
     {
         LogContext logContext("Source", source->getSourceId());
         ENGINE_LOG_DEBUG("Stopping Running Source");
-        if (source->tryStop(std::chrono::milliseconds(0)) == SourceReturnType::TryStopResult::TIMEOUT)
+        /// NOTE: This effectively blocks the current thread... The proper solution is to ensure that the RunningSource is
+        ///       never destructed before it has been stopped. A stopping query plan may still have running sources, which
+        ///       at least have been instructed to stop.
+
+        auto backoff = std::chrono::milliseconds(1);
+        for (size_t i = 0; i < 20; i++)
         {
-            ENGINE_LOG_DEBUG("Source was requested to stop. Stop will happen asynchronously.");
+            if (source->tryStop(std::chrono::milliseconds(0)) == SourceReturnType::TryStopResult::TIMEOUT)
+            {
+                NES_DEBUG("Shit not working");
+                std::this_thread::sleep_for(backoff);
+                backoff *= 2;
+                backoff = std::min(backoff, std::chrono::milliseconds(250));
+            }
+            else
+            {
+                return;
+            }
         }
+        INVARIANT(false, "Source did not stop in time the source does not seem to respect the stop request");
     }
 }
 

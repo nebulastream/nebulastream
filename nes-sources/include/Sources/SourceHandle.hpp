@@ -16,60 +16,42 @@
 
 #include <chrono>
 #include <cstddef>
-#include <memory>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Source.hpp>
+#include <ostream>
+#include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <BackpressureChannel.hpp>
+
+#include "QueryId.hpp"
 
 namespace NES
 {
-
-/// Hides SourceThread implementation.
-class SourceThread;
 
 struct SourceRuntimeConfiguration
 {
     size_t inflightBufferLimit;
 };
 
-/// Interface class to handle sources.
-/// Created from a source descriptor via the SourceProvider.
-/// start(): The underlying source starts consuming data. All queries using the source start processing.
-/// stop(): The underlying source stops consuming data, notifying the QueryEngine,
-/// that decides whether to keep queries, which used the particular source, alive.
+/// Abstract interface for source lifecycle management.
+/// Concrete implementations: SourceThreadHandle (C++ sources) and AsyncSourceHandle (Tokio/Rust sources).
 class SourceHandle
 {
 public:
-    explicit SourceHandle(
-        BackpressureListener backpressureListener,
-        OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        SourceRuntimeConfiguration configuration,
-        std::shared_ptr<AbstractBufferProvider> bufferPool,
-        std::unique_ptr<Source> sourceImplementation);
+    virtual ~SourceHandle() = default;
 
-    ~SourceHandle();
+    virtual bool
+    start(QueryId queryId, SourceReturnType::EmitFunction&& emitFunction, SourceReturnType::AsyncEmitFunction&& asyncEmitFunction)
+        = 0;
+    virtual void stop() = 0;
+    [[nodiscard]] virtual SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) = 0;
+    [[nodiscard]] virtual OriginId getSourceId() const = 0;
+    [[nodiscard]] virtual const SourceRuntimeConfiguration& getRuntimeConfiguration() const = 0;
 
-    bool start(SourceReturnType::EmitFunction&& emitFunction) const;
-    void stop() const;
+    friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle) { return sourceHandle.toString(out); }
 
-    /// Tries to stop the source within a given timeout.
-    [[nodiscard]] NES::SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) const;
-
-    friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
-
-    /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-    [[nodiscard]] OriginId getSourceId() const;
-
-    const SourceRuntimeConfiguration& getRuntimeConfiguration() const { return configuration; }
-
-private:
-    SourceRuntimeConfiguration configuration;
-    /// Used to print the data source via the overloaded '<<' operator.
-    std::unique_ptr<SourceThread> sourceThread;
+protected:
+    virtual std::ostream& toString(std::ostream& os) const = 0;
 };
 
 }

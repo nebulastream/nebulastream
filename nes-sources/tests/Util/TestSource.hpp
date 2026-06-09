@@ -33,6 +33,7 @@
 #include <Util/Overloaded.hpp>
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
+#include <BackpressureChannel.hpp>
 
 namespace NES
 {

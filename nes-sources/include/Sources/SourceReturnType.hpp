@@ -19,6 +19,7 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <coro/task.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::SourceReturnType
@@ -32,6 +33,9 @@ struct Error
 struct Data
 {
     TupleBuffer buffer;
+    /// Optional per-buffer callback invoked when the pipeline finishes processing
+    /// this buffer. Used by sources to implement inflight limiting (semaphore release).
+    std::function<void()> onComplete;
 };
 
 struct EoS
@@ -53,5 +57,6 @@ enum class EmitResult : uint8_t
 
 using SourceReturnType = std::variant<Error, Data, EoS>;
 using EmitFunction = std::function<EmitResult(OriginId, SourceReturnType, const std::stop_token&)>;
+using AsyncEmitFunction = std::function<coro::task<void>(OriginId, SourceReturnType)>;
 
 }

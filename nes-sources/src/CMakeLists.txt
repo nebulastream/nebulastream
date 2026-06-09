@@ -21,7 +21,7 @@ add_source_files(nes-sources-validation
 add_source_files(nes-sources
         SourceThread.cpp
         Source.cpp
-        SourceHandle.cpp
+        SourceThreadHandle.cpp
         SourceProvider.cpp
         SourceDataProvider.cpp
 )

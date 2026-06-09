@@ -48,6 +48,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/sstream.h>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <TestTaskQueue.hpp>
 #include <Util.hpp>
