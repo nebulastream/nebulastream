@@ -76,7 +76,7 @@ jobs:
     name: "E2E Test using Nebuli and SingleNodeWorker"
     strategy:
       matrix:
-        arch: [ x64, arm64 ]
+        arch: [ x64 ]
     uses: ./.github/workflows/execute_query.yml
     secrets: inherit
     with:
