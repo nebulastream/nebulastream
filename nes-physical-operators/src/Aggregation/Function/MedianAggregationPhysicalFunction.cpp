@@ -20,8 +20,8 @@
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Aggregation/Function/Detail/TypedMedianPrimitives.hpp>
 #include <DataTypes/DataType.hpp>
-#include <Functions/PhysicalFunction.hpp>
 #include <DataTypes/VarVal.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
@@ -135,8 +135,7 @@ void MedianAggregationPhysicalFunction::combine(
     using AggregationDetail::TypedMedian;
     const auto lhs = static_cast<nautilus::val<int8_t*>>(aggregationState1);
     const auto rhs = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    dispatchOnType(
-        inputType, [&]<typename T, bool Nullable>() { TypedMedian<T, Nullable>::combine(lhs, rhs); });
+    dispatchOnType(inputType, [&]<typename T, bool Nullable>() { TypedMedian<T, Nullable>::combine(lhs, rhs); });
 }
 
 void MedianAggregationPhysicalFunction::lower(
@@ -163,16 +162,14 @@ void MedianAggregationPhysicalFunction::reset(const nautilus::val<AggregationSta
 {
     using AggregationDetail::TypedMedian;
     const auto statePtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    dispatchOnType(
-        inputType, [&]<typename T, bool Nullable>() { TypedMedian<T, Nullable>::reset(statePtr); });
+    dispatchOnType(inputType, [&]<typename T, bool Nullable>() { TypedMedian<T, Nullable>::reset(statePtr); });
 }
 
 void MedianAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
 {
     using AggregationDetail::TypedMedian;
     const auto statePtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    dispatchOnType(
-        inputType, [&]<typename T, bool Nullable>() { TypedMedian<T, Nullable>::cleanup(statePtr); });
+    dispatchOnType(inputType, [&]<typename T, bool Nullable>() { TypedMedian<T, Nullable>::cleanup(statePtr); });
 }
 
 size_t MedianAggregationPhysicalFunction::getSizeOfStateInBytes() const
@@ -186,10 +183,7 @@ AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGenerat
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<MedianAggregationPhysicalFunction>(
-        std::move(arguments.inputType),
-        std::move(arguments.resultType),
-        arguments.inputFunction,
-        arguments.resultFieldIdentifier);
+        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }

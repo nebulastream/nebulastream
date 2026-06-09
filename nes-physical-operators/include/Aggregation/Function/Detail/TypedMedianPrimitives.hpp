@@ -32,51 +32,61 @@ namespace NES::AggregationDetail
 /// Short stable mnemonic per numeric type, used to mint the NautilusFunction symbol name.
 template <typename T>
 constexpr const char* medianTypeMnemonic();
+
 template <>
 constexpr const char* medianTypeMnemonic<int8_t>()
 {
     return "i8";
 }
+
 template <>
 constexpr const char* medianTypeMnemonic<int16_t>()
 {
     return "i16";
 }
+
 template <>
 constexpr const char* medianTypeMnemonic<int32_t>()
 {
     return "i32";
 }
+
 template <>
 constexpr const char* medianTypeMnemonic<int64_t>()
 {
     return "i64";
 }
+
 template <>
 constexpr const char* medianTypeMnemonic<uint8_t>()
 {
     return "u8";
 }
+
 template <>
 constexpr const char* medianTypeMnemonic<uint16_t>()
 {
     return "u16";
 }
+
 template <>
 constexpr const char* medianTypeMnemonic<uint32_t>()
 {
     return "u32";
 }
+
 template <>
 constexpr const char* medianTypeMnemonic<uint64_t>()
 {
     return "u64";
 }
+
 template <>
 constexpr const char* medianTypeMnemonic<float>()
 {
     return "f32";
 }
+
 template <>
 constexpr const char* medianTypeMnemonic<double>()
 {
@@ -179,10 +189,7 @@ struct TypedMedian<T, false>
 {
     static constexpr uint64_t vectorOffset = 0;
 
-    static void liftImpl(
-        nautilus::val<int8_t*> state,
-        nautilus::val<T> value,
-        nautilus::val<AbstractBufferProvider*> bufferProvider)
+    static void liftImpl(nautilus::val<int8_t*> state, nautilus::val<T> value, nautilus::val<AbstractBufferProvider*> bufferProvider)
     {
         auto pvPtr = static_cast<nautilus::val<PagedVector*>>(state);
         nautilus::invoke(appendValueToPagedVector<T>, pvPtr, value, bufferProvider);

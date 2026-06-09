@@ -66,6 +66,7 @@ public:
     /// entries in the page are live. Used by typed-buffer consumers (e.g. MEDIAN) that own the page layout
     /// and need direct slot access instead of going through a schema-based TupleBufferRef.
     [[nodiscard]] const TupleBuffer& getPage(size_t idx) const { return pages[idx].buffer; }
+
     [[nodiscard]] TupleBuffer& getLastPageMutable() { return pages.getLastPageMutable(); }
 
 private:
