@@ -1,0 +1,54 @@
+# name: GeoSpatialTypes.test
+# description: Exercises the GeoSpatial DataType plugins (Point, Line, Circle).
+# Constructs each nominal STRUCT from raw FLOAT64 columns, projects them through
+# the JSON output formatter, and validates Point + Point dispatching to the
+# pairwise-add PhysicalFunction registered by the Point plugin. Circle is a
+# nested STRUCT (`center` is itself a `Point`), so this also covers struct-in-struct
+# construction end-to-end.
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE geo(x1 FLOAT64 NOT NULL, y1 FLOAT64 NOT NULL, x2 FLOAT64 NOT NULL, y2 FLOAT64 NOT NULL, r FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR geo TYPE File;
+ATTACH INLINE
+1.0,2.0,10.0,20.0,5.0
+3.0,4.0,30.0,40.0,1.5
+0.0,0.0,-1.0,-2.0,7.25
+
+# Show a Point built from two FLOAT64 columns.
+SELECT Point(x1, y1) AS p FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"P":{"x":1.0,"y":2.0}}
+{"P":{"x":3.0,"y":4.0}}
+{"P":{"x":0.0,"y":0.0}}
+
+# Show a Line Ax + By + C = 0 built from three columns / literals.
+SELECT Line(x1, y1, FLOAT64(1.0)) AS l FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"L":{"A":1.0,"B":2.0,"C":1.0}}
+{"L":{"A":3.0,"B":4.0,"C":1.0}}
+{"L":{"A":0.0,"B":0.0,"C":1.0}}
+
+# Show a Circle: nested STRUCT whose `center` field is itself a Point.
+SELECT Circle(Point(x1, y1), r) AS c FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"C":{"center":{"x":1.0,"y":2.0},"radius":5.0}}
+{"C":{"center":{"x":3.0,"y":4.0},"radius":1.5}}
+{"C":{"center":{"x":0.0,"y":0.0},"radius":7.25}}
+
+# Point + Point dispatches to the Add_Point_Point PhysicalFunction
+# (pairwise field add: x+x, y+y).
+SELECT Point(x1, y1) + Point(x2, y2) AS addedpoint FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"ADDEDPOINT":{"x":11.0,"y":22.0}}
+{"ADDEDPOINT":{"x":33.0,"y":44.0}}
+{"ADDEDPOINT":{"x":-1.0,"y":-2.0}}
+
+# circle_area(Circle) dispatches to CircleAreaPhysicalFunction, which reads the
+# `radius` field out of the (nested) Circle STRUCT and returns pi * r^2 as FLOAT64.
+SELECT circle_area(Circle(Point(x1, y1), r)) AS area FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"AREA":78.539816}
+{"AREA":7.068583}
+{"AREA":165.129964}
+
+
