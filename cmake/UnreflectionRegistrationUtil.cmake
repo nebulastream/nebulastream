@@ -118,7 +118,12 @@ function(add_unreflection_plugin registry plugin_name)
         set(include_path "${rel_dir}/${header_basename}")
     endif()
 
-    set(glue_path "${CMAKE_CURRENT_BINARY_DIR}/registry/generated/${plugin_name}${registry}_unreflector.cpp")
+    # Disambiguate the generated TU and its self-registration symbol by the registry key
+    # rather than the plugin name: the key is unique within a registry, which lets a single
+    # C++ type register under several serialized names (e.g. ExtractFromTimestamp as Day_Of,
+    # Month_Of, Year_Of). For the common case where KEY is omitted, registry_key == plugin_name
+    # and the generated names are unchanged.
+    set(glue_path "${CMAKE_CURRENT_BINARY_DIR}/registry/generated/${registry_key}${registry}_unreflector.cpp")
     file(WRITE ${glue_path}
 "/// Auto-generated unreflector glue for ${registry}::${registry_key}.
 /// Self-registers at static initialization time; kept alive by --whole-archive on the glue sub-library.
@@ -131,7 +136,7 @@ namespace NES
 {
 namespace
 {
-const auto registered_${plugin_name}_${registry} = [] {
+const auto registered_${registry_key}_${registry} = [] {
     const bool registered = ${registry}UnreflectionRegistry::instance().addUnreflectorEntry(
         \"${registry_key}\",
         [](const Reflected& data, const ReflectionContext& context) {

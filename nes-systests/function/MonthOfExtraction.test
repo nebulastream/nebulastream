@@ -1,0 +1,36 @@
+# name: Month extraction from Unix timestamp
+# description: Checks if the extraction of the month from unix timestamps (ms) works
+# groups: [Function]
+
+CREATE LOGICAL SOURCE milliSecondsStream(id UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR milliSecondsStream TYPE File;
+ATTACH INLINE
+1,0
+2,1000
+3,1234
+4,1639494303000
+5,1771243200000
+6,253402300799999
+7,
+
+# different data type than a uint64_t
+CREATE LOGICAL SOURCE WrongDataType(timestamp VARSIZED);
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+ATTACH INLINE
+1970-01-01T00:00:00.000Z
+
+# Error, wrong data type
+SELECT MONTH_OF(timestamp) AS MONTH_IN_STREAM FROM WrongDataType INTO FILE();
+----
+Error 2006
+
+
+SELECT MONTH_OF(timestamp) AS MONTH_IN_STREAM FROM milliSecondsStream INTO FILE();
+----
+1
+1
+1
+12
+2
+12
+NULL
