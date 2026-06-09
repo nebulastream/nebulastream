@@ -1,0 +1,28 @@
+# name: sources/Generator_InlineSource.test
+# description: Creating Generator sources inline
+# groups: [Sources]
+
+
+
+CREATE SINK generator_output(id UINT64 NOT NULL, field2 UINT64 NOT NULL) TYPE File;
+
+SELECT ID, FIELD2
+FROM Generator(
+    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    1000000 AS `SOURCE`.MAX_RUNTIME_MS,
+    1 AS `SOURCE`.SEED,
+    'CSV' AS INPUT_FORMATTER.`TYPE`,
+    'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1' AS `SOURCE`.GENERATOR_SCHEMA,
+    SCHEMA(id UINT64 NOT NULL, field2 UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
+INTO generator_output;
+----
+0 0
+1 1
+2 2
+3 3
+4 4
+5 5
+6 5
+7 5
+8 5
+9 5

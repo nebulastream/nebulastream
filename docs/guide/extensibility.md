@@ -21,11 +21,21 @@ Currently, they are organized into two tiers:
 2. Internal plugins, located in the core nes-* directories, and enabled in every build.
 
 ### Optional Plugins
-To enable an optional plugin, open nes-plugins/CMakeLists.txt and set the desired plugin’s property like this:
-```cmake
-activate_optional_plugin("Sources/TCPSource" ON)
+Each optional plugin is controlled by a CMake option (all `ON` by default).
+To disable a plugin, pass its option at configure time:
+```shell
+cmake -B build -DNES_PLUGIN_TCP_SOURCE=OFF
 ```
-This includes the plugin in the NebulaStream build.
+To see all available plugin options (and other CMake options) along with their current values:
+```shell
+cmake -LH build | grep -A1 NES_PLUGIN
+```
+Internally, `nes-plugins/CMakeLists.txt` wires these options to `activate_optional_plugin()`:
+```cmake
+option(NES_PLUGIN_TCP_SOURCE "Enable TCP Source plugin" ON)
+activate_optional_plugin("Sources/TCPSource" ${NES_PLUGIN_TCP_SOURCE})
+```
+
 Optional plugins can be added as libraries using the following structure:
 ```cmake
 add_plugin_as_library(<PLUGIN_NAME> <COMPONENT_NAME> <REGISTRY_NAME> <LIBRARY_NAME> <SOURCE_FILES>)
@@ -44,6 +54,14 @@ Where:
 
 Plugins may declare additional dependencies, which will be exclusive to the plugin library.
 These can be added, for example, using `FetchContent` in the plugin's root `CMakeLists.txt`.
+
+`add_plugin_as_library` automatically looks for a `systests/` directory next to the plugin's `CMakeLists.txt`.
+If found, it registers that directory so the systest runner discovers the plugin's `.test` files.
+If no `systests/` directory exists, a status message is printed during configuration.
+
+For in-repo optional plugins, prefer placing plugin-dependent `.test` files under `nes-systests/plugins/<category>/`, tagged with the plugin's systest group (see `docs/development/systests.md`). 
+This keeps tests un-fragmented, lets a single test depend on multiple plugins, and lets disabled plugins exclude their tests via the generated `disable_current.yaml`.
+Extend the plugin→group map in `nes-plugins/CMakeLists.txt` when a new optional plugin ships tests.
 
 **When creating a new plugin, add it to nes-plugins under the correct prefix.**
 For example, if you’re introducing XML format support, place it under: `nes-plugins/InputFormatters/XmlInputFormatter`.

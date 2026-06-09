@@ -32,3 +32,7 @@ add_plugin(File FileData nes-sources FileSource.cpp)
 
 add_plugin(Network Source nes-sources NetworkSource.cpp)
 add_plugin(Network SourceValidation nes-sources NetworkSource.cpp)
+
+set(GENERATOR_SOURCE_FILES GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
+add_plugin(Generator Source nes-sources ${GENERATOR_SOURCE_FILES})
+add_plugin(Generator SourceValidation nes-sources ${GENERATOR_SOURCE_FILES})

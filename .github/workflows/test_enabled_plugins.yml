@@ -1,0 +1,81 @@
+name: Test Enabled Plugins
+description: |
+  Builds and tests NebulaStream with only specific plugins enabled while all
+  others are disabled. This verifies that each plugin works correctly in isolation.
+  Large tests are enabled to maximize coverage.
+
+  The matrix is auto-discovered by .github/ci/generate_plugins_matrix.py from
+  the option(NES_PLUGIN_*) declarations in nes-plugins/CMakeLists.txt — adding
+  a new plugin requires no edits to this workflow.
+
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      head_sha:
+        type: string
+        required: true
+        description: "head_sha of the branch"
+
+jobs:
+  generate-matrix:
+    name: Generate Enabled-Plugin Matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - id: gen
+        run: python3 .github/ci/generate_plugins_matrix.py --mode enabled --output-github
+
+  test-enabled-plugin:
+    needs: [ generate-matrix ]
+    runs-on: [ self-hosted, linux, X64, Build ]
+    name: "Enabled plugins: ${{ matrix.name }}"
+    container:
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libstdcxx-none
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      env:
+        MOLD_JOBS: 1
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: "true"
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      options: --user root
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: Configure NebulaStream
+        run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON ${{ matrix.arg }}
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Run Tests
+        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-enabled-plugins-${{ matrix.name }}
+          path: |
+            build/**/*.log
+            build/**/*.stats
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !cancelled() && !github.event.act }}
+        with:
+          name: junit-enabled-plugins-${{ matrix.name }}.xml
+          path: /junit.xml

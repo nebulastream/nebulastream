@@ -330,7 +330,13 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         return TestFileMap{{testfile.file, testfile}};
     }
 
-    auto testMap = discoverTestsRecursively(config.testsDiscoverDir.getValue(), config.testFileExtension.getValue());
+    TestFileMap testMap;
+    for (const auto& discoverDir : config.testDiscoverDirs.getValues())
+    {
+        auto tests = discoverTestsRecursively(discoverDir.getValue(), config.testFileExtension.getValue());
+        testMap.merge(tests);
+    }
+
     std::erase_if(
         testMap,
         [&](const auto& nameAndFile)

@@ -1,6 +1,6 @@
 # name: formatter/JSON/SIMDJSON.test
 # description: Queries to test behavior specific to the SIMDJSON input formatter
-# groups: [json, large]
+# groups: [Formatter, JSON, large]
 
 # Background: The SIMDJSON ondemand parser requires a batch_size configuration that must not be exceeded
 # Test: The SIMDJSON input format indexer throws the correct exception if it receives a buffer larger than its batch_size

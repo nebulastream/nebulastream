@@ -16,13 +16,37 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 #       we apply the same care and test coverage requirements to these plugins that we apply to the rest of the system.
 
 # activate optional plugins and add the path "THE/PATH" to the build (adding all dependencies of the optional plugin)
-activate_optional_plugin("Sources/TCPSource" ON)
-activate_optional_plugin("Sources/GeneratorSource" ON)
-activate_optional_plugin("Sinks/VoidSink" ON)
-activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
-activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
+option(NES_PLUGIN_TCP_SOURCE "Enable TCP Source plugin" ON)
+option(NES_PLUGIN_VOID_SINK "Enable Void Sink plugin" ON)
+option(NES_PLUGIN_JSON_INPUT_FORMATTER "Enable JSON Input Formatter plugin" ON)
+option(NES_PLUGIN_JSON_OUTPUT_FORMATTER "Enable JSON Output Formatter plugin" ON)
 
-if (NES_ENABLES_TESTS)
-  # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
-  activate_optional_plugin("Sinks/ChecksumSink" ON)
-endif()
+activate_optional_plugin("Sources/TCPSource" ${NES_PLUGIN_TCP_SOURCE})
+activate_optional_plugin("Sinks/VoidSink" ${NES_PLUGIN_VOID_SINK})
+activate_optional_plugin("InputFormatters/JSONInputFormatter" ${NES_PLUGIN_JSON_INPUT_FORMATTER})
+activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ${NES_PLUGIN_JSON_OUTPUT_FORMATTER})
+
+# Maps each optional plugin to the systest group its .test files are tagged with. A plugin-dependent
+# systest under nes-systests/plugins/ carries its plugin's group(s); when the plugin is disabled the
+# group is written into the generated disable_current.yaml (see nes-systests/systest/CMakeLists.txt) so
+# the systest runner excludes those tests. This is the only place that knows the OFF plugins, because a
+# disabled plugin's subdirectory is never added. Extend this map when adding a new optional plugin that
+# ships systests.
+set(NES_PLUGIN_SYSTEST_GROUP_MAP
+        NES_PLUGIN_TCP_SOURCE TCP
+        NES_PLUGIN_VOID_SINK Void
+        NES_PLUGIN_JSON_INPUT_FORMATTER JSON
+        NES_PLUGIN_JSON_OUTPUT_FORMATTER JSONOutput
+)
+set(disabledPluginGroups "")
+list(LENGTH NES_PLUGIN_SYSTEST_GROUP_MAP mapLength)
+math(EXPR lastPairIndex "${mapLength} - 1")
+foreach (optionIndex RANGE 0 ${lastPairIndex} 2)
+    math(EXPR groupIndex "${optionIndex} + 1")
+    list(GET NES_PLUGIN_SYSTEST_GROUP_MAP ${optionIndex} pluginOption)
+    list(GET NES_PLUGIN_SYSTEST_GROUP_MAP ${groupIndex} pluginGroup)
+    if (NOT ${pluginOption})
+        list(APPEND disabledPluginGroups ${pluginGroup})
+    endif ()
+endforeach ()
+set_property(GLOBAL PROPERTY NES_DISABLED_PLUGIN_GROUPS "${disabledPluginGroups}")

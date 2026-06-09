@@ -1,6 +1,6 @@
 # name: VarsizedJSON.test
 # description: Use json with variable sized field types. Tests output formatters ability to allocated child buffers for oversized formatted records
-# groups: [JSON]
+# groups: [JSONOutput]
 
 CREATE LOGICAL SOURCE jsonSource(firstField VARSIZED, secondField VARSIZED);
 CREATE PHYSICAL SOURCE FOR jsonSource TYPE File;
