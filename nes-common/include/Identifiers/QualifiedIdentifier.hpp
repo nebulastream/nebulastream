@@ -390,7 +390,13 @@ inline Identifier::operator QualifiedIdentifierBase<std::dynamic_extent>() const
 template <size_t Extent>
 struct Reflector<QualifiedIdentifierBase<Extent>>
 {
-    Reflected operator()(const QualifiedIdentifierBase<Extent>& identifierList) const { return reflect(fmt::format("{}", identifierList)); }
+    /// Reflect the individual Identifiers rather than a formatted string: each Identifier carries its own
+    /// case-sensitivity flag (via Reflector<Identifier>), whereas a formatted string strips the quotes of
+    /// case-sensitive identifiers and uppercases case-insensitive ones, losing that flag on the round-trip.
+    Reflected operator()(const QualifiedIdentifierBase<Extent>& identifierList) const
+    {
+        return reflect(identifierList.identifiers | std::ranges::to<std::vector<Identifier>>());
+    }
 };
 
 template <>
