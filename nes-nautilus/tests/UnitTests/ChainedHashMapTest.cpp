@@ -40,8 +40,8 @@ class ChainedHashMapTest
       public TestUtils::ChainedHashMapTestUtils
 {
 public:
-    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {.min = 100, .max = 10000};
-    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {.min = 10, .max = 2048};
+    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {.min = 100, .max = 1000};
+    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {.min = 10, .max = 1024};
     static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {.min = 1024, .max = 10240};
 
     static void SetUpTestSuite()

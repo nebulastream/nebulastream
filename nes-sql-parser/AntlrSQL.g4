@@ -359,7 +359,8 @@ predicate
 
 
 valueExpression
-    : (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
+    : CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
+    | (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'  #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
     | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
@@ -430,6 +431,7 @@ ASC: 'ASC' | 'asc';
 AT: 'AT';
 BETWEEN: 'BETWEEN' | 'between';
 BY: 'BY' | 'by';
+CAST: 'CASTTOTYPE' | 'casttotype';
 COMMENT: 'COMMENT';
 CUBE: 'CUBE';
 DELETE: 'DELETE';
