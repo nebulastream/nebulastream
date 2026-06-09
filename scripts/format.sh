@@ -72,6 +72,13 @@ fi
 if [ -v CI ]
 then
     [ -v DISTANCE_MERGE_BASE ] || log_fatal Running in CI but DISTANCE_MERGE_BASE not set
+    # A negative value is the sentinel for "commit count unknown" (e.g. merge_group runs,
+    # which have no pull_request payload). In that case the full history is fetched, so we
+    # compute the distance to the base branch ourselves, just like the local path below.
+    if [ "$DISTANCE_MERGE_BASE" -lt 0 ]
+    then
+        DISTANCE_MERGE_BASE=$(git rev-list --count origin/main..HEAD)
+    fi
 else
     DISTANCE_MERGE_BASE=$(git rev-list --count origin/main..HEAD)
 fi
