@@ -1,0 +1,200 @@
+# name: theta_join/ThetaJoinWithDifferentDataTypes.test
+# description: Theta join predicates across different numeric types: INT8/16/32/64, UINT8/16/32/64, FLOAT32/64
+# groups: [WindowOperators, Join, CompilationIntensive]
+
+CREATE LOGICAL SOURCE stream1(i8_s1 INT8 NOT NULL, i16_s1 INT16 NOT NULL, i32_s1 INT32 NOT NULL, i64_s1 INT64 NOT NULL, u8_s1 UINT8 NOT NULL, u16_s1 UINT16 NOT NULL, u32_s1 UINT32 NOT NULL, u64_s1 UINT64 NOT NULL, f32_s1 FLOAT32 NOT NULL, f64_s1 FLOAT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream1 TYPE File;
+ATTACH INLINE
+1,2,3,4,5,6,7,8,9,10,100
+
+CREATE LOGICAL SOURCE stream2(i8_s2 INT8 NOT NULL, i16_s2 INT16 NOT NULL, i32_s2 INT32 NOT NULL, i64_s2 INT64 NOT NULL, u8_s2 UINT8 NOT NULL, u16_s2 UINT16 NOT NULL, u32_s2 UINT32 NOT NULL, u64_s2 UINT64 NOT NULL, f32_s2 FLOAT32 NOT NULL, f64_s2 FLOAT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+1,1,1,1,1,1,1,1,1,1,500
+2,2,2,2,2,2,2,2,2,2,501
+3,3,3,3,3,3,3,3,3,3,502
+4,4,4,4,4,4,4,4,4,4,503
+5,5,5,5,5,5,5,5,5,5,504
+6,6,6,6,6,6,6,6,6,6,505
+7,7,7,7,7,7,7,7,7,7,506
+8,8,8,8,8,8,8,8,8,8,507
+9,9,9,9,9,9,9,9,9,9,508
+10,10,10,10,10,10,10,10,10,10,509
+
+CREATE SINK sinkStream1Stream2(stream1stream2.start UINT64 NOT NULL, stream1stream2.end UINT64 NOT NULL, stream1.i8_s1 INT8 NOT NULL, stream1.i16_s1 INT16 NOT NULL, stream1.i32_s1 INT32 NOT NULL, stream1.i64_s1 INT64 NOT NULL, stream1.u8_s1 UINT8 NOT NULL, stream1.u16_s1 UINT16 NOT NULL, stream1.u32_s1 UINT32 NOT NULL, stream1.u64_s1 UINT64 NOT NULL, stream1.f32_s1 FLOAT32 NOT NULL, stream1.f64_s1 FLOAT64 NOT NULL, stream1.ts UINT64 NOT NULL, stream2.i8_s2 INT8 NOT NULL, stream2.i16_s2 INT16 NOT NULL, stream2.i32_s2 INT32 NOT NULL, stream2.i64_s2 INT64 NOT NULL, stream2.u8_s2 UINT8 NOT NULL, stream2.u16_s2 UINT16 NOT NULL, stream2.u32_s2 UINT32 NOT NULL, stream2.u64_s2 UINT64 NOT NULL, stream2.f32_s2 FLOAT32 NOT NULL, stream2.f64_s2 FLOAT64 NOT NULL, stream2.ts UINT64 NOT NULL) TYPE File;
+
+# Query 1 - i8_s1 < i16_s2, tumbling 1 sec
+# Tests: less-than across signed integer types of different width (INT8 vs INT16)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON i8_s1 < i16_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 2 2 2 2 2 2 2 2 2.0 2.0 501
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 3 3 3 3 3 3 3 3 3.0 3.0 502
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 4 4 4 4 4 4 4 4 4.0 4.0 503
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 5 5 5 5 5 5 5 5 5.0 5.0 504
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 6 6 6 6 6 6 6 6 6.0 6.0 505
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 7 7 7 7 7 7 7 7 7.0 7.0 506
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 8 8 8 8 8 8 8 8 8.0 8.0 507
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 2 - i16_s1 < i32_s2, tumbling 1 sec
+# Tests: less-than across signed integer types (INT16 vs INT32)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON i16_s1 < i32_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 3 3 3 3 3 3 3 3 3.0 3.0 502
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 4 4 4 4 4 4 4 4 4.0 4.0 503
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 5 5 5 5 5 5 5 5 5.0 5.0 504
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 6 6 6 6 6 6 6 6 6.0 6.0 505
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 7 7 7 7 7 7 7 7 7.0 7.0 506
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 8 8 8 8 8 8 8 8 8.0 8.0 507
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 3 - i32_s1 < u8_s2, tumbling 1 sec
+# Tests: less-than from signed to unsigned integer (INT32 vs UINT8)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON i32_s1 < u8_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 4 4 4 4 4 4 4 4 4.0 4.0 503
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 5 5 5 5 5 5 5 5 5.0 5.0 504
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 6 6 6 6 6 6 6 6 6.0 6.0 505
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 7 7 7 7 7 7 7 7 7.0 7.0 506
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 8 8 8 8 8 8 8 8 8.0 8.0 507
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 4 - u8_s1 < u16_s2, tumbling 1 sec
+# Tests: less-than across unsigned integer types (UINT8 vs UINT16)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON u8_s1 < u16_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 6 6 6 6 6 6 6 6 6.0 6.0 505
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 7 7 7 7 7 7 7 7 7.0 7.0 506
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 8 8 8 8 8 8 8 8 8.0 8.0 507
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 5 - u64_s1 < f32_s2, tumbling 1 sec
+# Tests: less-than from unsigned integer to floating-point (UINT64 vs FLOAT32)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON u64_s1 < f32_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 6 - f32_s1 < f64_s2, tumbling 1 sec
+# Tests: less-than across floating-point types of different width (FLOAT32 vs FLOAT64)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON f32_s1 < f64_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 7 - i32_s1 > i8_s2, tumbling 1 sec
+# Tests: greater-than across signed integer types (INT32 vs INT8)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON i32_s1 > i8_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 1 1 1 1 1 1 1 1 1.0 1.0 500
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 2 2 2 2 2 2 2 2 2.0 2.0 501
+
+# Query 8 - u32_s1 > f64_s2, tumbling 1 sec
+# Tests: greater-than from unsigned integer to floating-point (UINT32 vs FLOAT64)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON u32_s1 > f64_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 1 1 1 1 1 1 1 1 1.0 1.0 500
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 2 2 2 2 2 2 2 2 2.0 2.0 501
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 3 3 3 3 3 3 3 3 3.0 3.0 502
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 4 4 4 4 4 4 4 4 4.0 4.0 503
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 5 5 5 5 5 5 5 5 5.0 5.0 504
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 6 6 6 6 6 6 6 6 6.0 6.0 505
+
+# Query 9 - i64_s1 >= f32_s2, tumbling 1 sec
+# Tests: greater-or-equal from signed integer to floating-point (INT64 vs FLOAT32)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON i64_s1 >= f32_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 1 1 1 1 1 1 1 1 1.0 1.0 500
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 2 2 2 2 2 2 2 2 2.0 2.0 501
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 3 3 3 3 3 3 3 3 3.0 3.0 502
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 4 4 4 4 4 4 4 4 4.0 4.0 503
+
+# Query 10 - f64_s1 >= u64_s2, tumbling 1 sec
+# Tests: greater-or-equal across float and unsigned integer (FLOAT64 vs UINT64)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON f64_s1 >= u64_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 1 1 1 1 1 1 1 1 1.0 1.0 500
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 2 2 2 2 2 2 2 2 2.0 2.0 501
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 3 3 3 3 3 3 3 3 3.0 3.0 502
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 4 4 4 4 4 4 4 4 4.0 4.0 503
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 5 5 5 5 5 5 5 5 5.0 5.0 504
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 6 6 6 6 6 6 6 6 6.0 6.0 505
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 7 7 7 7 7 7 7 7 7.0 7.0 506
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 8 8 8 8 8 8 8 8 8.0 8.0 507
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 11 - i8_s1 < i16_s2, tumbling 2 sec
+# Tests: INT8 < INT16, wider tumbling window groups same records into [0,2000)
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON i8_s1 < i16_s2 WINDOW TUMBLING (ts, size 2 sec) INTO sinkStream1Stream2;
+----
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 2 2 2 2 2 2 2 2 2.0 2.0 501
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 3 3 3 3 3 3 3 3 3.0 3.0 502
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 4 4 4 4 4 4 4 4 4.0 4.0 503
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 5 5 5 5 5 5 5 5 5.0 5.0 504
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 6 6 6 6 6 6 6 6 6.0 6.0 505
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 7 7 7 7 7 7 7 7 7.0 7.0 506
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 8 8 8 8 8 8 8 8 8.0 8.0 507
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 12 - f32_s1 < f64_s2, tumbling 2 sec
+# Tests: FLOAT32 < FLOAT64 with wider tumbling window
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON f32_s1 < f64_s2 WINDOW TUMBLING (ts, size 2 sec) INTO sinkStream1Stream2;
+----
+0 2000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 13 - i8_s1 < i16_s2, tumbling 500 ms
+# Tests: INT8 < INT16, 500ms window: stream1 (ts=100) and stream2 (ts=500–509) land in different buckets → no output
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON i8_s1 < i16_s2 WINDOW TUMBLING (ts, size 500 ms) INTO sinkStream1Stream2;
+----
+
+# Query 14 - u32_s1 > f64_s2, tumbling 500 ms
+# Tests: UINT32 > FLOAT64, 500ms window: confirms empty result for cross-type pred when records don't share a window
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON u32_s1 > f64_s2 WINDOW TUMBLING (ts, size 500 ms) INTO sinkStream1Stream2;
+----
+
+# Query 15 - i8_s1 < i16_s2, sliding 1000ms/500ms
+# Tests: INT8 < INT16 with sliding window — same predicate as Q1; verifies sliding window handles cross-type pred
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON i8_s1 < i16_s2 WINDOW SLIDING (ts, size 1 sec, advance by 500 ms) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 2 2 2 2 2 2 2 2 2.0 2.0 501
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 3 3 3 3 3 3 3 3 3.0 3.0 502
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 4 4 4 4 4 4 4 4 4.0 4.0 503
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 5 5 5 5 5 5 5 5 5.0 5.0 504
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 6 6 6 6 6 6 6 6 6.0 6.0 505
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 7 7 7 7 7 7 7 7 7.0 7.0 506
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 8 8 8 8 8 8 8 8 8.0 8.0 507
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 16 - u64_s1 < f32_s2, sliding 1000ms/500ms
+# Tests: UINT64 < FLOAT32 with sliding window — integer-to-float predicate in sliding context
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON u64_s1 < f32_s2 WINDOW SLIDING (ts, size 1 sec, advance by 500 ms) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 17 - f32_s1 < f64_s2, sliding 1000ms/500ms
+# Tests: FLOAT32 < FLOAT64 with sliding window — float-to-float predicate in sliding context
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON f32_s1 < f64_s2 WINDOW SLIDING (ts, size 1 sec, advance by 500 ms) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
+# Query 18 - i8_s1 != i8_s2, tumbling 1 sec
+# Tests: not-equals on INT8: the single stream2 row where i8_s2 equals stream1's i8_s1 (value 1) is excluded; all other rows are emitted
+SELECT * FROM (SELECT * FROM stream1) INNER JOIN (SELECT * FROM stream2) ON i8_s1 != i8_s2 WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2;
+----
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 2 2 2 2 2 2 2 2 2.0 2.0 501
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 3 3 3 3 3 3 3 3 3.0 3.0 502
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 4 4 4 4 4 4 4 4 4.0 4.0 503
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 5 5 5 5 5 5 5 5 5.0 5.0 504
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 6 6 6 6 6 6 6 6 6.0 6.0 505
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 7 7 7 7 7 7 7 7 7.0 7.0 506
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 8 8 8 8 8 8 8 8 8.0 8.0 507
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 9 9 9 9 9 9 9 9 9.0 9.0 508
+0 1000 1 2 3 4 5 6 7 8 9.0 10.0 100 10 10 10 10 10 10 10 10 10.0 10.0 509
+
