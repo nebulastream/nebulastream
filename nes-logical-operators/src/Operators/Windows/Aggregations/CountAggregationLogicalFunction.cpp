@@ -39,16 +39,15 @@
 
 namespace NES
 {
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(AggregationFieldAccess inputFunction)
-    : inputFunction(std::move(inputFunction))
+/// COUNT(*) includes null values (counts all rows), COUNT(fieldName) does not
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(AggregationFieldAccess inputFunction, const bool includeNullValues)
+    : inputFunction(std::move(inputFunction)), includeNullValues(includeNullValues)
 {
 }
 
-bool CountAggregationLogicalFunction::shallIncludeNullValues() noexcept
+bool CountAggregationLogicalFunction::shallIncludeNullValues() const noexcept
 {
-    /// For now, we hardcode it. As soon as TODO #699 is merged, we can specify here a difference
-    /// For example, COUNT(*) includes null whereas COUNT(fieldName) does not
-    return false;
+    return includeNullValues;
 }
 
 std::string_view CountAggregationLogicalFunction::getName() const noexcept
@@ -88,19 +87,38 @@ Reflected CountAggregationLogicalFunction::reflect() const
 
 CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
 {
+    if (includeNullValues)
+    {
+        /// COUNT(*) does not refer to a specific field; use the first field of the schema as a placeholder
+        PRECONDITION(schema.size() > 1, "Schema needs to have one field at least for CountAggregationLogicalFunction");
+        const auto& firstField = *schema.begin();
+        auto newInputFunction = TypedLogicalFunction<FieldAccessLogicalFunction>{FieldAccessLogicalFunction{firstField}};
+        return CountAggregationLogicalFunction{newInputFunction, includeNullValues};
+    }
     auto newInputFunction = inferFieldAccess(inputFunction, schema);
-    return CountAggregationLogicalFunction{newInputFunction};
+    return CountAggregationLogicalFunction{newInputFunction, includeNullValues};
+}
+
+namespace detail
+{
+struct ReflectedCountAggregationLogicalFunction
+{
+    AggregationFieldAccess inputFunction;
+    bool includeNullValues;
+};
 }
 
 Reflected Reflector<CountAggregationLogicalFunction>::operator()(const CountAggregationLogicalFunction& function) const
 {
-    return reflect(function.getInputFunction());
+    return reflect(detail::ReflectedCountAggregationLogicalFunction{
+        .inputFunction = function.getInputFunction(), .includeNullValues = function.shallIncludeNullValues()});
 }
 
 CountAggregationLogicalFunction
 Unreflector<CountAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    return CountAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
+    auto [inputFunction, includeNullValues] = context.unreflect<detail::ReflectedCountAggregationLogicalFunction>(reflected);
+    return CountAggregationLogicalFunction{std::move(inputFunction), includeNullValues};
 }
 
 AggregationLogicalFunctionRegistryReturnType
@@ -110,7 +128,7 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFun
     {
         throw CannotDeserialize("CountAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
-    return CountAggregationLogicalFunction{arguments.on.at(0)};
+    return CountAggregationLogicalFunction{arguments.on.at(0), arguments.includeNullValues};
 }
 }
 
