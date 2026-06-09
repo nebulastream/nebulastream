@@ -23,14 +23,16 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
-#include <Engine.hpp>
+#include <CompilationContext.hpp>
 
 namespace NES
 {
 
 struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 {
-    using NautilusCleanupExec = nautilus::engine::CallableFunction<void, HashMap*>;
+    /// Handle into the pipeline's compiled module; keeps the compiled cleanup function alive
+    /// even if the slice outlives the pipeline stage that compiled it.
+    using NautilusCleanupExec = PipelineFunction<void(HashMap*)>;
 
     CreateNewHashMapSliceArgs(
         std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup,
