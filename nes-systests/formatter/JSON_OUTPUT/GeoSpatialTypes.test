@@ -51,4 +51,12 @@ SELECT circle_area(Circle(Point(x1, y1), r)) AS area FROM geo INTO File('JSON' a
 {"AREA":7.068583}
 {"AREA":165.129964}
 
+# circle_circumference(Circle) dispatches to CircleCircumferencePhysicalFunction, which reads the
+# `radius` field out of the (nested) Circle STRUCT and returns 2 * pi * r as FLOAT64.
+SELECT circle_circumference(Circle(Point(x1, y1), r)) AS circumference FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"CIRCUMFERENCE":31.415927}
+{"CIRCUMFERENCE":9.424778}
+{"CIRCUMFERENCE":45.553093}
+
 
