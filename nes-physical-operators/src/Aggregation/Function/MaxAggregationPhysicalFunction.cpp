@@ -61,13 +61,14 @@ void MaxAggregationPhysicalFunction::lift(
         const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
         const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType, isNull);
 
-        /// If value is null or max is smaller than value --> keep the current max
-        const auto valueOrMax = VarVal::select(value.isNull(), max, value);
-        const auto newMax = VarVal::select((valueOrMax > max).getRawValueAs<nautilus::val<bool>>(), valueOrMax, max);
+        /// SQL-standard: skip NULL inputs
+        const auto valueIsNotNull = not value.isNull();
+        const auto adoptValue = valueIsNotNull and (isNull or (value > max).getRawValueAs<nautilus::val<bool>>());
+        const auto newMax = VarVal::select(adoptValue, value, max);
         newMax.writeToMemory(memAreaMax);
 
-        /// Updating the null value
-        const auto newIsNull = isNull or value.isNull();
+        /// Stay null only while every input has been NULL
+        const auto newIsNull = isNull and value.isNull();
         storeNull(aggregationState, newIsNull);
     }
 }
@@ -99,13 +100,13 @@ void MaxAggregationPhysicalFunction::combine(
         const auto max1 = VarVal::readVarValFromMemory(memAreaMax1, inputType, isNull1);
         const auto max2 = VarVal::readVarValFromMemory(memAreaMax2, inputType, isNull2);
 
-        /// Updating the null value
-        const auto newIsNull = isNull1 or isNull2;
+        /// SQL-standard: only stay null when both partitions are still empty
+        const auto newIsNull = isNull1 and isNull2;
         storeNull(aggregationState1, newIsNull);
 
-        /// If max1 or max2 is null, the result is null. Otherwise, it is the maximum of max1 and max2
+        /// If state1 is empty take max2, if state2 is empty take max1, otherwise take the pairwise max
         const auto max1OrMax2 = VarVal::select((max1 > max2).getRawValueAs<nautilus::val<bool>>(), max1, max2);
-        const auto newMax = VarVal::select(newIsNull, max1, max1OrMax2);
+        const auto newMax = VarVal::select(isNull1, max2, VarVal::select(isNull2, max1, max1OrMax2));
         newMax.writeToMemory(memAreaMax1);
     }
 }
@@ -137,10 +138,10 @@ Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
 
 void MaxAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
-    /// Resetting the null value
+    /// Initialize the null flag to "no value seen yet" so the first non-null input becomes the running max
     if (inputType.nullable)
     {
-        storeNull(aggregationState, false);
+        storeNull(aggregationState, true);
     }
 
     /// Resetting the max value to the minimum value

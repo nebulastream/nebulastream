@@ -61,13 +61,14 @@ void MinAggregationPhysicalFunction::lift(
         const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
         const auto min = VarVal::readVarValFromMemory(memAreaMin, inputType, isNull);
 
-        /// If value is null or min is smaller than value --> keep the current min
-        const auto valueOrMin = VarVal::select(value.isNull(), min, value);
-        const auto newMin = VarVal::select((valueOrMin < min).getRawValueAs<nautilus::val<bool>>(), valueOrMin, min);
+        /// SQL-standard: skip NULL inputs
+        const auto valueIsNotNull = not value.isNull();
+        const auto adoptValue = valueIsNotNull and (isNull or (value < min).getRawValueAs<nautilus::val<bool>>());
+        const auto newMin = VarVal::select(adoptValue, value, min);
         newMin.writeToMemory(memAreaMin);
 
-        /// Updating the null value
-        const auto newIsNull = isNull or value.isNull();
+        /// Stay null only while every input has been NULL
+        const auto newIsNull = isNull and value.isNull();
         storeNull(aggregationState, newIsNull);
     }
 }
@@ -99,13 +100,13 @@ void MinAggregationPhysicalFunction::combine(
         const auto min1 = VarVal::readVarValFromMemory(memAreaMin1, inputType, isNull1);
         const auto min2 = VarVal::readVarValFromMemory(memAreaMin2, inputType, isNull2);
 
-        /// Updating the null value
-        const auto newIsNull = isNull1 or isNull2;
+        /// SQL-standard: only stay null when both partitions are still empty
+        const auto newIsNull = isNull1 and isNull2;
         storeNull(aggregationState1, newIsNull);
 
-        /// If min1 or min2 is null, the result is null. Otherwise, it is the minimum of min1 and min2
+        /// If state1 is empty take min2; if state2 is empty take min1; otherwise take the pairwise min
         const auto min1OrMin2 = VarVal::select((min1 < min2).getRawValueAs<nautilus::val<bool>>(), min1, min2);
-        const auto newMin = VarVal::select(newIsNull, min1, min1OrMin2);
+        const auto newMin = VarVal::select(isNull1, min2, VarVal::select(isNull2, min1, min1OrMin2));
         newMin.writeToMemory(memAreaMin1);
     }
 }
@@ -137,10 +138,10 @@ Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
 
 void MinAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
-    /// Resetting the null value
+    /// Initialize the null flag to "no value seen yet" so the first non-null input becomes the running min
     if (inputType.nullable)
     {
-        storeNull(aggregationState, false);
+        storeNull(aggregationState, true);
     }
 
     /// Resetting the min value to the maximum value

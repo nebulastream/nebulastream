@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <utility>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
@@ -26,7 +27,6 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/function.hpp>
-#include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -45,28 +45,50 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
     Record::RecordFieldIdentifier resultFieldIdentifier,
     std::shared_ptr<TupleBufferRef> bufferRefPagedVector)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    , pagedVectorPtrOffset(this->inputType.nullable ? alignof(PagedVector*) : 0)
     , bufferRefPagedVector(std::move(bufferRefPagedVector))
 {
+}
+
+namespace
+{
+/// Reads the heap-allocated PagedVector pointer from the aggregation-state slot via memcpy (handles unaligned slots).
+PagedVector* loadPagedVector(int8_t* statePtr)
+{
+    PagedVector* pagedVector = nullptr;
+    std::memcpy(static_cast<void*>(&pagedVector), statePtr, sizeof(PagedVector*));
+    return pagedVector;
+}
+
+/// Writes the heap-allocated PagedVector pointer into the aggregation-state slot via memcpy (handles unaligned slots).
+void storePagedVector(int8_t* statePtr, PagedVector* pagedVector)
+{
+    std::memcpy(statePtr, static_cast<const void*>(&pagedVector), sizeof(PagedVector*));
+}
 }
 
 void MedianAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
-    auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto ptrSlot = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{pagedVectorPtrOffset});
+    const auto pagedVectorPtr = nautilus::invoke(loadPagedVector, ptrSlot);
     if (inputType.nullable)
     {
-        /// Reading the current null value and combining it with the one of the record
-        const auto oldContainsNull = readNull(aggregationState);
-        storeNull(aggregationState, value.isNull() or oldContainsNull);
-
-        /// Skipping the first byte (null)
-        memArea += nautilus::val<uint64_t>{1};
+        /// SQL-standard: NULL inputs are not part of the median set, so skip writing them. Flip the null flag to
+        /// false the first time we see a non-null value.
+        if (not value.isNull())
+        {
+            storeNull(aggregationState, false);
+            const PagedVectorRef pagedVectorRef{pagedVectorPtr, bufferRefPagedVector};
+            pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
+        }
     }
-
-    /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
-    const PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
-    pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
+    else
+    {
+        const PagedVectorRef pagedVectorRef{pagedVectorPtr, bufferRefPagedVector};
+        pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
+    }
 }
 
 void MedianAggregationPhysicalFunction::combine(
@@ -74,33 +96,30 @@ void MedianAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState2,
     PipelineMemoryProvider&)
 {
-    /// Getting the paged vectors from the aggregation states
-    auto memArea1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    auto memArea2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
+    const auto ptrSlot1 = static_cast<nautilus::val<int8_t*>>(aggregationState1 + nautilus::val<uint64_t>{pagedVectorPtrOffset});
+    const auto ptrSlot2 = static_cast<nautilus::val<int8_t*>>(aggregationState2 + nautilus::val<uint64_t>{pagedVectorPtrOffset});
+    const auto pagedVectorPtr1 = nautilus::invoke(loadPagedVector, ptrSlot1);
+    const auto pagedVectorPtr2 = nautilus::invoke(loadPagedVector, ptrSlot2);
 
     if (inputType.nullable)
     {
-        /// Combining the null values
+        /// SQL-standard: only stay null when both partitions are still empty (no non-null value seen on either side)
         const auto containsNull1 = readNull(aggregationState1);
         const auto containsNull2 = readNull(aggregationState2);
-        const auto newContainsNull = containsNull1 or containsNull2;
-        storeNull(aggregationState1, newContainsNull);
-
-        /// Skipping the first byte (null)
-        memArea1 += nautilus::val<uint64_t>{1};
-        memArea2 += nautilus::val<uint64_t>{1};
+        storeNull(aggregationState1, containsNull1 and containsNull2);
     }
 
-    /// Calling the copyFrom function of the paged vector to combine the two paged vectors by copying the content of the second paged vector to the first paged vector
-    nautilus::invoke(+[](PagedVector* vector1, const PagedVector* vector2) -> void { vector1->copyFrom(*vector2); }, memArea1, memArea2);
+    nautilus::invoke(
+        +[](PagedVector* vector1, const PagedVector* vector2) -> void { vector1->copyFrom(*vector2); }, pagedVectorPtr1, pagedVectorPtr2);
 }
 
 Record MedianAggregationPhysicalFunction::lower(
     const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    /// If it contains null values, we simply return a null value
-    const auto containsNull = inputType.nullable ? readNull(aggregationState) : nautilus::val<bool>{false};
-    if (containsNull)
+    /// If no non-null value was observed, return NULL per SQL standard. The paged vector is empty in that case,
+    /// so the early return also guards the numberOfEntries > 0 invariant below.
+    const auto isEmpty = inputType.nullable ? readNull(aggregationState) : nautilus::val<bool>{false};
+    if (isEmpty)
     {
         const VarVal zero{nautilus::val<uint64_t>(0), true, true};
         const VarVal medianValue = zero.castToType(resultType.type);
@@ -109,10 +128,9 @@ Record MedianAggregationPhysicalFunction::lower(
         return resultRecord;
     }
 
-    /// Getting the paged vector from the aggregation state
-    const auto pagedVectorPtr
-        = static_cast<nautilus::val<PagedVector*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
-    const PagedVectorRef pagedVectorRef(pagedVectorPtr, bufferRefPagedVector);
+    const auto ptrSlot = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{pagedVectorPtrOffset});
+    const auto pagedVectorPtr = nautilus::invoke(loadPagedVector, ptrSlot);
+    const PagedVectorRef pagedVectorRef{pagedVectorPtr, bufferRefPagedVector};
     const auto allFieldNames = bufferRefPagedVector->getAllFieldNames();
     const auto numberOfEntries = invoke(
         +[](const PagedVector* pagedVector)
@@ -198,38 +216,41 @@ Record MedianAggregationPhysicalFunction::lower(
 
 void MedianAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
+    /// Heap-allocate a fresh PagedVector and store the pointer in the state. Storing the PagedVector inline is not
+    /// possible: the std::vector inside it has stricter alignment requirements than 1 (the natural offset after the
+    /// null flag), and previous attempts to inline it produced state-buffer overruns that corrupted neighboring
+    /// aggregations on multi-aggregation queries.
     nautilus::invoke(
-        +[](AggregationState* pagedVectorMemArea) -> void
+        +[](int8_t* statePtr) -> void
         {
-            /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-            new (pagedVector) PagedVector();
+            auto* pagedVector = new PagedVector(); /// NOLINT(cppcoreguidelines-owning-memory)
+            storePagedVector(statePtr, pagedVector);
         },
-        aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
+        static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{pagedVectorPtrOffset}));
 
     if (inputType.nullable)
     {
-        const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-        nautilus::memset(memArea, 0, 1);
+        /// Initialize the null flag to "no value seen yet" so all-NULL windows correctly emit NULL
+        storeNull(aggregationState, true);
     }
 }
 
 void MedianAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
 {
-    invoke(
-        +[](AggregationState* pagedVectorMemArea) -> void
+    nautilus::invoke(
+        +[](int8_t* statePtr) -> void
         {
-            /// Calls the destructor of the PagedVector
-            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            pagedVector->~PagedVector();
+            /// Load the heap-allocated PagedVector pointer from the state buffer and free it
+            auto* pagedVector = loadPagedVector(statePtr);
+            delete pagedVector; /// NOLINT(cppcoreguidelines-owning-memory)
         },
-        aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
+        static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{pagedVectorPtrOffset}));
 }
 
 size_t MedianAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    /// ContainsNullValues (1B) + Pagedvector
-    return static_cast<uint64_t>(inputType.nullable) + sizeof(PagedVector);
+    /// (optional) null flag + (optional) alignment padding + PagedVector pointer.
+    return pagedVectorPtrOffset + sizeof(PagedVector*);
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMedianAggregationPhysicalFunction(
