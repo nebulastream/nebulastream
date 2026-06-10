@@ -26,12 +26,13 @@ namespace NES
 class AbsolutePhysicalFunction final
 {
 public:
-    explicit AbsolutePhysicalFunction(PhysicalFunction childFunction, DataType inputType);
+    explicit AbsolutePhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction childFunction;
     DataType inputType;
+    DataType outputType;
 };
 
 static_assert(PhysicalFunctionConcept<AbsolutePhysicalFunction>);
