@@ -12,180 +12,343 @@
     limitations under the License.
 */
 
-#include <cstring>
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <memory>
-#include <sstream>
+#include <optional>
+#include <span>
+#include <string>
 #include <tuple>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/Record.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp> /// NOLINT(misc-include-cleaner)
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <gtest/gtest.h>
-#include <magic_enum/magic_enum.hpp>
+#include <gtest/gtest.h> /// NOLINT(misc-include-cleaner): consumed via macros expanded from rapidcheck/gtest.h
 #include <nautilus/Engine.hpp>
-#include <BaseUnitTest.hpp>
-#include <ChainedHashMapTestUtils.hpp>
-#include <NautilusTestUtils.hpp>
+#include <DataStructureTestUtils.hpp>
+#include <ErrorHandling.hpp>
+#include <TestableChainedHashMap.hpp>
+#include <function.hpp>
+#include <static.hpp> /// NOLINT(misc-include-cleaner)
+#include <val_arith.hpp>
+#include <val_bool.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
 
+#include <rapidcheck.h> /// NOLINT(misc-include-cleaner)
+
+#include <fmt/ranges.h>
+#include <rapidcheck/gtest.h>
+
+/// NOLINTBEGIN(misc-include-cleaner, bugprone-unchecked-optional-access)
 namespace NES
 {
-class ChainedHashMapTest
-    : public Testing::BaseUnitTest,
-      public testing::WithParamInterface<std::tuple<int, std::vector<DataType::Type>, std::vector<DataType::Type>, ExecutionMode>>,
-      public TestUtils::ChainedHashMapTestUtils
+
+namespace
 {
-public:
-    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {.min = 100, .max = 1000};
-    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {.min = 10, .max = 1024};
-    static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {.min = 1024, .max = 10240};
 
-    static void SetUpTestSuite()
-    {
-        Logger::setupLogging("ChainedHashMapTest.log", LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ChainedHashMapTest class.");
-    }
+/// Buffer-size pool drawn from per property to exercise both extremes:
+/// - tiny buffers (64-512 B) force long page chains, which surfaces correctness issues in the
+///   getPageIndex binary search and the last-page cumulative-sum special case;
+/// - the large 2 MiB buffer keeps everything on a single page and exercises the no-paging path.
+/// Schemas whose tuple size doesn't fit must be discarded via RC_PRE.
+constexpr std::array<uint64_t, 4> BUFFER_SIZE_POOL = {128, 512, 4096, 2ULL * 1024 * 1024};
 
-    void SetUp() override
-    {
-        BaseUnitTest::SetUp();
-        const auto& [_, keyBasicTypes, valueBasicTypes, backend] = GetParam();
+/// Number of buckets pool drawn from property to test different numbers of buckets for the chained hash map.
+constexpr std::array<uint64_t, 6> NUM_BUCKETS_POOL = {32, 64, 128, 256, 512, 1024};
 
-        /// Creating the current test param
-        params = TestUtils::TestParams(MIN_MAX_NUMBER_OF_ITEMS, MIN_MAX_NUMBER_OF_BUCKETS, MIN_MAX_PAGE_SIZE);
+/// Number of entries per page — multiplied by entrySize to derive pageSize.
+/// Small values (1, 2) force long page chains; large values (64, 512) exercise the bulk path.
+constexpr std::array<uint64_t, 6> ENTRIES_PER_PAGE_POOL = {1, 2, 4, 16, 64, 512};
 
-        ChainedHashMapTestUtils::setUpChainedHashMapTest(keyBasicTypes, valueBasicTypes, backend);
-    }
+/// A real std::unordered_map<TestUtils::AnyVec, TestUtils::AnyVec> reference, so property tests compare the chained hash map against
+/// the standard library's own hash map semantics rather than a hand-rolled linear-scan association list.
+using KeyValueReference = std::unordered_map<TestUtils::AnyVec, TestUtils::AnyVec, TestUtils::AnyVecHash, TestUtils::AnyVecKeyEqual>;
 
-    static void TearDownTestSuite() { NES_INFO("Tear down ChainedHashMapTest class."); }
-};
-
-TEST_P(ChainedHashMapTest, singleInsert)
+/// Constructs an empty reference map, with AnyVecHash/AnyVecKeyEqual bound to chainedHashMap's key schema.
+KeyValueReference makeEmptyReference(const TestUtils::TestableChainedHashMap& chainedHashMap)
 {
-    /// Creating the hash map
-    ChainedHashMap hashMap{keySize, valueSize, params.numberOfBuckets, params.pageSize};
-
-    /// Check if the hash map is empty.
-    ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
-
-    /// We are inserting the records from the random key and value buffers into a map.
-    /// Thus, we can check if the provided values are correct.
-    /// We are testing here the findOrCreate method that only inserts a value if it does not exist, i.e., no update.
-    /// Therefore, we MUST NOT overwrite an existing key in this loop here to be able to test the findOrCreate method.
-    const auto exactMap = createExactMap(ExactMapInsert::INSERT);
-
-    /// Check if we can insert the entry and then read the values back.
-    auto findAndInsert = compileFindAndInsert();
-    for (auto& buffer : inputBuffers)
-    {
-        findAndInsert(std::addressof(buffer), bufferManager.get(), std::addressof(hashMap));
-    }
-
-    /// Now we are searching for the entries and checking if the values are correct.
-    checkIfValuesAreCorrectViaFindEntry(hashMap, exactMap);
-
-    /// Check if our entry iterator reads all the entries
-    checkEntryIterator(hashMap, exactMap);
+    const auto& keyTypes = chainedHashMap.getKeyDataTypes();
+    return KeyValueReference(0, TestUtils::AnyVecHash{&keyTypes}, TestUtils::AnyVecKeyEqual{&keyTypes});
 }
 
-TEST_P(ChainedHashMapTest, update)
+/// Adds numberOfItems freshly generated (key, value) pairs to both `reference` and the map under test,
+/// keeping only the first-seen value per unique key (try_emplace mirrors CHM's first-write-wins deduplication).
+/// Callers may invoke this repeatedly on the same reference/chainedHashMap to interleave writes and reads.
+void populateReference(
+    TestUtils::TestableChainedHashMap& chainedHashMap,
+    const std::vector<DataType>& fieldTypes,
+    uint64_t numberOfItems,
+    KeyValueReference& reference)
 {
-    /// Creating the hash map
-    ChainedHashMap hashMap{keySize, valueSize, params.numberOfBuckets, params.pageSize};
-
-    /// Check if the hash map is empty.
-    ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
-
-    /// Getting new values for updating the values in the hash map.
-    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);
-
-    /// We are inserting the records from the random key and value buffers into a map.
-    /// Thus, we can check if the provided values are correct.
-    /// We are testing here the findOrCreate and the insertOrUpdateEntry method, i.e., we are updating the values for existing keys.
-    /// Therefore, we MUST overwrite an existing key in this loop here to be able to test the findOrCreate method.
-    const auto exactMap = createExactMap(ExactMapInsert::OVERWRITE);
-    auto findAndUpdate = compileFindAndUpdate();
-    for (auto& buffer : inputBuffers)
+    const auto numKeys = static_cast<TestUtils::AnyVec::difference_type>(chainedHashMap.numKeyFields());
+    for (uint64_t i = 0; i < numberOfItems; ++i)
     {
-        findAndUpdate(std::addressof(buffer), std::addressof(buffer), bufferManager.get(), std::addressof(hashMap));
+        auto record = *TestUtils::genAnyVec(fieldTypes);
+        TestUtils::AnyVec key(record.begin(), record.begin() + numKeys);
+        TestUtils::AnyVec value(record.begin() + numKeys, record.end());
+        chainedHashMap.put(key, value);
+        reference.try_emplace(std::move(key), std::move(value));
     }
-
-    /// Now we are searching for the entries and checking if the values are correct.
-    checkIfValuesAreCorrectViaFindEntry(hashMap, exactMap);
-
-    /// Check if our entry iterator reads all the entries
-    checkEntryIterator(hashMap, exactMap);
 }
-#ifdef ALL_HASHMAP_TESTS
-/// Running the test for 3 times for each key, value schema and backend.
-/// This entails three different random number of items, number of buckets and page size.
-constexpr auto noIterations = 3;
-static auto keyTypes = ::testing::ValuesIn<std::vector<DataType::Type>>(
-    {{DataType::Type::UINT8},
-     {DataType::Type::VARSIZED},
-     {DataType::Type::VARSIZED, DataType::Type::INT8},
-     {DataType::Type::VARSIZED, DataType::Type::INT8, DataType::Type::INT64},
-     {DataType::Type::INT64, DataType::Type::UINT64, DataType::Type::INT8, DataType::Type::INT16, DataType::Type::INT32},
-     {DataType::Type::INT64,
-      DataType::Type::INT32,
-      DataType::Type::INT16,
-      DataType::Type::INT8,
-      DataType::Type::UINT64,
-      DataType::Type::UINT32,
-      DataType::Type::UINT16,
-      DataType::Type::UINT8}});
-static auto valTypes = ::testing::ValuesIn<std::vector<DataType::Type>>(
-    {{DataType::Type::INT8},
-     {DataType::Type::VARSIZED},
-     {DataType::Type::VARSIZED, DataType::Type::INT8},
-     {DataType::Type::VARSIZED, DataType::Type::INT8, DataType::Type::INT64},
-     {DataType::Type::INT64,
-      DataType::Type::INT32,
-      DataType::Type::INT16,
-      DataType::Type::INT8,
-      DataType::Type::FLOAT32,
-      DataType::Type::UINT64,
-      DataType::Type::UINT32,
-      DataType::Type::UINT16,
-      DataType::Type::UINT8,
-      DataType::Type::FLOAT64}});
-#else
-/// Running the test for 1 time for each key, value schema and backend.
-/// This entails one random number of items, number of buckets and page size.
-constexpr auto noIterations = 1;
-static auto keyTypes = ::testing::ValuesIn<std::vector<DataType::Type>>({{DataType::Type::UINT8}, {DataType::Type::VARSIZED}});
-static auto valTypes = ::testing::ValuesIn<std::vector<DataType::Type>>({{DataType::Type::INT8}, {DataType::Type::VARSIZED}});
-#endif
 
-INSTANTIATE_TEST_CASE_P(
-    ChainedHashMapTest,
-    ChainedHashMapTest,
-    ::testing::Combine(
-        ::testing::Range(0, noIterations), keyTypes, valTypes, ::testing::Values(ExecutionMode::COMPILER, ExecutionMode::INTERPRETER)),
-    [](const testing::TestParamInfo<ChainedHashMapTest::ParamType>& info)
+/// Verifies at() against a random sample of known-present keys (must hit, with the first-seen value) and a
+/// handful of independently-random keys (must miss, for whichever candidates don't happen to collide with
+/// the reference) - the miss path is new coverage the old index-based readAt() could never express.
+void verifyLookups(
+    TestUtils::TestableChainedHashMap& chainedHashMap, const KeyValueReference& reference, const std::vector<DataType>& fieldTypes)
+{
+    const auto numKeys = chainedHashMap.numKeyFields();
+    const auto& valueTypes = chainedHashMap.getValueDataTypes();
+    const std::vector<DataType> keyOnlyTypes(
+        fieldTypes.begin(), fieldTypes.begin() + numKeys); /// NOLINT(cppcoreguidelines-narrowing-conversions)
+
+    if (!reference.empty())
     {
-        const auto iteration = std::get<0>(info.param);
-        const auto keyBasicTypes = std::get<1>(info.param);
-        const auto valueBasicTypes = std::get<2>(info.param);
-        const auto backend = std::get<3>(info.param);
-
-        std::stringstream ss;
-        ss << "noI_" << iteration << "_keyTypes_";
-        for (const auto& keyBasicType : keyBasicTypes)
+        /// Materialised once so indices can be sampled by position; reference itself stays an unordered_map.
+        const std::vector<std::pair<TestUtils::AnyVec, TestUtils::AnyVec>> entries(reference.begin(), reference.end());
+        const auto indices = *rc::gen::container<std::vector<uint64_t>>(rc::gen::inRange<uint64_t>(0, entries.size()));
+        for (const auto idx : indices)
         {
-            ss << magic_enum::enum_name(keyBasicType) << "_";
+            const auto& [key, expectedValue] = entries[idx];
+            const auto actual = chainedHashMap.at(key);
+            RC_ASSERT(actual.has_value());
+            RC_ASSERT(TestUtils::anyVecsEqual(*actual, expectedValue, valueTypes));
         }
-        ss << "valTypes_";
-        for (const auto& valueBasicType : valueBasicTypes)
+    }
+
+    constexpr int numMissCandidates = 5;
+    for (int i = 0; i < numMissCandidates; ++i)
+    {
+        const auto candidateKey = *TestUtils::genAnyVec(keyOnlyTypes);
+        if (!reference.contains(candidateKey))
         {
-            ss << magic_enum::enum_name(valueBasicType) << "_";
+            RC_ASSERT(!chainedHashMap.at(candidateKey).has_value());
         }
-        ss << magic_enum::enum_name(backend);
-        return ss.str();
-    });
+    }
+}
+
+/// Verify put()/at() round-trip: every reference key is found with its first-seen value, and independently
+/// generated keys that don't collide with the reference correctly report absent. Writes and reads are
+/// interleaved across several iterations (rather than write-everything-then-verify-once) so lookups are also
+/// exercised against partially-populated intermediate hash-map states, not just the final one.
+void putAndLookupKeysProperty(TestUtils::EngineMode mode)
+{
+    constexpr uint64_t maxIterations = 5;
+
+    const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
+    const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
+    const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
+    const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
+    const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
+    const auto numIterations = *rc::gen::inRange<uint64_t>(1, maxIterations + 1);
+
+    NES_INFO(
+        "Property putAndLookupKeys: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, "
+        "iterations={}, field_types={}",
+        fieldTypes.size(),
+        numberOfItems,
+        bufferSize,
+        numKeyFields,
+        numberOfBuckets,
+        numEntriesPerPage,
+        numIterations,
+        fmt::join(fieldTypes, ", "));
+
+    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    TestUtils::TestableChainedHashMap chainedHashMap{fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage};
+    auto reference = makeEmptyReference(chainedHashMap);
+
+    const auto itemsPerIteration = numberOfItems / numIterations;
+    for (uint64_t iteration = 0; iteration < numIterations; ++iteration)
+    {
+        populateReference(chainedHashMap, fieldTypes, itemsPerIteration, reference);
+        NES_INFO(
+            "putAndLookupKeys: iteration {}/{}, CHM has {} entries, {} unique keys",
+            iteration + 1,
+            numIterations,
+            chainedHashMap.size(),
+            reference.size());
+        RC_ASSERT(chainedHashMap.size() == reference.size());
+        verifyLookups(chainedHashMap, reference, fieldTypes);
+    }
+}
+
+/// Verify getAll() returns every stored entry with the correct key+value pair.
+void putAndGetAllProperty(TestUtils::EngineMode mode)
+{
+    const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
+    const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
+    const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
+    const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
+    const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
+
+    NES_INFO(
+        "Property putAndGetAll: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, "
+        "field_types={}",
+        fieldTypes.size(),
+        numberOfItems,
+        bufferSize,
+        numKeyFields,
+        numberOfBuckets,
+        numEntriesPerPage,
+        fmt::join(fieldTypes, ", "));
+
+    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    TestUtils::TestableChainedHashMap chainedHashMap{fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage};
+    auto reference = makeEmptyReference(chainedHashMap);
+    populateReference(chainedHashMap, fieldTypes, numberOfItems, reference);
+
+    NES_INFO("putAndGetAll: CHM has {} entries, {} unique keys", chainedHashMap.size(), reference.size());
+    RC_ASSERT(chainedHashMap.size() == reference.size());
+
+    const auto& keyTypes = chainedHashMap.getKeyDataTypes();
+    const auto& valueTypes = chainedHashMap.getValueDataTypes();
+    auto actual = chainedHashMap.getAll();
+    RC_ASSERT(actual.size() == reference.size());
+    for (const auto& [expectedKey, expectedValue] : reference)
+    {
+        const bool found = std::ranges::any_of(
+            actual,
+            [&](const auto& entry)
+            {
+                return TestUtils::anyVecsEqual(entry.first, expectedKey, keyTypes)
+                    && TestUtils::anyVecsEqual(entry.second, expectedValue, valueTypes);
+            });
+        RC_ASSERT(found);
+    }
+}
+
+/// Verify put()/at() with the chained hash map used purely as a HashSet: every field is a key and there are no
+/// value fields at all. Unlike putAndLookupKeysProperty, where numKeyFields is drawn from a range and the
+/// all-keys/no-values case only turns up incidentally whenever that draw happens to land on fieldTypes.size(),
+/// here that condition is forced deterministically on every run, while everything else (schema, buffer size,
+/// bucket count, page size, item count, iteration count) stays randomised via property testing as usual.
+void putAndLookupHashSetProperty(TestUtils::EngineMode mode)
+{
+    constexpr uint64_t maxIterations = 5;
+
+    const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
+    const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
+    const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
+    const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
+    const auto numIterations = *rc::gen::inRange<uint64_t>(1, maxIterations + 1);
+    /// Deterministic, not drawn: every field is a key, so the map under test is exercised purely as a HashSet.
+    const auto numKeyFields = fieldTypes.size();
+
+    NES_INFO(
+        "Property putAndLookupHashSet: fields={}, N={}, bufferSize={}, numBuckets={}, entriesPerPage={}, iterations={}, "
+        "field_types={}",
+        fieldTypes.size(),
+        numberOfItems,
+        bufferSize,
+        numberOfBuckets,
+        numEntriesPerPage,
+        numIterations,
+        fmt::join(fieldTypes, ", "));
+
+    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    TestUtils::TestableChainedHashMap chainedHashMap{fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage};
+    RC_ASSERT(chainedHashMap.getValueDataTypes().empty());
+    auto reference = makeEmptyReference(chainedHashMap);
+
+    const auto itemsPerIteration = numberOfItems / numIterations;
+    for (uint64_t iteration = 0; iteration < numIterations; ++iteration)
+    {
+        populateReference(chainedHashMap, fieldTypes, itemsPerIteration, reference);
+        NES_INFO(
+            "putAndLookupHashSet: iteration {}/{}, CHM has {} entries, {} unique keys",
+            iteration + 1,
+            numIterations,
+            chainedHashMap.size(),
+            reference.size());
+        RC_ASSERT(chainedHashMap.size() == reference.size());
+        verifyLookups(chainedHashMap, reference, fieldTypes);
+    }
+}
+} /// anonymous namespace
+
+/// One RC_GTEST_PROP per (property, backend) combination so that a failure on one backend doesn't mask the other and
+/// rapidcheck's shrinking chases each backend's failing input independently.
+RC_GTEST_PROP(ChainedHashMapPropertyTest, putAndLookupKeysCompiler, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    putAndLookupKeysProperty(TestUtils::EngineMode::Compiler);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, putAndLookupKeysInterpreter, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    putAndLookupKeysProperty(TestUtils::EngineMode::Interpreter);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, putAndGetAllCompiler, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    putAndGetAllProperty(TestUtils::EngineMode::Compiler);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, putAndGetAllInterpreter, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    putAndGetAllProperty(TestUtils::EngineMode::Interpreter);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, putAndLookupHashSetCompiler, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    putAndLookupHashSetProperty(TestUtils::EngineMode::Compiler);
+}
+
+RC_GTEST_PROP(ChainedHashMapPropertyTest, putAndLookupHashSetInterpreter, ())
+{
+    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
+    putAndLookupHashSetProperty(TestUtils::EngineMode::Interpreter);
+}
+
+TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
+{
+    constexpr uint64_t bufferSize = 4096;
+    constexpr uint64_t numberOfBuckets = 1;
+    constexpr uint64_t entrySize = sizeof(ChainedHashMapEntry);
+    constexpr uint64_t entriesPerPage = 1;
+    constexpr uint64_t numberOfPooledBuffers = 16;
+
+    auto bufferManager = TestUtils::createBufferManager(bufferSize, numberOfPooledBuffers);
+    auto hashMapBuffer = bufferManager->getUnpooledBuffer(ChainedHashMap::calculateBufferSizeFromBuckets(numberOfBuckets)).value();
+    ChainedHashMap::init(hashMapBuffer, entrySize, numberOfBuckets, entrySize * entriesPerPage);
+
+    auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Interpreter);
+    auto iterate = engine.registerFunction(std::function(
+        /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
+        [](nautilus::val<TupleBuffer*> buffer)
+        {
+            const ChainedHashMapRef ref{buffer, {}, {}, nautilus::val<uint64_t>{entriesPerPage}, nautilus::val<uint64_t>{entrySize}};
+            for (const auto entry : ref)
+            {
+                std::ignore = entry;
+            }
+        }));
+
+    EXPECT_NO_THROW(iterate(&hashMapBuffer));
+}
 
 }
+
+/// NOLINTEND(misc-include-cleaner, bugprone-unchecked-optional-access)

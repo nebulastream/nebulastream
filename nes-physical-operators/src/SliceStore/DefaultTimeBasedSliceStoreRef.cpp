@@ -18,6 +18,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -64,7 +65,7 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
     /// Use the data structure extractor to get the operator-specific data structure, then store its pointer for usage in nautilus
     entryToReplace->sliceStart = slices[0]->getSliceStart().getRawValue();
     entryToReplace->sliceEnd = slices[0]->getSliceEnd().getRawValue();
-    entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(*slices[0], workerThreadId);
+    entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(*slices[0], workerThreadId, *bufferProvider);
 }
 
 DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(
@@ -92,7 +93,7 @@ DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(const DefaultTimeBa
 {
 }
 
-nautilus::val<SliceCacheEntry::DataStructure> DefaultTimeBasedSliceStoreRef::getDataStructureRef(
+NautilusBuffer DefaultTimeBasedSliceStoreRef::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp,
     const nautilus::val<WorkerThreadId>& workerThreadId,
     const nautilus::val<OperatorHandler*>& operatorHandler,
@@ -113,7 +114,8 @@ nautilus::val<SliceCacheEntry::DataStructure> DefaultTimeBasedSliceStoreRef::get
                 nautilus::val<const DefaultTimeBasedSliceStoreRef*>(this),
                 sliceStoreVal,
                 bufferProvider);
-        });
+        },
+        bufferProvider);
 }
 
 void setupSliceStoreProxy(
