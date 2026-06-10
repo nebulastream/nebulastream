@@ -44,7 +44,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
-    : engine(std::move(options)), operatorHandlers(std::move(operatorHandlers)), pipeline(std::move(pipeline))
+    : engine(options), operatorHandlers(std::move(operatorHandlers)), pipeline(std::move(pipeline))
 {
 }
 
@@ -59,11 +59,12 @@ void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffe
 
 void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine::NautilusModule& module) const
 {
-    /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
+    /// Capture the pipeline shared_ptr by value so the compiled function keeps it alive even if this stage is
+    /// destroyed before the function executes.
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
-        compiledFunction = [this](
+        compiledFunction = [pipeline = pipeline](
                                nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
                                nautilus::val<const TupleBuffer*> recordBufferRef,
                                nautilus::val<const Arena*> arenaRef)
