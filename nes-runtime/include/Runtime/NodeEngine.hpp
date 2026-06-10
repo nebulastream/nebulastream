@@ -22,15 +22,13 @@
 #include <Sources/SourceProvider.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryEngine.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
-/// Forward declaration of QueryEngineTest, which includes Task, which includes SinkMedium, which includes NodeEngine
-class QueryTracker;
-
 /// @brief this class represents the interface and entrance point into the
 /// query processing part of NES. It provides basic functionality
-/// such as registering, starting, and stopping.
+/// such as starting and stopping.
 class NodeEngine
 {
     friend class NodeEngineBuilder;
@@ -48,8 +46,7 @@ public:
         std::unique_ptr<QueryEngine> queryEngine,
         std::unique_ptr<SourceProvider> sourceProvider);
 
-    void registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
-    void startQuery(QueryId queryId);
+    void startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.
     void stopQuery(QueryId queryId);
@@ -66,7 +63,6 @@ private:
 
     std::shared_ptr<SystemEventListener> systemEventListener;
     std::unique_ptr<QueryEngine> queryEngine;
-    std::unique_ptr<QueryTracker> queryTracker;
     std::unique_ptr<SourceProvider> sourceProvider;
 };
 }

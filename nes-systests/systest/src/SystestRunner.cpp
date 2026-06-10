@@ -250,13 +250,11 @@ std::vector<RunningQuery> runQueries(
             if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value())
             {
                 /// Start both differential queries
-                auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan);
-                auto regDiff = querySubmitter.registerQuery(nextQuery.differentialQueryPlan.value());
+                auto reg = querySubmitter.startQuery(nextQuery.planInfoOrException.value().queryPlan);
+                auto regDiff = querySubmitter.startQuery(nextQuery.differentialQueryPlan.value());
                 if (reg and regDiff)
                 {
                     hasOneMoreQueryToStart = true;
-                    querySubmitter.startQuery(*reg);
-                    querySubmitter.startQuery(*regDiff);
                     active.emplace(*reg, std::make_shared<RunningQuery>(nextQuery, *reg, *regDiff));
                     active.emplace(*regDiff, std::make_shared<RunningQuery>(nextQuery, *regDiff, *reg));
                 }
@@ -272,11 +270,9 @@ std::vector<RunningQuery> runQueries(
             }
             else if (nextQuery.planInfoOrException.has_value())
             {
-                /// Registration
-                if (auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan))
+                if (auto reg = querySubmitter.startQuery(nextQuery.planInfoOrException.value().queryPlan))
                 {
                     hasOneMoreQueryToStart = true;
-                    querySubmitter.startQuery(*reg);
                     active.emplace(*reg, std::make_shared<RunningQuery>(nextQuery, *reg));
                 }
                 else
@@ -455,18 +451,17 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
             continue;
         }
 
-        const auto registrationResult = submitter.registerQuery(queryToRun.planInfoOrException.value().queryPlan);
-        if (not registrationResult.has_value())
+        const auto startResult = submitter.startQuery(queryToRun.planInfoOrException.value().queryPlan);
+        if (not startResult.has_value())
         {
             NES_ERROR("skip failing query: {}", queryToRun.testName);
             continue;
         }
-        auto queryId = registrationResult.value();
+        auto queryId = startResult.value();
 
         auto runningQueryPtr = std::make_shared<RunningQuery>(queryToRun, queryId);
         runningQueryPtr->passed = false;
         ranQueries.emplace_back(runningQueryPtr);
-        submitter.startQuery(queryId);
         const auto summary = submitter.finishedQueries().at(0);
 
         if (summary.getGlobalQueryStatus() == DistributedQueryStatus::Failed)

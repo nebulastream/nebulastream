@@ -27,6 +27,7 @@
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -39,8 +40,7 @@ class QuerySubmissionBackend
 {
 public:
     virtual ~QuerySubmissionBackend() = default;
-    [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(LogicalPlan) = 0;
-    virtual std::expected<void, Exception> start(QueryId) = 0;
+    [[nodiscard]] virtual std::expected<QueryId, Exception> start(LogicalPlan) = 0;
     virtual std::expected<void, Exception> stop(QueryId) = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
@@ -107,11 +107,9 @@ class QueryManager
 public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
-    [[nodiscard]] std::expected<DistributedQueryId, Exception> registerQuery(const DistributedLogicalPlan& plan);
-    /// Starts a pre-registered query. Start may potentially block waiting for the query state to change (even if it fails).
-    std::expected<void, std::vector<Exception>> start(DistributedQueryId query);
+    /// Compiles and starts the distributed query on all assigned workers. Blocks until the query state has advanced past Registered.
+    [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(const DistributedLogicalPlan& plan);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
-    std::expected<void, std::vector<Exception>> unregister(const DistributedQueryId& query);
     [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> status(const DistributedQueryId& query) const;
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;

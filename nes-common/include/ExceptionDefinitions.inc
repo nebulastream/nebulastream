@@ -96,7 +96,6 @@ EXCEPTION(CannotOpenSink, 4004, "failed to open a sink")
 
 /// 5XXX API errors
 EXCEPTION(QueryNotFound, 5000, "query is not registered")
-EXCEPTION(QueryRegistrationFailed, 5001, "query registration call failed")
 EXCEPTION(QueryStartFailed, 5002, "query start call failed")
 EXCEPTION(QueryStopFailed, 5003, "query stop call failed")
 EXCEPTION(QueryUnregistrationFailed, 5004, "query unregistration call failed")

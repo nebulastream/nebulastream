@@ -42,6 +42,7 @@
 #include <GoogleEventTracePrinter.hpp>
 #include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
@@ -91,7 +92,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     }
 }
 
-std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
+std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
@@ -119,23 +120,8 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         request->dumpCompilationResult = dumpMode;
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
-        nodeEngine->registerCompiledQueryPlan(plan.getQueryId(), std::move(result));
+        nodeEngine->startQuery(plan.getQueryId(), std::move(result));
         return plan.getQueryId();
-    }
-    CPPTRACE_CATCH(...)
-    {
-        return std::unexpected(wrapExternalException());
-    }
-    std::unreachable();
-}
-
-std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noexcept
-{
-    CPPTRACE_TRY
-    {
-        PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
-        nodeEngine->startQuery(queryId);
-        return {};
     }
     CPPTRACE_CATCH(...)
     {

@@ -33,6 +33,7 @@
 #include <grpcpp/support/status.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -53,16 +54,16 @@ GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
     }
 }
 
-std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(LogicalPlan localPlan)
+std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::start(LogicalPlan localPlan)
 {
     grpc::ClientContext context;
-    RegisterQueryReply reply;
-    RegisterQueryRequest request;
+    StartQueryReply reply;
+    StartQueryRequest request;
     request.mutable_queryplan()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(localPlan));
-    const auto status = stub->RegisterQuery(&context, request, &reply);
+    const auto status = stub->StartQuery(&context, request, &reply);
     if (status.ok())
     {
-        NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), workerConfig.host);
+        NES_DEBUG("Starting local query {} on node {} was successful.", localPlan.getQueryId(), workerConfig.host);
         /// The worker returns its assigned LocalQueryId, but we need to return the full QueryId
         /// which includes the DistributedQueryId from the plan
         auto workerQueryId = QueryPlanSerializationUtil::deserializeQueryId(reply.queryid());
@@ -72,23 +73,6 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(Logi
         }
         return workerQueryId;
     }
-    return std::unexpected{QueryRegistrationFailed(
-        "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
-}
-
-std::expected<void, Exception> GRPCQuerySubmissionBackend::start(QueryId queryId)
-{
-    grpc::ClientContext context;
-    StartQueryRequest request;
-    google::protobuf::Empty response;
-    *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
-    const auto status = stub->StartQuery(&context, request, &response);
-    if (status.ok())
-    {
-        NES_DEBUG("Starting query {} on node {} was successful.", queryId, workerConfig.host);
-        return {};
-    }
-
     return std::unexpected{QueryStartFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }

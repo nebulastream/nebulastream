@@ -22,6 +22,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <WorkerStatus.hpp>
@@ -35,8 +36,7 @@ class GRPCQuerySubmissionBackend final : public QuerySubmissionBackend
 
 public:
     explicit GRPCQuerySubmissionBackend(WorkerConfig config);
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan) override;
-    std::expected<void, Exception> start(QueryId) override;
+    [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
     std::expected<void, Exception> stop(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;

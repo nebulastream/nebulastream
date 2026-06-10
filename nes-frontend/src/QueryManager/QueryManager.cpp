@@ -107,7 +107,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     }
 }
 
-[[nodiscard]] std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const DistributedLogicalPlan& plan)
+[[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(const DistributedLogicalPlan& plan)
 {
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
 
@@ -121,6 +121,9 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
         throw QueryAlreadyRegistered("{}", plan.getQueryId());
     }
 
+    const std::chrono::steady_clock::time_point queryStartTimestamp = std::chrono::steady_clock::now();
+    std::vector<Exception> exceptions;
+
     for (const auto& [host, localPlans] : plan)
     {
         INVARIANT(backends.contains(host), "Plan was assigned to a node ({}) that is not part of the cluster", host);
@@ -130,72 +133,35 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
             {
                 /// Set the distributed query ID on the local plan before sending to worker
                 localPlan.setQueryId(QueryId::createDistributed(id));
-                const auto result = backends.at(host).registerQuery(localPlan);
+                const auto result = backends.at(host).start(localPlan);
                 if (result)
                 {
-                    NES_DEBUG("Registration to node {} was successful.", host);
+                    NES_DEBUG("Starting query on node {} was successful.", host);
                     localQueries[host].emplace_back(*result);
                     continue;
                 }
-                return std::unexpected{result.error()};
+                exceptions.emplace_back(result.error());
             }
             catch (const std::exception& e)
             {
-                return std::unexpected{QueryRegistrationFailed("Message from external exception: {}", e.what())};
+                exceptions.emplace_back(QueryStartFailed("Message from external exception: {}", e.what()));
             }
         }
+    }
+
+    if (!exceptions.empty())
+    {
+        return std::unexpected(exceptions);
     }
 
     this->state.queries.emplace(id, std::move(localQueries));
-    return id;
-}
 
-std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQueryId queryId)
-{
-    auto queryResult = getQuery(std::move(queryId));
-    if (!queryResult.has_value())
-    {
-        return std::unexpected(std::vector{queryResult.error()});
-    }
-    auto query = queryResult.value();
-    std::vector<Exception> exceptions;
-
-    const std::chrono::steady_clock::time_point queryStartTimestamp = std::chrono::steady_clock::now();
-    for (const auto& [host, localQueryId] : query.iterate())
-    {
-        try
-        {
-            INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
-            const auto result = backends.at(host).start(localQueryId);
-            if (result)
-            {
-                NES_DEBUG("Starting query {} on node {} was successful.", localQueryId, host);
-                continue;
-            }
-
-            exceptions.emplace_back(result.error());
-        }
-        /// Worker backends return std::expected for normal errors; this catch is defensive
-        /// against unexpected exceptions from the underlying network layer (e.g., gRPC stubs).
-        catch (const std::exception& e)
-        {
-            exceptions.emplace_back(QueryStartFailed("Message from external exception: {} ", e.what()));
-        }
-    }
-
-    if (not exceptions.empty())
-    {
-        return std::unexpected{exceptions};
-    }
-
-    /// Poll all queries until there status has changed to something other than Registered.
-    /// We do this so the function can guarantee that the next call to status will guarantee that the query is not in the Registered
-    /// State anymore.
+    /// Poll until all local queries have advanced past Registered, so the caller can immediately
+    /// observe a meaningful status after this function returns.
+    auto query = this->state.queries.at(id);
     auto waitForStatusChange = query.iterate()
         | std::views::transform([](const auto& pair) { return std::pair{std::get<0>(pair), std::get<1>(pair)}; })
         | std::ranges::to<std::vector>();
-    /// The query is expected to be moved into the started state pretty quickly after lowering, it is very unlikely to even observe
-    /// the status not changing immediatly, so a rapid polling interval is appropriate.
     constexpr auto statusPollInterval = std::chrono::milliseconds(10);
     constexpr size_t statusRetries = 17;
     for (size_t i = 0; i < statusRetries; ++i)
@@ -211,9 +177,6 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
                     exceptions.emplace_back(QueryStartFailed("Waiting for query state to change: {}", result.error()));
                     return true;
                 }
-
-                /// Waiting until the query state changed. Even if the query status changes to failed we consider the start to be successful.
-                /// Subsequent status requests will find the query in a failed state.
                 return result->state != QueryStatus::Registered;
             });
 
@@ -242,9 +205,9 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
 
     NES_DEBUG(
         "Query {} started successfully after {}.",
-        queryId,
+        id,
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - queryStartTimestamp));
-    return {};
+    return id;
 }
 
 std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManager::status(const DistributedQueryId& queryId) const

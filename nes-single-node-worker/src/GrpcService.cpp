@@ -105,31 +105,19 @@ grpc::Status tryWithDefaultHandling(const std::function<grpc::Status()>& f, grpc
 
 }
 
-grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
+grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, StartQueryReply* response)
 {
-    auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
+    auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
     return tryWithDefaultHandling(
         [&]
         {
-            auto result = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
+            auto result = delegate.startQuery(std::move(queryPlan));
             if (result.has_value())
             {
                 *response->mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(*result);
                 return grpc::Status::OK;
             }
             return handleError(result.error(), context);
-        },
-        context);
-}
-
-grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
-{
-    const auto queryId = QueryPlanSerializationUtil::deserializeQueryId(request->queryid());
-    return tryWithDefaultHandling(
-        [&]
-        {
-            getValueOrThrow(delegate.startQuery(queryId));
-            return grpc::Status::OK;
         },
         context);
 }

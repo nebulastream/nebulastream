@@ -170,7 +170,7 @@ teardown()      { nes_distributed_teardown; }
   run docker_nes_cli -d start
 
   sync_workdir
-  grep "(5001) : query registration call failed; Status: UNAVAILABLE" nes-cli.log
+  grep "(5002) : query start call failed; Could not start query: query start call failed; Status: UNAVAILABLE" nes-cli.log
   [ "$status" -eq 1 ]
 
   docker compose up -d --wait worker-1
