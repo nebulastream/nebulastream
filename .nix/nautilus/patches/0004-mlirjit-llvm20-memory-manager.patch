@@ -1,0 +1,26 @@
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+@@ -4,6 +4,7 @@
+ #include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
+ #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
+ #include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
++#include <llvm/Config/llvm-config.h>
+ #include <llvm/ExecutionEngine/SectionMemoryManager.h>
+ #include <llvm/IR/LLVMContext.h>
+ #include <llvm/Support/Error.h>
+@@ -65,8 +66,14 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 	auto objectLinkingLayerCreator =
+ 	    [&rawLayer, &options,
+ 	     &targetTriple](llvm::orc::ExecutionSession& session) -> std::unique_ptr<llvm::orc::ObjectLayer> {
++#if LLVM_VERSION_MAJOR >= 21
+ 		auto layer = std::make_unique<llvm::orc::RTDyldObjectLinkingLayer>(
+ 		    session, [](const llvm::MemoryBuffer&) { return std::make_unique<llvm::SectionMemoryManager>(); });
++#else
++		// LLVM <= 20: RTDyldObjectLinkingLayer's GetMemoryManagerFunction takes no arguments.
++		auto layer = std::make_unique<llvm::orc::RTDyldObjectLinkingLayer>(
++		    session, [] { return std::make_unique<llvm::SectionMemoryManager>(); });
++#endif
+ 
+ 		for (auto* listener : options.eventListeners) {
+ 			if (listener != nullptr) {
