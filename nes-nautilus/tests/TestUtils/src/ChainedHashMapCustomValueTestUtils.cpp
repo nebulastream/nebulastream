@@ -53,7 +53,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
             nautilus::val<HashMap*> hashMapVal)
         {
             ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
-            const RecordBuffer recordBufferKey(bufferKey);
+            const RecordBuffer recordBufferKey{BorrowedNautilusBuffer::from(bufferKey)};
             auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
 
             auto foundEntry = hashMapRef.findOrCreateEntry(
@@ -84,7 +84,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
 
             const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
             PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(ref.getValueMemArea()), tupleLayout);
-            const RecordBuffer recordBufferValue(bufferValue);
+            const RecordBuffer recordBufferValue{BorrowedNautilusBuffer::from(bufferValue)};
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
                 auto recordValue = inputBufferRef->readRecord(projectionAllFields, recordBufferValue, idxValues);
@@ -109,8 +109,8 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
             nautilus::val<HashMap*> hashMapVal)
         {
             ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);
-            const RecordBuffer recordBufferKey(keyBufferRef);
-            RecordBuffer recordBufferOutput(outputBufferRef);
+            const RecordBuffer recordBufferKey{BorrowedNautilusBuffer::from(keyBufferRef)};
+            RecordBuffer recordBufferOutput{BorrowedNautilusBuffer::from(outputBufferRef)};
             const auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
             const auto foundEntry
                 = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
