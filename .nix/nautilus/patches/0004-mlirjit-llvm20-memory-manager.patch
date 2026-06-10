@@ -9,10 +9,20 @@ diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp b/naut
  #include <llvm/ExecutionEngine/SectionMemoryManager.h>
  #include <llvm/IR/LLVMContext.h>
  #include <llvm/Support/Error.h>
-@@ -65,8 +66,14 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+@@ -62,11 +63,24 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 	// reach it after LLJIT construction for addEventListener().
+ 	llvm::orc::RTDyldObjectLinkingLayer* rawLayer = nullptr;
+ 
++#if LLVM_VERSION_MAJOR >= 21
  	auto objectLinkingLayerCreator =
  	    [&rawLayer, &options,
  	     &targetTriple](llvm::orc::ExecutionSession& session) -> std::unique_ptr<llvm::orc::ObjectLayer> {
++#else
++	// LLVM <= 20: LLJITBuilderState::ObjectLinkingLayerCreator also receives the target Triple.
++	auto objectLinkingLayerCreator =
++	    [&rawLayer, &options,
++	     &targetTriple](llvm::orc::ExecutionSession& session, const llvm::Triple&) -> std::unique_ptr<llvm::orc::ObjectLayer> {
++#endif
 +#if LLVM_VERSION_MAJOR >= 21
  		auto layer = std::make_unique<llvm::orc::RTDyldObjectLinkingLayer>(
  		    session, [](const llvm::MemoryBuffer&) { return std::make_unique<llvm::SectionMemoryManager>(); });
