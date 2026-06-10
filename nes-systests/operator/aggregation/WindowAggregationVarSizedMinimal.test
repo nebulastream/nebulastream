@@ -1,0 +1,27 @@
+# name: window/WindowAggregationVarSizedMinimal.test
+# description: Test window aggregations over different data types for keyed windows with the key being a varsized for minimal input (correctness test
+# groups: [Aggregation, WindowOperators, CompilationIntensive]
+
+
+CREATE LOGICAL SOURCE stream(keyVS VARSIZED, keyI16 VARSIZED, keyU64 VARSIZED, i8 INT8, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+my_key1,one,two,1,0
+my_key2,three,four,2,50
+my_key1,five,six,3,250
+
+# Checking if a count over a keyed window works for all data types
+SELECT start, end, keyVS, COUNT(i8) as i8_out
+FROM stream GROUP BY (keyVS) WINDOW TUMBLING(ts, size 200 ms) INTO FILE ();
+----
+0,200,my_key1,1
+0,200,my_key2,1
+200,400,my_key1,1
+
+# Checking if a median over a keyed window works for varsized keys
+SELECT start, end, keyVS, MEDIAN(i8) as i8_out
+FROM stream GROUP BY (keyVS) WINDOW TUMBLING(ts, size 200 ms) INTO FILE ();
+----
+0,200,my_key1,1.0
+0,200,my_key2,2.0
+200,400,my_key1,3.0

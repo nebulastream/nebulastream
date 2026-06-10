@@ -73,10 +73,8 @@ void HJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
     const auto windowInfoRef = getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
     const nautilus::val<Timestamp> windowStart{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
-    const auto leftHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
-    const auto rightHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
 
-    performMatchPairsProbe(
-        leftHashMapRefs, leftNumberOfHashMaps, rightHashMapRefs, rightNumberOfHashMaps, executionCtx, windowStart, windowEnd);
+    /// The hash map buffers themselves are stored as child buffers of the record buffer, not as raw pointers in the trigger struct
+    performMatchPairsProbe(recordBuffer.getReference(), leftNumberOfHashMaps, rightNumberOfHashMaps, executionCtx, windowStart, windowEnd);
 }
 }

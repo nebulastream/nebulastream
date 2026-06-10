@@ -18,6 +18,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -92,7 +93,7 @@ DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(const DefaultTimeBa
 {
 }
 
-nautilus::val<SliceCacheEntry::DataStructure> DefaultTimeBasedSliceStoreRef::getDataStructureRef(
+NautilusBuffer DefaultTimeBasedSliceStoreRef::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp,
     const nautilus::val<WorkerThreadId>& workerThreadId,
     const nautilus::val<OperatorHandler*>& operatorHandler,
@@ -113,7 +114,8 @@ nautilus::val<SliceCacheEntry::DataStructure> DefaultTimeBasedSliceStoreRef::get
                 nautilus::val<const DefaultTimeBasedSliceStoreRef*>(this),
                 sliceStoreVal,
                 bufferProvider);
-        });
+        },
+        bufferProvider);
 }
 
 void setupSliceStoreProxy(

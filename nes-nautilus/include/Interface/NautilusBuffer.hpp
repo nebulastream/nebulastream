@@ -80,7 +80,7 @@ class BorrowedNautilusBuffer
     explicit BorrowedNautilusBuffer(const nautilus::val<TupleBuffer*>& buffer);
 
 public:
-    static BorrowedNautilusBuffer from(const nautilus::val<TupleBuffer*>& originalBuffer);
+    static BorrowedNautilusBuffer from(const nautilus::val<const TupleBuffer*>& originalBuffer);
 
     nautilus::val<int8_t*> data();
     [[nodiscard]] nautilus::val<const int8_t*> data() const;
