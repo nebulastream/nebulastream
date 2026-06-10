@@ -36,6 +36,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/RowTupleBufferRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -147,7 +148,7 @@ public:
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();
 
-        RecordBuffer recordBuffer(std::addressof(buffer));
+        RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(std::addressof(buffer))};
         test(executionContext, recordBuffer);
     }
 

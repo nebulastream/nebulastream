@@ -38,6 +38,7 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -197,7 +198,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                                   nautilus::val<uint64_t> sizeVarSizedDataVal,
                                   nautilus::val<uint64_t*> outputIndex)
     {
-        RecordBuffer recordBuffer(buffer);
+        RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(buffer)};
         nautilus::val<uint64_t> value = std::move(startForValues);
         for (nautilus::val<uint64_t> i = 0; i < numberOfTuplesToFill; i = i + 1)
         {
