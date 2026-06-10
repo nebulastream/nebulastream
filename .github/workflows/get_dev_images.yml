@@ -71,7 +71,7 @@ jobs:
       hash: ${{ steps.hash-and-lookup.outputs.hash }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
       - name: Calculate and lookup hash
@@ -148,7 +148,7 @@ jobs:
           - arch: arm64
             stdlib: 'libstdcxx'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
       - name: Login to Docker Hub
@@ -218,7 +218,7 @@ jobs:
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true' && needs.build-dev-images.result == 'success'
     runs-on: [ self-hosted, linux, Build, x64 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
       - name: Login to Docker Hub

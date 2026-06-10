@@ -45,7 +45,7 @@ jobs:
         platform: [ x64 ]
     steps:
       - name: Checkout PR Branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
       - name: Build coverage and export as lcov
@@ -53,7 +53,7 @@ jobs:
           cmake -DCODE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
           cmake --build build --target ccov-all-export
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         with:
           slug: nebulastream/nebulastream
           fail_ci_if_error: true

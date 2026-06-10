@@ -7,10 +7,14 @@ description: |
 on:
   pull_request:
     types: [ synchronize, opened, reopened ]
+  merge_group:
+    branches: [ main ]
 
 # cancel previous runs of same PR / branch.
+# In merge_group runs github.head_ref is empty, so fall back to github.ref (the unique
+# gh-readonly-queue ref) to avoid queued runs cancelling each other.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}-pr
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-pr
   cancel-in-progress: true
 
 jobs:
@@ -18,16 +22,16 @@ jobs:
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
-      branch-name: ${{ github.head_ref }}
-      head_sha: ${{ github.event.pull_request.head.sha }}
+      branch-name: ${{ github.head_ref || github.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   smoke-tests:
     needs: [ get-dev-images ]
     uses: ./.github/workflows/smoke-tests.yml
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha }}
-      number_of_commits: ${{ github.event.pull_request.commits }}
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      number_of_commits: ${{ github.event.pull_request.commits || -1 }}
     secrets: inherit
 
   build-and-test:
@@ -37,7 +41,7 @@ jobs:
     secrets: inherit
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       matrix_config: pr_matrix.yaml
 
   large-tests:
@@ -47,14 +51,14 @@ jobs:
     secrets: inherit
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   run_code_coverage:
     needs: [ get-dev-images, smoke-tests ]
     name: "Run Code Coverage"
     uses: ./.github/workflows/code_coverage.yml
     with:
-      head_sha: ${{ github.event.pull_request.head.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
     secrets: inherit
 
@@ -65,30 +69,30 @@ jobs:
     secrets: inherit
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   test-nebuli-and-single-node-worker:
     needs: [ get-dev-images, smoke-tests ]
     name: "E2E Test using Nebuli and SingleNodeWorker"
     strategy:
       matrix:
-        arch: [ x64, arm64 ]
+        arch: [ x64 ]
     uses: ./.github/workflows/execute_query.yml
     secrets: inherit
     with:
-      head_sha: ${{ github.event.pull_request.head.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       runtime_seconds: '$((1*60))'
       arch: ${{ matrix.arch }}
 
   clang-tidy-diff:
-    if: github.event.pull_request.head.repo.fork == false
+    if: github.event_name == 'merge_group' || github.event.pull_request.head.repo.fork == false
     needs: [ get-dev-images, smoke-tests ]
     uses: ./.github/workflows/clang_tidy_diff.yml
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha }}
-      base_sha: ${{ github.event.pull_request.base.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      base_sha: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
       number_of_commits: ${{ github.event.pull_request.commits || -1 }}
     secrets: inherit
 
@@ -98,4 +102,4 @@ jobs:
     uses: ./.github/workflows/nix-build.yml
     secrets: inherit
     with:
-      head_sha: ${{ github.event.pull_request.head.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}

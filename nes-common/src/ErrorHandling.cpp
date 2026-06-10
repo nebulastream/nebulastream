@@ -26,7 +26,6 @@
 #include <cpptrace/from_current.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
 
 /// formater for cpptrace::nullable
 namespace fmt
@@ -229,28 +228,38 @@ ErrorCode getCurrentErrorCode()
 
 }
 
-/// errorCodeExists() and errorTypeExists() use internally magic_enum. To work with our generated error code enum we have to define
-/// min and max in advance
-namespace magic_enum::customize
-{
-template <>
-struct enum_range<NES::ErrorCode>
-{
-    static constexpr int min = 1000;
-    static constexpr int max = 10000;
-};
-}
-
+/// errorCodeExists() and errorTypeExists() resolve a numeric code / a type name against the ErrorCode
+/// enum using the same X-macro the enum is generated from (ExceptionDefinitions.inc). This replaces
+/// magic_enum::enum_cast, which needs an enum_range spanning the sparse [1000, 10000] code space and
+/// then instantiates compile-time machinery for all ~9000 candidate values — a giant AST that makes
+/// clang-tidy's whole-AST checks take tens of minutes on this TU.
 namespace NES
 {
 
 std::optional<ErrorCode> errorCodeExists(uint64_t code) noexcept
 {
-    return magic_enum::enum_cast<ErrorCode>(code);
+    switch (code)
+    {
+/// NOLINTNEXTLINE(cppcoreguidelines-macro-usage): X-macro table expansion over ExceptionDefinitions.inc; it generates case labels, which a constexpr template cannot.
+#define EXCEPTION(name, codeValue, message) \
+    case (codeValue): \
+        return static_cast<ErrorCode>(codeValue);
+#include <ExceptionDefinitions.inc>
+#undef EXCEPTION
+        default:
+            return std::nullopt;
+    }
 }
 
 std::optional<ErrorCode> errorTypeExists(std::string_view codeOrTypeStr) noexcept
 {
-    return magic_enum::enum_cast<ErrorCode>(codeOrTypeStr);
+#define EXCEPTION(name, codeValue, message) \
+    if (codeOrTypeStr == #name) \
+    { \
+        return static_cast<ErrorCode>(codeValue); \
+    }
+#include <ExceptionDefinitions.inc>
+#undef EXCEPTION
+    return std::nullopt;
 }
 }

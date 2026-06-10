@@ -1,0 +1,33 @@
+# name: sources/OutofOrder.test
+# description: Out-of-order tuples in a sliding-window aggregation and join trigger the "add slices to a window that has already been triggered" exception in DefaultTimeBasedSliceStore.
+# groups: [Sources, windowAggregation, large]
+
+# We set the buffer size and the number of threads to ensure a deterministic trigger of the exception
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1024]
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
+
+CREATE LOGICAL SOURCE outOfOrderStreamA(consumerId INT32 NOT NULL, sectorId INT32 NOT NULL, consumedPower FLOAT64 NOT NULL, consumerType VARSIZED NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR outOfOrderStreamA TYPE File;
+ATTACH FILE outoforder/outOfOrderStreamA.csv
+
+CREATE LOGICAL SOURCE outOfOrderStreamB(consumerId2 INT32 NOT NULL, sectorId2 INT32 NOT NULL, consumedPower2 FLOAT64 NOT NULL, consumerType2 VARSIZED NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR outOfOrderStreamB TYPE File;
+ATTACH FILE outoforder/outOfOrderStreamB.csv
+
+# Query 1: sliding-window aggregation over outOfOrderStreamA. A late tuple creates a new slice in an already-triggered window, which raises WindowingError.
+SELECT start, end, sectorId, SUM(consumedPower) AS consumedPower
+FROM outOfOrderStreamA
+GROUP BY sectorId
+WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
+INTO Checksum();
+----
+ERROR 3014
+
+# Query 2: sliding-window join of the two streams on consumerId, exercising the same out-of-order slice store path.
+SELECT *
+FROM (SELECT * FROM outOfOrderStreamA)
+INNER JOIN (SELECT * FROM outOfOrderStreamB) ON consumerId = consumerId2
+WINDOW SLIDING (timestamp, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
+INTO Checksum();
+----
+ERROR 3014

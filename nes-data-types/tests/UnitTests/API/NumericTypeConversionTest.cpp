@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -397,4 +398,41 @@ INSTANTIATE_TEST_CASE_P(
             magic_enum::enum_name(info.param.rightIsNullable),
             magic_enum::enum_name(info.param.expectedResult.type));
     });
+
+/// Joining a non-numeric type with a numeric or other non-matching type must symmetrically return nullopt.
+/// Regression test for asymmetry where e.g. INT32.join(BOOLEAN) returned nullopt but BOOLEAN.join(INT32) returned UNDEFINED.
+class JoinIncompatibleTypesTest : public Testing::BaseUnitTest,
+                                  public ::testing::WithParamInterface<std::pair<DataType::Type, DataType::Type>>
+{
+public:
+    static void SetUpTestSuite() { Logger::setupLogging("JoinIncompatibleTypesTest.log", LogLevel::LOG_DEBUG); }
+};
+
+TEST_P(JoinIncompatibleTypesTest, BothDirectionsReturnNullopt)
+{
+    const auto [leftType, rightType] = GetParam();
+    const auto left = DataTypeProvider::provideDataType(leftType);
+    const auto right = DataTypeProvider::provideDataType(rightType);
+    const auto leftRight = left.join(right);
+    const auto rightLeft = right.join(left);
+    EXPECT_FALSE(leftRight.has_value()) << "Expected nullopt for " << left << ".join(" << right << ")";
+    EXPECT_FALSE(rightLeft.has_value()) << "Expected nullopt for " << right << ".join(" << left << ")";
+}
+
+INSTANTIATE_TEST_CASE_P(
+    JoinIncompatibleTypesTest,
+    JoinIncompatibleTypesTest,
+    ::testing::Values(
+        std::pair{DataType::Type::INT32, DataType::Type::BOOLEAN},
+        std::pair{DataType::Type::INT64, DataType::Type::BOOLEAN},
+        std::pair{DataType::Type::UINT32, DataType::Type::BOOLEAN},
+        std::pair{DataType::Type::FLOAT32, DataType::Type::BOOLEAN},
+        std::pair{DataType::Type::FLOAT64, DataType::Type::BOOLEAN},
+        std::pair{DataType::Type::INT32, DataType::Type::CHAR},
+        std::pair{DataType::Type::INT64, DataType::Type::CHAR},
+        std::pair{DataType::Type::FLOAT64, DataType::Type::CHAR},
+        std::pair{DataType::Type::BOOLEAN, DataType::Type::CHAR},
+        std::pair{DataType::Type::BOOLEAN, DataType::Type::VARSIZED},
+        std::pair{DataType::Type::CHAR, DataType::Type::VARSIZED},
+        std::pair{DataType::Type::INT32, DataType::Type::VARSIZED}));
 }
