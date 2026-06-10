@@ -19,7 +19,6 @@
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <SliceStore/SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <val_concepts.hpp>
 
@@ -27,18 +26,18 @@ namespace NES
 {
 class WindowBasedOperatorHandler;
 
-/// Abstract interface for accessing operator-specific data structures from a SliceStore.
+/// Abstract interface for accessing an operator-specific data structure from a SliceStore.
+/// @tparam DataStructureType the concrete data-structure pointer (e.g. HashMap*, TupleBuffer*) the operator works on.
 /// Each WindowSlicesStoreInterface implementation provides its own concrete SliceStoreRef.
 /// The SliceStoreRef owns the SliceCache and encapsulates the cache + store interaction.
+template <class DataStructureType>
 class SliceStoreRef
 {
 public:
     virtual ~SliceStoreRef() = default;
 
     /// Main entry point: looks up or creates the data structure for the given timestamp and worker thread.
-    /// The extractor lambda converts an operator-agnostic Slice into the operator-specific data structure pointer.
-    /// The createSlicesFunction is called on cache miss to get a fresh SliceCreateFunction.
-    virtual nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
+    virtual nautilus::val<DataStructureType> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const nautilus::val<OperatorHandler*>& operatorHandler,

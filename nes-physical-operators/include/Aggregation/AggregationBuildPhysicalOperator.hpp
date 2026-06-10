@@ -26,13 +26,13 @@
 namespace NES
 {
 
-class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
+class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator<HashMap*>
 {
 public:
     AggregationBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::unique_ptr<SliceStoreRef> sliceStoreRef,
+        std::unique_ptr<SliceStoreRef<HashMap*>> sliceStoreRef,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
         HashMapOptions hashMapOptions);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;

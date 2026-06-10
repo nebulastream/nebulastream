@@ -27,7 +27,9 @@
 namespace NES
 {
 /// This class is the first phase of the stream join. The actual implementation is not part of this class
-class StreamJoinBuildPhysicalOperator : public WindowBuildPhysicalOperator
+/// @tparam DataStructureType the per-slice data-structure pointer the join build writes into
+template <class DataStructureType>
+class StreamJoinBuildPhysicalOperator : public WindowBuildPhysicalOperator<DataStructureType>
 {
 public:
     StreamJoinBuildPhysicalOperator(
@@ -35,7 +37,7 @@ public:
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
-        std::unique_ptr<SliceStoreRef> sliceStoreRef);
+        std::unique_ptr<SliceStoreRef<DataStructureType>> sliceStoreRef);
     ~StreamJoinBuildPhysicalOperator() override = default;
 
     StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other) = default;

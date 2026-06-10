@@ -121,26 +121,22 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
-    auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
+    auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef<NLJSlice, TupleBuffer*>(
+        [](NLJSlice& slice, const WorkerThreadId workerThreadId) -> TupleBuffer*
         {
-            const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left);
-            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
-            return const_cast<TupleBuffer*>(ptr);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the slice exposes a const buffer; the build operator writes into it.
+            return const_cast<TupleBuffer*>(slice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left));
         },
         [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             const CreateNewNLJSliceArgs nljSliceArgs{bufferProvider, tupleSizeLeft, tupleSizeRight};
             return handler.getCreateNewSlicesFunction(nljSliceArgs);
         });
-    auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
+    auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef<NLJSlice, TupleBuffer*>(
+        [](NLJSlice& slice, const WorkerThreadId workerThreadId) -> TupleBuffer*
         {
-            const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right);
-            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
-            return const_cast<TupleBuffer*>(ptr);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the slice exposes a const buffer; the build operator writes into it.
+            return const_cast<TupleBuffer*>(slice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right));
         },
         [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {

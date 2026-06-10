@@ -168,7 +168,7 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     std::unique_ptr<TimeFunction> timeFunction,
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
     HashMapOptions hashMapOptions,
-    std::unique_ptr<SliceStoreRef> sliceStoreRef)
+    std::unique_ptr<SliceStoreRef<HashMap*>> sliceStoreRef)
     : StreamJoinBuildPhysicalOperator{operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(tupleLayout), std::move(sliceStoreRef)}
     , hashMapOptions(std::move(hashMapOptions))
 {

@@ -225,13 +225,9 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
-    auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
-        {
-            auto& aggregationSlice = dynamic_cast<AggregationSlice&>(slice);
-            auto* ptr = aggregationSlice.getHashMapPtrOrCreate(workerThreadId);
-            return ptr;
-        },
+    auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef<AggregationSlice, HashMap*>(
+        [](AggregationSlice& slice, const WorkerThreadId workerThreadId) -> HashMap*
+        { return slice.getHashMapPtrOrCreate(workerThreadId); },
         /// NOLINTNEXTLINE(bugprone-exception-escape): dynamic_cast<ref> may throw std::bad_cast on bug; non-recoverable here.
         [hashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
         {

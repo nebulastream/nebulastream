@@ -31,7 +31,7 @@ namespace NES
 /// This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
 /// corresponding slice one after the other. Afterward, the second phase (NLJProbe) will start joining the tuples
 /// via two nested loops.
-class NLJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator
+class NLJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator<TupleBuffer*>
 {
 public:
     NLJBuildPhysicalOperator(
@@ -39,7 +39,7 @@ public:
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
-        std::unique_ptr<SliceStoreRef> sliceStoreRef);
+        std::unique_ptr<SliceStoreRef<TupleBuffer*>> sliceStoreRef);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 };
