@@ -24,6 +24,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Interface/RecordLayoutUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
@@ -96,20 +97,14 @@ public:
     [[nodiscard]] virtual std::vector<DataType> getAllDataTypes() const = 0;
 
 protected:
-    /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
-    /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
-    /// to the buffer if the type is of variable sized
-    static VarVal loadValue(const DataType& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference);
+    /// Builds the variable-sized load callback for a RecordBuffer-backed layout (row/column). Varsized
+    /// payloads live in the record buffer's child buffers, so the callback closes over the buffer.
+    static VarSizedLoadFn getRecordBufferLoad(const RecordBuffer& recordBuffer);
 
-    /// Currently, this method does not support Null handling. It stores an VarVal of type to the fieldReference
-    /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
-    /// to the buffer if the type is of variable sized
-    static VarVal storeValue(
-        const DataType& type,
-        const RecordBuffer& recordBuffer,
-        const nautilus::val<int8_t*>& fieldReference,
-        VarVal value,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider);
+    /// Builds the variable-sized store callback for a RecordBuffer-backed layout (row/column). New varsized
+    /// payloads are appended to the record buffer's child buffers via the buffer provider.
+    static VarSizedStoreFn
+    getRecordBufferStore(const RecordBuffer& recordBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider);
 
     [[nodiscard]] static bool
     includesField(const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex);
