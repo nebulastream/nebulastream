@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <utility>
 #include <Interface/RecordBuffer.hpp>
-#include <Pipelines/NautilusEngineProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -45,7 +44,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
-    : options(std::move(options)), operatorHandlers(std::move(operatorHandlers)), pipeline(std::move(pipeline))
+    : engine(std::move(options)), operatorHandlers(std::move(operatorHandlers)), pipeline(std::move(pipeline))
 {
 }
 
@@ -116,10 +115,6 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     /// all of them together. Only afterwards do the handles handed out during setup() become invocable.
     CPPTRACE_TRY
     {
-        /// Reuse this worker thread's engine instead of owning one per stage: it amortizes nautilus' tracing
-        /// arenas across the pipelines started on this thread. The produced executable is self-contained, so it
-        /// stays valid regardless of the (thread-local) engine's lifetime or its reuse for later pipelines.
-        auto& engine = NautilusEngineProvider::getEngine(options);
         auto module = engine.createModule();
         CompilationContext compilationCtx{module};
         pipeline->getRootOperator().setup(ctx, compilationCtx);
