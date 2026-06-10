@@ -59,12 +59,15 @@ void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffe
 
 void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine::NautilusModule& module) const
 {
-    /// Capture the pipeline shared_ptr by value so the compiled function keeps it alive even if this stage is
-    /// destroyed before the function executes.
+    /// Capture the stage by pointer rather than the pipeline shared_ptr: this compiled function is only ever invoked
+    /// through execute()/start()/stop() on the owning stage, so the stage (and thus its pipeline) outlives every call.
+    /// Capturing the pipeline shared_ptr by value instead makes the compiled module co-own the pipeline, and because
+    /// cached slices keep that module alive through their cleanup handle, it retains the pipeline (and its slice
+    /// buffers) past teardown -- which leaks buffers in the sliceCache systests.
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
-        compiledFunction = [pipeline = pipeline](
+        compiledFunction = [this](
                                nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
                                nautilus::val<const TupleBuffer*> recordBufferRef,
                                nautilus::val<const Arena*> arenaRef)
