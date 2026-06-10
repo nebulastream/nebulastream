@@ -124,7 +124,7 @@ VarVal nonNullVarVal(const FieldValue& value, const DataType::Type type)
 }
 
 /// Builds a placeholder `VarVal` carrying the null bit. The payload is irrelevant — the
-/// nullable write path stores the null byte first and `loadValue` skips the payload on read.
+/// nullable write path stores the null byte first and the read path skips the payload on read.
 VarVal nullVarVal(const DataType::Type type)
 {
     const auto isNull = nautilus::val<bool>(true);

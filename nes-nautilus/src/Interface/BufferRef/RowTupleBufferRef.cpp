@@ -24,9 +24,9 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Interface/RecordLayoutUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
-#include <static.hpp>
 #include <val.hpp>
 #include <val_bool.hpp>
 
@@ -38,35 +38,19 @@ RowTupleBufferRef::RowTupleBufferRef(std::vector<Field> fields, const uint64_t t
 {
 }
 
-namespace
-{
-nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldOffset)
-{
-    auto fieldAddress = recordOffset + nautilus::val<uint64_t>(fieldOffset);
-    return fieldAddress;
-}
-}
-
 Record RowTupleBufferRef::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const RecordBuffer& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
 {
-    Record record;
-    const auto bufferAddress = recordBuffer.getMemArea();
-    const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
-    for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
-    {
-        const auto& [name, type, fieldOffset] = fields.at(i);
-        if (not includesField(projections, name))
-        {
-            continue;
-        }
-        auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
-        auto value = loadValue(type, recordBuffer, fieldAddress);
-        record.write(name, value);
-    }
-    return record;
+    /// Row layout: the record occupies a contiguous slice; each field sits at its precomputed offset.
+    const auto recordAddress = recordBuffer.getMemArea() + (tupleSize * recordIndex);
+    const auto access = FieldAccess::createFieldAccesses(
+        fields,
+        [recordAddress](const auto& field)
+        { return FieldAccess{field.name, field.type, recordAddress + nautilus::val<uint64_t>(field.fieldOffset)}; },
+        [&projections](const auto& field) { return includesField(projections, field.name); });
+    return readRecordFields(access, getRecordBufferLoad(recordBuffer));
 }
 
 TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
@@ -80,20 +64,12 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     /// Check if index is in-bounds
     if (recordIndex < capacity)
     {
-        const auto bufferAddress = recordBuffer.getMemArea();
-        const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
-        for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
-        {
-            const auto& [name, type, fieldOffset] = fields.at(i);
-            if (not rec.hasField(name))
-            {
-                /// Skipping any fields that are not part of the record
-                continue;
-            }
-            auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
-            const auto& value = rec.read(name);
-            storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
-        }
+        const auto recordAddress = recordBuffer.getMemArea() + (tupleSize * recordIndex);
+        const auto access = FieldAccess::createFieldAccesses(
+            fields,
+            [recordAddress](const auto& field)
+            { return FieldAccess{field.name, field.type, recordAddress + nautilus::val<uint64_t>(field.fieldOffset)}; });
+        writeRecordFields(access, rec, getRecordBufferStore(recordBuffer, bufferProvider));
         writtenRecords = 1;
         successful = true;
     }
