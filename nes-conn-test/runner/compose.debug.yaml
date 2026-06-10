@@ -1,0 +1,68 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Compose override merged on top of the per-plugin compose.yaml +
+# runner.compose.yaml by `conntest debug` when the user wants to attach a
+# CLion / lldb client to a conntest-harness run. It targets the framework
+# `runner` service (one place, not a per-plugin stanza) with two
+# service-level additions, plus a tiny socat sidecar:
+#
+# * security_opt: seccomp=unconfined — lldb-server uses personality(2)
+#   and ptrace, both blocked by Docker's default seccomp profile.
+# * ports: publish the host-facing debug port. lldb-server itself binds
+#   to a private in-VM port; the lldb-relay sidecar bridges them.
+# * lldb-relay: socat with SO_KEEPALIVE so paused debug sessions stay
+#   connected on macOS/Colima setups where the published-port forwarder
+#   drops idle TCP connections after ~12s (see the block for details).
+#
+# Scoped to debug runs only; the base compose.yaml + runner.compose.yaml
+# stay untouched and `conntest run` / `conntest ci` never merge this file.
+
+services:
+  runner:
+    security_opt:
+      - seccomp=unconfined
+    ports:
+      - "127.0.0.1:${CONNTEST_DEBUG_PORT}:${CONNTEST_DEBUG_PORT}"
+
+  # Keepalive-enabling proxy in front of lldb-server. Reason: on some
+  # macOS / Colima combinations (observed on macOS 26.5 + Colima 0.10.1
+  # + CLion 2026.1.2 with vmType vz) the TCP forwarder that routes a
+  # published port from the host into the VM drops the connection after
+  # ~12s of idle (no traffic in either direction). lldb-server does not
+  # enable SO_KEEPALIVE on its accepted sockets, and CLion 2026.1.2's
+  # bundled lldb client doesn't appear to either, so a paused debugger
+  # session is "idle" the moment the user stops stepping — and the next
+  # debugger packet finds a half-closed connection, surfacing as
+  # "Signal: SIGSTOP / lost connection / Debugger detached" in CLion.
+  # socat with keepidle=5 / keepintvl=2 / keepcnt=3 puts a probe on the
+  # wire every ~5s once a connection goes idle, which every layer above
+  # sees as live traffic and nothing decides to drop. On hosts where
+  # the forwarder is happy to hold idle connections (observed: macOS
+  # 26.2 + CLion 2026.1.1 with the same Colima 0.10.1, also Docker
+  # Desktop and Linux native) this relay is a no-op.
+  #
+  # CONNTEST_DEBUG_BIND_PORT defaults to 23450 (the internal port
+  # lldb-server binds to, mirrored by NativeDebugConfig.bind_port in
+  # conntest_runner.harness). Override only if 23450 clashes with
+  # something else inside the runner container.
+  lldb-relay:
+    image: alpine/socat:latest
+    # Share runner's network namespace so 127.0.0.1 here reaches
+    # lldb-server inside the runner container.
+    network_mode: "service:runner"
+    depends_on:
+      - runner
+    command:
+      - "-d"
+      - "TCP-LISTEN:${CONNTEST_DEBUG_PORT},reuseaddr,fork,keepalive,keepidle=5,keepintvl=2,keepcnt=3"
+      - "TCP:127.0.0.1:${CONNTEST_DEBUG_BIND_PORT:-23450},keepalive,keepidle=5,keepintvl=2,keepcnt=3"

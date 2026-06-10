@@ -17,7 +17,9 @@
 /build-docker*
 /cmake-build*
 CMakeUserPresets.json
-debug*
+# Root-anchored like the other build dirs: the old unanchored `debug*`
+# silently swallowed source files (e.g. conntest_runner/cli/debug.py).
+/debug*
 vcpkg-repository
 
 # Deb file
@@ -26,6 +28,11 @@ docker/executableImage/resources/NebulaStream*.deb
 
 # Python virtual environment
 venv
+# uv workspace virtual environments (root /pyproject.toml). `.venv` is the
+# default; `.venv-linux` / `.venv-darwin` are the per-OS envs the conn-test
+# format gate uses (nes-conn-test/runner/check.sh). The root uv.lock is tracked.
+/.venv/
+/.venv-*/
 
 # Rust target dir
 target/
@@ -45,7 +52,10 @@ nes-asp/data/*.csv
 *.log
 *.undo
 
-scripts/__pycache__
+# Python bytecode caches — regenerated on every import.
+__pycache__/
+*.pyc
+*.pyo
 .ccache
 
 # Ignore nix symlinks

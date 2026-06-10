@@ -320,6 +320,8 @@ project_enable_format()
 if (CODE_COVERAGE)
     set(NES_COVERAGE_DIRECTORIES ${NES_DIRECTORIES})
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-systests")
+    # 'nes-conn-test' is a test component whose targets are not gtest binaries and have no eponymous target
+    list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-conn-test")
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-frontend")
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-single-node-worker")
     # 'nes-optional-plugins' is not a target on its own, the plugins are part of other targets
