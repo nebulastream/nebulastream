@@ -307,10 +307,4 @@ std::span<std::byte> DefaultTimeBasedSliceStore::allocateSpaceForSliceCache(
     return memArea;
 }
 
-std::unique_ptr<SliceStoreRef> DefaultTimeBasedSliceStore::createSliceStoreRef(
-    DefaultTimeBasedSliceStoreRef::DataStructureExtractor extractor, DefaultTimeBasedSliceStoreRef::CreateSlicesFunction creator)
-{
-    return std::make_unique<DefaultTimeBasedSliceStoreRef>(sliceCacheConfiguration, this, std::move(extractor), std::move(creator));
-}
-
 }

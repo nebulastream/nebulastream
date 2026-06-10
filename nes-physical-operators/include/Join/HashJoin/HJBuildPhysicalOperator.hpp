@@ -31,7 +31,7 @@ namespace NES
 /// This class is the first phase of the join. For both streams (left and right), the tuples are stored in a hash map of a
 /// corresponding slice one after the other. Afterward, the second phase (HJProbe) will start joining the tuples by comparing the join keys
 /// via a hash function.
-class HJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator
+class HJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator<HashMap*>
 {
 public:
     HJBuildPhysicalOperator(
@@ -40,7 +40,7 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
         HashMapOptions hashMapOptions,
-        std::unique_ptr<SliceStoreRef> sliceStoreRef);
+        std::unique_ptr<SliceStoreRef<HashMap*>> sliceStoreRef);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 

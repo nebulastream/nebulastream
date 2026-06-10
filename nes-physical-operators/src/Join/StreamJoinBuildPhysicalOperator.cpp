@@ -16,9 +16,11 @@
 #include <memory>
 #include <utility>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/HashMap/HashMap.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
@@ -26,15 +28,20 @@
 namespace NES
 {
 
-StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
+template <class DataStructureType>
+StreamJoinBuildPhysicalOperator<DataStructureType>::StreamJoinBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
-    std::unique_ptr<SliceStoreRef> sliceStoreRef)
-    : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
+    std::unique_ptr<SliceStoreRef<DataStructureType>> sliceStoreRef)
+    : WindowBuildPhysicalOperator<DataStructureType>(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
     , joinBuildSide(joinBuildSide)
     , tupleLayout(std::move(tupleLayout))
 {
 }
+
+/// Explicit instantiations for the data-structure types handed out by the slice store refs.
+template class StreamJoinBuildPhysicalOperator<HashMap*>;
+template class StreamJoinBuildPhysicalOperator<TupleBuffer*>;
 }

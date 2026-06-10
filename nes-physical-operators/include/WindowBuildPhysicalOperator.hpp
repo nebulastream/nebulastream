@@ -43,11 +43,15 @@ private:
 
 /// Is the general probe operator for window operators. It is responsible for emitting slices and windows to the second phase (probe).
 /// It is part of the first phase (build) that builds up the state of the window operator.
+/// @tparam DataStructureType the operator-specific data-structure pointer the slice store ref hands out (e.g. HashMap*, TupleBuffer*).
+template <class DataStructureType>
 class WindowBuildPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
     explicit WindowBuildPhysicalOperator(
-        OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, std::unique_ptr<SliceStoreRef> sliceStoreRef);
+        OperatorHandlerId operatorHandlerId,
+        std::unique_ptr<TimeFunction> timeFunction,
+        std::unique_ptr<SliceStoreRef<DataStructureType>> sliceStoreRef);
     WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other);
 
     /// This setup function can be called in a multithreaded environment. Meaning that if
@@ -71,7 +75,7 @@ protected:
     std::optional<PhysicalOperator> child;
     const OperatorHandlerId operatorHandlerId;
     const std::unique_ptr<TimeFunction> timeFunction;
-    std::unique_ptr<SliceStoreRef> sliceStoreRef;
+    std::unique_ptr<SliceStoreRef<DataStructureType>> sliceStoreRef;
 };
 
 }

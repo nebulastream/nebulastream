@@ -22,6 +22,7 @@
 #include <optional>
 #include <span>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <SliceStore/DefaultTimeBasedSliceStoreRef.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -71,10 +72,16 @@ public:
     std::span<std::byte>
     allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
 
-    /// Creates a SliceStoreRef that wraps this store. The store provides its own SliceCacheConfiguration;
-    /// the caller only supplies the two operator-specific callbacks.
-    std::unique_ptr<SliceStoreRef> createSliceStoreRef(
-        DefaultTimeBasedSliceStoreRef::DataStructureExtractor extractor, DefaultTimeBasedSliceStoreRef::CreateSlicesFunction creator);
+    /// Creates a SliceStoreRef that wraps this store, specialized on the operator's slice and data-structure type.
+    /// The store provides its own SliceCacheConfiguration, while the caller only supplies the two operator-specific callbacks.
+    template <class SliceType, class DataStructureType>
+    std::unique_ptr<SliceStoreRef<DataStructureType>> createSliceStoreRef(
+        DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>::DataStructureExtractor extractor,
+        DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>::CreateSlicesFunction creator)
+    {
+        return std::make_unique<DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>>(
+            sliceCacheConfiguration, this, std::move(extractor), std::move(creator));
+    }
 
 private:
     SliceCacheConfiguration sliceCacheConfiguration;

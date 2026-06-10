@@ -16,9 +16,12 @@
 
 #include <memory>
 #include <utility>
+#include <Aggregation/AggregationSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/TimestampRef.hpp>
+#include <Join/HashJoin/HJSlice.hpp>
+#include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
@@ -37,12 +40,13 @@ namespace NES
 
 /// Unified proxy function that handles slice cache misses for all build operators.
 /// Called via nautilus::invoke from JIT-compiled code when a slice is not found in the cache.
+template <class SliceType, class DataStructureType>
 void defaultTimeBasedSliceStoreRefCacheMissProxy(
     SliceCacheEntry* entryToReplace,
     OperatorHandler* operatorHandlerPtr,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
-    const DefaultTimeBasedSliceStoreRef* sliceStoreRef,
+    const DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>* sliceStoreRef,
     DefaultTimeBasedSliceStore* sliceStore,
     AbstractBufferProvider* bufferProvider)
 {
@@ -61,30 +65,31 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
     const auto slices = sliceStore->getSlicesOrCreate(timestamp, createFunction);
     INVARIANT(slices.size() == 1, "Expected exactly one slice for the given timestamp, but got {}", slices.size());
 
-    /// Use the data structure extractor to get the operator-specific data structure, then store its pointer for usage in nautilus
-    entryToReplace->sliceStart = slices[0]->getSliceStart().getRawValue();
-    entryToReplace->sliceEnd = slices[0]->getSliceEnd().getRawValue();
-    entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(*slices[0], workerThreadId);
+    /// This store instance only holds SliceType, so the static_cast is fine
+    auto& slice = *slices[0];
+    INVARIANT(dynamic_cast<SliceType*>(&slice) != nullptr, "Slice is not of the expected type for this slice store ref");
+
+    /// Extract the operator-specific data structure from the typed slice and store its pointer for nautilus.
+    entryToReplace->sliceStart = slice.getSliceStart().getRawValue();
+    entryToReplace->sliceEnd = slice.getSliceEnd().getRawValue();
+    entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(static_cast<SliceType&>(slice), workerThreadId);
 }
 
-DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(
+template <class SliceType, class DataStructureType>
+DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>::DefaultTimeBasedSliceStoreRef(
     SliceCacheConfiguration sliceCacheConfiguration,
     DefaultTimeBasedSliceStore* sliceStore,
     DataStructureExtractor dataStructureExtractor,
     CreateSlicesFunction createSlicesFunction)
     : dataStructureExtractor(std::move(dataStructureExtractor))
     , createSlicesFunction(std::move(createSlicesFunction))
-    , sliceCache(SliceCache::createSliceCache(sliceCacheConfiguration))
+    , sliceCache(SliceCache::createSliceCache(std::move(sliceCacheConfiguration)))
     , sliceStore(sliceStore)
 {
 }
 
-std::unique_ptr<SliceStoreRef> DefaultTimeBasedSliceStoreRef::clone()
-{
-    return std::make_unique<DefaultTimeBasedSliceStoreRef>(*this);
-}
-
-DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(const DefaultTimeBasedSliceStoreRef& other)
+template <class SliceType, class DataStructureType>
+DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>::DefaultTimeBasedSliceStoreRef(const DefaultTimeBasedSliceStoreRef& other)
     : dataStructureExtractor(other.dataStructureExtractor)
     , createSlicesFunction(other.createSlicesFunction)
     , sliceCache(other.sliceCache->clone())
@@ -92,20 +97,27 @@ DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(const DefaultTimeBa
 {
 }
 
-nautilus::val<SliceCacheEntry::DataStructure> DefaultTimeBasedSliceStoreRef::getDataStructureRef(
+template <class SliceType, class DataStructureType>
+std::unique_ptr<SliceStoreRef<DataStructureType>> DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>::clone()
+{
+    return std::make_unique<DefaultTimeBasedSliceStoreRef>(*this);
+}
+
+template <class SliceType, class DataStructureType>
+nautilus::val<DataStructureType> DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp,
     const nautilus::val<WorkerThreadId>& workerThreadId,
     const nautilus::val<OperatorHandler*>& operatorHandler,
     nautilus::val<AbstractBufferProvider*> bufferProvider)
 {
     nautilus::val<DefaultTimeBasedSliceStore*> sliceStoreVal{sliceStore};
-    return sliceCache->getDataStructureRef(
+    const nautilus::val<SliceCacheEntry::DataStructure> rawDataStructure = sliceCache->getDataStructureRef(
         timestamp,
         workerThreadId,
         [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
         {
             nautilus::invoke(
-                defaultTimeBasedSliceStoreRefCacheMissProxy,
+                defaultTimeBasedSliceStoreRefCacheMissProxy<SliceType, DataStructureType>,
                 entryToReplace,
                 operatorHandler,
                 timestamp,
@@ -114,10 +126,14 @@ nautilus::val<SliceCacheEntry::DataStructure> DefaultTimeBasedSliceStoreRef::get
                 sliceStoreVal,
                 bufferProvider);
         });
+    return rawDataStructure;
 }
 
+template <class SliceType, class DataStructureType>
 void setupSliceStoreProxy(
-    DefaultTimeBasedSliceStore* sliceStore, const PipelineExecutionContext* pipelineCtx, DefaultTimeBasedSliceStoreRef* self)
+    DefaultTimeBasedSliceStore* sliceStore,
+    const PipelineExecutionContext* pipelineCtx,
+    DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>* self)
 {
     PRECONDITION(sliceStore != nullptr, "The slice store not be null");
     PRECONDITION(pipelineCtx->getBufferManager() != nullptr, "bufferProvider should not be null!");
@@ -130,13 +146,20 @@ void setupSliceStoreProxy(
     self->sliceCache->setStartOfEntries(startOfEntries);
 }
 
-void DefaultTimeBasedSliceStoreRef::setupSliceStore(const nautilus::val<PipelineExecutionContext*>& pipelineCtx)
+template <class SliceType, class DataStructureType>
+void DefaultTimeBasedSliceStoreRef<SliceType, DataStructureType>::setupSliceStore(
+    const nautilus::val<PipelineExecutionContext*>& pipelineCtx)
 {
     nautilus::invoke(
-        setupSliceStoreProxy,
+        setupSliceStoreProxy<SliceType, DataStructureType>,
         nautilus::val<DefaultTimeBasedSliceStore*>{sliceStore},
         pipelineCtx,
         nautilus::val<DefaultTimeBasedSliceStoreRef*>{this});
 }
+
+/// Explicit instantiations for the operator/slice/data-structure combinations produced during lowering.
+template class DefaultTimeBasedSliceStoreRef<AggregationSlice, HashMap*>;
+template class DefaultTimeBasedSliceStoreRef<HJSlice, HashMap*>;
+template class DefaultTimeBasedSliceStoreRef<NLJSlice, TupleBuffer*>;
 
 }

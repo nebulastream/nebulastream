@@ -17,9 +17,11 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/HashMap/HashMap.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -68,7 +70,8 @@ void registerActivePipeline(OperatorHandler* ptrOpHandler)
     opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
 }
 
-void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
+template <class DataStructureType>
+void WindowBuildPhysicalOperator<DataStructureType>::close(ExecutionContext& executionCtx, RecordBuffer&) const
 {
     /// Update the watermark for the nlj operator and trigger slices
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
@@ -83,7 +86,8 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 }
 
-void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
+template <class DataStructureType>
+void WindowBuildPhysicalOperator<DataStructureType>::setup(ExecutionContext& executionCtx, CompilationContext&) const
 {
     auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(registerActivePipeline, operatorHandler);
@@ -91,39 +95,47 @@ void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
     sliceStoreRef->setupSliceStore(executionCtx.pipelineContext);
 }
 
-void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+template <class DataStructureType>
+void WindowBuildPhysicalOperator<DataStructureType>::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// Initializing the time function
     timeFunction->open(executionCtx, recordBuffer);
 
     /// Creating the local state for the window operator build.
     const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler));
+    executionCtx.setLocalOperatorState(this->id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler));
 }
 
-void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+template <class DataStructureType>
+void WindowBuildPhysicalOperator<DataStructureType>::terminate(ExecutionContext& executionCtx) const
 {
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(triggerAllWindowsProxy, operatorHandlerMemRef, executionCtx.pipelineContext);
 }
 
-std::optional<PhysicalOperator> WindowBuildPhysicalOperator::getChild() const
+template <class DataStructureType>
+std::optional<PhysicalOperator> WindowBuildPhysicalOperator<DataStructureType>::getChild() const
 {
     return child;
 }
 
-void WindowBuildPhysicalOperator::setChild(PhysicalOperator child)
+template <class DataStructureType>
+void WindowBuildPhysicalOperator<DataStructureType>::setChild(PhysicalOperator child)
 {
     this->child = std::move(child);
 }
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
-    const OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, std::unique_ptr<SliceStoreRef> sliceStoreRef)
+template <class DataStructureType>
+WindowBuildPhysicalOperator<DataStructureType>::WindowBuildPhysicalOperator(
+    const OperatorHandlerId operatorHandlerId,
+    std::unique_ptr<TimeFunction> timeFunction,
+    std::unique_ptr<SliceStoreRef<DataStructureType>> sliceStoreRef)
     : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction)), sliceStoreRef(std::move(sliceStoreRef))
 {
 }
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other)
+template <class DataStructureType>
+WindowBuildPhysicalOperator<DataStructureType>::WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other)
     : PhysicalOperatorConcept(other.id)
     , child(other.child)
     , operatorHandlerId(other.operatorHandlerId)
@@ -132,4 +144,8 @@ WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(const WindowBuildPhysic
     , sliceStoreRef(other.sliceStoreRef->clone())
 {
 }
+
+/// Explicit instantiations for the data-structure types handed out by the slice store refs.
+template class WindowBuildPhysicalOperator<HashMap*>;
+template class WindowBuildPhysicalOperator<TupleBuffer*>;
 }

@@ -135,7 +135,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::unique_ptr<SliceStoreRef> sliceStoreRef,
+    std::unique_ptr<SliceStoreRef<HashMap*>> sliceStoreRef,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
     HashMapOptions hashMapOptions)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
