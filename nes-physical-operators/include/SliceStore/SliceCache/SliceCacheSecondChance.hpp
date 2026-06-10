@@ -16,7 +16,9 @@
 #include <cstdint>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <val_bool.hpp>
@@ -29,6 +31,8 @@ struct SliceCacheEntrySecondChance final : SliceCacheEntry
 {
     /// Stores the second chance bit for each entry in the cache.
     bool secondChanceBit;
+
+    SliceCacheEntrySecondChance() : secondChanceBit(false) { }
 };
 
 static_assert(std::is_trivially_destructible_v<SliceCacheEntrySecondChance>);
@@ -41,10 +45,11 @@ public:
     SliceCacheSecondChance(const SliceCacheSecondChance& other);
     ~SliceCacheSecondChance() override = default;
     [[nodiscard]] std::unique_ptr<SliceCache> clone() const override;
-    nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
+    NautilusBuffer getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
-        const SliceCacheReplaceEntry& replaceEntry) override;
+        const SliceCacheReplaceEntry& replaceEntry,
+        nautilus::val<AbstractBufferProvider*> bufferProvider) override;
     /// Overrides to include space for the per-thread replacement indices at the end of the cache entries.
     /// Memory layout: [Thread0 entries][Thread1 entries]...[ThreadN entries][Thread0 replIdx][Thread1 replIdx]...[ThreadN replIdx]
     [[nodiscard]] uint64_t getCacheMemorySize() const override;
