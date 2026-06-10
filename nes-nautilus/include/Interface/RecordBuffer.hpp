@@ -18,10 +18,12 @@
 #include <DataTypes/VarVal.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -31,9 +33,8 @@ namespace NES
 class RecordBuffer
 {
 public:
-    /// @brief Creates a new record buffer with a reference to a tuple buffer
-    /// @param tupleBufferRef
-    explicit RecordBuffer(const nautilus::val<TupleBuffer*>& tupleBufferRef);
+    /// @brief Creates a new record buffer over an owned or borrowed buffer.
+    explicit RecordBuffer(NautilusBuffer buffer);
 
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
     [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
@@ -41,8 +42,9 @@ public:
     /// Retrieve the reference to the underling memory area from the record buffer.
     [[nodiscard]] nautilus::val<int8_t*> getMemArea() const;
 
-    /// Get the reference to the underlying TupleBuffer
-    const nautilus::val<TupleBuffer*>& getReference() const;
+    /// Returns a pointer to the underlying TupleBuffer for passing as an argument to a `nautilus::invoke`.
+    /// The pointer is only valid for as long as this RecordBuffer is alive and MUST NOT be stored or used to outlive it.
+    [[nodiscard]] nautilus::val<TupleBuffer*> getReference() const;
 
     /// Get the origin ID of the underlying tuple buffer. The origin ID is a unique identifier for the origin of the tuple buffer.
     nautilus::val<OriginId> getOriginId();
@@ -71,7 +73,7 @@ public:
     ~RecordBuffer() = default;
 
 private:
-    nautilus::val<TupleBuffer*> tupleBufferRef;
+    NautilusBuffer buffer;
 };
 
 }

@@ -50,8 +50,7 @@ public:
 void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// initialize state variable and create new buffer
-    const auto resultBufferRef = ctx.allocateBuffer();
-    const auto resultBuffer = RecordBuffer(resultBufferRef);
+    const RecordBuffer resultBuffer{ctx.allocateBuffer()};
     auto emitState = std::make_unique<EmitState>(resultBuffer);
     ctx.setLocalOperatorState(id, std::move(emitState));
 }
@@ -70,8 +69,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     if (!writeResult.successful)
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
-        const auto resultBufferRef = ctx.allocateBuffer();
-        emitState->resultBuffer = RecordBuffer(resultBufferRef);
+        emitState->resultBuffer = RecordBuffer{ctx.allocateBuffer()};
         emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = uint64_t{0};
 

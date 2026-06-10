@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -73,7 +74,7 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
                                nautilus::val<const Arena*> arenaRef)
     {
         auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
-        RecordBuffer recordBuffer(recordBufferRef);
+        RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(recordBufferRef)};
 
         pipeline->getRootOperator().open(ctx, recordBuffer);
         switch (ctx.getOpenReturnState())
