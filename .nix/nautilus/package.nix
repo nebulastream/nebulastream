@@ -53,6 +53,7 @@ let
       patches = [
         ./patches/0001-disable-ubsan-function-call-check.patch
         ./patches/0003-disable-cond-branch-weights.patch
+        ./patches/0004-mlirjit-llvm20-memory-manager.patch
       ];
 
       nativeBuildInputs = [
