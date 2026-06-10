@@ -16,7 +16,6 @@
 
 namespace NES
 {
-
 Slice::Slice(const SliceStart sliceStart, const SliceEnd sliceEnd) : sliceStart(sliceStart), sliceEnd(sliceEnd)
 {
 }
@@ -38,7 +37,7 @@ SliceEnd Slice::getSliceEnd() const
 
 bool Slice::operator==(const Slice& rhs) const
 {
-    return (sliceStart == rhs.sliceStart && sliceEnd == rhs.sliceEnd);
+    return (getSliceStart() == rhs.getSliceStart() && getSliceEnd() == rhs.getSliceEnd());
 }
 
 bool Slice::operator!=(const Slice& rhs) const
