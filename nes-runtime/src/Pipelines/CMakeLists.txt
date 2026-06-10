@@ -11,4 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        CompiledExecutablePipelineStage.cpp)
+        CompiledExecutablePipelineStage.cpp
+        NautilusEngineProvider.cpp)

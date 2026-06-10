@@ -54,7 +54,8 @@ private:
     /// Registers the pipeline's main traced function in the pipeline's module.
     void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
 
-    nautilus::engine::NautilusEngine engine;
+    /// Options used to obtain a (thread-local, shared) engine in start(); the stage does not own an engine.
+    nautilus::engine::Options options;
     /// Both are created lazily in start(); neither type is default-constructible.
     std::optional<nautilus::engine::CompiledModule> compiledModule;
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
