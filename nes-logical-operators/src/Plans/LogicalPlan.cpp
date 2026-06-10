@@ -31,6 +31,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <Debug/DebugHelpers.hpp>
 
 namespace NES
 {
@@ -392,7 +393,6 @@ std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan)
         {
             // Safely read the vector size without copying.
             // std::vector layout: [pointer to data, pointer to end, pointer to capacity end]
-            // We read the first two pointers to compute size without triggering any copy constructor.
             struct VecLayout { const void* begin; const void* end; const void* cap; };
             const auto* vec = reinterpret_cast<const VecLayout*>(
                     reinterpret_cast<const char*>(&plan) + sizeof(QueryId));
@@ -413,6 +413,31 @@ std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan)
             return oss.str();
         }
 
-    } // namespace Debug
+        OperatorView view(const LogicalOperator& op) /// NOLINT(misc-no-recursion)
+        {
+            OperatorView node;
+            /// Single line per operator, e.g. "SINK(opId: 7, sinkName: TestSink)"
+            node.op = op.explain(ExplainVerbosity::Debug);
+            for (const auto& child : op.getChildren())
+            {
+                node.children.push_back(view(child));
+            }
+            return node;
+        }
+
+        PlanView view(const LogicalPlan& plan)
+        {
+            PlanView result;
+            std::ostringstream planLabel;
+            planLabel << "LogicalPlan (queryId: " << plan.getQueryId() << ")";
+            result.plan = planLabel.str();
+            for (const auto& root : plan.getRootOperators())
+            {
+                result.roots.push_back(view(root));
+            }
+            return result;
+        }
+
+    } // namespace Debug // namespace Debug
 
 }

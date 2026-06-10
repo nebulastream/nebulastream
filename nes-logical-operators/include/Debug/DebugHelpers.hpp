@@ -2,9 +2,7 @@
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-
         https://www.apache.org/licenses/LICENSE-2.0
-
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,20 +11,52 @@
 */
 
 #pragma once
-
 #include <string>
-#include <Operators/LogicalOperator.hpp>
+#include <vector>
 #include <Plans/LogicalPlan.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES::Debug
 {
 
-/// Returns a full recursive debug string representation of a LogicalPlan.
-/// Calls explain(ExplainVerbosity::Debug) internally.
-std::string dump(const LogicalPlan& plan);
+/// Debugger-only helpers. Not used by production code paths.
+///
+/// Intended usage: while paused at a breakpoint in GDB/CLion, evaluate one of
+/// these in the "Threads & Variables" expression box or the GDB console:
+///
+///     NES::Debug::view(plan)                  -> shallow expandable tree
+///     NES::Debug::dump(plan)                  -> formatted multi-line string
+///
+/// The *View structs are deliberately tiny (one label string + children) so
+/// the debugger renders them as a compact tree: operator -> children -> ...,
+/// without the self/get()/impl indirection of the real operator objects.
 
-/// Returns a debug string representation of a single LogicalOperator node,
-/// including all of its children recursively.
-std::string dump(const LogicalOperator& op);
+/// One node of the shallow debug tree. `op` is the operator's single-line
+/// explain string (name, id and operator-specific details).
+    struct OperatorView
+    {
+        std::string op;
+        std::vector<OperatorView> children;
+    };
 
-} // namespace NES::Debug
+/// Root of the shallow debug tree for a whole plan.
+    struct PlanView
+    {
+        std::string plan;
+        std::vector<OperatorView> roots;
+    };
+
+/// Build a shallow debug tree for a single operator (recurses into children).
+    [[nodiscard]] OperatorView view(const LogicalOperator& op);
+
+/// Build a shallow debug tree for a whole plan.
+    [[nodiscard]] PlanView view(const LogicalPlan& plan);
+
+/// Formatted multi-line string of the whole plan (same content as
+/// explain(plan, ExplainVerbosity::Debug)).
+    [[nodiscard]] std::string dump(const LogicalPlan& plan);
+
+/// Formatted multi-line string of a single operator subtree.
+    [[nodiscard]] std::string dump(const LogicalOperator& op);
+
+}

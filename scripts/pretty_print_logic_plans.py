@@ -1,18 +1,19 @@
 # NES Query Plan Pretty Printers for GDB
 #
-# Renders LogicalPlan, LogicalOperator and LogicalFunction variables as a
-# collapsible tree in the CLion Variables/Watches pane.
+# Two complementary features:
 #
-# IMPORTANT: This script reads the object graph directly from memory.
-# It never calls any C++ function and never copies anything, so it cannot
-# crash the inferior — even on partially constructed objects.
+# 1) LABELS (automatic): LogicalPlan / LogicalOperator / LogicalFunction keep
+#    GDB's DEFAULT expandable structure completely unchanged; we only add an
+#    informative one-line label, e.g.
+#        sinkOp = {NES::LogicalOperator} Sink (id: 7, children: [Selection])
+#    Labels are computed by passive memory reading only (no C++ calls, no
+#    copies), so they cannot crash the inferior, even on half-built objects.
 #
-# Phase 2: per node, show
-#   - operator name + id (the node label)
-#   - operator-specific simple fields (std::string values)
-#   - the predicate function tree (for Selection etc.), recursively
-#   - child operators, recursively
-# Complex containers (traitSet, schema, descriptors) are skipped for now.
+# 2) SHALLOW VIEW (manual): the C++ helper NES::Debug::view(plan) returns a
+#    lightweight PlanView/OperatorView tree. Type it in the Watches /
+#    Evaluate-expression box to get a compact operator tree without the
+#    self/get()/impl indirection. The printers below render those views as
+#    label + children directly.
 #
 # Setup: loaded automatically via the project .gdbinit. No setup needed.
 
@@ -20,7 +21,7 @@ import gdb
 
 
 # ---------------------------------------------------------------------------
-# Low-level safe reads
+# Safe, passive memory reads (never execute code in the inferior)
 # ---------------------------------------------------------------------------
 
 def _looks_like_heap_ptr(addr):
@@ -31,23 +32,32 @@ def _looks_like_heap_ptr(addr):
 
 
 def _name_from_type(erased):
-    """
-    NES::detail::OperatorModel<NES::SourceNameLogicalOperator> -> SourceNameLogicalOperator
-    NES::detail::FunctionModel<NES::FieldAccessLogicalFunction> -> FieldAccessLogicalFunction
-    """
+    """OperatorModel<NES::SourceNameLogicalOperator> -> SourceNameLogicalOperator"""
     try:
         tname = str(erased.dynamic_type)
         inner = tname[tname.index('<') + 1: tname.rindex('>')]
         return inner.split('::')[-1].strip()
     except Exception:
-        return '?'
+        return None
+
+
+def _read_name(impl, erased):
+    """Operator/function display name: static NAME if present, else type name."""
+    try:
+        name_sv = impl['NAME']
+        length = int(name_sv['_M_len'])
+        data = name_sv['_M_str']
+        if _looks_like_heap_ptr(data) and 0 < length < 256:
+            return data.string(length=length)
+    except Exception:
+        pass
+    return _name_from_type(erased)
 
 
 def _read_std_string(val):
-    """Read a libstdc++ std::string gdb.Value into a python str, safely."""
+    """Read a libstdc++ std::string into a python str, or None."""
     try:
-        dataplus = val['_M_dataplus']
-        p = dataplus['_M_p']
+        p = val['_M_dataplus']['_M_p']
         if not _looks_like_heap_ptr(p):
             return None
         length = int(val['_M_string_length'])
@@ -58,23 +68,8 @@ def _read_std_string(val):
         return None
 
 
-def _is_std_string_type(t):
-    try:
-        return 'basic_string' in str(t.strip_typedefs())
-    except Exception:
-        return False
-
-
-# ---------------------------------------------------------------------------
-# Resolving an erased handle (operator OR function) to its concrete impl
-# ---------------------------------------------------------------------------
-
 def _resolve_impl(handle_val):
-    """
-    Given a TypedLogicalOperator or TypedLogicalFunction handle, follow the
-    shared_ptr 'self' to the concrete model and return (impl, erased, concrete)
-    or None if not safely readable.
-    """
+    """Follow handle.self (shared_ptr) to the concrete model. None if unsafe."""
     try:
         shared = handle_val['self']
         ptr = shared['_M_ptr']
@@ -82,80 +77,25 @@ def _resolve_impl(handle_val):
             return None
         erased = ptr.dereference()
         concrete = erased.cast(erased.dynamic_type)
-        impl = concrete['impl']
-        return (impl, erased, concrete)
+        return (concrete['impl'], erased, concrete)
     except Exception:
         return None
 
 
-def _operator_label(handle_val):
-    """Return 'Name (id: N)' label for an operator handle, or None."""
-    resolved = _resolve_impl(handle_val)
-    if resolved is None:
-        return None
-    impl, erased, concrete = resolved
-
-    name = None
-    try:
-        name_sv = impl['NAME']
-        length = int(name_sv['_M_len'])
-        data = name_sv['_M_str']
-        if _looks_like_heap_ptr(data) and 0 < length < 256:
-            name = data.string(length=length)
-    except Exception:
-        pass
-    if not name:
-        name = _name_from_type(erased)
-
-    op_id = None
-    try:
-        op_id = int(concrete['id']['value'])
-    except Exception:
-        pass
-
-    if op_id is not None:
-        return f'{name} (id: {op_id})'
-    return name
-
-
-def _function_label(handle_val):
-    """Return a label for a LogicalFunction handle, or None."""
-    resolved = _resolve_impl(handle_val)
-    if resolved is None:
-        return None
-    impl, erased, concrete = resolved
-
-    name = None
-    try:
-        name_sv = impl['NAME']
-        length = int(name_sv['_M_len'])
-        data = name_sv['_M_str']
-        if _looks_like_heap_ptr(data) and 0 < length < 256:
-            name = data.string(length=length)
-    except Exception:
-        pass
-    if not name:
-        name = _name_from_type(erased)
-    return name
-
-
-def _iter_handle_vector(vec_val):
-    """Yield each element gdb.Value from a vector of handles (no copies)."""
-    if vec_val is None:
-        return
+def _vector_range(vec_val, max_count=4096):
+    """Yield elements of a std::vector gdb.Value, with sanity checks."""
     try:
         impl = vec_val['_M_impl']
         start = impl['_M_start']
         finish = impl['_M_finish']
         if not _looks_like_heap_ptr(start):
             return
-        start_i = int(start)
-        finish_i = int(finish)
+        start_i, finish_i = int(start), int(finish)
         if finish_i < start_i:
             return
         elem_size = start.dereference().type.sizeof
         count = (finish_i - start_i) // elem_size
-        if count < 0 or count > 4096:
+        if count < 0 or count > max_count:
             return
         for i in range(count):
             yield start[i]
@@ -163,169 +103,170 @@ def _iter_handle_vector(vec_val):
         return
 
 
-# Field names we never want to show as "specific fields" because they are
-# either handled elsewhere (children) or are complex containers we skip.
-_SKIP_FIELDS = {
-    'children', 'traitSet', 'schema', 'inputSchema', 'outputSchema',
-    'inputSchemas', 'inputOriginIds', 'outputOriginIds',
-}
-
-
-def _iter_simple_fields(impl):
-    """
-    Yield (field_name, python_str_value) for simple std::string fields on the
-    operator impl. Skips complex containers and known structural fields.
-    """
+def _child_names(impl, limit=4):
+    """Names of an operator's children, for the label. Empty list if none."""
+    names = []
     try:
-        impl_type = impl.type.strip_typedefs()
+        for child in _vector_range(impl['children'], max_count=64):
+            resolved = _resolve_impl(child)
+            if resolved is None:
+                names.append('?')
+            else:
+                c_impl, c_erased, _ = resolved
+                names.append(_read_name(c_impl, c_erased) or '?')
+            if len(names) >= limit:
+                names.append('...')
+                break
     except Exception:
-        return
+        pass
+    return names
+
+
+def _yield_raw_fields(val):
+    """Yield every data member of val unchanged (default-like expansion)."""
     try:
-        fields = impl_type.fields()
+        fields = val.type.strip_typedefs().fields()
     except Exception:
         return
     for f in fields:
         try:
-            if not f.name or f.name in _SKIP_FIELDS:
+            if not f.name:
                 continue
-            ftype = f.type.strip_typedefs()
-            if _is_std_string_type(ftype):
-                field_val = impl[f.name]
-                # Only yield if the string is safely readable; this keeps us
-                # from handing GDB a corrupt value. We validate by reading it
-                # ourselves first (pure read, no execution).
-                if _read_std_string(field_val) is not None:
-                    yield (f.name, field_val)
+            if getattr(f, 'is_base_class', False):
+                continue
+            yield (f.name, val[f.name])
         except Exception:
             continue
 
 
 # ---------------------------------------------------------------------------
-# Pretty printers
+# 1) Label printers: custom LABEL, default CHILDREN.
 # ---------------------------------------------------------------------------
 
-def _collect_simple_fields_str(impl):
-    """Return a 'key: \"val\", key2: \"val2\"' string of simple std::string fields."""
-    parts = []
-    for fname, fval in _iter_simple_fields(impl):
-        parts.append(f'{fname}: {fval}')
-    return ', '.join(parts)
-
-
-
-
-class LogicalFunctionPrinter:
-    """Renders a NES::LogicalFunction (predicate expression) as a tree node."""
-
+class LogicalOperatorPrinter:
     def __init__(self, val):
         self.val = val
 
     def to_string(self):
-        label = _function_label(self.val)
-        if label is None:
-            return '<LogicalFunction — not readable>'
-        return label
-
-    def children(self):
         resolved = _resolve_impl(self.val)
         if resolved is None:
-            return
-        impl, _, _ = resolved
-        # simple string fields of the function (e.g. field name)
-        for fname, fval in _iter_simple_fields(impl):
-            yield (fname, fval)
-        # nested function children
+            return None
+        impl, erased, concrete = resolved
+        name = _read_name(impl, erased)
+        if not name:
+            return None
+        parts = []
         try:
-            child_vec = impl['children']
+            parts.append(f'id: {int(concrete["id"]["value"])}')
         except Exception:
-            child_vec = None
-        idx = 0
-        for child in _iter_handle_vector(child_vec):
-            yield (f'[{idx}]', child)
-            idx += 1
+            pass
+        children = _child_names(impl)
+        if children:
+            parts.append('children: [' + ', '.join(children) + ']')
+        return f'{name} ({", ".join(parts)})' if parts else name
+
+    def children(self):
+        return _yield_raw_fields(self.val)
 
     def display_hint(self):
         return None
 
 
-class LogicalOperatorPrinter:
-    """Renders a NES::LogicalOperator as a collapsible node."""
-
+class LogicalFunctionPrinter:
     def __init__(self, val):
         self.val = val
 
     def to_string(self):
-        label = _operator_label(self.val)
-        if label is None:
-            return '<LogicalOperator — not readable>'
-        return label
-
-    def children(self):
         resolved = _resolve_impl(self.val)
         if resolved is None:
-            return
-        impl, _, _ = resolved
+            return None
+        impl, erased, _ = resolved
+        return _read_name(impl, erased)
 
-        # operator-specific simple string fields (sinkName, logicalSourceName, ...)
-        for fname, fval in _iter_simple_fields(impl):
-            yield (fname, fval)
-
-        # predicate function, if this operator has one (e.g. Selection)
-        try:
-            predicate = impl['predicate']
-            yield ('predicate', predicate)
-        except Exception:
-            pass
-
-        # 3) child operators
-        try:
-            child_vec = impl['children']
-        except Exception:
-            child_vec = None
-        idx = 0
-        for child in _iter_handle_vector(child_vec):
-            yield (f'[{idx}]', child)
-            idx += 1
+    def children(self):
+        return _yield_raw_fields(self.val)
 
     def display_hint(self):
         return None
 
 
 class LogicalPlanPrinter:
-    """Renders a NES::LogicalPlan as a collapsible set of root operators."""
-
     def __init__(self, val):
         self.val = val
 
-    def _roots(self):
-        try:
-            vec = self.val['rootOperators']
-            impl = vec['_M_impl']
-            start = int(impl['_M_start'])
-            finish = int(impl['_M_finish'])
-            cap = int(impl['_M_end_of_storage'])
-            if not (0 <= start <= finish <= cap):
-                return None
-            return vec
-        except Exception:
-            return None
-
     def to_string(self):
-        if self._roots() is None:
-            return '<LogicalPlan — not yet constructed>'
-        # Show the query id in the label if available
+        label = 'LogicalPlan'
         try:
             qid = int(self.val['queryId']['value'])
-            return f'LogicalPlan (queryId: {qid})'
         except Exception:
-            return 'LogicalPlan'
+            return label
+        parts = [f'queryId: {qid}']
+        names = []
+        try:
+            for root in _vector_range(self.val['rootOperators'], max_count=64):
+                resolved = _resolve_impl(root)
+                if resolved is None:
+                    names.append('?')
+                else:
+                    impl, erased, _ = resolved
+                    names.append(_read_name(impl, erased) or '?')
+                if len(names) >= 4:
+                    names.append('...')
+                    break
+        except Exception:
+            pass
+        if names:
+            parts.append('roots: [' + ', '.join(names) + ']')
+        return f'{label} ({", ".join(parts)})'
 
     def children(self):
-        roots = self._roots()
+        return _yield_raw_fields(self.val)
+
+    def display_hint(self):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# 2) Shallow-view printers for NES::Debug::PlanView / OperatorView.
+#    These structs are produced by the C++ helper NES::Debug::view(...).
+#    Render: label string as the node text, children vector as the only rows.
+# ---------------------------------------------------------------------------
+
+class OperatorViewPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return _read_std_string(self.val['op']) or 'OperatorView'
+
+    def children(self):
         idx = 0
-        for root in _iter_handle_vector(roots):
-            yield (f'[root {idx}]', root)
-            idx += 1
+        try:
+            for child in _vector_range(self.val['children'], max_count=4096):
+                yield (f'[{idx}]', child)
+                idx += 1
+        except Exception:
+            return
+
+    def display_hint(self):
+        return None
+
+
+class PlanViewPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return _read_std_string(self.val['plan']) or 'PlanView'
+
+    def children(self):
+        idx = 0
+        try:
+            for root in _vector_range(self.val['roots'], max_count=4096):
+                yield (f'[root {idx}]', root)
+                idx += 1
+        except Exception:
+            return
 
     def display_hint(self):
         return None
@@ -340,19 +281,18 @@ def nes_pretty_printer_lookup(val):
         type_name = val.type.strip_typedefs().name
     except Exception:
         return None
-
     if type_name is None:
         return None
-
     if type_name == 'NES::LogicalPlan':
         return LogicalPlanPrinter(val)
-
-    if 'NES::TypedLogicalOperator' in type_name:
+    if type_name == 'NES::Debug::PlanView':
+        return PlanViewPrinter(val)
+    if type_name == 'NES::Debug::OperatorView':
+        return OperatorViewPrinter(val)
+    if 'NES::TypedLogicalOperator<' in type_name:
         return LogicalOperatorPrinter(val)
-
-    if 'NES::TypedLogicalFunction' in type_name:
+    if 'NES::TypedLogicalFunction<' in type_name:
         return LogicalFunctionPrinter(val)
-
     return None
 
 
@@ -367,4 +307,5 @@ def register_nes_printers(obj):
 
 
 register_nes_printers(None)
-print('[NES] Query plan pretty printers loaded (phase 2c: fields as child rows + predicate).')
+print('[NES] Plan/operator labels loaded. '
+      'Shallow tree: evaluate NES::Debug::view(plan) in the Watches pane.')
