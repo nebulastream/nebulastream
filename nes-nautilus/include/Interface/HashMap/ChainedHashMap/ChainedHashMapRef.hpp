@@ -25,6 +25,7 @@
 #include <Interface/HashMap/HashMapRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -48,19 +49,18 @@ public:
         [[nodiscard]] VarVal getKey(const Record::RecordFieldIdentifier& fieldIdentifier) const;
         [[nodiscard]] Record getKey() const;
         [[nodiscard]] Record getValue() const;
-        void updateEntryRef(const nautilus::val<ChainedHashMapEntry*>& entryRef);
         [[nodiscard]] nautilus::val<int8_t*> getValueMemArea() const;
         [[nodiscard]] HashFunction::HashValue getHash() const;
         [[nodiscard]] nautilus::val<ChainedHashMapEntry*> getNext() const;
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
-            const nautilus::val<ChainedHashMap*>& hashMapRef,
+            const nautilus::val<TupleBuffer*>& hashMapBuffer,
             std::vector<FieldOffsets> fieldsKey,
             std::vector<FieldOffsets> fieldsValue);
 
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
-            const nautilus::val<ChainedHashMap*>& hashMapRef,
+            const nautilus::val<TupleBuffer*>& hashMapBuffer,
             ChainedEntryMemoryProvider memoryProviderKeys,
             ChainedEntryMemoryProvider memoryProviderValues);
 
@@ -69,9 +69,8 @@ public:
         ChainedEntryRef(ChainedEntryRef&& other) noexcept;
         ~ChainedEntryRef() = default;
 
-
         nautilus::val<ChainedHashMapEntry*> entryRef;
-        nautilus::val<ChainedHashMap*> hashMapRef;
+        nautilus::val<TupleBuffer*> hashMapBuffer;
         ChainedEntryMemoryProvider memoryProviderKeys;
         ChainedEntryMemoryProvider memoryProviderValues;
     };
@@ -83,7 +82,7 @@ public:
     {
     public:
         EntryIterator(
-            const nautilus::val<HashMap*>& hashMapRef,
+            const nautilus::val<TupleBuffer*>& tupleBuffer,
             const nautilus::val<ChainedHashMapEntry*>& currentEntry,
             const nautilus::val<uint64_t>& entrySize,
             const nautilus::val<uint64_t>& tupleIndex,
@@ -97,7 +96,7 @@ public:
         nautilus::val<ChainedHashMapEntry*> operator*() const;
 
     private:
-        nautilus::val<HashMap*> hashMapRef;
+        nautilus::val<TupleBuffer*> tupleBuffer;
         nautilus::val<ChainedHashMapEntry*> currentEntry;
         nautilus::val<uint64_t> entrySize;
         nautilus::val<uint64_t> tupleIndex;
@@ -108,7 +107,7 @@ public:
     };
 
     ChainedHashMapRef(
-        const nautilus::val<HashMap*>& hashMapRef,
+        const nautilus::val<TupleBuffer*>& tupleBuffer,
         std::vector<FieldOffsets> fieldsKey,
         std::vector<FieldOffsets> fieldsValue,
         const nautilus::val<uint64_t>& entriesPerPage,
@@ -130,7 +129,6 @@ public:
     nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) override;
     [[nodiscard]] EntryIterator begin() const;
     [[nodiscard]] EntryIterator end() const;
-
 
 private:
     /// Finds the chain for the given hash value. If no chain exists, it returns nullptr.

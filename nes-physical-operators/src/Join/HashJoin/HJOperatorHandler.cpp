@@ -22,13 +22,16 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <tuple>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -41,34 +44,35 @@ namespace NES
 
 namespace
 {
-/// Collects non-empty hash maps for one build side from a single slice
-std::vector<HashMap*> getHashMapsFromSlice(const Slice& slice, JoinBuildSideType side)
+/// Collects non-empty hash map buffers for one build side from a single slice
+std::vector<TupleBuffer> getHashMapsFromSlice(const Slice& slice, JoinBuildSideType side)
 {
-    std::vector<HashMap*> maps;
+    std::vector<TupleBuffer> buffers;
     const auto* hjSlice = dynamic_cast<const HJSlice*>(&slice);
     INVARIANT(hjSlice != nullptr, "Slice must be of type HJSlice!");
     for (uint64_t i = 0; i < hjSlice->getNumberOfHashMapsForSide(); ++i)
     {
-        if (auto* map = hjSlice->getHashMapPtr(WorkerThreadId(i), side); map != nullptr && map->getNumberOfTuples() > 0)
+        const auto* hashMapBuffer = hjSlice->getHashMapBufferRefForSide(WorkerThreadId(i), side);
+        if (const auto hashMap = ChainedHashMap::load(*hashMapBuffer); hashMap.getTotalNumberOfRecords() > 0)
         {
-            maps.emplace_back(map);
+            buffers.emplace_back(*hashMapBuffer);
         }
     }
-    return maps;
+    return buffers;
 }
 
-/// Collects non-empty hash maps from multiple slices for one build side
-std::vector<HashMap*> getHashMapsFromSlices(const std::vector<std::shared_ptr<Slice>>& slices, JoinBuildSideType side)
+/// Collects non-empty hash map buffers from multiple slices for one build side
+std::vector<TupleBuffer> getHashMapsFromSlices(const std::vector<std::shared_ptr<Slice>>& slices, JoinBuildSideType side)
 {
-    std::vector<HashMap*> allMaps;
+    std::vector<TupleBuffer> allBuffers;
     for (const auto& slice : slices)
     {
-        for (auto* map : getHashMapsFromSlice(*slice, side))
+        for (auto& buffer : getHashMapsFromSlice(*slice, side))
         {
-            allMaps.emplace_back(map);
+            allBuffers.emplace_back(buffer);
         }
     }
-    return allMaps;
+    return allBuffers;
 }
 }
 
@@ -105,11 +109,13 @@ HJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& ne
     }
 
     return std::function(
-        [outputOriginId = outputOriginId, numberOfWorkerThreads = numberOfWorkerThreads, copyOfNewHashMapArgs = newHashMapArgs](
-            SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+        [bufferProvider = newHashMapArgs.bufferProvider,
+         outputOriginId = outputOriginId,
+         numberOfWorkerThreads = numberOfWorkerThreads,
+         copyOfNewHashMapArgs = newHashMapArgs](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             NES_TRACE("Creating new hash-join slice for slice {}-{} for output origin {}", sliceStart, sliceEnd, outputOriginId);
-            return {std::make_shared<HJSlice>(sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
+            return {std::make_shared<HJSlice>(*bufferProvider, sliceStart, sliceEnd, copyOfNewHashMapArgs, numberOfWorkerThreads)};
         });
 }
 
@@ -130,26 +136,6 @@ bool HJOperatorHandler::wasSetupCalled(const JoinBuildSideType& buildSide)
     std::unreachable();
 }
 
-void HJOperatorHandler::setNautilusCleanupExec(
-    std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> nautilusCleanupExec, const JoinBuildSideType& buildSide)
-{
-    switch (buildSide)
-    {
-        case JoinBuildSideType::Right:
-            rightCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
-            break;
-        case JoinBuildSideType::Left:
-            leftCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
-            break;
-            std::unreachable();
-    }
-}
-
-std::vector<std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec>> HJOperatorHandler::getNautilusCleanupExec() const
-{
-    return {leftCleanupStateNautilusFunction, rightCleanupStateNautilusFunction};
-}
-
 void HJOperatorHandler::emitSlicesToProbe(
     const std::vector<std::shared_ptr<Slice>>& leftSlices,
     const std::vector<std::shared_ptr<Slice>>& rightSlices,
@@ -158,16 +144,16 @@ void HJOperatorHandler::emitSlicesToProbe(
     const SequenceData& sequenceData,
     PipelineExecutionContext* pipelineCtx)
 {
-    const auto leftHashMaps = getHashMapsFromSlices(leftSlices, JoinBuildSideType::Left);
-    const auto rightHashMaps = getHashMapsFromSlices(rightSlices, JoinBuildSideType::Right);
+    const auto leftHashMapBuffers = getHashMapsFromSlices(leftSlices, JoinBuildSideType::Left);
+    const auto rightHashMapBuffers = getHashMapsFromSlices(rightSlices, JoinBuildSideType::Right);
 
     /// Update rolling average (accumulate locally, single lock acquisition)
     {
         uint64_t totalTuples = 0;
         uint64_t mapCount = 0;
-        for (const auto* map : leftHashMaps)
+        for (const auto& buffer : leftHashMapBuffers)
         {
-            totalTuples += map->getNumberOfTuples();
+            totalTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
             ++mapCount;
         }
         if (mapCount > 0)
@@ -178,9 +164,9 @@ void HJOperatorHandler::emitSlicesToProbe(
         /// Resetting before updating the right side
         totalTuples = 0;
         mapCount = 0;
-        for (const auto* map : rightHashMaps)
+        for (const auto& buffer : rightHashMapBuffers)
         {
-            totalTuples += map->getNumberOfTuples();
+            totalTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
             ++mapCount;
         }
         if (mapCount > 0)
@@ -191,16 +177,17 @@ void HJOperatorHandler::emitSlicesToProbe(
 
     /// Creating a tuple buffer containing all necessary information for the probe
     uint64_t totalNumberOfTuples = 0;
-    for (const auto* map : leftHashMaps)
+    for (const auto& buffer : leftHashMapBuffers)
     {
-        totalNumberOfTuples += map->getNumberOfTuples();
+        totalNumberOfTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
     }
-    for (const auto* map : rightHashMaps)
+    for (const auto& buffer : rightHashMapBuffers)
     {
-        totalNumberOfTuples += map->getNumberOfTuples();
+        totalNumberOfTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
     }
 
-    const auto neededBufferSize = sizeof(EmittedHJWindowTrigger) + ((leftHashMaps.size() + rightHashMaps.size()) * sizeof(HashMap*));
+    /// Hash map buffers are stored as child buffers, not inline in the main buffer.
+    constexpr auto neededBufferSize = sizeof(EmittedHJWindowTrigger);
     const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
     if (not tupleBufferVal.has_value())
     {
@@ -217,7 +204,19 @@ void HJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
 
-    new (tupleBuffer.getAvailableMemoryArea().data()) EmittedHJWindowTrigger{windowInfo, leftHashMaps, rightHashMaps, probeTaskType};
+    /// Writing all necessary information for the probe to the buffer via the placement constructor
+    new (tupleBuffer.getAvailableMemoryArea().data())
+        EmittedHJWindowTrigger{windowInfo, leftHashMapBuffers.size(), rightHashMapBuffers.size(), probeTaskType};
+
+    /// Store left hash map buffers as children first (indices 0..left-1), then right (indices left..left+right-1)
+    for (auto leftBuffer : leftHashMapBuffers)
+    {
+        std::ignore = tupleBuffer.storeChildBuffer(leftBuffer);
+    }
+    for (auto rightBuffer : rightHashMapBuffers)
+    {
+        std::ignore = tupleBuffer.storeChildBuffer(rightBuffer);
+    }
 
     pipelineCtx->emitBuffer(tupleBuffer);
 }
