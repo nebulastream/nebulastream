@@ -40,7 +40,7 @@ QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : que
 {
 }
 
-std::expected<DistributedQueryId, Exception> QuerySubmitter::registerQuery(const DistributedLogicalPlan& plan)
+std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const DistributedLogicalPlan& plan)
 {
     /// Make sure the queryplan is passed through serialization logic.
     std::unordered_map<Host, std::vector<std::string>> serializationErrorsPerWorker;
@@ -61,22 +61,21 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::registerQuery(const
         }
     }
 
-    if (serializationErrorsPerWorker.empty())
+    if (!serializationErrorsPerWorker.empty())
     {
-        return queryManager->registerQuery(plan);
+        return std::unexpected(CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker));
     }
 
-    const auto exception = CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker);
-    return std::unexpected(exception);
-}
+    auto result = queryManager->start(plan);
 
-void QuerySubmitter::startQuery(const DistributedQueryId& query)
-{
-    if (auto started = queryManager->start(query); !started.has_value())
+
+    if (!result.has_value())
     {
-        throw std::move(started.error().at(0));
+        return std::unexpected(std::move(result.error().at(0)));
     }
-    ids.emplace(query);
+
+    ids.emplace(*result);
+    return result.value();
 }
 
 void QuerySubmitter::stopQuery(const DistributedQueryId& query)

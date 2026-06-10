@@ -16,73 +16,28 @@
 
 #include <chrono>
 #include <memory>
-#include <unordered_map>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
 
-#include <Util/AtomicState.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <folly/Synchronized.h>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngine.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 
 namespace NES
 {
-
-class QueryTracker
-{
-    struct Idle
-    {
-        std::unique_ptr<CompiledQueryPlan> qep;
-    };
-
-    struct Executing
-    {
-    };
-
-    using QueryState = AtomicState<Idle, Executing>;
-    folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
-
-public:
-    void registerQuery(std::unique_ptr<CompiledQueryPlan> qep, QueryId queryId)
-    {
-        auto locked = queries.wlock();
-        auto [it, inserted] = locked->emplace(queryId, std::make_unique<QueryState>(Idle{std::move(qep)}));
-        if (!inserted)
-        {
-            throw QueryAlreadyRegistered("Query with ID {} is already registered", queryId);
-        }
-    }
-
-    std::unique_ptr<CompiledQueryPlan> moveToExecuting(QueryId qid)
-    {
-        auto rlocked = queries.rlock();
-        std::unique_ptr<CompiledQueryPlan> qep;
-        if (auto it = rlocked->find(qid); it != rlocked->end())
-        {
-            it->second->transition(
-                [&](Idle&& idle)
-                {
-                    qep = std::move(idle).qep;
-                    return Executing{};
-                });
-        }
-        return qep;
-    }
-};
 
 NodeEngine::~NodeEngine()
 {
     NES_DEBUG("Shutting down NodeEngine");
     queryEngine.reset();
     sourceProvider.reset();
-    queryTracker.reset();
 
     bufferManager->destroy();
     bufferManager.reset();
@@ -98,30 +53,16 @@ NodeEngine::NodeEngine(
     , queryLog(std::move(queryLog))
     , systemEventListener(std::move(systemEventListener))
     , queryEngine(std::move(queryEngine))
-    , queryTracker(std::make_unique<QueryTracker>())
     , sourceProvider(std::move(sourceProvider))
 {
 }
 
-void NodeEngine::registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
-{
-    queryTracker->registerQuery(std::move(compiledQueryPlan), queryId);
-    queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
-}
-
-void NodeEngine::startQuery(QueryId queryId)
+void NodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
-
-    if (auto qep = queryTracker->moveToExecuting(queryId))
-    {
-        systemEventListener->onEvent(StartQuerySystemEvent(queryId));
-        queryEngine->start(ExecutableQueryPlan::instantiate(*qep, *sourceProvider));
-    }
-    else
-    {
-        throw QueryNotRegistered("Query with queryId {} is not currently idle", queryId);
-    }
+    queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
+    systemEventListener->onEvent(StartQuerySystemEvent(std::move(queryId)));
+    queryEngine->start(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider));
 }
 
 void NodeEngine::stopQuery(QueryId queryId)

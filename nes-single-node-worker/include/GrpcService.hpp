@@ -14,6 +14,8 @@
 
 #pragma once
 #include <utility>
+#include <grpcpp/server_context.h>
+#include <grpcpp/support/status.h>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -27,9 +29,7 @@ namespace NES
 class GRPCServer final : public WorkerRPCService::Service
 {
 public:
-    grpc::Status RegisterQuery(grpc::ServerContext*, const RegisterQueryRequest*, RegisterQueryReply*) override;
-
-    grpc::Status StartQuery(grpc::ServerContext*, const StartQueryRequest*, google::protobuf::Empty*) override;
+    grpc::Status StartQuery(grpc::ServerContext*, const StartQueryRequest*, StartQueryReply*) override;
 
     grpc::Status StopQuery(grpc::ServerContext*, const StopQueryRequest*, google::protobuf::Empty*) override;
 
