@@ -28,7 +28,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <folly/Synchronized.h>
-#include <network/lib.h>
+#include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
 #include <BackpressureChannel.hpp>
 #include <PipelineExecutionContext.hpp>

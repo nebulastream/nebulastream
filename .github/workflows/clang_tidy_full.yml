@@ -32,8 +32,8 @@ jobs:
       - name: Run clang-tidy
         id: run-clang-tidy
         # The target generates the code clang-tidy needs (nes-codegen), runs run-clang-tidy over every
-        # translation unit and writes build/clang-tidy.log. Path exclusions (generated sources and
-        # nes-rust-bindings) live in scripts/tidy.sh, shared with the local tidy-full target.
+        # translation unit and writes build/clang-tidy.log. Structural exclusions for generated
+        # sources live in scripts/tidy.sh, shared with the local tidy-full target.
         run: cmake --build build --target tidy-full
       - name: show errors
         if: ${{ failure() && steps.run-clang-tidy.conclusion == 'failure' }}
