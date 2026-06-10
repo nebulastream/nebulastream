@@ -85,8 +85,8 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
 
 void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
 {
-    auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(registerActivePipeline, operatorHandler);
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(registerActivePipeline, operatorHandlerMemRef);
 
     sliceStoreRef->setupSliceStore(executionCtx.pipelineContext);
 }
@@ -128,8 +128,7 @@ WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(const WindowBuildPhysic
     , child(other.child)
     , operatorHandlerId(other.operatorHandlerId)
     , timeFunction(other.timeFunction ? other.timeFunction->clone() : nullptr)
-    /// The SliceStoreRef is shared across pipeline copies — it manages per-pipeline caches internally
-    , sliceStoreRef(other.sliceStoreRef->clone())
+    , sliceStoreRef(other.sliceStoreRef ? other.sliceStoreRef->clone() : nullptr)
 {
 }
 }

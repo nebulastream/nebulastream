@@ -21,9 +21,13 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 
@@ -31,51 +35,65 @@ namespace NES
 {
 
 HashMapSlice::HashMapSlice(
-    const SliceStart sliceStart,
-    const SliceEnd sliceEnd,
+    SliceStart sliceStart,
+    SliceEnd sliceEnd,
     const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
     const uint64_t numberOfHashMaps,
     const uint64_t numberOfInputStreams)
     : Slice(sliceStart, sliceEnd)
-    , createNewHashMapSliceArgs(createNewHashMapSliceArgs)
-    , numberOfHashMapsPerInputStream(numberOfHashMaps)
-    , numberOfInputStreams(numberOfInputStreams)
+    , numHashMaps(numberOfHashMaps * numberOfInputStreams)
+    , numInputStreams(numberOfInputStreams)
+    , numHashmapsPerInputStream(numberOfHashMaps)
+    , params(createNewHashMapSliceArgs)
 {
-    for (uint64_t i = 0; i < numberOfHashMaps * numberOfInputStreams; i++)
-    {
-        hashMaps.emplace_back(nullptr);
-    }
-}
-
-HashMapSlice::~HashMapSlice()
-{
-    INVARIANT(createNewHashMapSliceArgs.nautilusCleanup.size() == numberOfInputStreams, "We expect one cleanup function per input ");
-
-    /// As we assume that each hashmap of an input stream lie one after the other.
-    /// Thus, we need to call #numbnumberOfHashMaps times the same nautilusCleanup function and then move to the next one.
-    for (size_t i = 0; i < hashMaps.size(); i++)
-    {
-        if (hashMaps[i] and hashMaps[i]->getNumberOfTuples() > 0)
-        {
-            /// Calling the compiled nautilus function
-            createNewHashMapSliceArgs.nautilusCleanup[i / numberOfHashMapsPerInputStream]->operator()(hashMaps[i].get());
-        }
-    }
-
-    hashMaps.clear();
+    hashMapBuffers.resize(numHashMaps);
+    hashMapBuffersState.assign(numHashMaps, HashMapBufferState::UNINITIALIZED);
 }
 
 uint64_t HashMapSlice::getNumberOfHashMaps() const
 {
-    return hashMaps.size();
+    return numHashMaps;
 }
 
-uint64_t HashMapSlice::getNumberOfTuples() const
+uint64_t HashMapSlice::getNumInputStreams() const
 {
-    return std::accumulate(
-        hashMaps.begin(),
-        hashMaps.end(),
-        0,
-        [](uint64_t runningSum, const auto& hashMap) { return runningSum + hashMap->getNumberOfTuples(); });
+    return numInputStreams;
+}
+
+uint64_t HashMapSlice::getNumHashMapsPerInputStream() const
+{
+    return numHashmapsPerInputStream;
+}
+
+const TupleBuffer* HashMapSlice::getHashMapBufferRef(const VariableSizedAccess::Index childBufferIndex) const
+{
+    PRECONDITION(childBufferIndex.getRawIndex() < numHashMaps, "Hash Map index out of range in hash map slice getHashMapBufferRef!");
+    const auto pos = childBufferIndex.getRawIndex();
+    return hashMapBuffersState[pos] == HashMapBufferState::INITIALIZED ? &hashMapBuffers[pos] : nullptr;
+}
+
+const TupleBuffer*
+HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, const VariableSizedAccess::Index childBufferIndex)
+{
+    PRECONDITION(childBufferIndex.getRawIndex() < numHashMaps, "Hash Map index out of range in hash map slice loadHashMapBuffer!");
+    const auto pos = childBufferIndex.getRawIndex();
+    /// Check whether the hash map is initialized
+    if (hashMapBuffersState[pos] == HashMapBufferState::UNINITIALIZED)
+    {
+        /// initialize the chained hash map buffer
+        /// allocate buffers for the hash maps
+        if (auto childBuffer = bufferProvider.getUnpooledBuffer(ChainedHashMap::calculateBufferSizeFromBuckets(params.numberOfBuckets)))
+        {
+            /// initialize chained hash map i
+            ChainedHashMap::init(childBuffer.value(), params.keySize, params.valueSize, params.numberOfBuckets, params.pageSize);
+            hashMapBuffers[pos] = childBuffer.value();
+            hashMapBuffersState[pos] = HashMapBufferState::INITIALIZED;
+        }
+        else
+        {
+            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+        }
+    }
+    return &hashMapBuffers[pos];
 }
 }

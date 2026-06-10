@@ -11,10 +11,11 @@
 # limitations under the License.
 
 add_library(nes-nautilus-test-util STATIC
+        src/DataStructureTestUtils.cpp
         src/NautilusTestUtils.cpp
-        src/ChainedHashMapTestUtils.cpp
-        src/ChainedHashMapCustomValueTestUtils.cpp
         src/TestTupleBuffer.cpp
+        src/TestablePagedVector.cpp
+        src/TestableChainedHashMap.cpp
 )
 
 target_include_directories(nes-nautilus-test-util PUBLIC

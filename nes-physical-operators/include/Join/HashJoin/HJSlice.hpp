@@ -18,6 +18,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <HashMapSlice.hpp>
 
@@ -27,13 +29,13 @@ namespace NES
 struct CreateNewHJSliceArgs final : CreateNewHashMapSliceArgs
 {
     CreateNewHJSliceArgs(
-        std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup,
         const uint64_t keySize,
         const uint64_t valueSize,
         const uint64_t pageSize,
         const uint64_t numberOfBuckets,
+        AbstractBufferProvider* bufferProvider,
         const JoinBuildSideType joinBuildSide)
-        : CreateNewHashMapSliceArgs{std::move(nautilusCleanup), keySize, valueSize, pageSize, numberOfBuckets}, joinBuildSide(joinBuildSide)
+        : CreateNewHashMapSliceArgs{keySize, valueSize, pageSize, numberOfBuckets, bufferProvider}, joinBuildSide(joinBuildSide)
     {
     }
 
@@ -48,8 +50,9 @@ class HJSlice final : public HashMapSlice
 public:
     HJSlice(
         SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
-    [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
-    [[nodiscard]] HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide);
+    [[nodiscard]] const TupleBuffer* getHashMapBufferRefForSide(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
+    [[nodiscard]] const TupleBuffer* getOrCreateHashMapBufferRefForSide(
+        WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide, AbstractBufferProvider& bufferProvider);
     [[nodiscard]] uint64_t getNumberOfHashMapsForSide() const;
 };
 
