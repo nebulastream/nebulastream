@@ -11,17 +11,17 @@
 # limitations under the License.
 
 [package]
-name = "network_bindings"
+name = "nes_network_bindings"
 version = "0.1.0"
 edition = "2024"
 
 [lib]
-path = "lib.rs"
+crate-type = ["rlib", "staticlib"]
 
 [dependencies]
 # Generate C++ bindings
 cxx = "1.0"
 
 tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time"] }
-nes_network = { path = "../../network" }
+nes_network = { path = "../network" }
 tracing = "0.1.41"

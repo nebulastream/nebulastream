@@ -42,6 +42,7 @@ target_include_directories(nes-sources-validation
 target_link_libraries(nes-sources
         PUBLIC nes-sources-validation nes-common nes-configurations nes-memory nes-executable nes-network-bindings
         PRIVATE nes-input-formatter-provider nes-runtime)
+target_link_rust_lib(nes-sources nes_network_bindings)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -37,7 +37,7 @@
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
-#include <network/lib.h>
+#include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
 
 #include <DataTypes/Schema.hpp>

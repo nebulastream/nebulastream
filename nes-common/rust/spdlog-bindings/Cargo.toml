@@ -10,14 +10,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-corrosion_add_cxxbridge(
-        nes-network-bindings
-        CRATE nes_rust_bindings
-        FILES ../network/lib.rs
-)
-target_sources(nes-network-bindings PRIVATE src/NetworkBindings.cpp)
-target_include_directories(nes-network-bindings
-        PRIVATE .
-        PUBLIC include
-)
-target_link_libraries(nes-network-bindings PUBLIC nes-memory nes-common nes-network-interface)
+[package]
+name = "spdlog_bindings"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+tracing = "0.1"
+tracing-subscriber = "0.3"
+cxx = "1.0"
+
+[build-dependencies]
+cxx-build = "1.0"

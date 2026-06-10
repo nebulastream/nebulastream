@@ -32,6 +32,7 @@ target_include_directories(nes-sinks-validation PUBLIC
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
 target_link_libraries(nes-sinks
         PUBLIC nes-sinks-validation nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings)
+target_link_rust_lib(nes-sinks nes_network_bindings)
 
 target_include_directories(nes-sinks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
