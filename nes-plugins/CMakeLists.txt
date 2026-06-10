@@ -23,6 +23,7 @@ activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
 activate_optional_plugin("Sinks/MQTTSink" ON)
 activate_optional_plugin("Sinks/ODBCSink" ON)
+activate_optional_plugin("Sinks/TCPSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
 
