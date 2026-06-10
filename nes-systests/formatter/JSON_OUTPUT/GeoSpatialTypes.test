@@ -59,4 +59,23 @@ SELECT circle_circumference(Circle(Point(x1, y1), r)) AS circumference FROM geo 
 {"CIRCUMFERENCE":9.424778}
 {"CIRCUMFERENCE":45.553093}
 
+# point_circle_contains(Point, Circle) dispatches to PointCircleContainsPhysicalFunction, which
+# returns a BOOLEAN: true if the point lies within (distance to center <= radius) the circle.
+# Here the candidate point (x2, y2) is tested against the circle centered at (x1, y1) with radius r.
+#   row 1: (10,20) vs center (1,2) r=5    -> dist sqrt(405)~=20.12 > 5   -> false
+#   row 2: (30,40) vs center (3,4) r=1.5  -> dist 45 > 1.5              -> false
+#   row 3: (-1,-2) vs center (0,0) r=7.25 -> dist sqrt(5)~=2.24 <= 7.25 -> true
+SELECT point_circle_contains(Point(x2, y2), Circle(Point(x1, y1), r)) AS contained FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"CONTAINED":false}
+{"CONTAINED":false}
+{"CONTAINED":true}
+
+# A point at the circle's own center is always contained (distance 0 <= radius).
+SELECT point_circle_contains(Point(x1, y1), Circle(Point(x1, y1), r)) AS contained FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"CONTAINED":true}
+{"CONTAINED":true}
+{"CONTAINED":true}
+
 
