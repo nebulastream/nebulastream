@@ -26,6 +26,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
+#include <cpptrace/from_current_macros.hpp>
 #include <fmt/format.h>
 #include <nautilus/val_ptr.hpp>
 #include <CompilationContext.hpp>

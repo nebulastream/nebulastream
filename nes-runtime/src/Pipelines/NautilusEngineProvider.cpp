@@ -14,9 +14,9 @@
 #include <Pipelines/NautilusEngineProvider.hpp>
 
 #include <cstddef>
-#include <functional>
 #include <string>
 #include <unordered_map>
+#include <folly/hash/Hash.h>
 #include <Engine.hpp>
 #include <options.hpp>
 
@@ -45,16 +45,15 @@ struct EngineKeyHash
 {
     std::size_t operator()(const EngineKey& key) const noexcept
     {
-        std::size_t hash = std::hash<std::string>{}(key.backend);
-        const auto mix = [&hash](const std::size_t value) { hash ^= value + 0x9e3779b97f4a7c15ULL + (hash << 6) + (hash >> 2); };
-        mix(std::hash<std::string>{}(key.strategy));
-        mix(static_cast<std::size_t>(key.compilation));
-        mix(static_cast<std::size_t>(key.mlirMultithreading));
-        mix(static_cast<std::size_t>(key.dumpAll));
-        mix(static_cast<std::size_t>(key.dumpConsole));
-        mix(static_cast<std::size_t>(key.dumpFile));
-        mix(static_cast<std::size_t>(key.dumpGraph));
-        return hash;
+        return folly::hash::hash_combine(
+            key.backend,
+            key.strategy,
+            key.compilation,
+            key.mlirMultithreading,
+            key.dumpAll,
+            key.dumpConsole,
+            key.dumpFile,
+            key.dumpGraph);
     }
 };
 
