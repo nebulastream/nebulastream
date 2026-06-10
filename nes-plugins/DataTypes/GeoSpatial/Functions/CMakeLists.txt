@@ -20,6 +20,9 @@ add_plugin_as_library(CIRCLE_CIRCUMFERENCE LogicalFunction nes-logical-operators
 add_plugin_as_library(CIRCLE_CIRCUMFERENCE PhysicalFunction nes-physical-operators-registry circle_circumference_physical_function CircleCircumferencePhysicalFunction.cpp)
 add_plugin_as_library(POINT_CIRCLE_CONTAINS LogicalFunction nes-logical-operators-registry point_circle_contains_logical_function PointCircleContainsLogicalFunction.cpp)
 add_plugin_as_library(POINT_CIRCLE_CONTAINS PhysicalFunction nes-physical-operators-registry point_circle_contains_physical_function PointCircleContainsPhysicalFunction.cpp)
+add_plugin_as_library(POINT_LINE_CONTAINS LogicalFunction nes-logical-operators-registry point_line_contains_logical_function PointLineContainsLogicalFunction.cpp)
+add_plugin_as_library(POINT_LINE_CONTAINS PhysicalFunction nes-physical-operators-registry point_line_contains_physical_function PointLineContainsPhysicalFunction.cpp)
+
 
 target_include_directories(point_add_physical_function
         PUBLIC include
@@ -57,6 +60,16 @@ target_include_directories(point_circle_contains_logical_function
 )
 
 target_include_directories(point_circle_contains_physical_function
+        PUBLIC include
+        PRIVATE .
+)
+
+target_include_directories(point_line_contains_logical_function
+        PUBLIC include
+        PRIVATE .
+)
+
+target_include_directories(point_line_contains_physical_function
         PUBLIC include
         PRIVATE .
 )

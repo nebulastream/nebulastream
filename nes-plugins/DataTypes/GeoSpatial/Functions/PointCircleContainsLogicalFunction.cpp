@@ -54,7 +54,7 @@ LogicalFunction PointCircleContainsLogicalFunction::withInferredDataType(const S
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& c) { return c.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(
-        newChildren.size() == 2, "PointCircleContainsLogicalFunction expects exactly one child function but has {}", newChildren.size());
+        newChildren.size() == 2, "PointCircleContainsLogicalFunction expects exactly two child functions but has {}", newChildren.size());
     const auto leftType = newChildren[0].getDataType();
     const auto rightType = newChildren[1].getDataType();
     /// Check if the left child is of the point datatype structure and the right is of the circle datatype structure

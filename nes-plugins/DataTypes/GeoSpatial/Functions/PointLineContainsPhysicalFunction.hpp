@@ -22,11 +22,11 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace NES
 {
 
-/// Checks if the lhs point lies within the rhs circle
-class PointCircleContainsPhysicalFunction final
+/// Checks if the lhs point lies on the rhs line
+class PointLineContainsPhysicalFunction final
 {
 public:
-    explicit PointCircleContainsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
+    explicit PointLineContainsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
@@ -34,6 +34,6 @@ private:
     PhysicalFunction rightPhysicalFunction;
 };
 
-static_assert(PhysicalFunctionConcept<PointCircleContainsPhysicalFunction>);
+static_assert(PhysicalFunctionConcept<PointLineContainsPhysicalFunction>);
 
 }
