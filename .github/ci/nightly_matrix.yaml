@@ -18,29 +18,29 @@ runners:
 jobs:
   # === Sanitizer builds (RelWithDebInfo, on self-hosted 64-core) ===
 
-  - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest+docker)"
+  - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest+docker+conntest)"
     arch: x64
     stdlib: libcxx
     build_type: RelWithDebInfo
     sanitizer: address
     runner: self-hosted-{arch}
-    tests: [unit, systest, docker]
+    tests: [unit, systest, docker, conntest]
 
-  - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest)"
+  - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest+conntest)"
     arch: x64
     stdlib: libstdcxx
     build_type: RelWithDebInfo
     sanitizer: thread
     runner: self-hosted-{arch}
-    tests: [unit, systest]
+    tests: [unit, systest, conntest]
 
-  - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest+docker)"
+  - name: "{arch} {stdlib} {build_type} {sanitizer} (unit+systest+docker+conntest)"
     arch: x64
     stdlib: libcxx
     build_type: RelWithDebInfo
     sanitizer: undefined
     runner: self-hosted-{arch}
-    tests: [unit, systest, docker]
+    tests: [unit, systest, docker, conntest]
 
   # === Debug builds (no sanitizer, split for parallelism on x64) ===
 
@@ -78,13 +78,13 @@ jobs:
 
   # === Optimized builds (no sanitizer, combined — all fast enough) ===
 
-  - name: "{arch} {stdlib} {build_type} (unit+systest+docker)"
+  - name: "{arch} {stdlib} {build_type} (unit+systest+conntest+docker)"
     arch: [x64, arm64]
     stdlib: [libcxx, libstdcxx]
     build_type: [RelWithDebInfo, Release]
     sanitizer: none
     runner: github-{arch}
-    tests: [unit, systest, docker]
+    tests: [unit, systest, conntest, docker]
     exclude:
       - arch: arm64
         stdlib: libstdcxx
