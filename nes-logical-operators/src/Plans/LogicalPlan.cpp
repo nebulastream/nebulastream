@@ -385,4 +385,34 @@ std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan)
     return os << explain(plan, ExplainVerbosity::Short);
 }
 
+    namespace Debug
+    {
+
+        std::string dump(const LogicalPlan& plan)
+        {
+            // Safely read the vector size without copying.
+            // std::vector layout: [pointer to data, pointer to end, pointer to capacity end]
+            // We read the first two pointers to compute size without triggering any copy constructor.
+            struct VecLayout { const void* begin; const void* end; const void* cap; };
+            const auto* vec = reinterpret_cast<const VecLayout*>(
+                    reinterpret_cast<const char*>(&plan) + sizeof(QueryId));
+            const auto size = (reinterpret_cast<const char*>(vec->end)
+                               - reinterpret_cast<const char*>(vec->begin))
+                              / sizeof(LogicalOperator);
+            if (size > 1000)
+            {
+                return "<LogicalPlan — not yet constructed>";
+            }
+            return explain(plan, ExplainVerbosity::Debug);
+        }
+
+        std::string dump(const LogicalOperator& op)
+        {
+            std::ostringstream oss;
+            QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>::dumpRecursive(op, 0, oss, true);
+            return oss.str();
+        }
+
+    } // namespace Debug
+
 }
