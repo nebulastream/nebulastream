@@ -18,7 +18,9 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val_bool.hpp>
@@ -63,10 +65,11 @@ SliceCacheSecondChance::EntryFound SliceCacheSecondChance::searchInCache(
     return {.sliceCacheEntry = nullptr, .foundInCache = false};
 }
 
-nautilus::val<SliceCacheEntry::DataStructure> SliceCacheSecondChance::getDataStructureRef(
+NautilusBuffer SliceCacheSecondChance::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp,
     const nautilus::val<WorkerThreadId>& workerThreadId,
-    const SliceCacheReplaceEntry& replaceEntry)
+    const SliceCacheReplaceEntry& replaceEntry,
+    nautilus::val<AbstractBufferProvider*>)
 {
     /// We must use SliceCacheEntrySecondChance* for all pointer arithmetic, because the entries
     /// in memory are SliceCacheEntrySecondChance objects (40 bytes), not SliceCacheEntry (32 bytes).
@@ -85,7 +88,9 @@ nautilus::val<SliceCacheEntry::DataStructure> SliceCacheSecondChance::getDataStr
     if (auto [sliceCacheEntryToReplace, foundInCache] = searchInCache(threadLocalStart, timestamp); foundInCache)
     {
         sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
-        return nautilus::val<SliceCacheEntry*>{sliceCacheEntryToReplace}.get(&SliceCacheEntry::dataStructure);
+        BorrowedNautilusBuffer dataStructureBuffer
+            = BorrowedNautilusBuffer::from(sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::dataStructure));
+        return dataStructureBuffer;
     }
 
     /// If this is not the case, we iterate through the cache until we have find a slice that has the second chance bit set to false.
@@ -110,7 +115,9 @@ nautilus::val<SliceCacheEntry::DataStructure> SliceCacheSecondChance::getDataStr
     nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = threadLocalStart + replacementIndex;
     sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
     replaceEntry(nautilus::val<SliceCacheEntry*>{threadLocalStart + replacementIndex});
-    return nautilus::val<SliceCacheEntry*>{threadLocalStart + replacementIndex}.get(&SliceCacheEntry::dataStructure);
+    BorrowedNautilusBuffer dataStructureBuffer
+        = BorrowedNautilusBuffer::from(sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::dataStructure));
+    return dataStructureBuffer;
 }
 
 }

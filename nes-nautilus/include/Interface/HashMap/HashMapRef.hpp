@@ -19,8 +19,8 @@
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/Record.hpp>
-
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -29,7 +29,7 @@ namespace NES
 class HashMapRef
 {
 public:
-    explicit HashMapRef(const nautilus::val<HashMap*>& hashMapRef) : hashMapRef(hashMapRef) { }
+    explicit HashMapRef(const nautilus::val<TupleBuffer*>& tupleBuffer) : tupleBuffer(tupleBuffer) { }
 
     virtual ~HashMapRef() = default;
 
@@ -59,7 +59,7 @@ public:
     virtual nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) = 0;
 
 protected:
-    nautilus::val<HashMap*> hashMapRef;
+    nautilus::val<TupleBuffer*> tupleBuffer;
 };
 
 }

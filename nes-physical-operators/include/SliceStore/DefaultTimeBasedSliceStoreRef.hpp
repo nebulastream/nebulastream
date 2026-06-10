@@ -21,9 +21,11 @@
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -42,7 +44,7 @@ class DefaultTimeBasedSliceStoreRef final : public SliceStoreRef
 {
 public:
     /// Extracts the operator-specific data structure (TupleBuffer) from a Slice.
-    using DataStructureExtractor = std::function<void*(Slice&, WorkerThreadId)>;
+    using DataStructureExtractor = std::function<const TupleBuffer*(Slice&, WorkerThreadId)>;
 
     /// The function that creates new slices given a start and end timestamp.
     using SliceCreateFunction = std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>;
@@ -58,7 +60,7 @@ public:
     DefaultTimeBasedSliceStoreRef& operator=(const DefaultTimeBasedSliceStoreRef&) = delete;
     DefaultTimeBasedSliceStoreRef& operator=(DefaultTimeBasedSliceStoreRef&&) = delete;
 
-    nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
+    NautilusBuffer getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const nautilus::val<OperatorHandler*>& operatorHandler,
