@@ -46,14 +46,7 @@ struct EngineKeyHash
     std::size_t operator()(const EngineKey& key) const noexcept
     {
         return folly::hash::hash_combine(
-            key.backend,
-            key.strategy,
-            key.compilation,
-            key.mlirMultithreading,
-            key.dumpAll,
-            key.dumpConsole,
-            key.dumpFile,
-            key.dumpGraph);
+            key.backend, key.strategy, key.compilation, key.mlirMultithreading, key.dumpAll, key.dumpConsole, key.dumpFile, key.dumpGraph);
     }
 };
 
