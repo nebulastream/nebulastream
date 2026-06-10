@@ -20,7 +20,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
-#include <network/lib.h>
+#include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
 #include <NetworkOptions.hpp>

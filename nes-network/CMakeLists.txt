@@ -11,5 +11,6 @@
 # limitations under the License.
 
 add_subdirectory(interface)
-add_subdirectory(nes-rust-bindings/network)
-add_subdirectory(nes-rust-bindings/spdlog)
+add_subdirectory(network-bindings)
+
+add_rust_cargo_test(nes_network)

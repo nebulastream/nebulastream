@@ -11,14 +11,15 @@
 # limitations under the License.
 
 [package]
-name = "nes_rust_bindings"
-version = "0.1.0"
-edition = "2021"
+name = "nes_network_bindings"
+version.workspace = true
+edition.workspace = true
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["rlib", "staticlib"]
 
 [dependencies]
-cxx = "1.0"
-network_bindings = { path = "network" }
-spdlog_bindings = { path = "spdlog" }
+cxx = { workspace = true }
+tokio = { workspace = true }
+nes_network = { workspace = true }
+tracing = { workspace = true }
