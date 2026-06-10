@@ -40,9 +40,14 @@ VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     }
 
     /// We need to built a zero and negativeOne via castToType, as we can not make any assumptions on the input type.
+    /// Both select branches must have the same type: integer promotion widens value * negativeOne (e.g. int8 -> int),
+    /// so we cast each branch to the output type before selecting, which also produces the required result type.
     const auto zero = VarVal{0}.castToType(inputType.type);
     const auto negativeOne = VarVal{-1}.castToType(inputType.type);
-    return VarVal::select((value < zero).getRawValueAs<nautilus::val<bool>>(), value * negativeOne, value).castToType(outputType.type);
+    return VarVal::select(
+        (value < zero).getRawValueAs<nautilus::val<bool>>(),
+        (value * negativeOne).castToType(outputType.type),
+        value.castToType(outputType.type));
 }
 
 PhysicalFunctionRegistryReturnType
