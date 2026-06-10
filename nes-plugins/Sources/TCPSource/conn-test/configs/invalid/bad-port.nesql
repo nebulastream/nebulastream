@@ -1,0 +1,10 @@
+-- Invalid: `socket_port` must be in [1, 65535]; the validator in
+-- ConfigParametersTCPSource rejects 70000 at bind time with
+-- INVALID_CONFIG_PARAMETER (1000).
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE TCP SET (
+    'localhost' AS `SOURCE`.socket_host,
+    '70000'     AS `SOURCE`.socket_port,
+    'JSON'      AS INPUT_FORMATTER.`TYPE`
+);

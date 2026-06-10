@@ -14,276 +14,185 @@
 
 #include <TCPSource.hpp>
 
-#include <cerrno> /// For socket error
+#include <algorithm>
 #include <chrono>
-#include <cstring>
-#include <exception>
+#include <cstddef>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
-#include <thread>
 #include <unordered_map>
 #include <utility>
-#include <vector>
-#include <sys/select.h>
 
-#include <cstdio>
-#include <fcntl.h>
-#include <netdb.h>
-#include <unistd.h> /// For read
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/connect.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/system/error_code.hpp>
+
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <asm-generic/socket.h>
-#include <bits/types/struct_timeval.h>
-#include <cpptrace/from_current.hpp>
-#include <sys/socket.h> /// For socket functions
 #include <ErrorHandling.hpp>
-#include <FileDataRegistry.hpp>
-#include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include <TCPDataServer.hpp>
 
 namespace NES
 {
 
-TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
-    : errBuffer{}
-    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
-    , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
-    , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
-    , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
-    , tupleDelimiter(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
-    , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
-    , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
-    , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
-    , connectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCP::CONNECT_TIMEOUT))
+namespace
 {
-    NES_TRACE("Init TCPSource.");
+/// While the buffer is empty the source can wait for data indefinitely, but it
+/// must keep noticing a stop request — so each blocking wait is sliced.
+constexpr auto STOP_POLL_INTERVAL = std::chrono::milliseconds(100);
+}
+
+TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
+    : host(sourceDescriptor.getFromConfig(ConfigParametersTCPSource::SOCKET_HOST))
+    , port(sourceDescriptor.getFromConfig(ConfigParametersTCPSource::SOCKET_PORT))
+    , connectTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCPSource::CONNECT_TIMEOUT_MS))
+    , flushInterval(sourceDescriptor.getFromConfig(ConfigParametersTCPSource::FLUSH_INTERVAL_MS))
+{
 }
 
 std::ostream& TCPSource::toString(std::ostream& str) const
 {
     str << "\nTCPSource(";
-    str << "\n  generated tuples: " << this->generatedTuples;
-    str << "\n  generated buffers: " << this->generatedBuffers;
-    str << "\n  connection: " << this->connection;
-    str << "\n  timeout: " << connectionTimeout << " seconds";
-    str << "\n  socketHost: " << socketHost;
-    str << "\n  socketPort: " << socketPort;
-    str << "\n  socketType: " << socketType;
-    str << "\n  socketDomain: " << socketDomain;
-    str << "\n  tupleDelimiter: " << tupleDelimiter;
-    str << "\n  socketBufferSize: " << socketBufferSize;
-    str << "\n  bytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
-    str << "\n  flushIntervalInMs" << flushIntervalInMs;
+    str << "\n  host: " << host;
+    str << "\n  port: " << port;
+    str << "\n  connectTimeoutMs: " << connectTimeout.count();
+    str << "\n  flushIntervalMs: " << flushInterval.count();
     str << ")\n";
     return str;
 }
 
-bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
-{
-    const std::chrono::seconds socketConnectDefaultTimeout{connectionTimeout};
-
-    /// we try each addrinfo until we successfully create a socket
-    while (result != nullptr)
-    {
-        sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-
-        if (sockfd != -1)
-        {
-            break;
-        }
-        result = result->ai_next;
-    }
-
-    /// check if we found a vaild address
-    if (result == nullptr)
-    {
-        NES_ERROR("No valid address found to create socket.");
-        return false;
-    }
-
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg, hicpp-signed-bitwise) - POSIX API requires varargs
-    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
-
-    /// set timeout for both blocking receive and send calls
-    /// if timeout is set to zero, then the operation will never timeout
-    /// (https://linux.die.net/man/7/socket)
-    /// as a workaround, we implicitly add one microsecond to the timeout
-    timeval timeout{.tv_sec = socketConnectDefaultTimeout.count(), .tv_usec = IMPLICIT_TIMEOUT_USEC};
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-    connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
-
-    /// if the TCPSource did not establish a connection, try with timeout
-    if (connection < 0)
-    {
-        if (errno != EINPROGRESS)
-        {
-            close();
-            /// if connection was unsuccessful, throw an exception with context using errno
-            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerrorResult);
-        }
-
-        /// Set the timeout for the connect attempt
-        fd_set fdset;
-        timeval timeValue{.tv_sec = socketConnectDefaultTimeout.count(), .tv_usec = IMPLICIT_TIMEOUT_USEC};
-
-        FD_ZERO(&fdset);
-        FD_SET(sockfd, &fdset);
-
-        connection = select(sockfd + 1, nullptr, &fdset, nullptr, &timeValue);
-        if (connection <= 0)
-        {
-            /// Timeout or error
-            errno = ETIMEDOUT;
-            close();
-            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerrorResult);
-        }
-
-        /// Check if connect succeeded
-        int error = 0;
-        socklen_t len = sizeof(error);
-        if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0 || (error != 0))
-        {
-            errno = error;
-            close();
-            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerrorResult);
-        }
-    }
-    return true;
-}
-
 void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
-    NES_TRACE("TCPSource::open: Trying to create socket and connect.");
-
-    addrinfo hints{};
-    addrinfo* result = nullptr;
-
-    hints.ai_family = socketDomain;
-    hints.ai_socktype = socketType;
-    hints.ai_flags = 0; /// use default behavior
-    hints.ai_protocol
-        = 0; /// specifying 0 in this field indicates that socket addresses with any protocol can be returned by getaddrinfo() ;
-
-    const auto errorCode = getaddrinfo(socketHost.c_str(), socketPort.c_str(), &hints, &result);
-    if (errorCode != 0)
+    boost::system::error_code resolveError;
+    boost::asio::ip::tcp::resolver resolver{ioContext};
+    const auto endpoints = resolver.resolve(host, std::to_string(port), resolveError);
+    if (resolveError)
     {
-        throw CannotOpenSource("Failed getaddrinfo with error: {}", gai_strerror(errorCode));
+        throw CannotOpenSource("TCPSource cannot resolve {}:{}: {}", host, port, resolveError.message());
     }
 
-    /// make sure that result is cleaned up automatically (RAII)
-    const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> resultGuard(result, freeaddrinfo);
-
-    const int flags = fcntl(sockfd, F_GETFL, 0);
-
-    CPPTRACE_TRY
+    /// Asio's synchronous connect has no deadline, so connect asynchronously and
+    /// pump the io_context for at most `connectTimeout`.
+    std::optional<boost::system::error_code> connectResult;
+    boost::asio::async_connect(
+        socket,
+        endpoints,
+        [&connectResult](const boost::system::error_code& error, const boost::asio::ip::tcp::endpoint&) { connectResult = error; });
+    ioContext.restart();
+    ioContext.run_for(connectTimeout);
+    if (!connectResult)
     {
-        tryToConnect(result, flags);
+        /// Deadline hit with the connect still pending: closing the socket aborts
+        /// it; drain the io_context so the handler has run before `connectResult`
+        /// goes out of scope.
+        boost::system::error_code closeError;
+        socket.close(closeError);
+        ioContext.run();
+        throw CannotOpenSource("TCPSource connect to {}:{} timed out after {}ms", host, port, connectTimeout.count());
     }
-    CPPTRACE_CATCH(...)
+    if (*connectResult)
     {
-        ::close(sockfd); /// close socket to clean up state
-        throw wrapExternalException("Could not establich connection!");
+        throw CannotOpenSource("TCPSource cannot connect to {}:{}: {}", host, port, connectResult->message());
     }
-
-    /// Set connection to non-blocking again to enable a timeout in the 'read()' call
-    fcntl(sockfd, F_SETFL, flags); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
-
-    NES_TRACE("TCPSource::open: Connected to server.");
+    NES_DEBUG("TCPSource connected to {}:{}", host, port);
 }
 
-Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult TCPSource::fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
-    try
+    if (peerClosed)
     {
-        size_t numReceivedBytes = 0;
-        while (fillBuffer(tupleBuffer, numReceivedBytes))
-        {
-            /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
-        };
-        if (numReceivedBytes == 0)
-        {
-            return FillTupleBufferResult::eos();
-        }
-        return FillTupleBufferResult::withBytes(numReceivedBytes);
+        return FillTupleBufferResult::eos();
     }
-    catch (const std::exception& e)
-    {
-        NES_ERROR("Failed to fill the TupleBuffer. Error: {}.", e.what());
-        throw;
-    }
-}
 
-bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
-{
-    const auto flushIntervalTimerStart = std::chrono::system_clock::now();
-    bool flushIntervalPassed = false;
-    bool readWasValid = true;
+    size_t tbOffset = 0;
+    const auto tbSize = tupleBuffer.getBufferSize();
+    auto* const data = tupleBuffer.getAvailableMemoryArea().data();
+    const auto flushDeadline = std::chrono::steady_clock::now() + flushInterval;
 
-    const size_t rawTBSize = tupleBuffer.getBufferSize();
-    while (not flushIntervalPassed and numReceivedBytes < rawTBSize)
+    while (tbOffset < tbSize && !stopToken.stop_requested())
     {
-        const ssize_t bufferSizeReceived
-            = read(sockfd, tupleBuffer.getAvailableMemoryArea().data() + numReceivedBytes, rawTBSize - numReceivedBytes);
-        numReceivedBytes += bufferSizeReceived;
-        if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
+        /// The flush interval only bounds how long bytes already in the buffer
+        /// are held back; an empty buffer keeps waiting (TCP silence is not EoS).
+        const auto now = std::chrono::steady_clock::now();
+        if (tbOffset > 0 && now >= flushDeadline)
         {
-            /// if read method returned -1 an error occurred during read.
-            NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
-            readWasValid = false;
-            numReceivedBytes = 0;
             break;
         }
-        if (bufferSizeReceived == EOF_RECEIVED_BUFFER_SIZE)
+        auto waitUntil = now + STOP_POLL_INTERVAL;
+        if (tbOffset > 0)
         {
-            NES_TRACE("No data received from {}:{}.", socketHost, socketPort);
-            if (numReceivedBytes == 0)
-            {
-                NES_INFO("TCP Source detected EoS");
-                readWasValid = false;
-                break;
-            }
+            waitUntil = std::min(waitUntil, flushDeadline);
         }
-        /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
-        /// and writing data exceeds the user defined limit (bufferFlushIntervalMs).
-        /// If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
-        if ((flushIntervalInMs > 0
-             && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
-                 >= flushIntervalInMs))
+
+        /// Asio's synchronous read has no deadline, so read asynchronously and
+        /// pump the io_context until the read completes or the slice elapses.
+        boost::system::error_code readError;
+        size_t bytesRead = 0;
+        bool completed = false;
+        socket.async_read_some(
+            boost::asio::buffer(data + tbOffset, tbSize - tbOffset),
+            [&completed, &readError, &bytesRead](const boost::system::error_code& error, const size_t numBytes)
+            {
+                completed = true;
+                readError = error;
+                bytesRead = numBytes;
+            });
+        ioContext.restart();
+        ioContext.run_until(waitUntil);
+        if (!completed)
         {
-            NES_DEBUG("Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
-            flushIntervalPassed = true;
+            /// Slice elapsed with no data: cancel and drain the io_context so the
+            /// (aborted) handler has run before its captures go out of scope.
+            boost::system::error_code cancelError;
+            socket.cancel(cancelError);
+            ioContext.run();
+        }
+
+        tbOffset += bytesRead;
+        if (readError == boost::asio::error::operation_aborted)
+        {
+            continue;
+        }
+        if (readError == boost::asio::error::eof)
+        {
+            peerClosed = true;
+            break;
+        }
+        if (readError)
+        {
+            throw CannotOpenSource("TCPSource read from {}:{} failed: {}", host, port, readError.message());
         }
     }
-    ++generatedBuffers;
-    /// Loop while we haven't received any bytes yet and we can still read from the socket.
-    return numReceivedBytes == 0 and readWasValid;
-}
 
-DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), name());
+    if (tbOffset == 0 && peerClosed)
+    {
+        return FillTupleBufferResult::eos();
+    }
+    return FillTupleBufferResult::withBytes(std::min(tbOffset, tbSize));
 }
 
 void TCPSource::close()
 {
-    NES_DEBUG("Trying to close connection.");
-    if (connection >= 0)
-    {
-        ::close(sockfd);
-        NES_TRACE("Connection closed.");
-    }
+    /// Best-effort teardown: the peer may already have closed or reset the
+    /// connection, and that must not fail the query.
+    boost::system::error_code shutdownError;
+    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, shutdownError);
+    boost::system::error_code closeError;
+    socket.close(closeError);
+    NES_DEBUG("TCPSource to {}:{} closed", host, port);
+}
+
+DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<ConfigParametersTCPSource>(std::move(config), NAME);
 }
 
 SourceValidationRegistryReturnType RegisterTCPSourceValidation(SourceValidationRegistryArguments sourceConfig)
@@ -291,59 +200,14 @@ SourceValidationRegistryReturnType RegisterTCPSourceValidation(SourceValidationR
     return TCPSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
+/// The matching declaration in the auto-generated SourceGeneratedRegistrar.inc takes SourceRegistryArguments by value; a
+/// const-ref definition here would not match (compile error). The generator owns the calling convention. The function is
+/// also reached only by name from the registrar; `static` / anonymous-namespace would hide it from the registrar resolver.
+/// NOLINTBEGIN(performance-unnecessary-value-param, misc-use-internal-linkage)
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegistryArguments sourceRegistryArguments)
+/// NOLINTEND(performance-unnecessary-value-param, misc-use-internal-linkage)
 {
     return std::make_unique<TCPSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
-{
-    std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
-
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::PORT))
-    {
-        throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
-    }
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::HOST))
-    {
-        throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
-    }
-
-    auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.tuples));
-
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::PORT, std::to_string(mockTCPServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, "localhost");
-
-    auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
-    systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
-
-    return systestAdaptorArguments.physicalSourceConfig;
-}
-
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
-{
-    std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
-
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::PORT))
-    {
-        throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
-    }
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::HOST))
-    {
-        throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
-    }
-
-
-    auto mockTCPServer = std::make_unique<TCPDataServer>(systestAdaptorArguments.testFilePath);
-
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::PORT, std::to_string(mockTCPServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, "localhost");
-
-    auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
-    systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
-
-    return systestAdaptorArguments.physicalSourceConfig;
-}
 }
