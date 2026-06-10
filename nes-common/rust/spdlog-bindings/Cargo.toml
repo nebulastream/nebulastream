@@ -11,14 +11,14 @@
 # limitations under the License.
 
 [package]
-name = "nes_rust_bindings"
-version = "0.1.0"
-edition = "2021"
+name = "spdlog_bindings"
+version.workspace = true
+edition.workspace = true
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["rlib", "staticlib"]
 
 [dependencies]
-cxx = "1.0"
-network_bindings = { path = "network" }
-spdlog_bindings = { path = "spdlog" }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+cxx = { workspace = true }

@@ -10,17 +10,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Unified Rust workspace for all NebulaStream Rust crates.
+# Add new crates here when introducing Rust code in any part of the project.
+# CMake auto-discovers members via `cargo metadata` (see cmake/EnableRust.cmake).
 [workspace]
 resolver = "3"
 members = [
+    "nes-network/network",
+    "nes-network/network-bindings",
+    "nes-common/rust/spdlog-bindings",
     "nes-coordinator/model",
     "nes-coordinator/migration",
 ]
 
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+# Shared dependency declarations. Member crates opt in with `dep.workspace = true`.
 [workspace.dependencies]
+nes_network = { path = "nes-network/network" }
+migration = { path = "nes-coordinator/migration" }
+
 anyhow = "1.0"
+async-channel = "2.3.1"
 async-trait = "0.1"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
+cxx = "1.0.194"
+futures = "0.3.31"
+pin-project = "1.1.10"
+proptest = "1.5"
+proptest-derive = "0.5"
 sea-orm = { version = "=1.1.1", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",
@@ -34,11 +54,17 @@ sea-orm-migration = { version = "=1.1.1", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",
 ] }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0"
 sqlx = { version = "=0.8.2", default-features = false, features = ["sqlite"] }
 strum = { version = "0.26", features = ["derive"] }
+test-strategy = "0.4.5"
 thiserror = "2.0"
-tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "macros", "time"] }
-
-migration = { path = "nes-coordinator/migration" }
+tokio = { version = "1.52.0", features = ["macros", "rt", "rt-multi-thread", "sync", "net", "io-util", "time"] }
+tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
+tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor", "json", "serde_json"] }
+tokio-stream = "0.1.17"
+tokio-util = { version = "0.7.13", features = ["codec"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3"
+url = { version = "2.5.4", features = ["serde"] }

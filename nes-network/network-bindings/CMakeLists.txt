@@ -10,14 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-corrosion_add_cxxbridge(
+add_cxx_bridge(
         nes-network-bindings
-        CRATE nes_rust_bindings
-        FILES ../network/lib.rs
-        # REGEN_TARGET builds only the generated headers, without cargo or the C++ sources.
-        REGEN_TARGET nes-network-bindings-codegen
+        CRATE nes_network_bindings
+        FILES lib.rs
 )
-add_dependencies(nes-codegen nes-network-bindings-codegen)
 target_sources(nes-network-bindings PRIVATE src/NetworkBindings.cpp)
 target_include_directories(nes-network-bindings
         PRIVATE .
