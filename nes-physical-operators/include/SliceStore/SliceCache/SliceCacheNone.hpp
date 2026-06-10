@@ -16,6 +16,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/TimestampRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <val_concepts.hpp>
@@ -33,9 +34,10 @@ public:
     SliceCacheNone();
     ~SliceCacheNone() override = default;
     [[nodiscard]] std::unique_ptr<SliceCache> clone() const override;
-    nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
+    NautilusBuffer getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
-        const SliceCacheReplaceEntry& replaceEntry) override;
+        const SliceCacheReplaceEntry& replaceEntry,
+        nautilus::val<AbstractBufferProvider*> bufferProvider) override;
 };
 }

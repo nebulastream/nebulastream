@@ -104,7 +104,7 @@ BorrowedNautilusBuffer::BorrowedNautilusBuffer(const nautilus::val<NES::TupleBuf
 {
 }
 
-BorrowedNautilusBuffer BorrowedNautilusBuffer::from(const nautilus::val<TupleBuffer*>& originalBuffer)
+BorrowedNautilusBuffer BorrowedNautilusBuffer::from(const nautilus::val<const TupleBuffer*>& originalBuffer)
 {
     return BorrowedNautilusBuffer{originalBuffer};
 }

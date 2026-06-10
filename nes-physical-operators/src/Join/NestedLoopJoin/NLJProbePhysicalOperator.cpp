@@ -161,7 +161,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     const auto sliceRefRight = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdRight);
 
     const auto leftPagedVectorRef = invoke(
-        +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
+        +[](NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
         {
             PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
             return nljSlice->getPagedVectorTupleBufferRef(workerThreadId, joinBuildSide);
@@ -170,7 +170,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         workerThreadIdForPages,
         nautilus::val<JoinBuildSideType>(JoinBuildSideType::Left));
     const auto rightPagedVectorRef = invoke(
-        +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
+        +[](NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
         {
             PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
             return nljSlice->getPagedVectorTupleBufferRef(workerThreadId, joinBuildSide);

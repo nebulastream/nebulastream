@@ -19,6 +19,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
@@ -26,35 +29,20 @@
 namespace NES
 {
 AggregationSlice::AggregationSlice(
+    AbstractBufferProvider* bufferProvider,
     const SliceStart sliceStart,
     const SliceEnd sliceEnd,
     const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
     const uint64_t numberOfHashMaps)
-    : HashMapSlice(sliceStart, sliceEnd, createNewHashMapSliceArgs, numberOfHashMaps, 1)
+    : HashMapSlice(*bufferProvider, sliceStart, sliceEnd, createNewHashMapSliceArgs, numberOfHashMaps, 1)
 {
 }
 
-HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) const
+const TupleBuffer* AggregationSlice::getHashMapBufferRefForWorker(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % hashMaps.size();
-    INVARIANT(pos < hashMaps.size(), "The worker thread id should be smaller than the number of hashmaps");
-    return hashMaps[pos].get();
-}
-
-HashMap* AggregationSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId)
-{
-    const auto pos = workerThreadId % hashMaps.size();
-    INVARIANT(pos < hashMaps.size(), "The worker thread id should be smaller than the number of hashmaps");
-
-    if (hashMaps.at(pos) == nullptr)
-    {
-        hashMaps.at(pos) = std::make_unique<ChainedHashMap>(
-            createNewHashMapSliceArgs.keySize,
-            createNewHashMapSliceArgs.valueSize,
-            createNewHashMapSliceArgs.numberOfBuckets,
-            createNewHashMapSliceArgs.pageSize);
-    }
-    return hashMaps[pos].get();
+    const auto hashMapIndex = workerThreadId % getNumberOfHashMaps();
+    INVARIANT(hashMapIndex < getNumberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
+    return getHashMapBufferRef(VariableSizedAccess::Index{hashMapIndex});
 }
 
 }
