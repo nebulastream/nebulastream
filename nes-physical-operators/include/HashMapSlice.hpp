@@ -18,10 +18,14 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <CompilationContext.hpp>
 
@@ -30,30 +34,31 @@ namespace NES
 
 struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
 {
-    /// Handle into the pipeline's compiled module; keeps the compiled cleanup function alive
-    /// even if the slice outlives the pipeline stage that compiled it.
-    using NautilusCleanupExec = PipelineFunction<void(HashMap*)>;
-
     CreateNewHashMapSliceArgs(
-        std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup,
         const uint64_t keySize,
         const uint64_t valueSize,
         const uint64_t pageSize,
-        const uint64_t numberOfBuckets)
-        : nautilusCleanup(std::move(nautilusCleanup))
-        , keySize(keySize)
-        , valueSize(valueSize)
-        , pageSize(pageSize)
-        , numberOfBuckets(numberOfBuckets)
+        const uint64_t numberOfBuckets,
+        AbstractBufferProvider* bufferProvider)
+        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets), bufferProvider(bufferProvider)
     {
     }
 
     ~CreateNewHashMapSliceArgs() override = default;
-    std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup;
     uint64_t keySize;
     uint64_t valueSize;
     uint64_t pageSize;
     uint64_t numberOfBuckets;
+    AbstractBufferProvider* bufferProvider;
+};
+
+/// Whether a hash map buffer slot has been lazily allocated yet. Backed by uint8_t (not bool) so that
+/// std::vector<HashMapBufferState> gives each slot its own byte: unlike std::vector<bool>, which bit-packs
+/// multiple slots into a shared word and blocking concurrency
+enum class HashMapBufferState : uint8_t
+{
+    UNINITIALIZED,
+    INITIALIZED
 };
 
 /// A HashMapSlice stores a number of hashmaps per input stream. We assume that each input stream has the same number of hashmaps
@@ -63,7 +68,6 @@ struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
 /// +---------------------+---------------------+---------------------+---------------------+---------------------+
 ///
 /// As the hashmap might need to clean up its state, we expect multiple clean up functions as part of the @struct CreateNewHashMapSliceArgs
-/// For each stream, we expect one cleanup function and once this HashMapSlice gets destroyed they are being called.
 class HashMapSlice : public Slice
 {
 public:
@@ -74,18 +78,47 @@ public:
         uint64_t numberOfHashMaps,
         uint64_t numberOfInputStreams);
 
-    ~HashMapSlice() override;
-
     /// In our current implementation, we expect one hashmap per worker thread. Thus, we return the number of hashmaps == number of worker threads.
     [[nodiscard]] uint64_t getNumberOfHashMaps() const;
-
-    [[nodiscard]] uint64_t getNumberOfTuples() const;
+    [[nodiscard]] uint64_t getNumInputStreams() const;
+    [[nodiscard]] uint64_t getNumHashMapsPerInputStream() const;
 
 protected:
-    std::vector<std::unique_ptr<HashMap>> hashMaps;
-    CreateNewHashMapSliceArgs createNewHashMapSliceArgs;
-    uint64_t numberOfHashMapsPerInputStream;
-    uint64_t numberOfInputStreams;
+    /// We use this private struct to store the CreateNewHashMapSliceArgs parameters in a trivially-copyable way, that is also embedded in the header.
+    struct HashMapSliceParams
+    {
+        uint64_t keySize;
+        uint64_t valueSize;
+        uint64_t pageSize;
+        uint64_t numberOfBuckets;
+
+        explicit HashMapSliceParams(const CreateNewHashMapSliceArgs& args)
+            : keySize(args.keySize), valueSize(args.valueSize), pageSize(args.pageSize), numberOfBuckets(args.numberOfBuckets)
+        {
+        }
+    };
+
+    static_assert(std::is_trivially_copyable_v<HashMapSliceParams>);
+
+    /// @brief Returns the hash map buffer at childBufferIndex if it has already been lazily created, or nullptr
+    /// otherwise. Never allocates, so it is safe to call without synchronization: it only ever reads state that
+    /// is either not-yet-written (nullptr) or was already fully written by whichever thread first-touched this
+    /// index via getOrCreateHashMapBufferRef.
+    [[nodiscard]] const TupleBuffer* getHashMapBufferRef(VariableSizedAccess::Index childBufferIndex) const;
+
+    /// @brief Loads a specific hash map from the slice based on the index, lazily allocating it on first access.
+    [[nodiscard]] const TupleBuffer*
+    getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, VariableSizedAccess::Index childBufferIndex);
+
+    /// metadata
+    uint64_t numHashMaps;
+    uint64_t numInputStreams;
+    uint64_t numHashmapsPerInputStream;
+    HashMapSliceParams params;
+    /// the hash map buffers for the hash map slice
+    std::vector<TupleBuffer> hashMapBuffers;
+    /// Holds the state of whether individual tuplebuffers have been allocated.
+    std::vector<HashMapBufferState> hashMapBuffersState;
 };
 
 }

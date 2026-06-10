@@ -19,8 +19,8 @@
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/Record.hpp>
-
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -29,12 +29,14 @@ namespace NES
 class HashMapRef
 {
 public:
-    explicit HashMapRef(const nautilus::val<HashMap*>& hashMapRef) : hashMapRef(hashMapRef) { }
+    explicit HashMapRef(const nautilus::val<TupleBuffer*>& tupleBuffer) : tupleBuffer(tupleBuffer) { }
 
     virtual ~HashMapRef() = default;
 
     /// This function performs a lookup to the hash map with a record.
-    /// If the recordKey is found the entry is returned.
+    /// If the recordKey is found, the existing entry is returned UNMODIFIED and onInsert is NOT called — this is
+    /// first-write-wins, unlike std::unordered_map::operator[]/insert_or_assign, which would overwrite. Use
+    /// insertOrUpdateEntry() if you need update-on-collision semantics.
     /// If the key was not found a new entry for the set of keys is inserted and the onInsert function is called.
     /// After the onInsert function is called, the newly-created entry is returned.
     virtual nautilus::val<AbstractHashMapEntry*> findOrCreateEntry(
@@ -59,7 +61,7 @@ public:
     virtual nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) = 0;
 
 protected:
-    nautilus::val<HashMap*> hashMapRef;
+    nautilus::val<TupleBuffer*> tupleBuffer;
 };
 
 }

@@ -68,6 +68,7 @@ public:
     void combinePagedVectors();
 
 private:
+    /// This does not really follow our compact-buffer data structure logic
     std::vector<TupleBuffer> leftPagedVectorBuffers;
     std::vector<TupleBuffer> rightPagedVectorBuffers;
     std::mutex combinePagedVectorsMutex;

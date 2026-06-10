@@ -111,5 +111,4 @@ VarVal createNautilusMaxValue(const DataType::Type physicalType)
         }
     }
 }
-
 }

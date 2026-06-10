@@ -19,12 +19,14 @@
 #include <functional>
 #include <memory>
 #include <span>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 
 namespace NES
 {
@@ -58,59 +60,126 @@ public:
 /// The storage space contains individual key-value pairs. It does not support variable length keys or values for now.
 /// For keys, one could project them beforehand to a fixed length representation, e.g., uin64_t, and then use the newly mapped key.
 ///
-/// IMPORTANT:
-/// 1. This hash map is *NOT* thread save and allows for no concurrent accesses, as it does not use any locking, atomics or synchronization primitives.
+/// IMPORTANT — differences from std::unordered_map:
+/// 1. This hash map is *NOT* thread safe and allows for no concurrent accesses, as it does not use any locking, atomics or synchronization primitives.
 /// 2. This hash map does not clear the content of the entry. So it is up to the user to initialize values correctly.
+/// 3. There is no erase()/element removal: once inserted, an entry cannot be removed from the map.
+/// 4. There is no automatic rehashing: the number of buckets is fixed at init() and never grows to bound the load factor, unlike
+///    std::unordered_map's max_load_factor-triggered rehash. Callers must size numberOfBuckets for the expected cardinality upfront.
+/// 5. findOrCreateEntry() (see {@refitem HashMapRef.hpp}) is first-write-wins: on a colliding key, the existing entry is returned
+///    unmodified rather than overwritten as std::unordered_map::operator[]/insert_or_assign would. Use insertOrUpdateEntry() for
+///    update-on-collision semantics.
 class ChainedHashMap final : public HashMap
 {
 public:
-    struct Page
-    {
-        explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+    /// @brief Use init to initialize a ChainedHashMap view on a pre-allocated TupleBuffer
+    /// Constructors are private
+    static void init(TupleBuffer& tupleBuffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
+    static void init(TupleBuffer& tupleBuffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
 
-        std::span<std::byte> getMemArea() { return buffer.getAvailableMemoryArea(); }
+    /// @brief Loads a ChainedHashMap view from a pre-filled TupleBuffer
+    static ChainedHashMap load(const TupleBuffer& tupleBuffer);
 
-        TupleBuffer buffer;
-        uint64_t numberOfEntries{0};
-    };
-
-    ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
-    ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
-    ~ChainedHashMap() override;
-    [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
-    [[nodiscard]] uint64_t getNumberOfTuples() const override;
-    [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
+
+    [[nodiscard]] uint64_t getTotalNumberOfRecords() const override { return header().numRecords; }
+
+    [[nodiscard]] TupleBuffer getPage(uint64_t pageIndex) const;
+    [[nodiscard]] TupleBuffer getVarSizedPage(uint64_t pageIndex) const;
+    [[nodiscard]] static uint64_t calculateBufferSizeFromBuckets(uint64_t numberOfBuckets);
+    [[nodiscard]] static uint64_t calculateBufferSizeFromChains(uint64_t numberOfChains);
     [[nodiscard]] uint64_t getNumberOfPages() const;
-    [[nodiscard]] ChainedHashMapEntry* getStartOfChain(uint64_t entryIdx) const;
-    [[nodiscard]] uint64_t getNumberOfChains() const;
+    [[nodiscard]] uint64_t getNumberOfVarSizedPages() const;
 
-    /// Clears and deletes all entries in the hash map. It also releases the memory of any allocated buffers or other memory.
-    void clear() noexcept;
+    [[nodiscard]] uint64_t getStatus() const { return header().status; }
 
-    /// The passed method is being executed, once the destructor is called. This is necessary as the value type of this hash map
-    /// might allocate its own memory. Thus, the destructor of the value type should be called to release the memory.
-    void setDestructorCallback(const std::function<void(ChainedHashMapEntry*)>& callback);
+    [[nodiscard]] uint64_t getNumberOfBuckets() const { return header().numBuckets; }
 
-    /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
-    static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(const ChainedHashMap& other);
+    [[nodiscard]] uint64_t getNumberOfChains() const { return header().numChains; }
+
+    [[nodiscard]] uint64_t getEntrySize() const { return header().entrySize; }
+
+    [[nodiscard]] uint64_t getEntriesPerPage() const { return header().entriesPerPage; }
+
+    [[nodiscard]] uint64_t getPageSize() const { return header().pageSize; }
+
+    [[nodiscard]] uint64_t getMask() const { return header().mask; }
+
+    [[nodiscard]] VariableSizedAccess::Index getStorageBufferIdx() const;
+    [[nodiscard]] VariableSizedAccess::Index getVarSizedBufferIdx() const;
+    [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos);
+
+    /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
+    /// view and without using its access methods
+    [[nodiscard]] TupleBuffer* getBuffer() { return std::addressof(buffer); }
+
+    /// HashMapSlice magic numbers
+    static constexpr auto VALID_CHM = 82543427462775423;
+    static constexpr auto INVALID_CHM = 0;
+    static constexpr auto FIXED_STORAGE_SPACE_BUFFER_SIZE = 4;
+    static constexpr auto VARSIZED_STORAGE_SPACE_BUFFER_SIZE = 4;
+
+protected:
+    void appendPage(AbstractBufferProvider* bufferProvider);
+    void allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider);
 
 private:
+    /// private constructor that takes a pre-filled buffer
+    explicit ChainedHashMap(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+
     friend class ChainedHashMapRef;
 
-    /// Specifies the number of pre-allocated var sized
-    static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
-    TupleBuffer entrySpace;
-    std::vector<TupleBuffer> storageSpace;
-    std::vector<TupleBuffer> varSizedSpace;
-    uint64_t numberOfTuples; /// Number of entries in the hash map
-    uint64_t pageSize; /// Size of one storage page in bytes
-    uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize
-    uint64_t entriesPerPage; /// Number of entries per page
-    uint64_t numberOfChains; /// Number of buckets in the hash map
-    ChainedHashMapEntry** entries; /// Stores the pointers to the first entry in each chain
-    HashFunction::HashValue::raw_type mask; /// Mask to calculate the bucket position from the hash value. Always a (power of 2)-1
-    std::function<void(ChainedHashMapEntry*)> destructorCallBack; /// Callback function to be executed, once the destructor is called
+    /// Header structure stored at the beginning of the buffer
+    struct Header
+    {
+        uint64_t status;
+        uint64_t numBuckets;
+        uint64_t numChains;
+        uint64_t pageSize;
+        uint64_t entrySize;
+        uint64_t entriesPerPage;
+        uint64_t numRecords = 0;
+        uint64_t mask;
+        VariableSizedAccess::Index storageSpaceIndex;
+        VariableSizedAccess::Index varSizedSpaceIndex;
+
+        /// Chains array starts immediately after this header
+        /// it is dynamically sized based on numChains, so nothing to store in here.
+        /// Conceptually, it is like below:
+        /// uint64_t chains[numChains + 1];
+        Header(uint64_t numBuckets, uint64_t numChains, uint64_t pageSize, uint64_t entrySize, uint64_t entriesPerPage, uint64_t mask)
+            : status(VALID_CHM)
+            , numBuckets(numBuckets)
+            , numChains(numChains)
+            , pageSize(pageSize)
+            , entrySize(entrySize)
+            , entriesPerPage(entriesPerPage)
+            , mask(mask)
+            , storageSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+            , varSizedSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+        {
+        }
+    };
+
+    static_assert(std::is_trivially_destructible_v<Header>, "Header must be trivially destructible");
+
+    /// Helper util methods for safe access
+    [[nodiscard]] Header& header() { return *buffer.getAvailableMemoryArea<Header>().data(); }
+
+    [[nodiscard]] const Header& header() const { return *buffer.getAvailableMemoryArea<const Header>().data(); }
+
+    [[nodiscard]] std::span<ChainedHashMapEntry*> chains()
+    {
+        auto* data = buffer.getAvailableMemoryArea<uint8_t>().data();
+
+        /// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        auto* entries = reinterpret_cast<ChainedHashMapEntry**>(data + sizeof(Header));
+        return {entries, getNumberOfChains() + 1};
+        /// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    }
+
+    /// the main tuple buffer for this chained hash map
+    TupleBuffer buffer;
 };
 }
