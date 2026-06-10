@@ -25,38 +25,38 @@ let
   hashes = {
     x64 = {
       none = {
-        libcxx = "0fw9ivnahhcdjz12dbi7zdmxkxkc16f1injai90a99kvi5jknkcc";
-        libstdcxx = "0ymf7x74arflvxjcyy9manfxwzvdlcanms4n4wwk118ssrdqvydf";
+        libcxx = "0a252bf34873dd068d98ca0ee30866f949ac855142502fb7d79e77494e82ee4c";
+        libstdcxx = "5a3a1b41e847aad5ff7bdbb3cbdf9a156200a0fc8fb3e77144edf2af871f4481";
       };
       address = {
-        libcxx = "1mm6hc3f8z5l6d78id5vc9k76fb5s1pqqpxxqdvrzdd63h44yw04";
-        libstdcxx = "1zv8ljrbkv914afcmw2ybqbsmskyd7nmaf6v19qg94hyimjnikv5";
+        libcxx = "1c8d988505211703203ed707942eb1ea0967b6f56f6f50e6ff7cbc179d4c5f18";
+        libstdcxx = "5e8ad701a13f79a88c7a1700be812a4627e4532c03ed6408bffab67bb3294dc1";
       };
       thread = {
-        libcxx = "18d34bv9f0zvha65i4406ggbdk8plb1pmqhdj6kbdzr85j3xfd44";
-        libstdcxx = "1mvyqmx1jybggkljb1gvr726i2c0flw6wcbgb56bzxfnzc52hnsh";
+        libcxx = "46ebfd5e0de062442fc315c7ca3c08c089b3fe83515ecc5c1f8a88166b88d2d5";
+        libstdcxx = "1ca03576341cd0be6664bb709690c4a3eb395deddc2aca2ed5d17e21594d23fc";
       };
       undefined = {
-        libcxx = "004ny9dik6ngi9plwjjzd36q7grb2rrdxircwgv3d48pd7jww85m";
-        libstdcxx = "0mfl87218ci1cqfrsp41hmnq2zfiv3p5cxvrw4mr9v2yh50vlgn8";
+        libcxx = "b295d56ba321c8af7685ebdc0a46824893e2aa426ae8b2e99df8668992fcaef7";
+        libstdcxx = "90a5ee715003b81ee21ee4e540da4201c451bd099b3f668616976cfa84fe67fd";
       };
     };
     arm64 = {
       none = {
-        libcxx = "02l6k7lxhh78884xbq1gp2ms1qcy1v3ycz4pcp1wzhikyxllfrpf";
-        libstdcxx = "0pk83vhf3rd5s1pjv6vrmywk11gqvk5b42dyd9jarvv5x0jc0x1y";
+        libcxx = "4ad7b0a52396f422f0ab1a0c443a573bf2038f7a062435d01f64073af21d4f04";
+        libstdcxx = "132ad62eeb7842c030419dfc2cdd01b3c1ecfaeca98c06e0096fdb27504a7805";
       };
       address = {
-        libcxx = "0yrj1967zq081m2wfrfdmqf35qpfma704dvjrw6p551dr0ffsqv0";
-        libstdcxx = "08q5hz1bayy969lmrvx8kvl33bywlhxr6i9jjvw1q8gr2wspfqqg";
+        libcxx = "35989e505e8210306d18dfc2386ba44b68873ca616ddc2f6136e969b98c1bcb2";
+        libstdcxx = "115ae6bfc52db379a2b812bb834924864e19d5a6f8ac6eb77469e6141c69296c";
       };
       thread = {
-        libcxx = "1kssjk6mc4sw80s8ad8havyb07hga40vd7wrjr27spnmxxida104";
-        libstdcxx = "1k1mb7pvsigjdkwnvxm6a91ii8kvbwchksaw2hig9arpw13dsqbh";
+        libcxx = "2367380acd49dcb816b442b0129adf89112f2479bf37b5be9d322ca9be11c73f";
+        libstdcxx = "2f42a72b7fc049cd44fd61208f44b1f4e18df703cf98dfd8bede465beb4a6214";
       };
       undefined = {
-        libcxx = "06fbjswigang29pmbp2w6dvrin8gppjfcfks5rx53p5vxh5mm360";
-        libstdcxx = "1p945dg9prmzskb7zgcpdphh538r3d4fd76i5wg26s32p9jqxixr";
+        libcxx = "a602dab26489d6ce70aeb6335e09669fb17e7b1d4a73b098607b22fbbcb95dd1";
+        libstdcxx = "4ea40f9f06f24572276fe8ff7862e11500f0c1ddff06197a66e8c02d80169bd2";
       };
     };
   };
@@ -78,11 +78,11 @@ let
     { sanitizer, stdlib }:
     let
       hash = hashFor { inherit sanitizer stdlib; };
-      url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-20/nes-llvm-20-${arch}-${sanitizer}-${stdlib}.tar.zstd";
+      url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-21-v7/nes-llvm-21-v3-${arch}-${sanitizer}-${stdlib}.tar.zstd";
     in
     stdenv.mkDerivation {
       pname = "nes-mlir";
-      version = "20";
+      version = "21";
 
       src = pkgs.fetchurl {
         inherit url;
