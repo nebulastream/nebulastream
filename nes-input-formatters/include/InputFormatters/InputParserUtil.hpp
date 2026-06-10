@@ -14,7 +14,6 @@
 
 #pragma once
 
-
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -22,50 +21,22 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Util/Strings.hpp>
-#include <Arena.hpp>
-#include <ErrorHandling.hpp>
 #include <InputParser.hpp>
-#include <val.hpp>
-#include <val_arith.hpp>
-#include <val_bool.hpp>
-#include <val_concepts.hpp>
-#include <val_ptr.hpp>
 
 namespace NES
 {
 
-template <typename T>
-struct ParseResult
+/// Current placeholder for a fully functional InputParserDescriptor.
+/// Attributes are either passed into the parser implementation or used in the InputParserProvider to determine the parser type.
+struct InputParserConfig
 {
-    T value;
-    bool isNull;
+    bool nullable;
+    bool quotedText;
+    bool hasTrailingSpace;
 };
 
-void parseRawValueIntoRecord(
-    DataType dataType,
-    const std::string& parserType,
-    Record& record,
-    const nautilus::val<int8_t*>& fieldAddress,
-    const nautilus::val<uint64_t>& fieldSize,
-    const std::string& fieldName,
-    const std::vector<std::string>& nullValues);
-
-/// We expect a pointer and the size so that we can use this method from the nautilus runtime
-bool checkIsNullProxy(const int8_t* fieldAddress, uint64_t fieldSize, const std::vector<std::string>* nullValues) noexcept;
-
-/// Returns the native NULL representation for a primitive datatype (represented as nautilus::val...)
-template <typename T>
-VarVal writePrimitiveNull()
-{
-    return VarVal{nautilus::val<T>{0}, true, true};
-}
-
 /// Fetches InputParser from Registry
-std::unique_ptr<InputParser> provideInputParser(const std::string& parserType);
+/// The concrete type of parser is [Nullable]parserTypeInputParser
+std::unique_ptr<InputParser> provideInputParser(const std::string& parserType, const InputParserConfig& config);
 }

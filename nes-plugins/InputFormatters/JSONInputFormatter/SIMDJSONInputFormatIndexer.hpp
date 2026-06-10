@@ -87,7 +87,6 @@ public:
         , fieldDataTypes(std::move(fieldDataTypes))
         , nullValues({})
     {
-        /// JSON wraps textual values in quotes, which affects CHAR and VARSIZED parsers
         parserTypes[DataType::Type::UINT8] = "DefaultUINT8";
         parserTypes[DataType::Type::UINT16] = "DefaultUINT16";
         parserTypes[DataType::Type::UINT32] = "DefaultUINT32";
@@ -99,8 +98,8 @@ public:
         parserTypes[DataType::Type::FLOAT32] = "DefaultF32";
         parserTypes[DataType::Type::FLOAT64] = "DefaultF64";
         parserTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
-        parserTypes[DataType::Type::CHAR] = "QuotedCHAR";
-        parserTypes[DataType::Type::VARSIZED] = "QuotedVARSIZED";
+        parserTypes[DataType::Type::CHAR] = "DefaultCHAR";
+        parserTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
         /// Placeholder for UNDEFINED. Will throw an error if any field is UNDEFINED typed.
         parserTypes[DataType::Type::UNDEFINED] = "";
     }

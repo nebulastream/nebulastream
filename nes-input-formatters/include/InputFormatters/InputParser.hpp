@@ -29,16 +29,14 @@ public:
     InputParser() noexcept = default;
     virtual ~InputParser() noexcept = default;
 
-    /// Parse the value from string to it's c++ type representation
-    /// Also performs null handling
+    /// Parse the value from string to it's c++ type representation.
+    /// Also performs null handling for the NullableInputParser... implementations.
+    /// fieldNotFound is relevant for nullable fields and will trigger a NULL write if set to true. For not-nullable fields, it is ignored.
     [[nodiscard]] virtual VarVal parseToVarVal(
-        bool nullable,
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
-        const std::vector<std::string>& nullValues) const
+        const std::vector<std::string>& nullValues,
+        const nautilus::val<bool>& fieldNotFound) const
         = 0;
-
-    /// Return the Null-Representation of a datatype
-    [[nodiscard]] virtual VarVal writeNull() const = 0;
 };
 }

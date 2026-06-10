@@ -22,6 +22,7 @@
 #include <static.hpp>
 
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
@@ -89,8 +90,14 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-        parseRawValueIntoRecord(
-            fieldDataType, indexer.getParserType(fieldDataType.type), record, fieldAddress, fieldSize, fieldName, indexer.getNullValues());
+
+        /// Retrieve input parser for the field and parse the value.
+        /// These are the temporary defaults for our CSV format. Later, these arguments will be set by the user in the source definition.
+        const InputParserConfig parserConfig{.nullable = fieldDataType.nullable, .quotedText = false, .hasTrailingSpace = false};
+        const std::unique_ptr<InputParser> parser = provideInputParser(indexer.getParserType(fieldDataType.type), parserConfig);
+        /// fieldNotFound is always false, as CSV does not allow to completely skip fields including their delimiting commas.
+        const VarVal parsedVal = parser->parseToVarVal(fieldAddress, fieldSize, indexer.getNullValues(), false);
+        record.write(fieldName, parsedVal);
     }
     return record;
 }

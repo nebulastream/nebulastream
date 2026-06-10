@@ -13,33 +13,19 @@
 */
 
 #pragma once
-
-#include <cstddef>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <Util/Registry.hpp>
 #include <InputParser.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES
 {
-
-using InputParserRegistryReturnType = std::unique_ptr<InputParser>;
-
-struct InputParserRegistryArguments
+/// Class for input parsers, which should handle null-values. It extends the InputParser base class by adding a function that creates a VarVal
+/// representing a NULL value of the corresponding datatype.
+class NullableInputParser : public InputParser
 {
-    bool quotedText;
-    bool hasTrailingSpaces;
-};
+public:
+    NullableInputParser() noexcept = default;
 
-class InputParserRegistry
-    : public BaseRegistry<InputParserRegistry, std::string, InputParserRegistryReturnType, InputParserRegistryArguments>
-{
+    /// Return the Null-Representation of a datatype
+    [[nodiscard]] virtual VarVal writeNull() const = 0;
 };
-
 }
-
-#define INCLUDED_FROM_INPUTPARSER_REGISTRY
-#include <InputParserGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_INPUTPARSER_REGISTRY
