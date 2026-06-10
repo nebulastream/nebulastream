@@ -74,6 +74,7 @@ public:
         const bool compilation = (backend == ExecutionMode::COMPILER);
         NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
         options.setOption("engine.Compilation", compilation);
+        options.setOption("engine.backend", std::string("mlir"));
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
 
