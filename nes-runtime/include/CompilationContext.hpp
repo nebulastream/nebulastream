@@ -74,6 +74,9 @@ class CompilationContext
     nautilus::engine::NautilusModule& module; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     std::vector<std::function<void(nautilus::engine::CompiledModule&)>> pendingResolvers;
     uint64_t functionNameCounter = 0;
+    /// Set once resolveAfterCompilation() has run; registering further functions afterwards would append a resolver
+    /// that never runs, leaving its handle permanently unresolved, so it is a precondition violation.
+    bool compiled = false;
 
 public:
     explicit CompilationContext(nautilus::engine::NautilusModule& module) : module(module) { }
@@ -82,6 +85,7 @@ public:
     auto
     registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view namePrefix = "operatorFunction")
     {
+        PRECONDITION(!compiled, "registerFunction() must not be called after the module has been compiled");
         using RawR = nautilus::engine::details::raw_return_type_t<R>;
         using Handle = PipelineFunction<RawR(FunctionArguments...)>;
 
@@ -109,6 +113,7 @@ public:
             resolver(compiledModule);
         }
         pendingResolvers.clear();
+        compiled = true;
     }
 };
 }
