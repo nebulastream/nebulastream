@@ -18,6 +18,7 @@
 #include <memory>
 #include <mutex>
 #include <numeric>
+#include <tuple>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>

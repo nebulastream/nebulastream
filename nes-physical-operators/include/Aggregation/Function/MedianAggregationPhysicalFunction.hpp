@@ -38,14 +38,23 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
+        nautilus::val<TupleBuffer*> parentBuffer,
         PipelineMemoryProvider& pipelineMemoryProvider,
         const Record& record) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
+        nautilus::val<TupleBuffer*> parentBuffer1,
         nautilus::val<AggregationState*> aggregationState2,
+        nautilus::val<TupleBuffer*> parentBuffer2,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
-    Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
-    void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+    Record lower(
+        nautilus::val<AggregationState*> aggregationState,
+        nautilus::val<TupleBuffer*> parentBuffer,
+        PipelineMemoryProvider& pipelineMemoryProvider) override;
+    void reset(
+        nautilus::val<AggregationState*> aggregationState,
+        nautilus::val<TupleBuffer*> hashMapBuffer,
+        PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~MedianAggregationPhysicalFunction() override = default;

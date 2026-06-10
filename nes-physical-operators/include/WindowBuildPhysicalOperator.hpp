@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -24,7 +25,6 @@
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
-#include <val_ptr.hpp>
 
 namespace NES
 {

@@ -30,9 +30,12 @@ class HJSlice final : public HashMapSlice
 {
 public:
     HJSlice(
-        SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
-    [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
-    [[nodiscard]] HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide);
+        AbstractBufferProvider& bufferProvider,
+        SliceStart sliceStart,
+        SliceEnd sliceEnd,
+        const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
+        uint64_t numberOfHashMaps);
+    [[nodiscard]] const TupleBuffer* getHashMapBufferRefForSide(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
     [[nodiscard]] uint64_t getNumberOfHashMapsForSide() const;
 };
 

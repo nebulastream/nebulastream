@@ -38,7 +38,7 @@ public:
     /// Main entry point: looks up or creates the data structure for the given timestamp and worker thread.
     /// The extractor lambda converts an operator-agnostic Slice into the operator-specific data structure pointer.
     /// The createSlicesFunction is called on cache miss to get a fresh SliceCreateFunction.
-    virtual nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
+    virtual NautilusBuffer getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const nautilus::val<OperatorHandler*>& operatorHandler,

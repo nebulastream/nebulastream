@@ -19,10 +19,17 @@
 #include <limits>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/function.hpp>
+#include <nautilus/val_ptr.hpp>
+#include <nautilus/val_std.hpp>
 #include <ErrorHandling.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
@@ -111,5 +118,4 @@ VarVal createNautilusMaxValue(const DataType::Type physicalType)
         }
     }
 }
-
 }

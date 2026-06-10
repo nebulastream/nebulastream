@@ -20,12 +20,17 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
+#include <nautilus/val_ptr.hpp>
+#include <nautilus/val_std.hpp>
 #include <ErrorHandling.hpp>
 #include <val.hpp>
+#include <val_bool.hpp>
+#include <val_concepts.hpp>
 
 namespace NES
 {

@@ -122,12 +122,11 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
+        [](Slice& slice, const WorkerThreadId workerThreadId)
         {
-            const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left);
-            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
-            return const_cast<TupleBuffer*>(ptr);
+            auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
+            auto* pagedVectorBufferRef = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left);
+            return pagedVectorBufferRef;
         },
         [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
@@ -135,12 +134,11 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
             return handler.getCreateNewSlicesFunction(nljSliceArgs);
         });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
+        [](Slice& slice, const WorkerThreadId workerThreadId)
         {
-            const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right);
-            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
-            return const_cast<TupleBuffer*>(ptr);
+            auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
+            auto* pagedVectorBufferRef = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right);
+            return pagedVectorBufferRef;
         },
         [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {

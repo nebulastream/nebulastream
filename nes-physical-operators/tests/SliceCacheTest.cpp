@@ -310,7 +310,7 @@ TEST_P(SliceCacheNoneTest, testSliceCacheNone)
             const nautilus::val<bool*>& callbackCalledPtr) -> nautilus::val<SliceCacheEntry::DataStructure>
         {
             const nautilus::val<Timestamp> timestamp{timestampRaw};
-            return sliceCache->getDataStructureRef(
+            auto resultBuf = sliceCache->getDataStructureRef(
                 timestamp,
                 nautilus::val<WorkerThreadId>{0},
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
@@ -326,7 +326,9 @@ TEST_P(SliceCacheNoneTest, testSliceCacheNone)
                         callbackCalledPtr,
                         entryToReplace,
                         newDataStructurePtr);
-                });
+                },
+                pec->bufferManager.get());
+            return resultBuf.asArg();
         }));
 
     for (const auto& op : operations)
@@ -368,7 +370,7 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
             const nautilus::val<bool*>& callbackCalledPtr) -> nautilus::val<SliceCacheEntry::DataStructure>
         {
             const nautilus::val<Timestamp> timestamp{timestampRaw};
-            return sliceCache->getDataStructureRef(
+            auto resultBuf = sliceCache->getDataStructureRef(
                 timestamp,
                 nautilus::val<WorkerThreadId>{0},
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
@@ -392,7 +394,9 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
                         sliceStartRaw,
                         sliceEndRaw,
                         newDataStructurePtr);
-                });
+                },
+                pec->bufferManager.get());
+            return resultBuf.asArg();
         }));
     /// Create a reference cache to independently verify the Nautilus implementation
     SecondChanceCache referenceCache(numberOfEntries);
