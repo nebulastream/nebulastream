@@ -57,8 +57,8 @@ nes-repl -d -f JSON
 
 ### Embedded Mode
 
-The embedded mode runs queries locally on a single embedded worker. By default, the worker is identified internally as
-`localhost:8080` (virtual address - no actual network port is allocated).
+The embedded mode runs queries locally on a single embedded worker. The worker is accessed internally at
+`localhost:9090` (virtual address - no actual network port is allocated).
 
 Sources and sinks are automatically placed on the single node. No `HOST` configuration is required.
 
@@ -82,20 +82,20 @@ CREATE LOGICAL SOURCE endless(ts UINT64);
 CREATE PHYSICAL SOURCE FOR endless
 TYPE Generator
 SET(
-    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-    'CSV' as INPUT_FORMATTER."TYPE",
-    'emit_rate 10' AS "SOURCE".GENERATOR_RATE_CONFIG,
-    10000000 AS "SOURCE".MAX_RUNTIME_MS,
-    1 AS "SOURCE".SEED,
-    'SEQUENCE UINT64 0 10000000 1' AS "SOURCE".GENERATOR_SCHEMA
+    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'CSV' as PARSER.`TYPE`,
+    'emit_rate 10' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+    '10000s' AS `SOURCE`.MAX_RUNTIME,
+    1 AS `SOURCE`.SEED,
+    'SEQUENCE UINT64 0 10000000 1' AS `SOURCE`.GENERATOR_SCHEMA
 );
 
 -- 3. Create a sink (file output)
-CREATE SINK someSink(TS UINT64)
+CREATE SINK someSink(ENDLESS.TS UINT64)
 TYPE File
 SET(
-    'out.csv' as "SINK".FILE_PATH,
-    'CSV' as "SINK".OUTPUT_FORMAT
+    'out.csv' as `SINK`.FILE_PATH,
+    'CSV' as `SINK`.OUTPUT_FORMAT
 );
 
 -- 4. Check queries (should be empty initially)
@@ -163,7 +163,7 @@ Queries are always deployed based on the most recent topology state.
 
 ```sql
 -- 1. Register a worker node
-CREATE WORKER 'sink-node:8080' SET ('sink-node:9090' AS DATA);
+CREATE WORKER "sink-node:8080" SET ('sink-node:9090' AS DATA);
 -- Returns: [{"worker":"sink-node:8080"}]
 
 -- 2. Create logical source
@@ -173,22 +173,22 @@ CREATE LOGICAL SOURCE endless(ts UINT64);
 CREATE PHYSICAL SOURCE FOR endless
 TYPE Generator
 SET(
-    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-    'CSV' as INPUT_FORMATTER."TYPE",
-    'emit_rate 10' AS "SOURCE".GENERATOR_RATE_CONFIG,
-    10000000 AS "SOURCE".MAX_RUNTIME_MS,
-    'sink-node:8080' AS "SOURCE"."HOST",  -- Specify target host (gRPC address)
-    1 AS "SOURCE".SEED,
-    'SEQUENCE UINT64 0 10000000 1' AS "SOURCE".GENERATOR_SCHEMA
+    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'CSV' as PARSER.`TYPE`,
+    'emit_rate 10' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+    '10000s' AS `SOURCE`.MAX_RUNTIME,
+    "sink-node:8080" AS `SOURCE`.`HOST`,  -- Specify target host (gRPC address)
+    1 AS `SOURCE`.SEED,
+    'SEQUENCE UINT64 0 10000000 1' AS `SOURCE`.GENERATOR_SCHEMA
 );
 
 -- 4. Create sink with host specification
-CREATE SINK someSink(TS UINT64)
+CREATE SINK someSink(ENDLESS.TS UINT64)
 TYPE File
 SET(
-    'out.csv' as "SINK".FILE_PATH,
-    'CSV' as "SINK".OUTPUT_FORMAT,
-    'sink-node:8080' AS "SINK"."HOST"  -- Specify target host (gRPC address)
+    'out.csv' as `SINK`.FILE_PATH,
+    'CSV' as `SINK`.OUTPUT_FORMAT,
+    "sink-node:8080" AS `SINK`.`HOST`  -- Specify target host (gRPC address)
 );
 
 -- 5. Deploy query
@@ -201,30 +201,30 @@ Query status shows one global query status as well as potentially multiple local
 
 ```sql
 -- worker creation (multi-statement)
-CREATE WORKER 'sink-node:8080' SET ('sink-node:9090' AS DATA);
-CREATE WORKER 'source-node-1:8080' SET ('source-node-1:9090' AS DATA,
-    'intermediate-node-1:8080' AS "DOWNSTREAM");
-CREATE WORKER 'source-node-2:8080' SET ('source-node-2:9090' AS DATA,
-    'intermediate-node-1:8080' AS "DOWNSTREAM");
-CREATE WORKER 'source-node-3:8080' SET ('source-node-3:9090' AS DATA,
-    'intermediate-node-2:8080' AS "DOWNSTREAM");
-CREATE WORKER 'source-node-4:8080' SET ('source-node-4:9090' AS DATA,
-    'intermediate-node-2:8080' AS "DOWNSTREAM");
-CREATE WORKER 'source-node-5:8080' SET ('source-node-5:9090' AS DATA,
-    'intermediate-node-2:8080' AS "DOWNSTREAM");
-CREATE WORKER 'intermediate-node-1:8080' SET ('intermediate-node-1:9090' AS DATA,
-    'sink-node:8080' AS "DOWNSTREAM");
-CREATE WORKER 'intermediate-node-2:8080' SET ('intermediate-node-2:9090' AS DATA,
-    'sink-node:8080' AS "DOWNSTREAM");
+CREATE WORKER "sink-node:8080" SET ('sink-node:9090' AS DATA);
+CREATE WORKER "source-node-1:8080" SET ('source-node-1:9090' AS DATA,
+    "intermediate-node-1:8080" AS `DOWNSTREAM`);
+CREATE WORKER "source-node-2:8080" SET ('source-node-2:9090' AS DATA,
+    "intermediate-node-1:8080" AS `DOWNSTREAM`);
+CREATE WORKER "source-node-3:8080" SET ('source-node-3:9090' AS DATA,
+    "intermediate-node-2:8080" AS `DOWNSTREAM`);
+CREATE WORKER "source-node-4:8080" SET ('source-node-4:9090' AS DATA,
+    "intermediate-node-2:8080" AS `DOWNSTREAM`);
+CREATE WORKER "source-node-5:8080" SET ('source-node-5:9090' AS DATA,
+    "intermediate-node-2:8080" AS `DOWNSTREAM`);
+CREATE WORKER "intermediate-node-1:8080" SET ('intermediate-node-1:9090' AS DATA,
+    "sink-node:8080" AS `DOWNSTREAM`);
+CREATE WORKER "intermediate-node-2:8080" SET ('intermediate-node-2:9090' AS DATA,
+    "sink-node:8080" AS `DOWNSTREAM`);
 
 -- Deploy multiple queries to different nodes
 SELECT ID, VALUE, TIMESTAMP
-FROM Generator(..., 'source-node-1:8080' AS "SOURCE"."HOST", ...)
-INTO Print('sink-node:8080' AS "SINK"."HOST", ...);
+FROM Generator(..., "source-node-1:8080" AS `SOURCE`.`HOST`, ...)
+INTO Print("sink-node:8080" AS `SINK`.`HOST`, ...);
 
 SELECT ID, VALUE, TIMESTAMP
-FROM Generator(..., 'source-node-5:8080' AS "SOURCE"."HOST", ...)
-INTO Print('sink-node:8080' AS "SINK"."HOST", ...);
+FROM Generator(..., "source-node-5:8080" AS `SOURCE`.`HOST`, ...)
+INTO Print("sink-node:8080" AS `SINK`.`HOST`, ...);
 
 -- Verify query distribution
 SHOW QUERIES;
@@ -323,7 +323,7 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: DOUBLE
+      - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
     type: Void
     config: { }
@@ -340,7 +340,7 @@ physical:
     host: worker-1:8080
     parser_config:
       type: CSV
-      field_delimiter: ","
+      fieldDelimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -368,7 +368,7 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: DOUBLE
+      - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
     type: Void
     config: { }
@@ -385,7 +385,7 @@ physical:
     host: worker-1:8080
     parser_config:
       type: CSV
-      field_delimiter: ","
+      fieldDelimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -410,7 +410,7 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: DOUBLE
+      - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
     type: Void
     config: { }
@@ -427,7 +427,7 @@ physical:
     host: worker-1:8080
     parser_config:
       type: CSV
-      field_delimiter: ","
+      fieldDelimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -459,7 +459,7 @@ sinks:
   - name: VOID_SINK
     host: worker-2:8080 # sink located at worker-2
     schema:
-      - name: DOUBLE
+      - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
     type: Void
     config: { }
@@ -476,7 +476,7 @@ physical:
     host: worker-1:8080 # source located at worker-1
     parser_config:
       type: CSV
-      field_delimiter: ","
+      fieldDelimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
@@ -494,118 +494,6 @@ workers:
   - host: worker-2:8080
     data_address: worker-2:9090
     max_operators: 10000
-```
-
-### Model Registration
-
-The topology file supports an optional `models` section for registering ML models. Models are registered before
-queries are submitted, so they can be referenced by `MODEL_INFERENCE` in the query.
-
-```yaml
-models:
-  - name: iris
-    path: /path/to/iris.onnx
-    input:
-      - name: p1
-        type: FLOAT32
-      - name: p2
-        type: FLOAT32
-      - name: p3
-        type: FLOAT32
-      - name: p4
-        type: FLOAT32
-    output:
-      - name: setosa
-        type: FLOAT32
-      - name: versicolor
-        type: FLOAT32
-      - name: virginica
-        type: FLOAT32
-```
-
-Each model entry requires:
-- `name` - Identifier used in `MODEL_INFERENCE(name, ...)` queries
-- `path` - Absolute path to an `.onnx` model file (must exist at registration time)
-- `input` - List of input fields with name and type (must match the model's input tensor)
-- `output` - List of output fields with name and type (must match the model's output tensor)
-
-For the equivalent SQL syntax and full usage examples, see `guide/query_api.md`.
-
-**Example: Complete Topology with Model Inference**
-
-```yaml
-query: |
-  SELECT * FROM MODEL_INFERENCE(iris, stream) INTO result
-
-models:
-  - name: iris
-    path: /data/model/iris.onnx
-    input:
-      - name: p1
-        type: FLOAT32
-      - name: p2
-        type: FLOAT32
-      - name: p3
-        type: FLOAT32
-      - name: p4
-        type: FLOAT32
-    output:
-      - name: setosa
-        type: FLOAT32
-      - name: versicolor
-        type: FLOAT32
-      - name: virginica
-        type: FLOAT32
-
-sinks:
-  - name: result
-    host: worker-1:8080
-    schema:
-      - name: stream$p1
-        type: FLOAT32
-      - name: stream$p2
-        type: FLOAT32
-      - name: stream$p3
-        type: FLOAT32
-      - name: stream$p4
-        type: FLOAT32
-      - name: SETOSA
-        type: FLOAT32
-      - name: VERSICOLOR
-        type: FLOAT32
-      - name: VIRGINICA
-        type: FLOAT32
-    type: Print
-    config:
-      output_format: CSV
-    parser_config: { }
-
-logical:
-  - name: stream
-    schema:
-      - name: p1
-        type: FLOAT32
-      - name: p2
-        type: FLOAT32
-      - name: p3
-        type: FLOAT32
-      - name: p4
-        type: FLOAT32
-
-physical:
-  - logical: stream
-    host: worker-1:8080
-    parser_config:
-      type: CSV
-      field_delimiter: ","
-    type: generator
-    source_config:
-      generator_schema: NORMAL_DISTRIBUTION FLOAT64 0 1,NORMAL_DISTRIBUTION FLOAT64 0 1,NORMAL_DISTRIBUTION FLOAT64 0 1,NORMAL_DISTRIBUTION FLOAT64 0 1,
-      stop_generator_when_sequence_finishes: NONE
-
-workers:
-  - data_address: worker-1:9090
-    host: worker-1:8080
 ```
 
 ### Query Management
