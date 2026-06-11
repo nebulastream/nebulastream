@@ -113,7 +113,7 @@ public:
                 thread_local auto result = VarSizedResult{};
                 const std::string_view bezSV{bez, bezLength};
                 // Todo: can remove check
-                INVARIANT(bezSV == "Kreatinin", "Function only works for Kreatinin values, apply WHERE filter first");
+                INVARIANT(bezSV == "KREATININ", "Function only works for Kreatinin values, apply WHERE filter first");
                 const std::string probeResult = staticSharedDiffState.probe(
                     BaselineValues{.patientId = patientId, .timestamp = timestamp, .value = value}, insertionTs, ingestionTs);
                 const auto allocatedMemory = reinterpret_cast<char*>(arenaPtr->allocateMemory(probeResult.size()).data());
