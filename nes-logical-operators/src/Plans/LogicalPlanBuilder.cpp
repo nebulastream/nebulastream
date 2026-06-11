@@ -187,31 +187,6 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     return leftLogicalPlan;
 }
 
-namespace
-{
-/// Mirrors checkAndAddWatermarkAssigner but takes a TimeCharacteristic directly.
-/// IntervalJoinLogicalOperator carries the time characteristic standalone (not via WindowType),
-/// so this helper avoids fabricating a stand-in WindowType just to feed the existing entry point.
-LogicalPlan addWatermarkAssignerForTimeCharacteristic(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic)
-{
-    if (getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>(queryPlan).empty()
-        and getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(queryPlan).empty())
-    {
-        if (timeCharacteristic.getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
-        {
-            return promoteOperatorToRoot(queryPlan, TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>{});
-        }
-        if (timeCharacteristic.getType() == Windowing::TimeCharacteristic::Type::EventTime)
-        {
-            auto logicalFunction = FieldAccessLogicalFunction(timeCharacteristic.field.name);
-            auto assigner = TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>{logicalFunction, timeCharacteristic.getTimeUnit()};
-            return promoteOperatorToRoot(queryPlan, assigner);
-        }
-    }
-    return queryPlan;
-}
-}
-
 LogicalPlan LogicalPlanBuilder::addIntervalJoin(
     LogicalPlan leftLogicalPlan,
     LogicalPlan rightLogicalPlan,
@@ -250,8 +225,8 @@ LogicalPlan LogicalPlanBuilder::addIntervalJoin(
 
     INVARIANT(!rightLogicalPlan.getRootOperators().empty(), "RootOperators of rightLogicalPlan are empty");
 
-    leftLogicalPlan = addWatermarkAssignerForTimeCharacteristic(leftLogicalPlan, timeCharacteristic);
-    rightLogicalPlan = addWatermarkAssignerForTimeCharacteristic(rightLogicalPlan, timeCharacteristic);
+    leftLogicalPlan = checkAndAddWatermarkAssigner(leftLogicalPlan, timeCharacteristic);
+    rightLogicalPlan = checkAndAddWatermarkAssigner(rightLogicalPlan, timeCharacteristic);
 
     leftLogicalPlan = addBinaryOperatorAndUpdateSource(
         TypedLogicalOperator<IntervalJoinLogicalOperator>{joinFunction, std::move(timeCharacteristic), lowerBound, upperBound},

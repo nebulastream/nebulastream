@@ -111,6 +111,7 @@ private:
 
     TraitSet traitSet;
     friend Reflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>;
+    friend struct std::hash<IntervalJoinLogicalOperator>;
 };
 
 template <>
@@ -143,3 +144,9 @@ struct ReflectedIntervalJoinLogicalOperator
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
 };
 }
+
+template <>
+struct std::hash<NES::IntervalJoinLogicalOperator>
+{
+    std::size_t operator()(const NES::IntervalJoinLogicalOperator& intervalJoinLogicalOperator) const noexcept;
+};

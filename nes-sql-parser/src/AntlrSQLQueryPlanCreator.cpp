@@ -606,9 +606,9 @@ void AntlrSQLQueryPlanCreator::exitWindowClause(AntlrSQLParser::WindowClauseCont
 
 void AntlrSQLQueryPlanCreator::exitIntervalClause(AntlrSQLParser::IntervalClauseContext* context)
 {
-    /// timestampParameter inside intervalClause already populated helpers.top().timestamp
+    /// timestampParameter inside intervalClause already populated helpers.top().windowTimestamp
     /// via exitTimestampParameter.
-    if (helpers.top().timestamp.empty())
+    if (!helpers.top().windowTimestamp.has_value())
     {
         throw InvalidQuerySyntax(
             "Interval-join requires a timestamp parameter (e.g. INTERVAL (L.ts, lower 0 ms, upper 3 ms)) at {}", context->getText());
@@ -870,7 +870,9 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     {
         if (helpers.top().intervalLowerBound.has_value() && helpers.top().intervalUpperBound.has_value())
         {
-            auto timeCharacteristic = Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction(helpers.top().timestamp));
+            PRECONDITION(helpers.top().windowTimestamp.has_value(), "Interval join requires a timestamp parameter");
+            auto timeCharacteristic
+                = Windowing::TimeCharacteristic{std::get<Windowing::UnboundTimeCharacteristic>(helpers.top().windowTimestamp.value())};
             return LogicalPlanBuilder::addIntervalJoin(
                 leftQueryPlan,
                 rightQueryPlan,

@@ -24,6 +24,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <folly/hash/Hash.h>
 
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -34,6 +35,7 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Hash.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -109,7 +111,8 @@ std::string IntervalJoinLogicalOperator::explain(ExplainVerbosity verbosity, Ope
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "IntervalJoin(opId: {}, lowerBound: {} ms, upperBound: {} ms, joinFunction: {}, windowMetadata: (startField: {}, endField: {}), "
+            "IntervalJoin(opId: {}, lowerBound: {} ms, upperBound: {} ms, joinFunction: {}, windowMetadata: (startField: {}, endField: "
+            "{}), "
             "traitSet: {})",
             id,
             lowerBound,
@@ -136,6 +139,12 @@ void IntervalJoinLogicalOperator::inferLocalSchema()
     }
 
     this->joinFunction = this->joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
+
+    /// Bind the (single) timestamp characteristic. The interval join uses the same field name on
+    /// both sides; binding against the left child schema is sufficient because the runtime
+    /// TimeFunction reads the field by its unqualified last name on each side.
+    this->timeCharacteristic = Windowing::TimeCharacteristic{
+        Windowing::TimeCharacteristicWrapper{this->timeCharacteristic}.withInferredSchema((*children)[0].getOutputSchema())};
 
     std::vector<UnqualifiedUnboundField> outputFields
         = inputFields | std::views::transform([](const Field& field) { return field.unbound(); }) | std::ranges::to<std::vector>();
@@ -262,8 +271,8 @@ Unreflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>::Unreflector(Cont
 {
 }
 
-TypedLogicalOperator<IntervalJoinLogicalOperator>
-Unreflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+TypedLogicalOperator<IntervalJoinLogicalOperator> Unreflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>::operator()(
+    const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [operatorId, joinFunction, timeCharacteristic, lowerBound, upperBound, joinType]
         = context.unreflect<detail::ReflectedIntervalJoinLogicalOperator>(reflected);
@@ -288,4 +297,16 @@ LogicalOperatorGeneratedRegistrar::RegisterIntervalJoinLogicalOperator(LogicalOp
     std::unreachable();
 }
 
+}
+
+std::size_t
+std::hash<NES::IntervalJoinLogicalOperator>::operator()(const NES::IntervalJoinLogicalOperator& intervalJoinLogicalOperator) const noexcept
+{
+    return folly::hash::hash_combine_generic(
+        NES::Hash{},
+        intervalJoinLogicalOperator.joinType,
+        intervalJoinLogicalOperator.joinFunction,
+        intervalJoinLogicalOperator.lowerBound,
+        intervalJoinLogicalOperator.upperBound,
+        intervalJoinLogicalOperator.startEndFields);
 }

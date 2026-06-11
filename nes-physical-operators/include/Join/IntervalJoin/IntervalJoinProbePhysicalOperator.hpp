@@ -25,8 +25,8 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Watermark/TimeFunction.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
+#include <Watermark/TimeFunction.hpp>
 
 namespace NES
 {

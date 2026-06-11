@@ -17,17 +17,18 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <ranges>
 #include <span>
-#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/IntervalJoin/IntervalJoinBuildPhysicalOperator.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
@@ -42,14 +43,16 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/IntervalJoinLogicalOperator.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <Watermark/TimestampField.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
@@ -61,37 +64,17 @@ namespace NES
 namespace
 {
 
-/// Mirrors the NLJ helper but on a logical join function for either side schema.
-std::vector<Record::RecordFieldIdentifier> getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
+/// Mirrors the NLJ helper: collects the join-key field names that resolve against the
+/// given (physical) input schema.
+std::vector<Record::RecordFieldIdentifier>
+getJoinFieldNames(const Schema<QualifiedUnboundField, Ordered>& inputSchema, const LogicalFunction& joinFunction)
 {
     return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>().has_value(); })
-        | std::views::transform([](const auto& child)
-                                { return child.template tryGetAs<FieldAccessLogicalFunction>()->get().getFieldName(); })
-        | std::views::filter([&](const auto& fieldName) { return inputSchema.contains(fieldName); })
-        | std::ranges::to<std::vector<Record::RecordFieldIdentifier>>();
-}
-
-/// Variant of TimestampField::getTimestampLeftAndRight that takes a TimeCharacteristic
-/// directly (no WindowType wrapper). The interval-join logical operator carries the
-/// TimeCharacteristic standalone.
-std::pair<std::unique_ptr<TimeFunction>, std::unique_ptr<TimeFunction>>
-buildTimeFunctions(const Windowing::TimeCharacteristic& timeCharacteristic, const Schema& leftSchema, const Schema& rightSchema)
-{
-    if (timeCharacteristic.getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
-    {
-        return {TimestampField::ingestionTime().toTimeFunction(), TimestampField::ingestionTime().toTimeFunction()};
-    }
-
-    const auto fieldName = timeCharacteristic.field.getUnqualifiedName();
-    const auto leftField = leftSchema.getFieldByName(fieldName);
-    const auto rightField = rightSchema.getFieldByName(fieldName);
-    INVARIANT(
-        leftField.has_value() and rightField.has_value(), "Interval-join timestamp field {} must exist in both input schemas", fieldName);
-
-    return {
-        TimestampField::eventTime(leftField.value().name, timeCharacteristic.getTimeUnit()).toTimeFunction(),
-        TimestampField::eventTime(rightField.value().name, timeCharacteristic.getTimeUnit()).toTimeFunction()};
+        | std::views::transform([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>().value()->getField(); })
+        | std::views::filter([&](const auto& field) { return inputSchema.contains(field.getLastName()); })
+        | std::views::transform([](const auto& field) { return Record::RecordFieldIdentifier{field.getLastName()}; })
+        | std::ranges::to<std::vector>();
 }
 
 }
@@ -99,23 +82,24 @@ buildTimeFunctions(const Windowing::TimeCharacteristic& timeCharacteristic, cons
 LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGetAs<IntervalJoinLogicalOperator>(), "Expected an IntervalJoinLogicalOperator");
-    PRECONDITION(std::ranges::size(logicalOperator.getChildren()) == 2, "Expected two children");
 
-    const auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(logicalOperator.getTraitSet());
+    auto intervalJoin = logicalOperator.getAs<IntervalJoinLogicalOperator>();
+    auto children = intervalJoin->getBothChildren();
+    const auto traitSet = logicalOperator.getTraitSet();
+
+    const auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(traitSet);
     PRECONDITION(outputOriginIdsOpt.has_value(), "Expected the outputOriginIds trait to be set");
     const auto& outputOriginIds = outputOriginIdsOpt.value().get();
     PRECONDITION(std::ranges::size(outputOriginIds) == 1, "Expected exactly one output origin id");
-    PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
 
-    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    const auto memoryLayoutTypeTrait = traitSet.tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
 
-    auto intervalJoin = logicalOperator.getAs<IntervalJoinLogicalOperator>();
     const auto handlerId = getNextOperatorHandlerId();
-    const auto leftInputSchema = intervalJoin->getLeftSchema();
-    const auto rightInputSchema = intervalJoin->getRightSchema();
-    const auto outputSchema = intervalJoin.getOutputSchema();
+    const auto leftInputSchema = createPhysicalOutputSchema(children[0].getTraitSet());
+    const auto rightInputSchema = createPhysicalOutputSchema(children[1].getTraitSet());
+    const auto outputSchema = createPhysicalOutputSchema(traitSet);
     const auto outputOriginId = outputOriginIds[0];
     const auto logicalJoinFunction = intervalJoin->getJoinFunction();
     const auto lowerBound = intervalJoin->getLowerBound();
@@ -124,21 +108,25 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
 
     /// Side-specific input origins. The interval-join handler needs to know which
     /// origins belong to which side because it maintains per-side watermarks.
-    const auto children = intervalJoin.getChildren();
     const auto leftChildOrigins = getTrait<OutputOriginIdsTrait>(children[0].getTraitSet());
     const auto rightChildOrigins = getTrait<OutputOriginIdsTrait>(children[1].getTraitSet());
     PRECONDITION(leftChildOrigins.has_value() and rightChildOrigins.has_value(), "Expected outputOriginIds trait on both child operators");
     const std::vector<OriginId> leftInputOriginIds(leftChildOrigins.value().get().begin(), leftChildOrigins.value().get().end());
     const std::vector<OriginId> rightInputOriginIds(rightChildOrigins.value().get().begin(), rightChildOrigins.value().get().end());
 
-    auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
+    auto combinedFieldMappingVec = intervalJoin.getChildren()
+        | std::views::transform([](const auto& child)
+                                { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
+        | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
+    auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
+
+    auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
     auto leftBufferRef = LowerSchemaProvider::lowerSchema(pageSize, leftInputSchema, memoryLayoutType);
     auto rightBufferRef = LowerSchemaProvider::lowerSchema(pageSize, rightInputSchema, memoryLayoutType);
 
-    auto [leftTimeFunctionBuild, rightTimeFunctionBuild]
-        = buildTimeFunctions(intervalJoin->getTimeCharacteristic(), leftInputSchema, rightInputSchema);
-    auto [leftTimeFunctionProbe, rightTimeFunctionProbe]
-        = buildTimeFunctions(intervalJoin->getTimeCharacteristic(), leftInputSchema, rightInputSchema);
+    /// The interval join carries a single (bound) time characteristic; the runtime TimeFunction
+    /// reads the timestamp field by its unqualified name, so the same characteristic applies to both sides.
+    const auto& boundTimeCharacteristic = std::get<Windowing::BoundTimeCharacteristic>(intervalJoin->getTimeCharacteristic());
 
     /// Handler owns both stores. The lowering rule does NOT construct stores.
     auto handler = std::make_shared<IntervalJoinOperatorHandler>(
@@ -167,18 +155,18 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
         conf.sliceCacheConfiguration);
 
     const IntervalJoinBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, std::move(leftTimeFunctionBuild), leftBufferRef, std::move(sliceStoreRefLeft)};
+        handlerId, JoinBuildSideType::Left, TimeFunction::create(boundTimeCharacteristic), leftBufferRef, std::move(sliceStoreRefLeft)};
     const IntervalJoinBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, std::move(rightTimeFunctionBuild), rightBufferRef, std::move(sliceStoreRefRight)};
+        handlerId, JoinBuildSideType::Right, TimeFunction::create(boundTimeCharacteristic), rightBufferRef, std::move(sliceStoreRefRight)};
 
     const auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator = IntervalJoinProbePhysicalOperator(
         handlerId,
         joinFunction,
-        intervalJoin->getWindowMetaData(),
+        WindowMetaData{intervalJoin->getStartField(), intervalJoin->getEndField()},
         joinSchema,
-        std::move(leftTimeFunctionProbe),
-        std::move(rightTimeFunctionProbe),
+        TimeFunction::create(boundTimeCharacteristic),
+        TimeFunction::create(boundTimeCharacteristic),
         lowerBound,
         upperBound,
         leftBufferRef,
