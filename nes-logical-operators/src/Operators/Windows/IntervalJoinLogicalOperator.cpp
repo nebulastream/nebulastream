@@ -14,7 +14,9 @@
 
 #include <Operators/Windows/IntervalJoinLogicalOperator.hpp>
 
+#include <array>
 #include <cstdint>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -23,14 +25,14 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Schema/Binder.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -41,13 +43,25 @@
 namespace NES
 {
 
+namespace
+{
+void validateBounds(const int64_t lowerBound, const int64_t upperBound)
+{
+    if (lowerBound >= upperBound)
+    {
+        throw InvalidQuerySyntax(
+            "IntervalJoin requires lowerBound < upperBound; got lowerBound={}, upperBound={}.", lowerBound, upperBound);
+    }
+}
+}
+
 IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
     WeakLogicalOperator self,
     LogicalFunction joinFunction,
     Windowing::TimeCharacteristic timeCharacteristic,
-    int64_t lowerBound,
-    int64_t upperBound,
-    JoinLogicalOperator::JoinType joinType)
+    const int64_t lowerBound,
+    const int64_t upperBound,
+    const JoinLogicalOperator::JoinType joinType)
     : ManagedByOperator(std::move(self))
     , joinFunction(std::move(joinFunction))
     , timeCharacteristic(std::move(timeCharacteristic))
@@ -55,15 +69,27 @@ IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
     , upperBound(upperBound)
     , joinType(joinType)
 {
-    if (lowerBound >= upperBound)
-    {
-        throw InvalidQuerySyntax(
-            "IntervalJoin requires lowerBound < upperBound; got lowerBound={}, upperBound={}.", lowerBound, upperBound);
-    }
-    /// TODO #1471: PR #1471 will add LEFT_OUTER / RIGHT_OUTER / FULL_OUTER variants.
-    INVARIANT(
-        joinType == JoinLogicalOperator::JoinType::INNER_JOIN,
-        "IntervalJoinLogicalOperator currently supports only INNER_JOIN; PR #1471 will add the remaining variants.");
+    validateBounds(lowerBound, upperBound);
+}
+
+IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
+    WeakLogicalOperator self,
+    std::array<LogicalOperator, 2> children,
+    LogicalFunction joinFunction,
+    Windowing::TimeCharacteristic timeCharacteristic,
+    const int64_t lowerBound,
+    const int64_t upperBound,
+    const JoinLogicalOperator::JoinType joinType)
+    : ManagedByOperator(std::move(self))
+    , joinFunction(std::move(joinFunction))
+    , timeCharacteristic(std::move(timeCharacteristic))
+    , lowerBound(lowerBound)
+    , upperBound(upperBound)
+    , joinType(joinType)
+    , children(std::move(children))
+{
+    validateBounds(lowerBound, upperBound);
+    inferLocalSchema();
 }
 
 std::string_view IntervalJoinLogicalOperator::getName() const noexcept
@@ -75,7 +101,7 @@ bool IntervalJoinLogicalOperator::operator==(const IntervalJoinLogicalOperator& 
 {
     return timeCharacteristic == rhs.timeCharacteristic and lowerBound == rhs.lowerBound and upperBound == rhs.upperBound
         and joinType == rhs.joinType and getJoinFunction() == rhs.getJoinFunction() and outputSchema == rhs.outputSchema
-        and leftInputSchema == rhs.leftInputSchema and rightInputSchema == rhs.rightInputSchema and getTraitSet() == rhs.getTraitSet();
+        and getTraitSet() == rhs.getTraitSet();
 }
 
 std::string IntervalJoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -83,64 +109,62 @@ std::string IntervalJoinLogicalOperator::explain(ExplainVerbosity verbosity, Ope
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "IntervalJoin(opId: {}, lowerBound: {} ms, upperBound: {} ms, joinFunction: {}, windowStartField: {}, windowEndField: {}, "
+            "IntervalJoin(opId: {}, lowerBound: {} ms, upperBound: {} ms, joinFunction: {}, windowMetadata: (startField: {}, endField: {}), "
             "traitSet: {})",
             id,
             lowerBound,
             upperBound,
             getJoinFunction().explain(verbosity),
-            windowMetaData.windowStartFieldName,
-            windowMetaData.windowEndFieldName,
+            startEndFields.at(0),
+            startEndFields.at(1),
             traitSet.explain(verbosity));
     }
     return fmt::format("IntervalJoin({})", getJoinFunction().explain(verbosity));
 }
 
-IntervalJoinLogicalOperator IntervalJoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+void IntervalJoinLogicalOperator::inferLocalSchema()
 {
-    const auto& leftInputSchemaParam = inputSchemas[0];
-    const auto& rightInputSchemaParam = inputSchemas[1];
+    PRECONDITION(children.has_value(), "Child not set when calling schema inference");
+    const std::vector<Field> inputFields = *children | std::views::transform([](const auto& child) { return child.getOutputSchema(); })
+        | std::views::join | std::ranges::to<std::vector>();
 
+    auto inputSchemaOrCollisions = Schema<Field, Unordered>::tryCreateCollisionFree(inputFields);
+    if (!inputSchemaOrCollisions.has_value())
+    {
+        throw CannotInferSchema(
+            "Found collisions in input schemas: " + Schema<Field, Unordered>::createCollisionString(inputSchemaOrCollisions.error()));
+    }
+
+    this->joinFunction = this->joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
+
+    std::vector<UnqualifiedUnboundField> outputFields
+        = inputFields | std::views::transform([](const Field& field) { return field.unbound(); }) | std::ranges::to<std::vector>();
+    outputFields.emplace_back(startEndFields[0].getFullyQualifiedName(), startEndFields[0].getDataType());
+    outputFields.emplace_back(startEndFields[1].getFullyQualifiedName(), startEndFields[1].getDataType());
+
+    auto outputSchemaOrCollisions = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(outputFields);
+    if (!outputSchemaOrCollisions.has_value())
+    {
+        throw CannotInferSchema(
+            "Found collisions in interval-join output schema: "
+            + Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(outputSchemaOrCollisions.error()));
+    }
+    this->outputSchema = outputSchemaOrCollisions.value();
+}
+
+IntervalJoinLogicalOperator IntervalJoinLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(children.has_value(), "Child not set when calling schema inference");
     auto copy = *this;
-    copy.outputSchema = Schema{};
-    copy.leftInputSchema = leftInputSchemaParam;
-    copy.rightInputSchema = rightInputSchemaParam;
-
-    const auto newQualifierForSystemField = [](const Schema& leftSchema, const Schema& rightSchema)
-    {
-        const auto sourceNameLeft = leftSchema.getSourceNameQualifier();
-        const auto sourceNameRight = rightSchema.getSourceNameQualifier();
-        if (not(sourceNameLeft and sourceNameRight))
-        {
-            throw TypeInferenceException("Schemas of IntervalJoin operator must have source names.");
-        }
-        return sourceNameLeft.value() + sourceNameRight.value() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    }(leftInputSchemaParam, rightInputSchemaParam);
-
-    copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "START";
-    copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "END";
-    copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64);
-    copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64);
-
-    for (const auto& field : leftInputSchemaParam.getFields())
-    {
-        copy.outputSchema.addField(field.name, field.dataType);
-    }
-    for (const auto& field : rightInputSchemaParam.getFields())
-    {
-        copy.outputSchema.addField(field.name, field.dataType);
-    }
-
-    auto inputSchema = leftInputSchemaParam;
-    inputSchema.appendFieldsFromOtherSchema(rightInputSchemaParam);
-    copy.joinFunction = joinFunction.withInferredDataType(inputSchema);
+    copy.children = {(*copy.children)[0].withInferredSchema(), (*copy.children)[1].withInferredSchema()};
+    copy.inferLocalSchema();
     return copy;
 }
 
 IntervalJoinLogicalOperator IntervalJoinLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
 }
 
@@ -149,36 +173,52 @@ TraitSet IntervalJoinLogicalOperator::getTraitSet() const
     return traitSet;
 }
 
-IntervalJoinLogicalOperator IntervalJoinLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+IntervalJoinLogicalOperator IntervalJoinLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 2, "Can only set exactly two children for interval join, got {}", children.size());
     auto copy = *this;
-    copy.children = children;
+    copy.children = std::array{std::move(children.at(0)), std::move(children.at(1))};
     return copy;
 }
 
-std::vector<Schema> IntervalJoinLogicalOperator::getInputSchemas() const
+IntervalJoinLogicalOperator IntervalJoinLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    return {leftInputSchema, rightInputSchema};
-}
-
-Schema IntervalJoinLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
+    PRECONDITION(children.size() == 2, "Can only set exactly two children for interval join, got {}", children.size());
+    auto copy = *this;
+    copy.children = std::array{std::move(children.at(0)), std::move(children.at(1))};
+    copy.inferLocalSchema();
+    return copy;
 }
 
 std::vector<LogicalOperator> IntervalJoinLogicalOperator::getChildren() const
 {
-    return children;
+    if (children.has_value())
+    {
+        return *children | std::ranges::to<std::vector>();
+    }
+    return {};
 }
 
-Schema IntervalJoinLogicalOperator::getLeftSchema() const
+std::array<LogicalOperator, 2> IntervalJoinLogicalOperator::getBothChildren() const
 {
-    return leftInputSchema;
+    PRECONDITION(children.has_value(), "Children not set when trying to retrieve interval-join children");
+    return *children;
 }
 
-Schema IntervalJoinLogicalOperator::getRightSchema() const
+Schema<Field, Unordered> IntervalJoinLogicalOperator::getOutputSchema() const
 {
-    return rightInputSchema;
+    PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return NES::bind(self.lock(), outputSchema.value());
+}
+
+const UnqualifiedUnboundField& IntervalJoinLogicalOperator::getStartField() const
+{
+    return startEndFields[0];
+}
+
+const UnqualifiedUnboundField& IntervalJoinLogicalOperator::getEndField() const
+{
+    return startEndFields[1];
 }
 
 const Windowing::TimeCharacteristic& IntervalJoinLogicalOperator::getTimeCharacteristic() const
@@ -201,51 +241,40 @@ JoinLogicalOperator::JoinType IntervalJoinLogicalOperator::getJoinType() const n
     return joinType;
 }
 
-std::string IntervalJoinLogicalOperator::getWindowStartFieldName() const
-{
-    return windowMetaData.windowStartFieldName;
-}
-
-std::string IntervalJoinLogicalOperator::getWindowEndFieldName() const
-{
-    return windowMetaData.windowEndFieldName;
-}
-
-const WindowMetaData& IntervalJoinLogicalOperator::getWindowMetaData() const
-{
-    return windowMetaData;
-}
-
 LogicalFunction IntervalJoinLogicalOperator::getJoinFunction() const
 {
     return joinFunction;
 }
 
-Reflected Reflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>::operator()(const TypedLogicalOperator<IntervalJoinLogicalOperator>& op) const
+Reflected
+Reflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>::operator()(const TypedLogicalOperator<IntervalJoinLogicalOperator>& op) const
 {
     return reflect(detail::ReflectedIntervalJoinLogicalOperator{
+        .operatorId = op.getId(),
         .joinFunction = op->getJoinFunction(),
-        .timeCharacteristic = reflect(op->getTimeCharacteristic()),
+        .timeCharacteristic = op->getTimeCharacteristic(),
         .lowerBound = op->getLowerBound(),
         .upperBound = op->getUpperBound(),
-        .joinType = op->joinType});
+        .joinType = op->getJoinType()});
+}
+
+Unreflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))
+{
 }
 
 TypedLogicalOperator<IntervalJoinLogicalOperator>
 Unreflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [joinFunction, reflectedTimeCharacteristic, lowerBound, upperBound, joinType]
+    auto [operatorId, joinFunction, timeCharacteristic, lowerBound, upperBound, joinType]
         = context.unreflect<detail::ReflectedIntervalJoinLogicalOperator>(reflected);
-
-    if (!joinFunction.has_value())
-    {
-        throw CannotDeserialize("Missing join function for IntervalJoinLogicalOperator");
-    }
-
-    auto timeCharacteristic = context.unreflect<Windowing::TimeCharacteristic>(reflectedTimeCharacteristic);
-
+    auto foundChildren = plan->getChildrenFor(operatorId, context);
     return TypedLogicalOperator<IntervalJoinLogicalOperator>{
-        std::move(joinFunction.value()), std::move(timeCharacteristic), lowerBound, upperBound, joinType};
+        std::array{foundChildren.at(0), foundChildren.at(1)},
+        std::move(joinFunction),
+        std::move(timeCharacteristic),
+        lowerBound,
+        upperBound,
+        joinType};
 }
 
 LogicalOperatorRegistryReturnType

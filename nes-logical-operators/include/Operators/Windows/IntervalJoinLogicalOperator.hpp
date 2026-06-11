@@ -14,22 +14,27 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Schema/Field.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
-#include <Operators/Windows/WindowMetaData.hpp>
 
 namespace NES
 {
@@ -42,12 +47,10 @@ class SerializableOperator;
 /// intervals symmetrically (e.g. `[-4 ms, -1 ms]` is purely past-anchored). The
 /// runtime slice width derives as `W = upperBound - lowerBound`; the constructor
 /// rejects `lowerBound >= upperBound` since the point-predicate case (W = 0) is
-/// degenerate (see phase-3 §6 in interval-join-port-plan/).
+/// degenerate.
 class IntervalJoinLogicalOperator final : public OriginIdAssigner, public ManagedByOperator
 {
 public:
-    /// TODO #1471: PR #1471 will add LEFT_OUTER / RIGHT_OUTER / FULL_OUTER variants.
-    /// For the initial port we only support INNER_JOIN; the constructor INVARIANTs on it.
     explicit IntervalJoinLogicalOperator(
         WeakLogicalOperator self,
         LogicalFunction joinFunction,
@@ -56,32 +59,38 @@ public:
         int64_t upperBound,
         JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN);
 
+    explicit IntervalJoinLogicalOperator(
+        WeakLogicalOperator self,
+        std::array<LogicalOperator, 2> children,
+        LogicalFunction joinFunction,
+        Windowing::TimeCharacteristic timeCharacteristic,
+        int64_t lowerBound,
+        int64_t upperBound,
+        JoinLogicalOperator::JoinType joinType);
+
     [[nodiscard]] LogicalFunction getJoinFunction() const;
-    [[nodiscard]] Schema getLeftSchema() const;
-    [[nodiscard]] Schema getRightSchema() const;
     [[nodiscard]] const Windowing::TimeCharacteristic& getTimeCharacteristic() const;
     [[nodiscard]] int64_t getLowerBound() const noexcept;
     [[nodiscard]] int64_t getUpperBound() const noexcept;
     [[nodiscard]] JoinLogicalOperator::JoinType getJoinType() const noexcept;
-    [[nodiscard]] std::string getWindowStartFieldName() const;
-    [[nodiscard]] std::string getWindowEndFieldName() const;
-    [[nodiscard]] const WindowMetaData& getWindowMetaData() const;
+    [[nodiscard]] const UnqualifiedUnboundField& getStartField() const;
+    [[nodiscard]] const UnqualifiedUnboundField& getEndField() const;
 
     [[nodiscard]] bool operator==(const IntervalJoinLogicalOperator& rhs) const;
 
     [[nodiscard]] IntervalJoinLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
 
+    [[nodiscard]] Schema<Field, Unordered> getOutputSchema() const;
+    [[nodiscard]] IntervalJoinLogicalOperator withChildrenUnsafe(std::vector<LogicalOperator> children) const;
     [[nodiscard]] IntervalJoinLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
-
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] std::array<LogicalOperator, 2> getBothChildren() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] IntervalJoinLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] IntervalJoinLogicalOperator withInferredSchema() const;
 
 private:
     static constexpr std::string_view NAME = "IntervalJoin";
@@ -89,13 +98,18 @@ private:
     Windowing::TimeCharacteristic timeCharacteristic;
     int64_t lowerBound;
     int64_t upperBound;
-    WindowMetaData windowMetaData;
     JoinLogicalOperator::JoinType joinType;
+    std::optional<std::array<LogicalOperator, 2>> children;
 
-    std::vector<LogicalOperator> children;
+    void inferLocalSchema();
+    /// Set during schema inference
+    std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
+
+    std::array<UnqualifiedUnboundField, 2> startEndFields = std::array{
+        UnqualifiedUnboundField{Identifier::parse("start"), DataType::Type::UINT64},
+        UnqualifiedUnboundField{Identifier::parse("end"), DataType::Type::UINT64}};
+
     TraitSet traitSet;
-    Schema leftInputSchema, rightInputSchema, outputSchema;
-
     friend Reflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>;
 };
 
@@ -108,6 +122,9 @@ struct Reflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>
 template <>
 struct Unreflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>
 {
+    using ContextType = std::shared_ptr<ReflectedPlan>;
+    ContextType plan;
+    explicit Unreflector(ContextType operatorMapping);
     TypedLogicalOperator<IntervalJoinLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
@@ -118,8 +135,9 @@ namespace NES::detail
 {
 struct ReflectedIntervalJoinLogicalOperator
 {
-    std::optional<LogicalFunction> joinFunction;
-    Reflected timeCharacteristic;
+    OperatorId operatorId{OperatorId::INVALID};
+    LogicalFunction joinFunction;
+    Windowing::TimeCharacteristic timeCharacteristic;
     int64_t lowerBound = 0;
     int64_t upperBound = 0;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
