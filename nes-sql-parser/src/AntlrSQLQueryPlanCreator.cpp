@@ -18,10 +18,12 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -69,15 +71,17 @@
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/IntervalWindow.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <CommonParserFunctions.hpp>
 #include <ErrorHandling.hpp>
-#include <ParserUtil.hpp>
 
 namespace NES::Parsers
 {
@@ -108,25 +112,46 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
         sinks.front());
 }
 
-Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
+namespace
 {
+int64_t millisecondsPerUnit(const uint64_t timebase)
+{
+    constexpr int64_t milliSecondsInOneSecond = 1000;
+    constexpr int64_t secondsInOneMinute = 60;
+    constexpr int64_t minutesInOneHour = 60;
+    constexpr int64_t hoursInADay = 24;
+
     switch (timebase)
     {
         case AntlrSQLLexer::MS:
-            return API::Milliseconds(size);
+            return 1;
         case AntlrSQLLexer::SEC:
-            return API::Seconds(size);
+            return milliSecondsInOneSecond;
         case AntlrSQLLexer::MINUTE:
-            return API::Minutes(size);
+            return secondsInOneMinute * milliSecondsInOneSecond;
         case AntlrSQLLexer::HOUR:
-            return API::Hours(size);
+            return minutesInOneHour * secondsInOneMinute * milliSecondsInOneSecond;
         case AntlrSQLLexer::DAY:
-            return API::Days(size);
+            return hoursInADay * minutesInOneHour * secondsInOneMinute * milliSecondsInOneSecond;
         default:
             const AntlrSQLLexer lexer(nullptr);
             const std::string tokenName = std::string(lexer.getVocabulary().getSymbolicName(timebase));
             throw InvalidQuerySyntax("Unknown time unit: {}", tokenName);
     }
+}
+
+/// `size` is the magnitude of a time literal, so it is never negative. Converting it to milliseconds must not
+/// wrap around, otherwise a query like `3000000000000000 DAY` would silently become a small (or negative) measure.
+Windowing::TimeMeasure buildTimeMeasure(const int64_t size, const uint64_t timebase)
+{
+    PRECONDITION(size >= 0, "Time measures are parsed from unsigned literals, got {}", size);
+    const auto multiplier = millisecondsPerUnit(timebase);
+    if (size > std::numeric_limits<int64_t>::max() / multiplier)
+    {
+        throw InvalidQuerySyntax("Time measure of {} does not fit into a signed 64-bit millisecond value", size);
+    }
+    return Windowing::TimeMeasure{static_cast<uint64_t>(size * multiplier)};
+}
 }
 
 static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction, LogicalFunction rightFunction, const uint64_t tokenType)
@@ -858,6 +883,34 @@ void AntlrSQLQueryPlanCreator::exitWindowClause(AntlrSQLParser::WindowClauseCont
     AntlrSQLBaseListener::exitWindowClause(context);
 }
 
+void AntlrSQLQueryPlanCreator::exitIntervalClause(AntlrSQLParser::IntervalClauseContext* context)
+{
+    /// windowTimestamp has already been populated while handling the timestamp parameter inside the interval clause.
+    if (!helpers.top().windowTimestamp.has_value())
+    {
+        throw InvalidQuerySyntax(
+            "Interval-join requires a timestamp parameter (e.g. INTERVAL (L.ts, 0 ms, 3 ms)) at {}", context->getText());
+    }
+
+    const auto parseSigned = [](AntlrSQLParser::SignedTimeValueContext* signedCtx) -> int64_t
+    {
+        const auto magnitudeText = signedCtx->INTEGER_VALUE()->getText();
+        const auto magnitude = from_chars<int64_t>(magnitudeText);
+        if (!magnitude.has_value())
+        {
+            throw InvalidQuerySyntax("Interval-join bound '{}' does not fit into a signed 64-bit integer", magnitudeText);
+        }
+        const auto timebase = signedCtx->timeUnit()->getStop()->getType();
+        const auto measure = buildTimeMeasure(magnitude.value(), timebase);
+        const auto millis = static_cast<int64_t>(measure.getTime());
+        return signedCtx->MINUS() ? -millis : millis;
+    };
+
+    helpers.top().intervalLowerBound = parseSigned(context->lowerBound);
+    helpers.top().intervalUpperBound = parseSigned(context->upperBound);
+    AntlrSQLBaseListener::exitIntervalClause(context);
+}
+
 void AntlrSQLQueryPlanCreator::enterTimeUnit(AntlrSQLParser::TimeUnitContext* context)
 {
     /// Get Index of Parent Rule to check type of parent rule in conditions
@@ -1103,28 +1156,68 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     {
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
-    auto windowTypeOpt = helpers.top().windowType;
-    if (!windowTypeOpt)
-    {
-        throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
-    }
 
-    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
-    if (!currentWindowTimestampOpt.has_value()
-        || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+    const LogicalPlan queryPlan = [&]
     {
-        throw InvalidQuerySyntax("join requires two timestamps, but got {}", currentWindowTimestampOpt.has_value() ? "only one" : "none");
-    }
+        if (helpers.top().intervalLowerBound.has_value() && helpers.top().intervalUpperBound.has_value())
+        {
+            PRECONDITION(helpers.top().windowTimestamp.has_value(), "Interval join requires a timestamp parameter");
+            /// One timestamp per side: two field names map to left/right, a single name applies to both
+            /// (must exist in both inputs, a collision is rejected at schema inference).
+            auto characteristics = std::visit(
+                [](const auto& timestamp) -> std::array<Windowing::TimeCharacteristic, 2>
+                {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(timestamp)>, std::array<Windowing::UnboundTimeCharacteristic, 2>>)
+                    {
+                        return {Windowing::TimeCharacteristic{timestamp[0]}, Windowing::TimeCharacteristic{timestamp[1]}};
+                    }
+                    else
+                    {
+                        return {Windowing::TimeCharacteristic{timestamp}, Windowing::TimeCharacteristic{timestamp}};
+                    }
+                },
+                helpers.top().windowTimestamp.value());
+            return LogicalPlanBuilder::addIntervalJoin(
+                leftQueryPlan,
+                rightQueryPlan,
+                helpers.top().joinKeyRelationHelper.at(0),
+                std::move(characteristics[0]),
+                std::move(characteristics[1]),
+                Windowing::TimeBasedWindowType{Windowing::IntervalWindow{
+                    IntervalBound{helpers.top().intervalLowerBound.value()}, IntervalBound{helpers.top().intervalUpperBound.value()}}},
+                helpers.top().joinType);
+        }
 
-    auto joinTimeCharacteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
-    const auto queryPlan = LogicalPlanBuilder::addJoin(
-        leftQueryPlan,
-        rightQueryPlan,
-        helpers.top().joinKeyRelationHelper.at(0),
-        windowTypeOpt.value(),
-        helpers.top().joinType,
-        joinTimeCharacteristics[0],
-        joinTimeCharacteristics[1]);
+        auto windowTypeOpt = helpers.top().windowType;
+        if (!windowTypeOpt)
+        {
+            throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
+        }
+
+        const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+        if (!currentWindowTimestampOpt.has_value()
+            || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+        {
+            throw InvalidQuerySyntax(
+                "join requires two timestamps, but got {}", currentWindowTimestampOpt.has_value() ? "only one" : "none");
+        }
+
+        auto joinTimeCharacteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
+        return LogicalPlanBuilder::addJoin(
+            leftQueryPlan,
+            rightQueryPlan,
+            helpers.top().joinKeyRelationHelper.at(0),
+            windowTypeOpt.value(),
+            helpers.top().joinType,
+            joinTimeCharacteristics[0],
+            joinTimeCharacteristics[1]);
+    }();
+
+    /// The bounds belong to this JOIN clause only: a following join in the same relation must not inherit them
+    /// and be mistaken for an interval join.
+    helpers.top().intervalLowerBound.reset();
+    helpers.top().intervalUpperBound.reset();
+
     if (not helpers.empty())
     {
         /// we are in a subquery
