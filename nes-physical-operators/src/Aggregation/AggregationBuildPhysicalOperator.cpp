@@ -61,7 +61,8 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         hashMapOptions.fieldKeys,
         hashMapOptions.fieldValues,
         hashMapOptions.entriesPerPage,
-        hashMapOptions.entrySize);
+        hashMapOptions.entrySize,
+        hashMapOptions.bloomFilter);
 
     /// Calling the key functions to add/update the keys to the record
     for (nautilus::static_val<uint64_t> i = 0; i < hashMapOptions.fieldKeys.size(); ++i)

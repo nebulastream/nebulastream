@@ -63,7 +63,7 @@ jobs:
           echo "number_of_jobs=$VALUE" >> $GITHUB_OUTPUT
       - name: Configure NebulaStream
         run: |
-          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG -DNES_EXHAUSTIVE_TESTS=1
       - name: Build NebulaStream
         shell: bash
         run: |

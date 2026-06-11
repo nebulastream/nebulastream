@@ -61,7 +61,8 @@ HashMapSlice::HashMapSlice(
                 createNewHashMapSliceArgs.keySize,
                 createNewHashMapSliceArgs.valueSize,
                 createNewHashMapSliceArgs.numberOfBuckets,
-                createNewHashMapSliceArgs.pageSize);
+                createNewHashMapSliceArgs.pageSize,
+                createNewHashMapSliceArgs.bloomFilterParams.allocationByteCount());
             hashMapBuffers.emplace_back(childBuffer.value());
         }
         else

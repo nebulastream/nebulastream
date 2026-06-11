@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -39,8 +40,16 @@ struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
         const uint64_t valueSize,
         const uint64_t pageSize,
         const uint64_t numberOfBuckets,
-        AbstractBufferProvider* bufferProvider)
-        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets), bufferProvider(bufferProvider)
+        AbstractBufferProvider* bufferProvider,
+        /// Defaults to a disabled (default-constructed) BloomFilterParams so callers that do not use a
+        /// BloomFilter (e.g. aggregation) allocate no bloom-bit memory.
+        const Nautilus::Interface::BloomFilterParams bloomFilterParams = {})
+        : keySize(keySize)
+        , valueSize(valueSize)
+        , pageSize(pageSize)
+        , numberOfBuckets(numberOfBuckets)
+        , bufferProvider(bufferProvider)
+        , bloomFilterParams(bloomFilterParams)
     {
     }
 
@@ -50,6 +59,7 @@ struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
     uint64_t pageSize;
     uint64_t numberOfBuckets;
     AbstractBufferProvider* bufferProvider;
+    Nautilus::Interface::BloomFilterParams bloomFilterParams;
 };
 
 /// A HashMapSlice stores a number of hashmaps per input stream. We assume that each input stream has the same number of hashmaps

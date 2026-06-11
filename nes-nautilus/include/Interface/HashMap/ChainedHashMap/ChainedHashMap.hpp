@@ -67,8 +67,11 @@ class ChainedHashMap final : public HashMap
 public:
     /// @brief Use init to initialize a ChainedHashMap view on a pre-allocated TupleBuffer
     /// Constructors are private
-    static ChainedHashMap init(TupleBuffer& tupleBuffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
-    static ChainedHashMap init(TupleBuffer& tupleBuffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
+    /// @param bloomFilterMemAreaSize bytes for the optional in-map BloomFilter bit area, 0 disables it (see getBloomFilterMemArea)
+    static ChainedHashMap
+    init(TupleBuffer& tupleBuffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize, uint64_t bloomFilterMemAreaSize);
+    static ChainedHashMap
+    init(TupleBuffer& tupleBuffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize, uint64_t bloomFilterMemAreaSize);
 
     /// @brief Loads a ChainedHashMap view from a pre-filled TupleBuffer
     static ChainedHashMap load(const TupleBuffer& tupleBuffer);
@@ -99,9 +102,18 @@ public:
 
     [[nodiscard]] uint64_t getMask() const { return header().mask; }
 
+    /// Size in bytes of the optional in-map BloomFilter bit area (0 when disabled). Used to propagate the
+    /// filter sizing when a derived map is created from an existing one (e.g. the aggregation final map).
+    [[nodiscard]] uint64_t getBloomFilterMemAreaSize() const { return header().bloomFilterMemAreaSize; }
+
     [[nodiscard]] VariableSizedAccess::Index getStorageBufferIdx() const;
     [[nodiscard]] VariableSizedAccess::Index getVarSizedBufferIdx() const;
     [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos);
+
+    /// Pointer to the optional in-map BloomFilter bit area, consulted by ChainedHashMapRef::findChain to
+    /// short-circuit chain traversal. Returns nullptr when the filter is disabled or not yet allocated
+    /// (the bit area is lazily allocated on the first insertEntry, like the storage space).
+    [[nodiscard]] uint64_t* getBloomFilterMemArea() const;
 
     /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
     /// view and without using its access methods
@@ -137,12 +149,24 @@ private:
         uint64_t mask;
         VariableSizedAccess::Index storageSpaceIndex;
         VariableSizedAccess::Index varSizedSpaceIndex;
+        /// Optional in-map BloomFilter. bloomFilterMemAreaSize is the bit-area size in bytes (0 disables the
+        /// filter); bloomFilterSpaceIndex points to the lazily-allocated bit-area child buffer (INVALID until
+        /// the first insert).
+        uint64_t bloomFilterMemAreaSize;
+        VariableSizedAccess::Index bloomFilterSpaceIndex;
 
         /// Chains array starts immediately after this header
         /// it is dynamically sized based on numChains, so nothing to store in here.
         /// Conceptually, it is like below:
         /// uint64_t chains[numChains + 1];
-        Header(uint64_t numBuckets, uint64_t numChains, uint64_t pageSize, uint64_t entrySize, uint64_t entriesPerPage, uint64_t mask)
+        Header(
+            uint64_t numBuckets,
+            uint64_t numChains,
+            uint64_t pageSize,
+            uint64_t entrySize,
+            uint64_t entriesPerPage,
+            uint64_t mask,
+            uint64_t bloomFilterMemAreaSize)
             : status(VALID_CHM)
             , numBuckets(numBuckets)
             , numChains(numChains)
@@ -152,6 +176,8 @@ private:
             , mask(mask)
             , storageSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
             , varSizedSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+            , bloomFilterMemAreaSize(bloomFilterMemAreaSize)
+            , bloomFilterSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
         {
         }
     };

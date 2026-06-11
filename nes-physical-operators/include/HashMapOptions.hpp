@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/HashMap.hpp>
@@ -42,7 +43,8 @@ struct HashMapOptions
         const uint64_t keySize,
         const uint64_t valueSize,
         const uint64_t pageSize,
-        const uint64_t numberOfBuckets)
+        const uint64_t numberOfBuckets,
+        Nautilus::Interface::BloomFilterRef bloomFilter)
         : hashFunction(std::move(hashFunction))
         , keyFunctions(std::move(keyFunctions))
         , fieldKeys(std::move(fieldKeys))
@@ -53,6 +55,7 @@ struct HashMapOptions
         , valueSize(valueSize)
         , pageSize(pageSize)
         , numberOfBuckets(numberOfBuckets)
+        , bloomFilter(std::move(bloomFilter))
     {
         INVARIANT(entriesPerPage > 0, "The number of entries per page must be greater than 0");
         INVARIANT(entrySize > 0, "The entry size must be greater than 0");
@@ -77,6 +80,7 @@ struct HashMapOptions
         , valueSize(std::move(other.valueSize))
         , pageSize(std::move(other.pageSize))
         , numberOfBuckets(std::move(other.numberOfBuckets))
+        , bloomFilter(std::move(other.bloomFilter))
     {
     }
 
@@ -91,6 +95,7 @@ struct HashMapOptions
         , valueSize(other.valueSize)
         , pageSize(other.pageSize)
         , numberOfBuckets(other.numberOfBuckets)
+        , bloomFilter(other.bloomFilter)
     {
     }
 
@@ -106,6 +111,7 @@ struct HashMapOptions
         valueSize = std::move(other.valueSize);
         pageSize = std::move(other.pageSize);
         numberOfBuckets = std::move(other.numberOfBuckets);
+        bloomFilter = std::move(other.bloomFilter);
         return *this;
     };
 
@@ -121,6 +127,7 @@ struct HashMapOptions
         valueSize = other.valueSize;
         pageSize = other.pageSize;
         numberOfBuckets = other.numberOfBuckets;
+        bloomFilter = other.bloomFilter;
         return *this;
     }
 
@@ -153,6 +160,7 @@ struct HashMapOptions
     uint64_t valueSize;
     uint64_t pageSize;
     uint64_t numberOfBuckets;
+    Nautilus::Interface::BloomFilterRef bloomFilter;
 };
 
 }

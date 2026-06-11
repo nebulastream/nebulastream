@@ -48,6 +48,7 @@
     "nautilus",
     "reflectcpp",
     "replxx",
+    "rapidcheck",
     "scope-guard",
     "simdjson",
     "spdlog",

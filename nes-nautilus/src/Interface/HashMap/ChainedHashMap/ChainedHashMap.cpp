@@ -62,8 +62,12 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
     return capacity;
 }
 
-ChainedHashMap
-ChainedHashMap::init(TupleBuffer& tupleBuffer, const uint64_t entrySize, const uint64_t numberOfBuckets, const uint64_t pageSize)
+ChainedHashMap ChainedHashMap::init(
+    TupleBuffer& tupleBuffer,
+    const uint64_t entrySize,
+    const uint64_t numberOfBuckets,
+    const uint64_t pageSize,
+    const uint64_t bloomFilterMemAreaSize)
 {
     const uint64_t entriesPerPage = pageSize / entrySize;
     const uint64_t numberOfChains = calcCapacity(numberOfBuckets, assumedLoadFactor);
@@ -87,7 +91,7 @@ ChainedHashMap::init(TupleBuffer& tupleBuffer, const uint64_t entrySize, const u
 
     /// Initialize header
     new (tupleBuffer.getAvailableMemoryArea<Header>().data())
-        Header(numberOfBuckets, numberOfChains, pageSize, entrySize, entriesPerPage, numberOfChains - 1);
+        Header(numberOfBuckets, numberOfChains, pageSize, entrySize, entriesPerPage, numberOfChains - 1, bloomFilterMemAreaSize);
 
     /// Initialize chains array
     auto chainsArray = chm.chains();
@@ -99,7 +103,12 @@ ChainedHashMap::init(TupleBuffer& tupleBuffer, const uint64_t entrySize, const u
 }
 
 ChainedHashMap ChainedHashMap::init(
-    TupleBuffer& tupleBuffer, const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
+    TupleBuffer& tupleBuffer,
+    const uint64_t keySize,
+    const uint64_t valueSize,
+    const uint64_t numberOfBuckets,
+    const uint64_t pageSize,
+    const uint64_t bloomFilterMemAreaSize)
 {
     const uint64_t entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const uint64_t entriesPerPage = pageSize / entrySize;
@@ -124,7 +133,7 @@ ChainedHashMap ChainedHashMap::init(
 
     /// Initialize its header
     new (tupleBuffer.getAvailableMemoryArea<Header>().data())
-        Header(numberOfBuckets, numberOfChains, pageSize, entrySize, entriesPerPage, numberOfChains - 1);
+        Header(numberOfBuckets, numberOfChains, pageSize, entrySize, entriesPerPage, numberOfChains - 1, bloomFilterMemAreaSize);
 
     /// Initialize chains array
     auto chainsArray = chm.chains();
@@ -264,6 +273,20 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
 
 AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider)
 {
+    /// 0. Lazily allocate the optional BloomFilter bit area on the first insert, alongside the entry storage.
+    /// Zero-initialised so ChainedHashMapRef sees no spurious bits before any add().
+    if (header().bloomFilterMemAreaSize > 0 && header().bloomFilterSpaceIndex == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    {
+        auto bloomFilterBuffer = bufferProvider->getUnpooledBuffer(header().bloomFilterMemAreaSize);
+        if (not bloomFilterBuffer)
+        {
+            throw CannotAllocateBuffer(
+                "Could not allocate BloomFilter memory for ChainedHashMap of size {}", std::to_string(header().bloomFilterMemAreaSize));
+        }
+        std::memset(bloomFilterBuffer->getAvailableMemoryArea().data(), 0, header().bloomFilterMemAreaSize);
+        header().bloomFilterSpaceIndex = buffer.storeChildBuffer(bloomFilterBuffer.value());
+    }
+
     /// 1. Check if we need to allocate a new page
     if (getTotalNumberOfRecords() % getEntriesPerPage() == 0)
     {
@@ -315,6 +338,18 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
 [[nodiscard]] VariableSizedAccess::Index ChainedHashMap::getVarSizedBufferIdx() const
 {
     return header().varSizedSpaceIndex;
+}
+
+uint64_t* ChainedHashMap::getBloomFilterMemArea() const
+{
+    const auto bloomFilterSpaceIdx = header().bloomFilterSpaceIndex;
+    if (bloomFilterSpaceIdx == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    {
+        return nullptr;
+    }
+    auto bloomFilterBuffer = buffer.loadChildBuffer(bloomFilterSpaceIdx);
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    return reinterpret_cast<uint64_t*>(bloomFilterBuffer.getAvailableMemoryArea().data());
 }
 
 TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const
