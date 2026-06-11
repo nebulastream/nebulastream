@@ -1,0 +1,165 @@
+# name: Contains
+# description: CONTAINS(haystack, needle) returns whether haystack contains needle as a substring.
+#              Covers edge cases on non-null VARSIZED, SQL-standard three-valued logic with NULL,
+#              and configuration errors.
+# groups: [Function, Text, Projection, Selection, NullHandling]
+
+
+# ============================================================================
+# Section 1 — edge cases on non-null VARSIZED inputs
+# ============================================================================
+
+# Row layout: pairs that exercise size, position, and overlap boundaries.
+CREATE LOGICAL SOURCE edges(id UINT64 NOT NULL, haystack VARSIZED NOT NULL, needle VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR edges TYPE File;
+ATTACH INLINE
+1,abcdef,abc
+2,abcdef,def
+3,abcdef,cde
+4,abcdef,abcdef
+5,abcdef,xyz
+6,abcdef,abcx
+7,abcdef,abcdefg
+8,abc,abcdef
+9,aab,b
+10,aaaa,aa
+11,,
+12,,abc
+13,abc,
+14,a,a
+15,a,A
+
+CREATE SINK edgeResultSink(edges.id UINT64 NOT NULL, result BOOLEAN NOT NULL) TYPE File;
+
+# 1 — prefix, suffix, middle, identical, disjoint, off-by-one, oversized needle,
+#     single-char overlap, repeated-char overlap, both empty, empty haystack,
+#     empty needle, single-char identical, case sensitivity
+SELECT id, CONTAINS(haystack, needle) AS result FROM edges INTO edgeResultSink;
+----
+1,true
+2,true
+3,true
+4,true
+5,false
+6,false
+7,false
+8,false
+9,true
+10,true
+11,true
+12,false
+13,true
+14,true
+15,false
+
+
+# ============================================================================
+# Section 2 — selection (WHERE) with edge cases
+# ============================================================================
+
+CREATE SINK edgeIdSink(edges.id UINT64 NOT NULL) TYPE File;
+
+# Constant needle "abc": matches every haystack that contains it. Note the
+# empty-needle case (row 13) and the empty-haystack case (rows 11, 12) are
+# already covered by the field-driven projection above; the SQL parser does
+# not accept an empty VARSIZED literal so we cannot probe that side via a
+# constant here.
+SELECT id FROM edges WHERE CONTAINS(haystack, VARSIZED("abc")) INTO edgeIdSink;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+13
+
+
+# ============================================================================
+# Section 3 — SQL three-valued logic for NULL
+# ============================================================================
+# Per SQL standard, predicates on NULL operands evaluate to UNKNOWN (rendered
+# as NULL in scalar context). WHERE keeps only rows where the predicate is
+# TRUE — rows where it is UNKNOWN/NULL are dropped.
+
+CREATE LOGICAL SOURCE nullable(id UINT64 NOT NULL, haystack VARSIZED, needle VARSIZED);
+CREATE PHYSICAL SOURCE FOR nullable TYPE File;
+ATTACH INLINE
+1,hello world,ell
+2,hello world,xyz
+3,,ell
+4,hello world,
+5,,
+6,hello world,hello world
+
+CREATE SINK nullableResultSink(nullable.id UINT64 NOT NULL, result BOOLEAN) TYPE File;
+CREATE SINK nullableIsNullSink(nullable.id UINT64 NOT NULL, result BOOLEAN, result_isnull BOOLEAN NOT NULL) TYPE File;
+CREATE SINK nullableIdSink(nullable.id UINT64 NOT NULL) TYPE File;
+
+# Projection: NULL on either side propagates to a NULL result.
+SELECT id, CONTAINS(haystack, needle) AS result FROM nullable INTO nullableResultSink;
+----
+1,true
+2,false
+3,NULL
+4,NULL
+5,NULL
+6,true
+
+# ISNULL wrapping the predicate confirms three-valued-logic shape:
+# result is NULL exactly when haystack or needle is NULL.
+SELECT id, CONTAINS(haystack, needle) AS result, ISNULL(CONTAINS(haystack, needle)) AS result_isnull
+FROM nullable INTO nullableIsNullSink;
+----
+1,true,false
+2,false,false
+3,NULL,true
+4,NULL,true
+5,NULL,true
+6,true,false
+
+# Selection: rows where the predicate is NULL are filtered out (only TRUE
+# survives a WHERE clause under three-valued logic).
+SELECT id FROM nullable WHERE CONTAINS(haystack, needle) INTO nullableIdSink;
+----
+1
+6
+
+
+# ============================================================================
+# Section 4 — negative tests (configuration errors)
+# ============================================================================
+
+# Non-VARSIZED argument: the logical function rejects non-VARSIZED children
+# during schema inference. DifferentFieldTypeExpected = 2006.
+CREATE LOGICAL SOURCE numericStream(value INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR numericStream TYPE File;
+ATTACH INLINE
+42
+
+SELECT CONTAINS(value, VARSIZED("foo")) AS result FROM numericStream INTO File();
+----
+Error 2006
+
+# Other-side non-VARSIZED argument is rejected too.
+CREATE LOGICAL SOURCE mixedStream(haystack VARSIZED NOT NULL, n INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR mixedStream TYPE File;
+ATTACH INLINE
+abc,1
+
+SELECT CONTAINS(haystack, n) AS result FROM mixedStream INTO File();
+----
+Error 2006
+
+# Wrong arity (1 argument): the registry's RegisterContainsLogicalFunction
+# rejects anything other than two children. CannotDeserialize = 2002.
+SELECT CONTAINS(haystack) AS result FROM edges INTO File();
+----
+Error 2002
+
+# Wrong arity (3 arguments): same gate.
+SELECT CONTAINS(haystack, needle, needle) AS result FROM edges INTO File();
+----
+Error 2002
