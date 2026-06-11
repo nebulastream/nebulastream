@@ -604,6 +604,30 @@ void AntlrSQLQueryPlanCreator::exitWindowClause(AntlrSQLParser::WindowClauseCont
     AntlrSQLBaseListener::exitWindowClause(context);
 }
 
+void AntlrSQLQueryPlanCreator::exitIntervalClause(AntlrSQLParser::IntervalClauseContext* context)
+{
+    /// timestampParameter inside intervalClause already populated helpers.top().timestamp
+    /// via exitTimestampParameter.
+    if (helpers.top().timestamp.empty())
+    {
+        throw InvalidQuerySyntax(
+            "Interval-join requires a timestamp parameter (e.g. INTERVAL (L.ts, lower 0 ms, upper 3 ms)) at {}", context->getText());
+    }
+
+    const auto parseSigned = [](AntlrSQLParser::SignedTimeValueContext* signedCtx) -> int64_t
+    {
+        const int magnitude = std::stoi(signedCtx->INTEGER_VALUE()->getText());
+        const auto timebase = signedCtx->timeUnit()->getStop()->getType();
+        const auto measure = buildTimeMeasure(magnitude, timebase);
+        const auto millis = static_cast<int64_t>(measure.getTime());
+        return signedCtx->MINUS() ? -millis : millis;
+    };
+
+    helpers.top().intervalLowerBound = parseSigned(context->lowerBound);
+    helpers.top().intervalUpperBound = parseSigned(context->upperBound);
+    AntlrSQLBaseListener::exitIntervalClause(context);
+}
+
 void AntlrSQLQueryPlanCreator::enterTimeUnit(AntlrSQLParser::TimeUnitContext* context)
 {
     /// Get Index of Parent Rule to check type of parent rule in conditions
@@ -841,28 +865,45 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     {
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
-    auto windowTypeOpt = helpers.top().windowType;
-    if (!windowTypeOpt)
-    {
-        throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
-    }
 
-    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
-    if (!currentWindowTimestampOpt.has_value()
-        || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+    LogicalPlan queryPlan = [&]
     {
-        throw InvalidQuerySyntax("join requires two timestamps, but got {}", currentWindowTimestampOpt.has_value() ? "only one" : "none");
-    }
+        if (helpers.top().intervalLowerBound.has_value() && helpers.top().intervalUpperBound.has_value())
+        {
+            auto timeCharacteristic = Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction(helpers.top().timestamp));
+            return LogicalPlanBuilder::addIntervalJoin(
+                leftQueryPlan,
+                rightQueryPlan,
+                helpers.top().joinKeyRelationHelper.at(0),
+                std::move(timeCharacteristic),
+                helpers.top().intervalLowerBound.value(),
+                helpers.top().intervalUpperBound.value());
+        }
 
-    auto joinTimeCharacteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
-    const auto queryPlan = LogicalPlanBuilder::addJoin(
-        leftQueryPlan,
-        rightQueryPlan,
-        helpers.top().joinKeyRelationHelper.at(0),
-        windowTypeOpt.value(),
-        helpers.top().joinType,
-        joinTimeCharacteristics[0],
-        joinTimeCharacteristics[1]);
+        auto windowTypeOpt = helpers.top().windowType;
+        if (!windowTypeOpt)
+        {
+            throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
+        }
+
+        const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+        if (!currentWindowTimestampOpt.has_value()
+            || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+        {
+            throw InvalidQuerySyntax(
+                "join requires two timestamps, but got {}", currentWindowTimestampOpt.has_value() ? "only one" : "none");
+        }
+
+        auto joinTimeCharacteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
+        return LogicalPlanBuilder::addJoin(
+            leftQueryPlan,
+            rightQueryPlan,
+            helpers.top().joinKeyRelationHelper.at(0),
+            windowTypeOpt.value(),
+            helpers.top().joinType,
+            joinTimeCharacteristics[0],
+            joinTimeCharacteristics[1]);
+    }();
     if (not helpers.empty())
     {
         /// we are in a subquery
