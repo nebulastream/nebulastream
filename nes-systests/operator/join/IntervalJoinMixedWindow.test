@@ -1,0 +1,68 @@
+# name: join/IntervalJoinMixedWindow.test
+# description: Chained joins that mix window types — an interval join feeding a tumbling join and the reverse order. The inner join's window bounds are renamed to start1/end1 (via projection) so they do not collide with the outer join's start/end.
+# groups: [WindowOperators, Join, IntervalJoin, CompilationIntensive]
+
+CREATE LOGICAL SOURCE mwLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR mwLeft TYPE File;
+ATTACH INLINE
+1,10,1000
+2,20,1500
+3,30,2500
+4,40,3500
+
+CREATE LOGICAL SOURCE mwIntervalRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR mwIntervalRight TYPE File;
+ATTACH INLINE
+1,100,1002
+2,200,1600
+3,300,2500
+4,400,3502
+
+CREATE LOGICAL SOURCE mwWindowRight(id3 UINT64 NOT NULL, value3 UINT64 NOT NULL, timestampWindow UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR mwWindowRight TYPE File;
+ATTACH INLINE
+1,1000,1200
+3,3000,2900
+
+CREATE SINK mwIntervalThenWindowSink(start UINT64 NOT NULL, end UINT64 NOT NULL, start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL, id3 UINT64, value3 UINT64, timestampWindow UINT64) TYPE File;
+CREATE SINK mwWindowThenIntervalSink(start UINT64 NOT NULL, end UINT64 NOT NULL, start1 UINT64 NOT NULL, end1 UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL, id3 UINT64 NOT NULL, value3 UINT64 NOT NULL, timestampWindow UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL) TYPE File;
+
+# IntervalThenTumbling: an interval join (bounds [0 ms, 3 ms]) feeding a LEFT tumbling join. id1=4 finds an
+# interval partner but no window partner, so it survives the outer join with NULLs.
+SELECT * FROM (
+  SELECT * FROM (
+    SELECT start as start1, end as end1, id1, value1, timestampLeft, id2, value2, timestampRight
+    FROM (
+      SELECT * FROM (SELECT * FROM mwLeft) INNER JOIN (SELECT * FROM mwIntervalRight)
+      ON (id1 = id2)
+      INTERVAL (timestampLeft, timestampRight, 0 ms, 3 ms)
+    )
+  )
+  LEFT JOIN (SELECT * FROM mwWindowRight)
+  ON (id1 = id3)
+  WINDOW TUMBLING (timestampLeft, timestampWindow, size 1 sec)
+)
+INTO mwIntervalThenWindowSink;
+----
+1000 2000 999 1002 1 10 1000 1 100 1002 1 1000 1200
+2000 3000 2499 2502 3 30 2500 3 300 2500 3 3000 2900
+3000 4000 3498 3501 4 40 3500 4 400 3502 NULL NULL NULL
+
+# TumblingThenInterval: the reverse order — a tumbling join feeding an interval join (bounds [0 ms, 3 ms]).
+SELECT * FROM (
+  SELECT * FROM (
+    SELECT start as start1, end as end1, id1, value1, timestampLeft, id3, value3, timestampWindow
+    FROM (
+      SELECT * FROM (SELECT * FROM mwLeft) INNER JOIN (SELECT * FROM mwWindowRight)
+      ON (id1 = id3)
+      WINDOW TUMBLING (timestampLeft, timestampWindow, size 1 sec)
+    )
+  )
+  INNER JOIN (SELECT * FROM mwIntervalRight)
+  ON (id1 = id2)
+  INTERVAL (timestampLeft, timestampRight, 0 ms, 3 ms)
+)
+INTO mwWindowThenIntervalSink;
+----
+999 1002 1000 2000 1 10 1000 1 1000 1200 1 100 1002
+2499 2502 2000 3000 3 30 2500 3 3000 2900 3 300 2500
