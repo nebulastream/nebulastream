@@ -95,6 +95,17 @@ public:
         Windowing::TimeCharacteristic leftCharacteristic,
         Windowing::TimeCharacteristic rightCharacteristic);
 
+    /// Adds a streaming interval-join operator. `windowType` must hold an IntervalWindow carrying the
+    /// closed bound range [lowerBound, upperBound] in ms. Inserts watermark assigners on each input if absent.
+    static LogicalPlan addIntervalJoin(
+        LogicalPlan leftLogicalPlan,
+        LogicalPlan rightLogicalPlan,
+        const LogicalFunction& joinFunction,
+        Windowing::TimeCharacteristic leftCharacteristic,
+        Windowing::TimeCharacteristic rightCharacteristic,
+        Windowing::TimeBasedWindowType windowType,
+        JoinLogicalOperator::JoinType joinType);
+
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
