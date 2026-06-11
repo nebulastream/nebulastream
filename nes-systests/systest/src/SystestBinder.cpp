@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -52,7 +53,6 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <Util/Files.hpp>
@@ -75,6 +75,16 @@
 
 namespace NES::Systest
 {
+
+/// Physical-source configuration assembled while binding a systest. Lives here because the systest harness is the only
+/// consumer: attached test data (ATTACH INLINE/FILE) is always fed through a File source whose 'file_path' is filled in below.
+struct PhysicalSourceConfig
+{
+    std::string logical;
+    std::string type;
+    std::unordered_map<std::string, std::string> parserConfig;
+    std::unordered_map<std::string, std::string> sourceConfig;
+};
 
 /// Helper class to model the two-step process of creating sinks in systest. We cannot create sink descriptors directly from sink definitions, because
 /// every query should write to a separate file sink, while being able to share the sink definitions with other queries.
@@ -538,26 +548,47 @@ struct SystestBinder::Impl
 
     [[nodiscard]] std::filesystem::path generateSourceFilePath(const std::string& testData) const { return testDataDir / testData; }
 
+    /// The systest harness feeds attached test data (ATTACH INLINE/FILE) exclusively through a File source that reads a CSV
+    /// file: inline tuples are written to a freshly generated CSV, an attached file is referenced in place, and the resulting
+    /// path is hardcoded into the source config as 'file_path'.
     [[nodiscard]] PhysicalSourceConfig setUpSourceWithTestData(
-        PhysicalSourceConfig& physicalSourceConfig,
-        std::shared_ptr<std::vector<std::jthread>> sourceThreads,
-        std::pair<TestDataIngestionType, std::vector<std::string>> testData) const
+        PhysicalSourceConfig physicalSourceConfig, std::pair<TestDataIngestionType, std::vector<std::string>> testData) const
     {
+        if (toUpperCase(physicalSourceConfig.type) != "FILE")
+        {
+            throw InvalidConfigParameter(
+                "Systest sources with attached data must be TYPE File, but '{}' was given", physicalSourceConfig.type);
+        }
+        if (physicalSourceConfig.sourceConfig.contains("file_path"))
+        {
+            throw InvalidConfigParameter("A systest File source with attached data must not also set 'file_path'");
+        }
+
         switch (testData.first)
         {
             case TestDataIngestionType::INLINE: {
                 const auto testFile = generateSourceFilePath();
-                return SourceDataProvider::provideInlineDataSource(
-                    std::move(physicalSourceConfig), std::move(testData.second), std::move(sourceThreads), testFile);
+                std::ofstream out{testFile};
+                if (not out.is_open())
+                {
+                    throw TestException("Could not open source file \"{}\"", testFile.string());
+                }
+                for (const auto& tuple : testData.second)
+                {
+                    out << tuple << '\n';
+                }
+                out.flush();
+                physicalSourceConfig.sourceConfig.emplace("file_path", testFile.string());
+                return physicalSourceConfig;
             }
             case TestDataIngestionType::FILE: {
                 if (testData.second.size() != 1)
                 {
                     throw UnknownException("Invalid State");
                 }
-
                 const std::filesystem::path testFilePath = generateSourceFilePath(testData.second[0]);
-                return SourceDataProvider::provideFileDataSource(std::move(physicalSourceConfig), std::move(sourceThreads), testFilePath);
+                physicalSourceConfig.sourceConfig.emplace("file_path", testFilePath.string());
+                return physicalSourceConfig;
             }
             default:
                 std::unreachable();
@@ -566,7 +597,6 @@ struct SystestBinder::Impl
 
     void createPhysicalSource(
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
-        const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const CreatePhysicalSourceStatement& statement,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
@@ -586,7 +616,7 @@ struct SystestBinder::Impl
 
         if (testData.has_value())
         {
-            physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, std::move(testData.value()));
+            physicalSourceConfig = setUpSourceWithTestData(std::move(physicalSourceConfig), std::move(testData.value()));
         }
 
         const auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo.getRawValue());
@@ -637,7 +667,6 @@ struct SystestBinder::Impl
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
         const std::shared_ptr<ModelCatalog>& modelCatalog,
         SLTSinkFactory& sltSinkProvider,
-        const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
@@ -660,7 +689,7 @@ struct SystestBinder::Impl
         }
         else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
         {
-            createPhysicalSource(sourceCatalog, sourceThreads, std::get<CreatePhysicalSourceStatement>(statement), std::move(testData));
+            createPhysicalSource(sourceCatalog, std::get<CreatePhysicalSourceStatement>(statement), std::move(testData));
         }
         else if (std::holds_alternative<CreateSinkStatement>(statement))
         {
@@ -1014,7 +1043,7 @@ struct SystestBinder::Impl
         parser.registerOnCreateCallback(
             [&, sourceCatalog, modelCatalog](
                 const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
-            { createCallback(binder, sourceCatalog, modelCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
+            { createCallback(binder, sourceCatalog, modelCatalog, sltSinkProvider, query, std::move(input)); });
 
         try
         {
