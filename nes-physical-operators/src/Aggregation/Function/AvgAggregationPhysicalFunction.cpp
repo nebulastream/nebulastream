@@ -48,7 +48,10 @@ AvgAggregationPhysicalFunction::AvgAggregationPhysicalFunction(
 }
 
 void AvgAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    nautilus::val<TupleBuffer*>,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    const Record& record)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (inputType.nullable)
@@ -93,7 +96,9 @@ void AvgAggregationPhysicalFunction::lift(
 
 void AvgAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
+    nautilus::val<TupleBuffer*>,
     const nautilus::val<AggregationState*> aggregationState2,
+    nautilus::val<TupleBuffer*>,
     PipelineMemoryProvider&)
 {
     if (inputType.nullable)
@@ -145,7 +150,8 @@ void AvgAggregationPhysicalFunction::combine(
     }
 }
 
-Record AvgAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record AvgAggregationPhysicalFunction::lower(
+    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     if (inputType.nullable)
     {
@@ -172,7 +178,8 @@ Record AvgAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
     return Record({{resultFieldIdentifier, avg}});
 }
 
-void AvgAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void AvgAggregationPhysicalFunction::reset(
+    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     /// Resetting the isNull, sum, and count to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);

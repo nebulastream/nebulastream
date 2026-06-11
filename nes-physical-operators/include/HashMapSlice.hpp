@@ -18,10 +18,14 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Engine.hpp>
 
@@ -30,28 +34,22 @@ namespace NES
 
 struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 {
-    using NautilusCleanupExec = nautilus::engine::CallableFunction<void, HashMap*>;
-
     CreateNewHashMapSliceArgs(
-        std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup,
         const uint64_t keySize,
         const uint64_t valueSize,
         const uint64_t pageSize,
-        const uint64_t numberOfBuckets)
-        : nautilusCleanup(std::move(nautilusCleanup))
-        , keySize(keySize)
-        , valueSize(valueSize)
-        , pageSize(pageSize)
-        , numberOfBuckets(numberOfBuckets)
+        const uint64_t numberOfBuckets,
+        AbstractBufferProvider* bufferProvider)
+        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets), bufferProvider(bufferProvider)
     {
     }
 
     ~CreateNewHashMapSliceArgs() override = default;
-    std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup;
     uint64_t keySize;
     uint64_t valueSize;
     uint64_t pageSize;
     uint64_t numberOfBuckets;
+    AbstractBufferProvider* bufferProvider;
 };
 
 /// A HashMapSlice stores a number of hashmaps per input stream. We assume that each input stream has the same number of hashmaps
@@ -61,29 +59,49 @@ struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 /// +---------------------+---------------------+---------------------+---------------------+---------------------+
 ///
 /// As the hashmap might need to clean up its state, we expect multiple clean up functions as part of the @struct CreateNewHashMapSliceArgs
-/// For each stream, we expect one cleanup function and once this HashMapSlice gets destroyed they are being called.
 class HashMapSlice : public Slice
 {
 public:
     explicit HashMapSlice(
+        AbstractBufferProvider& bufferProvider,
         SliceStart sliceStart,
         SliceEnd sliceEnd,
         const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
         uint64_t numberOfHashMaps,
         uint64_t numberOfInputStreams);
 
-    ~HashMapSlice() override;
-
     /// In our current implementation, we expect one hashmap per worker thread. Thus, we return the number of hashmaps == number of worker threads.
     [[nodiscard]] uint64_t getNumberOfHashMaps() const;
-
-    [[nodiscard]] uint64_t getNumberOfTuples() const;
+    [[nodiscard]] uint64_t getNumInputStreams() const;
+    [[nodiscard]] uint64_t getNumHashMapsPerInputStream() const;
 
 protected:
-    std::vector<std::unique_ptr<HashMap>> hashMaps;
-    CreateNewHashMapSliceArgs createNewHashMapSliceArgs;
-    uint64_t numberOfHashMapsPerInputStream;
-    uint64_t numberOfInputStreams;
+    /// We use this private struct to store the CreateNewHashMapSliceArgs parameters in a trivially-copyable way, that is also embedded in the header.
+    struct HashMapSliceParams
+    {
+        uint64_t keySize;
+        uint64_t valueSize;
+        uint64_t pageSize;
+        uint64_t numberOfBuckets;
+
+        explicit HashMapSliceParams(const CreateNewHashMapSliceArgs& args)
+            : keySize(args.keySize), valueSize(args.valueSize), pageSize(args.pageSize), numberOfBuckets(args.numberOfBuckets)
+        {
+        }
+    };
+
+    static_assert(std::is_trivially_copyable_v<HashMapSliceParams>);
+
+    /// @brief Loads a specific hash map from the slice based on the index
+    [[nodiscard]] const TupleBuffer* getHashMapBufferRef(VariableSizedAccess::Index childBufferIndex) const;
+
+    /// metadata
+    uint64_t numHashMaps;
+    uint64_t numInputStreams;
+    uint64_t numHashmapsPerInputStream;
+    HashMapSliceParams params;
+    /// the hash map buffers for the hash map slice
+    std::vector<TupleBuffer> hashMapBuffers;
 };
 
 }

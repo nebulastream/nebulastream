@@ -66,7 +66,6 @@ uint64_t PagedVector::Page::getNumberOfTuples() const
 
 void PagedVector::init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize)
 {
-    /// initialize header through placement new
     new (buffer.getAvailableMemoryArea<Header>().data()) Header(0, pageBufferSize, tupleSize);
 }
 

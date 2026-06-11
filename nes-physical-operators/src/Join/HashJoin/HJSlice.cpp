@@ -21,6 +21,9 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
@@ -28,54 +31,35 @@
 namespace NES
 {
 HJSlice::HJSlice(
-    SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, const uint64_t numberOfHashMaps)
-    : HashMapSlice(std::move(sliceStart), std::move(sliceEnd), createNewHashMapSliceArgs, numberOfHashMaps, 2)
+    AbstractBufferProvider& bufferProvider,
+    SliceStart sliceStart,
+    SliceEnd sliceEnd,
+    const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
+    const uint64_t numberOfHashMaps)
+    : HashMapSlice(bufferProvider, std::move(sliceStart), std::move(sliceEnd), createNewHashMapSliceArgs, numberOfHashMaps, 2)
 {
 }
 
-HashMap* HJSlice::getHashMapPtr(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const
+[[nodiscard]] const TupleBuffer*
+HJSlice::getHashMapBufferRefForSide(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const
 {
     /// Hashmaps of the left build side come before right
-    auto pos = (workerThreadId % numberOfHashMapsPerInputStream)
-        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numberOfHashMapsPerInputStream));
-
+    auto pos = (workerThreadId % getNumHashMapsPerInputStream())
+        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * getNumHashMapsPerInputStream()));
+    const auto numHashMaps = getNumberOfHashMaps();
     INVARIANT(
-        not hashMaps.empty() and pos < hashMaps.size(),
+        numHashMaps > 0 and pos < numHashMaps,
         "No hashmap found for workerThreadId {} at pos {} for {} hashmaps",
         workerThreadId,
         pos,
-        hashMaps.size());
-    return hashMaps[pos].get();
-}
-
-HashMap* HJSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide)
-{
-    /// Hashmaps of the left build side come before right
-    auto pos = (workerThreadId % numberOfHashMapsPerInputStream)
-        + ((static_cast<uint64_t>(buildSide == JoinBuildSideType::Right) * numberOfHashMapsPerInputStream));
-
-    INVARIANT(
-        not hashMaps.empty() and pos < hashMaps.size(),
-        "No hashmap found for workerThreadId {} at pos {} for {} hashmaps",
-        workerThreadId,
-        pos,
-        hashMaps.size());
-
-    if (hashMaps.at(pos) == nullptr)
-    {
-        /// Hashmap at pos has not been initialized
-        hashMaps.at(pos) = std::make_unique<ChainedHashMap>(
-            createNewHashMapSliceArgs.keySize,
-            createNewHashMapSliceArgs.valueSize,
-            createNewHashMapSliceArgs.numberOfBuckets,
-            createNewHashMapSliceArgs.pageSize);
-    }
-    return hashMaps.at(pos).get();
+        numHashMaps);
+    const VariableSizedAccess::Index bufferIndex(pos);
+    return getHashMapBufferRef(bufferIndex);
 }
 
 uint64_t HJSlice::getNumberOfHashMapsForSide() const
 {
-    return numberOfHashMapsPerInputStream;
+    return getNumHashMapsPerInputStream();
 }
 
 }

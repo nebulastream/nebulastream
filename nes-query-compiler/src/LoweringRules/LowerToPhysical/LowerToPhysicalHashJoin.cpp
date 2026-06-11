@@ -204,7 +204,7 @@ HashMapOptions
 createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Schema& inputSchema, const QueryExecutionConfiguration& conf)
 {
     uint64_t keySize = 0;
-    constexpr auto valueSize = sizeof(PagedVector);
+    constexpr auto valueSize = sizeof(uint32_t);
     std::vector<PhysicalFunction> keyFunctions;
     std::vector<std::string> fieldKeyNames;
     for (auto& fieldExtension : joinFieldExtensions)
@@ -289,39 +289,29 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
+        [](Slice& slice, const WorkerThreadId workerThreadId)
         {
             auto& hjSlice = dynamic_cast<HJSlice&>(slice);
-            auto* ptr = hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Left);
-            return ptr;
+            return hjSlice.getHashMapBufferRefForSide(workerThreadId, JoinBuildSideType::Left);
         },
-        [hashMapOptions = leftHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
+        [hashMapOptions = leftHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{
-                hjHandler.getNautilusCleanupExec(),
-                hashMapOptions.keySize,
-                hashMapOptions.valueSize,
-                hashMapOptions.pageSize,
-                hashMapOptions.numberOfBuckets};
+                hashMapOptions.keySize, hashMapOptions.valueSize, hashMapOptions.pageSize, hashMapOptions.numberOfBuckets, &bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
+        [](Slice& slice, const WorkerThreadId workerThreadId)
         {
             auto& hjSlice = dynamic_cast<HJSlice&>(slice);
-            auto* ptr = hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Right);
-            return ptr;
+            return hjSlice.getHashMapBufferRefForSide(workerThreadId, JoinBuildSideType::Right);
         },
-        [hashMapOptions = rightHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
+        [hashMapOptions = rightHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{
-                hjHandler.getNautilusCleanupExec(),
-                hashMapOptions.keySize,
-                hashMapOptions.valueSize,
-                hashMapOptions.pageSize,
-                hashMapOptions.numberOfBuckets};
+                hashMapOptions.keySize, hashMapOptions.valueSize, hashMapOptions.pageSize, hashMapOptions.numberOfBuckets, &bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto handler

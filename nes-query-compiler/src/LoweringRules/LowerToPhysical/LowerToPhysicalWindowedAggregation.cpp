@@ -45,6 +45,7 @@
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
@@ -226,30 +227,25 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> const TupleBuffer*
         {
             auto& aggregationSlice = dynamic_cast<AggregationSlice&>(slice);
-            auto* ptr = aggregationSlice.getHashMapPtrOrCreate(workerThreadId);
-            return ptr;
+            return aggregationSlice.getHashMapBufferRefForWorker(workerThreadId);
         },
         /// NOLINTNEXTLINE(bugprone-exception-escape): dynamic_cast<ref> may throw std::bad_cast on bug; non-recoverable here.
-        [hashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
+        [hashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             auto& aggHandler = dynamic_cast<AggregationOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{
-                {aggHandler.cleanupStateNautilusFunction},
-                hashMapOptions.keySize,
-                hashMapOptions.valueSize,
-                hashMapOptions.pageSize,
-                hashMapOptions.numberOfBuckets};
+                hashMapOptions.keySize, hashMapOptions.valueSize, hashMapOptions.pageSize, hashMapOptions.numberOfBuckets, &bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
-    auto handler = std::make_shared<AggregationOperatorHandler>(
-        inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
     const AggregationBuildPhysicalOperator build{
         handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapOptions};
     const AggregationProbePhysicalOperator probe{hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
+    auto handler = std::make_shared<AggregationOperatorHandler>(
+        inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         newInputSchema,
