@@ -1,0 +1,23 @@
+-- A valid TCP source configuration.
+--
+-- The config keys (`socket_host`, `socket_port`, ...) match
+-- ConfigParametersTCPSource in nes-plugins/Sources/TCPSource/TCPSource.hpp.
+-- `SOURCE` and `TYPE` are reserved words, so the binder requires backticks.
+-- The endpoint is a concrete literal — binding never connects; the loader
+-- rewrites socket_host/socket_port to the per-test endpoint.
+--
+-- INPUT_FORMATTER.`TYPE` is descriptor-only in conn-test: the harness runs no
+-- formatter (in the real engine, formatting is lowered out of the descriptor
+-- and query-compiled). TCPSource is a byte pipe; the runner writes JSONL and
+-- parses the observed bytes back itself. 'JSON' is the honest name for the wire.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE TCP SET (
+    'localhost' AS `SOURCE`.socket_host,
+    '9000'      AS `SOURCE`.socket_port,
+    -- Hand a partially filled buffer downstream after 100ms. This is a latency
+    -- knob only: an empty buffer keeps waiting (TCP's end-of-stream is the
+    -- peer closing the connection, not silence).
+    '100'       AS `SOURCE`.flush_interval_ms,
+    'JSON'      AS INPUT_FORMATTER.`TYPE`
+);

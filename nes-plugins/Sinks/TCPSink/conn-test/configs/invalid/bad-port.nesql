@@ -1,0 +1,7 @@
+-- Invalid: `socket_port` must be in [1, 65535]; the validator in
+-- ConfigParametersTCPSink rejects 70000 at bind time with
+-- INVALID_CONFIG_PARAMETER (1000).
+CREATE SINK conntest_sink (value VARSIZED NOT NULL) TYPE TCP SET (
+    'localhost' AS `SINK`.socket_host,
+    '70000'     AS `SINK`.socket_port,
+    'JSON'      AS `SINK`.OUTPUT_FORMAT);

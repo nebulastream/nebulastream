@@ -11,6 +11,9 @@ members = [
     "conntest-plugin-mqttsink",
     "conntest-plugin-mqttsource",
     "conntest-plugin-odbcsink",
+    "conntest-plugin-odbcsource",
+    "conntest-plugin-tcpsink",
+    "conntest-plugin-tcpsource",
     "conntest-runner",
     "nebulastream-conntest-workspace",
 ]
@@ -96,6 +99,27 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" }]
+
+[[package]]
+name = "conntest-plugin-odbcsource"
+version = "0"
+source = { virtual = "nes-plugins/Sources/ODBCSource/conn-test" }
+dependencies = [
+    { name = "psycopg", extra = ["binary"] },
+]
+
+[package.metadata]
+requires-dist = [{ name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" }]
+
+[[package]]
+name = "conntest-plugin-tcpsink"
+version = "0"
+source = { virtual = "nes-plugins/Sinks/TCPSink/conn-test" }
+
+[[package]]
+name = "conntest-plugin-tcpsource"
+version = "0"
+source = { virtual = "nes-plugins/Sources/TCPSource/conn-test" }
 
 [[package]]
 name = "conntest-runner"

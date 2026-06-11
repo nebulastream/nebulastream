@@ -16,13 +16,14 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 #       we apply the same care and test coverage requirements to these plugins that we apply to the rest of the system.
 
 # activate optional plugins and add the path "THE/PATH" to the build (adding all dependencies of the optional plugin)
-activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sources/GeneratorSource" ON)
 activate_optional_plugin("Sources/MQTTSource" ON)
 activate_optional_plugin("Sources/ODBCSource" ON)
+activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
 activate_optional_plugin("Sinks/MQTTSink" ON)
 activate_optional_plugin("Sinks/ODBCSink" ON)
+activate_optional_plugin("Sinks/TCPSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
 

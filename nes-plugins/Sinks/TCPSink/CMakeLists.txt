@@ -10,13 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(TCP Source nes-sources-registry tcp_source_plugin_library TCPSource.cpp)
-add_plugin_as_library(TCP SourceValidation nes-sources-registry tcp_source_validation_plugin_library TCPSource.cpp)
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+add_plugin_as_library(TCP Sink nes-sinks-registry tcp_sink_plugin_library TCPSink.cpp)
+add_plugin_as_library(TCP SinkValidation nes-sinks-registry tcp_sink_validation_plugin_library TCPSink.cpp)
 
 # Boost.Asio is already in the vcpkg manifest (boost-asio); no new dependency.
 find_package(boost_asio CONFIG REQUIRED)
 
-foreach (_lib tcp_source_plugin_library tcp_source_validation_plugin_library)
+foreach (_lib tcp_sink_plugin_library tcp_sink_validation_plugin_library)
     target_include_directories(${_lib} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
     target_link_libraries(${_lib} PRIVATE Boost::asio)
 endforeach ()

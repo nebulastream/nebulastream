@@ -34,8 +34,6 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Files.hpp>
 #include <ErrorHandling.hpp>
-#include <FileDataRegistry.hpp>
-#include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
@@ -93,43 +91,6 @@ SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidation
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
-}
-
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
-{
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(std::string(SYSTEST_FILE_PATH_PARAMETER)))
-    {
-        throw InvalidConfigParameter("Mock FileSource cannot use given inline data if a 'file_path' is set");
-    }
-
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.try_emplace(
-        std::string(SYSTEST_FILE_PATH_PARAMETER), systestAdaptorArguments.testFilePath.string());
-
-
-    if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
-    {
-        /// Write inline tuples to test file.
-        for (const auto& tuple : systestAdaptorArguments.tuples)
-        {
-            testFile << tuple << "\n";
-        }
-        testFile.flush();
-        return systestAdaptorArguments.physicalSourceConfig;
-    }
-    throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
-}
-
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
-{
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(std::string(SYSTEST_FILE_PATH_PARAMETER)))
-    {
-        throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
-    }
-
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
-        std::string(SYSTEST_FILE_PATH_PARAMETER), systestAdaptorArguments.testFilePath.string());
-
-    return systestAdaptorArguments.physicalSourceConfig;
 }
 
 
