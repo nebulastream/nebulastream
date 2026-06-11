@@ -19,6 +19,7 @@ members = [
     "nes-network/network",
     "nes-network/network-bindings",
     "nes-common/rust/spdlog-bindings",
+    "nes-physical-operators/rust/cast-to-unix-timestamp",
 ]
 
 [workspace.package]

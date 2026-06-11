@@ -37,5 +37,8 @@ target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+add_subdirectory(rust/cast-to-unix-timestamp)
+target_link_libraries(nes-physical-operators PRIVATE nes-rust-timestamp-bindings)
+target_link_rust_lib(nes-physical-operators nes_rust_timestamp)
 
 add_tests_if_enabled(tests)
