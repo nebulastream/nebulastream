@@ -288,12 +288,9 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto handlerId = getNextOperatorHandlerId();
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
-    auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId)
-        {
-            auto& hjSlice = dynamic_cast<HJSlice&>(slice);
-            return hjSlice.getHashMapBufferRefForSide(workerThreadId, JoinBuildSideType::Left);
-        },
+    auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef<HJSlice>(
+        [](HJSlice& slice, const WorkerThreadId workerThreadId)
+        { return slice.getHashMapBufferRefForSide(workerThreadId, JoinBuildSideType::Left); },
         [hashMapOptions = leftHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
@@ -301,12 +298,9 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
                 hashMapOptions.keySize, hashMapOptions.valueSize, hashMapOptions.pageSize, hashMapOptions.numberOfBuckets, &bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
-    auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId)
-        {
-            auto& hjSlice = dynamic_cast<HJSlice&>(slice);
-            return hjSlice.getHashMapBufferRefForSide(workerThreadId, JoinBuildSideType::Right);
-        },
+    auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef<HJSlice>(
+        [](HJSlice& slice, const WorkerThreadId workerThreadId)
+        { return slice.getHashMapBufferRefForSide(workerThreadId, JoinBuildSideType::Right); },
         [hashMapOptions = rightHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);

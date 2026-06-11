@@ -33,6 +33,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SliceStore/SliceDataBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
@@ -63,15 +64,10 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
     /// Get the current slice / hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapBuffer
-        = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
+    const HashMapSliceBuffer hashMapSlice{
+        sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider)};
 
-    ChainedHashMapRef hashMap{
-        hashMapBuffer.asArg(),
-        hashMapOptions.fieldKeys,
-        hashMapOptions.fieldValues,
-        hashMapOptions.entriesPerPage,
-        hashMapOptions.entrySize};
+    ChainedHashMapRef hashMap = hashMapSlice.asHashMap(hashMapOptions);
 
     /// Calling the key functions to add/update the keys to the record
     nautilus::val<bool> containsNullInKey{false};
@@ -96,7 +92,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
             {
                 /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
                 const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                    entry, hashMapBuffer.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+                    entry, hashMapSlice.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
                 const nautilus::val<uint64_t> tupleSize = tupleLayout->getTupleSize();
                 nautilus::invoke(
@@ -111,7 +107,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                         }
                         throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
                     },
-                    hashMapBuffer.asArg(),
+                    hashMapSlice.asArg(),
                     static_cast<nautilus::val<uint32_t*>>(state),
                     ctx.pipelineMemoryProvider.bufferProvider,
                     tupleSize);
@@ -120,13 +116,13 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
         /// Inserting the tuple into the corresponding hash entry
         const ChainedHashMapRef::ChainedEntryRef entryRef{
-            hashMapEntry, hashMapBuffer.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+            hashMapEntry, hashMapSlice.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
         auto entryMemArea = entryRef.getValueMemArea();
         OwnedNautilusBuffer pagedVecBuffer;
         nautilus::invoke(
             +[](TupleBuffer* hashMapBuf, TupleBuffer* out, uint32_t* indexPtr)
             { *out = hashMapBuf->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
-            hashMapBuffer.asArg(),
+            hashMapSlice.asArg(),
             pagedVecBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(entryMemArea));
         PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVecBuffer.asArg()), tupleLayout);
