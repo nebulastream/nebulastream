@@ -561,6 +561,30 @@ void AntlrSQLQueryPlanCreator::exitWindowClause(AntlrSQLParser::WindowClauseCont
     AntlrSQLBaseListener::exitWindowClause(context);
 }
 
+void AntlrSQLQueryPlanCreator::exitIntervalClause(AntlrSQLParser::IntervalClauseContext* context)
+{
+    /// timestampParameter inside intervalClause already populated helpers.top().timestamp
+    /// via exitTimestampParameter.
+    if (helpers.top().timestamp.empty())
+    {
+        throw InvalidQuerySyntax(
+            "Interval-join requires a timestamp parameter (e.g. INTERVAL (L.ts, lower 0 ms, upper 3 ms)) at {}", context->getText());
+    }
+
+    const auto parseSigned = [](AntlrSQLParser::SignedTimeValueContext* signedCtx) -> int64_t
+    {
+        const int magnitude = std::stoi(signedCtx->INTEGER_VALUE()->getText());
+        const auto timebase = signedCtx->timeUnit()->getStop()->getType();
+        const auto measure = buildTimeMeasure(magnitude, timebase);
+        const auto millis = static_cast<int64_t>(measure.getTime());
+        return signedCtx->MINUS() ? -millis : millis;
+    };
+
+    helpers.top().intervalLowerBound = parseSigned(context->lowerBound);
+    helpers.top().intervalUpperBound = parseSigned(context->upperBound);
+    AntlrSQLBaseListener::exitIntervalClause(context);
+}
+
 void AntlrSQLQueryPlanCreator::enterTimeUnit(AntlrSQLParser::TimeUnitContext* context)
 {
     /// Get Index of Parent Rule to check type of parent rule in conditions
@@ -786,12 +810,27 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     {
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
-    if (!helpers.top().windowType)
+
+    LogicalPlan queryPlan = [&]
     {
-        throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
-    }
-    const auto queryPlan = LogicalPlanBuilder::addJoin(
-        leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), helpers.top().windowType, helpers.top().joinType);
+        if (helpers.top().intervalLowerBound.has_value() && helpers.top().intervalUpperBound.has_value())
+        {
+            auto timeCharacteristic = Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction(helpers.top().timestamp));
+            return LogicalPlanBuilder::addIntervalJoin(
+                leftQueryPlan,
+                rightQueryPlan,
+                helpers.top().joinKeyRelationHelper.at(0),
+                std::move(timeCharacteristic),
+                helpers.top().intervalLowerBound.value(),
+                helpers.top().intervalUpperBound.value());
+        }
+        if (!helpers.top().windowType)
+        {
+            throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
+        }
+        return LogicalPlanBuilder::addJoin(
+            leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), helpers.top().windowType, helpers.top().joinType);
+    }();
     if (not helpers.empty())
     {
         /// we are in a subquery

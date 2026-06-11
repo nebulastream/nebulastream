@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -79,6 +80,11 @@ public:
     std::vector<LogicalFunction> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
+
+    /// Interval-join state (only set when the JOIN ... INTERVAL (...) form is used).
+    /// Bounds are signed milliseconds. Empty optionals signal the windowed-join path.
+    std::optional<int64_t> intervalLowerBound;
+    std::optional<int64_t> intervalUpperBound;
 
     /// Utility variables to keep state between enter/exit parser function calls.
     size_t opBoolean{}; ///anonymous token enum in AntlrSQLLexer.h
