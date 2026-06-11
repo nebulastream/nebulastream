@@ -12,6 +12,7 @@
 
 add_plugin(NLJoin LoweringRule nes-query-compiler LowerToPhysicalNLJoin.cpp)
 add_plugin(HashJoin LoweringRule nes-query-compiler LowerToPhysicalHashJoin.cpp)
+add_plugin(IntervalJoin LoweringRule nes-query-compiler LowerToPhysicalIntervalJoin.cpp)
 add_plugin(Selection LoweringRule nes-query-compiler LowerToPhysicalSelection.cpp)
 add_plugin(Projection LoweringRule nes-query-compiler LowerToPhysicalProjection.cpp)
 add_plugin(WindowedAggregation LoweringRule nes-query-compiler LowerToPhysicalWindowedAggregation.cpp)
