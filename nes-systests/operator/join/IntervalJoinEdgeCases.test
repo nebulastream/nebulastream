@@ -1,0 +1,50 @@
+# name: join/IntervalJoinEdgeCases.test
+# description: Interval-join edge cases — out-of-order input and empty left/right inputs. Merged from the former single-query IntervalJoin{OutOfOrder,EmptyLeft,EmptyRight} tests, each query using its own input streams.
+# groups: [WindowOperators, Join, IntervalJoin]
+
+CREATE LOGICAL SOURCE oooLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR oooLeft TYPE File;
+ATTACH FILE small/intervaljoin_out_of_order_left.csv
+
+CREATE LOGICAL SOURCE oooRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR oooRight TYPE File;
+ATTACH FILE small/intervaljoin_out_of_order_right.csv
+
+CREATE SINK oooSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL) TYPE File;
+
+# OutOfOrder: out-of-order input timestamps; join is order-independent so results match the in-order future-only case [0 ms, 3 ms].
+SELECT * FROM (SELECT * FROM oooLeft) INNER JOIN (SELECT * FROM oooRight) ON id1 = id2 INTERVAL (timestampLeft, timestampRight, lower 0 ms, upper 3 ms) INTO oooSink;
+----
+999 1002 1 10 1000 1 100 1000
+999 1002 1 10 1000 1 200 1001
+999 1002 2 20 1001 2 300 1002
+1008 1011 1 30 1010 1 400 1011
+1998 2001 2 40 2000 2 500 2003
+
+CREATE LOGICAL SOURCE emptyLLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR emptyLLeft TYPE File;
+ATTACH FILE small/intervaljoin_empty_left.csv
+
+CREATE LOGICAL SOURCE emptyLRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR emptyLRight TYPE File;
+ATTACH FILE small/intervaljoin_future_only_right.csv
+
+CREATE SINK emptyLSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL) TYPE File;
+
+# EmptyLeft: empty left stream must yield no joined tuples (bounds [0 ms, 3 ms]).
+SELECT * FROM (SELECT * FROM emptyLLeft) INNER JOIN (SELECT * FROM emptyLRight) ON id1 = id2 INTERVAL (timestampLeft, timestampRight, lower 0 ms, upper 3 ms) INTO emptyLSink;
+----
+
+CREATE LOGICAL SOURCE emptyRLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR emptyRLeft TYPE File;
+ATTACH FILE small/intervaljoin_future_only_left.csv
+
+CREATE LOGICAL SOURCE emptyRRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR emptyRRight TYPE File;
+ATTACH FILE small/intervaljoin_empty_right.csv
+
+CREATE SINK emptyRSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL) TYPE File;
+
+# EmptyRight: empty right stream must yield no joined tuples (bounds [0 ms, 3 ms]).
+SELECT * FROM (SELECT * FROM emptyRLeft) INNER JOIN (SELECT * FROM emptyRRight) ON id1 = id2 INTERVAL (timestampLeft, timestampRight, lower 0 ms, upper 3 ms) INTO emptyRSink;
+----
