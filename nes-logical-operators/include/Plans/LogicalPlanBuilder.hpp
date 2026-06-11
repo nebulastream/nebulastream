@@ -26,6 +26,7 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES
@@ -83,6 +84,19 @@ public:
         const LogicalFunction& joinFunction,
         std::shared_ptr<Windowing::WindowType> windowType,
         JoinLogicalOperator::JoinType joinType);
+
+    /// Adds a streaming interval-join operator with closed bounds [lowerBound, upperBound]
+    /// in milliseconds. Bounds are signed (int64_t) so past/future-anchored intervals are
+    /// expressible (e.g. lower=-4, upper=-1). Watermark assigners are inserted on each
+    /// input plan if not already present, mirroring addJoin.
+    /// TODO #1471: PR #1471 will extend this with outer-join semantics; currently INNER_JOIN only.
+    static LogicalPlan addIntervalJoin(
+        LogicalPlan leftLogicalPlan,
+        LogicalPlan rightLogicalPlan,
+        const LogicalFunction& joinFunction,
+        Windowing::TimeCharacteristic timeCharacteristic,
+        int64_t lowerBound,
+        int64_t upperBound);
 
     static LogicalPlan addInferModel(std::string modelName, const LogicalPlan& childPlan);
 
