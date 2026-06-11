@@ -32,6 +32,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/VariableSizedAccessRef.hpp>
@@ -233,7 +234,7 @@ public:
             }
             currentTupleIdx = 0;
         }
-        const RecordBuffer recordBuffer{buffers.data() + currentBufferIdx};
+        const RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(buffers.data() + currentBufferIdx)};
         auto record = bufferRef->readRecord(schema.getFieldNames(), recordBuffer, currentTupleIdx);
         ++currentTupleIdx;
         return record;
@@ -335,7 +336,7 @@ void writeFieldToBuffer(
     AbstractBufferProvider& bufferProvider)
 {
     Record record;
-    const RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
+    const RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(std::addressof(tupleBuffer))};
     const auto fieldName = tupleBufferRef.getAllFieldNames().at(fieldIndex);
 
     /// Creating a Record containing the current field
@@ -361,7 +362,7 @@ inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleB
     const nautilus::val<const char*> messageVal{message.data()};
     nautilus::stringstream ss;
     ss << messageVal;
-    const RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
+    const RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(std::addressof(tupleBuffer))};
     for (nautilus::val<uint64_t> recordIndex = 0; recordIndex < recordBuffer.getNumRecords(); ++recordIndex)
     {
         const auto record = tupleBufferRef.readRecord(tupleBufferRef.getAllFieldNames(), recordBuffer, recordIndex);
