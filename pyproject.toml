@@ -1,0 +1,57 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Virtual uv workspace root for the repo's Python.
+#
+# This file exists ONLY to organize the conn-test Python into a uv workspace
+# with one shared, committed `uv.lock` at the repo root. It is a *virtual*
+# root (`package = false`): it ships no code and has no dependencies of its
+# own — "all dependencies live in the members" (uv workspace docs).
+#
+# Why a workspace: the conn-test framework's design principle is plugin
+# encapsulation. Each connector declares its loader's runtime client library
+# (paho-mqtt, psycopg, …) in its OWN `conn-test/pyproject.toml`, so adding a
+# connector never edits a shared file — the `members` glob below picks it up.
+# `uv sync --all-packages` then installs the union of all members' deps into
+# the single workspace `.venv`, which the conn-test runner needs because its
+# discovery imports every plugin loader at pytest-collection time.
+#
+# The runner member (`nes-conn-test/runner`) owns the test-tooling config
+# (ruff / mypy / pytest) — that config governs the harness, not this root.
+#
+# Membership convention: the globs make EVERY matched `conn-test/` dir a
+# workspace member, and uv requires each matched dir to contain a
+# `pyproject.toml` — it fails the whole resolve otherwise, naming the offender
+# ("Workspace member ... is missing a `pyproject.toml`"). So:
+#   * A connector whose loader needs NO third-party library still ships a
+#     minimal member file with `dependencies = []` (+ `[tool.uv] package = false`).
+#   * To keep a `conn-test/` dir OUT of the workspace entirely, add it to the
+#     `exclude` globs below — uv has no per-member opt-out flag, so this central
+#     list is the only escape hatch. In practice a `conn-test/pyproject.toml`
+#     exists only to declare deps for this workspace, so opting out is rare.
+
+[project]
+name = "nebulastream-conntest-workspace"
+version = "0"
+requires-python = ">=3.12"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+    "nes-conn-test/runner",
+    "nes-plugins/Sources/*/conn-test",
+    "nes-plugins/Sinks/*/conn-test",
+]
+# Opt a conn-test dir out of the workspace by adding its path/glob here.
+exclude = []

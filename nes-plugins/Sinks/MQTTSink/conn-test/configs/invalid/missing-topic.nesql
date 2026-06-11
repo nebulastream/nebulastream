@@ -1,0 +1,6 @@
+-- Invalid: `topic` is required (no default in ConfigParametersMQTTSink), so
+-- DescriptorConfig::validateAndFormat rejects this at bind time with
+-- INVALID_CONFIG_PARAMETER (1000).
+CREATE SINK conntest_sink (value VARSIZED NOT NULL) TYPE MQTT SET (
+    'tcp://localhost:1883' AS `SINK`.server_uri,
+    'JSON'                 AS `SINK`.OUTPUT_FORMAT);

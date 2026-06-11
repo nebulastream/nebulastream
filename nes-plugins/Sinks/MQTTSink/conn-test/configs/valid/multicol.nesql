@@ -1,0 +1,12 @@
+-- A SECOND valid MQTT sink schema, deliberately different from basic.nesql's
+-- single `value VARSIZED`: three columns of mixed types (INT32, VARSIZED,
+-- FLOAT64). It proves an arbitrary CREATE SINK schema flows end-to-end through
+-- the formatted (JSONL) sink — the framework generates typed rows from this
+-- schema, renders them to JSONL records the sink publishes, and parses the
+-- read-back per this schema for the rows-equal compare. No loader change needed.
+-- (OUTPUT_FORMAT is descriptor-only here — see basic.nesql.)
+CREATE SINK conntest_multi (id INT32 NOT NULL, label VARSIZED NOT NULL, ratio FLOAT64 NOT NULL) TYPE MQTT SET (
+    'tcp://localhost:1883' AS `SINK`.server_uri,
+    'demo/topic'           AS `SINK`.topic,
+    '1'                    AS `SINK`.qos,
+    'JSON'                 AS `SINK`.OUTPUT_FORMAT);

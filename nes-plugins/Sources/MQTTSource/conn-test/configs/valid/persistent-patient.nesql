@@ -1,0 +1,28 @@
+-- A persistent-session MQTT source config that bridges the `timeout` scenario's
+-- long link silence. Like persistent.nesql (clean_session=false + a fixed
+-- client_id, so the broker keeps the subscription) but with a much longer idle
+-- end-of-stream budget: flush_interval_ms x max_flush_retries = 200ms x 150 = 30s.
+--
+-- Why 30s: MQTTSource hard-codes paho's automatic_reconnect (the bare boolean, so
+-- paho's default backoff applies: minRetryInterval=1s, maxRetryInterval=60s,
+-- doubling on each failed retry — 1, 2, 4, 8, 16, ...). After the 15s cut the
+-- failed attempts land at +1/+3/+7/+15s, so the first one that can succeed is the
+-- next (16s) step — ~16s after restore. The 2s budget in persistent.nesql gives up
+-- long before that (→ LOSS); this 30s budget holds the post-gap read open through
+-- the reconnect + queued delivery with margin for phase jitter. The timeout
+-- binding pairs this with a step_timeout_ms above the budget so the harness
+-- watchdog does not cut the (legitimately long) FILL short. The client_id literal
+-- is documentation only: the loader rewrites it to a per-test token, so each
+-- scenario gets its own session regardless of which config it shares.
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE MQTT SET (
+    'tcp://localhost:1883' AS `SOURCE`.server_uri,
+    'demo/topic'           AS `SOURCE`.topic,
+    '1'                    AS `SOURCE`.qos,
+    '200'                  AS `SOURCE`.flush_interval_ms,
+    '150'                  AS `SOURCE`.max_flush_retries,
+    'false'                AS `SOURCE`.clean_session,
+    'conntest-patient'     AS `SOURCE`.client_id,
+    'JSON'                 AS INPUT_FORMATTER.`TYPE`
+);

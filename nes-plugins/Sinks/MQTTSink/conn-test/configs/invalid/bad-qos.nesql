@@ -1,0 +1,8 @@
+-- Invalid: `qos` must be 0, 1, or 2. The QOS validator in
+-- ConfigParametersMQTTSink rejects 3, so DescriptorConfig::validateAndFormat
+-- fails this at bind time with INVALID_CONFIG_PARAMETER (1000).
+CREATE SINK conntest_sink (value VARSIZED NOT NULL) TYPE MQTT SET (
+    'tcp://localhost:1883' AS `SINK`.server_uri,
+    'demo/topic'           AS `SINK`.topic,
+    '3'                    AS `SINK`.qos,
+    'JSON'                 AS `SINK`.OUTPUT_FORMAT);

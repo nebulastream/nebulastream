@@ -1,0 +1,17 @@
+-- A valid MQTT sink configuration that does NOT survive a connection loss.
+--
+-- `send_while_disconnected` and `automatic_reconnect` are both off, so the sink
+-- neither buffers publishes while the link is down nor re-establishes the
+-- connection: a publish issued during an outage is rejected with CannotOpenSink
+-- (4004) instead of being queued and delivered later. This is what makes the
+-- `outage` scenario's LOSS path express a real drop on a sink that otherwise
+-- buffers (see basic.nesql, which keeps both knobs at their reconnect-and-deliver
+-- defaults — the OK path). Config-key grammar matches ConfigParametersMQTTSink in
+-- nes-plugins/Sinks/MQTTSink/MQTTSink.hpp.
+CREATE SINK conntest_sink (value VARSIZED NOT NULL) TYPE MQTT SET (
+    'tcp://localhost:1883' AS `SINK`.server_uri,
+    'demo/topic'           AS `SINK`.topic,
+    '1'                    AS `SINK`.qos,
+    'false'                AS `SINK`.send_while_disconnected,
+    'false'                AS `SINK`.automatic_reconnect,
+    'JSON'                 AS `SINK`.OUTPUT_FORMAT);

@@ -1,6 +1,12 @@
 # syntax=docker/dockerfile:1
 # The development image adds common development tools we use during development and the CI uses for the pre-build-check
 ARG TAG=latest
+
+# `COPY --from` does not support variable expansion in the image reference, so the `uv` source
+# image is pinned via a globally-scoped ARG and resolved through a named stage (see the COPY below).
+ARG UV_VERSION=0.11.17
+FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
+
 FROM nebulastream/nes-development-dependency:${TAG}
 
 ARG ANTLR4_VERSION=4.13.2
@@ -159,3 +165,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     docker --version && \
     docker compose version
+
+# Ship `uv` for the conn-test pytest runner (nes-conn-test/runner) so the
+# battery no longer bootstraps it from astral.sh on every CI invocation —
+# the `conntest` CLI keeps the curl bootstrap only as a fallback for older
+# local images that predate this layer. Pinned, copied from the official
+# distroless image (the recommended container install path). The version is
+# pinned by the globally-scoped UV_VERSION ARG and the `uv` stage at the top.
+COPY --from=uv /uv /uvx /usr/local/bin/
+RUN uv --version

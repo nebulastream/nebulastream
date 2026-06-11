@@ -1,0 +1,11 @@
+-- Invalid: `qos` must be 0, 1, or 2. The QOS validator in
+-- ConfigParametersMQTTSource rejects 3, so DescriptorConfig::validateAndFormat
+-- fails this at bind time with INVALID_CONFIG_PARAMETER (1000).
+CREATE LOGICAL SOURCE smoke_input (data UINT8);
+
+CREATE PHYSICAL SOURCE FOR smoke_input TYPE MQTT SET (
+    'tcp://localhost:1883' AS `SOURCE`.server_uri,
+    'demo/topic'           AS `SOURCE`.topic,
+    '3'                    AS `SOURCE`.qos,
+    'JSON'                 AS INPUT_FORMATTER.`TYPE`
+);

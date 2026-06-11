@@ -14,6 +14,18 @@
 
 set -eo pipefail
 
+# Git aborts on a repository directory owned by a different uid than the
+# caller (CVE-2022-24765, "detected dubious ownership"). Inside the dev
+# container the bind-mounted checkout is host-owned while git runs as the
+# container user, so the rev-parse on the next line — and every git call
+# after it — fails. Whitelist this checkout (path derived from the script's
+# own location, since rev-parse would itself trip the guard). No-op when the
+# owner already matches, and de-duplicated so repeated runs do not pile up
+# identical entries in the global config.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+git config --global --get-all safe.directory 2>/dev/null | grep -qxF "${REPO_ROOT}" \
+    || git config --global --add safe.directory "${REPO_ROOT}"
+
 cd "$(git rev-parse --show-toplevel)"
 
 # We have to set the pager to cat, because otherwise the output is paged and the script hangs for git grep commands.
@@ -200,6 +212,11 @@ fi
 python3 scripts/check_preamble.py || FAIL=1
 
 DISTANCE_MERGE_BASE=$DISTANCE_MERGE_BASE python3 scripts/check_todos.py || FAIL=1
+
+# Python gate for the conn-test framework (ruff lint + format, mypy strict).
+# Scoped to changed conn-test Python; a no-op (no uv) when none changed.
+# Forwards the mode (-i fixes in place) and the merge-base distance.
+DISTANCE_MERGE_BASE=$DISTANCE_MERGE_BASE nes-conn-test/runner/check.sh "${1-}" || FAIL=1
 
 # error code uniqueness check
 DUPLICATES=$(sed -nE 's/^[[:space:]]*EXCEPTION\([^,]+,[[:space:]]*([0-9]+)[[:space:]]*,.*$/\1/p' nes-common/include/ExceptionDefinitions.inc | sort -n | uniq -d)

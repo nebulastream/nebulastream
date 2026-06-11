@@ -24,35 +24,53 @@ on:
 
 jobs:
   build-code-coverage-pr-branch:
-    container:
-      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
-      env:
-        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
-        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
-        SCCACHE_REGION: auto
-        SCCACHE_S3_USE_SSL: "true"
-        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
     timeout-minutes: 90
     runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
     strategy:
       fail-fast: false
       matrix:
         platform: [ x64 ]
+    # Run the host step on the bare runner and shell into the dev image via
+    # ./.github/steps/run-in-container instead of a job-level `container:`
+    # block. Under GHA `container:`, $(pwd) is the in-container bind-mount
+    # path (e.g. /__w/nebulastream/nebulastream) but the host's docker
+    # daemon resolves bind-mount sources against the runner's actual _work
+    # directory (e.g. /data-2/github-runners/.../_work/nebulastream/...).
+    # The conntest battery's compose.yaml interpolates ${HOST_NEBULASTREAM_ROOT}
+    # for its mosquitto.conf bind source, so the path mismatch made the
+    # daemon synthesise an empty directory and the file-onto-directory mount
+    # silently fail. run-in-container does `-v $(pwd):$(pwd)`, so the host
+    # and container paths are identical — same scheme as build_and_test.yml.
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+      SCCACHE_REGION: auto
+      SCCACHE_S3_USE_SSL: "true"
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
     steps:
       - name: Checkout PR Branch
         uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
-      - name: Build coverage and export as lcov
-        run: |
-          cmake -DCODE_COVERAGE=ON -B build
-          cmake --build build -j -- -k 0
-          cmake --build build --target ccov-all-export
+      - uses: ./.github/steps/run-in-container
+        name: Build coverage and export as lcov
+        with:
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+          run: |
+            export HOST_NEBULASTREAM_ROOT="$(pwd)"
+            # The ccov build invokes `conntest coverage` (via the
+            # ccov-run-conntest-pytest CMake target), which spawns the
+            # per-plugin compose `runner` service. That service must use
+            # the same image as this container so the harness binary links
+            # against the same libstdc++/libc++. Export the image name
+            # explicitly — `conntest coverage` is invoked from inside the
+            # build via a CMake custom target, so it cannot derive the image
+            # itself (it reads CONNTEST_DEV_IMAGE from the environment).
+            export CONNTEST_DEV_IMAGE="nebulastream/nes-ci:${{ inputs.dev_image_tag }}"
+            cmake -DCODE_COVERAGE=ON -B build
+            cmake --build build -j -- -k 0
+            cmake --build build --target ccov-all-export
       - uses: codecov/codecov-action@v7
         with:
           slug: nebulastream/nebulastream
