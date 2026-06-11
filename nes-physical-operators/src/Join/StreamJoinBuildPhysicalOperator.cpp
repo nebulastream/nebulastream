@@ -16,6 +16,7 @@
 #include <memory>
 #include <utility>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -29,11 +30,11 @@ StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
     std::unique_ptr<SliceStoreRef> sliceStoreRef)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
     , joinBuildSide(joinBuildSide)
-    , bufferRef(std::move(bufferRef))
+    , tupleLayout(std::move(tupleLayout))
 {
 }
 }

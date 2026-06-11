@@ -48,7 +48,7 @@ struct VariableSizedAccess
         using Underlying = uint32_t;
         static constexpr auto UnderlyingBits = sizeof(Underlying) * 8;
 
-        explicit Index(uint64_t index);
+        explicit Index(uint64_t index) noexcept;
 
         [[nodiscard]] Underlying getRawIndex() const;
         friend std::ostream& operator<<(std::ostream& os, const Index& index);

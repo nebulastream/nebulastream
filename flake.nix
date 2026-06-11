@@ -142,6 +142,10 @@
               linkerFlags = sanitizer.linkerFlags;
             };
             gtestPkg = overrideStdenv pkgs.gtest;
+            rapidcheckPkg = (overrideStdenv pkgs.rapidcheck).overrideAttrs (old: {
+              outputs = [ "out" ];
+              buildInputs = lib.unique ((old.buildInputs or [ ]) ++ extraInputs);
+            });
             re2Pkg = re2Packages.withSanitizer {
               extraBuildInputs = extraInputs;
               inherit useLibcxx;
@@ -201,6 +205,7 @@
                 gflagsPkg
                 glogPkg
                 gtestPkg
+                rapidcheckPkg
                 tbbPkg
                 follyPkg
                 re2Pkg
