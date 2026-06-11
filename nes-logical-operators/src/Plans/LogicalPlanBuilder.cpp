@@ -49,6 +49,7 @@
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Operators/Windows/IntervalJoinLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -191,6 +192,61 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     NES_TRACE("LogicalPlanBuilder: add join operator to query plan");
     leftLogicalPlan = addBinaryOperatorAndUpdateSource(
         JoinLogicalOperator::create(joinFunction, std::move(windowType), joinType, std::move(joinTimeCharacteristicOpt).value()),
+        leftLogicalPlan,
+        rightLogicalPlan);
+    return leftLogicalPlan;
+}
+
+LogicalPlan LogicalPlanBuilder::addIntervalJoin(
+    LogicalPlan leftLogicalPlan,
+    LogicalPlan rightLogicalPlan,
+    const LogicalFunction& joinFunction,
+    Windowing::TimeCharacteristic leftCharacteristic,
+    Windowing::TimeCharacteristic rightCharacteristic,
+    int64_t lowerBound,
+    int64_t upperBound,
+    JoinLogicalOperator::JoinType joinType)
+{
+    NES_TRACE("LogicalPlanBuilder: validate interval-join function and add interval-join operator");
+
+    /// Same constant-key check addJoin performs: forbid join keys that are purely constant expressions.
+    std::unordered_set<LogicalFunction> visitedFunctions;
+    for (const LogicalFunction& itr : BFSRange(joinFunction))
+    {
+        if (itr.getChildren().size() == 2)
+        {
+            auto leftVisitingOp = itr.getChildren()[0];
+            if (leftVisitingOp.getChildren().size() == 1)
+            {
+                if (visitedFunctions.find(leftVisitingOp) == visitedFunctions.end())
+                {
+                    visitedFunctions.insert(leftVisitingOp);
+                    auto leftChild = leftVisitingOp.getChildren().at(0);
+                    auto rightChild = leftVisitingOp.getChildren().at(1);
+                    if ((leftChild.getChildren().size() == 1) && (rightChild.getChildren().size() == 1))
+                    {
+                        if (leftChild.tryGetAs<ConstantValueLogicalFunction>() || rightChild.tryGetAs<ConstantValueLogicalFunction>())
+                        {
+                            throw InvalidQuerySyntax("One of the join keys does only consist of a constant function. Use WHERE instead.");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    INVARIANT(!rightLogicalPlan.getRootOperators().empty(), "RootOperators of rightLogicalPlan are empty");
+
+    leftLogicalPlan = checkAndAddWatermarkAssigner(leftLogicalPlan, leftCharacteristic);
+    rightLogicalPlan = checkAndAddWatermarkAssigner(rightLogicalPlan, rightCharacteristic);
+
+    auto joinTimeCharacteristicOpt
+        = JoinLogicalOperator::createJoinTimeCharacteristic({std::move(leftCharacteristic), std::move(rightCharacteristic)});
+    PRECONDITION(joinTimeCharacteristicOpt.has_value(), "Interval-join time characteristics must be either both bound or unbound");
+
+    leftLogicalPlan = addBinaryOperatorAndUpdateSource(
+        TypedLogicalOperator<IntervalJoinLogicalOperator>{
+            joinFunction, std::move(joinTimeCharacteristicOpt).value(), lowerBound, upperBound, joinType},
         leftLogicalPlan,
         rightLogicalPlan);
     return leftLogicalPlan;

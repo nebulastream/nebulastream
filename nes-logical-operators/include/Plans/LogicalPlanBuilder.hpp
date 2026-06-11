@@ -95,6 +95,21 @@ public:
         Windowing::TimeCharacteristic leftCharacteristic,
         Windowing::TimeCharacteristic rightCharacteristic);
 
+    /// Adds a streaming interval-join operator with closed bounds [lowerBound, upperBound]
+    /// in milliseconds. Bounds are signed (int64_t) so past/future-anchored intervals are
+    /// expressible (e.g. lower=-4, upper=-1). Watermark assigners are inserted on each
+    /// input plan if not already present, mirroring addJoin.
+    /// TODO #1471: PR #1471 will extend this with outer-join semantics; currently INNER_JOIN only.
+    static LogicalPlan addIntervalJoin(
+        LogicalPlan leftLogicalPlan,
+        LogicalPlan rightLogicalPlan,
+        const LogicalFunction& joinFunction,
+        Windowing::TimeCharacteristic leftCharacteristic,
+        Windowing::TimeCharacteristic rightCharacteristic,
+        int64_t lowerBound,
+        int64_t upperBound,
+        JoinLogicalOperator::JoinType joinType);
+
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
