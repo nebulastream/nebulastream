@@ -3,7 +3,7 @@
   "version-string": "latest",
   "homepage": "https://nebula.stream",
   "description": "Data Management for the Internet of Things.",
-  "builtin-baseline": "4334d8b4c8916018600212ab4dd4bbdc343065d1",
+  "builtin-baseline": "f3e10653cc27d62a37a3763cd84b38bca07c6075",
   "$comment": [
     "BEWARE: changing the baseline might change the expected ANTLR_VERSION",
     "        supplied to cmake by the antlr4 dependency.",
