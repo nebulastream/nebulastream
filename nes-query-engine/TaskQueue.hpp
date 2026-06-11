@@ -20,11 +20,29 @@
 #include <semaphore>
 #include <stop_token>
 #include <utility>
+#include <ittnotify.h>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
 namespace NES
 {
+static __itt_domain* taskQueueDomain = __itt_domain_create("engine.taskqueue");
+static __itt_string_handle* blockingRead = __itt_string_handle_create("Blocking Read");
+static __itt_string_handle* blockingWrite = __itt_string_handle_create("Blocking Write");
+static __itt_counter queue_depth = __itt_counter_create("Depth", "engine.taskqueue");
+static std::atomic<size_t> queue_depth_value{0};
+#define decrease_count() \
+    do \
+    { \
+        auto depth = queue_depth_value.fetch_sub(1, std::memory_order_relaxed) - 1; \
+        __itt_counter_set_value(queue_depth, &depth); \
+    } while (false)
+#define increase_count() \
+    do \
+    { \
+        auto depth = queue_depth_value.fetch_add(1, std::memory_order_relaxed) + 1; \
+        __itt_counter_set_value(queue_depth, &depth); \
+    } while (false)
 
 /// The TaskQueue is a central component within the QueryEngine. External components like sources or users of the system can add new tasks
 /// to an admission queue which is bounded and will backpressure sources if necessary. Internally, WorkerThreads communicate via a shared
@@ -46,6 +64,7 @@ class TaskQueue
 
     TaskType readElementAssumingItExists()
     {
+        decrease_count();
         TaskType task;
         /// The semaphore guarantees that there is at least one element in either one of the queues.
         if (internal.try_dequeue(task))
@@ -70,6 +89,25 @@ public:
     template <typename T = TaskType>
     bool addAdmissionTaskBlocking(const std::stop_token& stoken, T&& task)
     {
+        /// fast path
+        if (stoken.stop_requested())
+        {
+            return false;
+        }
+
+        if (admission.write(std::forward<T>(task)))
+        {
+            increase_count();
+            tasksAvailable.release();
+            return true;
+        }
+
+        /// blocking write
+        __itt_task_begin(taskQueueDomain, __itt_null, __itt_null, blockingWrite);
+        SCOPE_EXIT
+        {
+            __itt_task_end(taskQueueDomain);
+        };
         while (!stoken.stop_requested())
         {
             /// The order of operation upholds the invariant
@@ -77,6 +115,7 @@ public:
             if (admission.tryWriteUntil(std::chrono::steady_clock::now() + StopTokenCheckInterval, std::forward<T>(task)))
             {
                 /// tasksAvailable is only increased if write to admission queue was successful.
+                increase_count();
                 tasksAvailable.release();
                 return true;
             }
@@ -90,6 +129,7 @@ public:
     {
         /// The order of operation upholds the invariant. internal is unbounded which makes this write always succeed (unless oom)
         internal.enqueue(std::forward<T>(task));
+        increase_count();
         tasksAvailable.release();
     }
 
@@ -99,6 +139,11 @@ public:
     /// the stop token.
     std::optional<TaskType> getNextTaskBlocking(const std::stop_token& stoken)
     {
+        __itt_task_begin(taskQueueDomain, __itt_null, __itt_null, blockingRead);
+        SCOPE_EXIT
+        {
+            __itt_task_end(taskQueueDomain);
+        };
         while (!tasksAvailable.try_acquire_for(StopTokenCheckInterval))
         {
             if (stoken.stop_requested())

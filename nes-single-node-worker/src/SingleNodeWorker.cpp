@@ -22,6 +22,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <ittnotify.h>
 #include <unistd.h>
 #include <Configurations/ConfigValuePrinter.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -48,6 +49,13 @@
 #include <WorkerStatus.hpp>
 
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
+
+namespace
+{
+__itt_domain* workerDomain = __itt_domain_create("worker");
+__itt_string_handle* ittStartQuery = __itt_string_handle_create("Start");
+__itt_string_handle* ittStopQuery = __itt_string_handle_create("Stop");
+}
 
 namespace NES
 {
@@ -94,6 +102,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
 std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan) noexcept
 {
+    __itt_task_begin(workerDomain, __itt_null, __itt_null, ittStartQuery);
     CPPTRACE_TRY
     {
         /// Check if the plan already has a local query ID, generate one if needed
@@ -123,10 +132,12 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
         nodeEngine->startQuery(plan.getQueryId(), std::move(result));
+        __itt_task_end(workerDomain);
         return plan.getQueryId();
     }
     CPPTRACE_CATCH(...)
     {
+        __itt_task_end(workerDomain);
         return std::unexpected(wrapExternalException());
     }
     std::unreachable();
@@ -134,14 +145,17 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
 
 std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noexcept
 {
+    __itt_task_begin(workerDomain, __itt_null, __itt_null, ittStopQuery);
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->stopQuery(queryId);
+        __itt_task_end(workerDomain);
         return {};
     }
     CPPTRACE_CATCH(...)
     {
+        __itt_task_end(workerDomain);
         return std::unexpected{wrapExternalException()};
     }
     std::unreachable();

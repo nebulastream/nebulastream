@@ -26,6 +26,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <ittnotify.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Overloaded.hpp>
@@ -34,12 +35,26 @@
 #include <Interfaces.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <RunningQueryPlan.hpp>
+#include <scope_guard.hpp>
 
 namespace NES
 {
 
 namespace
 {
+__itt_domain* sourceDomain = __itt_domain_create("engine.source");
+__itt_string_handle* queueWrite = __itt_string_handle_create("Blocking Write");
+__itt_string_handle* waitForInflightBuffers = __itt_string_handle_create("Wait for inflight buffers");
+
+__itt_string_handle* asyncWriteTask = __itt_string_handle_create("Blocked Async Write");
+__itt_string_handle* asyncWriteCallbackTask = __itt_string_handle_create("Blocked Async Write Completed");
+
+[[maybe_unused]] __itt_id makeTaskId()
+{
+    thread_local uint64_t counter = 0;
+    return __itt_id_make(reinterpret_cast<void*>(pthread_self()), counter++);
+}
+
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
     size_t numberOfInflightBuffers,
@@ -70,6 +85,7 @@ SourceReturnType::EmitFunction emitFunction(
                                 return SourceReturnType::EmitResult::STOP_REQUESTED;
                             }
                         }
+                        __itt_task_begin(sourceDomain, __itt_null, __itt_null, queueWrite);
                         /// The admission queue might be full, we have to reattempt
                         while (not emitter.emitWork(
                             queryId,
@@ -80,9 +96,11 @@ SourceReturnType::EmitFunction emitFunction(
                         {
                             if (stopToken.stop_requested())
                             {
+                                __itt_task_end(sourceDomain);
                                 return SourceReturnType::EmitResult::STOP_REQUESTED;
                             }
                         }
+                        __itt_task_end(sourceDomain);
                         ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
                     }
                     return SourceReturnType::EmitResult::SUCCESS;
@@ -144,6 +162,7 @@ RunningSource::~RunningSource()
 {
     if (source)
     {
+        LogContext logContext("Source", source->getSourceId());
         ENGINE_LOG_DEBUG("Stopping Running Source");
         if (source->tryStop(std::chrono::milliseconds(0)) == SourceReturnType::TryStopResult::TIMEOUT)
         {

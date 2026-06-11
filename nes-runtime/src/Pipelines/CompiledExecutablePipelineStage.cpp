@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <ittnotify.h>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -39,6 +40,12 @@
 
 namespace NES
 {
+
+namespace
+{
+__itt_domain* compilationDomain = __itt_domain_create("engine.compilation");
+__itt_string_handle* compiling = __itt_string_handle_create("Compiling");
+}
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
@@ -123,7 +130,9 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
         CompilationContext compilationCtx{module};
         pipeline->getRootOperator().setup(ctx, compilationCtx);
         registerPipelineFunction(module);
+        __itt_task_begin(compilationDomain, __itt_null, __itt_null, compiling);
         compiledModule = module.compile();
+        __itt_task_end(compilationDomain);
         compilationCtx.resolveAfterCompilation(*compiledModule);
         compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
 
