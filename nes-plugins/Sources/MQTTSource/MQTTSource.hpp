@@ -30,6 +30,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UUID.hpp>
 #include <mqtt/async_client.h>
 #include <PayloadStash.hpp>
 

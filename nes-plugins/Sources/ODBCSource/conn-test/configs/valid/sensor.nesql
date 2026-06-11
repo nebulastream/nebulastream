@@ -1,0 +1,25 @@
+-- A SECOND valid ODBC source schema, deliberately different from basic.nesql
+-- (different column names, arity, order, and types — FLOAT32/INT16 that basic
+-- does not use), to prove an arbitrary CREATE LOGICAL SOURCE flows end-to-end:
+-- the framework parses this schema, generates rows for it, and the loader
+-- derives the per-test table DDL and the SELECT projection from it (no schema
+-- is hardcoded in the loader). Same windowed-poller contract as basic.nesql.
+CREATE LOGICAL SOURCE sensor_readings (
+    sensor_id INT32 NOT NULL,
+    ts INT64 NOT NULL,
+    temperature FLOAT32 NOT NULL,
+    humidity INT16 NOT NULL,
+    pressure FLOAT64 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR sensor_readings TYPE ODBC SET (
+    'NATIVE'                            AS INPUT_FORMATTER.`TYPE`,
+    'localhost'                         AS `SOURCE`.db_host,
+    '5432'                              AS `SOURCE`.db_port,
+    'nebulastream'                      AS `SOURCE`.database,
+    'nes'                               AS `SOURCE`.username,
+    'nes'                               AS `SOURCE`.password,
+    'PostgreSQL Unicode'                AS `SOURCE`.driver,
+    'SELECT sensor_id, ts, temperature, humidity, pressure FROM sensor_readings WHERE created_at > ? AND created_at <= ? ORDER BY sensor_id DESC' AS `SOURCE`.query,
+    '100'                               AS `SOURCE`.poll_interval_ms
+);

@@ -224,6 +224,10 @@
                 # so the C client has to be on CMAKE_PREFIX_PATH as well.
                 pkgs.paho-mqtt-c
                 pkgs.paho-mqtt-cpp
+                # unixODBC driver manager links into the ODBC source; the psql driver
+                # is the runtime driver the manager loads via odbcinst.ini.
+                pkgs.unixODBC
+                pkgs.unixODBCDrivers.psql
                 ireeruntimePkg
               ];
           in {

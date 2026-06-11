@@ -86,6 +86,21 @@ ControlChannel::ControlChannel(ControlChannel&& other) noexcept : fileDescriptor
     other.fileDescriptor = -1;
 }
 
+ControlChannel& ControlChannel::operator=(ControlChannel&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (fileDescriptor >= 0)
+        {
+            ::close(fileDescriptor);
+        }
+        fileDescriptor = other.fileDescriptor;
+        buffer = std::move(other.buffer);
+        other.fileDescriptor = -1;
+    }
+    return *this;
+}
+
 std::optional<std::string> ControlChannel::readLine()
 {
     while (true)

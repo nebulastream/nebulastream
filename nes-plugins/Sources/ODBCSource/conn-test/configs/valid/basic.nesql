@@ -1,0 +1,26 @@
+-- A valid ODBC source configuration (Postgres over the PostgreSQL Unicode
+-- driver). The ODBC source is a timestamp-windowed poller: it binds the two `?`
+-- markers in `query` to a (watermark, now] window and emits the projected
+-- columns. The logical schema is the projected columns.
+--
+-- The connector reads its endpoint from `db_host` / `db_port`. `query` is
+-- mandatory (no default). The `db_host` / `db_port` literals are concrete —
+-- binding never connects.
+CREATE LOGICAL SOURCE conntest_rows (
+    k INT64 NOT NULL,
+    a INT32 NOT NULL,
+    b INT64 NOT NULL,
+    c FLOAT64 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR conntest_rows TYPE ODBC SET (
+    'NATIVE'                            AS INPUT_FORMATTER.`TYPE`,
+    'localhost'                         AS `SOURCE`.db_host,
+    '5432'                              AS `SOURCE`.db_port,
+    'nebulastream'                      AS `SOURCE`.database,
+    'nes'                               AS `SOURCE`.username,
+    'nes'                               AS `SOURCE`.password,
+    'PostgreSQL Unicode'                AS `SOURCE`.driver,
+    'SELECT k, a, b, c FROM conntest_rows WHERE created_at > ? AND created_at <= ? ORDER BY k DESC' AS `SOURCE`.query,
+    '100'                               AS `SOURCE`.poll_interval_ms
+);

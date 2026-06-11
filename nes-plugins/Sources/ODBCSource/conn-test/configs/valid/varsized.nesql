@@ -1,0 +1,28 @@
+-- A valid ODBC source schema exercising VARSIZED columns — a non-null `message`
+-- and a NULLABLE `detail` — alongside fixed scalars. It proves the source path
+-- round-trips variable-sized data end-to-end: the framework generates rows
+-- (strings, with `detail` NULL on a deterministic fraction), the loader INSERTs
+-- them, the source reads the TEXT columns into VariableSizedAccess slots backed
+-- by child buffers, the harness serializes those payloads in its framed observed
+-- output, and the decoded tuples are multiset-compared against the oracle. The
+-- per-test table DDL and the SELECT projection are derived from this schema. The
+-- first projected column (the ORDER BY key) is kept a NOT NULL scalar. Same
+-- windowed-poller contract as basic.nesql.
+CREATE LOGICAL SOURCE log_entries (
+    entry_id INT64 NOT NULL,
+    message VARSIZED NOT NULL,
+    detail VARSIZED,
+    severity INT32 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR log_entries TYPE ODBC SET (
+    'NATIVE'                            AS INPUT_FORMATTER.`TYPE`,
+    'localhost'                         AS `SOURCE`.db_host,
+    '5432'                              AS `SOURCE`.db_port,
+    'nebulastream'                      AS `SOURCE`.database,
+    'nes'                               AS `SOURCE`.username,
+    'nes'                               AS `SOURCE`.password,
+    'PostgreSQL Unicode'                AS `SOURCE`.driver,
+    'SELECT entry_id, message, detail, severity FROM log_entries WHERE created_at > ? AND created_at <= ? ORDER BY entry_id DESC' AS `SOURCE`.query,
+    '100'                               AS `SOURCE`.poll_interval_ms
+);

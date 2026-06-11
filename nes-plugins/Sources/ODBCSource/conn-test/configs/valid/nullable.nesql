@@ -1,0 +1,26 @@
+-- A valid ODBC source schema with a NULLABLE scalar column (`reading`, declared
+-- without NOT NULL), to prove the source path round-trips NULLs. The framework
+-- generates rows for this schema (the nullable column NULL on a deterministic
+-- fraction), the loader INSERTs them (None -> SQL NULL), the source polls them,
+-- and the decoded observed tuples are multiset-compared against the oracle. The
+-- per-test table DDL and the SELECT projection are derived from this schema, so
+-- the nullable column becomes a NULL-allowing Postgres column. The first
+-- projected column (the ORDER BY key) is kept NOT NULL. Same windowed-poller
+-- contract as basic.nesql.
+CREATE LOGICAL SOURCE reading_events (
+    event_id INT64 NOT NULL,
+    reading FLOAT64,
+    level INT32 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR reading_events TYPE ODBC SET (
+    'NATIVE'                            AS INPUT_FORMATTER.`TYPE`,
+    'localhost'                         AS `SOURCE`.db_host,
+    '5432'                              AS `SOURCE`.db_port,
+    'nebulastream'                      AS `SOURCE`.database,
+    'nes'                               AS `SOURCE`.username,
+    'nes'                               AS `SOURCE`.password,
+    'PostgreSQL Unicode'                AS `SOURCE`.driver,
+    'SELECT event_id, reading, level FROM reading_events WHERE created_at > ? AND created_at <= ? ORDER BY event_id DESC' AS `SOURCE`.query,
+    '100'                               AS `SOURCE`.poll_interval_ms
+);
