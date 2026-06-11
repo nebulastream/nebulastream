@@ -37,11 +37,10 @@
 namespace NES
 {
 
-SpanningTupleBuffer::SpanningTupleBuffer(const size_t initialSize, TupleBuffer dummyBuffer)
-    : buffer(std::vector<SpanningTupleBufferEntry>(initialSize))
+SpanningTupleBuffer::SpanningTupleBuffer(const size_t initialSize) : buffer(std::vector<SpanningTupleBufferEntry>(initialSize))
 {
     PRECONDITION(initialSize > 0, "Constructing an SpanningTupleBuffer with an initial size of 0 is not allowed");
-    buffer.at(0).setStateOfFirstIndex(std::move(dummyBuffer));
+    buffer.at(0).setStateOfFirstIndex();
 }
 
 SpanningTupleBuffer::WithoutDelimiterSearchResult
