@@ -27,10 +27,10 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <ExecutionContext.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
@@ -75,7 +75,7 @@ private:
         JoinBuildSideType innerSide,
         const std::shared_ptr<TupleBufferRef>& innerMemoryProvider,
         const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
-        const Schema& nullSideSchema,
+        const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
         const nautilus::val<OperatorHandler*>& operatorHandlerRef,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,

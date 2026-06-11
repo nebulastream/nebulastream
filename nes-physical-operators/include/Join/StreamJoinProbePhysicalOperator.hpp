@@ -56,7 +56,7 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd,
         const std::vector<Record::RecordFieldIdentifier>& preservedProjections,
-        const Schema& nullSideSchema) const;
+        const Schema<QualifiedUnboundField, Ordered>& nullSideSchema) const;
 
     PhysicalFunction joinFunction;
     JoinSchema joinSchema;

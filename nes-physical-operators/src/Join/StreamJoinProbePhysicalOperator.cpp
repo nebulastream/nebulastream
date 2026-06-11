@@ -124,13 +124,13 @@ Record StreamJoinProbePhysicalOperator::createNullFilledJoinedRecord(
     const nautilus::val<Timestamp>& windowStart,
     const nautilus::val<Timestamp>& windowEnd,
     const std::vector<Record::RecordFieldIdentifier>& preservedProjections,
-    const Schema& nullSideSchema) const
+    const Schema<QualifiedUnboundField, Ordered>& nullSideSchema) const
 {
     Record joinedRecord;
 
     /// Writing the window start and end fields
-    joinedRecord.write(windowMetaData.windowStartFieldName, windowStart.convertToValue());
-    joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
+    joinedRecord.write(windowMetaData.startField.getFullyQualifiedName(), windowStart.convertToValue());
+    joinedRecord.write(windowMetaData.endField.getFullyQualifiedName(), windowEnd.convertToValue());
 
     /// Writing preserved-side fields normally (same pattern as createJoinedRecord)
     for (const auto& fieldName : nautilus::static_iterable(preservedProjections))
@@ -139,10 +139,11 @@ Record StreamJoinProbePhysicalOperator::createNullFilledJoinedRecord(
     }
 
     /// Writing null-filled fields for the null side — type must match schema DataType
-    for (const auto& field : nautilus::static_iterable(nullSideSchema.getFields()))
+    const std::vector<QualifiedUnboundField> nullSideFields(nullSideSchema.begin(), nullSideSchema.end());
+    for (const auto& field : nautilus::static_iterable(nullSideFields))
     {
-        auto nullVal = makeNullVarVal(field.dataType);
-        joinedRecord.write(field.name, nullVal);
+        auto nullVal = makeNullVarVal(field.getDataType());
+        joinedRecord.write(field.getFullyQualifiedName(), nullVal);
     }
 
     return joinedRecord;

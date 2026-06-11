@@ -32,11 +32,11 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
-#include <Windowing/WindowMetaData.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -91,7 +91,7 @@ void NLJOuterProbePhysicalOperator::performNullFillProbe(
     JoinBuildSideType innerSide,
     const std::shared_ptr<TupleBufferRef>& innerMemoryProvider,
     const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
-    const Schema& nullSideSchema,
+    const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
     const nautilus::val<OperatorHandler*>& operatorHandlerRef,
     ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& windowStart,

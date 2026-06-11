@@ -76,7 +76,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
     const HashMapOptions& outerHashMapOptions,
     const HashMapOptions& innerHashMapOptions,
     const std::shared_ptr<TupleBufferRef>& outerBufferRef,
-    const Schema& nullSideSchema,
+    const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
     ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& windowStart,
     const nautilus::val<Timestamp>& windowEnd) const
