@@ -1,0 +1,100 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#[cxx::bridge]
+pub mod ffi {
+    unsafe extern "C++" {
+        include!("BufferBindings.hpp");
+        #[namespace = "NES::detail"]
+        type MemorySegment;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_retain(handle: *mut MemorySegment);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_release(handle: *mut MemorySegment);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_size(handle: *mut MemorySegment) -> usize;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_data(handle: *mut MemorySegment) -> *mut u8;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_load_child(handle: *mut MemorySegment, index: usize)
+        -> *mut MemorySegment;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_store_child(
+            handle: *mut MemorySegment,
+            child: *mut MemorySegment,
+        ) -> usize;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_num_children(handle: *mut MemorySegment) -> usize;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_number_of_tuples(handle: *mut MemorySegment) -> usize;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_sequence_number(handle: *mut MemorySegment) -> u64;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_origin_id(handle: *mut MemorySegment) -> u64;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_chunk_number(handle: *mut MemorySegment) -> u64;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_watermark(handle: *mut MemorySegment) -> u64;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_last_chunk(handle: *mut MemorySegment) -> bool;
+
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_number_of_tuples(handle: *mut MemorySegment, n: usize);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_sequence_number(handle: *mut MemorySegment, seq: u64);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_origin_id(handle: *mut MemorySegment, origin: u64);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_chunk_number(handle: *mut MemorySegment, chunk: u64);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_watermark(handle: *mut MemorySegment, watermark: u64);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_last_chunk(handle: *mut MemorySegment, last_chunk: bool);
+    }
+
+    extern "Rust" {
+        type OnBufferAllocated;
+    }
+
+    unsafe extern "C++" {
+        include!("BufferBindings.hpp");
+        type BufferProviderHandle;
+        fn try_allocate(handle: &SharedPtr<BufferProviderHandle>) -> *mut MemorySegment;
+        fn try_allocate_unpooled(
+            handle: &SharedPtr<BufferProviderHandle>,
+            size: usize,
+        ) -> *mut MemorySegment;
+        unsafe fn allocate_async(
+            handle: &SharedPtr<BufferProviderHandle>,
+            done: unsafe fn(Box<OnBufferAllocated>, segment: *mut MemorySegment),
+            ctx: Box<OnBufferAllocated>,
+        );
+    }
+}
+
+/// Completion context for allocate_async: carries the segment of the freshly allocated buffer
+/// back to the awaiting BufferProvider::allocate() future.
+pub struct OnBufferAllocated(pub tokio::sync::oneshot::Sender<AllocatedSegment>);
+
+/// Newtype that asserts the raw MemorySegment pointer is safe to move across threads (the segment
+/// is reference counted; only the address travels). Needed because the allocating coroutine may be
+/// resumed on a different thread than the one awaiting the buffer.
+pub struct AllocatedSegment(pub *mut ffi::MemorySegment);
+unsafe impl Send for AllocatedSegment {}
+
+unsafe impl Send for ffi::MemorySegment {}
+unsafe impl Sync for ffi::MemorySegment {}
+
+unsafe impl Send for ffi::BufferProviderHandle {}
+unsafe impl Sync for ffi::BufferProviderHandle {}

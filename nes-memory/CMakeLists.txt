@@ -29,5 +29,10 @@ target_include_directories(nes-memory
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 find_package(folly REQUIRED)
-target_link_libraries(nes-memory PUBLIC nes-common PRIVATE folly::folly)
+target_link_libraries(nes-memory PUBLIC nes-common nes-coro PRIVATE folly::folly)
+
+add_subdirectory(rust/nes-buffer-bindings)
+add_subdirectory(rust/my-buffer-test)
+
+
 add_tests_if_enabled(tests)

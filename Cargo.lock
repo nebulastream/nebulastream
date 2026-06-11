@@ -529,6 +529,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "my_buffer_test"
+version = "0.1.0"
+dependencies = [
+ "cxx",
+ "nes_buffer_bindings",
+ "nes_buffer_runtime",
+ "tokio",
+]
+
+[[package]]
+name = "nes_buffer_bindings"
+version = "0.1.0"
+dependencies = [
+ "cxx",
+ "tokio",
+]
+
+[[package]]
+name = "nes_buffer_runtime"
+version = "0.1.0"
+dependencies = [
+ "cxx",
+ "nes_buffer_bindings",
+ "tokio",
+]
+
+[[package]]
 name = "nes_network"
 version = "0.1.0"
 dependencies = [

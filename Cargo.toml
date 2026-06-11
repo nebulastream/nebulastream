@@ -16,6 +16,9 @@
 [workspace]
 resolver = "2"
 members = [
+    "nes-memory/rust/nes-buffer-bindings",
+    "nes-memory/rust/my-buffer-test",
+    "nes-memory/rust/nes-buffer-runtime",
     "nes-network/network",
     "nes-network/network-bindings",
     "nes-common/rust/spdlog-bindings",
@@ -24,6 +27,8 @@ members = [
 
 # Shared dependency declarations. Member crates opt in with `dep.workspace = true`.
 [workspace.dependencies]
+nes_buffer_bindings = { path = "nes-memory/rust/nes-buffer-bindings" }
+nes_buffer_runtime = { path = "nes-memory/rust/nes-buffer-runtime" }
 nes_network = { path = "nes-network/network" }
 cxx = "1.0.194"
 tokio = "1.52.0"
