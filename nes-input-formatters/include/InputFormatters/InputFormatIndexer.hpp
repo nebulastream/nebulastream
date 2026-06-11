@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -35,10 +36,18 @@ namespace NES
 class InputFormatIndexer
 {
 public:
-    explicit InputFormatIndexer() = default;
+    /// `tailPadding` is the number of bytes this indexer may over-read past the logical end of its input as part
+    /// of SIMD lookahead. Callers that own the input memory must guarantee at least this many addressable bytes
+    /// past the content end. Defaults to 0 for indexers with no over-read; SIMD-based indexers (e.g. simdjson)
+    /// pass their padding constant here.
+    explicit InputFormatIndexer(std::size_t tailPadding = 0) noexcept : tailPaddingBytes(tailPadding) { }
+
     virtual ~InputFormatIndexer() = default;
 
     [[nodiscard]] virtual std::unique_ptr<RawBufferIndex> indexRawBuffer(std::string_view rawBuffer) const = 0;
+
+    /// See ctor doc. Cached on the instance — no virtual call.
+    [[nodiscard]] std::size_t requiredTailPadding() const noexcept { return tailPaddingBytes; }
 
     [[nodiscard]] virtual std::string_view getTupleDelimitingBytes() const = 0;
     [[nodiscard]] virtual std::string_view getFieldDelimitingBytes() const = 0;
@@ -50,5 +59,8 @@ public:
 protected:
     /// Implemented by children of InputFormatIndexer. Called by '<<'. Allows to use '<<' on abstract InputFormatIndexer.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
+
+private:
+    std::size_t tailPaddingBytes;
 };
 }
