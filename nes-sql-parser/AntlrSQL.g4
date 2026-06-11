@@ -145,8 +145,8 @@ relation
     ;
 
 joinRelation
-    : (joinType) JOIN right=relationPrimary joinCriteria? windowClause
-    | NATURAL joinType JOIN right=relationPrimary windowClause
+    : (joinType) JOIN right=relationPrimary joinCriteria? (windowClause | intervalClause)
+    | NATURAL joinType JOIN right=relationPrimary (windowClause | intervalClause)
     ;
 
 joinType
@@ -289,6 +289,14 @@ groupingSet
 
 windowClause
     : WINDOW windowSpec
+    ;
+
+intervalClause
+    : INTERVAL '(' timestampParameter ',' LOWER lowerBound=signedTimeValue ',' UPPER upperBound=signedTimeValue ')'
+    ;
+
+signedTimeValue
+    : MINUS? INTEGER_VALUE timeUnit
     ;
 
 watermarkClause: WATERMARK '(' watermarkParameters ')';
@@ -522,6 +530,9 @@ SUM: 'SUM' | 'sum';
 COUNT: 'COUNT' | 'count';
 MEDIAN: 'MEDIAN' | 'median';
 WATERMARK: 'WATERMARK' | 'watermark';
+INTERVAL: 'INTERVAL' | 'interval';
+LOWER: 'LOWER' | 'lower';
+UPPER: 'UPPER' | 'upper';
 OFFSET: 'OFFSET' | 'offset';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
