@@ -114,6 +114,9 @@ void configureArgumentParser(ArgumentParser& program)
         .default_value(false)
         .implicit_value(true);
     program.add_argument("--show-query-performance").flag().help("print per-query performance timing in the console output");
+    program.add_argument("--skip-query-plan-serialization-validation")
+        .flag()
+        .help("skip the systest query plan serialize/deserialize validation before query registration");
 }
 
 void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration& config)
@@ -385,6 +388,11 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     if (program.is_used("--show-query-performance"))
     {
         config.showQueryPerformance = true;
+    }
+
+    if (program.is_used("--skip-query-plan-serialization-validation"))
+    {
+        config.validateQueryPlanSerialization = false;
     }
 
     if (program.is_used("--endless"))

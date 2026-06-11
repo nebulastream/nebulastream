@@ -36,38 +36,41 @@
 namespace NES::Systest
 {
 
-QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : queryManager(std::move(queryManager))
+QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager, QuerySubmitterOptions options)
+    : queryManager(std::move(queryManager)), querySubmitterOptions(options)
 {
 }
 
 std::expected<DistributedQueryId, Exception> QuerySubmitter::registerQuery(const DistributedLogicalPlan& plan)
 {
-    /// Make sure the queryplan is passed through serialization logic.
-    std::unordered_map<Host, std::vector<std::string>> serializationErrorsPerWorker;
-    for (const auto& [grpc, localPlans] : plan)
+    if (querySubmitterOptions.validateQueryPlanSerialization)
     {
-        for (const auto& localPlan : localPlans)
+        std::unordered_map<Host, std::vector<std::string>> serializationErrorsPerWorker;
+        for (const auto& [grpc, localPlans] : plan)
         {
-            const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(localPlan);
-            const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
-            if (deserialized != localPlan)
+            for (const auto& localPlan : localPlans)
             {
-                serializationErrorsPerWorker[grpc].emplace_back(fmt::format(
-                    "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and "
-                    "deserialize(serialize(plan)):\n{}",
-                    explain(localPlan, ExplainVerbosity::Debug),
-                    explain(deserialized, ExplainVerbosity::Debug)));
+                const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(localPlan);
+                const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
+                if (deserialized != localPlan)
+                {
+                    serializationErrorsPerWorker[grpc].emplace_back(fmt::format(
+                        "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and "
+                        "deserialize(serialize(plan)):\n{}",
+                        explain(localPlan, ExplainVerbosity::Debug),
+                        explain(deserialized, ExplainVerbosity::Debug)));
+                }
             }
+        }
+
+        if (not serializationErrorsPerWorker.empty())
+        {
+            const auto exception = CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker);
+            return std::unexpected(exception);
         }
     }
 
-    if (serializationErrorsPerWorker.empty())
-    {
-        return queryManager->registerQuery(plan);
-    }
-
-    const auto exception = CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker);
-    return std::unexpected(exception);
+    return queryManager->registerQuery(plan);
 }
 
 void QuerySubmitter::startQuery(const DistributedQueryId& query)
