@@ -14,39 +14,53 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
+#include <val_arith.hpp>
+#include <val_concepts.hpp>
 
 namespace NES
 {
 
-/// Performs the second phase of the join. The tuples are joined via probing the previously built hash tables
-class HJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
+/// Shared base for all hash join probe operators (inner, outer).
+/// Holds the HJ-specific state (buffer refs, hash map options) and the match-pairs probe logic.
+/// This avoids duplicating the match-pairs iteration across probe variants while keeping inner and outer
+/// as independent siblings, neither inherits from the other.
+class HJProbePhysicalOperatorBase : public StreamJoinProbePhysicalOperator
 {
 public:
-    HJProbePhysicalOperator(
+    HJProbePhysicalOperatorBase(
         OperatorHandlerId operatorHandlerId,
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         JoinSchema joinSchema,
         std::shared_ptr<TupleBufferRef> leftBufferRef,
         std::shared_ptr<TupleBufferRef> rightBufferRef,
-        HashMapOptions leftHashMapBasedOptions,
-        HashMapOptions rightHashMapBasedOptions);
+        HashMapOptions leftHashMapOptions,
+        HashMapOptions rightHashMapOptions);
 
-    /// As the second phase gets triggered by the first phase, we receive a tuple buffer containing all information for performing the probe.
-    /// Thus, we start a new pipeline and therefore, we create new Records from the built-up state.
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+protected:
+    /// Match-pairs probe: iterates all left hash maps against all right hash maps and emits joined records
+    void performMatchPairsProbe(
+        nautilus::val<HashMap**> leftHashMapRefs,
+        nautilus::val<uint64_t> leftNumberOfHashMaps,
+        nautilus::val<HashMap**> rightHashMapRefs,
+        nautilus::val<uint64_t> rightNumberOfHashMaps,
+        ExecutionContext& executionCtx,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd) const;
 
-private:
     std::shared_ptr<TupleBufferRef> leftBufferRef, rightBufferRef;
     HashMapOptions leftHashMapOptions, rightHashMapOptions;
 };

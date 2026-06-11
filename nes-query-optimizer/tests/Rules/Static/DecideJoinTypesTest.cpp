@@ -58,6 +58,7 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Util/UUID.hpp>
 #include <DistributedQuery.hpp>
+#include <ErrorHandling.hpp>
 #include <QueryId.hpp>
 
 namespace NES
@@ -375,6 +376,7 @@ TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
     auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
     EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
 }
+
 
 }
 }

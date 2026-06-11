@@ -1,0 +1,47 @@
+# name: join/SlidingWindowChainedOuterJoin.test
+# description: Two-level chained LEFT OUTER JOIN with sliding windows — exercises combine-first trigger path twice
+# groups: [WindowOperators, Join, OuterJoin, SlidingWindow, CompilationIntensive]
+
+# Source definitions
+# stream: id=1 in slice 1 (t=500), id=2 in slice 1 (t=1500), id=3 in slice 2 (t=2500)
+# stream2: id2=1 in slice 2 (t=2500) — cross-slice match with stream id=1 in Join A
+# stream3: id3=1 at t=500 — matches Join A output where id=1 survived on the preserved (left) side
+# Join A (stream LEFT OUTER JOIN stream2 ON id=id2): id=1 matches cross-slice, id=2 and id=3 unmatched
+# Join B (Join_A_output LEFT OUTER JOIN stream3 ON id=id3): id=1 matches id3=1, rest unmatched
+# Without Plan 01 fix: N-squared probe calls would produce duplicate rows in both joins
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10,500
+2,20,1500
+3,30,2500
+
+CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+1,100,2500
+4,400,3500
+
+CREATE LOGICAL SOURCE stream3(id3 UINT64 NOT NULL, value3 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
+ATTACH INLINE
+1,1000,500
+
+CREATE SINK sink(streamstream2stream3.start UINT64 NOT NULL, streamstream2stream3.end UINT64 NOT NULL, streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.id2 UINT64, stream2.value2 UINT64, stream2.timestamp UINT64, stream3.id3 UINT64, stream3.value3 UINT64, stream3.timestamp UINT64) TYPE File;
+
+SELECT *
+FROM (
+  SELECT * FROM (SELECT * FROM stream) LEFT OUTER JOIN (SELECT * FROM stream2)
+  ON (id = id2)
+  WINDOW SLIDING (timestamp, size 4 sec, advance by 2 sec)
+) LEFT OUTER JOIN (SELECT * FROM stream3)
+ON (id = id3)
+WINDOW SLIDING (timestamp, size 4 sec, advance by 2 sec)
+INTO sink;
+----
+0,4000,0,4000,1,10,500,1,100,2500,1,1000,500
+0,4000,0,4000,2,20,1500,NULL,NULL,NULL,NULL,NULL,NULL
+0,4000,0,4000,3,30,2500,NULL,NULL,NULL,NULL,NULL,NULL
+0,4000,2000,6000,3,30,2500,NULL,NULL,NULL,NULL,NULL,NULL
+2000,6000,0,4000,3,30,2500,NULL,NULL,NULL,NULL,NULL,NULL
+2000,6000,2000,6000,3,30,2500,NULL,NULL,NULL,NULL,NULL,NULL
