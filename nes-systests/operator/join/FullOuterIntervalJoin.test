@@ -1,0 +1,44 @@
+# name: join/FullOuterInterightValJoin.test
+# description: FULL OUTER interightVal join — every left and every right tuple is emitted; unmatched tuples get the other side NULL-filled. Inputs span three interightVal windows (~1000/2000/3000 ms, width 3) and produce ten output rows: matches and left-null-fills come from the left-anchored pass, right-null-fills from the right-anchored end-of-stream pass (so they trail). Projects the join keys/values to keep the expected output deterministic.
+# groups: [WindowOperators, InterightValJoin, OuterJoin]
+
+CREATE LOGICAL SOURCE fullOuterLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR fullOuterLeft TYPE File;
+ATTACH INLINE
+1,10,1000
+3,30,1000
+4,40,2000
+6,60,2000
+
+CREATE LOGICAL SOURCE fullOuterRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR fullOuterRight TYPE File;
+ATTACH INLINE
+1,100,1000
+1,101,1002
+2,200,1001
+4,400,2000
+4,401,2003
+5,500,2002
+7,700,3000
+7,701,3001
+
+CREATE SINK fullOuterSink(leftId UINT64, leftVal UINT64, rightId UINT64, rightVal UINT64) TYPE File;
+
+# Future bounds [0 ms, 3 ms] across three windows. id=1 and id=4 match two right tuples each; left id=3 and
+# id=6 have no partner (NULL right); right keys 2, 5, 7, 7 have no left partner (NULL left). Ten rows total:
+# the four matches and two left-null-fills (left-anchored, in window order) precede the four right-null-fills.
+SELECT id1 AS leftId, value1 AS leftVal, id2 AS rightId, value2 AS rightVal
+FROM (SELECT * FROM fullOuterLeft) FULL OUTER JOIN (SELECT * FROM fullOuterRight)
+ON id1 = id2 INTERVAL (timestampLeft, timestampRight, lower 0 ms, upper 3 ms)
+INTO fullOuterSink;
+----
+1,10,1,100
+1,10,1,101
+3,30,NULL,NULL
+4,40,4,400
+4,40,4,401
+6,60,NULL,NULL
+NULL,NULL,2,200
+NULL,NULL,5,500
+NULL,NULL,7,700
+NULL,NULL,7,701

@@ -1,0 +1,28 @@
+# name: join/IntervalJoinCommutativity.test
+# description: Interval-join commutativity (ports CommutativeTest.java). A INTERVAL-JOIN B with bounds [L,U] selects the same key/value pairs as B INTERVAL-JOIN A with the swapped+negated bounds [-U,-L]. Queries project the joined keys/values into a canonical column order (window start/end and the per-side event timestamps are dropped because the two join orders anchor the window differently). Non-commutative cases (asymmetric bounds without the swap) are assertNotEquals in the original and cannot be expressed as a query-vs-query equivalence here.
+# groups: [WindowOperators, IntervalJoin]
+
+CREATE LOGICAL SOURCE sA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR sA TYPE File;
+ATTACH FILE small/intervaljoin_commutativity_a.csv
+
+CREATE LOGICAL SOURCE sB(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR sB TYPE File;
+ATTACH FILE small/intervaljoin_commutativity_b.csv
+
+CREATE SINK commSink(aid UINT64 NOT NULL, aval UINT64 NOT NULL, bid UINT64 NOT NULL, bval UINT64 NOT NULL) TYPE File;
+
+# C3 symmetric bounds [-3 ms, 3 ms]: A INTERVAL-JOIN B equals B INTERVAL-JOIN A with the same bounds.
+SELECT sA.id AS aid, sA.value AS aval, sB.id2 AS bid, sB.value2 AS bval FROM (SELECT * FROM sA) INNER JOIN (SELECT * FROM sB) ON id = id2 INTERVAL (timestampLeft, timestampRight, lower -3 ms, upper 3 ms) INTO commSink;
+====
+SELECT sA.id AS aid, sA.value AS aval, sB.id2 AS bid, sB.value2 AS bval FROM (SELECT * FROM sB) INNER JOIN (SELECT * FROM sA) ON id2 = id INTERVAL (timestampRight, timestampLeft, lower -3 ms, upper 3 ms) INTO commSink;
+
+# C4c past-anchored: A INTERVAL-JOIN B [-3 ms, 0 ms] equals B INTERVAL-JOIN A [0 ms, 3 ms] (bounds swapped and negated).
+SELECT sA.id AS aid, sA.value AS aval, sB.id2 AS bid, sB.value2 AS bval FROM (SELECT * FROM sA) INNER JOIN (SELECT * FROM sB) ON id = id2 INTERVAL (timestampLeft, timestampRight, lower -3 ms, upper 0 ms) INTO commSink;
+====
+SELECT sA.id AS aid, sA.value AS aval, sB.id2 AS bid, sB.value2 AS bval FROM (SELECT * FROM sB) INNER JOIN (SELECT * FROM sA) ON id2 = id INTERVAL (timestampRight, timestampLeft, lower 0 ms, upper 3 ms) INTO commSink;
+
+# C4d future-anchored: A INTERVAL-JOIN B [0 ms, 3 ms] equals B INTERVAL-JOIN A [-3 ms, 0 ms] (bounds swapped and negated).
+SELECT sA.id AS aid, sA.value AS aval, sB.id2 AS bid, sB.value2 AS bval FROM (SELECT * FROM sA) INNER JOIN (SELECT * FROM sB) ON id = id2 INTERVAL (timestampLeft, timestampRight, lower 0 ms, upper 3 ms) INTO commSink;
+====
+SELECT sA.id AS aid, sA.value AS aval, sB.id2 AS bid, sB.value2 AS bval FROM (SELECT * FROM sB) INNER JOIN (SELECT * FROM sA) ON id2 = id INTERVAL (timestampRight, timestampLeft, lower -3 ms, upper 0 ms) INTO commSink;
