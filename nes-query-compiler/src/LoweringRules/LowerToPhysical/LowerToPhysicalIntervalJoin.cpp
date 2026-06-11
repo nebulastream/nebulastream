@@ -37,9 +37,9 @@
 #include <Join/IntervalJoin/IntervalSliceStoreRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/IntervalJoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>

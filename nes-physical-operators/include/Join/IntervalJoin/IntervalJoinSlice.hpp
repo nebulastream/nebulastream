@@ -20,7 +20,7 @@
 #include <mutex>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <SliceStore/Slice.hpp>
 
 namespace NES

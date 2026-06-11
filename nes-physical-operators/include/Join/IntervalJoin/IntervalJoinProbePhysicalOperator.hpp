@@ -21,12 +21,12 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Interface/PagedVector/PagedVectorRef.hpp>
-#include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <Windowing/WindowMetaData.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 
 namespace NES
 {

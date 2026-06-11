@@ -18,8 +18,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Interface/Record.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>

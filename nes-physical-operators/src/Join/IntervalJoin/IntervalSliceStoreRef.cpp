@@ -19,8 +19,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
 #include <Join/IntervalJoin/IntervalSliceStore.hpp>
-#include <Interface/NESStrongTypeRef.hpp>
-#include <Interface/TimestampRef.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>

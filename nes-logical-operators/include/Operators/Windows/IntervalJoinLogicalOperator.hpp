@@ -29,7 +29,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
-#include <Windowing/WindowMetaData.hpp>
+#include <Operators/Windows/WindowMetaData.hpp>
 
 namespace NES
 {
