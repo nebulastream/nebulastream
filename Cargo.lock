@@ -556,6 +556,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "nes_rust_answer"
+version = "0.1.0"
+dependencies = [
+ "cxx",
+]
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
