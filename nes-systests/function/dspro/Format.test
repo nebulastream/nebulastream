@@ -20,6 +20,376 @@ SELECT
     Format(VARSIZED("Value is: {}, which is larger than: {}"), value, other_value) AS formatted
 FROM stream INTO sinkStream;
 ----
-Value is: {}, which is larger than: {}
-Value is: {}, which is larger than: {}
-Value is: {}, which is larger than: {}
+Value is: 1, which is larger than: 10
+Value is: 2, which is larger than: 20
+Value is: 3, which is larger than: 30
+
+########################################
+# VARSIZED source
+########################################
+
+CREATE LOGICAL SOURCE stringStream(
+    value VARSIZED NOT NULL,
+    other_value VARSIZED NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR stringStream TYPE File;
+
+ATTACH INLINE
+one,ten
+two,twenty
+three,thirty
+
+########################################
+# INT32 source
+########################################
+
+CREATE LOGICAL SOURCE intStream(
+    value INT32 NOT NULL,
+    other_value INT32 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR intStream TYPE File;
+
+ATTACH INLINE
+1,10
+2,20
+3,30
+
+########################################
+# Test 0 placeholders
+########################################
+
+CREATE SINK sinkZero(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("No placeholders")) AS formatted
+FROM stringStream INTO sinkZero;
+----
+No placeholders
+No placeholders
+No placeholders
+
+########################################
+# Test 1 placeholder (VARSIZED)
+########################################
+
+CREATE SINK sinkOne(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("Value is: {}"), value) AS formatted
+FROM stringStream INTO sinkOne;
+----
+Value is: one
+Value is: two
+Value is: three
+
+########################################
+# Test 2 placeholders (VARSIZED)
+########################################
+
+CREATE SINK sinkTwo(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("Value is: {}, which is larger than: {}"),
+        value,
+        other_value
+    ) AS formatted
+FROM stringStream INTO sinkTwo;
+----
+Value is: one, which is larger than: ten
+Value is: two, which is larger than: twenty
+Value is: three, which is larger than: thirty
+
+########################################
+# Test 2 placeholders (INT32)
+########################################
+
+CREATE SINK sinkInt(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("Value is: {}, which is larger than: {}"),
+        value,
+        other_value
+    ) AS formatted
+FROM intStream INTO sinkInt;
+----
+Value is: 1, which is larger than: 10
+Value is: 2, which is larger than: 20
+Value is: 3, which is larger than: 30
+
+########################################
+# BOOL source
+########################################
+
+CREATE LOGICAL SOURCE boolStream(flag BOOLEAN NOT NULL);
+CREATE PHYSICAL SOURCE FOR boolStream TYPE File;
+
+ATTACH INLINE
+true
+false
+true
+
+CREATE SINK sinkBool(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("flag={}"), flag) AS formatted
+FROM boolStream INTO sinkBool;
+----
+flag=true
+flag=false
+flag=true
+
+########################################
+# CHAR source
+########################################
+
+CREATE LOGICAL SOURCE charStream(c CHAR NOT NULL);
+CREATE PHYSICAL SOURCE FOR charStream TYPE File;
+
+ATTACH INLINE
+a
+b
+c
+
+CREATE SINK sinkChar(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("char={}"), c) AS formatted
+FROM charStream INTO sinkChar;
+----
+char=a
+char=b
+char=c
+
+########################################
+# FLOAT source
+########################################
+
+CREATE LOGICAL SOURCE floatStream(temp FLOAT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR floatStream TYPE File;
+
+ATTACH INLINE
+1.5
+2.25
+3.75
+
+CREATE SINK sinkFloat(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("temp={}"), temp) AS formatted
+FROM floatStream INTO sinkFloat;
+----
+temp=1.5
+temp=2.25
+temp=3.75
+
+########################################
+# triple stream source
+########################################
+CREATE LOGICAL SOURCE tripleStream(a INT32 NOT NULL, b INT32 NOT NULL, c INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR tripleStream TYPE File;
+ATTACH INLINE
+1,2,3
+4,5,6
+7,8,9
+
+CREATE SINK sinkTriple(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("{} + {} = {}"), a, b, c) AS formatted
+FROM tripleStream INTO sinkTriple;
+----
+1 + 2 = 3
+4 + 5 = 6
+7 + 8 = 9
+
+########################################
+# quad stream source
+########################################
+CREATE LOGICAL SOURCE quadStream(a INT32 NOT NULL, b INT32 NOT NULL, c INT32 NOT NULL, d INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR quadStream TYPE File;
+ATTACH INLINE
+1,2,3,4
+5,6,7,8
+9,10,11,12
+
+CREATE SINK sinkQuad(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("{} {} {} {}"), a, b, c, d) AS formatted
+FROM quadStream INTO sinkQuad;
+----
+1 2 3 4
+5 6 7 8
+9 10 11 12
+
+CREATE LOGICAL SOURCE manyStream(
+    a INT32 NOT NULL,
+    b INT32 NOT NULL,
+    c INT32 NOT NULL,
+    d INT32 NOT NULL,
+    e INT32 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR manyStream TYPE File;
+
+ATTACH INLINE
+1,2,3,4,5
+10,20,30,40,50
+
+CREATE SINK sinkMany(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("{}-{}-{}-{}-{}"), a, b, c, d, e) AS formatted
+FROM manyStream INTO sinkMany;
+----
+1-2-3-4-5
+10-20-30-40-50
+
+########################################
+# Test mixed data types
+########################################
+
+CREATE LOGICAL SOURCE mixedStream(
+    i INT32 NOT NULL,
+    b BOOLEAN NOT NULL,
+    c CHAR NOT NULL,
+    s VARSIZED NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR mixedStream TYPE File;
+
+ATTACH INLINE
+42,true,A,hello
+7,false,Z,world
+
+CREATE SINK sinkMixed(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("int={}, bool={}, char={}, text={}"),
+        i,
+        b,
+        c,
+        s
+    ) AS formatted
+FROM mixedStream INTO sinkMixed;
+----
+int=42, bool=true, char=A, text=hello
+int=7, bool=false, char=Z, text=world
+
+
+########################################
+# Edge case: placeholder only
+########################################
+
+
+CREATE LOGICAL SOURCE emptyFormatStream(value INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR emptyFormatStream TYPE File;
+
+ATTACH INLINE
+1
+2
+3
+
+CREATE SINK sinkPlaceholderOnly(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("{}"), value) AS formatted
+FROM emptyFormatStream INTO sinkPlaceholderOnly;
+----
+1
+2
+3
+
+########################################
+# Edge case: repeated adjacent placeholders
+########################################
+
+CREATE LOGICAL SOURCE adjacentStream(a INT32 NOT NULL, b INT32 NOT NULL, c INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR adjacentStream TYPE File;
+
+ATTACH INLINE
+1,2,3
+4,5,6
+
+CREATE SINK sinkAdjacent(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("{}{}{}"), a, b, c) AS formatted
+FROM adjacentStream INTO sinkAdjacent;
+----
+123
+456
+
+########################################
+# Edge case: negative numbers and zero
+########################################
+
+CREATE LOGICAL SOURCE numberStream(a INT32 NOT NULL, b INT32 NOT NULL, c INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR numberStream TYPE File;
+
+ATTACH INLINE
+-1,0,1
+-100,42,999
+
+CREATE SINK sinkNumbers(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("a={}, b={}, c={}"), a, b, c) AS formatted
+FROM numberStream INTO sinkNumbers;
+----
+a=-1, b=0, c=1
+a=-100, b=42, c=999
+
+########################################
+# Edge case: placeholder at beginning and end
+########################################
+
+CREATE SINK sinkBoundaryPlaceholders(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("{} middle {}"), a, c) AS formatted
+FROM numberStream INTO sinkBoundaryPlaceholders;
+----
+-1 middle 1
+-100 middle 999
+
+########################################
+# Test numeric type coverage
+########################################
+
+CREATE LOGICAL SOURCE numericStream(
+    i8 INT8 NOT NULL,
+    i16 INT16 NOT NULL,
+    i32 INT32 NOT NULL,
+    i64 INT64 NOT NULL,
+    f FLOAT32 NOT NULL,
+    d FLOAT64 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR numericStream TYPE File;
+
+ATTACH INLINE
+1,123,12345,123456789,1.5,2.25
+-1,-123,-12345,-123456789,-1.5,-2.25
+
+CREATE SINK sinkNumeric(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("i8={}, i16={}, i32={}, i64={}, f={}, d={}"),
+        i8,
+        i16,
+        i32,
+        i64,
+        f,
+        d
+    ) AS formatted
+FROM numericStream INTO sinkNumeric;
+----
+i8=1, i16=123, i32=12345, i64=123456789, f=1.5, d=2.25
+i8=-1, i16=-123, i32=-12345, i64=-123456789, f=-1.5, d=-2.25
