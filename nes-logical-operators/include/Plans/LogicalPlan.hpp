@@ -57,6 +57,7 @@ public:
     void setOriginalSql(const std::string& sql);
     void setQueryId(QueryId id);
 
+    std::optional<std::string> queryName;
 private:
     QueryId queryId = INVALID_QUERY_ID;
     std::vector<LogicalOperator> rootOperators;

@@ -35,7 +35,7 @@ DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
     auto root = plan.getRootOperators().at(0);
     std::cout << root << std::endl;
     auto uuid = generate_uuid();
-    auto filePath = "/home/benni/Desktop/nebulastream/benni/dedup/" + uuid + ".txt";
+    auto filePath = "/home/benni/Desktop/nebulastream/benni/dedup/" + plan.queryName.value_or(generate_uuid()) + ".txt";
     auto rootChild = SNDeduplicationLogicalOperator(WeakLogicalOperator{}, filePath).withChildren(root.getChildren());
     root = root.withChildren({rootChild});
     plan = plan.withRootOperators({root});
