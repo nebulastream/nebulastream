@@ -57,7 +57,7 @@ private:
 template <>
 struct Reflector<EnumWrapper>
 {
-    Reflected operator()(const EnumWrapper& wrapper) const { return reflect(wrapper.getValue()); }
+    Reflected operator()(const EnumWrapper& wrapper, const ReflectionContext& context) const { return context.reflect(wrapper.getValue()); }
 };
 
 template <>

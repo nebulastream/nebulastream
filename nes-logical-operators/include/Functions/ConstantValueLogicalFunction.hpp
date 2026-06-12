@@ -73,7 +73,7 @@ private:
 template <>
 struct Reflector<ConstantValueLogicalFunction>
 {
-    Reflected operator()(const ConstantValueLogicalFunction& function) const;
+    Reflected operator()(const ConstantValueLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

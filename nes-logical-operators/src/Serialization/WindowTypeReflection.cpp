@@ -26,24 +26,24 @@
 namespace NES
 {
 
-Reflected reflectWindowType(const Windowing::WindowType& windowType)
+Reflected reflectWindowType(const Windowing::WindowType& windowType, const ReflectionContext& context)
 {
-    auto [type, reflectedWindow] = [&windowType]()
+    auto [type, reflectedWindow] = [&windowType, &context]()
     {
         if (typeid(windowType) == typeid(Windowing::TumblingWindow))
         {
             const auto tumblingWindow = dynamic_cast<const Windowing::TumblingWindow&>(windowType);
-            return std::make_pair("TumblingWindow", reflect(tumblingWindow));
+            return std::make_pair("TumblingWindow", context.reflect(tumblingWindow));
         }
         if (typeid(windowType) == typeid(Windowing::SlidingWindow))
         {
             const auto slidingWindow = dynamic_cast<const Windowing::SlidingWindow&>(windowType);
-            return std::make_pair("SlidingWindow", reflect(slidingWindow));
+            return std::make_pair("SlidingWindow", context.reflect(slidingWindow));
         }
         throw CannotSerialize("Cannot serialize unknown window type");
     }();
 
-    return reflect(detail::ReflectedWindowTypeReflection{.type = type, .config = reflectedWindow});
+    return context.reflect(detail::ReflectedWindowTypeReflection{.type = type, .config = reflectedWindow});
 }
 
 std::shared_ptr<Windowing::WindowType> unreflectWindowType(const Reflected& reflected, const ReflectionContext& context)

@@ -97,9 +97,9 @@ std::string_view ToBase64LogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<ToBase64LogicalFunction>::operator()(const ToBase64LogicalFunction& function) const
+Reflected Reflector<ToBase64LogicalFunction>::operator()(const ToBase64LogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedToBase64LogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedToBase64LogicalFunction{.child = function.child});
 }
 
 ToBase64LogicalFunction Unreflector<ToBase64LogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

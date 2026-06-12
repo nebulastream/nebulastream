@@ -90,9 +90,9 @@ std::string_view LessLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<LessLogicalFunction>::operator()(const LessLogicalFunction& function) const
+Reflected Reflector<LessLogicalFunction>::operator()(const LessLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedLessLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedLessLogicalFunction{.left = function.left, .right = function.right});
 }
 
 LessLogicalFunction Unreflector<LessLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

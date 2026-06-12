@@ -93,9 +93,9 @@ std::string ExpLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("EXP({})", child.explain(verbosity));
 }
 
-Reflected Reflector<ExpLogicalFunction>::operator()(const ExpLogicalFunction& function) const
+Reflected Reflector<ExpLogicalFunction>::operator()(const ExpLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedExpLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedExpLogicalFunction{.child = function.child});
 }
 
 ExpLogicalFunction Unreflector<ExpLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

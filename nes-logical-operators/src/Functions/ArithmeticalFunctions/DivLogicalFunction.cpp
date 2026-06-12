@@ -100,9 +100,9 @@ std::string DivLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} / {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-Reflected Reflector<DivLogicalFunction>::operator()(const DivLogicalFunction& function) const
+Reflected Reflector<DivLogicalFunction>::operator()(const DivLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedDivLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedDivLogicalFunction{.left = function.left, .right = function.right});
 }
 
 DivLogicalFunction Unreflector<DivLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

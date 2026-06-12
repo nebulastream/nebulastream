@@ -106,7 +106,7 @@ std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getC
 }
 
 Reflected Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>::operator()(
-    const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>&) const
+    const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>&, const ReflectionContext&) const
 {
     return Reflected{};
 }

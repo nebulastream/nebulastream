@@ -194,10 +194,11 @@ LogicalFunction JoinLogicalOperator::getJoinFunction() const
     return joinFunction;
 }
 
-Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const TypedLogicalOperator<JoinLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(
+    const TypedLogicalOperator<JoinLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedJoinLogicalOperator{
-        .joinFunction = op->getJoinFunction(), .windowType = reflectWindowType(*op->getWindowType()), .joinType = op->joinType});
+    return context.reflect(detail::ReflectedJoinLogicalOperator{
+        .joinFunction = op->getJoinFunction(), .windowType = reflectWindowType(*op->getWindowType(), context), .joinType = op->joinType});
 }
 
 TypedLogicalOperator<JoinLogicalOperator>

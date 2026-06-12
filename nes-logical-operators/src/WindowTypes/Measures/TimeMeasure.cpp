@@ -55,9 +55,9 @@ bool TimeMeasure::operator==(const TimeMeasure& other) const
 
 namespace NES
 {
-Reflected Reflector<Windowing::TimeMeasure>::operator()(const Windowing::TimeMeasure& measure) const
+Reflected Reflector<Windowing::TimeMeasure>::operator()(const Windowing::TimeMeasure& measure, const ReflectionContext& context) const
 {
-    return reflect(measure.getTime());
+    return context.reflect(measure.getTime());
 }
 
 Windowing::TimeMeasure Unreflector<Windowing::TimeMeasure>::operator()(const Reflected& reflected, const ReflectionContext& context) const

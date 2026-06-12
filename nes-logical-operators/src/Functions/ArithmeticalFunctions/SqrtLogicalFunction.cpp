@@ -91,9 +91,9 @@ std::string_view SqrtLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<SqrtLogicalFunction>::operator()(const SqrtLogicalFunction& function) const
+Reflected Reflector<SqrtLogicalFunction>::operator()(const SqrtLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedSqrtLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedSqrtLogicalFunction{.child = function.child});
 }
 
 SqrtLogicalFunction Unreflector<SqrtLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

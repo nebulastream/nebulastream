@@ -60,7 +60,7 @@ private:
 template <>
 struct Reflector<CastFromUnixTimestampLogicalFunction>
 {
-    Reflected operator()(const CastFromUnixTimestampLogicalFunction& function) const;
+    Reflected operator()(const CastFromUnixTimestampLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

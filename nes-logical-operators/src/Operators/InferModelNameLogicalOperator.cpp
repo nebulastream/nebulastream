@@ -119,9 +119,9 @@ std::vector<LogicalOperator> InferModelNameLogicalOperator::getChildren() const
 }
 
 Reflected Reflector<TypedLogicalOperator<InferModelNameLogicalOperator>>::operator()(
-    const TypedLogicalOperator<InferModelNameLogicalOperator>& op) const
+    const TypedLogicalOperator<InferModelNameLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedInferModelNameLogicalOperator{
+    return context.reflect(detail::ReflectedInferModelNameLogicalOperator{
         .modelName = std::make_optional(op->getModelName()), .inputFieldNames = std::make_optional(op->getInputFieldNames())});
 }
 

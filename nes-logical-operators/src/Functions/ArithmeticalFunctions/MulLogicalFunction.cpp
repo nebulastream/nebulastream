@@ -101,9 +101,9 @@ std::string_view MulLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<MulLogicalFunction>::operator()(const MulLogicalFunction& function) const
+Reflected Reflector<MulLogicalFunction>::operator()(const MulLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedMulLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedMulLogicalFunction{.left = function.left, .right = function.right});
 }
 
 MulLogicalFunction Unreflector<MulLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

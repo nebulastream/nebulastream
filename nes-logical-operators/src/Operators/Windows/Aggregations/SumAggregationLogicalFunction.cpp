@@ -82,14 +82,11 @@ SumAggregationLogicalFunction SumAggregationLogicalFunction::withInferredStamp(c
         .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
 }
 
-Reflected SumAggregationLogicalFunction::reflect() const
+Reflected
+Reflector<SumAggregationLogicalFunction>::operator()(const SumAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<SumAggregationLogicalFunction>::operator()(const SumAggregationLogicalFunction& function) const
-{
-    return reflect(detail::ReflectedSumAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return context.reflect(
+        detail::ReflectedSumAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
 SumAggregationLogicalFunction

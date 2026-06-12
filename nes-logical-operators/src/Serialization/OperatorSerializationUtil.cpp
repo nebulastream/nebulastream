@@ -43,7 +43,7 @@ ReflectedOperator OperatorSerializationUtil::serializeOperator(const TypedLogica
     {
         reflectedOperator.childrenIds.emplace_back(child.getId().getRawValue());
     }
-    reflectedOperator.config = op->reflect();
+    reflectedOperator.config = ReflectionContext{}.reflect(*op);
 
     return reflectedOperator;
 }

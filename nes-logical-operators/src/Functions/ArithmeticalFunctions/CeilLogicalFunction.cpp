@@ -90,9 +90,9 @@ std::string CeilLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("CEIL({})", child.explain(verbosity));
 }
 
-Reflected Reflector<CeilLogicalFunction>::operator()(const CeilLogicalFunction& function) const
+Reflected Reflector<CeilLogicalFunction>::operator()(const CeilLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedCeilLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedCeilLogicalFunction{.child = function.child});
 }
 
 CeilLogicalFunction Unreflector<CeilLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

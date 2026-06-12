@@ -138,7 +138,7 @@ struct ReflectedSchema
 template <>
 struct Reflector<Schema::Field>
 {
-    Reflected operator()(const Schema::Field& field) const;
+    Reflected operator()(const Schema::Field& field, const ReflectionContext& context) const;
 };
 
 template <>
@@ -150,7 +150,7 @@ struct Unreflector<Schema::Field>
 template <>
 struct Reflector<Schema>
 {
-    Reflected operator()(const Schema& schema) const;
+    Reflected operator()(const Schema& schema, const ReflectionContext& context) const;
 };
 
 template <>

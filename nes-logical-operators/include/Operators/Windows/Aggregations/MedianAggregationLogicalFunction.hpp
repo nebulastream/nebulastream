@@ -40,7 +40,6 @@ public:
 
     [[nodiscard]] static std::string_view getName() noexcept;
     [[nodiscard]] std::string toString() const;
-    [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] DataType getInputStamp() const;
     [[nodiscard]] DataType getPartialAggregateStamp() const;
     [[nodiscard]] DataType getFinalAggregateStamp() const;
@@ -67,12 +66,10 @@ private:
     FieldAccessLogicalFunction asField;
 };
 
-static_assert(WindowAggregationFunctionConcept<MedianAggregationLogicalFunction>);
-
 template <>
 struct Reflector<MedianAggregationLogicalFunction>
 {
-    Reflected operator()(const MedianAggregationLogicalFunction& function) const;
+    Reflected operator()(const MedianAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
@@ -80,6 +77,9 @@ struct Unreflector<MedianAggregationLogicalFunction>
 {
     MedianAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
+
+static_assert(WindowAggregationFunctionConcept<MedianAggregationLogicalFunction>);
+
 }
 
 namespace NES::detail

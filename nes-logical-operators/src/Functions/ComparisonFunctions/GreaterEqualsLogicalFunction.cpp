@@ -92,9 +92,10 @@ std::string_view GreaterEqualsLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<GreaterEqualsLogicalFunction>::operator()(const GreaterEqualsLogicalFunction& function) const
+Reflected
+Reflector<GreaterEqualsLogicalFunction>::operator()(const GreaterEqualsLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedGreaterEqualsLogicalFunction{.left = function.left, .right = function.right});
+    return context.reflect(detail::ReflectedGreaterEqualsLogicalFunction{.left = function.left, .right = function.right});
 }
 
 GreaterEqualsLogicalFunction

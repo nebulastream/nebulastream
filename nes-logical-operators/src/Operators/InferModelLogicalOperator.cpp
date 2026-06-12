@@ -186,11 +186,11 @@ std::vector<LogicalOperator> InferModelLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected
-Reflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const TypedLogicalOperator<InferModelLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(
+    const TypedLogicalOperator<InferModelLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(
-        detail::ReflectedInferModelLogicalOperator{.model = reflect(op->getModel()), .inputFieldNames = op->getInputFieldNames()});
+    return context.reflect(
+        detail::ReflectedInferModelLogicalOperator{.model = context.reflect(op->getModel()), .inputFieldNames = op->getInputFieldNames()});
 }
 
 TypedLogicalOperator<InferModelLogicalOperator>

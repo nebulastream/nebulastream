@@ -106,9 +106,9 @@ SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 }
 
 Reflected Reflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::operator()(
-    const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op) const
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(op->getSourceDescriptor());
+    return context.reflect(op->getSourceDescriptor());
 }
 
 TypedLogicalOperator<SourceDescriptorLogicalOperator>

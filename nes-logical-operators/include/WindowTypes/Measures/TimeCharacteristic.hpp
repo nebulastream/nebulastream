@@ -77,7 +77,7 @@ namespace NES
 template <>
 struct Reflector<Windowing::TimeCharacteristic>
 {
-    Reflected operator()(const Windowing::TimeCharacteristic& characteristic) const;
+    Reflected operator()(const Windowing::TimeCharacteristic& characteristic, const ReflectionContext& context) const;
 };
 
 template <>

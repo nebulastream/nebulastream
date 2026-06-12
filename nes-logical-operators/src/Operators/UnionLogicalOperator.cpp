@@ -148,9 +148,10 @@ UnionLogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputS
     return copy;
 }
 
-Reflected Reflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(const TypedLogicalOperator<UnionLogicalOperator>&) const
+Reflected Reflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(
+    const TypedLogicalOperator<UnionLogicalOperator>&, const ReflectionContext& context) const
 {
-    return reflect(true);
+    return context.reflect(true);
 }
 
 TypedLogicalOperator<UnionLogicalOperator>

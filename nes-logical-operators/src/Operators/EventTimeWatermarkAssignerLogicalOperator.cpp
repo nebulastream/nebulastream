@@ -124,9 +124,9 @@ std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChild
 }
 
 Reflected Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::operator()(
-    const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op) const
+    const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{.onField = op->onField, .timeUnit = op->unit});
+    return context.reflect(detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{.onField = op->onField, .timeUnit = op->unit});
 }
 
 TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>

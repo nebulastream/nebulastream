@@ -250,9 +250,9 @@ auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
     return fields.cend();
 }
 
-Reflected Reflector<Schema::Field>::operator()(const Schema::Field& field) const
+Reflected Reflector<Schema::Field>::operator()(const Schema::Field& field, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedField{.name = field.name, .type = field.dataType});
+    return context.reflect(detail::ReflectedField{.name = field.name, .type = field.dataType});
 }
 
 Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl, const ReflectionContext& context) const
@@ -261,9 +261,9 @@ Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl, const
     return Schema::Field{std::move(name), type};
 }
 
-Reflected Reflector<Schema>::operator()(const Schema& schema) const
+Reflected Reflector<Schema>::operator()(const Schema& schema, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedSchema{.fields = schema.getFields()});
+    return context.reflect(detail::ReflectedSchema{.fields = schema.getFields()});
 }
 
 Schema Unreflector<Schema>::operator()(const Reflected& rfl, const ReflectionContext& context) const

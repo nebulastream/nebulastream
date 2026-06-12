@@ -46,7 +46,12 @@ using WindowAggregationLogicalFunction = TypedWindowAggregationLogicalFunction<>
 /// planning and optimization.
 template <typename T>
 concept WindowAggregationFunctionConcept = requires(
-    const T& thisFunction, const Schema& schema, DataType dataType, FieldAccessLogicalFunction fieldAccessLogicalFunction, const T& rhs) {
+    const T& thisFunction,
+    const Schema& schema,
+    DataType dataType,
+    FieldAccessLogicalFunction fieldAccessLogicalFunction,
+    const ReflectionContext& context,
+    const T& rhs) {
     { thisFunction.getInputStamp() } -> std::convertible_to<DataType>;
 
     { thisFunction.getPartialAggregateStamp() } -> std::convertible_to<DataType>;
@@ -73,7 +78,7 @@ concept WindowAggregationFunctionConcept = requires(
 
     { thisFunction.shallIncludeNullValues() } noexcept -> std::convertible_to<bool>;
 
-    { thisFunction.reflect() } -> std::convertible_to<Reflected>;
+    { context.reflect(thisFunction) } -> std::convertible_to<Reflected>;
 
     { thisFunction.getName() } noexcept -> std::convertible_to<std::string_view>;
 
@@ -89,7 +94,7 @@ struct ErasedWindowAggregationFunction
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
     [[nodiscard]] virtual std::string toString() const = 0;
-    [[nodiscard]] virtual Reflected reflect() const = 0;
+    [[nodiscard]] virtual Reflected reflect(const ReflectionContext& context) const = 0;
     [[nodiscard]] virtual bool equals(const ErasedWindowAggregationFunction& other) const = 0;
     [[nodiscard]] virtual DataType getInputStamp() const = 0;
     [[nodiscard]] virtual DataType getPartialAggregateStamp() const = 0;
@@ -266,7 +271,7 @@ struct TypedWindowAggregationLogicalFunction
 
     [[nodiscard]] std::string toString() const { return self->toString(); }
 
-    [[nodiscard]] Reflected reflect() const { return self->reflect(); }
+    [[nodiscard]] Reflected reflect(const ReflectionContext& context) const { return self->reflect(context); }
 
     [[nodiscard]] bool shallIncludeNullValues() const noexcept { return self->shallIncludeNullValues(); }
 
@@ -334,7 +339,7 @@ struct WindowAggregationFunctionModel : ErasedWindowAggregationFunction
 
     [[nodiscard]] std::string toString() const override { return impl.toString(); }
 
-    [[nodiscard]] Reflected reflect() const override { return impl.reflect(); }
+    [[nodiscard]] Reflected reflect(const ReflectionContext& context) const override { return context.reflect(impl); }
 
     [[nodiscard]] bool shallIncludeNullValues() const noexcept override { return impl.shallIncludeNullValues(); }
 

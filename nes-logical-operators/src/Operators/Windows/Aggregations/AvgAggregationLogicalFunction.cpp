@@ -107,14 +107,11 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
         .withInputStamp(newOnField.getDataType());
 }
 
-Reflected AvgAggregationLogicalFunction::reflect() const
+Reflected
+Reflector<AvgAggregationLogicalFunction>::operator()(const AvgAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<AvgAggregationLogicalFunction>::operator()(const AvgAggregationLogicalFunction& function) const
-{
-    return reflect(detail::ReflectedAvgAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return context.reflect(
+        detail::ReflectedAvgAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
 AvgAggregationLogicalFunction

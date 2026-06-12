@@ -63,7 +63,8 @@ protected:
 template <>
 struct Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op) const;
+    Reflected
+    operator()(const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op, const ReflectionContext& context) const;
 };
 
 template <>

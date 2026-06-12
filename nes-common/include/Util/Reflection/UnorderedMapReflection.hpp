@@ -32,7 +32,7 @@ template <typename K, typename V, typename Hash, typename KeyEqual, typename All
 requires(std::is_same_v<K, std::string> || std::is_arithmetic_v<K>)
 struct Reflector<std::unordered_map<K, V, Hash, KeyEqual, Allocator>>
 {
-    Reflected operator()(const std::unordered_map<K, V, Hash, KeyEqual, Allocator>& data) const
+    Reflected operator()(const std::unordered_map<K, V, Hash, KeyEqual, Allocator>& data, const ReflectionContext& context) const
     {
         rfl::Generic::Object obj;
         for (const auto& [key, value] : data)
@@ -51,7 +51,7 @@ struct Reflector<std::unordered_map<K, V, Hash, KeyEqual, Allocator>>
                 static_assert(
                     std::is_same_v<K, std::string> || std::is_arithmetic_v<K>, "Unsupported key type for std::unordered_map serialization");
             }
-            obj[keyStr] = *reflect(value);
+            obj[keyStr] = *context.reflect(value);
         }
         return Reflected{rfl::Generic::Object{std::move(obj)}};
     }

@@ -90,9 +90,11 @@ LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema&
     return *this;
 }
 
-Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& function) const
+Reflected
+Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedConstantValueLogicalFunction{.value = function.getConstantValue(), .dataType = function.getDataType()});
+    return context.reflect(
+        detail::ReflectedConstantValueLogicalFunction{.value = function.getConstantValue(), .dataType = function.getDataType()});
 }
 
 ConstantValueLogicalFunction

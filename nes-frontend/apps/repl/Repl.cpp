@@ -441,7 +441,8 @@ struct Repl::Impl
                         [](const auto& statementResult)
                         {
                             return rfl::json::write(NES::rowsToJsonArray(
-                                NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult)));
+                                NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult),
+                                NES::ReflectionContext{}));
                         },
                         result.value())
                               << "\n";

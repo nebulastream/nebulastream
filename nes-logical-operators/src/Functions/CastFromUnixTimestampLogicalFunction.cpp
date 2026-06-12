@@ -97,9 +97,10 @@ std::string CastFromUnixTimestampLogicalFunction::explain(ExplainVerbosity) cons
     return fmt::format("Cast from unix timestamp (ms) to ISO-8601 UTC, outputType={}", outputType);
 }
 
-Reflected Reflector<CastFromUnixTimestampLogicalFunction>::operator()(const CastFromUnixTimestampLogicalFunction& function) const
+Reflected Reflector<CastFromUnixTimestampLogicalFunction>::operator()(
+    const CastFromUnixTimestampLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedCastFromUnixTimestampLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedCastFromUnixTimestampLogicalFunction{.child = function.child});
 }
 
 CastFromUnixTimestampLogicalFunction

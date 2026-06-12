@@ -59,9 +59,10 @@ bool TumblingWindow::operator==(const WindowType& otherWindowType) const
 namespace NES
 {
 
-Reflected Reflector<Windowing::TumblingWindow>::operator()(const Windowing::TumblingWindow& tumblingWindow) const
+Reflected
+Reflector<Windowing::TumblingWindow>::operator()(const Windowing::TumblingWindow& tumblingWindow, const ReflectionContext& context) const
 {
-    return reflect(
+    return context.reflect(
         detail::ReflectedTumblingWindow{.size = tumblingWindow.getSize(), .timeCharacteristic = tumblingWindow.getTimeCharacteristic()});
 }
 

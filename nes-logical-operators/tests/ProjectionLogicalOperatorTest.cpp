@@ -144,7 +144,7 @@ TEST_F(ProjectionLogicalOperatorTest, DuplicateUnaliasedFieldSurvivesReflectionR
     const auto inferred = TypedLogicalOperator<ProjectionLogicalOperator>(op->withInferredSchema({schema}));
 
     /// Simulate serialization round-trip: reflect → unreflect.
-    const auto reflected = NES::reflect(inferred);
+    const auto reflected = ReflectionContext{}.reflect(inferred);
     const auto roundTripped = ReflectionContext{}.unreflect<TypedLogicalOperator<ProjectionLogicalOperator>>(reflected);
 
     /// Second inference (simulates deserialization re-inference) must not throw.
@@ -164,7 +164,7 @@ TEST_F(ProjectionLogicalOperatorTest, DuplicateExplicitAliasSurvivesReflectionRo
     /// First inference catches the duplicate — the test here is about the round-trip path.
     /// But the query would normally fail before reaching serialization. Simulate a hypothetical
     /// round-trip by reflecting the raw (pre-inference) operator and then re-inferring.
-    const auto reflected = NES::reflect(TypedLogicalOperator<ProjectionLogicalOperator>(op));
+    const auto reflected = ReflectionContext{}.reflect(TypedLogicalOperator<ProjectionLogicalOperator>(op));
     const auto roundTripped = ReflectionContext{}.unreflect<TypedLogicalOperator<ProjectionLogicalOperator>>(reflected);
 
     EXPECT_THROW((void)roundTripped->withInferredSchema({schema}), Exception);
