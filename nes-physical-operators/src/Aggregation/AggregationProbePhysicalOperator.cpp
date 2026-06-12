@@ -138,7 +138,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
              const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
         {
-            outputRecord.reassignFields(aggFunction->lower(finalStatePtr, executionCtx.pipelineMemoryProvider));
+            aggFunction->lower(outputRecord, finalStatePtr, executionCtx.pipelineMemoryProvider);
             finalStatePtr = finalStatePtr + aggFunction->getSizeOfStateInBytes();
         }
 

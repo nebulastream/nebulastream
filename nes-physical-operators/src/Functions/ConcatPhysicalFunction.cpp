@@ -49,17 +49,15 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     const auto newSize
         = nautilus::select(newNull, nautilus::val<uint64_t>{0}, leftVariableSizedData.getSize() + rightVariableSizedData.getSize());
     const auto newVarSizeData = arena.allocateVariableSizedData(newSize);
-    if (newNull)
+    if (not newNull)
     {
-        return VarVal{newVarSizeData, leftValue.isNullable() or rightValue.isNullable(), newNull};
+        /// Writing the left value and then the right value to the new variable sized data
+        nautilus::memcpy(newVarSizeData.getContent(), leftVariableSizedData.getContent(), leftVariableSizedData.getSize());
+        nautilus::memcpy(
+            newVarSizeData.getContent() + leftVariableSizedData.getSize(),
+            rightVariableSizedData.getContent(),
+            rightVariableSizedData.getSize());
     }
-
-    /// Writing the left value and then the right value to the new variable sized data
-    nautilus::memcpy(newVarSizeData.getContent(), leftVariableSizedData.getContent(), leftVariableSizedData.getSize());
-    nautilus::memcpy(
-        newVarSizeData.getContent() + leftVariableSizedData.getSize(),
-        rightVariableSizedData.getContent(),
-        rightVariableSizedData.getSize());
     return VarVal{newVarSizeData, leftValue.isNullable() or rightValue.isNullable(), newNull};
 }
 

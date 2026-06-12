@@ -15,27 +15,24 @@
 #pragma once
 
 #include <cstddef>
-#include <memory>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
 {
 
+/// Median over a window. Stores per-input-column raw `T` values in a buffer-pool-backed
+/// PagedVector and computes the median in a single C++ runtime function on lower.
+/// All traced primitives (lift, combine, lower, reset, cleanup) delegate to NautilusFunction
+/// wrappers specialised on (T, Nullable) so each operation is compiled once per type.
 class MedianAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
     MedianAggregationPhysicalFunction(
-        DataType inputType,
-        DataType resultType,
-        PhysicalFunction inputFunction,
-        Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::shared_ptr<TupleBufferRef> bufferRefPagedVector);
+        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -44,14 +41,12 @@ public:
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
-    Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+    void
+    lower(Record& outputRecord, nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~MedianAggregationPhysicalFunction() override = default;
-
-private:
-    std::shared_ptr<TupleBufferRef> bufferRefPagedVector;
 };
 
 }

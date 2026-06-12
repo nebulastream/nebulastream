@@ -16,57 +16,115 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <utility>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
+#include <Aggregation/Function/Detail/TypedMedianPrimitives.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
-#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
-#include <nautilus/function.hpp>
-#include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>
-#include <val_arith.hpp>
-#include <val_bool.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
+namespace
+{
+
+/// Host-side dispatch over (DataType::Type, nullable) onto a generic callable parametrised by
+/// `<typename T, bool Nullable>`. Each Median instance picks exactly one branch at trace-construction
+/// time; the other branches are not traced.
+template <typename Callable>
+auto dispatchOnType(const DataType& type, Callable&& callable)
+{
+    using AggregationDetail::TypedMedian;
+    if (type.nullable)
+    {
+        switch (type.type)
+        {
+            case DataType::Type::INT8:
+                return callable.template operator()<int8_t, true>();
+            case DataType::Type::INT16:
+                return callable.template operator()<int16_t, true>();
+            case DataType::Type::INT32:
+                return callable.template operator()<int32_t, true>();
+            case DataType::Type::INT64:
+                return callable.template operator()<int64_t, true>();
+            case DataType::Type::UINT8:
+                return callable.template operator()<uint8_t, true>();
+            case DataType::Type::UINT16:
+                return callable.template operator()<uint16_t, true>();
+            case DataType::Type::UINT32:
+                return callable.template operator()<uint32_t, true>();
+            case DataType::Type::UINT64:
+                return callable.template operator()<uint64_t, true>();
+            case DataType::Type::FLOAT32:
+                return callable.template operator()<float, true>();
+            case DataType::Type::FLOAT64:
+                return callable.template operator()<double, true>();
+            default:
+                throw UnknownDataType("MEDIAN does not support input type {}", type);
+        }
+    }
+    switch (type.type)
+    {
+        case DataType::Type::INT8:
+            return callable.template operator()<int8_t, false>();
+        case DataType::Type::INT16:
+            return callable.template operator()<int16_t, false>();
+        case DataType::Type::INT32:
+            return callable.template operator()<int32_t, false>();
+        case DataType::Type::INT64:
+            return callable.template operator()<int64_t, false>();
+        case DataType::Type::UINT8:
+            return callable.template operator()<uint8_t, false>();
+        case DataType::Type::UINT16:
+            return callable.template operator()<uint16_t, false>();
+        case DataType::Type::UINT32:
+            return callable.template operator()<uint32_t, false>();
+        case DataType::Type::UINT64:
+            return callable.template operator()<uint64_t, false>();
+        case DataType::Type::FLOAT32:
+            return callable.template operator()<float, false>();
+        case DataType::Type::FLOAT64:
+            return callable.template operator()<double, false>();
+        default:
+            throw UnknownDataType("MEDIAN does not support input type {}", type);
+    }
+}
+
+}
 
 MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
-    DataType inputType,
-    DataType resultType,
-    PhysicalFunction inputFunction,
-    Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<TupleBufferRef> bufferRefPagedVector)
+    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
-    , bufferRefPagedVector(std::move(bufferRefPagedVector))
 {
 }
 
 void MedianAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
+    using AggregationDetail::TypedMedian;
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
-    auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    if (inputType.nullable)
-    {
-        /// Reading the current null value and combining it with the one of the record
-        const auto oldContainsNull = readNull(aggregationState);
-        storeNull(aggregationState, value.isNull() or oldContainsNull);
-
-        /// Skipping the first byte (null)
-        memArea += nautilus::val<uint64_t>{1};
-    }
-
-    /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
-    const PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
-    pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
+    const auto statePtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    dispatchOnType(
+        inputType,
+        [&]<typename T, bool Nullable>()
+        {
+            const auto typedValue = value.getRawValueAs<nautilus::val<T>>();
+            if constexpr (Nullable)
+            {
+                TypedMedian<T, Nullable>::lift(statePtr, typedValue, value.isNull(), pipelineMemoryProvider.bufferProvider);
+            }
+            else
+            {
+                TypedMedian<T, Nullable>::lift(statePtr, typedValue, pipelineMemoryProvider.bufferProvider);
+            }
+        });
 }
 
 void MedianAggregationPhysicalFunction::combine(
@@ -74,174 +132,58 @@ void MedianAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState2,
     PipelineMemoryProvider&)
 {
-    /// Getting the paged vectors from the aggregation states
-    auto memArea1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    auto memArea2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-
-    if (inputType.nullable)
-    {
-        /// Combining the null values
-        const auto containsNull1 = readNull(aggregationState1);
-        const auto containsNull2 = readNull(aggregationState2);
-        const auto newContainsNull = containsNull1 or containsNull2;
-        storeNull(aggregationState1, newContainsNull);
-
-        /// Skipping the first byte (null)
-        memArea1 += nautilus::val<uint64_t>{1};
-        memArea2 += nautilus::val<uint64_t>{1};
-    }
-
-    /// Calling the copyFrom function of the paged vector to combine the two paged vectors by copying the content of the second paged vector to the first paged vector
-    nautilus::invoke(+[](PagedVector* vector1, const PagedVector* vector2) -> void { vector1->copyFrom(*vector2); }, memArea1, memArea2);
+    using AggregationDetail::TypedMedian;
+    const auto lhs = static_cast<nautilus::val<int8_t*>>(aggregationState1);
+    const auto rhs = static_cast<nautilus::val<int8_t*>>(aggregationState2);
+    dispatchOnType(inputType, [&]<typename T, bool Nullable>() { TypedMedian<T, Nullable>::combine(lhs, rhs); });
 }
 
-Record MedianAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
+void MedianAggregationPhysicalFunction::lower(
+    Record& outputRecord, const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
-    /// If it contains null values, we simply return a null value
-    const auto containsNull = inputType.nullable ? readNull(aggregationState) : nautilus::val<bool>{false};
-    if (containsNull)
-    {
-        const VarVal zero{nautilus::val<uint64_t>(0), true, true};
-        const VarVal medianValue = zero.castToType(resultType.type);
-        Record resultRecord;
-        resultRecord.write(resultFieldIdentifier, medianValue);
-        return resultRecord;
-    }
-
-    /// Getting the paged vector from the aggregation state
-    const auto pagedVectorPtr
-        = static_cast<nautilus::val<PagedVector*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
-    const PagedVectorRef pagedVectorRef(pagedVectorPtr, bufferRefPagedVector);
-    const auto allFieldNames = bufferRefPagedVector->getAllFieldNames();
-    const auto numberOfEntries = invoke(
-        +[](const PagedVector* pagedVector)
+    using AggregationDetail::TypedMedian;
+    const auto statePtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    dispatchOnType(
+        inputType,
+        [&]<typename T, bool Nullable>()
         {
-            const auto numberOfEntriesVal = pagedVector->getTotalNumberOfEntries();
-            INVARIANT(numberOfEntriesVal > 0, "The number of entries in the paged vector must be greater than 0");
-            return numberOfEntriesVal;
-        },
-        pagedVectorPtr);
-
-    /// Iterating in two nested loops over all the records in the paged vector to get the median.
-    /// We pick a candidate and then count for each item, if the candidate is smaller and also if the candidate is less than the item.
-    const nautilus::val<int64_t> medianPos1 = (numberOfEntries - 1) / 2;
-    const nautilus::val<int64_t> medianPos2 = numberOfEntries / 2;
-    nautilus::val<uint64_t> medianItemPos1 = 0;
-    nautilus::val<uint64_t> medianItemPos2 = 0;
-    nautilus::val<bool> medianFound1(false);
-    nautilus::val<bool> medianFound2(false);
-
-
-    /// Picking a candidate and counting how many items are smaller or equal to the candidate
-    const auto endIt = pagedVectorRef.end(allFieldNames);
-    for (auto candidateIt = pagedVectorRef.begin(allFieldNames); candidateIt != endIt; ++candidateIt)
-    {
-        nautilus::val<int64_t> countLessThan = 0;
-        nautilus::val<int64_t> countEqual = 0;
-        const auto candidateRecord = *candidateIt;
-        const auto candidateValue = inputFunction.execute(candidateRecord, pipelineMemoryProvider.arena);
-
-        /// Counting how many items are smaller or equal for the current candidate
-        for (auto itemIt = pagedVectorRef.begin(allFieldNames); itemIt != endIt; ++itemIt)
-        {
-            const auto itemRecord = *itemIt;
-            const auto itemValue = inputFunction.execute(itemRecord, pipelineMemoryProvider.arena);
-            if (itemValue < candidateValue)
+            const nautilus::val<double> medianAsDouble = TypedMedian<T, Nullable>::lower(statePtr);
+            VarVal medianValue{medianAsDouble};
+            if constexpr (Nullable)
             {
-                countLessThan = countLessThan + 1;
+                const auto isNull = TypedMedian<T, Nullable>::lowerIsNull(statePtr);
+                medianValue = VarVal{medianAsDouble, true, isNull};
             }
-            if (itemValue == candidateValue)
-            {
-                countEqual = countEqual + 1;
-            }
-        }
-
-        /// Checking if the current candidate is the median, and if so, storing the position of the median
-        /// The current candidate is the median if the number of items that are smaller or equal to the candidate is larger than the median position
-        if (not medianFound1 && countLessThan <= medianPos1 && medianPos1 < countLessThan + countEqual)
-        {
-            medianItemPos1 = candidateIt - pagedVectorRef.begin(allFieldNames);
-            medianFound1 = true;
-        }
-        if (not medianFound2 && countLessThan <= medianPos2 && medianPos2 < countLessThan + countEqual)
-        {
-            medianItemPos2 = candidateIt - pagedVectorRef.begin(allFieldNames);
-            medianFound2 = true;
-        }
-    }
-
-    /// Setting the default median value. If a median was found, the value will be overwritten
-    const VarVal zero(nautilus::val<uint64_t>(0));
-    VarVal medianValue = zero.castToType(resultType.type);
-    if (medianFound1 and medianFound2)
-    {
-        /// Calculating the median value. Regardless if the number of entries is odd or even, we calculate the median as the average of the two middle values.
-        /// For even numbers of entries, this is its natural definition.
-        /// For odd numbers of entries, both positions are pointing to the same item and thus, we are calculating the average of the same item, which is the item itself.
-        const auto medianRecord1 = pagedVectorRef.readRecord(medianItemPos1, allFieldNames);
-        const auto medianRecord2 = pagedVectorRef.readRecord(medianItemPos2, allFieldNames);
-
-        const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
-        const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
-        const VarVal two = nautilus::val<uint64_t>(2);
-        medianValue
-            = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
-    }
-
-    /// Adding the median to the result record
-    Record resultRecord;
-    resultRecord.write(resultFieldIdentifier, medianValue);
-
-    return resultRecord;
+            outputRecord.write(resultFieldIdentifier, medianValue.castToType(resultType.type));
+        });
 }
 
 void MedianAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
-    nautilus::invoke(
-        +[](AggregationState* pagedVectorMemArea) -> void
-        {
-            /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-            new (pagedVector) PagedVector();
-        },
-        aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
-
-    if (inputType.nullable)
-    {
-        const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-        nautilus::memset(memArea, 0, 1);
-    }
+    using AggregationDetail::TypedMedian;
+    const auto statePtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    dispatchOnType(inputType, [&]<typename T, bool Nullable>() { TypedMedian<T, Nullable>::reset(statePtr); });
 }
 
 void MedianAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
 {
-    invoke(
-        +[](AggregationState* pagedVectorMemArea) -> void
-        {
-            /// Calls the destructor of the PagedVector
-            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            pagedVector->~PagedVector();
-        },
-        aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
+    using AggregationDetail::TypedMedian;
+    const auto statePtr = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    dispatchOnType(inputType, [&]<typename T, bool Nullable>() { TypedMedian<T, Nullable>::cleanup(statePtr); });
 }
 
 size_t MedianAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    /// ContainsNullValues (1B) + Pagedvector
-    return static_cast<uint64_t>(inputType.nullable) + sizeof(PagedVector);
+    /// Layout: (nullable ? 8B isNull padded : 0) + sizeof(PagedVector). PagedVector dominates.
+    const size_t head = inputType.nullable ? 8 : 0;
+    return head + sizeof(PagedVector);
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMedianAggregationPhysicalFunction(
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    INVARIANT(arguments.bufferRefPagedVector.has_value(), "Memory provider paged vector not set");
     return std::make_shared<MedianAggregationPhysicalFunction>(
-        std::move(arguments.inputType),
-        std::move(arguments.resultType),
-        arguments.inputFunction,
-        arguments.resultFieldIdentifier,
-        arguments.bufferRefPagedVector.value());
+        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }

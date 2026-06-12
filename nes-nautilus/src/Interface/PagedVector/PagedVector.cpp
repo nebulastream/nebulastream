@@ -175,6 +175,12 @@ const TupleBuffer& PagedVector::PagesWrapper::getLastPage() const
     return pages.back().buffer;
 }
 
+TupleBuffer& PagedVector::PagesWrapper::getLastPageMutable()
+{
+    PRECONDITION(not pages.empty(), "getLastPageMutable() should be called after a page has been inserted!");
+    return pages.back().buffer;
+}
+
 const TupleBuffer& PagedVector::PagesWrapper::getFirstPage() const
 {
     PRECONDITION(not pages.empty(), "getFirstPage() should be called after a page has been inserted!");

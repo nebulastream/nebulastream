@@ -1,0 +1,22 @@
+Index: plugins/std/CMakeLists.txt
+===================================================================
+--- a/plugins/std/CMakeLists.txt
++++ b/plugins/std/CMakeLists.txt
+@@ -45,3 +45,17 @@
+ if (ENABLE_TESTS)
+     add_subdirectory(test)
+ endif ()
++
++# Install rules so downstream consumers of `find_package(nautilus)` can link
++# the std plugin via the namespaced alias `nautilus::nautilus-std`.
++add_library(nautilus::nautilus-std ALIAS nautilus-std)
++
++install(
++        TARGETS nautilus-std
++        EXPORT nautilus-config
++        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
++        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
++        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
++
++install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/nautilus/
++        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nautilus)

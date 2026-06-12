@@ -13,32 +13,57 @@
 */
 #pragma once
 
+#include <atomic>
+#include <cstdint>
 #include <functional>
+#include <memory>
+#include <string>
+#include <utility>
+#include <Interface/CompiledHandle.hpp>
 #include <Engine.hpp>
+#include <Module.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
 {
 
-/// Similar to the execution context, this class provides access to functionality for compiling code in a pipeline.
+/// Per-pipeline compilation context handed to PhysicalOperator::setup().
+///
+/// Operators call registerFunction() during setup to add helper functions
+/// (e.g. hash-map cleanup) to the pipeline's nautilus::engine::NautilusModule.
+/// All registrations and the main pipeline function compile together in a
+/// single module.compile() call, so they share IR optimization passes and
+/// backend invocation. The handle returned here resolves lazily on first
+/// invocation once the surrounding pipeline stage has compiled its module.
 class CompilationContext
 {
-    /// We assume that a compilation context always outlives the engine
-    const nautilus::engine::NautilusEngine& engine; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
-
 public:
-    explicit CompilationContext(const nautilus::engine::NautilusEngine& engine) : engine(engine) { }
-
-    template <typename R, typename... FunctionArguments>
-    auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...)) const
+    CompilationContext(nautilus::engine::NautilusModule& moduleBuilder, std::shared_ptr<CompiledModuleSlot> slot)
+        : moduleBuilder(moduleBuilder), slot(std::move(slot))
     {
-        return engine.registerFunction<R, FunctionArguments...>(fnptr);
     }
 
     template <typename R, typename... FunctionArguments>
-    auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func) const
+    CompiledHandle<R, FunctionArguments...> registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...))
     {
-        return engine.registerFunction<R, FunctionArguments...>(func);
+        auto name = mintName();
+        moduleBuilder.registerFunction(name, fnptr);
+        return CompiledHandle<R, FunctionArguments...>(slot, std::move(name));
     }
+
+    template <typename R, typename... FunctionArguments>
+    CompiledHandle<R, FunctionArguments...> registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func)
+    {
+        auto name = mintName();
+        moduleBuilder.registerFunction<R(nautilus::val<FunctionArguments>...)>(name, std::move(func));
+        return CompiledHandle<R, FunctionArguments...>(slot, std::move(name));
+    }
+
+private:
+    std::string mintName() { return "nes_helper_" + std::to_string(nextId.fetch_add(1, std::memory_order_relaxed)); }
+
+    nautilus::engine::NautilusModule& moduleBuilder; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    std::shared_ptr<CompiledModuleSlot> slot;
+    std::atomic<uint64_t> nextId{0};
 };
 }
