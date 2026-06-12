@@ -35,7 +35,7 @@ struct Reflector<detail::ErasedLogicalFunction>
 {
     Reflected operator()(const detail::ErasedLogicalFunction& function, const ReflectionContext& context) const
     {
-        return context.reflect(function);
+        return function.reflect(context);
     }
 };
 
