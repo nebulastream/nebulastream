@@ -329,6 +329,8 @@ public:
         {
             if (explainStatement.has_value())
             {
+                if (exception.has_value())
+                    return std::unexpected{exception.value()};
                 return std::unexpected{TestException("EXPLAIN query — no distributed plan")};
             }
             if (not exception.has_value())
