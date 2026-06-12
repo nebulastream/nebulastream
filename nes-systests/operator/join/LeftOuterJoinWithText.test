@@ -18,7 +18,7 @@ ATTACH INLINE
 3,world,350
 
 # Sink: right-side label is nullable (no NOT NULL) because unmatched left rows get NULL-filled right fields
-CREATE SINK sink(streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.id2 UINT64, stream2.label VARSIZED, stream2.timestamp UINT64) TYPE File;
+CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64, label VARSIZED, timestamp UINT64) TYPE File;
 
 # Left id=2 has no right match, so stream2.label must be NULL-filled — this hits the missing VARSIZED case in makeNullVarVal
 SELECT *

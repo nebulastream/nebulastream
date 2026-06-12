@@ -10,7 +10,7 @@ CREATE LOGICAL SOURCE futRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, time
 CREATE PHYSICAL SOURCE FOR futRight TYPE File;
 ATTACH FILE small/intervaljoin_future_only_right.csv
 
-CREATE SINK futSink(futLeftfutRight.start UINT64 NOT NULL, futLeftfutRight.end UINT64 NOT NULL, futLeft.id1 UINT64 NOT NULL, futLeft.value1 UINT64 NOT NULL, futLeft.timestamp UINT64 NOT NULL, futRight.id2 UINT64 NOT NULL, futRight.value2 UINT64 NOT NULL, futRight.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK futSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # FutureOnly: right.ts must fall in [left.ts + 0 ms, left.ts + 3 ms].
 SELECT * FROM (SELECT * FROM futLeft) INNER JOIN (SELECT * FROM futRight) ON id1 = id2 INTERVAL (timestamp, lower 0 ms, upper 3 ms) INTO futSink;
@@ -29,7 +29,7 @@ CREATE LOGICAL SOURCE pastRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, tim
 CREATE PHYSICAL SOURCE FOR pastRight TYPE File;
 ATTACH FILE small/intervaljoin_past_only_right.csv
 
-CREATE SINK pastSink(pastLeftpastRight.start UINT64 NOT NULL, pastLeftpastRight.end UINT64 NOT NULL, pastLeft.id1 UINT64 NOT NULL, pastLeft.value1 UINT64 NOT NULL, pastLeft.timestamp UINT64 NOT NULL, pastRight.id2 UINT64 NOT NULL, pastRight.value2 UINT64 NOT NULL, pastRight.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK pastSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # PastOnly: right.ts must fall in [left.ts - 4 ms, left.ts - 1 ms] (negative offsets).
 SELECT * FROM (SELECT * FROM pastLeft) INNER JOIN (SELECT * FROM pastRight) ON id1 = id2 INTERVAL (timestamp, lower -4 ms, upper -1 ms) INTO pastSink;
@@ -48,7 +48,7 @@ CREATE LOGICAL SOURCE mixRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, time
 CREATE PHYSICAL SOURCE FOR mixRight TYPE File;
 ATTACH FILE small/intervaljoin_mixed_bounds_right.csv
 
-CREATE SINK mixSink(mixLeftmixRight.start UINT64 NOT NULL, mixLeftmixRight.end UINT64 NOT NULL, mixLeft.id1 UINT64 NOT NULL, mixLeft.value1 UINT64 NOT NULL, mixLeft.timestamp UINT64 NOT NULL, mixRight.id2 UINT64 NOT NULL, mixRight.value2 UINT64 NOT NULL, mixRight.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK mixSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # MixedBounds: right.ts must fall in [left.ts - 6 ms, left.ts + 2 ms] (W = 8), spanning past and future.
 SELECT * FROM (SELECT * FROM mixLeft) INNER JOIN (SELECT * FROM mixRight) ON id1 = id2 INTERVAL (timestamp, lower -6 ms, upper 2 ms) INTO mixSink;
@@ -68,7 +68,7 @@ CREATE LOGICAL SOURCE exclRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, tim
 CREATE PHYSICAL SOURCE FOR exclRight TYPE File;
 ATTACH FILE small/intervaljoin_exclusive_bound_right.csv
 
-CREATE SINK exclSink(exclLeftexclRight.start UINT64 NOT NULL, exclLeftexclRight.end UINT64 NOT NULL, exclLeft.id1 UINT64 NOT NULL, exclLeft.value1 UINT64 NOT NULL, exclLeft.timestamp UINT64 NOT NULL, exclRight.id2 UINT64 NOT NULL, exclRight.value2 UINT64 NOT NULL, exclRight.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK exclSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # ExclusiveBound: closed bounds [0 ms, 3 ms] — right tuples exactly at left.ts+0 and left.ts+3 must match.
 SELECT * FROM (SELECT * FROM exclLeft) INNER JOIN (SELECT * FROM exclRight) ON id1 = id2 INTERVAL (timestamp, lower 0 ms, upper 3 ms) INTO exclSink;
@@ -99,7 +99,7 @@ ATTACH INLINE
 1008,10,8
 1009,10,9
 
-CREATE SINK p1Sink(p1Leftp1Right.start UINT64 NOT NULL, p1Leftp1Right.end UINT64 NOT NULL, p1Left.f1_left UINT64 NOT NULL, p1Left.f2_left UINT64 NOT NULL, p1Left.timestamp UINT64 NOT NULL, p1Right.f1_right UINT64 NOT NULL, p1Right.f2_right UINT64 NOT NULL, p1Right.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK p1Sink(start UINT64 NOT NULL, end UINT64 NOT NULL, f1_left UINT64 NOT NULL, f2_left UINT64 NOT NULL, timestamp UINT64 NOT NULL, f1_right UINT64 NOT NULL, f2_right UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # PrivateTest1: future bounds [0 ms, 3 ms], left tuples arrive before their right partners; join key f2.
 SELECT * FROM (SELECT * FROM p1Left) INNER JOIN (SELECT * FROM p1Right) ON f2_left = f2_right INTERVAL (timestamp, lower 0 ms, upper 3 ms) INTO p1Sink;
@@ -137,7 +137,7 @@ ATTACH INLINE
 1008,12,8
 1009,12,9
 
-CREATE SINK p2Sink(p2Leftp2Right.start UINT64 NOT NULL, p2Leftp2Right.end UINT64 NOT NULL, p2Left.f1_left UINT64 NOT NULL, p2Left.f2_left UINT64 NOT NULL, p2Left.timestamp UINT64 NOT NULL, p2Right.f1_right UINT64 NOT NULL, p2Right.f2_right UINT64 NOT NULL, p2Right.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK p2Sink(start UINT64 NOT NULL, end UINT64 NOT NULL, f1_left UINT64 NOT NULL, f2_left UINT64 NOT NULL, timestamp UINT64 NOT NULL, f1_right UINT64 NOT NULL, f2_right UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # PrivateTest2: future bounds [0 ms, 3 ms] with right tuples interleaved before/after left; join key f2.
 SELECT * FROM (SELECT * FROM p2Left) INNER JOIN (SELECT * FROM p2Right) ON f2_left = f2_right INTERVAL (timestamp, lower 0 ms, upper 3 ms) INTO p2Sink;
@@ -170,7 +170,7 @@ ATTACH INLINE
 1008,12,8
 1009,12,9
 
-CREATE SINK p3Sink(p3Leftp3Right.start UINT64 NOT NULL, p3Leftp3Right.end UINT64 NOT NULL, p3Left.f1_left UINT64 NOT NULL, p3Left.f2_left UINT64 NOT NULL, p3Left.timestamp UINT64 NOT NULL, p3Right.f1_right UINT64 NOT NULL, p3Right.f2_right UINT64 NOT NULL, p3Right.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK p3Sink(start UINT64 NOT NULL, end UINT64 NOT NULL, f1_left UINT64 NOT NULL, f2_left UINT64 NOT NULL, timestamp UINT64 NOT NULL, f1_right UINT64 NOT NULL, f2_right UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # PrivateTest3: past bounds [-4 ms, -1 ms]; join key f2.
 SELECT * FROM (SELECT * FROM p3Left) INNER JOIN (SELECT * FROM p3Right) ON f2_left = f2_right INTERVAL (timestamp, lower -4 ms, upper -1 ms) INTO p3Sink;
@@ -203,7 +203,7 @@ ATTACH INLINE
 1008,12,3,8
 1009,12,4,9
 
-CREATE SINK p4Sink(p4Leftp4Right.start UINT64 NOT NULL, p4Leftp4Right.end UINT64 NOT NULL, p4Left.f1_left UINT64 NOT NULL, p4Left.f2_left UINT64 NOT NULL, p4Left.timestamp UINT64 NOT NULL, p4Right.f1_right UINT64 NOT NULL, p4Right.f2_right UINT64 NOT NULL, p4Right.f3_right UINT64 NOT NULL, p4Right.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK p4Sink(start UINT64 NOT NULL, end UINT64 NOT NULL, f1_left UINT64 NOT NULL, f2_left UINT64 NOT NULL, timestamp UINT64 NOT NULL, f1_right UINT64 NOT NULL, f2_right UINT64 NOT NULL, f3_right UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # PrivateTest4: mixed bounds [-6 ms, 2 ms] with asymmetric schemas (right carries an extra field f3_right); join key f2.
 SELECT * FROM (SELECT * FROM p4Left) INNER JOIN (SELECT * FROM p4Right) ON f2_left = f2_right INTERVAL (timestamp, lower -6 ms, upper 2 ms) INTO p4Sink;

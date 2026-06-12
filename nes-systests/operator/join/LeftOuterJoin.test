@@ -11,7 +11,7 @@ CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, times
 CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
 ATTACH FILE small/outer_join_right.csv
 
-CREATE SINK sink(streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.id2 UINT64, stream2.value2 UINT64, stream2.timestamp UINT64) TYPE Checksum;
+CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64, value2 UINT64, timestamp UINT64) TYPE Checksum;
 
 # Query 1 — Large tumbling window (10 sec)
 SELECT *

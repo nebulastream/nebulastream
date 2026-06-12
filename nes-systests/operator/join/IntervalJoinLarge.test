@@ -10,7 +10,7 @@ CREATE LOGICAL SOURCE r10(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp
 CREATE PHYSICAL SOURCE FOR r10 TYPE File;
 ATTACH FILE small/intervaljoin_large_10kb_right.csv
 
-CREATE SINK checksum10(l10r10.start UINT64 NOT NULL, l10r10.end UINT64 NOT NULL, l10.id UINT64 NOT NULL, l10.value UINT64 NOT NULL, l10.timestamp UINT64 NOT NULL, r10.id2 UINT64 NOT NULL, r10.value2 UINT64 NOT NULL, r10.timestamp UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK checksum10(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE Checksum;
 
 # ~10 kB input, narrow window [-5 ms, 5 ms] (W = 10). Expected count,checksum from the Python oracle.
 SELECT * FROM (SELECT * FROM l10) INNER JOIN (SELECT * FROM r10) ON id = id2 INTERVAL (timestamp, lower -5 ms, upper 5 ms) INTO checksum10;
@@ -25,7 +25,7 @@ CREATE LOGICAL SOURCE r100(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestam
 CREATE PHYSICAL SOURCE FOR r100 TYPE File;
 ATTACH FILE small/intervaljoin_large_100kb_right.csv
 
-CREATE SINK checksum100(l100r100.start UINT64 NOT NULL, l100r100.end UINT64 NOT NULL, l100.id UINT64 NOT NULL, l100.value UINT64 NOT NULL, l100.timestamp UINT64 NOT NULL, r100.id2 UINT64 NOT NULL, r100.value2 UINT64 NOT NULL, r100.timestamp UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK checksum100(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE Checksum;
 
 # ~100 kB input, wide window [-105 ms, 105 ms] (W = 210, spanning multiple slices). Expected count,checksum from the Python oracle.
 SELECT * FROM (SELECT * FROM l100) INNER JOIN (SELECT * FROM r100) ON id = id2 INTERVAL (timestamp, lower -105 ms, upper 105 ms) INTO checksum100;

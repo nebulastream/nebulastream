@@ -1,6 +1,6 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# You may obtain the License at
 
 #    https://www.apache.org/licenses/LICENSE-2.0
 
@@ -18,19 +18,19 @@ include(CheckCXXSourceCompiles)
 
 option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
 SET(USING_LIBCXX OFF)
-SET(USING_LIBSTDCXX OFF)
+SET(USING_LIBSTDCXX ON)
 
 if (USE_LIBCXX_IF_AVAILABLE)
-    # check if libc++ available and at least version 19
+     # check if libc++ available and at least version 19
     set(CMAKE_REQUIRED_FLAGS "-std=c++23 -stdlib=libc++")
     check_cxx_source_compiles("
-        #include <cstddef>
-        #if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 190000
+         #include <cstddef>
+         #if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 190000
             int main() { return 0; }
-        #else
-            #error \"libc++ version is below 19\"
-        #endif
-    " LIBCXX_VERSION_CHECK)
+         #else
+             #error \"libc++ version is below 19\"
+         #endif
+     " LIBCXX_VERSION_CHECK)
 
     if (LIBCXX_VERSION_CHECK)
         message(STATUS "Using Libc++")
@@ -42,16 +42,16 @@ if (USE_LIBCXX_IF_AVAILABLE)
 endif ()
 
 if (NOT ${USING_LIBCXX})
-    # Check if Libstdc++ version is 14 or above
+     # Check if Libstdc++ version is 14 or above
     set(CMAKE_REQUIRED_FLAGS "-std=c++23")
     check_cxx_source_compiles("
-        #include <cstddef>
-        #if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 14
+         #include <cstddef>
+         #if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 14
             int main() { return 0; }
-        #else
-            #error \"libstdc++ version is below 14\"
-        #endif
-    " LIBSTDCXX_VERSION_CHECK)
+         #else
+             #error \"libstdc++ version is below 14\"
+         #endif
+     " LIBSTDCXX_VERSION_CHECK)
 
     if (LIBSTDCXX_VERSION_CHECK)
         set(USING_LIBSTDCXX ON)
@@ -63,9 +63,9 @@ endif ()
 
 if (${USING_LIBCXX})
     add_compile_options(-stdlib=libc++)
-    # Currently C++20 threading features are hidden behind the feature flag
+     # Currently C++20 threading features are hidden behind the feature flag
     add_compile_options(-fexperimental-library)
-    # Enable Libc++ hardening mode
+     # Enable Libc++ hardening mode
     add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
     add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
     add_link_options(-lc++)

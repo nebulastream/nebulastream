@@ -10,7 +10,7 @@ CREATE LOGICAL SOURCE negRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, time
 CREATE PHYSICAL SOURCE FOR negRight TYPE File;
 ATTACH FILE small/intervaljoin_future_only_right.csv
 
-CREATE SINK negSink(negLeftnegRight.start UINT64 NOT NULL, negLeftnegRight.end UINT64 NOT NULL, negLeft.id1 UINT64 NOT NULL, negLeft.value1 UINT64 NOT NULL, negLeft.timestamp UINT64 NOT NULL, negRight.id2 UINT64 NOT NULL, negRight.value2 UINT64 NOT NULL, negRight.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK negSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # PointPredicate: a point predicate [0 ms, 0 ms] must be rejected (W = U - L = 0 is degenerate).
 SELECT * FROM (SELECT * FROM negLeft) INNER JOIN (SELECT * FROM negRight) ON id1 = id2 INTERVAL (timestamp, lower 0 ms, upper 0 ms) INTO negSink;
@@ -43,7 +43,7 @@ ATTACH INLINE
 1008,10,8
 1009,10,9
 
-CREATE SINK pt5Sink(pt5Leftpt5Right.start UINT64 NOT NULL, pt5Leftpt5Right.end UINT64 NOT NULL, pt5Left.id1 UINT64 NOT NULL, pt5Left.value1 UINT64 NOT NULL, pt5Left.timestamp UINT64 NOT NULL, pt5Right.id2 UINT64 NOT NULL, pt5Right.value2 UINT64 NOT NULL, pt5Right.timestamp UINT64 NOT NULL) TYPE File;
+CREATE SINK pt5Sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
 
 # PrivateTest5: the private repo's exact-timestamp-match interval join uses lower == upper == 0 ms; NebulaStream rejects this degenerate point predicate.
 SELECT * FROM (SELECT * FROM pt5Left) INNER JOIN (SELECT * FROM pt5Right) ON id1 = id2 INTERVAL (timestamp, lower 0 ms, upper 0 ms) INTO pt5Sink;
