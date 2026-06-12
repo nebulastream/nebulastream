@@ -3,11 +3,27 @@
 
 CREATE LOGICAL SOURCE stream(id UINT32 NOT NULL, value UINT32 NOT NULL);
 
-EXPLAIN (LOGICAL, FORMAT TEXT) SELECT id, value FROM stream INTO Void('localhost:8080' AS `SINK`.`HOST`);
+EXPLAIN (LOGICAL, FORMAT TEXT) SELECT id, value FROM stream INTO File();
 ----
-Query:
-EXPLAIN (LOGICAL, FORMAT TEXT) SELECT id, value FROM stream INTO Void('localhost:8080' AS `SINK`.`HOST`);
-Initial Logical Plan:
+== Initial Logical Plan ==
 INLINE_SINK(InlineSink)
   PROJECTION(fields: [ID, VALUE])
     SOURCE(STREAM)
+
+
+EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT *
+FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
+ON (value = value2 AND id = id2)
+WINDOW TUMBLING (timestamp, size 1 sec)
+INTO File();
+----
+== Initial Logical Plan ==
+INLINE_SINK(InlineSink)
+  PROJECTION(fields: [*])
+    Join(VALUE = VALUE2 AND ID = ID2)
+      WATERMARK_ASSIGNER(Event time)
+        PROJECTION(fields: [*])
+          SOURCE(STREAM)
+      WATERMARK_ASSIGNER(Event time)
+        PROJECTION(fields: [*])
+          SOURCE(STREAM2)

@@ -498,23 +498,12 @@ std::string SystestParser::expectVerbatimLines()
     {
         ++currentLine;
     }
-    /// Collect lines until a structural token, preserving empty lines.
-    /// QUERY tokens (SELECT/EXPLAIN) are NOT stop tokens because EXPLAIN output can reproduce
-    /// the query SQL verbatim. Only tokens that introduce new top-level constructs stop collection.
-    static const std::unordered_set<TokenType> VerbatimStopTokens{
-        TokenType::CREATE,
-        TokenType::RESULT_DELIMITER,
-        TokenType::CONFIGURATION,
-        TokenType::GLOBAL_CONFIGURATION,
-        TokenType::DIFFERENTIAL,
-        TokenType::SEQUENTIAL_EXECUTION,
-    };
+
     std::string result;
     while (currentLine < lines.size())
     {
-        if (auto tok = getTokenIfValid(lines[currentLine]); tok.has_value() && VerbatimStopTokens.contains(*tok))
+        if (lines[currentLine].empty() && lines[currentLine-1].empty())
         {
-            shouldRevisitCurrentLine = true;
             break;
         }
         if (!result.empty())
