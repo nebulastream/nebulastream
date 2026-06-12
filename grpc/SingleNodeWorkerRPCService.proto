@@ -18,24 +18,18 @@ import "SerializableQueryPlan.proto";
 import "google/protobuf/empty.proto";
 
 service WorkerRPCService {
-  rpc RegisterQuery (RegisterQueryRequest) returns (RegisterQueryReply) {}
-
-  rpc StartQuery (StartQueryRequest) returns (google.protobuf.Empty) {}
+  rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (google.protobuf.Empty) {}
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
   rpc RequestStatus (WorkerStatusRequest) returns (WorkerStatusResponse) {}
 }
 
-message RegisterQueryRequest {
+message StartQueryRequest {
   NES.SerializableQueryPlan queryPlan = 1;
 }
 
-message RegisterQueryReply {
-  NES.SerializableQueryId queryId = 1;
-}
-
-message StartQueryRequest {
+message StartQueryReply {
   NES.SerializableQueryId queryId = 1;
 }
 

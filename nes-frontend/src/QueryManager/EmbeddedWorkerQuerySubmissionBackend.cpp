@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <memory>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -23,6 +24,7 @@
 
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
@@ -50,14 +52,9 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
 {
 }
 
-std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(LogicalPlan plan)
+std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(LogicalPlan plan)
 {
-    return worker.registerQuery(plan);
-}
-
-std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(QueryId queryId)
-{
-    return worker.startQuery(queryId);
+    return worker.startQuery(std::move(plan));
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)

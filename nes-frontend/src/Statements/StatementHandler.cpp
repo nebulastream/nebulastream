@@ -358,22 +358,15 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
             distributedPlan.setQueryId(*statement.id);
         }
 
-        const auto queryResult = queryManager->registerQuery(distributedPlan);
-        return queryResult
-            .and_then(
-                [this](const auto& query)
+        return queryManager->start(distributedPlan)
+            .transform([](DistributedQueryId distQueryId) { return QueryStatementResult{std::move(distQueryId)}; })
+            .transform_error(
+                [](auto vecOfErrors)
                 {
-                    return queryManager->start(query)
-                        .transform([&query] { return query; })
-                        .transform_error(
-                            [](auto vecOfErrors)
-                            {
-                                return QueryStartFailed(
-                                    "Could not start query: {}",
-                                    fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
-                            });
-                })
-            .transform([](auto query) { return QueryStatementResult{std::move(query)}; });
+                    return QueryStartFailed(
+                        "Could not start query: {}",
+                        fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
+                });
     }
     CPPTRACE_CATCH(...)
     {
