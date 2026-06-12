@@ -34,9 +34,57 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h> /// NOLINT(misc-include-cleaner)
+#include <Functions/ConstantValueLogicalFunction.hpp>
 
 namespace NES
 {
+    std::string extractFormatString(const LogicalFunction& function)
+    {
+        auto constant = function.tryGetAs<ConstantValueLogicalFunction>();
+
+        if (!constant)
+        {
+            throw CannotInferSchema(
+                "Format requires a constant VARSIZED literal as its first argument");
+        }
+
+        if (constant->get().getDataType().type != DataType::Type::VARSIZED)
+        {
+            throw CannotInferSchema(
+                "Format requires a VARSIZED format string as its first argument, but got data type {}", constant->get().getDataType());
+        }
+
+        return constant->get().getConstantValue();
+    }
+
+    size_t countPlaceholders(std::string_view formatString)
+    {
+        size_t count = 0;
+
+        for (size_t i = 0; i < formatString.size(); ++i)
+        {
+            if (formatString[i] == '{')
+            {
+                if (i + 1 < formatString.size() && formatString[i + 1] == '}')
+                {
+                    ++count;
+                    ++i;
+                }
+                else
+                {
+                    throw CannotInferSchema(
+                        "Format currently only supports '{}' placeholders");
+                }
+            }
+            else if (formatString[i] == '}')
+            {
+                throw CannotInferSchema(
+                    "Format string contains unmatched '}'");
+            }
+        }
+
+        return count;
+    }
 
 FormatLogicalFunction::FormatLogicalFunction(std::vector<LogicalFunction> children)
     : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED)), children(std::move(children))
@@ -73,12 +121,18 @@ LogicalFunction FormatLogicalFunction::withInferredDataType(const Schema& schema
         | std::ranges::to<std::vector>();
     INVARIANT(not newChildren.empty(), "FormatLogicalFunction expects at least one child (the format string)");
 
-    /// TODO(student): consider validating that newChildren[0] is a VARSIZED format string.
-    ///                You may also wrap non-VARSIZED placeholder args here in a to_string(...)
-    ///                helper so the physical side only deals with VARSIZED inputs.
-    ///                For inspiration see the FmtLogicalFunction prototype on branch
-    ///                `origin/retrospective-study-charite-mlife-rebased-v2` (file
-    ///                `nes-plugins/Functions/Fmt/FmtLogicalFunction.cpp`, commit e88b3b46ec).
+    const auto formatString = extractFormatString(newChildren.front());
+
+    const auto placeholders = countPlaceholders(formatString);
+    const auto argumentCount = newChildren.size() - 1;
+
+    if (placeholders != argumentCount)
+    {
+        throw CannotInferSchema(
+            "Format string has {} placeholder(s) but {} argument(s) were provided",
+            placeholders,
+            argumentCount);
+    }
 
     auto newDataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
     newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
