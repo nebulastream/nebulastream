@@ -248,12 +248,15 @@ std::string explain(const LogicalPlan& plan, ExplainVerbosity verbosity)
     std::stringstream stringstream;
     if (verbosity == ExplainVerbosity::Short)
     {
-        auto dumpHandler = PlanRenderer<LogicalPlan, LogicalOperator>(stringstream, ExplainVerbosity::Short);
-        dumpHandler.dump(plan);
+        auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false, ExplainVerbosity::Short);
+        for (const auto& rootOperator : plan.getRootOperators())
+        {
+            dumpHandler.dump({rootOperator});
+        }
     }
     else
     {
-        auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false);
+        auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false, ExplainVerbosity::Debug);
         for (const auto& rootOperator : plan.getRootOperators())
         {
             dumpHandler.dump({rootOperator});

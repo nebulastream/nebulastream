@@ -226,6 +226,9 @@ public:
     std::expected<DropSinkStatementResult, Exception> operator()(const DropSinkStatement& statement);
 };
 
+/// Computes the EXPLAIN output for the given statement using the provided optimizer.
+std::string computeExplainOutput(const ExplainQueryStatement& statement, const QueryOptimizer& optimizer);
+
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
     SharedPtr<QueryManager> queryManager;

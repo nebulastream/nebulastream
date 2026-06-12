@@ -531,7 +531,61 @@ public:
             if (auto* const explainStatementAST = statementAST->explainStatement())
             {
                 INVARIANT(explainStatementAST->query() != nullptr, "Should be enforced by antlr");
-                return ExplainQueryStatement{queryBinder(explainStatementAST->query())};
+                ExplainFormat format = ExplainFormat::Visual;
+                ExplainStage stage = ExplainStage::All;
+                if (auto* const optionsAST = explainStatementAST->explainOptions())
+                {
+                    bool stageSet = false;
+                    bool formatSet = false;
+                    for (auto* const optionAST : optionsAST->explainOption())
+                    {
+                        if (auto* const stageAST = optionAST->explainStage())
+                        {
+                            if (stageSet)
+                            {
+                                throw InvalidQuerySyntax("EXPLAIN: at most one stage option (LOGICAL, OPTIMIZED, DISTRIBUTED, ALL) is allowed");
+                            }
+                            stageSet = true;
+                            if (stageAST->LOGICAL() != nullptr)
+                            {
+                                stage = ExplainStage::Logical;
+                            }
+                            else if (stageAST->OPTIMIZED() != nullptr)
+                            {
+                                stage = ExplainStage::Optimized;
+                            }
+                            else if (stageAST->DISTRIBUTED_KW() != nullptr)
+                            {
+                                stage = ExplainStage::Distributed;
+                            }
+                            else
+                            {
+                                stage = ExplainStage::All;
+                            }
+                        }
+                        else if (auto* const fmtAST = optionAST->explainFormat())
+                        {
+                            if (formatSet)
+                            {
+                                throw InvalidQuerySyntax("EXPLAIN: at most one FORMAT option is allowed");
+                            }
+                            formatSet = true;
+                            if (fmtAST->TEXT() != nullptr)
+                            {
+                                format = ExplainFormat::Text;
+                            }
+                            else if (fmtAST->VERBOSE() != nullptr)
+                            {
+                                format = ExplainFormat::Verbose;
+                            }
+                            else
+                            {
+                                format = ExplainFormat::Visual;
+                            }
+                        }
+                    }
+                }
+                return ExplainQueryStatement{queryBinder(explainStatementAST->query()), format, stage};
             }
             if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {

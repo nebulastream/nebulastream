@@ -41,23 +41,23 @@ template <typename Plan, typename Operator>
 class QueryConsoleDumpHandler
 {
 public:
-    explicit QueryConsoleDumpHandler(std::ostream& out, bool multiline) : out(out), multiline(multiline) { }
+    explicit QueryConsoleDumpHandler(std::ostream& out, bool multiline, ExplainVerbosity verbosity) : out(out), multiline(multiline), verbosity(std::move(verbosity)) { }
 
-    void dump(const Operator& node) { dumpRecursive(node, 0, out, multiline); }
+    void dump(const Operator& node) { dumpRecursive(node, 0, out, multiline, verbosity); }
 
-    static void dumpRecursive(const Operator& op, const uint64_t level, std::ostream& out, const bool multiline)
+    static void dumpRecursive(const Operator& op, const uint64_t level, std::ostream& out, const bool multiline, const ExplainVerbosity& verbosity)
     {
         const std::string indent(level * 2, ' ');
-        out << indent << (multiline ? "+ " : "") << op.explain(ExplainVerbosity::Debug) << '\n';
+        out << indent << (multiline ? "+ " : "") << op.explain(verbosity) << '\n';
         for (auto& child : op.getChildren())
         {
             if constexpr (is_shared_ptr_v<std::decay_t<decltype(child)>>)
             {
-                dumpRecursive(*child, level + 1, out, multiline);
+                dumpRecursive(*child, level + 1, out, multiline, verbosity);
             }
             else
             {
-                dumpRecursive(child, level + 1, out, multiline);
+                dumpRecursive(child, level + 1, out, multiline, verbosity);
             }
         }
     }
@@ -67,6 +67,7 @@ public:
 private:
     std::ostream& out;
     bool multiline;
+    ExplainVerbosity verbosity;
 };
 
 }

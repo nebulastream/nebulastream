@@ -687,6 +687,53 @@ TEST_F(StatementBinderTest, ExplainStatement)
     }
 }
 
+TEST_F(StatementBinderTest, ExplainStatementStageOptions)
+{
+    const auto getExplainStatement = [&](std::string_view sql) -> ExplainQueryStatement
+    {
+        const auto result = binder->parseAndBindSingle(sql);
+        EXPECT_TRUE(result.has_value()) << "Failed to parse: " << sql;
+        return std::get<ExplainQueryStatement>(result.value());
+    };
+
+    EXPECT_EQ(getExplainStatement("EXPLAIN SELECT * FROM `source` INTO `sink`").explainStage, ExplainStage::All);
+    EXPECT_EQ(getExplainStatement("EXPLAIN (ALL) SELECT * FROM `source` INTO `sink`").explainStage, ExplainStage::All);
+    EXPECT_EQ(getExplainStatement("EXPLAIN (LOGICAL) SELECT * FROM `source` INTO `sink`").explainStage, ExplainStage::Logical);
+    EXPECT_EQ(getExplainStatement("EXPLAIN (OPTIMIZED) SELECT * FROM `source` INTO `sink`").explainStage, ExplainStage::Optimized);
+    EXPECT_EQ(getExplainStatement("EXPLAIN (DISTRIBUTED) SELECT * FROM `source` INTO `sink`").explainStage, ExplainStage::Distributed);
+
+    const auto duplicateStage = binder->parseAndBindSingle("EXPLAIN (LOGICAL, OPTIMIZED) SELECT * FROM `source` INTO `sink`");
+    EXPECT_FALSE(duplicateStage.has_value());
+}
+
+TEST_F(StatementBinderTest, ExplainStatementFormatOptions)
+{
+    const auto getExplainStatement = [&](std::string_view sql) -> ExplainQueryStatement
+    {
+        const auto result = binder->parseAndBindSingle(sql);
+        EXPECT_TRUE(result.has_value()) << "Failed to parse: " << sql;
+        return std::get<ExplainQueryStatement>(result.value());
+    };
+
+    EXPECT_EQ(getExplainStatement("EXPLAIN SELECT * FROM `source` INTO `sink`").explainFormat, ExplainFormat::Visual);
+    EXPECT_EQ(getExplainStatement("EXPLAIN (FORMAT VISUAL) SELECT * FROM `source` INTO `sink`").explainFormat, ExplainFormat::Visual);
+    EXPECT_EQ(getExplainStatement("EXPLAIN (FORMAT TEXT) SELECT * FROM `source` INTO `sink`").explainFormat, ExplainFormat::Text);
+    EXPECT_EQ(getExplainStatement("EXPLAIN (FORMAT VERBOSE) SELECT * FROM `source` INTO `sink`").explainFormat, ExplainFormat::Verbose);
+
+    const auto duplicateFormat = binder->parseAndBindSingle(
+        "EXPLAIN (FORMAT TEXT, FORMAT VERBOSE) SELECT * FROM `source` INTO `sink`");
+    EXPECT_FALSE(duplicateFormat.has_value());
+}
+
+TEST_F(StatementBinderTest, ExplainStatementCombinedOptions)
+{
+    const auto result = binder->parseAndBindSingle("EXPLAIN (LOGICAL, FORMAT VERBOSE) SELECT * FROM `source` INTO `sink`");
+    ASSERT_TRUE(result.has_value());
+    const auto& stmt = std::get<ExplainQueryStatement>(result.value());
+    EXPECT_EQ(stmt.explainStage, ExplainStage::Logical);
+    EXPECT_EQ(stmt.explainFormat, ExplainFormat::Verbose);
+}
+
 TEST_F(StatementBinderTest, CreateWorkerStatementTest)
 {
     const std::string statementString

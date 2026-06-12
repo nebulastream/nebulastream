@@ -60,7 +60,11 @@ terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
 statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
 
-explainStatement: EXPLAIN query;
+explainStatement: EXPLAIN ('(' explainOptions ')')? query;
+explainOptions: explainOption (',' explainOption)*;
+explainOption: explainStage | FORMAT explainFormat;
+explainStage: ALL | LOGICAL | OPTIMIZED | DISTRIBUTED_KW;
+explainFormat: VISUAL | TEXT | VERBOSE;
 createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
@@ -619,6 +623,10 @@ LOGICAL: 'LOGICAL';
 PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
 SINK : 'SINK';
+OPTIMIZED: 'OPTIMIZED' | 'optimized';
+DISTRIBUTED_KW: 'DISTRIBUTED' | 'distributed';
+VISUAL: 'VISUAL' | 'visual';
+VERBOSE: 'VERBOSE' | 'verbose';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work

@@ -317,28 +317,66 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
         .transform([&statement] { return DropQueryStatementResult{statement.id}; });
 }
 
+std::string computeExplainOutput(const ExplainQueryStatement& statement, const QueryOptimizer& optimizer)
+{
+    auto formatPlan = [&](const LogicalPlan& plan) -> std::string
+    {
+        switch (statement.explainFormat)
+        {
+            case ExplainFormat::Visual:
+            {
+                std::stringstream stringstream;
+                auto renderer = PlanRenderer<LogicalPlan, LogicalOperator>(stringstream, ExplainVerbosity::Short);
+                renderer.dump(plan);
+                return stringstream.str();
+            }
+            case ExplainFormat::Text:    return explain(plan, ExplainVerbosity::Short);
+            case ExplainFormat::Verbose: return explain(plan, ExplainVerbosity::Debug);
+        }
+        std::unreachable();
+    };
+
+    std::stringstream explainMessage;
+    const bool needsOptimizer
+        = statement.explainStage == ExplainStage::Optimized || statement.explainStage == ExplainStage::Distributed
+          || statement.explainStage == ExplainStage::All;
+
+    if (statement.explainStage == ExplainStage::Logical || statement.explainStage == ExplainStage::All)
+    {
+        fmt::println(explainMessage, "== Initial Logical Plan ==\n{}", formatPlan(statement.plan));
+    }
+
+    if (needsOptimizer)
+    {
+        const auto distributedPlan = optimizer.optimize(statement.plan);
+
+        if (statement.explainStage == ExplainStage::Optimized || statement.explainStage == ExplainStage::All)
+        {
+            fmt::println(explainMessage, " == Optimized Global Plan ==\n{}", formatPlan(distributedPlan.getGlobalPlan()));
+        }
+
+        if (statement.explainStage == ExplainStage::Distributed || statement.explainStage == ExplainStage::All)
+        {
+            fmt::println(explainMessage, "== Decomposed Plans == ");
+            for (const auto& [worker, plans] : distributedPlan)
+            {
+                fmt::println(explainMessage, " ---- {} plans on {} ----", plans.size(), worker);
+                for (const auto& [index, plan] : plans | views::enumerate)
+                {
+                    fmt::println(explainMessage, "{}:\n{}\n", index, formatPlan(plan));
+                }
+            }
+        }
+    }
+
+    return explainMessage.str();
+}
+
 std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::operator()(const ExplainQueryStatement& statement)
 {
     CPPTRACE_TRY
     {
-        std::stringstream explainMessage;
-        fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
-        fmt::println(explainMessage, "Initial Logical Plan:\n{}", statement.plan);
-
-        const auto distributedPlan = queryOptimizer->optimize(statement.plan);
-
-        fmt::println(explainMessage, "Optimized Global Plan:\n{}", distributedPlan.getGlobalPlan());
-
-        fmt::println(explainMessage, "Decomposed Plans:");
-        for (const auto& [worker, plans] : distributedPlan)
-        {
-            fmt::println(explainMessage, "{} plans on {}:", plans.size(), worker);
-            for (const auto& [index, plan] : plans | views::enumerate)
-            {
-                fmt::println(explainMessage, "{}:\n{}\n", index, plan);
-            }
-        }
-        return ExplainQueryStatementResult{explainMessage.str()};
+        return ExplainQueryStatementResult{computeExplainOutput(statement, *queryOptimizer)};
     }
     CPPTRACE_CATCH(...)
     {

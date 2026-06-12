@@ -45,7 +45,7 @@ PhysicalPlan::PhysicalPlan(
 std::string PhysicalPlan::toString() const
 {
     std::stringstream stringstream;
-    auto dumpHandler = QueryConsoleDumpHandler<PhysicalPlan, PhysicalOperatorWrapper>(stringstream, true);
+    auto dumpHandler = QueryConsoleDumpHandler<PhysicalPlan, PhysicalOperatorWrapper>(stringstream, true, ExplainVerbosity::Debug);
     for (const auto& rootOperator : rootOperators)
     {
         dumpHandler.dump(*rootOperator);

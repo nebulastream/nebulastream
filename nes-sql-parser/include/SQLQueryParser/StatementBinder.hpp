@@ -122,9 +122,26 @@ struct QueryStatement
     std::optional<DistributedQueryId> id;
 };
 
+enum class ExplainFormat
+{
+    Visual,
+    Text,
+    Verbose
+};
+
+enum class ExplainStage
+{
+    Logical,
+    Optimized,
+    Distributed,
+    All
+};
+
 struct ExplainQueryStatement
 {
     LogicalPlan plan;
+    ExplainFormat explainFormat = ExplainFormat::Visual;
+    ExplainStage explainStage = ExplainStage::All;
 };
 
 struct ShowQueriesStatement
