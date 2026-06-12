@@ -153,6 +153,7 @@ public:
 
     using QueryCallback = std::function<void(std::string, SystestQueryId, bool)>;
     using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
+    using ResultVerbatimCallback = std::function<void(std::string&&, SystestQueryId correspondingQueryId)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
     using DifferentialQueryBlockCallback
         = std::function<void(std::string, std::string, SystestQueryId correspondingQueryId, SystestQueryId diffQueryId)>;
@@ -163,6 +164,7 @@ public:
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
+    void registerOnResultVerbatimCallback(ResultVerbatimCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
     void registerOnCreateCallback(CreateCallback callback);
     void registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback);
@@ -186,6 +188,7 @@ private:
     void applySubstitutionRules(std::string& line);
 
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
+    [[nodiscard]] std::string expectVerbatimLines();
     [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> expectCreateStatement();
@@ -198,6 +201,7 @@ private:
     std::vector<SubstitutionRule> substitutionRules;
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
+    ResultVerbatimCallback onResultVerbatimCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
     CreateCallback onCreateCallback;
     DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;

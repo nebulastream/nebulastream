@@ -244,7 +244,18 @@ std::vector<RunningQuery> runQueries(
                 nextQuery.testName,
                 nextQuery.queryIdInFile);
 
-            if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value())
+            if (nextQuery.explainActualOutput.has_value())
+            {
+                auto ptr = std::make_shared<RunningQuery>(nextQuery);
+                reportResult(
+                    ptr,
+                    progressTracker,
+                    failed,
+                    [&ptr] { return checkResult(*ptr).value_or(""); },
+                    QueryPerformanceMessageBuilder{});
+                completedQueries.insert({nextQuery.testName, nextQuery.queryIdInFile});
+            }
+            else if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value())
             {
                 /// Start both differential queries
                 auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan);
@@ -446,6 +457,11 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
     {
         const auto& queryToRun = *it;
+        if (queryToRun.explainActualOutput.has_value())
+        {
+            NES_INFO("Skipping EXPLAIN query for benchmarking: {}:{}", queryToRun.testName, queryToRun.queryIdInFile);
+            continue;
+        }
         if (not queryToRun.planInfoOrException.has_value())
         {
             NES_ERROR("skip failing query: {}", queryToRun.testName);

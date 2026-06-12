@@ -196,8 +196,9 @@ struct SystestQuery
     };
 
     std::expected<PlanInfo, Exception> planInfoOrException;
-    std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
-    std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
+    std::variant<std::vector<std::string>, ExpectedError, std::string> expectedResultsOrExpectedError;
+    std::optional<std::string> explainActualOutput;
+    std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     ConfigurationOverride configurationOverride;
     std::optional<DistributedLogicalPlan> differentialQueryPlan;
     std::optional<std::pair<TestName, SystestQueryId>> runAfter;

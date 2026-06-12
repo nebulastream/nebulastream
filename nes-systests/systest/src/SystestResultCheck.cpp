@@ -766,6 +766,26 @@ namespace NES
 {
 std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery)
 {
+    if (runningQuery.systestQuery.explainActualOutput.has_value())
+    {
+        const auto trimTrailing = [](const std::string& s) -> std::string_view
+        {
+            std::string_view view = s;
+            while (!view.empty() && (view.back() == '\n' || view.back() == '\r' || view.back() == ' '))
+            {
+                view.remove_suffix(1);
+            }
+            return view;
+        };
+        const auto expected = trimTrailing(std::get<std::string>(runningQuery.systestQuery.expectedResultsOrExpectedError));
+        const auto actual = trimTrailing(*runningQuery.systestQuery.explainActualOutput);
+        if (actual == expected)
+        {
+            return std::nullopt;
+        }
+        return fmt::format("EXPLAIN output mismatch\n\n--- expected ---\n{}\n--- actual ---\n{}", expected, actual);
+    }
+
     /// Void sinks discard all tuples and produce no result file, so there is nothing to check.
     if (runningQuery.systestQuery.planInfoOrException.has_value())
     {

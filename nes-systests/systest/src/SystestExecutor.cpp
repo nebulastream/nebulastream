@@ -369,6 +369,13 @@ SystestExecutorResult SystestExecutor::executeSystests()
                         continue;
                     }
 
+                    if (query.explainActualOutput.has_value())
+                    {
+                        std::cout << "Skipping EXPLAIN query for benchmarking: " << query.testName << ":"
+                                  << query.queryIdInFile.toString() << "\n";
+                        continue;
+                    }
+
                     benchmarkQueries.push_back(query);
                 }
 

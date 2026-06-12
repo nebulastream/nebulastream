@@ -1,0 +1,13 @@
+# description: Validates EXPLAIN output for a simple projection query
+# groups: [explain]
+
+CREATE LOGICAL SOURCE stream(id UINT32 NOT NULL, value UINT32 NOT NULL);
+
+EXPLAIN (LOGICAL, FORMAT TEXT) SELECT id, value FROM stream INTO Void('localhost:8080' AS `SINK`.`HOST`);
+----
+Query:
+EXPLAIN (LOGICAL, FORMAT TEXT) SELECT id, value FROM stream INTO Void('localhost:8080' AS `SINK`.`HOST`);
+Initial Logical Plan:
+INLINE_SINK(InlineSink)
+  PROJECTION(fields: [ID, VALUE])
+    SOURCE(STREAM)

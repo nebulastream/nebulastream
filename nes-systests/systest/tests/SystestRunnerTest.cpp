@@ -84,7 +84,7 @@ makeSummary(const NES::QueryId& id, const NES::QueryStatus currState, const std:
 
 NES::Systest::SystestQuery makeQuery(
     const std::expected<NES::Systest::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
-    std::variant<std::vector<std::string>, NES::Systest::ExpectedError> expected,
+    std::variant<std::vector<std::string>, NES::Systest::ExpectedError, std::string> expected,
     std::optional<std::pair<NES::Systest::TestName, NES::Systest::SystestQueryId>> runAfter = std::nullopt,
     NES::Systest::SystestQueryId queryId = NES::INVALID<NES::Systest::SystestQueryId>)
 {
@@ -96,6 +96,7 @@ NES::Systest::SystestQuery makeQuery(
         .queryDefinition = "SELECT * FROM test",
         .planInfoOrException = planInfoOrException,
         .expectedResultsOrExpectedError = std::move(expected),
+        .explainActualOutput = std::nullopt,
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
         .configurationOverride = NES::Systest::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,

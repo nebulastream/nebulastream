@@ -207,6 +207,11 @@ void SystestParser::registerOnResultTuplesCallback(ResultTuplesCallback callback
     this->onResultTuplesCallback = std::move(callback);
 }
 
+void SystestParser::registerOnResultVerbatimCallback(ResultVerbatimCallback callback)
+{
+    this->onResultVerbatimCallback = std::move(callback);
+}
+
 void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback callback)
 {
     this->onErrorExpectationCallback = std::move(callback);
@@ -272,7 +277,18 @@ void SystestParser::parse()
                 }
                 else
                 {
-                    if (onResultTuplesCallback)
+                    static constexpr std::string_view ExplainPrefix = "EXPLAIN"sv;
+                    const bool precedingQueryIsExplain
+                        = lastParsedQuery.has_value()
+                          && toLowerCase(lastParsedQuery.value()).starts_with(toLowerCase(ExplainPrefix));
+                    if (precedingQueryIsExplain)
+                    {
+                        if (onResultVerbatimCallback)
+                        {
+                            onResultVerbatimCallback(expectVerbatimLines(), queryIdAssigner.getNextQueryResultNumber());
+                        }
+                    }
+                    else if (onResultTuplesCallback)
                     {
                         onResultTuplesCallback(expectTuples(false), queryIdAssigner.getNextQueryResultNumber());
                     }
@@ -355,8 +371,10 @@ void SystestParser::applySubstitutionRules(std::string& line)
 
 std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
 {
-    /// Query is a special case as it's identifying token is not space seperated
-    if (toLowerCase(line).starts_with(toLowerCase(QueryToken)))
+    static constexpr std::string_view ExplainQueryToken = "EXPLAIN"sv;
+    /// Query tokens are special cases as their identifying token is not space-separated
+    if (toLowerCase(line).starts_with(toLowerCase(QueryToken))
+        || toLowerCase(line).starts_with(toLowerCase(ExplainQueryToken)))
     {
         return TokenType::QUERY;
     }
@@ -470,6 +488,42 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
         currentLine++;
     }
     return tuples;
+}
+
+std::string SystestParser::expectVerbatimLines()
+{
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist: {}", currentLine);
+    /// Skip the result delimiter `----`
+    if (currentLine < lines.size() && toLowerCase(lines[currentLine]) == toLowerCase(ResultDelimiter))
+    {
+        ++currentLine;
+    }
+    /// Collect lines until a structural token, preserving empty lines.
+    /// QUERY tokens (SELECT/EXPLAIN) are NOT stop tokens because EXPLAIN output can reproduce
+    /// the query SQL verbatim. Only tokens that introduce new top-level constructs stop collection.
+    static const std::unordered_set<TokenType> VerbatimStopTokens{
+        TokenType::CREATE,
+        TokenType::RESULT_DELIMITER,
+        TokenType::CONFIGURATION,
+        TokenType::GLOBAL_CONFIGURATION,
+        TokenType::DIFFERENTIAL,
+        TokenType::SEQUENTIAL_EXECUTION,
+    };
+    std::string result;
+    while (currentLine < lines.size())
+    {
+        if (auto tok = getTokenIfValid(lines[currentLine]); tok.has_value() && VerbatimStopTokens.contains(*tok))
+        {
+            shouldRevisitCurrentLine = true;
+            break;
+        }
+        if (!result.empty())
+        {
+            result += '\n';
+        }
+        result += lines[currentLine++];
+    }
+    return result;
 }
 
 std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> SystestParser::expectCreateStatement()
