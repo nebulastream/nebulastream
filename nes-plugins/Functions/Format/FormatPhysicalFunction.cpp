@@ -22,88 +22,290 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <cstring>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <nautilus/function.hpp>
+#include <select.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
+#include <charconv>
+#include <type_traits>
 
 namespace NES
 {
+    namespace {
+
+        template <typename T>
+        constexpr uint32_t toCharsBufferSize()
+        {
+            if constexpr (std::is_floating_point_v<T>)
+            {
+                return std::is_same_v<T, double> ? 32 : 16;
+            }
+            else
+            {
+                return sizeof(T) * 3 + 2;
+            }
+        }
+
+        template <typename T>
+        uint32_t toCharsValue(T value, int8_t* buf, uint32_t bufSize)
+        {
+            auto* charBuf = reinterpret_cast<char*>(buf);
+            auto result = std::to_chars(charBuf, charBuf + bufSize, value);
+            return static_cast<uint32_t>(result.ptr - charBuf);
+        }
+
+        void writeBoolTrue(int8_t* dst)
+        {
+            dst[0] = 't';
+            dst[1] = 'r';
+            dst[2] = 'u';
+            dst[3] = 'e';
+        }
+
+        void writeBoolFalse(int8_t* dst)
+        {
+            dst[0] = 'f';
+            dst[1] = 'a';
+            dst[2] = 'l';
+            dst[3] = 's';
+            dst[4] = 'e';
+        }
+
+        void writeChar(int8_t* dst, char c)
+        {
+            dst[0] = static_cast<int8_t>(c);
+        }
+
+        VarVal stringifyValue(const VarVal& value, const ArenaRef& arena)
+        {
+            return value.customVisit(
+                [&]<typename Underlying>(Underlying&& underlying) -> VarVal
+                {
+                    using U = std::remove_cvref_t<Underlying>;
+
+                    if constexpr (std::is_same_v<U, VariableSizedData>)
+                    {
+                        return VarVal{underlying, value.isNullable(), value.isNull()};
+                    }
+                    else if constexpr (std::is_same_v<U, nautilus::val<bool>>)
+                    {
+                        auto trueBuf = arena.allocateVariableSizedData(nautilus::val<uint64_t>{4});
+                        auto falseBuf = arena.allocateVariableSizedData(nautilus::val<uint64_t>{5});
+
+                        nautilus::invoke(writeBoolTrue, trueBuf.getContent());
+                        nautilus::invoke(writeBoolFalse, falseBuf.getContent());
+
+                        if (underlying)
+                        {
+                            return VarVal{trueBuf, value.isNullable(), value.isNull()};
+                        }
+
+                        return VarVal{falseBuf, value.isNullable(), value.isNull()};
+                    }
+                    else if constexpr (std::is_same_v<U, nautilus::val<char>>)
+                    {
+                        auto buf = arena.allocateVariableSizedData(nautilus::val<uint64_t>{1});
+                        nautilus::invoke(writeChar, buf.getContent(), underlying);
+                        return VarVal{buf, value.isNullable(), value.isNull()};
+                    }
+                    else
+                    {
+                        using ValueType = U::basic_type;
+
+                        constexpr uint32_t bufSize = toCharsBufferSize<ValueType>();
+
+                        auto buf = arena.allocateVariableSizedData(nautilus::val<uint64_t>{bufSize});
+
+                        nautilus::val<uint32_t> writtenSize = nautilus::invoke(
+                            toCharsValue<ValueType>,
+                            underlying,
+                            buf.getContent(),
+                            nautilus::val<uint32_t>{bufSize});
+
+                        auto result = VariableSizedData{
+                            buf.getContent(),
+                            nautilus::val<uint64_t>{writtenSize}};
+
+                        return VarVal{result, value.isNullable(), value.isNull()};
+                    }
+                });
+        }
+
+        void storeArgument(
+            int8_t* argPtrsRaw,
+            int8_t* argSizesRaw,
+            uint64_t index,
+            int8_t* argPtr,
+            uint64_t argSize)
+        {
+            auto** argPtrs = reinterpret_cast<int8_t**>(argPtrsRaw);
+            auto* argSizes = reinterpret_cast<uint64_t*>(argSizesRaw);
+
+            argPtrs[index] = argPtr;
+            argSizes[index] = argSize;
+        }
+
+        uint64_t countOutputSize(
+            int8_t* fmt,
+            uint64_t fmtSize,
+            int8_t* /*argPtrsRaw*/,
+            int8_t* argSizesRaw,
+            uint64_t argCount)
+        {
+            auto* argSizes = reinterpret_cast<uint64_t*>(argSizesRaw);
+
+            uint64_t size = 0;
+            uint64_t argIndex = 0;
+
+            for (uint64_t i = 0; i < fmtSize; ++i)
+            {
+                if (fmt[i] == '{' && i + 1 < fmtSize && fmt[i + 1] == '}')
+                {
+                    if (argIndex < argCount)
+                    {
+                        size += argSizes[argIndex];
+                    }
+
+                    ++argIndex;
+                    ++i;
+                }
+                else
+                {
+                    ++size;
+                }
+            }
+
+            return size;
+        }
+
+        void writeFormattedOutput(
+            const int8_t* fmt,
+            uint64_t fmtSize,
+            int8_t* argPtrsRaw,
+            int8_t* argSizesRaw,
+            uint64_t argCount,
+            int8_t* out)
+        {
+            auto** argPtrs = reinterpret_cast<int8_t**>(argPtrsRaw);
+            auto* argSizes = reinterpret_cast<uint64_t*>(argSizesRaw);
+
+            uint64_t outIndex = 0;
+            uint64_t argIndex = 0;
+
+            for (uint64_t i = 0; i < fmtSize; ++i)
+            {
+                if (fmt[i] == '{' && i + 1 < fmtSize && fmt[i + 1] == '}')
+                {
+                    if (argIndex < argCount)
+                    {
+                        const auto argSize = argSizes[argIndex];
+                        std::memcpy(out + outIndex, argPtrs[argIndex], argSize);
+                        outIndex += argSize;
+                    }
+
+                    ++argIndex;
+                    ++i;
+                }
+                else
+                {
+                    out[outIndex++] = fmt[i];
+                }
+            }
+        }
+    }
 
 FormatPhysicalFunction::FormatPhysicalFunction(std::vector<PhysicalFunction> childPhysicalFunctions)
     : childPhysicalFunctions(std::move(childPhysicalFunctions))
 {
 }
 
-VarVal FormatPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
-{
-    /// Skeleton: return the format string verbatim, ignoring placeholder args.
-    const auto formatStringValue = childPhysicalFunctions.front().execute(record, arena);
+VarVal FormatPhysicalFunction::execute(const Record& record, ArenaRef& arena) const {
+        PRECONDITION(
+            not childPhysicalFunctions.empty(),
+            "Format function must have at least one child function");
 
-    /// TODO(student): replace the passthrough above with a real fmt::format-style
-    /// substitution that fills `{}` placeholders in the format string with the
-    /// stringified values of `childPhysicalFunctions[1..]` (in order).
-    /// The returned VarVal must wrap a VARSIZED allocated from `arena`.
-    ///
-    /// Where to start:
-    ///   * Systest for this function (extend it with cases as you go):
-    ///       nes-systests/function/dspro/Format.test
-    ///     Once Format actually substitutes placeholders, update the expected rows there.
-    ///
-    ///   * Reference physical functions worth studying:
-    ///       - nes-physical-operators/src/Functions/ConcatPhysicalFunction.cpp
-    ///         Shows how to allocate a new VARSIZED in the arena and memcpy bytes into
-    ///         it. The natural primitive for emitting "literal | stringified arg |
-    ///         literal | ..." fragments.
-    ///       - nes-physical-operators/src/Functions/ToBase64PhysicalFunction.cpp
-    ///         Shows how to call a native C/C++ helper from Nautilus code via
-    ///         `nautilus::invoke(...)` — useful if you stringify numerics with
-    ///         std::to_chars or sprintf rather than reimplementing in Nautilus.
-    ///       - nes-physical-operators/src/Functions/ArithmeticalFunctions/AbsolutePhysicalFunction.cpp
-    ///         Minimal example of operating on a Nautilus `VarVal`.
-    ///     Their logical-side counterparts live under
-    ///       nes-logical-operators/src/Functions/...
-    ///
-    ///   * Prior prototype (ls-1801 / Lukas Schwerdtfeger, not on main):
-    ///       Branch:  origin/retrospective-study-charite-mlife-rebased-v2
-    ///       Commit:  e88b3b46ec  "feat(Functions): add FMT printf-style varsized formatter plugin"
-    ///       Files:   nes-plugins/Functions/Fmt/{FmtLogicalFunction,FmtPhysicalFunction,
-    ///                                          ToStringLogicalFunction,ToStringPhysicalFunction}.{hpp,cpp}
-    ///                nes-systests/function/varsized/FMT.test
-    ///     The prototype factors out a `to_string` function that lifts non-VARSIZED
-    ///     args to VARSIZED (via VarVal::customVisit + std::to_chars), and inserts
-    ///     those wrappers during data type inference so the physical side only
-    ///     concatenates VARSIZED fragments. That two-function split is one viable
-    ///     design; you are free to do it differently.
-    ///
-    ///   * Building / running NebulaStream:
-    ///       - docs/development/development.md  (dev container, CMake profiles, build steps)
-    ///       - docs/guide/extensibility.md      (plugin & registry model — read this first)
-    ///       - docs/development/systests.md     (running systests from the CLI)
-    ///       - README.md "Quick Start" section
-    ///
-    ///   * Running this systest from CLion (recommended):
-    ///       - CLion plugin (gutter icons to run/debug individual systests):
-    ///           nes-systests/utils/SystestPlugin/README.md
-    ///         Releases (download the .zip and install from disk):
-    ///           https://github.com/nebulastream/systest-plugin/releases/
-    ///       - Optional: enable systest syntax highlighting via
-    ///           nes-systests/utils/SyntaxHighlighting/README.md
-    ///       From the command line you can also run the `systest` target directly,
-    ///       e.g. `systest -t .../Format.test`.
-    ///
-    ///   * Adding a vcpkg dependency to this plugin (e.g. fmt itself if you decide
-    ///     to delegate formatting to libfmt; analogous to `simdjson` in the JSON
-    ///     input formatter plugin):
-    ///       1. Add the port to the project's vcpkg manifest:
-    ///            vcpkg.json  ->  "dependencies": [ ..., "fmt" ]
-    ///       2. Switch this plugin from `add_plugin(...)` (which injects sources into
-    ///          the host registry component) to `add_plugin_as_library(...)`, which
-    ///          creates a real library target you can link against by name. Then add
-    ///          in CMakeLists.txt:
-    ///            find_package(fmt CONFIG REQUIRED)
-    ///            target_link_libraries(<plugin_library> PRIVATE fmt::fmt)
-    ///       3. Reference example with a vcpkg dep:
-    ///            nes-plugins/InputFormatters/JSONInputFormatter/CMakeLists.txt
-    ///            (uses `find_package(simdjson CONFIG REQUIRED)` + target_link_libraries)
-    return formatStringValue;
-}
+        /// Format is validated on the logical side:
+        ///   - the format string is a constant VARSIZED literal
+        ///   - the number of `{}` placeholders matches the number of arguments
+        ///
+        /// The physical side evaluates all children, stringifies every argument to
+        /// VariableSizedData, stores their pointers/sizes in arena-allocated arrays,
+        /// computes the output size, allocates the final VARSIZED result, and writes
+        /// literal fragments plus argument bytes into it.
+
+    const auto formatStringValue = childPhysicalFunctions[0].execute(record, arena);
+    const auto formatString = formatStringValue.getRawValueAs<VariableSizedData>();
+
+    const auto argCount = childPhysicalFunctions.size() - 1;
+
+    if (argCount == 0)
+    {
+        return formatStringValue;
+    }
+
+    auto argPtrsBuffer = arena.allocateVariableSizedData(
+        nautilus::val<uint64_t>{argCount * sizeof(int8_t*)});
+
+    auto argSizesBuffer = arena.allocateVariableSizedData(
+        nautilus::val<uint64_t>{argCount * sizeof(uint64_t)});
+
+    auto nullable = formatStringValue.isNullable();
+    auto newNull = formatStringValue.isNullable() and formatStringValue.isNull();
+
+    std::vector<VarVal> argValues;
+    argValues.reserve(argCount);
+
+    for (size_t i = 0; i < argCount; ++i)
+    {
+        const auto rawArgValue = childPhysicalFunctions[i + 1].execute(record, arena);
+        auto argValue = stringifyValue(rawArgValue, arena);
+        const auto arg = argValue.getRawValueAs<VariableSizedData>();
+
+        nullable = nullable or argValue.isNullable();
+        newNull = newNull or (argValue.isNullable() and argValue.isNull());
+
+        nautilus::invoke(
+            storeArgument,
+            argPtrsBuffer.getContent(),
+            argSizesBuffer.getContent(),
+            nautilus::val<uint64_t>{i},
+            arg.getContent(),
+            arg.getSize());
+
+        argValues.emplace_back(std::move(argValue));
+    }
+
+    const auto outputSize = nautilus::select(
+        newNull,
+        nautilus::val<uint64_t>{0},
+        nautilus::invoke(
+            countOutputSize,
+            formatString.getContent(),
+            formatString.getSize(),
+            argPtrsBuffer.getContent(),
+            argSizesBuffer.getContent(),
+            nautilus::val<uint64_t>{argCount}));
+
+    auto output = arena.allocateVariableSizedData(outputSize);
+
+    if (newNull)
+    {
+        return VarVal{output, nullable, newNull};
+    }
+
+    nautilus::invoke(
+        writeFormattedOutput,
+        formatString.getContent(),
+        formatString.getSize(),
+        argPtrsBuffer.getContent(),
+        argSizesBuffer.getContent(),
+        nautilus::val<uint64_t>{argCount},
+        output.getContent());
+
+    return VarVal{output, nullable, newNull};
+    }
 
 PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterFormatPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
