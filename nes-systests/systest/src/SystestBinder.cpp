@@ -287,6 +287,7 @@ public:
         }
         try
         {
+            boundPlan->queryName = testName.value_or("") + queryIdInFile.toString();
             auto distributedPlan = queryOptimizer.optimize(boundPlan.value());
             setOptimizedPlan(std::move(distributedPlan));
         }
