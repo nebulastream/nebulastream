@@ -55,6 +55,11 @@ PipelineId getPipelineIdProxy(const PipelineExecutionContext* pec)
 {
     return pec->getPipelineId();
 }
+
+int getCurrentEpochProxy(const PipelineExecutionContext* pec)
+{
+    return pec->getCurrentEpoch();
+}
 }
 
 ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
@@ -68,6 +73,8 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , sequenceNumber(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
+    , currentEpoch(nautilus::invoke(getCurrentEpochProxy, pipelineContext))
+    , originEpoch(currentEpoch)
 {
 }
 

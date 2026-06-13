@@ -59,6 +59,9 @@ public:
     void setLastChunk(const nautilus::val<bool>& isLastChunk);
     nautilus::val<bool> isLastChunk();
 
+    nautilus::val<int> getOriginEpoch();
+    void setOriginEpoch(const nautilus::val<int>& originEpoch);
+
     ///  Get the watermark timestamp of the underlying tuple buffer. The watermark timestamp is a point in time that guarantees no records
     ///  with a lower timestamp will be received.
     nautilus::val<Timestamp> getWatermarkTs();

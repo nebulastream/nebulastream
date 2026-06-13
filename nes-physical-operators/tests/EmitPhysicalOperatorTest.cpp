@@ -88,6 +88,8 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
 
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
 
+        [[nodiscard]] int getCurrentEpoch() const override {return 0;}
+
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
         {
             return *operatorHandlers;

@@ -150,6 +150,10 @@ BufferControlBlock* BufferControlBlock::retain()
     owningThreads[std::this_thread::get_id()].emplace_back(info);
 #endif
     ++referenceCounter;
+    for (auto&& child : children)
+    {
+        child->controlBlock->retain(); //TODO do we actually need this??
+    }
     return this;
 }
 
@@ -277,6 +281,15 @@ bool BufferControlBlock::isLastChunk() const noexcept
 void BufferControlBlock::setLastChunk(const bool lastChunk)
 {
     this->lastChunk = lastChunk;
+}
+
+[[nodiscard]] int BufferControlBlock::getOriginEpoch() const noexcept
+{
+    return originEpoch;
+}
+void BufferControlBlock::setOriginEpoch(int epoch)
+{
+    this->originEpoch = epoch;
 }
 
 void BufferControlBlock::setCreationTimestamp(const Timestamp timestamp)

@@ -101,4 +101,14 @@ inline bool NES_Memory_TupleBuffer_isLastChunk(const TupleBuffer* tupleBuffer)
     return tupleBuffer->isLastChunk();
 };
 
+inline int NES_Memory_TupleBuffer_getOriginEpoch(const TupleBuffer* tupleBuffer)
+{
+    return tupleBuffer->getOriginEpoch();
+};
+
+inline void NES_Memory_TupleBuffer_setOriginEpoch(TupleBuffer* tupleBuffer, const int epoch)
+{
+    tupleBuffer->setOriginEpoch(epoch);
+};
+
 }

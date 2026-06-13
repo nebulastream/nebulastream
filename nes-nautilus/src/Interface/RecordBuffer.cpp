@@ -86,6 +86,18 @@ nautilus::val<bool> RecordBuffer::isLastChunk()
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_isLastChunk, tupleBufferRef)};
 }
 
+
+nautilus::val<int> RecordBuffer::getOriginEpoch()
+{
+    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getOriginEpoch, tupleBufferRef)};
+}
+
+void RecordBuffer::setOriginEpoch(const nautilus::val<int>& originEpoch)
+{
+    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setOriginEpoch, tupleBufferRef, originEpoch);
+}
+
+
 nautilus::val<Timestamp> RecordBuffer::getWatermarkTs()
 {
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getWatermark, tupleBufferRef)};

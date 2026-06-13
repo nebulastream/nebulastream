@@ -153,7 +153,7 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
     auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
     const auto varSizedPtr = invoke(
         {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
+        + [](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
