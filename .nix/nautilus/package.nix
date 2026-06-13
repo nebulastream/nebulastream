@@ -15,8 +15,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "1c6d94a8ef41af19f8ac17bf0be7c664a88afab8";
-    hash = "sha256-CQWnHo0TeBqI6svOUVgl8gW7OJgBzKKJafbyexD54xs=";
+    rev = "29169c1499a5e49f4543c938e9342267a629f639";
+    hash = "sha256-uNhozLKGsHf6WLN/CYVANi3NwMrRj5YplVqtjY65ngA=";
   };
 
   baseBuildInputs = [
@@ -52,7 +52,6 @@ let
 
       patches = [
         ./patches/0001-disable-ubsan-function-call-check.patch
-        ./patches/0003-disable-cond-branch-weights.patch
       ];
 
       nativeBuildInputs = [
@@ -79,7 +78,12 @@ let
         "-DENABLE_MLIR_BACKEND=ON"
         "-DENABLE_C_BACKEND=ON"
         "-DENABLE_BC_BACKEND=OFF"
-        "-DENABLE_INLINING_PASS=OFF"
+        "-DENABLE_ASMJIT_BACKEND=OFF"
+        "-DENABLE_SIMD_PLUGIN=OFF"
+        "-DENABLE_STD_PLUGIN=ON"
+        "-DENABLE_SPECIALIZATION_PLUGIN=OFF"
+        "-DENABLE_INLINING_PLUGIN=OFF"
+        "-DENABLE_GPU_PLUGIN=OFF"
         "-DENABLE_TESTS=OFF"
         "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"
         "-DLLVM_DIR=${mlirBinary}/lib/cmake/llvm"

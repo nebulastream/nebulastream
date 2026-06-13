@@ -36,7 +36,7 @@
 namespace NES::TestUtils
 {
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, uint64_t, AbstractBufferProvider*, HashMap*>
+nautilus::engine::CompiledFunction<void(TupleBuffer*, TupleBuffer*, uint64_t, AbstractBufferProvider*, HashMap*)>
 ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
     const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
 {
@@ -82,7 +82,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
         }));
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*>
+nautilus::engine::CompiledFunction<void(TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*)>
 ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
     const std::vector<Record::RecordFieldIdentifier>& projectionAllFields, const std::shared_ptr<TupleBufferRef>& tupleBufferRef) const
 {

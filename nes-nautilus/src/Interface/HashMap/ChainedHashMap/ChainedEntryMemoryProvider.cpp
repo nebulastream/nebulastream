@@ -206,7 +206,7 @@ void ChainedEntryMemoryProvider::writeEntryRef(
 std::vector<Record::RecordFieldIdentifier> ChainedEntryMemoryProvider::getAllFieldIdentifiers() const
 {
     std::vector<Record::RecordFieldIdentifier> fieldIdentifiers;
-    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fields))
+    for (const auto& [fieldIdentifier, type, fieldOffset] : fields)
     {
         fieldIdentifiers.push_back(fieldIdentifier);
     }

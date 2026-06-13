@@ -88,12 +88,12 @@ nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() con
     /// We call this method solely, if we actually need the value memory area and not a VarVal.
     /// Therefore, we do not store the valueOffset in the ChainedEntryRef or the ChainedEntryMemoryProvider
     /// During tracing the offset is calculated and should be stored as a constant in the compiled code
-    nautilus::static_val<uint64_t> valueMemAreaOffset(0);
+    uint64_t valueMemAreaOffset = 0;
     if (memoryProviderValues.getAllFields().empty())
     {
         /// We take the max offset of the keys
         valueMemAreaOffset = std::numeric_limits<uint64_t>::min();
-        for (const auto& field : nautilus::static_iterable(memoryProviderKeys.getAllFields()))
+        for (const auto& field : memoryProviderKeys.getAllFields())
         {
             const auto offset = field.fieldOffset;
             const auto fieldSize = field.type.getSizeInBytesWithNull();
@@ -107,7 +107,7 @@ nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() con
     {
         /// We take the min offset of the values
         valueMemAreaOffset = std::numeric_limits<uint64_t>::max();
-        for (const auto& field : nautilus::static_iterable(memoryProviderValues.getAllFields()))
+        for (const auto& field : memoryProviderValues.getAllFields())
         {
             const auto offset = field.fieldOffset;
             if (valueMemAreaOffset > offset)
@@ -169,7 +169,7 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(ChainedEntryRef&& other) noe
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Record& recordKey, const HashFunction::HashValue& hash) const
 {
     auto entry = findChain(hash);
-    while (entry)
+    while (entry != nullptr)
     {
         const ChainedEntryRef entryRef(entry, hashMapRef, fieldKeys, fieldValues);
         if (compareKeys(entryRef, recordKey))
@@ -213,7 +213,7 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
 
     ///  If entry contains nullptr, there does not exist a key with the same values.
     const auto hashValue = hashFunction.calculate(keyValues);
-    if (const auto entryRef = findKey(recordKey, hashValue))
+    if (const auto entryRef = findKey(recordKey, hashValue); entryRef != nullptr)
     {
         return static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
     }
@@ -242,7 +242,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
     /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
     const ChainedEntryRef otherEntryRef(chainEntry, hashMapRef, fieldKeys, fieldValues);
-    if (const auto entryRef = findEntry(otherEntryRef))
+    if (const auto entryRef = findEntry(otherEntryRef); entryRef != nullptr)
     {
         auto castedEntry = static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
         if (onUpdate)
