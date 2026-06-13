@@ -24,6 +24,7 @@
 #include <fmt/format.h>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
+#include <Module.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -82,8 +83,7 @@ public:
     explicit CompilationContext(nautilus::engine::NautilusModule& module) : module(module) { }
 
     template <typename R, typename... FunctionArguments>
-    auto
-    registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view namePrefix = "operatorFunction")
+    auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view namePrefix)
     {
         PRECONDITION(!compiled, "registerFunction() must not be called after the module has been compiled");
         using RawR = nautilus::engine::details::raw_return_type_t<R>;
@@ -100,9 +100,21 @@ public:
     }
 
     template <typename R, typename... FunctionArguments>
-    auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...), const std::string_view namePrefix = "operatorFunction")
+    auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func)
+    {
+        return registerFunction(std::move(func), "operatorFunction");
+    }
+
+    template <typename R, typename... FunctionArguments>
+    auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...), const std::string_view namePrefix)
     {
         return registerFunction(std::function<R(nautilus::val<FunctionArguments>...)>(fnptr), namePrefix);
+    }
+
+    template <typename R, typename... FunctionArguments>
+    auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...))
+    {
+        return registerFunction(std::function<R(nautilus::val<FunctionArguments>...)>(fnptr), "operatorFunction");
     }
 
     /// Called by CompiledExecutablePipelineStage once, directly after compiling the pipeline's module.
