@@ -36,7 +36,6 @@
 #include <InputFormatterDescriptor.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawValueParser.hpp>
-#include <static.hpp>
 
 namespace NES
 {
@@ -133,19 +132,9 @@ public:
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& fieldIndex) const
-    {
-        return fieldNamesOutput[fieldIndex];
-    }
-
-    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& fieldIndex) const
+    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameInJsonAt(const uint64_t fieldIndex) const
     {
         return fieldNamesInJson[fieldIndex];
-    }
-
-    [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& fieldIndex) const
-    {
-        return fieldDataTypes[fieldIndex];
     }
 
     [[nodiscard]] uint64_t getNumberOfFields() const
