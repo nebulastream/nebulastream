@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -49,12 +50,21 @@ protected:
 
 struct ConfigParametersVoid
 {
-    /// Void discards every tuple but still accepts the standard sink parameters (file_path, output_format) so it can be used as a drop-in null target in systest's --workingDir flow, which injects file_path into every sink.
+    /// Void discards every tuple but still accepts the standard sink parameters (file_path,
+    /// output_format) so it can be used as a drop-in null target in systest's --workingDir flow,
+    /// which injects file_path into every sink.
+    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
         "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
 
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
+        "file_path",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::FILE_PATH, OUTPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);
 };
 }
 
