@@ -15,6 +15,8 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
@@ -22,14 +24,54 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <nautilus/nautilus_function.hpp>
+#include <val_bool.hpp>
 #include <val_concepts.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
 
+/// Median aggregation.
+///
+/// The lift, combine, lower and reset bodies are extracted into dedicated nautilus functions
+/// (NautilusFunction, i.e. Pattern 2 cross-calls) so that they are compiled once and called from the
+/// pipeline rather than inlined at every aggregation. The functions live in a global, statically allocated,
+/// templated table (see the .cpp): one set per (input type, result type, nullability) with clear, type-derived
+/// names. As nautilus deduplicates functions by name, all medians of the same type in a pipeline share a
+/// single compiled instantiation. This object merely selects the matching set and forwards to it.
+///
+/// To keep the bodies type-parametric, the per-column work stays in the thin virtual wrappers: the wrapper
+/// computes the input value via inputFunction and hands it to the nautilus function through a scratch slot,
+/// and it reads the lowered result back from a scratch slot before writing it under the column-specific
+/// result field. Consequently the paged vector stores only the single aggregated value per row.
 class MedianAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
+    /// Uniform signatures of the extracted nautilus functions. The concrete data type lives inside the body
+    /// (selected by template parameters), so these handle types are independent of it; values cross the
+    /// boundary through scratch memory (val<int8_t*>) because a Record/VarVal cannot.
+    using LiftFunction = nautilus::NautilusFunction<std::function<void(
+        nautilus::val<AggregationState*>,
+        nautilus::val<int8_t*>,
+        nautilus::val<bool>,
+        nautilus::val<AbstractBufferProvider*>)>>;
+    using CombineFunction
+        = nautilus::NautilusFunction<std::function<void(nautilus::val<AggregationState*>, nautilus::val<AggregationState*>)>>;
+    using LowerFunction = nautilus::NautilusFunction<
+        std::function<void(nautilus::val<AggregationState*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>)>>;
+    using ResetFunction = nautilus::NautilusFunction<std::function<void(nautilus::val<AggregationState*>)>>;
+
+    /// The four extracted nautilus functions selected for this median's data types. Non-owning pointers into
+    /// the global static function table (see the .cpp).
+    struct MedianFunctions
+    {
+        LiftFunction* lift = nullptr;
+        CombineFunction* combine = nullptr;
+        LowerFunction* lower = nullptr;
+        ResetFunction* reset = nullptr;
+    };
+
     MedianAggregationPhysicalFunction(
         DataType inputType,
         DataType resultType,
@@ -51,7 +93,8 @@ public:
     ~MedianAggregationPhysicalFunction() override = default;
 
 private:
-    std::shared_ptr<TupleBufferRef> bufferRefPagedVector;
+    /// Selected from the global static function table by (input type, result type, nullability) in the constructor.
+    MedianFunctions functions;
 };
 
 }
