@@ -41,7 +41,9 @@ find_package(MLIR REQUIRED CONFIG)
 find_package(nautilus REQUIRED CONFIG)
 
 # We have to set the nes-nautilus to public to use the nautilus library in other modules
+# nautilus::nautilus-std provides the implementations of the nautilus/std/* wrappers (memcmp, cmath, ...)
 target_link_libraries(nes-nautilus PUBLIC nautilus::nautilus
+        nautilus::nautilus-std
         MLIRExecutionEngine
         MLIRFuncAllExtensions
 

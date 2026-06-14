@@ -142,7 +142,7 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
     const TupleBufferRef& bufferRef) const
 {
     Record record;
-    const auto numberOfFields = nautilus::static_val{bufferRef.getAllDataTypes().size()};
+    const auto numberOfFields = bufferRef.getAllDataTypes().size();
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
         const auto fieldName = bufferRef.getAllFieldNames().at(i);

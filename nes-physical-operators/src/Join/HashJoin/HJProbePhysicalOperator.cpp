@@ -118,7 +118,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 auto rightItEnd = rightPagedVector.end(rightFields);
 
                 /// We use here findEntry as the other methods would insert a new entry, which is unnecessary
-                if (auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef))
+                if (auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef); leftEntry != nullptr)
                 {
                     /// At this moment, we can be sure that both paged vector contain only records that satisfy the join condition
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{

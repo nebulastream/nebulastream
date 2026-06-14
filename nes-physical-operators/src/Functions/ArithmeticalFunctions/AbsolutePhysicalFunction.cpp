@@ -22,11 +22,12 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
-AbsolutePhysicalFunction::AbsolutePhysicalFunction(PhysicalFunction childFunction, DataType inputType)
-    : childFunction(std::move(childFunction)), inputType(std::move(inputType))
+AbsolutePhysicalFunction::AbsolutePhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType)
+    : childFunction(std::move(childFunction)), inputType(std::move(inputType)), outputType(std::move(outputType))
 {
 }
 
@@ -35,17 +36,18 @@ VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     auto value = childFunction.execute(record, arena);
     if (not inputType.isSignedInteger() and not inputType.isFloat())
     {
-        return value;
+        return value.castToType(outputType.type);
     }
 
     /// We need to built a zero and negativeOne via castToType, as we can not make any assumptions on the input type.
+    /// Both select branches must have the same type: integer promotion widens value * negativeOne (e.g. int8 -> int),
+    /// so we cast each branch to the output type before selecting, which also produces the required result type.
     const auto zero = VarVal{0}.castToType(inputType.type);
     const auto negativeOne = VarVal{-1}.castToType(inputType.type);
-    if (value < zero)
-    {
-        return value * negativeOne;
-    }
-    return value;
+    return VarVal::select(
+        (value < zero).getRawValueAs<nautilus::val<bool>>(),
+        (value * negativeOne).castToType(outputType.type),
+        value.castToType(outputType.type));
 }
 
 PhysicalFunctionRegistryReturnType
@@ -53,7 +55,10 @@ PhysicalFunctionGeneratedRegistrar::RegisterAbsPhysicalFunction(PhysicalFunction
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Absolute function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Absolute function must have exactly one input type");
-    return AbsolutePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.inputTypes[0]);
+    return AbsolutePhysicalFunction(
+        physicalFunctionRegistryArguments.childFunctions[0],
+        physicalFunctionRegistryArguments.inputTypes[0],
+        physicalFunctionRegistryArguments.outputType);
 }
 
 

@@ -17,16 +17,20 @@
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
+#include <cpptrace/from_current_macros.hpp>
 #include <fmt/format.h>
 #include <nautilus/val_ptr.hpp>
 #include <CompilationContext.hpp>
 #include <Engine.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
@@ -40,63 +44,56 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
-    : engine(std::move(options))
-    , compiledPipelineFunction(nullptr)
-    , operatorHandlers(std::move(operatorHandlers))
-    , pipeline(std::move(pipeline))
+    : engine(options), operatorHandlers(std::move(operatorHandlers)), pipeline(std::move(pipeline))
 {
 }
 
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
+    INVARIANT(compiledPipelineFunction.has_value(), "execute() was called before start() compiled the pipeline");
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
+    (*compiledPipelineFunction)(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
 
-nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*>
-CompiledExecutablePipelineStage::compilePipeline() const
+void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine::NautilusModule& module) const
 {
-    CPPTRACE_TRY
+    /// Capture the stage by pointer rather than the pipeline shared_ptr: this compiled function is only ever invoked
+    /// through execute()/start()/stop() on the owning stage, so the stage (and thus its pipeline) outlives every call.
+    /// Capturing the pipeline shared_ptr by value instead makes the compiled module co-own the pipeline, and because
+    /// cached slices keep that module alive through their cleanup handle, it retains the pipeline (and its slice
+    /// buffers) past teardown -- which leaks buffers in the sliceCache systests.
+    /// Additionally, we can NOT use const or const references for the parameters of the lambda function
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
+        compiledFunction = [this](
+                               nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
+                               nautilus::val<const TupleBuffer*> recordBufferRef,
+                               nautilus::val<const Arena*> arenaRef)
     {
-        /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
-        /// Additionally, we can NOT use const or const references for the parameters of the lambda function
-        /// NOLINTBEGIN(performance-unnecessary-value-param)
-        const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
-            compiledFunction = [this](
-                                   nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                                   nautilus::val<const TupleBuffer*> recordBufferRef,
-                                   nautilus::val<const Arena*> arenaRef)
-        {
-            auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
-            RecordBuffer recordBuffer(recordBufferRef);
+        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+        RecordBuffer recordBuffer(recordBufferRef);
 
-            pipeline->getRootOperator().open(ctx, recordBuffer);
-            switch (ctx.getOpenReturnState())
-            {
-                case OpenReturnState::CONTINUE: {
-                    pipeline->getRootOperator().close(ctx, recordBuffer);
-                    break;
-                }
-                case OpenReturnState::REPEAT: {
-                    nautilus::invoke(
-                        +[](PipelineExecutionContext* pec, const TupleBuffer* buffer)
-                        { pec->repeatTask(*buffer, std::chrono::milliseconds(0)); },
-                        pipelineExecutionContext,
-                        recordBufferRef);
-                    break;
-                }
+        pipeline->getRootOperator().open(ctx, recordBuffer);
+        switch (ctx.getOpenReturnState())
+        {
+            case OpenReturnState::CONTINUE: {
+                pipeline->getRootOperator().close(ctx, recordBuffer);
+                break;
             }
-        };
-        /// NOLINTEND(performance-unnecessary-value-param)
-        return engine.registerFunction(compiledFunction);
-    }
-    CPPTRACE_CATCH(...)
-    {
-        throw wrapExternalException(fmt::format("Could not query compile pipeline: {}", *pipeline));
-    }
-    std::unreachable();
+            case OpenReturnState::REPEAT: {
+                nautilus::invoke(
+                    +[](PipelineExecutionContext* pec, const TupleBuffer* buffer)
+                    { pec->repeatTask(*buffer, std::chrono::milliseconds(0)); },
+                    pipelineExecutionContext,
+                    recordBufferRef);
+                break;
+            }
+        }
+    };
+    /// NOLINTEND(performance-unnecessary-value-param)
+    module.registerFunction(std::string{PIPELINE_FUNCTION_NAME}, compiledFunction);
 }
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
@@ -117,9 +114,33 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    CompilationContext compilationCtx{engine};
-    pipeline->getRootOperator().setup(ctx, compilationCtx);
-    compiledPipelineFunction = this->compilePipeline();
+    /// Each pipeline compiles into exactly one module: operators register named helper functions during setup(),
+    /// the main pipeline function is added to the same module, and a single compile() call traces and compiles
+    /// all of them together. Only afterwards do the handles handed out during setup() become invocable.
+    CPPTRACE_TRY
+    {
+        auto module = engine.createModule();
+        CompilationContext compilationCtx{module};
+        pipeline->getRootOperator().setup(ctx, compilationCtx);
+        registerPipelineFunction(module);
+        compiledModule = module.compile();
+        compilationCtx.resolveAfterCompilation(*compiledModule);
+        compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
+
+        /// Surface nautilus' per-compilation statistics (tracing/IR/backend timings, generated code size).
+        /// getStatistics() is null in interpreted mode; the report is only formatted when debug logging is on.
+        if (const auto statistics = compiledModule->getStatistics())
+        {
+            NES_DEBUG(
+                "Nautilus compilation statistics for pipeline {}:\n{}",
+                pipeline->getPipelineId(),
+                statistics->formatReport(fmt::format("pipeline-{}", pipeline->getPipelineId()), engine.getNameOfBackend()));
+        }
+    }
+    CPPTRACE_CATCH(...)
+    {
+        throw wrapExternalException(fmt::format("Could not query compile pipeline: {}", *pipeline));
+    }
 }
 
 }
