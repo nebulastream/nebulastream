@@ -340,6 +340,12 @@ TEST_F(GeneratorTest, whitespaceOnlySchemaThrows)
     EXPECT_THROW(Generator(42U, GeneratorStop::NONE, "   "), Exception);
 }
 
+/// A schema field that is empty after trimming (e.g. a stray delimiter) is rejected.
+TEST_F(GeneratorTest, emptySchemaLineThrows)
+{
+    EXPECT_THROW(Generator(42U, GeneratorStop::NONE, "SEQUENCE UINT64 0 10 1,   "), Exception);
+}
+
 /// --- FixedGeneratorRate Tests ---
 
 class FixedGeneratorRateTest : public ::testing::Test
