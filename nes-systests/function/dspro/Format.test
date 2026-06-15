@@ -394,7 +394,9 @@ FROM numericStream INTO sinkNumeric;
 i8=1, i16=123, i32=12345, i64=123456789, f=1.5, d=2.25
 i8=-1, i16=-123, i32=-12345, i64=-123456789, f=-1.5, d=-2.25
 
+########################################
 # Test function argument
+########################################
 
 CREATE SINK sinkFunctionArg(formatted VARSIZED NOT NULL) TYPE File;
 
@@ -405,7 +407,9 @@ FROM numberStream INTO sinkFunctionArg;
 abs=1
 abs=100
 
+########################################
 # Test nested Format
+########################################
 
 CREATE SINK sinkNestedFormat(formatted VARSIZED NOT NULL) TYPE File;
 
@@ -416,7 +420,9 @@ FROM numberStream INTO sinkNestedFormat;
 outer=[-1, 0]
 outer=[-100, 42]
 
+########################################
 # Test expression argument
+########################################
 
 CREATE SINK sinkExprArg(formatted VARSIZED NOT NULL) TYPE File;
 
