@@ -47,6 +47,7 @@
     "nameof",
     "nautilus",
     "nlohmann-json",
+    "openssl",
     "reflectcpp",
     "replxx",
     "scope-guard",

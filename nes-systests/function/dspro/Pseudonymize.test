@@ -18,7 +18,7 @@ SELECT
     Pseudonymize(patient_id) AS patient_id_pseudo
 FROM stream INTO sinkStream;
 ----
-0
-1
-2
-3
+1049608084
+1489541908
+1527142490
+949260057

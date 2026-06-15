@@ -13,4 +13,7 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 add_plugin(Pseudonymize LogicalFunction nes-logical-operators PseudonymizeLogicalFunction.cpp)
-add_plugin(Pseudonymize PhysicalFunction nes-physical-operators PseudonymizePhysicalFunction.cpp)
+add_plugin_as_library(Pseudonymize PhysicalFunction nes-physical-operators-registry pseudonymize_physical_plugin_lib PseudonymizePhysicalFunction.cpp)
+
+find_package(OpenSSL REQUIRED)
+target_link_libraries(pseudonymize_physical_plugin_lib PRIVATE OpenSSL::Crypto)

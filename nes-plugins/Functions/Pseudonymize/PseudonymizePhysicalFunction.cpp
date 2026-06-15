@@ -22,6 +22,11 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
+#include <openssl/evp.h>
+#include <cstring>
+
 namespace NES
 {
 
@@ -30,10 +35,43 @@ PseudonymizePhysicalFunction::PseudonymizePhysicalFunction(PhysicalFunction chil
 {
 }
 
+namespace {
+int32_t generateHMAC(int32_t inputId) {
+    const char* secret_key= "dummy_key";
+    int key_length = std::strlen(secret_key);
+
+    unsigned char hmacResult[EVP_MAX_MD_SIZE];
+    unsigned int hmacLen = 0;
+
+    HMAC(
+        EVP_sha256(),
+        secret_key,
+        key_length,
+        reinterpret_cast<unsigned char*>(&inputId),
+        sizeof(inputId),
+        hmacResult,
+        &hmacLen
+    );
+
+    int32_t result = 0;
+    std::memcpy(&result, hmacResult, sizeof(result));
+
+    return result > 0 ? result : -result;
+}
+}
+
+
 VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto inputValue = childPhysicalFunction.execute(record, arena);
+    // auto inputSize = inputValue.getSize();
+    // auto maxOutputSize = (inputSize + nautilus::val<uint32_t>(2)) / nautilus::val<uint32_t>(3) * nautilus::val<uint32_t>(4);
+    //auto output = arena.allocateVariableSizedData(maxOutputSize);
+    // auto actualOutputSize = nautilus::invoke()
+    auto inputInt = inputValue.getRawValueAs<nautilus::val<int32_t>>();
+    auto opensslResult = nautilus::invoke(generateHMAC, inputInt);
 
+    return VarVal(opensslResult);
     /// TODO(student): replace the identity passthrough below with the actual pseudonymization
     /// of `inputValue` (e.g. keyed hash, format-preserving encryption, ...).
     /// The returned VarVal must have the same integer type as `inputValue`.
@@ -83,7 +121,6 @@ VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& are
     ///       3. Reference example with a vcpkg dep:
     ///            nes-plugins/InputFormatters/JSONInputFormatter/CMakeLists.txt
     ///            (uses `find_package(simdjson CONFIG REQUIRED)` + target_link_libraries)
-    return inputValue;
 }
 
 PhysicalFunctionRegistryReturnType
