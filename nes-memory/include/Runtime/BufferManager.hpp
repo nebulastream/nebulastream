@@ -68,28 +68,33 @@ class BufferManager final : public std::enable_shared_from_this<BufferManager>, 
         explicit Private() = default;
     };
 
+public:
     static constexpr auto DEFAULT_BUFFER_SIZE = 8 * 1024;
     static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
     static constexpr auto DEFAULT_ALIGNMENT = 64;
+    static constexpr auto DEFAULT_NUMBER_OF_RESERVED_BUFFERS = 0;
 
-public:
     explicit BufferManager(
         Private,
         uint32_t bufferSize,
         uint32_t numOfBuffers,
         std::shared_ptr<std::pmr::memory_resource> memoryResource,
-        uint32_t withAlignment);
+        uint32_t withAlignment,
+        uint32_t numOfReservedBuffers);
 
     /// Creates a new global buffer manager
     /// @param bufferSize the size of each buffer in bytes
     /// @param numOfBuffers the total number of buffers in the pool
     /// @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
     /// @param memoryResource resource for allocating and deallocating memory
+    /// @param numOfReservedBuffers number of buffers held back in a liveness reserve, only handed out via the
+    ///        reserved acquisition API (tryGetReservedBuffer / getReservedBufferWithTimeout). Clamped to numOfBuffers.
     static std::shared_ptr<BufferManager> create(
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
         const std::shared_ptr<std::pmr::memory_resource>& memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
-        uint32_t withAlignment = DEFAULT_ALIGNMENT);
+        uint32_t withAlignment = DEFAULT_ALIGNMENT,
+        uint32_t numOfReservedBuffers = DEFAULT_NUMBER_OF_RESERVED_BUFFERS);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
@@ -105,6 +110,13 @@ private:
      */
     void initialize(uint32_t withAlignment);
 
+    /// Transitions a free segment into a live TupleBuffer (refCount 0 -> 1). Throws InvalidRefCountForBuffer
+    /// if the segment was not in a clean state. Shared by all acquisition paths.
+    TupleBuffer wrapSegment(NES::detail::MemorySegment* segment);
+
+    /// Returns a recycled segment to the reserve if it is below its target fill, otherwise to the normal pool.
+    void returnSegment(NES::detail::MemorySegment* segment);
+
 public:
     /// This blocks until a buffer is available.
     TupleBuffer getBufferBlocking() override;
@@ -119,6 +131,11 @@ public:
      * @return a new buffer
      */
     std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override;
+
+    /// Reserved acquisition: tries the liveness reserve first, then falls back to the normal pool. If
+    /// numOfReservedBuffers is 0 the reserve is empty and this behaves like the normal non-reserved acquisition.
+    std::optional<TupleBuffer> tryGetReservedBuffer() override;
+    std::optional<TupleBuffer> getReservedBufferWithTimeout(std::chrono::milliseconds timeoutMs) override;
 
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
 
@@ -149,6 +166,11 @@ private:
     std::vector<NES::detail::MemorySegment> allBuffers;
 
     folly::MPMCQueue<NES::detail::MemorySegment*> availableBuffers;
+
+    /// Liveness reserve: buffers only handed out via the reserved acquisition API so the drain/emit path can
+    /// always make forward progress even when the normal pool is fully drained by in-flight buffers.
+    folly::MPMCQueue<NES::detail::MemorySegment*> reservedBuffers;
+    size_t numOfReservedBuffers;
 
     std::shared_ptr<NES::UnpooledChunksManager> unpooledChunksManager;
 

@@ -49,6 +49,16 @@ public:
            "Number buffers in global buffer pool.",
            {std::make_shared<NumberValidation>()}};
 
+    /// Number of buffers held back in a liveness reserve inside the global buffer manager. These buffers are only
+    /// handed out via the reserved acquisition API (used by the drain/emit path: window-trigger emit, sinks, network
+    /// egress), so the system can always make forward progress and free in-flight buffers even when the normal pool is
+    /// exhausted. This breaks the buffer-exhaustion deadlock. 0 disables the reserve (default, behaviour unchanged).
+    UIntOption numberOfReservedBuffersInGlobalBufferManager
+        = {"number_of_reserved_buffers_in_global_buffer_manager",
+           "0",
+           "Number of buffers reserved for the drain/emit path in the global buffer pool (liveness reserve).",
+           {std::make_shared<NumberValidation>()}};
+
     /// Indicates how many buffers a single data source can allocate. This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
     UIntOption defaultMaxInflightBuffers
         = {"default_max_inflight_buffers",
@@ -73,6 +83,7 @@ private:
             &defaultQueryOptimization,
             &network,
             &numberOfBuffersInGlobalBufferManager,
+            &numberOfReservedBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,
             &dumpQueryCompilationIR,
             &dumpGraph};

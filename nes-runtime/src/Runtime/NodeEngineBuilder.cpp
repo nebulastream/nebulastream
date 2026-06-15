@@ -19,6 +19,7 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
@@ -37,7 +38,10 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 {
     auto bufferManager = BufferManager::create(
         workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue(),
-        workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
+        workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
+        std::make_shared<NesDefaultMemoryAllocator>(),
+        BufferManager::DEFAULT_ALIGNMENT,
+        workerConfiguration.numberOfReservedBuffersInGlobalBufferManager.getValue());
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);

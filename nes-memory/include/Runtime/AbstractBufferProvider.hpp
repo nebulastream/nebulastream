@@ -50,6 +50,19 @@ public:
 
     virtual std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) = 0;
 
+    /// Acquires a buffer that is allowed to draw from the liveness reserve (see BufferManager). This is intended
+    /// for the drain/emit path (window-trigger emit, sinks, network egress) so that forward progress is always
+    /// possible even when the normal pool is exhausted by in-flight buffers, breaking the buffer-exhaustion
+    /// deadlock. Providers without a dedicated reserve fall back to the normal non-reserved acquisition.
+    virtual std::optional<TupleBuffer> tryGetReservedBuffer() { return getBufferNoBlocking(); }
+
+    /// Blocking-with-timeout variant of tryGetReservedBuffer(). Waits up to timeout_ms for a (reserved or normal)
+    /// buffer to become available.
+    virtual std::optional<TupleBuffer> getReservedBufferWithTimeout(std::chrono::milliseconds timeout_ms)
+    {
+        return getBufferWithTimeout(timeout_ms);
+    }
+
     /// Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
     virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
 };
