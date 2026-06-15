@@ -22,21 +22,30 @@ get_source(nes-sinks NES_SINKS_SOURCE_FILES)
 add_library(nes-sinks-validation ${NES_SINKS_VALIDATION_SOURCE_FILES})
 add_library(nes-sinks ${NES_SINKS_SOURCE_FILES})
 
+add_subdirectory(rust/nes-sink-validation-bindings)
+add_subdirectory(rust/nes-sink-runtime-bindings)
+
 target_link_libraries(nes-sinks-validation
-        PUBLIC nes-common nes-configurations nes-data-types)
+        PUBLIC nes-common nes-configurations nes-data-types nes-sink-validation-bindings)
+target_link_rust_lib(nes-sinks-validation nes_sink_validation_bindings)
 
 target_include_directories(nes-sinks-validation PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
+# nes-network-bindings is retained for the legacy C++ NetworkSink; the TokioSink
+# bridge additionally links the io-runtime and sink-runtime bindings.
 target_link_libraries(nes-sinks
-        PUBLIC nes-sinks-validation nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings)
+        PUBLIC nes-sinks-validation nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings
+        PRIVATE nes-io-runtime nes-sink-runtime-bindings)
 target_link_rust_lib(nes-sinks nes_network_bindings)
+target_link_rust_lib(nes-sinks nes_sink_runtime_bindings)
 
 target_include_directories(nes-sinks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)

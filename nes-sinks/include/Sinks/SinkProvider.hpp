@@ -14,6 +14,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <BackpressureChannel.hpp>
@@ -21,7 +22,15 @@
 namespace NES
 {
 
-/// Takes a SinkDescriptor and in exchange returns a SinkPipeline, which Tasks can process (together with a TupleBuffer).
+class SinkProvider
+{
+public:
+    std::unique_ptr<Sink> lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor) const;
+    [[nodiscard]] bool contains(const std::string& sinkType) const;
+};
+
+/// Compatibility wrapper -- delegates to a default-constructed SinkProvider.
+/// Existing call sites use this free function; new code should prefer SinkProvider directly.
 std::unique_ptr<Sink> lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
 
 }

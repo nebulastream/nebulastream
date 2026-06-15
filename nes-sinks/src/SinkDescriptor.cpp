@@ -39,8 +39,11 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <fmt/ranges.h>
+#include <rust/cxx.h>
+
 #include <ErrorHandling.hpp>
 #include <SinkValidationRegistry.hpp>
+#include "nes-sink-validation-bindings/lib.h"
 
 namespace NES
 {
@@ -282,7 +285,12 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
     const std::unordered_map<std::string, std::string> stringConfigMap = configPairs
         | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
         | std::ranges::to<std::unordered_map>();
-    auto sinkValidationRegistryArguments = SinkValidationRegistryArguments{stringConfigMap};
+    auto sinkValidationRegistryArguments = SinkValidationRegistryArguments{.sinkType = std::string(sinkType), .config = stringConfigMap};
+
+    if (exists(std::string(sinkType)))
+    {
+        return RegisterTokioSinkValidation(sinkValidationRegistryArguments);
+    }
     return SinkValidationRegistry::instance().create(std::string{sinkType}, std::move(sinkValidationRegistryArguments));
 }
 
