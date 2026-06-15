@@ -24,6 +24,7 @@ members = [
     "nes-network/network",
     "nes-network/network-bindings",
     "nes-common/rust/spdlog-bindings",
+    "nes-common/rust/nes-config-options",
     "nes-plugins/Functions/RustAnswer/rust",
 ]
 
@@ -34,6 +35,7 @@ nes_io_runtime_bindings = { path = "nes-io-runtime/rust/nes-io-runtime-bindings"
 nes_buffer_bindings = { path = "nes-memory/rust/nes-buffer-bindings" }
 nes_buffer_runtime = { path = "nes-memory/rust/nes-buffer-runtime" }
 nes_network = { path = "nes-network/network" }
+nes_config_options = { path = "nes-common/rust/nes-config-options" }
 cxx = "1.0.194"
 tokio = "1.52.0"
 async-trait = "0.1.89"
