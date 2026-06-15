@@ -556,6 +556,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "nes_io_runtime"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
+name = "nes_io_runtime_bindings"
+version = "0.1.0"
+dependencies = [
+ "cxx",
+ "nes_io_runtime",
+]
+
+[[package]]
 name = "nes_network"
 version = "0.1.0"
 dependencies = [

@@ -41,6 +41,7 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
+#include <IORuntime.hpp>
 #include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryId.hpp>
@@ -65,7 +66,7 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
-    : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
+    : ioRuntime(std::make_unique<IORuntime>()), listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     {
         std::stringstream configStr;

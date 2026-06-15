@@ -16,6 +16,8 @@
 [workspace]
 resolver = "2"
 members = [
+    "nes-io-runtime/rust/nes-io-runtime",
+    "nes-io-runtime/rust/nes-io-runtime-bindings",
     "nes-memory/rust/nes-buffer-bindings",
     "nes-memory/rust/my-buffer-test",
     "nes-memory/rust/nes-buffer-runtime",
@@ -27,6 +29,8 @@ members = [
 
 # Shared dependency declarations. Member crates opt in with `dep.workspace = true`.
 [workspace.dependencies]
+nes_io_runtime = { path = "nes-io-runtime/rust/nes-io-runtime" }
+nes_io_runtime_bindings = { path = "nes-io-runtime/rust/nes-io-runtime-bindings" }
 nes_buffer_bindings = { path = "nes-memory/rust/nes-buffer-bindings" }
 nes_buffer_runtime = { path = "nes-memory/rust/nes-buffer-runtime" }
 nes_network = { path = "nes-network/network" }
