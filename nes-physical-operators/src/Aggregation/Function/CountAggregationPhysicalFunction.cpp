@@ -46,14 +46,11 @@ CountAggregationPhysicalFunction::CountAggregationPhysicalFunction(
 }
 
 void CountAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    nautilus::val<TupleBuffer*>,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const AggregationStateRef& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     /// Reading the old count from the aggregation state.
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
-    const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memAreaCount = aggregationState.data();
     const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, resultType);
 
     /// If value is null and we do not include null values, we keep the old value. Otherwise, we increment the counter.
@@ -65,18 +62,14 @@ void CountAggregationPhysicalFunction::lift(
 }
 
 void CountAggregationPhysicalFunction::combine(
-    const nautilus::val<AggregationState*> aggregationState1,
-    nautilus::val<TupleBuffer*>,
-    const nautilus::val<AggregationState*> aggregationState2,
-    nautilus::val<TupleBuffer*>,
-    PipelineMemoryProvider&)
+    const AggregationStateRef& aggregationState1, const AggregationStateRef& aggregationState2, PipelineMemoryProvider&)
 {
     /// Reading the count from the first aggregation state
-    const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
+    const auto memAreaCount1 = aggregationState1.data();
     const auto count1 = VarVal::readNonNullableVarValFromMemory(memAreaCount1, resultType);
 
     /// Reading the count from the second aggregation state
-    const auto memAreaCount2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
+    const auto memAreaCount2 = aggregationState2.data();
     const auto count2 = VarVal::readNonNullableVarValFromMemory(memAreaCount2, resultType);
 
     /// Adding the counts together
@@ -86,11 +79,10 @@ void CountAggregationPhysicalFunction::combine(
     newCount.writeToMemory(memAreaCount1);
 }
 
-Record CountAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+Record CountAggregationPhysicalFunction::lower(const AggregationStateRef& aggregationState, PipelineMemoryProvider&)
 {
     /// Reading the count from the aggregation state
-    const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memAreaCount = aggregationState.data();
     const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, resultType);
 
     /// Creating a record with the count
@@ -100,11 +92,10 @@ Record CountAggregationPhysicalFunction::lower(
     return record;
 }
 
-void CountAggregationPhysicalFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+void CountAggregationPhysicalFunction::reset(const AggregationStateRef& aggregationState, PipelineMemoryProvider&)
 {
     /// Resetting the count and count to 0
-    const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memArea = aggregationState.data();
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
 }
 

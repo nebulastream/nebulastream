@@ -33,25 +33,13 @@ class MaxAggregationPhysicalFunction : public AggregationPhysicalFunction
 public:
     MaxAggregationPhysicalFunction(
         DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
-    void lift(
-        const nautilus::val<AggregationState*>& aggregationState,
-        nautilus::val<TupleBuffer*>,
-        PipelineMemoryProvider& pipelineMemoryProvider,
-        const Record& record) override;
+    void lift(const AggregationStateRef& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record) override;
     void combine(
-        nautilus::val<AggregationState*> aggregationState1,
-        nautilus::val<TupleBuffer*>,
-        nautilus::val<AggregationState*> aggregationState2,
-        nautilus::val<TupleBuffer*>,
+        const AggregationStateRef& aggregationState1,
+        const AggregationStateRef& aggregationState2,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
-    Record lower(
-        nautilus::val<AggregationState*> aggregationState,
-        nautilus::val<TupleBuffer*>,
-        PipelineMemoryProvider& pipelineMemoryProvider) override;
-    void reset(
-        nautilus::val<AggregationState*> aggregationState,
-        nautilus::val<TupleBuffer*>,
-        PipelineMemoryProvider& pipelineMemoryProvider) override;
+    Record lower(const AggregationStateRef& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+    void reset(const AggregationStateRef& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~MaxAggregationPhysicalFunction() override = default;

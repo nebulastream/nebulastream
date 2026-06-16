@@ -54,7 +54,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
     /// Getting the corresponding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapBuffer
+    auto hashMapBuffer
         = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
     ChainedHashMapRef hashMap(
         hashMapBuffer.asArg(),
@@ -84,7 +84,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
             auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
             {
-                aggFunction->reset(state, hashMapBuffer.asArg(), ctx.pipelineMemoryProvider);
+                aggFunction->reset(AggregationStateRef{state, hashMapBuffer}, ctx.pipelineMemoryProvider);
                 state = state + aggFunction->getSizeOfStateInBytes();
             }
         },
@@ -97,7 +97,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
-        aggFunction->lift(state, hashMapBuffer.asArg(), ctx.pipelineMemoryProvider, record);
+        aggFunction->lift(AggregationStateRef{state, hashMapBuffer}, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }
