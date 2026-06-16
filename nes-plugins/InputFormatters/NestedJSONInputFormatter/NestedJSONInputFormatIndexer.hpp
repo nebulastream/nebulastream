@@ -34,8 +34,8 @@
 #include <InputFormatIndexer.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
+#include <ValueDeserializerUtil.hpp>
 #include <static.hpp>
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -80,7 +80,8 @@ public:
         const char tupleDelimiter,
         std::vector<Identifier> fieldNamesInJson,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
-        std::vector<DataType> fieldDataTypes)
+        std::vector<DataType> fieldDataTypes,
+        const std::string& deserializerOverrides)
         : tupleDelimiter(tupleDelimiter)
         , fieldNamesInJson(std::move(fieldNamesInJson))
         , fieldNamesOutput(std::move(fieldNamesOutput))
@@ -104,10 +105,14 @@ public:
         deserializerTypes[DataType::Type::STRUCT] = "JSONSTRUCT";
         deserializerTypes[DataType::Type::FIXEDSIZED] = "JSONFIXEDSIZED";
         deserializerTypes[DataType::Type::VARARRAY] = "JSONVARARRAY";
+
+        /// Override default parsers with user-defined parsers.
+        parseValueDeserializerOverrides(deserializerOverrides, deserializerTypes);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
-    static std::unique_ptr<NestedJSONInputFormatIndexer> create(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
+    static std::unique_ptr<NestedJSONInputFormatIndexer>
+    create(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
     {
         /// We expect the names in the json file to not be source qualified.
         /// The remaining (unqualified) field name encodes the JSON path; '/' separates nesting levels (e.g. "user/name").
@@ -123,7 +128,12 @@ public:
         PRECONDITION(fieldNamesOutput.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
 
         return std::make_unique<NestedJSONInputFormatIndexer>(
-            Private{}, config.getFromConfig(ConfigParametersNestedJSON::TUPLE_DELIMITER), std::move(fieldNamesInJson), std::move(fieldNamesOutput), std::move(fieldDataTypes));
+            Private{},
+            config.getFromConfig(ConfigParametersNestedJSON::TUPLE_DELIMITER),
+            std::move(fieldNamesInJson),
+            std::move(fieldNamesOutput),
+            std::move(fieldDataTypes),
+            config.getFromConfig(InputFormatterDescriptor::VALUE_DESERIALIZERS));
     }
 
     ~NestedJSONInputFormatIndexer() override = default;
@@ -143,10 +153,7 @@ public:
         return fieldNamesOutput[i];
     }
 
-    [[nodiscard]] const Identifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& i) const
-    {
-        return fieldNamesInJson[i];
-    }
+    [[nodiscard]] const Identifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& i) const { return fieldNamesInJson[i]; }
 
     [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
 
