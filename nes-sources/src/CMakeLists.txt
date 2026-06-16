@@ -27,15 +27,15 @@ add_source_files(nes-sources
 )
 
 # Register plugins — runtime side (source class + systest adaptors)
-add_plugin(File Source FileSource.cpp)
-add_plugin(File InlineData FileSource.cpp)
-add_plugin(File FileData FileSource.cpp)
+# The File source runtime is provided by the Rust file_source plugin; only its
+# systest data adaptors (InlineData/FileData) remain on the C++ side.
+add_plugin(File InlineData FileSystestAdaptor.cpp)
+add_plugin(File FileData FileSystestAdaptor.cpp)
 add_plugin(Network Source NetworkSource.cpp)
 
 # Register plugins — validation side. These TUs hold the Register*SourceValidation
 # function and must compile into nes-sources-validation so the validation library's
 # registrar can resolve them without pulling in any runtime symbols.
-add_plugin(File SourceValidation FileSourceValidation.cpp)
 add_plugin(Network SourceValidation NetworkSourceValidation.cpp)
 add_plugin(Tokio SourceValidation TokioSourceValidation.cpp)
 

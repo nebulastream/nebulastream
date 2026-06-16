@@ -12,78 +12,24 @@
     limitations under the License.
 */
 
-#include <FileSource.hpp>
+/// Systest data adaptors for the File source. The File source runtime + validation
+/// now live in the Rust file_source plugin; these adaptors only prepare test data
+/// (write inline tuples to a temp file / point at an existing file) and set the
+/// FILE_PATH config the source reads. They register into the InlineData/FileData
+/// registries consumed by the systest harness.
 
-#include <cerrno>
-#include <cstdlib>
-#include <cstring>
-#include <format>
 #include <fstream>
-#include <ios>
-#include <istream>
-#include <memory>
-#include <ostream>
-#include <stop_token>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Files.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
+#include <FileSourceConfig.hpp>
 #include <InlineDataRegistry.hpp>
-#include <SourceRegistry.hpp>
 
 namespace NES
 {
-
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
-{
-}
-
-void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
-{
-    const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
-    this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
-    if (not this->inputFile)
-    {
-        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
-    }
-}
-
-void FileSource::close()
-{
-    this->inputFile.close();
-}
-
-Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
-{
-    this->inputFile.read(
-        tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
-    const auto numBytesRead = this->inputFile.gcount();
-    this->totalNumBytesRead += numBytesRead;
-    if (numBytesRead == 0)
-    {
-        return FillTupleBufferResult::eos();
-    }
-    return FillTupleBufferResult::withBytes(numBytesRead);
-}
-
-std::ostream& FileSource::toString(std::ostream& str) const
-{
-    str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
-    return str;
-}
-
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
-{
-    return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
-}
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
@@ -121,6 +67,5 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(File
 
     return systestAdaptorArguments.physicalSourceConfig;
 }
-
 
 }

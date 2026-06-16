@@ -26,6 +26,7 @@ members = [
     "nes-common/rust/spdlog-bindings",
     "nes-common/rust/nes-config-options",
     "nes-plugins/Functions/RustAnswer/rust",
+    "nes-plugins/Sources/FileSource",
     "nes-sinks/rust/nes-sink-validation",
     "nes-sinks/rust/nes-sink-validation-bindings",
     "nes-sinks/rust/nes-sink-runtime",
