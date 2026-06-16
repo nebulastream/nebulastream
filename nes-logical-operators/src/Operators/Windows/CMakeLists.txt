@@ -12,8 +12,8 @@
 
 add_subdirectory(Aggregations)
 
-add_plugin(WindowedAggregation LogicalOperator nes-logical-operators WindowedAggregationLogicalOperator.cpp)
-add_plugin(Join LogicalOperator nes-logical-operators JoinLogicalOperator.cpp)
+add_plugin(WindowedAggregation LogicalOperator WindowedAggregationLogicalOperator.cpp)
+add_plugin(Join LogicalOperator JoinLogicalOperator.cpp)
 
 add_unreflection_plugin(LogicalOperator WindowedAggregation)
 add_unreflection_plugin(LogicalOperator Join)

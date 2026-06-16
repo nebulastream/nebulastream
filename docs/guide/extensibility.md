@@ -28,17 +28,16 @@ activate_optional_plugin("Sources/TCPSource" ON)
 This includes the plugin in the NebulaStream build.
 Optional plugins can be added as libraries using the following structure:
 ```cmake
-add_plugin_as_library(<PLUGIN_NAME> <COMPONENT_NAME> <REGISTRY_NAME> <LIBRARY_NAME> <SOURCE_FILES>)
+add_plugin_as_library(<PLUGIN_NAME> <REGISTRY_NAME> <LIBRARY_NAME> <SOURCE_FILES>)
 target_link_libraries(<LIBRARY_NAME> PRIVATE <DEPENDS_ON_LIBRARY>) # <-- optional, set if plugin lib depends on additional libraries
 ```
 For instance, a `TCPSource` plugin might look like this:
 ```cmake
-add_plugin_as_library(TCP Source nes-sources-registry tcp_source_plugin_library TCPSource.cpp)
+add_plugin_as_library(TCP Source tcp_source_plugin_library TCPSource.cpp)
 ```
 Where:
 - `TCP` is the unique identifier used to instantiate the plugin from the registry.
 - `Source` is the name of the registry the plugin belongs to.
-- `nes-sources-registry` is the library that holds the specific component’s registry.
 - `tcp_source_plugin_library` is the resulting library from the `add_plugin_as_library` command.
 - TCPSource.cpp lists the source files that make up the plugin library.
 
@@ -57,11 +56,11 @@ nes-physical-operators/src/Functions/ArithmeticalFunctions/AddPhysicalFunction.c
 ```
 In the source directory’s `CMakeLists.txt`, internal plugins are added like this:
 ```cmake
-add_plugin(Add PhysicalFunction nes-physical-operators AddPhysicalFunction.cpp)
-add_plugin(Div PhysicalFunction nes-physical-operators DivPhysicalFunction.cpp)
-add_plugin(Mod PhysicalFunction nes-physical-operators ModPhysicalFunction.cpp)
-add_plugin(Mul PhysicalFunction nes-physical-operators MulPhysicalFunction.cpp)
-add_plugin(Sub PhysicalFunction nes-physical-operators SubPhysicalFunction.cpp)
+add_plugin(Add PhysicalFunction AddPhysicalFunction.cpp)
+add_plugin(Div PhysicalFunction DivPhysicalFunction.cpp)
+add_plugin(Mod PhysicalFunction ModPhysicalFunction.cpp)
+add_plugin(Mul PhysicalFunction MulPhysicalFunction.cpp)
+add_plugin(Sub PhysicalFunction SubPhysicalFunction.cpp)
 ```
 Notice the slight difference in the CMake function used here compared to optional plugins.
 While `add_plugin_as_library` creates a standalone library that is then linked into the component’s library (e.g., `nes-physical-operators`),

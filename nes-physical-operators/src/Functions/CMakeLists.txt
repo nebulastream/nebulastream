@@ -17,14 +17,14 @@ add_source_files(nes-physical-operators
         CastFieldPhysicalFunction.cpp
         )
 
-add_plugin(Concat PhysicalFunction nes-physical-operators ConcatPhysicalFunction.cpp)
-add_plugin(OCTET_LENGTH PhysicalFunction nes-physical-operators OctetLengthPhysicalFunction.cpp)
-add_plugin(CHAR_LENGTH PhysicalFunction nes-physical-operators CharLengthPhysicalFunction.cpp)
-add_plugin(FROM_BASE64 PhysicalFunction nes-physical-operators FromBase64PhysicalFunction.cpp)
-add_plugin(TO_BASE64 PhysicalFunction nes-physical-operators ToBase64PhysicalFunction.cpp)
-add_plugin(Cast PhysicalFunction nes-physical-operators CastFieldPhysicalFunction.cpp)
-add_plugin(CastToUnixTs PhysicalFunction nes-physical-operators CastToUnixTimestampPhysicalFunction.cpp)
-add_plugin(CastFromUnixTs PhysicalFunction nes-physical-operators CastFromUnixTimestampPhysicalFunction.cpp)
+add_plugin(Concat PhysicalFunction ConcatPhysicalFunction.cpp)
+add_plugin(OCTET_LENGTH PhysicalFunction OctetLengthPhysicalFunction.cpp)
+add_plugin(CHAR_LENGTH PhysicalFunction CharLengthPhysicalFunction.cpp)
+add_plugin(FROM_BASE64 PhysicalFunction FromBase64PhysicalFunction.cpp)
+add_plugin(TO_BASE64 PhysicalFunction ToBase64PhysicalFunction.cpp)
+add_plugin(Cast PhysicalFunction CastFieldPhysicalFunction.cpp)
+add_plugin(CastToUnixTs PhysicalFunction CastToUnixTimestampPhysicalFunction.cpp)
+add_plugin(CastFromUnixTs PhysicalFunction CastFromUnixTimestampPhysicalFunction.cpp)
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)
