@@ -15,18 +15,60 @@
 #include <ValueDeserializerUtil.hpp>
 
 #include <algorithm>
-#include <cstring>
 #include <memory>
 #include <string>
+#include <string_view>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
-#include <DataTypes/DataType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Interface/Record.hpp>
+#include <Util/Strings.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
 #include <ErrorHandling.hpp>
 #include <ValueDeserializer.hpp>
 #include <ValueDeserializerRegistry.hpp>
 
 namespace NES
 {
+
+std::unordered_map<Record::RecordFieldIdentifier, std::string>
+parseValueDeserializerOverrides(const std::string& overrides, const std::vector<Record::RecordFieldIdentifier>& fieldNames)
+{
+    std::unordered_map<Record::RecordFieldIdentifier, std::string> deserializerTypes;
+    for (const auto& entry : splitOnMultipleDelimiters(overrides, {','}))
+    {
+        const auto separator = entry.find(':');
+        if (separator == std::string_view::npos)
+        {
+            throw InvalidConfigParameter(
+                "VALUE_DESERIALIZERS entry '{}' is not of the form [FIELD-NAME]:[DESERIALIZER-KEY]", escapeSpecialCharacters(entry));
+        }
+        const auto configuredName = QualifiedIdentifier::tryParse(trimWhiteSpaces(entry.substr(0, separator)));
+        if (not configuredName.has_value())
+        {
+            throw InvalidConfigParameter(
+                "VALUE_DESERIALIZERS entry '{}' does not start with a valid field name: {}",
+                escapeSpecialCharacters(entry),
+                configuredName.error().what());
+        }
+        /// Ignoring an entry that names no field of the schema would hide a typo until someone wonders why the configured
+        /// deserializer never ran.
+        if (std::ranges::find(fieldNames, configuredName.value()) == fieldNames.end())
+        {
+            throw InvalidConfigParameter(
+                "VALUE_DESERIALIZERS configures a deserializer for the field '{}', which is not part of the schema. Known fields: {}",
+                configuredName.value(),
+                fmt::join(fieldNames, ", "));
+        }
+        deserializerTypes[configuredName.value()] = std::string{trimWhiteSpaces(entry.substr(separator + 1))};
+    }
+    return deserializerTypes;
+}
+
 std::unique_ptr<ValueDeserializer> provideValueDeserializer(const std::string& deserializerType, const ValueDeserializerConfig& config)
 {
     /// Resolve the "Nullable" member
