@@ -62,7 +62,7 @@ jobs:
           echo "$metrics_for_issues" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Markdown to Artefacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: repo-metrics
           path: ./metrics

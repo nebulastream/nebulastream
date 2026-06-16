@@ -134,14 +134,14 @@ jobs:
 
       - name: Upload nebuli.log on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: repl-log-${{ matrix.arch }}
           path: nes-repl.log
 
       - name: Upload worker.log on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: worker-log-${{ matrix.arch }}
           path: worker.log
