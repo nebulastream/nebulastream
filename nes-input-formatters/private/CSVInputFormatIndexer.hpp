@@ -90,11 +90,16 @@ public:
     static constexpr size_t SIZE_OF_FIELD_DELIMITER = 1;
 
     explicit CSVInputFormatIndexer(
-        Private, const char tupleDelimiter, const char fieldDelimiter, const bool allowCommasInStrings, const size_t numberOfFields)
+        Private,
+        const char tupleDelimiter,
+        const char fieldDelimiter,
+        const bool allowCommasInStrings,
+        const std::vector<Record::RecordFieldIdentifier>& fieldNames,
+        const std::string& deserializerOverrides)
         : tupleDelimiter(tupleDelimiter)
         , fieldDelimiter(fieldDelimiter)
         , allowCommasInStrings(allowCommasInStrings)
-        , numberOfFields(numberOfFields)
+        , numberOfFields(fieldNames.size())
         , nullValues({""})
     {
         deserializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
@@ -110,6 +115,9 @@ public:
         deserializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
         deserializerTypes[DataType::Type::CHAR] = "DefaultCHAR";
         deserializerTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
+
+        /// Override the datatype defaults for the fields that the user configured a deserializer for
+        fieldDeserializerTypes = parseValueDeserializerOverrides(deserializerOverrides, fieldNames);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -120,7 +128,8 @@ public:
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER),
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER),
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS),
-            tupleBufferRef.getAllDataTypes().size());
+            tupleBufferRef.getAllFieldNames(),
+            config.getFromConfig(InputFormatterDescriptor::VALUE_DESERIALIZERS));
     }
 
     ~CSVInputFormatIndexer() override = default;
