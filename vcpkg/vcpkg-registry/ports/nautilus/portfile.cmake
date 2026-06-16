@@ -17,6 +17,7 @@ vcpkg_from_github(
         SHA512 9d1993522738bd0dcd4fd9420bd0a6efef5e2fbddc94abfdd263b9883feaa0078c6c507b6bf45fd870366078c1ae371fadc0050c4d5aecda722d4fd4ab41bbf3
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
+		0002-fix-fmt-formatter-instantiation-order.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
