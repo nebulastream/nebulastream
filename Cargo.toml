@@ -29,6 +29,7 @@ members = [
     "nes-plugins/Sources/FileSource",
     "nes-plugins/Sinks/VoidSink",
     "nes-plugins/Sinks/PrintSink",
+    "nes-plugins/Sinks/FileSink",
     "nes-sinks/rust/nes-sink-validation",
     "nes-sinks/rust/nes-sink-validation-bindings",
     "nes-sinks/rust/nes-sink-runtime",
