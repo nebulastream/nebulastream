@@ -95,6 +95,9 @@ CSVOutputFormatter::CSVOutputFormatter(
     parserTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
     /// Set placeholder for UNDEFINED, we throw an error later if a field type is UNDEFINED.
     parserTypes[DataType::Type::UNDEFINED] = "";
+
+    /// Override default parsers with user specified ones
+    parseOutputParserOverrides(descriptor.getFromConfig(OutputFormatterDescriptor::OUTPUT_PARSERS), parserTypes);
 }
 
 nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(

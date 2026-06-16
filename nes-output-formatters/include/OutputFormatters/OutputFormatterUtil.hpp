@@ -23,7 +23,9 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
+#include <magic_enum/magic_enum.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
@@ -95,6 +97,28 @@ struct OutputParserConfig
 {
     bool quoted;
 };
+
+/// Overrides the parser types for the datatypes based on the input of the string. The function expects the string to be formatted like this:
+/// [TYPENAME]:[PARSERTYPE],...
+inline void parseOutputParserOverrides(const std::string& overrides, std::unordered_map<DataType::Type, std::string>& parsersMap)
+{
+    size_t typeNameStart = 0;
+    size_t typeNameEnd = overrides.find(':', typeNameStart);
+    while (typeNameEnd != std::string::npos)
+    {
+        const std::string typeName = overrides.substr(typeNameStart, typeNameEnd - typeNameStart);
+        const size_t parserTypeStart = typeNameEnd + 1;
+        const size_t parserTypeEnd = std::min(overrides.size(), overrides.find(',', parserTypeStart));
+        const std::string parserType = overrides.substr(parserTypeStart, parserTypeEnd - parserTypeStart);
+
+        if (std::optional<DataType::Type> dataType = magic_enum::enum_cast<DataType::Type>(typeName))
+        {
+            parsersMap[dataType.value()] = parserType;
+        }
+        typeNameStart = parserTypeEnd + 1;
+        typeNameEnd = overrides.find(':', typeNameStart);
+    }
+}
 
 /// Fetches OutputParser from Registry
 inline std::unique_ptr<OutputParser> provideOutputParser(const std::string& parserType, const OutputParserConfig& config)

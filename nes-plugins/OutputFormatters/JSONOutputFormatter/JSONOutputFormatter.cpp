@@ -88,7 +88,8 @@ void writeValue(
 }
 }
 
-JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames)
+JSONOutputFormatter::JSONOutputFormatter(
+    const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
     : OutputFormatter(fieldNames)
     , canonicalFieldNames(
           fieldNames | std::views::transform([](const auto& id) { return fmt::format("{}", id); }) | std::ranges::to<std::vector>())
@@ -108,6 +109,9 @@ JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldId
     parserTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
     /// Set placeholder for UNDEFINED, we throw an error later if a field type is UNDEFINED.
     parserTypes[DataType::Type::UNDEFINED] = "";
+
+    /// Override default parsers with user specified ones
+    parseOutputParserOverrides(descriptor.getFromConfig(OutputFormatterDescriptor::OUTPUT_PARSERS), parserTypes);
 }
 
 nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
@@ -191,6 +195,6 @@ OutputFormatterValidationGeneratedRegistrar::RegisterJSONOutputFormatterValidati
 
 OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)
 {
-    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames));
+    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames), std::move(args.descriptor));
 }
 }

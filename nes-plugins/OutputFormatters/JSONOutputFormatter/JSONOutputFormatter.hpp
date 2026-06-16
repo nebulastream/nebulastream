@@ -40,7 +40,7 @@ namespace NES
 class JSONOutputFormatter : public OutputFormatter
 {
 public:
-    explicit JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames);
+    explicit JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor);
 
     [[nodiscard]] nautilus::val<uint64_t> writeFormattedValue(
         const VarVal& value,
@@ -68,7 +68,7 @@ namespace NES::OutputFormatterConfig
 struct ConfigParametersJSON
 {
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap();
+        = DescriptorConfig::createConfigParameterContainerMap(OutputFormatterDescriptor::parameterMap);
 };
 }
 
