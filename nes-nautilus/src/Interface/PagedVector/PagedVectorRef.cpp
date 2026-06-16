@@ -169,6 +169,27 @@ PagedVectorRef::PagedVectorRef(NautilusBuffer pagedVectorBuffer, std::shared_ptr
 {
 }
 
+OwnedNautilusBuffer
+PagedVectorRef::createBuffer(const nautilus::val<AbstractBufferProvider*>& bufferProvider, const nautilus::val<uint64_t>& tupleSize)
+{
+    OwnedNautilusBuffer pagedVectorBuffer;
+    nautilus::invoke(
+        +[](AbstractBufferProvider* provider, TupleBuffer* out, const uint64_t tupleSize)
+        {
+            if (auto buffer = provider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
+            {
+                PagedVector::init(buffer.value(), provider->getBufferSize(), tupleSize);
+                *out = buffer.value();
+                return;
+            }
+            throw BufferAllocationFailure("No unpooled TupleBuffer available for paged vector!");
+        },
+        bufferProvider,
+        pagedVectorBuffer.asArg(),
+        tupleSize);
+    return pagedVectorBuffer;
+}
+
 Schema::Field DefaultPagedVectorTupleLayout::getFieldAt(uint64_t pos) const
 {
     INVARIANT(

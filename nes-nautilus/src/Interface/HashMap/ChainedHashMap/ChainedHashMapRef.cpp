@@ -160,6 +160,7 @@ ChainedHashMapRef::ChainedEntryRef& ChainedHashMapRef::ChainedEntryRef::operator
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(ChainedEntryRef&& other) noexcept
     : entryRef(other.entryRef)
+    , hashMapBuffer(other.hashMapBuffer)
     , memoryProviderKeys(std::move(other.memoryProviderKeys))
     , memoryProviderValues(std::move(other.memoryProviderValues))
 {
@@ -192,6 +193,11 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findEntry(const nautilus
     const ChainedEntryRef otherEntryRef{chainEntry, tupleBuffer, fieldKeys, fieldValues};
     const auto entryRef = findEntry(otherEntryRef);
     return entryRef;
+}
+
+ChainedHashMapRef::ChainedEntryRef ChainedHashMapRef::getEntryRef(const nautilus::val<AbstractHashMapEntry*>& entry) const
+{
+    return ChainedEntryRef{static_cast<nautilus::val<ChainedHashMapEntry*>>(entry), tupleBuffer, fieldKeys, fieldValues};
 }
 
 nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(

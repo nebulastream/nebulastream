@@ -130,6 +130,10 @@ public:
     [[nodiscard]] EntryIterator begin() const;
     [[nodiscard]] EntryIterator end() const;
 
+    /// Builds a ChainedEntryRef for the given entry using this map's own buffer and field offsets, so callers do not have to thread the
+    /// hash map buffer and field offsets through themselves.
+    [[nodiscard]] ChainedEntryRef getEntryRef(const nautilus::val<AbstractHashMapEntry*>& entry) const;
+
 private:
     /// Finds the chain for the given hash value. If no chain exists, it returns nullptr.
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findChain(const HashFunction::HashValue& hash) const;
