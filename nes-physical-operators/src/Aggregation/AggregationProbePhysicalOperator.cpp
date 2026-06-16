@@ -26,7 +26,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>

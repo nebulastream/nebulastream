@@ -30,7 +30,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
@@ -67,44 +67,44 @@ constexpr std::int64_t ceilDiv(std::int64_t x, std::int64_t divisor)
 }
 
 IntervalJoinOperatorHandler::IntervalJoinOperatorHandler(
-    std::vector<OriginId> leftInputOriginsParam,
-    std::vector<OriginId> rightInputOriginsParam,
+    std::vector<OriginId> anchorInputOriginsParam,
+    std::vector<OriginId> partnerInputOriginsParam,
     const OriginId outputOriginIdParam,
     const std::int64_t lowerBoundParam,
     const std::int64_t upperBoundParam,
     SliceCacheConfiguration sliceCacheConfigurationParam,
-    const bool emitLeftNullFillParam,
-    const bool emitRightNullFillParam)
+    const bool emitAnchorNullFillParam,
+    const bool emitPartnerNullFillParam)
     : lowerBound(lowerBoundParam)
     , upperBound(upperBoundParam)
-    , widthW(static_cast<std::uint64_t>(upperBoundParam - lowerBoundParam))
-    , offsetLow(floorDiv(lowerBoundParam, static_cast<std::int64_t>(widthW)))
-    , offsetHigh(ceilDiv(upperBoundParam, static_cast<std::int64_t>(widthW)))
-    , leftInputOrigins(std::move(leftInputOriginsParam))
-    , rightInputOrigins(std::move(rightInputOriginsParam))
+    , sliceWidth(static_cast<std::uint64_t>(upperBoundParam - lowerBoundParam))
+    , offsetLow(floorDiv(lowerBoundParam, static_cast<std::int64_t>(sliceWidth)))
+    , offsetHigh(ceilDiv(upperBoundParam, static_cast<std::int64_t>(sliceWidth)))
+    , anchorInputOrigins(std::move(anchorInputOriginsParam))
+    , partnerInputOrigins(std::move(partnerInputOriginsParam))
     , outputOriginId(outputOriginIdParam)
     , sliceCacheConfiguration(std::move(sliceCacheConfigurationParam))
-    , emitLeftNullFill(emitLeftNullFillParam)
-    , emitRightNullFill(emitRightNullFillParam)
+    , emitAnchorNullFill(emitAnchorNullFillParam)
+    , emitPartnerNullFill(emitPartnerNullFillParam)
     , nextProbeSequence(SequenceNumber::INITIAL)
     , numberOfWorkerThreads(0)
-    , leftBuildDone(false)
-    , rightBuildDone(false)
+    , anchorBuildDone(false)
+    , partnerBuildDone(false)
 {
     PRECONDITION(lowerBound < upperBound, "Interval-join bounds require lowerBound < upperBound; got [{}, {}]", lowerBound, upperBound);
-    leftStore = std::make_unique<IntervalSliceStore>(widthW, sliceCacheConfiguration);
-    rightStore = std::make_unique<IntervalSliceStore>(widthW, sliceCacheConfiguration);
+    anchorStore = std::make_unique<IntervalSliceStore>(sliceWidth, sliceCacheConfiguration);
+    partnerStore = std::make_unique<IntervalSliceStore>(sliceWidth, sliceCacheConfiguration);
 
-    auto combinedOrigins = leftInputOrigins;
-    combinedOrigins.insert(combinedOrigins.end(), rightInputOrigins.begin(), rightInputOrigins.end());
-    wmLeft = std::make_unique<MultiOriginWatermarkProcessor>(leftInputOrigins);
-    wmRight = std::make_unique<MultiOriginWatermarkProcessor>(rightInputOrigins);
+    auto combinedOrigins = anchorInputOrigins;
+    combinedOrigins.insert(combinedOrigins.end(), partnerInputOrigins.begin(), partnerInputOrigins.end());
+    wmAnchor = std::make_unique<MultiOriginWatermarkProcessor>(anchorInputOrigins);
+    wmPartner = std::make_unique<MultiOriginWatermarkProcessor>(partnerInputOrigins);
     wmProbe = std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId});
 }
 
 void IntervalJoinOperatorHandler::start(PipelineExecutionContext& pipelineCtx, std::uint32_t)
 {
-    /// Each pipeline (left build, right build, probe) calls start. Storing
+    /// Each pipeline (anchor build, partner build, probe) calls start. Storing
     /// the worker count repeatedly is safe — all pipelines share the same
     /// runtime worker pool, so the value is stable across calls.
     numberOfWorkerThreads.store(pipelineCtx.getNumberOfWorkerThreads(), std::memory_order_release);
@@ -116,17 +116,17 @@ void IntervalJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionCo
     /// onSideBuildTerminated -> flushAllOnTermination. Nothing to do here.
 }
 
-void IntervalJoinOperatorHandler::notifyBufferDoneLeft(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
+void IntervalJoinOperatorHandler::notifyBufferDoneAnchor(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
     [[maybe_unused]] const auto newWm
-        = wmLeft->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+        = wmAnchor->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     tryTriggerAnchors(pipelineCtx);
 }
 
-void IntervalJoinOperatorHandler::notifyBufferDoneRight(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
+void IntervalJoinOperatorHandler::notifyBufferDonePartner(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
     [[maybe_unused]] const auto newWm
-        = wmRight->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+        = wmPartner->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     tryTriggerAnchors(pipelineCtx);
 }
 
@@ -136,22 +136,22 @@ void IntervalJoinOperatorHandler::notifyBufferDoneProbe(const BufferMetaData& bu
         = wmProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     const auto probeWm = wmProbe->getCurrentWatermark();
 
-    /// RIGHT/FULL outer interval join performs a right-anchored null-fill pass at termination that needs
-    /// every left partner still present. Suppress incremental GC so no partner is reclaimed beforehand.
-    if (emitRightNullFill)
+    /// RIGHT/FULL outer interval join performs a partner-anchored null-fill pass at termination that needs
+    /// every anchor-side partner still present. Suppress incremental GC so no partner is reclaimed beforehand.
+    if (emitPartnerNullFill)
     {
         return;
     }
 
-    leftStore->garbageCollectTriggered(probeWm);
+    anchorStore->garbageCollectTriggered(probeWm);
 
-    /// Right slices outlive their own end by max(0, -offsetLow) * widthW so anchors with
+    /// Partner slices outlive their own end by max(0, -offsetLow) * sliceWidth so anchors with
     /// negative offsetLow can still see them. GC threshold is probeWm shifted back by that.
-    const auto rightShift = std::max<std::int64_t>(0, -offsetLow) * static_cast<std::int64_t>(widthW);
+    const auto partnerShift = std::max<std::int64_t>(0, -offsetLow) * static_cast<std::int64_t>(sliceWidth);
     const auto probeWmRaw = static_cast<std::int64_t>(probeWm.getRawValue());
-    if (probeWmRaw > rightShift)
+    if (probeWmRaw > partnerShift)
     {
-        rightStore->garbageCollectExpired(Timestamp{static_cast<Timestamp::Underlying>(probeWmRaw - rightShift)});
+        partnerStore->garbageCollectExpired(Timestamp{static_cast<Timestamp::Underlying>(probeWmRaw - partnerShift)});
     }
 }
 
@@ -159,19 +159,19 @@ void IntervalJoinOperatorHandler::onSideBuildTerminated(const JoinBuildSideType 
 {
     if (side == JoinBuildSideType::Left)
     {
-        leftBuildDone.store(true, std::memory_order_release);
+        anchorBuildDone.store(true, std::memory_order_release);
     }
     else
     {
-        rightBuildDone.store(true, std::memory_order_release);
+        partnerBuildDone.store(true, std::memory_order_release);
     }
 
-    if (leftBuildDone.load(std::memory_order_acquire) && rightBuildDone.load(std::memory_order_acquire))
+    if (anchorBuildDone.load(std::memory_order_acquire) && partnerBuildDone.load(std::memory_order_acquire))
     {
         flushAllOnTermination(pipelineCtx);
-        if (emitRightNullFill)
+        if (emitPartnerNullFill)
         {
-            flushRightNullFill(pipelineCtx);
+            flushPartnerNullFill(pipelineCtx);
         }
     }
 }
@@ -186,40 +186,40 @@ IntervalJoinOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArg
         { return {std::make_shared<IntervalJoinSlice>(sliceStart, sliceEnd, numWorkers)}; });
 }
 
-IntervalSliceStore& IntervalJoinOperatorHandler::getLeftStore() noexcept
+IntervalSliceStore& IntervalJoinOperatorHandler::getAnchorStore() noexcept
 {
-    return *leftStore;
+    return *anchorStore;
 }
 
-IntervalSliceStore& IntervalJoinOperatorHandler::getRightStore() noexcept
+IntervalSliceStore& IntervalJoinOperatorHandler::getPartnerStore() noexcept
 {
-    return *rightStore;
+    return *partnerStore;
 }
 
 void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pipelineCtx)
 {
-    const auto leftWm = wmLeft->getCurrentWatermark();
-    const auto rightWm = wmRight->getCurrentWatermark();
+    const auto anchorWm = wmAnchor->getCurrentWatermark();
+    const auto partnerWm = wmPartner->getCurrentWatermark();
 
-    /// Anchor S_L^i is triggerable iff
-    ///   leftWm  >= iEnd                                  (anchor itself built)
-    ///   rightWm >= iEnd + max(0, offsetHigh) * W         (partners built)
-    const auto rightShift = std::max<std::int64_t>(0, offsetHigh) * static_cast<std::int64_t>(widthW);
-    const auto rightWmRaw = static_cast<std::int64_t>(rightWm.getRawValue());
-    const auto leftWmRaw = static_cast<std::int64_t>(leftWm.getRawValue());
-    if (rightWmRaw < rightShift)
+    /// Anchor S_A^i is triggerable iff
+    ///   anchorWm  >= iEnd                                  (anchor itself built)
+    ///   partnerWm >= iEnd + max(0, offsetHigh) * W         (partners built)
+    const auto partnerShift = std::max<std::int64_t>(0, offsetHigh) * static_cast<std::int64_t>(sliceWidth);
+    const auto partnerWmRaw = static_cast<std::int64_t>(partnerWm.getRawValue());
+    const auto anchorWmRaw = static_cast<std::int64_t>(anchorWm.getRawValue());
+    if (partnerWmRaw < partnerShift)
     {
-        /// Right side hasn't reached the partner horizon for ANY anchor yet.
+        /// Partner side hasn't reached the partner horizon for ANY anchor yet.
         return;
     }
-    const auto effectiveWmRaw = std::min(leftWmRaw, rightWmRaw - rightShift);
+    const auto effectiveWmRaw = std::min(anchorWmRaw, partnerWmRaw - partnerShift);
     if (effectiveWmRaw <= 0)
     {
         return;
     }
     const auto effectiveWm = Timestamp{static_cast<Timestamp::Underlying>(effectiveWmRaw)};
 
-    auto anchors = leftStore->claimTriggerable(effectiveWm);
+    auto anchors = anchorStore->claimTriggerable(effectiveWm);
     if (anchors.empty())
     {
         return;
@@ -234,13 +234,13 @@ void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pi
         anchor->combinePagedVectors();
 
         EmittedIntervalJoinWindowTrigger trigger{};
-        trigger.leftSliceEnd = anchor->getSliceEnd();
+        trigger.anchorSliceEnd = anchor->getSliceEnd();
         trigger.windowInfo = WindowInfo{anchor->getSliceStart().getRawValue(), anchor->getSliceEnd().getRawValue()};
         trigger.partnerCount = 0;
         auto minPartnerStart = anchor->getSliceStart();
 
         const auto anchorStartRaw = static_cast<std::int64_t>(anchor->getSliceStart().getRawValue());
-        const auto widthSigned = static_cast<std::int64_t>(widthW);
+        const auto widthSigned = static_cast<std::int64_t>(sliceWidth);
         const auto iIndex = anchorStartRaw / widthSigned;
         for (std::int64_t k = offsetLow; k <= offsetHigh; ++k)
         {
@@ -250,13 +250,13 @@ void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pi
                 continue;
             }
             const auto partnerEnd = SliceEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
-            const auto partnerOpt = rightStore->getSliceBySliceEnd(partnerEnd);
+            const auto partnerOpt = partnerStore->getSliceBySliceEnd(partnerEnd);
             if (!partnerOpt.has_value())
             {
                 continue;
             }
             auto partnerSlice = std::dynamic_pointer_cast<IntervalJoinSlice>(partnerOpt.value());
-            INVARIANT(partnerSlice != nullptr, "Right store should hold IntervalJoinSlice instances");
+            INVARIANT(partnerSlice != nullptr, "Partner store should hold IntervalJoinSlice instances");
             if (partnerSlice->getNumberOfTuples() == 0)
             {
                 continue;
@@ -265,10 +265,10 @@ void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pi
             trigger.partnerSliceEnds[trigger.partnerCount++] = partnerEnd;
             minPartnerStart = std::min(minPartnerStart, partnerSlice->getSliceStart());
         }
-        if (trigger.partnerCount == 0 && !emitLeftNullFill)
+        if (trigger.partnerCount == 0 && !emitAnchorNullFill)
         {
             /// No non-empty partners and not a left-outer join — skip emit; sequence number is NOT consumed.
-            /// For a left-outer join we still emit so the probe can null-fill the unmatched left tuples.
+            /// For a left-outer join we still emit so the probe can null-fill the unmatched anchor tuples.
             continue;
         }
 
@@ -285,7 +285,7 @@ void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pi
 
 void IntervalJoinOperatorHandler::flushAllOnTermination(PipelineExecutionContext* pipelineCtx)
 {
-    auto anchors = leftStore->claimAllNonTriggered();
+    auto anchors = anchorStore->claimAllNonTriggered();
     if (anchors.empty())
     {
         return;
@@ -300,13 +300,13 @@ void IntervalJoinOperatorHandler::flushAllOnTermination(PipelineExecutionContext
         anchor->combinePagedVectors();
 
         EmittedIntervalJoinWindowTrigger trigger{};
-        trigger.leftSliceEnd = anchor->getSliceEnd();
+        trigger.anchorSliceEnd = anchor->getSliceEnd();
         trigger.windowInfo = WindowInfo{anchor->getSliceStart().getRawValue(), anchor->getSliceEnd().getRawValue()};
         trigger.partnerCount = 0;
         auto minPartnerStart = anchor->getSliceStart();
 
         const auto anchorStartRaw = static_cast<std::int64_t>(anchor->getSliceStart().getRawValue());
-        const auto widthSigned = static_cast<std::int64_t>(widthW);
+        const auto widthSigned = static_cast<std::int64_t>(sliceWidth);
         const auto iIndex = anchorStartRaw / widthSigned;
         for (std::int64_t k = offsetLow; k <= offsetHigh; ++k)
         {
@@ -316,13 +316,13 @@ void IntervalJoinOperatorHandler::flushAllOnTermination(PipelineExecutionContext
                 continue;
             }
             const auto partnerEnd = SliceEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
-            const auto partnerOpt = rightStore->getSliceBySliceEnd(partnerEnd);
+            const auto partnerOpt = partnerStore->getSliceBySliceEnd(partnerEnd);
             if (!partnerOpt.has_value())
             {
                 continue;
             }
             auto partnerSlice = std::dynamic_pointer_cast<IntervalJoinSlice>(partnerOpt.value());
-            INVARIANT(partnerSlice != nullptr, "Right store should hold IntervalJoinSlice instances");
+            INVARIANT(partnerSlice != nullptr, "Partner store should hold IntervalJoinSlice instances");
             if (partnerSlice->getNumberOfTuples() == 0)
             {
                 continue;
@@ -331,7 +331,7 @@ void IntervalJoinOperatorHandler::flushAllOnTermination(PipelineExecutionContext
             trigger.partnerSliceEnds[trigger.partnerCount++] = partnerEnd;
             minPartnerStart = std::min(minPartnerStart, partnerSlice->getSliceStart());
         }
-        if (trigger.partnerCount == 0 && !emitLeftNullFill)
+        if (trigger.partnerCount == 0 && !emitAnchorNullFill)
         {
             continue;
         }
@@ -343,22 +343,22 @@ void IntervalJoinOperatorHandler::flushAllOnTermination(PipelineExecutionContext
     }
 }
 
-void IntervalJoinOperatorHandler::flushRightNullFill(PipelineExecutionContext* pipelineCtx)
+void IntervalJoinOperatorHandler::flushPartnerNullFill(PipelineExecutionContext* pipelineCtx)
 {
-    /// Anchor on the right store; left partners are looked up symmetrically. A right tuple at tR pairs with
-    /// a left tuple at tL iff tL in [tR - upperBound, tR - lowerBound], i.e. the left-partner offset range is
-    /// the left-anchored range with the bounds negated and swapped.
-    auto rightAnchors = rightStore->claimAllNonTriggered();
-    if (rightAnchors.empty())
+    /// Anchor on the partner store; anchor-side partners are looked up symmetrically. A partner tuple at tP
+    /// pairs with an anchor tuple at tA iff tA in [tP - upperBound, tP - lowerBound], i.e. the anchor-partner
+    /// offset range is the normal range with the bounds negated and swapped.
+    auto partnerAnchors = partnerStore->claimAllNonTriggered();
+    if (partnerAnchors.empty())
     {
         return;
     }
 
-    const auto widthSigned = static_cast<std::int64_t>(widthW);
-    const auto leftOffsetLow = floorDiv(-upperBound, widthSigned);
-    const auto leftOffsetHigh = ceilDiv(-lowerBound, widthSigned);
+    const auto widthSigned = static_cast<std::int64_t>(sliceWidth);
+    const auto anchorOffsetLow = floorDiv(-upperBound, widthSigned);
+    const auto anchorOffsetHigh = ceilDiv(-lowerBound, widthSigned);
 
-    for (auto& anchor : rightAnchors)
+    for (auto& anchor : partnerAnchors)
     {
         if (anchor->getNumberOfTuples() == 0)
         {
@@ -367,15 +367,15 @@ void IntervalJoinOperatorHandler::flushRightNullFill(PipelineExecutionContext* p
         anchor->combinePagedVectors();
 
         EmittedIntervalJoinWindowTrigger trigger{};
-        trigger.leftSliceEnd = anchor->getSliceEnd();
+        trigger.anchorSliceEnd = anchor->getSliceEnd();
         trigger.windowInfo = WindowInfo{anchor->getSliceStart().getRawValue(), anchor->getSliceEnd().getRawValue()};
         trigger.partnerCount = 0;
-        trigger.rightNullFillPass = true;
+        trigger.partnerNullFillPass = true;
         auto minPartnerStart = anchor->getSliceStart();
 
         const auto anchorStartRaw = static_cast<std::int64_t>(anchor->getSliceStart().getRawValue());
         const auto jIndex = anchorStartRaw / widthSigned;
-        for (std::int64_t k = leftOffsetLow; k <= leftOffsetHigh; ++k)
+        for (std::int64_t k = anchorOffsetLow; k <= anchorOffsetHigh; ++k)
         {
             const auto partnerEndRaw = (jIndex + k + 1) * widthSigned;
             if (partnerEndRaw <= 0)
@@ -383,13 +383,13 @@ void IntervalJoinOperatorHandler::flushRightNullFill(PipelineExecutionContext* p
                 continue;
             }
             const auto partnerEnd = SliceEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
-            const auto partnerOpt = leftStore->getSliceBySliceEnd(partnerEnd);
+            const auto partnerOpt = anchorStore->getSliceBySliceEnd(partnerEnd);
             if (!partnerOpt.has_value())
             {
                 continue;
             }
             auto partnerSlice = std::dynamic_pointer_cast<IntervalJoinSlice>(partnerOpt.value());
-            INVARIANT(partnerSlice != nullptr, "Left store should hold IntervalJoinSlice instances");
+            INVARIANT(partnerSlice != nullptr, "Anchor store should hold IntervalJoinSlice instances");
             if (partnerSlice->getNumberOfTuples() == 0)
             {
                 continue;
@@ -399,7 +399,7 @@ void IntervalJoinOperatorHandler::flushRightNullFill(PipelineExecutionContext* p
             minPartnerStart = std::min(minPartnerStart, partnerSlice->getSliceStart());
         }
 
-        /// Always emit (even with zero left partners) so every right tuple that matched no left tuple is null-filled.
+        /// Always emit (even with zero anchor-side partners) so every partner tuple that matched no anchor tuple is null-filled.
         const auto seqRaw = nextProbeSequence.fetch_add(1, std::memory_order_relaxed);
         const SequenceData sequenceData{SequenceNumber{seqRaw}, ChunkNumber{ChunkNumber::INITIAL}, /*lastChunk=*/true};
         const auto bufferWatermark = std::min(anchor->getSliceStart(), minPartnerStart);
@@ -415,20 +415,20 @@ void IntervalJoinOperatorHandler::emitProbeBuffer(
 {
     auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
     tupleBuffer.setOriginId(outputOriginId);
-    tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
-    tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
+    tupleBuffer.setSequenceNumber(SequenceNumber{sequenceData.sequenceNumber});
+    tupleBuffer.setChunkNumber(ChunkNumber{sequenceData.chunkNumber});
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(watermark);
     tupleBuffer.setNumberOfTuples(1);
-    tupleBuffer.setCreationTimestampInMS(Timestamp(static_cast<Timestamp::Underlying>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count())));
+    tupleBuffer.setCreationTimestampInMS(Timestamp{static_cast<Timestamp::Underlying>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count())});
 
     std::memcpy(tupleBuffer.getAvailableMemoryArea().data(), &trigger, sizeof(trigger));
     pipelineCtx->emitBuffer(tupleBuffer);
 
     NES_TRACE(
         "Emitted interval-join anchor end {} with {} partners (seq={}, wm={}, outputOrigin={})",
-        trigger.leftSliceEnd,
+        trigger.anchorSliceEnd,
         static_cast<std::uint64_t>(trigger.partnerCount),
         sequenceData.sequenceNumber,
         watermark,

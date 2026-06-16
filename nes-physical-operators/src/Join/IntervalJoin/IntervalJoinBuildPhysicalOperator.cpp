@@ -14,7 +14,6 @@
 
 #include <Join/IntervalJoin/IntervalJoinBuildPhysicalOperator.hpp>
 
-#include <cstdint>
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
@@ -42,59 +41,74 @@ namespace NES
 namespace
 {
 
-/// setup-time proxy. Increments the side's slice-store pipeline counter so
-/// the handler knows how many input pipelines will eventually terminate.
-void intervalJoinRegisterActivePipelineProxy(OperatorHandler* ptrOpHandler, const std::uint8_t side)
+IntervalJoinOperatorHandler* asIntervalJoinHandler(OperatorHandler* ptrOpHandler)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null");
     auto* handler = dynamic_cast<IntervalJoinOperatorHandler*>(ptrOpHandler);
     PRECONDITION(handler != nullptr, "expected IntervalJoinOperatorHandler");
-    // todo can I not create an IntervalJoinBuildLeft and IntervalJOinBuildRight so that I can then set the
-    auto& store = (static_cast<JoinBuildSideType>(side) == JoinBuildSideType::Left) ? handler->getLeftStore() : handler->getRightStore();
-    store.incrementNumberOfInputPipelines();
+    return handler;
 }
 
-/// Per-buffer close proxy. Routes to the side-appropriate notifyBufferDone*.
-void intervalJoinNotifyBufferDoneProxy(
+/// setup-time proxies. Increment the side's slice-store pipeline counter so the handler
+/// knows how many input pipelines will eventually terminate.
+void intervalJoinRegisterActivePipelineAnchorProxy(OperatorHandler* ptrOpHandler)
+{
+    asIntervalJoinHandler(ptrOpHandler)->getAnchorStore().incrementNumberOfInputPipelines();
+}
+
+void intervalJoinRegisterActivePipelinePartnerProxy(OperatorHandler* ptrOpHandler)
+{
+    asIntervalJoinHandler(ptrOpHandler)->getPartnerStore().incrementNumberOfInputPipelines();
+}
+
+/// Per-buffer close proxies. Advance the side's build watermark and re-run the trigger loop.
+void intervalJoinNotifyBufferDoneAnchorProxy(
     OperatorHandler* ptrOpHandler,
     PipelineExecutionContext* pipelineCtx,
     const Timestamp watermarkTs,
     const SequenceNumber sequenceNumber,
     const ChunkNumber chunkNumber,
     const bool lastChunk,
-    const OriginId originId,
-    const std::uint8_t side)
+    const OriginId originId)
 {
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
-    auto* handler = dynamic_cast<IntervalJoinOperatorHandler*>(ptrOpHandler);
-    PRECONDITION(handler != nullptr, "expected IntervalJoinOperatorHandler");
-
     const BufferMetaData bufferMetaData{watermarkTs, SequenceData{sequenceNumber, chunkNumber, lastChunk}, originId};
-    if (static_cast<JoinBuildSideType>(side) == JoinBuildSideType::Left)
+    asIntervalJoinHandler(ptrOpHandler)->notifyBufferDoneAnchor(bufferMetaData, pipelineCtx);
+}
+
+void intervalJoinNotifyBufferDonePartnerProxy(
+    OperatorHandler* ptrOpHandler,
+    PipelineExecutionContext* pipelineCtx,
+    const Timestamp watermarkTs,
+    const SequenceNumber sequenceNumber,
+    const ChunkNumber chunkNumber,
+    const bool lastChunk,
+    const OriginId originId)
+{
+    PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
+    const BufferMetaData bufferMetaData{watermarkTs, SequenceData{sequenceNumber, chunkNumber, lastChunk}, originId};
+    asIntervalJoinHandler(ptrOpHandler)->notifyBufferDonePartner(bufferMetaData, pipelineCtx);
+}
+
+/// Terminate proxies. Decrement the side's pipeline count; if zero, signal the handler that
+/// this side is done. When both sides are done the handler runs the end-of-stream flush.
+void intervalJoinTriggerAllAnchorProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)
+{
+    PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
+    auto* handler = asIntervalJoinHandler(ptrOpHandler);
+    if (handler->getAnchorStore().decrementAndCheckIfLastPipeline())
     {
-        handler->notifyBufferDoneLeft(bufferMetaData, pipelineCtx);
-    }
-    else
-    {
-        handler->notifyBufferDoneRight(bufferMetaData, pipelineCtx);
+        handler->onSideBuildTerminated(JoinBuildSideType::Left, pipelineCtx);
     }
 }
 
-/// Terminate proxy. Decrements the side's pipeline count; if zero, signals
-/// the handler that this side is done. When both sides are done the handler
-/// runs the end-of-stream flush.
-void intervalJoinTriggerAllProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx, const std::uint8_t side)
+void intervalJoinTriggerAllPartnerProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)
 {
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
-    auto* handler = dynamic_cast<IntervalJoinOperatorHandler*>(ptrOpHandler);
-    PRECONDITION(handler != nullptr, "expected IntervalJoinOperatorHandler");
-
-    auto& store = (static_cast<JoinBuildSideType>(side) == JoinBuildSideType::Left) ? handler->getLeftStore() : handler->getRightStore();
-    if (store.decrementAndCheckIfLastPipeline())
+    auto* handler = asIntervalJoinHandler(ptrOpHandler);
+    if (handler->getPartnerStore().decrementAndCheckIfLastPipeline())
     {
-        handler->onSideBuildTerminated(static_cast<JoinBuildSideType>(side), pipelineCtx);
+        handler->onSideBuildTerminated(JoinBuildSideType::Right, pipelineCtx);
     }
 }
 
@@ -111,38 +125,6 @@ IntervalJoinBuildPhysicalOperator::IntervalJoinBuildPhysicalOperator(
 {
 }
 
-void IntervalJoinBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
-{
-    auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(intervalJoinRegisterActivePipelineProxy, operatorHandler, nautilus::val<std::uint8_t>{static_cast<std::uint8_t>(joinBuildSide)});
-    sliceStoreRef->setupSliceStore(executionCtx.pipelineContext);
-}
-
-void IntervalJoinBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
-{
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(
-        intervalJoinNotifyBufferDoneProxy,
-        operatorHandlerMemRef,
-        executionCtx.pipelineContext,
-        executionCtx.watermarkTs,
-        executionCtx.sequenceNumber,
-        executionCtx.chunkNumber,
-        executionCtx.lastChunk,
-        executionCtx.originId,
-        nautilus::val<std::uint8_t>{static_cast<std::uint8_t>(joinBuildSide)});
-}
-
-void IntervalJoinBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
-{
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(
-        intervalJoinTriggerAllProxy,
-        operatorHandlerMemRef,
-        executionCtx.pipelineContext,
-        nautilus::val<std::uint8_t>{static_cast<std::uint8_t>(joinBuildSide)});
-}
-
 void IntervalJoinBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
@@ -153,6 +135,80 @@ void IntervalJoinBuildPhysicalOperator::execute(ExecutionContext& executionCtx, 
 
     const PagedVectorRef pagedVectorRef(pagedVectorMemRef, bufferRef);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+}
+
+IntervalJoinBuildAnchorPhysicalOperator::IntervalJoinBuildAnchorPhysicalOperator(
+    const OperatorHandlerId operatorHandlerId,
+    std::unique_ptr<TimeFunction> timeFunction,
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::unique_ptr<SliceStoreRef> sliceStoreRef)
+    : IntervalJoinBuildPhysicalOperator{
+          operatorHandlerId, JoinBuildSideType::Left, std::move(timeFunction), std::move(bufferRef), std::move(sliceStoreRef)}
+{
+}
+
+void IntervalJoinBuildAnchorPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
+{
+    auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(intervalJoinRegisterActivePipelineAnchorProxy, operatorHandler);
+    sliceStoreRef->setupSliceStore(executionCtx.pipelineContext);
+}
+
+void IntervalJoinBuildAnchorPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
+{
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(
+        intervalJoinNotifyBufferDoneAnchorProxy,
+        operatorHandlerMemRef,
+        executionCtx.pipelineContext,
+        executionCtx.watermarkTs,
+        executionCtx.sequenceNumber,
+        executionCtx.chunkNumber,
+        executionCtx.lastChunk,
+        executionCtx.originId);
+}
+
+void IntervalJoinBuildAnchorPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+{
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(intervalJoinTriggerAllAnchorProxy, operatorHandlerMemRef, executionCtx.pipelineContext);
+}
+
+IntervalJoinBuildPartnerPhysicalOperator::IntervalJoinBuildPartnerPhysicalOperator(
+    const OperatorHandlerId operatorHandlerId,
+    std::unique_ptr<TimeFunction> timeFunction,
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::unique_ptr<SliceStoreRef> sliceStoreRef)
+    : IntervalJoinBuildPhysicalOperator{
+          operatorHandlerId, JoinBuildSideType::Right, std::move(timeFunction), std::move(bufferRef), std::move(sliceStoreRef)}
+{
+}
+
+void IntervalJoinBuildPartnerPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
+{
+    auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(intervalJoinRegisterActivePipelinePartnerProxy, operatorHandler);
+    sliceStoreRef->setupSliceStore(executionCtx.pipelineContext);
+}
+
+void IntervalJoinBuildPartnerPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
+{
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(
+        intervalJoinNotifyBufferDonePartnerProxy,
+        operatorHandlerMemRef,
+        executionCtx.pipelineContext,
+        executionCtx.watermarkTs,
+        executionCtx.sequenceNumber,
+        executionCtx.chunkNumber,
+        executionCtx.lastChunk,
+        executionCtx.originId);
+}
+
+void IntervalJoinBuildPartnerPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+{
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(intervalJoinTriggerAllPartnerProxy, operatorHandlerMemRef, executionCtx.pipelineContext);
 }
 
 }

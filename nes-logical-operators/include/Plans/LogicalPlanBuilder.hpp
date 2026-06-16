@@ -95,21 +95,17 @@ public:
         Windowing::TimeCharacteristic leftCharacteristic,
         Windowing::TimeCharacteristic rightCharacteristic);
 
-    /// Adds a streaming interval-join operator with closed bounds [lowerBound, upperBound]
-    /// in milliseconds. Bounds are signed (int64_t) so past/future-anchored intervals are
-    /// expressible (e.g. lower=-4, upper=-1). Watermark assigners are inserted on each
-    /// input plan if not already present, mirroring addJoin.
-    // todo go through all changes on this branch and remove all #TODO that reference outer join as we implement it.
-    /// TODO #1471: PR #1471 will extend this with outer-join semantics; currently INNER_JOIN only.
+    /// Adds a streaming interval-join operator whose bounds are carried by an IntervalWindow inside
+    /// `windowType` (closed range [lowerBound, upperBound] in milliseconds). Bounds are signed so
+    /// past/future-anchored intervals are expressible (e.g. lower=-4, upper=-1). Watermark assigners
+    /// are inserted on each input plan if not already present, mirroring addJoin.
     static LogicalPlan addIntervalJoin(
         LogicalPlan leftLogicalPlan,
         LogicalPlan rightLogicalPlan,
         const LogicalFunction& joinFunction,
         Windowing::TimeCharacteristic leftCharacteristic,
         Windowing::TimeCharacteristic rightCharacteristic,
-        // todo extend the Windowing::TimeBasedWindowType to have an Interval there
-        int64_t lowerBound,
-        int64_t upperBound,
+        Windowing::TimeBasedWindowType windowType,
         JoinLogicalOperator::JoinType joinType);
 
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);

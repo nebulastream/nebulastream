@@ -203,15 +203,20 @@ LogicalPlan LogicalPlanBuilder::addIntervalJoin(
     const LogicalFunction& joinFunction,
     Windowing::TimeCharacteristic leftCharacteristic,
     Windowing::TimeCharacteristic rightCharacteristic,
-    int64_t lowerBound,
-    int64_t upperBound,
+    Windowing::TimeBasedWindowType windowType,
     JoinLogicalOperator::JoinType joinType)
 {
     NES_TRACE("LogicalPlanBuilder: validate interval-join function and add interval-join operator");
 
+    PRECONDITION(
+        std::holds_alternative<Windowing::IntervalWindow>(windowType.getUnderlying()),
+        "addIntervalJoin requires the window type to hold an IntervalWindow");
+    const auto& intervalWindow = std::get<Windowing::IntervalWindow>(windowType.getUnderlying());
+    const auto lowerBound = intervalWindow.getLowerBound();
+    const auto upperBound = intervalWindow.getUpperBound();
+
     /// Same constant-key check addJoin performs: forbid join keys that are purely constant expressions.
     std::unordered_set<LogicalFunction> visitedFunctions;
-    // todo go through all changes and use {} for all constructor calls
     for (const LogicalFunction& itr : BFSRange(joinFunction))
     {
         if (itr.getChildren().size() == 2)

@@ -26,7 +26,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <SliceCacheConfiguration.hpp>
@@ -37,6 +37,7 @@ namespace NES
 
 /// Trigger payload emitted by IntervalJoinOperatorHandler per anchor slice.
 ///
+// todo do not mention NLJ here. Simply start with only stuff from IntervalJoin
 /// We diverge from NLJ's per-pair shape: each anchor produces ONE buffer
 /// containing up to MAX_PARTNERS partner slice ends. The upper bound is 3 for
 /// `W = U - L` (proof: an interval of length W overlaps at most 3 consecutive
@@ -46,22 +47,22 @@ struct EmittedIntervalJoinWindowTrigger
 {
     static constexpr std::size_t MAX_PARTNERS = 3;
 
-    /// Anchor slice end. For the normal (left-anchored) pass this is a left-store slice and the partners
-    /// are right-store slices. For a right-null-fill pass (rightNullFillPass = true) the roles are swapped:
-    /// the anchor is a right-store slice and the partners are left-store slices.
-    SliceEnd leftSliceEnd{0};
+    /// Driving slice end. For the normal pass this is an anchor-store slice and the partners
+    /// are partner-store slices. For a null-fill pass (partnerNullFillPass = true) the roles are
+    /// swapped: the driving slice is a partner-store slice and its partners are anchor-store slices.
+    SliceEnd anchorSliceEnd{0};
     SliceEnd partnerSliceEnds[MAX_PARTNERS] = {SliceEnd{0}, SliceEnd{0}, SliceEnd{0}};
     std::uint8_t partnerCount = 0;
     WindowInfo windowInfo{0, 0};
-    /// When true the probe runs a right-anchored null-fill pass (RIGHT/FULL outer): for each right anchor
-    /// tuple with no matching left partner it emits a row with the left-side fields set to null.
-    bool rightNullFillPass = false;
+    /// When true the probe runs a partner-anchored null-fill pass (RIGHT/FULL outer): for each partner
+    /// anchor tuple with no matching anchor-side partner it emits a row with the anchor-side fields set to null.
+    bool partnerNullFillPass = false;
 };
 
 /// Operator handler for the streaming interval join.
 ///
-/// Holds two IntervalSliceStores (left + right), three watermark processors
-/// (left build, right build, probe), and the bound arithmetic that drives
+/// Holds two IntervalSliceStores (anchor + partner), three watermark processors
+/// (anchor build, partner build, probe), and the bound arithmetic that drives
 /// trigger emission. Extends OperatorHandler directly — NOT
 /// WindowBasedOperatorHandler — because the base's "one store + one combined
 /// build WM" assumption doesn't fit per-side stores with per-side watermarks.
@@ -69,14 +70,14 @@ class IntervalJoinOperatorHandler final : public OperatorHandler
 {
 public:
     IntervalJoinOperatorHandler(
-        std::vector<OriginId> leftInputOrigins,
-        std::vector<OriginId> rightInputOrigins,
+        std::vector<OriginId> anchorInputOrigins,
+        std::vector<OriginId> partnerInputOrigins,
         OriginId outputOriginId,
         std::int64_t lowerBound,
         std::int64_t upperBound,
         SliceCacheConfiguration sliceCacheConfiguration,
-        bool emitLeftNullFill = false,
-        bool emitRightNullFill = false);
+        bool emitAnchorNullFill = false,
+        bool emitPartnerNullFill = false);
 
     void start(PipelineExecutionContext& ctx, std::uint32_t localStateVariableId) override;
     void stop(QueryTerminationType type, PipelineExecutionContext& ctx) override;
@@ -84,11 +85,11 @@ public:
     /// Build-side notifications. Called from IntervalJoinBuildPhysicalOperator::close
     /// via the side-aware proxy. Each advances its own build watermark and re-runs
     /// the anchor-trigger loop, since either side's WM advance may unblock anchors.
-    void notifyBufferDoneLeft(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
-    void notifyBufferDoneRight(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
+    void notifyBufferDoneAnchor(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
+    void notifyBufferDonePartner(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
 
     /// Probe-side notification. Advances the probe watermark, then GCs both
-    /// stores (left at probeWm, right at probeWm shifted by max(0, -offsetLow) * W).
+    /// stores (anchor at probeWm, partner at probeWm shifted by max(0, -offsetLow) * W).
     void notifyBufferDoneProbe(const BufferMetaData& bufferMetaData);
 
     /// Called from the build operator's terminate() proxy AFTER the side's
@@ -101,14 +102,14 @@ public:
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& args) const;
 
-    [[nodiscard]] IntervalSliceStore& getLeftStore() noexcept;
-    [[nodiscard]] IntervalSliceStore& getRightStore() noexcept;
+    [[nodiscard]] IntervalSliceStore& getAnchorStore() noexcept;
+    [[nodiscard]] IntervalSliceStore& getPartnerStore() noexcept;
 
     [[nodiscard]] std::int64_t getLowerBound() const noexcept { return lowerBound; }
 
     [[nodiscard]] std::int64_t getUpperBound() const noexcept { return upperBound; }
 
-    [[nodiscard]] std::uint64_t getSliceWidth() const noexcept { return widthW; }
+    [[nodiscard]] std::uint64_t getSliceWidth() const noexcept { return sliceWidth; }
 
     [[nodiscard]] std::uint64_t getNumberOfWorkerThreads() const noexcept { return numberOfWorkerThreads; }
 
@@ -124,11 +125,11 @@ private:
     /// regardless of watermark.
     void flushAllOnTermination(PipelineExecutionContext* pipelineCtx);
 
-    /// RIGHT/FULL outer end-of-stream pass. Anchors on the right store and looks up left partner slices
-    /// (symmetric to the left-anchored trigger). Emits one right-null-fill buffer per non-empty right
-    /// anchor so the probe can null-fill right tuples that matched no left tuple. Runs at termination,
-    /// when GC has been suppressed so every left partner is still present.
-    void flushRightNullFill(PipelineExecutionContext* pipelineCtx);
+    /// RIGHT/FULL outer end-of-stream pass. Anchors on the partner store and looks up anchor-side partner
+    /// slices (symmetric to the normal anchor-driven trigger). Emits one partner-null-fill buffer per
+    /// non-empty partner anchor so the probe can null-fill partner tuples that matched no anchor-side tuple.
+    /// Runs at termination, when GC has been suppressed so every anchor-side partner is still present.
+    void flushPartnerNullFill(PipelineExecutionContext* pipelineCtx);
 
     /// Serializes a single trigger struct into a buffer and dispatches it.
     /// Mirrors NLJOperatorHandler::emitSlicesToProbe; differs in payload shape
@@ -141,33 +142,36 @@ private:
 
     const std::int64_t lowerBound;
     const std::int64_t upperBound;
-    const std::uint64_t widthW;
+    const std::uint64_t sliceWidth;
     const std::int64_t offsetLow;
     const std::int64_t offsetHigh;
 
-    const std::vector<OriginId> leftInputOrigins;
-    const std::vector<OriginId> rightInputOrigins;
+    const std::vector<OriginId> anchorInputOrigins;
+    const std::vector<OriginId> partnerInputOrigins;
     const OriginId outputOriginId;
     const SliceCacheConfiguration sliceCacheConfiguration;
     /// LEFT/FULL outer interval join: emit anchor buffers even when an anchor has no non-empty partner
-    /// slices, so the probe can null-fill the unmatched left tuples.
-    const bool emitLeftNullFill;
-    /// RIGHT/FULL outer interval join: run a right-anchored null-fill pass at termination, and suppress
-    /// GC meanwhile so left partner slices survive for that pass.
-    const bool emitRightNullFill;
+    /// slices, so the probe can null-fill the unmatched anchor tuples.
+    const bool emitAnchorNullFill;
+    // todo write out GC to garbage collection
+    /// RIGHT/FULL outer interval join: run a partner-anchored null-fill pass at termination, and suppress
+    /// GC meanwhile so anchor-side partner slices survive for that pass.
+    const bool emitPartnerNullFill;
 
-    // todo please rename left and right and use anchor and other name we came up with. Do this for all left and right in the IntervalJoin physical operators (build, probe), operator handler, and the
-    std::unique_ptr<IntervalSliceStore> leftStore;
-    std::unique_ptr<IntervalSliceStore> rightStore;
+    std::unique_ptr<IntervalSliceStore> anchorStore;
+    std::unique_ptr<IntervalSliceStore> partnerStore;
 
-    std::unique_ptr<MultiOriginWatermarkProcessor> wmLeft;
-    std::unique_ptr<MultiOriginWatermarkProcessor> wmRight;
+    // todo write out watermark for wmAnchor, wmPartner, and wmProbe
+    std::unique_ptr<MultiOriginWatermarkProcessor> wmAnchor;
+    std::unique_ptr<MultiOriginWatermarkProcessor> wmPartner;
     std::unique_ptr<MultiOriginWatermarkProcessor> wmProbe;
 
     std::atomic<SequenceNumber::Underlying> nextProbeSequence;
     std::atomic<std::uint64_t> numberOfWorkerThreads;
-    std::atomic<bool> leftBuildDone;
-    std::atomic<bool> rightBuildDone;
+
+    // todo write one line comment why we need these atomics
+    std::atomic<bool> anchorBuildDone;
+    std::atomic<bool> partnerBuildDone;
 };
 
 }

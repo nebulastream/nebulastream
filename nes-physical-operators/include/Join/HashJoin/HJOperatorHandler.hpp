@@ -28,7 +28,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
 #include <Util/RollingAverage.hpp>
 #include <HashMapSlice.hpp>
 
@@ -73,7 +73,7 @@ public:
     HJOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        std::unique_ptr<TimeBasedWindowSlicesStoreInterface> sliceAndWindowStore,
         uint64_t maxNumberOfBuckets,
         JoinTriggerStrategy triggerStrategy);
 

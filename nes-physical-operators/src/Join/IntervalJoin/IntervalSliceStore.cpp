@@ -30,7 +30,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
@@ -40,14 +39,14 @@
 namespace NES
 {
 
-IntervalSliceStore::IntervalSliceStore(const uint64_t widthW, SliceCacheConfiguration sliceCacheConfiguration)
-    : widthW(widthW)
-    /// Tumbling: slide == size == widthW.
-    , sliceAssigner(widthW, widthW)
+IntervalSliceStore::IntervalSliceStore(const uint64_t sliceWidth, SliceCacheConfiguration sliceCacheConfiguration)
+    : sliceWidth(sliceWidth)
+    /// Tumbling: slide == size == sliceWidth.
+    , sliceAssigner(sliceWidth, sliceWidth)
     , sliceCacheConfiguration(std::move(sliceCacheConfiguration))
     , numberOfActiveInputPipelines(0)
 {
-    PRECONDITION(widthW > 0, "Interval-join slice width must be > 0; got {}", widthW);
+    PRECONDITION(sliceWidth > 0, "Interval-join slice width must be > 0; got {}", sliceWidth);
 }
 
 IntervalSliceStore::~IntervalSliceStore()
@@ -207,25 +206,7 @@ bool IntervalSliceStore::decrementAndCheckIfLastPipeline() noexcept
 
 uint64_t IntervalSliceStore::getWindowSize() const
 {
-    return widthW;
-}
-
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> IntervalSliceStore::getTriggerableWindowSlices(Timestamp)
-{
-    /// Interval-join handler talks to claimTriggerable directly; this is only here
-    /// to satisfy WindowSlicesStoreInterface and is unused.
-    return {};
-}
-
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> IntervalSliceStore::getAllNonTriggeredSlices()
-{
-    /// Same as above: handler uses claimAllNonTriggered directly.
-    return {};
-}
-
-void IntervalSliceStore::garbageCollectSlicesAndWindows(Timestamp)
-{
-    /// Handler routes GC through garbageCollectTriggered/garbageCollectExpired.
+    return sliceWidth;
 }
 
 void IntervalSliceStore::deleteState()

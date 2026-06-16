@@ -69,7 +69,9 @@
 #include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/IntervalWindow.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -906,8 +908,8 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
                 helpers.top().joinKeyRelationHelper.at(0),
                 std::move(characteristics[0]),
                 std::move(characteristics[1]),
-                helpers.top().intervalLowerBound.value(),
-                helpers.top().intervalUpperBound.value(),
+                Windowing::TimeBasedWindowType{
+                    Windowing::IntervalWindow{helpers.top().intervalLowerBound.value(), helpers.top().intervalUpperBound.value()}},
                 helpers.top().joinType);
         }
 

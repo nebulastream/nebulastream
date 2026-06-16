@@ -57,12 +57,13 @@ struct WindowInfoAndSequenceNumber
     bool operator<(const WindowInfoAndSequenceNumber& other) const { return windowInfo < other.windowInfo; }
 };
 
-/// This is the interface for storing windows and slices in a window-based operator
-/// It provides an interface to operate on slices and windows for a time-based window operator, e.g., join or aggregation
-class WindowSlicesStoreInterface
+/// Interface for storing windows and slices in a time-based windowed operator (tumbling/sliding
+/// aggregations and joins via WindowBasedOperatorHandler). It assumes per-window triggering with
+/// sequence numbers; operators without that model (e.g. the streaming interval join) do not use it.
+class TimeBasedWindowSlicesStoreInterface
 {
 public:
-    virtual ~WindowSlicesStoreInterface() = default;
+    virtual ~TimeBasedWindowSlicesStoreInterface() = default;
     /// Retrieves the slices that corresponds to the timestamp. If no slices exist for the timestamp, they are created by calling the method createNewSlice
     virtual std::vector<std::shared_ptr<Slice>>
     getSlicesOrCreate(Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)

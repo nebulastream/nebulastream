@@ -25,7 +25,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
 
 namespace NES
 {
@@ -65,7 +65,7 @@ public:
     NLJOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        std::unique_ptr<TimeBasedWindowSlicesStoreInterface> sliceAndWindowStore,
         JoinTriggerStrategy triggerStrategy);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>

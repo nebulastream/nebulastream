@@ -25,7 +25,7 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
 #include <Util/RollingAverage.hpp>
 #include <HashMapSlice.hpp>
 #include <WindowBasedOperatorHandler.hpp>
@@ -60,7 +60,7 @@ public:
     AggregationOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        std::unique_ptr<TimeBasedWindowSlicesStoreInterface> sliceAndWindowStore,
         uint64_t maxNumberOfBuckets);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>

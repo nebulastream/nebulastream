@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <vector>
 #include <SliceStore/DefaultTimeBasedSliceStoreRef.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
 #include <folly/Synchronized.h>
 
 #include <Identifiers/Identifiers.hpp>
@@ -52,7 +52,7 @@ struct SlicesAndState
     WindowInfoState windowState;
 };
 
-class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
+class DefaultTimeBasedSliceStore final : public TimeBasedWindowSlicesStoreInterface
 {
 public:
     DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, SliceCacheConfiguration sliceCacheConfiguration);

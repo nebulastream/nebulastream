@@ -35,16 +35,13 @@ namespace NES
 class IntervalSliceStore;
 class IntervalJoinOperatorHandler;
 
-// todo remove here all references to the DefaultTimeBasedSliceStoreRef in this file and class
-/// Concrete SliceStoreRef for IntervalSliceStore. Mirrors
-/// DefaultTimeBasedSliceStoreRef in shape — owns a SliceCache, delegates the
-/// build hot path through it, and routes cache misses to a proxy that talks
+/// Concrete SliceStoreRef for IntervalSliceStore: owns a SliceCache, delegates
+/// the build hot path through it, and routes cache misses to a proxy that talks
 /// to the IntervalJoin-typed operator handler.
 ///
-/// The only meaningful divergence from DefaultTimeBasedSliceStoreRef is the
-/// CreateSlicesFunction's handler type. The base SliceStoreRef passes a
-/// generic OperatorHandler*; each concrete ref dynamic_casts to its expected
-/// handler subtype internally.
+/// The base SliceStoreRef hands the CreateSlicesFunction a generic
+/// OperatorHandler*; this ref dynamic_casts it to IntervalJoinOperatorHandler
+/// before resolving the per-side store.
 class IntervalSliceStoreRef final : public SliceStoreRef
 {
 public:
@@ -88,8 +85,8 @@ private:
     IntervalSliceStore* sliceStore;
 };
 
-/// Free factory; mirrors DefaultTimeBasedSliceStore::createSliceStoreRef. Defined
-/// in the .cpp so this header can stay free of the IntervalSliceStore body.
+/// Free factory, defined in the .cpp so this header can stay free of the
+/// IntervalSliceStore body.
 std::unique_ptr<SliceStoreRef> createIntervalSliceStoreRef(
     IntervalSliceStore& sliceStore,
     IntervalSliceStoreRef::DataStructureExtractor extractor,

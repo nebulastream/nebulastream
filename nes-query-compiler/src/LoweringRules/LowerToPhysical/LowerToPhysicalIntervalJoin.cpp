@@ -97,8 +97,8 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
 
     const auto handlerId = getNextOperatorHandlerId();
-    const auto leftInputSchema = createPhysicalOutputSchema(children[0].getTraitSet());
-    const auto rightInputSchema = createPhysicalOutputSchema(children[1].getTraitSet());
+    const auto anchorInputSchema = createPhysicalOutputSchema(children[0].getTraitSet());
+    const auto partnerInputSchema = createPhysicalOutputSchema(children[1].getTraitSet());
     const auto outputSchema = createPhysicalOutputSchema(traitSet);
     const auto outputOriginId = outputOriginIds[0];
     const auto logicalJoinFunction = intervalJoin->getJoinFunction();
@@ -106,21 +106,22 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
     const auto upperBound = intervalJoin->getUpperBound();
     const auto pageSize = conf.pageSize.getValue();
 
-    /// Outer interval joins null-fill the preserved side's unmatched tuples. LEFT-side unmatched tuples are
-    /// null-filled inside each left-anchored probe task; RIGHT-side unmatched tuples are null-filled by a
-    /// symmetric right-anchored pass the handler runs at termination.
+    /// Outer interval joins null-fill the preserved side's unmatched tuples. Anchor-side unmatched tuples are
+    /// null-filled inside each anchor-driven probe task; partner-side unmatched tuples are null-filled by a
+    /// symmetric partner-anchored pass the handler runs at termination.
     using JoinType = JoinLogicalOperator::JoinType;
     const auto joinType = intervalJoin->getJoinType();
-    const bool emitLeftNullFill = (joinType == JoinType::OUTER_LEFT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
-    const bool emitRightNullFill = (joinType == JoinType::OUTER_RIGHT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
+    const bool emitAnchorNullFill = (joinType == JoinType::OUTER_LEFT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
+    const bool emitPartnerNullFill = (joinType == JoinType::OUTER_RIGHT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
 
     /// Side-specific input origins. The interval-join handler needs to know which
     /// origins belong to which side because it maintains per-side watermarks.
-    const auto leftChildOrigins = getTrait<OutputOriginIdsTrait>(children[0].getTraitSet());
-    const auto rightChildOrigins = getTrait<OutputOriginIdsTrait>(children[1].getTraitSet());
-    PRECONDITION(leftChildOrigins.has_value() and rightChildOrigins.has_value(), "Expected outputOriginIds trait on both child operators");
-    const std::vector<OriginId> leftInputOriginIds(leftChildOrigins.value().get().begin(), leftChildOrigins.value().get().end());
-    const std::vector<OriginId> rightInputOriginIds(rightChildOrigins.value().get().begin(), rightChildOrigins.value().get().end());
+    const auto anchorChildOrigins = getTrait<OutputOriginIdsTrait>(children[0].getTraitSet());
+    const auto partnerChildOrigins = getTrait<OutputOriginIdsTrait>(children[1].getTraitSet());
+    PRECONDITION(
+        anchorChildOrigins.has_value() and partnerChildOrigins.has_value(), "Expected outputOriginIds trait on both child operators");
+    const std::vector<OriginId> anchorInputOriginIds(anchorChildOrigins.value().get().begin(), anchorChildOrigins.value().get().end());
+    const std::vector<OriginId> partnerInputOriginIds(partnerChildOrigins.value().get().begin(), partnerChildOrigins.value().get().end());
 
     auto combinedFieldMappingVec = intervalJoin.getChildren()
         | std::views::transform([](const auto& child)
@@ -129,32 +130,32 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
-    auto leftBufferRef = LowerSchemaProvider::lowerSchema(pageSize, leftInputSchema, memoryLayoutType);
-    auto rightBufferRef = LowerSchemaProvider::lowerSchema(pageSize, rightInputSchema, memoryLayoutType);
+    auto anchorBufferRef = LowerSchemaProvider::lowerSchema(pageSize, anchorInputSchema, memoryLayoutType);
+    auto partnerBufferRef = LowerSchemaProvider::lowerSchema(pageSize, partnerInputSchema, memoryLayoutType);
 
-    /// The interval join carries one bound time characteristic per side; the left build reads the
-    /// left timestamp field and the right build reads the right timestamp field.
+    /// The interval join carries one bound time characteristic per side; the anchor build reads the
+    /// anchor timestamp field and the partner build reads the partner timestamp field.
     const auto& joinTimeCharacteristicsVariant = intervalJoin->getJoinTimeCharacteristics();
     const auto characteristicsAreBound
         = std::holds_alternative<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
     PRECONDITION(characteristicsAreBound, "Expected the interval-join time characteristics to be bound");
-    const auto& [leftTimeCharacteristic, rightTimeCharacteristic]
+    const auto& [anchorTimeCharacteristic, partnerTimeCharacteristic]
         = std::get<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
 
     /// Handler owns both stores. The lowering rule does NOT construct stores.
     auto handler = std::make_shared<IntervalJoinOperatorHandler>(
-        leftInputOriginIds,
-        rightInputOriginIds,
+        anchorInputOriginIds,
+        partnerInputOriginIds,
         outputOriginId,
         lowerBound,
         upperBound,
         conf.sliceCacheConfiguration,
-        emitLeftNullFill,
-        emitRightNullFill);
+        emitAnchorNullFill,
+        emitPartnerNullFill);
 
     /// SliceStoreRef per side, talking to the side-appropriate store on the handler.
-    auto sliceStoreRefLeft = createIntervalSliceStoreRef(
-        handler->getLeftStore(),
+    auto sliceStoreRefAnchor = createIntervalSliceStoreRef(
+        handler->getAnchorStore(),
         [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
         {
             const auto& ijSlice = dynamic_cast<IntervalJoinSlice&>(slice);
@@ -163,8 +164,8 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
         },
         [](IntervalJoinOperatorHandler& h) { return h.getCreateNewSlicesFunction({}); },
         conf.sliceCacheConfiguration);
-    auto sliceStoreRefRight = createIntervalSliceStoreRef(
-        handler->getRightStore(),
+    auto sliceStoreRefPartner = createIntervalSliceStoreRef(
+        handler->getPartnerStore(),
         [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
         {
             const auto& ijSlice = dynamic_cast<IntervalJoinSlice&>(slice);
@@ -174,30 +175,45 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
         [](IntervalJoinOperatorHandler& h) { return h.getCreateNewSlicesFunction({}); },
         conf.sliceCacheConfiguration);
 
-    const IntervalJoinBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, TimeFunction::create(leftTimeCharacteristic), leftBufferRef, std::move(sliceStoreRefLeft)};
-    const IntervalJoinBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, TimeFunction::create(rightTimeCharacteristic), rightBufferRef, std::move(sliceStoreRefRight)};
+    const IntervalJoinBuildAnchorPhysicalOperator anchorBuildOperator{
+        handlerId, TimeFunction::create(anchorTimeCharacteristic), anchorBufferRef, std::move(sliceStoreRefAnchor)};
+    const IntervalJoinBuildPartnerPhysicalOperator partnerBuildOperator{
+        handlerId, TimeFunction::create(partnerTimeCharacteristic), partnerBufferRef, std::move(sliceStoreRefPartner)};
 
-    const auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
-    auto probeOperator = IntervalJoinProbePhysicalOperator(
-        handlerId,
-        joinFunction,
-        WindowMetaData{intervalJoin->getStartField(), intervalJoin->getEndField()},
-        joinSchema,
-        TimeFunction::create(leftTimeCharacteristic),
-        TimeFunction::create(rightTimeCharacteristic),
-        lowerBound,
-        upperBound,
-        leftBufferRef,
-        rightBufferRef,
-        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
-        getJoinFieldNames(rightInputSchema, logicalJoinFunction),
-        emitLeftNullFill);
+    const JoinSchema joinSchema{anchorInputSchema, partnerInputSchema, outputSchema};
 
-    auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(leftBuildOperator),
-        leftInputSchema,
+    /// Inner/cartesian joins emit matches only; any outer variant needs the null-fill-capable probe.
+    PhysicalOperator probeOperator = isOuterJoin(joinType) ? PhysicalOperator{IntervalJoinProbeOuterPhysicalOperator{
+                                                                 handlerId,
+                                                                 joinFunction,
+                                                                 WindowMetaData{intervalJoin->getStartField(), intervalJoin->getEndField()},
+                                                                 joinSchema,
+                                                                 TimeFunction::create(anchorTimeCharacteristic),
+                                                                 TimeFunction::create(partnerTimeCharacteristic),
+                                                                 lowerBound,
+                                                                 upperBound,
+                                                                 anchorBufferRef,
+                                                                 partnerBufferRef,
+                                                                 getJoinFieldNames(anchorInputSchema, logicalJoinFunction),
+                                                                 getJoinFieldNames(partnerInputSchema, logicalJoinFunction),
+                                                                 emitAnchorNullFill}}
+                                                           : PhysicalOperator{IntervalJoinProbeInnerPhysicalOperator{
+                                                                 handlerId,
+                                                                 joinFunction,
+                                                                 WindowMetaData{intervalJoin->getStartField(), intervalJoin->getEndField()},
+                                                                 joinSchema,
+                                                                 TimeFunction::create(anchorTimeCharacteristic),
+                                                                 TimeFunction::create(partnerTimeCharacteristic),
+                                                                 lowerBound,
+                                                                 upperBound,
+                                                                 anchorBufferRef,
+                                                                 partnerBufferRef,
+                                                                 getJoinFieldNames(anchorInputSchema, logicalJoinFunction),
+                                                                 getJoinFieldNames(partnerInputSchema, logicalJoinFunction)}};
+
+    auto anchorBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
+        std::move(anchorBuildOperator),
+        anchorInputSchema,
         outputSchema,
         memoryLayoutType,
         memoryLayoutType,
@@ -205,9 +221,9 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
-    auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(rightBuildOperator),
-        rightInputSchema,
+    auto partnerBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
+        std::move(partnerBuildOperator),
+        partnerInputSchema,
         outputSchema,
         memoryLayoutType,
         memoryLayoutType,
@@ -224,9 +240,9 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::SCAN,
-        std::vector{leftBuildWrapper, rightBuildWrapper});
+        std::vector{anchorBuildWrapper, partnerBuildWrapper});
 
-    return {.root = {probeWrapper}, .leafs = {leftBuildWrapper, rightBuildWrapper}};
+    return {.root = {probeWrapper}, .leafs = {anchorBuildWrapper, partnerBuildWrapper}};
 }
 
 std::unique_ptr<AbstractLoweringRule>

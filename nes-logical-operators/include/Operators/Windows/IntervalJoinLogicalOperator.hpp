@@ -40,9 +40,12 @@ namespace NES
 {
 class SerializableOperator;
 
-// todo add that we call/refer to left as the anchor
 /// Logical operator for a streaming interval join: pairs each left tuple `a` with
 /// right tuples `b` where `b.ts \in [a.ts + lowerBound, a.ts + upperBound]`.
+///
+/// The left input is the *anchor* — each anchor tuple defines an interval that the
+/// right input's *partner* tuples are matched against. "anchor"/"partner" is the
+/// terminology used throughout the physical interval-join operators and handler.
 ///
 /// Bounds are signed millisecond offsets (int64_t) so they can express past/future
 /// intervals symmetrically (e.g. `[-4 ms, -1 ms]` is purely past-anchored). The
