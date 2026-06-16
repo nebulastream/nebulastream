@@ -82,7 +82,8 @@ public:
         const char tupleDelimiter,
         std::vector<Identifier> fieldNamesInJson,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
-        std::vector<DataType> fieldDataTypes)
+        std::vector<DataType> fieldDataTypes,
+        const std::string& deserializerOverrides)
         : tupleDelimiter(tupleDelimiter)
         , fieldNamesInJson(std::move(fieldNamesInJson))
         , fieldNamesOutput(std::move(fieldNamesOutput))
@@ -102,6 +103,9 @@ public:
         deserializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
         deserializerTypes[DataType::Type::CHAR] = "DefaultCHAR";
         deserializerTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
+
+        /// Override default parsers with user-defined parsers.
+        parseValueDeserializerOverrides(deserializerOverrides, deserializerTypes);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -124,7 +128,8 @@ public:
             config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER),
             std::move(fieldNamesInJson),
             std::move(fieldNamesOutput),
-            std::move(fieldDataTypes));
+            std::move(fieldDataTypes),
+            config.getFromConfig(InputFormatterDescriptor::VALUE_DESERIALIZERS));
     }
 
     ~SIMDJSONInputFormatIndexer() override = default;
