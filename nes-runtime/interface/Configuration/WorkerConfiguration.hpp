@@ -50,13 +50,17 @@ public:
            {std::make_shared<NumberValidation>()}};
 
     /// Number of buffers held back in a liveness reserve inside the global buffer manager. These buffers are only
-    /// handed out via the reserved acquisition API (used by the drain/emit path: window-trigger emit, sinks, network
-    /// egress), so the system can always make forward progress and free in-flight buffers even when the normal pool is
-    /// exhausted. This breaks the buffer-exhaustion deadlock. 0 disables the reserve (default, behaviour unchanged).
+    /// handed out as a last resort when the normal pool is exhausted (see DefaultPEC::allocateTupleBuffer), so an
+    /// in-flight task can always run to completion and free its input buffer. This guarantees forward progress and
+    /// breaks the buffer-exhaustion deadlock. It should be at least number_of_worker_threads (so every worker can
+    /// always complete its current task), with headroom for pipelines that emit several buffers per step. The default
+    /// of 64 comfortably covers typical worker counts and is negligible against the default pool size. Set to 0 to
+    /// disable the reserve entirely.
     UIntOption numberOfReservedBuffersInGlobalBufferManager
         = {"number_of_reserved_buffers_in_global_buffer_manager",
-           "0",
-           "Number of buffers reserved for the drain/emit path in the global buffer pool (liveness reserve).",
+           "64",
+           "Number of buffers reserved as a last-resort liveness reserve in the global buffer pool (>= number of "
+           "worker threads recommended; 0 disables).",
            {std::make_shared<NumberValidation>()}};
 
     /// Indicates how many buffers a single data source can allocate. This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
