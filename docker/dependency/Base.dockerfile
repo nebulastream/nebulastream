@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1
 # The Base Dockerfile installs and configures all relevant tooling to build the dependencies and NebulaStream.
-# Currently our compiler toolchain is based on llvm-18 using libc++.
+# Currently our compiler toolchain is based on llvm-21 using libc++.
 # Additionally we install a recent CMake version and the mold linker.
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
-ARG LLVM_TOOLCHAIN_VERSION=19
-ARG MOLD_VERSION=2.37.1
-ARG CMAKE_VERSION=3.31.11-0kitware1ubuntu24.04.1
+ARG LLVM_TOOLCHAIN_VERSION=21
+ARG MOLD_VERSION=2.41.0
+ARG CMAKE_VERSION=4.3.3-0kitware1ubuntu26.04.1
 ENV LLVM_TOOLCHAIN_VERSION=${LLVM_TOOLCHAIN_VERSION}
 
 RUN apt update -y && apt install \
@@ -20,7 +20,7 @@ RUN apt update -y && apt install \
     ca-certificates \
     linux-libc-dev \
     build-essential \
-    g++-14 \
+    g++-15 \
     make \
     libssl-dev \
     openssl \
