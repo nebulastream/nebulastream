@@ -1,0 +1,26 @@
+# name: value_serializers/ValueSerializerOverrides.test
+# description: Tests the VALUE_SERIALIZERS config parameter to configure the serializer type of individual fields
+# groups: [Formatter]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [4096]
+
+CREATE LOGICAL SOURCE messages(raw VARSIZED NOT NULL, escaped VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR messages TYPE File;
+ATTACH INLINE
+say "hi",say "hi"
+
+# Quoted field names containing commas should still be parsed correctly if they appear in VALUE_SERIALIZERS.
+CREATE LOGICAL SOURCE measurements("sensor,value" UINT64 NOT NULL, ts INT64 NOT NULL, "sensor,value2" INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR measurements TYPE File;
+ATTACH INLINE
+42,1000,43
+
+# Description: 'raw' and 'escaped' share the same datatype, but only 'escaped' is serialized with the JSON serializer,
+# which quotes the value and escapes the quotes within it.
+SELECT * FROM messages INTO FILE('escaped:JSONVARSIZED,raw:DefaultVARSIZED' as "OUTPUT_FORMATTER".VALUE_SERIALIZERS);
+----
+say "hi","say \"hi\""
+
+SELECT * FROM measurements INTO FILE('"sensor,value":DefaultUINT64, ts:DefaultINT64, "sensor,value2":DefaultINT32' AS "OUTPUT_FORMATTER".VALUE_SERIALIZERS);
+----
+42,1000,43
