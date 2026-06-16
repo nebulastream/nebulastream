@@ -20,10 +20,13 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
+#include <magic_enum/magic_enum.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
@@ -95,6 +98,28 @@ struct ValueSerializerConfig
 {
     bool quoted;
 };
+
+/// Overrides the serializer types for the datatypes based on the overrides string. The function expects the string to be formatted like this:
+/// [TYPENAME]:[SERIALIZER-KEY],...
+inline void parseValueSerializerOverrides(const std::string& overrides, std::unordered_map<DataType::Type, std::string>& serializersMap)
+{
+    size_t typeNameStart = 0;
+    size_t typeNameEnd = overrides.find(':', typeNameStart);
+    while (typeNameEnd != std::string::npos)
+    {
+        const std::string typeName = overrides.substr(typeNameStart, typeNameEnd - typeNameStart);
+        const size_t serializerTypeStart = typeNameEnd + 1;
+        const size_t serializerTypeEnd = std::min(overrides.size(), overrides.find(',', serializerTypeStart));
+        const std::string serializerType = overrides.substr(serializerTypeStart, serializerTypeEnd - serializerTypeStart);
+
+        if (std::optional<DataType::Type> dataType = magic_enum::enum_cast<DataType::Type>(typeName))
+        {
+            serializersMap[dataType.value()] = serializerType;
+        }
+        typeNameStart = serializerTypeEnd + 1;
+        typeNameEnd = overrides.find(':', typeNameStart);
+    }
+}
 
 /// Fetches ValueSerializer from Registry
 inline std::unique_ptr<ValueSerializer> provideValueSerializer(const std::string& serializerType, const ValueSerializerConfig& config)
