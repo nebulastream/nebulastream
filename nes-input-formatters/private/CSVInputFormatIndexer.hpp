@@ -90,7 +90,12 @@ public:
     static constexpr size_t SIZE_OF_FIELD_DELIMITER = 1;
 
     explicit CSVInputFormatIndexer(
-        Private, const char tupleDelimiter, const char fieldDelimiter, const bool allowCommasInStrings, const size_t numberOfFields)
+        Private,
+        const char tupleDelimiter,
+        const char fieldDelimiter,
+        const bool allowCommasInStrings,
+        const size_t numberOfFields,
+        const std::string& parserOverrides)
         : tupleDelimiter(tupleDelimiter)
         , fieldDelimiter(fieldDelimiter)
         , allowCommasInStrings(allowCommasInStrings)
@@ -112,6 +117,9 @@ public:
         parserTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
         /// Placeholder for UNDEFINED. Will throw an error if any field is UNDEFINED typed.
         parserTypes[DataType::Type::UNDEFINED] = "";
+
+        /// Override the default parsers with the ones set by the user
+        parseInputParserOverrides(parserOverrides, parserTypes);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -122,7 +130,8 @@ public:
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER),
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER),
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS),
-            tupleBufferRef.getAllDataTypes().size());
+            tupleBufferRef.getAllDataTypes().size(),
+            config.getFromConfig(InputFormatterDescriptor::INPUT_PARSERS));
     }
 
     ~CSVInputFormatIndexer() override = default;

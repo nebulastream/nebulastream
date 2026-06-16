@@ -82,7 +82,8 @@ public:
         const char tupleDelimiter,
         std::vector<Identifier> fieldNamesInJson,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
-        std::vector<DataType> fieldDataTypes)
+        std::vector<DataType> fieldDataTypes,
+        const std::string& parserOverrides)
         : tupleDelimiter(tupleDelimiter)
         , fieldNamesInJson(std::move(fieldNamesInJson))
         , fieldNamesOutput(std::move(fieldNamesOutput))
@@ -104,6 +105,9 @@ public:
         parserTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
         /// Placeholder for UNDEFINED. Will throw an error if any field is UNDEFINED typed.
         parserTypes[DataType::Type::UNDEFINED] = "";
+
+        /// Override default parsers with user-defined parsers.
+        parseInputParserOverrides(parserOverrides, parserTypes);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -126,7 +130,8 @@ public:
             config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER),
             std::move(fieldNamesInJson),
             std::move(fieldNamesOutput),
-            std::move(fieldDataTypes));
+            std::move(fieldDataTypes),
+            config.getFromConfig(InputFormatterDescriptor::INPUT_PARSERS));
     }
 
     ~SIMDJSONInputFormatIndexer() override = default;

@@ -21,12 +21,36 @@
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <magic_enum/magic_enum.hpp>
+
 #include <ErrorHandling.hpp>
 #include <InputParser.hpp>
 #include <InputParserRegistry.hpp>
 
 namespace NES
 {
+
+void parseInputParserOverrides(const std::string& overrides, std::unordered_map<DataType::Type, std::string>& parsersMap)
+{
+    size_t typeNameStart = 0;
+    size_t typeNameEnd = overrides.find(':', typeNameStart);
+    while (typeNameEnd != std::string::npos)
+    {
+        const std::string typeName = overrides.substr(typeNameStart, typeNameEnd - typeNameStart);
+        const size_t parserTypeStart = typeNameEnd + 1;
+        const size_t parserTypeEnd = std::min(overrides.size(), overrides.find(',', parserTypeStart));
+        const std::string parserType = overrides.substr(parserTypeStart, parserTypeEnd - parserTypeStart);
+
+        if (std::optional<DataType::Type> dataType = magic_enum::enum_cast<DataType::Type>(typeName))
+        {
+            parsersMap[dataType.value()] = parserType;
+        }
+        typeNameStart = parserTypeEnd + 1;
+        typeNameEnd = overrides.find(':', typeNameStart);
+    }
+}
+
 std::unique_ptr<InputParser> provideInputParser(const std::string& parserType, const InputParserConfig& config)
 {
     /// Resolve the "Nullable" member

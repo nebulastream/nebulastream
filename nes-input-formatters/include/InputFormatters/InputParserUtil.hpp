@@ -32,6 +32,10 @@ struct InputParserConfig
     bool hasTrailingSpace;
 };
 
+/// Overrides the parser types for the datatypes based on the input of the string. The function expects the string to be formatted like this:
+/// [TYPENAME]:[PARSERTYPE],...
+void parseInputParserOverrides(const std::string& overrides, std::unordered_map<DataType::Type, std::string>& parsersMap);
+
 /// Fetches InputParser from Registry
 /// The concrete type of parser is [Nullable]parserTypeInputParser
 std::unique_ptr<InputParser> provideInputParser(const std::string& parserType, const InputParserConfig& config);
