@@ -120,25 +120,17 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
-    auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId)
-        {
-            auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* pagedVectorBufferRef = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left);
-            return pagedVectorBufferRef;
-        },
+    auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef<NLJSlice>(
+        [](const NLJSlice& slice, const WorkerThreadId workerThreadId)
+        { return slice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left); },
         [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             const CreateNewNLJSliceArgs nljSliceArgs{bufferProvider, tupleSizeLeft, tupleSizeRight};
             return handler.getCreateNewSlicesFunction(nljSliceArgs);
         });
-    auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId)
-        {
-            auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* pagedVectorBufferRef = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right);
-            return pagedVectorBufferRef;
-        },
+    auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef<NLJSlice>(
+        [](const NLJSlice& slice, const WorkerThreadId workerThreadId)
+        { return slice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right); },
         [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             const CreateNewNLJSliceArgs nljSliceArgs{bufferProvider, tupleSizeLeft, tupleSizeRight};

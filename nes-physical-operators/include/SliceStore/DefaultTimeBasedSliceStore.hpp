@@ -22,6 +22,7 @@
 #include <optional>
 #include <span>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <SliceStore/DefaultTimeBasedSliceStoreRef.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -34,6 +35,7 @@
 #include <SliceStore/SliceAssigner.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
+#include <ErrorHandling.hpp>
 #include <SliceCacheConfiguration.hpp>
 
 namespace NES
@@ -71,10 +73,26 @@ public:
     std::span<std::byte>
     allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
 
-    /// Creates a SliceStoreRef that wraps this store. The store provides its own SliceCacheConfiguration;
-    /// the caller only supplies the two operator-specific callbacks.
-    std::unique_ptr<SliceStoreRef> createSliceStoreRef(
-        DefaultTimeBasedSliceStoreRef::DataStructureExtractor extractor, DefaultTimeBasedSliceStoreRef::CreateSlicesFunction creator);
+    /// Creates a SliceStoreRef that wraps this store, specialized on the concrete SliceType this store holds. The store provides its own
+    /// SliceCacheConfiguration; the caller only supplies the two operator-specific callbacks. The extractor is statically typed on
+    /// SliceType, so the lowering rules no longer need a `dynamic_cast` - the single Slice->SliceType cast is injected here once and is a
+    /// free `static_cast` in release. That the slice actually is a SliceType is a precondition of this wrapper, guaranteed because each
+    /// store ref holds exactly one SliceType; the PRECONDITION verifies it via `dynamic_cast` in debug builds and compiles out in release.
+    template <class SliceType, class Extractor>
+    std::unique_ptr<SliceStoreRef> createSliceStoreRef(Extractor extractor, DefaultTimeBasedSliceStoreRef::CreateSlicesFunction creator)
+    {
+        return std::make_unique<DefaultTimeBasedSliceStoreRef>(
+            sliceCacheConfiguration,
+            this,
+            [extractor = std::move(extractor)](Slice& slice, const WorkerThreadId workerThreadId) -> const TupleBuffer*
+            {
+                PRECONDITION(
+                    dynamic_cast<SliceType*>(&slice) != nullptr,
+                    "Slice handed to the extractor is not the SliceType this slice store ref was specialized on");
+                return extractor(static_cast<SliceType&>(slice), workerThreadId);
+            },
+            std::move(creator));
+    }
 
 private:
     SliceCacheConfiguration sliceCacheConfiguration;
