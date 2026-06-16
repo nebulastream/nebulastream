@@ -38,10 +38,10 @@ log_fatal() {
 }
 
 
-if [ -x "$(command -v clang-format-19)" ]
+if [ -x "$(command -v clang-format-21)" ]
 then
-    CLANG_FORMAT="clang-format-19"
-elif [ -x "$(command -v clang-format)" ] && clang-format --version | grep "version 19" > /dev/null
+    CLANG_FORMAT="clang-format-21"
+elif [ -x "$(command -v clang-format)" ] && clang-format --version | grep "version 21" > /dev/null
 then
     CLANG_FORMAT="clang-format"
 else
