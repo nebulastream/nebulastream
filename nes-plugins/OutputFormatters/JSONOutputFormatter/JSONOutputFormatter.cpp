@@ -37,6 +37,7 @@
 #include <std/cstring.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/ValueSerializer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -88,7 +89,8 @@ void writeValue(
 }
 }
 
-JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames)
+JSONOutputFormatter::JSONOutputFormatter(
+    const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
     : OutputFormatter(fieldNames)
     , canonicalFieldNames(
           fieldNames | std::views::transform([](const auto& id) { return fmt::format("{}", id); }) | std::ranges::to<std::vector>())
@@ -106,6 +108,10 @@ JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldId
     serializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
     serializerTypes[DataType::Type::CHAR] = "JSONCHAR";
     serializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
+
+    /// Override the datatype defaults for the fields that the user configured a serializer for
+    fieldSerializerTypes
+        = parseValueSerializerOverrides(descriptor.getFromConfig(OutputFormatterDescriptor::VALUE_SERIALIZERS), this->fieldNames);
 }
 
 nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
@@ -160,13 +166,19 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
                 bufferProvider,
                 written,
                 currentRemainingSize,
-                getSerializerType(fieldType.type));
+                getSerializerType(fieldNames.at(fieldIndex), fieldType.type));
         }
     }
     else
     {
         writeValue(
-            value, fieldPointer + written, recordBuffer, bufferProvider, written, currentRemainingSize, getSerializerType(fieldType.type));
+            value,
+            fieldPointer + written,
+            recordBuffer,
+            bufferProvider,
+            written,
+            currentRemainingSize,
+            getSerializerType(fieldNames.at(fieldIndex), fieldType.type));
     }
 
     /// Either write a , or a }\n depending on if this is the last value of the record
@@ -209,6 +221,6 @@ OutputFormatterValidationGeneratedRegistrar::RegisterJSONOutputFormatterValidati
 
 OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)
 {
-    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames));
+    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames), std::move(args.descriptor));
 }
 }
