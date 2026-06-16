@@ -242,7 +242,22 @@ struct DefaultPEC final : PipelineExecutionContext
     TupleBuffer allocateTupleBuffer() override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
-        return bm->getBufferBlocking();
+        /// Matches the BufferManager's default blocking-acquire timeout (see GET_BUFFER_TIMEOUT).
+        static constexpr auto bufferAllocTimeout = std::chrono::milliseconds(1000);
+        /// Prefer the normal pool so we never needlessly consume the liveness reserve.
+        if (auto buffer = bm->getBufferNoBlocking())
+        {
+            return std::move(buffer.value());
+        }
+        /// The normal pool is exhausted. Fall back to the liveness reserve (with the usual blocking timeout) so this
+        /// in-flight task can always run to completion and free its input buffer back to the pool, breaking the
+        /// buffer-exhaustion deadlock. With a reserve size of 0 (the default) this is equivalent to the previous
+        /// getBufferBlocking() behaviour, as the reserve is empty and the call just blocks on the normal pool.
+        if (auto buffer = bm->getReservedBufferWithTimeout(bufferAllocTimeout))
+        {
+            return std::move(buffer.value());
+        }
+        throw BufferAllocationFailure("Global buffer pool could not allocate buffer before timeout");
     }
 
     TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
