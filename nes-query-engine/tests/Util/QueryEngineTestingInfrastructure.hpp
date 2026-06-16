@@ -98,12 +98,8 @@ struct ExpectStats
     { \
         size_t lower; \
         size_t upper; \
-        Name(size_t lower, size_t upper) : lower(lower), upper(upper) \
-        { \
-        } \
-        Name(size_t exact) : lower(exact), upper(exact) \
-        { \
-        } \
+        Name(size_t lower, size_t upper) : lower(lower), upper(upper) { } \
+        Name(size_t exact) : lower(exact), upper(exact) { } \
     }; \
 \
     void apply(Name v) \

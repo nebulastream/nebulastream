@@ -112,14 +112,16 @@ void processQueryWithError(
             if (auto* expectedError = std::get_if<ExpectedError>(&runningQuery->systestQuery.expectedResultsOrExpectedError))
             {
                 const DistributedException& actualException = runningQuery->exception.value();
-                auto allExceptionByAddress = std::views::join(std::views::transform(
-                    actualException.details(),
-                    [](auto& exceptionsByAddress)
-                    {
-                        return std::views::transform(
-                            exceptionsByAddress.second,
-                            [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
-                    }));
+                auto allExceptionByAddress = std::views::join(
+                    std::views::transform(
+                        actualException.details(),
+                        [](auto& exceptionsByAddress)
+                        {
+                            return std::views::transform(
+                                exceptionsByAddress.second,
+                                [address = exceptionsByAddress.first](auto& exception)
+                                { return std::pair{address, std::cref(exception)}; });
+                        }));
 
                 /// The test passes if the expected error code is among the thrown exceptions. Additional errors are tolerated, because
                 /// a failure on one pipeline can raise secondary/cascading errors on connected pipelines
@@ -293,8 +295,9 @@ std::vector<RunningQuery> runQueries(
                     std::make_shared<RunningQuery>(nextQuery),
                     progressTracker,
                     failed,
-                    DistributedException(std::unordered_map<Host, std::vector<Exception>>{
-                        {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
+                    DistributedException(
+                        std::unordered_map<Host, std::vector<Exception>>{
+                            {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
                     queryPerformanceMessage);
             }
         }

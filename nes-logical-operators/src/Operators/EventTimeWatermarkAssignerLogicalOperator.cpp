@@ -173,8 +173,9 @@ Windowing::TimeUnit EventTimeWatermarkAssignerLogicalOperator::getUnit() const
 Reflected Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::operator()(
     const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op) const
 {
-    return reflect(detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{
-        .operatorId = op.getId(), .onField = op->getOnField(), .timeUnit = op->getUnit()});
+    return reflect(
+        detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{
+            .operatorId = op.getId(), .onField = op->getOnField(), .timeUnit = op->getUnit()});
 }
 
 Unreflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::Unreflector(ContextType operatorMapping)

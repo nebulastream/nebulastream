@@ -115,8 +115,9 @@ bool isValidHostname(std::string_view host)
         return false;
     }
 
-    const std::regex hostnamePattern("^[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?"
-                                     "(\\.[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)*$");
+    const std::regex hostnamePattern(
+        "^[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?"
+        "(\\.[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)*$");
 
     return std::regex_match(host.begin(), host.end(), hostnamePattern);
 }

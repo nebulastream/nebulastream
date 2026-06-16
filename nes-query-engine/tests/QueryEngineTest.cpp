@@ -1110,27 +1110,29 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessorsSourceFailure)
 
     /// Count number of completed non-sink tasks
     EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<TaskExecutionComplete>(::testing::_)))
-        .WillRepeatedly(::testing::Invoke(
-            [&](Event event)
-            {
-                const auto& completion = std::get<TaskExecutionComplete>(event);
-                if (completion.pipelineId != test.pipelineIds.at(sink))
+        .WillRepeatedly(
+            ::testing::Invoke(
+                [&](Event event)
                 {
-                    ++pipelinesCompletedOrExpired;
-                }
-            }));
+                    const auto& completion = std::get<TaskExecutionComplete>(event);
+                    if (completion.pipelineId != test.pipelineIds.at(sink))
+                    {
+                        ++pipelinesCompletedOrExpired;
+                    }
+                }));
 
     /// Count number of expired Non-Sink tasks
     EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<TaskExpired>(::testing::_)))
-        .WillRepeatedly(::testing::Invoke(
-            [&](Event event)
-            {
-                const auto& expired = std::get<TaskExpired>(event);
-                if (expired.pipelineId != test.pipelineIds.at(sink))
+        .WillRepeatedly(
+            ::testing::Invoke(
+                [&](Event event)
                 {
-                    ++pipelinesCompletedOrExpired;
-                }
-            }));
+                    const auto& expired = std::get<TaskExpired>(event);
+                    if (expired.pipelineId != test.pipelineIds.at(sink))
+                    {
+                        ++pipelinesCompletedOrExpired;
+                    }
+                }));
 
     test.start();
     {
