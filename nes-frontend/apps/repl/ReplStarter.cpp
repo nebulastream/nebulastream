@@ -144,13 +144,14 @@ int main(int argc, char** argv)
                 magic_enum::enum_name(OnExitBehavior::STOP_QUERIES),
                 magic_enum::enum_name(OnExitBehavior::DO_NOTHING))
             .default_value(std::string(magic_enum::enum_name(OnExitBehavior::DO_NOTHING)))
-            .help(fmt::format(
-                "on exit behavior: [{}]",
-                fmt::join(
-                    std::views::transform(
-                        magic_enum::enum_values<OnExitBehavior>(),
-                        [](const auto& exitBehavior) { return magic_enum::enum_name(exitBehavior); }),
-                    ", ")));
+            .help(
+                fmt::format(
+                    "on exit behavior: [{}]",
+                    fmt::join(
+                        std::views::transform(
+                            magic_enum::enum_values<OnExitBehavior>(),
+                            [](const auto& exitBehavior) { return magic_enum::enum_name(exitBehavior); }),
+                        ", ")));
 
         program.add_argument("-e", "--error-behaviour")
             .choices("FAIL_FAST", "RECOVER", "CONTINUE_AND_FAIL")

@@ -165,6 +165,7 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
                     leftJoinNames.emplace_back(
                         FieldNamesExtension{.oldField = leftField, .newField = QualifiedUnboundField{leftFieldNewName, *joinedDataType}});
                     rightJoinNames.emplace_back(
+
                         FieldNamesExtension{.oldField = rightField, .newField = QualifiedUnboundField{rightFieldNewName, *joinedDataType}});
                 }
                 else
@@ -174,10 +175,12 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
             }
             else
             {
-                leftJoinNames.emplace_back(FieldNamesExtension{
-                    .oldField = leftField, .newField = QualifiedUnboundField{leftField.getLastName(), leftField.getDataType()}});
-                rightJoinNames.emplace_back(FieldNamesExtension{
-                    .oldField = rightField, .newField = QualifiedUnboundField{rightField.getLastName(), rightField.getDataType()}});
+                leftJoinNames.emplace_back(
+                    FieldNamesExtension{
+                        .oldField = leftField, .newField = QualifiedUnboundField{leftField.getLastName(), leftField.getDataType()}});
+                rightJoinNames.emplace_back(
+                    FieldNamesExtension{
+                        .oldField = rightField, .newField = QualifiedUnboundField{rightField.getLastName(), rightField.getDataType()}});
             }
         });
 
@@ -211,12 +214,13 @@ std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<Ph
         const Schema<QualifiedUnboundField, Ordered> outputSchema(currentFields);
 
         /// Create a new map operator with the cast as its function
-        mapPhysicalOperators.emplace_back(std::make_shared<PhysicalOperatorWrapper>(
-            MapPhysicalOperator(newField.getFullyQualifiedName(), castedPhysicalFunction),
-            inputSchema,
-            outputSchema,
-            memoryLayoutType,
-            memoryLayoutType));
+        mapPhysicalOperators.emplace_back(
+            std::make_shared<PhysicalOperatorWrapper>(
+                MapPhysicalOperator(newField.getFullyQualifiedName(), castedPhysicalFunction),
+                inputSchema,
+                outputSchema,
+                memoryLayoutType,
+                memoryLayoutType));
     }
 
     return {Schema<QualifiedUnboundField, Ordered>{currentFields}, mapPhysicalOperators};

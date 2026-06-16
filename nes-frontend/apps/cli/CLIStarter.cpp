@@ -581,8 +581,9 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     statements.reserve(workers.size());
     for (const auto& [host, dataAddress, maxOperators, downstream, config] : workers)
     {
-        statements.emplace_back(NES::CreateWorkerStatement{
-            .host = host, .dataAddress = dataAddress, .capacity = maxOperators, .downstream = downstream, .config = config});
+        statements.emplace_back(
+            NES::CreateWorkerStatement{
+                .host = host, .dataAddress = dataAddress, .capacity = maxOperators, .downstream = downstream, .config = config});
     }
     for (const auto& [name, schemaFields] : logical)
     {
@@ -591,22 +592,24 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 
     for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
-        statements.emplace_back(NES::CreatePhysicalSourceStatement{
-            .attachedTo = bindIdentifierName(logical),
-            .sourceType = bindIdentifierName(type),
-            .host = NES::Host(host),
-            .sourceConfig = bindConfig(sourceConfig),
-            .parserConfig = bindConfig(parserConfig)});
+        statements.emplace_back(
+            NES::CreatePhysicalSourceStatement{
+                .attachedTo = bindIdentifierName(logical),
+                .sourceType = bindIdentifierName(type),
+                .host = NES::Host(host),
+                .sourceConfig = bindConfig(sourceConfig),
+                .parserConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
     {
-        statements.emplace_back(NES::CreateSinkStatement{
-            .name = bindIdentifierName(name),
-            .sinkType = bindIdentifierName(type),
-            .schema = bindSchema(schemaFields),
-            .host = NES::Host(host),
-            .sinkConfig = bindConfig(config),
-            .formatConfig = bindConfig(parserConfig)});
+        statements.emplace_back(
+            NES::CreateSinkStatement{
+                .name = bindIdentifierName(name),
+                .sinkType = bindIdentifierName(type),
+                .schema = bindSchema(schemaFields),
+                .host = NES::Host(host),
+                .sinkConfig = bindConfig(config),
+                .formatConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, path, input, output] : models)
     {

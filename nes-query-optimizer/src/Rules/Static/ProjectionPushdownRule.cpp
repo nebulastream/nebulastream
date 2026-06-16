@@ -220,8 +220,9 @@ LogicalOperator pushBeyondJoin(const TypedLogicalOperator<JoinLogicalOperator>& 
         }
         else
         {
-            throw FieldNotFound(fmt::format(
-                "the requested join predicate field \"{}\" was not found in either child of the join operator", field.getLastName()));
+            throw FieldNotFound(
+                fmt::format(
+                    "the requested join predicate field \"{}\" was not found in either child of the join operator", field.getLastName()));
         }
     }
 
