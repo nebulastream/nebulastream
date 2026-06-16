@@ -102,16 +102,8 @@ RUN python3 -m venv /opt/iree && \
     ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
     iree-compile --version
 
-# Pre-clone Corrosion at the exact ref CMake will request, so offline configures inside the
-# container can fall back to it when GitHub is unreachable. EnableRust.cmake probes GitHub
-# first and only uses CORROSION_SRC when the probe fails. Tracks the nebulastream fork that
-# avoids always-dirty Rust target rebuilds.
-ENV CORROSION_GIT_REPO=https://github.com/nebulastream/corrosion.git \
-    CORROSION_VERSION=v0.6.1-always-dirty-fix \
-    CORROSION_SRC=/opt/corrosion
-RUN git clone --depth 1 --branch ${CORROSION_VERSION} \
-        ${CORROSION_GIT_REPO} ${CORROSION_SRC} && \
-    chmod -R a+rX ${CORROSION_SRC}
+# Corrosion is vendored in-tree at cmake/corrosion (see cmake/corrosion/VENDORING.md), so there is
+# no Corrosion pre-clone / CORROSION_SRC fallback to bake into the image anymore.
 
 # Pre-fetch every crate pinned in nes-network/Cargo.lock into $CARGO_HOME so cargo can build
 # offline. Only manifests + lockfile are copied (filtered by .dockerignore); stub lib sources
