@@ -110,7 +110,7 @@ jobs:
             ctest --test-dir build -j 1 -L DockerCompose --output-on-failure --output-junit build/junit-docker.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
 
       - name: Upload Test Logs on Failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
           name: logs-${{ matrix.name }}
@@ -232,7 +232,7 @@ jobs:
               # makes impossible. They are not testing offline-build behavior.
               ctest --test-dir build-offline -j --output-on-failure --timeout 1200 -LE DockerCompose
             '
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         # Upload all log and stat files if any of the tests has failed.
         name: Upload Test Logs on Failure
         if: ${{ failure() && !github.event.act }}

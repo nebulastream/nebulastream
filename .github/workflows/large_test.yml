@@ -89,7 +89,7 @@ jobs:
               --worker.default_query_execution.slice_cache.enable_slice_cache=${{ inputs.enable_slice_cache }}
 
       - name: Upload Test Logs on Failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: failure() && !github.event.act
         with:
           name: test-logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
@@ -126,7 +126,7 @@ jobs:
       - name: Run systest remote test
         run: ctest --test-dir build --output-on-failure --timeout 2400 -R systest-remote-test
       - name: Upload Test Logs on Failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: failure() && !github.event.act
         with:
           name: systest-remote-test-logs-${{ matrix.arch }}-${{ matrix.stdlib }}

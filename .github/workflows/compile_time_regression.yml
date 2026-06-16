@@ -62,7 +62,7 @@ jobs:
           ClangBuildAnalyzer --analyze build-summary > /tmp/compile-time-logs/clang-build-analyzer.txt
 
       - name: Upload compile time analysis
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: ${{ !cancelled() }}
         with:
           name: compile-time-logs-${{ matrix.arch }}

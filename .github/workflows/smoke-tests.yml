@@ -83,7 +83,7 @@ jobs:
           # Exclude DockerCompose tests (distributed-cli, distributed-repl, systest-remote) as they are too slow for smoke tests.
           ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 -LE DockerCompose ${ADDITIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         # Upload all log and stats files if any of the tests has failed.
         if: ${{ failure() && !github.event.act }}
         with:
@@ -101,7 +101,7 @@ jobs:
           flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}
           files: /junit.xml
       - name: Upload Test Summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
           name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
