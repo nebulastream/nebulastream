@@ -37,6 +37,7 @@
 #include <std/cstring.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/ValueSerializer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -88,7 +89,8 @@ void writeValue(
 }
 }
 
-JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames)
+JSONOutputFormatter::JSONOutputFormatter(
+    const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
     : OutputFormatter(fieldNames)
     , canonicalFieldNames(
           fieldNames | std::views::transform([](const auto& id) { return fmt::format("{}", id); }) | std::ranges::to<std::vector>())
@@ -106,6 +108,9 @@ JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldId
     serializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
     serializerTypes[DataType::Type::CHAR] = "JSONCHAR";
     serializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
+
+    /// Override default serializers with user specified ones
+    parseValueSerializerOverrides(descriptor.getFromConfig(OutputFormatterDescriptor::VALUE_SERIALIZERS), serializerTypes);
 }
 
 nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
@@ -209,6 +214,6 @@ OutputFormatterValidationGeneratedRegistrar::RegisterJSONOutputFormatterValidati
 
 OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)
 {
-    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames));
+    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames), std::move(args.descriptor));
 }
 }

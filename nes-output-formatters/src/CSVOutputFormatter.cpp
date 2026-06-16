@@ -92,6 +92,9 @@ CSVOutputFormatter::CSVOutputFormatter(
     serializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
     serializerTypes[DataType::Type::CHAR] = "DefaultCHAR";
     serializerTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
+
+    /// Override default serializers with user specified ones
+    parseValueSerializerOverrides(descriptor.getFromConfig(OutputFormatterDescriptor::VALUE_SERIALIZERS), serializerTypes);
 }
 
 nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
