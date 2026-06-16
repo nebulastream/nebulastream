@@ -46,7 +46,6 @@
 #include <rfl/json/Parser.hpp>
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
-#include "Sinks/PrintSink.hpp"
 #include "Sinks/SinkDescriptor.hpp"
 #include "SinksParsing/SchemaFormatter.hpp"
 

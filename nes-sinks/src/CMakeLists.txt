@@ -24,7 +24,6 @@ add_source_files(nes-sinks
 
 # Register plugins — runtime side (Sink factory)
 add_plugin(File Sink FileSink.cpp)
-add_plugin(Print Sink PrintSink.cpp)
 add_plugin(Network Sink NetworkSink.cpp)
 add_plugin(Tokio Sink TokioSink.cpp)
 
@@ -32,6 +31,5 @@ add_plugin(Tokio Sink TokioSink.cpp)
 # into nes-sinks-validation so its registrar resolves Register*SinkValidation
 # without pulling runtime symbols.
 add_plugin(File SinkValidation FileSinkValidation.cpp)
-add_plugin(Print SinkValidation PrintSinkValidation.cpp)
 add_plugin(Network SinkValidation NetworkSinkValidation.cpp)
 add_plugin(Tokio SinkValidation TokioSinkValidation.cpp)
