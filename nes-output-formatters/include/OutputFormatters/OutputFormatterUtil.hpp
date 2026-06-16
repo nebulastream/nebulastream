@@ -22,16 +22,19 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <type_traits>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/VarVal.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/ValueSerializer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <ValueSerializerRegistry.hpp>
 
@@ -95,6 +98,43 @@ struct ValueSerializerConfig
 {
     bool quoted;
 };
+
+/// Resolves the serializer that the user configured for individual fields against the fields of the output schema.
+/// The function expects the overrides string to be formatted like this: [FIELD-NAME]:[SERIALIZER-KEY],...
+/// Throws an InvalidConfigParameter for a malformed entry or an entry that names no field of the output schema.
+[[nodiscard]] inline std::unordered_map<Record::RecordFieldIdentifier, std::string>
+parseValueSerializerOverrides(const std::string& overrides, const std::vector<Record::RecordFieldIdentifier>& fieldNames)
+{
+    std::unordered_map<Record::RecordFieldIdentifier, std::string> serializerTypes;
+    for (const auto& entry : splitOnMultipleDelimiters(overrides, {','}))
+    {
+        const auto separator = entry.find(':');
+        if (separator == std::string_view::npos)
+        {
+            throw InvalidConfigParameter(
+                "VALUE_SERIALIZERS entry '{}' is not of the form [FIELD-NAME]:[SERIALIZER-KEY]", escapeSpecialCharacters(entry));
+        }
+        const auto configuredName = QualifiedIdentifier::tryParse(trimWhiteSpaces(entry.substr(0, separator)));
+        if (not configuredName.has_value())
+        {
+            throw InvalidConfigParameter(
+                "VALUE_SERIALIZERS entry '{}' does not start with a valid field name: {}",
+                escapeSpecialCharacters(entry),
+                configuredName.error().what());
+        }
+        /// Ignoring an entry that names no field of the output schema would hide a typo until someone wonders why the configured
+        /// serializer never ran.
+        if (std::ranges::find(fieldNames, configuredName.value()) == fieldNames.end())
+        {
+            throw InvalidConfigParameter(
+                "VALUE_SERIALIZERS configures a serializer for the field '{}', which is not part of the output schema. Known fields: {}",
+                configuredName.value(),
+                fmt::join(fieldNames, ", "));
+        }
+        serializerTypes[configuredName.value()] = std::string{trimWhiteSpaces(entry.substr(separator + 1))};
+    }
+    return serializerTypes;
+}
 
 /// Fetches ValueSerializer from Registry
 inline std::unique_ptr<ValueSerializer> provideValueSerializer(const std::string& serializerType, const ValueSerializerConfig& config)
