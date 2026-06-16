@@ -104,6 +104,9 @@ CSVOutputFormatter::CSVOutputFormatter(
     /// CSV does not support arrays / vectors so they obtain no preconfigured serializer here.
     /// CSV does not have a serialization standard for struct datatypes. If a user-defined datatype plugin has its own serialization (like timestamps or decimals),
     /// this wil still be used.
+
+    /// Override default serializers with user specified ones
+    parseValueSerializerOverrides(descriptor.getFromConfig(OutputFormatterDescriptor::VALUE_SERIALIZERS), serializerTypes);
 }
 
 nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
