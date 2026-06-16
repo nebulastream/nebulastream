@@ -156,6 +156,7 @@ private:
     /// GC meanwhile so left partner slices survive for that pass.
     const bool emitRightNullFill;
 
+    // todo please rename left and right and use anchor and other name we came up with. Do this for all left and right in the IntervalJoin physical operators (build, probe), operator handler, and the
     std::unique_ptr<IntervalSliceStore> leftStore;
     std::unique_ptr<IntervalSliceStore> rightStore;
 

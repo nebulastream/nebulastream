@@ -99,6 +99,7 @@ public:
     /// in milliseconds. Bounds are signed (int64_t) so past/future-anchored intervals are
     /// expressible (e.g. lower=-4, upper=-1). Watermark assigners are inserted on each
     /// input plan if not already present, mirroring addJoin.
+    // todo go through all changes on this branch and remove all #TODO that reference outer join as we implement it.
     /// TODO #1471: PR #1471 will extend this with outer-join semantics; currently INNER_JOIN only.
     static LogicalPlan addIntervalJoin(
         LogicalPlan leftLogicalPlan,
@@ -106,6 +107,7 @@ public:
         const LogicalFunction& joinFunction,
         Windowing::TimeCharacteristic leftCharacteristic,
         Windowing::TimeCharacteristic rightCharacteristic,
+        // todo extend the Windowing::TimeBasedWindowType to have an Interval there
         int64_t lowerBound,
         int64_t upperBound,
         JoinLogicalOperator::JoinType joinType);

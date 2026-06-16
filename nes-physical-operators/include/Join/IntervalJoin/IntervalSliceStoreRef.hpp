@@ -35,6 +35,7 @@ namespace NES
 class IntervalSliceStore;
 class IntervalJoinOperatorHandler;
 
+// todo remove here all references to the DefaultTimeBasedSliceStoreRef in this file and class
 /// Concrete SliceStoreRef for IntervalSliceStore. Mirrors
 /// DefaultTimeBasedSliceStoreRef in shape — owns a SliceCache, delegates the
 /// build hot path through it, and routes cache misses to a proxy that talks

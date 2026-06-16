@@ -43,6 +43,7 @@ class IntervalSliceStoreRef;
 
 /// Leaner mirror of DefaultTimeBasedSliceStore for the streaming interval join.
 ///
+// todo do not mention here the DefaultTimeBasedSliceStore. just write what the interval join requires 
 /// DefaultTimeBasedSliceStore carries a windows map plus a per-window state
 /// machine to support tumbling/sliding aggregations and joins. IntervalJoin
 /// doesn't need that — a "window" in the join-output sense is exactly one
@@ -72,6 +73,7 @@ public:
     /// sliceEnd <= triggerWm whose triggered flag is still false; return them
     /// in sorted (sliceEnd-ascending) order. Concurrent triggers on different
     /// watermarks each see a disjoint claim set thanks to the per-slice CAS.
+    // todo combine claimTriggerable with the existing WindowSlicesStoreInterface. Come up with a changed interface that works for both, DefaultTimeBasedSliceStore and IntervalSliceStore
     std::vector<std::shared_ptr<IntervalJoinSlice>> claimTriggerable(Timestamp triggerWm);
 
     /// LEFT-store termination flush. Atomically claim all not-yet-triggered
@@ -83,6 +85,7 @@ public:
     /// `gcWm` (probe watermark). Called from notifyBufferDoneProbe.
     void garbageCollectTriggered(Timestamp gcWm);
 
+    // todo do not use left and right. come up with anchor and another term.
     /// RIGHT-store GC: drop slices whose end is below `gcWm`. The handler
     /// computes `gcWm = probeWm - max(0, -offsetLow) * widthW` so that right
     /// slices outlive the last possible anchor that could reference them.
@@ -93,6 +96,7 @@ public:
     std::span<std::byte>
     allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
 
+    // todo do not mention here NLJ. just state why we need this
     /// Pipeline-count idiom matching NLJ's: tracks how many build pipelines on
     /// this side are still active. Incremented in setup(), decremented in
     /// terminate(); when it hits zero the side is "build-done".
@@ -101,8 +105,6 @@ public:
 
     [[nodiscard]] uint64_t getWindowSize() const override;
 
-    /// WindowSlicesStoreInterface compliance — thin shims; the handler uses
-    /// the interval-specific methods above, not these.
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
     getTriggerableWindowSlices(Timestamp globalWatermark) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
@@ -110,6 +112,7 @@ public:
     void deleteState() override;
 
 private:
+    // todo please write out what W stands for in widthW
     const uint64_t widthW;
     SliceAssigner sliceAssigner;
     SliceCacheConfiguration sliceCacheConfiguration;

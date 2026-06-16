@@ -211,6 +211,7 @@ LogicalPlan LogicalPlanBuilder::addIntervalJoin(
 
     /// Same constant-key check addJoin performs: forbid join keys that are purely constant expressions.
     std::unordered_set<LogicalFunction> visitedFunctions;
+    // todo go through all changes and use {} for all constructor calls
     for (const LogicalFunction& itr : BFSRange(joinFunction))
     {
         if (itr.getChildren().size() == 2)

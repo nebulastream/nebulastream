@@ -49,6 +49,7 @@ void intervalJoinRegisterActivePipelineProxy(OperatorHandler* ptrOpHandler, cons
     PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null");
     auto* handler = dynamic_cast<IntervalJoinOperatorHandler*>(ptrOpHandler);
     PRECONDITION(handler != nullptr, "expected IntervalJoinOperatorHandler");
+    // todo can I not create an IntervalJoinBuildLeft and IntervalJOinBuildRight so that I can then set the
     auto& store = (static_cast<JoinBuildSideType>(side) == JoinBuildSideType::Left) ? handler->getLeftStore() : handler->getRightStore();
     store.incrementNumberOfInputPipelines();
 }

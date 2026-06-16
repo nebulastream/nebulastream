@@ -40,6 +40,7 @@ namespace NES
 {
 class SerializableOperator;
 
+// todo add that we call/refer to left as the anchor
 /// Logical operator for a streaming interval join: pairs each left tuple `a` with
 /// right tuples `b` where `b.ts \in [a.ts + lowerBound, a.ts + upperBound]`.
 ///

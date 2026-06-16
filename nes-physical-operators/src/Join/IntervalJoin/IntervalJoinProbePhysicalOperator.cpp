@@ -232,6 +232,7 @@ void IntervalJoinProbePhysicalOperator::open(ExecutionContext& executionCtx, Rec
     const auto leftFieldNames = leftMemoryProvider->getAllFieldNames();
     const auto rightFieldNames = rightMemoryProvider->getAllFieldNames();
 
+    // todo refactor IntervalJoinProbe and have a separate outer and inner variant. this should increase the readability
     if (rightNullFillPass)
     {
         /// RIGHT/FULL outer null-fill pass: the anchor is a right slice and the partners are left slices.
