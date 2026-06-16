@@ -14,12 +14,16 @@
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
 
@@ -35,18 +39,36 @@ AggregationPhysicalFunction::AggregationPhysicalFunction(
 {
 }
 
-void AggregationPhysicalFunction::storeNull(const nautilus::val<AggregationState*>& aggregationState, const nautilus::val<bool>& isNull)
-{
-    const auto memAreaNull = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    VarVal{isNull}.writeToMemory(memAreaNull);
-}
-
-nautilus::val<bool> AggregationPhysicalFunction::readNull(const nautilus::val<AggregationState*>& aggregationState)
-{
-    const auto memAreaNull = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    auto isNull = readValueFromMemRef<bool>(memAreaNull);
-    return isNull;
-}
-
 AggregationPhysicalFunction::~AggregationPhysicalFunction() = default;
+
+AggregationStateRef::AggregationStateRef(nautilus::val<AggregationState*> state, NautilusBuffer& buffer)
+    : base(static_cast<nautilus::val<int8_t*>>(state)), parentBuffer(&buffer)
+{
+}
+
+nautilus::val<int8_t*> AggregationStateRef::data() const
+{
+    return base;
+}
+
+nautilus::val<int8_t*> AggregationStateRef::valueData(const bool hasNullByte) const
+{
+    /// hasNullByte is a compile-time bool, so we branch here rather than emit a traced pointer-add-by-zero for the non-nullable case.
+    return hasNullByte ? data() + nautilus::val<uint64_t>{1} : data();
+}
+
+NautilusBuffer& AggregationStateRef::getBuffer() const
+{
+    return *parentBuffer;
+}
+
+nautilus::val<bool> AggregationStateRef::readNull() const
+{
+    return readValueFromMemRef<bool>(data());
+}
+
+void AggregationStateRef::storeNull(const nautilus::val<bool>& isNull) const
+{
+    VarVal{isNull}.writeToMemory(data());
+}
 }

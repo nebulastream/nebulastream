@@ -48,10 +48,7 @@ AvgAggregationPhysicalFunction::AvgAggregationPhysicalFunction(
 }
 
 void AvgAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    nautilus::val<TupleBuffer*>,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const AggregationStateRef& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (inputType.nullable)
@@ -61,9 +58,9 @@ void AvgAggregationPhysicalFunction::lift(
             = nautilus::select(not includeNullValues and value.isNull(), nautilus::val<int8_t>{0}, nautilus::val<int8_t>{1});
 
         /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
-        const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
+        const auto memAreaSum = aggregationState.valueData(true);
         const auto memAreaCount = memAreaSum + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
-        const auto isNull = readNull(aggregationState);
+        const auto isNull = aggregationState.readNull();
         const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, isNull);
         const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
 
@@ -74,12 +71,12 @@ void AvgAggregationPhysicalFunction::lift(
         /// Writing the new isNull, sum, and count back to the aggregation state
         newSum.writeToMemory(memAreaSum);
         newCount.writeToMemory(memAreaCount);
-        storeNull(aggregationState, newSum.isNull());
+        aggregationState.storeNull(newSum.isNull());
     }
     else
     {
         /// Reading old sum and count from the aggregation state. The sum is stored at the beginning of the aggregation state and the count is stored after the sum
-        const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
+        const auto memAreaSum = aggregationState.data();
         const auto memAreaCount = memAreaSum + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
         const auto sum = VarVal::readNonNullableVarValFromMemory(memAreaSum, inputType);
         const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
@@ -95,25 +92,21 @@ void AvgAggregationPhysicalFunction::lift(
 }
 
 void AvgAggregationPhysicalFunction::combine(
-    const nautilus::val<AggregationState*> aggregationState1,
-    nautilus::val<TupleBuffer*>,
-    const nautilus::val<AggregationState*> aggregationState2,
-    nautilus::val<TupleBuffer*>,
-    PipelineMemoryProvider&)
+    const AggregationStateRef& aggregationState1, const AggregationStateRef& aggregationState2, PipelineMemoryProvider&)
 {
     if (inputType.nullable)
     {
         /// Reading the sum and count from the first aggregation state
-        const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1 + nautilus::val<uint64_t>{1});
+        const auto memAreaSum1 = aggregationState1.valueData(true);
         const auto memAreaCount1 = memAreaSum1 + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
-        const auto isNull1 = readNull(aggregationState1);
+        const auto isNull1 = aggregationState1.readNull();
         const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, inputType, isNull1);
         const auto count1 = VarVal::readNonNullableVarValFromMemory(memAreaCount1, countType);
 
         /// Reading the sum and count from the second aggregation state
-        const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2 + nautilus::val<uint64_t>{1});
+        const auto memAreaSum2 = aggregationState2.valueData(true);
         const auto memAreaCount2 = memAreaSum2 + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
-        const auto isNull2 = readNull(aggregationState2);
+        const auto isNull2 = aggregationState2.readNull();
         const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType, isNull2);
         const auto count2 = VarVal::readNonNullableVarValFromMemory(memAreaCount2, countType);
 
@@ -124,18 +117,18 @@ void AvgAggregationPhysicalFunction::combine(
         /// Writing the new sum, count and null back to the first aggregation state
         newSum.writeToMemory(memAreaSum1);
         newCount.writeToMemory(memAreaCount1);
-        storeNull(aggregationState1, newSum.isNull());
+        aggregationState1.storeNull(newSum.isNull());
     }
     else
     {
         /// Reading the sum and count from the first aggregation state
-        const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
+        const auto memAreaSum1 = aggregationState1.data();
         const auto memAreaCount1 = memAreaSum1 + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
         const auto sum1 = VarVal::readNonNullableVarValFromMemory(memAreaSum1, inputType);
         const auto count1 = VarVal::readNonNullableVarValFromMemory(memAreaCount1, countType);
 
         /// Reading the sum and count from the second aggregation state
-        const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
+        const auto memAreaSum2 = aggregationState2.data();
         const auto memAreaCount2 = memAreaSum2 + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
         const auto sum2 = VarVal::readNonNullableVarValFromMemory(memAreaSum2, inputType);
         const auto count2 = VarVal::readNonNullableVarValFromMemory(memAreaCount2, countType);
@@ -150,15 +143,14 @@ void AvgAggregationPhysicalFunction::combine(
     }
 }
 
-Record AvgAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+Record AvgAggregationPhysicalFunction::lower(const AggregationStateRef& aggregationState, PipelineMemoryProvider&)
 {
     if (inputType.nullable)
     {
         /// Reading the sum and count from the aggregation state
-        const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
+        const auto memAreaSum = aggregationState.valueData(true);
         const auto memAreaCount = memAreaSum + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
-        const auto isNull = readNull(aggregationState);
+        const auto isNull = aggregationState.readNull();
         const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, isNull);
         const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
 
@@ -168,7 +160,7 @@ Record AvgAggregationPhysicalFunction::lower(
     }
 
     /// Reading the sum and count from the aggregation state
-    const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memAreaSum = aggregationState.data();
     const auto memAreaCount = memAreaSum + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
     const auto sum = VarVal::readNonNullableVarValFromMemory(memAreaSum, inputType);
     const auto count = VarVal::readNonNullableVarValFromMemory(memAreaCount, countType);
@@ -178,11 +170,10 @@ Record AvgAggregationPhysicalFunction::lower(
     return Record({{resultFieldIdentifier, avg}});
 }
 
-void AvgAggregationPhysicalFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+void AvgAggregationPhysicalFunction::reset(const AggregationStateRef& aggregationState, PipelineMemoryProvider&)
 {
     /// Resetting the isNull, sum, and count to 0
-    const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memArea = aggregationState.data();
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
 }
 

@@ -98,6 +98,11 @@ public:
     friend class PagedVectorRefIter;
     PagedVectorRef(NautilusBuffer pagedVectorBuffer, std::shared_ptr<PagedVectorTupleLayout> tupleLayout);
 
+    /// Allocates and initialises a fresh unpooled buffer backing an empty PagedVector, returned as an owned buffer ready to be stored
+    /// (e.g. as a child buffer of a hash map entry). Throws if no unpooled buffer is available.
+    [[nodiscard]] static OwnedNautilusBuffer
+    createBuffer(const nautilus::val<AbstractBufferProvider*>& bufferProvider, const nautilus::val<uint64_t>& tupleSize);
+
     /// Appends the record to the paged vector, extending its total size and possibly allocating a new page.
     void pushBack(const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider);
 

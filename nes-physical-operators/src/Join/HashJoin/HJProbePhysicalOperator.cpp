@@ -140,17 +140,10 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
 
             for (const auto rightEntry : rightHashMap)
             {
-                const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
-                    rightEntry, rightHashMapBufferRef.asArg(), rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
-                auto rightValueMem = rightEntryRef.getValueMemArea();
-                OwnedNautilusBuffer rightPagedVecBuffer;
-                nautilus::invoke(
-                    +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
-                    { *out = hashMapBuf->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
-                    rightHashMapBufferRef.asArg(),
-                    rightPagedVecBuffer.asArg(),
-                    static_cast<nautilus::val<uint32_t*>>(rightValueMem));
-                const PagedVectorRef rightPagedVector{BorrowedNautilusBuffer::from(rightPagedVecBuffer.asArg()), rightTupleLayout};
+                const auto rightEntryRef = rightHashMap.getEntryRef(rightEntry);
+                auto rightPagedVecBuffer = rightHashMapBufferRef.getChild(
+                    static_cast<nautilus::val<size_t>>(readValueFromMemRef<uint32_t>(rightEntryRef.getValueMemArea())));
+                const PagedVectorRef rightPagedVector{std::move(rightPagedVecBuffer), rightTupleLayout};
                 const auto rightFields = rightTupleLayout->getAllFieldNames();
                 auto rightItStart = rightPagedVector.begin();
                 auto rightItEnd = rightPagedVector.end();
@@ -159,17 +152,10 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 if (auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef))
                 {
                     /// At this moment, we can be sure that both paged vector contain only records that satisfy the join condition
-                    const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
-                        leftEntry, leftHashMapBufferRef.asArg(), leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
-                    auto leftValueMem = leftEntryRef.getValueMemArea();
-                    OwnedNautilusBuffer leftPagedVecBuffer;
-                    nautilus::invoke(
-                        +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
-                        { *out = hashMapBuf->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
-                        leftHashMapBufferRef.asArg(),
-                        leftPagedVecBuffer.asArg(),
-                        static_cast<nautilus::val<uint32_t*>>(leftValueMem));
-                    const PagedVectorRef leftPagedVector{BorrowedNautilusBuffer::from(leftPagedVecBuffer.asArg()), leftTupleLayout};
+                    const auto leftEntryRef = leftHashMap.getEntryRef(leftEntry);
+                    auto leftPagedVecBuffer = leftHashMapBufferRef.getChild(
+                        static_cast<nautilus::val<size_t>>(readValueFromMemRef<uint32_t>(leftEntryRef.getValueMemArea())));
+                    const PagedVectorRef leftPagedVector{std::move(leftPagedVecBuffer), leftTupleLayout};
                     const auto leftFields = leftTupleLayout->getAllFieldNames();
 
                     for (const auto& leftRecord : leftPagedVector)
