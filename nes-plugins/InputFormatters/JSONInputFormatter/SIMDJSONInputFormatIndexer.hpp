@@ -89,7 +89,8 @@ public:
         const char tupleDelimiter,
         std::vector<std::string> jsonPointersToFields,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
-        std::vector<DataType> fieldDataTypes)
+        std::vector<DataType> fieldDataTypes,
+        const std::string& deserializerOverrides)
         : tupleDelimiter(tupleDelimiter)
         , jsonPointersToFields(std::move(jsonPointersToFields))
         , fieldNamesOutput(std::move(fieldNamesOutput))
@@ -111,6 +112,9 @@ public:
         /// decode them, the default ones would hand the escape sequences through to the record verbatim.
         deserializerTypes[DataType::Type::CHAR] = "JSONCHAR";
         deserializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
+
+        /// Override the datatype defaults for the fields that the user configured a deserializer for
+        fieldDeserializerTypes = parseValueDeserializerOverrides(deserializerOverrides, this->fieldNamesOutput);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -135,7 +139,8 @@ public:
             config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER),
             std::move(jsonPointersToFields),
             std::move(fieldNamesOutput),
-            std::move(fieldDataTypes));
+            std::move(fieldDataTypes),
+            config.getFromConfig(InputFormatterDescriptor::VALUE_DESERIALIZERS));
     }
 
     ~SIMDJSONInputFormatIndexer() override = default;

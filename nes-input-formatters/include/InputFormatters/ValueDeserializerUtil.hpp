@@ -14,10 +14,12 @@
 
 #pragma once
 
-#include <cstddef>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
+#include <Interface/Record.hpp>
 #include <ValueDeserializer.hpp>
 
 namespace NES
@@ -31,6 +33,12 @@ struct ValueDeserializerConfig
     bool quoted;
     bool hasTrailingSpaces;
 };
+
+/// Resolves the deserializer that the user configured for individual fields against the fields of the schema.
+/// The function expects the overrides string to be formatted like this: [FIELD-NAME]:[DESERIALIZER-KEY],...
+/// Throws an InvalidConfigParameter for a malformed entry or an entry that names no field of the schema.
+[[nodiscard]] std::unordered_map<Record::RecordFieldIdentifier, std::string>
+parseValueDeserializerOverrides(const std::string& overrides, const std::vector<Record::RecordFieldIdentifier>& fieldNames);
 
 /// Fetches ValueDeserializer from Registry
 /// The concrete type of deserializer is [Nullable]<deserializerType>ValueDeserializer
