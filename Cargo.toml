@@ -30,6 +30,10 @@ members = [
     "nes-sinks/rust/nes-sink-validation-bindings",
     "nes-sinks/rust/nes-sink-runtime",
     "nes-sinks/rust/nes-sink-runtime-bindings",
+    "nes-sources/rust/nes-source-validation",
+    "nes-sources/rust/nes-source-validation-bindings",
+    "nes-sources/rust/nes-source-runtime",
+    "nes-sources/rust/nes-source-runtime-bindings",
 ]
 
 # Shared dependency declarations. Member crates opt in with `dep.workspace = true`.
@@ -44,6 +48,10 @@ nes_sink_validation = { path = "nes-sinks/rust/nes-sink-validation" }
 nes_sink_validation_bindings = { path = "nes-sinks/rust/nes-sink-validation-bindings" }
 nes_sink_runtime = { path = "nes-sinks/rust/nes-sink-runtime" }
 nes_sink_runtime_bindings = { path = "nes-sinks/rust/nes-sink-runtime-bindings" }
+nes_source_validation = { path = "nes-sources/rust/nes-source-validation" }
+nes_source_validation_bindings = { path = "nes-sources/rust/nes-source-validation-bindings" }
+nes_source_runtime = { path = "nes-sources/rust/nes-source-runtime" }
+nes_source_runtime_bindings = { path = "nes-sources/rust/nes-source-runtime-bindings" }
 cxx = "1.0.194"
 tokio = "1.52.0"
 async-trait = "0.1.89"

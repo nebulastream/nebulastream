@@ -20,10 +20,14 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
+#include <rust/cxx.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceValidationRegistry.hpp>
+#include "nes-source-validation-bindings/lib.h"
 
 namespace NES::SourceValidationProvider
 {
@@ -33,7 +37,12 @@ std::optional<DescriptorConfig::Config> provide(const std::string_view sourceTyp
     const std::unordered_map<std::string, std::string> stringConfigMap = configMap
         | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
         | std::ranges::to<std::unordered_map>();
-    auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(stringConfigMap);
+    auto sourceValidationRegistryArguments
+        = SourceValidationRegistryArguments{.sourceType = std::string(sourceType), .config = std::move(stringConfigMap)};
+    if (source_exists(sourceValidationRegistryArguments.sourceType))
+    {
+        return RegisterTokioSourceValidation(std::move(sourceValidationRegistryArguments));
+    }
     return SourceValidationRegistry::instance().create(std::string{sourceType}, std::move(sourceValidationRegistryArguments));
 }
 }

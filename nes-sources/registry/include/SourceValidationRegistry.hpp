@@ -26,6 +26,7 @@ using SourceValidationRegistryReturnType = DescriptorConfig::Config;
 
 struct SourceValidationRegistryArguments
 {
+    std::string sourceType;
     std::unordered_map<std::string, std::string> config;
 };
 

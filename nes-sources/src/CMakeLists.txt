@@ -37,3 +37,8 @@ add_plugin(Network Source NetworkSource.cpp)
 # registrar can resolve them without pulling in any runtime symbols.
 add_plugin(File SourceValidation FileSourceValidation.cpp)
 add_plugin(Network SourceValidation NetworkSourceValidation.cpp)
+add_plugin(Tokio SourceValidation TokioSourceValidation.cpp)
+
+# TokioSource C++ class (runtime). Tokio-backed sources register their
+# SourceValidation in TokioSourceValidation.cpp above.
+add_source_files(nes-sources TokioSource.cpp)

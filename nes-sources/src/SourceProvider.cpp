@@ -17,14 +17,17 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <nes-source-validation-bindings/lib.h>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceThreadHandle.hpp>
+#include <TokioSource.hpp>
 
 namespace NES
 {
@@ -37,9 +40,19 @@ SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr
 std::unique_ptr<SourceHandle>
 SourceProvider::lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const
 {
+    const auto& sourceType = sourceDescriptor.getSourceType();
+
+    if (source_exists(sourceType))
+    {
+        SourceRuntimeConfiguration runtimeConfig{64};
+        return std::make_unique<TokioSource>(
+            std::move(backpressureListener), sourceDescriptor, originId, bufferPool, std::move(runtimeConfig));
+    }
+
+    /// Fall through to standard SourceRegistry — C++ sources wrapped in SourceThread.
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
-    if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))
+    if (auto source = SourceRegistry::instance().create(sourceType, sourceArguments))
     {
         /// The source-specific configuration of maxInflightBuffers takes priority.
         /// If not specified (0), we take the NodeEngine-wide configuration.
@@ -51,7 +64,7 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
         return std::make_unique<SourceThreadHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     }
-    throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
+    throw UnknownSourceType("unknown source descriptor type: {}", sourceType);
 }
 
 bool SourceProvider::contains(const std::string& sourceType) const ///NOLINT(readability-convert-member-functions-to-static)

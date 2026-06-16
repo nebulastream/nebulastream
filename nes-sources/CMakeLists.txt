@@ -26,8 +26,12 @@ get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 add_library(nes-sources-validation ${NES_SOURCES_VALIDATION_SOURCE_FILES})
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
 
+add_subdirectory(rust/nes-source-validation-bindings)
+add_subdirectory(rust/nes-source-runtime-bindings)
+
 target_link_libraries(nes-sources-validation
-        PUBLIC nes-common nes-configurations nes-data-types)
+        PUBLIC nes-common nes-configurations nes-data-types nes-source-validation-bindings)
+target_link_rust_lib(nes-sources-validation nes_source_validation_bindings)
 
 target_include_directories(nes-sources-validation
         PUBLIC
@@ -39,10 +43,13 @@ target_include_directories(nes-sources-validation
         PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
+# nes-network-bindings is retained for the legacy C++ NetworkSource; the TokioSource
+# bridge additionally links the io-runtime and source-runtime bindings.
 target_link_libraries(nes-sources
-        PUBLIC nes-sources-validation nes-common nes-configurations nes-memory nes-executable nes-network-bindings
-        PRIVATE nes-input-formatter-provider nes-runtime)
+        PUBLIC nes-sources-validation nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings
+        PRIVATE nes-input-formatter-provider nes-runtime nes-io-runtime nes-source-runtime-bindings nes-coro)
 target_link_rust_lib(nes-sources nes_network_bindings)
+target_link_rust_lib(nes-sources nes_source_runtime_bindings)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
