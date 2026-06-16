@@ -17,7 +17,9 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
+#include <DataTypes/DataType.hpp>
 #include <ValueDeserializer.hpp>
 
 namespace NES
@@ -31,6 +33,10 @@ struct ValueDeserializerConfig
     bool quoted;
     bool hasTrailingSpaces;
 };
+
+/// Overrides the deserializer types for the datatypes based on the overrides string. The function expects the string to be formatted like this:
+/// [TYPENAME]:[DESERIALIZER-KEY],...
+void parseValueDeserializerOverrides(const std::string& overrides, std::unordered_map<DataType::Type, std::string>& deserializersMap);
 
 /// Fetches ValueDeserializer from Registry
 /// The concrete type of deserializer is [Nullable]<deserializerType>ValueDeserializer
