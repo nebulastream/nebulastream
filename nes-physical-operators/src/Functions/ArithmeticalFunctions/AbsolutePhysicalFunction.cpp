@@ -14,6 +14,8 @@
 
 #include <Functions/ArithmeticalFunctions/AbsolutePhysicalFunction.hpp>
 
+#include <cstdint>
+#include <limits>
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
@@ -22,6 +24,8 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <function.hpp>
+#include <val_arith.hpp>
 #include <val_bool.hpp>
 
 namespace NES
@@ -34,20 +38,36 @@ AbsolutePhysicalFunction::AbsolutePhysicalFunction(PhysicalFunction childFunctio
 VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     auto value = childFunction.execute(record, arena);
+
+    /// Unsigned integers are a no-op: the magnitude equals the value and the result type is unchanged.
     if (not inputType.isSignedInteger() and not inputType.isFloat())
     {
         return value.castToType(outputType.type);
     }
 
-    /// We need to built a zero and negativeOne via castToType, as we can not make any assumptions on the input type.
-    /// Both select branches must have the same type: integer promotion widens value * negativeOne (e.g. int8 -> int),
-    /// so we cast each branch to the output type before selecting, which also produces the required result type.
-    const auto zero = VarVal{0}.castToType(inputType.type);
-    const auto negativeOne = VarVal{-1}.castToType(inputType.type);
-    return VarVal::select(
-        (value < zero).getRawValueAs<nautilus::val<bool>>(),
-        (value * negativeOne).castToType(outputType.type),
-        value.castToType(outputType.type));
+    /// Signed integer types are widened by one rank during schema inference so the magnitude of the minimum value is representable
+    /// (e.g. ABS(INT8 -128) = INT16 128). INT64 cannot be widened, so ABS(INT64_MIN) is not representable and must raise a runtime error.
+    if (inputType.isType(DataType::Type::INT64))
+    {
+        const auto rawValue = value.getRawValueAs<nautilus::val<int64_t>>();
+        const auto isMinValue = rawValue == nautilus::val<int64_t>{std::numeric_limits<int64_t>::min()};
+        /// A NULL value carries arbitrary raw bits, so only raise the overflow error when the value is INT64_MIN and non-null.
+        if (isMinValue and not value.isNull())
+        {
+            nautilus::invoke(+[] { throw ArithmeticalError("ABS() of INT64_MIN overflows"); });
+        }
+    }
+
+    /// Cast to the widened output type first, so that negating the minimum value does not overflow.
+    /// Non-const so the `return widenedValue` path can move rather than copy (performance-no-automatic-move).
+    auto widenedValue = value.castToType(outputType.type);
+    const auto zero = VarVal{0}.castToType(outputType.type);
+    const auto negativeOne = VarVal{-1}.castToType(outputType.type);
+    if (widenedValue < zero)
+    {
+        return widenedValue * negativeOne;
+    }
+    return widenedValue;
 }
 
 PhysicalFunctionRegistryReturnType
