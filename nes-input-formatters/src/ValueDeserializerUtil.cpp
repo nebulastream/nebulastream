@@ -17,16 +17,41 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
+#include <magic_enum/magic_enum.hpp>
+
 #include <ErrorHandling.hpp>
 #include <ValueDeserializer.hpp>
 #include <ValueDeserializerRegistry.hpp>
 
 namespace NES
 {
+
+void parseValueDeserializerOverrides(const std::string& overrides, std::unordered_map<DataType::Type, std::string>& deserializersMap)
+{
+    size_t typeNameStart = 0;
+    size_t typeNameEnd = overrides.find(':', typeNameStart);
+    while (typeNameEnd != std::string::npos)
+    {
+        const std::string typeName = overrides.substr(typeNameStart, typeNameEnd - typeNameStart);
+        const size_t deserializerTypeStart = typeNameEnd + 1;
+        const size_t deserializerTypeEnd = std::min(overrides.size(), overrides.find(',', deserializerTypeStart));
+        const std::string deserializerType = overrides.substr(deserializerTypeStart, deserializerTypeEnd - deserializerTypeStart);
+
+        if (std::optional<DataType::Type> dataType = magic_enum::enum_cast<DataType::Type>(typeName))
+        {
+            deserializersMap[dataType.value()] = deserializerType;
+        }
+        typeNameStart = deserializerTypeEnd + 1;
+        typeNameEnd = overrides.find(':', typeNameStart);
+    }
+}
+
 std::unique_ptr<ValueDeserializer> provideValueDeserializer(const std::string& deserializerType, const ValueDeserializerConfig& config)
 {
     /// Resolve the "Nullable" member
