@@ -23,20 +23,34 @@
 #include <gtest/gtest.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/Schema.hpp>
+#include <Debug/DebugHelpers.hpp>
+#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/UUID.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/TumblingWindow.hpp>
 #include <QueryId.hpp>
 
 using namespace NES;
@@ -246,3 +260,158 @@ TEST_F(LogicalPlanTest, OutputOperator)
     ss << plan;
     EXPECT_FALSE(ss.str().empty());
 }
+
+/// ── Breakpoint-target tests ──────────────────────────────────────────────────
+/// Build a plan, pause at the marked line, and inspect `plan` or
+/// `NES::Debug::view(plan)` in the debugger Variables panel.
+
+TEST_F(LogicalPlanTest, DebugView_DeepFilterPipeline)
+{
+    /// Source → WatermarkAssigner → Selection(temperature > limit) → Selection(id) → Sink
+    const LogicalOperator source{SourceNameLogicalOperator{"sensors"}};
+    const LogicalOperator watermark{IngestionTimeWatermarkAssignerLogicalOperator{}.withChildren({source})};
+    const LogicalOperator filter1{
+        SelectionLogicalOperator{
+            GreaterLogicalFunction{FieldAccessLogicalFunction{"temperature"}, FieldAccessLogicalFunction{"limit"}}
+        }.withChildren({watermark})};
+    const LogicalOperator filter2{SelectionLogicalOperator{FieldAccessLogicalFunction{"id"}}.withChildren({filter1})};
+    const LogicalOperator sink{SinkLogicalOperator{"ResultSink"}.withChildren({filter2})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {sink});
+    EXPECT_EQ(flatten(plan).size(), 5); // <-- set breakpoint here, inspect 'plan'
+}
+
+TEST_F(LogicalPlanTest, DebugView_MultiSourceUnion)
+{
+    /// Source("sensorA") + Source("sensorB") → Union → Selection(active) → Sink
+    const LogicalOperator sourceA{SourceNameLogicalOperator{"sensorA"}};
+    const LogicalOperator sourceB{SourceNameLogicalOperator{"sensorB"}};
+    const LogicalOperator unionOp{UnionLogicalOperator{}.withChildren({sourceA, sourceB})};
+    const LogicalOperator selection{SelectionLogicalOperator{FieldAccessLogicalFunction{"active"}}.withChildren({unionOp})};
+    const LogicalOperator sink{SinkLogicalOperator{"MergedSink"}.withChildren({selection})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {sink});
+    EXPECT_EQ(flatten(plan).size(), 5); // <-- set breakpoint here, inspect 'plan'
+}
+
+TEST_F(LogicalPlanTest, DebugView_CompoundPredicate)
+{
+    /// Source → Selection((temperature > limit AND pressure < ceiling) OR active) → Sink
+    const LogicalOperator source{SourceNameLogicalOperator{"events"}};
+    const LogicalOperator selection{
+        SelectionLogicalOperator{
+            OrLogicalFunction{
+                AndLogicalFunction{
+                    GreaterLogicalFunction{FieldAccessLogicalFunction{"temperature"}, FieldAccessLogicalFunction{"limit"}},
+                    LessLogicalFunction{FieldAccessLogicalFunction{"pressure"}, FieldAccessLogicalFunction{"ceiling"}}
+                },
+                FieldAccessLogicalFunction{"active"}
+            }
+        }.withChildren({source})};
+    const LogicalOperator sink{SinkLogicalOperator{"AlarmSink"}.withChildren({selection})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {sink});
+    EXPECT_EQ(flatten(plan).size(), 3); // <-- set breakpoint here, inspect 'plan'
+}
+
+TEST_F(LogicalPlanTest, DebugView_TumblingWindowAggregation)
+{
+    /// Source("metrics") → WatermarkAssigner → WindowedAggregation(SUM(value) GROUP BY sensor, 5s) → Sink
+    const LogicalOperator source{SourceNameLogicalOperator{"metrics"}};
+    const LogicalOperator watermark{IngestionTimeWatermarkAssignerLogicalOperator{}.withChildren({source})};
+    auto windowType = std::make_shared<Windowing::TumblingWindow>(
+        Windowing::TimeCharacteristic::createIngestionTime(),
+        Windowing::TimeMeasure(5000));
+    auto sumAgg = std::make_shared<WindowAggregationLogicalFunction>(
+        SumAggregationLogicalFunction{FieldAccessLogicalFunction{"value"}, FieldAccessLogicalFunction{"sum_value"}});
+    const LogicalOperator windowAgg{
+        WindowedAggregationLogicalOperator{
+            {FieldAccessLogicalFunction{"sensor"}},
+            std::vector{sumAgg},
+            windowType
+        }.withChildren({watermark})};
+    const LogicalOperator sink{SinkLogicalOperator{"AggSink"}.withChildren({windowAgg})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {sink});
+    EXPECT_EQ(flatten(plan).size(), 4); // <-- set breakpoint here, inspect 'plan'
+}
+
+TEST_F(LogicalPlanTest, DebugView_InnerJoin)
+{
+    /// Source("orders") + Source("payments") → Join(id > orderId, TUMBLING 10s) → Sink
+    const LogicalOperator sourceOrders{SourceNameLogicalOperator{"orders"}};
+    const LogicalOperator sourcePayments{SourceNameLogicalOperator{"payments"}};
+    auto joinWindow = std::make_shared<Windowing::TumblingWindow>(
+        Windowing::TimeCharacteristic::createIngestionTime(),
+        Windowing::TimeMeasure(10000));
+    const LogicalOperator join{
+        JoinLogicalOperator{
+            GreaterLogicalFunction{FieldAccessLogicalFunction{"id"}, FieldAccessLogicalFunction{"orderId"}},
+            joinWindow,
+            JoinLogicalOperator::JoinType::INNER_JOIN
+        }.withChildren({sourceOrders, sourcePayments})};
+    const LogicalOperator sink{SinkLogicalOperator{"JoinSink"}.withChildren({join})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {sink});
+    EXPECT_EQ(flatten(plan).size(), 4); // <-- set breakpoint here, inspect 'plan'
+}
+
+/// ── Correctness tests for Debug::view() ──────────────────────────────────────
+
+TEST_F(LogicalPlanTest, DebugView_CleanLabels)
+{
+    const LogicalOperator source{SourceNameLogicalOperator{"sensors"}};
+    const LogicalOperator filter{SelectionLogicalOperator{FieldAccessLogicalFunction{"temperature"}}.withChildren({source})};
+    const LogicalOperator sink{SinkLogicalOperator{"ResultSink"}.withChildren({filter})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {sink});
+
+    const auto pv = Debug::view(plan);
+    ASSERT_EQ(pv.roots.size(), 1);
+    EXPECT_EQ(pv.roots[0].op, "SINK(ResultSink)");
+    ASSERT_EQ(pv.roots[0].children.size(), 1);
+    EXPECT_EQ(pv.roots[0].children[0].op, "SELECTION(temperature)");
+    ASSERT_EQ(pv.roots[0].children[0].children.size(), 1);
+    EXPECT_EQ(pv.roots[0].children[0].children[0].op, "SOURCE(sensors)");
+}
+
+/// view() preserves child order, so a union's two inputs appear in build order.
+TEST_F(LogicalPlanTest, DebugView_UnionTwoChildren)
+{
+    const LogicalOperator sourceA{SourceNameLogicalOperator{"sensorA"}};
+    const LogicalOperator sourceB{SourceNameLogicalOperator{"sensorB"}};
+    const LogicalOperator unionOp{UnionLogicalOperator{}.withChildren({sourceA, sourceB})};
+
+    const auto ov = Debug::view(unionOp);
+    EXPECT_EQ(ov.op, "UnionWith");
+    ASSERT_EQ(ov.children.size(), 2);
+    EXPECT_EQ(ov.children[0].op, "SOURCE(sensorA)");
+    EXPECT_EQ(ov.children[1].op, "SOURCE(sensorB)");
+}
+
+TEST_F(LogicalPlanTest, DebugView_JoinLabels)
+{
+    const LogicalOperator sourceOrders{SourceNameLogicalOperator{"orders"}};
+    const LogicalOperator sourcePayments{SourceNameLogicalOperator{"payments"}};
+    auto joinWindow = std::make_shared<Windowing::TumblingWindow>(
+        Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(10000));
+    const LogicalOperator join{
+        JoinLogicalOperator{
+            GreaterLogicalFunction{FieldAccessLogicalFunction{"id"}, FieldAccessLogicalFunction{"orderId"}},
+            joinWindow,
+            JoinLogicalOperator::JoinType::INNER_JOIN}
+            .withChildren({sourceOrders, sourcePayments})};
+    const LogicalOperator sink{SinkLogicalOperator{"JoinSink"}.withChildren({join})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {sink});
+
+    const auto pv = Debug::view(plan);
+    ASSERT_EQ(pv.roots.size(), 1);
+    EXPECT_EQ(pv.roots[0].op, "SINK(JoinSink)");
+    ASSERT_EQ(pv.roots[0].children.size(), 1);
+    EXPECT_EQ(pv.roots[0].children[0].op, "Join(id > orderId)");
+    ASSERT_EQ(pv.roots[0].children[0].children.size(), 2);
+    EXPECT_EQ(pv.roots[0].children[0].children[0].op, "SOURCE(orders)");
+    EXPECT_EQ(pv.roots[0].children[0].children[1].op, "SOURCE(payments)");
+}
+
+TEST_F(LogicalPlanTest, DebugView_PlanLabelHasQueryId)
+{
+    const LogicalOperator source{SourceNameLogicalOperator{"sensors"}};
+    const LogicalPlan plan(INVALID_QUERY_ID, {source});
+    EXPECT_THAT(Debug::view(plan).plan, testing::HasSubstr("queryId"));
+}
+
