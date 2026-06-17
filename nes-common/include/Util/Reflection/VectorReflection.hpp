@@ -37,7 +37,7 @@ struct Reflector<std::vector<T>>
             auto reflected = context.reflect(element);
             result.push_back(reflected);
         }
-        return Reflected{rfl::Generic::Array{std::move(result)}};
+        return Reflected{std::move(result)};
     }
 };
 
