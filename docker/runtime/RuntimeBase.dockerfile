@@ -6,7 +6,7 @@
 FROM ubuntu:26.04
 
 ARG LLVM_TOOLCHAIN_VERSION=21
-ARG GRPC_HEALTH_PROBE_VERSION=v0.4.40
+ARG GRPC_HEALTH_PROBE_VERSION=v0.4.52
 
 RUN apt update -y && apt install curl wget gpg -y \
     && curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
