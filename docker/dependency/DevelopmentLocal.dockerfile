@@ -21,4 +21,6 @@ RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
 RUN mkdir -p /run/containerd && \
     chown -R ${UID}:${GID} /run/containerd
 
+RUN mkdir -p /home/${USERNAME}/.config/gdb && \
+    echo "set auto-load safe-path /" > /home/${USERNAME}/.config/gdb/gdbinit
 USER ${USERNAME}
