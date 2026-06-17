@@ -32,6 +32,7 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Debug/DebugHelpers.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -236,4 +237,22 @@ TEST_F(LogicalPlanTest, OutputOperator)
     std::stringstream ss;
     ss << plan;
     EXPECT_FALSE(ss.str().empty());
+}
+
+TEST_F(LogicalPlanTest, DebugViewBuildsLabeledTree)
+{
+    const auto source = SourceNameLogicalOperator::create(Identifier::parse("sensors"));
+    const auto filter = SelectionLogicalOperator::create(UnboundFieldAccessLogicalFunction{Identifier::parse("temperature")})
+                            .withChildrenUnsafe({source});
+    const auto sink = SinkLogicalOperator::create(Identifier::parse("ResultSink")).withChildrenUnsafe({filter});
+    const LogicalPlan plan(INVALID_QUERY_ID, {sink});
+
+    const auto planView = Debug::view(plan);
+    EXPECT_NE(planView.plan.find("LogicalPlan"), std::string::npos);
+    ASSERT_EQ(planView.roots.size(), 1);
+    EXPECT_EQ(planView.roots[0].op, "SINK(RESULTSINK)");
+    ASSERT_EQ(planView.roots[0].children.size(), 1);
+    EXPECT_EQ(planView.roots[0].children[0].op, "SELECTION(TEMPERATURE)");
+    ASSERT_EQ(planView.roots[0].children[0].children.size(), 1);
+    EXPECT_EQ(planView.roots[0].children[0].children[0].op, "SOURCE(SENSORS)");
 }

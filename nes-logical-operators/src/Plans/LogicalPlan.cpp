@@ -26,6 +26,7 @@
 #include <utility>
 #include <vector>
 
+#include <Debug/DebugHelpers.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -279,6 +280,35 @@ bool LogicalPlan::operator==(const LogicalPlan& other) const
 std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan)
 {
     return os << explain(plan, ExplainVerbosity::Short);
+}
+
+namespace Debug
+{
+
+OperatorView view(const LogicalOperator& op) /// NOLINT(misc-no-recursion)
+{
+    OperatorView node;
+    node.op = op.explain(ExplainVerbosity::Short);
+    for (const auto& child : op.getChildren())
+    {
+        node.children.push_back(view(child));
+    }
+    return node;
+}
+
+PlanView view(const LogicalPlan& plan)
+{
+    PlanView result;
+    std::ostringstream planLabel;
+    planLabel << "LogicalPlan (queryId: " << plan.getQueryId() << ")";
+    result.plan = planLabel.str();
+    for (const auto& root : plan.getRootOperators())
+    {
+        result.roots.push_back(view(root));
+    }
+    return result;
+}
+
 }
 
 }
