@@ -37,6 +37,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/TCPDataServer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <asm-generic/socket.h>
 #include <bits/types/struct_timeval.h>
@@ -47,7 +48,6 @@
 #include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include <Sources/TCPDataServer.hpp>
 
 namespace NES
 {
@@ -296,7 +296,8 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBlockingTCPSource(Sou
     return std::make_unique<BlockingTCPSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterBlockingTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+InlineDataRegistryReturnType
+InlineDataGeneratedRegistrar::RegisterBlockingTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
     std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
@@ -312,7 +313,8 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterBlockingTCPIn
 
     auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.tuples));
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersBlockingTCP::PORT, std::to_string(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
+        ConfigParametersBlockingTCP::PORT, std::to_string(mockTCPServer->getPort()));
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersBlockingTCP::HOST, "localhost");
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
@@ -338,7 +340,8 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterBlockingTCPFileDa
 
     auto mockTCPServer = std::make_unique<TCPDataServer>(systestAdaptorArguments.testFilePath);
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersBlockingTCP::PORT, std::to_string(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
+        ConfigParametersBlockingTCP::PORT, std::to_string(mockTCPServer->getPort()));
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersBlockingTCP::HOST, "localhost");
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });

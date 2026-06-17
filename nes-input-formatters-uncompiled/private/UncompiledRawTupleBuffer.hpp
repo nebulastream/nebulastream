@@ -91,7 +91,8 @@ private:
 public:
     UncompiledStagedBuffer() = default;
 
-    UncompiledStagedBuffer(UncompiledRawTupleBuffer rawTupleBuffer, const uint32_t offsetOfFirstTupleDelimiter, const uint32_t offsetOfLastTupleDelimiter)
+    UncompiledStagedBuffer(
+        UncompiledRawTupleBuffer rawTupleBuffer, const uint32_t offsetOfFirstTupleDelimiter, const uint32_t offsetOfLastTupleDelimiter)
         : rawBuffer(std::move(rawTupleBuffer))
         , sizeOfBufferInBytes(this->rawBuffer.getNumberOfBytes())
         , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)

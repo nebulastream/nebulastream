@@ -1,13 +1,13 @@
 // src/query_manager.rs
+use crate::config::QueryDefinition;
 use anyhow::Result;
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 use tempfile::NamedTempFile;
-use std::io::Write;
-use tracing::{info, debug};
-use crate::config::QueryDefinition;
+use tracing::{debug, info};
 
 pub struct QueryManager {
     working_dir: PathBuf,
@@ -20,7 +20,10 @@ pub struct QueryManager {
 impl QueryManager {
     pub fn new(working_dir: PathBuf) -> Self {
         // Todo: generalize
-        let nebuli_binary = std::path::Path::new("/home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-nebuli/nes-nebuli").to_path_buf();
+        let nebuli_binary = std::path::Path::new(
+            "/home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-nebuli/nes-nebuli",
+        )
+        .to_path_buf();
         // let nebuli_binary = working_dir.join("nes-nebuli");
 
         Self {
@@ -67,7 +70,14 @@ impl QueryManager {
 
         // Start the query
         let start_output = Command::new(&self.nebuli_binary)
-            .args(&["-d", "-w", "-s", "localhost:8080", "start", &instance_id.to_string()])
+            .args(&[
+                "-d",
+                "-w",
+                "-s",
+                "localhost:8080",
+                "start",
+                &instance_id.to_string(),
+            ])
             .current_dir(&self.working_dir)
             .output()?;
 
@@ -78,7 +88,10 @@ impl QueryManager {
         }
 
         self.total_submitted.fetch_add(1, Ordering::Relaxed);
-        info!("Query '{}' instance {} started successfully", query.id, instance_id);
+        info!(
+            "Query '{}' instance {} started successfully",
+            query.id, instance_id
+        );
 
         Ok(())
     }

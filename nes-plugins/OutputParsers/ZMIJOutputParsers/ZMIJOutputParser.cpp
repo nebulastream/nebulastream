@@ -22,15 +22,16 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/InlineTagMacro.hpp>
 #include <Util/InvokeMacro.hpp>
 #include <Util/Strings.hpp>
-#include <OutputParserRegistry.hpp>
 #include <nautilus/inline.hpp>
-#include <Util/InlineTagMacro.hpp>
+#include <OutputParserRegistry.hpp>
 
 namespace NES
 {
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseF32ZMIJ(
     const float value,
     int8_t* bufferStartingAddress,
@@ -45,6 +46,7 @@ uint64_t parseF32ZMIJ(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseF64ZMIJ(
     const double value,
     int8_t* bufferStartingAddress,
@@ -58,7 +60,6 @@ uint64_t parseF64ZMIJ(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
-
 nautilus::val<uint64_t> ZMIJF32OutputParser::parseAndWrite(
     const VarVal& value,
     const nautilus::val<uint64_t>& remainingSize,
@@ -67,7 +68,8 @@ nautilus::val<uint64_t> ZMIJF32OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-    return NAUTILUS_TAGGED_INVOKE("parse_to_string", parseF32ZMIJ, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseF32ZMIJ, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> ZMIJF64OutputParser::parseAndWrite(
@@ -78,7 +80,8 @@ nautilus::val<uint64_t> ZMIJF64OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-    return NAUTILUS_TAGGED_INVOKE("parse_to_string", parseF64ZMIJ, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseF64ZMIJ, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 OutputParserRegistryReturnType OutputParserGeneratedRegistrar::RegisterZMIJF32OutputParser(OutputParserRegistryArguments)

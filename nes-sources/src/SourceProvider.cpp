@@ -54,7 +54,8 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
             ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
             : defaultMaxInflightBuffers;
         const auto inputFormatterThreadingMode = sourceDescriptor.getInputFormatterDescriptor().getThreadingMode();
-        SourceRuntimeConfiguration runtimeConfig{.inflightBufferLimit = maxInflightBuffers, .inputFormatterThreadingMode = inputFormatterThreadingMode};
+        SourceRuntimeConfiguration runtimeConfig{
+            .inflightBufferLimit = maxInflightBuffers, .inputFormatterThreadingMode = inputFormatterThreadingMode};
 
         return std::visit(
             Overloaded{

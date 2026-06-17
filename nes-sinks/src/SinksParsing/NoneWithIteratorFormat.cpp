@@ -20,9 +20,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <string>
 #include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <SinksParsing/Format.hpp>
 #include <fmt/format.h>
-#include <SinksParsing/BufferIterator.hpp>
 
 namespace NES
 {

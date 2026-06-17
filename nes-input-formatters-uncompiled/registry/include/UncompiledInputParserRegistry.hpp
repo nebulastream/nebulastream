@@ -31,8 +31,11 @@ struct UncompiledInputParserRegistryArguments
     UncompiledQuotationType quotationType;
 };
 
-class UncompiledInputParserRegistry
-    : public BaseRegistry<UncompiledInputParserRegistry, std::string, UncompiledInputParserRegistryReturnType, UncompiledInputParserRegistryArguments>
+class UncompiledInputParserRegistry : public BaseRegistry<
+                                          UncompiledInputParserRegistry,
+                                          std::string,
+                                          UncompiledInputParserRegistryReturnType,
+                                          UncompiledInputParserRegistryArguments>
 {
 };
 

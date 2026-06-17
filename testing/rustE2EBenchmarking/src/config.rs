@@ -1,9 +1,9 @@
 // src/config.rs
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BenchmarkConfig {
@@ -105,29 +105,41 @@ impl BenchmarkConfig {
 
         // Validate working directory exists
         if !self.system.working_directory.exists() {
-            anyhow::bail!("Working directory not found: {:?}", self.system.working_directory);
+            anyhow::bail!(
+                "Working directory not found: {:?}",
+                self.system.working_directory
+            );
         }
 
         // Validate TCP server files exist
         for server in &self.tcp_servers {
             if !server.file_path.exists() {
-                anyhow::bail!("TCP server file not found for '{}': {:?}",
-                    server.name, server.file_path);
+                anyhow::bail!(
+                    "TCP server file not found for '{}': {:?}",
+                    server.name,
+                    server.file_path
+                );
             }
         }
 
         // Validate query YAML files exist
         for query in &self.queries {
             if !query.yaml_path.exists() {
-                anyhow::bail!("Query YAML not found for '{}': {:?}",
-                    query.id, query.yaml_path);
+                anyhow::bail!(
+                    "Query YAML not found for '{}': {:?}",
+                    query.id,
+                    query.yaml_path
+                );
             }
 
             // Validate TCP sources reference existing servers
             for source in &query.tcp_sources {
                 if !self.tcp_servers.iter().any(|s| &s.name == source) {
-                    anyhow::bail!("Query '{}' references unknown TCP server: '{}'",
-                        query.id, source);
+                    anyhow::bail!(
+                        "Query '{}' references unknown TCP server: '{}'",
+                        query.id,
+                        source
+                    );
                 }
             }
         }
@@ -135,8 +147,8 @@ impl BenchmarkConfig {
         // Validate benchmark steps reference valid queries and servers
         for step in &self.benchmark_sequence {
             match step {
-                BenchmarkStep::StartTcpServers { servers } |
-                BenchmarkStep::StopTcpServers { servers } => {
+                BenchmarkStep::StartTcpServers { servers }
+                | BenchmarkStep::StopTcpServers { servers } => {
                     for server in servers {
                         if !self.tcp_servers.iter().any(|s| &s.name == server) {
                             anyhow::bail!("Step references unknown TCP server: '{}'", server);
@@ -151,7 +163,10 @@ impl BenchmarkConfig {
                 BenchmarkStep::SubmitParallel { queries } => {
                     for pq in queries {
                         if !self.queries.iter().any(|q| &q.id == &pq.query_id) {
-                            anyhow::bail!("Parallel step references unknown query: '{}'", pq.query_id);
+                            anyhow::bail!(
+                                "Parallel step references unknown query: '{}'",
+                                pq.query_id
+                            );
                         }
                     }
                 }
@@ -172,11 +187,26 @@ impl BenchmarkConfig {
                 working_directory: PathBuf::from("/path/to/working/dir"),
                 parameters: {
                     let mut params = HashMap::new();
-                    params.insert("worker.queryEngine.numberOfWorkerThreads".to_string(), "23".to_string());
-                    params.insert("worker.queryEngine.admissionQueueSize".to_string(), "5000".to_string());
-                    params.insert("worker.queryEngine.taskQueueSize".to_string(), "100000".to_string());
-                    params.insert("worker.defaultQueryExecution.executionMode".to_string(), "COMPILER".to_string());
-                    params.insert("worker.numberOfBuffersInGlobalBufferManager".to_string(), "800000".to_string());
+                    params.insert(
+                        "worker.queryEngine.numberOfWorkerThreads".to_string(),
+                        "23".to_string(),
+                    );
+                    params.insert(
+                        "worker.queryEngine.admissionQueueSize".to_string(),
+                        "5000".to_string(),
+                    );
+                    params.insert(
+                        "worker.queryEngine.taskQueueSize".to_string(),
+                        "100000".to_string(),
+                    );
+                    params.insert(
+                        "worker.defaultQueryExecution.executionMode".to_string(),
+                        "COMPILER".to_string(),
+                    );
+                    params.insert(
+                        "worker.numberOfBuffersInGlobalBufferManager".to_string(),
+                        "800000".to_string(),
+                    );
                     params.insert("worker.bufferSizeInBytes".to_string(), "65536".to_string());
                     params
                 },
@@ -223,7 +253,6 @@ impl BenchmarkConfig {
             benchmark_sequence: vec![
                 BenchmarkStep::StartSystem,
                 BenchmarkStep::Wait { duration_ms: 5000 },
-
                 // First phase: Yahoo queries
                 BenchmarkStep::StartTcpServers {
                     servers: vec!["yahoo_server".to_string()],
@@ -237,18 +266,15 @@ impl BenchmarkConfig {
                 BenchmarkStep::CollectMetrics {
                     name: "yahoo_phase".to_string(),
                 },
-
                 // Second phase: Nexmark queries in parallel
                 BenchmarkStep::StartTcpServers {
                     servers: vec!["nexmark_server".to_string()],
                 },
                 BenchmarkStep::SubmitParallel {
-                    queries: vec![
-                        ParallelQuery {
-                            query_id: "q5_nexmark".to_string(),
-                            count: 10,
-                        },
-                    ],
+                    queries: vec![ParallelQuery {
+                        query_id: "q5_nexmark".to_string(),
+                        count: 10,
+                    }],
                 },
                 BenchmarkStep::WaitForCompletion {
                     timeout_ms: Some(60000),
@@ -256,7 +282,6 @@ impl BenchmarkConfig {
                 BenchmarkStep::CollectMetrics {
                     name: "nexmark_phase".to_string(),
                 },
-
                 BenchmarkStep::StopSystem,
             ],
 
@@ -273,8 +298,14 @@ impl BenchmarkConfig {
         Ok(())
     }
 
-    pub fn get_total_tcp_connections(&self, query_id: &str, count: u32) -> Result<HashMap<String, u32>> {
-        let query = self.queries.iter()
+    pub fn get_total_tcp_connections(
+        &self,
+        query_id: &str,
+        count: u32,
+    ) -> Result<HashMap<String, u32>> {
+        let query = self
+            .queries
+            .iter()
             .find(|q| q.id == query_id)
             .ok_or_else(|| anyhow::anyhow!("Query '{}' not found", query_id))?;
 

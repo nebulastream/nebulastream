@@ -79,7 +79,8 @@ public:
         const nautilus::val<int8_t*>& fieldPointer,
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const = 0;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+        = 0;
 
     virtual std::ostream& toString(std::ostream&) const = 0;
 

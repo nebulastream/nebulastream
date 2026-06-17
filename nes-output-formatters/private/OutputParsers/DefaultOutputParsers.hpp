@@ -19,10 +19,10 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputParser.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES
 {

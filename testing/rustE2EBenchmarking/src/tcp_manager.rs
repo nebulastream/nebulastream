@@ -1,9 +1,9 @@
 // src/tcp_manager.rs
+use crate::config::TcpServerConfig;
 use anyhow::Result;
 use std::collections::HashMap;
 use std::process::{Child, Command};
-use tracing::{info, error};
-use crate::config::TcpServerConfig;
+use tracing::{error, info};
 
 pub struct TcpServerManager {
     servers: HashMap<String, TcpServerHandle>,
@@ -34,12 +34,19 @@ impl TcpServerManager {
 
         // Build the tcp-server command
         // Todo: generalize
-        let mut cmd = Command::new("/home/rudi/dima/nebulastream-public/testing/rustE2EBenchmarking/target/release/tcp-server");
-        cmd.arg("--host").arg(&config.host)
-            .arg("--port").arg(config.port.to_string())
-            .arg("--file").arg(&config.file_path)
-            .arg("--repeat").arg(config.repeat_count.to_string())
-            .arg("--batch-size").arg(total_connections.to_string());
+        let mut cmd = Command::new(
+            "/home/rudi/dima/nebulastream-public/testing/rustE2EBenchmarking/target/release/tcp-server",
+        );
+        cmd.arg("--host")
+            .arg(&config.host)
+            .arg("--port")
+            .arg(config.port.to_string())
+            .arg("--file")
+            .arg(&config.file_path)
+            .arg("--repeat")
+            .arg(config.repeat_count.to_string())
+            .arg("--batch-size")
+            .arg(total_connections.to_string());
 
         if let Some(buffer_size) = config.buffer_size {
             cmd.arg("--buffer-size").arg(buffer_size.to_string());
@@ -49,11 +56,14 @@ impl TcpServerManager {
 
         let process = cmd.spawn()?;
 
-        self.servers.insert(name.clone(), TcpServerHandle {
-            process,
-            config,
-            connections_served: 0,
-        });
+        self.servers.insert(
+            name.clone(),
+            TcpServerHandle {
+                process,
+                config,
+                connections_served: 0,
+            },
+        );
 
         // Give server time to start
         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;

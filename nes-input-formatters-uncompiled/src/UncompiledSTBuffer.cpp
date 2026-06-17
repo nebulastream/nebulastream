@@ -37,7 +37,8 @@
 namespace NES
 {
 
-UncompiledSTBuffer::UncompiledSTBuffer(const size_t initialSize, TupleBuffer dummyBuffer) : buffer(std::vector<UncompiledSTBufferEntry>(initialSize))
+UncompiledSTBuffer::UncompiledSTBuffer(const size_t initialSize, TupleBuffer dummyBuffer)
+    : buffer(std::vector<UncompiledSTBufferEntry>(initialSize))
 {
     PRECONDITION(initialSize > 0, "Constructing an UncompiledSTBuffer with an initial size of 0 is not allowed");
     buffer.at(0).setStateOfFirstIndex(std::move(dummyBuffer));
@@ -70,8 +71,8 @@ void UncompiledSTBuffer::claimSTBuffers(const SequenceNumber stStartSn, const st
     buffer[lastBufferIdx].claimLeadingBuffer(spanningTupleBuffers, lastOffset);
 }
 
-UncompiledSequenceShredderResult
-UncompiledSTBuffer::tryFindLeadingSTForBufferWithDelimiter(const SequenceNumber sequenceNumber, const UncompiledStagedBuffer& indexedRawBuffer)
+UncompiledSequenceShredderResult UncompiledSTBuffer::tryFindLeadingSTForBufferWithDelimiter(
+    const SequenceNumber sequenceNumber, const UncompiledStagedBuffer& indexedRawBuffer)
 {
     /// Try to set 'indexedRawBuffer' at corresponding index in buffer. Return as 'out-of-range' buffer, if setting the buffer fails
     if (const auto [bufferIdx, abaItNumber] = getBufferIdxAndABAItNo(sequenceNumber);
@@ -86,7 +87,8 @@ UncompiledSTBuffer::tryFindLeadingSTForBufferWithDelimiter(const SequenceNumber 
         std::vector<UncompiledStagedBuffer> spanningTupleBuffers(sizeOfSpanningTuple);
         spanningTupleBuffers[0] = std::move(firstSTStartBuffer.value());
         claimSTBuffers(firstSTStartSN, spanningTupleBuffers);
-        return UncompiledSequenceShredderResult{.isInRange = true, .spanningBuffers = UncompiledSpanningBuffers(std::move(spanningTupleBuffers))};
+        return UncompiledSequenceShredderResult{
+            .isInRange = true, .spanningBuffers = UncompiledSpanningBuffers(std::move(spanningTupleBuffers))};
     }
     return UncompiledSequenceShredderResult{.isInRange = true, .spanningBuffers = UncompiledSpanningBuffers({indexedRawBuffer})};
 }
@@ -123,7 +125,8 @@ UncompiledSTBuffer::tryFindSTForBufferWithoutDelimiter(const SequenceNumber sequ
         INVARIANT(searchAndClaimResult.leadingSTStartBuffer.has_value(), "A leading spanning tuple must have start buffer value");
         spanningTupleBuffers[0] = std::move(searchAndClaimResult.leadingSTStartBuffer.value());
         claimSTBuffers(searchAndClaimResult.firstSequenceNumber, spanningTupleBuffers);
-        return UncompiledSequenceShredderResult{.isInRange = true, .spanningBuffers = UncompiledSpanningBuffers(std::move(spanningTupleBuffers))};
+        return UncompiledSequenceShredderResult{
+            .isInRange = true, .spanningBuffers = UncompiledSpanningBuffers(std::move(spanningTupleBuffers))};
     }
     return UncompiledSequenceShredderResult{.isInRange = true, .spanningBuffers = UncompiledSpanningBuffers({indexedRawBuffer})};
 }
@@ -152,7 +155,8 @@ std::pair<UncompiledSTBufferIdx, UncompiledABAItNo> UncompiledSTBuffer::getBuffe
     return std::make_pair(sequenceNumberBufferIdx, abaItNumber);
 }
 
-std::optional<size_t> UncompiledSTBuffer::searchLeading(const UncompiledSTBufferIdx searchStartBufferIdx, const UncompiledABAItNo abaItNumber) const
+std::optional<size_t>
+UncompiledSTBuffer::searchLeading(const UncompiledSTBufferIdx searchStartBufferIdx, const UncompiledABAItNo abaItNumber) const
 {
     const auto searchStartBufferIdxV = searchStartBufferIdx.getRawValue();
     size_t leadingDistance = 1;
@@ -169,7 +173,8 @@ std::optional<size_t> UncompiledSTBuffer::searchLeading(const UncompiledSTBuffer
     return (entryState.hasCorrectABA) ? std::optional{leadingDistance} : std::nullopt;
 }
 
-std::optional<size_t> UncompiledSTBuffer::searchTrailing(const UncompiledSTBufferIdx searchStartBufferIdx, const UncompiledABAItNo abaItNumber) const
+std::optional<size_t>
+UncompiledSTBuffer::searchTrailing(const UncompiledSTBufferIdx searchStartBufferIdx, const UncompiledABAItNo abaItNumber) const
 {
     const auto searchStartBufferIdxV = searchStartBufferIdx.getRawValue();
     size_t trailingDistance = 1;
@@ -208,7 +213,8 @@ UncompiledSTBuffer::ClaimedSpanningTuple UncompiledSTBuffer::claimingTrailingDel
     return claimingTrailingDelimiterSearch(stStartSN, stStartSN);
 }
 
-UncompiledSTBuffer::ClaimedSpanningTuple UncompiledSTBuffer::claimingTrailingDelimiterSearch(const SequenceNumber stStartSN, const SequenceNumber searchStartSN)
+UncompiledSTBuffer::ClaimedSpanningTuple
+UncompiledSTBuffer::claimingTrailingDelimiterSearch(const SequenceNumber stStartSN, const SequenceNumber searchStartSN)
 {
     const auto [stStartBufferIdx, stStartABAItNo] = getBufferIdxAndABAItNo(stStartSN);
     const auto [searchStartBufferIdx, searchStartABAItNo] = getBufferIdxAndABAItNo(searchStartSN);

@@ -1,18 +1,18 @@
 // src/runner.rs
 use anyhow::Result;
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tokio::time::{sleep, Duration, Instant};
-use tracing::{info, warn, error};
 use chrono::Local;
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use tokio::time::{Duration, Instant, sleep};
+use tracing::{error, info, warn};
 
 use crate::config::{BenchmarkConfig, BenchmarkStep};
-use crate::tcp_manager::TcpServerManager;
 use crate::query_manager::QueryManager;
 use crate::system_manager::SystemManager;
+use crate::tcp_manager::TcpServerManager;
 
 pub struct BenchmarkRunner {
     config: BenchmarkConfig,
@@ -26,9 +26,7 @@ pub struct BenchmarkRunner {
 impl BenchmarkRunner {
     pub fn new(config: BenchmarkConfig) -> Self {
         let tcp_manager = Arc::new(RwLock::new(TcpServerManager::new()));
-        let query_manager = Arc::new(QueryManager::new(
-            config.system.working_directory.clone(),
-        ));
+        let query_manager = Arc::new(QueryManager::new(config.system.working_directory.clone()));
         let system_manager = Arc::new(SystemManager::new(
             config.system.binary_path.clone(),
             config.system.working_directory.clone(),
@@ -59,8 +57,12 @@ impl BenchmarkRunner {
 
         // Execute benchmark sequence
         for (idx, step) in self.config.benchmark_sequence.iter().enumerate() {
-            info!("Executing step {}/{}: {:?}",
-                idx + 1, self.config.benchmark_sequence.len(), step);
+            info!(
+                "Executing step {}/{}: {:?}",
+                idx + 1,
+                self.config.benchmark_sequence.len(),
+                step
+            );
 
             if let Err(e) = self.execute_step(step).await {
                 error!("Step {} failed: {}", idx + 1, e);
@@ -72,7 +74,10 @@ impl BenchmarkRunner {
         }
 
         let total_duration = start_time.elapsed();
-        info!("Benchmark completed in {:.2}s", total_duration.as_secs_f64());
+        info!(
+            "Benchmark completed in {:.2}s",
+            total_duration.as_secs_f64()
+        );
 
         // Save metrics if configured
         if let Some(metrics_file) = &self.config.output.metrics_file {
@@ -110,22 +115,30 @@ impl BenchmarkRunner {
 
             BenchmarkStep::StartTcpServers { servers } => {
                 for server_name in servers {
-                    let server_config = self.config.tcp_servers.iter()
+                    let server_config = self
+                        .config
+                        .tcp_servers
+                        .iter()
                         .find(|s| &s.name == server_name)
                         .ok_or_else(|| anyhow::anyhow!("TCP server '{}' not found", server_name))?;
 
                     // Calculate total connections needed based on pending queries
-                    let total_connections = self.calculate_connections_for_server(server_name).await?;
+                    let total_connections =
+                        self.calculate_connections_for_server(server_name).await?;
 
-                    info!("Starting TCP server '{}' on {}:{} (expecting {} connections)",
-                        server_name, server_config.host, server_config.port, total_connections);
+                    info!(
+                        "Starting TCP server '{}' on {}:{} (expecting {} connections)",
+                        server_name, server_config.host, server_config.port, total_connections
+                    );
 
                     let mut manager = self.tcp_manager.write().await;
-                    manager.start_server(
-                        server_name.clone(),
-                        server_config.clone(),
-                        total_connections,
-                    ).await?;
+                    manager
+                        .start_server(
+                            server_name.clone(),
+                            server_config.clone(),
+                            total_connections,
+                        )
+                        .await?;
                 }
             }
 
@@ -137,8 +150,15 @@ impl BenchmarkRunner {
                 }
             }
 
-            BenchmarkStep::SubmitQuery { query_id, count, delay_between_ms } => {
-                let query_def = self.config.queries.iter()
+            BenchmarkStep::SubmitQuery {
+                query_id,
+                count,
+                delay_between_ms,
+            } => {
+                let query_def = self
+                    .config
+                    .queries
+                    .iter()
                     .find(|q| &q.id == query_id)
                     .ok_or_else(|| anyhow::anyhow!("Query '{}' not found", query_id))?;
 
@@ -148,11 +168,9 @@ impl BenchmarkRunner {
                     let output_path = self.get_query_output_path(query_id, i);
 
                     info!("Got output path");
-                    self.query_manager.submit_query(
-                        query_def.clone(),
-                        i,
-                        output_path,
-                    ).await?;
+                    self.query_manager
+                        .submit_query(query_def.clone(), i, output_path)
+                        .await?;
                     info!("submitted query");
                     if i < *count {
                         if let Some(delay) = delay_between_ms {
@@ -168,7 +186,10 @@ impl BenchmarkRunner {
 
                 let mut tasks = Vec::new();
                 for pq in queries {
-                    let query_def = self.config.queries.iter()
+                    let query_def = self
+                        .config
+                        .queries
+                        .iter()
                         .find(|q| q.id == pq.query_id)
                         .ok_or_else(|| anyhow::anyhow!("Query '{}' not found", pq.query_id))?;
 
@@ -178,11 +199,7 @@ impl BenchmarkRunner {
                         let query_def = query_def.clone();
 
                         let task = tokio::spawn(async move {
-                            query_manager.submit_query(
-                                query_def,
-                                i,
-                                output_path,
-                            ).await
+                            query_manager.submit_query(query_def, i, output_path).await
                         });
 
                         tasks.push(task);
@@ -242,18 +259,24 @@ impl BenchmarkRunner {
 
         for step in &self.config.benchmark_sequence {
             match step {
-                BenchmarkStep::StartTcpServers { servers } if servers.contains(&server_name.to_string()) => {
+                BenchmarkStep::StartTcpServers { servers }
+                    if servers.contains(&server_name.to_string()) =>
+                {
                     server_started = true;
                     total_connections = 0; // Reset count when server starts
                 }
 
-                BenchmarkStep::StopTcpServers { servers } if servers.contains(&server_name.to_string()) => {
+                BenchmarkStep::StopTcpServers { servers }
+                    if servers.contains(&server_name.to_string()) =>
+                {
                     if server_started {
                         break; // Stop counting when server stops
                     }
                 }
 
-                BenchmarkStep::SubmitQuery { query_id, count, .. } if server_started => {
+                BenchmarkStep::SubmitQuery {
+                    query_id, count, ..
+                } if server_started => {
                     if let Some(query) = self.config.queries.iter().find(|q| &q.id == query_id) {
                         if query.tcp_sources.contains(&server_name.to_string()) {
                             total_connections += count;
@@ -263,7 +286,9 @@ impl BenchmarkRunner {
 
                 BenchmarkStep::SubmitParallel { queries } if server_started => {
                     for pq in queries {
-                        if let Some(query) = self.config.queries.iter().find(|q| q.id == pq.query_id) {
+                        if let Some(query) =
+                            self.config.queries.iter().find(|q| q.id == pq.query_id)
+                        {
                             if query.tcp_sources.contains(&server_name.to_string()) {
                                 total_connections += pq.count;
                             }
@@ -284,7 +309,11 @@ impl BenchmarkRunner {
 
         // Create timestamped subdirectory for this run
         let timestamp = Local::now().format("%Y%m%d_%H%M%S");
-        let run_dir = self.config.output.results_dir.join(format!("run_{}", timestamp));
+        let run_dir = self
+            .config
+            .output
+            .results_dir
+            .join(format!("run_{}", timestamp));
         fs::create_dir_all(&run_dir)?;
 
         Ok(())
@@ -292,13 +321,13 @@ impl BenchmarkRunner {
 
     fn get_query_output_path(&self, query_id: &str, instance: u32) -> PathBuf {
         let timestamp = Local::now().format("%Y%m%d_%H%M%S");
-        self.config.output.results_dir
-            .join(format!("{}_{}_{}_{}.csv",
-                          self.config.name.replace(' ', "_"),
-                          query_id,
-                          instance,
-                          timestamp
-            ))
+        self.config.output.results_dir.join(format!(
+            "{}_{}_{}_{}.csv",
+            self.config.name.replace(' ', "_"),
+            query_id,
+            instance,
+            timestamp
+        ))
     }
 
     async fn collect_current_metrics(&self) -> Result<serde_json::Value> {

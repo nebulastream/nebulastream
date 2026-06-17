@@ -25,9 +25,9 @@
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexerRegistry.hpp>
-#include <InputFormatterValidationRegistry.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
+#include <InputFormatterValidationRegistry.hpp>
 
 namespace
 {
@@ -159,8 +159,8 @@ RegisterSequentialCSVInputFormatIndexer(InputFormatIndexerRegistryArguments argu
     return arguments.createInputFormatterWithIndexer(SequentialCSVInputFormatIndexer{arguments.getInputFormatterConfig()});
 }
 
-InputFormatterValidationRegistryReturnType
-InputFormatterValidationGeneratedRegistrar::RegisterSequentialCSVInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterSequentialCSVInputFormatterValidation(
+    InputFormatterValidationRegistryArguments arguments)
 {
     return SequentialCSVInputFormatIndexer::validateAndFormat(arguments.config);
 }

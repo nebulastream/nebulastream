@@ -15,8 +15,8 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <InputParser.hpp>
 #include <val_arith.hpp>
@@ -26,7 +26,7 @@ namespace NES
 {
 class FastFloatF32InputParser final : public InputParser
 {
-    public:
+public:
     explicit FastFloatF32InputParser() noexcept = default;
     [[nodiscard]] VarVal parseToVarVal(
         bool nullable,

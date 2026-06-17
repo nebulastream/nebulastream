@@ -32,6 +32,7 @@
 #include <SinksParsing/CSVFormat.hpp>
 #include <SinksParsing/NoneWithIteratorFormat.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
@@ -39,7 +40,6 @@
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
-#include <Util/Strings.hpp>
 
 namespace NES
 {

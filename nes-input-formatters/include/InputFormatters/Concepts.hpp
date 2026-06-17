@@ -57,8 +57,8 @@ concept FieldIndexFunctionType = requires(const T& indexFunction) {
 
 class RawTupleBuffer;
 template <typename T>
-concept InputFormatIndexerType = IndexerMetaDataType<typename T::IndexerMetaData>
-    && FieldIndexFunctionType<typename T::FieldIndexFunctionType>
+concept InputFormatIndexerType
+    = IndexerMetaDataType<typename T::IndexerMetaData> && FieldIndexFunctionType<typename T::FieldIndexFunctionType>
     && std::same_as<std::remove_cv_t<decltype(T::IsSequential)>, bool> && requires(const T& indexer) {
            {
                indexer.indexRawBuffer(

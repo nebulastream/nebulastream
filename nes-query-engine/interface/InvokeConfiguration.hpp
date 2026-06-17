@@ -17,10 +17,10 @@
 // InvokeConfig.hpp
 #pragma once
 
+#include <filesystem>
+#include <optional>
 #include <string>
 #include <unordered_map>
-#include <optional>
-#include <filesystem>
 // #include <yaml-cpp/yaml.h>
 
 #include <nautilus/common/FunctionAttributes.hpp>
@@ -28,7 +28,12 @@
 namespace NES
 {
 
-enum class InvokeMode { Default, FnAttr, Inline };
+enum class InvokeMode
+{
+    Default,
+    FnAttr,
+    Inline
+};
 
 class InvokeConfig
 {
@@ -44,9 +49,13 @@ public:
 
     /// Manual setters (useful for tests)
     void setGlobalMode(InvokeMode mode) { globalMode_ = mode; }
+
     void setGlobalFnAttr(nautilus::FunctionAttributes attr) { globalAttr_ = attr; }
+
     void setMode(const std::string& tag, InvokeMode mode) { modes_[tag] = mode; }
+
     void setFnAttr(const std::string& tag, nautilus::FunctionAttributes attr) { attrs_[tag] = attr; }
+
     void reset();
 
 private:

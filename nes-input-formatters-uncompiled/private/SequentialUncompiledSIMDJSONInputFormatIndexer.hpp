@@ -26,7 +26,8 @@
 namespace NES
 {
 
-class SequentialUncompiledSIMDJSONInputFormatIndexer final : public UncompiledInputFormatIndexer<SequentialUncompiledSIMDJSONInputFormatIndexer>
+class SequentialUncompiledSIMDJSONInputFormatIndexer final
+    : public UncompiledInputFormatIndexer<SequentialUncompiledSIMDJSONInputFormatIndexer>
 {
 public:
     static constexpr std::string_view NAME = "SequentialUncompiledJSON";
@@ -42,7 +43,8 @@ public:
     SequentialUncompiledSIMDJSONInputFormatIndexer() = default;
     ~SequentialUncompiledSIMDJSONInputFormatIndexer() = default;
 
-    static void indexRawBuffer(UncompiledSIMDJSONFIF& fieldIndexFunction, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledSIMDJSONMetaData& metaData);
+    static void indexRawBuffer(
+        UncompiledSIMDJSONFIF& fieldIndexFunction, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledSIMDJSONMetaData& metaData);
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& os, const SequentialUncompiledSIMDJSONInputFormatIndexer&);

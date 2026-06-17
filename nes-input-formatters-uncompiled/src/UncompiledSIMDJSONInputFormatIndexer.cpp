@@ -22,7 +22,7 @@
 #include <UncompiledInputFormatIndexerRegistry.hpp>
 #include <UncompiledSIMDJSONFIF.hpp>
 
-#include "InputFormatterValidationRegistry.hpp"
+#include <InputFormatterValidationRegistry.hpp>
 
 namespace NES
 {
@@ -54,8 +54,7 @@ void UncompiledSIMDJSONInputFormatIndexer::indexRawBuffer(
 std::ostream& operator<<(std::ostream& os, const UncompiledSIMDJSONInputFormatIndexer&)
 {
     return os << fmt::format(
-               "UncompiledSIMDJSONInputFormatIndexer(tupleDelimiter: {})",
-               UncompiledSIMDJSONInputFormatIndexer::TUPLE_DELIMITER);
+               "UncompiledSIMDJSONInputFormatIndexer(tupleDelimiter: {})", UncompiledSIMDJSONInputFormatIndexer::TUPLE_DELIMITER);
 }
 
 DescriptorConfig::Config UncompiledSIMDJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
@@ -67,12 +66,11 @@ UncompiledInputFormatIndexerRegistryReturnType RegisterUncompiledJSONUncompiledI
     UncompiledInputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
     return arguments.createUncompiledInputFormatterTaskPipeline(
-        UncompiledSIMDJSONInputFormatIndexer{},
-        UncompiledQuotationType::DOUBLE_QUOTE);
+        UncompiledSIMDJSONInputFormatIndexer{}, UncompiledQuotationType::DOUBLE_QUOTE);
 }
 
-InputFormatterValidationRegistryReturnType
-InputFormatterValidationGeneratedRegistrar::RegisterUncompiledJSONInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterUncompiledJSONInputFormatterValidation(
+    InputFormatterValidationRegistryArguments arguments)
 {
     return UncompiledSIMDJSONInputFormatIndexer::validateAndFormat(arguments.config);
 }

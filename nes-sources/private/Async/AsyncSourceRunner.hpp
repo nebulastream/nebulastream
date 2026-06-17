@@ -17,15 +17,15 @@
 #include <functional>
 #include <future>
 
+#include <Sources/SourceReturnType.hpp>
 #include <boost/asio/awaitable.hpp>
-#include "Sources/SourceReturnType.hpp"
 
 #include <Async/IOThread.hpp>
 #include <Sources/AsyncSource.hpp>
 // #include <Sources/SourceExecutionContext.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceUtility.hpp>
 #include <ErrorHandling.hpp>
-#include "Runtime/AbstractBufferProvider.hpp"
 
 namespace NES
 {

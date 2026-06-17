@@ -31,6 +31,7 @@
 #include <variant>
 #include <vector>
 
+#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
@@ -55,7 +56,6 @@
 #include <Task.hpp>
 #include <TaskQueue.hpp>
 #include <Thread.hpp>
-#include "Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp"
 
 namespace NES
 {

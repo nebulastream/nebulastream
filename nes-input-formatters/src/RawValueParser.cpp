@@ -30,14 +30,13 @@
 #include <std/cstring.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <InputParserRegistry.hpp>
 #include <function.hpp>
 #include <select.hpp>
 #include <val.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
 #include <common/FunctionAttributes.hpp>
-#include <InputParserRegistry.hpp>
-
 
 namespace NES
 {

@@ -18,13 +18,13 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <UncompiledInputFormatters/UncompiledInputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
-
+#include <UncompiledInputFormatters/UncompiledInputFormatterTaskPipeline.hpp>
 
 namespace NES
 {
-std::unique_ptr<UncompiledInputFormatterTaskPipeline> provideUncompiledInputFormatterTask(const Schema& schema, const InputFormatterDescriptor& config);
+std::unique_ptr<UncompiledInputFormatterTaskPipeline>
+provideUncompiledInputFormatterTask(const Schema& schema, const InputFormatterDescriptor& config);
 
 bool uncompiledContains(const std::string& parserType);
 }

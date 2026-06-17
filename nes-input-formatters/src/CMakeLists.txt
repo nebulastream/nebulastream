@@ -29,3 +29,5 @@ add_plugin(CSV InputFormatIndexer nes-input-formatters CSVInputFormatIndexer.cpp
 add_plugin(CSV InputFormatterValidation nes-input-formatters CSVInputFormatIndexer.cpp)
 add_plugin(SequentialCSV InputFormatIndexer nes-input-formatters SequentialCSVInputFormatIndexer.cpp)
 add_plugin(SequentialCSV InputFormatterValidation nes-input-formatters SequentialCSVInputFormatIndexer.cpp)
+add_plugin(SIMDCSV InputFormatIndexer nes-input-formatters SIMDCSVInputFormatIndexer.cpp SIMDCSVKernel.cpp)
+add_plugin(SIMDCSV InputFormatterValidation nes-input-formatters SIMDCSVInputFormatIndexer.cpp SIMDCSVKernel.cpp)

@@ -34,7 +34,6 @@ namespace NES
 class NoneWithIteratorFormat : public Format
 {
 public:
-
     explicit NoneWithIteratorFormat(const Schema& schema);
 
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;

@@ -20,6 +20,7 @@
 #include <variant>
 #include <vector>
 
+#include <../../../nes-plugins/OutputFormatters/JSONOutputFormatter/JSONOutputFormatter.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
@@ -30,7 +31,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include "../../../nes-plugins/OutputFormatters/JSONOutputFormatter/JSONOutputFormatter.hpp"
 
 namespace NES
 {

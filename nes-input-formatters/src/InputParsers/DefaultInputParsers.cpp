@@ -16,13 +16,13 @@
 #include <memory>
 
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Util/InlineTagMacro.hpp>
 #include <Util/InvokeMacro.hpp>
 #include <Util/Strings.hpp>
 #include <InputParserRegistry.hpp>
 #include <RawValueParser.hpp>
 #include <function.hpp>
 #include <val_ptr.hpp>
-#include <Util/InlineTagMacro.hpp>
 
 namespace NES
 {

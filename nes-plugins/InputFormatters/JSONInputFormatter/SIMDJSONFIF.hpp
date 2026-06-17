@@ -191,7 +191,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
                 const nautilus::val<int8_t*> rawPtr = *getMemberWithOffset<int8_t*>(parseResult, offsetof(RawResultFixed<T>, ptrToRawJson));
                 const nautilus::val<uint64_t> size
                     = *getMemberWithOffset<uint64_t>(parseResult, offsetof(RawResultFixed<T>, sizeOfRawJson));
-                parseRawValueIntoRecord(dataType, record, rawPtr, size, fieldName, SIMDJSONMetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
+                parseRawValueIntoRecord(
+                    dataType, record, rawPtr, size, fieldName, SIMDJSONMetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
             }
             return;
         }
@@ -199,7 +200,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             = nautilus::invoke({nautilus::ModRefInfo::Ref}, getRawJsonWithNullCheck<T, false>, fieldIndex, fieldIndexFunction, metaData);
         const nautilus::val<int8_t*> rawPtr = *getMemberWithOffset<int8_t*>(parseResult, offsetof(RawResultFixed<T>, ptrToRawJson));
         const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(parseResult, offsetof(RawResultFixed<T>, sizeOfRawJson));
-        parseRawValueIntoRecord(dataType, record, rawPtr, size, fieldName, SIMDJSONMetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
+        parseRawValueIntoRecord(
+            dataType, record, rawPtr, size, fieldName, SIMDJSONMetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
     }
 
     static VarVal parseJsonVarSized(

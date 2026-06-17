@@ -165,7 +165,9 @@ PlainSpanningTupleBufferEntry::EntryState PlainSpanningTupleBufferEntry::getEntr
 }
 
 bool PlainSpanningTupleBufferEntry::validateFinalState(
-    const SpanningTupleBufferIdx bufferIdx, const PlainSpanningTupleBufferEntry& nextEntry, const SpanningTupleBufferIdx lastIdxOfBuffer) const
+    const SpanningTupleBufferIdx bufferIdx,
+    const PlainSpanningTupleBufferEntry& nextEntry,
+    const SpanningTupleBufferIdx lastIdxOfBuffer) const
 {
     bool isValidFinalState = true;
     const auto state = this->plainState.getState();

@@ -15,8 +15,8 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <InputParser.hpp>
 #include <val_arith.hpp>

@@ -126,7 +126,7 @@ pub struct TupleBuffer {
     pub last_chunk: bool,
     pub data: Vec<u8>,
     pub child_buffers: Vec<Vec<u8>>,
-    pub source_insertion_ts: u64
+    pub source_insertion_ts: u64,
 }
 
 impl TupleBuffer {

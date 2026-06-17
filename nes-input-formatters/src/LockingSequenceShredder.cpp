@@ -24,8 +24,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <RawTupleBuffer.hpp>
 #include <LockingSpanningTupleBuffer.hpp>
+#include <RawTupleBuffer.hpp>
 #include <from_current.hpp>
 
 namespace NES

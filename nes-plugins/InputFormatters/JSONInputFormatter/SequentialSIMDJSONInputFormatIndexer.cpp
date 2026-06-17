@@ -23,7 +23,7 @@
 #include <InputFormatterTupleBufferRef.hpp>
 #include <SIMDJSONFIF.hpp>
 
-#include "InputFormatterValidationRegistry.hpp"
+#include <InputFormatterValidationRegistry.hpp>
 
 namespace NES
 {
@@ -50,8 +50,7 @@ void SequentialSIMDJSONInputFormatIndexer::indexRawBuffer(
 std::ostream& operator<<(std::ostream& os, const SequentialSIMDJSONInputFormatIndexer&)
 {
     return os << fmt::format(
-               "SequentialSIMDJSONInputFormatIndexer(tupleDelimiter: {})",
-               SequentialSIMDJSONInputFormatIndexer::TUPLE_DELIMITER);
+               "SequentialSIMDJSONInputFormatIndexer(tupleDelimiter: {})", SequentialSIMDJSONInputFormatIndexer::TUPLE_DELIMITER);
 }
 
 DescriptorConfig::Config SequentialSIMDJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
@@ -64,8 +63,8 @@ InputFormatIndexerRegistryReturnType RegisterSequentialJSONInputFormatIndexer(In
     return arguments.createInputFormatterWithIndexer(SequentialSIMDJSONInputFormatIndexer{});
 }
 
-InputFormatterValidationRegistryReturnType
-InputFormatterValidationGeneratedRegistrar::RegisterSequentialJSONInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterSequentialJSONInputFormatterValidation(
+    InputFormatterValidationRegistryArguments arguments)
 {
     return SequentialSIMDJSONInputFormatIndexer::validateAndFormat(arguments.config);
 }

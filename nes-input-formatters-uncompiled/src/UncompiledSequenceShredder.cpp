@@ -90,7 +90,8 @@ UncompiledSequenceShredder::findLeadingSTWithDelimiter(const UncompiledStagedBuf
     return spanningTupleBuffer->tryFindLeadingSTForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
 }
 
-UncompiledSequenceShredderResult UncompiledSequenceShredder::findSTWithoutDelimiter(const UncompiledStagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
+UncompiledSequenceShredderResult
+UncompiledSequenceShredder::findSTWithoutDelimiter(const UncompiledStagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
 {
     if (const auto stSearchResult = spanningTupleBuffer->tryFindSTForBufferWithoutDelimiter(sequenceNumber, indexedRawBuffer);
         stSearchResult.isInRange) [[likely]]

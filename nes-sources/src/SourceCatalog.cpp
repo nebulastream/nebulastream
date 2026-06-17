@@ -35,7 +35,7 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
 
-#include "InputFormatterValidationProvider.hpp"
+#include <InputFormatterValidationProvider.hpp>
 
 namespace NES
 {

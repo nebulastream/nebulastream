@@ -174,80 +174,80 @@ UncompiledParseFunctionSignature getStringParseFunction(const UncompiledQuotatio
 /// Registration functions for the default uncompiled input parsers
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultBOOLUncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultBOOLUncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<bool>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultCHARUncompiledInputParser(UncompiledInputParserRegistryArguments args)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultCHARUncompiledInputParser(UncompiledInputParserRegistryArguments args)
 {
     return (args.quotationType == UncompiledQuotationType::NONE) ? parseUncompiledFieldString<char>()
                                                                  : parseQuotedUncompiledFieldString<char>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT8UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT8UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<int8_t>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT16UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT16UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<int16_t>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT32UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT32UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<int32_t>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT64UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT64UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<int64_t>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT8UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT8UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<uint8_t>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT16UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT16UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<uint16_t>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT32UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT32UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<uint32_t>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT64UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT64UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<uint64_t>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultF32UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultF32UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<float>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultF64UncompiledInputParser(UncompiledInputParserRegistryArguments)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultF64UncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
     return parseUncompiledFieldString<double>();
 }
 
 UncompiledInputParserRegistryReturnType
-    UncompiledInputParserGeneratedRegistrar::RegisterDefaultVARSIZEDUncompiledInputParser(UncompiledInputParserRegistryArguments args)
+UncompiledInputParserGeneratedRegistrar::RegisterDefaultVARSIZEDUncompiledInputParser(UncompiledInputParserRegistryArguments args)
 {
     return getStringParseFunction(args.quotationType);
 }

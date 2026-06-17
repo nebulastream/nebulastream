@@ -27,12 +27,13 @@ namespace NES
 {
 /// Restricts the UncompiledUncompiledIndexerMetaData that an UncompiledInputFormatIndexer receives from the UncompiledInputFormatterTask
 template <typename T>
-concept UncompiledIndexerMetaDataType = requires(InputFormatterDescriptor config, Schema schema, T UncompiledIndexerMetaData, std::ostream& spanningTuple) {
-    T(config, schema);
-    /// Assumes a fixed set of symbols that separate tuples
-    /// InputFormatIndexers without tuple delimiters should return an empty string
-    { UncompiledIndexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
-};
+concept UncompiledIndexerMetaDataType
+    = requires(InputFormatterDescriptor config, Schema schema, T UncompiledIndexerMetaData, std::ostream& spanningTuple) {
+          T(config, schema);
+          /// Assumes a fixed set of symbols that separate tuples
+          /// InputFormatIndexers without tuple delimiters should return an empty string
+          { UncompiledIndexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;
+      };
 
 template <typename T>
 concept UncompiledFieldIndexFunctionType = requires(T& indexFunction) {
@@ -46,11 +47,11 @@ concept UncompiledFieldIndexFunctionType = requires(T& indexFunction) {
 };
 
 template <typename T>
-concept UncompiledInputFormatIndexerType
-    = UncompiledIndexerMetaDataType<typename T::UncompiledIndexerMetaData> && std::same_as<std::remove_cv_t<decltype(T::IsFormattingRequired)>, bool>
+concept UncompiledInputFormatIndexerType = UncompiledIndexerMetaDataType<typename T::UncompiledIndexerMetaData>
+    && std::same_as<std::remove_cv_t<decltype(T::IsFormattingRequired)>, bool>
     && std::same_as<std::remove_cv_t<decltype(T::HasSpanningTuple)>, bool>
-    && std::same_as<std::remove_cv_t<decltype(T::IsSequential)>, bool> && UncompiledFieldIndexFunctionType<typename T::UncompiledFieldIndexFunctionType>
-    && requires(const T& indexer) {
+    && std::same_as<std::remove_cv_t<decltype(T::IsSequential)>, bool>
+    && UncompiledFieldIndexFunctionType<typename T::UncompiledFieldIndexFunctionType> && requires(const T& indexer) {
            {
                indexer.indexRawBuffer(
                    std::declval<typename T::UncompiledFieldIndexFunctionType&>(),

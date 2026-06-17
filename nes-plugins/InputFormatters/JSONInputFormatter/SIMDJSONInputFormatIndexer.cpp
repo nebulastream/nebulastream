@@ -23,7 +23,7 @@
 #include <InputFormatterTupleBufferRef.hpp>
 #include <SIMDJSONFIF.hpp>
 
-#include "InputFormatterValidationRegistry.hpp"
+#include <InputFormatterValidationRegistry.hpp>
 
 namespace NES
 {

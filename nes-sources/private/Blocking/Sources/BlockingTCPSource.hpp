@@ -60,7 +60,8 @@ struct ConfigParametersBlockingTCP
                 {
                     return portNumber;
                 }
-                NES_ERROR("BlockingTCPSource specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
+                NES_ERROR(
+                    "BlockingTCPSource specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
             }
             return portNumber;
         }};

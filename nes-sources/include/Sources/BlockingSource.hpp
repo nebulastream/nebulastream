@@ -19,10 +19,10 @@
 #include <ostream>
 #include <stop_token>
 
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Formatter.hpp>
 #include <variant>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES
 {

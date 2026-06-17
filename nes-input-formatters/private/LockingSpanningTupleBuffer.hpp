@@ -25,9 +25,9 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <PlainSpanningTupleBufferState.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
-#include <PlainSpanningTupleBufferState.hpp>
 
 namespace NES
 {

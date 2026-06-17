@@ -36,6 +36,8 @@
 #include <Configurations/Descriptor.hpp>
 #include <Sources/AsyncSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/TCPDataServer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <boost/asio/deferred.hpp>
 #include <boost/system/detail/error_code.hpp>
 #include <boost/system/system_error.hpp>
@@ -43,12 +45,10 @@
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include <Sources/TCPDataServer.hpp>
-#include "Util/Logger/Logger.hpp"
 
 #include <FileDataRegistry.hpp>
 
-#include "InlineDataRegistry.hpp"
+#include <InlineDataRegistry.hpp>
 
 // #include <InlineDataRegistry.hpp>
 
@@ -166,7 +166,6 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData
 
 FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-
     std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
 

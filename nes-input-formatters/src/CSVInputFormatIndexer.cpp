@@ -25,10 +25,9 @@
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexerRegistry.hpp>
-#include <InputFormatterValidationRegistry.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
-
+#include <InputFormatterValidationRegistry.hpp>
 
 namespace
 {

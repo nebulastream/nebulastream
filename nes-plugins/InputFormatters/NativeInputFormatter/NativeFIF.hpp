@@ -23,7 +23,6 @@
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldIndexFunction.hpp>
 #include <FieldOffsets.hpp>
@@ -53,8 +52,7 @@ class NativeFIF final : public FieldIndexFunction<NativeFIF>
     [[nodiscard]] nautilus::val<bool>
     applyHasNext(const nautilus::val<uint64_t>& recordIdx, nautilus::val<NativeFIF*> fieldIndexFunctionPtr) const
     {
-        const nautilus::val<uint64_t> total
-            = *getMemberWithOffset<size_t>(fieldIndexFunctionPtr, offsetof(NativeFIF, totalNumberOfTuples));
+        const nautilus::val<uint64_t> total = *getMemberWithOffset<size_t>(fieldIndexFunctionPtr, offsetof(NativeFIF, totalNumberOfTuples));
         return recordIdx < total;
     }
 

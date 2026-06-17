@@ -56,7 +56,7 @@ public:
     virtual void stop() = 0;
 
     /// Tries to stop the source within a given timeout.
-     [[nodiscard]] virtual NES::SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) = 0;
+    [[nodiscard]] virtual NES::SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) = 0;
 
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);

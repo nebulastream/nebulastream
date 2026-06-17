@@ -23,8 +23,8 @@
 #include <DataTypes/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Concepts.hpp>
 #include <UncompiledInputFormatters/UncompiledInputParser.hpp>
+#include <Concepts.hpp>
 
 namespace NES
 {

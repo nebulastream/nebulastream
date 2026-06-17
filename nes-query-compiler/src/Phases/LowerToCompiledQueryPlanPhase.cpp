@@ -27,6 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <UncompiledInputFormatters/UncompiledInputFormatterProvider.hpp>
 #include <Util/DumpMode.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <CompiledQueryPlan.hpp>
@@ -37,7 +38,6 @@
 #include <SinkPhysicalOperator.hpp>
 #include <SourcePhysicalOperator.hpp>
 #include <options.hpp>
-#include "UncompiledInputFormatters/UncompiledInputFormatterProvider.hpp"
 
 namespace NES
 {
@@ -61,7 +61,6 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
 
     /// Convert logical source descriptor to actual source descriptor
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
-
 
 
     // if is 'UNCOMPILED' input formatter after source pipeline

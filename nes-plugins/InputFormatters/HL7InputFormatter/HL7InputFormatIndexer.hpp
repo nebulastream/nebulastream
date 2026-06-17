@@ -23,8 +23,8 @@
 #include <InputFormatIndexer.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
 
+#include <Nautilus/Interface/Record.hpp>
 #include <FieldOffsets.hpp>
-#include "Nautilus/Interface/Record.hpp"
 
 namespace NES
 {
@@ -64,7 +64,9 @@ struct HL7MetaData
     std::string_view getTupleDelimitingBytes() const { return std::to_string(TUPLE_DELIMITER); }
 
     [[nodiscard]] char getTupleDelimiter() const { return TUPLE_DELIMITER; }
+
     [[nodiscard]] char getSegmentDelimiter() const { return segmentDelimiter; }
+
     [[nodiscard]] char getMessageDelimiter() const { return messageDelimiter; }
 
     static QuotationType getQuotationType() { return QuotationType::DOUBLE_QUOTE; }

@@ -23,7 +23,7 @@
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
 
-#include "InputFormatterValidationRegistry.hpp"
+#include <InputFormatterValidationRegistry.hpp>
 
 namespace NES
 {

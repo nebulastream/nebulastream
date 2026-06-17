@@ -1,0 +1,64 @@
+# name: formatter/SIMDCSV.test
+# description: SIMD-accelerated CSV input formatter (portable simdcsv-based alternative to the scalar CSV indexer)
+# groups: [Formatter]
+
+# Multi-column integer parsing through the SIMDCSV indexer. The inline data is >64 bytes so the SIMD
+# 64-byte block path is exercised end-to-end (not only the scalar tail).
+CREATE LOGICAL SOURCE simdStream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR simdStream TYPE File SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+1,101,201
+2,102,202
+3,103,203
+4,104,204
+5,105,205
+6,106,206
+7,107,207
+8,108,208
+9,109,209
+10,110,210
+11,111,211
+12,112,212
+13,113,213
+14,114,214
+15,115,215
+16,116,216
+
+CREATE SINK simdSink(simdStream.id UINT64 NOT NULL, simdStream.value UINT64 NOT NULL, simdStream.timestamp UINT64 NOT NULL) TYPE File;
+SELECT * FROM simdStream INTO simdSink;
+----
+1,101,201
+2,102,202
+3,103,203
+4,104,204
+5,105,205
+6,106,206
+7,107,207
+8,108,208
+9,109,209
+10,110,210
+11,111,211
+12,112,212
+13,113,213
+14,114,214
+15,115,215
+16,116,216
+
+# Custom field delimiter through the SIMDCSV indexer (pipe-separated).
+CREATE LOGICAL SOURCE simdPipeStream(id UINT64 NOT NULL, value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR simdPipeStream TYPE File SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`, '|' AS INPUT_FORMATTER.`FIELD_DELIMITER`);
+ATTACH INLINE
+1|10
+2|20
+3|30
+4|40
+5|50
+
+CREATE SINK simdPipeSink(simdPipeStream.id UINT64 NOT NULL, simdPipeStream.value UINT64 NOT NULL) TYPE File;
+SELECT * FROM simdPipeStream INTO simdPipeSink;
+----
+1,10
+2,20
+3,30
+4,40
+5,50

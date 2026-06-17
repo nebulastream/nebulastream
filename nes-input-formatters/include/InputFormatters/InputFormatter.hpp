@@ -42,9 +42,9 @@
 #include <Concepts.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <LockingSequenceShredder.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
-#include <LockingSequenceShredder.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>

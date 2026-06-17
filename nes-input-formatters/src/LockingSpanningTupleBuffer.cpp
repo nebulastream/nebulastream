@@ -27,9 +27,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
+#include <PlainSpanningTupleBufferState.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
-#include <PlainSpanningTupleBufferState.hpp>
 
 #include <ErrorHandling.hpp>
 
@@ -59,7 +59,8 @@ LockingSpanningTupleBuffer::searchAndTryClaimWithoutDelimiter(const SequenceNumb
     return WithoutDelimiterSearchResult{};
 }
 
-void LockingSpanningTupleBuffer::claimSpanningTupleBuffers(const SequenceNumber stStartSn, const std::span<StagedBuffer> spanningTupleBuffers)
+void LockingSpanningTupleBuffer::claimSpanningTupleBuffers(
+    const SequenceNumber stStartSn, const std::span<StagedBuffer> spanningTupleBuffers)
 {
     const auto lastOffset = spanningTupleBuffers.size() - 1;
     for (size_t offset = 1; offset < lastOffset; ++offset)
@@ -173,7 +174,8 @@ std::pair<SpanningTupleBufferIdx, ABAItNo> LockingSpanningTupleBuffer::getBuffer
     return std::make_pair(sequenceNumberBufferIdx, abaItNumber);
 }
 
-std::optional<size_t> LockingSpanningTupleBuffer::searchLeading(const SpanningTupleBufferIdx searchStartBufferIdx, const ABAItNo abaItNumber) const
+std::optional<size_t>
+LockingSpanningTupleBuffer::searchLeading(const SpanningTupleBufferIdx searchStartBufferIdx, const ABAItNo abaItNumber) const
 {
     const auto searchStartBufferIdxV = searchStartBufferIdx.getRawValue();
     size_t leadingDistance = 1;

@@ -28,10 +28,10 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/AsyncSource.hpp>
 // #include <Sources/SourceExecutionContext.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceUtility.hpp>
 #include <Util/Overloaded.hpp>
 #include <ErrorHandling.hpp>
-#include "Runtime/AbstractBufferProvider.hpp"
 
 namespace NES
 {
@@ -41,8 +41,8 @@ AsyncSourceRunner::AsyncSourceRunner(std::unique_ptr<AsyncSource> asyncSource, S
 {
 }
 
-asio::awaitable<void, Executor> AsyncSourceRunner::runningRoutine(
-    OriginId sourceId, std::shared_ptr<AbstractBufferProvider> bufferProvider) const
+asio::awaitable<void, Executor>
+AsyncSourceRunner::runningRoutine(OriginId sourceId, std::shared_ptr<AbstractBufferProvider> bufferProvider) const
 {
     /// Helper lambda that we forward to the input formatter to emit data events on our behalf
     uint64_t sequenceNumberGenerator{SequenceNumber::INITIAL};

@@ -21,7 +21,9 @@
 #include <utility>
 #include <vector>
 
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -31,8 +33,6 @@
 #include <RawTupleBuffer.hpp>
 #include <RawValueParser.hpp>
 #include <static.hpp>
-#include "Configurations/Descriptor.hpp"
-#include "Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp"
 
 namespace NES
 {

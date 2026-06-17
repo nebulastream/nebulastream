@@ -46,7 +46,8 @@ struct UncompiledInputFormatIndexerRegistryArguments
     /// @tparam: FieldAccessType: function used to index fields when parsing/processing the data of the (raw) input buffer
     /// @tparam: HasSpanningTuple: hardcode to 'true' if format cannot guarantee buffers with tuples that never span across buffers
     template <UncompiledInputFormatIndexerType FormatterType>
-    UncompiledInputFormatIndexerRegistryReturnType createUncompiledInputFormatterTaskPipeline(FormatterType inputFormatter, const UncompiledQuotationType quotationType)
+    UncompiledInputFormatIndexerRegistryReturnType
+    createUncompiledInputFormatterTaskPipeline(FormatterType inputFormatter, const UncompiledQuotationType quotationType)
     {
         auto inputFormatterTask
             = UncompiledInputFormatterTask<FormatterType>(std::move(inputFormatter), schema, quotationType, inputFormatIndexerConfig);
@@ -62,10 +63,10 @@ private:
 };
 
 class UncompiledInputFormatIndexerRegistry : public BaseRegistry<
-                                       UncompiledInputFormatIndexerRegistry,
-                                       std::string,
-                                       UncompiledInputFormatIndexerRegistryReturnType,
-                                       UncompiledInputFormatIndexerRegistryArguments>
+                                                 UncompiledInputFormatIndexerRegistry,
+                                                 std::string,
+                                                 UncompiledInputFormatIndexerRegistryReturnType,
+                                                 UncompiledInputFormatIndexerRegistryArguments>
 {
 };
 

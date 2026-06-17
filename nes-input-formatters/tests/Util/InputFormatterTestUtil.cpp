@@ -155,7 +155,9 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value(), false, 1)};
+    return {
+        std::move(backpressureController),
+        sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value(), false, 1)};
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
@@ -168,7 +170,6 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
-
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const DescriptorConfig::Config& parserConfiguration,

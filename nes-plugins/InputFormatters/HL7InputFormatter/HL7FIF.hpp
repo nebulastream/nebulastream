@@ -70,7 +70,6 @@ RawResultFixed<T>* getRawJsonWithNullCheck(FieldIndex fieldIndex, HL7FIF* fieldI
 
 bool checkIsNullJsonProxy(FieldIndex fieldIndex, const HL7FIF* fieldIndexFunction, const HL7MetaData* metaData) noexcept;
 
-
 class HL7FIF final : public FieldIndexFunction<HL7FIF>
 {
     friend FieldIndexFunction<HL7FIF>;
@@ -83,8 +82,7 @@ class HL7FIF final : public FieldIndexFunction<HL7FIF>
     /// HL7 can only determine the correct number of tuples after parsing the entire buffer
     [[nodiscard]] static size_t applyGetTotalNumberOfTuples() { return 0; }
 
-    [[nodiscard]] static nautilus::val<bool>
-    applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<HL7FIF*>& fieldIndexFunction);
+    [[nodiscard]] static nautilus::val<bool> applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<HL7FIF*>& fieldIndexFunction);
 
     template <typename T>
     void parseJsonFixedSizeIntoVarVal(
@@ -114,7 +112,8 @@ class HL7FIF final : public FieldIndexFunction<HL7FIF>
                 const nautilus::val<int8_t*> rawPtr = *getMemberWithOffset<int8_t*>(parseResult, offsetof(RawResultFixed<T>, ptrToRawJson));
                 const nautilus::val<uint64_t> size
                     = *getMemberWithOffset<uint64_t>(parseResult, offsetof(RawResultFixed<T>, sizeOfRawJson));
-                parseRawValueIntoRecord(dataType, record, rawPtr, size, fieldName, HL7MetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
+                parseRawValueIntoRecord(
+                    dataType, record, rawPtr, size, fieldName, HL7MetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
             }
             return;
         }
@@ -122,7 +121,8 @@ class HL7FIF final : public FieldIndexFunction<HL7FIF>
             = nautilus::invoke({nautilus::ModRefInfo::Ref}, getRawJsonWithNullCheck<T, false>, fieldIndex, fieldIndexFunction, metaData);
         const nautilus::val<int8_t*> rawPtr = *getMemberWithOffset<int8_t*>(parseResult, offsetof(RawResultFixed<T>, ptrToRawJson));
         const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(parseResult, offsetof(RawResultFixed<T>, sizeOfRawJson));
-        parseRawValueIntoRecord(dataType, record, rawPtr, size, fieldName, HL7MetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
+        parseRawValueIntoRecord(
+            dataType, record, rawPtr, size, fieldName, HL7MetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
     }
 
     static VarVal parseJsonVarSized(
@@ -220,14 +220,13 @@ public:
         return hl7Value.value();
     }
 
-    static hl7::hl7_result<hl7::ondemand::value> accessHl7FieldOrThrow(
-        hl7::hl7_result<hl7::ondemand::document_reference>& hl7Reference, const std::string_view fieldName)
+    static hl7::hl7_result<hl7::ondemand::value>
+    accessHl7FieldOrThrow(hl7::hl7_result<hl7::ondemand::document_reference>& hl7Reference, const std::string_view fieldName)
     {
         const auto hl7Result = hl7Reference[fieldName];
         if (not hl7Result.has_value())
         {
-            throw FieldNotFound(
-                "Hl7 has not found the fieldName {} with error: {}", fieldName, magic_enum::enum_name(hl7Result.error()));
+            throw FieldNotFound("Hl7 has not found the fieldName {} with error: {}", fieldName, magic_enum::enum_name(hl7Result.error()));
         }
         return hl7Result;
     }

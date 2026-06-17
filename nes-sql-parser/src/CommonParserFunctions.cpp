@@ -162,9 +162,6 @@ std::unordered_map<std::string, std::string> parseOutputFormatterConfig(const Co
     return parserConfig;
 }
 
-
-
-
 std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions)
 {
     std::unordered_map<std::string, std::string> sourceOptions{};

@@ -59,10 +59,7 @@ public:
         return InputFormatterThreadingMode::PARALLEL;
     }
 
-    [[nodiscard]] SequenceShredderMode getSequenceShredderMode() const
-    {
-        return this->getFromConfig(SEQUENCE_SHREDDER_MODE);
-    }
+    [[nodiscard]] SequenceShredderMode getSequenceShredderMode() const { return this->getFromConfig(SEQUENCE_SHREDDER_MODE); }
 
     static inline const DescriptorConfig::ConfigParameter<std::string> TYPE{
         std::string{TYPE_STRING},
@@ -72,8 +69,7 @@ public:
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormatterThreadingMode> THREADING_MODE{
         "threading_mode",
         EnumWrapper{InputFormatterThreadingMode::PARALLEL},
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(THREADING_MODE, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(THREADING_MODE, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, SequenceShredderMode> SEQUENCE_SHREDDER_MODE{
         "sequence_shredder_mode",

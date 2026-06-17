@@ -45,8 +45,7 @@
 
 namespace NES
 {
-[[nodiscard]] nautilus::val<bool>
-HL7FIF::applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<HL7FIF*>& fieldIndexFunction)
+[[nodiscard]] nautilus::val<bool> HL7FIF::applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<HL7FIF*>& fieldIndexFunction)
 {
     const nautilus::val<bool> isAtLastTuple = *getMemberWithOffset<bool>(fieldIndexFunction, offsetof(HL7FIF, isAtLastTuple));
     return not isAtLastTuple;

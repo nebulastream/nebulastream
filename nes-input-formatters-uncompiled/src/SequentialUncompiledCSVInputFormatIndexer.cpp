@@ -24,9 +24,9 @@
 #include <UncompiledInputFormatters/UncompiledInputFormatterTaskPipeline.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <InputFormatterValidationRegistry.hpp>
 #include <UncompiledFieldOffsets.hpp>
 #include <UncompiledInputFormatIndexerRegistry.hpp>
-#include <InputFormatterValidationRegistry.hpp>
 #include <UncompiledInputFormatterTask.hpp>
 
 namespace
@@ -123,7 +123,8 @@ UncompiledInputFormatIndexerRegistryReturnType RegisterSequentialUncompiledCSVUn
 }
 
 InputFormatterValidationRegistryReturnType
-InputFormatterValidationGeneratedRegistrar::RegisterSequentialUncompiledCSVInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+InputFormatterValidationGeneratedRegistrar::RegisterSequentialUncompiledCSVInputFormatterValidation(
+    InputFormatterValidationRegistryArguments arguments)
 {
     return SequentialUncompiledCSVInputFormatIndexer::validateAndFormat(arguments.config);
 }
