@@ -643,6 +643,8 @@
           git
           ccache
           mold
+          rustc
+          cargo
         ];
 
         # LLVM toolchain with versioned symlinks for vcpkg
