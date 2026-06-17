@@ -58,6 +58,7 @@ INGORED_ENDINGS = {
     "dockerignore",
     "dummy",
     "env",
+    "gdbinit",
     "gitignore",
     "mailmap",
     "json",

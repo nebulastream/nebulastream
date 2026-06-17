@@ -21,4 +21,10 @@ RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
 RUN mkdir -p /run/containerd && \
     chown -R ${UID}:${GID} /run/containerd
 
+# Mirror the root-level gdbinit trust setting for the non-root dev user: GDB reads
+# per-user config from ~/.config/gdb/gdbinit, and without this it refuses to
+# auto-load the repo-root .gdbinit (which loads the pretty-printer) when running
+# as ${USERNAME}.
+RUN mkdir -p /home/${USERNAME}/.config/gdb && \
+    echo "set auto-load safe-path /" > /home/${USERNAME}/.config/gdb/gdbinit
 USER ${USERNAME}
