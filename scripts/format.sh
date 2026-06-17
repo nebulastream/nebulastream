@@ -188,6 +188,17 @@ do
     fi
 done
 
+# error: no parent-relative or absolute path includes
+#
+# Includes must use the configured include paths, not parent-directory traversal
+# (e.g. <../../foo.hpp> or "../../foo.hpp") or absolute paths (e.g. </home/user/foo.hpp>
+# or "/home/user/foo.hpp"). This applies to both angle-bracket and double-quote includes.
+INCLUDE_PATH_PATTERN='#include[[:space:]]+([<"]/|[<"][^>"]*\.\./)'
+if git grep -E "$INCLUDE_PATH_PATTERN" -- "*.hpp" "*.cpp" > /dev/null
+then
+    log_error "Found include(s) with parent-relative or absolute paths. Use proper include paths instead.\n$(git grep -n -E "$INCLUDE_PATH_PATTERN" -- "*.hpp" "*.cpp")"
+fi
+
 # no raw catch (...)
 #
 # We generally want to have cpptrace traces, thus we need to use the cpptrace try-catch wrapper.
