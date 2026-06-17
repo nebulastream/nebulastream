@@ -297,3 +297,10 @@ if (CODE_COVERAGE)
     target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO ALL)
     target_code_coverage(nes-frontend-lib PUBLIC AUTO ALL)
 endif ()
+
+# Registers the `package-docker-images` target (and per-binary sub-targets) that
+# packages the already-built cli/repl/embedded-repl/worker binaries into slim
+# Docker runtime images. Included here, after add_subdirectory() has defined the
+# binary targets, so the packaging targets can depend on them. The targets are
+# only registered when a Docker daemon is reachable at configure time.
+include(cmake/PackageDockerImages.cmake)
