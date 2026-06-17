@@ -23,6 +23,10 @@
 #include <SIMDCSVKernel.hpp>
 #include <SIMDCSVScan.hpp>
 
+#if defined(__aarch64__)
+    #include <arm_neon.h>
+#endif
+
 /// Self-contained micro-benchmark (no external benchmark library) for the CSV indexing phase:
 /// "raw bytes -> field/tuple offsets", the work the InputFormatIndexer does before value parsing.
 /// It compares three implementations that all emit the identical FieldOffsets contract:
@@ -245,6 +249,149 @@ size_t indexToBand(uint32_t* out, const std::string_view view, const bool quoteA
     return static_cast<size_t>(cursor - out);
 }
 
+#if defined(__aarch64__)
+inline uint64_t benchNeonMoveMask(const uint8x16_t cmp, const uint8x16_t bitmask)
+{
+    const uint8x16_t anded = vandq_u8(cmp, bitmask);
+    return static_cast<uint64_t>(vaddv_u8(vget_low_u8(anded))) | (static_cast<uint64_t>(vaddv_u8(vget_high_u8(anded))) << 8);
+}
+
+/// DIAGNOSTIC variant of indexToBand: the NEON kernel is inlined at compile time (no function pointer,
+/// no BlockBits scratch array). Per block, compute -> field_sep -> flatten are fused with the masks
+/// kept in registers. Identical work to indexToBand (all three masks computed); isolates the cost of
+/// the runtime-dispatch materialization boundary.
+size_t indexToBandFusedNeon(uint32_t* out, const std::string_view view, const bool quoteAware)
+{
+    const auto* data = reinterpret_cast<const uint8_t*>(view.data());
+    const size_t numBytes = view.size();
+    uint32_t* cursor = out;
+    uint64_t quoteCarry = 0;
+    static const uint8_t bitmaskBytes[16] = {1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128};
+    const uint8x16_t bitmask = vld1q_u8(bitmaskBytes);
+    const uint8x16_t vComma = vdupq_n_u8(static_cast<uint8_t>(fieldDelim));
+    const uint8x16_t vNewline = vdupq_n_u8(static_cast<uint8_t>(tupleDelim));
+    const uint8x16_t vQuote = vdupq_n_u8(static_cast<uint8_t>('"'));
+
+    const size_t numBlocks = numBytes / 64;
+    for (size_t blk = 0; blk < numBlocks; ++blk)
+    {
+        const uint8_t* p = data + (blk * 64);
+        uint64_t comma = 0;
+        uint64_t newline = 0;
+        uint64_t quote = 0;
+        for (unsigned j = 0; j < 4; ++j)
+        {
+            const uint8x16_t in = vld1q_u8(p + (j * 16));
+            comma |= benchNeonMoveMask(vceqq_u8(in, vComma), bitmask) << (j * 16);
+            newline |= benchNeonMoveMask(vceqq_u8(in, vNewline), bitmask) << (j * 16);
+            quote |= benchNeonMoveMask(vceqq_u8(in, vQuote), bitmask) << (j * 16);
+        }
+        uint64_t fieldSep = 0;
+        if (quoteAware)
+        {
+            uint64_t quoted = NES::SimdCsv::prefixXor(quote);
+            quoted ^= quoteCarry;
+            quoteCarry = uint64_t{0} - (quoted >> 63);
+            fieldSep = (comma & ~quoted) | newline;
+        }
+        else
+        {
+            fieldSep = comma | newline;
+        }
+        cursor = flattenBits(cursor, static_cast<uint32_t>(blk * 64), fieldSep);
+    }
+
+    bool insideQuote = quoteAware && (quoteCarry != 0);
+    for (size_t i = numBlocks * 64; i < numBytes; ++i)
+    {
+        const char byte = view[i];
+        if (byte == tupleDelim || (byte == fieldDelim && (!quoteAware || !insideQuote)))
+        {
+            *cursor++ = static_cast<uint32_t>(i);
+        }
+        if (quoteAware && byte == '"')
+        {
+            insideQuote = !insideQuote;
+        }
+    }
+    return static_cast<size_t>(cursor - out);
+}
+
+/// simdcsv's neonmovemask_bulk: reduce four 0x00/0xFF compare vectors (a full 64-byte block) to a
+/// 64-bit mask with a vpaddq_u8 tree — cheaper than four separate vaddv reductions.
+inline uint64_t benchNeonMoveMaskBulk(uint8x16_t p0, uint8x16_t p1, uint8x16_t p2, uint8x16_t p3, const uint8x16_t bitmask)
+{
+    const uint8x16_t t0 = vandq_u8(p0, bitmask);
+    const uint8x16_t t1 = vandq_u8(p1, bitmask);
+    const uint8x16_t t2 = vandq_u8(p2, bitmask);
+    const uint8x16_t t3 = vandq_u8(p3, bitmask);
+    uint8x16_t sum0 = vpaddq_u8(t0, t1);
+    const uint8x16_t sum1 = vpaddq_u8(t2, t3);
+    sum0 = vpaddq_u8(sum0, sum1);
+    sum0 = vpaddq_u8(sum0, sum0);
+    return vgetq_lane_u64(vreinterpretq_u64_u8(sum0), 0);
+}
+
+/// As indexToBandFusedNeon, but with simdcsv's vpaddq-tree movemask (one bulk reduction per mask per
+/// 64-byte block instead of four vaddv reductions). Isolates the movemask-op cost.
+size_t indexToBandFusedNeonBulk(uint32_t* out, const std::string_view view, const bool quoteAware)
+{
+    const auto* data = reinterpret_cast<const uint8_t*>(view.data());
+    const size_t numBytes = view.size();
+    uint32_t* cursor = out;
+    uint64_t quoteCarry = 0;
+    static const uint8_t bitmaskBytes[16] = {1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128};
+    const uint8x16_t bitmask = vld1q_u8(bitmaskBytes);
+    const uint8x16_t vComma = vdupq_n_u8(static_cast<uint8_t>(fieldDelim));
+    const uint8x16_t vNewline = vdupq_n_u8(static_cast<uint8_t>(tupleDelim));
+    const uint8x16_t vQuote = vdupq_n_u8(static_cast<uint8_t>('"'));
+
+    const size_t numBlocks = numBytes / 64;
+    for (size_t blk = 0; blk < numBlocks; ++blk)
+    {
+        const uint8_t* p = data + (blk * 64);
+        const uint8x16_t b0 = vld1q_u8(p);
+        const uint8x16_t b1 = vld1q_u8(p + 16);
+        const uint8x16_t b2 = vld1q_u8(p + 32);
+        const uint8x16_t b3 = vld1q_u8(p + 48);
+        const uint64_t comma
+            = benchNeonMoveMaskBulk(vceqq_u8(b0, vComma), vceqq_u8(b1, vComma), vceqq_u8(b2, vComma), vceqq_u8(b3, vComma), bitmask);
+        const uint64_t newline = benchNeonMoveMaskBulk(
+            vceqq_u8(b0, vNewline), vceqq_u8(b1, vNewline), vceqq_u8(b2, vNewline), vceqq_u8(b3, vNewline), bitmask);
+        const uint64_t quote
+            = benchNeonMoveMaskBulk(vceqq_u8(b0, vQuote), vceqq_u8(b1, vQuote), vceqq_u8(b2, vQuote), vceqq_u8(b3, vQuote), bitmask);
+        uint64_t fieldSep = 0;
+        if (quoteAware)
+        {
+            uint64_t quoted = NES::SimdCsv::prefixXor(quote);
+            quoted ^= quoteCarry;
+            quoteCarry = uint64_t{0} - (quoted >> 63);
+            fieldSep = (comma & ~quoted) | newline;
+        }
+        else
+        {
+            fieldSep = comma | newline;
+        }
+        cursor = flattenBits(cursor, static_cast<uint32_t>(blk * 64), fieldSep);
+    }
+
+    bool insideQuote = quoteAware && (quoteCarry != 0);
+    for (size_t i = numBlocks * 64; i < numBytes; ++i)
+    {
+        const char byte = view[i];
+        if (byte == tupleDelim || (byte == fieldDelim && (!quoteAware || !insideQuote)))
+        {
+            *cursor++ = static_cast<uint32_t>(i);
+        }
+        if (quoteAware && byte == '"')
+        {
+            insideQuote = !insideQuote;
+        }
+    }
+    return static_cast<size_t>(cursor - out);
+}
+#endif
+
 /// Runs `fn(sink, csv)` `iterations` times and returns GB/s. Accumulates a checksum into `sink` usage
 /// so the compiler cannot elide the work.
 template <typename Fn>
@@ -324,6 +471,15 @@ int main()
     const double band16k = measureChunked(fastFn, band, csv, 16384, iterations, checksum);
     const double band4k = measureChunked(fastFn, band, csv, 4096, iterations, checksum);
 
+#if defined(__aarch64__)
+    const auto fusedFn = [&](uint32_t* out, std::string_view v) { return indexToBandFusedNeon(out, v, true); };
+    const double fusedWhole = measureChunked(fusedFn, band, csv, 0, iterations, checksum);
+    const double fused4k = measureChunked(fusedFn, band, csv, 4096, iterations, checksum);
+    const auto bulkFn = [&](uint32_t* out, std::string_view v) { return indexToBandFusedNeonBulk(out, v, true); };
+    const double bulkWhole = measureChunked(bulkFn, band, csv, 0, iterations, checksum);
+    const double bulk4k = measureChunked(bulkFn, band, csv, 4096, iterations, checksum);
+#endif
+
     const char* kernel = simdKernelName();
     std::printf(
         "CSV indexing micro-benchmark (%zu MiB, %d iterations, %d fields/row, no quotes in data)\n",
@@ -341,6 +497,13 @@ int main()
     std::printf("    %-30s %8.2f GB/s\n", "64 KiB chunks", band64k);
     std::printf("    %-30s %8.2f GB/s\n", "16 KiB chunks", band16k);
     std::printf("    %-30s %8.2f GB/s   (engine default buffer size)\n", "4 KiB chunks", band4k);
+#if defined(__aarch64__)
+    std::printf("  DIAGNOSTIC — flat band, NEON inlined (no fn-ptr / no BlockBits scratch, fused):\n");
+    std::printf("    %-30s %8.2f GB/s   (%.2fx vs dispatched band)\n", "vaddv movemask, whole", fusedWhole, fusedWhole / bandWhole);
+    std::printf("    %-30s %8.2f GB/s   (%.2fx vs dispatched band)\n", "vaddv movemask, 4 KiB", fused4k, fused4k / band4k);
+    std::printf("    %-30s %8.2f GB/s   (%.2fx vs dispatched band)\n", "vpaddq-bulk movemask, whole", bulkWhole, bulkWhole / bandWhole);
+    std::printf("    %-30s %8.2f GB/s   (%.2fx vs dispatched band)\n", "vpaddq-bulk movemask, 4 KiB", bulk4k, bulk4k / band4k);
+#endif
     std::printf("(checksum %llu)\n", static_cast<unsigned long long>(checksum));
     return 0;
 }
