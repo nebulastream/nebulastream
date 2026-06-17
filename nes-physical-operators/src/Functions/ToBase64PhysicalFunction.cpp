@@ -57,12 +57,17 @@ VarVal ToBase64PhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     const auto inputValue = childPhysicalFunction.execute(record, arena).getRawValueAs<VariableSizedData>();
     const auto inputSize = inputValue.getSize();
 
-    /// Base64 output is at most 4/3 of input size + padding, rounded up to multiple of 4
-    const auto maxOutputSize = (inputSize + nautilus::val<uint64_t>(2)) / nautilus::val<uint64_t>(3) * nautilus::val<uint64_t>(4);
+    /// Base64 output is at most 4/3 of input size + padding, rounded up to multiple of 4.
+    /// EVP_EncodeBlock additionally writes a trailing NUL terminator past the encoded bytes, so reserve
+    /// one extra byte to keep that write inside the allocation (otherwise ASan flags use-after-poison on
+    /// the next allocation's redzone introduced by the arena poisoning in PR 1665).
+    const auto encodedSize = (inputSize + nautilus::val<uint64_t>(2)) / nautilus::val<uint64_t>(3) * nautilus::val<uint64_t>(4);
+    const auto maxOutputSize = encodedSize + nautilus::val<uint64_t>(1);
     auto output = arena.allocateVariableSizedData(maxOutputSize);
 
     auto actualSize = nautilus::invoke(encodeBase64, inputValue.getContent(), inputSize, output.getContent());
 
+    /// The VariableSizedData length excludes the NUL terminator written by EVP_EncodeBlock.
     return VariableSizedData(output.getContent(), actualSize);
 }
 

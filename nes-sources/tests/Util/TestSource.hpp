@@ -20,6 +20,7 @@
 #include <future>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <stop_token>
 #include <string>
 #include <utility>
@@ -28,6 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
@@ -92,14 +94,14 @@ private:
     folly::MPMCQueue<ControlData> queue{DEFAULT_QUEUE_SIZE};
 };
 
-class TestSource : public Source
+class TestSource : public RawSource
 {
 public:
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
     void open(std::shared_ptr<AbstractBufferProvider>) override;
     void close() override;
 
 protected:
+    FillTupleBufferResult fillRaw(std::span<std::byte> out, const std::stop_token& stopToken) override;
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 public:

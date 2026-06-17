@@ -122,6 +122,11 @@ void fillThreadOwnershipInfo(std::string& threadName, cpptrace::raw_trace& calls
 #endif
 bool BufferControlBlock::prepare(const std::shared_ptr<BufferRecycler>& recycler)
 {
+    /// Hand-out is an exclusive point: one thread has dequeued the segment and it is not published yet.
+    /// Unpoison the control block before touching its reference counter. For pooled buffers it was poisoned
+    /// while idle in the pool (see BufferManager); wrapped/unpooled control blocks are heap-allocated and
+    /// never poisoned, so this is a harmless no-op there. It is re-poisoned on recycle.
+    ASAN_UNPOISON_MEMORY_REGION(this, sizeof(*this));
     int32_t expected = 0;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     /// store the current thread that owns the buffer and track which function obtained the buffer
