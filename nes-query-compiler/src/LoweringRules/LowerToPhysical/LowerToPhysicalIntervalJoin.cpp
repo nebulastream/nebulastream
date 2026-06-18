@@ -30,10 +30,10 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Iterators/BFSIterator.hpp>
-#include <Join/IntervalJoin/IntervalJoinBuildAnchorPhysicalOperator.hpp>
-#include <Join/IntervalJoin/IntervalJoinBuildPartnerPhysicalOperator.hpp>
+#include <Join/IntervalJoin/IntervalJoinBuildPhysicalOperator.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
-#include <Join/IntervalJoin/IntervalJoinProbePhysicalOperator.hpp>
+#include <Join/IntervalJoin/IntervalJoinProbeInnerPhysicalOperator.hpp>
+#include <Join/IntervalJoin/IntervalJoinProbeOuterPhysicalOperator.hpp>
 #include <Join/IntervalJoin/IntervalJoinSlice.hpp>
 #include <Join/IntervalJoin/IntervalSliceStore.hpp>
 #include <Join/IntervalJoin/IntervalSliceStoreRef.hpp>
@@ -176,10 +176,18 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
         [](IntervalJoinOperatorHandler& h) { return h.getCreateNewSlicesFunction({}); },
         conf.sliceCacheConfiguration);
 
-    const IntervalJoinBuildAnchorPhysicalOperator anchorBuildOperator{
-        handlerId, TimeFunction::create(anchorTimeCharacteristic), anchorBufferRef, std::move(sliceStoreRefAnchor)};
-    const IntervalJoinBuildPartnerPhysicalOperator partnerBuildOperator{
-        handlerId, TimeFunction::create(partnerTimeCharacteristic), partnerBufferRef, std::move(sliceStoreRefPartner)};
+    const IntervalJoinBuildPhysicalOperator anchorBuildOperator{
+        handlerId,
+        IntervalJoinBuildSide::Anchor,
+        TimeFunction::create(anchorTimeCharacteristic),
+        anchorBufferRef,
+        std::move(sliceStoreRefAnchor)};
+    const IntervalJoinBuildPhysicalOperator partnerBuildOperator{
+        handlerId,
+        IntervalJoinBuildSide::Partner,
+        TimeFunction::create(partnerTimeCharacteristic),
+        partnerBufferRef,
+        std::move(sliceStoreRefPartner)};
 
     const JoinSchema joinSchema{anchorInputSchema, partnerInputSchema, outputSchema};
 

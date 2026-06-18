@@ -70,12 +70,6 @@ std::uint64_t getPartnerCountProxy(const EmittedIntervalJoinWindowTrigger* trigg
     return static_cast<std::uint64_t>(trigger->partnerCount);
 }
 
-bool getPartnerNullFillPassProxy(const EmittedIntervalJoinWindowTrigger* trigger)
-{
-    PRECONDITION(trigger != nullptr, "trigger should not be null");
-    return trigger->partnerNullFillPass;
-}
-
 Timestamp getWindowStartFromTriggerProxy(const EmittedIntervalJoinWindowTrigger* trigger)
 {
     PRECONDITION(trigger != nullptr, "trigger should not be null");
@@ -133,24 +127,6 @@ void intervalJoinNotifyProbeBufferDoneProxy(
     handler->notifyBufferDoneProbe(bufferMetaData);
 }
 
-void intervalJoinProbeStartProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null");
-    PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
-    auto* handler = dynamic_cast<IntervalJoinOperatorHandler*>(ptrOpHandler);
-    PRECONDITION(handler != nullptr, "expected IntervalJoinOperatorHandler");
-    handler->start(*pipelineCtx, 0);
-}
-
-void intervalJoinProbeStopProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null");
-    PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
-    auto* handler = dynamic_cast<IntervalJoinOperatorHandler*>(ptrOpHandler);
-    PRECONDITION(handler != nullptr, "expected IntervalJoinOperatorHandler");
-    handler->stop(QueryTerminationType::Graceful, *pipelineCtx);
-}
-
 }
 
 IntervalJoinProbePhysicalOperator::IntervalJoinProbePhysicalOperator(
@@ -197,12 +173,32 @@ IntervalJoinProbePhysicalOperator::IntervalJoinProbePhysicalOperator(const Inter
 void IntervalJoinProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     setupChild(executionCtx, compilationContext);
-    invoke(intervalJoinProbeStartProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
+    invoke(
+        +[](OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)
+        {
+            PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null");
+            PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
+            auto* handler = dynamic_cast<IntervalJoinOperatorHandler*>(ptrOpHandler);
+            PRECONDITION(handler != nullptr, "expected IntervalJoinOperatorHandler");
+            handler->start(*pipelineCtx, 0);
+        },
+        executionCtx.getGlobalOperatorHandler(operatorHandlerId),
+        executionCtx.pipelineContext);
 }
 
 void IntervalJoinProbePhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
-    invoke(intervalJoinProbeStopProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
+    invoke(
+        +[](OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)
+        {
+            PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null");
+            PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
+            auto* handler = dynamic_cast<IntervalJoinOperatorHandler*>(ptrOpHandler);
+            PRECONDITION(handler != nullptr, "expected IntervalJoinOperatorHandler");
+            handler->stop(QueryTerminationType::Graceful, *pipelineCtx);
+        },
+        executionCtx.getGlobalOperatorHandler(operatorHandlerId),
+        executionCtx.pipelineContext);
     terminateChild(executionCtx);
 }
 
@@ -348,89 +344,19 @@ void IntervalJoinProbePhysicalOperator::runAnchorDrivenPass(ExecutionContext& ex
     }
 }
 
-IntervalJoinProbeInnerPhysicalOperator::IntervalJoinProbeInnerPhysicalOperator(
-    const OperatorHandlerId operatorHandlerId,
-    PhysicalFunction joinFunction,
-    WindowMetaData windowMetaData,
-    const JoinSchema& joinSchema,
-    std::unique_ptr<TimeFunction> anchorTimeFunction,
-    std::unique_ptr<TimeFunction> partnerTimeFunction,
-    const std::int64_t lowerBound,
-    const std::int64_t upperBound,
-    std::shared_ptr<TupleBufferRef> anchorMemoryProvider,
-    std::shared_ptr<TupleBufferRef> partnerMemoryProvider,
-    std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNames,
-    std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNames)
-    : IntervalJoinProbePhysicalOperator(
-          operatorHandlerId,
-          std::move(joinFunction),
-          std::move(windowMetaData),
-          joinSchema,
-          std::move(anchorTimeFunction),
-          std::move(partnerTimeFunction),
-          lowerBound,
-          upperBound,
-          std::move(anchorMemoryProvider),
-          std::move(partnerMemoryProvider),
-          std::move(anchorKeyFieldNames),
-          std::move(partnerKeyFieldNames),
-          /*emitAnchorNullFill=*/false)
+nautilus::val<bool> IntervalJoinProbePhysicalOperator::isPartnerNullFillPass(RecordBuffer& recordBuffer) const
 {
-}
-
-void IntervalJoinProbeInnerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    prepareOpen(executionCtx, recordBuffer);
-    runAnchorDrivenPass(executionCtx, recordBuffer);
-}
-
-IntervalJoinProbeOuterPhysicalOperator::IntervalJoinProbeOuterPhysicalOperator(
-    const OperatorHandlerId operatorHandlerId,
-    PhysicalFunction joinFunction,
-    WindowMetaData windowMetaData,
-    const JoinSchema& joinSchema,
-    std::unique_ptr<TimeFunction> anchorTimeFunction,
-    std::unique_ptr<TimeFunction> partnerTimeFunction,
-    const std::int64_t lowerBound,
-    const std::int64_t upperBound,
-    std::shared_ptr<TupleBufferRef> anchorMemoryProvider,
-    std::shared_ptr<TupleBufferRef> partnerMemoryProvider,
-    std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNames,
-    std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNames,
-    const bool emitAnchorNullFill)
-    : IntervalJoinProbePhysicalOperator(
-          operatorHandlerId,
-          std::move(joinFunction),
-          std::move(windowMetaData),
-          joinSchema,
-          std::move(anchorTimeFunction),
-          std::move(partnerTimeFunction),
-          lowerBound,
-          upperBound,
-          std::move(anchorMemoryProvider),
-          std::move(partnerMemoryProvider),
-          std::move(anchorKeyFieldNames),
-          std::move(partnerKeyFieldNames),
-          emitAnchorNullFill)
-{
-}
-
-void IntervalJoinProbeOuterPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    prepareOpen(executionCtx, recordBuffer);
-
-    // todo we should have two separate probe operators. one for outer (null filled, partner driven) and one for inner (not null filled, anchor driven). during lowering, we check if the join type is outer and then create the one or the other. similar as we do it for the HashJoin and NestedLoopJoin
     const auto triggerRef = static_cast<nautilus::val<EmittedIntervalJoinWindowTrigger*>>(recordBuffer.getMemArea());
-    const auto partnerNullFillPass = invoke(getPartnerNullFillPassProxy, triggerRef);
-    if (partnerNullFillPass)
-    {
-        runPartnerNullFillPass(executionCtx, recordBuffer);
-        return;
-    }
-    runAnchorDrivenPass(executionCtx, recordBuffer);
+    return invoke(
+        +[](const EmittedIntervalJoinWindowTrigger* trigger)
+        {
+            PRECONDITION(trigger != nullptr, "trigger should not be null");
+            return trigger->partnerNullFillPass;
+        },
+        triggerRef);
 }
 
-void IntervalJoinProbeOuterPhysicalOperator::runPartnerNullFillPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void IntervalJoinProbePhysicalOperator::runPartnerNullFillPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     const auto triggerRef = static_cast<nautilus::val<EmittedIntervalJoinWindowTrigger*>>(recordBuffer.getMemArea());
     const auto driverSliceEnd = invoke(getAnchorSliceEndFromTriggerProxy, triggerRef);

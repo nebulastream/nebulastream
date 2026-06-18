@@ -20,6 +20,7 @@
 #include <cstring>
 #include <functional>
 #include <memory>
+#include <tuple>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -47,7 +48,7 @@ namespace
 /// Computes floor(x / divisor) for signed numerator and positive divisor,
 /// correctly rounding toward negative infinity. C's `/` rounds toward zero,
 /// which would give the wrong slice index for negative bounds.
-// todo use c++-23 stdlib functions
+/// No C++23 stdlib equivalent exists; replace with std::div_floor once the toolchain ships C++26 <intdiv> (P3724).
 constexpr std::int64_t floorDiv(std::int64_t x, std::int64_t divisor)
 {
     INVARIANT(divisor > 0, "floorDiv divisor must be positive; got {}", divisor);
@@ -57,7 +58,7 @@ constexpr std::int64_t floorDiv(std::int64_t x, std::int64_t divisor)
 }
 
 /// Computes ceil(x / divisor) for signed numerator and positive divisor.
-// todo use c++-23 stdlib functions
+/// No C++23 stdlib equivalent exists; replace with std::div_ceil once the toolchain ships C++26 <intdiv> (P3724).
 constexpr std::int64_t ceilDiv(std::int64_t x, std::int64_t divisor)
 {
     INVARIANT(divisor > 0, "ceilDiv divisor must be positive; got {}", divisor);
@@ -118,27 +119,16 @@ void IntervalJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionCo
     /// onSideBuildTerminated -> flushAllOnTermination. Nothing to do here.
 }
 
-void IntervalJoinOperatorHandler::notifyBufferDoneAnchor(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
+void IntervalJoinOperatorHandler::notifyBufferDone(
+    const IntervalJoinBuildSide side, const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
-    // todo use std::ignore here
-    [[maybe_unused]] const auto newWatermark
-        = watermarkAnchor->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
-    tryTriggerAnchors(pipelineCtx);
-}
-
-void IntervalJoinOperatorHandler::notifyBufferDonePartner(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
-{
-    // todo use std::ignore here
-    [[maybe_unused]] const auto newWatermark
-        = watermarkPartner->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    std::ignore = getBuildWatermark(side).updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     tryTriggerAnchors(pipelineCtx);
 }
 
 void IntervalJoinOperatorHandler::notifyBufferDoneProbe(const BufferMetaData& bufferMetaData)
 {
-    // todo use std::ignore here
-    [[maybe_unused]] const auto newWatermark
-        = watermarkProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    std::ignore = watermarkProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     const auto probeWatermark = watermarkProbe->getCurrentWatermark();
 
     /// RIGHT/FULL outer interval join performs a partner-anchored null-fill pass at termination that needs
@@ -160,15 +150,16 @@ void IntervalJoinOperatorHandler::notifyBufferDoneProbe(const BufferMetaData& bu
     }
 }
 
-void IntervalJoinOperatorHandler::onSideBuildTerminated(const JoinBuildSideType side, PipelineExecutionContext* pipelineCtx)
+void IntervalJoinOperatorHandler::onSideBuildTerminated(const IntervalJoinBuildSide side, PipelineExecutionContext* pipelineCtx)
 {
-    if (side == JoinBuildSideType::Left)
+    switch (side)
     {
-        anchorBuildDone.store(true, std::memory_order_release);
-    }
-    else
-    {
-        partnerBuildDone.store(true, std::memory_order_release);
+        case IntervalJoinBuildSide::Anchor:
+            anchorBuildDone.store(true, std::memory_order_release);
+            break;
+        case IntervalJoinBuildSide::Partner:
+            partnerBuildDone.store(true, std::memory_order_release);
+            break;
     }
 
     if (anchorBuildDone.load(std::memory_order_acquire) && partnerBuildDone.load(std::memory_order_acquire))
@@ -199,6 +190,30 @@ IntervalSliceStore& IntervalJoinOperatorHandler::getAnchorStore() noexcept
 IntervalSliceStore& IntervalJoinOperatorHandler::getPartnerStore() noexcept
 {
     return *partnerStore;
+}
+
+IntervalSliceStore& IntervalJoinOperatorHandler::getStore(const IntervalJoinBuildSide side) noexcept
+{
+    switch (side)
+    {
+        case IntervalJoinBuildSide::Anchor:
+            return *anchorStore;
+        case IntervalJoinBuildSide::Partner:
+            return *partnerStore;
+    }
+    std::unreachable();
+}
+
+MultiOriginWatermarkProcessor& IntervalJoinOperatorHandler::getBuildWatermark(const IntervalJoinBuildSide side) noexcept
+{
+    switch (side)
+    {
+        case IntervalJoinBuildSide::Anchor:
+            return *watermarkAnchor;
+        case IntervalJoinBuildSide::Partner:
+            return *watermarkPartner;
+    }
+    std::unreachable();
 }
 
 void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pipelineCtx)

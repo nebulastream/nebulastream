@@ -16,8 +16,8 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
+#include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
-#include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -28,28 +28,34 @@
 namespace NES
 {
 
-/// Build-side skeleton for the streaming interval join.
+/// Build-side operator for the streaming interval join.
 ///
-/// Both sides do the same thing in execute() (append the tuple to the slice covering its
-/// timestamp); only the setup/close/terminate wiring differs because it targets a specific
-/// per-side store and notification on the handler. That side-specific wiring lives in the
-/// IntervalJoinBuildAnchorPhysicalOperator / IntervalJoinBuildPartnerPhysicalOperator subclasses
-/// (each in its own header/source), so neither carries a runtime side flag.
+/// Both inputs do the same thing in execute() (append the tuple to the slice covering its
+/// timestamp); only the setup/close/terminate wiring differs because it targets a specific per-side
+/// store and notification on the handler. The side is captured once as an IntervalJoinBuildSide and
+/// threaded through the side-parameterized proxies, so a single class serves both the anchor and
+/// partner inputs (mirroring NLJ/HashJoin's single parameterized build operator).
 ///
-/// We inherit the StreamJoinBuildPhysicalOperator skeleton but the subclasses override
-/// setup/close/terminate because the inherited paths dynamic_cast the handler to
-/// WindowBasedOperatorHandler, which the interval-join handler does not extend.
-class IntervalJoinBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator
+/// We inherit the StreamJoinBuildPhysicalOperator skeleton but override setup/close/terminate because
+/// the inherited paths dynamic_cast the handler to WindowBasedOperatorHandler, which the interval-join
+/// handler does not extend.
+class IntervalJoinBuildPhysicalOperator final : public StreamJoinBuildPhysicalOperator
 {
 public:
     IntervalJoinBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
-        JoinBuildSideType joinBuildSide,
+        IntervalJoinBuildSide buildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<TupleBufferRef> bufferRef,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
 
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
+
+private:
+    const IntervalJoinBuildSide buildSide;
 };
 
 }

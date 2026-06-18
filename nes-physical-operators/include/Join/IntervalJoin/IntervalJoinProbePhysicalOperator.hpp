@@ -36,14 +36,15 @@ namespace NES
 /// Shared probe infrastructure for the streaming interval join.
 ///
 /// A probe buffer represents one driving ("anchor") slice with up to 3 partner slice ends.
-/// The two concrete variants below differ only in how they treat unmatched tuples:
-///   - IntervalJoinProbeInnerPhysicalOperator emits matched (anchor, partner) pairs only.
-///   - IntervalJoinProbeOuterPhysicalOperator additionally null-fills unmatched tuples.
+/// The two concrete variants (IntervalJoinProbeInnerPhysicalOperator and
+/// IntervalJoinProbeOuterPhysicalOperator, each in its own header) differ only in how they treat
+/// unmatched tuples:
+///   - the inner probe emits matched (anchor, partner) pairs only;
+///   - the outer probe additionally null-fills unmatched tuples.
 ///
-/// Inherits StreamJoinProbePhysicalOperator for createJoinedRecord/createNullFilledJoinedRecord,
-/// but the variants override close() indirectly via this base because the inherited
-/// WindowProbePhysicalOperator::close would dynamic_cast the handler to WindowBasedOperatorHandler,
-/// which the interval-join handler does not extend.
+/// Inherits StreamJoinProbePhysicalOperator for createJoinedRecord/createNullFilledJoinedRecord, but
+/// the base overrides close() because the inherited WindowProbePhysicalOperator::close would
+/// dynamic_cast the handler to WindowBasedOperatorHandler, which the interval-join handler does not extend.
 class IntervalJoinProbePhysicalOperator : public StreamJoinProbePhysicalOperator
 {
 public:
@@ -78,6 +79,15 @@ protected:
     /// the partner-side fields null-filled.
     void runAnchorDrivenPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 
+    /// Partner-anchored null-fill pass (outer probe only): the driving slice is a partner-store slice
+    /// and its partners are anchor-store slices. Matches were already emitted by the anchor-driven pass,
+    /// so this only emits a null-filled row for each partner tuple that matched no anchor tuple.
+    void runPartnerNullFillPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+
+    /// Reads the partnerNullFillPass flag from the trigger buffer (set by the handler's termination
+    /// pass). The outer probe branches on it to choose the partner-anchored null-fill pass.
+    [[nodiscard]] nautilus::val<bool> isPartnerNullFillPass(RecordBuffer& recordBuffer) const;
+
     /// Interval predicate: anchorTs + lowerBound <= partnerTs <= anchorTs + upperBound. `anchorRecord`
     /// is an anchor-side (left input) tuple, `partnerRecord` a partner-side (right input) tuple.
     [[nodiscard]] nautilus::val<bool>
@@ -92,57 +102,6 @@ protected:
     std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNames;
     std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNames;
     bool emitAnchorNullFill;
-};
-
-/// Inner (and cartesian) interval-join probe: emits matched (anchor, partner) pairs only.
-class IntervalJoinProbeInnerPhysicalOperator final : public IntervalJoinProbePhysicalOperator
-{
-public:
-    IntervalJoinProbeInnerPhysicalOperator(
-        OperatorHandlerId operatorHandlerId,
-        PhysicalFunction joinFunction,
-        WindowMetaData windowMetaData,
-        const JoinSchema& joinSchema,
-        std::unique_ptr<TimeFunction> anchorTimeFunction,
-        std::unique_ptr<TimeFunction> partnerTimeFunction,
-        std::int64_t lowerBound,
-        std::int64_t upperBound,
-        std::shared_ptr<TupleBufferRef> anchorMemoryProvider,
-        std::shared_ptr<TupleBufferRef> partnerMemoryProvider,
-        std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNames,
-        std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNames);
-
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-};
-
-/// Outer interval-join probe (LEFT/RIGHT/FULL). The anchor-driven pass null-fills unmatched anchor
-/// tuples (LEFT/FULL, controlled by emitAnchorNullFill); a partner-anchored null-fill pass, triggered
-/// by the handler at termination, null-fills unmatched partner tuples (RIGHT/FULL).
-class IntervalJoinProbeOuterPhysicalOperator final : public IntervalJoinProbePhysicalOperator
-{
-public:
-    IntervalJoinProbeOuterPhysicalOperator(
-        OperatorHandlerId operatorHandlerId,
-        PhysicalFunction joinFunction,
-        WindowMetaData windowMetaData,
-        const JoinSchema& joinSchema,
-        std::unique_ptr<TimeFunction> anchorTimeFunction,
-        std::unique_ptr<TimeFunction> partnerTimeFunction,
-        std::int64_t lowerBound,
-        std::int64_t upperBound,
-        std::shared_ptr<TupleBufferRef> anchorMemoryProvider,
-        std::shared_ptr<TupleBufferRef> partnerMemoryProvider,
-        std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNames,
-        std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNames,
-        bool emitAnchorNullFill);
-
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
-private:
-    /// Partner-anchored null-fill pass: the driving slice is a partner-store slice and its partners
-    /// are anchor-store slices. Matches were already emitted by the anchor-driven pass, so this only
-    /// emits a null-filled row for each partner tuple that matched no anchor tuple.
-    void runPartnerNullFillPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 };
 
 }

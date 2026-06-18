@@ -35,6 +35,15 @@
 namespace NES
 {
 
+/// Which build input a record arrived on. The interval join labels its inputs anchor (left) and
+/// partner (right) rather than reusing the shared JoinBuildSideType, whose Left/Right names would
+/// obscure the anchor/partner roles that drive trigger emission.
+enum class IntervalJoinBuildSide : std::uint8_t
+{
+    Anchor,
+    Partner
+};
+
 /// Trigger payload emitted by IntervalJoinOperatorHandler per anchor slice.
 ///
 /// Each anchor slice produces ONE buffer carrying up to MAX_PARTNERS partner slice ends. The bound
@@ -80,11 +89,10 @@ public:
     void start(PipelineExecutionContext& ctx, std::uint32_t localStateVariableId) override;
     void stop(QueryTerminationType type, PipelineExecutionContext& ctx) override;
 
-    /// Build-side notifications. Called from IntervalJoinBuildPhysicalOperator::close
-    /// via the side-aware proxy. Each advances its own build watermark and re-runs
-    /// the anchor-trigger loop, since either side's watermark advance may unblock anchors.
-    void notifyBufferDoneAnchor(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
-    void notifyBufferDonePartner(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
+    /// Build-side notification. Called from IntervalJoinBuildPhysicalOperator::close via the
+    /// side-aware proxy. Advances the given side's build watermark and re-runs the anchor-trigger
+    /// loop, since either side's watermark advance may unblock anchors.
+    void notifyBufferDone(IntervalJoinBuildSide side, const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
 
     /// Probe-side notification. Advances the probe watermark, then garbage-collects both
     /// stores (anchor at probeWatermark, partner at probeWatermark shifted by max(0, -offsetLow) * W).
@@ -93,7 +101,7 @@ public:
     /// Called from the build operator's terminate() proxy AFTER the side's
     /// slice-store reports its last input pipeline. Marks the side done; when
     /// both sides are done, runs the end-of-stream flush.
-    void onSideBuildTerminated(JoinBuildSideType side, PipelineExecutionContext* pipelineCtx);
+    void onSideBuildTerminated(IntervalJoinBuildSide side, PipelineExecutionContext* pipelineCtx);
 
     /// Lambda factory used by IntervalSliceStoreRef's cache-miss proxy. Returns
     /// a closure that captures numberOfWorkerThreads by value (set in start()).
@@ -102,6 +110,9 @@ public:
 
     [[nodiscard]] IntervalSliceStore& getAnchorStore() noexcept;
     [[nodiscard]] IntervalSliceStore& getPartnerStore() noexcept;
+
+    /// Side-dispatched store accessor used by the build operator's side-parameterized proxies.
+    [[nodiscard]] IntervalSliceStore& getStore(IntervalJoinBuildSide side) noexcept;
 
     [[nodiscard]] std::int64_t getLowerBound() const noexcept { return lowerBound; }
 
@@ -114,6 +125,9 @@ public:
     [[nodiscard]] OriginId getOutputOriginId() const noexcept { return outputOriginId; }
 
 private:
+    /// Side-dispatched build-watermark accessor (anchor vs partner), mirroring getStore.
+    [[nodiscard]] MultiOriginWatermarkProcessor& getBuildWatermark(IntervalJoinBuildSide side) noexcept;
+
     /// Heart of the operator: claims newly-triggerable anchor slices, looks up
     /// non-empty partner slices for each, and emits one probe buffer per anchor.
     void tryTriggerAnchors(PipelineExecutionContext* pipelineCtx);
