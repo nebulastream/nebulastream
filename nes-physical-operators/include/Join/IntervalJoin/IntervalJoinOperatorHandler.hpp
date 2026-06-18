@@ -37,12 +37,10 @@ namespace NES
 
 /// Trigger payload emitted by IntervalJoinOperatorHandler per anchor slice.
 ///
-// todo do not mention NLJ here. Simply start with only stuff from IntervalJoin
-/// We diverge from NLJ's per-pair shape: each anchor produces ONE buffer
-/// containing up to MAX_PARTNERS partner slice ends. The upper bound is 3 for
-/// `W = U - L` (proof: an interval of length W overlaps at most 3 consecutive
-/// width-W buckets). This halves task count vs per-pair emit and removes the
-/// chunking dance that would otherwise be needed for the probe-WM processor.
+/// Each anchor slice produces ONE buffer carrying up to MAX_PARTNERS partner slice ends. The bound
+/// is 3 because, with slice width `W = upperBound - lowerBound`, an interval of length W overlaps at
+/// most 3 consecutive width-W buckets. Emitting one buffer per anchor (instead of one per
+/// anchor/partner pair) keeps the task count low and avoids chunking the probe-side watermark.
 struct EmittedIntervalJoinWindowTrigger
 {
     static constexpr std::size_t MAX_PARTNERS = 3;
@@ -65,7 +63,7 @@ struct EmittedIntervalJoinWindowTrigger
 /// (anchor build, partner build, probe), and the bound arithmetic that drives
 /// trigger emission. Extends OperatorHandler directly — NOT
 /// WindowBasedOperatorHandler — because the base's "one store + one combined
-/// build WM" assumption doesn't fit per-side stores with per-side watermarks.
+/// build watermark" assumption doesn't fit per-side stores with per-side watermarks.
 class IntervalJoinOperatorHandler final : public OperatorHandler
 {
 public:
@@ -84,12 +82,12 @@ public:
 
     /// Build-side notifications. Called from IntervalJoinBuildPhysicalOperator::close
     /// via the side-aware proxy. Each advances its own build watermark and re-runs
-    /// the anchor-trigger loop, since either side's WM advance may unblock anchors.
+    /// the anchor-trigger loop, since either side's watermark advance may unblock anchors.
     void notifyBufferDoneAnchor(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
     void notifyBufferDonePartner(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
 
-    /// Probe-side notification. Advances the probe watermark, then GCs both
-    /// stores (anchor at probeWm, partner at probeWm shifted by max(0, -offsetLow) * W).
+    /// Probe-side notification. Advances the probe watermark, then garbage-collects both
+    /// stores (anchor at probeWatermark, partner at probeWatermark shifted by max(0, -offsetLow) * W).
     void notifyBufferDoneProbe(const BufferMetaData& bufferMetaData);
 
     /// Called from the build operator's terminate() proxy AFTER the side's
@@ -128,12 +126,11 @@ private:
     /// RIGHT/FULL outer end-of-stream pass. Anchors on the partner store and looks up anchor-side partner
     /// slices (symmetric to the normal anchor-driven trigger). Emits one partner-null-fill buffer per
     /// non-empty partner anchor so the probe can null-fill partner tuples that matched no anchor-side tuple.
-    /// Runs at termination, when GC has been suppressed so every anchor-side partner is still present.
+    /// Runs at termination, when garbage collection has been suppressed so every anchor-side partner is still present.
     void flushPartnerNullFill(PipelineExecutionContext* pipelineCtx);
 
-    /// Serializes a single trigger struct into a buffer and dispatches it.
-    /// Mirrors NLJOperatorHandler::emitSlicesToProbe; differs in payload shape
-    /// (one buffer per anchor; partner array; numberOfTuples = 1).
+    /// Serializes a single trigger struct into a buffer (one buffer per anchor, carrying the partner
+    /// slice-end array; numberOfTuples = 1) and dispatches it to the probe.
     void emitProbeBuffer(
         const EmittedIntervalJoinWindowTrigger& trigger,
         const SequenceData& sequenceData,
@@ -153,23 +150,26 @@ private:
     /// LEFT/FULL outer interval join: emit anchor buffers even when an anchor has no non-empty partner
     /// slices, so the probe can null-fill the unmatched anchor tuples.
     const bool emitAnchorNullFill;
-    // todo write out GC to garbage collection
     /// RIGHT/FULL outer interval join: run a partner-anchored null-fill pass at termination, and suppress
-    /// GC meanwhile so anchor-side partner slices survive for that pass.
+    /// garbage collection meanwhile so anchor-side partner slices survive for that pass.
     const bool emitPartnerNullFill;
 
     std::unique_ptr<IntervalSliceStore> anchorStore;
     std::unique_ptr<IntervalSliceStore> partnerStore;
 
-    // todo write out watermark for wmAnchor, wmPartner, and wmProbe
-    std::unique_ptr<MultiOriginWatermarkProcessor> wmAnchor;
-    std::unique_ptr<MultiOriginWatermarkProcessor> wmPartner;
-    std::unique_ptr<MultiOriginWatermarkProcessor> wmProbe;
+    /// Per-side watermark processors. watermarkAnchor and watermarkPartner track how far the anchor (left) and
+    /// partner (right) build inputs have advanced; watermarkProbe tracks the probe (output) side. An anchor
+    /// slice only triggers once both build watermarks have passed its partner horizon, and the
+    /// garbage-collection thresholds are derived from watermarkProbe.
+    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkAnchor;
+    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkPartner;
+    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProbe;
 
     std::atomic<SequenceNumber::Underlying> nextProbeSequence;
     std::atomic<std::uint64_t> numberOfWorkerThreads;
 
-    // todo write one line comment why we need these atomics
+    /// Set from each build side's terminate(), which run concurrently on independent pipeline threads;
+    /// atomic so the "both sides done" check that fires the end-of-stream flush stays race-free.
     std::atomic<bool> anchorBuildDone;
     std::atomic<bool> partnerBuildDone;
 };

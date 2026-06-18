@@ -73,10 +73,10 @@ public:
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd);
 
     /// Anchor-side trigger primitive. Atomically claim every slice with
-    /// sliceEnd <= triggerWm whose triggered flag is still false; return them
+    /// sliceEnd <= triggerWatermark whose triggered flag is still false; return them
     /// in sorted (sliceEnd-ascending) order. Concurrent triggers on different
     /// watermarks each see a disjoint claim set thanks to the per-slice CAS.
-    std::vector<std::shared_ptr<IntervalJoinSlice>> claimTriggerable(Timestamp triggerWm);
+    std::vector<std::shared_ptr<IntervalJoinSlice>> claimTriggerable(Timestamp triggerWatermark);
 
     /// Anchor-side termination flush. Atomically claim all not-yet-triggered
     /// slices regardless of watermark. Called from the build operator's
@@ -84,13 +84,13 @@ public:
     std::vector<std::shared_ptr<IntervalJoinSlice>> claimAllNonTriggered();
 
     /// Anchor-side GC: drop slices that have been triggered AND ended below
-    /// `gcWm` (probe watermark). Called from notifyBufferDoneProbe.
-    void garbageCollectTriggered(Timestamp gcWm);
+    /// `gcWatermark` (probe watermark). Called from notifyBufferDoneProbe.
+    void garbageCollectTriggered(Timestamp gcWatermark);
 
-    /// Partner-side GC: drop slices whose end is below `gcWm`. The handler
-    /// computes `gcWm = probeWm - max(0, -offsetLow) * sliceWidth` so that partner
+    /// Partner-side GC: drop slices whose end is below `gcWatermark`. The handler
+    /// computes `gcWatermark = probeWatermark - max(0, -offsetLow) * sliceWidth` so that partner
     /// slices outlive the last possible anchor that could reference them.
-    void garbageCollectExpired(Timestamp gcWm);
+    void garbageCollectExpired(Timestamp gcWatermark);
 
     /// Per-pipeline cache memory allocation, invoked from
     /// IntervalSliceStoreRef::setupSliceStore.

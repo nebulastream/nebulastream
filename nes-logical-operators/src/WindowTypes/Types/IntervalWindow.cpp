@@ -28,7 +28,8 @@ namespace NES::Windowing
 
 /// No bound validation here; lowerBound < upperBound is enforced (with a graceful error) by
 /// IntervalJoinLogicalOperator so invalid user queries are rejected rather than terminating.
-IntervalWindow::IntervalWindow(const std::int64_t lowerBound, const std::int64_t upperBound) : lowerBound(lowerBound), upperBound(upperBound)
+IntervalWindow::IntervalWindow(const std::int64_t lowerBound, const std::int64_t upperBound)
+    : lowerBound(lowerBound), upperBound(upperBound)
 {
 }
 

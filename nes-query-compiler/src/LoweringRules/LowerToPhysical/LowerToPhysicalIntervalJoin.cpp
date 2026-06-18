@@ -30,7 +30,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Iterators/BFSIterator.hpp>
-#include <Join/IntervalJoin/IntervalJoinBuildPhysicalOperator.hpp>
+#include <Join/IntervalJoin/IntervalJoinBuildAnchorPhysicalOperator.hpp>
+#include <Join/IntervalJoin/IntervalJoinBuildPartnerPhysicalOperator.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
 #include <Join/IntervalJoin/IntervalJoinProbePhysicalOperator.hpp>
 #include <Join/IntervalJoin/IntervalJoinSlice.hpp>
@@ -127,7 +128,7 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
         | std::views::transform([](const auto& child)
                                 { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
-    auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
+    FieldMappingTrait combinedFieldMapping{std::move(combinedFieldMappingVec)};
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
     auto anchorBufferRef = LowerSchemaProvider::lowerSchema(pageSize, anchorInputSchema, memoryLayoutType);

@@ -92,13 +92,13 @@ std::optional<std::shared_ptr<Slice>> IntervalSliceStore::getSliceBySliceEnd(con
     return std::nullopt;
 }
 
-std::vector<std::shared_ptr<IntervalJoinSlice>> IntervalSliceStore::claimTriggerable(const Timestamp triggerWm)
+std::vector<std::shared_ptr<IntervalJoinSlice>> IntervalSliceStore::claimTriggerable(const Timestamp triggerWatermark)
 {
     std::vector<std::shared_ptr<IntervalJoinSlice>> claimed;
     const auto slicesReadLocked = slices.rlock();
     for (const auto& [sliceEnd, slicePtr] : *slicesReadLocked)
     {
-        if (sliceEnd > triggerWm)
+        if (sliceEnd > triggerWatermark)
         {
             /// Map is sorted; everything beyond the watermark stays.
             break;
@@ -125,7 +125,7 @@ std::vector<std::shared_ptr<IntervalJoinSlice>> IntervalSliceStore::claimAllNonT
     return claimed;
 }
 
-void IntervalSliceStore::garbageCollectTriggered(const Timestamp gcWm)
+void IntervalSliceStore::garbageCollectTriggered(const Timestamp gcWatermark)
 {
     std::vector<std::shared_ptr<IntervalJoinSlice>> slicesToDelete;
     {
@@ -133,7 +133,7 @@ void IntervalSliceStore::garbageCollectTriggered(const Timestamp gcWm)
         for (auto it = slicesWriteLocked->begin(); it != slicesWriteLocked->end();)
         {
             const auto& [sliceEnd, slicePtr] = *it;
-            if (sliceEnd >= gcWm)
+            if (sliceEnd >= gcWatermark)
             {
                 /// Map is sorted; everything from here onward has not yet expired.
                 break;
@@ -153,7 +153,7 @@ void IntervalSliceStore::garbageCollectTriggered(const Timestamp gcWm)
     slicesToDelete.clear();
 }
 
-void IntervalSliceStore::garbageCollectExpired(const Timestamp gcWm)
+void IntervalSliceStore::garbageCollectExpired(const Timestamp gcWatermark)
 {
     std::vector<std::shared_ptr<IntervalJoinSlice>> slicesToDelete;
     {
@@ -161,7 +161,7 @@ void IntervalSliceStore::garbageCollectExpired(const Timestamp gcWm)
         for (auto it = slicesWriteLocked->begin(); it != slicesWriteLocked->end();)
         {
             const auto& [sliceEnd, slicePtr] = *it;
-            if (sliceEnd >= gcWm)
+            if (sliceEnd >= gcWatermark)
             {
                 break;
             }

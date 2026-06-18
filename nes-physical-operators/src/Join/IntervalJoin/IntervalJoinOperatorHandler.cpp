@@ -47,6 +47,7 @@ namespace
 /// Computes floor(x / divisor) for signed numerator and positive divisor,
 /// correctly rounding toward negative infinity. C's `/` rounds toward zero,
 /// which would give the wrong slice index for negative bounds.
+// todo use c++-23 stdlib functions
 constexpr std::int64_t floorDiv(std::int64_t x, std::int64_t divisor)
 {
     INVARIANT(divisor > 0, "floorDiv divisor must be positive; got {}", divisor);
@@ -56,6 +57,7 @@ constexpr std::int64_t floorDiv(std::int64_t x, std::int64_t divisor)
 }
 
 /// Computes ceil(x / divisor) for signed numerator and positive divisor.
+// todo use c++-23 stdlib functions
 constexpr std::int64_t ceilDiv(std::int64_t x, std::int64_t divisor)
 {
     INVARIANT(divisor > 0, "ceilDiv divisor must be positive; got {}", divisor);
@@ -97,9 +99,9 @@ IntervalJoinOperatorHandler::IntervalJoinOperatorHandler(
 
     auto combinedOrigins = anchorInputOrigins;
     combinedOrigins.insert(combinedOrigins.end(), partnerInputOrigins.begin(), partnerInputOrigins.end());
-    wmAnchor = std::make_unique<MultiOriginWatermarkProcessor>(anchorInputOrigins);
-    wmPartner = std::make_unique<MultiOriginWatermarkProcessor>(partnerInputOrigins);
-    wmProbe = std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId});
+    watermarkAnchor = std::make_unique<MultiOriginWatermarkProcessor>(anchorInputOrigins);
+    watermarkPartner = std::make_unique<MultiOriginWatermarkProcessor>(partnerInputOrigins);
+    watermarkProbe = std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId});
 }
 
 void IntervalJoinOperatorHandler::start(PipelineExecutionContext& pipelineCtx, std::uint32_t)
@@ -118,40 +120,43 @@ void IntervalJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionCo
 
 void IntervalJoinOperatorHandler::notifyBufferDoneAnchor(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
-    [[maybe_unused]] const auto newWm
-        = wmAnchor->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    // todo use std::ignore here
+    [[maybe_unused]] const auto newWatermark
+        = watermarkAnchor->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     tryTriggerAnchors(pipelineCtx);
 }
 
 void IntervalJoinOperatorHandler::notifyBufferDonePartner(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
-    [[maybe_unused]] const auto newWm
-        = wmPartner->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    // todo use std::ignore here
+    [[maybe_unused]] const auto newWatermark
+        = watermarkPartner->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     tryTriggerAnchors(pipelineCtx);
 }
 
 void IntervalJoinOperatorHandler::notifyBufferDoneProbe(const BufferMetaData& bufferMetaData)
 {
-    [[maybe_unused]] const auto newWm
-        = wmProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
-    const auto probeWm = wmProbe->getCurrentWatermark();
+    // todo use std::ignore here
+    [[maybe_unused]] const auto newWatermark
+        = watermarkProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    const auto probeWatermark = watermarkProbe->getCurrentWatermark();
 
     /// RIGHT/FULL outer interval join performs a partner-anchored null-fill pass at termination that needs
-    /// every anchor-side partner still present. Suppress incremental GC so no partner is reclaimed beforehand.
+    /// every anchor-side partner still present. Suppress incremental garbage collection so no partner is reclaimed beforehand.
     if (emitPartnerNullFill)
     {
         return;
     }
 
-    anchorStore->garbageCollectTriggered(probeWm);
+    anchorStore->garbageCollectTriggered(probeWatermark);
 
     /// Partner slices outlive their own end by max(0, -offsetLow) * sliceWidth so anchors with
-    /// negative offsetLow can still see them. GC threshold is probeWm shifted back by that.
+    /// negative offsetLow can still see them. The garbage-collection threshold is probeWatermark shifted back by that.
     const auto partnerShift = std::max<std::int64_t>(0, -offsetLow) * static_cast<std::int64_t>(sliceWidth);
-    const auto probeWmRaw = static_cast<std::int64_t>(probeWm.getRawValue());
-    if (probeWmRaw > partnerShift)
+    const auto probeWatermarkRaw = static_cast<std::int64_t>(probeWatermark.getRawValue());
+    if (probeWatermarkRaw > partnerShift)
     {
-        partnerStore->garbageCollectExpired(Timestamp{static_cast<Timestamp::Underlying>(probeWmRaw - partnerShift)});
+        partnerStore->garbageCollectExpired(Timestamp{static_cast<Timestamp::Underlying>(probeWatermarkRaw - partnerShift)});
     }
 }
 
@@ -198,28 +203,28 @@ IntervalSliceStore& IntervalJoinOperatorHandler::getPartnerStore() noexcept
 
 void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pipelineCtx)
 {
-    const auto anchorWm = wmAnchor->getCurrentWatermark();
-    const auto partnerWm = wmPartner->getCurrentWatermark();
+    const auto anchorWatermark = watermarkAnchor->getCurrentWatermark();
+    const auto partnerWatermark = watermarkPartner->getCurrentWatermark();
 
     /// Anchor S_A^i is triggerable iff
-    ///   anchorWm  >= iEnd                                  (anchor itself built)
-    ///   partnerWm >= iEnd + max(0, offsetHigh) * W         (partners built)
+    ///   anchorWatermark  >= iEnd                                  (anchor itself built)
+    ///   partnerWatermark >= iEnd + max(0, offsetHigh) * W         (partners built)
     const auto partnerShift = std::max<std::int64_t>(0, offsetHigh) * static_cast<std::int64_t>(sliceWidth);
-    const auto partnerWmRaw = static_cast<std::int64_t>(partnerWm.getRawValue());
-    const auto anchorWmRaw = static_cast<std::int64_t>(anchorWm.getRawValue());
-    if (partnerWmRaw < partnerShift)
+    const auto partnerWatermarkRaw = static_cast<std::int64_t>(partnerWatermark.getRawValue());
+    const auto anchorWatermarkRaw = static_cast<std::int64_t>(anchorWatermark.getRawValue());
+    if (partnerWatermarkRaw < partnerShift)
     {
         /// Partner side hasn't reached the partner horizon for ANY anchor yet.
         return;
     }
-    const auto effectiveWmRaw = std::min(anchorWmRaw, partnerWmRaw - partnerShift);
-    if (effectiveWmRaw <= 0)
+    const auto effectiveWatermarkRaw = std::min(anchorWatermarkRaw, partnerWatermarkRaw - partnerShift);
+    if (effectiveWatermarkRaw <= 0)
     {
         return;
     }
-    const auto effectiveWm = Timestamp{static_cast<Timestamp::Underlying>(effectiveWmRaw)};
+    const Timestamp effectiveWatermark{static_cast<Timestamp::Underlying>(effectiveWatermarkRaw)};
 
-    auto anchors = anchorStore->claimTriggerable(effectiveWm);
+    auto anchors = anchorStore->claimTriggerable(effectiveWatermark);
     if (anchors.empty())
     {
         return;
@@ -249,7 +254,7 @@ void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pi
             {
                 continue;
             }
-            const auto partnerEnd = SliceEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
+            const SliceEnd partnerEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
             const auto partnerOpt = partnerStore->getSliceBySliceEnd(partnerEnd);
             if (!partnerOpt.has_value())
             {
@@ -315,7 +320,7 @@ void IntervalJoinOperatorHandler::flushAllOnTermination(PipelineExecutionContext
             {
                 continue;
             }
-            const auto partnerEnd = SliceEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
+            const SliceEnd partnerEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
             const auto partnerOpt = partnerStore->getSliceBySliceEnd(partnerEnd);
             if (!partnerOpt.has_value())
             {
@@ -382,7 +387,7 @@ void IntervalJoinOperatorHandler::flushPartnerNullFill(PipelineExecutionContext*
             {
                 continue;
             }
-            const auto partnerEnd = SliceEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
+            const SliceEnd partnerEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
             const auto partnerOpt = anchorStore->getSliceBySliceEnd(partnerEnd);
             if (!partnerOpt.has_value())
             {
@@ -427,7 +432,7 @@ void IntervalJoinOperatorHandler::emitProbeBuffer(
     pipelineCtx->emitBuffer(tupleBuffer);
 
     NES_TRACE(
-        "Emitted interval-join anchor end {} with {} partners (seq={}, wm={}, outputOrigin={})",
+        "Emitted interval-join anchor end {} with {} partners (seq={}, watermark={}, outputOrigin={})",
         trigger.anchorSliceEnd,
         static_cast<std::uint64_t>(trigger.partnerCount),
         sequenceData.sequenceNumber,

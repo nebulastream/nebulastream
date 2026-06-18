@@ -12,6 +12,8 @@
 
 add_source_files(nes-physical-operators
         IntervalJoinBuildPhysicalOperator.cpp
+        IntervalJoinBuildAnchorPhysicalOperator.cpp
+        IntervalJoinBuildPartnerPhysicalOperator.cpp
         IntervalJoinOperatorHandler.cpp
         IntervalJoinProbePhysicalOperator.cpp
         IntervalJoinSlice.cpp

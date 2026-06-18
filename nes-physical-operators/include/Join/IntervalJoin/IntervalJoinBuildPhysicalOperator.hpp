@@ -33,8 +33,8 @@ namespace NES
 /// Both sides do the same thing in execute() (append the tuple to the slice covering its
 /// timestamp); only the setup/close/terminate wiring differs because it targets a specific
 /// per-side store and notification on the handler. That side-specific wiring lives in the
-/// IntervalJoinBuildAnchorPhysicalOperator / IntervalJoinBuildPartnerPhysicalOperator
-/// subclasses, so neither carries a runtime side flag.
+/// IntervalJoinBuildAnchorPhysicalOperator / IntervalJoinBuildPartnerPhysicalOperator subclasses
+/// (each in its own header/source), so neither carries a runtime side flag.
 ///
 /// We inherit the StreamJoinBuildPhysicalOperator skeleton but the subclasses override
 /// setup/close/terminate because the inherited paths dynamic_cast the handler to
@@ -50,39 +50,6 @@ public:
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
-};
-
-// todo have separate files (.hpp/.cpp) for IntervalJoinBuildAnchorPhysicalOperator and IntervalJoinBuildPartnerPhysicalOperator
-/// Anchor-side (left input) build operator: registers/notifies/terminates against the
-/// handler's anchor store.
-class IntervalJoinBuildAnchorPhysicalOperator final : public IntervalJoinBuildPhysicalOperator
-{
-public:
-    IntervalJoinBuildAnchorPhysicalOperator(
-        OperatorHandlerId operatorHandlerId,
-        std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef,
-        std::unique_ptr<SliceStoreRef> sliceStoreRef);
-
-    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void terminate(ExecutionContext& executionCtx) const override;
-};
-
-/// Partner-side (right input) build operator: registers/notifies/terminates against the
-/// handler's partner store.
-class IntervalJoinBuildPartnerPhysicalOperator final : public IntervalJoinBuildPhysicalOperator
-{
-public:
-    IntervalJoinBuildPartnerPhysicalOperator(
-        OperatorHandlerId operatorHandlerId,
-        std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef,
-        std::unique_ptr<SliceStoreRef> sliceStoreRef);
-
-    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void terminate(ExecutionContext& executionCtx) const override;
 };
 
 }
