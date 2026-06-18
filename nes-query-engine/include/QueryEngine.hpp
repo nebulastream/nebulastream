@@ -27,6 +27,7 @@ namespace NES
 /// Forward declaration so that only the QueryEngine can be included
 class QueryCatalog;
 class ThreadPool;
+class BufferExhaustionArbiter;
 
 class QueryEngine
 {
@@ -51,6 +52,9 @@ public:
     std::shared_ptr<AbstractQueryStatusListener> statusListener;
     std::shared_ptr<QueryEngineStatisticListener> statisticListener;
     std::shared_ptr<QueryCatalog> queryCatalog;
+    /// Selects+terminates a victim query when the buffer pool is exhausted. Declared after queryCatalog (which it
+    /// references) and before threadPool (which uses it) so construction/destruction order is correct.
+    std::unique_ptr<BufferExhaustionArbiter> bufferExhaustionArbiter;
     std::unique_ptr<ThreadPool> threadPool;
     Host host;
 };

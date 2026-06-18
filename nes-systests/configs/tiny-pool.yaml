@@ -1,0 +1,5 @@
+# Small global buffer pool to induce contention so the arbiter terminates a victim (TERMINATE_LARGEST) under pressure.
+number_of_buffers_in_global_buffer_manager: 16
+query_engine:
+  number_of_worker_threads: 2
+  buffer_recovery_margin: 2
