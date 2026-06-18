@@ -55,7 +55,7 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const NamedSinkDescriptor& sinkDescriptor);
     friend bool operator==(const NamedSinkDescriptor& lhs, const NamedSinkDescriptor& rhs);
 
-    [[nodiscard]] std::optional<std::string_view> getFormatType() const;
+    [[nodiscard]] std::optional<std::string> getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>> getSchema() const;
