@@ -162,8 +162,9 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     for (auto& nodeFunctionKey : boundGroupingKeys)
     {
         auto loweredFunctionType = nodeFunctionKey.getDataType();
-        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(
-            nodeFunctionKey, *aggregation->getChild().getTraitSet().get<FieldMappingTrait>()));
+        keyFunctions.emplace_back(
+            QueryCompilation::FunctionProvider::lowerFunction(
+                nodeFunctionKey, *aggregation->getChild().getTraitSet().get<FieldMappingTrait>()));
         keySize += loweredFunctionType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;

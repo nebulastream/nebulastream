@@ -359,8 +359,9 @@ public:
     template <typename OtherChecked>
     requires(std::is_same_v<Checked, detail::ErasedLogicalOperator> && LogicalOperatorConcept<OtherChecked>)
     explicit WeakTypedLogicalOperator(const std::shared_ptr<detail::SelfRef<OtherChecked>>& other)
-        : self(std::shared_ptr<detail::ErasedLogicalOperator>{
-              other, static_cast<detail::ErasedLogicalOperator*>(other->self.rlock()->value())})
+        : self(
+              std::shared_ptr<detail::ErasedLogicalOperator>{
+                  other, static_cast<detail::ErasedLogicalOperator*>(other->self.rlock()->value())})
     {
     }
 

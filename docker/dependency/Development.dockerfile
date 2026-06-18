@@ -35,7 +35,7 @@ RUN git clone https://github.com/aras-p/ClangBuildAnalyzer.git \
     && ClangBuildAnalyzer --version
 
 # Install GDB Libc++ Pretty Printer
-RUN wget -P /usr/share/libcxx/  https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-19.1.7/libcxx/utils/gdb/libcxx/printers.py && \
+RUN wget -P /usr/share/libcxx/  https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-21.1.8/libcxx/utils/gdb/libcxx/printers.py && \
     cat <<EOF > /etc/gdb/gdbinit
     python
     import sys
@@ -49,7 +49,7 @@ EOF
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.90.0
+    RUST_VERSION=1.96.0
 
 RUN set -eux; \
     \
@@ -89,7 +89,7 @@ RUN set -eux; \
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.90.0
+    RUST_VERSION=1.96.0
 
 # Install IREE compiler tools for ML inference (ONNX → IREE compilation)
 ARG IREE_COMPILER_VERSION=3.11.0

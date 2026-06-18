@@ -67,30 +67,31 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
     }
 
     const auto cleanupStateNautilusFunction
-        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-            [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
-            {
-                const ChainedHashMapRef hashMapRef{
-                    hashMap,
-                    copyOfHashMapOptions.fieldKeys,
-                    copyOfHashMapOptions.fieldValues,
-                    copyOfHashMapOptions.entriesPerPage,
-                    copyOfHashMapOptions.entrySize};
-                for (const auto entry : hashMapRef)
+        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(
+            std::function(
+                [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
                 {
-                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
-                    const auto state = entryRefReset.getValueMemArea();
+                    const ChainedHashMapRef hashMapRef{
+                        hashMap,
+                        copyOfHashMapOptions.fieldKeys,
+                        copyOfHashMapOptions.fieldValues,
+                        copyOfHashMapOptions.entriesPerPage,
+                        copyOfHashMapOptions.entrySize};
+                    for (const auto entry : hashMapRef)
+                    {
+                        const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                            entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                        const auto state = entryRefReset.getValueMemArea();
 
-                    nautilus::invoke(
-                        +[](TupleBuffer* pagedVectorMemArea) -> void
-                        {
-                            /// Calls the destructor of the TupleBuffer
-                            pagedVectorMemArea->~TupleBuffer();
-                        },
-                        state);
-                }
-            })));
+                        nautilus::invoke(
+                            +[](TupleBuffer* pagedVectorMemArea) -> void
+                            {
+                                /// Calls the destructor of the TupleBuffer
+                                pagedVectorMemArea->~TupleBuffer();
+                            },
+                            state);
+                    }
+                })));
     /// NOLINTEND(performance-unnecessary-value-param)
     operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
 }

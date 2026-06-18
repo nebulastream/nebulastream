@@ -22,8 +22,9 @@ namespace NES
 {
 Reflected Reflector<TypedWindowAggregationLogicalFunction<>>::operator()(const TypedWindowAggregationLogicalFunction<>& function) const
 {
-    return reflect(detail::ReflectedWindowAggregationLogicalFunction{
-        .functionType = std::string{function.getName()}, .functionConfig = function->reflect()});
+    return reflect(
+        detail::ReflectedWindowAggregationLogicalFunction{
+            .functionType = std::string{function.getName()}, .functionConfig = function->reflect()});
 }
 
 TypedWindowAggregationLogicalFunction<>

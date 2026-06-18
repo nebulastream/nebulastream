@@ -301,12 +301,13 @@ JoinTimeCharacteristic JoinLogicalOperator::getJoinTimeCharacteristics() const
 
 Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const TypedLogicalOperator<JoinLogicalOperator>& op) const
 {
-    return reflect(detail::ReflectedJoinLogicalOperator{
-        .operatorId = op.getId(),
-        .joinFunction = op->getJoinFunction(),
-        .windowType = op->getWindowType(),
-        .timestampFields = op->getJoinTimeCharacteristics(),
-        .joinType = op->getJoinType()});
+    return reflect(
+        detail::ReflectedJoinLogicalOperator{
+            .operatorId = op.getId(),
+            .joinFunction = op->getJoinFunction(),
+            .windowType = op->getWindowType(),
+            .timestampFields = op->getJoinTimeCharacteristics(),
+            .joinType = op->getJoinType()});
 }
 
 Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))

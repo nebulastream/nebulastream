@@ -441,8 +441,10 @@ struct Repl::Impl
                     std::cout << std::visit(
                         [](const auto& statementResult)
                         {
-                            return rfl::json::write(NES::rowsToJsonArray(
-                                NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult)));
+                            return rfl::json::write(
+                                NES::rowsToJsonArray(
+                                    NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(
+                                        statementResult)));
                         },
                         result.value())
                               << "\n";
@@ -566,17 +568,18 @@ Repl::Repl(
     StatementOutputFormat defaultOutputFormat,
     bool interactiveMode,
     std::stop_token stopToken)
-    : impl(std::make_unique<Impl>(
-          std::move(sourceStatementHandler),
-          std::move(sinkStatementHandler),
-          std::move(topologyStatementHandler),
-          std::move(modelStatementHandler),
-          std::move(queryStatementHandler),
-          std::move(binder),
-          errorBehaviour,
-          defaultOutputFormat,
-          interactiveMode,
-          std::move(stopToken)))
+    : impl(
+          std::make_unique<Impl>(
+              std::move(sourceStatementHandler),
+              std::move(sinkStatementHandler),
+              std::move(topologyStatementHandler),
+              std::move(modelStatementHandler),
+              std::move(queryStatementHandler),
+              std::move(binder),
+              errorBehaviour,
+              defaultOutputFormat,
+              interactiveMode,
+              std::move(stopToken)))
 {
 }
 

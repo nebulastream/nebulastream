@@ -699,46 +699,49 @@ public:
         PagedVector::init(pagedVector, bufferManager.getBufferSize(), layout->getSchema().getSizeInBytes());
 
         /// NOLINTBEGIN(performance-unnecessary-value-param)
-        pushbackFn.emplace(engine->registerFunction(std::function(
-            [layout, dataTypes = dataTypes, projections = projections](
-                nautilus::val<TupleBuffer*> pagedVector, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
-            {
-                Record record;
-                /// static_val ensures each field iteration gets a distinct trace tag.
-                for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
+        pushbackFn.emplace(engine->registerFunction(
+            std::function(
+                [layout, dataTypes = dataTypes, projections = projections](
+                    nautilus::val<TupleBuffer*> pagedVector, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
                 {
-                    record.write(projections[i], buildVarVal(rec, i, dataTypes[i]));
-                }
-                PagedVectorRef pvRef(BorrowedNautilusBuffer::from(pagedVector), layout);
-                pvRef.pushBack(record, bm);
-            })));
+                    Record record;
+                    /// static_val ensures each field iteration gets a distinct trace tag.
+                    for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
+                    {
+                        record.write(projections[i], buildVarVal(rec, i, dataTypes[i]));
+                    }
+                    PagedVectorRef pvRef(BorrowedNautilusBuffer::from(pagedVector), layout);
+                    pvRef.pushBack(record, bm);
+                })));
 
-        readAtFn.emplace(engine->registerFunction(std::function(
-            [layout, dataTypes = dataTypes, projections = projections](
-                nautilus::val<TupleBuffer*> pagedVector, nautilus::val<uint64_t> index, nautilus::val<AnyVec*> out)
-            {
-                const PagedVectorRef pvRef(BorrowedNautilusBuffer::from(pagedVector), layout);
-                auto record = pvRef.at(index);
-                for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
+        readAtFn.emplace(engine->registerFunction(
+            std::function(
+                [layout, dataTypes = dataTypes, projections = projections](
+                    nautilus::val<TupleBuffer*> pagedVector, nautilus::val<uint64_t> index, nautilus::val<AnyVec*> out)
                 {
-                    storeVarValToAnyVec(out, i, record.read(projections[i]), dataTypes[i]);
-                }
-            })));
-
-        readAll.emplace(engine->registerFunction(std::function(
-            [layout, dataTypes = dataTypes, projections = projections](
-                nautilus::val<TupleBuffer*> pagedVector, nautilus::val<std::vector<AnyVec>*> outVector)
-            {
-                const PagedVectorRef pvRef(BorrowedNautilusBuffer::from(pagedVector), layout);
-                for (const auto& record : pvRef)
-                {
-                    auto out = anyVecPushBack(outVector, nautilus::val<size_t>(std::ranges::size(layout->getSchema())));
+                    const PagedVectorRef pvRef(BorrowedNautilusBuffer::from(pagedVector), layout);
+                    auto record = pvRef.at(index);
                     for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
                     {
                         storeVarValToAnyVec(out, i, record.read(projections[i]), dataTypes[i]);
                     }
-                }
-            })));
+                })));
+
+        readAll.emplace(engine->registerFunction(
+            std::function(
+                [layout, dataTypes = dataTypes, projections = projections](
+                    nautilus::val<TupleBuffer*> pagedVector, nautilus::val<std::vector<AnyVec>*> outVector)
+                {
+                    const PagedVectorRef pvRef(BorrowedNautilusBuffer::from(pagedVector), layout);
+                    for (const auto& record : pvRef)
+                    {
+                        auto out = anyVecPushBack(outVector, nautilus::val<size_t>(std::ranges::size(layout->getSchema())));
+                        for (nautilus::static_val<uint64_t> i = 0; i < dataTypes.size(); ++i)
+                        {
+                            storeVarValToAnyVec(out, i, record.read(projections[i]), dataTypes[i]);
+                        }
+                    }
+                })));
         /// NOLINTEND(performance-unnecessary-value-param)
     }
 

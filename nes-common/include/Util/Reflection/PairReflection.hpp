@@ -33,7 +33,7 @@ struct Reflector<std::pair<T1, T2>>
         std::vector<rfl::Generic> arr;
         arr.push_back(*reflect(data.first));
         arr.push_back(*reflect(data.second));
-        return Reflected{rfl::Generic::Array{std::move(arr)}};
+        return Reflected{std::move(arr)};
     }
 };
 

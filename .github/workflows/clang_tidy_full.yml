@@ -38,7 +38,7 @@ jobs:
         shell: bash
         # do not run clang-tidy on generated files, i.e. files from dirs matching .*_generated_src/, or on nes-rust-bindings
         # (c.f. https://stackoverflow.com/a/1240365 for regex explanation)
-        run: run-clang-tidy-19 -p build -header-filter='^(?!.*nes-rust-bindings/).*' '^(?!.*_generated_src/)(?!.*nes-rust-bindings/).+$' 2> /dev/null | tee clang-tidy.log
+        run: run-clang-tidy-21 -p build -header-filter='^(?!.*nes-rust-bindings/).*' '^(?!.*_generated_src/)(?!.*nes-rust-bindings/).+$' 2> /dev/null | tee clang-tidy.log
       - name: show errors
         if: ${{ failure() && steps.run-clang-tidy.conclusion == 'failure' }}
         run: |

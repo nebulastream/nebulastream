@@ -44,53 +44,55 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// Resharper disable once CppPassValueParameterByConstReference
-    return nautilusEngine->registerFunction(std::function(
-        [this, projectionAllFields](
-            nautilus::val<TupleBuffer*> bufferKey,
-            nautilus::val<TupleBuffer*> bufferValue,
-            nautilus::val<uint64_t> keyPositionVal,
-            nautilus::val<AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<HashMap*> hashMapVal)
-        {
-            ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
-            const RecordBuffer recordBufferKey(bufferKey);
-            auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
-
-            auto foundEntry = hashMapRef.findOrCreateEntry(
-                recordKey,
-                *getMurMurHashFunction(),
-                [&](const nautilus::val<AbstractHashMapEntry*>& entry)
-                {
-                    const ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
-                    const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
-                    nautilus::invoke(
-                        +[](AbstractBufferProvider* bufferManager, TupleBuffer* pagedVectorMemArea, const uint64_t tupleSize)
-                        {
-                            if (auto pagedVectorBuffer = bufferManager->getUnpooledBuffer(PagedVector::getMainBufferSize()))
-                            {
-                                /// initialize paged vector buffer
-                                PagedVector::init(pagedVectorBuffer.value(), bufferManager->getBufferSize(), tupleSize);
-                                /// @warning: this will be refactored again during the ChainedHashMap refactor
-                                new (pagedVectorMemArea) TupleBuffer(pagedVectorBuffer.value());
-                                return;
-                            }
-                            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
-                        },
-                        bufferManagerVal,
-                        ref.getValueMemArea(),
-                        tupleSize);
-                },
-                bufferManagerVal);
-
-            const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(ref.getValueMemArea()), tupleLayout);
-            const RecordBuffer recordBufferValue(bufferValue);
-            for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
+    return nautilusEngine->registerFunction(
+        std::function(
+            [this, projectionAllFields](
+                nautilus::val<TupleBuffer*> bufferKey,
+                nautilus::val<TupleBuffer*> bufferValue,
+                nautilus::val<uint64_t> keyPositionVal,
+                nautilus::val<AbstractBufferProvider*> bufferManagerVal,
+                nautilus::val<HashMap*> hashMapVal)
             {
-                auto recordValue = inputBufferRef->readRecord(projectionAllFields, recordBufferValue, idxValues);
-                pagedVectorRef.pushBack(recordValue, bufferManagerVal);
-            }
-        }));
+                ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+                const RecordBuffer recordBufferKey(bufferKey);
+                auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
+
+                auto foundEntry = hashMapRef.findOrCreateEntry(
+                    recordKey,
+                    *getMurMurHashFunction(),
+                    [&](const nautilus::val<AbstractHashMapEntry*>& entry)
+                    {
+                        const ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
+                        const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
+                        nautilus::invoke(
+                            +[](AbstractBufferProvider* bufferManager, TupleBuffer* pagedVectorMemArea, const uint64_t tupleSize)
+                            {
+                                if (auto pagedVectorBuffer = bufferManager->getUnpooledBuffer(PagedVector::getMainBufferSize()))
+                                {
+                                    /// initialize paged vector buffer
+                                    PagedVector::init(pagedVectorBuffer.value(), bufferManager->getBufferSize(), tupleSize);
+                                    /// @warning: this will be refactored again during the ChainedHashMap refactor
+                                    new (pagedVectorMemArea) TupleBuffer(pagedVectorBuffer.value());
+                                    return;
+                                }
+                                throw BufferAllocationFailure(
+                                    "No unpooled TupleBuffer available for chained hash map entry's paged vector!");
+                            },
+                            bufferManagerVal,
+                            ref.getValueMemArea(),
+                            tupleSize);
+                    },
+                    bufferManagerVal);
+
+                const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
+                PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(ref.getValueMemArea()), tupleLayout);
+                const RecordBuffer recordBufferValue(bufferValue);
+                for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
+                {
+                    auto recordValue = inputBufferRef->readRecord(projectionAllFields, recordBufferValue, idxValues);
+                    pagedVectorRef.pushBack(recordValue, bufferManagerVal);
+                }
+            }));
 }
 
 nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*>
@@ -100,32 +102,33 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    return nautilusEngine->registerFunction(std::function(
-        [this, projectionAllFields, tupleBufferRef](
-            nautilus::val<TupleBuffer*> keyBufferRef,
-            nautilus::val<uint64_t> keyPositionVal,
-            nautilus::val<TupleBuffer*> outputBufferRef,
-            nautilus::val<AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<HashMap*> hashMapVal)
-        {
-            ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);
-            const RecordBuffer recordBufferKey(keyBufferRef);
-            RecordBuffer recordBufferOutput(outputBufferRef);
-            const auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
-            const auto foundEntry
-                = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
-
-            const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            const PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(ref.getValueMemArea()), tupleLayout);
-            nautilus::val<uint64_t> recordBufferIndex = 0;
-            for (auto it = pagedVectorRef.begin(); it != pagedVectorRef.end(); ++it)
+    return nautilusEngine->registerFunction(
+        std::function(
+            [this, projectionAllFields, tupleBufferRef](
+                nautilus::val<TupleBuffer*> keyBufferRef,
+                nautilus::val<uint64_t> keyPositionVal,
+                nautilus::val<TupleBuffer*> outputBufferRef,
+                nautilus::val<AbstractBufferProvider*> bufferManagerVal,
+                nautilus::val<HashMap*> hashMapVal)
             {
-                const auto record = *it;
-                tupleBufferRef->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
-                recordBufferIndex = recordBufferIndex + 1;
-                recordBufferOutput.setNumRecords(recordBufferIndex);
-            }
-        }));
+                ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);
+                const RecordBuffer recordBufferKey(keyBufferRef);
+                RecordBuffer recordBufferOutput(outputBufferRef);
+                const auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
+                const auto foundEntry
+                    = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
+
+                const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
+                const PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(ref.getValueMemArea()), tupleLayout);
+                nautilus::val<uint64_t> recordBufferIndex = 0;
+                for (auto it = pagedVectorRef.begin(); it != pagedVectorRef.end(); ++it)
+                {
+                    const auto record = *it;
+                    tupleBufferRef->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
+                    recordBufferIndex = recordBufferIndex + 1;
+                    recordBufferOutput.setNumRecords(recordBufferIndex);
+                }
+            }));
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
