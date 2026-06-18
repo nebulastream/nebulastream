@@ -26,7 +26,7 @@
 #include <Sources/SourceUtility.hpp>
 #include <Util/AtomicState.hpp>
 
-#include <BlockingSourceRunner.hpp>
+#include <Blocking/BlockingSourceRunner.hpp>
 
 namespace NES
 {
