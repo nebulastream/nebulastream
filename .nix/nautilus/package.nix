@@ -52,6 +52,7 @@ let
 
       patches = [
         ./patches/0001-disable-ubsan-function-call-check.patch
+        ./patches/0002-fmt-fix.patch
       ];
 
       nativeBuildInputs = [
