@@ -793,9 +793,9 @@ private:
     AbstractBufferProvider& bufferManager;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::unique_ptr<nautilus::engine::NautilusEngine> engine;
-    std::optional<nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, AnyVec*>> pushbackFn;
-    std::optional<nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, AnyVec*>> readAtFn;
-    std::optional<nautilus::engine::CallableFunction<void, TupleBuffer*, std::vector<AnyVec>*>> readAll;
+    std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, AbstractBufferProvider*, AnyVec*)>> pushbackFn;
+    std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, uint64_t, AnyVec*)>> readAtFn;
+    std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, std::vector<AnyVec>*)>> readAll;
 };
 
 /// Reads pagedVector.at(idx) for a rapidcheck-drawn set of indices and asserts each record equals the reference.
