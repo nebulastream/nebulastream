@@ -23,10 +23,12 @@ Let's start with key terminology.
 | **Data Type**        | Specifies how to interpret a field's data and which operations are valid.                   | `U8`, `I8`, `U16`, `I16`, `U32`, `I32`, `U64`, `I64`, `CHAR`, `BOOL`, `VARSIZED` |
 | **Source**           | Connector that **ingests** external data, creating a stream.                                | `FROM`, [See Sources](#data-sources-logical-and-physical)                        |
 | **Input Formatter**  | Decodes raw data from a source into internal tuple format.                                  | [See Input Formatters](#input-formatters)                                        |
+| **Input Parser**     | Parses textual values into their binary representation.                                     | [See Input Parsers](#input-parsers)                                              |
 | **Operator**         | Transforms a stream of tuples (e.g., filtering, aggregating).                               | `SELECT`, `WHERE`, `GROUP BY`, `JOIN`, [See Operators](#operators)               |
 | **Function**         | Operation applied to one or more fields (or input functions) within an operator.            | `SUM`, `AVG`, `+`, `-`, `CONCAT`, [See Functions](#functions)                    |
 | **Window**           | Partition an unbounded stream into finite chunks for stateful operations like aggregations. | `WINDOW (TUMBLING\|SLIDING) (timestamp, [duration][unit])`                       |
 | **Output Formatter** | Encodes tuples into a specific format to prepare for a sink.                                | [See Output Formatters](#output-formatters)                                      |
+| **Output Parser**    | Parses binary values into their textual representation.                                     | [See Output Parsers](#output-parsers)                                            |
 | **Sink**             | Connector that **exports** query results out of NebulaStream.                               | `INTO`, [See Sinks](#data-sinks-defining-the-output)                             |
 
 ---
@@ -304,8 +306,30 @@ CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
 );
 ```
 
-Currently, we support the text-based CSV format, with JSON following in an upcoming release.
+Currently, we support the text-based CSV and JSON formats.
 
+---
+## Input Parsers
+Input Parsers convert textual values that arrive with the incoming records into binary values.
+Thus, they are part of the input-formatting routine and handle the parse of the actual values, which were located by the
+input formatter.
+The system currently configures a specific input parser type per data type. For each parser type, a seperate parser for
+nullable fields is implemented.
+
+The system comes with the `(Nullable)Default<Typename>InputParser` implementations for every data type, which use `std::from_chars`.
+Input Parsers can be configured with the flags `quotedText` and `hasTrailingSpaces`, which need to be set by the `RawBufferIndex` during the construction of the input parser.
+
+Further input parser implementations, for example using third party parser libraries, may be added as plugin.
+Note, that each new parser implementations requires a separate "Nullable" variant.
+
+The used input parser implementations for specific datatypes can be adjusted with the `INPUT_PARSERS` parameter of the input formatter by providing a comma-separated list of <Typename>:<InputParser Type> entries:
+```sql
+CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
+'CSV' as INPUT_FORMATTER.`TYPE`,
+'FLOAT32:FastFloatF32,FLOAT64:FastFloatF64' as "INPUT_FORMATTER".INPUT_PARSERS,
+...
+);
+```
 ---
 ## Output Formatters
 The output formatter component converts records with values in our native in-memory format into the desired output format of a sink.
@@ -322,6 +346,26 @@ All required parameters can be specified via `OUTPUT_FORMATTER.*` in each sink.
 CREATE SINK sink_name TYPE FILE SET(
        'CSV' as "SINK".OUTPUT_FORMAT,
        TRUE as "OUTPUT_FORMATTER".QUOTE_STRINGS,
+       ...
+);
+```
+---
+## Output Parsers
+Output Parsers convert binary values into their textual representations within textual formats like CSV or JSON.
+Thus, they are part of the output-formatting routine and handle the parse of the actual values while the output formatter handles the remaining symbols like delimiting characters.
+Unlike the input parsers, output parsers do not need to differentiate between nullable and non-nullable fields, as null-values will be detected and written by the output formatter.
+
+The system comes with the `Default<Typename>OutputParser` implementations, as well as JSONCHAROutputParser and JSONVARSIZEDOutputParser for json-escaped strings and chars.
+The default implementations use `std::to_string` for int - string conversions and `fmt::format`, which utilizes the Dragonbox algorithm, for float - string conversions.
+Output parsers can currently be configured with the `quoted` flag, which needs to be set by the output formatter that calls the output parser.
+
+Further output parser implementations, for example using third party parser libraries, may be added as plugin.
+
+The used output parser implementations for specific datatypes can be adjusted with the `OUTPUT_PARSERS` parameter of the output formatter by providing a comma-separated list of <Typename>:<OutputParser Type> entries:
+```sql
+CREATE SINK sink_name TYPE FILE SET(
+       'CSV' as `SINK`.OUTPUT_FORMAT,
+       'FLOAT32:ZmijF32,FLOAT64:ZmijF64' as "OUTPUT_FORMATTER".OUTPUT_PARSERS,
        ...
 );
 ```
