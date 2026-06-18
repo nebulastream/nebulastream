@@ -1,16 +1,16 @@
 {
   pkgs,
   mlirBinary,
+  llvmPackages,
+  fmtPkg ? pkgs.fmt_11,
+  spdlogPkg ? pkgs.spdlog.override { fmt = fmtPkg; },
 }:
 
 let
   lib = pkgs.lib;
-  llvm = pkgs.llvmPackages_19;
+  llvm = llvmPackages;
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
-
-  fmtPkg = pkgs.fmt_11;
-  spdlogPkg = pkgs.spdlog.override { fmt = fmtPkg; };
 
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
