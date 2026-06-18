@@ -1,6 +1,6 @@
 {
   lib,
-  llvmPackages_19,
+  llvmPackages,
   cmake,
   ninja,
   pkg-config,
@@ -9,7 +9,7 @@
 }:
 
 let
-  clangStdenv = llvmPackages_19.stdenv;
+  clangStdenv = llvmPackages.stdenv;
 
   stablehloSrc = fetchFromGitHub {
     owner = "iree-org";

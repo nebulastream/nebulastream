@@ -26,7 +26,11 @@ namespace NES
 SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataType& dataType, SerializableDataType* serializedDataType)
 {
     auto serializedPhysicalTypeEnum = SerializableDataType_Type();
-    SerializableDataType_Type_Parse(magic_enum::enum_name(dataType.type), &serializedPhysicalTypeEnum);
+    const auto serializedPhysicalTypeName = magic_enum::enum_name(dataType.type);
+    if (!SerializableDataType_Type_Parse(serializedPhysicalTypeName, &serializedPhysicalTypeEnum))
+    {
+        throw CannotSerialize("Could not serialize data type {}", serializedPhysicalTypeName);
+    }
     serializedDataType->set_type(serializedPhysicalTypeEnum);
     serializedDataType->set_nullable(dataType.nullable);
     return serializedDataType;

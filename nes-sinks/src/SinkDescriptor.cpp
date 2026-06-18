@@ -57,7 +57,7 @@ bool operator==(const NamedSinkDescriptor& lhs, const NamedSinkDescriptor& rhs)
     return lhs.name == rhs.name;
 }
 
-std::optional<std::string_view> NamedSinkDescriptor::getFormatType() const
+std::string NamedSinkDescriptor::getFormatType() const
 {
     try
     {

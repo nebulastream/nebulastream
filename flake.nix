@@ -13,9 +13,15 @@
       let
         pkgs = import nixpkgs { inherit system; };
         lib = pkgs.lib;
-        llvm = pkgs.llvmPackages_19;
-        clangToolsVersion = lib.getVersion llvm.clang-tools;
-        llvmToolchainVersion = lib.versions.major clangToolsVersion;
+        toolchain = rec {
+          llvmToolchainVersion = "21";
+          llvmPackages = pkgs.${"llvmPackages_${llvmToolchainVersion}"};
+          mlirBuild = "with-fix-173075-clang21-toolchain";
+          mlirRelease = "vmlir-${llvmToolchainVersion}-${mlirBuild}";
+          mlirAssetPrefix = "nes-llvm-${llvmToolchainVersion}-${mlirBuild}";
+        };
+        llvm = toolchain.llvmPackages;
+        inherit (toolchain) llvmToolchainVersion;
         clangTidyDiffCommand = "clang-tidy-diff-${llvmToolchainVersion}.py";
         clangStdenv = llvm.stdenv;
         libcxxStdenv = llvm.libcxxStdenv;
@@ -91,6 +97,23 @@
         defaultStdlibName = "libstdcxx";
 
         antlr4Version = "4.13.2";
+        cxxbridgeCmdVersion = "1.0.187";
+        corrosionSrc = pkgs.fetchFromGitHub {
+          owner = "nebulastream";
+          repo = "corrosion";
+          rev = "v0.6.1-always-dirty-fix";
+          hash = "sha256-v4zFuKKQCdN0SjIcgTwLhyRlQm3oAdkfBPRNAiG3BHI=";
+        };
+        cxxbridgeCmd = pkgs.rustPlatform.buildRustPackage {
+          pname = "cxxbridge-cmd";
+          version = cxxbridgeCmdVersion;
+          src = pkgs.fetchCrate {
+            pname = "cxxbridge-cmd";
+            version = cxxbridgeCmdVersion;
+            hash = "sha256-IGnbSesGjFxmeHSMWlqLFlJxUQTT5o0wVgilibBIVvg=";
+          };
+          cargoHash = "sha256-8eCRFiLiNfXr79uJzJVIvgJ2U5IvfhnjM5OmMRNpujI=";
+        };
         simdjsonBasePkg =
           let
             version = "4.0.7";
@@ -231,13 +254,16 @@
             inherit fmtPkg spdlogPkg follyPkg baseThirdPartyDeps;
           };
 
-        ireeruntimePkg = pkgs.callPackage ./.nix/ireeruntime/package.nix { };
+        packageToolchainArgs = { inherit (toolchain) llvmPackages; };
+        abseilPackageArgs = packageToolchainArgs // { abseil-cpp = pkgs.abseil-cpp_202505 or pkgs.abseil-cpp; };
 
-        nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
-        abseilPackages = pkgs.callPackage ./.nix/abseil/package.nix { };
-        re2Packages = pkgs.callPackage ./.nix/re2/package.nix { };
-        protobufPackages = pkgs.callPackage ./.nix/protobuf/package.nix { };
-        grpcPackages = pkgs.callPackage ./.nix/grpc/package.nix { };
+        ireeruntimePkg = pkgs.callPackage ./.nix/ireeruntime/package.nix packageToolchainArgs;
+
+        nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix packageToolchainArgs;
+        abseilPackages = pkgs.callPackage ./.nix/abseil/package.nix abseilPackageArgs;
+        re2Packages = pkgs.callPackage ./.nix/re2/package.nix packageToolchainArgs;
+        protobufPackages = pkgs.callPackage ./.nix/protobuf/package.nix packageToolchainArgs;
+        grpcPackages = pkgs.callPackage ./.nix/grpc/package.nix packageToolchainArgs;
 
         ccacheFlags = [
           "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
@@ -252,22 +278,33 @@
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache
         '';
 
-        antlr4Packages = pkgs.callPackage ./.nix/antlr4/package.nix { };
-        cpptracePackages = pkgs.callPackage ./.nix/cpptrace/package.nix { };
-        argparsePackages = pkgs.callPackage ./.nix/argparse/package.nix { };
-        libcuckooPackages = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
-        magicEnumPackages = pkgs.callPackage ./.nix/magic_enum/package.nix { };
-        reflectCppPackages = pkgs.callPackage ./.nix/reflect_cpp/package.nix { };
-        nameofPackages = pkgs.callPackage ./.nix/nameof/package.nix { };
-        scopeGuardPackages = pkgs.callPackage ./.nix/scope_guard/package.nix { };
-        spdlogPackages = pkgs.callPackage ./.nix/spdlog/package.nix { };
-        follyPackages = pkgs.callPackage ./.nix/folly/package.nix { };
+        antlr4Packages = pkgs.callPackage ./.nix/antlr4/package.nix packageToolchainArgs;
+        cpptracePackages = pkgs.callPackage ./.nix/cpptrace/package.nix packageToolchainArgs;
+        argparsePackages = pkgs.callPackage ./.nix/argparse/package.nix packageToolchainArgs;
+        libcuckooPackages = pkgs.callPackage ./.nix/libcuckoo/package.nix packageToolchainArgs;
+        magicEnumPackages = pkgs.callPackage ./.nix/magic_enum/package.nix packageToolchainArgs;
+        reflectCppPackages = pkgs.callPackage ./.nix/reflect_cpp/package.nix packageToolchainArgs;
+        nameofPackages = pkgs.callPackage ./.nix/nameof/package.nix packageToolchainArgs;
+        scopeGuardPackages = pkgs.callPackage ./.nix/scope_guard/package.nix packageToolchainArgs;
+        spdlogPackages = pkgs.callPackage ./.nix/spdlog/package.nix packageToolchainArgs;
+        follyPackages = pkgs.callPackage ./.nix/folly/package.nix packageToolchainArgs;
 
-        mlirPackages = import ./.nix/mlir/package.nix { inherit pkgs; };
+        mlirPackages = import ./.nix/mlir/package.nix {
+          inherit pkgs;
+          inherit (toolchain) llvmToolchainVersion mlirRelease mlirAssetPrefix;
+        };
         mlirBinaryFor = cfg: mlirPackages.forOptions cfg;
 
-        nautilusPackagesFor = mlirBinary:
-          import ./.nix/nautilus/package.nix { inherit pkgs mlirBinary; };
+        nautilusPackagesFor =
+          {
+            mlirBinary,
+            fmtPkg ? pkgs.fmt_11,
+            spdlogPkg ? pkgs.spdlog.override { fmt = fmtPkg; },
+          }:
+          import ./.nix/nautilus/package.nix {
+            inherit pkgs mlirBinary fmtPkg spdlogPkg;
+            inherit (toolchain) llvmPackages;
+          };
 
         sanitizerPackageSet = {
           antlr4 = antlr4Packages;
@@ -298,7 +335,10 @@
               linkerFlags = sanitizer.linkerFlags;
             };
             sanitizedDeps = map (pkg: pkg.withSanitizer sanitizerArgs) sanitizerPackages;
-            nautilusPackages = nautilusPackagesFor mlirBinary;
+            nautilusPackages = nautilusPackagesFor {
+              inherit mlirBinary;
+              inherit (packageSet) fmtPkg spdlogPkg;
+            };
             sanitizedNautilus = nautilusPackages.withSanitizer {
               extraBuildInputs = extraInputs;
               inherit useLibcxx;
@@ -367,6 +407,7 @@
           "-DLLVM_TOOLCHAIN_VERSION=${llvmToolchainVersion}"
           "-DMLIR_DIR=${combo.mlirBinary}/lib/cmake/mlir"
           "-DLLVM_DIR=${combo.mlirBinary}/lib/cmake/llvm"
+          "-DFETCHCONTENT_SOURCE_DIR_CORROSION=${corrosionSrc}"
           "-DANTLR4_JAR_LOCATION=${antlr4Jar}"
           "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
           "-DUSE_SANITIZER=${combo.sanitizer.cmakeValue}"
@@ -497,10 +538,7 @@
           '';
         };
 
-        clangTidyDiffScript = pkgs.fetchurl {
-          url = "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-${clangToolsVersion}/clang-tools-extra/clang-tidy/tool/clang-tidy-diff.py";
-          hash = "sha256-+64k7MRZjQOFQVltm8sEZMhu3VEYfYax+86MxOAO2sU=";
-        };
+        clangTidyDiffScript = "${llvm.clang-unwrapped.src}/clang-tools-extra/clang-tidy/tool/clang-tidy-diff.py";
 
         clangTidyDiffRunner = pkgs.writeShellApplication {
           name = clangTidyDiffCommand;
@@ -645,7 +683,7 @@
           mold
           rustc
           cargo
-        ];
+        ] ++ [ cxxbridgeCmd ];
 
         # LLVM toolchain with versioned symlinks for vcpkg
         clangWithVersionsDefault = pkgs.symlinkJoin {
@@ -730,7 +768,7 @@
               [
                 "-DCMAKE_BUILD_TYPE=Release"
                 "-DNES_ENABLES_TESTS=ON"
-                "-DUSE_CCACHE_IF_AVAILABLE=OFF"
+                "-DUSE_BUILD_CACHE=OFF"
                 "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
               ]
               ++ cmakeCommonFlags combo;
@@ -750,7 +788,7 @@
             version = "unstable";
             src = ./.;
 
-            nativeBuildInputs = buildTools;
+            nativeBuildInputs = buildTools ++ [ pkgs.rustPlatform.cargoSetupHook ];
             buildInputs =
               llvmToolsVariant
               ++ cmakeCtx.thirdPartyDeps
@@ -758,9 +796,15 @@
               ++ sanitizer.extraPackages
               ++ stdlib.extraPackages;
             patches = nebulastreamPatches;
+            cargoDeps = pkgs.rustPlatform.importCargoLock { lockFile = ./nes-network/Cargo.lock; };
+            cargoRoot = "nes-network";
 
             CMAKE_PREFIX_PATH = cmakeCtx.cmakePrefixPath;
             PKG_CONFIG_PATH = cmakeCtx.pkgConfigPath;
+
+            preConfigure = ''
+              export CARGO_HOME="$PWD/.cargo"
+            '';
 
             cmakeFlags = cmakeFlagsList;
 
@@ -849,7 +893,15 @@
               sanitizer = defaultSanitizer.cmakeValue;
               stdlib = defaultStdlib.name;
             };
-            nautilusPackages = nautilusPackagesFor defaultMlirBinary;
+            packageSet = packagesForStdlib {
+              stdlib = defaultStdlib;
+              extraInputs = extraInputs;
+              sanitizer = defaultSanitizer;
+            };
+            nautilusPackages = nautilusPackagesFor {
+              mlirBinary = defaultMlirBinary;
+              inherit (packageSet) fmtPkg spdlogPkg;
+            };
           in {
             antlr4 = antlr4Packages.withSanitizer sanitizerArgs;
             cpptrace = cpptracePackages.withSanitizer sanitizerArgs;

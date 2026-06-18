@@ -1,4 +1,9 @@
-{ pkgs }:
+{
+  pkgs,
+  llvmToolchainVersion,
+  mlirRelease,
+  mlirAssetPrefix,
+}:
 let
   lib = pkgs.lib;
   stdenv = pkgs.stdenvNoCC;
@@ -25,38 +30,38 @@ let
   hashes = {
     x64 = {
       none = {
-        libcxx = "0fw9ivnahhcdjz12dbi7zdmxkxkc16f1injai90a99kvi5jknkcc";
-        libstdcxx = "0ymf7x74arflvxjcyy9manfxwzvdlcanms4n4wwk118ssrdqvydf";
+        libcxx = "sha256-vVLdgd+8Fw7OfyJM5bfMO0Gv/bxI19rg9KK8VhNSfAE=";
+        libstdcxx = "sha256-8HTBvceq7FSX2OGJiFVxk1s6tjhu3Zf9f7eddakfJEA=";
       };
       address = {
-        libcxx = "1mm6hc3f8z5l6d78id5vc9k76fb5s1pqqpxxqdvrzdd63h44yw04";
-        libstdcxx = "1zv8ljrbkv914afcmw2ybqbsmskyd7nmaf6v19qg94hyimjnikv5";
+        libcxx = "sha256-82xPmfsxNUfa8bNyMT3EqpvrCnOge/qfdYeXVMNwH2g=";
+        libstdcxx = "sha256-Q1HLol2DW4yJhIkxVGXHPPBnkSKvkAc/ft0ju+dvTaQ=";
       };
       thread = {
-        libcxx = "18d34bv9f0zvha65i4406ggbdk8plb1pmqhdj6kbdzr85j3xfd44";
-        libstdcxx = "1mvyqmx1jybggkljb1gvr726i2c0flw6wcbgb56bzxfnzc52hnsh";
+        libcxx = "sha256-tdACHM97MABTUX8LCfyhWWjBkvXhGAwl3yspil/I47o=";
+        libstdcxx = "sha256-qZYBL6Y8bf9ENii0npEuWS6rEx6GPwjWtJOkps+d4HU=";
       };
       undefined = {
-        libcxx = "004ny9dik6ngi9plwjjzd36q7grb2rrdxircwgv3d48pd7jww85m";
-        libstdcxx = "0mfl87218ci1cqfrsp41hmnq2zfiv3p5cxvrw4mr9v2yh50vlgn8";
+        libcxx = "sha256-zjMYm+zDryNfJjgs8uG9CwE299GaBvEB6g7nVJSyzvw=";
+        libstdcxx = "sha256-S9XdjkMC/S9yJetoU3Sbi13Ap/W91lS4AwChZcgxNuo=";
       };
     };
     arm64 = {
       none = {
-        libcxx = "02l6k7lxhh78884xbq1gp2ms1qcy1v3ycz4pcp1wzhikyxllfrpf";
-        libstdcxx = "0pk83vhf3rd5s1pjv6vrmywk11gqvk5b42dyd9jarvv5x0jc0x1y";
+        libcxx = "sha256-BskqEdrNOmPWNV7PD8DzZWxiZJykWEyUUsQIyQcLwqI=";
+        libstdcxx = "sha256-8IqoEgNximKB49/Gew14Ai/LGKadsNw1bBB01BGaqcM=";
       };
       address = {
-        libcxx = "0yrj1967zq081m2wfrfdmqf35qpfma704dvjrw6p551dr0ffsqv0";
-        libstdcxx = "08q5hz1bayy969lmrvx8kvl33bywlhxr6i9jjvw1q8gr2wspfqqg";
+        libcxx = "sha256-JaSaWZJ7r5mcPZFvQruCL+KEdkbpa5fC0b/PdYE9R04=";
+        libstdcxx = "sha256-6NC4auWCVv59oQPST7LZHWsSWqM7F8MLnRJdnAGah7o=";
       };
       thread = {
-        libcxx = "1kssjk6mc4sw80s8ad8havyb07hga40vd7wrjr27spnmxxida104";
-        libstdcxx = "1k1mb7pvsigjdkwnvxm6a91ii8kvbwchksaw2hig9arpw13dsqbh";
+        libcxx = "sha256-2vsHxTXiFRmukdlxvaATtVNle5zVyel+G/bnPD5LSW8=";
+        libstdcxx = "sha256-H9XrQekxGGu60hHiEGdMMr+rjR9bYe42gkaogsgDbvw=";
       };
       undefined = {
-        libcxx = "06fbjswigang29pmbp2w6dvrin8gppjfcfks5rx53p5vxh5mm360";
-        libstdcxx = "1p945dg9prmzskb7zgcpdphh538r3d4fd76i5wg26s32p9jqxixr";
+        libcxx = "sha256-T8Ft/9ASprmoByPksquNMN3AJe+euorKPzEiPUypYpc=";
+        libstdcxx = "sha256-0maAVCipzhJvFuzUzwE/U0at+vmW0dVEzQekOskLM1Y=";
       };
     };
   };
@@ -78,15 +83,14 @@ let
     { sanitizer, stdlib }:
     let
       hash = hashFor { inherit sanitizer stdlib; };
-      url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-20/nes-llvm-20-${arch}-${sanitizer}-${stdlib}.tar.zstd";
+      url = "https://github.com/nebulastream/clang-binaries/releases/download/${mlirRelease}/${mlirAssetPrefix}-${arch}-${sanitizer}-${stdlib}.tar.zstd";
     in
     stdenv.mkDerivation {
       pname = "nes-mlir";
-      version = "20";
+      version = llvmToolchainVersion;
 
       src = pkgs.fetchurl {
-        inherit url;
-        sha256 = hash;
+        inherit url hash;
       };
 
       nativeBuildInputs = [

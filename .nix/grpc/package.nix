@@ -1,11 +1,11 @@
 {
   lib,
-  llvmPackages_19,
+  llvmPackages,
   grpc,
 }:
 
 let
-  llvm = llvmPackages_19;
+  llvm = llvmPackages;
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
 
