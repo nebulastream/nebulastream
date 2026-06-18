@@ -15,8 +15,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "29169c1499a5e49f4543c938e9342267a629f639";
-    hash = "sha256-uNhozLKGsHf6WLN/CYVANi3NwMrRj5YplVqtjY65ngA=";
+    rev = "d63bd8f30298e6761e749769742f34d01d332210";
+    hash = "sha256-UD2msYmFyueMMvCMVrZRDNoKc9qwnEsgmE8pqtPG/60=";
   };
 
   baseBuildInputs = [
