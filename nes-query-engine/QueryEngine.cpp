@@ -50,6 +50,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
@@ -199,6 +200,14 @@ public:
     /// fallback). Thread-safe.
     std::optional<QueryId> selectVictim(BufferExhaustionPolicy policy, QueryId currentQuery);
 
+    /// An eligible victim query together with the metrics used to rank it (see gatherVictimCandidates).
+    struct VictimCandidate
+    {
+        QueryId queryId;
+        uint64_t pending;
+        uint64_t creation;
+    };
+
     void clear()
     {
         const std::scoped_lock lock(mutex);
@@ -206,6 +215,18 @@ public:
     }
 
 private:
+    /// Collects every query currently holding buffers (Running or Starting) as a victim candidate, recording its
+    /// pending-task count and creation order. Must be called while holding `mutex`.
+    std::vector<VictimCandidate> gatherVictimCandidates();
+
+    /// The query with the most pending tasks. `candidates` must be non-empty.
+    static QueryId selectLargest(const std::vector<VictimCandidate>& candidates);
+    /// The query whose pending tasks most exceed the fair share (average), or nullopt if none exceeds it.
+    /// `candidates` must be non-empty.
+    static std::optional<QueryId> selectOverFairShare(const std::vector<VictimCandidate>& candidates);
+    /// The most recently created query. `candidates` must be non-empty.
+    static QueryId selectYoungest(const std::vector<VictimCandidate>& candidates);
+
     std::recursive_mutex mutex;
     std::unordered_map<QueryId, State> queryStates;
     /// Monotonic creation order per query (for TERMINATE_YOUNGEST); guarded by mutex.
@@ -316,7 +337,7 @@ struct DefaultPEC final : PipelineExecutionContext
         , repeatHandler(std::move(repeatHandler))
         , bm(std::move(bm))
         , arbiter(arbiter)
-        , queryId(queryId)
+        , queryId(std::move(queryId))
         , numberOfThreads(numberOfThreads)
         , threadId(threadId)
         , pipelineId(pipelineId)
@@ -1111,17 +1132,17 @@ void QueryCatalog::failQuery(QueryId id, Exception exception)
             didTransition = it->second->transition(
                 [&toDispose](Starting&& starting)
                 {
-                    toDispose = std::move(starting.plan);
+                    toDispose = std::move(starting).plan;
                     return Terminated{Terminated::Failed};
                 },
                 [&toDispose](Running&& running)
                 {
-                    toDispose = std::move(running.plan);
+                    toDispose = std::move(running).plan;
                     return Terminated{Terminated::Failed};
                 },
                 [&toDispose](Stopping&& stopping)
                 {
-                    toDispose = std::move(stopping.plan);
+                    toDispose = std::move(stopping).plan;
                     return Terminated{Terminated::Failed};
                 });
         }
@@ -1142,29 +1163,9 @@ void QueryCatalog::failQuery(QueryId id, Exception exception)
     }
 }
 
-std::optional<QueryId> QueryCatalog::selectVictim(BufferExhaustionPolicy policy, QueryId currentQuery)
+std::vector<QueryCatalog::VictimCandidate> QueryCatalog::gatherVictimCandidates()
 {
-    if (policy == BufferExhaustionPolicy::TERMINATE_SELF)
-    {
-        return currentQuery;
-    }
-
-    const std::scoped_lock lock(mutex);
-
-    QueryId bestQuery = INVALID_QUERY_ID;
-    uint64_t bestPending = 0;
-    uint64_t bestCreation = 0;
-    uint64_t totalPending = 0;
-    size_t runningCount = 0;
-
-    struct Candidate
-    {
-        QueryId queryId;
-        uint64_t pending;
-        uint64_t creation;
-    };
-
-    std::vector<Candidate> candidates;
+    std::vector<VictimCandidate> candidates;
     for (auto& [queryId, state] : queryStates)
     {
         /// Read the query's pending-task count via an identity transition (AtomicState has no const read), which keeps
@@ -1175,7 +1176,7 @@ std::optional<QueryId> QueryCatalog::selectVictim(BufferExhaustionPolicy policy,
             [&pending](Running&& running)
             {
                 pending = running.plan->sumPendingTasks();
-                return Running{std::move(running.plan)};
+                return std::move(running);
             });
         if (!eligible)
         {
@@ -1183,7 +1184,7 @@ std::optional<QueryId> QueryCatalog::selectVictim(BufferExhaustionPolicy policy,
                 [&pending](Starting&& starting)
                 {
                     pending = starting.plan->sumPendingTasks();
-                    return Starting{std::move(starting.plan)};
+                    return std::move(starting);
                 });
         }
         if (!eligible)
@@ -1192,10 +1193,73 @@ std::optional<QueryId> QueryCatalog::selectVictim(BufferExhaustionPolicy policy,
         }
         const auto creation = creationOrder.contains(queryId) ? creationOrder.at(queryId) : 0;
         candidates.push_back({queryId, pending, creation});
-        totalPending += pending;
-        ++runningCount;
+    }
+    return candidates;
+}
+
+QueryId QueryCatalog::selectLargest(const std::vector<VictimCandidate>& candidates)
+{
+    QueryId bestQuery = INVALID_QUERY_ID;
+    uint64_t bestPending = 0;
+    for (const auto& candidate : candidates)
+    {
+        if (bestQuery == INVALID_QUERY_ID || candidate.pending > bestPending)
+        {
+            bestQuery = candidate.queryId;
+            bestPending = candidate.pending;
+        }
+    }
+    return bestQuery;
+}
+
+std::optional<QueryId> QueryCatalog::selectOverFairShare(const std::vector<VictimCandidate>& candidates)
+{
+    /// Fair share = average pending across running queries. Victim = the one most above it (only if any exceeds).
+    /// candidates is non-empty here (precondition), so the divisor is always >= 1.
+    uint64_t totalPending = 0;
+    for (const auto& candidate : candidates)
+    {
+        totalPending += candidate.pending;
+    }
+    const auto fairShare = totalPending / candidates.size();
+    QueryId bestQuery = INVALID_QUERY_ID;
+    uint64_t bestPending = 0;
+    for (const auto& candidate : candidates)
+    {
+        if (candidate.pending > fairShare && (bestQuery == INVALID_QUERY_ID || candidate.pending > bestPending))
+        {
+            bestQuery = candidate.queryId;
+            bestPending = candidate.pending;
+        }
+    }
+    return bestQuery == INVALID_QUERY_ID ? std::nullopt : std::optional<QueryId>(bestQuery);
+}
+
+QueryId QueryCatalog::selectYoungest(const std::vector<VictimCandidate>& candidates)
+{
+    QueryId bestQuery = INVALID_QUERY_ID;
+    uint64_t bestCreation = 0;
+    for (const auto& candidate : candidates)
+    {
+        if (bestQuery == INVALID_QUERY_ID || candidate.creation > bestCreation)
+        {
+            bestQuery = candidate.queryId;
+            bestCreation = candidate.creation;
+        }
+    }
+    return bestQuery;
+}
+
+std::optional<QueryId> QueryCatalog::selectVictim(BufferExhaustionPolicy policy, QueryId currentQuery)
+{
+    if (policy == BufferExhaustionPolicy::TERMINATE_SELF)
+    {
+        return currentQuery;
     }
 
+    const std::scoped_lock lock(mutex);
+
+    const std::vector<VictimCandidate> candidates = gatherVictimCandidates();
     if (candidates.empty())
     {
         return std::nullopt;
@@ -1204,38 +1268,11 @@ std::optional<QueryId> QueryCatalog::selectVictim(BufferExhaustionPolicy policy,
     switch (policy)
     {
         case BufferExhaustionPolicy::TERMINATE_LARGEST:
-            for (const auto& c : candidates)
-            {
-                if (bestQuery == INVALID_QUERY_ID || c.pending > bestPending)
-                {
-                    bestQuery = c.queryId;
-                    bestPending = c.pending;
-                }
-            }
-            return bestQuery;
-        case BufferExhaustionPolicy::TERMINATE_OVER_FAIR_SHARE: {
-            /// Fair share = average pending across running queries. Victim = the one most above it (only if any exceeds).
-            const auto fairShare = totalPending / runningCount;
-            for (const auto& c : candidates)
-            {
-                if (c.pending > fairShare && (bestQuery == INVALID_QUERY_ID || c.pending > bestPending))
-                {
-                    bestQuery = c.queryId;
-                    bestPending = c.pending;
-                }
-            }
-            return bestQuery == INVALID_QUERY_ID ? std::nullopt : std::optional<QueryId>(bestQuery);
-        }
+            return selectLargest(candidates);
+        case BufferExhaustionPolicy::TERMINATE_OVER_FAIR_SHARE:
+            return selectOverFairShare(candidates);
         case BufferExhaustionPolicy::TERMINATE_YOUNGEST:
-            for (const auto& c : candidates)
-            {
-                if (bestQuery == INVALID_QUERY_ID || c.creation > bestCreation)
-                {
-                    bestQuery = c.queryId;
-                    bestCreation = c.creation;
-                }
-            }
-            return bestQuery;
+            return selectYoungest(candidates);
         case BufferExhaustionPolicy::TERMINATE_SELF:
             return currentQuery; /// handled above
     }
