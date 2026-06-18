@@ -1,0 +1,80 @@
+# name: benchmark/FormatterThroughput.test
+# description: End-to-end input-formatter throughput on a 5 GB CSV, isolating (a) the formatter
+#              (scalar CSV indexer vs SIMDCSV) and (b) the sink (Checksum vs Void). The query is a
+#              single-field projection so value-parsing and the rest of the pipeline do minimal
+#              work, leaving the formatter (+ sink) as the dominant cost. Run with `systest -b`.
+#              Data (not committed) is generated via scripts/benchmarking/gen_formatter_csv.py:
+#                python3 scripts/benchmarking/gen_formatter_csv.py \
+#                  nes-systests/testdata/large/formatter/bench_5xUINT64_5g.csv --target-mb 5120
+#              Drive multi-rep medians at several thread counts with:
+#                scripts/benchmarking/run_formatter_bench.py
+# groups: [Formatter, benchmark, large]
+
+# ---------------------------------------------------------------------------
+# Sources: identical schema and identical backing file; the ONLY difference is
+# the input formatter, so any throughput delta isolates the indexer.
+# ---------------------------------------------------------------------------
+CREATE LOGICAL SOURCE csv5(creationTS UINT64 NOT NULL, key UINT64 NOT NULL, v1 UINT64 NOT NULL, v2 UINT64 NOT NULL, v3 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR csv5 TYPE File SET("CSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/formatter/bench_5xUINT64_5g.csv
+
+CREATE LOGICAL SOURCE simd5(creationTS UINT64 NOT NULL, key UINT64 NOT NULL, v1 UINT64 NOT NULL, v2 UINT64 NOT NULL, v3 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR simd5 TYPE File SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/formatter/bench_5xUINT64_5g.csv
+
+CREATE SINK csv5_projChk(csv5.key UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK simd5_projChk(simd5.key UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK csv5_projVoid(csv5.key UINT64 NOT NULL) TYPE Void;
+CREATE SINK simd5_projVoid(simd5.key UINT64 NOT NULL) TYPE Void;
+CREATE SINK csv5_agg(csv5.start UINT64 NOT NULL, csv5.end UINT64 NOT NULL, csv5.key UINT64 NOT NULL, csv5.sum_v1 UINT64 NOT NULL, csv5.cnt UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK simd5_agg(simd5.start UINT64 NOT NULL, simd5.end UINT64 NOT NULL, simd5.key UINT64 NOT NULL, simd5.sum_v1 UINT64 NOT NULL, simd5.cnt UINT64 NOT NULL) TYPE Checksum;
+
+# ===========================================================================
+# Q1/Q2 — PROJECTION to CHECKSUM sink: single-field projection of every row. The formatter indexes
+# every line and value-parses one field; the sink re-serializes + hashes every output tuple, so this
+# measures formatter + (heavy) sink. May flood the sink at high thread counts and fail with buffer-pool
+# exhaustion -- that failure is itself part of the answer to "is the checksum sink a bottleneck?".
+# ===========================================================================
+# CSV
+SELECT key FROM csv5 INTO csv5_projChk;
+----
+143128260, 15104504004
+
+# SIMDCSV
+SELECT key FROM simd5 INTO simd5_projChk;
+----
+143128260, 15104504004
+
+# ===========================================================================
+# Q3/Q4 — PROJECTION to VOID sink: same query, but the sink discards every tuple (zero per-tuple
+# work). Isolates the formatter (+ source + projection) with the sink removed -- the formatter ceiling.
+# ===========================================================================
+# CSV
+SELECT key FROM csv5 INTO csv5_projVoid;
+----
+
+# SIMDCSV
+SELECT key FROM simd5 INTO simd5_projVoid;
+----
+
+# ===========================================================================
+# Q5/Q6 — AGGREGATION reference (Checksum sink, tiny output): heavy per-tuple engine work, so the
+# formatter's share is smallest here.
+# ===========================================================================
+# CSV
+SELECT start, end, key, SUM(v1) AS sum_v1, COUNT(v2) AS cnt
+FROM csv5
+GROUP BY key
+WINDOW TUMBLING(creationTS, SIZE 1 SEC)
+INTO csv5_agg;
+----
+183296, 411571294
+
+# SIMDCSV
+SELECT start, end, key, SUM(v1) AS sum_v1, COUNT(v2) AS cnt
+FROM simd5
+GROUP BY key
+WINDOW TUMBLING(creationTS, SIZE 1 SEC)
+INTO simd5_agg;
+----
+183296, 411571294
