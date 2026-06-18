@@ -181,6 +181,8 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
 
     auto nautilusOptions = nautilus::engine::Options{};
     nautilusOptions.setOption("engine.Compilation", isCompiled);
+    nautilusOptions.setOption("engine.backend", std::string("mlir"));
+    nautilusOptions.setOption("engine.compilationStrategy", std::string("legacy"));
     nautilusOptions.setOption("mlir.enableMultithreading", false);
     return std::make_shared<CompiledExecutablePipelineStage>(
         physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilusOptions);

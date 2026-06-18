@@ -80,6 +80,8 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     const bool compilation = (backend == ExecutionMode::COMPILER);
     NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
     options.setOption("engine.Compilation", compilation);
+    options.setOption("engine.backend", std::string("mlir"));
+    options.setOption("engine.compilationStrategy", std::string("legacy"));
     options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
     nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
 
@@ -184,7 +186,7 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
     return ss.str();
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*>
+nautilus::engine::CompiledFunction<void(TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*)>
 ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer(const std::shared_ptr<TupleBufferRef>& tupleBufferRef) const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -223,7 +225,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer(const std::shared_ptr
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, HashMap*, AbstractBufferProvider*>
+nautilus::engine::CompiledFunction<void(TupleBuffer*, HashMap*, AbstractBufferProvider*)>
 ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator(const std::shared_ptr<TupleBufferRef>& tupleBufferRef) const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -255,7 +257,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator(cons
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, HashMap*>
+nautilus::engine::CompiledFunction<void(TupleBuffer*, AbstractBufferProvider*, HashMap*)>
 ChainedHashMapTestUtils::compileFindAndInsert() const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -288,7 +290,7 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
-nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*>
+nautilus::engine::CompiledFunction<void(TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*)>
 ChainedHashMapTestUtils::compileFindAndUpdate() const
 {
     /// Compiling a function that finds the entry and updates the value.

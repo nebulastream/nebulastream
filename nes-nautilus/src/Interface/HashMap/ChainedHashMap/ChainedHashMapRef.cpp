@@ -169,7 +169,7 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(ChainedEntryRef&& other) noe
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Record& recordKey, const HashFunction::HashValue& hash) const
 {
     auto entry = findChain(hash);
-    while (entry)
+    while (entry != nullptr)
     {
         const ChainedEntryRef entryRef(entry, hashMapRef, fieldKeys, fieldValues);
         if (compareKeys(entryRef, recordKey))
@@ -213,7 +213,7 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
 
     ///  If entry contains nullptr, there does not exist a key with the same values.
     const auto hashValue = hashFunction.calculate(keyValues);
-    if (const auto entryRef = findKey(recordKey, hashValue))
+    if (const auto entryRef = findKey(recordKey, hashValue); entryRef != nullptr)
     {
         return static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
     }
@@ -242,7 +242,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
     /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
     const ChainedEntryRef otherEntryRef(chainEntry, hashMapRef, fieldKeys, fieldValues);
-    if (const auto entryRef = findEntry(otherEntryRef))
+    if (const auto entryRef = findEntry(otherEntryRef); entryRef != nullptr)
     {
         auto castedEntry = static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
         if (onUpdate)
