@@ -420,6 +420,14 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
         {
             failedQueries.emplace_back(queryRan);
         }
+        /// A query that never reached a terminal Stopped state -- e.g. it failed at runtime with a
+        /// buffer-pool exhaustion under high parallelism -- has no recorded status, and therefore no
+        /// timing metrics. Skip it in the benchmark output instead of dereferencing an empty optional
+        /// in getElapsedTime(); it is still surfaced as a failure via `failedQueries`.
+        if (!queryRan.queryStatus.has_value())
+        {
+            continue;
+        }
         const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
         resultJson.push_back({
             {"query name", queryRan.systestQuery.testName},
