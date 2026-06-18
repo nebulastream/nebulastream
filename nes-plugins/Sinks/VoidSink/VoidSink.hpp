@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -23,6 +24,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/SchemaFormatter.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -45,12 +47,28 @@ public:
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "VoidSink"; }
+
+private:
+    /// Optional result-file path: present when a harness (e.g. systest) injects one, absent in a
+    /// normal query. When present, only the schema header line (no data rows) is written to it on
+    /// stop, so the systest result check sees a matching schema and an empty result set.
+    std::optional<std::string> outputFilePath;
+    SchemaFormatter schemaFormatter;
 };
 
 struct ConfigParametersVoid
 {
+    /// The Void sink discards all tuples and has no real configuration. It nonetheless accepts an
+    /// optional `file_path` because the systest harness injects one into every sink; it is used only
+    /// to emit a single empty line so the harness has a result file to read.
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
+        "file_path",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap();
+        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH);
 };
 }
 
