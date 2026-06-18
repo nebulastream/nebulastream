@@ -74,6 +74,8 @@ nautilus::engine::NautilusEngine makeEngine(EngineMode mode)
 {
     nautilus::engine::Options options;
     options.setOption("engine.Compilation", mode == EngineMode::Compiler);
+    options.setOption("engine.backend", std::string("mlir"));
+    options.setOption("engine.compilationStrategy", std::string("legacy"));
     options.setOption("mlir.enableMultithreading", false);
     return {options};
 }

@@ -1,9 +1,7 @@
-Index: nautilus/include/nautilus/Executable.hpp
-===================================================================
 diff --git a/nautilus/include/nautilus/Executable.hpp b/nautilus/include/nautilus/Executable.hpp
---- a/nautilus/include/nautilus/Executable.hpp	(revision 85c19150d9bb7e8cca3051e67e04e76045462379)
-+++ b/nautilus/include/nautilus/Executable.hpp	(date 1710547200000)
-@@ -75,7 +75,7 @@
+--- a/nautilus/include/nautilus/Executable.hpp
++++ b/nautilus/include/nautilus/Executable.hpp
+@@ -78,7 +78,7 @@ public:
  		 * @param arguments
  		 * @return returns the result of the function if any
  		 */
@@ -12,3 +10,18 @@ diff --git a/nautilus/include/nautilus/Executable.hpp b/nautilus/include/nautilu
  			if (std::holds_alternative<FunctionType*>(func)) {
  				auto fptr = std::get<FunctionType*>(func);
  				if constexpr (!std::is_void_v<R>) {
+diff --git a/nautilus/include/nautilus/Module.hpp b/nautilus/include/nautilus/Module.hpp
+--- a/nautilus/include/nautilus/Module.hpp
++++ b/nautilus/include/nautilus/Module.hpp
+@@ -86,7 +86,10 @@ class ModuleFunction<R(Args...)> {
+ 		if (state_->executable) {
+ 			if (state_->executable->hasInvocableFunctionPtr()) {
+ 				auto* fptr = reinterpret_cast<R (*)(Args...)>(state_->executable->getInvocableFunctionPtr(name_));
+-				cache_->impl = fptr;
++				// UBSan -fsanitize=function verifies a type hash emitted before each function at every
++				// indirect call; JIT-compiled code has no such prologue, so calling the raw pointer traps.
++				// Wrap the call so the function-type check is exempt for the JIT entry point.
++				cache_->impl = [fptr](Args... args) __attribute__((no_sanitize("function"))) -> R { return fptr(std::forward<Args>(args)...); };
+ 			} else {
+ 				auto invocable = std::make_shared<compiler::Executable::Invocable<R, Args...>>(
+ 				    state_->executable->getInvocableMember<R, Args...>(name_));

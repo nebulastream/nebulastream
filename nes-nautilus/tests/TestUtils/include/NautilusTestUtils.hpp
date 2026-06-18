@@ -145,13 +145,13 @@ template <typename R, typename... FunctionArguments>
 class FunctionWrapper final : public FunctionWrapperBase
 {
 public:
-    explicit FunctionWrapper(nautilus::engine::CallableFunction<R, FunctionArguments...>&& function)
+    explicit FunctionWrapper(nautilus::engine::CompiledFunction<R(FunctionArguments...)>&& function)
         : FunctionWrapperBase(), func(std::move(function))
     {
     }
 
     ~FunctionWrapper() override = default;
-    nautilus::engine::CallableFunction<R, FunctionArguments...> func;
+    nautilus::engine::CompiledFunction<R(FunctionArguments...)> func;
 };
 
 class NautilusTestUtils
