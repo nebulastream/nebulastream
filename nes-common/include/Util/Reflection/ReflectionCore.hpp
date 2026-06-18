@@ -30,7 +30,10 @@
 #include <rfl/Generic.hpp>
 #include <rfl/Tuple.hpp>
 #include <rfl/from_generic.hpp>
+#include <rfl/json/Parser.hpp>
+#include <rfl/json/write.hpp>
 #include <rfl/named_tuple_t.hpp>
+
 #include <ErrorHandling.hpp>
 #include <nameof.hpp>
 
@@ -450,12 +453,42 @@ struct Unreflector<T>
 {
     T operator()(const Reflected& data, const ReflectionContext&) const
     {
-        auto optional = rfl::from_generic<T>(data);
-        if (!optional.has_value())
+        /// reflect() serializes every integral (including unsigned ones) as an int64_t.
+        /// reflectcpp's Generic reader, however, routes any integral whose sizeof <= sizeof(int)
+        /// through a 32-bit, int-range-checked path (Generic::to_int()), which rejects valid
+        /// uint32_t values above INT_MAX. Read the int64_t back ourselves to preserve the full
+        /// range and stay consistent with how we serialize. (See ReflectionTest.UnsignedConversion.)
+        if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>)
         {
-            throw CannotDeserialize("Failed to unreflect given data, rfl error: {}", optional.error().what());
+            return std::visit(
+                [&data]<typename ValueType>(const ValueType& value) -> T
+                {
+                    if constexpr (std::same_as<ValueType, int64_t>)
+                    {
+                        return static_cast<T>(value);
+                    }
+                    else
+                    {
+                        throw CannotDeserialize(
+                            "Failed to unreflect integral type {}, expected int64_t, got: {}",
+                            NAMEOF_TYPE(T),
+                            rfl::json::write(static_cast<rfl::Generic>(data)));
+                    }
+                },
+                data->variant());
         }
-        return optional.value();
+        else
+        {
+            auto optional = rfl::from_generic<T>(data);
+            if (!optional.has_value())
+            {
+                throw CannotDeserialize(
+                    "Failed to unreflect given data, rfl error: {}. {}",
+                    optional.error().what(),
+                    rfl::json::write(static_cast<rfl::Generic>(data)));
+            }
+            return optional.value();
+        }
     }
 };
 
