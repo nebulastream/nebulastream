@@ -52,6 +52,7 @@ let
 
       patches = [
         ./patches/0001-disable-ubsan-function-call-check.patch
+        ./patches/0002-fix-fmt-formatter-instantiation-order.patch
         ./patches/0003-disable-cond-branch-weights.patch
       ];
 
