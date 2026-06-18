@@ -24,10 +24,6 @@ enum class BufferExhaustionPolicy : uint8_t
 {
     /// Terminate the running query holding the most buffers (default): one kill frees the most and targets the offender.
     TERMINATE_LARGEST,
-    /// Terminate the running query most exceeding its fair share (pool / number of running queries).
-    TERMINATE_OVER_FAIR_SHARE,
-    /// Terminate the most recently started running query (least work lost).
-    TERMINATE_YOUNGEST,
     /// The query whose worker hit the exhaustion terminates itself (minimal; no enumeration; may be unfair).
     TERMINATE_SELF
 };

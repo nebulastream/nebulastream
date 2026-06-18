@@ -205,7 +205,6 @@ public:
     {
         QueryId queryId;
         uint64_t pending;
-        uint64_t creation;
     };
 
     void clear()
@@ -216,22 +215,14 @@ public:
 
 private:
     /// Collects every query currently holding buffers (Running or Starting) as a victim candidate, recording its
-    /// pending-task count and creation order. Must be called while holding `mutex`.
+    /// pending-task count. Must be called while holding `mutex`.
     std::vector<VictimCandidate> gatherVictimCandidates();
 
     /// The query with the most pending tasks. `candidates` must be non-empty.
     static QueryId selectLargest(const std::vector<VictimCandidate>& candidates);
-    /// The query whose pending tasks most exceed the fair share (average), or nullopt if none exceeds it.
-    /// `candidates` must be non-empty.
-    static std::optional<QueryId> selectOverFairShare(const std::vector<VictimCandidate>& candidates);
-    /// The most recently created query. `candidates` must be non-empty.
-    static QueryId selectYoungest(const std::vector<VictimCandidate>& candidates);
 
     std::recursive_mutex mutex;
     std::unordered_map<QueryId, State> queryStates;
-    /// Monotonic creation order per query (for TERMINATE_YOUNGEST); guarded by mutex.
-    std::unordered_map<QueryId, uint64_t> creationOrder;
-    uint64_t creationCounter = 0;
     std::shared_ptr<AbstractQueryStatusListener> listener;
     std::shared_ptr<QueryEngineStatisticListener> statistic;
 };
@@ -1064,7 +1055,6 @@ void QueryCatalog::start(
     const auto startTimestamp = std::chrono::system_clock::now();
     auto state = std::make_shared<StateRef>(Reserved{});
     this->queryStates.emplace(queryId, state);
-    this->creationOrder[queryId] = this->creationCounter++;
     queryListener->state = state;
 
     auto [runningQueryPlan, callback] = RunningQueryPlan::start(queryId, std::move(plan), controller, emitter, queryListener);
@@ -1191,8 +1181,7 @@ std::vector<QueryCatalog::VictimCandidate> QueryCatalog::gatherVictimCandidates(
         {
             continue;
         }
-        const auto creation = creationOrder.contains(queryId) ? creationOrder.at(queryId) : 0;
-        candidates.push_back({queryId, pending, creation});
+        candidates.push_back({queryId, pending});
     }
     return candidates;
 }
@@ -1207,44 +1196,6 @@ QueryId QueryCatalog::selectLargest(const std::vector<VictimCandidate>& candidat
         {
             bestQuery = candidate.queryId;
             bestPending = candidate.pending;
-        }
-    }
-    return bestQuery;
-}
-
-std::optional<QueryId> QueryCatalog::selectOverFairShare(const std::vector<VictimCandidate>& candidates)
-{
-    /// Fair share = average pending across running queries. Victim = the one most above it (only if any exceeds).
-    /// candidates is non-empty here (precondition), so the divisor is always >= 1.
-    uint64_t totalPending = 0;
-    for (const auto& candidate : candidates)
-    {
-        totalPending += candidate.pending;
-    }
-    const auto fairShare = totalPending / candidates.size();
-    QueryId bestQuery = INVALID_QUERY_ID;
-    uint64_t bestPending = 0;
-    for (const auto& candidate : candidates)
-    {
-        if (candidate.pending > fairShare && (bestQuery == INVALID_QUERY_ID || candidate.pending > bestPending))
-        {
-            bestQuery = candidate.queryId;
-            bestPending = candidate.pending;
-        }
-    }
-    return bestQuery == INVALID_QUERY_ID ? std::nullopt : std::optional<QueryId>(bestQuery);
-}
-
-QueryId QueryCatalog::selectYoungest(const std::vector<VictimCandidate>& candidates)
-{
-    QueryId bestQuery = INVALID_QUERY_ID;
-    uint64_t bestCreation = 0;
-    for (const auto& candidate : candidates)
-    {
-        if (bestQuery == INVALID_QUERY_ID || candidate.creation > bestCreation)
-        {
-            bestQuery = candidate.queryId;
-            bestCreation = candidate.creation;
         }
     }
     return bestQuery;
@@ -1269,10 +1220,6 @@ std::optional<QueryId> QueryCatalog::selectVictim(BufferExhaustionPolicy policy,
     {
         case BufferExhaustionPolicy::TERMINATE_LARGEST:
             return selectLargest(candidates);
-        case BufferExhaustionPolicy::TERMINATE_OVER_FAIR_SHARE:
-            return selectOverFairShare(candidates);
-        case BufferExhaustionPolicy::TERMINATE_YOUNGEST:
-            return selectYoungest(candidates);
         case BufferExhaustionPolicy::TERMINATE_SELF:
             return currentQuery; /// handled above
     }
