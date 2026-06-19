@@ -19,6 +19,7 @@
 #include <vector>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ExecutableQueryPlan.hpp>
@@ -58,16 +59,18 @@ TEST_F(BufferExhaustionTest, ExhaustionTerminatesVictimAndRecovers)
     for (size_t i = 0; i < numberOfQueries; ++i)
     {
         auto builder = test.buildNewQuery();
-        sourceIds[i] = builder.addSource();
-        pipelineIds[i] = builder.addPipeline({sourceIds[i]});
-        builder.addSink({pipelineIds[i]});
+        const auto source = builder.addSource();
+        const auto pipeline = builder.addPipeline({source});
+        builder.addSink({pipeline});
+        sourceIds.at(i) = source;
+        pipelineIds.at(i) = pipeline;
         queries.emplace_back(test.addNewQuery(std::move(builder)));
     }
 
     /// Each pipeline invocation grabs the whole pool, guaranteeing exhaustion as soon as data flows.
     for (size_t i = 0; i < numberOfQueries; ++i)
     {
-        test.pipelineControls[pipelineIds[i]]->allocateAndHoldPerInvocation = numberOfBuffers;
+        test.pipelineControls[pipelineIds.at(i)]->allocateAndHoldPerInvocation = numberOfBuffers;
         test.expectQueryStatusEvents(test.queryId(i), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
     }
 
@@ -85,7 +88,7 @@ TEST_F(BufferExhaustionTest, ExhaustionTerminatesVictimAndRecovers)
 
     /// Continuously feed both sources so the pipelines keep allocating until each query is terminated.
     DataGenerator<> dataGenerator;
-    dataGenerator.start({test.sourceControls[sourceIds[0]], test.sourceControls[sourceIds[1]]});
+    dataGenerator.start({test.sourceControls[sourceIds.at(0)], test.sourceControls[sourceIds.at(1)]});
 
     for (size_t i = 0; i < numberOfQueries; ++i)
     {
