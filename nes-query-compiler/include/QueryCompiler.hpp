@@ -21,6 +21,11 @@
 #include <CompiledQueryPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
+namespace nautilus::engine
+{
+class NautilusEngine;
+}
+
 namespace NES::QueryCompilation
 {
 
@@ -39,12 +44,16 @@ struct QueryCompilationRequest
 class QueryCompiler
 {
 public:
-    explicit QueryCompiler(QueryExecutionConfiguration defaultQueryExecution) : defaultQueryExecution(std::move(defaultQueryExecution)) { };
+    explicit QueryCompiler(QueryExecutionConfiguration defaultQueryExecution);
 
     std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
 
 private:
     QueryExecutionConfiguration defaultQueryExecution;
+    /// A single Nautilus engine is built once per worker and reused across all pipelines. It carries the engine-scope
+    /// options (backend, compilation strategy, compiled/interpreted mode); per-request dump options are applied per
+    /// module. Shared rather than owned outright because the compiled pipeline stages that use it outlive this compiler.
+    std::shared_ptr<const nautilus::engine::NautilusEngine> engine;
 };
 
 }

@@ -184,8 +184,9 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     nautilusOptions.setOption("engine.backend", std::string("mlir"));
     nautilusOptions.setOption("engine.compilationStrategy", std::string("legacy"));
     nautilusOptions.setOption("mlir.enableMultithreading", false);
+    auto engine = std::make_shared<const nautilus::engine::NautilusEngine>(nautilusOptions);
     return std::make_shared<CompiledExecutablePipelineStage>(
-        physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilusOptions);
+        physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), std::move(engine), nautilus::engine::ModuleOptions{});
 }
 
 }

@@ -27,7 +27,6 @@
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
-#include <Util/ExecutionMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -87,55 +86,36 @@ void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, 
 
 std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage(const std::shared_ptr<Pipeline>& pipeline)
 {
-    nautilus::engine::Options options;
-    /// We disable multithreading in MLIR by default to not interfere with NebulaStream's thread model
-    options.setOption("mlir.enableMultithreading", false);
-    /// Use the single-tier LegacyCompiler with the MLIR backend. Otherwise nautilus defaults to its tiered JIT
-    /// (bytecode tier-0, MLIR tier-1 promoted on a background thread), whose bytecode backend is intentionally not
-    /// built into our nautilus package and which would also conflict with the thread model above. We set both the
-    /// strategy and the backend explicitly rather than relying on the "non-empty backend implies legacy" shortcut.
-    options.setOption("engine.compilationStrategy", std::string("legacy"));
-    options.setOption("engine.backend", std::string("mlir"));
-    switch (pipelineQueryPlan->getExecutionMode())
-    {
-        case ExecutionMode::COMPILER: {
-            options.setOption("engine.Compilation", true);
-            break;
-        }
-        case ExecutionMode::INTERPRETER: {
-            options.setOption("engine.Compilation", false);
-            break;
-        }
-        default: {
-            INVARIANT(false, "Invalid backend");
-        }
-    }
+    /// The engine-scope options (backend, compilation strategy, compiled/interpreted mode) live on the shared,
+    /// worker-wide engine. Here we only set the module-scope options that vary per compilation request: the dump
+    /// configuration. They are applied when the stage creates its module from the shared engine.
     /// See: https://github.com/nebulastream/nautilus/blob/main/docs/options.md
+    nautilus::engine::ModuleOptions moduleOptions;
     switch (dumpQueryCompilationIR.getDumpOption())
     {
         case DumpMode::Options::NONE:
-            options.setOption("dump.all", false);
-            options.setOption("dump.console", false);
-            options.setOption("dump.file", false);
+            moduleOptions.setOption("dump.all", false);
+            moduleOptions.setOption("dump.console", false);
+            moduleOptions.setOption("dump.file", false);
             break;
         case DumpMode::Options::CONSOLE:
-            options.setOption("dump.all", true);
-            options.setOption("dump.console", true);
-            options.setOption("dump.file", false);
+            moduleOptions.setOption("dump.all", true);
+            moduleOptions.setOption("dump.console", true);
+            moduleOptions.setOption("dump.file", false);
             break;
         case DumpMode::Options::FILE:
-            options.setOption("dump.all", true);
-            options.setOption("dump.console", false);
-            options.setOption("dump.file", true);
+            moduleOptions.setOption("dump.all", true);
+            moduleOptions.setOption("dump.console", false);
+            moduleOptions.setOption("dump.file", true);
             break;
         case DumpMode::Options::FILE_AND_CONSOLE:
-            options.setOption("dump.all", true);
-            options.setOption("dump.console", true);
-            options.setOption("dump.file", true);
+            moduleOptions.setOption("dump.all", true);
+            moduleOptions.setOption("dump.console", true);
+            moduleOptions.setOption("dump.file", true);
             break;
     }
-    options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
-    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
+    moduleOptions.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
+    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), engine, std::move(moduleOptions));
 }
 
 std::shared_ptr<ExecutablePipeline> LowerToCompiledQueryPlanPhase::processOperatorPipeline(const std::shared_ptr<Pipeline>& pipeline)

@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -24,13 +25,19 @@
 #include <CompiledQueryPlan.hpp>
 #include <PipelinedQueryPlan.hpp>
 
+namespace nautilus::engine
+{
+class NautilusEngine;
+}
+
 namespace NES
 {
 class LowerToCompiledQueryPlanPhase
 {
 public:
-    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations)
-        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations)
+    LowerToCompiledQueryPlanPhase(
+        DumpMode dumpQueryCompilationIntermediateRepresentations, std::shared_ptr<const nautilus::engine::NautilusEngine> engine)
+        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations), engine(std::move(engine))
     {
     }
 
@@ -56,5 +63,7 @@ private:
 
     /// Config parameter
     DumpMode dumpQueryCompilationIR;
+    /// The worker-wide Nautilus engine, shared by every pipeline stage this phase produces.
+    std::shared_ptr<const nautilus::engine::NautilusEngine> engine;
 };
 }

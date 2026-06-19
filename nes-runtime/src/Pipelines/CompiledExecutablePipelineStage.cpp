@@ -43,9 +43,14 @@ namespace NES
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
-    nautilus::engine::Options options)
-    : engine(options), operatorHandlers(std::move(operatorHandlers)), pipeline(std::move(pipeline))
+    std::shared_ptr<const nautilus::engine::NautilusEngine> engine,
+    nautilus::engine::ModuleOptions moduleOptions)
+    : engine(std::move(engine))
+    , moduleOptions(std::move(moduleOptions))
+    , operatorHandlers(std::move(operatorHandlers))
+    , pipeline(std::move(pipeline))
 {
+    INVARIANT(this->engine != nullptr, "CompiledExecutablePipelineStage requires a non-null Nautilus engine");
 }
 
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
@@ -119,7 +124,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     /// all of them together. Only afterwards do the handles handed out during setup() become invocable.
     CPPTRACE_TRY
     {
-        auto module = engine.createModule();
+        auto module = engine->createModule(moduleOptions);
         CompilationContext compilationCtx{module};
         pipeline->getRootOperator().setup(ctx, compilationCtx);
         registerPipelineFunction(module);
@@ -134,7 +139,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
             NES_DEBUG(
                 "Nautilus compilation statistics for pipeline {}:\n{}",
                 pipeline->getPipelineId(),
-                statistics->formatReport(fmt::format("pipeline-{}", pipeline->getPipelineId()), engine.getNameOfBackend()));
+                statistics->formatReport(fmt::format("pipeline-{}", pipeline->getPipelineId()), engine->getNameOfBackend()));
         }
     }
     CPPTRACE_CATCH(...)
