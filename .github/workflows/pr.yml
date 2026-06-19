@@ -6,19 +6,25 @@ description: |
   Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
 on:
   pull_request:
-    types: [ synchronize, opened, reopened ]
+    types: [ synchronize, opened, reopened, edited ]
   merge_group:
     branches: [ main ]
 
 # cancel previous runs of same PR / branch.
 # In merge_group runs github.head_ref is empty, so fall back to github.ref (the unique
 # gh-readonly-queue ref) to avoid queued runs cancelling each other.
+# A title/body edit ('edited' without a base change) is skipped by the get-dev-images gate, but
+# concurrency is evaluated before that gate — so isolate those runs in a unique group, otherwise
+# cancel-in-progress would kill a legit in-progress build before the skip even happens.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-pr
+  # run_id suffix gives no-op edits a private group; drop it if 'edited' is ever removed from triggers.
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-pr${{ (github.event.action == 'edited' && github.event.changes.base == null) && format('-noop-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 jobs:
   get-dev-images:
+    # 'edited' fires on title/body/base changes; only rerun the pipeline when the base branch changed.
+    if: github.event.action != 'edited' || github.event.changes.base != null
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
