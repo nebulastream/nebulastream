@@ -156,6 +156,29 @@ struct DirtyBufferProvider : AbstractBufferProvider
         return buffer;
     }
 
+    TupleBuffer getBuffer(size_t size) override
+    {
+        auto buffer = bm->getBuffer(size);
+        for (uint32_t& availableMemoryArea : buffer.getAvailableMemoryArea<uint32_t>())
+        {
+            availableMemoryArea = DIRTY_FILL_PATTERN;
+        }
+        return buffer;
+    }
+
+    std::optional<TupleBuffer> getBufferNoBlocking(size_t size) override
+    {
+        auto buffer = bm->getBufferNoBlocking(size);
+        if (buffer)
+        {
+            for (uint32_t& availableMemoryArea : buffer->getAvailableMemoryArea<uint32_t>())
+            {
+                availableMemoryArea = DIRTY_FILL_PATTERN;
+            }
+        }
+        return buffer;
+    }
+
     std::shared_ptr<BufferManager> bm;
 };
 
