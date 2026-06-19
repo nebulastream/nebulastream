@@ -61,122 +61,158 @@ multipleStatements: (statement (';' statement)* ';'?)? EOF;
 statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
 
 explainStatement: EXPLAIN query;
+EXPLAIN: 'EXPLAIN';
 createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition;
-createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
+createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
                                 TYPE type=identifier
                                 optionsClause?;
-optionsClause: (SET '(' options=namedConfigExpressionSeq ')');
+FOR: 'FOR';
+TYPE: 'TYPE';
+optionsClause: (SET '(' options=namedConfigLiteralSeq? ')');
+SET: 'SET';
+
+namedConfigLiteralSeq: namedConfigLiteral (',' namedConfigLiteral)*;
+namedConfigLiteral: literal AS qualifiedIdentifier;
 
 createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier optionsClause?;
 
-createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
+createWorkerDefinition: WORKER hostaddr=STRING_LITERAL optionsClause?;
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
-columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
+columnDefinition: identifier typeDefinition nullableDefinition?;
 
 typeDefinition: DATA_TYPE;
-nullableDefinition: NOT NULLTOKEN;
-
-fromQuery: AS query;
+nullableDefinition: NOT NULL;
+NULL: 'NULL';
 
 dropStatement: DROP dropSubject WHERE dropFilter;
+DROP: 'DROP';
+WHERE: 'WHERE';
 dropSubject: dropQuery | dropSource | dropSink | dropWorker;
 dropQuery: QUERY;
+QUERY: 'QUERY';
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
 dropPhysicalSourceSubject: PHYSICAL SOURCE;
 dropWorker: WORKER;
 dropSink: SINK;
 
-dropFilter: attr=strictIdentifier EQ value=constant;
+dropFilter: attr=identifier EQ value=literal;
 
-showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT showFormat)?;
-showFormat: TEXT | JSON;
-showSubject: QUERIES #showQueriesSubject
-    | LOGICAL SOURCES #showLogicalSourcesSubject
-    | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
-    | SINKS #showSinksSubject;
+showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT identifier)?;
+showSubject: showQueriesSubject | showLogicalSourcesSubject | showPhysicalSourcesSubject | showSinksSubject;
+showQueriesSubject: QUERIES;
+showLogicalSourcesSubject: LOGICAL SOURCES;
+showPhysicalSourcesSubject: PHYSICAL SOURCES;
+showSinksSubject: SINKS;
 
-showFilter: attr=strictIdentifier EQ value=constant;
+showFilter: attr=identifier EQ value=literal;
 
 queryWithOptions: query optionsClause?;
 
+query: projectionTerm fromTerm filterTerm? groupByTerm?;
 
-openRelationalExpression: closedRelationalExpression | query | joinRelationalExpression;
+projectionTerm: SELECT projectionSeq?;
+SELECT: 'SELECT';
+projectionSeq: projection (COMMA projection)*;
+projection: ASTERISK | namedExpression;
+ASTERISK: '*';
+namedExpression: openScalarExpression (AS identifier)?;
+
+filterTerm: WHERE openScalarExpression;
+fromTerm: FROM openRelationalExpression;
+FROM: 'FROM';
+groupByTerm: GROUP_BY openScalarExpression (COMMA openScalarExpression)* UNARY_WINDOW_LITERAL;
+GROUP_BY: GROUP BY;
+fragment GROUP: 'GROUP ';
+fragment BY: 'BY';
+
+
+openRelationalExpression: closedRelationalExpression | unionSeq;
 closedRelationalExpression: identifier | functionCallRelationalExpression | OPEN_PARANTHESIS openRelationalExpression CLOSE_PARANTHESIS | closedRelationalExpression AS identifier;
 AS: 'AS';
-joinRelationalExpression: closedRelationalExpression INNER_JOIN closedRelationalExpression ON scalarExpression;
+joinRelationalExpression: closedRelationalExpression INNER_JOIN closedRelationalExpression ON openScalarExpression BINARY_WINDOW_LITERAL;
+
+unionSeq: unionArg (UNION_ALL unionArg)*;
+unionArg: query | joinRelationalExpression;
 
 
-BINARY_WINDOW_LITERAL: WINDOW WINDOW_TYPE OPEN_PARANTHESIS(IDENTIFIER COMMA IDENTIFIER COMMA);
+BINARY_WINDOW_LITERAL: WINDOW WINDOW_TYPE OPEN_PARANTHESIS IDENTIFIER COMMA IDENTIFIER COMMA INTERVAL_LITERAL CLOSE_PARANTHESIS;
+UNARY_WINDOW_LITERAL: WINDOW WINDOW_TYPE OPEN_PARANTHESIS IDENTIFIER COMMA INTERVAL_LITERAL CLOSE_PARANTHESIS;
 WINDOW_TYPE: TUMBLING | SLIDING;
 fragment TUMBLING: 'TUMBLING';
 fragment SLIDING: 'SLIDING';
-WINDOW: 'WINDOW';
+fragment WINDOW: 'WINDOW';
 ON: 'ON';
 INNER_JOIN: INNER? JOIN;
 fragment INNER: 'INNER';
 fragment JOIN: 'JOIN';
 
+UNION_ALL: UNION ALL?;
+fragment ALL: 'ALL';
+fragment UNION: 'UNION';
+
 
 functionCallRelationalExpression: identifier OPEN_PARANTHESIS relFunctionCallArgument (COMMA relFunctionCallArgument)* CLOSE_PARANTHESIS;
-relFunctionCallArgument: closedRelationalExpression | scalarExpression;
+relFunctionCallArgument: closedRelationalExpression | openScalarExpression;
 
 
-scalarExpression: identifier | literal | infixScalarExpression | prefixScalarExpression | functionCallScalarExpression | castFunctionalScalarExpression | intervalExpression;
-infixScalarExpression: scalarExpression infixScalarExpression scalarExpression;
-prefixScalarExpression: infixScalarOperator scalarExpression;
-functionCallScalarExpression: identifier OPEN_PARANTHESIS scalarExpression (COMMA scalarExpression)* CLOSE_PARANTHESIS;
-castFunctionalScalarExpression: DATA_TYPE OPEN_PARANTHESIS scalarExpression CLOSE_PARANTHESIS;
+openScalarExpression: infixScalarExpression | intervalExpression | closedScalarExpression;
+closedScalarExpression: identifier | literal | prefixScalarExpression | castFunctionalScalarExpression | functionCallScalarExpression | OPEN_PARANTHESIS openScalarExpression CLOSE_PARANTHESIS;
+prefixScalarExpression: prefixScalarOperator closedScalarExpression;
+infixScalarExpression: closedScalarExpression infixScalarOperator closedScalarExpression;
+functionCallScalarExpression: identifier OPEN_PARANTHESIS openScalarExpression (COMMA openScalarExpression)* CLOSE_PARANTHESIS;
+castFunctionalScalarExpression: DATA_TYPE OPEN_PARANTHESIS openScalarExpression CLOSE_PARANTHESIS;
 OPEN_PARANTHESIS: '(';
 CLOSE_PARANTHESIS: ')';
 
 COMMA: ',';
 
 
-intervalExpression: INTERVAL scalarExpression DATETIME_FIELD (TO DATETIME_FIELD)?;
+INTERVAL_LITERAL: INTERVAL LITERAL DATETIME_FIELD;
+intervalExpression: INTERVAL openScalarExpression DATETIME_FIELD;
 DATETIME_FIELD: YEAR | MONTH | DAY | HOUR | MINUTE | SECOND | MILLISECONDS;
-YEAR: 'YEAR';
-MONTH: 'MONTH';
-DAY: 'DAY';
-HOUR: 'HOUR';
-MINUTE: 'MINUTE';
-SECOND: 'SECOND';
-MILLISECONDS: 'MILLISECONDS';
+fragment YEAR: 'YEAR';
+fragment MONTH: 'MONTH';
+fragment DAY: 'DAY';
+fragment HOUR: 'HOUR';
+fragment MINUTE: 'MINUTE';
+fragment SECOND: 'SECOND';
+fragment MILLISECONDS: 'MILLISECONDS';
 
 INTERVAL: 'INTERVAL';
 
-infixScalarOperator: MINUS;
+prefixScalarOperator: MINUS | NOT;
+infixScalarOperator: MINUS | PLUS | EQ;
 
-identifier: IDENTIFIER;
-IDENTIFIER: UNQUOTED_IDENTIFIER | QUOTED_IDENTIFIER;
 
-QUOTED_IDENTIFIER: '"' ( ~'"' )* '"' ;
 
-literal: BOOLEAN_TYPE | STRING_LITERAL | SIGNED_INT_LITERAL | UNSIGNED_INT_LITERAL | FLOAT_LITERAL;
+literal: LITERAL;
+LITERAL: BOOLEAN_TYPE | STRING_LITERAL | SIGNED_INT_LITERAL | UNSIGNED_INT_LITERAL | FLOAT_LITERAL;
 
-boolLiteral: BOOLEAN_TYPE;
 BOOL_LITERAL: TRUE | FALSE;
 fragment TRUE: 'TRUE';
 fragment FALSE: 'FALSE';
 
-stringLiteral: STRING_LITERAL;
-signedIntLiteral: SIGNED_INT_LITERAL;
 
 STRING_LITERAL: '\'' ( ~('\''|'\\') | ('\\' .) )* '\'' ;
 
 SIGNED_INT_LITERAL: MINUS? DIGITS;
 UNSIGNED_INT_LITERAL: DIGITS;
 
-floatLiteral: FLOATING_POINT_TYPE;
 FLOAT_LITERAL: EXP_FRACTION | DECIMAL_FRACTION;
 fragment EXP_FRACTION: (MINUS? 'e' DIGITS)? MINUS? DIGITS;
 fragment DECIMAL_FRACTION : MINUS? DIGITS '.' DIGIT* | MINUS? '.' DIGITS;
 
 MINUS: '-';
+PLUS: '+';
+NOT: 'NOT';
+EQ: '=';
+
+
 
 
 fragment DIGITS: DIGIT+;
@@ -216,12 +252,23 @@ PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
 SINK : 'SINK';
 
+DOT: '.';
+
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
+
+WS: [ \r\n\t]+ -> channel(HIDDEN)
+    ;
 
 SIMPLE_COMMENT
     : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
     ;
+
+qualifiedIdentifier: IDENTIFIER (DOT IDENTIFIER)*;
+identifier: IDENTIFIER;
+
+IDENTIFIER: UNQUOTED_IDENTIFIER | QUOTED_IDENTIFIER;
+QUOTED_IDENTIFIER: '"' ( ~'"' )* '"' ;
 
 UNQUOTED_IDENTIFIER
     : LETTER (LETTER | DIGIT | '_')*
