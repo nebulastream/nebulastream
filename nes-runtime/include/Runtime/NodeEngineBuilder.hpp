@@ -14,9 +14,11 @@
 
 #pragma once
 #include <memory>
+#include <optional>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/StatisticListener.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 namespace NES
@@ -30,6 +32,10 @@ public:
     explicit NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticListener);
 
     std::unique_ptr<NodeEngine> build(const Host& host);
+
+    /// Translates the buffer-size-class worker options into a SizeClassConfig, or std::nullopt when
+    /// size classes are disabled. Throws InvalidConfigParameter if min > max. Exposed for testing.
+    static std::optional<SizeClassConfig> makeSizeClassConfig(const WorkerConfiguration& workerConfiguration);
 
 private:
     WorkerConfiguration workerConfiguration;
