@@ -10,12 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-configurations
-        IpValidation.cpp
-        NumberValidation.cpp
-        PowerOfTwoValidation.cpp
-        NonZeroValidation.cpp
-        EndpointValidation.cpp
-        FloatValidation.cpp
-        BooleanValidation.cpp
-)
+# Self-contained timing harness (no google-benchmark dependency, which is not in the vcpkg manifest).
+add_executable(buffer-manager-benchmark BufferManagerBenchmark.cpp)
+target_link_libraries(buffer-manager-benchmark PRIVATE nes-memory)
