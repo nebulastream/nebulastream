@@ -54,581 +54,269 @@ DISABLE_WARNING(-Wunused-parameter)
   }
 }
 
-singleStatement: statement ';'? EOF;
+singleStatement: statement SEMICOLON? EOF;
+SEMICOLON: ';';
 
-terminatedStatement: statement ';';
-multipleStatements: (statement (';' statement)* ';'?)? EOF;
+terminatedStatement: statement SEMICOLON;
+multipleStatements: (statement (SEMICOLON statement)* SEMICOLON?)? EOF;
 statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
 
 explainStatement: EXPLAIN query;
+EXPLAIN: E X P L A I N;
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
-createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition;
+createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
                                 TYPE type=identifier
                                 optionsClause?;
-optionsClause: (SET '(' options=namedConfigExpressionSeq ')');
+FOR: F O R;
+TYPE: T Y P E;
+optionsClause: (SET OPEN_PARANTHESIS options=namedConfigLiteralSeq? CLOSE_PARANTHESIS);
+SET: S E T;
+
+namedConfigLiteralSeq: namedConfigLiteral (COMMA namedConfigLiteral)*;
+namedConfigLiteral: literal AS qualifiedIdentifier;
 
 createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier optionsClause?;
 
-createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
+createWorkerDefinition: WORKER hostaddr=STRING_LITERAL optionsClause?;
 
-createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
-                       INPUT '(' modelInputField (',' modelInputField)* ')'
-                       OUTPUT '(' modelOutputField (',' modelOutputField)* ')';
-modelInputField: identifier typeDefinition;
-modelOutputField: identifier typeDefinition;
-
-schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
-columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
+schemaDefinition: OPEN_PARANTHESIS columnDefinition (COMMA columnDefinition)* CLOSE_PARANTHESIS;
+columnDefinition: identifier typeDefinition nullableDefinition?;
 
 typeDefinition: DATA_TYPE;
-nullableDefinition: NOT NULLTOKEN;
-
-fromQuery: AS query;
+nullableDefinition: NOT NULL;
+NULL: N U L L;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
-dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
-dropModel: MODEL;
+DROP: D R O P;
+WHERE: W H E R E;
+dropSubject: dropQuery | dropSource | dropSink | dropWorker;
 dropQuery: QUERY;
+QUERY: Q U E R Y;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
 dropPhysicalSourceSubject: PHYSICAL SOURCE;
 dropWorker: WORKER;
 dropSink: SINK;
 
-dropFilter: attr=strictIdentifier EQ value=constant;
-
-showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT showFormat)?;
-showFormat: TEXT | JSON;
-showSubject: QUERIES #showQueriesSubject
-    | LOGICAL SOURCES #showLogicalSourcesSubject
-    | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
-    | SINKS #showSinksSubject
-    | MODELS #showModelsSubject;
-
-showFilter: attr=strictIdentifier EQ value=constant;
-
-queryWithOptions: query optionsClause?;
-query: queryTerm queryOrganization ;
-
-queryOrganization:
-         (ORDER BY order+=sortItem (',' order+=sortItem)*)?
-         (LIMIT (ALL | limit=INTEGER_VALUE))?
-         (OFFSET offset=INTEGER_VALUE)?
-         ;
-
-queryTerm: queryPrimary #primaryQuery
-         |  left=queryTerm setoperator=UNION right=queryTerm  #setOperation
-         ;
-
-queryPrimary
-    : querySpecification                                                    #queryPrimaryDefault
-    | fromStatement                                                         #fromStmt
-    | TABLE multipartIdentifier                                             #table
-    | inlineTable                                                           #inlineTableDefault1
-    | '(' query ')'                                                         #subquery
-    ;
-/// new layout to be closer to traditional SQL
-querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause? sinkClause?;
-
-
-fromClause: FROM relation (',' relation)*;
-
-relation
-    : relationPrimary joinRelation*
-    ;
-
-joinRelation
-    : (joinType) JOIN right=relationPrimary joinCriteria? windowClause
-    | NATURAL joinType JOIN right=relationPrimary windowClause
-    ;
-
-joinType
-    : INNER?
-    ;
-
-joinCriteria
-    : ON booleanExpression
-    ;
-
-relationPrimary
-    : multipartIdentifier                     #tableName
-    | '(' query ')'                           #aliasedQuery
-    | '(' relation ')'                        #aliasedRelation
-    | inlineTable                             #inlineTableDefault2
-    | inlineSource                            #inlineDefinedSource
-    | modelInferenceSource                    #modelInferenceRelation
-    ;
-
-modelInferenceSource
-    : MODEL_INFERENCE '(' modelName=identifier ',' modelInferenceInput ')'
-    ;
-
-modelInferenceInput
-    : multipartIdentifier                     #modelInferenceStreamName
-    | '(' query ')'                           #modelInferenceSubquery
-    | modelInferenceSource                    #modelInferenceNested
-    ;
-
-inlineSource
-    : type=identifier '(' parameters=namedConfigExpressionSeq ')'
-    ;
-
-schema: SCHEMA schemaDefinition
- ;
-
-fromStatement: fromClause fromStatementBody+;
-
-fromStatementBody: selectClause whereClause? groupByClause?;
-
-selectClause : SELECT (hints+=hint)* namedExpressionSeq;
-
-whereClause: WHERE booleanExpression;
-
-havingClause: HAVING booleanExpression;
-
-inlineTable
-    : VALUES expression (',' expression)*
-    ;
-
-multipartIdentifier
-    : parts+=errorCapturingIdentifier ('.' parts+=errorCapturingIdentifier)*
-    ;
-
-namedConfigExpression: (constant | schema) AS name=identifierChain;
-
-namedExpression
-    : expression AS name=identifier
-    | expression
-    ;
-
-identifier: strictIdentifier;
-
-strictIdentifier
-    : IDENTIFIER #unquotedIdentifier
-    | quotedIdentifier #quotedIdentifierAlternative;
-
-quotedIdentifier
-    : BACKQUOTED_IDENTIFIER
-    ;
-
-BACKQUOTED_IDENTIFIER
-    : '"' ( ~'"' )* '"'
-    ;
-
-identifierChain: strictIdentifier ('.' strictIdentifier)*;
-
-identifierList
-    : '(' identifierSeq ')'
-    ;
-
-identifierSeq
-    : ident+=errorCapturingIdentifier (',' ident+=errorCapturingIdentifier)*
-    ;
-
-errorCapturingIdentifier
-    : identifier errorCapturingIdentifierExtra
-    ;
-
-errorCapturingIdentifierExtra
-    : (MINUS identifier)+    #errorIdent
-    |                        #realIdent
-    ;
-
-namedConfigExpressionSeq: (namedConfigExpression (',' namedConfigExpression)*)?;
-namedExpressionSeq
-    : namedExpression (',' namedExpression)*
-    ;
-
-expression
-    : valueExpression
-    | booleanExpression
-    | identifier
-    | schema
-    ;
-
-booleanExpression
-    : NOT booleanExpression                                        #logicalNot
-    | EXISTS '(' query ')'                                         #exists
-    | valueExpression predicate?                                   #predicated
-    | left=booleanExpression op=AND right=booleanExpression  #logicalBinary
-    | left=booleanExpression op=OR right=booleanExpression   #logicalBinary
-    ;
-
-/// Problem fixed that the querySpecification rule could match an empty string
-windowedAggregationClause:
-    groupByClause? windowClause watermarkClause?
-    | windowClause groupByClause? watermarkClause?;
-
-groupByClause
-    : GROUP BY groupingExpressions+=expression (',' groupingExpressions+=expression)* (
-      WITH kind=ROLLUP
-    | WITH kind=CUBE
-    | kind=GROUPING SETS '(' groupingSet (',' groupingSet)* ')')?
-    | GROUP BY kind=GROUPING SETS '(' groupingSet (',' groupingSet)* ')'
-    ;
-
-groupingSet
-    : '(' (expression (',' expression)*)? ')'
-    | expression
-    ;
-
-windowClause
-    : WINDOW windowSpec
-    ;
-
-watermarkClause: WATERMARK '(' watermarkParameters ')';
-
-watermarkParameters: watermarkIdentifier=identifier ',' watermark=INTEGER_VALUE watermarkTimeUnit=timeUnit;
-/// Adding Threshold Windows
-windowSpec:
-    timeWindow #timeBasedWindow
-    | countWindow #countBasedWindow
-    | conditionWindow #thresholdBasedWindow
-    ;
-
-timeWindow
-    : TUMBLING '(' timestampParameter ',' sizeParameter ')'                       #tumblingWindow
-    | SLIDING '(' timestampParameter ',' sizeParameter ',' advancebyParameter ')' #slidingWindow
-    ;
-
-timestampParameter: name=IDENTIFIER (',' name=IDENTIFIER)?;
-
-countWindow:
-    TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling
-    ;
-
-conditionWindow
-    : THRESHOLD '(' conditionParameter (',' thresholdMinSizeParameter)? ')' #thresholdWindow
-    ;
-
-conditionParameter: expression;
-thresholdMinSizeParameter: INTEGER_VALUE;
-
-sizeParameter: SIZE INTEGER_VALUE timeUnit;
-
-advancebyParameter: ADVANCE BY INTEGER_VALUE timeUnit;
-
-timeUnit: MS
-        | SEC
-        | MINUTE
-        | HOUR
-        | DAY
-        ;
-
-
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
-
-sinkClause: INTO sink (',' sink)*;
-
-sink: identifier | inlineSink;
-
-inlineSink
-    : type=identifier '(' parameters=namedConfigExpressionSeq ')'
-    ;
-
-nullNotnull
-    : NOT? NULLTOKEN
-    ;
-
-streamName: IDENTIFIER;
-
-fileFormat: CSV_FORMAT;
-
-sortItem
-    : expression ordering=(ASC | DESC)? (NULLS nullOrder=(LAST | FIRST))?
-    ;
-
-predicate
-    : NOT? kind=BETWEEN lower=valueExpression AND upper=valueExpression
-    | NOT? kind=IN '(' expression (',' expression)* ')'
-    | NOT? kind=IN '(' query ')'
-    | NOT? kind=RLIKE pattern=valueExpression
-    | NOT? kind=LIKE quantifier=(ANY | SOME | ALL) ('('')' | '(' expression (',' expression)* ')')
-    | NOT? kind=LIKE pattern=valueExpression (ESCAPE escapeChar=STRING)?
-    | IS nullNotnull
-    | IS NOT? kind=(TRUE | FALSE | UNKNOWN)
-    | IS NOT? kind=DISTINCT FROM right=valueExpression
-    ;
-
-
-valueExpression
-    : (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
-    | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
-    | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
-    | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
-    | left=valueExpression op=AMPERSAND right=valueExpression                          #arithmeticBinary
-    | left=valueExpression op=HAT right=valueExpression                                #arithmeticBinary
-    | left=valueExpression op=PIPE right=valueExpression                               #arithmeticBinary
-    | left=valueExpression comparisonOperator right=valueExpression                          #comparison
-    | primaryExpression                                                                      #valueExpressionDefault
-    ;
-
-comparisonOperator
-    : EQ | NEQ | NEQJ | LT | LTE | GT | GTE | NSEQ
-    ;
-
-hint
-    : '/*+' hintStatements+=hintStatement (','? hintStatements+=hintStatement)* '*/'
-    ;
-
-hintStatement
-    : hintName=identifier
-    | hintName=identifier '(' parameters+=primaryExpression (',' parameters+=primaryExpression)* ')'
-    ;
-
-primaryExpression
-    : ASTERISK                                                                                 #star
-    | qualifiedName '.' ASTERISK                                                               #star
-    | base=primaryExpression '.' fieldName=identifier                                          #dereference
-    | '(' query ')'                                                                            #subqueryExpression
-    | '(' namedExpression (',' namedExpression)+ ')'                                           #rowConstructor
-    | '(' expression ')'                                                                       #parenthesizedExpression
-    | constant                                                                                 #constantDefault
-    | identifier                                                                               #columnReference
-    ;
-
-qualifiedName
-    : identifier ('.' identifier)*
-    ;
-
-number
-    : MINUS? INTEGER_VALUE              #integerLiteral
-    | MINUS? FLOAT_LITERAL              #floatLiteral
-    ;
-
-unsignedIntegerLiteral: INTEGER_VALUE;
-
-signedIntegerLiteral: MINUS INTEGER_VALUE;
-
-constant
-    : NULLTOKEN                                                                                #nullLiteral
-    | identifier STRING                                                                        #typeConstructor
-    | number                                                                                   #numericLiteral
-    | booleanValue                                                                             #booleanLiteral
-    | STRING                                                                                  #stringLiteral
-    ;
-
-booleanValue
-    : TRUE | FALSE
-    ;
-
-///****************************
-/// Start of the keywords list
-///****************************
-ALL: 'ALL' | 'all';
-AND: 'AND' | 'and';
-ANY: 'ANY';
-AS: 'AS' | 'as';
-ASC: 'ASC' | 'asc';
-AT: 'AT';
-BETWEEN: 'BETWEEN' | 'between';
-BY: 'BY' | 'by';
-COMMENT: 'COMMENT';
-CUBE: 'CUBE';
-DELETE: 'DELETE';
-DESC: 'DESC' | 'desc';
-DISTINCT: 'DISTINCT';
-DIV: 'DIV';
-DROP: 'DROP';
-ELSE: 'ELSE';
-END: 'END';
-ESCAPE: 'ESCAPE';
-EXISTS: 'EXISTS';
-FALSE: 'FALSE';
-FIRST: 'FIRST';
-FOR: 'FOR';
-FROM: 'FROM' | 'from';
-FULL: 'FULL';
-GROUP: 'GROUP' | 'group';
-GROUPING: 'GROUPING';
-HAVING: 'HAVING' | 'having';
-IF: 'IF';
-IN: 'IN' | 'in';
-INNER: 'INNER' | 'inner';
-INSERT: 'INSERT' | 'insert';
-INTO: 'INTO' | 'into';
-IS: 'IS'  'is';
-JOIN: 'JOIN' | 'join';
-LAST: 'LAST';
-LEFT: 'LEFT';
-LIKE: 'LIKE';
-LIMIT: 'LIMIT' | 'limit';
-LIST: 'LIST';
-MERGE: 'MERGE' | 'merge';
-NATURAL: 'NATURAL';
-NOT: 'NOT' | 'not' | '!';
-NULLTOKEN:'NULL';
-NULLS: 'NULLS';
-OF: 'OF';
-ON: 'ON' | 'on';
-OR: 'OR' | 'or';
-ORDER: 'ORDER' | 'order';
-QUERY: 'QUERY';
-RECOVER: 'RECOVER';
-RIGHT: 'RIGHT';
-RLIKE: 'RLIKE' | 'REGEXP';
-ROLLUP: 'ROLLUP';
-SCHEMA: 'SCHEMA';
-SELECT: 'SELECT' | 'select';
-SETS: 'SETS';
-SOME: 'SOME';
-START: 'START';
-TABLE: 'TABLE';
-TO: 'TO';
-TRUE: 'TRUE';
-TYPE: 'TYPE';
-UNION: 'UNION' | 'union';
-UNKNOWN: 'UNKNOWN';
-USE: 'USE';
-USING: 'USING';
-VALUES: 'VALUES';
-WHEN: 'WHEN';
-WHERE: 'WHERE' | 'where';
-WINDOW: 'WINDOW' | 'window';
-WITH: 'WITH';
-SET: 'SET';
-TUMBLING: 'TUMBLING' | 'tumbling';
-SLIDING: 'SLIDING' | 'sliding';
-THRESHOLD : 'THRESHOLD'|'threshold';
-SIZE: 'SIZE' | 'size';
-ADVANCE: 'ADVANCE' | 'advance';
-MS: 'MS' | 'ms';
-SEC: 'SEC' | 'sec';
-MINUTE: 'MINUTE' | 'minute' | 'MINUTES' | 'minutes';
-HOUR: 'HOUR' | 'hour' | 'HOURS' | 'hours';
-DAY: 'DAY' | 'day' | 'DAYS' | 'days';
-MIN: 'MIN' | 'min';
-MAX: 'MAX' | 'max';
-AVG: 'AVG' | 'avg';
-SUM: 'SUM' | 'sum';
-COUNT: 'COUNT' | 'count';
-MEDIAN: 'MEDIAN' | 'median';
-WATERMARK: 'WATERMARK' | 'watermark';
-OFFSET: 'OFFSET' | 'offset';
-CSV_FORMAT : 'CSV_FORMAT';
-AT_MOST_ONCE : 'AT_MOST_ONCE';
-AT_LEAST_ONCE : 'AT_LEAST_ONCE';
-JSON: 'JSON';
-TEXT: 'TEXT';
-EXPLAIN: 'EXPLAIN' | 'explain';
-MODEL: 'MODEL';
-MODELS: 'MODELS';
-MODEL_INFERENCE: 'MODEL_INFERENCE';
-INPUT: 'INPUT';
-OUTPUT: 'OUTPUT';
-
-///--NebulaSQL-KEYWORD-LIST-END
-///****************************
-/// End of the keywords list
-///****************************
-
-
-
-BOOLEAN_VALUE: 'true' | 'false';
-EQ  : '=' | '==';
-NSEQ: '<=>';
-NEQ : '<>';
-NEQJ: '!=';
-LT  : '<';
-LTE : '<=' | '!>';
-GT  : '>';
-GTE : '>=' | '!<';
-
-PLUS: '+';
-MINUS: '-';
+dropFilter: attr=identifier EQ value=literal;
+
+showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT identifier)?;
+showSubject: showQueriesSubject | showLogicalSourcesSubject | showPhysicalSourcesSubject | showSinksSubject;
+showQueriesSubject: QUERIES;
+showLogicalSourcesSubject: LOGICAL SOURCES;
+showPhysicalSourcesSubject: PHYSICAL SOURCES;
+showSinksSubject: SINKS;
+
+showFilter: attr=identifier EQ value=literal;
+
+queryWithOptions: queryWithSink optionsClause?;
+queryWithSink: unionSeq intoTerm;
+unionSeq: query (UNION_ALL query)*;
+query: projectionTerm fromTerm filterTerm? groupByTerm?;
+
+projectionTerm: SELECT projectionSeq?;
+SELECT: S E L E C T;
+projectionSeq: projection (COMMA projection)*;
+projection: ASTERISK | namedExpression;
 ASTERISK: '*';
-SLASH: '/';
-PERCENT: '%';
-TILDE: '~';
-AMPERSAND: '&';
-PIPE: '|';
-CONCAT_PIPE: '||';
-HAT: '^';
+namedExpression: openScalarExpression (AS identifier)?;
 
-STRING
-    : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
-    ;
+filterTerm: WHERE openScalarExpression;
+fromTerm: FROM openRelationalExpression;
+FROM: F R O M;
+groupByTerm: GROUP_BY openScalarExpression (COMMA openScalarExpression)* unaryWindowLiteral;
+GROUP_BY: GROUP WS BY;
+fragment GROUP: G R O U P;
+fragment BY: B Y;
 
-INTEGER_VALUE
-    : DIGIT+
-    ;
+intoTerm: INTO sink;
+INTO: I N T O;
+sink: identifier | literalFunctionCall;
 
-FLOAT_LITERAL
-    : DIGIT+ EXPONENT?
-    | DECIMAL_DIGITS EXPONENT? {isValidDecimal()}?
-    ;
+openRelationalExpression: closedRelationalExpression | joinRelationalExpression;
+closedRelationalExpression: identifier | functionCall | OPEN_PARANTHESIS openRelationalExpression CLOSE_PARANTHESIS | OPEN_PARANTHESIS unionSeq CLOSE_PARANTHESIS | closedRelationalExpression AS identifier;
+AS: A S;
+joinRelationalExpression: closedRelationalExpression INNER_JOIN closedRelationalExpression ON openScalarExpression binaryWindowLiteral;
+
+binaryWindowLiteral: WINDOW WINDOW_TYPE OPEN_PARANTHESIS IDENTIFIER COMMA IDENTIFIER COMMA intervalLiteral CLOSE_PARANTHESIS;
+unaryWindowLiteral: WINDOW WINDOW_TYPE OPEN_PARANTHESIS IDENTIFIER COMMA intervalLiteral CLOSE_PARANTHESIS;
+WINDOW_TYPE: TUMBLING | SLIDING;
+fragment TUMBLING: T U M B L I N G;
+fragment SLIDING: S L I D I N G;
+WINDOW: W I N D O W;
+ON: O N;
+INNER_JOIN: INNER? JOIN;
+fragment INNER: I N N E R WS;
+fragment JOIN: J O I N;
+
+UNION_ALL: UNION ALL?;
+fragment ALL: A L L;
+fragment UNION: U N I O N;
+
+openScalarExpression: infixScalarExpression | intervalExpression | closedScalarExpression;
+closedScalarExpression: identifier
+    | literal
+    | prefixScalarExpression
+    | castFunctionalScalarExpression
+    | functionCall
+    | OPEN_PARANTHESIS openScalarExpression CLOSE_PARANTHESIS
+    | OPEN_PARANTHESIS unionSeq CLOSE_PARANTHESIS;
+
+prefixScalarExpression: prefixScalarOperator closedScalarExpression;
+infixScalarExpression: closedScalarExpression infixScalarOperator closedScalarExpression;
+castFunctionalScalarExpression: DATA_TYPE OPEN_PARANTHESIS openScalarExpression CLOSE_PARANTHESIS;
+
+functionCall: positionalFunctionCall | namedFunctionCall;
+positionalFunctionCall: identifier OPEN_PARANTHESIS positionalFunctionCallArgument (COMMA positionalFunctionCallArgument)* CLOSE_PARANTHESIS;
+positionalFunctionCallArgument: closedScalarExpression | closedRelationalExpression | schemaDefinition;
+namedFunctionCall: identifier OPEN_PARANTHESIS namedFunctionCallArgument (COMMA namedFunctionCallArgument)* CLOSE_PARANTHESIS;
+namedFunctionCallArgument: positionalFunctionCallArgument AS qualifiedIdentifier;
+
+/// Once we have better literal folding, this separate block can be removed and its usages be replaced by functionCall
+literalFunctionCall: positionalLiteralFunctionCall | namedLiteralFunctionCall;
+positionalLiteralFunctionCall: identifier OPEN_PARANTHESIS positionalLiteralFunctionCallArgument (COMMA positionalLiteralFunctionCallArgument)* CLOSE_PARANTHESIS;
+positionalLiteralFunctionCallArgument: literal | schemaDefinition;
+namedLiteralFunctionCall: identifier OPEN_PARANTHESIS namedLiteralFunctionCallArgument (COMMA namedLiteralFunctionCallArgument)* CLOSE_PARANTHESIS;
+namedLiteralFunctionCallArgument: positionalLiteralFunctionCallArgument AS qualifiedIdentifier;
+
+OPEN_PARANTHESIS: '(';
+CLOSE_PARANTHESIS: ')';
+COMMA: ',';
+
+intervalLiteral: INTERVAL LITERAL DATETIME_FIELD;
+intervalExpression: INTERVAL openScalarExpression DATETIME_FIELD;
+DATETIME_FIELD: YEAR | MONTH | DAY | HOUR | MINUTE | SECOND | MILLISECONDS;
+fragment YEAR: Y E A R;
+fragment MONTH: M O N T H;
+fragment DAY: D A Y;
+fragment HOUR: H O U R;
+fragment MINUTE: M I N U T E;
+fragment SECOND: S E C O N D;
+fragment MILLISECONDS: M I L L I S E C O N D S;
+
+INTERVAL: I N T E R V A L;
+
+prefixScalarOperator: MINUS | NOT;
+infixScalarOperator: MINUS | PLUS | EQ | DIV | NEQ | AND | OR | GREATER | GREATER_EQUALS | LESSER | LESSER_EQUALS;
+MINUS: '-';
+PLUS: '+';
+DIV: '/';
+MUL: ASTERISK;
+NOT: N O T;
+EQ: '=';
+NEQ: '<>' | '!=';
+AND: A N D;
+OR: O R;
+GREATER: '>';
+GREATER_EQUALS: '>=';
+LESSER: '<';
+LESSER_EQUALS: '<=';
 
 
-fragment DECIMAL_DIGITS
-    : DIGIT+ '.' DIGIT*
-    | '.' DIGIT+
-    ;
+literal: LITERAL;
+LITERAL: BOOLEAN_TYPE | STRING_LITERAL | SIGNED_INT_LITERAL | UNSIGNED_INT_LITERAL | FLOAT_LITERAL;
 
-fragment EXPONENT
-    : 'E' [+-]? DIGIT+
-    ;
-
-fragment DIGIT
-    : [0-9]
-    ;
-
-fragment LETTER
-    : ('a'..'z'|'A'..'Z'|'_')
-    ;
-
-WS
-    : [ \r\n\t]+ -> channel(HIDDEN)
-    ;
+BOOL_LITERAL: TRUE | FALSE;
+fragment TRUE: T R U E;
+fragment FALSE: F A L S E;
 
 
-SINKS: 'SINKS';
-SOURCES: 'SOURCES' | 'sources';
-QUERIES: 'QUERIES' | 'queries';
+STRING_LITERAL: '\'' ( ~('\''|'\\') | ('\\' .) )* '\'' ;
+
+SIGNED_INT_LITERAL: MINUS? DIGITS;
+UNSIGNED_INT_LITERAL: DIGITS;
+
+FLOAT_LITERAL: EXP_FRACTION | DECIMAL_FRACTION;
+fragment EXP_FRACTION: (MINUS? E DIGITS)? MINUS? DIGITS;
+fragment DECIMAL_FRACTION : MINUS? DIGITS DOT DIGIT* | MINUS? DOT DIGITS;
+
+fragment DIGITS: DIGIT+;
+fragment DIGIT : [0-9] ;
+
+fragment LETTER : ('a'..'z'|'A'..'Z'|'_') ;
+
+SINKS: S I N K S;
+SOURCES: S O U R C E S;
+QUERIES: Q U E R I E S;
 
 
 DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
 
-INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
-INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
-INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
-TINY_INT_TYPE: 'TINYINT';
-SMALL_INT_TYPE: 'SMALLINT';
-NORMAL_INT_TYPE: 'INT' | 'INTEGER';
-BIG_INT_TYPE: 'BIGINT';
-FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
-CHAR_TYPE: 'CHAR';
-VARSIZED_TYPE: 'VARSIZED';
-BOOLEAN_TYPE: 'BOOLEAN';
+fragment INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER WS INTEGER_BASES_TYPES | U I N T '8' | U I N T '16' | U I N T '32' | U I N T '64';
+fragment INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | I N T '64' | I N T '32' | I N T '16' | I N T '8';
+fragment INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
+fragment TINY_INT_TYPE: T I N Y I N T;
+fragment SMALL_INT_TYPE: S M A L L I N T;
+fragment NORMAL_INT_TYPE: I N T | I N T E G E R;
+fragment BIG_INT_TYPE: B I G I N T;
+fragment FLOATING_POINT_TYPE: F L O A T '32' | F L O A T '64';
+fragment CHAR_TYPE: C H A R;
+fragment VARSIZED_TYPE: V A R S I Z E D;
+fragment BOOLEAN_TYPE: B O O L E A N;
 
-UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
+fragment UNSIGNED_TYPE_QUALIFIER: U N S I G N E D;
+
+SHOW : S H O W;
+FORMAT :  F O R M A T;
+CREATE : C R E A T E;
+SOURCE : S O U R C E;
+LOGICAL: L O G I C A L;
+PHYSICAL: P H Y S I C A L;
+WORKER: W O R K E R;
+SINK : S I N K;
+
+DOT: '.';
+
+/// ThAnK yOu SqL fOr bEiNg CaSe-InSenSiTiVe
+fragment A : [aA];
+fragment B : [bB];
+fragment C : [cC];
+fragment D : [dD];
+fragment E : [eE];
+fragment F : [fF];
+fragment G : [gG];
+fragment H : [hH];
+fragment I : [iI];
+fragment J : [jJ];
+fragment K : [kK];
+fragment L : [lL];
+fragment M : [mM];
+fragment N : [nN];
+fragment O : [oO];
+fragment P : [pP];
+fragment Q : [qQ];
+fragment R : [rR];
+fragment S : [sS];
+fragment T : [tT];
+fragment U : [uU];
+fragment V : [vV];
+fragment W : [wW];
+fragment X : [xX];
+fragment Y : [yY];
+fragment Z : [zZ];
 
 
-
-SHOW : 'SHOW';
-FORMAT : 'FORMAT';
-CREATE : 'CREATE';
-SOURCE : 'SOURCE';
-LOGICAL: 'LOGICAL';
-PHYSICAL: 'PHYSICAL';
-WORKER: 'WORKER';
-SINK : 'SINK';
-
-//Make sure that you add lexer rules for keywords before the identifier rule,
-//otherwise it will take priority and your grammars will not work
 
 SIMPLE_COMMENT
     : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
     ;
 
-BRACKETED_COMMENT
-    : '/*' {!isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
+/// Make sure that you add lexer rules for keywords before the identifier rule,
+// otherwise it will take priority and your grammars will not work
+qualifiedIdentifier: IDENTIFIER (DOT IDENTIFIER)*;
+identifier: IDENTIFIER;
+
+IDENTIFIER: UNQUOTED_IDENTIFIER | QUOTED_IDENTIFIER;
+QUOTED_IDENTIFIER: '"' ( ~'"' )* '"' ;
+
+UNQUOTED_IDENTIFIER
+    : LETTER (LETTER | DIGIT | '_')*
     ;
 
-IDENTIFIER
-    : LETTER (LETTER | DIGIT | '_')*
+WS: [ \r\n\t]+ -> channel(HIDDEN)
     ;
 
 /// Catch-all for anything we can't recognize.
