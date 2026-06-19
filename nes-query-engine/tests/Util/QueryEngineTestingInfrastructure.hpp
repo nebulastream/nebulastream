@@ -210,6 +210,11 @@ public:
     std::atomic<size_t> throwOnNthInvocation = -1;
     std::atomic<size_t> repeatCount = 0;
     std::atomic<size_t> repeatCountDuringStop = 0;
+    /// When > 0, each execute() invocation allocates this many buffers via the PipelineExecutionContext (the
+    /// buffer-exhaustion arbiter path) and holds them, to deliberately exhaust the global pool in tests. The held
+    /// buffers are released when the pipeline is destroyed (e.g. when its query is terminated).
+    std::atomic<size_t> allocateAndHoldPerInvocation = 0;
+    folly::Synchronized<std::vector<TupleBuffer>, std::mutex> heldBuffers;
 
     std::promise<void> start;
     std::promise<void> stop;
@@ -251,6 +256,7 @@ struct TestPipeline final : ExecutablePipelineStage
 
     ~TestPipeline() override
     {
+        controller->heldBuffers.lock()->clear();
         controller->stage = nullptr;
         controller->destruction.set_value();
     }
@@ -296,6 +302,14 @@ struct TestPipeline final : ExecutablePipelineStage
         if (controller->invocations.fetch_add(1) + 1 == controller->throwOnNthInvocation)
         {
             throw Exception("I should throw here.", 9999);
+        }
+
+        /// Optionally allocate-and-hold buffers via the PipelineExecutionContext to drive the buffer-exhaustion
+        /// arbiter. allocateTupleBuffer() throws QueryBufferExhausted when this query is selected as the victim.
+        for (size_t held = 0; held < controller->allocateAndHoldPerInvocation.load(); ++held)
+        {
+            auto buffer = pipelineExecutionContext.allocateTupleBuffer();
+            controller->heldBuffers.lock()->emplace_back(std::move(buffer));
         }
 
         /// Handle repeat functionality
