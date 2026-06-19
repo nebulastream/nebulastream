@@ -26,6 +26,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
+#include <Time/IntervalBound.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <val_concepts.hpp>
@@ -33,19 +34,19 @@
 namespace NES
 {
 
-/// Shared probe infrastructure for the streaming interval join.
+/// Probe operator for the streaming interval join.
 ///
-/// A probe buffer represents one driving ("anchor") slice with up to 3 partner slice ends.
-/// The two concrete variants (IntervalJoinProbeInnerPhysicalOperator and
-/// IntervalJoinProbeOuterPhysicalOperator, each in its own header) differ only in how they treat
-/// unmatched tuples:
-///   - the inner probe emits matched (anchor, partner) pairs only;
-///   - the outer probe additionally null-fills unmatched tuples.
+/// A probe buffer represents one driving ("anchor") slice with up to 3 partner slice ends. The two
+/// null-fill flags — set at lowering from the join type — select the behaviour, so a single class
+/// covers inner and all outer variants:
+///   - both false: inner / cartesian — emit matched (anchor, partner) pairs only;
+///   - emitAnchorNullFill (LEFT/FULL): additionally null-fill anchor tuples with no partner;
+///   - emitPartnerNullFill (RIGHT/FULL): additionally run the partner-anchored null-fill pass.
 ///
 /// Inherits StreamJoinProbePhysicalOperator for createJoinedRecord/createNullFilledJoinedRecord, but
-/// the base overrides close() because the inherited WindowProbePhysicalOperator::close would
-/// dynamic_cast the handler to WindowBasedOperatorHandler, which the interval-join handler does not extend.
-class IntervalJoinProbePhysicalOperator : public StreamJoinProbePhysicalOperator
+/// overrides close() because the inherited WindowProbePhysicalOperator::close would dynamic_cast the
+/// handler to WindowBasedOperatorHandler, which the interval-join handler does not extend.
+class IntervalJoinProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 {
 public:
     IntervalJoinProbePhysicalOperator(
@@ -55,18 +56,19 @@ public:
         const JoinSchema& joinSchema,
         std::unique_ptr<TimeFunction> anchorTimeFunction,
         std::unique_ptr<TimeFunction> partnerTimeFunction,
-        // todo have a strong type for the std::int64_t that we use for all lowerBound and upperBounds
-        std::int64_t lowerBound,
-        std::int64_t upperBound,
+        IntervalBound lowerBound,
+        IntervalBound upperBound,
         std::shared_ptr<TupleBufferRef> anchorMemoryProvider,
         std::shared_ptr<TupleBufferRef> partnerMemoryProvider,
         std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNames,
         std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNames,
-        bool emitAnchorNullFill);
+        bool emitAnchorNullFill,
+        bool emitPartnerNullFill);
 
     IntervalJoinProbePhysicalOperator(const IntervalJoinProbePhysicalOperator& other);
 
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void terminate(ExecutionContext& executionCtx) const override;
 
@@ -96,13 +98,14 @@ protected:
 
     std::unique_ptr<TimeFunction> anchorTimeFunction;
     std::unique_ptr<TimeFunction> partnerTimeFunction;
-    std::int64_t lowerBound;
-    std::int64_t upperBound;
+    IntervalBound lowerBound;
+    IntervalBound upperBound;
     std::shared_ptr<TupleBufferRef> anchorMemoryProvider;
     std::shared_ptr<TupleBufferRef> partnerMemoryProvider;
     std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNames;
     std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNames;
     bool emitAnchorNullFill;
+    bool emitPartnerNullFill;
 };
 
 }

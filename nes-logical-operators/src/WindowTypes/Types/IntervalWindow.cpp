@@ -28,29 +28,30 @@ namespace NES::Windowing
 
 /// No bound validation here; lowerBound < upperBound is enforced (with a graceful error) by
 /// IntervalJoinLogicalOperator so invalid user queries are rejected rather than terminating.
-IntervalWindow::IntervalWindow(const std::int64_t lowerBound, const std::int64_t upperBound)
+IntervalWindow::IntervalWindow(const IntervalBound lowerBound, const IntervalBound upperBound)
     : lowerBound(lowerBound), upperBound(upperBound)
 {
 }
 
-std::int64_t IntervalWindow::getLowerBound() const
+IntervalBound IntervalWindow::getLowerBound() const
 {
     return lowerBound;
 }
 
-std::int64_t IntervalWindow::getUpperBound() const
+IntervalBound IntervalWindow::getUpperBound() const
 {
     return upperBound;
 }
 
 TimeMeasure IntervalWindow::getSize() const
 {
-    return TimeMeasure{static_cast<uint64_t>(upperBound - lowerBound)};
+    return TimeMeasure{static_cast<uint64_t>(upperBound.getRawValue() - lowerBound.getRawValue())};
 }
 
 std::ostream& operator<<(std::ostream& os, const IntervalWindow& intervalWindow)
 {
-    return os << fmt::format("IntervalWindow: [{}, {}]", intervalWindow.getLowerBound(), intervalWindow.getUpperBound());
+    return os << fmt::format(
+               "IntervalWindow: [{}, {}]", intervalWindow.getLowerBound().getRawValue(), intervalWindow.getUpperBound().getRawValue());
 }
 
 bool IntervalWindow::operator==(const IntervalWindow& otherWindowType) const = default;
@@ -59,7 +60,7 @@ bool IntervalWindow::operator==(const IntervalWindow& otherWindowType) const = d
 
 std::size_t std::hash<NES::Windowing::IntervalWindow>::operator()(const NES::Windowing::IntervalWindow& window) const noexcept
 {
-    return folly::hash::hash_combine(window.getLowerBound(), window.getUpperBound());
+    return folly::hash::hash_combine(window.getLowerBound().getRawValue(), window.getUpperBound().getRawValue());
 }
 
 namespace NES
@@ -67,14 +68,14 @@ namespace NES
 
 Reflected Reflector<Windowing::IntervalWindow>::operator()(const Windowing::IntervalWindow& intervalWindow) const
 {
-    return reflect(
-        detail::ReflectedIntervalWindow{.lowerBound = intervalWindow.getLowerBound(), .upperBound = intervalWindow.getUpperBound()});
+    return reflect(detail::ReflectedIntervalWindow{
+        .lowerBound = intervalWindow.getLowerBound().getRawValue(), .upperBound = intervalWindow.getUpperBound().getRawValue()});
 }
 
 Windowing::IntervalWindow
 Unreflector<Windowing::IntervalWindow>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [lowerBound, upperBound] = context.unreflect<detail::ReflectedIntervalWindow>(reflected);
-    return Windowing::IntervalWindow{lowerBound, upperBound};
+    return Windowing::IntervalWindow{IntervalBound{lowerBound}, IntervalBound{upperBound}};
 }
 }

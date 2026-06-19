@@ -32,8 +32,7 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Join/IntervalJoin/IntervalJoinBuildPhysicalOperator.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
-#include <Join/IntervalJoin/IntervalJoinProbeInnerPhysicalOperator.hpp>
-#include <Join/IntervalJoin/IntervalJoinProbeOuterPhysicalOperator.hpp>
+#include <Join/IntervalJoin/IntervalJoinProbePhysicalOperator.hpp>
 #include <Join/IntervalJoin/IntervalJoinSlice.hpp>
 #include <Join/IntervalJoin/IntervalSliceStore.hpp>
 #include <Join/IntervalJoin/IntervalSliceStoreRef.hpp>
@@ -191,34 +190,23 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
 
     const JoinSchema joinSchema{anchorInputSchema, partnerInputSchema, outputSchema};
 
-    /// Inner/cartesian joins emit matches only; any outer variant needs the null-fill-capable probe.
-    PhysicalOperator probeOperator = isOuterJoin(joinType) ? PhysicalOperator{IntervalJoinProbeOuterPhysicalOperator{
-                                                                 handlerId,
-                                                                 joinFunction,
-                                                                 WindowMetaData{intervalJoin->getStartField(), intervalJoin->getEndField()},
-                                                                 joinSchema,
-                                                                 TimeFunction::create(anchorTimeCharacteristic),
-                                                                 TimeFunction::create(partnerTimeCharacteristic),
-                                                                 lowerBound,
-                                                                 upperBound,
-                                                                 anchorBufferRef,
-                                                                 partnerBufferRef,
-                                                                 getJoinFieldNames(anchorInputSchema, logicalJoinFunction),
-                                                                 getJoinFieldNames(partnerInputSchema, logicalJoinFunction),
-                                                                 emitAnchorNullFill}}
-                                                           : PhysicalOperator{IntervalJoinProbeInnerPhysicalOperator{
-                                                                 handlerId,
-                                                                 joinFunction,
-                                                                 WindowMetaData{intervalJoin->getStartField(), intervalJoin->getEndField()},
-                                                                 joinSchema,
-                                                                 TimeFunction::create(anchorTimeCharacteristic),
-                                                                 TimeFunction::create(partnerTimeCharacteristic),
-                                                                 lowerBound,
-                                                                 upperBound,
-                                                                 anchorBufferRef,
-                                                                 partnerBufferRef,
-                                                                 getJoinFieldNames(anchorInputSchema, logicalJoinFunction),
-                                                                 getJoinFieldNames(partnerInputSchema, logicalJoinFunction)}};
+    /// One probe class for all join types; the two null-fill flags (derived from the join type) select inner vs
+    /// LEFT/RIGHT/FULL outer behaviour. Both are false for inner/cartesian.
+    PhysicalOperator probeOperator = IntervalJoinProbePhysicalOperator{
+        handlerId,
+        joinFunction,
+        WindowMetaData{intervalJoin->getStartField(), intervalJoin->getEndField()},
+        joinSchema,
+        TimeFunction::create(anchorTimeCharacteristic),
+        TimeFunction::create(partnerTimeCharacteristic),
+        lowerBound,
+        upperBound,
+        anchorBufferRef,
+        partnerBufferRef,
+        getJoinFieldNames(anchorInputSchema, logicalJoinFunction),
+        getJoinFieldNames(partnerInputSchema, logicalJoinFunction),
+        emitAnchorNullFill,
+        emitPartnerNullFill};
 
     auto anchorBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(anchorBuildOperator),

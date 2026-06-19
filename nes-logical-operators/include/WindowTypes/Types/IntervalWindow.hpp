@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <functional>
 #include <ostream>
+#include <Time/IntervalBound.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/ReflectionFwd.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
@@ -32,10 +33,10 @@ namespace NES::Windowing
 class IntervalWindow
 {
 public:
-    IntervalWindow(std::int64_t lowerBound, std::int64_t upperBound);
+    IntervalWindow(IntervalBound lowerBound, IntervalBound upperBound);
 
-    [[nodiscard]] std::int64_t getLowerBound() const;
-    [[nodiscard]] std::int64_t getUpperBound() const;
+    [[nodiscard]] IntervalBound getLowerBound() const;
+    [[nodiscard]] IntervalBound getUpperBound() const;
     /// The join's slice width: upperBound - lowerBound (always positive, lowerBound < upperBound).
     [[nodiscard]] TimeMeasure getSize() const;
 
@@ -43,8 +44,8 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const IntervalWindow& intervalWindow);
 
 private:
-    std::int64_t lowerBound;
-    std::int64_t upperBound;
+    IntervalBound lowerBound;
+    IntervalBound upperBound;
 };
 
 }

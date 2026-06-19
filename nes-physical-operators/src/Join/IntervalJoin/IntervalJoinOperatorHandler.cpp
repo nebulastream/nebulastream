@@ -73,16 +73,16 @@ IntervalJoinOperatorHandler::IntervalJoinOperatorHandler(
     std::vector<OriginId> anchorInputOriginsParam,
     std::vector<OriginId> partnerInputOriginsParam,
     const OriginId outputOriginIdParam,
-    const std::int64_t lowerBoundParam,
-    const std::int64_t upperBoundParam,
+    const IntervalBound lowerBoundParam,
+    const IntervalBound upperBoundParam,
     SliceCacheConfiguration sliceCacheConfigurationParam,
     const bool emitAnchorNullFillParam,
     const bool emitPartnerNullFillParam)
     : lowerBound(lowerBoundParam)
     , upperBound(upperBoundParam)
-    , sliceWidth(static_cast<std::uint64_t>(upperBoundParam - lowerBoundParam))
-    , offsetLow(floorDiv(lowerBoundParam, static_cast<std::int64_t>(sliceWidth)))
-    , offsetHigh(ceilDiv(upperBoundParam, static_cast<std::int64_t>(sliceWidth)))
+    , sliceWidth(static_cast<std::uint64_t>(upperBoundParam.getRawValue() - lowerBoundParam.getRawValue()))
+    , offsetLow(floorDiv(lowerBoundParam.getRawValue(), static_cast<std::int64_t>(sliceWidth)))
+    , offsetHigh(ceilDiv(upperBoundParam.getRawValue(), static_cast<std::int64_t>(sliceWidth)))
     , anchorInputOrigins(std::move(anchorInputOriginsParam))
     , partnerInputOrigins(std::move(partnerInputOriginsParam))
     , outputOriginId(outputOriginIdParam)
@@ -94,7 +94,11 @@ IntervalJoinOperatorHandler::IntervalJoinOperatorHandler(
     , anchorBuildDone(false)
     , partnerBuildDone(false)
 {
-    PRECONDITION(lowerBound < upperBound, "Interval-join bounds require lowerBound < upperBound; got [{}, {}]", lowerBound, upperBound);
+    PRECONDITION(
+        lowerBound < upperBound,
+        "Interval-join bounds require lowerBound < upperBound; got [{}, {}]",
+        lowerBound.getRawValue(),
+        upperBound.getRawValue());
     anchorStore = std::make_unique<IntervalSliceStore>(sliceWidth, sliceCacheConfiguration);
     partnerStore = std::make_unique<IntervalSliceStore>(sliceWidth, sliceCacheConfiguration);
 
@@ -243,8 +247,7 @@ void IntervalJoinOperatorHandler::tryTriggerAnchors(PipelineExecutionContext* pi
         return;
     }
 
-    assembleAndEmitTriggers(
-        anchors, *partnerStore, offsetLow, offsetHigh, /*partnerNullFillPass=*/false, /*alwaysEmit=*/false, pipelineCtx);
+    assembleAndEmitTriggers(anchors, *partnerStore, offsetLow, offsetHigh, /*partnerNullFillPass=*/false, pipelineCtx);
 }
 
 void IntervalJoinOperatorHandler::flushAllOnTermination(PipelineExecutionContext* pipelineCtx)
@@ -255,8 +258,7 @@ void IntervalJoinOperatorHandler::flushAllOnTermination(PipelineExecutionContext
         return;
     }
 
-    assembleAndEmitTriggers(
-        anchors, *partnerStore, offsetLow, offsetHigh, /*partnerNullFillPass=*/false, /*alwaysEmit=*/false, pipelineCtx);
+    assembleAndEmitTriggers(anchors, *partnerStore, offsetLow, offsetHigh, /*partnerNullFillPass=*/false, pipelineCtx);
 }
 
 void IntervalJoinOperatorHandler::flushPartnerNullFill(PipelineExecutionContext* pipelineCtx)
@@ -271,12 +273,11 @@ void IntervalJoinOperatorHandler::flushPartnerNullFill(PipelineExecutionContext*
     }
 
     const auto widthSigned = static_cast<std::int64_t>(sliceWidth);
-    const auto anchorOffsetLow = floorDiv(-upperBound, widthSigned);
-    const auto anchorOffsetHigh = ceilDiv(-lowerBound, widthSigned);
+    const auto anchorOffsetLow = floorDiv(-upperBound.getRawValue(), widthSigned);
+    const auto anchorOffsetHigh = ceilDiv(-lowerBound.getRawValue(), widthSigned);
 
-    /// Always emit (even with zero anchor-side partners) so every partner tuple that matched no anchor tuple is null-filled.
-    assembleAndEmitTriggers(
-        partnerAnchors, *anchorStore, anchorOffsetLow, anchorOffsetHigh, /*partnerNullFillPass=*/true, /*alwaysEmit=*/true, pipelineCtx);
+    /// partnerNullFillPass=true emits even with zero anchor-side partners, so every partner tuple that matched no anchor tuple is null-filled.
+    assembleAndEmitTriggers(partnerAnchors, *anchorStore, anchorOffsetLow, anchorOffsetHigh, /*partnerNullFillPass=*/true, pipelineCtx);
 }
 
 void IntervalJoinOperatorHandler::assembleAndEmitTriggers(
@@ -284,9 +285,7 @@ void IntervalJoinOperatorHandler::assembleAndEmitTriggers(
     IntervalSliceStore& partnerStoreParam,
     const std::int64_t offsetLowParam,
     const std::int64_t offsetHighParam,
-    // todo as they are always either both false or both true, can we not combine them?
     const bool partnerNullFillPass,
-    const bool alwaysEmit,
     PipelineExecutionContext* pipelineCtx)
 {
     const auto widthSigned = static_cast<std::int64_t>(sliceWidth);
@@ -306,11 +305,10 @@ void IntervalJoinOperatorHandler::assembleAndEmitTriggers(
         auto minPartnerStart = anchor->getSliceStart();
 
         const auto anchorStartRaw = static_cast<std::int64_t>(anchor->getSliceStart().getRawValue());
-        // todo come up with a more expressive name for iIndex. intervalIndex for example
-        const auto iIndex = anchorStartRaw / widthSigned;
+        const auto anchorBucketIndex = anchorStartRaw / widthSigned;
         for (std::int64_t k = offsetLowParam; k <= offsetHighParam; ++k)
         {
-            const auto partnerEndRaw = (iIndex + k + 1) * widthSigned;
+            const auto partnerEndRaw = (anchorBucketIndex + k + 1) * widthSigned;
             if (partnerEndRaw <= 0)
             {
                 continue;
@@ -331,7 +329,7 @@ void IntervalJoinOperatorHandler::assembleAndEmitTriggers(
             trigger.partnerSliceEnds[trigger.partnerCount++] = partnerEnd;
             minPartnerStart = std::min(minPartnerStart, partnerSlice->getSliceStart());
         }
-        if (!alwaysEmit && trigger.partnerCount == 0 && !emitAnchorNullFill)
+        if (!partnerNullFillPass && trigger.partnerCount == 0 && !emitAnchorNullFill)
         {
             /// No non-empty partners and not a left-outer join — skip emit; sequence number is NOT consumed.
             /// For a left-outer join we still emit so the probe can null-fill the unmatched anchor tuples.
@@ -362,9 +360,8 @@ void IntervalJoinOperatorHandler::emitProbeBuffer(
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(watermark);
     tupleBuffer.setNumberOfTuples(1);
-    tupleBuffer.setCreationTimestampInMS(
-        Timestamp{static_cast<Timestamp::Underlying>(
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count())});
+    tupleBuffer.setCreationTimestampInMS(Timestamp{static_cast<Timestamp::Underlying>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count())});
 
     std::memcpy(tupleBuffer.getAvailableMemoryArea().data(), &trigger, sizeof(trigger));
     pipelineCtx->emitBuffer(tupleBuffer);

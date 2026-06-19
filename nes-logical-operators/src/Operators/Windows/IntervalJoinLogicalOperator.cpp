@@ -51,6 +51,7 @@ namespace NES
 
 namespace
 {
+// todo use IntervalBound instead of i64 so that validateBounds replaces it
 void validateBounds(const int64_t lowerBound, const int64_t upperBound)
 {
     if (lowerBound >= upperBound)
@@ -65,8 +66,8 @@ IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
     WeakLogicalOperator self,
     LogicalFunction joinFunction,
     JoinTimeCharacteristic timeCharacteristics,
-    const int64_t lowerBound,
-    const int64_t upperBound,
+    const IntervalBound lowerBound,
+    const IntervalBound upperBound,
     const JoinLogicalOperator::JoinType joinType)
     : ManagedByOperator(std::move(self))
     , joinFunction(std::move(joinFunction))
@@ -75,7 +76,7 @@ IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
     , upperBound(upperBound)
     , joinType(joinType)
 {
-    validateBounds(lowerBound, upperBound);
+    validateBounds(lowerBound.getRawValue(), upperBound.getRawValue());
 }
 
 IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
@@ -83,8 +84,8 @@ IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
     std::array<LogicalOperator, 2> children,
     LogicalFunction joinFunction,
     JoinTimeCharacteristic timeCharacteristics,
-    const int64_t lowerBound,
-    const int64_t upperBound,
+    const IntervalBound lowerBound,
+    const IntervalBound upperBound,
     const JoinLogicalOperator::JoinType joinType)
     : ManagedByOperator(std::move(self))
     , joinFunction(std::move(joinFunction))
@@ -94,7 +95,7 @@ IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
     , joinType(joinType)
     , children(std::move(children))
 {
-    validateBounds(lowerBound, upperBound);
+    validateBounds(lowerBound.getRawValue(), upperBound.getRawValue());
     inferLocalSchema();
 }
 
@@ -119,8 +120,8 @@ std::string IntervalJoinLogicalOperator::explain(ExplainVerbosity verbosity, Ope
             "{}), "
             "traitSet: {})",
             id,
-            lowerBound,
-            upperBound,
+            lowerBound.getRawValue(),
+            upperBound.getRawValue(),
             getJoinFunction().explain(verbosity),
             startEndFields.at(0),
             startEndFields.at(1),
@@ -284,12 +285,12 @@ JoinTimeCharacteristic IntervalJoinLogicalOperator::getJoinTimeCharacteristics()
     return timestampFields;
 }
 
-int64_t IntervalJoinLogicalOperator::getLowerBound() const noexcept
+IntervalBound IntervalJoinLogicalOperator::getLowerBound() const noexcept
 {
     return lowerBound;
 }
 
-int64_t IntervalJoinLogicalOperator::getUpperBound() const noexcept
+IntervalBound IntervalJoinLogicalOperator::getUpperBound() const noexcept
 {
     return upperBound;
 }
@@ -311,8 +312,8 @@ Reflector<TypedLogicalOperator<IntervalJoinLogicalOperator>>::operator()(const T
         .operatorId = op.getId(),
         .joinFunction = op->getJoinFunction(),
         .timestampFields = op->getJoinTimeCharacteristics(),
-        .lowerBound = op->getLowerBound(),
-        .upperBound = op->getUpperBound(),
+        .lowerBound = op->getLowerBound().getRawValue(),
+        .upperBound = op->getUpperBound().getRawValue(),
         .joinType = op->getJoinType()});
 }
 
@@ -330,8 +331,8 @@ TypedLogicalOperator<IntervalJoinLogicalOperator> Unreflector<TypedLogicalOperat
         std::array{foundChildren.at(0), foundChildren.at(1)},
         std::move(joinFunction),
         std::move(timestampFields),
-        lowerBound,
-        upperBound,
+        IntervalBound{lowerBound},
+        IntervalBound{upperBound},
         joinType};
 }
 
@@ -355,7 +356,7 @@ std::hash<NES::IntervalJoinLogicalOperator>::operator()(const NES::IntervalJoinL
         NES::Hash{},
         intervalJoinLogicalOperator.joinType,
         intervalJoinLogicalOperator.joinFunction,
-        intervalJoinLogicalOperator.lowerBound,
-        intervalJoinLogicalOperator.upperBound,
+        intervalJoinLogicalOperator.lowerBound.getRawValue(),
+        intervalJoinLogicalOperator.upperBound.getRawValue(),
         intervalJoinLogicalOperator.startEndFields);
 }

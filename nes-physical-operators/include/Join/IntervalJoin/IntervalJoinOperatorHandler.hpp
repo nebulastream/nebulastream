@@ -27,6 +27,7 @@
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
+#include <Time/IntervalBound.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <SliceCacheConfiguration.hpp>
@@ -80,8 +81,8 @@ public:
         std::vector<OriginId> anchorInputOrigins,
         std::vector<OriginId> partnerInputOrigins,
         OriginId outputOriginId,
-        std::int64_t lowerBound,
-        std::int64_t upperBound,
+        IntervalBound lowerBound,
+        IntervalBound upperBound,
         SliceCacheConfiguration sliceCacheConfiguration,
         bool emitAnchorNullFill = false,
         bool emitPartnerNullFill = false);
@@ -114,9 +115,9 @@ public:
     /// Side-dispatched store accessor used by the build operator's side-parameterized proxies.
     [[nodiscard]] IntervalSliceStore& getStore(IntervalJoinBuildSide side) noexcept;
 
-    [[nodiscard]] std::int64_t getLowerBound() const noexcept { return lowerBound; }
+    [[nodiscard]] IntervalBound getLowerBound() const noexcept { return lowerBound; }
 
-    [[nodiscard]] std::int64_t getUpperBound() const noexcept { return upperBound; }
+    [[nodiscard]] IntervalBound getUpperBound() const noexcept { return upperBound; }
 
     [[nodiscard]] std::uint64_t getSliceWidth() const noexcept { return sliceWidth; }
 
@@ -146,16 +147,15 @@ private:
     /// Shared trigger-assembly loop behind all three emit paths (steady-state anchor trigger, the
     /// end-of-stream anchor flush, and the partner-anchored null-fill pass). For each non-empty driving
     /// slice it gathers the non-empty partner slices in [offsetLow, offsetHigh] from `partnerStore` and
-    /// emits one probe buffer. When `alwaysEmit` is true (partner null-fill pass) a buffer is emitted even
-    /// with zero partners; otherwise emission is skipped unless there is at least one partner or
-    /// emitAnchorNullFill is set.
+    /// emits one probe buffer. In the partner-null-fill pass (`partnerNullFillPass`) a buffer is emitted
+    /// even with zero partners so every unmatched partner tuple gets null-filled; otherwise emission is
+    /// skipped unless there is at least one partner or emitAnchorNullFill is set.
     void assembleAndEmitTriggers(
         std::vector<std::shared_ptr<IntervalJoinSlice>>& drivingSlices,
         IntervalSliceStore& partnerStore,
         std::int64_t offsetLowParam,
         std::int64_t offsetHighParam,
         bool partnerNullFillPass,
-        bool alwaysEmit,
         PipelineExecutionContext* pipelineCtx);
 
     /// Serializes a single trigger struct into a buffer (one buffer per anchor, carrying the partner
@@ -166,8 +166,8 @@ private:
         Timestamp watermark,
         PipelineExecutionContext* pipelineCtx) const;
 
-    const std::int64_t lowerBound;
-    const std::int64_t upperBound;
+    const IntervalBound lowerBound;
+    const IntervalBound upperBound;
     const std::uint64_t sliceWidth;
     const std::int64_t offsetLow;
     const std::int64_t offsetHigh;

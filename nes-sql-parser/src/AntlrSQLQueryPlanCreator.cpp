@@ -908,8 +908,8 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
                 helpers.top().joinKeyRelationHelper.at(0),
                 std::move(characteristics[0]),
                 std::move(characteristics[1]),
-                Windowing::TimeBasedWindowType{
-                    Windowing::IntervalWindow{helpers.top().intervalLowerBound.value(), helpers.top().intervalUpperBound.value()}},
+                Windowing::TimeBasedWindowType{Windowing::IntervalWindow{
+                    IntervalBound{helpers.top().intervalLowerBound.value()}, IntervalBound{helpers.top().intervalUpperBound.value()}}},
                 helpers.top().joinType);
         }
 

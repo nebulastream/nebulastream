@@ -31,6 +31,7 @@
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Schema/Field.hpp>
+#include <Time/IntervalBound.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -59,8 +60,8 @@ public:
         WeakLogicalOperator self,
         LogicalFunction joinFunction,
         JoinTimeCharacteristic timeCharacteristics,
-        int64_t lowerBound,
-        int64_t upperBound,
+        IntervalBound lowerBound,
+        IntervalBound upperBound,
         JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN);
 
     explicit IntervalJoinLogicalOperator(
@@ -68,14 +69,14 @@ public:
         std::array<LogicalOperator, 2> children,
         LogicalFunction joinFunction,
         JoinTimeCharacteristic timeCharacteristics,
-        int64_t lowerBound,
-        int64_t upperBound,
+        IntervalBound lowerBound,
+        IntervalBound upperBound,
         JoinLogicalOperator::JoinType joinType);
 
     [[nodiscard]] LogicalFunction getJoinFunction() const;
     [[nodiscard]] JoinTimeCharacteristic getJoinTimeCharacteristics() const;
-    [[nodiscard]] int64_t getLowerBound() const noexcept;
-    [[nodiscard]] int64_t getUpperBound() const noexcept;
+    [[nodiscard]] IntervalBound getLowerBound() const noexcept;
+    [[nodiscard]] IntervalBound getUpperBound() const noexcept;
     [[nodiscard]] JoinLogicalOperator::JoinType getJoinType() const noexcept;
     [[nodiscard]] const UnqualifiedUnboundField& getStartField() const;
     [[nodiscard]] const UnqualifiedUnboundField& getEndField() const;
@@ -100,8 +101,8 @@ private:
     static constexpr std::string_view NAME = "IntervalJoin";
     LogicalFunction joinFunction;
     JoinTimeCharacteristic timestampFields;
-    int64_t lowerBound;
-    int64_t upperBound;
+    IntervalBound lowerBound;
+    IntervalBound upperBound;
     JoinLogicalOperator::JoinType joinType;
     std::optional<std::array<LogicalOperator, 2>> children;
 
