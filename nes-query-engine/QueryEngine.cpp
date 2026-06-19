@@ -1122,17 +1122,20 @@ void QueryCatalog::failQuery(QueryId id, Exception exception)
             didTransition = it->second->transition(
                 [&toDispose](Starting&& starting)
                 {
-                    toDispose = std::move(starting).plan;
+                    auto terminating = std::move(starting);
+                    toDispose = std::move(terminating.plan);
                     return Terminated{Terminated::Failed};
                 },
                 [&toDispose](Running&& running)
                 {
-                    toDispose = std::move(running).plan;
+                    auto terminating = std::move(running);
+                    toDispose = std::move(terminating.plan);
                     return Terminated{Terminated::Failed};
                 },
                 [&toDispose](Stopping&& stopping)
                 {
-                    toDispose = std::move(stopping).plan;
+                    auto terminating = std::move(stopping);
+                    toDispose = std::move(terminating.plan);
                     return Terminated{Terminated::Failed};
                 });
         }
@@ -1165,16 +1168,18 @@ std::vector<QueryCatalog::VictimCandidate> QueryCatalog::gatherVictimCandidates(
         bool eligible = state->transition(
             [&pending](Running&& running)
             {
-                pending = running.plan->sumPendingTasks();
-                return std::move(running);
+                auto candidate = std::move(running);
+                pending = candidate.plan->sumPendingTasks();
+                return candidate;
             });
         if (!eligible)
         {
             eligible = state->transition(
                 [&pending](Starting&& starting)
                 {
-                    pending = starting.plan->sumPendingTasks();
-                    return std::move(starting);
+                    auto candidate = std::move(starting);
+                    pending = candidate.plan->sumPendingTasks();
+                    return candidate;
                 });
         }
         if (!eligible)
