@@ -28,17 +28,9 @@ namespace NES
 
 TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
 {
-    if (size == provider.getBufferSize())
-    {
-        return provider.getBufferBlocking();
-    }
-
-    auto bufferOpt = provider.getUnpooledBuffer(size);
-    if (bufferOpt.has_value())
-    {
-        return bufferOpt.value();
-    }
-    throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", size);
+    /// Route through the provider's size-aware allocation: a fitting pooled size class when one
+    /// exists, otherwise the unpooled fallback. The returned buffer is guaranteed to be >= size.
+    return provider.getBuffer(size);
 }
 
 TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider)
