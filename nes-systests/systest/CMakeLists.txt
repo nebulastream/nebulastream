@@ -29,7 +29,7 @@ else ()
     # By default this only includes small files located in testdata/small
     set(TEST_DATA_PATH DATA{../testdata/,RECURSE:,REGEX:small.*})
 endif ()
-set(ExternalData_TIMEOUT_ABSOLUTE 1200)
+set(ExternalData_TIMEOUT_ABSOLUTE ${LARGE_TEST_DOWNLOAD_TIMEOUT})
 ExternalData_Expand_Arguments(
         test-data
         EXPANDED_TEST_DATA_PATH

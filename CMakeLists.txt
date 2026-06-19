@@ -24,6 +24,7 @@ option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile t
 option(CODE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Enable tests" ON)
 option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
+set(LARGE_TEST_DOWNLOAD_TIMEOUT 1200 CACHE STRING "Absolute timeout in seconds for downloading large test data files")
 option(ENABLE_DOCKER_TESTS "Runs testcases that require docker" ON)
 
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
