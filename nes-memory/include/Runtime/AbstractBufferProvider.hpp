@@ -16,10 +16,8 @@
 #include <chrono>
 #include <cstddef>
 #include <optional>
-#include <utility>
 #include <vector>
 #include <Runtime/TupleBuffer.hpp>
-#include <ErrorHandling.hpp>
 
 /// This enum reflects the different types of buffer managers in the system
 /// global: overall buffer manager
@@ -59,28 +57,10 @@ public:
     /// Providers that support multiple size classes serve this from the smallest fitting class; otherwise
     /// it falls back to the default pooled buffer (for `size <= getBufferSize()`) or an unpooled buffer.
     /// Callers must always read the returned buffer's own getBufferSize(); it may exceed `size`.
-    virtual TupleBuffer getBuffer(size_t size)
-    {
-        if (size <= getBufferSize())
-        {
-            return getBufferBlocking();
-        }
-        if (auto unpooled = getUnpooledBuffer(size))
-        {
-            return std::move(unpooled.value());
-        }
-        throw BufferAllocationFailure("Could not allocate a buffer of size {}", size);
-    }
+    virtual TupleBuffer getBuffer(size_t size) = 0;
 
     /// Non-blocking variant of getBuffer(size). Returns an invalid optional if no buffer is currently available.
-    virtual std::optional<TupleBuffer> getBufferNoBlocking(size_t size)
-    {
-        if (size <= getBufferSize())
-        {
-            return getBufferNoBlocking();
-        }
-        return getUnpooledBuffer(size);
-    }
+    virtual std::optional<TupleBuffer> getBufferNoBlocking(size_t size) = 0;
 };
 
 }

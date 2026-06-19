@@ -19,6 +19,7 @@
 #include <thread>
 #include <vector>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h> /// NOLINT(misc-include-cleaner): consumed via macros expanded from rapidcheck/gtest.h
 #include <rapidcheck/gtest.h>
@@ -167,6 +168,75 @@ TEST_F(SizeClassBufferTest, LargerThanMaxClassUsesUnpooled)
     /// Pooled availability is untouched; the buffer came from the unpooled manager.
     EXPECT_EQ(bm->getNumberOfAvailableBuffers(), pooledBefore);
     EXPECT_GE(bm->getNumOfUnpooledBuffers(), 1u);
+}
+
+/// getBufferNoBlocking(size) returns an empty optional once the best-fit class and every larger
+/// class are drained (so it cannot promote), without blocking.
+TEST_F(SizeClassBufferTest, NoBlockingReturnsNulloptWhenExhausted)
+{
+    /// Classes >= 1000 bytes are 1024(1), 2048(1) and the 4096 default(1) -> three buffers total.
+    auto bm = BufferManager::create(4096, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 2048, 1));
+    std::vector<TupleBuffer> held;
+    held.push_back(bm->getBuffer(1000));
+    held.push_back(bm->getBuffer(1000));
+    held.push_back(bm->getBuffer(1000));
+    EXPECT_FALSE(bm->getBufferNoBlocking(1000).has_value());
+    held.clear();
+    EXPECT_TRUE(bm->getBufferNoBlocking(1000).has_value());
+}
+
+/// TotalBudgetSplit provisions every class and serves the exact class for a request.
+TEST_F(SizeClassBufferTest, BudgetPolicyServesEveryClass)
+{
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, budgetConfig(1024, 8192, 1U << 20U));
+    EXPECT_EQ(bm->getBuffer(1024).getBufferSize(), 1024u);
+    EXPECT_EQ(bm->getBuffer(8192).getBufferSize(), 8192u);
+}
+
+/// LazyElastic grows to its ceiling and then promotes / falls back for further demand, leak-free.
+TEST_F(SizeClassBufferTest, LazyElasticPastCeiling)
+{
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, lazyConfig(2048, 4096, 0, 2, 4));
+    std::vector<TupleBuffer> held;
+    held.reserve(12);
+    for (int i = 0; i < 12; ++i)
+    {
+        auto buffer = bm->getBuffer(2048);
+        EXPECT_GE(buffer.getBufferSize(), 2048u);
+        held.push_back(std::move(buffer));
+    }
+    held.clear();
+    EXPECT_NO_FATAL_FAILURE(bm->destroy());
+}
+
+/// deepCopyBuffer replicates the raw bytes, size and metadata into a fresh buffer.
+TEST_F(SizeClassBufferTest, DeepCopyReplicatesDataAndMetadata)
+{
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 8192, 4));
+    auto source = bm->getBuffer(2000); /// 2048 class
+    auto bytes = source.getAvailableMemoryArea<uint8_t>();
+    for (size_t i = 0; i < bytes.size(); ++i)
+    {
+        bytes[i] = static_cast<uint8_t>(i & 0xFFU);
+    }
+    source.setNumberOfTuples(7);
+
+    auto copy = deepCopyBuffer(source, *bm);
+    EXPECT_GE(copy.getBufferSize(), source.getBufferSize());
+    EXPECT_EQ(copy.getNumberOfTuples(), 7u);
+    const auto copyBytes = copy.getAvailableMemoryArea<uint8_t>();
+    for (size_t i = 0; i < source.getBufferSize(); ++i)
+    {
+        EXPECT_EQ(copyBytes[i], static_cast<uint8_t>(i & 0xFFU));
+    }
+}
+
+/// Exhausting the default pool makes the blocking no-arg path throw after the timeout.
+TEST_F(SizeClassBufferTest, BlockingThrowsWhenDefaultPoolExhausted)
+{
+    auto bm = BufferManager::create(4096, 1);
+    auto held = bm->getBufferBlocking();
+    EXPECT_ANY_THROW([[maybe_unused]] auto buffer = bm->getBufferBlocking());
 }
 
 /// Many threads hammering mixed sizes across all classes must never leak: after everyone returns
