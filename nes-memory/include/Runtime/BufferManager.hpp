@@ -15,21 +15,53 @@
 #pragma once
 
 #include <atomic>
-#include <condition_variable>
-#include <deque>
+#include <cstdint>
 #include <memory>
 #include <memory_resource>
-#include <mutex>
 #include <optional>
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/UnpooledChunksManager.hpp>
-#include <folly/MPMCQueue.h>
+
+namespace NES::detail
+{
+class FixedSizeClassPool;
+}
 
 namespace NES
 {
+
+/// How the buffers of the additional (power-of-two) size classes are provisioned. The default
+/// class (of exactly the configured bufferSize) is always eagerly preallocated for backward
+/// compatibility; this policy only governs the extra size classes.
+enum class BufferProvisioningPolicy : uint8_t
+{
+    /// Distribute one overall byte budget equally across all size classes (counts derived per class).
+    TotalBudgetSplit,
+    /// Eagerly preallocate a fixed number of buffers per size class.
+    EagerPerClass,
+    /// Preallocate a small floor per class and grow it by a region on demand, up to a ceiling.
+    LazyElastic
+};
+
+/// Opt-in configuration enabling additional power-of-two size classes alongside the default buffer
+/// size. Classes are minClassSize, 2*minClassSize, ... up to maxClassSize (both powers of two).
+struct SizeClassConfig
+{
+    size_t minClassSize;
+    size_t maxClassSize;
+    BufferProvisioningPolicy policy = BufferProvisioningPolicy::TotalBudgetSplit;
+    /// TotalBudgetSplit: total bytes distributed (equal share) across the size classes.
+    size_t totalBudgetBytes = 0;
+    /// EagerPerClass: buffers preallocated per size class.
+    size_t buffersPerClass = 0;
+    /// LazyElastic: floor preallocated per class, region growth step, and per-class ceiling.
+    size_t floorBuffersPerClass = 0;
+    size_t growthChunkBuffers = 64;
+    size_t maxBuffersPerClass = 4096;
+};
 
 /**
  * @brief The BufferManager is responsible for:
@@ -68,28 +100,31 @@ class BufferManager final : public std::enable_shared_from_this<BufferManager>, 
         explicit Private() = default;
     };
 
+public:
     static constexpr auto DEFAULT_BUFFER_SIZE = 8 * 1024;
     static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
     static constexpr auto DEFAULT_ALIGNMENT = 64;
 
-public:
     explicit BufferManager(
         Private,
         uint32_t bufferSize,
         uint32_t numOfBuffers,
         std::shared_ptr<std::pmr::memory_resource> memoryResource,
-        uint32_t withAlignment);
+        uint32_t withAlignment,
+        std::optional<SizeClassConfig> sizeClasses);
 
     /// Creates a new global buffer manager
-    /// @param bufferSize the size of each buffer in bytes
-    /// @param numOfBuffers the total number of buffers in the pool
+    /// @param bufferSize the size of each default-class buffer in bytes
+    /// @param numOfBuffers the total number of default-class buffers in the pool
     /// @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
     /// @param memoryResource resource for allocating and deallocating memory
+    /// @param sizeClasses optional configuration enabling additional power-of-two size classes for variable-sized pooled buffers
     static std::shared_ptr<BufferManager> create(
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
         const std::shared_ptr<std::pmr::memory_resource>& memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
-        uint32_t withAlignment = DEFAULT_ALIGNMENT);
+        uint32_t withAlignment = DEFAULT_ALIGNMENT,
+        std::optional<SizeClassConfig> sizeClasses = std::nullopt);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
@@ -99,11 +134,16 @@ public:
 
 private:
     /**
-     * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes.
-     * This is a one shot call. A second invocation of this call will fail
-     * @param withAlignment
+     * @brief Build the size class pools (the default class plus any configured power-of-two classes)
+     * and preallocate their buffers according to the provisioning policy. One shot call.
      */
-    void initialize(uint32_t withAlignment);
+    void initialize(uint32_t withAlignment, const std::optional<SizeClassConfig>& sizeClasses);
+
+    /// Index of the smallest size class whose buffers are >= size, or pools.size() if none fits (too large).
+    [[nodiscard]] size_t classIndexForSize(size_t size) const noexcept;
+
+    /// Prepares the segment's control block (reference count 0 -> 1) and wraps it in a TupleBuffer.
+    TupleBuffer wrapSegment(NES::detail::MemorySegment* segment);
 
 public:
     /// This blocks until a buffer is available.
@@ -111,6 +151,13 @@ public:
 
     /// invalid optional if there is no buffer.
     std::optional<TupleBuffer> getBufferNoBlocking() override;
+
+    /// Blocks until a pooled buffer of at least `size` bytes is available, served from the smallest
+    /// fitting size class. Requests larger than the largest class fall back to an unpooled buffer.
+    TupleBuffer getBuffer(size_t size) override;
+
+    /// Non-blocking variant of getBuffer(size).
+    std::optional<TupleBuffer> getBufferNoBlocking(size_t size) override;
 
     /**
      * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
@@ -146,17 +193,16 @@ public:
     void recycleUnpooledBuffer(NES::detail::MemorySegment* segment, const AllocationThreadInfo&) override;
 
 private:
-    std::vector<NES::detail::MemorySegment> allBuffers;
-
-    folly::MPMCQueue<NES::detail::MemorySegment*> availableBuffers;
+    /// One pool per size class, sorted ascending by buffer size. pools[defaultPoolIndex] is the
+    /// class of exactly `bufferSize` that backs the no-arg getBufferBlocking()/getBufferSize().
+    std::vector<std::unique_ptr<NES::detail::FixedSizeClassPool>> pools;
+    size_t defaultPoolIndex{0};
 
     std::shared_ptr<NES::UnpooledChunksManager> unpooledChunksManager;
 
     size_t bufferSize;
     size_t numOfBuffers;
-
-    uint8_t* basePointer{nullptr};
-    size_t allocatedAreaSize;
+    uint32_t alignment{DEFAULT_ALIGNMENT};
 
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};

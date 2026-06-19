@@ -32,3 +32,10 @@ target_include_directories(nes-memory
 find_package(folly REQUIRED)
 target_link_libraries(nes-memory PUBLIC nes-common nes-data-types PRIVATE folly::folly)
 add_tests_if_enabled(tests)
+
+# Optional microbenchmarks comparing the fixed-pooled, size-class-pooled, and unpooled allocation paths.
+# Off by default so normal builds do not pull in google-benchmark; enable with -DNES_BUILD_MEMORY_BENCHMARKS=ON.
+option(NES_BUILD_MEMORY_BENCHMARKS "Build nes-memory microbenchmarks" OFF)
+if (NES_BUILD_MEMORY_BENCHMARKS)
+    add_subdirectory(benchmarks)
+endif ()

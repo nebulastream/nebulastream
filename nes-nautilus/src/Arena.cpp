@@ -31,15 +31,12 @@ namespace NES
 
 std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
 {
-    /// Case 1
+    /// Case 1: the request does not fit into a default-size buffer. Serve it from the smallest
+    /// fitting pooled size class (falling back to an unpooled buffer for very large requests).
     if (bufferProvider->getBufferSize() < sizeInBytes)
     {
-        const auto unpooledBufferOpt = bufferProvider->getUnpooledBuffer(sizeInBytes);
-        if (not unpooledBufferOpt.has_value())
-        {
-            throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size " + std::to_string(sizeInBytes));
-        }
-        unpooledBuffers.emplace_back(unpooledBufferOpt.value());
+        auto oversizedBuffer = bufferProvider->getBuffer(sizeInBytes);
+        unpooledBuffers.emplace_back(oversizedBuffer);
         lastAllocationSize = sizeInBytes;
         return unpooledBuffers.back().getAvailableMemoryArea().subspan(0, sizeInBytes);
     }
