@@ -64,8 +64,9 @@ IntervalJoinProbeInnerPhysicalOperator::IntervalJoinProbeInnerPhysicalOperator(
 
 void IntervalJoinProbeInnerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    // todo if there is so little difference between inner and outer join then merge it into one class with separate methods. maybe even we can set the specific runJoinPass to call during the lowering. this should be possible
     prepareOpen(executionCtx, recordBuffer);
-    runAnchorDrivenPass(executionCtx, recordBuffer);
+    runJoinPass(executionCtx, recordBuffer, /*driverIsAnchor=*/true);
 }
 
 }

@@ -23,31 +23,23 @@
 namespace NES
 {
 
-/// Trigger strategy for inner joins and cartesian products.
-/// Emits NxN MATCH_PAIRS tasks: each left slice paired with each right slice.
-struct InnerJoinTriggerStrategy
+/// Window-trigger strategy for stream joins, configured at lowering time from the join type.
+/// Always emits NxN MATCH_PAIRS tasks (each left slice paired with each right slice) and, for outer
+/// joins, additionally emits per-side NULL_FILL tasks. Inner joins and cartesian products leave both
+/// flags false.
+/// - Left outer:  {emitLeftNullFill = true}
+/// - Right outer: {emitRightNullFill = true}
+/// - Full outer:  {emitLeftNullFill = true, emitRightNullFill = true}
+struct JoinTriggerStrategy
 {
-    static void triggerWindow(
-        const std::vector<std::shared_ptr<Slice>>& allSlices,
-        const WindowInfoAndSequenceNumber& windowInfo,
-        const EmitSlicesFn& emitFn,
-        PipelineExecutionContext* pipelineCtx);
-};
+    bool emitLeftNullFill = false;
+    bool emitRightNullFill = false;
 
-/// Trigger strategy for outer joins (left, right, full).
-/// Emits NxN MATCH_PAIRS tasks plus null-fill tasks for the configured sides.
-/// Template parameters eliminate runtime branching via if constexpr.
-/// - Left outer:  OuterJoinTriggerStrategy<true, false>
-/// - Right outer: OuterJoinTriggerStrategy<false, true>
-/// - Full outer:  OuterJoinTriggerStrategy<true, true>
-template <bool EmitLeftNullFill, bool EmitRightNullFill>
-struct OuterJoinTriggerStrategy
-{
-    static void triggerWindow(
+    void triggerWindow(
         const std::vector<std::shared_ptr<Slice>>& allSlices,
         const WindowInfoAndSequenceNumber& windowInfo,
         const EmitSlicesFn& emitFn,
-        PipelineExecutionContext* pipelineCtx);
+        PipelineExecutionContext* pipelineCtx) const;
 };
 
 }

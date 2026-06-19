@@ -55,6 +55,7 @@ public:
         const JoinSchema& joinSchema,
         std::unique_ptr<TimeFunction> anchorTimeFunction,
         std::unique_ptr<TimeFunction> partnerTimeFunction,
+        // todo have a strong type for the std::int64_t that we use for all lowerBound and upperBounds
         std::int64_t lowerBound,
         std::int64_t upperBound,
         std::shared_ptr<TupleBufferRef> anchorMemoryProvider,
@@ -74,15 +75,15 @@ protected:
     /// per-side time functions.
     void prepareOpen(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 
-    /// Anchor-driven pass: for each anchor tuple, emit a joined row for every partner tuple inside
-    /// the interval. When emitAnchorNullFill is set, an anchor tuple with no partner emits a row with
-    /// the partner-side fields null-filled.
-    void runAnchorDrivenPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-
-    /// Partner-anchored null-fill pass (outer probe only): the driving slice is a partner-store slice
-    /// and its partners are anchor-store slices. Matches were already emitted by the anchor-driven pass,
-    /// so this only emits a null-filled row for each partner tuple that matched no anchor tuple.
-    void runPartnerNullFillPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    /// Scans the buffer's driving slice against its partner slices. Two modes selected by `driverIsAnchor`
+    /// (a compile-time flag, so each call site specializes and the inner probe generates no null-fill code):
+    ///   - driverIsAnchor (anchor-driven pass): driver = anchor-store slice, partners = partner-store slices;
+    ///     emits a joined row for every partner tuple inside the interval, and — when emitAnchorNullFill is set —
+    ///     a partner-side-null row for any anchor tuple with no partner.
+    ///   - !driverIsAnchor (partner-anchored null-fill pass, outer probe only): roles swap; matches were already
+    ///     emitted by the anchor-driven pass, so this only emits an anchor-side-null row for each partner tuple
+    ///     that matched no anchor tuple.
+    void runJoinPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer, bool driverIsAnchor) const;
 
     /// Reads the partnerNullFillPass flag from the trigger buffer (set by the handler's termination
     /// pass). The outer probe branches on it to choose the partner-anchored null-fill pass.

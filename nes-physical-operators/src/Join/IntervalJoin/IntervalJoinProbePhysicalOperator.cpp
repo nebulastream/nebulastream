@@ -269,10 +269,12 @@ IntervalJoinProbePhysicalOperator::intervalPredicateHolds(ExecutionContext& exec
     return lowerOk && upperOk;
 }
 
-void IntervalJoinProbePhysicalOperator::runAnchorDrivenPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+// todo I do not like that we need to have a lot of ? operators for driverIsAnchor. Can we not get rid of them? Maybe do this in the callee location that we need to create a struct driver and passenger or something like that
+void IntervalJoinProbePhysicalOperator::runJoinPass(
+    ExecutionContext& executionCtx, RecordBuffer& recordBuffer, const bool driverIsAnchor) const
 {
     const auto triggerRef = static_cast<nautilus::val<EmittedIntervalJoinWindowTrigger*>>(recordBuffer.getMemArea());
-    const auto anchorSliceEnd = invoke(getAnchorSliceEndFromTriggerProxy, triggerRef);
+    const auto driverSliceEnd = invoke(getAnchorSliceEndFromTriggerProxy, triggerRef);
     const auto windowStart = invoke(getWindowStartFromTriggerProxy, triggerRef);
     const auto windowEnd = invoke(getWindowEndFromTriggerProxy, triggerRef);
     const auto partnerCount = invoke(getPartnerCountProxy, triggerRef);
@@ -281,62 +283,79 @@ void IntervalJoinProbePhysicalOperator::runAnchorDrivenPass(ExecutionContext& ex
     const auto anchorFieldNames = anchorMemoryProvider->getAllFieldNames();
     const auto partnerFieldNames = partnerMemoryProvider->getAllFieldNames();
 
-    /// Anchor slice: resolved once per buffer, then merged-page reused for every partner.
-    const auto anchorSliceRef = invoke(getAnchorSliceByEndProxy, operatorHandlerMemRef, anchorSliceEnd);
-    const auto anchorPagedVectorPtr = invoke(getMergedPagedVectorProxy, anchorSliceRef);
-    const PagedVectorRef anchorPagedVector{anchorPagedVectorPtr, anchorMemoryProvider};
+    /// Role bindings, resolved at trace time from driverIsAnchor. Anchor-driven pass: driver is an anchor-store
+    /// slice and the gathered partners are partner-store slices. Partner-null-fill pass: the roles swap.
+    const auto& driverProvider = driverIsAnchor ? anchorMemoryProvider : partnerMemoryProvider;
+    const auto& partnerSliceProvider = driverIsAnchor ? partnerMemoryProvider : anchorMemoryProvider;
+    const auto& driverKeys = driverIsAnchor ? anchorKeyFieldNames : partnerKeyFieldNames;
+    const auto& partnerSliceKeys = driverIsAnchor ? partnerKeyFieldNames : anchorKeyFieldNames;
+    const auto& driverFields = driverIsAnchor ? anchorFieldNames : partnerFieldNames;
+    const auto& partnerSliceFields = driverIsAnchor ? partnerFieldNames : anchorFieldNames;
 
-    /// Outer loop over anchor tuples so each anchor tuple is matched against every partner slice in a
-    /// single pass. This lets a LEFT/FULL outer join detect an unmatched anchor tuple and null-fill it
-    /// here: the trigger gathers every partner slice that can fall inside this anchor's interval range,
-    /// so absence of a match across all partners means the anchor tuple truly has no partner.
+    /// Driver slice: resolved once per buffer, then merged-page reused for every partner.
+    const auto driverSliceRef = driverIsAnchor ? invoke(getAnchorSliceByEndProxy, operatorHandlerMemRef, driverSliceEnd)
+                                               : invoke(getPartnerSliceByEndProxy, operatorHandlerMemRef, driverSliceEnd);
+    const auto driverPagedVectorPtr = invoke(getMergedPagedVectorProxy, driverSliceRef);
+    const PagedVectorRef driverPagedVector{driverPagedVectorPtr, driverProvider};
+
+    /// Outer loop over driver tuples so each is matched against every partner slice in a single pass. This lets
+    /// an unmatched driver tuple be detected and null-filled here: the trigger gathers every partner slice that
+    /// can fall inside this driver's interval range, so absence of a match across all partners means no partner.
     nautilus::val<std::uint64_t> outerPos{0};
-    for (auto outerIt = anchorPagedVector.begin(anchorKeyFieldNames); outerIt != anchorPagedVector.end(anchorKeyFieldNames); ++outerIt)
+    for (auto outerIt = driverPagedVector.begin(driverKeys); outerIt != driverPagedVector.end(driverKeys); ++outerIt)
     {
         nautilus::val<bool> matched{false};
         for (nautilus::val<std::uint64_t> partnerIdx{0}; partnerIdx < partnerCount;
              partnerIdx = partnerIdx + nautilus::val<std::uint64_t>{1})
         {
             const auto partnerSliceEnd = invoke(getPartnerSliceEndProxy, triggerRef, partnerIdx);
-            const auto partnerSliceRef = invoke(getPartnerSliceByEndProxy, operatorHandlerMemRef, partnerSliceEnd);
+            const auto partnerSliceRef = driverIsAnchor ? invoke(getPartnerSliceByEndProxy, operatorHandlerMemRef, partnerSliceEnd)
+                                                        : invoke(getAnchorSliceByEndProxy, operatorHandlerMemRef, partnerSliceEnd);
             const auto partnerPagedVectorPtr = invoke(getMergedPagedVectorProxy, partnerSliceRef);
-            const PagedVectorRef partnerPagedVector{partnerPagedVectorPtr, partnerMemoryProvider};
+            const PagedVectorRef partnerPagedVector{partnerPagedVectorPtr, partnerSliceProvider};
 
             nautilus::val<std::uint64_t> innerPos{0};
-            for (auto innerIt = partnerPagedVector.begin(partnerKeyFieldNames); innerIt != partnerPagedVector.end(partnerKeyFieldNames);
-                 ++innerIt)
+            for (auto innerIt = partnerPagedVector.begin(partnerSliceKeys); innerIt != partnerPagedVector.end(partnerSliceKeys); ++innerIt)
             {
-                /// User join expression first (cheap join key compare); skip interval check on failure.
-                const auto candidateRecord
-                    = createJoinedRecord(*outerIt, *innerIt, windowStart, windowEnd, anchorKeyFieldNames, partnerKeyFieldNames);
+                /// joinFunction expects (anchor, partner) field order. The anchor-side tuple is the driver in the
+                /// anchor-driven pass and the partner-slice tuple in the null-fill pass. User join expression first
+                /// (cheap join key compare); skip the interval check on failure.
+                const auto candidateRecord = driverIsAnchor
+                    ? createJoinedRecord(*outerIt, *innerIt, windowStart, windowEnd, anchorKeyFieldNames, partnerKeyFieldNames)
+                    : createJoinedRecord(*innerIt, *outerIt, windowStart, windowEnd, anchorKeyFieldNames, partnerKeyFieldNames);
                 if (joinFunction.execute(candidateRecord, executionCtx.pipelineMemoryProvider.arena))
                 {
-                    auto anchorRecord = anchorPagedVector.readRecord(outerPos, anchorFieldNames);
-                    auto partnerRecord = partnerPagedVector.readRecord(innerPos, partnerFieldNames);
+                    auto driverRecord = driverPagedVector.readRecord(outerPos, driverFields);
+                    auto partnerSliceRecord = partnerPagedVector.readRecord(innerPos, partnerSliceFields);
+                    auto& anchorRecord = driverIsAnchor ? driverRecord : partnerSliceRecord;
+                    auto& partnerRecord = driverIsAnchor ? partnerSliceRecord : driverRecord;
                     if (intervalPredicateHolds(executionCtx, anchorRecord, partnerRecord))
                     {
-                        auto joinedRecord
-                            = createJoinedRecord(anchorRecord, partnerRecord, windowStart, windowEnd, anchorFieldNames, partnerFieldNames);
-                        executeChild(executionCtx, joinedRecord);
-                        if (emitAnchorNullFill)
+                        /// The anchor-driven pass emits matched rows; the partner-null-fill pass does not
+                        /// (those matches were already emitted), it only records that a partner matched.
+                        if (driverIsAnchor)
                         {
-                            matched = nautilus::val<bool>{true};
+                            auto joinedRecord = createJoinedRecord(
+                                anchorRecord, partnerRecord, windowStart, windowEnd, anchorFieldNames, partnerFieldNames);
+                            executeChild(executionCtx, joinedRecord);
                         }
+                        matched = nautilus::val<bool>{true};
                     }
                 }
                 innerPos = innerPos + nautilus::val<std::uint64_t>{1};
             }
         }
-        /// LEFT/FULL outer: an anchor tuple with no partner across all partner slices emits one row with
-        /// the partner-side fields null. `emitAnchorNullFill` is a compile-time flag, so inner joins
-        /// generate none of this code.
-        if (emitAnchorNullFill)
+        /// Null-fill the unmatched driver tuple: anchor-driven pass only for LEFT/FULL (emitAnchorNullFill,
+        /// partner-side null); the partner-null-fill pass always (anchor-side null). Both flags are compile-time,
+        /// so the inner probe generates none of this code.
+        const bool doNullFill = driverIsAnchor ? emitAnchorNullFill : true;
+        if (doNullFill)
         {
             if (!matched)
             {
-                auto anchorRecord = anchorPagedVector.readRecord(outerPos, anchorFieldNames);
-                auto nullRecord
-                    = createNullFilledJoinedRecord(anchorRecord, windowStart, windowEnd, anchorFieldNames, joinSchema.rightSchema);
+                auto driverRecord = driverPagedVector.readRecord(outerPos, driverFields);
+                const auto& nullSchema = driverIsAnchor ? joinSchema.rightSchema : joinSchema.leftSchema;
+                auto nullRecord = createNullFilledJoinedRecord(driverRecord, windowStart, windowEnd, driverFields, nullSchema);
                 executeChild(executionCtx, nullRecord);
             }
         }
@@ -354,66 +373,6 @@ nautilus::val<bool> IntervalJoinProbePhysicalOperator::isPartnerNullFillPass(Rec
             return trigger->partnerNullFillPass;
         },
         triggerRef);
-}
-
-void IntervalJoinProbePhysicalOperator::runPartnerNullFillPass(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    const auto triggerRef = static_cast<nautilus::val<EmittedIntervalJoinWindowTrigger*>>(recordBuffer.getMemArea());
-    const auto driverSliceEnd = invoke(getAnchorSliceEndFromTriggerProxy, triggerRef);
-    const auto windowStart = invoke(getWindowStartFromTriggerProxy, triggerRef);
-    const auto windowEnd = invoke(getWindowEndFromTriggerProxy, triggerRef);
-    const auto partnerCount = invoke(getPartnerCountProxy, triggerRef);
-
-    const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    const auto anchorFieldNames = anchorMemoryProvider->getAllFieldNames();
-    const auto partnerFieldNames = partnerMemoryProvider->getAllFieldNames();
-
-    /// The driving slice is a partner-store slice; its partners are anchor-store slices. Matches were
-    /// already emitted by the anchor-driven pass, so here we only emit a null-filled row (anchor-side
-    /// fields null) for each partner tuple that matched no anchor tuple within the interval.
-    const auto driverSliceRef = invoke(getPartnerSliceByEndProxy, operatorHandlerMemRef, driverSliceEnd);
-    const auto driverPagedVectorPtr = invoke(getMergedPagedVectorProxy, driverSliceRef);
-    const PagedVectorRef driverPagedVector{driverPagedVectorPtr, partnerMemoryProvider};
-
-    nautilus::val<std::uint64_t> outerPos{0};
-    for (auto outerIt = driverPagedVector.begin(partnerKeyFieldNames); outerIt != driverPagedVector.end(partnerKeyFieldNames); ++outerIt)
-    {
-        nautilus::val<bool> matched{false};
-        for (nautilus::val<std::uint64_t> partnerIdx{0}; partnerIdx < partnerCount;
-             partnerIdx = partnerIdx + nautilus::val<std::uint64_t>{1})
-        {
-            const auto partnerSliceEnd = invoke(getPartnerSliceEndProxy, triggerRef, partnerIdx);
-            const auto anchorSliceRef = invoke(getAnchorSliceByEndProxy, operatorHandlerMemRef, partnerSliceEnd);
-            const auto anchorPagedVectorPtr = invoke(getMergedPagedVectorProxy, anchorSliceRef);
-            const PagedVectorRef anchorPagedVector{anchorPagedVectorPtr, anchorMemoryProvider};
-
-            nautilus::val<std::uint64_t> innerPos{0};
-            for (auto innerIt = anchorPagedVector.begin(anchorKeyFieldNames); innerIt != anchorPagedVector.end(anchorKeyFieldNames);
-                 ++innerIt)
-            {
-                /// joinFunction expects (anchor, partner) field order; here inner = anchor, outer = partner.
-                const auto candidateRecord
-                    = createJoinedRecord(*innerIt, *outerIt, windowStart, windowEnd, anchorKeyFieldNames, partnerKeyFieldNames);
-                if (joinFunction.execute(candidateRecord, executionCtx.pipelineMemoryProvider.arena))
-                {
-                    auto partnerRecord = driverPagedVector.readRecord(outerPos, partnerFieldNames);
-                    auto anchorRecord = anchorPagedVector.readRecord(innerPos, anchorFieldNames);
-                    if (intervalPredicateHolds(executionCtx, anchorRecord, partnerRecord))
-                    {
-                        matched = nautilus::val<bool>{true};
-                    }
-                }
-                innerPos = innerPos + nautilus::val<std::uint64_t>{1};
-            }
-        }
-        if (!matched)
-        {
-            auto partnerRecord = driverPagedVector.readRecord(outerPos, partnerFieldNames);
-            auto nullRecord = createNullFilledJoinedRecord(partnerRecord, windowStart, windowEnd, partnerFieldNames, joinSchema.leftSchema);
-            executeChild(executionCtx, nullRecord);
-        }
-        outerPos = outerPos + nautilus::val<std::uint64_t>{1};
-    }
 }
 
 }

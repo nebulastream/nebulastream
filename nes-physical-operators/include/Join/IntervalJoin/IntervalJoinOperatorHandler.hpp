@@ -143,6 +143,21 @@ private:
     /// Runs at termination, when garbage collection has been suppressed so every anchor-side partner is still present.
     void flushPartnerNullFill(PipelineExecutionContext* pipelineCtx);
 
+    /// Shared trigger-assembly loop behind all three emit paths (steady-state anchor trigger, the
+    /// end-of-stream anchor flush, and the partner-anchored null-fill pass). For each non-empty driving
+    /// slice it gathers the non-empty partner slices in [offsetLow, offsetHigh] from `partnerStore` and
+    /// emits one probe buffer. When `alwaysEmit` is true (partner null-fill pass) a buffer is emitted even
+    /// with zero partners; otherwise emission is skipped unless there is at least one partner or
+    /// emitAnchorNullFill is set.
+    void assembleAndEmitTriggers(
+        std::vector<std::shared_ptr<IntervalJoinSlice>>& drivingSlices,
+        IntervalSliceStore& partnerStore,
+        std::int64_t offsetLowParam,
+        std::int64_t offsetHighParam,
+        bool partnerNullFillPass,
+        bool alwaysEmit,
+        PipelineExecutionContext* pipelineCtx);
+
     /// Serializes a single trigger struct into a buffer (one buffer per anchor, carrying the partner
     /// slice-end array; numberOfTuples = 1) and dispatches it to the probe.
     void emitProbeBuffer(

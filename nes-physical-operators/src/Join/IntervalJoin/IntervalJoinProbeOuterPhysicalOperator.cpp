@@ -72,10 +72,10 @@ void IntervalJoinProbeOuterPhysicalOperator::open(ExecutionContext& executionCtx
     /// drives the partner-anchored null-fill pass; every other buffer drives the normal anchor-driven pass.
     if (isPartnerNullFillPass(recordBuffer))
     {
-        runPartnerNullFillPass(executionCtx, recordBuffer);
+        runJoinPass(executionCtx, recordBuffer, /*driverIsAnchor=*/false);
         return;
     }
-    runAnchorDrivenPass(executionCtx, recordBuffer);
+    runJoinPass(executionCtx, recordBuffer, /*driverIsAnchor=*/true);
 }
 
 }

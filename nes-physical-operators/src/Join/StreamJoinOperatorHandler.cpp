@@ -17,7 +17,6 @@
 #include <map>
 #include <memory>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -53,7 +52,7 @@ void StreamJoinOperatorHandler::triggerSlices(
 
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
-        std::visit([&](const auto& strategy) { strategy.triggerWindow(allSlices, windowInfo, emitFn, pipelineCtx); }, triggerStrategy);
+        triggerStrategy.triggerWindow(allSlices, windowInfo, emitFn, pipelineCtx);
     }
 }
 
