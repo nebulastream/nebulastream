@@ -66,6 +66,11 @@ namespace NES
 {
 
 
+using ScalarLiteral = std::variant<std::string, int64_t, uint64_t, double, bool>;
+using Literal = std::variant<std::string, int64_t, uint64_t, double, bool, Schema<UnqualifiedUnboundField, Ordered>>;
+using ConfigMap = std::unordered_map<Identifier, std::unordered_map<Identifier, Literal>>;
+using ConfigMultiMap = std::vector<std::pair<QualifiedIdentifier, Literal>>;
+
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 class StatementBinder::Impl
 {
@@ -81,6 +86,353 @@ public:
     }
 
     ~Impl() = default;
+
+    Identifier bindIdentifier(AntlrSQLParser::IdentifierContext* strictIdentifier)
+    {
+        const auto idExp = Identifier::tryParse(strictIdentifier->getText());
+        if (not idExp.has_value())
+        {
+            throw std::move(idExp).error();
+        }
+        return idExp.value();
+    }
+
+    QualifiedIdentifier bindQualifiedIdentifier(AntlrSQLParser::QualifiedIdentifierContext* identifierList)
+    {
+        auto idExpected = QualifiedIdentifier::tryParse(identifierList->getText());
+        if (not idExpected.has_value())
+        {
+            throw std::move(idExpected).error();
+        }
+        return idExpected.value();
+    }
+
+    Identifier bindIdentifier(std::string identifier)
+    {
+        auto identifierExpected = Identifier::tryParse(std::move(identifier));
+        if (!identifierExpected.has_value())
+        {
+            throw std::move(identifierExpected).error();
+        }
+        return identifierExpected.value();
+    }
+
+    /// TODO #764 use identifier lists instead of map of maps
+    ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigLiteralContext*>& configOptions)
+    {
+        ConfigMap boundConfigOptions{};
+        for (auto* const configOption : configOptions)
+        {
+            if (configOption->qualifiedIdentifier()->IDENTIFIER().size() != 2)
+            {
+                throw InvalidConfigParameter("Config key needs to be qualified exactly once, but was {}", configOption->qualifiedIdentifier()->getText());
+            }
+            const auto rootIdentifier = bindIdentifier(configOption->qualifiedIdentifier()->IDENTIFIER().at(0)->getText());
+            auto optionName = bindIdentifier(configOption->qualifiedIdentifier()->IDENTIFIER().at(1)->getText());
+            boundConfigOptions.try_emplace( rootIdentifier, std::unordered_map<Identifier, Literal>{});
+
+            std::variant<ScalarLiteral, Schema<UnqualifiedUnboundField, Ordered>> value{};
+
+            if (configOption-> != nullptr)
+            {
+                value = bindLiteral(configOption->constant());
+            }
+            else if (configOption->schema() != nullptr)
+            {
+                value = bindSchema(configOption->schema()->schemaDefinition());
+            }
+
+            if (not boundConfigOptions.at(rootIdentifier).try_emplace(optionName, value).second)
+            {
+                throw InvalidConfigParameter("Duplicate option for source: {}", configOption->name->getText());
+            }
+        }
+        return boundConfigOptions;
+    }
+
+    ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions)
+    {
+        ConfigMultiMap boundConfigOptions;
+        for (auto* const configOption : configOptions)
+        {
+            auto pathExp = QualifiedIdentifier::tryParse(configOption->name->getText());
+            if (not pathExp.has_value())
+            {
+                throw std::move(pathExp).error();
+            }
+
+            std::variant<ScalarLiteral, Schema<UnqualifiedUnboundField, Ordered>> value{};
+            if (configOption->constant() != nullptr)
+            {
+                value = bindLiteral(configOption->constant());
+            }
+            else if (configOption->schema() != nullptr)
+            {
+                value = bindSchema(configOption->schema()->schemaDefinition());
+            }
+            boundConfigOptions.emplace_back(std::move(pathExp).value(), value);
+        }
+        return boundConfigOptions;
+    }
+
+    namespace
+    {
+    /// Converts a config option entry to a lowercase string key-value pair.
+    /// Returns std::nullopt for non-Literal values (e.g., Schema), which are handled by separate functions.
+    std::optional<std::pair<Identifier, std::string>>
+    configOptionToValue(const std::pair<const Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>& entry)
+    {
+        if (!std::holds_alternative<Literal>(entry.second))
+        {
+            return std::nullopt;
+        }
+        const auto value = literalToString(std::get<Literal>(entry.second));
+        return std::make_pair(entry.first, value);
+    }
+
+    /// Collects all literal config options that live under any of the given top-level prefixes into a single key-value map.
+    std::unordered_map<Identifier, std::string>
+    collectConfigBlock(const ConfigMap& configOptions, const std::initializer_list<std::string_view> prefixes)
+    {
+        auto config = std::unordered_map<Identifier, std::string>{};
+        for (const auto prefix : prefixes)
+        {
+            if (const auto configIter = configOptions.find(Identifier::parse(std::string{prefix})); configIter != configOptions.end())
+            {
+                for (const auto& entry : configIter->second | std::views::transform(configOptionToValue))
+                {
+                    if (entry.has_value())
+                    {
+                        config.insert_or_assign(entry->first, entry->second);
+                    }
+                }
+            }
+        }
+        return config;
+    }
+    } /// namespace
+
+    std::unordered_map<Identifier, std::string> parseInputFormatterConfig(const ConfigMap& configOptions)
+    {
+        return collectConfigBlock(configOptions, {"INPUT_FORMATTER"});
+    }
+
+    std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
+    {
+        return collectConfigBlock(configOptions, {"OUTPUT_FORMATTER"});
+    }
+
+    std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions)
+    {
+        std::unordered_map<Identifier, std::string> sourceOptions{};
+        if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SOURCE")); sourceConfigIter != configOptions.end())
+        {
+            sourceOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
+                | std::views::filter([](const auto& opt) { return opt.has_value(); })
+                | std::views::transform([](const auto& opt) { return *opt; })
+                | std::ranges::to<std::unordered_map<Identifier, std::string>>();
+        }
+
+        return sourceOptions;
+    }
+
+    std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions)
+    {
+        std::unordered_map<Identifier, std::string> sinkOptions{};
+        if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SINK")); sourceConfigIter != configOptions.end())
+        {
+            sinkOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
+                | std::views::filter([](const auto& opt) { return opt.has_value(); })
+                | std::views::transform([](const auto& opt) { return *opt; })
+                | std::ranges::to<std::unordered_map<Identifier, std::string>>();
+        }
+
+        return sinkOptions;
+    }
+
+    namespace
+    {
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSchema(ConfigMap configOptions, const Identifier& configName)
+    {
+        if (const auto sourceConfigIter = configOptions.find(configName); sourceConfigIter != configOptions.end())
+        {
+            if (const auto schemaIter = sourceConfigIter->second.find(Identifier::parse("SCHEMA"));
+                schemaIter != sourceConfigIter->second.end())
+            {
+                if (std::holds_alternative<Schema<UnqualifiedUnboundField, Ordered>>(schemaIter->second))
+                {
+                    return std::get<Schema<UnqualifiedUnboundField, Ordered>>(schemaIter->second);
+                }
+            }
+        }
+        return std::nullopt;
+    }
+    }
+
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSourceSchema(ConfigMap configOptions)
+    {
+        return getSchema(std::move(configOptions), Identifier::parse("SOURCE"));
+    }
+
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSinkSchema(ConfigMap configOptions)
+    {
+        return getSchema(std::move(configOptions), Identifier::parse("SINK"));
+    }
+
+    namespace
+    {
+    std::string bindString(std::string_view view) { return std::string(view.substr(1, view.size() - 2)); }
+    }
+
+    std::string bindStringLiteral(* stringLiteral)
+    {
+        PRECONDITION(stringLiteral->getText().size() > 1, "String literal must have at least two characters for quotation marks");
+        return bindString(stringLiteral->getText());
+    }
+
+    std::string bindStringLiteral(antlr4::Token* stringLiteral)
+    {
+        PRECONDITION(stringLiteral->getText().size() > 1, "String literal must have at least two characters for quotation marks");
+        PRECONDITION(stringLiteral->getType() == AntlrSQLParser::STRING, "Attempting to bind a non string token to a string literal");
+        return bindString(stringLiteral->getText());
+    }
+
+    int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral)
+    {
+        return from_chars_with_exception<int64_t>(integerLiteral->getText());
+    }
+
+    int64_t bindIntegerLiteral(AntlrSQLParser::SignedIntegerLiteralContext* signedIntegerLiteral)
+    {
+        return from_chars_with_exception<int64_t>(signedIntegerLiteral->getText());
+    }
+
+    uint64_t bindUnsignedIntegerLiteral(AntlrSQLParser::UnsignedIntegerLiteralContext* unsignedIntegerLiteral)
+    {
+        return from_chars_with_exception<uint64_t>(unsignedIntegerLiteral->getText());
+    }
+
+    double bindDoubleLiteral(AntlrSQLParser::FloatLiteralContext* doubleLiteral)
+    {
+        return from_chars_with_exception<double>(doubleLiteral->getText());
+    }
+
+    bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral)
+    {
+        return from_chars_with_exception<bool>(booleanLiteral->getText());
+    }
+
+    ScalarLiteral bindLiteral(AntlrSQLParser::ScalarLiteralContext* literalAST)
+    {
+        if (auto* const stringAST = literalAST->STRING_LITERAL())
+        {
+            return bindStringLiteral(stringAST);
+        }
+        if (auto* const numericLiteral = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(literalAST))
+        {
+            if (auto* const intLocation = dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(numericLiteral->number()))
+            {
+                const auto signedInt = bindIntegerLiteral(intLocation);
+                if (signedInt >= 0)
+                {
+                    return static_cast<uint64_t>(signedInt);
+                }
+                return signedInt;
+            }
+            if (auto* const doubleLocation = dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(numericLiteral->number()))
+            {
+                return bindDoubleLiteral(doubleLocation);
+            }
+        }
+        if (auto* const booleanLocation = dynamic_cast<AntlrSQLParser::BooleanLiteralContext*>(literalAST))
+        {
+            return bindBooleanLiteral(booleanLocation);
+        }
+        INVARIANT(false, "Unknow literal type, is the binder out of sync or was a nullptr passed?");
+        std::unreachable();
+    }
+
+    std::pair<Identifier, ScalarLiteral> bindShowFilter(const AntlrSQLParser::ShowFilterContext* showFilterAST)
+    {
+        return {bindIdentifier(showFilterAST->attr), bindLiteral(showFilterAST->value)};
+    }
+
+    std::pair<Identifier, ScalarLiteral> bindDropFilter(const AntlrSQLParser::DropFilterContext* dropFilterAST)
+    {
+        return {bindIdentifier(dropFilterAST->attr), bindLiteral(dropFilterAST->value)};
+    }
+
+    Schema<UnqualifiedUnboundField, Ordered> bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST)
+    {
+        std::vector<UnqualifiedUnboundField> fields{};
+
+        for (auto* const column : schemaDefAST->columnDefinition())
+        {
+            auto isNullableBool = column->nullableDefinition() == nullptr || !(not column->nullableDefinition()->getText().empty());
+            auto isNullable = isNullableBool ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+            auto dataType = bindDataType(column->typeDefinition(), isNullable);
+            auto columnName = bindIdentifier(column->strictIdentifier());
+            fields.emplace_back(columnName, dataType);
+        }
+        const auto boundSchema = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(fields));
+        if (!boundSchema.has_value())
+        {
+            throw FieldAlreadyExists(Schema<UnqualifiedUnboundField, Ordered>::createCollisionString(boundSchema.error()));
+        }
+        return boundSchema.value();
+    }
+
+    DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const DataType::NULLABLE isNullable)
+    {
+        std::string dataTypeText = typeDefAST->getText();
+
+        bool translated = false;
+        bool isUnsigned = false;
+        if (dataTypeText.starts_with("UNSIGNED "))
+        {
+            isUnsigned = true;
+            translated = true;
+            dataTypeText = dataTypeText.substr(std::strlen("UNSIGNED "));
+        }
+
+        static const std::unordered_map<std::string, std::string> DataTypeMapping
+            = {{"TINYINT", "INT8"}, {"SMALLINT", "INT16"}, {"INT", "INT32"}, {"INTEGER", "INT32"}, {"BIGINT", "INT64"}};
+
+        if (const auto found = DataTypeMapping.find(dataTypeText); found != DataTypeMapping.end())
+        {
+            translated = true;
+            dataTypeText = [&]
+            {
+                if (isUnsigned)
+                {
+                    return "U" + found->second;
+                }
+                return found->second;
+            }();
+        }
+        const auto dataType = DataTypeProvider::tryProvideDataType(dataTypeText, isNullable);
+        if (not dataType.has_value())
+        {
+            if (translated)
+            {
+                throw UnknownDataType("{}, translated into {}", typeDefAST->getText(), dataTypeText);
+            }
+            throw UnknownDataType("{}", typeDefAST->getText());
+        }
+        return *dataType;
+    }
+
+    [[nodiscard]] std::string literalToString(const ScalarLiteral& literal)
+    {
+        return std::visit(
+            Overloaded{
+                [](std::string string) { return string; },
+                [](int64_t integer) { return std::to_string(integer); },
+                [](uint64_t unsignedInteger) { return std::to_string(unsignedInteger); },
+                [](const double doubleLiteral) { return std::to_string(doubleLiteral); },
+                [](const bool boolean) -> std::string { return boolean ? "true" : "false"; }},
+            literal);
+    }
 
     StatementOutputFormat bindFormat(AntlrSQLParser::ShowFormatContext* formatAST) const
     {
@@ -147,7 +499,7 @@ public:
                 [](const auto& key) { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("CAPACITY"); });
             if (it != configs.end())
             {
-                auto* literalOpt = std::get_if<Literal>(&it->second);
+                auto* literalOpt = std::get_if<ScalarLiteral>(&it->second);
                 if (literalOpt && std::holds_alternative<uint64_t>(*literalOpt))
                 {
                     return static_cast<size_t>(std::get<uint64_t>(*literalOpt));
@@ -164,7 +516,7 @@ public:
                 [](const auto& key) { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("DATA"); });
             if (it != configs.end())
             {
-                const Literal* literalOpt = std::get_if<Literal>(&it->second);
+                const ScalarLiteral* literalOpt = std::get_if<ScalarLiteral>(&it->second);
                 if (literalOpt && std::holds_alternative<std::string>(*literalOpt))
                 {
                     return URI(std::get<std::string>(*literalOpt)).toString();
@@ -184,7 +536,7 @@ public:
                 | std::views::transform(
                        [](const auto& value)
                        {
-                           const Literal* literalOpt = std::get_if<Literal>(&value);
+                           const ScalarLiteral* literalOpt = std::get_if<ScalarLiteral>(&value);
                            if (literalOpt && std::holds_alternative<std::string>(*literalOpt))
                            {
                                return URI(std::get<std::string>(*literalOpt)).toString();
@@ -220,9 +572,9 @@ public:
         if (const auto sinkConfigIter = configOptions.find(SinkIdentifier); sinkConfigIter != configOptions.end())
         {
             sinkOptions = sinkConfigIter->second
-                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+                | std::views::filter([](auto& pair) { return std::holds_alternative<ScalarLiteral>(pair.second); })
                 | std::views::transform([](auto& pair)
-                                        { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
+                                        { return std::make_pair(pair.first, literalToString(std::get<ScalarLiteral>(pair.second))); })
                 | std::ranges::to<std::unordered_map<Identifier, std::string>>();
         }
         std::unordered_map<Identifier, std::string> formatOptions{};
@@ -230,9 +582,9 @@ public:
             formatConfigIter != configOptions.end())
         {
             formatOptions = formatConfigIter->second
-                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+                | std::views::filter([](auto& pair) { return std::holds_alternative<ScalarLiteral>(pair.second); })
                 | std::views::transform([](auto& pair)
-                                        { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
+                                        { return std::make_pair(pair.first, literalToString(std::get<ScalarLiteral>(pair.second))); })
                 | std::ranges::to<std::unordered_map<Identifier, std::string>>();
         }
         /// "host" determines worker placement, not sink behavior — extract it from the config map into a dedicated field.
@@ -253,9 +605,31 @@ public:
             .formatConfig = formatOptions};
     }
 
-    CreateModelStatement bindCreateModelStatement(AntlrSQLParser::CreateModelDefinitionContext* modelDefAST) const
+    struct CatalogItem
     {
-        const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
+        QualifiedIdentifier type;
+        QualifiedIdentifier name;
+        ConfigMap config;
+    };
+
+    CatalogItem bindCatalogItem(AntlrSQLParser::CreateCatalogItemDefinitionContext* catalogItemDefAST) const
+    {
+        auto type = bindQualifiedIdentifier(catalogItemDefAST->type);
+        auto name = bindQualifiedIdentifier(catalogItemDefAST->name);
+        auto configMap = [&]
+        {
+            if (catalogItemDefAST->optionsClause() != nullptr)
+            {
+                return bindConfigOptions(catalogItemDefAST->optionsClause()->options);
+            }
+            return ConfigMap{};
+        };
+        return CatalogItem{std::move(type), std::move(name), std::move(configMap)};
+    }
+
+    CreateModelStatement bindCreateModelStatement(AntlrSQLParser::CreateCatalogItemDefinitionContext* modelDefAST) const
+    {
+        const auto modelName = bindIdentifier(modelDefAST->);
         const auto modelPath = bindStringLiteral(modelDefAST->modelPath);
 
         std::vector<UnqualifiedUnboundField> inputs;
@@ -451,7 +825,7 @@ public:
     /// Validate a filter and extract its typed value, or throw a syntax error tied to `subject`.
     template <typename T>
     static T requireFilterValue(
-        const std::pair<Identifier, Literal>& filter,
+        const std::pair<Identifier, ScalarLiteral>& filter,
         std::string_view expectedAttr,
         std::string_view expectedTypeDescription,
         std::string_view subject)
@@ -467,13 +841,13 @@ public:
         return std::get<T>(filter.second);
     }
 
-    static DropLogicalSourceStatement bindDropLogicalSource(const std::pair<Identifier, Literal>& filter)
+    static DropLogicalSourceStatement bindDropLogicalSource(const std::pair<Identifier, ScalarLiteral>& filter)
     {
         return DropLogicalSourceStatement{
             LogicalSourceName(Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP LOGICAL SOURCE")))};
     }
 
-    [[nodiscard]] DropPhysicalSourceStatement bindDropPhysicalSource(const std::pair<Identifier, Literal>& filter) const
+    [[nodiscard]] DropPhysicalSourceStatement bindDropPhysicalSource(const std::pair<Identifier, ScalarLiteral>& filter) const
     {
         const auto id = requireFilterValue<uint64_t>(filter, "ID", "an unsigned integer", "DROP PHYSICAL SOURCE");
         if (const auto physicalSource = sourceCatalog->getPhysicalSource(PhysicalSourceId{id}))
@@ -483,17 +857,17 @@ public:
         throw UnknownSourceName("There is no physical source with id {}", id);
     }
 
-    static DropQueryStatement bindDropQuery(const std::pair<Identifier, Literal>& filter)
+    static DropQueryStatement bindDropQuery(const std::pair<Identifier, ScalarLiteral>& filter)
     {
         return DropQueryStatement{.id = DistributedQueryId(requireFilterValue<std::string>(filter, "ID", "a string", "DROP QUERY"))};
     }
 
-    static DropSinkStatement bindDropSink(const std::pair<Identifier, Literal>& filter)
+    static DropSinkStatement bindDropSink(const std::pair<Identifier, ScalarLiteral>& filter)
     {
         return DropSinkStatement{Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SINK"))};
     }
 
-    static DropModelStatement bindDropModel(const std::pair<Identifier, Literal>& filter)
+    static DropModelStatement bindDropModel(const std::pair<Identifier, ScalarLiteral>& filter)
     {
         return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
     }
@@ -564,7 +938,7 @@ public:
                     {
                         if (auto idIter = optionsIter->second.find(IdIdentifier); idIter != optionsIter->second.end())
                         {
-                            auto* literal = std::get_if<Literal>(&idIter->second);
+                            auto* literal = std::get_if<ScalarLiteral>(&idIter->second);
                             if ((literal == nullptr) || !std::holds_alternative<std::string>(*literal))
                             {
                                 throw InvalidQuerySyntax("Query id must be a string");

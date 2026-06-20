@@ -64,12 +64,14 @@ statement: queryWithOptions | createStatement | dropStatement | showStatement | 
 explainStatement: EXPLAIN query;
 EXPLAIN: E X P L A I N;
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createCatalogItemDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
                                 TYPE type=identifier
                                 optionsClause?;
+createCatalogItemDefinition: type=qualifiedIdentifier name=qualifiedIdentifier optionsClause?;
+
 FOR: F O R;
 TYPE: T Y P E;
 optionsClause: (SET OPEN_PARANTHESIS options=namedConfigLiteralSeq? CLOSE_PARANTHESIS);
@@ -82,6 +84,8 @@ createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identi
 
 createWorkerDefinition: WORKER hostaddr=STRING_LITERAL optionsClause?;
 
+schemaCtor: SCHEMA schemaDefinition;
+SCHEMA: S C H E M A;
 schemaDefinition: OPEN_PARANTHESIS columnDefinition (COMMA columnDefinition)* CLOSE_PARANTHESIS;
 columnDefinition: identifier typeDefinition nullableDefinition?;
 
@@ -101,7 +105,7 @@ dropPhysicalSourceSubject: PHYSICAL SOURCE;
 dropWorker: WORKER;
 dropSink: SINK;
 
-dropFilter: attr=identifier EQ value=literal;
+dropFilter: attr=identifier EQ value=scalarLiteral;
 
 showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT identifier)?;
 showSubject: showQueriesSubject | showLogicalSourcesSubject | showPhysicalSourcesSubject | showSinksSubject;
@@ -110,7 +114,7 @@ showLogicalSourcesSubject: LOGICAL SOURCES;
 showPhysicalSourcesSubject: PHYSICAL SOURCES;
 showSinksSubject: SINKS;
 
-showFilter: attr=identifier EQ value=literal;
+showFilter: attr=identifier EQ value=scalarLiteral;
 
 queryWithOptions: queryWithSink optionsClause?;
 queryWithSink: unionSeq intoTerm;
@@ -171,14 +175,14 @@ castFunctionalScalarExpression: DATA_TYPE OPEN_PARANTHESIS openScalarExpression 
 
 functionCall: positionalFunctionCall | namedFunctionCall;
 positionalFunctionCall: identifier OPEN_PARANTHESIS positionalFunctionCallArgument (COMMA positionalFunctionCallArgument)* CLOSE_PARANTHESIS;
-positionalFunctionCallArgument: closedScalarExpression | closedRelationalExpression | schemaDefinition;
+positionalFunctionCallArgument: closedScalarExpression | closedRelationalExpression;
 namedFunctionCall: identifier OPEN_PARANTHESIS namedFunctionCallArgument (COMMA namedFunctionCallArgument)* CLOSE_PARANTHESIS;
 namedFunctionCallArgument: positionalFunctionCallArgument AS qualifiedIdentifier;
 
 /// Once we have better literal folding, this separate block can be removed and its usages be replaced by functionCall
 literalFunctionCall: positionalLiteralFunctionCall | namedLiteralFunctionCall;
 positionalLiteralFunctionCall: identifier OPEN_PARANTHESIS positionalLiteralFunctionCallArgument (COMMA positionalLiteralFunctionCallArgument)* CLOSE_PARANTHESIS;
-positionalLiteralFunctionCallArgument: literal | schemaDefinition;
+positionalLiteralFunctionCallArgument: literal;
 namedLiteralFunctionCall: identifier OPEN_PARANTHESIS namedLiteralFunctionCallArgument (COMMA namedLiteralFunctionCallArgument)* CLOSE_PARANTHESIS;
 namedLiteralFunctionCallArgument: positionalLiteralFunctionCallArgument AS qualifiedIdentifier;
 
@@ -186,7 +190,7 @@ OPEN_PARANTHESIS: '(';
 CLOSE_PARANTHESIS: ')';
 COMMA: ',';
 
-intervalLiteral: INTERVAL LITERAL DATETIME_FIELD;
+intervalLiteral: INTERVAL literal DATETIME_FIELD;
 intervalExpression: INTERVAL openScalarExpression DATETIME_FIELD;
 DATETIME_FIELD: YEAR | MONTH | DAY | HOUR | MINUTE | SECOND | MILLISECONDS;
 fragment YEAR: Y E A R;
@@ -216,25 +220,27 @@ LESSER: '<';
 LESSER_EQUALS: '<=';
 
 
-literal: LITERAL;
-LITERAL: BOOLEAN_TYPE | STRING_LITERAL | SIGNED_INT_LITERAL | UNSIGNED_INT_LITERAL | FLOAT_LITERAL;
+literal: scalarLiteral | schemaCtor;
+scalarLiteral: boolLiteral | stringLiteral | signedIntLiteral | unsignedIntLiteral | floatLiteral;
 
-BOOL_LITERAL: TRUE | FALSE;
-fragment TRUE: T R U E;
-fragment FALSE: F A L S E;
+boolLiteral: TRUE | FALSE;
+TRUE: T R U E;
+FALSE: F A L S E;
 
-
+stringLiteral: STRING_LITERAL;
 STRING_LITERAL: '\'' ( ~('\''|'\\') | ('\\' .) )* '\'' ;
 
+signedIntLiteral: SIGNED_INT_LITERAL;
 SIGNED_INT_LITERAL: MINUS? DIGITS;
+unsignedIntLiteral: UNSIGNED_INT_LITERAL;
 UNSIGNED_INT_LITERAL: DIGITS;
 
-FLOAT_LITERAL: EXP_FRACTION | DECIMAL_FRACTION;
-fragment EXP_FRACTION: (MINUS? E DIGITS)? MINUS? DIGITS;
-fragment DECIMAL_FRACTION : MINUS? DIGITS DOT DIGIT* | MINUS? DOT DIGITS;
+floatLiteral: decimalFraction floatExponent?;
+floatExponent: E MINUS? exponent=DIGITS;
+decimalFraction: MINUS? integers=DIGITS DOT fraction=DIGIT* | MINUS? DOT fraction=DIGITS;
 
-fragment DIGITS: DIGIT+;
-fragment DIGIT : [0-9] ;
+DIGITS: DIGIT+;
+DIGIT : [0-9] ;
 
 fragment LETTER : ('a'..'z'|'A'..'Z'|'_') ;
 
@@ -275,7 +281,7 @@ fragment A : [aA];
 fragment B : [bB];
 fragment C : [cC];
 fragment D : [dD];
-fragment E : [eE];
+E : [eE];
 fragment F : [fF];
 fragment G : [gG];
 fragment H : [hH];
