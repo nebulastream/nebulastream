@@ -51,13 +51,14 @@ namespace NES
 
 namespace
 {
-// todo use IntervalBound instead of i64 so that validateBounds replaces it
-void validateBounds(const int64_t lowerBound, const int64_t upperBound)
+void validateBounds(const IntervalBound lowerBound, const IntervalBound upperBound)
 {
     if (lowerBound >= upperBound)
     {
         throw InvalidQuerySyntax(
-            "IntervalJoin requires lowerBound < upperBound; got lowerBound={}, upperBound={}.", lowerBound, upperBound);
+            "IntervalJoin requires lowerBound < upperBound; got lowerBound={}, upperBound={}.",
+            lowerBound.getRawValue(),
+            upperBound.getRawValue());
     }
 }
 }
@@ -76,7 +77,7 @@ IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
     , upperBound(upperBound)
     , joinType(joinType)
 {
-    validateBounds(lowerBound.getRawValue(), upperBound.getRawValue());
+    validateBounds(lowerBound, upperBound);
 }
 
 IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
@@ -95,7 +96,7 @@ IntervalJoinLogicalOperator::IntervalJoinLogicalOperator(
     , joinType(joinType)
     , children(std::move(children))
 {
-    validateBounds(lowerBound.getRawValue(), upperBound.getRawValue());
+    validateBounds(lowerBound, upperBound);
     inferLocalSchema();
 }
 

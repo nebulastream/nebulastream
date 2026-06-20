@@ -201,6 +201,10 @@ private:
     /// atomic so the "both sides done" check that fires the end-of-stream flush stays race-free.
     std::atomic<bool> anchorBuildDone;
     std::atomic<bool> partnerBuildDone;
+    /// Both sides can observe "both done" concurrently; this guard makes the end-of-stream flush run on
+    /// exactly one thread. Otherwise the two threads emit probe buffers concurrently and one thread's
+    /// buffers can be enqueued after the other side's EOS, racing query teardown (use-after-free / missing slice).
+    std::atomic<bool> terminationFlushed;
 };
 
 }

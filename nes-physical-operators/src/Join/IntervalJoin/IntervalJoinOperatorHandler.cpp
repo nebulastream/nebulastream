@@ -93,6 +93,7 @@ IntervalJoinOperatorHandler::IntervalJoinOperatorHandler(
     , numberOfWorkerThreads(0)
     , anchorBuildDone(false)
     , partnerBuildDone(false)
+    , terminationFlushed(false)
 {
     PRECONDITION(
         lowerBound < upperBound,
@@ -166,10 +167,16 @@ void IntervalJoinOperatorHandler::onSideBuildTerminated(const IntervalJoinBuildS
 
     if (anchorBuildDone.load(std::memory_order_acquire) && partnerBuildDone.load(std::memory_order_acquire))
     {
-        flushAllOnTermination(pipelineCtx);
-        if (emitPartnerNullFill)
+        /// Both sides may observe "both done" concurrently; exactly one thread must run the flush so all probe
+        /// buffers are emitted within a single terminate() call (before that side's EOS), rather than being split
+        /// across two threads where one thread's buffers can land after the other side's EOS and race teardown.
+        if (!terminationFlushed.exchange(true, std::memory_order_acq_rel))
         {
-            flushPartnerNullFill(pipelineCtx);
+            flushAllOnTermination(pipelineCtx);
+            if (emitPartnerNullFill)
+            {
+                flushPartnerNullFill(pipelineCtx);
+            }
         }
     }
 }
