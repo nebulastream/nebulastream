@@ -47,11 +47,29 @@ SourceReturnType::EmitFunction emitFunction(
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
-    WorkEmitter& emitter)
+    WorkEmitter& emitter,
+    const bool adaptiveInflight)
 {
-    auto availableBuffer = std::make_shared<InflightThrottle>(
-        std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
-    return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
+    /// #1713: max = the configured inflight limit, so the adaptive cap never exceeds the non-adaptive baseline. When
+    /// adaptive, the throttle starts low (max/4) and the AIMD policy grows it toward max on stall / decays it on idle.
+    const auto maxLimit = std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max()));
+    const auto initialLimit = adaptiveInflight ? std::max<size_t>(1, maxLimit / 4) : maxLimit;
+    auto availableBuffer = std::make_shared<InflightThrottle>(initialLimit);
+    auto policy = std::make_shared<InflightPolicy>(InflightPolicy{
+        .min = std::max<size_t>(1, maxLimit / 8),
+        .max = maxLimit,
+        .current = initialLimit,
+        .additiveStep = std::max<size_t>(1, maxLimit / 8)});
+    auto lastActivity = std::make_shared<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+    return [&controller,
+            successors = std::move(successors),
+            source,
+            &emitter,
+            queryId,
+            adaptiveInflight,
+            availableBuffer = std::move(availableBuffer),
+            policy = std::move(policy),
+            lastActivity = std::move(lastActivity)](
                const OriginId sourceId,
                SourceReturnType::SourceReturnType event,
                const std::stop_token& stopToken) -> SourceReturnType::EmitResult
@@ -62,11 +80,27 @@ SourceReturnType::EmitFunction emitFunction(
                 {
                     for (const auto& successor : successors)
                     {
-                        /// Acquire an inflight slot; acquire() returns false (without taking a slot) if the source is
-                        /// asked to terminate while waiting, so there is no permit imbalance on the stop path.
-                        if (not availableBuffer->acquire(stopToken).acquired)
+                        /// Acquire an inflight slot; acquire() returns acquired=false (without taking a slot) if the
+                        /// source is asked to terminate while waiting, so there is no permit imbalance on the stop path.
+                        const auto acquireResult = availableBuffer->acquire(stopToken);
+                        if (not acquireResult.acquired)
                         {
                             return SourceReturnType::EmitResult::STOP_REQUESTED;
+                        }
+                        if (adaptiveInflight)
+                        {
+                            /// #1713 AIMD: grow the cap when we had to wait (saturated), decay it after an idle gap.
+                            const auto now = std::chrono::steady_clock::now();
+                            if (acquireResult.waited)
+                            {
+                                availableBuffer->setLimit(policy->onStall());
+                                *lastActivity = now;
+                            }
+                            else if (now - *lastActivity > std::chrono::milliseconds(500))
+                            {
+                                availableBuffer->setLimit(policy->onIdleDecay());
+                                *lastActivity = now;
+                            }
                         }
                         /// The admission queue might be full, we have to reattempt
                         while (not emitter.emitWork(
@@ -128,12 +162,14 @@ std::shared_ptr<RunningSource> RunningSource::create(
     WorkEmitter& emitter)
 {
     const auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
+    const auto adaptiveInflight = source->getRuntimeConfiguration().adaptiveInflight;
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(onSourceStopped), std::move(onSourceFailure)));
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
-        runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+        runningSource->source->start(
+            emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter, adaptiveInflight));
     }
     return runningSource;
 }
