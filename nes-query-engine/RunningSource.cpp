@@ -32,6 +32,7 @@
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <Interfaces.hpp>
+#include <InflightThrottle.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <RunningQueryPlan.hpp>
 
@@ -40,77 +41,6 @@ namespace NES
 
 namespace
 {
-/// #1713: bounded counter with a dynamically adjustable limit, replacing std::counting_semaphore as the per-source
-/// inflight-buffer throttle so the cap can later grow/shrink at runtime (adaptive provisioning). Stage 1 keeps the
-/// limit fixed, so behaviour is identical to the semaphore. condition_variable_any is required to compose with
-/// std::stop_callback (std::condition_variable cannot).
-class InflightThrottle
-{
-public:
-    explicit InflightThrottle(const std::size_t initialLimit) : limit(initialLimit) { }
-
-    /// Blocks until inUse < limit OR the stop_token is signalled. Returns true if a slot was acquired (inUse
-    /// incremented); false if it returned due to stop (inUse NOT incremented -- the caller must not release()).
-    [[nodiscard]] bool acquire(const std::stop_token& token)
-    {
-        std::unique_lock lock(mutex);
-        const std::stop_callback callback(token, [this] { cv.notify_all(); });
-        cv.wait(lock, [&] { return inUse < limit || token.stop_requested(); });
-        if (token.stop_requested())
-        {
-            return false;
-        }
-        ++inUse;
-        return true;
-    }
-
-    /// Returns one slot. Safe to call from any thread (e.g. the task-completion callback).
-    void release()
-    {
-        bool notify = false;
-        {
-            const std::lock_guard lock(mutex);
-            if (inUse > 0)
-            {
-                --inUse;
-            }
-            notify = inUse < limit;
-        }
-        if (notify)
-        {
-            cv.notify_one();
-        }
-    }
-
-    /// Adjust the cap (Stage 2 AIMD will call this; Stage 1 never does). Growing wakes waiters; shrinking below inUse
-    /// simply blocks new acquires until releases drain it -- in-flight buffers are never forcibly reclaimed.
-    void setLimit(const std::size_t newLimit)
-    {
-        bool grew = false;
-        {
-            const std::lock_guard lock(mutex);
-            grew = newLimit > limit;
-            limit = newLimit;
-        }
-        if (grew)
-        {
-            cv.notify_all();
-        }
-    }
-
-    [[nodiscard]] std::size_t currentLimit() const
-    {
-        const std::lock_guard lock(mutex);
-        return limit;
-    }
-
-private:
-    mutable std::mutex mutex;
-    std::condition_variable_any cv;
-    std::size_t inUse = 0;
-    std::size_t limit;
-};
-
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
     size_t numberOfInflightBuffers,
@@ -134,7 +64,7 @@ SourceReturnType::EmitFunction emitFunction(
                     {
                         /// Acquire an inflight slot; acquire() returns false (without taking a slot) if the source is
                         /// asked to terminate while waiting, so there is no permit imbalance on the stop path.
-                        if (not availableBuffer->acquire(stopToken))
+                        if (not availableBuffer->acquire(stopToken).acquired)
                         {
                             return SourceReturnType::EmitResult::STOP_REQUESTED;
                         }
