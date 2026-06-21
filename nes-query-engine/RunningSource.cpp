@@ -20,8 +20,8 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <condition_variable>
 #include <mutex>
-#include <semaphore>
 #include <stop_token>
 #include <utility>
 #include <variant>
@@ -40,6 +40,77 @@ namespace NES
 
 namespace
 {
+/// #1713: bounded counter with a dynamically adjustable limit, replacing std::counting_semaphore as the per-source
+/// inflight-buffer throttle so the cap can later grow/shrink at runtime (adaptive provisioning). Stage 1 keeps the
+/// limit fixed, so behaviour is identical to the semaphore. condition_variable_any is required to compose with
+/// std::stop_callback (std::condition_variable cannot).
+class InflightThrottle
+{
+public:
+    explicit InflightThrottle(const std::size_t initialLimit) : limit(initialLimit) { }
+
+    /// Blocks until inUse < limit OR the stop_token is signalled. Returns true if a slot was acquired (inUse
+    /// incremented); false if it returned due to stop (inUse NOT incremented -- the caller must not release()).
+    [[nodiscard]] bool acquire(const std::stop_token& token)
+    {
+        std::unique_lock lock(mutex);
+        const std::stop_callback callback(token, [this] { cv.notify_all(); });
+        cv.wait(lock, [&] { return inUse < limit || token.stop_requested(); });
+        if (token.stop_requested())
+        {
+            return false;
+        }
+        ++inUse;
+        return true;
+    }
+
+    /// Returns one slot. Safe to call from any thread (e.g. the task-completion callback).
+    void release()
+    {
+        bool notify = false;
+        {
+            const std::lock_guard lock(mutex);
+            if (inUse > 0)
+            {
+                --inUse;
+            }
+            notify = inUse < limit;
+        }
+        if (notify)
+        {
+            cv.notify_one();
+        }
+    }
+
+    /// Adjust the cap (Stage 2 AIMD will call this; Stage 1 never does). Growing wakes waiters; shrinking below inUse
+    /// simply blocks new acquires until releases drain it -- in-flight buffers are never forcibly reclaimed.
+    void setLimit(const std::size_t newLimit)
+    {
+        bool grew = false;
+        {
+            const std::lock_guard lock(mutex);
+            grew = newLimit > limit;
+            limit = newLimit;
+        }
+        if (grew)
+        {
+            cv.notify_all();
+        }
+    }
+
+    [[nodiscard]] std::size_t currentLimit() const
+    {
+        const std::lock_guard lock(mutex);
+        return limit;
+    }
+
+private:
+    mutable std::mutex mutex;
+    std::condition_variable_any cv;
+    std::size_t inUse = 0;
+    std::size_t limit;
+};
+
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
     size_t numberOfInflightBuffers,
@@ -48,7 +119,7 @@ SourceReturnType::EmitFunction emitFunction(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    auto availableBuffer = std::make_shared<std::counting_semaphore<>>(
+    auto availableBuffer = std::make_shared<InflightThrottle>(
         std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
     return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
                const OriginId sourceId,
@@ -61,14 +132,11 @@ SourceReturnType::EmitFunction emitFunction(
                 {
                     for (const auto& successor : successors)
                     {
+                        /// Acquire an inflight slot; acquire() returns false (without taking a slot) if the source is
+                        /// asked to terminate while waiting, so there is no permit imbalance on the stop path.
+                        if (not availableBuffer->acquire(stopToken))
                         {
-                            /// release the semaphore in case the source wants to terminate
-                            const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
-                            availableBuffer->acquire();
-                            if (stopToken.stop_requested())
-                            {
-                                return SourceReturnType::EmitResult::STOP_REQUESTED;
-                            }
+                            return SourceReturnType::EmitResult::STOP_REQUESTED;
                         }
                         /// The admission queue might be full, we have to reattempt
                         while (not emitter.emitWork(
