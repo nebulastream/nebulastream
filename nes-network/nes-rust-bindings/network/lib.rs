@@ -38,6 +38,8 @@ pub mod ffi {
         number_of_tuples: u64,
         watermark: u64,
         last_chunk: bool,
+        // #1704: the sender's buffer size, so the receiver can allocate a fitting (e.g. larger size-class) buffer.
+        buffer_size: u64,
     }
 
     /// Configuration for network services (sender and receiver).
@@ -389,6 +391,7 @@ fn receive_buffer(
             chunk_number: buffer.chunk_number as u64,
             number_of_tuples: buffer.number_of_tuples as u64,
             last_chunk: buffer.last_chunk,
+            buffer_size: buffer.buffer_size as u64,
         });
 
     buffer_builder.as_mut().setData(&buffer.data);
@@ -469,6 +472,7 @@ fn send_buffer(
         number_of_tuples: metadata.number_of_tuples,
         watermark: metadata.watermark,
         last_chunk: metadata.last_chunk,
+        buffer_size: metadata.buffer_size,
         data: Vec::from(data),
         child_buffers: children.iter().map(|bytes| Vec::from(*bytes)).collect(),
     };
