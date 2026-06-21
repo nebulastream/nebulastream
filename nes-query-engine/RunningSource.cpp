@@ -90,15 +90,28 @@ SourceReturnType::EmitFunction emitFunction(
                         if (adaptiveInflight)
                         {
                             /// #1713 AIMD: grow the cap when we had to wait (saturated), decay it after an idle gap.
+                            /// Log only on an actual change -- this doubles as the per-source grant/decay instrumentation.
                             const auto now = std::chrono::steady_clock::now();
                             if (acquireResult.waited)
                             {
-                                availableBuffer->setLimit(policy->onStall());
+                                const auto prev = availableBuffer->currentLimit();
+                                const auto grown = policy->onStall();
+                                availableBuffer->setLimit(grown);
+                                if (grown != prev)
+                                {
+                                    ENGINE_LOG_DEBUG("#1713 adaptive inflight grew {} -> {} (query {})", prev, grown, queryId);
+                                }
                                 *lastActivity = now;
                             }
                             else if (now - *lastActivity > std::chrono::milliseconds(500))
                             {
-                                availableBuffer->setLimit(policy->onIdleDecay());
+                                const auto prev = availableBuffer->currentLimit();
+                                const auto decayed = policy->onIdleDecay();
+                                availableBuffer->setLimit(decayed);
+                                if (decayed != prev)
+                                {
+                                    ENGINE_LOG_DEBUG("#1713 adaptive inflight decayed {} -> {} (query {})", prev, decayed, queryId);
+                                }
                                 *lastActivity = now;
                             }
                         }
