@@ -155,7 +155,7 @@ uint64_t PagedVector::getMainBufferSize()
 void PagedVector::addNewPage(AbstractBufferProvider* bufferProvider, const uint64_t bufferSize)
 {
     /// Either no pages exist, or the last page is full so allocate a new one
-    if (auto page = bufferProvider->getUnpooledBuffer(bufferSize); page.has_value())
+    if (auto page = getPagedBuffer(bufferSize, *bufferProvider); page.has_value())
     {
         updateCumulativeSumLastItem();
         Page::init(page.value());
