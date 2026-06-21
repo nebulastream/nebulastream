@@ -385,6 +385,12 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*, const Allocati
     INVARIANT(false, "This method should not be called!");
 }
 
+bool BufferManager::servesSizeClasses() const
+{
+    /// More than the single default class means power-of-two size classes were configured.
+    return pools.size() > 1;
+}
+
 size_t BufferManager::getBufferSize() const
 {
     return bufferSize;

@@ -61,6 +61,25 @@ public:
 
     /// Non-blocking variant of getBuffer(size). Returns an invalid optional if no buffer is currently available.
     virtual std::optional<TupleBuffer> getBufferNoBlocking(size_t size) = 0;
+
+    /// #1705: true if this provider serves multiple power-of-two size classes (size-class pooling enabled), so
+    /// operator-state pages should be drawn from a fitting class rather than the unpooled path.
+    [[nodiscard]] virtual bool servesSizeClasses() const { return false; }
 };
+
+/// #1705: allocate an operator-state page of at least `size` bytes. Prefers a pooled size-class buffer when the
+/// provider has size classes (avoids the slow, fragmenting unpooled path); otherwise uses the unpooled path so we
+/// never consume the default data pool for state. Returns nullopt only on a genuine budget breach (clean failure).
+inline std::optional<TupleBuffer> getPagedBuffer(const size_t size, AbstractBufferProvider& provider)
+{
+    if (provider.servesSizeClasses())
+    {
+        if (auto pooled = provider.getBufferNoBlocking(size); pooled.has_value())
+        {
+            return pooled;
+        }
+    }
+    return provider.getUnpooledBuffer(size);
+}
 
 }

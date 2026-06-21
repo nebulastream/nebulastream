@@ -179,6 +179,7 @@ public:
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
     size_t getNumberOfAvailableBuffers() const;
+    bool servesSizeClasses() const override;
 
     /// Explicitly shuts down the buffer manager: checks for leaked buffers (fires INVARIANT on leaks),
     /// deallocates all memory, and marks the manager as destroyed. The destructor calls this automatically

@@ -170,7 +170,7 @@ void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvi
     else
     {
         /// Create new storage buffer and add the page
-        auto newVarSizedBuffer = bufferProvider->getUnpooledBuffer(VARSIZED_STORAGE_SPACE_BUFFER_SIZE);
+        auto newVarSizedBuffer = getPagedBuffer(VARSIZED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
         if (!newVarSizedBuffer)
         {
             throw CannotAllocateBuffer(
@@ -228,7 +228,7 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
     }
     else
     {
-        if (auto newPageUnpooled = bufferProvider->getUnpooledBuffer(getPageSize()))
+        if (auto newPageUnpooled = getPagedBuffer(getPageSize(), *bufferProvider))
         {
             newPage = newPageUnpooled.value();
         }
@@ -251,7 +251,7 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
     else
     {
         /// create new storage buffer (of minimal size)
-        auto newStorageBuffer = bufferProvider->getUnpooledBuffer(FIXED_STORAGE_SPACE_BUFFER_SIZE);
+        auto newStorageBuffer = getPagedBuffer(FIXED_STORAGE_SPACE_BUFFER_SIZE, *bufferProvider);
         if (not newStorageBuffer)
         {
             throw CannotAllocateBuffer(
