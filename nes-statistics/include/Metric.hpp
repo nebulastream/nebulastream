@@ -13,18 +13,21 @@
 */
 
 #pragma once
-#include <memory>
-#include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryExecutionConfiguration.hpp>
+
+#include <cstdint>
 
 namespace NES
 {
-class AbstractStatisticStore;
-}
 
-namespace NES::LowerToPhysicalOperators
+/// User-facing metric types. The system maps these to the appropriate StatisticType internally.
+enum class Metric : uint8_t
 {
-PhysicalPlan
-apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf, std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
+    Cardinality,
+    MinVal,
+    MaxVal,
+    Rate,
+    Average,
+};
+
+
 }

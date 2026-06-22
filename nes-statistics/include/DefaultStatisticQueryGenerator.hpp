@@ -13,18 +13,23 @@
 */
 
 #pragma once
-#include <memory>
+
+#include <cstdint>
+#include <string>
 #include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryExecutionConfiguration.hpp>
+#include <StatisticQueryGenerator.hpp>
 
 namespace NES
 {
-class AbstractStatisticStore;
-}
 
-namespace NES::LowerToPhysicalOperators
+class DefaultStatisticQueryGenerator : public StatisticQueryGenerator
 {
-PhysicalPlan
-apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf, std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
+public:
+    [[nodiscard]] LogicalPlan
+    generateBuildQuery(uint64_t statisticId, uint64_t windowSizeMs, const std::string& fifoPath) const override;
+
+    [[nodiscard]] LogicalPlan
+    generateProbeQuery(uint64_t statisticId, uint64_t startTs, uint64_t endTs, const std::string& fifoPath) const override;
+};
+
 }

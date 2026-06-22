@@ -121,9 +121,9 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
     return root;
 }
 
-PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
+PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf, std::shared_ptr<AbstractStatisticStore> statisticStore) /// NOLINT
 {
-    const auto registryArgument = LoweringRuleRegistryArguments{conf};
+    const auto registryArgument = LoweringRuleRegistryArguments{conf, std::move(statisticStore)};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.getRootOperators().size());
     for (const auto& logicalRoot : queryPlan.getRootOperators())

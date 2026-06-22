@@ -15,9 +15,9 @@
 #pragma once
 
 #include <memory>
-#include <string>
+#include <utility>
 #include <LoweringRules/AbstractLoweringRule.hpp>
-#include <Util/Registry.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
@@ -25,22 +25,21 @@ namespace NES
 
 class AbstractStatisticStore;
 
-using LoweringRuleRegistryReturnType = std::unique_ptr<AbstractLoweringRule>;
-
-struct LoweringRuleRegistryArguments
+/// Lowers a StatisticStoreReaderLogicalOperator to the physical StatisticStoreReader, wiring it to a
+/// StatisticStoreOperatorHandler that wraps the shared store injected via the LoweringRuleRegistryArguments
+/// (constructor DI from the QueryCompiler).
+struct LowerToPhysicalStatisticStoreReader : AbstractLoweringRule
 {
+    LowerToPhysicalStatisticStoreReader(QueryExecutionConfiguration conf, std::shared_ptr<AbstractStatisticStore> statisticStore)
+        : conf(std::move(conf)), statisticStore(std::move(statisticStore))
+    {
+    }
+
+    LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+
+private:
     QueryExecutionConfiguration conf;
-    /// Shared statistic store injected by the QueryCompiler (constructor DI). Only the statistic store
-    /// lowering rules use it; all other rules ignore it. nullptr for non-statistic query compilation.
-    std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr;
+    std::shared_ptr<AbstractStatisticStore> statisticStore;
 };
 
-class LoweringRuleRegistry
-    : public BaseRegistry<LoweringRuleRegistry, std::string, LoweringRuleRegistryReturnType, LoweringRuleRegistryArguments>
-{
-};
 }
-
-#define INCLUDED_FROM_REGISTRY_LOWERING_RULE
-#include <LoweringRuleGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_LOWERING_RULE
