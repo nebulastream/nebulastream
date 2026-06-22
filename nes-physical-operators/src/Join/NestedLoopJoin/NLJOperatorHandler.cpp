@@ -55,8 +55,17 @@ NLJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& a
         [numberOfWorkerThreads = numberOfWorkerThreads,
          bufferProvider = nljArgs.bufferProvider,
          tupleSizeLeft = nljArgs.tupleSizeLeft,
-         tupleSizeRight = nljArgs.tupleSizeRight](SliceStart start, SliceEnd end) -> std::vector<std::shared_ptr<Slice>>
-        { return {std::make_shared<NLJSlice>(*bufferProvider, start, end, numberOfWorkerThreads, tupleSizeLeft, tupleSizeRight)}; });
+         tupleSizeRight = nljArgs.tupleSizeRight,
+         spillManager = spillManager](SliceStart start, SliceEnd end) -> std::vector<std::shared_ptr<Slice>>
+        {
+            auto slice = std::make_shared<NLJSlice>(
+                *bufferProvider, start, end, numberOfWorkerThreads, tupleSizeLeft, tupleSizeRight, spillManager);
+            if (spillManager != nullptr && spillManager->configuration().enabled)
+            {
+                spillManager->registerState(slice);
+            }
+            return {slice};
+        });
 }
 
 void NLJOperatorHandler::emitSlicesToProbe(

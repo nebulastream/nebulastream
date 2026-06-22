@@ -15,9 +15,11 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <SliceStore/Slice.hpp>
 #include <HashMapSlice.hpp>
 
@@ -47,7 +49,11 @@ class HJSlice final : public HashMapSlice
 {
 public:
     HJSlice(
-        SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
+        SliceStart sliceStart,
+        SliceEnd sliceEnd,
+        const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
+        uint64_t numberOfHashMaps,
+        std::shared_ptr<SpillManager> spillManager = nullptr);
     [[nodiscard]] HashMap* getHashMapPtr(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
     [[nodiscard]] HashMap* getHashMapPtrOrCreate(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide);
     [[nodiscard]] uint64_t getNumberOfHashMapsForSide() const;

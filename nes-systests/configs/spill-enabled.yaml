@@ -1,0 +1,8 @@
+# Worker config that turns on disk-backed state spilling with a deliberately tiny memory budget, so the governor
+# evicts/reloads slices during the query. State spilling requires the slice cache to be disabled.
+enable_state_spilling: true
+state_memory_budget_in_bytes: 16384
+spill_directory: /tmp
+default_query_execution:
+  slice_cache:
+    enable_slice_cache: false

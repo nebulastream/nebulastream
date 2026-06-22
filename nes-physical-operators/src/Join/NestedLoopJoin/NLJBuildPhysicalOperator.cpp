@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
@@ -23,13 +24,17 @@
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
+#include <function.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -43,6 +48,28 @@ SliceEnd getNLJSliceEndProxy(const NLJSlice* nljSlice)
 {
     PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
     return nljSlice->getSliceEnd();
+}
+
+/// Returns the provider that PagedVector page allocations should go through for the slice this worker is currently
+/// building into. When state spilling is enabled the slice owns an arena-backed BufferManager, and routing pages
+/// through it keeps the whole slice (main buffers + pages) in a single spill unit. When spilling is disabled (or the
+/// slice is not yet pinned), the pipeline's buffer provider is used instead, so behaviour is unchanged.
+AbstractBufferProvider*
+getNLJBuildBufferProviderProxy(OperatorHandler* ptrOpHandler, const WorkerThreadId workerThreadId, AbstractBufferProvider* fallbackProvider)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "op handler context should not be null");
+    PRECONDITION(fallbackProvider != nullptr, "fallback buffer provider should not be null");
+    if (const auto* windowHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler))
+    {
+        if (auto* slice = dynamic_cast<NLJSlice*>(windowHandler->getPinnedBuildSlice(workerThreadId)))
+        {
+            if (auto* spillProvider = slice->getSpillBufferProvider())
+            {
+                return spillProvider;
+            }
+        }
+    }
+    return fallbackProvider;
 }
 
 NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
@@ -66,8 +93,16 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     auto nljPagedVectorMemRef = sliceStoreRef->getDataStructureRef(
         timestamp, executionCtx.workerThreadId, operatorHandler, executionCtx.pipelineMemoryProvider.bufferProvider);
+
+    /// Determine which provider PagedVector pages are allocated from. With state spilling enabled, getDataStructureRef
+    /// has just pinned this worker's build slice, so we route page allocations through that slice's own arena-backed
+    /// provider (keeping the whole slice as a single spill unit). With spilling disabled the proxy returns the pipeline
+    /// provider, leaving behaviour unchanged.
+    const nautilus::val<AbstractBufferProvider*> pageProvider = nautilus::invoke(
+        getNLJBuildBufferProviderProxy, operatorHandler, executionCtx.workerThreadId, executionCtx.pipelineMemoryProvider.bufferProvider);
+
     /// Write record to the pagedVector
     PagedVectorRef pagedVectorRef{BorrowedNautilusBuffer::from(nljPagedVectorMemRef), tupleLayout};
-    pagedVectorRef.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+    pagedVectorRef.pushBack(record, pageProvider);
 }
 }

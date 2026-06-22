@@ -1,0 +1,9 @@
+# Same as spill-enabled.yaml but forces the nested-loop join strategy, to exercise NLJSlice/PagedVector spilling.
+enable_state_spilling: true
+state_memory_budget_in_bytes: 16384
+spill_directory: /tmp
+default_query_execution:
+  slice_cache:
+    enable_slice_cache: false
+default_query_optimization:
+  join_strategy: NESTED_LOOP_JOIN

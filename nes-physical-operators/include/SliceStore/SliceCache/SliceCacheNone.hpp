@@ -33,6 +33,9 @@ public:
     SliceCacheNone();
     ~SliceCacheNone() override = default;
     [[nodiscard]] std::unique_ptr<SliceCache> clone() const override;
+
+    [[nodiscard]] bool alwaysMisses() const override { return true; }
+
     nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,

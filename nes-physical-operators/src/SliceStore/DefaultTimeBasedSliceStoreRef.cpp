@@ -21,6 +21,7 @@
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -60,6 +61,10 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
     /// Look up or create the slice in the slice store
     const auto slices = sliceStore->getSlicesOrCreate(timestamp, createFunction);
     INVARIANT(slices.size() == 1, "Expected exactly one slice for the given timestamp, but got {}", slices.size());
+
+    /// Pin (and reload if evicted) the resolved slice for this worker before handing out a pointer into its state, so a
+    /// concurrent eviction cannot discard the arena pages we are about to access. No-op when spilling is disabled.
+    windowHandler->pinSliceForBuild(workerThreadId, slices[0]);
 
     /// Use the data structure extractor to get the operator-specific data structure, then store its pointer for usage in nautilus
     entryToReplace->sliceStart = slices[0]->getSliceStart().getRawValue();
@@ -121,6 +126,16 @@ void setupSliceStoreProxy(
 {
     PRECONDITION(sliceStore != nullptr, "The slice store not be null");
     PRECONDITION(pipelineCtx->getBufferManager() != nullptr, "bufferProvider should not be null!");
+
+    /// State spilling relies on every slice access going through the cache-miss proxy (so the proxy can pin/reload the
+    /// slice). A caching slice cache would serve a hit with a raw pointer into a possibly-evicted arena -> corruption.
+    /// Therefore spilling requires the no-op slice cache (enable_slice_cache=false).
+    if (const auto& spillManager = pipelineCtx->getSpillManager(); spillManager != nullptr && spillManager->configuration().enabled)
+    {
+        PRECONDITION(
+            self->sliceCache->alwaysMisses(),
+            "State spilling (enable_state_spilling=true) requires the slice cache to be disabled (enable_slice_cache=false)");
+    }
 
     /// Creating new space for the slice cache of this pipeline
     /// The order is important. First, we need to set the number of worker threads, as the slice cache depends on it.

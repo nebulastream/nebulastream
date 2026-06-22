@@ -62,3 +62,6 @@ scripts/__pycache__
 .claude/
 .codex/
 [Cc][Ll][Aa][Uu][Dd][Ee].md
+
+# build directories
+/build*

@@ -14,14 +14,21 @@
 
 #pragma once
 
+#include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Spill/ArenaMemoryResource.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <SliceStore/Slice.hpp>
 #include <CompilationContext.hpp>
 
@@ -64,7 +71,10 @@ struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
 ///
 /// As the hashmap might need to clean up its state, we expect multiple clean up functions as part of the @struct CreateNewHashMapSliceArgs
 /// For each stream, we expect one cleanup function and once this HashMapSlice gets destroyed they are being called.
-class HashMapSlice : public Slice
+/// HashMapSlice is also a SpillableState: when a SpillManager with spilling enabled is supplied, the slice allocates
+/// all of its hash maps' memory from its own arena-backed BufferManager (see spillProviderOrNull), so the whole slice
+/// can be evicted to / reloaded from disk as a unit by the governor.
+class HashMapSlice : public Slice, public SpillableState
 {
 public:
     explicit HashMapSlice(
@@ -72,7 +82,8 @@ public:
         SliceEnd sliceEnd,
         const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
         uint64_t numberOfHashMaps,
-        uint64_t numberOfInputStreams);
+        uint64_t numberOfInputStreams,
+        std::shared_ptr<SpillManager> spillManager = nullptr);
 
     ~HashMapSlice() override;
 
@@ -81,11 +92,34 @@ public:
 
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
+    /// SpillableState: the slice's resident footprint, eviction/reload, and victim-ordering key (the slice end, so the
+    /// oldest slice is evicted first).
+    [[nodiscard]] size_t residentBytes() const override;
+    [[nodiscard]] bool isEvicted() const override;
+    void evictState() override;
+    void reloadState() override;
+    [[nodiscard]] uint64_t coldnessKey() const override;
+
 protected:
+    /// Returns the slice's own arena-backed buffer provider when spilling is enabled (creating the arena lazily on
+    /// first use), or nullptr when spilling is disabled (in which case callers use the global pipeline provider, i.e.
+    /// behaviour is unchanged). Pinning the returned provider into a hash map makes that hash map spillable.
+    AbstractBufferProvider* spillProviderOrNull();
+
     std::vector<std::unique_ptr<HashMap>> hashMaps;
     CreateNewHashMapSliceArgs createNewHashMapSliceArgs;
     uint64_t numberOfHashMapsPerInputStream;
     uint64_t numberOfInputStreams;
+
+private:
+    /// Spilling state (only used when spillManager is set and spilling is enabled). One arena + BufferManager per slice;
+    /// all of the slice's hash maps allocate from it, so the slice is a single spill unit.
+    std::shared_ptr<SpillManager> spillManager;
+    std::shared_ptr<ArenaMemoryResource> spillArena;
+    std::shared_ptr<BufferManager> spillBufferManager;
+    bool spillEnabled{false};
+    std::atomic<bool> spillEvicted{false};
+    std::mutex spillMutex; /// guards lazy arena creation and the evicted flag
 };
 
 }

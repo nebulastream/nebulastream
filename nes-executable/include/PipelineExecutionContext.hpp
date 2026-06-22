@@ -25,6 +25,8 @@
 
 namespace NES
 {
+class SpillManager;
+
 class PipelineExecutionContext
 {
 public:
@@ -57,6 +59,11 @@ public:
     [[nodiscard]] virtual WorkerThreadId getWorkerThreadId() const = 0;
     [[nodiscard]] virtual uint64_t getNumberOfWorkerThreads() const = 0;
     [[nodiscard]] virtual std::shared_ptr<AbstractBufferProvider> getBufferManager() const = 0;
+
+    /// The process-wide state-spilling governor, or nullptr if state spilling is not configured. Window/aggregation
+    /// operator handlers obtain it here (in start()) to make their slices spillable.
+    [[nodiscard]] virtual std::shared_ptr<SpillManager> getSpillManager() const { return nullptr; }
+
     [[nodiscard]] virtual PipelineId getPipelineId() const = 0;
 
     /// TODO #30 Remove OperatorHandler from the pipeline execution context

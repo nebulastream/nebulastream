@@ -14,32 +14,49 @@
 #include <HashMapSlice.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <numeric>
+#include <string>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Spill/ArenaMemoryResource.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
+namespace
+{
+/// Process-wide counter to give each slice's arena backing file a unique name.
+std::atomic<uint64_t> spillSliceCounter{0};
+/// Small pooled count for the per-slice BufferManager: the hash maps allocate via getUnpooledBuffer (the unpooled path,
+/// which routes through the arena), so the pooled area is essentially unused and is kept tiny.
+constexpr uint32_t SLICE_POOL_BUFFERS = 2;
+}
+
 HashMapSlice::HashMapSlice(
     const SliceStart sliceStart,
     const SliceEnd sliceEnd,
     const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
     const uint64_t numberOfHashMaps,
-    const uint64_t numberOfInputStreams)
+    const uint64_t numberOfInputStreams,
+    std::shared_ptr<SpillManager> spillManager)
     : Slice(sliceStart, sliceEnd)
     , createNewHashMapSliceArgs(createNewHashMapSliceArgs)
     , numberOfHashMapsPerInputStream(numberOfHashMaps)
     , numberOfInputStreams(numberOfInputStreams)
+    , spillManager(std::move(spillManager))
+    , spillEnabled(this->spillManager != nullptr && this->spillManager->configuration().enabled)
 {
     for (uint64_t i = 0; i < numberOfHashMaps * numberOfInputStreams; i++)
     {
@@ -50,6 +67,19 @@ HashMapSlice::HashMapSlice(
 HashMapSlice::~HashMapSlice()
 {
     INVARIANT(createNewHashMapSliceArgs.nautilusCleanup.size() == numberOfInputStreams, "We expect one cleanup function per input ");
+
+    /// Stop the governor from tracking this slice before we touch its state.
+    if (spillManager != nullptr)
+    {
+        spillManager->unregisterState(this);
+    }
+    /// The nautilus cleanup below dereferences the hash maps' entries, which live in the arena. If the slice is
+    /// currently evicted, reload it first so cleanup reads valid memory rather than discarded (zero-fill) pages.
+    if (spillEvicted.load() && spillArena != nullptr)
+    {
+        spillArena->reload();
+        spillEvicted.store(false);
+    }
 
     /// As we assume that each hashmap of an input stream lie one after the other.
     /// Thus, we need to call #numbnumberOfHashMaps times the same nautilusCleanup function and then move to the next one.
@@ -63,6 +93,61 @@ HashMapSlice::~HashMapSlice()
     }
 
     hashMaps.clear();
+}
+
+AbstractBufferProvider* HashMapSlice::spillProviderOrNull()
+{
+    if (!spillEnabled)
+    {
+        return nullptr;
+    }
+    const std::lock_guard guard(spillMutex);
+    if (spillArena == nullptr)
+    {
+        const auto& config = spillManager->configuration();
+        const auto backingFile = config.spillDirectory + "/nes-slice-" + std::to_string(spillSliceCounter.fetch_add(1)) + ".spill";
+        spillArena = std::make_shared<ArenaMemoryResource>(config.arenaMode, backingFile);
+        spillBufferManager
+            = BufferManager::create(static_cast<uint32_t>(createNewHashMapSliceArgs.pageSize), SLICE_POOL_BUFFERS, spillArena);
+    }
+    return spillBufferManager.get();
+}
+
+size_t HashMapSlice::residentBytes() const
+{
+    if (spillEvicted.load() || spillArena == nullptr)
+    {
+        return 0;
+    }
+    return spillArena->liveBytes();
+}
+
+bool HashMapSlice::isEvicted() const
+{
+    return spillEvicted.load();
+}
+
+void HashMapSlice::evictState()
+{
+    if (spillArena != nullptr && !spillEvicted.load())
+    {
+        spillArena->evict();
+        spillEvicted.store(true);
+    }
+}
+
+void HashMapSlice::reloadState()
+{
+    if (spillArena != nullptr && spillEvicted.load())
+    {
+        spillArena->reload();
+        spillEvicted.store(false);
+    }
+}
+
+uint64_t HashMapSlice::coldnessKey() const
+{
+    return sliceEnd.getRawValue();
 }
 
 uint64_t HashMapSlice::getNumberOfHashMaps() const

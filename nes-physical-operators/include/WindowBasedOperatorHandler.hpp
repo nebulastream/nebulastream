@@ -22,6 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -84,6 +85,20 @@ public:
     [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const = 0;
 
+    [[nodiscard]] const std::shared_ptr<SpillManager>& getSpillManager() const { return spillManager; }
+
+    /// Called from the build cache-miss proxy on every record access (state spilling requires the no-op slice cache, so
+    /// every access misses). Pins the resolved slice for this worker -- reloading it if it was evicted -- and unpins the
+    /// slice this worker pinned previously, so eviction never targets a slice a worker is currently building into. A
+    /// shared_ptr to the pinned slice is held per worker so it cannot be destroyed while pinned. Triggers a proactive
+    /// spill when the worker moves to a new slice. No-op when spilling is disabled.
+    void pinSliceForBuild(WorkerThreadId workerThreadId, const std::shared_ptr<Slice>& slice);
+
+    /// Returns the slice this worker is currently building into (the one most recently pinned via pinSliceForBuild),
+    /// or nullptr when spilling is disabled / no slice is pinned yet. Used by build operators to route page allocations
+    /// into the slice's own spill arena. The returned pointer is valid while the worker keeps building this slice.
+    [[nodiscard]] Slice* getPinnedBuildSlice(WorkerThreadId workerThreadId) const;
+
 protected:
     /// Gets called if slices should be triggered once a window is ready to be emitted.
     /// Each window operator can be specific about what to do if the given slices are ready to be emitted
@@ -98,5 +113,11 @@ protected:
     uint64_t numberOfWorkerThreads;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
+    /// Process-wide spill governor, obtained from the pipeline execution context in start(). Null when state spilling is
+    /// not configured; when set and enabled, slices created by this handler are registered with it and become spillable.
+    std::shared_ptr<SpillManager> spillManager;
+    /// The slice each worker is currently building into (and has pinned). Sized to the worker count in start(); only
+    /// used when spilling is enabled. Holding the shared_ptr keeps the slice alive (and registered) while pinned.
+    std::vector<std::shared_ptr<Slice>> pinnedBuildSlicePerWorker;
 };
 }

@@ -80,6 +80,13 @@ public:
     [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
+
+    /// Pins this hash map's page allocations to a specific buffer provider, overriding the provider passed to
+    /// insertEntry/allocateSpaceForVarSized. Used by spillable slices so all of a slice's hash-map memory is allocated
+    /// from the slice's own (arena-backed) BufferManager and can therefore be evicted/reloaded as a unit. When left
+    /// unset (nullptr, the default), the provider passed at the call site is used, i.e. behaviour is unchanged.
+    void setOwnBufferProvider(AbstractBufferProvider* provider) { ownBufferProvider = provider; }
+
     [[nodiscard]] uint64_t getNumberOfTuples() const override;
     [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
     [[nodiscard]] uint64_t getNumberOfPages() const;
@@ -99,8 +106,15 @@ public:
 private:
     friend class ChainedHashMapRef;
 
+    /// Returns the provider to allocate from: the pinned own provider when set, otherwise the one passed at the call site.
+    [[nodiscard]] AbstractBufferProvider* effectiveProvider(AbstractBufferProvider* passed) const
+    {
+        return ownBufferProvider != nullptr ? ownBufferProvider : passed;
+    }
+
     /// Specifies the number of pre-allocated var sized
     static constexpr auto NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS = 100;
+    AbstractBufferProvider* ownBufferProvider{nullptr};
     TupleBuffer entrySpace;
     std::vector<TupleBuffer> storageSpace;
     std::vector<TupleBuffer> varSizedSpace;

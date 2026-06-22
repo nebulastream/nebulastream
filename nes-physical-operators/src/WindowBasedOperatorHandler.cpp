@@ -21,6 +21,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
+#include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
@@ -45,10 +47,70 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)
 {
     numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
+    spillManager = pipelineExecutionContext.getSpillManager();
+    if (spillManager != nullptr && spillManager->configuration().enabled)
+    {
+        pinnedBuildSlicePerWorker.assign(numberOfWorkerThreads, nullptr);
+    }
 }
 
 void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
+    /// Release any slices still pinned by the build path so they can be evicted/destroyed.
+    if (spillManager != nullptr)
+    {
+        for (auto& pinned : pinnedBuildSlicePerWorker)
+        {
+            if (pinned != nullptr)
+            {
+                if (auto* spillable = dynamic_cast<SpillableState*>(pinned.get()))
+                {
+                    spillManager->unpin(*spillable);
+                }
+                pinned = nullptr;
+            }
+        }
+    }
+}
+
+void WindowBasedOperatorHandler::pinSliceForBuild(const WorkerThreadId workerThreadId, const std::shared_ptr<Slice>& slice)
+{
+    if (spillManager == nullptr || !spillManager->configuration().enabled || pinnedBuildSlicePerWorker.empty())
+    {
+        return;
+    }
+    auto* spillable = dynamic_cast<SpillableState*>(slice.get());
+    if (spillable == nullptr)
+    {
+        return;
+    }
+    auto& pinned = pinnedBuildSlicePerWorker[workerThreadId % pinnedBuildSlicePerWorker.size()];
+    if (pinned.get() == slice.get())
+    {
+        /// Same slice as the previous access: already pinned, nothing to do.
+        return;
+    }
+    /// Moving to a different slice: unpin the previous one, pin (and reload if evicted) the new one.
+    if (pinned != nullptr)
+    {
+        if (auto* previous = dynamic_cast<SpillableState*>(pinned.get()))
+        {
+            spillManager->unpin(*previous);
+        }
+    }
+    spillManager->pin(*spillable);
+    pinned = slice;
+    /// State grew (a new slice is in use): give the governor a chance to evict cold, unpinned slices.
+    spillManager->maybeSpill();
+}
+
+Slice* WindowBasedOperatorHandler::getPinnedBuildSlice(const WorkerThreadId workerThreadId) const
+{
+    if (pinnedBuildSlicePerWorker.empty())
+    {
+        return nullptr;
+    }
+    return pinnedBuildSlicePerWorker[workerThreadId % pinnedBuildSlicePerWorker.size()].get();
 }
 
 WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const

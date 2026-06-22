@@ -19,6 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
@@ -29,8 +30,9 @@ AggregationSlice::AggregationSlice(
     const SliceStart sliceStart,
     const SliceEnd sliceEnd,
     const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
-    const uint64_t numberOfHashMaps)
-    : HashMapSlice(sliceStart, sliceEnd, createNewHashMapSliceArgs, numberOfHashMaps, 1)
+    const uint64_t numberOfHashMaps,
+    std::shared_ptr<SpillManager> spillManager)
+    : HashMapSlice(sliceStart, sliceEnd, createNewHashMapSliceArgs, numberOfHashMaps, 1, std::move(spillManager))
 {
 }
 
@@ -48,11 +50,19 @@ HashMap* AggregationSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThre
 
     if (hashMaps.at(pos) == nullptr)
     {
-        hashMaps.at(pos) = std::make_unique<ChainedHashMap>(
+        auto hashMap = std::make_unique<ChainedHashMap>(
             createNewHashMapSliceArgs.keySize,
             createNewHashMapSliceArgs.valueSize,
             createNewHashMapSliceArgs.numberOfBuckets,
             createNewHashMapSliceArgs.pageSize);
+        /// When spilling is enabled, pin this hash map's allocations to the slice's own arena-backed provider so the
+        /// whole slice can be evicted/reloaded as a unit. When disabled, spillProviderOrNull() returns nullptr and the
+        /// hash map keeps using the provider passed at insert time (behaviour unchanged).
+        if (auto* sliceProvider = spillProviderOrNull())
+        {
+            hashMap->setOwnBufferProvider(sliceProvider);
+        }
+        hashMaps.at(pos) = std::move(hashMap);
     }
     return hashMaps[pos].get();
 }

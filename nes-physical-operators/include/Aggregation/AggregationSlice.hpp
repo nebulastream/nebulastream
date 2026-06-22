@@ -15,8 +15,10 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <SliceStore/Slice.hpp>
 #include <HashMapSlice.hpp>
 
@@ -30,7 +32,11 @@ class AggregationSlice final : public HashMapSlice
 {
 public:
     AggregationSlice(
-        SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
+        SliceStart sliceStart,
+        SliceEnd sliceEnd,
+        const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
+        uint64_t numberOfHashMaps,
+        std::shared_ptr<SpillManager> spillManager = nullptr);
 
     /// Returns the pointer to the underlying hashmap.
     /// IMPORTANT: This method should only be used for passing the hashmap to the nautilus executable.

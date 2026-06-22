@@ -71,6 +71,11 @@ public:
     /// Memory layout: [Thread0 entries][Thread1 entries]...[ThreadN entries]
     [[nodiscard]] virtual uint64_t getCacheMemorySize() const;
 
+    /// True if every access is a cache miss (i.e. always routes through the replace/cache-miss proxy). State spilling
+    /// requires this so that the proxy can pin/reload the slice on every access (a cached pointer could otherwise refer
+    /// to an evicted, discarded arena page). Only SliceCacheNone returns true.
+    [[nodiscard]] virtual bool alwaysMisses() const { return false; }
+
     /// Sets the number of worker threads so that per-thread cache memory can be allocated.
     void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
 

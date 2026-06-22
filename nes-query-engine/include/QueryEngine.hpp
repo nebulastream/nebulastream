@@ -17,6 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
@@ -36,6 +37,7 @@ public:
         std::shared_ptr<QueryEngineStatisticListener> statListener,
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<BufferManager> bm,
+        std::shared_ptr<SpillManager> spillManager,
         const Host& host);
     void stop(QueryId queryId);
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
@@ -48,6 +50,7 @@ public:
     /// left over running queries. Dropping a RunningQueryPlan has to invoke a HardStop which must not emit
     /// further work into the TaskQueue.
     std::shared_ptr<BufferManager> bufferManager;
+    std::shared_ptr<SpillManager> spillManager;
     std::shared_ptr<AbstractQueryStatusListener> statusListener;
     std::shared_ptr<QueryEngineStatisticListener> statisticListener;
     std::shared_ptr<QueryCatalog> queryCatalog;

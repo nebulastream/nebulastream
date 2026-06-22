@@ -21,6 +21,8 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
@@ -28,8 +30,12 @@
 namespace NES
 {
 HJSlice::HJSlice(
-    SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, const uint64_t numberOfHashMaps)
-    : HashMapSlice(std::move(sliceStart), std::move(sliceEnd), createNewHashMapSliceArgs, numberOfHashMaps, 2)
+    SliceStart sliceStart,
+    SliceEnd sliceEnd,
+    const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
+    const uint64_t numberOfHashMaps,
+    std::shared_ptr<SpillManager> spillManager)
+    : HashMapSlice(std::move(sliceStart), std::move(sliceEnd), createNewHashMapSliceArgs, numberOfHashMaps, 2, std::move(spillManager))
 {
 }
 
@@ -64,11 +70,18 @@ HashMap* HJSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId, con
     if (hashMaps.at(pos) == nullptr)
     {
         /// Hashmap at pos has not been initialized
-        hashMaps.at(pos) = std::make_unique<ChainedHashMap>(
+        auto hashMap = std::make_unique<ChainedHashMap>(
             createNewHashMapSliceArgs.keySize,
             createNewHashMapSliceArgs.valueSize,
             createNewHashMapSliceArgs.numberOfBuckets,
             createNewHashMapSliceArgs.pageSize);
+        /// Route this hash map's pages through the slice's arena when spilling is enabled, so the whole slice (both
+        /// build sides) is one spill unit. No-op (nullptr) when spilling is disabled -> behaviour unchanged.
+        if (auto* sliceProvider = spillProviderOrNull())
+        {
+            hashMap->setOwnBufferProvider(sliceProvider);
+        }
+        hashMaps.at(pos) = std::move(hashMap);
     }
     return hashMaps.at(pos).get();
 }

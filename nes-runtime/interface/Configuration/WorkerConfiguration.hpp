@@ -57,6 +57,21 @@ public:
            "SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
+    /// Enables disk-backed spilling of stateful operator (window/aggregation) slices when memory pressure is high, so
+    /// queries can run with state larger than RAM. Off by default.
+    BoolOption enableStateSpilling = {"enable_state_spilling", "false", "Enable disk-backed spilling of operator state."};
+
+    /// Target ceiling (in bytes) for total resident operator-state across all slices before the governor starts
+    /// evicting the coldest slices to disk. 0 means no proactive eviction (only relevant when spilling is enabled).
+    UIntOption stateMemoryBudgetInBytes
+        = {"state_memory_budget_in_bytes",
+           "0",
+           "Resident operator-state budget in bytes that triggers spilling (0 = unbounded).",
+           {std::make_shared<NumberValidation>()}};
+
+    /// Directory under which per-slice spill (arena backing) files are created.
+    StringOption spillDirectory = {"spill_directory", "/tmp", "Directory for operator-state spill files."};
+
     EnumOption<DumpMode::Options> dumpQueryCompilationIR
         = {"dump_compilation_result",
            DumpMode::Options::NONE,
@@ -74,6 +89,9 @@ private:
             &network,
             &numberOfBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,
+            &enableStateSpilling,
+            &stateMemoryBudgetInBytes,
+            &spillDirectory,
             &dumpQueryCompilationIR,
             &dumpGraph};
     }

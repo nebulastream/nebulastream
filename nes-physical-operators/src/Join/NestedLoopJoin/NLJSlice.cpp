@@ -14,20 +14,36 @@
 
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 
+#include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <mutex>
 #include <numeric>
+#include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Spill/ArenaMemoryResource.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
+
+namespace
+{
+std::atomic<uint64_t> nljSpillSliceCounter{0};
+/// The per-slice BufferManager's pooled area is unused (PagedVector main buffers and pages are allocated via
+/// getUnpooledBuffer, which routes through the arena), so it is kept tiny; this page size only sizes that unused
+/// pooled area.
+constexpr uint32_t NLJ_SLICE_POOL_PAGE_SIZE = 4096;
+constexpr uint32_t NLJ_SLICE_POOL_BUFFERS = 2;
+}
 
 NLJSlice::NLJSlice(
     AbstractBufferProvider& bufferProvider,
@@ -35,14 +51,29 @@ NLJSlice::NLJSlice(
     const SliceEnd sliceEnd,
     const uint64_t numberOfWorkerThreads,
     const uint64_t tupleSizeLeft,
-    const uint64_t tupleSizeRight)
+    const uint64_t tupleSizeRight,
+    std::shared_ptr<SpillManager> spillManager)
     : Slice(sliceStart, sliceEnd)
+    , spillManager(std::move(spillManager))
+    , spillEnabled(this->spillManager != nullptr && this->spillManager->configuration().enabled)
 {
+    /// When spilling is enabled, create the slice's arena up front and allocate ALL the PagedVector main buffers (and,
+    /// via the build operator routing getSpillBufferProvider() into pushBack, all pages) from the per-slice
+    /// arena-backed BufferManager. This makes the whole slice (both sides, all workers) a single spill unit.
+    if (spillEnabled)
+    {
+        const auto& config = this->spillManager->configuration();
+        const auto backingFile = config.spillDirectory + "/nes-nljslice-" + std::to_string(nljSpillSliceCounter.fetch_add(1)) + ".spill";
+        spillArena = std::make_shared<ArenaMemoryResource>(config.arenaMode, backingFile);
+        spillBufferManager = BufferManager::create(NLJ_SLICE_POOL_PAGE_SIZE, NLJ_SLICE_POOL_BUFFERS, spillArena);
+    }
+    AbstractBufferProvider& effectiveProvider = spillEnabled ? *spillBufferManager : bufferProvider;
+
     const uint64_t pvMainBufferSize = PagedVector::getMainBufferSize();
-    const uint64_t pvPageBufferSize = bufferProvider.getBufferSize();
+    const uint64_t pvPageBufferSize = effectiveProvider.getBufferSize();
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
+        if (auto pagedVectorBuffer = effectiveProvider.getUnpooledBuffer(pvMainBufferSize))
         {
             /// initialize the paged vector tuple buffer
             PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeLeft);
@@ -56,7 +87,7 @@ NLJSlice::NLJSlice(
 
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
+        if (auto pagedVectorBuffer = effectiveProvider.getUnpooledBuffer(pvMainBufferSize))
         {
             /// initialize the paged vector tuple buffer
             PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeRight);
@@ -67,6 +98,58 @@ NLJSlice::NLJSlice(
             throw BufferAllocationFailure("No unpooled TupleBuffer available for NLJ right paged vector main buffer");
         }
     }
+}
+
+NLJSlice::~NLJSlice()
+{
+    if (spillManager != nullptr)
+    {
+        spillManager->unregisterState(this);
+    }
+    /// Releasing the PagedVectors' TupleBuffers touches buffer control blocks that live in the arena; reload first so
+    /// that memory is valid rather than discarded (zero-fill) pages.
+    if (spillEvicted.load() && spillArena != nullptr)
+    {
+        spillArena->reload();
+        spillEvicted.store(false);
+    }
+}
+
+size_t NLJSlice::residentBytes() const
+{
+    if (spillEvicted.load() || spillArena == nullptr)
+    {
+        return 0;
+    }
+    return spillArena->liveBytes();
+}
+
+bool NLJSlice::isEvicted() const
+{
+    return spillEvicted.load();
+}
+
+void NLJSlice::evictState()
+{
+    if (spillArena != nullptr && !spillEvicted.load())
+    {
+        spillArena->evict();
+        spillEvicted.store(true);
+    }
+}
+
+void NLJSlice::reloadState()
+{
+    if (spillArena != nullptr && spillEvicted.load())
+    {
+        spillArena->reload();
+        spillEvicted.store(false);
+    }
+}
+
+uint64_t NLJSlice::coldnessKey() const
+{
+    return sliceEnd.getRawValue();
 }
 
 uint64_t NLJSlice::getNumberOfTuplesLeft() const
@@ -150,5 +233,10 @@ void NLJSlice::combinePagedVectors()
         }
         rightPagedVectorBuffers.erase(rightPagedVectorBuffers.begin() + 1, rightPagedVectorBuffers.end());
     }
+}
+
+AbstractBufferProvider* NLJSlice::getSpillBufferProvider() const
+{
+    return spillEnabled ? spillBufferManager.get() : nullptr;
 }
 }

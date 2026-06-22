@@ -19,5 +19,11 @@ target_link_libraries(tuple-buffer-memory-access-tests nes-memory)
 add_nes_test(buffer-manager-destroy-test BufferManagerDestroyTest.cpp)
 target_link_libraries(buffer-manager-destroy-test nes-memory)
 
+add_nes_test(arena-memory-resource-test ArenaMemoryResourceTest.cpp)
+target_link_libraries(arena-memory-resource-test nes-memory)
+
+add_nes_test(spill-manager-test SpillManagerTest.cpp)
+target_link_libraries(spill-manager-test nes-memory)
+
 add_nes_test(child-buffer-tests ChildBufferTests.cpp)
 target_link_libraries(child-buffer-tests nes-memory)

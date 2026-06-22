@@ -21,6 +21,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/Spill/SpillManager.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -53,6 +54,20 @@ void StreamJoinOperatorHandler::triggerSlices(
 
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
+        /// The probe operator reads raw pointers into these slices' state asynchronously. Pin them (reloading any
+        /// evicted) and keep them pinned so the governor cannot evict a triggered slice before the probe consumes it;
+        /// the pin is released when the slice is garbage-collected.
+        if (spillManager != nullptr && spillManager->configuration().enabled)
+        {
+            for (const auto& slice : allSlices)
+            {
+                if (auto* spillable = dynamic_cast<SpillableState*>(slice.get()))
+                {
+                    spillManager->pin(*spillable);
+                }
+            }
+        }
+
         std::visit([&](const auto& strategy) { strategy.triggerWindow(allSlices, windowInfo, emitFn, pipelineCtx); }, triggerStrategy);
     }
 }
