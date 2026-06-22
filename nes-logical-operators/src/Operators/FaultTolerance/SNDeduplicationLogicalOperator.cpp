@@ -18,6 +18,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <vector>
 #include <Operators/FaultTolerance/SNDeduplicationLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Binder.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
@@ -30,6 +31,22 @@ SNDeduplicationLogicalOperator::SNDeduplicationLogicalOperator(WeakLogicalOperat
 {
 }
 
+SNDeduplicationLogicalOperator::SNDeduplicationLogicalOperator(WeakLogicalOperator self, LogicalOperator child, std::string filePath)
+    : ManagedByOperator(std::move(self)), child(std::move(child)), filePath(std::move(filePath))
+{
+    inferLocalSchema();
+}
+
+TypedLogicalOperator<SNDeduplicationLogicalOperator> SNDeduplicationLogicalOperator::create(std::string filePath)
+{
+    return TypedLogicalOperator<SNDeduplicationLogicalOperator>{std::move(filePath)};
+}
+
+TypedLogicalOperator<SNDeduplicationLogicalOperator> SNDeduplicationLogicalOperator::create(LogicalOperator child, std::string filePath)
+{
+    return TypedLogicalOperator<SNDeduplicationLogicalOperator>{std::move(child), std::move(filePath)};
+}
+
 std::string_view SNDeduplicationLogicalOperator::getName() const noexcept
 {
     return NAME;
@@ -40,9 +57,8 @@ std::string SNDeduplicationLogicalOperator::explain(ExplainVerbosity verbosity, 
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "SN_DEDUPLICATION(opId: {}, inputSchema: {}, traitSet: {}, filePath: {})",
+            "SN_DEDUPLICATION(opId: {}, traitSet: {}, filePath: {})",
             id,
-            inputSchema,
             traitSet.explain(verbosity),
             filePath);
     }
@@ -51,27 +67,23 @@ std::string SNDeduplicationLogicalOperator::explain(ExplainVerbosity verbosity, 
 
 bool SNDeduplicationLogicalOperator::operator==(const SNDeduplicationLogicalOperator& rhs) const
 {
-    return getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
+    return filePath == rhs.filePath && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 }
 
-SNDeduplicationLogicalOperator SNDeduplicationLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
-{
-    auto copy = *this;
-    if (inputSchemas.empty())
-    {
-        throw CannotDeserialize("SNDeduplication should have at least one input");
-    }
 
-    const auto& firstSchema = inputSchemas.at(0);
-    for (const auto& schema : inputSchemas)
-    {
-        if (schema != firstSchema)
-        {
-            throw CannotInferSchema("All input schemas must be equal for SNDeduplication operator");
-        }
-    }
-    copy.inputSchema = firstSchema;
-    copy.outputSchema = firstSchema;
+void SNDeduplicationLogicalOperator::inferLocalSchema()
+{
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
+    const auto inputSchema = child->getOutputSchema();
+    outputSchema = unbind(inputSchema);
+}
+
+SNDeduplicationLogicalOperator SNDeduplicationLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(child.has_value(), "Child not set when calling schema inference");
+    auto copy = *this;
+    copy.child = copy.child->withInferredSchema();
+    copy.inferLocalSchema();
     return copy;
 }
 
@@ -87,26 +99,42 @@ SNDeduplicationLogicalOperator SNDeduplicationLogicalOperator::withTraitSet(Trai
     return copy;
 }
 
-SNDeduplicationLogicalOperator SNDeduplicationLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+SNDeduplicationLogicalOperator SNDeduplicationLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for selection, got {}", children.size());
     auto copy = *this;
-    copy.children = std::move(children);
+    copy.child = std::move(children.at(0));
     return copy;
 }
 
-std::vector<Schema> SNDeduplicationLogicalOperator::getInputSchemas() const
+SNDeduplicationLogicalOperator SNDeduplicationLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    return {inputSchema};
-};
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for selection, got {}", children.size());
+    auto copy = *this;
+    copy.child = std::move(children.at(0));
+    copy.inferLocalSchema();
+    return copy;
+}
 
-Schema SNDeduplicationLogicalOperator::getOutputSchema() const
+Schema<Field, Unordered> SNDeduplicationLogicalOperator::getOutputSchema() const
 {
-    return outputSchema;
+    INVARIANT(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return NES::bindToOperator(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> SNDeduplicationLogicalOperator::getChildren() const
 {
-    return children;
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
+}
+
+LogicalOperator SNDeduplicationLogicalOperator::getChild() const
+{
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
 }
 
 std::string SNDeduplicationLogicalOperator::getFilePath() const
@@ -114,29 +142,35 @@ std::string SNDeduplicationLogicalOperator::getFilePath() const
     return filePath;
 }
 
-
-Reflected Reflector<TypedLogicalOperator<SNDeduplicationLogicalOperator>>::operator()(
+Reflected
+Reflector<TypedLogicalOperator<SNDeduplicationLogicalOperator>>::operator()(
     const TypedLogicalOperator<SNDeduplicationLogicalOperator>& op) const
 {
-    return reflect(op->filePath);
+    return reflect(detail::ReflectedSNDeduplicationLogicalOperator{.operatorId = op.getId(), .filePath = op->getFilePath()});
+
+}
+
+Unreflector<TypedLogicalOperator<SNDeduplicationLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))
+{
 }
 
 TypedLogicalOperator<SNDeduplicationLogicalOperator>
-Unreflector<TypedLogicalOperator<SNDeduplicationLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+Unreflector<TypedLogicalOperator<SNDeduplicationLogicalOperator>>::operator()(
+    const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto filePath = context.unreflect<std::string>(reflected);
-    return TypedLogicalOperator<SNDeduplicationLogicalOperator>{filePath};
-}
-
-LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterSNDeduplicationLogicalOperator(LogicalOperatorRegistryArguments arguments)
-{
-    if (!arguments.reflected.isEmpty())
+    auto [id, filePath] = context.unreflect<detail::ReflectedSNDeduplicationLogicalOperator>(reflected);
+    auto children = plan->getChildrenFor(id, context);
+    if (children.size() != 1)
     {
-        return ReflectionContext{}.unreflect<TypedLogicalOperator<SNDeduplicationLogicalOperator>>(arguments.reflected);
+        throw CannotDeserialize("SelectionLogicalOperator requires exactly one child, but got {}", children.size());
     }
-    PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
-    std::unreachable();
+    return SNDeduplicationLogicalOperator::create(children.at(0), filePath);
 }
 
+
+}
+
+uint64_t std::hash<NES::SNDeduplicationLogicalOperator>::operator()(const NES::SNDeduplicationLogicalOperator& op) const noexcept
+{
+    return std::hash<std::string>{}(op.getFilePath()); //TODO check this
 }

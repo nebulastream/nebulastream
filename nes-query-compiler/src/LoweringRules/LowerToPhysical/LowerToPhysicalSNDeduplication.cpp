@@ -25,11 +25,12 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
+#include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
-#include <Traits/OutputOriginIdsTrait.hpp>
-
+#include <DataTypes/UnboundField.hpp>
 
 namespace NES
 {
@@ -38,47 +39,49 @@ LoweringRuleResultSubgraph LowerToPhysicalSNDeduplication::apply(LogicalOperator
 {
     PRECONDITION(logicalOperator.tryGetAs<SNDeduplicationLogicalOperator>(), "Expected a SelectionLogicalOperator");
     const auto lop = logicalOperator.getAs<SNDeduplicationLogicalOperator>();
-    const auto inputSchema = lop.getInputSchemas()[0];
+    const auto inputSchema = createPhysicalOutputSchema(lop->getChild().getTraitSet());
+    const auto outputSchema = createPhysicalOutputSchema(lop->getTraitSet());
+
     auto handlerId = getNextOperatorHandlerId();
     const auto inputOriginIds
-    = lop.getChildren()
-    | std::views::transform(
-          [](const auto& child)
-          {
-              auto childOutputOriginIds = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
-              PRECONDITION(childOutputOriginIds.has_value(), "Expected the outputOriginIds trait of the child to be set");
-              return childOutputOriginIds.value().get();
-          })
-    | std::views::join | std::ranges::to<std::vector<OriginId>>();
+        = lop.getChildren()
+        | std::views::transform(
+              [](const auto& child)
+              {
+                  auto childOutputOriginIds = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
+                  PRECONDITION(childOutputOriginIds.has_value(), "Expected the outputOriginIds trait of the child to be set");
+                  return childOutputOriginIds.value().get();
+              })
+        | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
     auto handler = std::make_shared<SNDeduplicationOperatorHandler>(lop->getFilePath(), inputOriginIds);
 
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
 
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    PRECONDITION(inputSchema.hasFields(), "Expected a schema with fields");
 
     const auto bufferSize = conf.operatorBufferSize.getValue();
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
     //const auto memoryProvider = nullptr;
 
-    auto physicalOperator = SNDeduplicationPhysicalOperator(memoryProvider, lop.getInputSchemas()[0].getFieldNames(), handlerId, lop->getFilePath());
-    //auto physicalOperator = ScanPhysicalOperator(memoryProvider, inputSchema.getFieldNames());
-    auto c1 = lop.getOutputSchema().getNumberOfFields();
-    auto c2 = inputSchema.getNumberOfFields();
+    auto inputFieldNames = inputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
+            | std::ranges::to<std::vector>();
+
+    auto physicalOperator
+        = SNDeduplicationPhysicalOperator(memoryProvider, inputFieldNames, handlerId, lop->getFilePath());
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
         inputSchema,
-        logicalOperator.getOutputSchema(),
+        outputSchema,
         memoryLayoutType,
         memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
-    std::vector leafs(logicalOperator.getChildren().size(), wrapper);
-    return {.root = wrapper, .leafs = {leafs}};
+    std::vector leaves(logicalOperator.getChildren().size(), wrapper);
+    return {.root = wrapper, .leaves = {leaves}};
 };
 
 std::unique_ptr<AbstractLoweringRule>
