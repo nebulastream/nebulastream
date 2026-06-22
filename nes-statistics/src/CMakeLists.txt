@@ -15,6 +15,7 @@ add_source_files(nes-statistics
         StatisticRegistry.cpp
         DefaultStatisticQueryGenerator.cpp
         StatisticCoordinator.cpp
+        StatisticRetrievalService.cpp
 )
 
 add_subdirectory(StatisticStore)

@@ -40,6 +40,7 @@
 #include <Phases/RuleBasedOptimizer.hpp>
 #include <Phases/SemanticAnalyzer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <QueryStatus.hpp>
 #include <RequestStatisticStatement.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -47,10 +48,39 @@
 #include <Sources/SourceCatalog.hpp>
 #include <StatisticCoordinator.hpp>
 #include <StatisticRegistry.hpp>
+#include <StatisticRetrievalService.hpp>
 #include <StatisticStore/DefaultStatisticStore.hpp>
 
 namespace NES
 {
+
+namespace
+{
+/// Blocking stop used as the coordinator's StopQueryFn: stop the query, then poll until it actually reaches the
+/// Stopped/Failed state (best-effort, with a timeout) so the caller knows the query has torn down.
+std::expected<void, Exception> blockingStop(SingleNodeWorker& worker, const QueryId queryId)
+{
+    if (auto stopped = worker.stopQuery(queryId); not stopped.has_value())
+    {
+        return stopped;
+    }
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds{10};
+    while (std::chrono::steady_clock::now() < deadline)
+    {
+        const auto status = worker.getQueryStatus(queryId);
+        if (not status.has_value())
+        {
+            return std::unexpected(status.error());
+        }
+        if (status->state == QueryStatus::Stopped || status->state == QueryStatus::Failed)
+        {
+            return {};
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds{20});
+    }
+    return {};
+}
+}
 
 class StatisticCoordinatorE2ETest : public Testing::BaseUnitTest
 {
@@ -97,7 +127,8 @@ TEST_F(StatisticCoordinatorE2ETest, BuildAndProbeRoundTripOverFifo)
             {
                 return std::unexpected(exception);
             }
-        });
+        },
+        [&worker](const QueryId queryId) { return blockingStop(worker, queryId); });
 
     coordinator.startResultReader();
 
@@ -126,9 +157,70 @@ TEST_F(StatisticCoordinatorE2ETest, BuildAndProbeRoundTripOverFifo)
 
     const auto value = coordinator.getStatistics(key, Windowing::TimeMeasure{0}, Windowing::TimeMeasure{windowSizeMs});
 
+    /// Stop the (otherwise continuous) build query so it does not linger into the next test.
+    coordinator.stopStatistic(key);
     coordinator.stopResultReader();
 
     ASSERT_TRUE(value.has_value()) << "getStatistics returned no value (timed out waiting on the FIFO)";
+    EXPECT_DOUBLE_EQ(value.value(), 42.0);
+}
+
+/// Same dataflow, but driven through the synchronous StatisticRetrievalService: a single blocking call starts
+/// the ad-hoc build, starts the probe, waits for the value over the pipe, and returns the scalar.
+TEST_F(StatisticCoordinatorE2ETest, AdHocScalarRetrievalViaService)
+{
+    constexpr uint64_t windowSizeMs = 1000;
+
+    auto store = std::make_shared<DefaultStatisticStore>();
+    SingleNodeWorker worker(SingleNodeWorkerConfiguration{}, Host("localhost"), store);
+
+    const auto sourceCatalog = std::make_shared<SourceCatalog>();
+    const auto sinkCatalog = std::make_shared<SinkCatalog>();
+    const auto modelCatalog = std::make_shared<ModelCatalog>();
+    const SemanticAnalyzer semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
+    const RuleBasedOptimizer ruleOptimizer{QueryOptimizerConfiguration{}};
+
+    StatisticCoordinator coordinator(
+        std::make_unique<DefaultStatisticQueryGenerator>(),
+        [&](LogicalPlan plan) -> std::expected<QueryId, Exception>
+        {
+            try
+            {
+                auto optimized = ruleOptimizer.optimize(semanticAnalyzer.analyse(std::move(plan)));
+                auto queryId = worker.registerQuery(std::move(optimized));
+                if (not queryId.has_value())
+                {
+                    return queryId;
+                }
+                if (auto started = worker.startQuery(queryId.value()); not started.has_value())
+                {
+                    return std::unexpected(started.error());
+                }
+                return queryId;
+            }
+            catch (const Exception& exception)
+            {
+                return std::unexpected(exception);
+            }
+        },
+        [&worker](const QueryId queryId) { return blockingStop(worker, queryId); });
+    coordinator.startResultReader();
+
+    const StatisticRetrievalService retrievalService(coordinator);
+    const RequestStatisticBuildStatement statement{
+        .domain = DataDomain{.logicalSourceName = "adhocSource", .fieldName = "value"},
+        .metric = Metric::Average,
+        .windowSizeMs = windowSizeMs,
+        .windowAdvanceMs = std::nullopt,
+        .eventTimeFieldName = std::nullopt,
+        .conditionTrigger = std::nullopt,
+        .options = {}};
+
+    const auto value = retrievalService.retrieveStatistic(statement);
+
+    coordinator.stopResultReader();
+
+    ASSERT_TRUE(value.has_value()) << "retrieveStatistic returned no value";
     EXPECT_DOUBLE_EQ(value.value(), 42.0);
 }
 
