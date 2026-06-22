@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <string>  // added: needed for std::string secretKey
+
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -23,7 +25,8 @@ namespace NES
 {
 
 /// Physical function that pseudonymizes an integer value.
-/// The skeleton currently returns the input unchanged (identity).
+/// The secret key is loaded once from the environment variable
+/// PSEUDONYM_SECRET_KEY at construction time and reused for every record.
 class PseudonymizePhysicalFunction final
 {
 public:
@@ -32,6 +35,7 @@ public:
 
 private:
     PhysicalFunction childPhysicalFunction;
+    std::string secretKey;  // added: holds the HMAC key for the lifetime of this object
 };
 
 static_assert(PhysicalFunctionConcept<PseudonymizePhysicalFunction>);

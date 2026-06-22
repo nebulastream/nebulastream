@@ -1,6 +1,14 @@
 # name: function/dspro/Pseudonymize.test
-# description: Skeleton tests for the Pseudonymize function (identity behavior until students implement it).
+# description: Tests for the Pseudonymize function using HMAC-SHA256 with a secret key loaded from the environment.
 # groups: [Function, Pseudonymize]
+#
+# IMPORTANT — before running these tests, set the environment variable:
+#   export PSEUDONYM_SECRET_KEY="my-secret-key"
+#
+# Test 1: Basic pseudonymization
+#   Verifies that patient IDs are transformed into non-identity pseudo-IDs.
+#   Input: 0, 1, 2, 3
+#   Expected: deterministic HMAC-SHA256 outputs for key="my-secret-key"
 
 CREATE LOGICAL SOURCE stream(patient_id INT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
@@ -12,13 +20,99 @@ ATTACH INLINE
 
 CREATE SINK sinkStream(patient_id_pseudo INT32 NOT NULL) TYPE File;
 
-# TODO(student): once Pseudonymize no longer returns the identity, replace the expected
-#                rows below with the expected pseudonymized values.
 SELECT
     Pseudonymize(patient_id) AS patient_id_pseudo
 FROM stream INTO sinkStream;
 ----
-1049608084
-1489541908
-1527142490
-949260057
+2031579173
+1319590570
+465916991
+331865371
+
+
+# Test 2: Determinism
+#   Runs the exact same query a second time and expects identical output.
+#   Proves: same input + same key always produces the same pseudo-ID.
+#   This is critical for patient tracking across multiple data streams.
+
+CREATE LOGICAL SOURCE stream2(patient_id INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+0
+1
+2
+3
+
+CREATE SINK sinkStream2(patient_id_pseudo INT32 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream2 INTO sinkStream2;
+----
+2031579173
+1319590570
+465916991
+331865371
+
+
+# Test 3: Key sensitivity
+#   Uses a different key (other-secret-key) and expects completely different outputs
+#   for the same input IDs. Proves the key is actually being used in the HMAC —
+#   without this test, a plain SHA-256 (no key) would also pass tests 1 and 2.
+#
+#   To run this test, temporarily change the environment variable:
+#     export PSEUDONYM_SECRET_KEY="other-secret-key"
+
+CREATE LOGICAL SOURCE stream3(patient_id INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
+ATTACH INLINE
+0
+1
+2
+3
+
+CREATE SINK sinkStream3(patient_id_pseudo INT32 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream3 INTO sinkStream3;
+----
+1702986568
+1021456373
+681150670
+975472697
+
+
+# Test 4: Edge case — single record
+#   Verifies the function works correctly with a stream of exactly one record.
+
+CREATE LOGICAL SOURCE stream4(patient_id INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream4 TYPE File;
+ATTACH INLINE
+0
+
+CREATE SINK sinkStream4(patient_id_pseudo INT32 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream4 INTO sinkStream4;
+----
+2031579173
+
+
+# Test 5: Edge case — maximum INT32 value
+#   Verifies the function handles the boundary value INT32_MAX (2147483647)
+#   without overflow or undefined behaviour.
+
+CREATE LOGICAL SOURCE stream5(patient_id INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream5 TYPE File;
+ATTACH INLINE
+2147483647
+
+CREATE SINK sinkStream5(patient_id_pseudo INT32 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream5 INTO sinkStream5;
+----
+1401463166
