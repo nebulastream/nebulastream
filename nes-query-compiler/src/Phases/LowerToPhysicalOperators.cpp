@@ -81,13 +81,13 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
     const auto rule = resolveLoweringRule(logicalOperator, registryArgument);
 
     /// We apply the rule and receive a subgraph
-    const auto [root, leafs] = rule->apply(logicalOperator);
+    const auto [root, leaves] = rule->apply(logicalOperator);
     INVARIANT(
-        leafs.size() == logicalOperator.getChildren().size(),
+        leaves.size() == logicalOperator.getChildren().size(),
         "Number of children after lowering must remain the same. {}, before:{}, after:{}",
         logicalOperator,
         logicalOperator.getChildren().size(),
-        leafs.size());
+        leaves.size());
     /// if the lowering result is empty we bypass the operator
     if (not root)
     {
@@ -104,14 +104,14 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
     /// We embed the subgraph into the resulting plan of physical operator wrappers
     auto children = logicalOperator.getChildren();
     INVARIANT(
-        children.size() == leafs.size(),
+        children.size() == leaves.size(),
         "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
         children.size(),
-        leafs.size(),
+        leaves.size(),
         logicalOperator);
 
     std::ranges::for_each(
-        std::views::zip(children, leafs),
+        std::views::zip(children, leaves),
         [&registryArgument](const auto& zippedPair)
         {
             const auto& [child, leaf] = zippedPair;

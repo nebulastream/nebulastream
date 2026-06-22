@@ -249,7 +249,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leaves(logicalOperator.getChildren().size(), buildWrapper);
-    return {.root = probeWrapper, .leafs = {leaves}};
+    return {.root = probeWrapper, .leaves = {leaves}};
 }
 
 std::unique_ptr<AbstractLoweringRule>

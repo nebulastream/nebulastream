@@ -82,7 +82,7 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,
         renames);
 
-    return {.root = wrapper, .leafs = renames};
+    return {.root = wrapper, .leaves = renames};
 }
 
 LoweringRuleRegistryReturnType LoweringRuleGeneratedRegistrar::RegisterUnionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT

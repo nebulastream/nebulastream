@@ -28,12 +28,12 @@ namespace NES
 struct LoweringRuleResultSubgraph
 {
     using SubGraphRoot = std::shared_ptr<PhysicalOperatorWrapper>;
-    using SubGraphLeafs = std::vector<std::shared_ptr<PhysicalOperatorWrapper>>;
+    using SubGraphLeaves = std::vector<std::shared_ptr<PhysicalOperatorWrapper>>;
 
     /// Top-level physical operator of subgraph
     SubGraphRoot root;
     /// Bottom-level physical operators of subgraph
-    SubGraphLeafs leafs;
+    SubGraphLeaves leaves;
 };
 
 /// Interface for lowering rules.
