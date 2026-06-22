@@ -14,13 +14,13 @@
 
 #pragma once
 
+#include <memory>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
 
 #include <Plans/LogicalPlan.hpp>
-#include <RequestStatisticStatement.hpp>
 #include <Rules/Rule.hpp>
 
 namespace NES
@@ -49,9 +49,8 @@ class StatisticRetrievalService;
 class StatisticOptimizationRule
 {
 public:
-    /// @param retrievalService service used to fetch the statistic; must outlive this rule.
-    /// @param statement the (mock) statistic request to retrieve on every apply().
-    StatisticOptimizationRule(const StatisticRetrievalService& retrievalService, RequestStatisticBuildStatement statement);
+    /// @param retrievalService shared ownership of the service used to fetch the statistic.
+    explicit StatisticOptimizationRule(std::shared_ptr<const StatisticRetrievalService> retrievalService);
 
     static constexpr std::string_view NAME = "StatisticOptimizationRule";
 
@@ -63,9 +62,9 @@ public:
     bool operator==(const StatisticOptimizationRule& other) const;
 
 private:
-    /// Pointer (not reference) so the rule stays copyable/assignable as required by the type-erased Rule wrapper.
-    const StatisticRetrievalService* retrievalService;
-    RequestStatisticBuildStatement statement;
+    /// shared_ptr so the rule stays copyable/assignable as required by the type-erased Rule wrapper, while sharing
+    /// ownership of the service.
+    std::shared_ptr<const StatisticRetrievalService> retrievalService;
 };
 
 static_assert(RuleConcept<StatisticOptimizationRule, LogicalPlan>);

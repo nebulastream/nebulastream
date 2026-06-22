@@ -261,7 +261,7 @@ int main(int argc, char** argv)
         /// can surface a (mock) statistic while optimizing user queries. Only wired in the embedded engine build,
         /// where we have a local engine to serve the statistic build/probe queries. The owning objects below live
         /// for the whole REPL session.
-        const NES::StatisticRetrievalService* statRetrievalServicePtr = nullptr;
+        std::shared_ptr<const NES::StatisticRetrievalService> statRetrievalService;
 
 #ifdef EMBED_ENGINE
         enable_memcom();
@@ -360,8 +360,7 @@ int main(int argc, char** argv)
                 return {};
             });
         statCoordinator->startResultReader();
-        auto statRetrievalService = std::make_shared<NES::StatisticRetrievalService>(*statCoordinator);
-        statRetrievalServicePtr = statRetrievalService.get();
+        statRetrievalService = std::make_shared<NES::StatisticRetrievalService>(*statCoordinator);
         /// ------------------------------------------------------------------------------------------------------
 #else
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
@@ -371,7 +370,7 @@ int main(int argc, char** argv)
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
         auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
-            queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, statRetrievalServicePtr);
+            queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, statRetrievalService);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),

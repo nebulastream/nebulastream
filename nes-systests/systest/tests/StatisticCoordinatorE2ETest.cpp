@@ -233,8 +233,6 @@ TEST_F(StatisticCoordinatorE2ETest, AdHocScalarRetrievalViaService)
 /// selectivity.
 TEST_F(StatisticCoordinatorE2ETest, OptimizationRulePrintsStatisticAndLeavesPlanUnmodified)
 {
-    constexpr uint64_t windowSizeMs = 1000;
-
     auto store = std::make_shared<DefaultStatisticStore>();
     SingleNodeWorker worker(SingleNodeWorkerConfiguration{}, Host("localhost"), store);
 
@@ -270,21 +268,13 @@ TEST_F(StatisticCoordinatorE2ETest, OptimizationRulePrintsStatisticAndLeavesPlan
         [&worker](const QueryId queryId) { return blockingStop(worker, queryId); });
     coordinator.startResultReader();
 
-    StatisticRetrievalService retrievalService(coordinator);
-    const RequestStatisticBuildStatement statement{
-        .domain = DataDomain{.logicalSourceName = "ruleSource", .fieldName = "value"},
-        .metric = Metric::Average,
-        .windowSizeMs = windowSizeMs,
-        .windowAdvanceMs = std::nullopt,
-        .eventTimeFieldName = std::nullopt,
-        .conditionTrigger = std::nullopt,
-        .options = {}};
+    auto retrievalService = std::make_shared<StatisticRetrievalService>(coordinator);
 
     /// A representative *user* query plan (one without statistic operators), so the rule's recursion guard does not
     /// skip it. The rule does not inspect the plan beyond that guard, so a bare source plan suffices.
     const LogicalPlan inputPlan = LogicalPlanBuilder::createLogicalPlan(Identifier::parse("userSource"));
 
-    const StatisticOptimizationRule rule(retrievalService, statement);
+    const StatisticOptimizationRule rule(retrievalService);
     const LogicalPlan outputPlan = rule.apply(inputPlan);
 
     coordinator.stopResultReader();

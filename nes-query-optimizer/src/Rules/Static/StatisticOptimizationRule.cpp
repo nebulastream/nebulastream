@@ -15,6 +15,7 @@
 #include <Rules/Static/StatisticOptimizationRule.hpp>
 
 #include <iostream>
+#include <memory>
 #include <set>
 #include <string_view>
 #include <typeindex>
@@ -25,9 +26,9 @@
 #include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
 #include <Operators/Statistic/StatisticStoreWriterLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <RequestStatisticStatement.hpp>
 #include <StatisticRetrievalService.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -40,8 +41,7 @@ namespace
 /// already run through a separate plain optimizer, so this is defense-in-depth.
 bool containsStatisticStoreOperator(const LogicalOperator& op)
 {
-    if (op.tryGetAs<StatisticStoreWriterLogicalOperator>().has_value()
-        || op.tryGetAs<StatisticStoreReaderLogicalOperator>().has_value())
+    if (op.tryGetAs<StatisticStoreWriterLogicalOperator>().has_value() || op.tryGetAs<StatisticStoreReaderLogicalOperator>().has_value())
     {
         return true;
     }
@@ -68,9 +68,8 @@ bool isStatisticQuery(const LogicalPlan& plan)
 }
 }
 
-StatisticOptimizationRule::StatisticOptimizationRule(
-    const StatisticRetrievalService& retrievalService, RequestStatisticBuildStatement statement)
-    : retrievalService(&retrievalService), statement(std::move(statement))
+StatisticOptimizationRule::StatisticOptimizationRule(std::shared_ptr<const StatisticRetrievalService> retrievalService)
+    : retrievalService(std::move(retrievalService))
 {
 }
 
@@ -83,14 +82,23 @@ LogicalPlan StatisticOptimizationRule::apply(LogicalPlan queryPlan) const
         return queryPlan;
     }
 
+    // todo should be a RequestStatisticProbeStatement
+    const RequestStatisticBuildStatement statisticRetrievalStatements{
+        .domain = DataDomain{.logicalSourceName = "optimizerSource", .fieldName = "value"},
+        .metric = Metric::Average,
+        .windowSizeMs = 1000,
+        .windowAdvanceMs = std::nullopt,
+        .eventTimeFieldName = std::nullopt,
+        .conditionTrigger = std::nullopt,
+        .options = {}};
+
     /// Fetch the (mock) statistic over the existing build/probe machinery and surface it. In a real adaptive rule
     /// this value would drive a rewrite (e.g. filter reordering by selectivity); for the PoC we only prove the value
     /// reaches the optimizer and then hand the plan back untouched.
-    if (const auto value = retrievalService->retrieveStatistic(statement); value.has_value())
+    if (const auto value = retrievalService->retrieveStatistic(statisticRetrievalStatements); value.has_value())
     {
         NES_INFO("StatisticOptimizationRule: retrieved statistic value {}; returning plan unmodified.", value.value());
-        std::cout << "StatisticOptimizationRule: retrieved statistic value " << value.value()
-                  << "; returning plan unmodified.\n";
+        std::cout << "StatisticOptimizationRule: retrieved statistic value " << value.value() << "; returning plan unmodified.\n";
     }
     else
     {
@@ -126,5 +134,4 @@ bool StatisticOptimizationRule::operator==(const StatisticOptimizationRule& othe
 {
     return retrievalService == other.retrievalService;
 }
-
 }

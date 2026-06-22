@@ -15,6 +15,7 @@
 
 #include <Phases/RuleBasedOptimizer.hpp>
 
+#include <memory>
 #include <utility>
 
 #include <Plans/LogicalPlan.hpp>
@@ -42,7 +43,7 @@ namespace NES
 {
 
 RuleBasedOptimizer::RuleBasedOptimizer(
-    QueryOptimizerConfiguration defaultQueryOptimization, const StatisticRetrievalService* statisticRetrievalService)
+    QueryOptimizerConfiguration defaultQueryOptimization, std::shared_ptr<const StatisticRetrievalService> statisticRetrievalService)
     : defaultQueryOptimization(std::move(defaultQueryOptimization))
 {
     RuleManager<LogicalPlan> ruleManager;
@@ -64,15 +65,7 @@ RuleBasedOptimizer::RuleBasedOptimizer(
     /// reaching the optimizer at plan-rewrite time.
     if (statisticRetrievalService != nullptr)
     {
-        const RequestStatisticBuildStatement mockStatement{
-            .domain = DataDomain{.logicalSourceName = "optimizerSource", .fieldName = "value"},
-            .metric = Metric::Average,
-            .windowSizeMs = 1000,
-            .windowAdvanceMs = std::nullopt,
-            .eventTimeFieldName = std::nullopt,
-            .conditionTrigger = std::nullopt,
-            .options = {}};
-        ruleManager.addRule(StatisticOptimizationRule{*statisticRetrievalService, mockStatement});
+        ruleManager.addRule(StatisticOptimizationRule{std::move(statisticRetrievalService)});
     }
 
     NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
