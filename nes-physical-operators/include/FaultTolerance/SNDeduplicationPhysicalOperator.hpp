@@ -12,11 +12,11 @@ Licensed under the Apache License, Version 2.0 (the "License");
     limitations under the License.
 */
 #pragma once
+#include <ScanPhysicalOperator.hpp>
 
 #include <optional>
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
@@ -33,10 +33,15 @@ public:
 };
 }
 
-class SNDeduplicationPhysicalOperator final : public PhysicalOperatorConcept
+class SNDeduplicationPhysicalOperator final : public ScanPhysicalOperator
 {
 public:
-    explicit SNDeduplicationPhysicalOperator(OperatorHandlerId operatorHandlerId, std::string filePath) : operatorHandlerId(operatorHandlerId), filePath(std::move(filePath)) {};
+    explicit SNDeduplicationPhysicalOperator(
+        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::vector<Record::RecordFieldIdentifier> projections,
+        OperatorHandlerId operatorHandlerId,
+        std::string filePath)
+        : ScanPhysicalOperator(bufferRef, projections), operatorHandlerId(operatorHandlerId), filePath(std::move(filePath)) { };
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -48,6 +53,8 @@ public:
 
 private:
     std::optional<PhysicalOperator> child;
+    std::shared_ptr<TupleBufferRef> bufferRef;
+    std::vector<Record::RecordFieldIdentifier> projections;
     OperatorHandlerId operatorHandlerId;
     const std::string filePath;
 };

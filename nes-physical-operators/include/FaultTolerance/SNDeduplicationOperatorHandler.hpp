@@ -15,11 +15,25 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <unordered_set>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <folly/Synchronized.h>
-#include <Identifiers/Identifiers.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES {
+
+
+namespace detail
+{
+struct SNBufferingRecord
+{
+    std::vector<TupleBuffer> buffers = std::vector<TupleBuffer>();
+    size_t iterator = 0;
+    ChunkNumber maxChunkNumber = ChunkNumber{ChunkNumber::INVALID};
+    int originEpoch = -1;
+    bool completed = false;
+};
+}
 
 class SNDeduplicationOperatorHandler : public OperatorHandler
 {
@@ -40,14 +54,18 @@ public:
 
     void save();
 
-    bool checkAndInsert(OriginId originId, SequenceNumber sequenceNumber);
+    bool filterAndBuffer(TupleBuffer* buffer);
+
+    TupleBuffer* probe(TupleBuffer* buffer);
+
+    void finalizeSN(TupleBuffer* buffer);
 
 
 
 private:
     const std::string filePath;
     const std::vector<OriginId> origins;
-    std::unordered_map<OriginId, std::shared_ptr<folly::Synchronized<std::unordered_set<SequenceNumber>>>> seenSequenceNumbers;
+    std::unordered_map<OriginId, folly::Synchronized<std::unordered_map<SequenceNumber, folly::Synchronized<detail::SNBufferingRecord>>>> buffers;
 };
 
 }

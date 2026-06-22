@@ -16,6 +16,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <utility>
 #include <FaultTolerance/SNDeduplicationOperatorHandler.hpp>
 #include <FaultTolerance/SNDeduplicationPhysicalOperator.hpp>
+#include <Util/StdInt.hpp>
+
 
 namespace NES
 {
@@ -45,45 +47,53 @@ void SNDeduplicationPhysicalOperator::terminate(ExecutionContext& executionCtx) 
     invoke(stopHandlerProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId));
 }
 
-bool checkDuplicate(OperatorHandler* handler, OriginId oid, SequenceNumber sn)
+bool filterAndBufferProxy(OperatorHandler* handler, TupleBuffer* buffer)
 {
     auto* deduplicationHandler = dynamic_cast<SNDeduplicationOperatorHandler*>(handler);
-    return deduplicationHandler->checkAndInsert(oid, sn);
+    return deduplicationHandler->filterAndBuffer(buffer);
 }
 
-void SNDeduplicationPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+TupleBuffer* probeProxy(OperatorHandler* handler, TupleBuffer* buffer)
 {
-    auto localState = std::make_unique<SND::DeduplicationLocalState>();
-    auto globalHandler = ctx.getGlobalOperatorHandler(operatorHandlerId);
-
-    auto originID = recordBuffer.getOriginId();
-    auto seqNumber = recordBuffer.getSequenceNumber();
-    localState->skipBuffer = nautilus::invoke(checkDuplicate, globalHandler, originID, seqNumber);
-    if (!localState->skipBuffer)
-    {
-        openChild(ctx, recordBuffer);
-    }
-
-    ctx.setLocalOperatorState(id, std::move(localState));
+    auto* deduplicationHandler = dynamic_cast<SNDeduplicationOperatorHandler*>(handler);
+    return deduplicationHandler->probe(buffer);
 }
 
-void SNDeduplicationPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+void finalizeSNProxy(OperatorHandler* handler, TupleBuffer* buffer)
 {
-    auto* const localState = dynamic_cast<SND::DeduplicationLocalState*>(ctx.getLocalState(id));
-    if (!localState->skipBuffer)
+    auto* deduplicationHandler = dynamic_cast<SNDeduplicationOperatorHandler*>(handler);
+    deduplicationHandler->finalizeSN(buffer);
+}
+void SNDeduplicationPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+
+    //ScanPhysicalOperator::open(executionCtx, recordBuffer);
+    //ScanPhysicalOperator::close(executionCtx, recordBuffer);
+    //auto localState = std::make_unique<SND::DeduplicationLocalState>();
+    auto globalHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    auto probeFlag = nautilus::invoke(filterAndBufferProxy, globalHandler, recordBuffer.getReference());
+    if (probeFlag)
     {
-        executeChild(ctx, record);
+        for (auto buffer = nautilus::invoke(probeProxy, globalHandler, recordBuffer.getReference()); buffer != nautilus::val<TupleBuffer*>(nullptr);
+             buffer = nautilus::invoke(probeProxy, globalHandler, recordBuffer.getReference()))
+        {
+            RecordBuffer recordBufferToEmit(buffer);
+            ScanPhysicalOperator::open(executionCtx, recordBufferToEmit);
+            ScanPhysicalOperator::close(executionCtx, recordBufferToEmit);
+            executionCtx.resetLocalPipelineState();
+        }
+        nautilus::invoke(finalizeSNProxy, globalHandler, recordBuffer.getReference());
     }
 }
 
-void SNDeduplicationPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+void SNDeduplicationPhysicalOperator::execute(ExecutionContext&, Record&) const
 {
-    auto* const localState = dynamic_cast<SND::DeduplicationLocalState*>(ctx.getLocalState(id));
+    /// NOOP
+}
 
-    if (!localState->skipBuffer)
-    {
-        closeChild(ctx, recordBuffer);
-    }
+void SNDeduplicationPhysicalOperator::close(ExecutionContext&, RecordBuffer&) const
+{
+    /// NOOP
 }
 
 [[nodiscard]] std::optional<PhysicalOperator> SNDeduplicationPhysicalOperator::getChild() const
