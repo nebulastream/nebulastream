@@ -55,7 +55,8 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
+SingleNodeWorker::SingleNodeWorker(
+    const SingleNodeWorkerConfiguration& configuration, const Host& host, std::shared_ptr<AbstractStatisticStore> statisticStore)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     {
@@ -73,7 +74,8 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     }
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
-    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
+    compiler = std::make_unique<QueryCompilation::QueryCompiler>(
+        configuration.workerConfiguration.defaultQueryExecution, std::move(statisticStore));
 
     if (!configuration.dataAddress.getValue().empty())
     {

@@ -13,18 +13,23 @@
 */
 
 #pragma once
-#include <memory>
-#include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryExecutionConfiguration.hpp>
+
+#include <functional>
+#include <optional>
+#include <Functions/LogicalFunction.hpp>
+#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <Statistic.hpp>
 
 namespace NES
 {
-class AbstractStatisticStore;
-}
 
-namespace NES::LowerToPhysicalOperators
+/// A condition-callback pair. When a statistic result arrives the callback fires.
+/// If condition is set, only results satisfying it trigger the callback.
+/// If condition is std::nullopt, the callback fires unconditionally on every result.
+struct ConditionTrigger
 {
-PhysicalPlan
-apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf, std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
+    std::optional<LogicalFunction> condition;
+    std::function<void(Statistic::StatisticId, Windowing::TimeMeasure startTs, Windowing::TimeMeasure endTs)> callback;
+};
+
 }

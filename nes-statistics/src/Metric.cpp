@@ -11,20 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Metric.hpp>
 
-#pragma once
-#include <memory>
-#include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryExecutionConfiguration.hpp>
+#include <ostream>
+#include <magic_enum/magic_enum.hpp>
+
+#include <Statistic.hpp>
 
 namespace NES
 {
-class AbstractStatisticStore;
+
+std::ostream& operator<<(std::ostream& os, const Statistic& statistic)
+{
+    os << "Statistic{id=" << statistic.getStatisticId() << ", type=" << magic_enum::enum_name(statistic.getStatisticType())
+       << ", start=" << statistic.getStartTs().getTime() << ", end=" << statistic.getEndTs().getTime()
+       << ", seenTuples=" << statistic.getNumberOfSeenTuples() << "}";
+    return os;
 }
 
-namespace NES::LowerToPhysicalOperators
-{
-PhysicalPlan
-apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf, std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
 }

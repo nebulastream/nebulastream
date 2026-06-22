@@ -12,19 +12,23 @@
     limitations under the License.
 */
 
-#pragma once
+#include <Statistic/StatisticStore/StatisticStoreOperatorHandler.hpp>
+
 #include <memory>
-#include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryExecutionConfiguration.hpp>
+#include <utility>
+#include <StatisticStore/AbstractStatisticStore.hpp>
 
 namespace NES
 {
-class AbstractStatisticStore;
+
+StatisticStoreOperatorHandler::StatisticStoreOperatorHandler(std::shared_ptr<AbstractStatisticStore> statisticStore)
+    : statisticStore(std::move(statisticStore))
+{
 }
 
-namespace NES::LowerToPhysicalOperators
+std::shared_ptr<AbstractStatisticStore> StatisticStoreOperatorHandler::getStatisticStore() const
 {
-PhysicalPlan
-apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf, std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
+    return statisticStore;
+}
+
 }

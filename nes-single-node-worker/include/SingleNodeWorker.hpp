@@ -34,6 +34,8 @@
 namespace NES
 {
 
+class AbstractStatisticStore;
+
 /// @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
 /// coordination. The SingleNodeWorker can register LogicalQueryPlans which are lowered into an executable format, by the
 /// QueryCompiler. The user can manage the lifecycle of queries inside the NodeEngine using the SingleNodeWorkers interface.
@@ -46,7 +48,12 @@ class SingleNodeWorker
     SingleNodeWorkerConfiguration configuration;
 
 public:
-    explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&, const Host& = Host("SingleNodeWorker"));
+    /// `statisticStore`, if provided, is injected into the QueryCompiler so the statistic store write/read
+    /// operators share one store across all queries this worker compiles (PoC constructor-DI; nullptr otherwise).
+    explicit SingleNodeWorker(
+        const SingleNodeWorkerConfiguration&,
+        const Host& = Host("SingleNodeWorker"),
+        std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
     ~SingleNodeWorker();
     /// Non-Copyable
     SingleNodeWorker(const SingleNodeWorker& other) = delete;
