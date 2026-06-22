@@ -152,7 +152,7 @@ BufferControlBlock* BufferControlBlock::retain()
     ++referenceCounter;
     for (auto&& child : children)
     {
-        child->controlBlock->retain(); //TODO do we actually need this??
+        //child->controlBlock->retain(); //TODO do we actually need this??
     }
     return this;
 }
