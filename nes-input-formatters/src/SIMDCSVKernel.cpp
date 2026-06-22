@@ -115,14 +115,23 @@ computeBlocksAvx2(const char* data, const size_t numBlocks, BlockBits* out, cons
 
 #elif defined(__aarch64__)
 
-/// NEON has no movemask instruction; emulate it by AND-ing the 0x00/0xFF compare result with a
-/// per-lane bit-position constant and horizontally adding each 8-lane half (vaddv_u8, armv8-a).
-inline uint64_t neonMoveMask(const uint8x16_t cmp, const uint8x16_t bitmask)
+/// NEON has no movemask instruction; emulate it the simdcsv way (neonmovemask_bulk): AND each
+/// 0x00/0xFF compare result with a per-lane bit-position constant, then reduce all four 16-byte
+/// compare vectors of a 64-byte block to a 64-bit mask with a `vpaddq_u8` tree -- one bulk reduction
+/// per mask, instead of four per-16-byte `vaddv` reductions. Measurably cheaper (see
+/// csv-indexer-benchmark, where the bulk movemask is ~1.3x the per-16 vaddv variant).
+inline uint64_t
+neonMoveMaskBulk(const uint8x16_t p0, const uint8x16_t p1, const uint8x16_t p2, const uint8x16_t p3, const uint8x16_t bitmask)
 {
-    const uint8x16_t anded = vandq_u8(cmp, bitmask);
-    const auto low = static_cast<uint64_t>(vaddv_u8(vget_low_u8(anded)));
-    const auto high = static_cast<uint64_t>(vaddv_u8(vget_high_u8(anded)));
-    return low | (high << 8);
+    const uint8x16_t t0 = vandq_u8(p0, bitmask);
+    const uint8x16_t t1 = vandq_u8(p1, bitmask);
+    const uint8x16_t t2 = vandq_u8(p2, bitmask);
+    const uint8x16_t t3 = vandq_u8(p3, bitmask);
+    uint8x16_t sum0 = vpaddq_u8(t0, t1);
+    const uint8x16_t sum1 = vpaddq_u8(t2, t3);
+    sum0 = vpaddq_u8(sum0, sum1);
+    sum0 = vpaddq_u8(sum0, sum0);
+    return vgetq_lane_u64(vreinterpretq_u64_u8(sum0), 0);
 }
 
 /// NEON kernel: 4x16-byte loads, armv8-a baseline (always runnable on arm64).
@@ -136,16 +145,16 @@ void computeBlocksNeon(const char* data, const size_t numBlocks, BlockBits* out,
     for (size_t blk = 0; blk < numBlocks; ++blk)
     {
         const auto* block = reinterpret_cast<const uint8_t*>(data + (blk * 64));
-        uint64_t comma = 0;
-        uint64_t newline = 0;
-        uint64_t quote = 0;
-        for (unsigned j = 0; j < 4; ++j)
-        {
-            const uint8x16_t in = vld1q_u8(block + (j * 16));
-            comma |= neonMoveMask(vceqq_u8(in, vComma), bitmask) << (j * 16);
-            newline |= neonMoveMask(vceqq_u8(in, vNewline), bitmask) << (j * 16);
-            quote |= neonMoveMask(vceqq_u8(in, vQuote), bitmask) << (j * 16);
-        }
+        const uint8x16_t b0 = vld1q_u8(block);
+        const uint8x16_t b1 = vld1q_u8(block + 16);
+        const uint8x16_t b2 = vld1q_u8(block + 32);
+        const uint8x16_t b3 = vld1q_u8(block + 48);
+        const uint64_t comma
+            = neonMoveMaskBulk(vceqq_u8(b0, vComma), vceqq_u8(b1, vComma), vceqq_u8(b2, vComma), vceqq_u8(b3, vComma), bitmask);
+        const uint64_t newline
+            = neonMoveMaskBulk(vceqq_u8(b0, vNewline), vceqq_u8(b1, vNewline), vceqq_u8(b2, vNewline), vceqq_u8(b3, vNewline), bitmask);
+        const uint64_t quote
+            = neonMoveMaskBulk(vceqq_u8(b0, vQuote), vceqq_u8(b1, vQuote), vceqq_u8(b2, vQuote), vceqq_u8(b3, vQuote), bitmask);
         out[blk] = BlockBits{comma, newline, quote};
     }
 }

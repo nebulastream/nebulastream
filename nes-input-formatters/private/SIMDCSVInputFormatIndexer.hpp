@@ -20,6 +20,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <CSVInputFormatIndexer.hpp>
+#include <FieldBand.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
 #include <SIMDCSVKernel.hpp>
@@ -28,10 +29,14 @@ namespace NES
 {
 
 /// SIMD-accelerated alternative to CSVInputFormatIndexer, based on the structural-index algorithm of
-/// https://github.com/geofflangdale/simdcsv. It reuses CSVMetaData and the CSV descriptor config, and
-/// produces the exact same FieldOffsets as the scalar indexer, so it is a drop-in replacement selected
+/// https://github.com/geofflangdale/simdcsv. It reuses CSVMetaData and the CSV descriptor config, selected
 /// by setting the input formatter `type` to "SIMDCSV". The SIMD core is portable via runtime CPU
 /// dispatch (SSE2/AVX2 on x86-64, NEON on arm64, scalar fallback elsewhere); see SIMDCSVKernel.hpp.
+///
+/// EXPERIMENT (REVERT/productionize before merge): this formatter is temporarily repurposed to the fast
+/// flat-band path -- it emits raw structural positions into a FieldBand (branchless `indexBandInto`) instead
+/// of grouped FieldOffsets, to measure the flat-band end-to-end win. See FieldBand.hpp. (The structured
+/// SimdCsv::indexInto remains available for the scalar-equivalent path.)
 class SIMDCSVInputFormatIndexer : public InputFormatIndexer<SIMDCSVInputFormatIndexer>
 {
 public:
@@ -39,13 +44,12 @@ public:
     static constexpr bool IsSequential = false;
 
     using IndexerMetaData = CSVMetaData;
-    using FieldIndexFunctionType = FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>;
+    using FieldIndexFunctionType = FieldBand;
 
     explicit SIMDCSVInputFormatIndexer(const InputFormatterDescriptor& config);
     ~SIMDCSVInputFormatIndexer() = default;
 
-    void indexRawBuffer(
-        FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const;
+    void indexRawBuffer(FieldBand& band, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& os, const SIMDCSVInputFormatIndexer& obj);

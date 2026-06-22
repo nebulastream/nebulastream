@@ -14,8 +14,11 @@
 
 #include <SequenceShredder.hpp>
 
+#include <atomic>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -35,6 +38,42 @@
 #include <RawTupleBuffer.hpp>
 #include <SpanningTupleBuffer.hpp>
 #include <from_current.hpp>
+
+namespace
+{
+/// TMP DIAGNOSTIC: accumulate wall time spent in the SequenceShredder's per-buffer spanning-tuple
+/// resolution (find*), across all threads, printed at process exit. Measures the shredder's share of
+/// the compiled formatter pipeline. REVERT before merge.
+std::atomic<std::uint64_t> g_shredNs{0};
+std::atomic<std::uint64_t> g_shredCalls{0};
+
+const struct ShredDiagPrinter
+{
+    ~ShredDiagPrinter()
+    {
+        std::fprintf(
+            stderr,
+            "DIAG_SHREDDER shred_cpu=%.4fs calls=%llu\n",
+            g_shredNs.load() / 1e9,
+            static_cast<unsigned long long>(g_shredCalls.load()));
+    }
+} g_shredDiagPrinter;
+
+struct ShredScopeTimer
+{
+    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+
+    ~ShredScopeTimer()
+    {
+        g_shredNs.fetch_add(
+            static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count()),
+            std::memory_order_relaxed);
+        g_shredCalls.fetch_add(1, std::memory_order_relaxed);
+    }
+};
+}
+
+#define SHRED_TIMER() const ShredScopeTimer shredScopeTimer /// NOLINT
 
 namespace NES
 {
@@ -67,22 +106,26 @@ SequenceShredder::~SequenceShredder()
 
 SequenceShredderResult SequenceShredder::findLeadingSpanningTupleWithDelimiter(const StagedBuffer& indexedRawBuffer)
 {
+    SHRED_TIMER();
     return findLeadingSpanningTupleWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
 }
 
 SpanningBuffers SequenceShredder::findTrailingSpanningTupleWithDelimiter(const SequenceNumber sequenceNumber)
 {
+    SHRED_TIMER();
     return spanningTupleBuffer->tryFindTrailingSpanningTupleForBufferWithDelimiter(sequenceNumber);
 }
 
 SpanningBuffers
 SequenceShredder::findTrailingSpanningTupleWithDelimiter(const SequenceNumber sequenceNumber, const FieldIndex offsetOfLastTuple)
 {
+    SHRED_TIMER();
     return spanningTupleBuffer->tryFindTrailingSpanningTupleForBufferWithDelimiter(sequenceNumber, offsetOfLastTuple);
 }
 
 SequenceShredderResult SequenceShredder::findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
 {
+    SHRED_TIMER();
     return findSpanningTupleWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
 }
 

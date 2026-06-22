@@ -1,0 +1,26 @@
+# name: benchmark/_diag.test
+# description: throwaway — localize the proj-vs-agg gap by varying ONLY output volume (all -> Void sink).
+# groups: [Formatter, benchmark, large]
+CREATE LOGICAL SOURCE csv5(creationTS UINT64 NOT NULL, key UINT64 NOT NULL, v1 UINT64 NOT NULL, v2 UINT64 NOT NULL, v3 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR csv5 TYPE File SET("CSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/formatter/bench_5xUINT64_5g.csv
+
+CREATE SINK d_filter(csv5.key UINT64 NOT NULL) TYPE Void;
+CREATE SINK d_proj(csv5.key UINT64 NOT NULL) TYPE Void;
+CREATE SINK d_agg(csv5.start UINT64 NOT NULL, csv5.end UINT64 NOT NULL, csv5.key UINT64 NOT NULL, csv5.sum_v1 UINT64 NOT NULL, csv5.cnt UINT64 NOT NULL) TYPE Void;
+
+# q1 filterVoid: scan+index all, parse v1 for every row, emit ~0 (WHERE v1<10 ~ 1400 rows). Isolates input-side work.
+SELECT key FROM csv5 WHERE v1 < UINT64(10) INTO d_filter;
+----
+
+# q2 projVoid: scan+index all, parse key for every row, emit ALL ~143M rows. Adds full output materialization.
+SELECT key FROM csv5 INTO d_proj;
+----
+
+# q3 aggVoid: scan+index all, parse 4 fields, hash/group, emit ~183k. Output-light but parse+build heavy.
+SELECT start, end, key, SUM(v1) AS sum_v1, COUNT(v2) AS cnt
+FROM csv5
+GROUP BY key
+WINDOW TUMBLING(creationTS, SIZE 1 SEC)
+INTO d_agg;
+----

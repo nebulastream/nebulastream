@@ -15,6 +15,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <ranges>
 #include <string>
@@ -119,6 +120,12 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
+    /// TMP DIAGNOSTIC: NES_SKIP_MATERIALIZE traces OUT the per-field storeValue (the 8-byte/tuple write into the
+    /// output buffer) at pipeline-compile time, keeping everything else (bounds check, loop, outputIndex advance,
+    /// buffer fill+emit cadence) intact. The throughput delta vs a normal run isolates record-materialization cost.
+    /// std::getenv is read once at trace time so the store is pruned from the compiled pipeline. Breaks results --
+    /// diagnostic only. REVERT before merge.
+    static const bool skipMaterialize = std::getenv("NES_SKIP_MATERIALIZE") != nullptr;
     nautilus::val<bool> successful{false};
     nautilus::val<uint64_t> writtenRecords{0};
     /// Check if index is in-bounds
@@ -132,6 +139,10 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
             if (not rec.hasField(name))
             {
                 /// Skipping any fields that are not part of the record
+                continue;
+            }
+            if (skipMaterialize)
+            {
                 continue;
             }
             auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);

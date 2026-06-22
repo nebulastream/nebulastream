@@ -26,6 +26,7 @@ activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
 activate_optional_plugin("Sinks/MonitoringSink" ON)
 activate_optional_plugin("OutputParsers/ZMIJOutputParsers" ON)
 activate_optional_plugin("InputParsers/FastFloatInputParsers" ON)
+activate_optional_plugin("InputParsers/FastIntegerInputParsers" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

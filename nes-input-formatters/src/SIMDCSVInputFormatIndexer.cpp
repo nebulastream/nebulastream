@@ -14,6 +14,10 @@
 
 #include <SIMDCSVInputFormatIndexer.hpp>
 
+#include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -31,6 +35,27 @@
 #include <SIMDCSVKernel.hpp>
 #include <SIMDCSVScan.hpp>
 
+namespace
+{
+/// TMP DIAGNOSTIC: per-buffer wall time in SIMDCSVInputFormatIndexer::indexRawBuffer, summed across
+/// threads, printed at process exit -- the SIMD counterpart of DIAG_CSVINDEX, for a direct scalar-vs-SIMD
+/// index-CPU comparison. Per-buffer (cheap), so a plain atomic is fine here. REVERT before merge.
+std::atomic<std::uint64_t> g_simdIdxNs{0};
+std::atomic<std::uint64_t> g_simdIdxCalls{0};
+
+const struct SimdIdxDiagPrinter
+{
+    ~SimdIdxDiagPrinter()
+    {
+        std::fprintf(
+            stderr,
+            "DIAG_SIMDINDEX index_cpu=%.4fs calls=%llu\n",
+            g_simdIdxNs.load() / 1e9,
+            static_cast<unsigned long long>(g_simdIdxCalls.load()));
+    }
+} g_simdIdxDiagPrinter;
+}
+
 namespace NES
 {
 
@@ -40,11 +65,25 @@ SIMDCSVInputFormatIndexer::SIMDCSVInputFormatIndexer(const InputFormatterDescrip
 {
 }
 
-void SIMDCSVInputFormatIndexer::indexRawBuffer(
-    FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
+void SIMDCSVInputFormatIndexer::indexRawBuffer(FieldBand& band, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
 {
-    SimdCsv::indexInto(
-        fieldOffsets,
+    const struct ScopeTimer
+    {
+        std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+
+        ~ScopeTimer()
+        {
+            g_simdIdxNs.fetch_add(
+                static_cast<std::uint64_t>(
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count()),
+                std::memory_order_relaxed);
+            g_simdIdxCalls.fetch_add(1, std::memory_order_relaxed);
+        }
+    } scopeTimer;
+
+    /// EXPERIMENT: fast flat-band path (raw structural positions) instead of structured FieldOffsets.
+    SimdCsv::indexBandInto(
+        band,
         rawBuffer.getBufferView(),
         metaData.getFieldDelimiter(),
         metaData.getTupleDelimiter(),

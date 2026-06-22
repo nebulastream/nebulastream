@@ -175,4 +175,137 @@ void indexInto(
     sink.markWithTupleDelimiters(firstNewline, lastNewline);
 }
 
+/// EXPERIMENT (REVERT/productionize before merge): branchless bit-flatten (the simdcsv flatten_bits trick).
+/// Writes each set bit's position (base + trailing-zeros) into `out`, advancing by popcount. Writes up to
+/// 8/16 slots unconditionally for branch-free speed; slots past the real count are overwritten by the next
+/// call, so `out` must have >= 16 slots of slack beyond the true total (see FieldBand::prepareBand).
+inline uint32_t* flattenBits(uint32_t* out, const uint32_t base, uint64_t bits)
+{
+    if (bits == 0)
+    {
+        return out;
+    }
+    const int cnt = __builtin_popcountll(bits);
+    for (int k = 0; k < 8; ++k)
+    {
+        out[k] = base + static_cast<uint32_t>(__builtin_ctzll(bits));
+        bits &= bits - 1;
+    }
+    if (cnt > 8)
+    {
+        for (int k = 8; k < 16; ++k)
+        {
+            out[k] = base + static_cast<uint32_t>(__builtin_ctzll(bits));
+            bits &= bits - 1;
+        }
+    }
+    if (cnt > 16)
+    {
+        for (int k = 16; k < cnt; ++k)
+        {
+            out[k] = base + static_cast<uint32_t>(__builtin_ctzll(bits));
+            bits &= bits - 1;
+        }
+    }
+    return out + cnt;
+}
+
+/// EXPERIMENT (REVERT/productionize before merge): the fast flat-band indexer. Dumps every structural
+/// position (unquoted comma + newline) into the band branchlessly (no per-tuple grouping / pending vector /
+/// per-tuple field-count validation -- that grouping is what made indexInto ~= scalar). Tracks the first and
+/// last newline so the band reader can derive the anchor index and complete-tuple count. `Band` must provide
+/// startSetup(size_t,size_t), prepareBand(size_t)->uint32_t*, finalize(size_t,uint32_t,uint32_t),
+/// markNoTupleDelimiters() -- FieldBand does.
+template <typename Band>
+void indexBandInto(
+    Band& band,
+    const std::string_view view,
+    const char fieldDelim,
+    const char tupleDelim,
+    const bool quoteAware,
+    const uint64_t numFields,
+    const ComputeBlocksFn computeBlocks)
+{
+    constexpr size_t sizeOfFieldDelimiter = 1;
+    band.startSetup(numFields, sizeOfFieldDelimiter);
+
+    const char* data = view.data();
+    const size_t numBytes = view.size();
+    uint32_t* const out = band.prepareBand(numBytes);
+    uint32_t* cursor = out;
+
+    bool seenNewline = false;
+    uint32_t firstNewline = 0;
+    uint32_t lastNewline = 0;
+    uint64_t quoteCarry = 0;
+
+    const size_t numBlocks = numBytes / 64;
+    constexpr size_t chunkBlocks = 16;
+    std::array<BlockBits, chunkBlocks> chunk{};
+    for (size_t base = 0; base < numBlocks; base += chunkBlocks)
+    {
+        const size_t count = std::min(chunkBlocks, numBlocks - base);
+        computeBlocks(data + (base * 64), count, chunk.data(), fieldDelim, tupleDelim);
+        for (size_t i = 0; i < count; ++i)
+        {
+            const BlockBits bits = chunk[i];
+            const auto blockBase = static_cast<uint32_t>((base + i) * 64);
+            uint64_t fieldSep = 0;
+            if (quoteAware)
+            {
+                uint64_t quoted = prefixXor(bits.quote);
+                quoted ^= quoteCarry;
+                quoteCarry = uint64_t{0} - (quoted >> 63);
+                fieldSep = (bits.comma & ~quoted) | bits.newline;
+            }
+            else
+            {
+                fieldSep = bits.comma | bits.newline;
+            }
+            cursor = flattenBits(cursor, blockBase, fieldSep);
+            /// newlines never occur inside quotes, so the raw newline mask is exact
+            if (bits.newline != 0)
+            {
+                if (!seenNewline)
+                {
+                    seenNewline = true;
+                    firstNewline = blockBase + static_cast<uint32_t>(__builtin_ctzll(bits.newline));
+                }
+                lastNewline = blockBase + static_cast<uint32_t>(63 - __builtin_clzll(bits.newline));
+            }
+        }
+    }
+
+    bool insideQuote = quoteAware && (quoteCarry != 0);
+    for (size_t i = numBlocks * 64; i < numBytes; ++i)
+    {
+        const char byte = data[i];
+        const bool isNewline = (byte == tupleDelim);
+        if (isNewline || (byte == fieldDelim && (!quoteAware || !insideQuote)))
+        {
+            *cursor++ = static_cast<uint32_t>(i);
+            if (isNewline)
+            {
+                if (!seenNewline)
+                {
+                    seenNewline = true;
+                    firstNewline = static_cast<uint32_t>(i);
+                }
+                lastNewline = static_cast<uint32_t>(i);
+            }
+        }
+        if (quoteAware && byte == '"')
+        {
+            insideQuote = !insideQuote;
+        }
+    }
+
+    if (!seenNewline)
+    {
+        band.markNoTupleDelimiters();
+        return;
+    }
+    band.finalize(static_cast<size_t>(cursor - out), firstNewline, lastNewline);
+}
+
 }

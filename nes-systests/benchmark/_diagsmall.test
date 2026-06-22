@@ -1,0 +1,21 @@
+# name: benchmark/_diagsmall.test
+# description: throwaway — count parses-per-row for a single-field projection (10 rows -> 10 or 50 parses?)
+# groups: [Formatter, benchmark]
+CREATE LOGICAL SOURCE csv5s(creationTS UINT64 NOT NULL, key UINT64 NOT NULL, v1 UINT64 NOT NULL, v2 UINT64 NOT NULL, v3 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR csv5s TYPE File SET("CSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+1,2,3,4,5
+11,12,13,14,15
+21,22,23,24,25
+31,32,33,34,35
+41,42,43,44,45
+51,52,53,54,55
+61,62,63,64,65
+71,72,73,74,75
+81,82,83,84,85
+91,92,93,94,95
+
+CREATE SINK ds(csv5s.key UINT64 NOT NULL) TYPE Checksum;
+SELECT key FROM csv5s INTO ds;
+----
+10, 470

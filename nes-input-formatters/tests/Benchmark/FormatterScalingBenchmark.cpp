@@ -118,21 +118,30 @@ struct DroppingPec final : PipelineExecutionContext
     }
 
     bool emitBuffer(const TupleBuffer&, ContinuationPolicy) override { return true; } /// drop
+
     TupleBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
+
     TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
     {
         pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
         return *pinnedBuffers.back();
     }
+
     [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return threadId; }
+
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 0; }
+
     [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bm; }
+
     [[nodiscard]] PipelineId getPipelineId() const override { return pipelineId; }
+
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override { return operatorHandlers; }
+
     void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& handlers) override
     {
         operatorHandlers = handlers;
     }
+
     void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override
     {
         if (repeatTaskCallback)
@@ -140,6 +149,7 @@ struct DroppingPec final : PipelineExecutionContext
             repeatTaskCallback();
         }
     }
+
     void setRepeatTaskCallback(std::function<void()> callback) { repeatTaskCallback = std::move(callback); }
 };
 
@@ -218,8 +228,8 @@ double drainPerThreadPools(
                 TestPipelineTask task{};
                 while (queue.readIfNotEmpty(task))
                 {
-                    auto pec = std::make_shared<TestPipelineExecutionContext>(
-                        bufferManager, WorkerThreadId(i), PipelineId(0), resultBuffers);
+                    auto pec
+                        = std::make_shared<TestPipelineExecutionContext>(bufferManager, WorkerThreadId(i), PipelineId(0), resultBuffers);
                     pec->setRepeatTaskCallback([&queue, task] { queue.blockingWrite(task); });
                     task.execute(*pec);
                 }
@@ -391,7 +401,8 @@ int main(int argc, char** argv)
     NES::Logger::setupLogging("formatter-scaling-benchmark.log", NES::LogLevel::LOG_ERROR);
 
     const std::string filePath = (argc > 1) ? argv[1] : "nes-systests/testdata/large/formatter/bench_5xUINT64_512m.csv";
-    const size_t sizeOfRawBuffers = ((argc > 2) ? std::strtoull(argv[2], nullptr, 10) : 128ULL) * 1024;
+    /// rawBuf size in KiB; accepts fractional KiB (strtod) so sub-page sizes work, e.g. 0.5 = 512 bytes.
+    const size_t sizeOfRawBuffers = static_cast<size_t>(((argc > 2) ? std::strtod(argv[2], nullptr) : 128.0) * 1024.0);
     const size_t maxBuffers = (argc > 3) ? std::strtoull(argv[3], nullptr, 10) : 0; /// 0 = all
     const unsigned reps = (argc > 4) ? static_cast<unsigned>(std::strtoul(argv[4], nullptr, 10)) : 3U;
     std::vector<size_t> threadCounts;
@@ -438,7 +449,10 @@ int main(int argc, char** argv)
     const std::string shredderModeArg = (argc > 10 && std::string(argv[10]) != "-") ? argv[10] : "both";
     const std::vector<std::string> modes = (shredderModeArg == "LOCK_FREE") ? std::vector<std::string>{"LOCK_FREE"}
         : (shredderModeArg == "LOCKING")                                    ? std::vector<std::string>{"LOCKING"}
-                                                                           : std::vector<std::string>{"LOCK_FREE", "LOCKING"};
+                                                                            : std::vector<std::string>{"LOCK_FREE", "LOCKING"};
+    /// uint64Parser: override the UINT64 field parser via the descriptor (e.g. "FastUINT64") to A/B the
+    /// Default vs a fast integer-parser plugin with the producer removed. "" / "-" = DefaultUINT64.
+    const std::string uint64Parser = (argc > 11 && std::string(argv[11]) != "-") ? argv[11] : "";
 
     /// Track the raw buffer size so memory stays ~= input size as we shrink buffers to stress the
     /// shredder (output of the parse is <= input bytes, so it fits a same-size buffer).
@@ -477,10 +491,11 @@ int main(int argc, char** argv)
         static_cast<double>(totalBytes) / (1024 * 1024),
         reps);
     std::printf(
-        "drain mode: %s | project: %s | fnattr: %s\n",
+        "drain mode: %s | project: %s | fnattr: %s | uint64 parser: %s\n",
         drainMode.c_str(),
         projectField.empty() ? "(none, parse all cols)" : projectField.c_str(),
-        fnattrPath.empty() ? "off" : "on");
+        fnattrPath.empty() ? "off" : "on",
+        uint64Parser.empty() ? "DefaultUINT64" : uint64Parser.c_str());
 
     /// Formatted-buffer pool sized by task count (the emit operator flushes ~one output buffer per
     /// task) with generous headroom for per-thread fragmentation + spanning-tuple buffers.
@@ -502,17 +517,20 @@ int main(int argc, char** argv)
         {
             auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(workerThreads);
             const auto conf = InputFormatterValidationProvider::provide(
-                "SIMDCSV",
-                {{"type", "SIMDCSV"},
-                 {"tuple_delimiter", "\n"},
-                 {"field_delimiter", ","},
-                 {"sequence_shredder_mode", mode}});
+                "SIMDCSV", {{"type", "SIMDCSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}, {"sequence_shredder_mode", mode}});
             if (not conf.has_value())
             {
                 throw std::runtime_error("Invalid SIMDCSV indexer config");
             }
+            /// SIMDCSV `provide()` validates only the indexer params; the per-field parser is a separate
+            /// InputFormatterDescriptor param, so inject the override into the validated config directly.
+            auto formatterConfig = conf.value();
+            if (not uint64Parser.empty())
+            {
+                formatterConfig[InputFormatterDescriptor::UINT64_PARSER.name] = uint64Parser;
+            }
             auto stage = InputFormatterTestUtil::createInputFormatter(
-                conf.value(), schema, MemoryLayoutType::ROW_LAYOUT, sizeOfFormattedBuffers, /*isCompiled*/ true, projection);
+                formatterConfig, schema, MemoryLayoutType::ROW_LAYOUT, sizeOfFormattedBuffers, /*isCompiled*/ true, projection);
 
             if (drainMode == "lean" || drainMode == "leannoemit")
             {
@@ -527,8 +545,7 @@ int main(int argc, char** argv)
             }
             if (drainMode == "static")
             {
-                return drainStatic(
-                    workerThreads, rawBuffers, stage.get(), sizeOfFormattedBuffers, numFormattedBuffers, resultBuffers);
+                return drainStatic(workerThreads, rawBuffers, stage.get(), sizeOfFormattedBuffers, numFormattedBuffers, resultBuffers);
             }
             std::vector<TestPipelineTask> tasks;
             tasks.reserve(rawBuffers.size());
@@ -568,9 +585,22 @@ int main(int argc, char** argv)
             {
                 base = med;
             }
+            const double mn = *std::ranges::min_element(gbs);
+            const double mx = *std::ranges::max_element(gbs);
+            const double spreadPct = (med > 0.0) ? 100.0 * (mx - mn) / med : 0.0;
             const double repeatsPerPass = static_cast<double>(g_repeats.load()) / reps;
             const double repeatPct = 100.0 * repeatsPerPass / static_cast<double>(rawBuffers.size());
-            std::printf("  %7zu | %6.3f | %6.2fx | repeats/pass=%9.0f (%5.1f%% of buffers)\n", threads, med, med / base, repeatsPerPass, repeatPct);
+            std::printf(
+                "  %7zu | %6.3f | %6.2fx | min..max %6.3f..%6.3f (spread %4.0f%%, n=%u) | repeats/pass=%9.0f (%5.1f%% of buffers)\n",
+                threads,
+                med,
+                med / base,
+                mn,
+                mx,
+                spreadPct,
+                reps,
+                repeatsPerPass,
+                repeatPct);
             std::fflush(stdout);
         }
     }

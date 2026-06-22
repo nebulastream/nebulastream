@@ -34,6 +34,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -56,6 +57,8 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
 #include <InputFormatterValidationProvider.hpp>
+#include <MapPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>
@@ -176,16 +179,34 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const Schema& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
-    const bool isCompiled)
+    const bool isCompiled,
+    const std::optional<Schema>& projection)
 {
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
 
-    auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType);
+    /// The formatter parses against the full input `schema`; the emit writes the (possibly narrower)
+    /// output schema. Different buffers (raw input vs formatted output), so different layouts are fine.
+    const Schema& outputSchema = projection.has_value() ? *projection : schema;
+    auto inputProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType);
+    auto outputProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, outputSchema, memoryLayoutType);
     auto inputFormatterType = std::get<std::string>(parserConfiguration.at("type"));
     auto scanOp = ScanPhysicalOperator(
-        provideInputFormatterTupleBufferRef(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider),
+        provideInputFormatterTupleBufferRef(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, inputProvider),
         schema.getFieldNames());
-    scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
+
+    PhysicalOperator child = EmitPhysicalOperator(emitOperatorHandlerId, std::move(outputProvider));
+    if (projection.has_value())
+    {
+        /// One identity Map per projected field: Map(f, FieldAccess(f)). Only these reads reach the
+        /// record, so the dropped fields' parse invokes become dead code (DCE'd under fnattr).
+        for (const auto& fieldName : projection->getFieldNames())
+        {
+            auto mapOp = MapPhysicalOperator(fieldName, FieldAccessPhysicalFunction(fieldName));
+            mapOp.setChild(child);
+            child = mapOp;
+        }
+    }
+    scanOp.setChild(child);
 
     auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(scanOp));
     physicalScanPipeline->getOperatorHandlers().emplace(emitOperatorHandlerId, std::make_shared<EmitOperatorHandler>());

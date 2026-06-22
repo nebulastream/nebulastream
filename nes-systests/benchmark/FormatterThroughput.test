@@ -10,10 +10,9 @@
 #                scripts/benchmarking/run_formatter_bench.py
 # groups: [Formatter, benchmark, large]
 
-# ---------------------------------------------------------------------------
 # Sources: identical schema and identical backing file; the ONLY difference is
 # the input formatter, so any throughput delta isolates the indexer.
-# ---------------------------------------------------------------------------
+
 CREATE LOGICAL SOURCE csv5(creationTS UINT64 NOT NULL, key UINT64 NOT NULL, v1 UINT64 NOT NULL, v2 UINT64 NOT NULL, v3 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR csv5 TYPE File SET("CSV" AS INPUT_FORMATTER.`TYPE`);
 ATTACH FILE large/formatter/bench_5xUINT64_5g.csv

@@ -1,0 +1,13 @@
+# name: benchmark/_diag_all_128m.test
+# description: throwaway — SELECT * (all 5 fields parsed, NO projection DCE) on the 128 MiB 5xUINT64
+#              file, SIMDCSV. Same WORK as the formatter-scaling benchmark (cols=5) -> isolates the
+#              benchmark's test overhead vs the engine for identical 5-field parse + materialize.
+# groups: [Formatter, benchmark, large]
+CREATE LOGICAL SOURCE csv5(creationTS UINT64 NOT NULL, key UINT64 NOT NULL, v1 UINT64 NOT NULL, v2 UINT64 NOT NULL, v3 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR csv5 TYPE File SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/formatter/bench_5xUINT64_128m.csv
+
+CREATE SINK d_all(csv5.creationTS UINT64 NOT NULL, csv5.key UINT64 NOT NULL, csv5.v1 UINT64 NOT NULL, csv5.v2 UINT64 NOT NULL, csv5.v3 UINT64 NOT NULL) TYPE Void;
+
+SELECT creationTS, key, v1, v2, v3 FROM csv5 INTO d_all;
+----

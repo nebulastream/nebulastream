@@ -24,8 +24,15 @@ import sys
 # Measured: Apple M5 Max, 14-vCPU dev container, Release; SIMDCSV, 5-col index + 1-field parse
 # (project f1 + fnattr), 128 KiB buffers, 5 GiB file (bench_5xUINT64_5g.csv), pre-loaded buffers (no IO),
 # median of 5 reps + 1 discarded warmup, drain-only timing (thread spawn + eps->stop() excluded).
-# 14-thread window ~210 ms (vs ~21 ms on the old 512 MiB file).
+# WITH the single-thread optimizations: FastUINT64 parser + NEON vpaddq-bulk movemask index kernel.
+# Whole curve ~+35% vs the pre-optimization run (1t 2.38->3.30, 14t 24.7->33.4); scaling shape unchanged
+# (the ~10x/14t taper is the machine memory-core-heterogeneity ceiling, not the formatter).
 MEASURED = [
+    (1, 3.304), (2, 6.313), (3, 9.172), (4, 12.072), (5, 15.107), (6, 18.134), (7, 19.836),
+    (8, 21.800), (9, 23.908), (10, 25.753), (11, 27.746), (12, 29.431), (13, 31.256), (14, 33.428),
+]
+# Pre-optimization reference (Default parser, old kernel), same config -- plotted as a faint baseline.
+BASELINE = [
     (1, 2.382), (2, 4.506), (3, 6.719), (4, 8.727), (5, 11.011), (6, 13.040), (7, 14.668),
     (8, 16.148), (9, 17.539), (10, 18.890), (11, 20.511), (12, 21.799), (13, 23.371), (14, 24.709),
 ]
@@ -58,12 +65,20 @@ def main():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    title_sub = "SIMDCSV, 5-col index + 1-field parse (project f1 + fnattr), 128 KiB, in-memory\nApple M5 Max, 14-vCPU container"
+    title_sub = "SIMDCSV + FastUINT64 + bulk-movemask, 1-field parse (project f1 + fnattr), 128 KiB, in-memory\nApple M5 Max, 14-vCPU container"
 
     # ---- Plot 1: absolute throughput scalability ----
     fig1, ax1 = plt.subplots(figsize=(8.5, 5.5))
     ax1.plot(th, ideal_gb, "--", color="#999999", lw=1.8, label=f"ideal linear ({base:.2f} GB/s x threads)")
-    ax1.plot(th, gb, "-o", color="#1b7837", lw=2.4, ms=6, label="measured")
+    if not data_path:
+        bth = [r[0] for r in BASELINE]
+        bgb = [r[1] for r in BASELINE]
+        ax1.plot(bth, bgb, "-o", color="#bbbbbb", lw=1.8, ms=4, label="before opts (Default parser, old kernel)")
+        ax1.annotate(
+            f"{bgb[-1]:.1f} GB/s", xy=(bth[-1], bgb[-1]), xytext=(-6, -14),
+            textcoords="offset points", ha="right", fontsize=9, color="#888888",
+        )
+    ax1.plot(th, gb, "-o", color="#1b7837", lw=2.4, ms=6, label="measured (+ FastUINT64 + bulk movemask)")
     ax1.annotate(
         f"{gb[-1]:.1f} GB/s",
         xy=(th[-1], gb[-1]),
