@@ -41,7 +41,7 @@ RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryO
     ruleManager.addRule(DecideJoinTypesRule{this->defaultQueryOptimization.joinStrategy});
     ruleManager.addRule(DecideMemoryLayoutRule{});
     ruleManager.addRule(RedundantUnionRemovalRule{});
-    ruleManager.addRule(RedundantProjectionRemovalRule{});
+    //ruleManager.addRule(RedundantProjectionRemovalRule{});
     ruleManager.addRule(DecideFieldMappings{});
     ruleManager.addRule(DecideFieldOrder{});
     ruleManager.addRule(OriginIdInferenceRule{});
