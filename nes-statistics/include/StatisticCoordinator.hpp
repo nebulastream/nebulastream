@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryId.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
@@ -40,7 +41,7 @@ namespace NES
 /// Result of a collectNewStatistic() call.
 struct CollectStatisticResult
 {
-    QueryId queryId;
+    DistributedQueryId queryId;
     Statistic::StatisticId statisticId;
     bool alreadyExisted;
 };
@@ -54,11 +55,12 @@ struct CollectStatisticResult
 class StatisticCoordinator
 {
 public:
-    /// Callback that submits an already-generated LogicalPlan, returning the QueryId on success.
-    using SubmitQueryFn = std::function<std::expected<QueryId, Exception>(LogicalPlan)>;
+    /// Callback that submits an already-generated LogicalPlan through the high-level deployment interface
+    /// (optimize + register + start), returning the DistributedQueryId on success.
+    using SubmitQueryFn = std::function<std::expected<DistributedQueryId, Exception>(LogicalPlan)>;
 
     /// Callback that stops a previously submitted query by id. Expected to BLOCK until the query has stopped.
-    using StopQueryFn = std::function<std::expected<void, Exception>(QueryId)>;
+    using StopQueryFn = std::function<std::expected<void, Exception>(DistributedQueryId)>;
 
     StatisticCoordinator(
         std::unique_ptr<StatisticQueryGenerator> queryGenerator, SubmitQueryFn submitQuery, StopQueryFn stopQuery = nullptr);

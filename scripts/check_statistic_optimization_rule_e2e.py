@@ -84,8 +84,9 @@ def main() -> int:
         print("Build it first, e.g.: cmake --build build_dir --target nes-repl-embedded", file=sys.stderr)
         return 2
 
+    # --enable-statistics gives the embedded worker a statistic store and wires the StatisticOptimizationRule.
     # --on-exit STOP_QUERIES tears the deployed query down cleanly before the process exits.
-    cmd = [str(args.repl_binary), "--on-exit", "STOP_QUERIES"]
+    cmd = [str(args.repl_binary), "--enable-statistics", "--on-exit", "STOP_QUERIES"]
     print(f"Starting NebulaStream instance: {' '.join(cmd)}")
     try:
         completed = subprocess.run(

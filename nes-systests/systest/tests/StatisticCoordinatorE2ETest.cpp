@@ -18,16 +18,22 @@
 ///   and the value travels over the named pipe to the coordinator's reader -> onStatisticReport.
 /// The build query writes the constant value 42, so a successful round-trip returns 42.
 
+#include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <expected>
 #include <memory>
 #include <optional>
+#include <string>
 #include <thread>
+#include <unordered_map>
 #include <utility>
 
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryId.hpp>
+#include <folly/Synchronized.h>
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -83,6 +89,60 @@ std::expected<void, Exception> blockingStop(SingleNodeWorker& worker, const Quer
     }
     return {};
 }
+
+/// Bridges a bare SingleNodeWorker (low-level QueryId) to the coordinator's high-level DistributedQueryId callback
+/// interface. Production deploys through the QueryManager and needs no such bridge; this id map exists only because
+/// the unit harness drives a worker directly, one layer below the coordinator's deployment interface.
+std::pair<StatisticCoordinator::SubmitQueryFn, StatisticCoordinator::StopQueryFn>
+bareWorkerCallbacks(SingleNodeWorker& worker, const SemanticAnalyzer& semanticAnalyzer, const RuleBasedOptimizer& ruleOptimizer)
+{
+    auto ids = std::make_shared<folly::Synchronized<std::unordered_map<DistributedQueryId, QueryId>>>();
+    auto counter = std::make_shared<std::atomic<uint64_t>>(0);
+
+    StatisticCoordinator::SubmitQueryFn submitFn
+        = [&worker, &semanticAnalyzer, &ruleOptimizer, ids, counter](LogicalPlan plan) -> std::expected<DistributedQueryId, Exception>
+    {
+        try
+        {
+            auto optimized = ruleOptimizer.optimize(semanticAnalyzer.analyse(std::move(plan)));
+            auto queryId = worker.registerQuery(std::move(optimized));
+            if (not queryId.has_value())
+            {
+                return std::unexpected(queryId.error());
+            }
+            if (auto started = worker.startQuery(queryId.value()); not started.has_value())
+            {
+                return std::unexpected(started.error());
+            }
+            const DistributedQueryId distributedId("stat-query-" + std::to_string(counter->fetch_add(1)));
+            ids->wlock()->emplace(distributedId, queryId.value());
+            return distributedId;
+        }
+        catch (const Exception& exception)
+        {
+            return std::unexpected(exception);
+        }
+    };
+
+    StatisticCoordinator::StopQueryFn stopFn = [&worker, ids](const DistributedQueryId& distributedId) -> std::expected<void, Exception>
+    {
+        std::optional<QueryId> queryId;
+        {
+            const auto locked = ids->rlock();
+            if (const auto it = locked->find(distributedId); it != locked->end())
+            {
+                queryId = it->second;
+            }
+        }
+        if (not queryId.has_value())
+        {
+            return {};
+        }
+        return blockingStop(worker, queryId.value());
+    };
+
+    return {std::move(submitFn), std::move(stopFn)};
+}
 }
 
 class StatisticCoordinatorE2ETest : public Testing::BaseUnitTest
@@ -108,30 +168,8 @@ TEST_F(StatisticCoordinatorE2ETest, BuildAndProbeRoundTripOverFifo)
     const SemanticAnalyzer semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
     const RuleBasedOptimizer ruleOptimizer{QueryOptimizerConfiguration{}};
 
-    StatisticCoordinator coordinator(
-        std::make_unique<DefaultStatisticQueryGenerator>(),
-        [&](LogicalPlan plan) -> std::expected<QueryId, Exception>
-        {
-            try
-            {
-                auto optimized = ruleOptimizer.optimize(semanticAnalyzer.analyse(std::move(plan)));
-                auto queryId = worker.registerQuery(std::move(optimized));
-                if (not queryId.has_value())
-                {
-                    return queryId;
-                }
-                if (auto started = worker.startQuery(queryId.value()); not started.has_value())
-                {
-                    return std::unexpected(started.error());
-                }
-                return queryId;
-            }
-            catch (const Exception& exception)
-            {
-                return std::unexpected(exception);
-            }
-        },
-        [&worker](const QueryId queryId) { return blockingStop(worker, queryId); });
+    auto [submitFn, stopFn] = bareWorkerCallbacks(worker, semanticAnalyzer, ruleOptimizer);
+    StatisticCoordinator coordinator(std::make_unique<DefaultStatisticQueryGenerator>(), std::move(submitFn), std::move(stopFn));
 
     coordinator.startResultReader();
 
@@ -183,30 +221,8 @@ TEST_F(StatisticCoordinatorE2ETest, AdHocScalarRetrievalViaService)
     const SemanticAnalyzer semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
     const RuleBasedOptimizer ruleOptimizer{QueryOptimizerConfiguration{}};
 
-    StatisticCoordinator coordinator(
-        std::make_unique<DefaultStatisticQueryGenerator>(),
-        [&](LogicalPlan plan) -> std::expected<QueryId, Exception>
-        {
-            try
-            {
-                auto optimized = ruleOptimizer.optimize(semanticAnalyzer.analyse(std::move(plan)));
-                auto queryId = worker.registerQuery(std::move(optimized));
-                if (not queryId.has_value())
-                {
-                    return queryId;
-                }
-                if (auto started = worker.startQuery(queryId.value()); not started.has_value())
-                {
-                    return std::unexpected(started.error());
-                }
-                return queryId;
-            }
-            catch (const Exception& exception)
-            {
-                return std::unexpected(exception);
-            }
-        },
-        [&worker](const QueryId queryId) { return blockingStop(worker, queryId); });
+    auto [submitFn, stopFn] = bareWorkerCallbacks(worker, semanticAnalyzer, ruleOptimizer);
+    StatisticCoordinator coordinator(std::make_unique<DefaultStatisticQueryGenerator>(), std::move(submitFn), std::move(stopFn));
     coordinator.startResultReader();
 
     const StatisticRetrievalService retrievalService(coordinator);
@@ -242,30 +258,8 @@ TEST_F(StatisticCoordinatorE2ETest, OptimizationRulePrintsStatisticAndLeavesPlan
     const SemanticAnalyzer semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
     const RuleBasedOptimizer ruleOptimizer{QueryOptimizerConfiguration{}};
 
-    StatisticCoordinator coordinator(
-        std::make_unique<DefaultStatisticQueryGenerator>(),
-        [&](LogicalPlan plan) -> std::expected<QueryId, Exception>
-        {
-            try
-            {
-                auto optimized = ruleOptimizer.optimize(semanticAnalyzer.analyse(std::move(plan)));
-                auto queryId = worker.registerQuery(std::move(optimized));
-                if (not queryId.has_value())
-                {
-                    return queryId;
-                }
-                if (auto started = worker.startQuery(queryId.value()); not started.has_value())
-                {
-                    return std::unexpected(started.error());
-                }
-                return queryId;
-            }
-            catch (const Exception& exception)
-            {
-                return std::unexpected(exception);
-            }
-        },
-        [&worker](const QueryId queryId) { return blockingStop(worker, queryId); });
+    auto [submitFn, stopFn] = bareWorkerCallbacks(worker, semanticAnalyzer, ruleOptimizer);
+    StatisticCoordinator coordinator(std::make_unique<DefaultStatisticQueryGenerator>(), std::move(submitFn), std::move(stopFn));
     coordinator.startResultReader();
 
     auto retrievalService = std::make_shared<StatisticRetrievalService>(coordinator);

@@ -71,7 +71,7 @@ public:
 TEST_F(StatisticRegistryTest, RegisterAndFind)
 {
     const auto key = makeKey(Metric::Cardinality, "src", "field", 5000);
-    const auto queryId = QueryId::createDistributed(DistributedQueryId{"100"});
+    const auto queryId = DistributedQueryId{"100"};
 
     registry.registerStatistic(key, queryId, Statistic::StatisticId{42}, makeTriggers(2));
     auto result = registry.find(key);
@@ -91,7 +91,7 @@ TEST_F(StatisticRegistryTest, FindReturnsNulloptForUnknownKey)
 TEST_F(StatisticRegistryTest, FindReturnsNulloptForDifferentWindowSize)
 {
     const auto key = makeKey(Metric::Cardinality, "src", "field", 5000);
-    registry.registerStatistic(key, QueryId::createDistributed(DistributedQueryId{"100"}), Statistic::StatisticId{42}, makeTriggers(0));
+    registry.registerStatistic(key, DistributedQueryId{"100"}, Statistic::StatisticId{42}, makeTriggers(0));
 
     auto differentWindow = makeKey(Metric::Cardinality, "src", "field", 10000);
     EXPECT_FALSE(registry.find(differentWindow).has_value());
@@ -103,23 +103,23 @@ TEST_F(StatisticRegistryTest, DifferentMetricsSameFieldAreSeparateEntries)
     const auto keyMinVal = makeKey(Metric::MinVal, "src", "field", 5000);
 
     registry.registerStatistic(
-        keyCardinality, QueryId::createDistributed(DistributedQueryId{"1"}), Statistic::StatisticId{100}, makeTriggers(1));
+        keyCardinality, DistributedQueryId{"1"}, Statistic::StatisticId{100}, makeTriggers(1));
     registry.registerStatistic(
-        keyMinVal, QueryId::createDistributed(DistributedQueryId{"2"}), Statistic::StatisticId{200}, makeTriggers(3));
+        keyMinVal, DistributedQueryId{"2"}, Statistic::StatisticId{200}, makeTriggers(3));
 
     auto resultCardinality = registry.find(keyCardinality);
     auto resultMinVal = registry.find(keyMinVal);
 
     ASSERT_TRUE(resultCardinality.has_value());
     ASSERT_TRUE(resultMinVal.has_value());
-    EXPECT_EQ(resultCardinality->queryId, QueryId::createDistributed(DistributedQueryId{"1"}));
-    EXPECT_EQ(resultMinVal->queryId, QueryId::createDistributed(DistributedQueryId{"2"}));
+    EXPECT_EQ(resultCardinality->queryId, DistributedQueryId{"1"});
+    EXPECT_EQ(resultMinVal->queryId, DistributedQueryId{"2"});
 }
 
 TEST_F(StatisticRegistryTest, DeregisterRemovesEntry)
 {
     const auto key = makeKey(Metric::Cardinality, "src", "field", 5000);
-    registry.registerStatistic(key, QueryId::createDistributed(DistributedQueryId{"100"}), Statistic::StatisticId{42}, makeTriggers(4));
+    registry.registerStatistic(key, DistributedQueryId{"100"}, Statistic::StatisticId{42}, makeTriggers(4));
     EXPECT_TRUE(registry.find(key).has_value());
 
     EXPECT_TRUE(registry.deregisterStatistic(key));
@@ -141,7 +141,7 @@ TEST_F(StatisticRegistryTest, RegisterWithTriggers)
 
     std::vector<ConditionTrigger> triggers;
     triggers.push_back(std::move(trigger));
-    registry.registerStatistic(key, QueryId::createDistributed(DistributedQueryId{"100"}), Statistic::StatisticId{42}, std::move(triggers));
+    registry.registerStatistic(key, DistributedQueryId{"100"}, Statistic::StatisticId{42}, std::move(triggers));
 
     auto result = registry.find(key);
     ASSERT_TRUE(result.has_value());
@@ -151,7 +151,7 @@ TEST_F(StatisticRegistryTest, RegisterWithTriggers)
 TEST_F(StatisticRegistryTest, AddTriggerToExistingEntry)
 {
     const auto key = makeKey(Metric::Cardinality, "src", "field", 5000);
-    registry.registerStatistic(key, QueryId::createDistributed(DistributedQueryId{"100"}), Statistic::StatisticId{42}, makeTriggers(0));
+    registry.registerStatistic(key, DistributedQueryId{"100"}, Statistic::StatisticId{42}, makeTriggers(0));
 
     auto resultBefore = registry.find(key);
     ASSERT_TRUE(resultBefore.has_value());

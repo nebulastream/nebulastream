@@ -17,6 +17,7 @@
 #include <QueryManager/QueryManager.hpp>
 
 #include <chrono>
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -28,10 +29,17 @@
 
 namespace NES
 {
+class AbstractStatisticStore;
+
 class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration);
+    /// @param statisticStore optional statistic store injected into the worker so statistic build/probe queries can
+    /// read/write it. nullptr (the default) means the worker cannot serve statistic queries.
+    EmbeddedWorkerQuerySubmissionBackend(
+        WorkerConfig config,
+        SingleNodeWorkerConfiguration workerConfiguration,
+        std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
     [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan) override;
     std::expected<void, Exception> start(QueryId) override;
     std::expected<void, Exception> stop(QueryId) override;
@@ -42,6 +50,8 @@ private:
     SingleNodeWorker worker;
 };
 
-BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration);
+/// @param statisticStore optional statistic store injected into the embedded worker (see the backend ctor).
+BackendProvider
+createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration, std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
 
 }

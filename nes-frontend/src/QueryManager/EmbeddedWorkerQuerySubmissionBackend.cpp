@@ -31,7 +31,7 @@ namespace NES
 {
 
 EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
-    WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration)
+    WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration, std::shared_ptr<AbstractStatisticStore> statisticStore)
     : worker{[&]()
              {
                  /// Start with the per-worker topology config, then overlay only
@@ -45,7 +45,7 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
                  mergedConfig.dataAddress.setValue(config.dataAddress);
 
                  const LogContext logContext("create", config.host);
-                 return SingleNodeWorker(mergedConfig, config.host);
+                 return SingleNodeWorker(mergedConfig, config.host, std::move(statisticStore));
              }()}
 {
 }
@@ -75,10 +75,10 @@ std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::wor
     return worker.getWorkerStatus(after);
 }
 
-BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)
+BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration, std::shared_ptr<AbstractStatisticStore> statisticStore)
 {
-    return [workerConfiguration](const WorkerConfig& config) /// NOLINT(bugprone-exception-escape)
-    { return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(config, workerConfiguration); };
+    return [workerConfiguration, statisticStore = std::move(statisticStore)](const WorkerConfig& config) /// NOLINT(bugprone-exception-escape)
+    { return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(config, workerConfiguration, statisticStore); };
 }
 
 }
