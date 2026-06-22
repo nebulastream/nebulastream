@@ -21,10 +21,16 @@
 
 namespace NES
 {
+class StatisticRetrievalService;
+
 class RuleBasedOptimizer
 {
 public:
-    explicit RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryOptimization);
+    /// If `statisticRetrievalService` is non-null, a StatisticOptimizationRule backed by that service is added to
+    /// the rule sequence (PoC: it fetches a mock statistic and prints it while leaving the plan unmodified). The
+    /// service must outlive this optimizer. When null, the default rule sequence is used unchanged.
+    explicit RuleBasedOptimizer(
+        QueryOptimizerConfiguration defaultQueryOptimization, const StatisticRetrievalService* statisticRetrievalService = nullptr);
 
     [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
 

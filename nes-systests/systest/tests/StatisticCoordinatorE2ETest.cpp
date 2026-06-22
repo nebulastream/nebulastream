@@ -25,8 +25,10 @@
 #include <thread>
 #include <utility>
 
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
@@ -42,6 +44,7 @@
 #include <QueryOptimizerConfiguration.hpp>
 #include <QueryStatus.hpp>
 #include <RequestStatisticStatement.hpp>
+#include <Rules/Static/StatisticOptimizationRule.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -222,6 +225,71 @@ TEST_F(StatisticCoordinatorE2ETest, AdHocScalarRetrievalViaService)
 
     ASSERT_TRUE(value.has_value()) << "retrieveStatistic returned no value";
     EXPECT_DOUBLE_EQ(value.value(), 42.0);
+}
+
+/// Demonstrates statistics feeding a query-structuring decision: the StatisticOptimizationRule pulls a (mock)
+/// statistic through the retrieval service while optimizing, prints it, and returns the plan unmodified (we have no
+/// meaningful statistic to act on yet). This stands in for a future adaptive rewrite, e.g. filter reordering by
+/// selectivity.
+TEST_F(StatisticCoordinatorE2ETest, OptimizationRulePrintsStatisticAndLeavesPlanUnmodified)
+{
+    constexpr uint64_t windowSizeMs = 1000;
+
+    auto store = std::make_shared<DefaultStatisticStore>();
+    SingleNodeWorker worker(SingleNodeWorkerConfiguration{}, Host("localhost"), store);
+
+    const auto sourceCatalog = std::make_shared<SourceCatalog>();
+    const auto sinkCatalog = std::make_shared<SinkCatalog>();
+    const auto modelCatalog = std::make_shared<ModelCatalog>();
+    const SemanticAnalyzer semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
+    const RuleBasedOptimizer ruleOptimizer{QueryOptimizerConfiguration{}};
+
+    StatisticCoordinator coordinator(
+        std::make_unique<DefaultStatisticQueryGenerator>(),
+        [&](LogicalPlan plan) -> std::expected<QueryId, Exception>
+        {
+            try
+            {
+                auto optimized = ruleOptimizer.optimize(semanticAnalyzer.analyse(std::move(plan)));
+                auto queryId = worker.registerQuery(std::move(optimized));
+                if (not queryId.has_value())
+                {
+                    return queryId;
+                }
+                if (auto started = worker.startQuery(queryId.value()); not started.has_value())
+                {
+                    return std::unexpected(started.error());
+                }
+                return queryId;
+            }
+            catch (const Exception& exception)
+            {
+                return std::unexpected(exception);
+            }
+        },
+        [&worker](const QueryId queryId) { return blockingStop(worker, queryId); });
+    coordinator.startResultReader();
+
+    StatisticRetrievalService retrievalService(coordinator);
+    const RequestStatisticBuildStatement statement{
+        .domain = DataDomain{.logicalSourceName = "ruleSource", .fieldName = "value"},
+        .metric = Metric::Average,
+        .windowSizeMs = windowSizeMs,
+        .windowAdvanceMs = std::nullopt,
+        .eventTimeFieldName = std::nullopt,
+        .conditionTrigger = std::nullopt,
+        .options = {}};
+
+    /// A representative *user* query plan (one without statistic operators), so the rule's recursion guard does not
+    /// skip it. The rule does not inspect the plan beyond that guard, so a bare source plan suffices.
+    const LogicalPlan inputPlan = LogicalPlanBuilder::createLogicalPlan(Identifier::parse("userSource"));
+
+    const StatisticOptimizationRule rule(retrievalService, statement);
+    const LogicalPlan outputPlan = rule.apply(inputPlan);
+
+    coordinator.stopResultReader();
+
+    EXPECT_EQ(outputPlan, inputPlan) << "StatisticOptimizationRule must return the plan unmodified";
 }
 
 }

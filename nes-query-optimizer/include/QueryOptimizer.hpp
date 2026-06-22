@@ -28,6 +28,7 @@
 namespace NES
 {
 class ModelCatalog;
+class StatisticRetrievalService;
 }
 
 namespace NES
@@ -36,14 +37,17 @@ namespace NES
 class QueryOptimizer final
 {
 public:
+    /// `statisticRetrievalService` (optional, may be null) is forwarded to the RuleBasedOptimizer to enable the
+    /// PoC StatisticOptimizationRule. It must outlive this optimizer.
     explicit QueryOptimizer(
         const QueryOptimizerConfiguration& defaultQueryOptimization,
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
         const std::shared_ptr<const SinkCatalog>& sinkCatalog,
         const std::shared_ptr<const WorkerCatalog>& workerCatalog,
-        const std::shared_ptr<const ModelCatalog>& modelCatalog)
+        const std::shared_ptr<const ModelCatalog>& modelCatalog,
+        const StatisticRetrievalService* statisticRetrievalService = nullptr)
         : semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog)
-        , ruleBasedOptimization(defaultQueryOptimization)
+        , ruleBasedOptimization(defaultQueryOptimization, statisticRetrievalService)
         , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
 
     [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;

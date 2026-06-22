@@ -31,4 +31,4 @@ add_nes_test_systest(slt-e2e-test
 
 add_nes_test_systest(statistic-coordinator-e2e-test
         "StatisticCoordinatorE2ETest.cpp")
-target_link_libraries(statistic-coordinator-e2e-test nes-statistics)
+target_link_libraries(statistic-coordinator-e2e-test nes-statistics nes-query-optimizer)

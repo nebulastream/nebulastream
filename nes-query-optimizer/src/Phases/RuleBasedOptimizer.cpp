@@ -29,15 +29,20 @@
 #include <Rules/Static/ProjectionPushdownRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
+#include <Rules/Static/StatisticOptimizationRule.hpp>
 #include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <CollectionDomain.hpp>
+#include <Metric.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <RequestStatisticStatement.hpp>
 
 namespace NES
 {
 
-RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryOptimization)
+RuleBasedOptimizer::RuleBasedOptimizer(
+    QueryOptimizerConfiguration defaultQueryOptimization, const StatisticRetrievalService* statisticRetrievalService)
     : defaultQueryOptimization(std::move(defaultQueryOptimization))
 {
     RuleManager<LogicalPlan> ruleManager;
@@ -52,6 +57,23 @@ RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryO
     ruleManager.addRule(PredicatePushdownRule{});
     ruleManager.addRule(WatermarkAssignerPushdownRule{});
     ruleManager.addRule(ProjectionPushdownRule{});
+
+    /// PoC: when a statistic retrieval service is wired in, add a rule that surfaces a (mock) statistic to the
+    /// optimizer for each user query. The statement below selects which statistic to fetch; correctness is
+    /// irrelevant here (the PoC store returns the constant 42) — it only demonstrates the control-plane value
+    /// reaching the optimizer at plan-rewrite time.
+    if (statisticRetrievalService != nullptr)
+    {
+        const RequestStatisticBuildStatement mockStatement{
+            .domain = DataDomain{.logicalSourceName = "optimizerSource", .fieldName = "value"},
+            .metric = Metric::Average,
+            .windowSizeMs = 1000,
+            .windowAdvanceMs = std::nullopt,
+            .eventTimeFieldName = std::nullopt,
+            .conditionTrigger = std::nullopt,
+            .options = {}};
+        ruleManager.addRule(StatisticOptimizationRule{*statisticRetrievalService, mockStatement});
+    }
 
     NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
     ruleSequence = ruleManager.getSequence();
