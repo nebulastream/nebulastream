@@ -31,11 +31,13 @@ public:
         QueryOptimizerConfiguration defaultQueryOptimization,
         SharedPtr<const SourceCatalog> sourceCatalog,
         SharedPtr<const SinkCatalog> sinkCatalog,
-        SharedPtr<const WorkerCatalog> workerCatalog)
+        SharedPtr<const WorkerCatalog> workerCatalog,
+        bool makeFT)
         : defaultQueryOptimization(std::move(defaultQueryOptimization))
         , sourceCatalog(std::move(sourceCatalog))
         , sinkCatalog(std::move(sinkCatalog))
-        , workerCatalog(std::move(workerCatalog)) { };
+        , workerCatalog(std::move(workerCatalog))
+        , makeFT(makeFT) { };
 
     [[nodiscard]] DistributedLogicalPlan place(LogicalPlan plan) const;
 
@@ -44,6 +46,7 @@ private:
     SharedPtr<const SourceCatalog> sourceCatalog;
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
+    bool makeFT;
 };
 
 

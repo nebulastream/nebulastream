@@ -19,14 +19,19 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
+#include <Placement/FaultTolerancePlacement.hpp>
 
 namespace NES
 {
 DistributedLogicalPlan OperatorPlacer::place(LogicalPlan plan) const
 {
     BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(plan);
-
-    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
+    auto decomposed = QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
         .decompose(plan, defaultQueryOptimization.network);
+    if (makeFT)
+    {
+        return FTPlacer(copyPtr(workerCatalog)).apply(decomposed);
+    }
+    return decomposed;
 }
 }

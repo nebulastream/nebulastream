@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -11,30 +11,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#pragma once
 
-#include <Operators/FaultTolerance/SNDeduplicationLogicalOperator.hpp>
-#include <QueryOptimizer.hpp>
-
+#include <utility>
 #include <Plans/LogicalPlan.hpp>
+#include <Util/Pointers.hpp>
+#include <WorkerCatalog.hpp>
+
 #include <DistributedLogicalPlan.hpp>
 
 namespace NES
 {
 
-#include <uuid/uuid.h>
-std::string generate_uuid() {
-    uuid_t bin;
-    uuid_generate_random(bin);
-    char str[37];
-    uuid_unparse_lower(bin, str);
-    return std::string(str);
-}
-
-DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
+/// Insert fault tolerance operators into the distributed query plan
+class FTPlacer final
 {
-    plan = semanticAnalyzer.analyse(plan);
-    plan = ruleBasedOptimization.optimize(plan);
-    return operatorPlacement.place(plan);
-}
+    SharedPtr<const WorkerCatalog> workerCatalog;
 
+public:
+    explicit FTPlacer(SharedPtr<const WorkerCatalog> workerCatalog) : workerCatalog(std::move(workerCatalog)) { }
+
+    DistributedLogicalPlan apply(DistributedLogicalPlan& distributedPlan);
+};
 }
