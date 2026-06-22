@@ -482,7 +482,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         }
     }
 
-    return {.root = {probeWrapper}, .leafs = {leftLeaf, rightLeaf}};
+    return {.root = {probeWrapper}, .leaves = {leftLeaf, rightLeaf}};
 };
 
 std::unique_ptr<AbstractLoweringRule>

@@ -269,7 +269,7 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
             rightKeyFieldNames));
     }
 
-    return {.root = {probeWrapper}, .leafs = {leftBuildWrapper, rightBuildWrapper}};
+    return {.root = {probeWrapper}, .leaves = {leftBuildWrapper, rightBuildWrapper}};
 };
 
 std::unique_ptr<AbstractLoweringRule>

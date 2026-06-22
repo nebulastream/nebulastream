@@ -95,7 +95,7 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     std::vector leaves(logicalOperator.getChildren().size(), wrapper);
-    return {.root = wrapper, .leafs = {leaves}};
+    return {.root = wrapper, .leaves = {leaves}};
 }
 
 std::unique_ptr<AbstractLoweringRule>

@@ -131,7 +131,7 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
             std::vector{child});
     }
 
-    return {.root = child, .leafs = {scanWrapper}};
+    return {.root = child, .leaves = {scanWrapper}};
 }
 
 std::unique_ptr<AbstractLoweringRule>

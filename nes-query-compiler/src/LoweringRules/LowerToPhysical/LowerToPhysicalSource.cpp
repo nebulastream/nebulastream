@@ -69,7 +69,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
         memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
-    return {.root = wrapper, .leafs = {}};
+    return {.root = wrapper, .leaves = {}};
 }
 
 LoweringRuleRegistryReturnType
