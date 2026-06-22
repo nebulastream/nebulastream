@@ -62,3 +62,7 @@ scripts/__pycache__
 .claude/
 [Cc][Ll][Aa][Uu][Dd][Ee].md
 build_mac/
+
+# Environment Variables & Secrets
+.env
+*.env

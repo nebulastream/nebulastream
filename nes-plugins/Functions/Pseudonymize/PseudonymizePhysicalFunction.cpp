@@ -50,8 +50,8 @@ namespace {
     thread_local const std::string* tl_secretKey = nullptr;
 }
 
-// Constructor — loads the key once from the environment at startup.
-// Throws immediately if the variable is not set.
+// Constructor — loads the key once from the environment at startup
+// Throws immediately if the variable is not set
 PseudonymizePhysicalFunction::PseudonymizePhysicalFunction(PhysicalFunction childPhysicalFunction)
     : childPhysicalFunction(std::move(childPhysicalFunction))
 {
@@ -68,14 +68,15 @@ PseudonymizePhysicalFunction::PseudonymizePhysicalFunction(PhysicalFunction chil
 
 namespace {
 
-// generateHMAC takes ONLY the patient ID — the single int32 that Nautilus
-// can handle natively. The key is read from the thread-local pointer
-// which execute() sets just before calling nautilus::invoke().
-int32_t generateHMAC(int32_t inputId)
+// TEMPLATE: A single, generic logic block for all numeric types.
+// 'sizeof(inputId)' automatically adapts to the input type (e.g., 4 bytes for INT32, 8 for INT64).
+template <typename T>
+T generateGenericHMAC(T inputId)
 {
     const std::string* keyPtr = tl_secretKey;
     unsigned char hmacResult[EVP_MAX_MD_SIZE];
     unsigned int  hmacLen = 0;
+
     HMAC(
         EVP_sha256(),
         keyPtr->data(),
@@ -85,8 +86,10 @@ int32_t generateHMAC(int32_t inputId)
         hmacResult,
         &hmacLen
     );
-    int32_t result = 0;
+
+    T result = 0;
     std::memcpy(&result, hmacResult, sizeof(result));
+
     return result > 0 ? result : -result;
 }
 
@@ -94,17 +97,37 @@ int32_t generateHMAC(int32_t inputId)
 
 VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    // Point the thread-local at our member key before invoking.
-    // generateHMAC will read it directly — no Nautilus type issues.
+    // Provide the key to the current execution thread right before entering the JIT block
     tl_secretKey = &secretKey;
-
     const auto inputValue = childPhysicalFunction.execute(record, arena);
-    auto inputInt = inputValue.getRawValueAs<nautilus::val<int32_t>>();
 
-    // Now invoke with only the int32 — the only argument type Nautilus needs.
-    auto pseudoId = nautilus::invoke(generateHMAC, inputInt);
+    // VISITOR PATTERN: 'customVisit' dynamically unpacks the VarVal box from the inside.
+    // 'arg' automatically assumes the exact underlying type (e.g., nautilus::val<int32_t>).
+    return inputValue.customVisit([&](auto&& arg) -> VarVal
+    {
+        using ArgType = std::decay_t<decltype(arg)>;
 
-    return VarVal(pseudoId);
+        // CRITICAL: 'if constexpr' forces the C++ compiler to drop irrelevant branches at compile-time.
+        // This prevents Nautilus from crashing due to type mismatches and creates clean,
+        // isolated execution paths perfect for MC/DC test coverage.
+        if constexpr (std::is_same_v<ArgType, nautilus::val<int32_t>>)
+        {
+            auto pseudoId = nautilus::invoke(generateGenericHMAC<int32_t>, arg);
+            return VarVal(pseudoId);
+        }
+        else if constexpr (std::is_same_v<ArgType, nautilus::val<int64_t>>)
+        {
+            auto pseudoId = nautilus::invoke(generateGenericHMAC<int64_t>, arg);
+            return VarVal(pseudoId);
+        }
+        else
+        {
+            throw std::runtime_error(
+                "[PseudonymizePhysicalFunction] Unsupported input data type"
+                "Currently only INT32 and INT64 are supported"
+            );
+        }
+    });
 }
 
 PhysicalFunctionRegistryReturnType

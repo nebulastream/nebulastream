@@ -63,24 +63,24 @@ FROM stream2 INTO sinkStream2;
 #   To run this test, temporarily change the environment variable:
 #     export PSEUDONYM_SECRET_KEY="other-secret-key"
 
-CREATE LOGICAL SOURCE stream3(patient_id INT32 NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
-ATTACH INLINE
-0
-1
-2
-3
+#CREATE LOGICAL SOURCE stream3(patient_id INT32 NOT NULL);
+#CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
+#ATTACH INLINE
+#0
+#1
+#2
+#3
 
-CREATE SINK sinkStream3(patient_id_pseudo INT32 NOT NULL) TYPE File;
+#CREATE SINK sinkStream3(patient_id_pseudo INT32 NOT NULL) TYPE File;
 
-SELECT
-    Pseudonymize(patient_id) AS patient_id_pseudo
-FROM stream3 INTO sinkStream3;
-----
-1702986568
-1021456373
-681150670
-975472697
+#SELECT
+#    Pseudonymize(patient_id) AS patient_id_pseudo
+#FROM stream3 INTO sinkStream3;
+#----
+#1702986568
+#1021456373
+#681150670
+#975472697
 
 
 # Test 4: Edge case — single record
@@ -116,3 +116,44 @@ SELECT
 FROM stream5 INTO sinkStream5;
 ----
 1401463166
+
+
+
+# Test 6: INT64 Data Type Support
+#   Verifies that the function correctly identifies and processes INT64 inputs
+#   using the polymorphic template without causing a JIT-compiler type mismatch.
+CREATE LOGICAL SOURCE stream6(patient_id INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream6 TYPE File;
+ATTACH INLINE
+0
+1
+2
+3
+
+CREATE SINK sinkStream6(patient_id_pseudo INT64 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream6 INTO sinkStream6;
+----
+5879662185643602027
+6351266960312834111
+7878015036157417302
+8896932896802744675
+
+
+# Test 7: Edge case — maximum INT64 value
+#   Verifies the function handles the massive 8-byte boundary value INT64_MAX
+#   (9223372036854775807) natively.
+CREATE LOGICAL SOURCE stream7(patient_id INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream7 TYPE File;
+ATTACH INLINE
+9223372036854775807
+
+CREATE SINK sinkStream7(patient_id_pseudo INT64 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream7 INTO sinkStream7;
+----
+2830690117075404093
