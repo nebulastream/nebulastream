@@ -114,7 +114,7 @@ set(NES_WARNINGS "-Wall -Wconstant-conversion -Wbitwise-instead-of-logical -Wext
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer ${NES_SPECIFIC_FLAGS}")
 
 # setup rpath for linker
-set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")
+list(APPEND CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")
 set(CMAKE_INSTALL_RPATH "$ORIGIN/nes-plugins")
 
 if (ENABLE_FTIME_TRACE)
