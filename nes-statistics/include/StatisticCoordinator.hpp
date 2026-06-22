@@ -57,7 +57,11 @@ public:
     /// Callback that submits an already-generated LogicalPlan, returning the QueryId on success.
     using SubmitQueryFn = std::function<std::expected<QueryId, Exception>(LogicalPlan)>;
 
-    StatisticCoordinator(std::unique_ptr<StatisticQueryGenerator> queryGenerator, SubmitQueryFn submitQuery);
+    /// Callback that stops a previously submitted query by id. Expected to BLOCK until the query has stopped.
+    using StopQueryFn = std::function<std::expected<void, Exception>(QueryId)>;
+
+    StatisticCoordinator(
+        std::unique_ptr<StatisticQueryGenerator> queryGenerator, SubmitQueryFn submitQuery, StopQueryFn stopQuery = nullptr);
     ~StatisticCoordinator();
 
     StatisticCoordinator(const StatisticCoordinator&) = delete;
@@ -75,6 +79,11 @@ public:
 
     /// Removes the entry for this key. Returns true if an entry was removed.
     bool deregisterStatistic(const StatisticRegistry::Key& key);
+
+    /// Stops the build query backing `key` (blocking, via the stop callback if one was provided) and deregisters
+    /// it. Returns true if an entry was found. Used by the ad-hoc retrieval path to tear down the build query
+    /// once its value has been read back.
+    bool stopStatistic(const StatisticRegistry::Key& key);
 
     /// Creates the result FIFO (mkfifo) and starts the reader thread. Must be called before collectNewStatistic /
     /// getStatistics (the generated queries bake the returned FIFO path into their FileSink). Returns the path.
@@ -99,6 +108,7 @@ private:
     StatisticRegistry registry;
     std::unique_ptr<StatisticQueryGenerator> queryGenerator;
     SubmitQueryFn submitQuery;
+    StopQueryFn stopQuery;
 
     std::string fifoPath;
     std::thread readerThread;

@@ -15,8 +15,10 @@
 #include <StatisticCoordinator.hpp>
 
 #include <array>
+#include <atomic>
 #include <cerrno>
 #include <chrono>
+#include <csignal>
 #include <cstddef>
 #include <cstdint>
 #include <future>
@@ -46,8 +48,9 @@
 namespace NES
 {
 
-StatisticCoordinator::StatisticCoordinator(std::unique_ptr<StatisticQueryGenerator> queryGenerator, SubmitQueryFn submitQuery)
-    : queryGenerator(std::move(queryGenerator)), submitQuery(std::move(submitQuery))
+StatisticCoordinator::StatisticCoordinator(
+    std::unique_ptr<StatisticQueryGenerator> queryGenerator, SubmitQueryFn submitQuery, StopQueryFn stopQuery)
+    : queryGenerator(std::move(queryGenerator)), submitQuery(std::move(submitQuery)), stopQuery(std::move(stopQuery))
 {
 }
 
@@ -97,9 +100,34 @@ bool StatisticCoordinator::deregisterStatistic(const StatisticRegistry::Key& key
     return registry.deregisterStatistic(key);
 }
 
+bool StatisticCoordinator::stopStatistic(const StatisticRegistry::Key& key)
+{
+    const auto entry = registry.find(key);
+    if (not entry.has_value())
+    {
+        return false;
+    }
+    if (stopQuery)
+    {
+        if (auto stopped = stopQuery(entry->queryId); not stopped.has_value())
+        {
+            NES_WARNING(
+                "StatisticCoordinator::stopStatistic: failed to stop build query {}: {}", entry->queryId, stopped.error().what());
+        }
+    }
+    registry.deregisterStatistic(key);
+    return true;
+}
+
 std::string StatisticCoordinator::startResultReader()
 {
-    fifoPath = "/tmp/nes_statistic_coordinator_" + std::to_string(::getpid()) + ".fifo";
+    /// A data-plane FileSink may still be writing when we close/unlink the FIFO on shutdown; ignore SIGPIPE so that
+    /// write fails with EPIPE instead of terminating the whole process.
+    std::signal(SIGPIPE, SIG_IGN);
+
+    /// Unique per coordinator instance (not just per process) so multiple coordinators in one process do not collide.
+    static std::atomic<uint64_t> fifoCounter{0};
+    fifoPath = "/tmp/nes_statistic_coordinator_" + std::to_string(::getpid()) + "_" + std::to_string(fifoCounter.fetch_add(1)) + ".fifo";
     ::unlink(fifoPath.c_str());
     if (::mkfifo(fifoPath.c_str(), 0600) != 0)
     {
@@ -214,12 +242,14 @@ StatisticCoordinator::getStatistics(const StatisticRegistry::Key& key, Windowing
     pendingProbes.wlock()->insert_or_assign(statisticId, PendingProbe{.promise = std::move(promise)});
 
     auto plan = queryGenerator->generateProbeQuery(statisticId.getRawValue(), startTs.getTime(), endTs.getTime(), fifoPath);
-    if (const auto submitResult = submitQuery(std::move(plan)); not submitResult.has_value())
+    const auto submitResult = submitQuery(std::move(plan));
+    if (not submitResult.has_value())
     {
         pendingProbes.wlock()->erase(statisticId);
         NES_WARNING("StatisticCoordinator::getStatistics: probe submit failed: {}", submitResult.error().what());
         return std::nullopt;
     }
+    const auto probeQueryId = submitResult.value();
 
     constexpr auto timeout = std::chrono::seconds{30};
     std::optional<double> result;
@@ -232,6 +262,15 @@ StatisticCoordinator::getStatistics(const StatisticRegistry::Key& key, Windowing
         NES_WARNING("StatisticCoordinator::getStatistics: timeout waiting for probe result of statisticId={}", statisticId);
     }
     pendingProbes.wlock()->erase(statisticId);
+
+    /// The probe is a one-shot query; stop it now that we have the result so it does not linger.
+    if (stopQuery)
+    {
+        if (auto stopped = stopQuery(probeQueryId); not stopped.has_value())
+        {
+            NES_WARNING("StatisticCoordinator::getStatistics: failed to stop probe query {}: {}", probeQueryId, stopped.error().what());
+        }
+    }
     return result;
 }
 
