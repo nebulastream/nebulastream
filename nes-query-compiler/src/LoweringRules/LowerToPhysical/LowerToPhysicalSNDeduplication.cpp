@@ -38,6 +38,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSNDeduplication::apply(LogicalOperator
 {
     PRECONDITION(logicalOperator.tryGetAs<SNDeduplicationLogicalOperator>(), "Expected a SelectionLogicalOperator");
     const auto lop = logicalOperator.getAs<SNDeduplicationLogicalOperator>();
+    const auto inputSchema = lop.getInputSchemas()[0];
     auto handlerId = getNextOperatorHandlerId();
     const auto inputOriginIds
     = lop.getChildren()
@@ -51,24 +52,33 @@ LoweringRuleResultSubgraph LowerToPhysicalSNDeduplication::apply(LogicalOperator
     | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
     auto handler = std::make_shared<SNDeduplicationOperatorHandler>(lop->getFilePath(), inputOriginIds);
-    auto physicalOperator = SNDeduplicationPhysicalOperator(handlerId, lop->getFilePath());
 
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
-    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
-    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
 
+    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    PRECONDITION(inputSchema.hasFields(), "Expected a schema with fields");
+
+    const auto bufferSize = conf.operatorBufferSize.getValue();
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
+    const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
+    //const auto memoryProvider = nullptr;
+
+    auto physicalOperator = SNDeduplicationPhysicalOperator(memoryProvider, lop.getInputSchemas()[0].getFieldNames(), handlerId, lop->getFilePath());
+    //auto physicalOperator = ScanPhysicalOperator(memoryProvider, inputSchema.getFieldNames());
+    auto c1 = lop.getOutputSchema().getNumberOfFields();
+    auto c2 = inputSchema.getNumberOfFields();
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        logicalOperator.getInputSchemas()[0],
+        inputSchema,
         logicalOperator.getOutputSchema(),
         memoryLayoutType,
         memoryLayoutType,
         handlerId,
         handler,
-        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
-    std::vector leafes(logicalOperator.getChildren().size(), wrapper);
-    return {.root = wrapper, .leafs = {leafes}};
+    std::vector leafs(logicalOperator.getChildren().size(), wrapper);
+    return {.root = wrapper, .leafs = {leafs}};
 };
 
 std::unique_ptr<AbstractLoweringRule>
