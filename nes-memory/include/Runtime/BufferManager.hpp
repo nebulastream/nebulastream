@@ -73,23 +73,16 @@ class BufferManager final : public std::enable_shared_from_this<BufferManager>, 
     static constexpr auto DEFAULT_ALIGNMENT = 64;
 
 public:
-    explicit BufferManager(
-        Private,
-        uint32_t bufferSize,
-        uint32_t numOfBuffers,
-        std::shared_ptr<std::pmr::memory_resource> memoryResource,
-        uint32_t withAlignment);
+    explicit BufferManager(Private, uint32_t bufferSize, uint32_t numOfBuffers, std::shared_ptr<std::pmr::memory_resource> memoryResource);
 
-    /// Creates a new global buffer manager
+    /// Creates a new global buffer manager. Buffers are always aligned to DEFAULT_ALIGNMENT (a cache line).
     /// @param bufferSize the size of each buffer in bytes
     /// @param numOfBuffers the total number of buffers in the pool
-    /// @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
     /// @param memoryResource resource for allocating and deallocating memory
     static std::shared_ptr<BufferManager> create(
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
-        const std::shared_ptr<std::pmr::memory_resource>& memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
-        uint32_t withAlignment = DEFAULT_ALIGNMENT);
+        const std::shared_ptr<std::pmr::memory_resource>& memoryResource = std::make_shared<NesDefaultMemoryAllocator>());
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
@@ -99,11 +92,10 @@ public:
 
 private:
     /**
-     * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes.
-     * This is a one shot call. A second invocation of this call will fail
-     * @param withAlignment
+     * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes, aligned to
+     * DEFAULT_ALIGNMENT. This is a one shot call. A second invocation of this call will fail
      */
-    void initialize(uint32_t withAlignment);
+    void initialize();
 
 public:
     /// This blocks until a buffer is available.
