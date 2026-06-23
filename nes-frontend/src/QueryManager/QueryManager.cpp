@@ -109,7 +109,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
 [[nodiscard]] std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const DistributedLogicalPlan& plan)
 {
-    std::unordered_map<Host, std::vector<QueryId>> localQueries;
+    std::unordered_map<Host, std::vector<LocalQuery>> localQueries;
 
     auto id = plan.getQueryId();
     if (id == DistributedQueryId(DistributedQueryId::INVALID))
@@ -134,7 +134,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
                 if (result)
                 {
                     NES_DEBUG("Registration to node {} was successful.", host);
-                    localQueries[host].emplace_back(*result);
+                    localQueries[host].emplace_back(LocalQuery{host, *result, localPlan, 0}); // TODO epoch, move plan
                     continue;
                 }
                 return std::unexpected{result.error()};
@@ -161,15 +161,15 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
     std::vector<Exception> exceptions;
 
     const std::chrono::steady_clock::time_point queryStartTimestamp = std::chrono::steady_clock::now();
-    for (const auto& [host, localQueryId] : query.iterate())
+    for (const auto& [host, localQuery] : query.iterate())
     {
         try
         {
             INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
-            const auto result = backends.at(host).start(localQueryId);
+            const auto result = backends.at(host).start(localQuery.queryId);
             if (result)
             {
-                NES_DEBUG("Starting query {} on node {} was successful.", localQueryId, host);
+                NES_DEBUG("Starting query {} on node {} was successful.", localQuery.queryId, host);
                 continue;
             }
 
@@ -204,8 +204,8 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
             waitForStatusChange,
             [&](const auto& pair)
             {
-                auto [wId, localQueryId] = pair;
-                const auto result = backends.at(wId).status(localQueryId);
+                auto [wId, localQuery] = pair;
+                const auto result = backends.at(wId).status(localQuery.queryId);
                 if (!result)
                 {
                     exceptions.emplace_back(QueryStartFailed("Waiting for query state to change: {}", result.error()));
@@ -231,7 +231,7 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
             statusRetries,
             fmt::join(
                 waitForStatusChange
-                    | std::views::transform([](const auto& pair) { return fmt::format("{}@{}", std::get<1>(pair), std::get<0>(pair)); }),
+                    | std::views::transform([](const auto& pair) { return fmt::format("{}@{}", std::get<1>(pair).queryId, std::get<0>(pair)); }),
                 ", ")));
     }
 
@@ -258,20 +258,20 @@ std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManag
 
     std::unordered_map<Host, std::unordered_map<QueryId, std::expected<LocalQueryStatusSnapshot, Exception>>> localStatusResults;
 
-    for (const auto& [host, localQueryId] : query.iterate())
+    for (const auto& [host, localQuery] : query.iterate())
     {
         try
         {
             INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
-            const auto result = backends.at(host).status(localQueryId);
-            localStatusResults[host].emplace(localQueryId, result);
+            const auto result = backends.at(host).status(localQuery.queryId);
+            localStatusResults[host].emplace(localQuery.queryId, result);
         }
         /// Worker backends return std::expected for normal errors; this catch is defensive
         /// against unexpected exceptions from the underlying network layer (e.g., gRPC stubs).
         catch (const std::exception& e)
         {
             localStatusResults[host].emplace(
-                localQueryId, std::unexpected(QueryStatusFailed("Message from external exception: {} ", e.what())));
+                localQuery.queryId, std::unexpected(QueryStatusFailed("Message from external exception: {} ", e.what())));
         }
     }
 
@@ -322,15 +322,15 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
 
     std::vector<Exception> exceptions{};
 
-    for (const auto& [host, localQueryId] : query.iterate())
+    for (const auto& [host, localQuery] : query.iterate())
     {
         try
         {
             INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
-            auto result = backends.at(host).stop(localQueryId);
+            auto result = backends.at(host).stop(localQuery.queryId);
             if (result)
             {
-                NES_DEBUG("Stopping query {} on node {} was successful.", localQueryId, host);
+                NES_DEBUG("Stopping query {} on node {} was successful.", localQuery.queryId, host);
                 continue;
             }
             exceptions.push_back(result.error());

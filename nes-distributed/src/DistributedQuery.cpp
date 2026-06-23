@@ -185,18 +185,18 @@ NES::DistributedQueryMetrics NES::DistributedQueryStatusSnapshot::coalesceQueryM
     return metrics;
 }
 
-NES::DistributedQuery::DistributedQuery(std::unordered_map<Host, std::vector<QueryId>> localQueries) : localQueries(std::move(localQueries))
+NES::DistributedQuery::DistributedQuery(std::unordered_map<Host, std::vector<LocalQuery>> localQueries) : localQueries(std::move(localQueries))
 {
 }
 
 std::ostream& NES::operator<<(std::ostream& os, const DistributedQuery& query)
 {
     std::vector<std::string> entries;
-    for (const auto& [grpc, ids] : query.localQueries)
+    for (const auto& [grpc, localQueries] : query.localQueries)
     {
-        for (const auto& id : ids)
+        for (const auto& localQuery : localQueries)
         {
-            entries.push_back(fmt::format("{}@{}", id, grpc));
+            entries.push_back(fmt::format("{}@{}", localQuery.queryId, grpc));
         }
     }
     fmt::print(os, "Query [{}]", fmt::join(entries, ", "));

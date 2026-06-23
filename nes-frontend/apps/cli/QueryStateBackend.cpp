@@ -25,9 +25,11 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
+#include <google/protobuf/util/json_util.h>
 #include <rfl/Rename.hpp>
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
@@ -38,10 +40,19 @@ namespace NES::CLI
 {
 namespace
 {
-struct PersistedQueryState
+
+struct PersistedLocalQueryState
+{
+    rfl::Rename<"host", std::string> host;
+    rfl::Rename<"local_query_id", std::string> localQueryId;
+    rfl::Rename<"logical_plan_protobuf", std::string> logicalPlanProtobuf;
+    rfl::Rename<"epoch", int> epoch;
+};
+
+struct PersistedDistributedQueryState
 {
     rfl::Rename<"query_id", std::string> queryId;
-    rfl::Rename<"local_queries", std::unordered_map<std::string, std::vector<std::string>>> localQueries;
+    rfl::Rename<"local_queries", std::unordered_map<std::string, std::vector<PersistedLocalQueryState>>> localQueries;
     rfl::Rename<"created_at", std::string> createdAt;
 };
 }
@@ -101,11 +112,21 @@ std::filesystem::path QueryStateBackend::getQueryFilePath(const DistributedQuery
 PersistedQueryId QueryStateBackend::store(const DistributedQueryId& distributedQueryId, const DistributedQuery& distributedQuery)
 {
     auto filePath = getQueryFilePath(distributedQueryId);
-    PersistedQueryState state;
+    PersistedDistributedQueryState state;
     state.queryId = distributedQueryId.getRawValue();
-    for (const auto& [grpcAddr, queryId] : distributedQuery.iterate())
+    for (const auto& [grpcAddr, localQuery] : distributedQuery.iterate())
     {
-        state.localQueries()[grpcAddr.getRawValue()].push_back(queryId.getLocalQueryId().getRawValue());
+        std::string serializedLocalPlan;
+        if (!google::protobuf::util::MessageToJsonString(
+                 QueryPlanSerializationUtil::serializeQueryPlan(localQuery.localPlan), &serializedLocalPlan)
+                 .ok())
+        {
+            INVARIANT(false, "Couldn't serialize local plan, find out why");
+        }
+
+        state.localQueries()[grpcAddr.getRawValue()].push_back(
+            PersistedLocalQueryState{
+                grpcAddr.getRawValue(), localQuery.queryId.getLocalQueryId().getRawValue(), serializedLocalPlan, localQuery.epoch});
     }
     state.createdAt = fmt::format("{:%Y-%m-%dT%H:%M:%S%z}", std::chrono::system_clock::now());
 
@@ -138,27 +159,39 @@ DistributedQuery QueryStateBackend::load(PersistedQueryId persistedId)
     }
     std::stringstream contents;
     contents << file.rdbuf();
-    auto parsed = rfl::json::read<PersistedQueryState>(contents.str());
+    auto parsed = rfl::json::read<PersistedDistributedQueryState>(contents.str());
     if (!parsed)
     {
         throw InvalidConfigParameter("Failed to parse state file {}: {}", filePath.string(), parsed.error().what());
     }
     const auto state = std::move(parsed.value());
     auto distributedId = DistributedQueryId(state.queryId());
-    std::unordered_map<Host, std::vector<QueryId>> localQueries;
-    for (const auto& [workerKey, localQueryIds] : state.localQueries())
+    std::unordered_map<Host, std::vector<LocalQuery>> queries;
+    for (const auto& [workerKey, persistedLocalQueries] : state.localQueries())
     {
         const Host worker(workerKey);
-        std::vector<QueryId> queryIds;
-        queryIds.reserve(localQueryIds.size());
-        for (const auto& localQueryIdStr : localQueryIds)
+        std::vector<LocalQuery> localQueries;
+        localQueries.reserve(persistedLocalQueries.size());
+        for (const auto& localQuery : persistedLocalQueries)
         {
-            queryIds.emplace_back(QueryId::create(LocalQueryId(localQueryIdStr), distributedId));
+            SerializableQueryPlan serializableQueryPlan;
+            auto status = google::protobuf::util::JsonStringToMessage(localQuery.logicalPlanProtobuf.get(), &serializableQueryPlan);
+
+            if (!status.ok())
+            {
+                INVARIANT(false, "Couldn't parse local plan, find out why");
+            }
+            localQueries.emplace_back(
+                LocalQuery{
+                    worker,
+                    QueryId::create(LocalQueryId(localQuery.localQueryId.get()), distributedId),
+                    QueryPlanSerializationUtil::deserializeQueryPlan(serializableQueryPlan),
+                    localQuery.epoch.get()});
         }
-        localQueries.emplace(worker, std::move(queryIds));
+        queries.emplace(worker, std::move(localQueries));
     }
     NES_DEBUG("Loaded query state from: {}", filePath.string());
-    return DistributedQuery(localQueries);
+    return DistributedQuery(queries);
 }
 
 void QueryStateBackend::remove(PersistedQueryId persistedId)

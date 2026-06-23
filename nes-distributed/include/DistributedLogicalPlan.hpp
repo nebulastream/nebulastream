@@ -71,6 +71,7 @@ public:
 private:
     DistributedQueryId queryId{DistributedQueryId::INVALID};
     std::unordered_map<Host, std::vector<LogicalPlan>> localPlans;
+    std::unordered_map<LogicalPlan*, std::vector<LogicalPlan*>> childPlans;
     LogicalPlan globalPlan;
 };
 }

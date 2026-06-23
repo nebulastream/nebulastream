@@ -26,6 +26,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
@@ -112,9 +113,18 @@ struct DistributedQueryStatusSnapshot
     [[nodiscard]] DistributedQueryMetrics coalesceQueryMetrics() const;
 };
 
+class LocalQuery
+{
+public:
+    Host host;
+    QueryId queryId;
+    LogicalPlan localPlan;
+    int epoch;
+};
+
 class DistributedQuery
 {
-    std::unordered_map<Host, std::vector<QueryId>> localQueries;
+    std::unordered_map<Host, std::vector<LocalQuery>> localQueries;
 
 public:
     [[nodiscard]] auto iterate() const
@@ -138,7 +148,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const DistributedQuery& query);
     DistributedQuery() = default;
 
-    explicit DistributedQuery(std::unordered_map<Host, std::vector<QueryId>> localQueries);
+    explicit DistributedQuery(std::unordered_map<Host, std::vector<LocalQuery>> localQueries);
 };
 
 std::ostream& operator<<(std::ostream& ostream, const DistributedQuery& query);
