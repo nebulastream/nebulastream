@@ -65,6 +65,14 @@ LoweringRuleResultSubgraph LowerToPhysicalSNDeduplication::apply(LogicalOperator
     const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
     //const auto memoryProvider = nullptr;
 
+    if (inputSchema.getSizeInBytes() > bufferSize) //TODO is this really the right place
+    {
+        throw TuplesTooLargeForPipelineBufferSize(
+            "Got pipeline with an input schema size of {}, which is larger than the configured buffer size of the pipeline, which is {}",
+            inputSchema.getSizeInBytes(),
+            bufferSize);
+    }
+
     auto inputFieldNames = inputSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
             | std::ranges::to<std::vector>();
 

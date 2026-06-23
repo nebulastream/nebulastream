@@ -40,11 +40,13 @@ void SNDeduplicationPhysicalOperator::setup(ExecutionContext& executionCtx, Comp
 {
     (void)compilationContext;
     invoke(startHandlerProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId));
+    setupChild(executionCtx, compilationContext);
 }
 
 void SNDeduplicationPhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     invoke(stopHandlerProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId));
+    terminateChild(executionCtx);
 }
 
 bool filterAndBufferProxy(OperatorHandler* handler, TupleBuffer* buffer)
