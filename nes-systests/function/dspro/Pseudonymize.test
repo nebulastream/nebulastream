@@ -118,7 +118,6 @@ FROM stream5 INTO sinkStream5;
 1401463166
 
 
-
 # Test 6: INT64 Data Type Support
 #   Verifies that the function correctly identifies and processes INT64 inputs
 #   using the polymorphic template without causing a JIT-compiler type mismatch.
@@ -157,3 +156,77 @@ SELECT
 FROM stream7 INTO sinkStream7;
 ----
 2830690117075404093
+
+
+# Test 8: INT8 Data Type Support
+#   Verifies that the function correctly processes 1-byte integers (INT8).
+#   This explicitly triggers the `is_same_v<ArgType, nautilus::val<int8_t>>` branch.
+CREATE LOGICAL SOURCE stream8(patient_id INT8 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream8 TYPE File;
+ATTACH INLINE
+1
+2
+3
+
+CREATE SINK sinkStream8(patient_id_pseudo INT8 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream8 INTO sinkStream8;
+----
+117
+48
+53
+
+
+# Test 9: INT8 Edge Case — Maximum Value
+#   Verifies the function handles the boundary value for signed INT8 (127).
+CREATE LOGICAL SOURCE stream9(patient_id INT8 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream9 TYPE File;
+ATTACH INLINE
+127
+
+CREATE SINK sinkStream9(patient_id_pseudo INT8 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream9 INTO sinkStream9;
+----
+75
+
+
+# Test 10: INT16 Data Type Support
+#   Verifies that the function correctly processes 2-byte integers (INT16).
+#   This explicitly triggers the `is_same_v<ArgType, nautilus::val<int16_t>>` branch.
+CREATE LOGICAL SOURCE stream10(patient_id INT16 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream10 TYPE File;
+ATTACH INLINE
+1
+2
+3
+
+CREATE SINK sinkStream10(patient_id_pseudo INT16 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream10 INTO sinkStream10;
+----
+27641
+32324
+4390
+
+
+# Test 11: INT16 Edge Case — Maximum Value
+#   Verifies the function handles the boundary value for signed INT16 (32767).
+CREATE LOGICAL SOURCE stream11(patient_id INT16 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream11 TYPE File;
+ATTACH INLINE
+32767
+
+CREATE SINK sinkStream11(patient_id_pseudo INT16 NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream11 INTO sinkStream11;
+----
+18622

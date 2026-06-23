@@ -110,7 +110,17 @@ VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& are
         // CRITICAL: 'if constexpr' forces the C++ compiler to drop irrelevant branches at compile-time.
         // This prevents Nautilus from crashing due to type mismatches and creates clean,
         // isolated execution paths perfect for MC/DC test coverage.
-        if constexpr (std::is_same_v<ArgType, nautilus::val<int32_t>>)
+        if constexpr (std::is_same_v<ArgType, nautilus::val<int8_t>>)
+        {
+            auto pseudoId = nautilus::invoke(generateGenericHMAC<int8_t>, arg);
+            return VarVal(pseudoId);
+        }
+        else if constexpr (std::is_same_v<ArgType, nautilus::val<int16_t>>)
+        {
+            auto pseudoId = nautilus::invoke(generateGenericHMAC<int16_t>, arg);
+            return VarVal(pseudoId);
+        }
+        else if constexpr (std::is_same_v<ArgType, nautilus::val<int32_t>>)
         {
             auto pseudoId = nautilus::invoke(generateGenericHMAC<int32_t>, arg);
             return VarVal(pseudoId);
