@@ -42,13 +42,13 @@
 //     {repo}/scripts/benchmarking/worker_mem_scaling_poc.cpp -o /tmp/memscale && \
 //     /tmp/memscale'   # all knobs have engine-matched defaults; see Params below
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
 #include <thread>
 #include <vector>
 
@@ -56,22 +56,23 @@ namespace
 {
 struct Params
 {
-    uint64_t bufBytes;       /// raw buffer size (engine operator_buffer_size)
-    uint64_t rowBytes;       /// avg bytes per CSV row
-    uint32_t fields;         /// structural positions emitted per row (== band entries/row)
-    uint32_t proj;           /// projected fields materialized per row
+    uint64_t bufBytes; /// raw buffer size (engine operator_buffer_size)
+    uint64_t rowBytes; /// avg bytes per CSV row
+    uint32_t fields; /// structural positions emitted per row (== band entries/row)
+    uint32_t proj; /// projected fields materialized per row
     uint64_t bytesPerWorker; /// raw input each worker streams (weak scaling)
-    uint32_t poolBufs;       /// per-worker pool of raw buffers reused round-robin (working-set knob)
+    uint32_t poolBufs; /// per-worker pool of raw buffers reused round-robin (working-set knob)
     uint32_t maxWorkers;
 };
 
 enum Mode
 {
     STREAM = 0, /// read only
-    BANDW = 1,  /// + band write
-    BANDR = 2,  /// + band read (dependent) + projected-field read
-    FULL = 3    /// + materialize write
+    BANDW = 1, /// + band write
+    BANDR = 2, /// + band read (dependent) + projected-field read
+    FULL = 3 /// + materialize write
 };
+
 const char* modeName(int m)
 {
     switch (m)
@@ -91,8 +92,7 @@ std::atomic<uint64_t> g_globalSink{0};
 std::atomic<int> g_startGate{0};
 
 /// Process one buffer with the given cumulative access pattern. Returns a checksum (defeats DCE).
-inline uint64_t
-processBuffer(int mode, const uint8_t* raw, uint64_t bufBytes, uint32_t* band, uint8_t* out, const Params& p)
+inline uint64_t processBuffer(int mode, const uint8_t* raw, uint64_t bufBytes, uint32_t* band, uint8_t* out, const Params& p)
 {
     const uint64_t rows = bufBytes / p.rowBytes;
     uint64_t acc = 0;

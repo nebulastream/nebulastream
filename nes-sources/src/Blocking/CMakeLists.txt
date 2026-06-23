@@ -21,9 +21,13 @@ add_plugin(BlockingTCP Source nes-sources Sources/BlockingTCPSource.cpp)
 add_plugin(BlockingTCP SourceValidation nes-sources Sources/BlockingTCPSource.cpp)
 add_plugin(BlockingFile Source nes-sources Sources/BlockingFileSource.cpp)
 add_plugin(BlockingFile SourceValidation nes-sources Sources/BlockingFileSource.cpp)
+add_plugin(InMemory Source nes-sources Sources/InMemoryFileSource.cpp)
+add_plugin(InMemory SourceValidation nes-sources Sources/InMemoryFileSource.cpp)
 
 # Systest adaptors
 add_plugin(BlockingTCP InlineData nes-sources Sources/BlockingTCPSource.cpp)
 add_plugin(BlockingTCP FileData nes-sources Sources/BlockingTCPSource.cpp)
 add_plugin(BlockingFile InlineData nes-sources Sources/BlockingFileSource.cpp)
 add_plugin(BlockingFile FileData nes-sources Sources/BlockingFileSource.cpp)
+add_plugin(InMemory InlineData nes-sources Sources/InMemoryFileSource.cpp)
+add_plugin(InMemory FileData nes-sources Sources/InMemoryFileSource.cpp)

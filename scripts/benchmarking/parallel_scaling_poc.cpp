@@ -30,11 +30,11 @@
 //     'clang++ -O3 -std=c++20 -pthread {repo}/scripts/benchmarking/parallel_scaling_poc.cpp \
 //        -o /tmp/poc && /tmp/poc'
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <algorithm>
 #include <thread>
 #include <vector>
 
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
     }
     volatile uint64_t sink = 0;
 
-    std::vector<double> medianThpt(threadCounts.size(), 0.0);  /// aggregate Giter/s
+    std::vector<double> medianThpt(threadCounts.size(), 0.0); /// aggregate Giter/s
     std::vector<std::pair<double, double>> spread(threadCounts.size(), {0.0, 0.0});
 
     for (size_t idx = 0; idx < threadCounts.size(); ++idx)
@@ -124,8 +124,10 @@ int main(int argc, char** argv)
     }
 
     const double base = medianThpt[0];
-    std::printf("\nembarrassingly-parallel weak scaling (register-only, %llu iters/thread, median of %u reps)\n\n",
-                static_cast<unsigned long long>(iters), reps);
+    std::printf(
+        "\nembarrassingly-parallel weak scaling (register-only, %llu iters/thread, median of %u reps)\n\n",
+        static_cast<unsigned long long>(iters),
+        reps);
     std::printf("┌─────────┬──────────────┬─────────┐\n");
     std::printf("│ threads │ throughput   │ speedup │\n");
     std::printf("├─────────┼──────────────┼─────────┤\n");

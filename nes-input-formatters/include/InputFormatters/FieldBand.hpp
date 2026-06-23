@@ -60,7 +60,9 @@ class FieldBand final : public FieldIndexFunction<FieldBand>
     friend FieldIndexFunction<FieldBand>;
 
     [[nodiscard]] FieldIndex applyGetByteOffsetOfFirstTuple() const { return this->offsetOfFirstTuple; }
+
     [[nodiscard]] FieldIndex applyGetByteOffsetOfLastTuple() const { return this->offsetOfLastTuple; }
+
     [[nodiscard]] size_t applyGetTotalNumberOfTuples() const { return this->totalNumberOfTuples; }
 
     static const FieldIndex* getBandDataProxy(const FieldBand* const fieldBand) { return fieldBand->band.data(); }

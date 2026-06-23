@@ -33,12 +33,12 @@
 //     {repo}/scripts/benchmarking/parallel_scaling_sleepy_poc.cpp -o /tmp/sleepy && \
 //     /tmp/sleepy <workIters> <prodIters> <tasksPerWorker> <numProducers> <maxWorkers> <inflight>'
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <algorithm>
 #include <semaphore>
 #include <thread>
 #include <vector>
@@ -61,8 +61,8 @@ uint64_t work(uint64_t seed, uint64_t iters)
 
 struct Params
 {
-    uint64_t workIters;   /// compute per task on the worker (consumer) side
-    uint64_t prodIters;   /// compute per task on the producer side (IO/read analogue)
+    uint64_t workIters; /// compute per task on the worker (consumer) side
+    uint64_t prodIters; /// compute per task on the producer side (IO/read analogue)
     uint64_t tasksPerWorker;
     unsigned numProducers;
     int inflight;
@@ -73,8 +73,8 @@ double runConfig(unsigned workers, const Params& p, volatile uint64_t& sinkOut)
 {
     const uint64_t totalTasks = static_cast<uint64_t>(workers) * p.tasksPerWorker;
 
-    std::counting_semaphore<> tasksAvailable{0};      /// producer release / worker acquire  (== TaskQueue::tasksAvailable)
-    std::counting_semaphore<> freeSlots{p.inflight};  /// bounded in-flight backpressure       (== RunningSource::availableBuffer)
+    std::counting_semaphore<> tasksAvailable{0}; /// producer release / worker acquire  (== TaskQueue::tasksAvailable)
+    std::counting_semaphore<> freeSlots{p.inflight}; /// bounded in-flight backpressure       (== RunningSource::availableBuffer)
     std::atomic<uint64_t> claimedByProducer{0};
     std::atomic<uint64_t> claimedByWorker{0};
     std::atomic<uint64_t> sink{0};
@@ -97,9 +97,9 @@ double runConfig(unsigned workers, const Params& p, volatile uint64_t& sinkOut)
                     {
                         break;
                     }
-                    freeSlots.acquire();             /// block if too far ahead of the workers
+                    freeSlots.acquire(); /// block if too far ahead of the workers
                     local ^= work(0xABCDEF * (pi + 1) + t, p.prodIters);
-                    tasksAvailable.release();        /// wake exactly one worker, one token per task
+                    tasksAvailable.release(); /// wake exactly one worker, one token per task
                 }
                 sink.fetch_add(local);
             });
@@ -118,7 +118,7 @@ double runConfig(unsigned workers, const Params& p, volatile uint64_t& sinkOut)
                     {
                         break;
                     }
-                    tasksAvailable.acquire();        /// THE SLEEP: block here when the queue is drained
+                    tasksAvailable.acquire(); /// THE SLEEP: block here when the queue is drained
                     local ^= work(0xC0FFEE * (wi + 1) + c, p.workIters);
                     freeSlots.release();
                 }

@@ -14,8 +14,12 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <optional>
 #include <semaphore>
 #include <stop_token>
@@ -44,6 +48,17 @@ class TaskQueue
     /// This parameter could be tuned to allow for more timely cancellation
     static constexpr std::chrono::milliseconds StopTokenCheckInterval{100};
 
+    /// TMP DIAGNOSTIC (env NES_TASKQUEUE_STATS): split worker acquires into fast-path (queue non-empty -> immediate
+    /// CAS, no spin) vs slow-path (queue empty -> wait, which is where libstdc++'s semaphore __sched_yield lives).
+    /// statOutstanding mirrors the semaphore count; avgDepthOnFastAcquire = mean queued-task count seen at an
+    /// immediate acquire: ~1 => producer<->worker lockstep (producer-paced), >>1 => producer runs ahead
+    /// (worker-bound). Dumped to stderr in the dtor. Revert before merge.
+    const bool statsEnabled{std::getenv("NES_TASKQUEUE_STATS") != nullptr};
+    std::atomic<uint64_t> statFast{0};
+    std::atomic<uint64_t> statSlow{0};
+    std::atomic<int64_t> statOutstanding{0};
+    std::atomic<uint64_t> statDepthSum{0};
+
     TaskType readElementAssumingItExists()
     {
         TaskType task;
@@ -65,6 +80,26 @@ class TaskQueue
 public:
     explicit TaskQueue(size_t admissionTaskQueueSize) : admission(admissionTaskQueueSize) { }
 
+    ~TaskQueue()
+    {
+        if (statsEnabled)
+        {
+            const auto fast = statFast.load(std::memory_order_relaxed);
+            const auto slow = statSlow.load(std::memory_order_relaxed);
+            const auto total = fast + slow;
+            const auto depthSum = statDepthSum.load(std::memory_order_relaxed);
+            std::fprintf(
+                stderr,
+                "[NES_TASKQUEUE_STATS] acquires=%llu fast=%llu (%.2f%%) slow=%llu (%.2f%%) avgDepthOnFastAcquire=%.2f\n",
+                static_cast<unsigned long long>(total),
+                static_cast<unsigned long long>(fast),
+                total ? 100.0 * static_cast<double>(fast) / static_cast<double>(total) : 0.0,
+                static_cast<unsigned long long>(slow),
+                total ? 100.0 * static_cast<double>(slow) / static_cast<double>(total) : 0.0,
+                fast ? static_cast<double>(depthSum) / static_cast<double>(fast) : 0.0);
+        }
+    }
+
     /// By design the admission queue is bounded, which could lead to writes being blocked.
     /// The stop token allows cancellation. In case the writing was canceled, this method returns false.
     template <typename T = TaskType>
@@ -78,6 +113,10 @@ public:
             {
                 /// tasksAvailable is only increased if write to admission queue was successful.
                 tasksAvailable.release();
+                if (statsEnabled) [[unlikely]]
+                {
+                    statOutstanding.fetch_add(1, std::memory_order_relaxed);
+                }
                 return true;
             }
         }
@@ -91,6 +130,10 @@ public:
         /// The order of operation upholds the invariant. internal is unbounded which makes this write always succeed (unless oom)
         internal.enqueue(std::forward<T>(task));
         tasksAvailable.release();
+        if (statsEnabled) [[unlikely]]
+        {
+            statOutstanding.fetch_add(1, std::memory_order_relaxed);
+        }
     }
 
     /// Blocking read to retrieve the next task from the internal queue, or the admission queue if the internal task queue is empty.
@@ -99,6 +142,29 @@ public:
     /// the stop token.
     std::optional<TaskType> getNextTaskBlocking(const std::stop_token& stoken)
     {
+        if (statsEnabled) [[unlikely]]
+        {
+            /// try_acquire() never spins/yields: success => count was > 0 (queue non-empty) = fast path.
+            if (tasksAvailable.try_acquire())
+            {
+                statFast.fetch_add(1, std::memory_order_relaxed);
+                const auto depthBefore = statOutstanding.fetch_sub(1, std::memory_order_relaxed);
+                statDepthSum.fetch_add(depthBefore > 0 ? static_cast<uint64_t>(depthBefore) : 0, std::memory_order_relaxed);
+                return readElementAssumingItExists();
+            }
+            /// count was 0: we have to wait -- this is the spin/__sched_yield/futex path.
+            statSlow.fetch_add(1, std::memory_order_relaxed);
+            while (!tasksAvailable.try_acquire_for(StopTokenCheckInterval))
+            {
+                if (stoken.stop_requested())
+                {
+                    return std::nullopt;
+                }
+            }
+            statOutstanding.fetch_sub(1, std::memory_order_relaxed);
+            return readElementAssumingItExists();
+        }
+
         while (!tasksAvailable.try_acquire_for(StopTokenCheckInterval))
         {
             if (stoken.stop_requested())
@@ -116,6 +182,11 @@ public:
         if (!tasksAvailable.try_acquire())
         {
             return std::nullopt;
+        }
+
+        if (statsEnabled) [[unlikely]]
+        {
+            statOutstanding.fetch_sub(1, std::memory_order_relaxed);
         }
 
         return readElementAssumingItExists();

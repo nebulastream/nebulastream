@@ -11,3 +11,4 @@
 # limitations under the License.
 
 add_tests_if_enabled(systest)
+add_tests_if_enabled(bench-runner)

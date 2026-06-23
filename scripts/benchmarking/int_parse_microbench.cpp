@@ -108,6 +108,7 @@ struct Fields
     std::string buf;
     std::vector<uint32_t> off;
     std::vector<uint32_t> len;
+
     [[nodiscard]] size_t count() const { return len.size(); }
 };
 
@@ -190,8 +191,8 @@ void benchWidth(const char* label, uint64_t maxValue, size_t n, uint32_t reps, u
     std::printf("%-22s (avg %.1f digits, %zu fields)\n", label, avgLen, f.count());
     std::printf("  A current  (trim+wrap) : %7.1f M/s  %6.2f ns   1.00x\n", mps(a), nsp(a));
     std::printf("  B no-trim   (wrap)     : %7.1f M/s  %6.2f ns  %5.2fx vs A\n", mps(b), nsp(b), a / b);
-    std::printf("  C fastfloat (proposed) : %7.1f M/s  %6.2f ns  %5.2fx vs A  (%+.0f%% vs A)\n", mps(c), nsp(c), a / c,
-                100.0 * (a - c) / a);
+    std::printf(
+        "  C fastfloat (proposed) : %7.1f M/s  %6.2f ns  %5.2fx vs A  (%+.0f%% vs A)\n", mps(c), nsp(c), a / c, 100.0 * (a - c) / a);
     std::printf("  D std-bare  (lower bnd): %7.1f M/s  %6.2f ns  %5.2fx vs A\n\n", mps(d), nsp(d), a / d);
 }
 } /// namespace
@@ -205,8 +206,8 @@ int main(int argc, char** argv)
     std::printf("=== integer-parse microbench (single thread, %zu fields, min of %u reps) ===\n", n, reps);
     std::printf("variants: A=trim+from_chars_with_exception (today)  B=no trim  C=fast_float (proposed)  D=std::from_chars bare\n\n");
 
-    benchWidth("key   (1-2 digit)", 63ULL, n, reps, sink);          /// the SELECT-key projected field
-    benchWidth("payload (~7 digit)", 1'000'002ULL, n, reps, sink);  /// v1/v2/v3
+    benchWidth("key   (1-2 digit)", 63ULL, n, reps, sink); /// the SELECT-key projected field
+    benchWidth("payload (~7 digit)", 1'000'002ULL, n, reps, sink); /// v1/v2/v3
     benchWidth("timestamp (13 dig)", 9'999'999'999'999ULL, n, reps, sink);
     benchWidth("wide uint64 (~20d)", ~0ULL, n, reps, sink);
 

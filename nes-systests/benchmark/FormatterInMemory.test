@@ -1,0 +1,31 @@
+# name: benchmark/FormatterInMemory.test
+# description: InMemory source (loads the whole file into RAM in its ctor, then produces from RAM so
+#              the read is EXCLUDED from the systest -b window). Q1 = checksum correctness gate: must
+#              equal the known File/SIMDCSV result, proving byte-identical delivery. Q2 = projVoid for
+#              throughput runs (run with -b + NES_DISABLE_EMIT=1, sweep worker threads).
+# groups: [Formatter, benchmark, large]
+
+CREATE LOGICAL SOURCE mem5(creationTS UINT64 NOT NULL, key UINT64 NOT NULL, v1 UINT64 NOT NULL, v2 UINT64 NOT NULL, v3 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR mem5 TYPE InMemory SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`, "TracedUINT64" AS INPUT_FORMATTER.`UINT64_PARSER`);
+ATTACH FILE large/formatter/bench_5xUINT64_5g.csv
+
+CREATE LOGICAL SOURCE mem5s(creationTS UINT64 NOT NULL, key UINT64 NOT NULL, v1 UINT64 NOT NULL, v2 UINT64 NOT NULL, v3 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR mem5s TYPE InMemory SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`, "TracedUINT64" AS INPUT_FORMATTER.`UINT64_PARSER`);
+ATTACH FILE large/formatter/bench_5xUINT64_512m.csv
+
+CREATE SINK mem5_projChk(mem5.key UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK mem5_projVoid(mem5.key UINT64 NOT NULL) TYPE Void;
+CREATE SINK mem5s_projVoid(mem5s.key UINT64 NOT NULL) TYPE Void;
+
+# Q1 -- correctness: must match the known File/SIMDCSV checksum (FormatterThroughput.test Q2)
+SELECT key FROM mem5 INTO mem5_projChk;
+----
+143128260, 15104504004
+
+# Q2 -- throughput (Void sink; run under -b + NES_DISABLE_EMIT=1)
+SELECT key FROM mem5 INTO mem5_projVoid;
+----
+
+# Q3 -- 512MB throughput variant (fast load; for quick A/B sweeps)
+SELECT key FROM mem5s INTO mem5s_projVoid;
+----

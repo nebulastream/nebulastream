@@ -167,6 +167,9 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
     };
 
     const bool requiresMetadata = !source.addsMetadata();
+    /// Prefill path: the source pre-filled its own buffers outside the timed window, so we just hand them
+    /// to the engine (no pool acquire, no fillTupleBuffer memcpy). nullopt => end-of-stream.
+    const bool preFill = source.preFillsBuffers();
     while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
     {
         /// 4 Things that could happen:
@@ -178,6 +181,16 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the BlockingSourceRunner via the return promise.
         ///    The thread exists with an exception
 
+        if (preFill)
+        {
+            auto preFilledBuffer = source.takePreFilledBuffer();
+            if (!preFilledBuffer.has_value())
+            {
+                return {SourceImplementationTermination::EndOfStream};
+            }
+            emit(std::move(*preFilledBuffer), requiresMetadata);
+            continue;
+        }
 
         // Todo: utilize threading mode
         // - at this point we are guaranteed that if threading mode is sequential, the type is also sequential

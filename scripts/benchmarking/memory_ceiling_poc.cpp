@@ -88,9 +88,9 @@ std::atomic<uint64_t> g_sink{0}; /// defeats dead-code elimination across all ar
 struct MemParams
 {
     uint64_t bufBytes = 131072; /// raw buffer size (engine operator_buffer_size)
-    uint64_t rowBytes = 40;     /// avg bytes per CSV row
-    uint32_t fields = 5;        /// structural positions emitted per row (band entries/row)
-    uint32_t proj = 1;          /// projected fields materialized per row (SELECT key)
+    uint64_t rowBytes = 40; /// avg bytes per CSV row
+    uint32_t fields = 5; /// structural positions emitted per row (band entries/row)
+    uint32_t proj = 1; /// projected fields materialized per row (SELECT key)
 };
 
 /// One buffer, the FULL cumulative pattern: STREAM read + BAND write + dependent
@@ -206,8 +206,8 @@ double median(std::vector<double> xs)
 }
 
 /// Median throughput (units/sec, aggregate over all threads) for one arm.
-double medianThroughput(unsigned threads, uint32_t reps, uint32_t warmup, double unitsPerWorker,
-                        const std::function<std::function<uint64_t()>(unsigned)>& make)
+double medianThroughput(
+    unsigned threads, uint32_t reps, uint32_t warmup, double unitsPerWorker, const std::function<std::function<uint64_t()>(unsigned)>& make)
 {
     std::vector<double> tp;
     for (uint32_t rep = 0; rep < warmup + reps; ++rep)
@@ -263,13 +263,17 @@ int main(int argc, char** argv)
     { return [tid, regIters]() -> uint64_t { return regWork(0xC0FFEEULL * (tid + 1), regIters); }; };
 
     std::printf("=== MEMORY-CEILING PoC: is the multi-thread ceiling a machine property? ===\n");
-    std::printf("hardware_concurrency=%u  maxThreads=%u  reps=%u (+%u warmup)\n",
-                std::thread::hardware_concurrency(), maxThreads, reps, warmup);
-    std::printf("MEM arms: buf=%lluKiB row=%lluB fields=%u proj=%u perWorker=%lluMiB | L1 ws=%lluKiB  DRAM ws=%lluMiB\n",
-                static_cast<unsigned long long>(mp.bufBytes >> 10), static_cast<unsigned long long>(mp.rowBytes),
-                mp.fields, mp.proj, static_cast<unsigned long long>(bytesPerWorker >> 20),
-                static_cast<unsigned long long>((1ULL * mp.bufBytes) >> 10),
-                static_cast<unsigned long long>((512ULL * mp.bufBytes) >> 20));
+    std::printf(
+        "hardware_concurrency=%u  maxThreads=%u  reps=%u (+%u warmup)\n", std::thread::hardware_concurrency(), maxThreads, reps, warmup);
+    std::printf(
+        "MEM arms: buf=%lluKiB row=%lluB fields=%u proj=%u perWorker=%lluMiB | L1 ws=%lluKiB  DRAM ws=%lluMiB\n",
+        static_cast<unsigned long long>(mp.bufBytes >> 10),
+        static_cast<unsigned long long>(mp.rowBytes),
+        mp.fields,
+        mp.proj,
+        static_cast<unsigned long long>(bytesPerWorker >> 20),
+        static_cast<unsigned long long>((1ULL * mp.bufBytes) >> 10),
+        static_cast<unsigned long long>((512ULL * mp.bufBytes) >> 20));
     std::printf("REGISTER arm: %llu iters/thread (no memory)\n", static_cast<unsigned long long>(regIters));
     std::printf("NOTE: absolute GB/s is a memory-MODEL rate (~2.5x the formatter; less work/byte) -- only the\n");
     std::printf("      SPEEDUP/efficiency columns transfer to the real formatter.\n\n");
@@ -294,9 +298,18 @@ int main(int argc, char** argv)
         regTop = reg / regBase;
         l1Top = l1 / l1Base;
         dramTop = dram / dramBase;
-        std::printf(" %7u | %7.2f  %6.2fx | %7.2f  %6.2fx | %7.2f  %6.2fx |  %3.0f%% / %3.0f%% / %3.0f%%\n", t,
-                    reg / 1e9, reg / regBase, l1 / 1e9, l1 / l1Base, dram / 1e9, dram / dramBase,
-                    100.0 * (reg / regBase) / t, 100.0 * (l1 / l1Base) / t, 100.0 * (dram / dramBase) / t);
+        std::printf(
+            " %7u | %7.2f  %6.2fx | %7.2f  %6.2fx | %7.2f  %6.2fx |  %3.0f%% / %3.0f%% / %3.0f%%\n",
+            t,
+            reg / 1e9,
+            reg / regBase,
+            l1 / 1e9,
+            l1 / l1Base,
+            dram / 1e9,
+            dram / dramBase,
+            100.0 * (reg / regBase) / t,
+            100.0 * (l1 / l1Base) / t,
+            100.0 * (dram / dramBase) / t);
         std::fflush(stdout);
     }
 
@@ -307,9 +320,11 @@ int main(int argc, char** argv)
     std::printf("  REGISTER (no memory)   : %.2fx  (%.0f%% efficiency)  <- hardware ceiling\n", regTop, 100.0 * regTop / maxThreads);
     std::printf("  MEM-L1   (cache-hot)   : %.2fx  (%.0f%% efficiency)\n", l1Top, 100.0 * l1Top / maxThreads);
     std::printf("  MEM-DRAM (DRAM-cold)   : %.2fx  (%.0f%% efficiency)\n", dramTop, 100.0 * dramTop / maxThreads);
-    std::printf("  working-set gap (L1 vs DRAM) : %+.1f%%  -> %s\n", wsGap,
-                (wsGap > -8.0 && wsGap < 8.0) ? "WORKING-SET INDEPENDENT => NOT DRAM bandwidth (core/cache-pipeline heterogeneity)"
-                                              : "working-set dependent => bandwidth/cache-capacity matters");
+    std::printf(
+        "  working-set gap (L1 vs DRAM) : %+.1f%%  -> %s\n",
+        wsGap,
+        (wsGap > -8.0 && wsGap < 8.0) ? "WORKING-SET INDEPENDENT => NOT DRAM bandwidth (core/cache-pipeline heterogeneity)"
+                                      : "working-set dependent => bandwidth/cache-capacity matters");
     std::printf("  memory tax (REG -> MEM-L1)   : -%.0f%%  -> touching memory at all costs this much scaling\n", memTax);
     std::printf("  => the formatter (real, 9.8x/14t) sits on the MEM ceiling: not a pipeline stage, a machine property.\n");
     std::printf("\n(checksum %llu)\n", static_cast<unsigned long long>(g_sink.load()));

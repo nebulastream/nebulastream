@@ -61,8 +61,7 @@ T parseWithFastInt(const int8_t* fieldAddress, const uint64_t fieldSize)
 /// (or a partial parse) -> isNull, mirroring the FastFloat nullable path.
 template <typename T, bool Nullable>
 requires Nullable
-FastIntParseResult<T>*
-parseWithFastInt(const int8_t* fieldAddress, const uint64_t fieldSize, const std::vector<std::string>* nullValues)
+FastIntParseResult<T>* parseWithFastInt(const int8_t* fieldAddress, const uint64_t fieldSize, const std::vector<std::string>* nullValues)
 {
     PRECONDITION(nullValues != nullptr, "NullValues is expected to be not null!");
 
@@ -128,7 +127,8 @@ VarVal FastINT16InputParser::parseToVarVal(
             fieldAddress,
             fieldSize,
             nautilus::val<const std::vector<std::string>*>{&nullValues});
-        const nautilus::val<int16_t> nautilusValue = *getMemberWithOffset<int16_t>(parseResult, offsetof(FastIntParseResult<int16_t>, value));
+        const nautilus::val<int16_t> nautilusValue
+            = *getMemberWithOffset<int16_t>(parseResult, offsetof(FastIntParseResult<int16_t>, value));
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(FastIntParseResult<int16_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
@@ -151,7 +151,8 @@ VarVal FastINT32InputParser::parseToVarVal(
             fieldAddress,
             fieldSize,
             nautilus::val<const std::vector<std::string>*>{&nullValues});
-        const nautilus::val<int32_t> nautilusValue = *getMemberWithOffset<int32_t>(parseResult, offsetof(FastIntParseResult<int32_t>, value));
+        const nautilus::val<int32_t> nautilusValue
+            = *getMemberWithOffset<int32_t>(parseResult, offsetof(FastIntParseResult<int32_t>, value));
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(FastIntParseResult<int32_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
@@ -174,7 +175,8 @@ VarVal FastINT64InputParser::parseToVarVal(
             fieldAddress,
             fieldSize,
             nautilus::val<const std::vector<std::string>*>{&nullValues});
-        const nautilus::val<int64_t> nautilusValue = *getMemberWithOffset<int64_t>(parseResult, offsetof(FastIntParseResult<int64_t>, value));
+        const nautilus::val<int64_t> nautilusValue
+            = *getMemberWithOffset<int64_t>(parseResult, offsetof(FastIntParseResult<int64_t>, value));
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(FastIntParseResult<int64_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
@@ -197,7 +199,8 @@ VarVal FastUINT8InputParser::parseToVarVal(
             fieldAddress,
             fieldSize,
             nautilus::val<const std::vector<std::string>*>{&nullValues});
-        const nautilus::val<uint8_t> nautilusValue = *getMemberWithOffset<uint8_t>(parseResult, offsetof(FastIntParseResult<uint8_t>, value));
+        const nautilus::val<uint8_t> nautilusValue
+            = *getMemberWithOffset<uint8_t>(parseResult, offsetof(FastIntParseResult<uint8_t>, value));
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(FastIntParseResult<uint8_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
