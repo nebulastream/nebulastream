@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
@@ -185,16 +186,52 @@ NES::DistributedQueryMetrics NES::DistributedQueryStatusSnapshot::coalesceQueryM
     return metrics;
 }
 
-NES::DistributedQuery::DistributedQuery(std::unordered_map<Host, std::vector<LocalQuery>> localQueries) : localQueries(std::move(localQueries))
+void NES::DistributedQuery::reconstructDistributedQueryGraph()
 {
+    upstreamQueries.clear();
+
+    for (auto& [grpc, workerQueries] : localQueries)
+    {
+        for (auto& localQuery : workerQueries)
+        {
+            for (auto& rootOp : localQuery.localPlan.getRootOperators())
+            {
+                if (auto sink = rootOp.tryGetAs<SinkLogicalOperator>())
+                {
+                    auto descriptor = sink->get().getSinkDescriptor();
+                    INVARIANT(descriptor.has_value(), "Sinks should have descriptors at this point");
+                    if (descriptor->getSinkType() == Identifier::parse("Network").asCanonicalString())
+                    {
+                        auto downstream
+                            = std::get<std::string>(descriptor->getConfig().at(Identifier::parse("data_endpoint").asCanonicalString()));
+                        Host host{downstream};
+                        upstreamQueries[host].push_back(&localQuery);
+                    }
+                }
+            }
+        }
+    }
+    /*for (auto& [host, queries] : upstreamQueries)
+    {
+        for (auto& localQuery : queries)
+        {
+            std::cout << localQuery->host << " -> " << host << std::endl;
+        }
+    } */
+}
+
+NES::DistributedQuery::DistributedQuery(std::unordered_map<Host, std::vector<LocalQuery>> localQueries)
+    : localQueries(std::move(localQueries))
+{
+    reconstructDistributedQueryGraph();
 }
 
 std::ostream& NES::operator<<(std::ostream& os, const DistributedQuery& query)
 {
     std::vector<std::string> entries;
-    for (const auto& [grpc, localQueries] : query.localQueries)
+    for (const auto& [grpc, workerQueries] : query.localQueries)
     {
-        for (const auto& localQuery : localQueries)
+        for (const auto& localQuery : workerQueries)
         {
             entries.push_back(fmt::format("{}@{}", localQuery.queryId, grpc));
         }

@@ -125,6 +125,11 @@ public:
 class DistributedQuery
 {
     std::unordered_map<Host, std::vector<LocalQuery>> localQueries;
+    std::unordered_map<Host, std::vector<LocalQuery*>> upstreamQueries; // TODO make upstreamQueries thread safe
+
+    /// Query topology is lost after placement and may at some point change at query runtime
+    /// iterate over sinks of local queries to reconstruct the query graph made up of the local queries as nodes
+    void reconstructDistributedQueryGraph();
 
 public:
     [[nodiscard]] auto iterate() const
