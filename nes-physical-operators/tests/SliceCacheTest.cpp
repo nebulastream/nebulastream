@@ -407,7 +407,7 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
             op.timestamp.getRawValue(), op.sliceStart.getRawValue(), op.sliceEnd.getRawValue(), op.expectedResult, &callbackCalled);
 
         /// Perform the same lookup in the reference cache
-        const auto [refHit, refPtr] = referenceCache.lookup(Timestamp{op.timestamp}, op.sliceStart, op.sliceEnd, op.expectedResult);
+        auto [refHit, refPtr] = referenceCache.lookup(Timestamp{op.timestamp}, op.sliceStart, op.sliceEnd, op.expectedResult);
 
         /// Verify hit/miss agreement between the Nautilus implementation and the reference cache
         if (refHit)
