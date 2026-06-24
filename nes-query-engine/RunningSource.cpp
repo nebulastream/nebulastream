@@ -16,11 +16,11 @@
 
 #include <algorithm>
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
-#include <condition_variable>
 #include <mutex>
 #include <stop_token>
 #include <utility>
@@ -31,8 +31,8 @@
 #include <Util/Overloaded.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
-#include <Interfaces.hpp>
 #include <InflightThrottle.hpp>
+#include <Interfaces.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <RunningQueryPlan.hpp>
 
