@@ -102,7 +102,7 @@ public:
                 {
                     config["output_format"] = "CSV";
                 }
-                else if (toUpperCase(sinkType) == "CHECKSUM")
+                else if (toUpperCase(sinkType) == "CHECKSUM" && std::getenv("NES_BENCH_NO_QUOTE") == nullptr)
                 {
                     formatConfig["quote_strings"] = "true";
                 }
@@ -720,7 +720,7 @@ struct SystestBinder::Impl
         {
             sinkConfig.emplace("output_format", "CSV");
         }
-        if (toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM")
+        if (toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM" && std::getenv("NES_BENCH_NO_QUOTE") == nullptr)
         {
             formatConfig["quote_strings"] = "true";
         }
