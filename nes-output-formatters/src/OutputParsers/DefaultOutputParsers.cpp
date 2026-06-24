@@ -14,9 +14,13 @@
 
 #include <OutputParsers/DefaultOutputParsers.hpp>
 
+#include <charconv>
+#include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -31,6 +35,31 @@
 
 namespace NES
 {
+namespace
+{
+/// Format `value` as fixed 6-decimal with trailing zeros stripped (keeping one digit after the point) --
+/// byte-identical to Util::formatFloat (`fmt::format("{:.6f}")` + strip) -- but via std::to_chars straight
+/// into the caller's stack buffer: no per-row format-string parse and no std::string heap allocation (these
+/// dominated float-output cost in profiling). Returns the number of chars written into `out`.
+/// `cap` must cover the widest fixed-6 form (~316 chars for a 1e308 double).
+template <std::floating_point T>
+size_t formatFloatFixed6(const T value, char* const out, const size_t cap)
+{
+    const auto [ptr, ec] = std::to_chars(out, out + cap, value, std::chars_format::fixed, 6);
+    const size_t len = static_cast<size_t>(ptr - out);
+    const size_t decimalPos = std::string_view{out, len}.find('.');
+    if (decimalPos == std::string_view::npos)
+    {
+        return len;
+    }
+    size_t lastNonZero = len - 1;
+    while (out[lastNonZero] == '0')
+    {
+        --lastNonZero;
+    }
+    return (lastNonZero == decimalPos) ? (decimalPos + 2) : (lastNonZero + 1);
+}
+}
 
 NAUTILUS_TAGGED_INLINE(output_parse)
 
@@ -54,8 +83,9 @@ uint64_t parseF32(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = formatFloat(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    char tmp[344];
+    const size_t n = formatFloatFixed6(value, tmp, sizeof(tmp));
+    return writeBytesToBuffer(tmp, n, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -67,8 +97,9 @@ uint64_t parseF64(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = formatFloat(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    char tmp[344];
+    const size_t n = formatFloatFixed6(value, tmp, sizeof(tmp));
+    return writeBytesToBuffer(tmp, n, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)

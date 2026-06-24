@@ -39,10 +39,18 @@ uint64_t parseF32ZMIJ(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    std::string parsedValue(zmij::float_buffer_size + 1, '\0');
-    const auto size = zmij::write(parsedValue.data(), parsedValue.size(), value);
-    parsedValue.resize(size);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    /// Fast path: the widest float is zmij::float_buffer_size, so if that fits in the remaining main-buffer
+    /// space we let zmij::write serialize straight into the output buffer -- no per-value std::string heap
+    /// allocation and no strlen (zmij::write returns the byte count).
+    if (remainingSpace >= zmij::float_buffer_size)
+    {
+        return zmij::write(reinterpret_cast<char*>(bufferStartingAddress), remainingSpace, value);
+    }
+    /// Boundary: not enough contiguous main-buffer room for the worst case -- serialize into a stack buffer
+    /// and let writeBytesToBuffer spill the overflow into a child buffer.
+    char tmp[zmij::float_buffer_size + 1];
+    const auto size = zmij::write(tmp, sizeof(tmp), value);
+    return writeBytesToBuffer(tmp, size, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -54,10 +62,16 @@ uint64_t parseF64ZMIJ(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    std::string parsedValue(zmij::double_buffer_size + 1, '\0');
-    const auto size = zmij::write(parsedValue.data(), parsedValue.size(), value);
-    parsedValue.resize(size);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    /// Fast path: zmij::write straight into the output buffer when the worst-case width fits -- no per-value
+    /// std::string heap allocation, no strlen.
+    if (remainingSpace >= zmij::double_buffer_size)
+    {
+        return zmij::write(reinterpret_cast<char*>(bufferStartingAddress), remainingSpace, value);
+    }
+    /// Boundary: serialize into a stack buffer and let writeBytesToBuffer spill into a child buffer.
+    char tmp[zmij::double_buffer_size + 1];
+    const auto size = zmij::write(tmp, sizeof(tmp), value);
+    return writeBytesToBuffer(tmp, size, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
 nautilus::val<uint64_t> ZMIJF32OutputParser::parseAndWrite(
@@ -79,7 +93,7 @@ nautilus::val<uint64_t> ZMIJF64OutputParser::parseAndWrite(
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<int8_t*>& startingAddress) const
 {
-    const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
+    const auto castedVal = value.getRawValueAs<nautilus::val<double>>();
     return NAUTILUS_TAGGED_INVOKE(
         "parse_to_string", parseF64ZMIJ, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
