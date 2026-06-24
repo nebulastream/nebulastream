@@ -16,13 +16,14 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Formatter.hpp>
 #include <variant>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES
 {
@@ -77,6 +78,15 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const BlockingSource& source);
 
     [[nodiscard]] virtual bool addsMetadata() const { return false; }
+
+    /// Prefill hook (default: not used). A source that pre-fills its own buffers OUTSIDE the timed window
+    /// (e.g. in its constructor) overrides preFillsBuffers() to return true; the runner then drains
+    /// takePreFilledBuffer() -- which hands back ready buffers (numberOfTuples already set) -- instead of
+    /// acquiring a pool buffer and calling fillTupleBuffer(). This removes the per-buffer producer memcpy
+    /// from the measured window. nullopt signals end-of-stream. Only honored in PARALLEL threading mode.
+    [[nodiscard]] virtual bool preFillsBuffers() const { return false; }
+
+    [[nodiscard]] virtual std::optional<TupleBuffer> takePreFilledBuffer() { return std::nullopt; }
 
     /// Implemented by children of BlockingSource. Called by '<<'. Allows to use '<<' on abstract BlockingSource.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;

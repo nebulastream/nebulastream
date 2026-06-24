@@ -18,10 +18,10 @@
 #include <string>
 
 // #include <Sources/Source.hpp>
+#include <Sources/AsyncSource.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
-#include "Sources/AsyncSource.hpp"
-#include "Sources/BlockingSource.hpp"
 
 namespace NES
 {

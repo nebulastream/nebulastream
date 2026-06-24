@@ -58,8 +58,7 @@ bool AsyncSourceHandle::start(SourceReturnType::EmitFunction&& emitFn)
                 getSourceId(),
                 this->bufferPool,
                 initialState.pinThreads,
-                initialState.numberOfIOThreads
-            };
+                initialState.numberOfIOThreads};
         });
 }
 

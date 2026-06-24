@@ -226,10 +226,17 @@ public:
     /// Wait for all threads to complete all WorkTasks in the MPMC queue.
     void waitForCompletion();
 
+    /// Wall-clock seconds of the drain only -- thread creation (excluded via the start gate, see
+    /// startProcessing()) and the final eps->stop() are NOT counted. Valid only after waitForCompletion().
+    [[nodiscard]] double getElapsedSeconds() const { return static_cast<double>(timer.getRuntime()) / 1e6; }
+
 private:
     folly::MPMCQueue<TestPipelineTask> threadTasks;
     uint64_t numberOfWorkerThreads;
     std::latch completionLatch;
+    /// Workers park here right after creation; startProcessing() arms the timer and then opens the gate,
+    /// so the measured window excludes thread-creation cost (which otherwise grows with the worker count).
+    std::latch startGate;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
     std::shared_ptr<ExecutablePipelineStage> eps;

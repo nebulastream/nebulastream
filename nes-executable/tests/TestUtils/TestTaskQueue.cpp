@@ -153,6 +153,7 @@ MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     : threadTasks(testTasks.size())
     , numberOfWorkerThreads(numberOfThreads)
     , completionLatch(numberOfThreads)
+    , startGate(1)
     , bufferProvider(std::move(bufferProvider))
     , resultBuffers(std::move(resultBuffers))
     , timer("ConcurrentTestTaskQueue")
@@ -173,24 +174,29 @@ MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
 
 void MultiThreadedTestTaskQueue::startProcessing()
 {
-    timer.start();
+    /// Create all worker threads first (they park on `startGate`), THEN arm the timer and release them,
+    /// so thread-creation cost -- which grows with the worker count -- stays out of the measured window.
     for (size_t i = 0; i < numberOfWorkerThreads; ++i)
     {
         threads.emplace_back([this, i] { threadFunction(i); });
     }
+    timer.start();
+    startGate.count_down();
 }
 
 void MultiThreadedTestTaskQueue::waitForCompletion()
 {
     completionLatch.wait();
+    /// Pause before the end-of-stream flush so eps->stop() (a fixed, non-scaling cost) is not timed.
+    timer.pause();
     const auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers);
     eps->stop(*pipelineExecutionContext);
-    timer.pause();
     NES_DEBUG("Final time to process all tasks: {}ms", timer.getPrintTime());
 }
 
 void MultiThreadedTestTaskQueue::threadFunction(const size_t threadIdx)
 {
+    startGate.wait();
     TestPipelineTask testTask{};
     while (threadTasks.readIfNotEmpty(testTask))
     {

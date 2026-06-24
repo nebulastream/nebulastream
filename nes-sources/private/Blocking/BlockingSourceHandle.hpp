@@ -19,14 +19,14 @@
 #include <thread>
 #include <utility>
 
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/BlockingSource.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceUtility.hpp>
 #include <Util/AtomicState.hpp>
-#include "Runtime/AbstractBufferProvider.hpp"
 
-#include "BlockingSourceRunner.hpp"
+#include <Blocking/BlockingSourceRunner.hpp>
 
 namespace NES
 {

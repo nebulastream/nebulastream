@@ -16,10 +16,10 @@
 
 #include <cstdint>
 #include <memory>
-#include <ostream>
-#include <unordered_map>
-#include <string>
 #include <optional>
+#include <ostream>
+#include <string>
+#include <unordered_map>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/io_context.hpp>
@@ -94,9 +94,6 @@ struct ConfigParametersTCP
         }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-       = DescriptorConfig::createConfigParameterContainerMap(
-           SourceDescriptor::parameterMap,
-           HOST,
-           PORT);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, HOST, PORT);
 };
 }

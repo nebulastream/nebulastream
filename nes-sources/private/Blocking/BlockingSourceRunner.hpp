@@ -26,13 +26,13 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 // #include <Blocking/BlockingSourceRunner.hpp>
+#include <Sources/BlockingSource.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
 #include <Thread.hpp>
-#include "Sources/BlockingSource.hpp"
-#include "Sources/SourceDescriptor.hpp"
 
 namespace NES
 {

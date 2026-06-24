@@ -44,13 +44,14 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
-#include "FileDataRegistry.hpp"
-#include "InlineDataRegistry.hpp"
+#include <FileDataRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 
 namespace NES
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersFileSource::FILEPATH))
+FileSource::FileSource(const SourceDescriptor& sourceDescriptor)
+    : filePath(sourceDescriptor.getFromConfig(ConfigParametersFileSource::FILEPATH))
 {
 }
 

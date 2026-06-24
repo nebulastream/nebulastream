@@ -21,11 +21,11 @@
 #include <thread>
 #include <vector>
 
+#include <Util/Logger/Logger.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
-#include "Util/Logger/Logger.hpp"
 
-#include "Thread.hpp"
+#include <Thread.hpp>
 
 namespace NES
 {
