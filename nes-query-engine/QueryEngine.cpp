@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -31,6 +32,7 @@
 #include <variant>
 #include <vector>
 
+#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
@@ -55,7 +57,6 @@
 #include <Task.hpp>
 #include <TaskQueue.hpp>
 #include <Thread.hpp>
-#include "Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp"
 
 namespace NES
 {
@@ -479,6 +480,10 @@ thread_local WorkerThreadId ThreadPool::WorkerThread::id = INVALID<WorkerThreadI
 
 bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 {
+    /// TMP DIAGNOSTIC: when NES_DISABLE_EMIT is set, a pipeline does not hand its emitted buffers to
+    /// successor pipelines (incl. the sink). Isolates the per-buffer emit/sink-task cost from the
+    /// scan/parse/operator cost. NOT for production -- it breaks query results.
+    static const bool disableEmit = std::getenv("NES_DISABLE_EMIT") != nullptr;
     LogContext logContext("Task", fmt::format("{}-{}", task.queryId, task.pipelineId));
     if (terminating)
     {
@@ -499,6 +504,10 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             {
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                if (disableEmit)
+                {
+                    return true;
+                }
                 return std::ranges::all_of(
                     pipeline->successors,
                     [&](const auto& successor)

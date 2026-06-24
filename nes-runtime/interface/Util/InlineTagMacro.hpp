@@ -41,10 +41,10 @@
 #define NES_TAGGED_INLINE_EXPAND_0
 
 #if NES_INLINE_GLOBAL
-/// Global inlining enabled: all tagged functions get NAUTILUS_INLINE regardless of per-tag settings
-#define NAUTILUS_TAGGED_INLINE(tag) NAUTILUS_INLINE
+    /// Global inlining enabled: all tagged functions get NAUTILUS_INLINE regardless of per-tag settings
+    #define NAUTILUS_TAGGED_INLINE(tag) NAUTILUS_INLINE
 #else
-/// Per-tag inlining: NES_INLINE_TAG_<tag> must be defined as 0 or 1 in the generated config.
-/// Undefined tags produce a compile error — add the tag to the CMake inline config.
-#define NAUTILUS_TAGGED_INLINE(tag) NES_INLINE_CONCAT(NES_TAGGED_INLINE_EXPAND_, NES_INLINE_TAG_##tag)
+    /// Per-tag inlining: NES_INLINE_TAG_<tag> must be defined as 0 or 1 in the generated config.
+    /// Undefined tags produce a compile error — add the tag to the CMake inline config.
+    #define NAUTILUS_TAGGED_INLINE(tag) NES_INLINE_CONCAT(NES_TAGGED_INLINE_EXPAND_, NES_INLINE_TAG_##tag)
 #endif

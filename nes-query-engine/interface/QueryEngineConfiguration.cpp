@@ -18,10 +18,10 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include <InvokeConfiguration.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <InvokeConfiguration.hpp>
 
 namespace NES
 {
@@ -30,7 +30,8 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThrea
     struct Validator : ConfigurationValidation
     {
         std::string threadType;
-        explicit Validator(std::string threadType) : ConfigurationValidation(), threadType(std::move(threadType)) {}
+
+        explicit Validator(std::string threadType) : ConfigurationValidation(), threadType(std::move(threadType)) { }
 
         [[nodiscard]] bool isValid(const std::string& stringValue) const override
         {

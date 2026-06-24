@@ -214,9 +214,7 @@ SourceReturnType::EmitFunction emitFunction(
                                     });
                             },
                             [&](const TupleBuffer&, std::chrono::milliseconds)
-                            {
-                                throw SkippingDelayedTaskDuringShutdown("Cannot execute delayed task as follow-up to source");
-                            }
+                            { throw SkippingDelayedTaskDuringShutdown("Cannot execute delayed task as follow-up to source"); }
 
                         );
                         successor->stage->execute(executeData.buffer, pec);

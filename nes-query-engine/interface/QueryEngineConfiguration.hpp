@@ -45,7 +45,10 @@ public:
     UIntOption admissionQueueSize
         = {"admission_queue_size", "1000", "Size of the bounded admission queue used within the QueryEngine", {queueSizeValidator()}};
     StringOption invokeModeConfigurationPath
-        = {"invoke_mode_configuration", "", "Path to YAML file configuring invoke modes (empty = all default)", {invokeModeConfigurationValidator()}};
+        = {"invoke_mode_configuration",
+           "",
+           "Path to YAML file configuring invoke modes (empty = all default)",
+           {invokeModeConfigurationValidator()}};
 
 protected:
     std::vector<BaseOption*> getOptions() override
