@@ -26,10 +26,10 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/Format.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Checksum.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <SinksParsing/Format.hpp>
 
 namespace NES
 {

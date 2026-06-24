@@ -13,6 +13,7 @@
 */
 #include <VoidSink.hpp>
 
+#include <fstream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -28,13 +29,25 @@
 
 namespace NES
 {
-VoidSink::VoidSink(BackpressureController backpressureController, const SinkDescriptor&) : Sink(std::move(backpressureController))
+VoidSink::VoidSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+    : Sink(std::move(backpressureController))
+    , outputFilePath(sinkDescriptor.tryGetFromConfig(ConfigParametersVoid::FILE_PATH))
+    , schemaFormatter(sinkDescriptor.getSchema())
 {
 }
 
 void VoidSink::start(PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up void sink: {}", *this);
+    /// When driven by the systest harness a result-file path is injected; write just the schema header
+    /// line (no data rows) so the harness sees a matching schema and an empty result set. We do this in
+    /// start() -- guaranteed to run once -- rather than stop(), so a result file still exists even when
+    /// no buffers reach the sink (e.g. under the NES_DISABLE_EMIT diagnostic).
+    if (outputFilePath.has_value())
+    {
+        std::ofstream outputFileStream(*outputFilePath, std::ofstream::binary | std::ofstream::trunc);
+        outputFileStream << schemaFormatter.getFormattedSchema();
+    }
 }
 
 void VoidSink::stop(PipelineExecutionContext&)
