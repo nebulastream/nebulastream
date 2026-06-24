@@ -67,16 +67,26 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
         const auto bufferAddress = recordBuffer.getMemArea();
         const auto recordAddress = bufferAddress + bytesWritten;
 
-        /// Iterate through the vals of the record and pass them to the output formatter for formatting
-        for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+        /// Whole-record fast path: a formatter may write the entire record at once (e.g. CSV coalescing of
+        /// contiguous passthrough fields). If it declines, fall back to formatting field-by-field.
+        if (auto coalesced = formatter->tryWriteCoalescedRecord(
+                rec, recordAddress, nautilus::val<uint64_t>{bufferSize} - bytesWritten, recordBuffer, bufferProvider))
         {
-            const auto& [name, type] = fields.at(i);
-            const auto fieldAddress = recordAddress + writtenForThisRecord;
-            const nautilus::val remainingBytes{bufferSize - bytesWritten - writtenForThisRecord};
-            const auto& value = rec.read(name);
-            const auto amountWritten
-                = formatter->writeFormattedValue(value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
-            writtenForThisRecord += amountWritten;
+            writtenForThisRecord = *coalesced;
+        }
+        else
+        {
+            /// Iterate through the vals of the record and pass them to the output formatter for formatting
+            for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+            {
+                const auto& [name, type] = fields.at(i);
+                const auto fieldAddress = recordAddress + writtenForThisRecord;
+                const nautilus::val remainingBytes{bufferSize - bytesWritten - writtenForThisRecord};
+                const auto& value = rec.read(name);
+                const auto amountWritten
+                    = formatter->writeFormattedValue(value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
+                writtenForThisRecord += amountWritten;
+            }
         }
     }
     return {.successful = successful, .writtenRecords = writtenForThisRecord};

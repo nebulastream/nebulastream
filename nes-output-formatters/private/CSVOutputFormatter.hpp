@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -48,6 +49,18 @@ public:
         const DataType& fieldType,
         const nautilus::static_val<uint64_t>& fieldIndex,
         const nautilus::val<int8_t*>& fieldPointer,
+        const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+
+    /// Coalesced fast path: if every output field is a lazy passthrough value (raw input bytes, written
+    /// unquoted) and the field delimiter is a single byte, a run of fields that are actually adjacent in the
+    /// source buffer -- checked at runtime, with the in-between byte verified to be the field delimiter -- is
+    /// emitted as ONE copy plus the tuple delimiter, instead of one copy per field. Declines (nullopt) when a
+    /// field is not a lazy value or the delimiter is multi-byte, leaving those records to the per-field path.
+    [[nodiscard]] std::optional<nautilus::val<uint64_t>> tryWriteCoalescedRecord(
+        const Record& record,
+        const nautilus::val<int8_t*>& recordAddress,
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;

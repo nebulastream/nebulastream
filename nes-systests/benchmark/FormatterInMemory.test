@@ -44,3 +44,39 @@ SELECT key FROM mem5v INTO mem5v_projChk;
 # Q5 -- Varsized key -> Void (parse elided; no output format)
 SELECT key FROM mem5v INTO mem5v_projVoid;
 ----
+
+# Lazy-typed UINT64 elision: key stays UINT64 (NOT varsized), but lazy_uint_overloads=true makes the
+# formatter emit a deferred (ptr,size) LazyValueRepresentation instead of parsing. A pure projection
+# passthrough then writes the raw CSV bytes straight to the CSV output (no to_string), through the same
+# byte-copy fast path as the varsized trick -- but without declaring the column VARSIZED, so there is no
+# input-side child-buffer round-trip. Output bytes are byte-identical to the parsed path (canonical ints),
+# so the checksum must still match Q1.
+CREATE LOGICAL SOURCE mem5L(creationTS UINT64 NOT NULL, key UINT64 NOT NULL, v1 UINT64 NOT NULL, v2 UINT64 NOT NULL, v3 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR mem5L TYPE InMemory SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`, "TracedUINT64" AS INPUT_FORMATTER.`UINT64_PARSER`, "true" AS INPUT_FORMATTER.`LAZY_UINT_OVERLOADS`);
+ATTACH FILE large/formatter/bench_5xUINT64_5g.csv
+
+CREATE SINK mem5L_projChk(mem5L.key UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK mem5L_projVoid(mem5L.key UINT64 NOT NULL) TYPE Void;
+
+# Q6 -- lazy-typed UINT64 -> Checksum: parse elided, raw-byte CSV output. Correctness must match Q1.
+SELECT key FROM mem5L INTO mem5L_projChk;
+----
+143128260, 15104504004
+
+# Q7 -- lazy-typed UINT64 -> Void (parse elided; no output format)
+SELECT key FROM mem5L INTO mem5L_projVoid;
+----
+
+# SELECT * : all 5 UINT64 fields elided -> full-row raw-byte passthrough (index all + copy all out,
+# no parse, no to_string). This is the maximal-elision case (5 fields vs 1) -- on a typed-parse branch
+# it would pay 5 parses + 5 to_string per row.
+CREATE SINK mem5_allChk(mem5.creationTS UINT64 NOT NULL, mem5.key UINT64 NOT NULL, mem5.v1 UINT64 NOT NULL, mem5.v2 UINT64 NOT NULL, mem5.v3 UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK mem5_allVoid(mem5.creationTS UINT64 NOT NULL, mem5.key UINT64 NOT NULL, mem5.v1 UINT64 NOT NULL, mem5.v2 UINT64 NOT NULL, mem5.v3 UINT64 NOT NULL) TYPE Void;
+
+# Q8 -- SELECT * -> Checksum (all 5 fields elided, full-row byte passthrough)
+SELECT * FROM mem5 INTO mem5_allChk;
+----
+
+# Q9 -- SELECT * -> Void (index all 5, no output format)
+SELECT * FROM mem5 INTO mem5_allVoid;
+----
