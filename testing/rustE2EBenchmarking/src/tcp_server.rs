@@ -1,3 +1,18 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+use clap::Parser;
 use std::fs::File;
 use std::io::Read;
 use std::net::SocketAddr;
@@ -7,8 +22,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::io::AsyncWriteExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{Barrier, Mutex};
-use tokio::time::{sleep, interval};
-use clap::Parser;
+use tokio::time::{interval, sleep};
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -92,10 +106,15 @@ impl Server {
 
         println!("Server listening on {}", addr);
         println!("Waiting for {} clients to connect...", self.args.clients);
-        println!("Will serve file {} times to each client", self.args.iterations);
-        println!("Total rate: {} MB/s, Per client: {:.2} MB/s",
-                 self.args.rate,
-                 self.args.rate / self.args.clients as f64);
+        println!(
+            "Will serve file {} times to each client",
+            self.args.iterations
+        );
+        println!(
+            "Total rate: {} MB/s, Per client: {:.2} MB/s",
+            self.args.rate,
+            self.args.rate / self.args.clients as f64
+        );
         println!("Mode: {:?}", self.args.mode);
 
         let client_counter = Arc::new(Mutex::new(0));
@@ -116,13 +135,9 @@ impl Server {
             let args = Arc::clone(&self.args);
 
             let handle = tokio::spawn(async move {
-                if let Err(e) = handle_client(
-                    stream,
-                    client_id,
-                    barrier_clone,
-                    file_data,
-                    args,
-                ).await {
+                if let Err(e) =
+                    handle_client(stream, client_id, barrier_clone, file_data, args).await
+                {
                     eprintln!("Error handling client {}: {}", client_id, e);
                 }
             });
@@ -130,8 +145,10 @@ impl Server {
             client_handles.push(handle);
         }
 
-
-        println!("All {} clients connected. Starting file transfer...", self.args.clients);
+        println!(
+            "All {} clients connected. Starting file transfer...",
+            self.args.clients
+        );
 
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -165,8 +182,10 @@ async fn handle_client(
     let client_rate_bytes_per_sec = (client_rate_mbps * 1024.0 * 1024.0) as usize;
     let chunk_size = args.chunk_size_kb * 1024;
 
-    println!("Client {}: Starting transfer ({} iterations, {:.2} MB/s)",
-             client_id, args.iterations, client_rate_mbps);
+    println!(
+        "Client {}: Starting transfer ({} iterations, {:.2} MB/s)",
+        client_id, args.iterations, client_rate_mbps
+    );
 
     match args.mode {
         SendingMode::Uniform => {
@@ -177,7 +196,8 @@ async fn handle_client(
                 args.iterations,
                 client_rate_bytes_per_sec,
                 chunk_size,
-            ).await?;
+            )
+            .await?;
         }
         SendingMode::Burst => {
             send_burst(
@@ -186,7 +206,8 @@ async fn handle_client(
                 &file_data,
                 args.iterations,
                 client_rate_bytes_per_sec,
-            ).await?;
+            )
+            .await?;
         }
     }
 
@@ -223,8 +244,10 @@ async fn send_uniform(
         let elapsed = start.elapsed();
         let actual_rate = (bytes_sent as f64 / elapsed.as_secs_f64()) / (1024.0 * 1024.0);
 
-        println!("Client {}: Iteration {}/{} complete ({:.2} MB/s actual)",
-                 client_id, iteration, iterations, actual_rate);
+        println!(
+            "Client {}: Iteration {}/{} complete ({:.2} MB/s actual)",
+            client_id, iteration, iterations, actual_rate
+        );
     }
 
     Ok(())
@@ -250,14 +273,20 @@ async fn send_burst(
         let elapsed = start.elapsed();
         let actual_rate = (file_size as f64 / elapsed.as_secs_f64()) / (1024.0 * 1024.0);
 
-        println!("Client {}: Iteration {}/{} burst sent ({:.2} MB/s actual)",
-                 client_id, iteration, iterations, actual_rate);
+        println!(
+            "Client {}: Iteration {}/{} burst sent ({:.2} MB/s actual)",
+            client_id, iteration, iterations, actual_rate
+        );
 
         // Pause to maintain average rate
         if iteration < iterations {
             let remaining_time = burst_duration.saturating_sub(elapsed);
             if !remaining_time.is_zero() {
-                println!("Client {}: Pausing for {:.2}s", client_id, remaining_time.as_secs_f64());
+                println!(
+                    "Client {}: Pausing for {:.2}s",
+                    client_id,
+                    remaining_time.as_secs_f64()
+                );
                 sleep(remaining_time).await;
             }
         }

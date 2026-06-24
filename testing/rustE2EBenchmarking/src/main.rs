@@ -2,14 +2,14 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use tracing::{info, error};
+use tracing::{error, info};
 use walkdir::WalkDir;
 
 mod config;
-mod runner;
-mod tcp_manager;
 mod query_manager;
+mod runner;
 mod system_manager;
+mod tcp_manager;
 
 use config::BenchmarkConfig;
 use runner::BenchmarkRunner;
@@ -58,9 +58,7 @@ enum Commands {
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_env_filter("info")
-        .init();
+    tracing_subscriber::fmt().with_env_filter("info").init();
 
     let args = Args::parse();
 
@@ -155,7 +153,10 @@ async fn main() -> Result<()> {
         }
 
         Commands::Example { output } => {
-            info!("Generating example benchmark configuration to: {:?}", output);
+            info!(
+                "Generating example benchmark configuration to: {:?}",
+                output
+            );
             BenchmarkConfig::write_example(&output)?;
             info!("Example configuration written successfully");
         }
