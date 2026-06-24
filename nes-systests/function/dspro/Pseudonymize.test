@@ -55,35 +55,7 @@ FROM stream2 INTO sinkStream2;
 331865371
 
 
-# Test 3: Key sensitivity
-#   Uses a different key (other-secret-key) and expects completely different outputs
-#   for the same input IDs. Proves the key is actually being used in the HMAC —
-#   without this test, a plain SHA-256 (no key) would also pass tests 1 and 2.
-#
-#   To run this test, temporarily change the environment variable:
-#     export PSEUDONYM_SECRET_KEY="other-secret-key"
-
-#CREATE LOGICAL SOURCE stream3(patient_id INT32 NOT NULL);
-#CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
-#ATTACH INLINE
-#0
-#1
-#2
-#3
-
-#CREATE SINK sinkStream3(patient_id_pseudo INT32 NOT NULL) TYPE File;
-
-#SELECT
-#    Pseudonymize(patient_id) AS patient_id_pseudo
-#FROM stream3 INTO sinkStream3;
-#----
-#1702986568
-#1021456373
-#681150670
-#975472697
-
-
-# Test 4: Edge case — single record
+# Test 3: Edge case — single record
 #   Verifies the function works correctly with a stream of exactly one record.
 
 CREATE LOGICAL SOURCE stream4(patient_id INT32 NOT NULL);
@@ -100,7 +72,7 @@ FROM stream4 INTO sinkStream4;
 2031579173
 
 
-# Test 5: Edge case — maximum INT32 value
+# Test 4: Edge case — maximum INT32 value
 #   Verifies the function handles the boundary value INT32_MAX (2147483647)
 #   without overflow or undefined behaviour.
 
@@ -118,7 +90,7 @@ FROM stream5 INTO sinkStream5;
 1401463166
 
 
-# Test 6: INT64 Data Type Support
+# Test 5: INT64 Data Type Support
 #   Verifies that the function correctly identifies and processes INT64 inputs
 #   using the polymorphic template without causing a JIT-compiler type mismatch.
 CREATE LOGICAL SOURCE stream6(patient_id INT64 NOT NULL);
@@ -141,7 +113,7 @@ FROM stream6 INTO sinkStream6;
 8896932896802744675
 
 
-# Test 7: Edge case — maximum INT64 value
+# Test 6: Edge case — maximum INT64 value
 #   Verifies the function handles the massive 8-byte boundary value INT64_MAX
 #   (9223372036854775807) natively.
 CREATE LOGICAL SOURCE stream7(patient_id INT64 NOT NULL);
@@ -158,7 +130,7 @@ FROM stream7 INTO sinkStream7;
 2830690117075404093
 
 
-# Test 8: INT8 Data Type Support
+# Test 7: INT8 Data Type Support
 #   Verifies that the function correctly processes 1-byte integers (INT8).
 #   This explicitly triggers the `is_same_v<ArgType, nautilus::val<int8_t>>` branch.
 CREATE LOGICAL SOURCE stream8(patient_id INT8 NOT NULL);
@@ -179,7 +151,7 @@ FROM stream8 INTO sinkStream8;
 53
 
 
-# Test 9: INT8 Edge Case — Maximum Value
+# Test 8: INT8 Edge Case — Maximum Value
 #   Verifies the function handles the boundary value for signed INT8 (127).
 CREATE LOGICAL SOURCE stream9(patient_id INT8 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream9 TYPE File;
@@ -195,7 +167,7 @@ FROM stream9 INTO sinkStream9;
 75
 
 
-# Test 10: INT16 Data Type Support
+# Test 9: INT16 Data Type Support
 #   Verifies that the function correctly processes 2-byte integers (INT16).
 #   This explicitly triggers the `is_same_v<ArgType, nautilus::val<int16_t>>` branch.
 CREATE LOGICAL SOURCE stream10(patient_id INT16 NOT NULL);
@@ -216,7 +188,7 @@ FROM stream10 INTO sinkStream10;
 4390
 
 
-# Test 11: INT16 Edge Case — Maximum Value
+# Test 10: INT16 Edge Case — Maximum Value
 #   Verifies the function handles the boundary value for signed INT16 (32767).
 CREATE LOGICAL SOURCE stream11(patient_id INT16 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream11 TYPE File;
@@ -230,3 +202,25 @@ SELECT
 FROM stream11 INTO sinkStream11;
 ----
 18622
+
+
+# Test 11: VARSIZED string pseudonymization
+#   Verifies that string patient IDs (e.g. "P001") are transformed into
+#   64-character lowercase hex pseudo-IDs using HMAC-SHA256.
+#   Output is always a fixed-length VARSIZED string regardless of input length.
+CREATE LOGICAL SOURCE stream12(patient_id VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream12 TYPE File;
+ATTACH INLINE
+P001
+P002
+P003
+
+CREATE SINK sinkStream12(patient_id_pseudo VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Pseudonymize(patient_id) AS patient_id_pseudo
+FROM stream12 INTO sinkStream12;
+----
+530a988a127b178d8bd04e5e69632d6ff61055f8598d991a2994d49f4356ebc9
+eefc834a1fa4681cab5b136cb0721f2f8dc51082b32447b3c4cd2fc0b27548a2
+99f7971de5720f5ae9547767e0d20a26605f5e5a00459ee0213a442c63e24b6c

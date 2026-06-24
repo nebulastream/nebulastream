@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp> /// NOLINT(misc-include-cleaner)
@@ -67,12 +68,27 @@ LogicalFunction PseudonymizeLogicalFunction::withInferredDataType(const Schema& 
         newChildren.push_back(chr.withInferredDataType(schema));
     }
     INVARIANT(newChildren.size() == 1, "PseudonymizeLogicalFunction expects exactly one child but has {}", newChildren.size());
-    if (not newChildren[0].getDataType().isInteger())
+
+    const auto& inputType = newChildren[0].getDataType();
+
+    // Accept either integer types (INT32, INT64, etc.) or variable-sized strings.
+    // For integers: output type is the same integer type as input (preserves width).
+    // For strings:  output type is always VARSIZED (hex string of the HMAC digest).
+    if (inputType.isInteger())
     {
-        throw DifferentFieldTypeExpected("Pseudonymize expects an integer input but got {}", newChildren[0].getDataType());
+        // Integer path — keep same type as input
+        return withDataType(inputType).withChildren(newChildren);
     }
-    auto newDataType = newChildren[0].getDataType();
-    return withDataType(newDataType).withChildren(newChildren);
+    if (inputType.isType(DataType::Type::VARSIZED))
+    {
+        // String path — output is a VARSIZED hex string
+        auto varsizedType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+        varsizedType.nullable = inputType.nullable;
+        return withDataType(varsizedType).withChildren(newChildren);
+    }
+
+    throw DifferentFieldTypeExpected(
+        "Pseudonymize expects an integer or VARSIZED input but got {}", inputType);
 };
 
 std::vector<LogicalFunction> PseudonymizeLogicalFunction::getChildren() const
