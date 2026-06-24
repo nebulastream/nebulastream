@@ -15,14 +15,14 @@
 #include <FastFloatInputParser.hpp>
 
 #include <memory>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/InlineTagMacro.hpp>
+#include <Util/InvokeMacro.hpp>
 #include <fast_float/fast_float.h>
 #include <ErrorHandling.hpp>
 #include <InputParserRegistry.hpp>
 #include <RawValueParser.hpp>
 #include <val_arith.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Util/InvokeMacro.hpp>
 
 namespace NES
 {
@@ -50,7 +50,8 @@ T parseWithFastFloat(const int8_t* fieldAddress, const uint64_t fieldSize)
 
 template <typename T, bool Nullable>
 requires Nullable
-FastFloatParseResult<T>* parseWithFastFloat(const int8_t* fieldAddress, const uint64_t fieldSize, const std::vector<std::string>* nullValues)
+FastFloatParseResult<T>*
+parseWithFastFloat(const int8_t* fieldAddress, const uint64_t fieldSize, const std::vector<std::string>* nullValues)
 {
     PRECONDITION(nullValues != nullptr, "NullValues is expected to be not null!");
 
@@ -92,7 +93,8 @@ VarVal FastFloatF64InputParser::parseToVarVal(
             fieldAddress,
             fieldSize,
             nautilus::val<const std::vector<std::string>*>{&nullValues});
-        const nautilus::val<double> nautilusValue = *getMemberWithOffset<double>(parseResult, offsetof(FastFloatParseResult<double>, value));
+        const nautilus::val<double> nautilusValue
+            = *getMemberWithOffset<double>(parseResult, offsetof(FastFloatParseResult<double>, value));
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(FastFloatParseResult<double>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
@@ -116,7 +118,8 @@ VarVal FastFloatF64InputParser::parseLazyToVarVal(
         }
         return VarVal{result, true, isNull};
     }
-    const nautilus::val<double> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseWithFastFloat<double, false>, fieldAddress, fieldSize);
+    const nautilus::val<double> result
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseWithFastFloat<double, false>, fieldAddress, fieldSize);
     return VarVal{result, false, false};
 }
 
