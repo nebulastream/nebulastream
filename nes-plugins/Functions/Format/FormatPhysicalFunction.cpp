@@ -147,45 +147,12 @@ namespace NES
             argSizes[index] = argSize;
         }
 
-        uint64_t countOutputSize(
-            int8_t* fmt,
-            uint64_t fmtSize,
-            int8_t* /*argPtrsRaw*/,
-            int8_t* argSizesRaw,
-            uint64_t argCount)
-        {
-            auto* argSizes = reinterpret_cast<uint64_t*>(argSizesRaw);
-
-            uint64_t size = 0;
-            uint64_t argIndex = 0;
-
-            for (uint64_t i = 0; i < fmtSize; ++i)
-            {
-                if (fmt[i] == '{' && i + 1 < fmtSize && fmt[i + 1] == '}')
-                {
-                    if (argIndex < argCount)
-                    {
-                        size += argSizes[argIndex];
-                    }
-
-                    ++argIndex;
-                    ++i;
-                }
-                else
-                {
-                    ++size;
-                }
-            }
-
-            return size;
-        }
-
-        void writeFormattedOutput(
+        uint64_t writeFormattedOutput(
             const int8_t* fmt,
             uint64_t fmtSize,
             int8_t* argPtrsRaw,
             int8_t* argSizesRaw,
-            uint64_t argCount,
+            uint64_t /*argCount*/,
             int8_t* out)
         {
             auto** argPtrs = reinterpret_cast<int8_t**>(argPtrsRaw);
@@ -196,23 +163,45 @@ namespace NES
 
             for (uint64_t i = 0; i < fmtSize; ++i)
             {
-                if (fmt[i] == '{' && i + 1 < fmtSize && fmt[i + 1] == '}')
+                if (fmt[i] == '{')
                 {
-                    if (argIndex < argCount)
+                    if (i + 1 < fmtSize && fmt[i + 1] == '{')
+                    {
+                        out[outIndex++] = '{';
+                        ++i;
+                    }
+                    else if (i + 1 < fmtSize && fmt[i + 1] == '}')
                     {
                         const auto argSize = argSizes[argIndex];
                         std::memcpy(out + outIndex, argPtrs[argIndex], argSize);
                         outIndex += argSize;
-                    }
 
-                    ++argIndex;
-                    ++i;
+                        ++argIndex;
+                        ++i;
+                    }
+                    else
+                    {
+                        out[outIndex++] = fmt[i];
+                    }
+                }
+                else if (fmt[i] == '}')
+                {
+                    if (i + 1 < fmtSize && fmt[i + 1] == '}')
+                    {
+                        out[outIndex++] = '}';
+                        ++i;
+                    }
+                    else
+                    {
+                        out[outIndex++] = fmt[i];
+                    }
                 }
                 else
                 {
                     out[outIndex++] = fmt[i];
                 }
             }
+            return outIndex;
         }
     }
 
@@ -253,6 +242,7 @@ VarVal FormatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
 
     auto nullable = formatStringValue.isNullable();
     auto newNull = formatStringValue.isNullable() and formatStringValue.isNull();
+    auto maxOutputSize = formatString.getSize();
 
     std::vector<VarVal> argValues;
     argValues.reserve(argCount);
@@ -260,11 +250,12 @@ VarVal FormatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     for (size_t i = 0; i < argCount; ++i)
     {
         const auto rawArgValue = childPhysicalFunctions[i + 1].execute(record, arena);
+        nullable = nullable or rawArgValue.isNullable();
+        newNull = newNull or (rawArgValue.isNullable() and rawArgValue.isNull());
         auto argValue = stringifyValue(rawArgValue, arena);
         const auto arg = argValue.getRawValueAs<VariableSizedData>();
 
-        nullable = nullable or argValue.isNullable();
-        newNull = newNull or (argValue.isNullable() and argValue.isNull());
+        maxOutputSize = maxOutputSize + arg.getSize();
 
         nautilus::invoke(
             storeArgument,
@@ -277,34 +268,23 @@ VarVal FormatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
         argValues.emplace_back(std::move(argValue));
     }
 
-    const auto outputSize = nautilus::select(
+    auto output = arena.allocateVariableSizedData(
+        nautilus::select(newNull, nautilus::val<uint64_t>{0}, maxOutputSize));
+
+    const auto actualOutputSize = nautilus::select(
         newNull,
         nautilus::val<uint64_t>{0},
         nautilus::invoke(
-            countOutputSize,
+            writeFormattedOutput,
             formatString.getContent(),
             formatString.getSize(),
             argPtrsBuffer.getContent(),
             argSizesBuffer.getContent(),
-            nautilus::val<uint64_t>{argCount}));
+            nautilus::val<uint64_t>{argCount},
+            output.getContent()));
 
-    auto output = arena.allocateVariableSizedData(outputSize);
-
-    if (newNull)
-    {
-        return VarVal{output, nullable, newNull};
-    }
-
-    nautilus::invoke(
-        writeFormattedOutput,
-        formatString.getContent(),
-        formatString.getSize(),
-        argPtrsBuffer.getContent(),
-        argSizesBuffer.getContent(),
-        nautilus::val<uint64_t>{argCount},
-        output.getContent());
-
-    return VarVal{output, nullable, newNull};
+    return VarVal{VariableSizedData{output.getContent(), actualOutputSize},
+    nullable, newNull};
     }
 
 PhysicalFunctionRegistryReturnType
