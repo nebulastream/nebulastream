@@ -170,7 +170,7 @@ void BufferManager::initialize(uint32_t withAlignment, const std::optional<SizeC
             classSizes.push_back(classSize);
         }
         const size_t numClasses = classSizes.size();
-        const size_t budget = (sc.totalBudgetBytes != 0) ? sc.totalBudgetBytes : (static_cast<size_t>(bufferSize) * numOfBuffers);
+        const size_t budget = (sc.totalBudgetBytes != 0) ? sc.totalBudgetBytes : (bufferSize * numOfBuffers);
 
         for (const size_t classSize : classSizes)
         {
