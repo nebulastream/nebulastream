@@ -432,3 +432,80 @@ FROM numberStream INTO sinkExprArg;
 ----
 sum=-1, diff=1
 sum=-58, diff=142
+
+########################################
+# Null Test handling
+########################################
+
+CREATE LOGICAL SOURCE nullableStream(value INT32, other_value INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR nullableStream TYPE File;
+ATTACH INLINE
+1,10
+NULL,20
+3,30
+
+CREATE SINK sinkNullable(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("value={}, other={}"), value, other_value) AS formatted
+FROM nullableStream INTO sinkNullable;
+----
+value=1, other=10
+NULL
+value=3, other=30
+
+########################################
+# Escaped braces
+########################################
+
+CREATE SINK sinkEscapedBraces(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("literal {{}} value={}"), value) AS formatted
+FROM stringStream INTO sinkEscapedBraces;
+----
+literal {} value=one
+literal {} value=two
+literal {} value=three
+
+########################################
+# Escaped braces around placeholder
+########################################
+
+CREATE SINK sinkEscapedBracesWithPlaceholder(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("{{ value={} }}"), value) AS formatted
+FROM stringStream INTO sinkEscapedBracesWithPlaceholder;
+----
+{ value=one }
+{ value=two }
+{ value=three }
+
+########################################
+# Edge case: spaces around placeholders
+########################################
+
+CREATE SINK sinkSpacesAround(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("Value:   {}   End"), value) AS formatted
+FROM stringStream INTO sinkSpacesAround;
+----
+Value:   one   End
+Value:   two   End
+Value:   three   End
+
+########################################
+# Edge case: adjacent placeholders separated by spaces
+########################################
+
+CREATE SINK sinkSpacesBetween(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("{}   {}"), value, other_value) AS formatted
+FROM stringStream INTO sinkSpacesBetween;
+----
+one   ten
+two   twenty
+three   thirty
