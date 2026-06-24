@@ -33,6 +33,7 @@ namespace NES
 {
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseChar(
     const char value,
     int8_t* bufferStartingAddress,
@@ -45,6 +46,7 @@ uint64_t parseChar(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseF32(
     const float value,
     int8_t* bufferStartingAddress,
@@ -57,6 +59,7 @@ uint64_t parseF32(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseF64(
     const double value,
     int8_t* bufferStartingAddress,
@@ -69,6 +72,7 @@ uint64_t parseF64(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseInt8(
     const int32_t value,
     int8_t* bufferStartingAddress,
@@ -81,6 +85,7 @@ uint64_t parseInt8(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseInt16(
     const int32_t value,
     int8_t* bufferStartingAddress,
@@ -93,6 +98,7 @@ uint64_t parseInt16(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseInt32(
     const int32_t value,
     int8_t* bufferStartingAddress,
@@ -105,6 +111,7 @@ uint64_t parseInt32(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseInt64(
     const int64_t value,
     int8_t* bufferStartingAddress,
@@ -117,6 +124,7 @@ uint64_t parseInt64(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseBool(
     const bool value,
     int8_t* bufferStartingAddress,
@@ -129,6 +137,7 @@ uint64_t parseBool(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseUint8(
     const uint8_t value,
     int8_t* bufferStartingAddress,
@@ -141,6 +150,7 @@ uint64_t parseUint8(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseUint16(
     const uint16_t value,
     int8_t* bufferStartingAddress,
@@ -153,6 +163,7 @@ uint64_t parseUint16(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseUint32(
     const uint32_t value,
     int8_t* bufferStartingAddress,
@@ -165,6 +176,7 @@ uint64_t parseUint32(
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
+
 uint64_t parseUint64(
     const uint64_t value,
     int8_t* bufferStartingAddress,

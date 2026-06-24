@@ -15,6 +15,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <ranges>
 #include <string>
@@ -76,6 +77,12 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
+    /// TMP DIAGNOSTIC: NES_SKIP_MATERIALIZE traces OUT the per-field storeValue (the 8-byte/tuple write into the
+    /// output buffer) at pipeline-compile time, keeping everything else (bounds check, loop, outputIndex advance,
+    /// buffer fill+emit cadence) intact. The throughput delta vs a normal run isolates record-materialization cost.
+    /// std::getenv is read once at trace time so the store is pruned from the compiled pipeline. Breaks results --
+    /// diagnostic only. REVERT before merge.
+    static const bool skipMaterialize = std::getenv("NES_SKIP_MATERIALIZE") != nullptr;
     nautilus::val<bool> successful{false};
     nautilus::val<uint64_t> writtenRecords{0};
     /// Check if index is in-bounds
@@ -89,6 +96,10 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
             if (not rec.hasField(name))
             {
                 /// Skipping any fields that are not part of the record
+                continue;
+            }
+            if (skipMaterialize)
+            {
                 continue;
             }
             auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
@@ -110,6 +121,46 @@ std::vector<Record::RecordFieldIdentifier> RowTupleBufferRef::getAllFieldNames()
 std::vector<DataType> RowTupleBufferRef::getAllDataTypes() const
 {
     return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
+}
+
+Record RowTupleBufferRef::readRecordWithOffset(
+    const std::vector<Record::RecordFieldIdentifier>& projections,
+    const nautilus::val<int8_t*>& bufferAddress,
+    const nautilus::val<uint64_t>& recordIndex,
+    const nautilus::val<uint32_t>& offset,
+    const std::vector<uint32_t>& maxStringLengths) const
+{
+    Record record;
+    const auto recordOffset = bufferAddress + offset + (tupleSize * recordIndex);
+    nautilus::static_val<uint64_t> stringIndex = 0;
+    for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+    {
+        const auto& [name, type, fieldOffset] = fields.at(i);
+        if (not includesField(projections, name))
+        {
+            continue;
+        }
+        auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
+        if (type.isType(DataType::Type::VARSIZED))
+        {
+            nautilus::val<uint32_t> stringLength = 0;
+            while (stringLength < maxStringLengths.at(stringIndex) and fieldAddress[stringLength] != '\0')
+            {
+                ++stringLength;
+            }
+            const VariableSizedData varSized{fieldAddress, stringLength};
+            const VarVal varVal{varSized, false, false};
+
+            ++stringIndex;
+            record.write(name, varVal);
+        }
+        else
+        {
+            auto value = VarVal::readVarValFromMemory(fieldAddress, type, false);
+            record.write(name, value);
+        }
+    }
+    return record;
 }
 
 }

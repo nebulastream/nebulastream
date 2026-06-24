@@ -33,7 +33,6 @@ namespace NES
 class NoneFormat : public Format
 {
 public:
-
     explicit NoneFormat(const Schema& schema);
 
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;

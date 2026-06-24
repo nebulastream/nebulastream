@@ -19,13 +19,13 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
 #include <val_ptr.hpp>
-#include <Time/Timestamp.hpp>
 
 namespace NES
 {
@@ -95,6 +95,7 @@ void updateTimestamp(const Timestamp timestamp, PagedVector* vec)
 {
     vec->updateTimestamp(timestamp);
 }
+
 void PagedVectorRef::updateSourceCreationTimestamp(const nautilus::val<Timestamp>& ts) const
 {
     nautilus::invoke(updateTimestamp, ts, pagedVectorRef);

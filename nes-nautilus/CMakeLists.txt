@@ -20,6 +20,12 @@ get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
 target_link_libraries(nes-nautilus PUBLIC nes-memory nes-input-formatters nes-output-formatters)
 
+# TMP DIAGNOSTIC (benchmark experiment): apply the nautilus InliningPass to nes-nautilus so the bitcode of
+# NAUTILUS_INLINE-marked proxies (e.g. NES_Memory_TupleBuffer_getMemArea) is registered and the JIT can
+# splice them in instead of emitting a proxy `call`. Other components are pass-applied in their own
+# CMakeLists; nes-nautilus was not, leaving its buffer/record proxies un-inlinable everywhere.
+nautilus_inline(nes-nautilus)
+
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-nautilus REUSE_FROM nes-common)

@@ -54,7 +54,7 @@ namespace NES
 
 namespace
 {
-uint64_t writeVarsized(
+NAUTILUS_INLINE uint64_t writeVarsized(
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
     const bool quoteStrings,
@@ -63,24 +63,41 @@ uint64_t writeVarsized(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    std::string stringFormattedValue{reinterpret_cast<const char*>(varSizedContent), contentSize};
-    if (quoteStrings)
+    /// Fast path (no quoting): copy the raw source bytes straight into the output buffer -- no per-value
+    /// std::string allocation, no strlen. A child buffer is touched only if the row genuinely overflows
+    /// the main buffer (handled inside writeBytesToBuffer).
+    const char* const data = reinterpret_cast<const char*>(varSizedContent);
+    /// Fast path (no quoting): copy the raw source bytes straight into the output buffer -- no per-value
+    /// std::string allocation, no strlen. A child buffer is touched only on genuine main-buffer overflow.
+    if (!quoteStrings)
     {
-        /// Replace all " instances in the string with ""
-        std::string stringWithDoubledQuotes;
-        for (const char character : stringFormattedValue)
-        {
-            if (character == '"')
-            {
-                stringWithDoubledQuotes.append("\"\"");
-            }
-            else
-            {
-                stringWithDoubledQuotes += character;
-            }
-        }
-        stringFormattedValue = "\"" + stringWithDoubledQuotes + "\"";
+        return writeBytesToBuffer(data, contentSize, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
     }
+    /// Quoting requested. The common case has no embedded quote to escape, so we can still avoid the
+    /// std::string: write `"` + raw bytes + `"` directly when the quoted value fits in the main buffer.
+    if (std::memchr(varSizedContent, '"', contentSize) == nullptr && tupleBuffer->getNumberOfChildBuffers() == 0
+        && contentSize + 2 <= remainingSpace)
+    {
+        bufferStartingAddress[0] = static_cast<int8_t>('"');
+        std::memcpy(bufferStartingAddress + 1, data, contentSize);
+        bufferStartingAddress[1 + contentSize] = static_cast<int8_t>('"');
+        return contentSize + 2;
+    }
+    /// Slow path: embedded quotes need doubling, or the value spans into a child buffer.
+    std::string stringFormattedValue{data, contentSize};
+    std::string stringWithDoubledQuotes;
+    for (const char character : stringFormattedValue)
+    {
+        if (character == '"')
+        {
+            stringWithDoubledQuotes.append("\"\"");
+        }
+        else
+        {
+            stringWithDoubledQuotes += character;
+        }
+    }
+    stringFormattedValue = "\"" + stringWithDoubledQuotes + "\"";
     return writeValueToBuffer(stringFormattedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
@@ -224,15 +241,23 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
             parserTypes.at(fieldType.type));
     }
 
-    /// Write either the field delimiter or the tuple delimiter, depending on the field index
+    /// Write either the field delimiter or the tuple delimiter, depending on the field index.
+    /// The delimiter length is known at construction time, so write the raw bytes directly (no strlen).
+    const auto isLastField = fieldIndex == nautilus::val<uint64_t>{fieldNames.size()} - 1;
     const auto delimiter = nautilus::select(
-        fieldIndex == nautilus::val<uint64_t>{fieldNames.size()} - 1,
-        nautilus::val<const char*>{tupleDelimiter.c_str()},
-        nautilus::val<const char*>{fieldDelimiter.c_str()});
+        isLastField, nautilus::val<const char*>{tupleDelimiter.c_str()}, nautilus::val<const char*>{fieldDelimiter.c_str()});
+    const auto delimiterLength
+        = nautilus::select(isLastField, nautilus::val<uint64_t>{tupleDelimiter.size()}, nautilus::val<uint64_t>{fieldDelimiter.size()});
 
     /// As formatting is finished fo this value after this function, currentRemainingSize does not have to be adjusted anymore
     written += nautilus::invoke(
-        writeValueToBuffer, delimiter, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
+        writeBytesToBuffer,
+        delimiter,
+        delimiterLength,
+        currentRemainingSize,
+        recordBuffer.getReference(),
+        bufferProvider,
+        fieldPointer + written);
     return written;
 }
 

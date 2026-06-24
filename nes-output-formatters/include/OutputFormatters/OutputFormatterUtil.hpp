@@ -30,6 +30,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <Util/Strings.hpp>
+#include <nautilus/inline.hpp> /// TMP DIAGNOSTIC: NAUTILUS_INLINE marker for the output write proxies
 #include <std/cstring.h>
 #include <ErrorHandling.hpp>
 #include <OutputParserRegistry.hpp>
@@ -41,20 +42,23 @@
 
 namespace NES
 {
-/// Write the string completely into the tuple buffer.
-/// Child buffers may be allocated if it does not fit completely into the main memory of the tuple buffer.
-/// String may span between children or between the main buffer and the first child.
-/// RemainingSpace tells the function the amount of space that is left in the main buffer.
-/// Will return the amount of bytes written in the main memory of the buffer
-inline uint64_t writeValueToBuffer(
-    const char* value,
+/// Write `size` raw bytes from `data` completely into the tuple buffer (no null-termination / strlen).
+/// Child buffers may be allocated only if it does not fit completely into the main memory of the tuple buffer.
+/// Will return the amount of bytes written in the main memory of the buffer.
+/// This is the fast path for varsized passthrough: it copies the source bytes straight into the output
+/// buffer without an intermediate std::string allocation.
+/// Slow path: the value does not fit in the remaining main-buffer space, so it spills into one or more
+/// child buffers (or appends to existing children). Kept out of the inlined fast path so the JIT loop
+/// stays tiny.
+inline uint64_t writeBytesToBufferSpilling(
+    const char* data,
+    const size_t size,
     const uint64_t remainingSpace,
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider,
     int8_t* bufferStartingAddress)
 {
-    const std::string_view valueString{value};
-    size_t remainingBytes = valueString.size();
+    size_t remainingBytes = size;
     uint32_t numOfChildBuffers = tupleBuffer->getNumberOfChildBuffers();
     uint64_t writtenToMainMemory = 0;
     /// Fill up the remaing space in the main tuple buffer before allocating any child buffers
@@ -62,7 +66,7 @@ inline uint64_t writeValueToBuffer(
     {
         const size_t fitsInMainBuffer = std::min(remainingBytes, remainingSpace);
         writtenToMainMemory += fitsInMainBuffer;
-        std::memcpy(bufferStartingAddress, valueString.data(), fitsInMainBuffer);
+        std::memcpy(bufferStartingAddress, data, fitsInMainBuffer);
         remainingBytes -= fitsInMainBuffer;
         /// Create the first child buffer, if necessary
         if (remainingBytes > 0)
@@ -78,9 +82,9 @@ inline uint64_t writeValueToBuffer(
         const VariableSizedAccess::Index childIndex{numOfChildBuffers - 1};
         auto lastChildBuffer = tupleBuffer->loadChildBuffer(childIndex);
         const auto bufferOffset = lastChildBuffer.getNumberOfTuples();
-        const uint32_t valueOffset = valueString.size() - remainingBytes;
+        const uint32_t valueOffset = size - remainingBytes;
         const uint64_t writable = std::min(remainingBytes, lastChildBuffer.getBufferSize() - bufferOffset);
-        std::memcpy(lastChildBuffer.getAvailableMemoryArea<>().data() + bufferOffset, valueString.data() + valueOffset, writable);
+        std::memcpy(lastChildBuffer.getAvailableMemoryArea<>().data() + bufferOffset, data + valueOffset, writable);
         remainingBytes -= writable;
         lastChildBuffer.setNumberOfTuples(bufferOffset + writable);
         if (remainingBytes > 0)
@@ -91,6 +95,37 @@ inline uint64_t writeValueToBuffer(
         }
     }
     return writtenToMainMemory;
+}
+
+NAUTILUS_INLINE inline uint64_t writeBytesToBuffer(
+    const char* data,
+    const size_t size,
+    const uint64_t remainingSpace,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider,
+    int8_t* bufferStartingAddress)
+{
+    /// Fast path: the value fits entirely in the main buffer. The main buffer overflows into child buffers
+    /// at most once, and that overflow drains remainingSpace to 0 (the caller subtracts the full
+    /// remainingSpace). Hence `size <= remainingSpace` guarantees no child buffers exist yet and the whole
+    /// value is written to main -- so we can skip the per-write getNumberOfChildBuffers() proxy call.
+    if (size <= remainingSpace)
+    {
+        std::memcpy(bufferStartingAddress, data, size);
+        return size;
+    }
+    return writeBytesToBufferSpilling(data, size, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
+
+/// Write the null-terminated string completely into the tuple buffer (delegates to writeBytesToBuffer).
+inline uint64_t writeValueToBuffer(
+    const char* value,
+    const uint64_t remainingSpace,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider,
+    int8_t* bufferStartingAddress)
+{
+    return writeBytesToBuffer(value, std::string_view{value}.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
 /// Parses the varval into a string.

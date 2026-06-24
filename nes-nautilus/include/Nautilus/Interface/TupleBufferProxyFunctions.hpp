@@ -18,10 +18,15 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
+#include <nautilus/inline.hpp> /// TMP DIAGNOSTIC: NAUTILUS_INLINE marker for the getMemArea proxy (see below)
 
 namespace NES::ProxyFunctions
 {
-inline int8_t* NES_Memory_TupleBuffer_getMemArea(TupleBuffer* tupleBuffer)
+/// TMP DIAGNOSTIC (benchmark experiment): mark the buffer-base accessor for nautilus inlining so the JIT
+/// splices its body in instead of emitting a proxy `call` (perf showed it at ~9% self-time, un-inlined,
+/// because nes-nautilus was not pass-applied). Requires `nautilus_inline(nes-nautilus)` in the CMakeLists
+/// to actually register the bitcode; the annotation is a no-op in non-pass-applied TUs.
+NAUTILUS_INLINE inline int8_t* NES_Memory_TupleBuffer_getMemArea(TupleBuffer* tupleBuffer)
 {
     return reinterpret_cast<int8_t*>(tupleBuffer->getAvailableMemoryArea().data());
 };
