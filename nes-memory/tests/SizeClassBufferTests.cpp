@@ -65,16 +65,16 @@ TEST_F(SizeClassBufferTest, RoundsUpToSmallestFittingClass)
 {
     auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 16384, 4));
 
-    EXPECT_EQ(bm->getBuffer(1).getBufferSize(), 1024u);
-    EXPECT_EQ(bm->getBuffer(1024).getBufferSize(), 1024u);
-    EXPECT_EQ(bm->getBuffer(1025).getBufferSize(), 2048u);
-    EXPECT_EQ(bm->getBuffer(4096).getBufferSize(), 4096u); /// the default class
-    EXPECT_EQ(bm->getBuffer(5000).getBufferSize(), 8192u);
-    EXPECT_EQ(bm->getBuffer(16384).getBufferSize(), 16384u);
+    EXPECT_EQ(bm->getBuffer(1).getBufferSize(), 1024U);
+    EXPECT_EQ(bm->getBuffer(1024).getBufferSize(), 1024U);
+    EXPECT_EQ(bm->getBuffer(1025).getBufferSize(), 2048U);
+    EXPECT_EQ(bm->getBuffer(4096).getBufferSize(), 4096U); /// the default class
+    EXPECT_EQ(bm->getBuffer(5000).getBufferSize(), 8192U);
+    EXPECT_EQ(bm->getBuffer(16384).getBufferSize(), 16384U);
 
     /// Larger than the largest class -> unpooled buffer that still satisfies the >= contract.
     auto unpooled = bm->getBuffer(20000);
-    EXPECT_GE(unpooled.getBufferSize(), 20000u);
+    EXPECT_GE(unpooled.getBufferSize(), 20000U);
 }
 
 /// Without a SizeClassConfig the manager has exactly one class (the default), preserving legacy behavior,
@@ -83,11 +83,11 @@ TEST_F(SizeClassBufferTest, BackwardCompatibleSingleClass)
 {
     auto bm = BufferManager::create(4096, 8);
 
-    EXPECT_EQ(bm->getBufferSize(), 4096u);
-    EXPECT_EQ(bm->getNumOfPooledBuffers(), 8u);
-    EXPECT_EQ(bm->getBuffer(2000).getBufferSize(), 4096u);
-    EXPECT_EQ(bm->getBuffer(4096).getBufferSize(), 4096u);
-    EXPECT_GE(bm->getBuffer(9000).getBufferSize(), 9000u); /// unpooled
+    EXPECT_EQ(bm->getBufferSize(), 4096U);
+    EXPECT_EQ(bm->getNumOfPooledBuffers(), 8U);
+    EXPECT_EQ(bm->getBuffer(2000).getBufferSize(), 4096U);
+    EXPECT_EQ(bm->getBuffer(4096).getBufferSize(), 4096U);
+    EXPECT_GE(bm->getBuffer(9000).getBufferSize(), 9000U); /// unpooled
 }
 
 /// EagerPerClass preallocates the configured number of buffers per class up front.
@@ -95,8 +95,8 @@ TEST_F(SizeClassBufferTest, EagerPerClassPreallocatesCounts)
 {
     /// Classes: 1024, 2048, 4096(default,8), 8192 -> 3 extra classes * 4 + default 8 = 20.
     auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 8192, 4));
-    EXPECT_EQ(bm->getNumOfPooledBuffers(), 20u);
-    EXPECT_EQ(bm->getNumberOfAvailableBuffers(), 20u);
+    EXPECT_EQ(bm->getNumOfPooledBuffers(), 20U);
+    EXPECT_EQ(bm->getNumberOfAvailableBuffers(), 20U);
 }
 
 /// TotalBudgetSplit distributes a byte budget across the classes; each class gets at least one buffer.
@@ -104,7 +104,7 @@ TEST_F(SizeClassBufferTest, TotalBudgetSplitDistributesBudget)
 {
     auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, budgetConfig(1024, 8192, 1U << 20U));
     /// Default class (8) plus a positive number of buffers in each extra class.
-    EXPECT_GT(bm->getNumOfPooledBuffers(), 8u);
+    EXPECT_GT(bm->getNumOfPooledBuffers(), 8U);
     EXPECT_EQ(bm->getNumberOfAvailableBuffers(), bm->getNumOfPooledBuffers());
 }
 
@@ -116,12 +116,12 @@ TEST_F(SizeClassBufferTest, RecyclesBackIntoCorrectClass)
 
     {
         auto buffer = bm->getBuffer(1500); /// 2048 class
-        EXPECT_EQ(buffer.getBufferSize(), 2048u);
+        EXPECT_EQ(buffer.getBufferSize(), 2048U);
         EXPECT_EQ(bm->getNumberOfAvailableBuffers(), totalAvailable - 1);
     }
     /// After release the buffer is back, and a new same-sized request reuses the 2048 class.
     EXPECT_EQ(bm->getNumberOfAvailableBuffers(), totalAvailable);
-    EXPECT_EQ(bm->getBuffer(1500).getBufferSize(), 2048u);
+    EXPECT_EQ(bm->getBuffer(1500).getBufferSize(), 2048U);
 }
 
 /// When the best-fit class is momentarily exhausted, getBuffer promotes to a larger pooled class.
@@ -130,10 +130,10 @@ TEST_F(SizeClassBufferTest, PromotesToLargerClassWhenExhausted)
     auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 8192, 1));
 
     auto first = bm->getBuffer(1000); /// drains the single 1024-class buffer
-    EXPECT_EQ(first.getBufferSize(), 1024u);
+    EXPECT_EQ(first.getBufferSize(), 1024U);
     auto promoted = bm->getBuffer(1000); /// 1024 empty -> next class
-    EXPECT_GE(promoted.getBufferSize(), 1024u);
-    EXPECT_GT(promoted.getBufferSize(), 1024u);
+    EXPECT_GE(promoted.getBufferSize(), 1024U);
+    EXPECT_GT(promoted.getBufferSize(), 1024U);
 }
 
 /// LazyElastic starts near-empty and grows a class on demand up to its ceiling.
@@ -142,14 +142,14 @@ TEST_F(SizeClassBufferTest, LazyElasticGrowsOnDemand)
     auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, lazyConfig(2048, 8192, 0, 4, 64));
 
     /// The lazy classes contribute nothing until first use.
-    EXPECT_EQ(bm->getNumberOfAvailableBuffers(), 8u);
+    EXPECT_EQ(bm->getNumberOfAvailableBuffers(), 8U);
 
     std::vector<TupleBuffer> held;
     held.reserve(10);
     for (int i = 0; i < 10; ++i)
     {
         auto buffer = bm->getBuffer(2048);
-        EXPECT_EQ(buffer.getBufferSize(), 2048u);
+        EXPECT_EQ(buffer.getBufferSize(), 2048U);
         held.push_back(std::move(buffer));
     }
     /// Grew past the initial growth chunk of 4 to satisfy 10 concurrent live buffers.
@@ -164,10 +164,10 @@ TEST_F(SizeClassBufferTest, LargerThanMaxClassUsesUnpooled)
     const auto pooledBefore = bm->getNumberOfAvailableBuffers();
 
     auto buffer = bm->getBuffer(100000);
-    EXPECT_GE(buffer.getBufferSize(), 100000u);
+    EXPECT_GE(buffer.getBufferSize(), 100000U);
     /// Pooled availability is untouched; the buffer came from the unpooled manager.
     EXPECT_EQ(bm->getNumberOfAvailableBuffers(), pooledBefore);
-    EXPECT_GE(bm->getNumOfUnpooledBuffers(), 1u);
+    EXPECT_GE(bm->getNumOfUnpooledBuffers(), 1U);
 }
 
 /// getBufferNoBlocking(size) returns an empty optional once the best-fit class and every larger
@@ -189,8 +189,8 @@ TEST_F(SizeClassBufferTest, NoBlockingReturnsNulloptWhenExhausted)
 TEST_F(SizeClassBufferTest, BudgetPolicyServesEveryClass)
 {
     auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, budgetConfig(1024, 8192, 1U << 20U));
-    EXPECT_EQ(bm->getBuffer(1024).getBufferSize(), 1024u);
-    EXPECT_EQ(bm->getBuffer(8192).getBufferSize(), 8192u);
+    EXPECT_EQ(bm->getBuffer(1024).getBufferSize(), 1024U);
+    EXPECT_EQ(bm->getBuffer(8192).getBufferSize(), 8192U);
 }
 
 /// LazyElastic grows to its ceiling and then promotes / falls back for further demand, leak-free.
@@ -202,7 +202,7 @@ TEST_F(SizeClassBufferTest, LazyElasticPastCeiling)
     for (int i = 0; i < 12; ++i)
     {
         auto buffer = bm->getBuffer(2048);
-        EXPECT_GE(buffer.getBufferSize(), 2048u);
+        EXPECT_GE(buffer.getBufferSize(), 2048U);
         held.push_back(std::move(buffer));
     }
     held.clear();
@@ -223,7 +223,7 @@ TEST_F(SizeClassBufferTest, DeepCopyReplicatesDataAndMetadata)
 
     auto copy = deepCopyBuffer(source, *bm);
     EXPECT_GE(copy.getBufferSize(), source.getBufferSize());
-    EXPECT_EQ(copy.getNumberOfTuples(), 7u);
+    EXPECT_EQ(copy.getNumberOfTuples(), 7U);
     const auto copyBytes = copy.getAvailableMemoryArea<uint8_t>();
     for (size_t i = 0; i < source.getBufferSize(); ++i)
     {
