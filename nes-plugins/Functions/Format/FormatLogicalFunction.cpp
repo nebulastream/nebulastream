@@ -59,31 +59,50 @@ namespace NES
 
     size_t countPlaceholders(std::string_view formatString)
     {
-        size_t count = 0;
+        size_t placeholders = 0;
 
         for (size_t i = 0; i < formatString.size(); ++i)
         {
             if (formatString[i] == '{')
             {
-                if (i + 1 < formatString.size() && formatString[i + 1] == '}')
+                if (i + 1 >= formatString.size())
                 {
-                    ++count;
+                    throw CannotInferSchema("Format string contains unmatched '{'");
+                }
+                if (formatString[i + 1] == '{')
+                {
+                    ++i; // escaped literal {
+                }
+                else if (formatString[i + 1] == '}')
+                {
+                    ++placeholders;
                     ++i;
                 }
                 else
                 {
                     throw CannotInferSchema(
-                        "Format currently only supports '{}' placeholders");
+                        "Format only supports '{}' placeholders and '{{' escapes");
                 }
             }
             else if (formatString[i] == '}')
             {
-                throw CannotInferSchema(
-                    "Format string contains unmatched '}'");
+                if (i + 1 >= formatString.size())
+                {
+                    throw CannotInferSchema("Format string contains unmatched '}'");
+                }
+
+                if (formatString[i + 1] == '}')
+                {
+                    ++i; // escaped literal }
+                }
+                else
+                {
+                    throw CannotInferSchema("Format string contains unmatched '}'");
+                }
             }
         }
 
-        return count;
+        return placeholders;
     }
 
 FormatLogicalFunction::FormatLogicalFunction(std::vector<LogicalFunction> children)
