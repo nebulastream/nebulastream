@@ -30,8 +30,8 @@ namespace NES
 std::unique_ptr<UncompiledInputFormatterTaskPipeline>
 provideUncompiledInputFormatterTask(const Schema& schema, const InputFormatterDescriptor& config)
 {
-    if (auto inputFormatter
-        = UncompiledInputFormatIndexerRegistry::instance().create(config.getInputFormatterType(), UncompiledInputFormatIndexerRegistryArguments(config, schema)))
+    if (auto inputFormatter = UncompiledInputFormatIndexerRegistry::instance().create(
+            config.getInputFormatterType(), UncompiledInputFormatIndexerRegistryArguments(config, schema)))
     {
         return std::move(inputFormatter.value());
     }

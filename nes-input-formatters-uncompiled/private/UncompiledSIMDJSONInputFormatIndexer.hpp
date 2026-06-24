@@ -42,7 +42,8 @@ public:
     UncompiledSIMDJSONInputFormatIndexer() = default;
     ~UncompiledSIMDJSONInputFormatIndexer() = default;
 
-    static void indexRawBuffer(UncompiledSIMDJSONFIF& fieldIndexFunction, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledSIMDJSONMetaData& metaData);
+    static void indexRawBuffer(
+        UncompiledSIMDJSONFIF& fieldIndexFunction, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledSIMDJSONMetaData& metaData);
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& os, const UncompiledSIMDJSONInputFormatIndexer&);

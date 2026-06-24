@@ -115,7 +115,10 @@ class UncompiledAtomicState
 
     void setStateOfFirstEntry() { this->state = firstEntryDummy; }
 
-    void setHasTupleDelimiterState(const UncompiledABAItNo abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber.getRawValue()); }
+    void setHasTupleDelimiterState(const UncompiledABAItNo abaItNumber)
+    {
+        this->state = (hasTupleDelimiterBit | abaItNumber.getRawValue());
+    }
 
     void setNoTupleDelimiterState(const UncompiledABAItNo abaItNumber) { this->state = abaItNumber.getRawValue(); }
 
@@ -176,7 +179,8 @@ public:
 
     /// Iterates over all STBufferEntries, checking that they don't hold any buffer references if they should not and that their atomic
     /// bitmap state is correct. Logs errors and returns 'false' if at least one entry is in an invalid state
-    [[nodiscard]] bool validateFinalState(UncompiledSTBufferIdx bufferIdx, const UncompiledSTBufferEntry& nextEntry, UncompiledSTBufferIdx lastIdxOfBuffer) const;
+    [[nodiscard]] bool validateFinalState(
+        UncompiledSTBufferIdx bufferIdx, const UncompiledSTBufferEntry& nextEntry, UncompiledSTBufferIdx lastIdxOfBuffer) const;
 
 private:
     /// 24 Bytes (TupleBuffer)

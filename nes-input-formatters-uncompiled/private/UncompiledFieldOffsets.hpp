@@ -62,7 +62,8 @@ class UncompiledFieldOffsets final : public UncompiledFieldIndexFunction<Uncompi
         const size_t numberOfPriorFields = tupleIdx * numberOfOffsetsPerTuple + fieldIdx;
         const auto startOfCurrentField = this->indexValues.at(numberOfPriorFields);
         const auto endOfCurrentField = this->indexValues.at(numberOfPriorFields + 1);
-        const auto sizeOfCurrentField = endOfCurrentField - startOfCurrentField - (sizeOfFieldDelimiter - static_cast<size_t>(fieldIdx + 1 == numberOfFieldsInSchema));
+        const auto sizeOfCurrentField = endOfCurrentField - startOfCurrentField
+            - (sizeOfFieldDelimiter - static_cast<size_t>(fieldIdx + 1 == numberOfFieldsInSchema));
         return std::string_view(bufferView.substr(startOfCurrentField, sizeOfCurrentField));
     }
 

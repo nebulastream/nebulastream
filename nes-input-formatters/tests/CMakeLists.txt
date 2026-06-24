@@ -25,3 +25,4 @@ function(add_nes_input_formatter_test)
 endfunction()
 
 add_subdirectory(UnitTests)
+add_subdirectory(Benchmark)

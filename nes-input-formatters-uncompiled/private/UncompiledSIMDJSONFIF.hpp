@@ -60,8 +60,7 @@ struct UncompiledSIMDJSONMetaData
         for (const auto& field : schema.getFields())
         {
             const auto& fieldName = field.name;
-            if (const auto qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
-                qualifierPosition != std::string::npos)
+            if (const auto qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
             {
                 fieldNamesInJson.emplace_back(fieldName.substr(qualifierPosition + 1));
             }

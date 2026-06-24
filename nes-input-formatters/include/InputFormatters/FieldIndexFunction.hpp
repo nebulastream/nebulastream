@@ -19,13 +19,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Arena.hpp>
 #include <RawTupleBuffer.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
-#include <DataTypes/DataType.hpp>
 
 namespace NES
 {

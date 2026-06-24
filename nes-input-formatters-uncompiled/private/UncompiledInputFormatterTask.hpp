@@ -38,8 +38,8 @@
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <UncompiledFieldIndexFunction.hpp>
-#include <UncompiledRawTupleBuffer.hpp>
 #include <UncompiledParserProvider.hpp>
+#include <UncompiledRawTupleBuffer.hpp>
 #include <UncompiledSequenceShredder.hpp>
 
 namespace NES
@@ -161,20 +161,34 @@ inline std::string getUncompiledParserName(const DataType::Type type, const Inpu
 {
     switch (type)
     {
-        case DataType::Type::BOOLEAN: return config.getFromConfig(InputFormatterDescriptor::BOOL_PARSER);
-        case DataType::Type::CHAR: return config.getFromConfig(InputFormatterDescriptor::CHAR_PARSER);
-        case DataType::Type::INT8: return config.getFromConfig(InputFormatterDescriptor::INT8_PARSER);
-        case DataType::Type::INT16: return config.getFromConfig(InputFormatterDescriptor::INT16_PARSER);
-        case DataType::Type::INT32: return config.getFromConfig(InputFormatterDescriptor::INT32_PARSER);
-        case DataType::Type::INT64: return config.getFromConfig(InputFormatterDescriptor::INT64_PARSER);
-        case DataType::Type::UINT8: return config.getFromConfig(InputFormatterDescriptor::UINT8_PARSER);
-        case DataType::Type::UINT16: return config.getFromConfig(InputFormatterDescriptor::UINT16_PARSER);
-        case DataType::Type::UINT32: return config.getFromConfig(InputFormatterDescriptor::UINT32_PARSER);
-        case DataType::Type::UINT64: return config.getFromConfig(InputFormatterDescriptor::UINT64_PARSER);
-        case DataType::Type::FLOAT32: return config.getFromConfig(InputFormatterDescriptor::F32_PARSER);
-        case DataType::Type::FLOAT64: return config.getFromConfig(InputFormatterDescriptor::F64_PARSER);
-        case DataType::Type::VARSIZED: return "DefaultVARSIZED";
-        case DataType::Type::UNDEFINED: throw NotImplemented("Cannot parse undefined type.");
+        case DataType::Type::BOOLEAN:
+            return config.getFromConfig(InputFormatterDescriptor::BOOL_PARSER);
+        case DataType::Type::CHAR:
+            return config.getFromConfig(InputFormatterDescriptor::CHAR_PARSER);
+        case DataType::Type::INT8:
+            return config.getFromConfig(InputFormatterDescriptor::INT8_PARSER);
+        case DataType::Type::INT16:
+            return config.getFromConfig(InputFormatterDescriptor::INT16_PARSER);
+        case DataType::Type::INT32:
+            return config.getFromConfig(InputFormatterDescriptor::INT32_PARSER);
+        case DataType::Type::INT64:
+            return config.getFromConfig(InputFormatterDescriptor::INT64_PARSER);
+        case DataType::Type::UINT8:
+            return config.getFromConfig(InputFormatterDescriptor::UINT8_PARSER);
+        case DataType::Type::UINT16:
+            return config.getFromConfig(InputFormatterDescriptor::UINT16_PARSER);
+        case DataType::Type::UINT32:
+            return config.getFromConfig(InputFormatterDescriptor::UINT32_PARSER);
+        case DataType::Type::UINT64:
+            return config.getFromConfig(InputFormatterDescriptor::UINT64_PARSER);
+        case DataType::Type::FLOAT32:
+            return config.getFromConfig(InputFormatterDescriptor::F32_PARSER);
+        case DataType::Type::FLOAT64:
+            return config.getFromConfig(InputFormatterDescriptor::F64_PARSER);
+        case DataType::Type::VARSIZED:
+            return "DefaultVARSIZED";
+        case DataType::Type::UNDEFINED:
+            throw NotImplemented("Cannot parse undefined type.");
     }
     std::unreachable();
 }
@@ -192,6 +206,7 @@ class UncompiledInputFormatterTask
 {
 public:
     static constexpr bool hasSpanningTuple() { return FormatterType::HasSpanningTuple; }
+
     static constexpr bool isSequential() { return FormatterType::IsSequential; }
 
     explicit UncompiledInputFormatterTask(
@@ -208,8 +223,9 @@ public:
         /// field number, load the correct function for parsing from the vector.
         , parseFunctions(
               schema.getFields()
-              | std::views::transform([&parserConfig, quotationType](const auto& field)
-                                      { return provideUncompiledParseFunction(getUncompiledParserName(field.dataType.type, parserConfig), quotationType); })
+              | std::views::transform(
+                  [&parserConfig, quotationType](const auto& field)
+                  { return provideUncompiledParseFunction(getUncompiledParserName(field.dataType.type, parserConfig), quotationType); })
               | std::ranges::to<std::vector>())
     {
         if constexpr (hasSpanningTuple() and not isSequential())
@@ -231,15 +247,14 @@ public:
     {
         if constexpr (isSequential())
         {
-            INVARIANT(accumulatedSpanningTupleBuffers.empty(),
-                "Sequential input formatter should have no accumulated buffers when stopping.");
+            INVARIANT(
+                accumulatedSpanningTupleBuffers.empty(), "Sequential input formatter should have no accumulated buffers when stopping.");
         }
         else if constexpr (hasSpanningTuple())
         {
             INVARIANT(sequenceShredder != nullptr, "The UncompiledSequenceShredder handles spanning tuples, thus it must not be null.");
         }
     }
-
 
     // ========== Sequential (single-threaded) execution path ==========
     void executeTask(const UncompiledRawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
@@ -328,18 +343,21 @@ private:
     FormatterType inputFormatIndexer;
     UncompiledSchemaInfo schemaInfo;
     typename FormatterType::UncompiledIndexerMetaData uncompiledIndexerMetaData;
-    struct Empty {};
+
+    struct Empty
+    {
+    };
 
     /// Concurrent mode only: lock-free spanning tuple resolution across threads
-    [[no_unique_address]] std::conditional_t<hasSpanningTuple() and not isSequential(),
-        std::unique_ptr<UncompiledSequenceShredder>, Empty> sequenceShredder;
+    [[no_unique_address]] std::conditional_t<hasSpanningTuple() and not isSequential(), std::unique_ptr<UncompiledSequenceShredder>, Empty>
+        sequenceShredder;
 
     std::vector<UncompiledParseFunctionSignature> parseFunctions;
 
     /// Sequential mode only: accumulates delimiter-less buffers that are part of a multi-buffer spanning tuple.
     /// Stores (TupleBuffer, byteCount) pairs — byteCount is saved before setNumberOfTuples(0) since TupleBuffer is ref-counted.
-    [[no_unique_address]] std::conditional_t<isSequential(),
-        std::vector<std::pair<TupleBuffer, size_t>>, Empty> accumulatedSpanningTupleBuffers;
+    [[no_unique_address]] std::conditional_t<isSequential(), std::vector<std::pair<TupleBuffer, size_t>>, Empty>
+        accumulatedSpanningTupleBuffers;
 
     /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
     /// Iterates over all full tuples using hasNext() and parses the tuples into formatted data.
@@ -390,9 +408,8 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        auto [isInRange, leadingSTBuffers] = sequenceShredder->findLeadingSTWithDelimiter(
-            UncompiledStagedBuffer{
-                rawBuffer, fieldIndexFunction.getOffsetOfFirstTupleDelimiter(), fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
+        auto [isInRange, leadingSTBuffers] = sequenceShredder->findLeadingSTWithDelimiter(UncompiledStagedBuffer{
+            rawBuffer, fieldIndexFunction.getOffsetOfFirstTupleDelimiter(), fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
         if (not isInRange)
         {
             NES_WARNING("Sequence Number {} was out of range", rawBuffer.getSequenceNumber().getRawValue());
@@ -458,9 +475,8 @@ private:
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        auto [isInRange, stagedBuffers] = sequenceShredder->findSTWithoutDelimiter(
-            UncompiledStagedBuffer{
-                rawBuffer, fieldIndexFunction.getOffsetOfFirstTupleDelimiter(), fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
+        auto [isInRange, stagedBuffers] = sequenceShredder->findSTWithoutDelimiter(UncompiledStagedBuffer{
+            rawBuffer, fieldIndexFunction.getOffsetOfFirstTupleDelimiter(), fieldIndexFunction.getOffsetOfLastTupleDelimiter()});
         if (not isInRange)
         {
             rawBuffer.repeat(pec);
@@ -525,8 +541,7 @@ private:
         const auto delimiterSize = uncompiledIndexerMetaData.getTupleDelimitingBytes().size();
 
         // Todo: offsetOfLastDelimiter is not always known!
-        const auto truncatedByteCount = rawBuffer.getNumberOfBytes()
-            - (fieldIndexFunction.getOffsetOfLastTupleDelimiter() + delimiterSize);
+        const auto truncatedByteCount = rawBuffer.getNumberOfBytes() - (fieldIndexFunction.getOffsetOfLastTupleDelimiter() + delimiterSize);
         rawBuffer.setNumberOfTuples(truncatedByteCount);
     }
 
@@ -568,8 +583,7 @@ private:
             inputFormatIndexer.indexRawBuffer(tempFIF, tempRawBuffer, uncompiledIndexerMetaData);
 
             processUncompiledTuple<typename FormatterType::UncompiledFieldIndexFunctionType>(
-                completeSpanningTuple, tempFIF, 0, formattedBuffer,
-                this->schemaInfo, this->parseFunctions, bufferProvider);
+                completeSpanningTuple, tempFIF, 0, formattedBuffer, this->schemaInfo, this->parseFunctions, bufferProvider);
             formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
         }
     }

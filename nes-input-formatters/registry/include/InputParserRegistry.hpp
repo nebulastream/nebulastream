@@ -18,8 +18,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <InputParser.hpp>
 #include <Util/Registry.hpp>
+#include <InputParser.hpp>
 
 namespace NES
 {

@@ -164,12 +164,17 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpe
 /// Compares two files and returns true if they are equal on a byte level.
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
 
+/// Builds a compiled Scan(InputFormatter)->[Map per projected field]->Emit pipeline. When `projection`
+/// is given, the scan still indexes/parses against the full `schema`, but only the projected fields are
+/// read downstream -- so under the fnattr invoke mode the dropped fields' parses are DCE'd (mirrors the
+/// engine's SELECT-<subset> projection pushdown). `projection == nullopt` keeps all fields (the default).
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const DescriptorConfig::Config& parserConfiguration,
     const Schema& schema,
     MemoryLayoutType memoryLayoutType,
     size_t sizeOfFormattedBuffers,
-    bool isCompiled);
+    bool isCompiled,
+    const std::optional<Schema>& projection = std::nullopt);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle

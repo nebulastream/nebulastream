@@ -45,4 +45,6 @@ endif ()
 
 create_registries_for_component(InputFormatIndexer InputFormatterValidation InputParser)
 
+add_subdirectory(benchmarks)
+
 add_tests_if_enabled(tests)

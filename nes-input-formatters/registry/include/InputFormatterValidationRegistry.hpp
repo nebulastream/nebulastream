@@ -31,10 +31,10 @@ struct InputFormatterValidationRegistryArguments
 };
 
 class InputFormatterValidationRegistry final : public BaseRegistry<
-                                                    InputFormatterValidationRegistry,
-                                                    std::string,
-                                                    InputFormatterValidationRegistryReturnType,
-                                                    InputFormatterValidationRegistryArguments>
+                                                   InputFormatterValidationRegistry,
+                                                   std::string,
+                                                   InputFormatterValidationRegistryReturnType,
+                                                   InputFormatterValidationRegistryArguments>
 {
 };
 }

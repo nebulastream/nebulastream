@@ -51,7 +51,8 @@ class UncompiledSpanningBuffers
 public:
     UncompiledSpanningBuffers() = default;
 
-    explicit UncompiledSpanningBuffers(std::vector<UncompiledStagedBuffer> spanningBuffers) : spanningBuffers(std::move(spanningBuffers)) { }
+    explicit UncompiledSpanningBuffers(std::vector<UncompiledStagedBuffer> spanningBuffers)
+        : spanningBuffers(std::move(spanningBuffers)) { }
 
     [[nodiscard]] size_t getSize() const { return this->spanningBuffers.size(); }
 
@@ -100,7 +101,8 @@ private:
 
     /// Enable 'ConcurrentSynchronizationTest' to used mocked buffer and provide 'sequenceNumber' as additional argument
     friend ConcurrentSynchronizationTest;
-    UncompiledSequenceShredderResult findLeadingSTWithDelimiter(const UncompiledStagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
+    UncompiledSequenceShredderResult
+    findLeadingSTWithDelimiter(const UncompiledStagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
     UncompiledSequenceShredderResult findSTWithoutDelimiter(const UncompiledStagedBuffer& indexedRawBuffer, SequenceNumber sequenceNumber);
 };
 

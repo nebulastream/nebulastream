@@ -34,6 +34,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -56,6 +57,8 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
 #include <InputFormatterValidationProvider.hpp>
+#include <MapPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>
@@ -155,7 +158,9 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value(), false, 1)};
+    return {
+        std::move(backpressureController),
+        sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value(), false, 1)};
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
@@ -169,22 +174,39 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
     }
 }
 
-
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const DescriptorConfig::Config& parserConfiguration,
     const Schema& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
-    const bool isCompiled)
+    const bool isCompiled,
+    const std::optional<Schema>& projection)
 {
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
 
-    auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType);
+    /// The formatter parses against the full input `schema`; the emit writes the (possibly narrower)
+    /// output schema. Different buffers (raw input vs formatted output), so different layouts are fine.
+    const Schema& outputSchema = projection.has_value() ? *projection : schema;
+    auto inputProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType);
+    auto outputProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, outputSchema, memoryLayoutType);
     auto inputFormatterType = std::get<std::string>(parserConfiguration.at("type"));
     auto scanOp = ScanPhysicalOperator(
-        provideInputFormatterTupleBufferRef(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider),
+        provideInputFormatterTupleBufferRef(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, inputProvider),
         schema.getFieldNames());
-    scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
+
+    PhysicalOperator child = EmitPhysicalOperator(emitOperatorHandlerId, std::move(outputProvider));
+    if (projection.has_value())
+    {
+        /// One identity Map per projected field: Map(f, FieldAccess(f)). Only these reads reach the
+        /// record, so the dropped fields' parse invokes become dead code (DCE'd under fnattr).
+        for (const auto& fieldName : projection->getFieldNames())
+        {
+            auto mapOp = MapPhysicalOperator(fieldName, FieldAccessPhysicalFunction(fieldName));
+            mapOp.setChild(child);
+            child = mapOp;
+        }
+    }
+    scanOp.setChild(child);
 
     auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(scanOp));
     physicalScanPipeline->getOperatorHandlers().emplace(emitOperatorHandlerId, std::make_shared<EmitOperatorHandler>());
@@ -192,6 +214,28 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     auto nautilusOptions = nautilus::engine::Options{};
     nautilusOptions.setOption("engine.Compilation", isCompiled);
     nautilusOptions.setOption("mlir.enableMultithreading", false);
+    /// TMP DIAGNOSTIC (benchmark A/B). The engine's compile path (LowerToCompiledQueryPlanPhase) sets
+    /// `mlir.inline_invoke_calls=true`, which inlines proxy `invoke` calls (e.g. getMemArea) at the MLIR
+    /// level. This isolated util historically omitted it, so the benchmark UNDER-inlined vs the engine
+    /// (proxy invokes stayed as calls). Default to the engine's behaviour (ON); NES_BENCH_INLINE_INVOKE=0
+    /// restores the old benchmark behaviour for the A/B.
+    /// Default OFF: NES_BENCH_INLINE_INVOKE=1 opts in. (ON breaks JIT TLS resolution -- `__emutls_v`
+    /// symbols-not-found -- when a thread_local-accessing proxy gets inlined, which the unit-test
+    /// pipelines hit; the formatter-scaling benchmark does not. Keep opt-in until that is resolved.)
+    {
+        const char* const env = std::getenv("NES_BENCH_INLINE_INVOKE");
+        const bool inlineInvoke = (env != nullptr) && (std::string(env) == "1");
+        nautilusOptions.setOption("mlir.inline_invoke_calls", inlineInvoke);
+    }
+    /// TMP DIAGNOSTIC: dump the compilation IR (== worker.dump_compilation_result) to verify inlining.
+    /// NES_BENCH_DUMP=console|file|both.
+    if (const char* const dump = std::getenv("NES_BENCH_DUMP"))
+    {
+        const std::string mode = dump;
+        nautilusOptions.setOption("dump.all", true);
+        nautilusOptions.setOption("dump.console", mode == "console" || mode == "both");
+        nautilusOptions.setOption("dump.file", mode == "file" || mode == "both");
+    }
     return std::make_shared<CompiledExecutablePipelineStage>(
         physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilusOptions);
 }

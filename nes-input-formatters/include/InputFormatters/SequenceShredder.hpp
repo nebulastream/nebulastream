@@ -67,7 +67,8 @@ struct SequenceShredderResult
 /// (Planned) Given enough out-of-range requests, the SequenceShredder doubles the size of the SpanningTupleBuffer
 class SequenceShredder
 {
-    static constexpr size_t INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER = 1024;
+    static constexpr size_t INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER
+        = 65536; /// DIAG: was 1024 (ring-overflow repeat test). NOTE: 1024 vs 65536 is perf-neutral (tested 2026-06-24, identical @8/16w, no overflow) -- ring size is NOT an L3 lever; hot set is the in-flight sliding window, not the whole ring.
 
 public:
     explicit SequenceShredder(size_t sizeOfTupleDelimiterInBytes);

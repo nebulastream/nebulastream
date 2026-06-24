@@ -52,7 +52,6 @@ struct ConfigParametersUncompiledCSVInputFormatIndexer
             InputFormatterDescriptor::parameterMap, ALLOW_COMMAS_IN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
 };
 
-
 struct UncompiledCSVMetaData
 {
     explicit UncompiledCSVMetaData(const InputFormatterDescriptor& config, const Schema&)

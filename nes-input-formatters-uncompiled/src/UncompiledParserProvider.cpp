@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
+#include <UncompiledParserProvider.hpp>
+
 #include <string>
 #include <utility>
-#include <UncompiledParserProvider.hpp>
 
 #include <UncompiledInputFormatters/UncompiledInputParser.hpp>
 #include <ErrorHandling.hpp>

@@ -107,8 +107,8 @@ std::optional<UncompiledStagedBuffer> UncompiledSTBufferEntry::tryClaimSpanningT
     if (this->atomicState.tryClaimSpanningTuple(abaItNumber))
     {
         INVARIANT(this->trailingBufferRef.getReferenceCounter() != 0, "Tried to claim a trailing buffer with a nullptr");
-        const auto stagedBuffer
-            = UncompiledStagedBuffer(UncompiledRawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
+        const auto stagedBuffer = UncompiledStagedBuffer(
+            UncompiledRawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
         this->atomicState.setUsedTrailingBuffer();
         return {stagedBuffer};
     }
@@ -154,7 +154,8 @@ UncompiledSTBufferEntry::EntryState UncompiledSTBufferEntry::getEntryState(const
     return EntryState{.hasCorrectABA = isCorrectABA, .hasDelimiter = hasDelimiter};
 }
 
-bool UncompiledSTBufferEntry::validateFinalState(const UncompiledSTBufferIdx bufferIdx, const UncompiledSTBufferEntry& nextEntry, const UncompiledSTBufferIdx lastIdxOfBuffer) const
+bool UncompiledSTBufferEntry::validateFinalState(
+    const UncompiledSTBufferIdx bufferIdx, const UncompiledSTBufferEntry& nextEntry, const UncompiledSTBufferIdx lastIdxOfBuffer) const
 {
     bool isValidFinalState = true;
     const auto state = this->atomicState.getState();

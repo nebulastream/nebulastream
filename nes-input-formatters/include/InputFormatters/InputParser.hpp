@@ -32,13 +32,15 @@ public:
         bool nullable,
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
-        const std::vector<std::string>& nullValues) const = 0;
+        const std::vector<std::string>& nullValues) const
+        = 0;
 
     /// For this value, nullable and null are already known and do not need to be searched for again
     virtual VarVal parseLazyToVarVal(
         const bool& nullable,
         const nautilus::val<bool>& isNull,
         const nautilus::val<int8_t*>& fieldAddress,
-        const nautilus::val<uint64_t>& fieldSize) const = 0;
+        const nautilus::val<uint64_t>& fieldSize) const
+        = 0;
 };
 }

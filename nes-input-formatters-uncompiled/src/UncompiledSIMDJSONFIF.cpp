@@ -70,14 +70,14 @@ void UncompiledSIMDJSONFIF::markWithTupleDelimiters(
     this->offsetOfLastTuple = offsetToLastTuple;
 }
 
-std::pair<bool, UncompiledFieldIndex> UncompiledSIMDJSONFIF::indexJSON(
-    const std::string_view jsonSV, const UncompiledSIMDJSONMetaData& metaData)
+std::pair<bool, UncompiledFieldIndex>
+UncompiledSIMDJSONFIF::indexJSON(const std::string_view jsonSV, const UncompiledSIMDJSONMetaData& metaData)
 {
     return indexJSON(jsonSV, metaData, simdjson::ondemand::DEFAULT_BATCH_SIZE);
 }
 
-std::pair<bool, UncompiledFieldIndex> UncompiledSIMDJSONFIF::indexJSON(
-    const std::string_view jsonSV, const UncompiledSIMDJSONMetaData& metaData, const size_t batchSize)
+std::pair<bool, UncompiledFieldIndex>
+UncompiledSIMDJSONFIF::indexJSON(const std::string_view jsonSV, const UncompiledSIMDJSONMetaData& metaData, const size_t batchSize)
 {
     this->metaDataPtr = &metaData;
     this->lastProcessedTupleIdx = 0;

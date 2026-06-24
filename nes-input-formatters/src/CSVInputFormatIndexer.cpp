@@ -14,7 +14,11 @@
 
 #include <CSVInputFormatIndexer.hpp>
 
+#include <atomic>
+#include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <cstdio>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -25,14 +29,26 @@
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexerRegistry.hpp>
-#include <InputFormatterValidationRegistry.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
-
+#include <InputFormatterValidationRegistry.hpp>
 
 namespace
 {
+/// TMP DIAGNOSTIC: accumulate wall time spent in CSVInputFormatIndexer::indexRawBuffer (the per-buffer
+/// structural index phase) across all threads, and print the total at process exit. Used to measure
+/// the index phase's share of the compiled formatter pipeline. REVERT before merge.
+std::atomic<std::uint64_t> g_idxNs{0};
+std::atomic<std::uint64_t> g_idxCalls{0};
 
+const struct IdxDiagPrinter
+{
+    ~IdxDiagPrinter()
+    {
+        std::fprintf(
+            stderr, "DIAG_CSVINDEX index_cpu=%.4fs calls=%llu\n", g_idxNs.load() / 1e9, static_cast<unsigned long long>(g_idxCalls.load()));
+    }
+} g_idxDiagPrinter;
 
 void initializeIndexFunctionForTupleWithCommasInStrings(
     NES::FieldOffsets<NES::CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
@@ -108,6 +124,21 @@ CSVInputFormatIndexer::CSVInputFormatIndexer(const InputFormatterDescriptor& con
 void CSVInputFormatIndexer::indexRawBuffer(
     FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
 {
+    /// TMP DIAGNOSTIC: time the whole index phase (incl. early returns) via RAII; see g_idxDiagPrinter.
+    const struct ScopeTimer
+    {
+        std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+
+        ~ScopeTimer()
+        {
+            g_idxNs.fetch_add(
+                static_cast<std::uint64_t>(
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count()),
+                std::memory_order_relaxed);
+            g_idxCalls.fetch_add(1, std::memory_order_relaxed);
+        }
+    } scopeTimer;
+
     fieldOffsets.startSetup(metaData.getNumberOfFields(), NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
 
     const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(metaData.getTupleDelimiter()));
