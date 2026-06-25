@@ -68,7 +68,13 @@ MergePointSet findMergePoints(const std::vector<std::shared_ptr<PhysicalOperator
         if (!visited.insert(opId).second)
         {
             /// Already visited — this operator has in-degree > 1
-            mergePoints.insert(opId);
+            /// EXPERIMENT (benchmarking branch): do NOT treat a UNION as a merge point, so it is not forced
+            /// into a separate materializing pipeline. A same-schema union is stream concatenation; fusing it
+            /// preserves lazy-value elision (avoids the parse + re-serialize round-trip at the pipeline break).
+            if (!wrapper->getPhysicalOperator().tryGet<UnionPhysicalOperator>())
+            {
+                mergePoints.insert(opId);
+            }
             return;
         }
         for (const auto& child : wrapper->getChildren())
