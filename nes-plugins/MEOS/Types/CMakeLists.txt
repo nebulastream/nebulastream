@@ -12,21 +12,9 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_subdirectory(Functions)
-add_plugin_as_library(Point DataType nes-data-types-registry point_data_type_plugin PointDataType.cpp)
-add_plugin_as_library(Line DataType nes-data-types-registry line_data_type_plugin LineDataType.cpp)
-add_plugin_as_library(Circle DataType nes-data-types-registry circle_data_type_plugin CircleDataType.cpp)
+add_plugin_as_library(MovingPoint DataType nes-data-types-registry moving_point_data_type_plugin MovingPointDataType.cpp)
 
-target_include_directories(point_data_type_plugin
-        PUBLIC include
-        PRIVATE .
-)
-
-target_include_directories(line_data_type_plugin
-        PUBLIC include
-        PRIVATE .
-)
-
-target_include_directories(circle_data_type_plugin
+target_include_directories(moving_point_data_type_plugin
         PUBLIC include
         PRIVATE .
 )

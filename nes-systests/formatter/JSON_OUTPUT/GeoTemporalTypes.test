@@ -1,0 +1,45 @@
+# name: GeoTemporalTypes.test
+# description: Exercises the GeoTemporal DataType plugins in combination with meos-driven functions (MovingPoint).
+# groups: [Formatter, JSON, GeoTemporal, Meos]
+
+CREATE LOGICAL SOURCE temporal(lon1 FLOAT64 NOT NULL, lat1 FLOAT64 NOT NULL, lon2 FLOAT64 NOT NULL, lat2 FLOAT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR temporal TYPE FILE;
+ATTACH INLINE
+-73.9857,40.7484,-73.9857,40.7484,1609459200
+-73.9855,40.7485,-80.9855,40.7485,1609459260
+-73.9865,40.7475,-90.9865,40.7475,1609459320
+-73.9855,40.7485,-100.9855,40.7485,1609459380
+-73.9857,40.7485,-110.9857,40.7485,1609459440
+-73.9855,40.7485,-120.9855,40.7485,1609459500
+
+# Check if MovingPoint plugin works
+SELECT MovingPoint(lon1, lat1, ts) AS mp FROM temporal WHERE ts == UINT64(1609459200) INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"MP":{"lon":-73.9857,"lat":40.7484,"ts":1609459200}}
+
+
+# Records the distance between the two points in the tuple. They share a timestamp, so they can be compared as TInstants by nearest_approach_distance at any point
+SELECT nearest_approach_distance(MovingPoint(lon1, lat1, ts), MovingPoint(lon2, lat2, ts)) AS distance FROM temporal INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"DISTANCE":0.0}
+{"DISTANCE":7.0}
+{"DISTANCE":17.0}
+{"DISTANCE":27.0}
+{"DISTANCE":37.0}
+{"DISTANCE":47.0}
+
+# Outcome if we were to treat the points as one trajectory (TSequence)
+SELECT start, end, MIN(nearest_approach_distance(MovingPoint(lon1, lat1, ts), MovingPoint(lon2, lat2, ts))) AS nad FROM temporal WINDOW TUMBLING(ts, size 2000000000 ms) INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"TEMPORAL$START":0,"TEMPORAL$END":2000000000,"NAD":0.0}
+
+# Outcome if we were to treat the points as multiple trajectory parts
+SELECT start, end, MIN(nearest_approach_distance(MovingPoint(lon1, lat1, ts), MovingPoint(lon2, lat2, ts))) AS nad FROM temporal WINDOW TUMBLING(ts, size 120 ms) INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"TEMPORAL$START":1609459200,"TEMPORAL$END":1609459320,"NAD":0.0}
+{"TEMPORAL$START":1609459320,"TEMPORAL$END":1609459440,"NAD":17.0}
+{"TEMPORAL$START":1609459440,"TEMPORAL$END":1609459560,"NAD":37.0}
+
+
+
+

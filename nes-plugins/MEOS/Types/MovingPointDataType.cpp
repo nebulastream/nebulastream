@@ -23,7 +23,7 @@ namespace NES::DataTypeGeneratedRegistrar
 {
 
 /// A moving point is a point with a timestamp. Currently, we support 2-dimensional points consisting of a longitude, latitude and a timestamp.
-/// We currently map them to the TGEOMETRY temptype in meos.
+/// We currently map them to the TGEOMPOINT temptype in meos.
 DataTypeRegistryReturnType RegisterMovingPointDataType(DataTypeRegistryArguments args)
 {
     std::vector<std::pair<std::string, DataType>> fields;

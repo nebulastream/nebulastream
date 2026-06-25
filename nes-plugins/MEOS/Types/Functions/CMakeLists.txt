@@ -11,9 +11,20 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(MovingPoint DataType nes-data-types-registry moving_point_data_type_plugin MovingPointDataType.cpp)
 
-target_include_directories(moving_point_data_type_plugin
+add_plugin_as_library(NEAREST_APPROACH_DISTANCE LogicalFunction nes-logical-operators-registry nearest_approach_distance_logical_function NearestApproachDistanceLogicalFunction.cpp)
+add_plugin_as_library(NEAREST_APPROACH_DISTANCE PhysicalFunction nes-physical-operators-registry nearest_approach_distance_physical_function NearestApproachDistancePhysicalFunction.cpp)
+
+
+target_include_directories(nearest_approach_distance_logical_function
         PUBLIC include
         PRIVATE .
 )
+target_include_directories(nearest_approach_distance_physical_function
+        PUBLIC include
+        PRIVATE .
+)
+target_link_libraries(nearest_approach_distance_physical_function PUBLIC nes-meos)
+
+
+
