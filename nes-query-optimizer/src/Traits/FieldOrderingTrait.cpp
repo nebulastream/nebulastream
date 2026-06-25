@@ -53,9 +53,9 @@ std::string_view FieldOrderingTrait::getName()
     return NAME;
 }
 
-Reflected Reflector<FieldOrderingTrait>::operator()(const FieldOrderingTrait& trait) const
+Reflected Reflector<FieldOrderingTrait>::operator()(const FieldOrderingTrait& trait, const ReflectionContext& context) const
 {
-    return reflect(trait.orderedFields);
+    return context.reflect(trait.orderedFields);
 }
 
 FieldOrderingTrait Unreflector<FieldOrderingTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const

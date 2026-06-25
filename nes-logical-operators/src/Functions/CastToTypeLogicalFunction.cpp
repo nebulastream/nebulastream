@@ -107,7 +107,8 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunc
     std::unreachable();
 }
 
-Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction& function, const ReflectionContext& context) const
+Reflected
+Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction& function, const ReflectionContext& context) const
 {
     return context.reflect(detail::ReflectedCastToTypeLogicalFunction{
         .child = function.getChildren()[0],

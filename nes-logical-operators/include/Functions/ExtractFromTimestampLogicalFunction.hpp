@@ -71,7 +71,7 @@ private:
 template <>
 struct Reflector<ExtractFromTimestampLogicalFunction>
 {
-    Reflected operator()(const ExtractFromTimestampLogicalFunction& function) const;
+    Reflected operator()(const ExtractFromTimestampLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

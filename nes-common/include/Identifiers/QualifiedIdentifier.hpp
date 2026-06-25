@@ -390,7 +390,10 @@ inline Identifier::operator QualifiedIdentifierBase<std::dynamic_extent>() const
 template <size_t Extent>
 struct Reflector<QualifiedIdentifierBase<Extent>>
 {
-    Reflected operator()(const QualifiedIdentifierBase<Extent>& identifierList) const { return reflect(fmt::format("{}", identifierList)); }
+    Reflected operator()(const QualifiedIdentifierBase<Extent>& identifierList, const ReflectionContext& context) const
+    {
+        return context.reflect(fmt::format("{}", identifierList));
+    }
 };
 
 template <>

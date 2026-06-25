@@ -67,12 +67,10 @@ private:
 
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
-static_assert(LogicalFunctionConcept<UnboundFieldAccessLogicalFunction>);
-
 template <>
 struct Reflector<UnboundFieldAccessLogicalFunction>
 {
-    Reflected operator()(const UnboundFieldAccessLogicalFunction& function) const;
+    Reflected operator()(const UnboundFieldAccessLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
@@ -80,6 +78,8 @@ struct Unreflector<UnboundFieldAccessLogicalFunction>
 {
     UnboundFieldAccessLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
+
+static_assert(LogicalFunctionConcept<UnboundFieldAccessLogicalFunction>);
 
 }
 

@@ -210,7 +210,8 @@ Schema<Field, Ordered> UnionLogicalOperator::getOrderedOutputSchema(ChildOutputO
     return bindToOperator(self.lock(), unbind(orderProvider(children.at(0))));
 }
 
-Reflected Reflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(const TypedLogicalOperator<UnionLogicalOperator>& op, const ReflectionContext& context) const
+Reflected Reflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(
+    const TypedLogicalOperator<UnionLogicalOperator>& op, const ReflectionContext& context) const
 {
     return context.reflect(op.getId());
 }

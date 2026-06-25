@@ -117,9 +117,9 @@ template <typename K, typename V, typename Hash, typename KeyEqual, typename All
 requires(!std::is_same_v<K, std::string> && !std::is_arithmetic_v<K>)
 struct Reflector<std::unordered_map<K, V, Hash, KeyEqual, Allocator>>
 {
-    Reflected operator()(const std::unordered_map<K, V, Hash, KeyEqual, Allocator>& data) const
+    Reflected operator()(const std::unordered_map<K, V, Hash, KeyEqual, Allocator>& data, const ReflectionContext& context) const
     {
-        return reflect(data | std::ranges::to<std::vector>());
+        return context.reflect(data | std::ranges::to<std::vector>());
     }
 };
 

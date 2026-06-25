@@ -67,9 +67,9 @@ std::string_view FieldMappingTrait::getName()
     return NAME;
 }
 
-Reflected Reflector<FieldMappingTrait>::operator()(const FieldMappingTrait& trait) const
+Reflected Reflector<FieldMappingTrait>::operator()(const FieldMappingTrait& trait, const ReflectionContext& context) const
 {
-    return reflect(trait.mapping);
+    return context.reflect(trait.mapping);
 }
 
 FieldMappingTrait Unreflector<FieldMappingTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const

@@ -349,7 +349,10 @@ auto Schema<FieldType, IsOrdered>::size() const -> decltype(std::declval<FieldCo
 template <typename FieldType, OrderType IsOrdered>
 struct Reflector<Schema<FieldType, IsOrdered>>
 {
-    Reflected operator()(const Schema<FieldType, IsOrdered>& schema) const { return reflect(schema | std::ranges::to<std::vector>()); }
+    Reflected operator()(const Schema<FieldType, IsOrdered>& schema, const ReflectionContext& context) const
+    {
+        return context.reflect(schema | std::ranges::to<std::vector>());
+    }
 };
 
 template <typename FieldType, OrderType IsOrdered>

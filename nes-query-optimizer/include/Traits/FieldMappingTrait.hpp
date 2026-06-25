@@ -54,7 +54,7 @@ private:
 template <>
 struct Reflector<FieldMappingTrait>
 {
-    Reflected operator()(const FieldMappingTrait& trait) const;
+    Reflected operator()(const FieldMappingTrait& trait, const ReflectionContext& context) const;
 };
 
 template <>
