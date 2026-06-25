@@ -80,3 +80,13 @@ SELECT * FROM mem5 INTO mem5_allChk;
 # Q9 -- SELECT * -> Void (index all 5, no output format)
 SELECT * FROM mem5 INTO mem5_allVoid;
 ----
+
+# Computed (non-lazy) UINT64 columns: each sum is materialized by the kernel, so none is a lazy passthrough
+# and the CSV sink must serialize all five through DefaultUINT64OutputParser (the integer output parser).
+# Projecting five computed columns makes integer output serialization the dominant per-row cost (the integer
+# analogue of Q1's float-compute path), so the std::to_chars-vs-to_string A/B is not diluted by input parse.
+CREATE SINK mem5_sumChk(s1 UINT64 NOT NULL, s2 UINT64 NOT NULL, s3 UINT64 NOT NULL, s4 UINT64 NOT NULL, s5 UINT64 NOT NULL) TYPE Checksum;
+
+# Q10 -- five computed UINT64 columns -> Checksum: integer-output-serialization bound
+SELECT key + v1 AS s1, key + v2 AS s2, key + v3 AS s3, v1 + v2 AS s4, v1 + v3 AS s5 FROM mem5 INTO mem5_sumChk;
+----

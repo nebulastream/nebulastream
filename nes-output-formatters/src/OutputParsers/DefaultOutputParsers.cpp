@@ -19,7 +19,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <string_view>
 
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -59,6 +58,33 @@ size_t formatFloatFixed6(const T value, char* const out, const size_t cap)
     }
     return (lastNonZero == decimalPos) ? (decimalPos + 2) : (lastNonZero + 1);
 }
+
+/// Serialize an integral `value` as decimal ASCII via std::to_chars -- byte-identical to the prior
+/// std::to_string path (both emit canonical decimal) but with no heap std::string allocation and no trailing
+/// strlen (std::to_chars returns the end pointer). The widest decimal form across our integer types is 20
+/// chars (uint64 max / int64 min). When that fits in the remaining main-buffer space, serialize STRAIGHT into
+/// the output buffer -- skipping the stack buffer and the writeBytesToBuffer memcpy (mirrors the ZMIJ float
+/// direct-write fast path). Only at a buffer boundary do we serialize into a stack buffer and let
+/// writeBytesToBuffer spill the overflow into a child buffer.
+template <std::integral T>
+uint64_t writeIntegralValue(
+    const T value,
+    int8_t* const bufferStartingAddress,
+    const uint64_t remainingSpace,
+    TupleBuffer* const tupleBuffer,
+    AbstractBufferProvider* const bufferProvider)
+{
+    constexpr uint64_t maxWidth = 20;
+    if (remainingSpace >= maxWidth)
+    {
+        char* const out = reinterpret_cast<char*>(bufferStartingAddress);
+        const auto [ptr, ec] = std::to_chars(out, out + remainingSpace, value);
+        return static_cast<uint64_t>(ptr - out);
+    }
+    char tmp[24];
+    const auto [ptr, ec] = std::to_chars(tmp, tmp + sizeof(tmp), value);
+    return writeBytesToBuffer(tmp, static_cast<size_t>(ptr - tmp), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -70,8 +96,7 @@ uint64_t parseChar(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue{value};
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeBytesToBuffer(&value, 1, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -111,8 +136,7 @@ uint64_t parseInt8(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = std::to_string(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeIntegralValue(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -124,8 +148,7 @@ uint64_t parseInt16(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = std::to_string(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeIntegralValue(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -137,8 +160,7 @@ uint64_t parseInt32(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = std::to_string(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeIntegralValue(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -150,8 +172,7 @@ uint64_t parseInt64(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = std::to_string(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeIntegralValue(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -163,8 +184,7 @@ uint64_t parseBool(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = std::to_string(static_cast<int>(value));
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeIntegralValue(static_cast<int>(value), bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -176,8 +196,7 @@ uint64_t parseUint8(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = std::to_string(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeIntegralValue(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -189,8 +208,7 @@ uint64_t parseUint16(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = std::to_string(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeIntegralValue(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -202,8 +220,7 @@ uint64_t parseUint32(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = std::to_string(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeIntegralValue(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -215,8 +232,7 @@ uint64_t parseUint64(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    const std::string parsedValue = std::to_string(value);
-    return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeIntegralValue(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultCHAROutputParser::parseAndWrite(
