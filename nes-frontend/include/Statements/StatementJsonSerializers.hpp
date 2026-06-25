@@ -66,7 +66,7 @@ inline rfl::Generic toFrontendGeneric(const UnqualifiedUnboundField& field, cons
 {
     rfl::Object<rfl::Generic> obj;
     obj["name"] = context.reflect(field.getFullyQualifiedName());
-    obj["type"] = toFrontendGeneric(field.getDataType());
+    obj["type"] = toFrontendGeneric(field.getDataType(), context);
     return obj;
 }
 

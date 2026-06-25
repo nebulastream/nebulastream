@@ -55,7 +55,7 @@ private:
 template <>
 struct Reflector<FieldOrderingTrait>
 {
-    Reflected operator()(const FieldOrderingTrait& trait) const;
+    Reflected operator()(const FieldOrderingTrait& trait, const ReflectionContext& context) const;
 };
 
 template <>

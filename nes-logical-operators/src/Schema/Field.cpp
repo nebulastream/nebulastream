@@ -57,9 +57,9 @@ Identifier Field::getLastName() const
     return name;
 }
 
-Reflected Reflector<Field>::operator()(const Field& field) const
+Reflected Reflector<Field>::operator()(const Field& field, const ReflectionContext& context) const
 {
-    return reflect(
+    return context.reflect(
         detail::ReflectedField{.producedBy = field.getProducedBy().getId(), .name = field.getLastName(), .dataType = field.getDataType()});
 }
 

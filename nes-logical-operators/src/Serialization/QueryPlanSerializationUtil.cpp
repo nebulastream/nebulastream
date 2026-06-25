@@ -70,7 +70,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
             .type = std::string{itr->getName()},
             .operatorId = itr->getOperatorId(),
             .childrenIds = std::move(childrenIds),
-            .config = itr->reflect(),
+            .config = itr->reflect(ReflectionContext{}),
             .traitSet = itr->getTraitSet()};
 
         const auto serializedString = rfl::json::write(*ReflectionContext{}.reflect(reflectedOperator));

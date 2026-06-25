@@ -95,7 +95,7 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredType(co
 Reflected
 Reflector<AvgAggregationLogicalFunction>::operator()(const AvgAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return context.reflect(function.getInputFunction);
+    return context.reflect(function.getInputFunction());
 }
 
 AvgAggregationLogicalFunction

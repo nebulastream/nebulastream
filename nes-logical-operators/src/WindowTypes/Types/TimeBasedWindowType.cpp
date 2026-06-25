@@ -65,9 +65,10 @@ const std::variant<TumblingWindow, SlidingWindow>& TimeBasedWindowType::getUnder
 namespace NES
 {
 
-Reflected Reflector<Windowing::TimeBasedWindowType>::operator()(const Windowing::TimeBasedWindowType& window) const
+Reflected
+Reflector<Windowing::TimeBasedWindowType>::operator()(const Windowing::TimeBasedWindowType& window, const ReflectionContext& context) const
 {
-    return reflect(window.getUnderlying());
+    return context.reflect(window.getUnderlying());
 }
 
 Windowing::TimeBasedWindowType

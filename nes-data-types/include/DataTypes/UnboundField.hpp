@@ -85,9 +85,9 @@ struct ReflectedUnboundFieldBase
 template <size_t IdListExtent>
 struct Reflector<UnboundFieldBase<IdListExtent>>
 {
-    Reflected operator()(const UnboundFieldBase<IdListExtent>& field) const
+    Reflected operator()(const UnboundFieldBase<IdListExtent>& field, const ReflectionContext& context) const
     {
-        return reflect(ReflectedUnboundFieldBase<IdListExtent>{field.getFullyQualifiedName(), field.getDataType()});
+        return context.reflect(ReflectedUnboundFieldBase<IdListExtent>{field.getFullyQualifiedName(), field.getDataType()});
     }
 };
 

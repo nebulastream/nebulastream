@@ -123,9 +123,10 @@ std::string VarSizedToNumericLogicalFunction::explain(ExplainVerbosity verbosity
     return fmt::format("VarSizedToNumeric({}, {})", child.explain(verbosity), targetType);
 }
 
-Reflected Reflector<VarSizedToNumericLogicalFunction>::operator()(const VarSizedToNumericLogicalFunction& function) const
+Reflected Reflector<VarSizedToNumericLogicalFunction>::operator()(
+    const VarSizedToNumericLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedVarSizedToNumericLogicalFunction{
+    return context.reflect(detail::ReflectedVarSizedToNumericLogicalFunction{
         .child = function.getChildren()[0],
         .targetType = function.getDataType(),
     });

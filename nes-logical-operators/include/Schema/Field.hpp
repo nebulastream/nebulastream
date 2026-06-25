@@ -68,7 +68,7 @@ struct ReflectedField
 template <>
 struct Reflector<Field>
 {
-    Reflected operator()(const Field& field) const;
+    Reflected operator()(const Field& field, const ReflectionContext& context) const;
 };
 
 template <>
