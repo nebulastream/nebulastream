@@ -87,7 +87,7 @@ into the same `ModelStatementHandler`:
 
 - SQL: `CREATE MODEL name ('/path/to/model.onnx') INPUT (...) OUTPUT (...);`
 - Topology YAML: a top-level `models:` list (see
-  `docs/nebulastream-frontend.md`).
+  `docs/guide/nebulastream-frontend.md`).
 
 `ModelCatalog::registerModel` validates the request and stores it:
 

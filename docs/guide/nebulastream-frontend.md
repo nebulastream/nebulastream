@@ -57,8 +57,8 @@ nes-repl -d -f JSON
 
 ### Embedded Mode
 
-The embedded mode runs queries locally on a single embedded worker. The worker is accessed internally at
-`localhost:9090` (virtual address - no actual network port is allocated).
+The embedded mode runs queries locally on a single embedded worker. By default, the worker is identified internally as
+`localhost:8080` (virtual address - no actual network port is allocated).
 
 Sources and sinks are automatically placed on the single node. No `HOST` configuration is required.
 
@@ -91,7 +91,7 @@ SET(
 );
 
 -- 3. Create a sink (file output)
-CREATE SINK someSink(ENDLESS.TS UINT64)
+CREATE SINK someSink(TS UINT64)
 TYPE File
 SET(
     'out.csv' as "SINK".FILE_PATH,
@@ -163,7 +163,7 @@ Queries are always deployed based on the most recent topology state.
 
 ```sql
 -- 1. Register a worker node
-CREATE WORKER "sink-node:8080" SET ('sink-node:9090' AS DATA);
+CREATE WORKER 'sink-node:8080' SET ('sink-node:9090' AS DATA);
 -- Returns: [{"worker":"sink-node:8080"}]
 
 -- 2. Create logical source
@@ -177,18 +177,18 @@ SET(
     'CSV' as INPUT_FORMATTER."TYPE",
     'emit_rate 10' AS "SOURCE".GENERATOR_RATE_CONFIG,
     10000000 AS "SOURCE".MAX_RUNTIME_MS,
-    "sink-node:8080" AS "SOURCE"."HOST",  -- Specify target host (gRPC address)
+    'sink-node:8080' AS "SOURCE"."HOST",  -- Specify target host (gRPC address)
     1 AS "SOURCE".SEED,
     'SEQUENCE UINT64 0 10000000 1' AS "SOURCE".GENERATOR_SCHEMA
 );
 
 -- 4. Create sink with host specification
-CREATE SINK someSink(ENDLESS.TS UINT64)
+CREATE SINK someSink(TS UINT64)
 TYPE File
 SET(
     'out.csv' as "SINK".FILE_PATH,
     'CSV' as "SINK".OUTPUT_FORMAT,
-    "sink-node:8080" AS "SINK"."HOST"  -- Specify target host (gRPC address)
+    'sink-node:8080' AS "SINK"."HOST"  -- Specify target host (gRPC address)
 );
 
 -- 5. Deploy query
@@ -201,30 +201,30 @@ Query status shows one global query status as well as potentially multiple local
 
 ```sql
 -- worker creation (multi-statement)
-CREATE WORKER "sink-node:8080" SET ('sink-node:9090' AS DATA);
-CREATE WORKER "source-node-1:8080" SET ('source-node-1:9090' AS DATA,
-    "intermediate-node-1:8080" AS "DOWNSTREAM");
-CREATE WORKER "source-node-2:8080" SET ('source-node-2:9090' AS DATA,
-    "intermediate-node-1:8080" AS "DOWNSTREAM");
-CREATE WORKER "source-node-3:8080" SET ('source-node-3:9090' AS DATA,
-    "intermediate-node-2:8080" AS "DOWNSTREAM");
-CREATE WORKER "source-node-4:8080" SET ('source-node-4:9090' AS DATA,
-    "intermediate-node-2:8080" AS "DOWNSTREAM");
-CREATE WORKER "source-node-5:8080" SET ('source-node-5:9090' AS DATA,
-    "intermediate-node-2:8080" AS "DOWNSTREAM");
-CREATE WORKER "intermediate-node-1:8080" SET ('intermediate-node-1:9090' AS DATA,
-    "sink-node:8080" AS "DOWNSTREAM");
-CREATE WORKER "intermediate-node-2:8080" SET ('intermediate-node-2:9090' AS DATA,
-    "sink-node:8080" AS "DOWNSTREAM");
+CREATE WORKER 'sink-node:8080' SET ('sink-node:9090' AS DATA);
+CREATE WORKER 'source-node-1:8080' SET ('source-node-1:9090' AS DATA,
+    'intermediate-node-1:8080' AS "DOWNSTREAM");
+CREATE WORKER 'source-node-2:8080' SET ('source-node-2:9090' AS DATA,
+    'intermediate-node-1:8080' AS "DOWNSTREAM");
+CREATE WORKER 'source-node-3:8080' SET ('source-node-3:9090' AS DATA,
+    'intermediate-node-2:8080' AS "DOWNSTREAM");
+CREATE WORKER 'source-node-4:8080' SET ('source-node-4:9090' AS DATA,
+    'intermediate-node-2:8080' AS "DOWNSTREAM");
+CREATE WORKER 'source-node-5:8080' SET ('source-node-5:9090' AS DATA,
+    'intermediate-node-2:8080' AS "DOWNSTREAM");
+CREATE WORKER 'intermediate-node-1:8080' SET ('intermediate-node-1:9090' AS DATA,
+    'sink-node:8080' AS "DOWNSTREAM");
+CREATE WORKER 'intermediate-node-2:8080' SET ('intermediate-node-2:9090' AS DATA,
+    'sink-node:8080' AS "DOWNSTREAM");
 
 -- Deploy multiple queries to different nodes
 SELECT ID, VALUE, TIMESTAMP
-FROM Generator(..., "source-node-1:8080" AS "SOURCE"."HOST", ...)
-INTO Print("sink-node:8080" AS "SINK"."HOST", ...);
+FROM Generator(..., 'source-node-1:8080' AS "SOURCE"."HOST", ...)
+INTO Print('sink-node:8080' AS "SINK"."HOST", ...);
 
 SELECT ID, VALUE, TIMESTAMP
-FROM Generator(..., "source-node-5:8080" AS "SOURCE"."HOST", ...)
-INTO Print("sink-node:8080" AS "SINK"."HOST", ...);
+FROM Generator(..., 'source-node-5:8080' AS "SOURCE"."HOST", ...)
+INTO Print('sink-node:8080' AS "SINK"."HOST", ...);
 
 -- Verify query distribution
 SHOW QUERIES;
@@ -323,7 +323,7 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     type: Void
     config: { }
@@ -368,7 +368,7 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     type: Void
     config: { }
@@ -410,7 +410,7 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     type: Void
     config: { }
@@ -459,7 +459,7 @@ sinks:
   - name: VOID_SINK
     host: worker-2:8080 # sink located at worker-2
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     type: Void
     config: { }
