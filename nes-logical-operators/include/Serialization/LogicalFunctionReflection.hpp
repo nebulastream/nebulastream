@@ -46,7 +46,7 @@ struct Reflector<TypedLogicalFunction<Checked>>
 {
     Reflected operator()(const TypedLogicalFunction<Checked>& function, const ReflectionContext& context) const
     {
-        return context.reflect(detail::ReflectedLogicalFunction{std::string{function.getType()}, Reflector<Checked>{}(*function)});
+        return context.reflect(detail::ReflectedLogicalFunction{std::string{function.getType()}, Reflector<Checked>{}(*function, context)});
     }
 };
 

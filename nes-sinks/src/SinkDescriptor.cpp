@@ -303,15 +303,15 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
         rhs.underlying);
 }
 
-Reflected Reflector<NamedSinkDescriptor>::operator()(const NamedSinkDescriptor& descriptor) const
+Reflected Reflector<NamedSinkDescriptor>::operator()(const NamedSinkDescriptor& descriptor, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedNamedSinkDescriptor{
+    return context.reflect(detail::ReflectedNamedSinkDescriptor{
         .name = descriptor.getSinkName(),
         .schema = *descriptor.getSchema(),
         .sinkType = descriptor.getSinkType(),
         .host = descriptor.getHost(),
-        .formatConfig = reflect(descriptor.getOutputFormatterConfig()),
-        .config = descriptor.getReflectedConfig()});
+        .formatConfig = context.reflect(descriptor.getOutputFormatterConfig()),
+        .config = descriptor.getReflectedConfig(context)});
 }
 
 NamedSinkDescriptor Unreflector<NamedSinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const
@@ -321,7 +321,7 @@ NamedSinkDescriptor Unreflector<NamedSinkDescriptor>::operator()(const Reflected
     return NamedSinkDescriptor{name, schema, sinkType, host, unreflectedFormatConfig, Descriptor::unreflectConfig(config, context)};
 }
 
-Reflected Reflector<InlineSinkDescriptor>::operator()(const InlineSinkDescriptor& descriptor) const
+Reflected Reflector<InlineSinkDescriptor>::operator()(const InlineSinkDescriptor& descriptor, const ReflectionContext& context) const
 {
     using SchemaType = decltype(std::declval<detail::ReflectedInlineSinkDescriptor>().schema);
     auto schema = std::visit(
@@ -330,13 +330,13 @@ Reflected Reflector<InlineSinkDescriptor>::operator()(const InlineSinkDescriptor
             [](const auto& schemaPtr) { return SchemaType{*schemaPtr}; }},
         descriptor.getSchema());
 
-    return reflect(detail::ReflectedInlineSinkDescriptor{
+    return context.reflect(detail::ReflectedInlineSinkDescriptor{
         .sinkId = descriptor.getSinkId(),
         .schema = std::move(schema),
         .sinkType = descriptor.getSinkType(),
         .host = descriptor.getHost(),
-        .formatConfig = reflect(descriptor.getOutputFormatterConfig()),
-        .config = descriptor.getReflectedConfig()});
+        .formatConfig = context.reflect(descriptor.getOutputFormatterConfig()),
+        .config = descriptor.getReflectedConfig(context)});
 }
 
 InlineSinkDescriptor Unreflector<InlineSinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const

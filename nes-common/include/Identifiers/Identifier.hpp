@@ -87,7 +87,7 @@ private:
 template <>
 struct Reflector<Identifier>
 {
-    Reflected operator()(const Identifier& identifier) const;
+    Reflected operator()(const Identifier& identifier, const ReflectionContext& context) const;
 };
 
 template <>

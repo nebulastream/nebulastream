@@ -119,9 +119,9 @@ std::expected<Identifier, Exception> Identifier::tryParse(std::string value)
     return Identifier{std::move(value), caseSensitive.value()};
 }
 
-Reflected Reflector<Identifier>::operator()(const Identifier& identifier) const
+Reflected Reflector<Identifier>::operator()(const Identifier& identifier, const ReflectionContext& context) const
 {
-    return reflect(std::pair{identifier.getOriginalString(), identifier.isCaseSensitive()});
+    return context.reflect(std::pair{identifier.getOriginalString(), identifier.isCaseSensitive()});
 }
 
 Identifier Unreflector<Identifier>::operator()(const Reflected& reflectable, const ReflectionContext& context) const

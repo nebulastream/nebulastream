@@ -57,8 +57,6 @@ private:
     friend Reflector<CastToUnixTimestampLogicalFunction>;
 };
 
-static_assert(LogicalFunctionConcept<CastToUnixTimestampLogicalFunction>);
-
 template <>
 struct Reflector<CastToUnixTimestampLogicalFunction>
 {

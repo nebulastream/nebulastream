@@ -100,7 +100,7 @@ std::string_view UnboundFieldAccessLogicalFunction::getType()
     return NAME;
 }
 
-Reflected Reflector<UnboundFieldAccessLogicalFunction>::operator()(const UnboundFieldAccessLogicalFunction&) const
+Reflected Reflector<UnboundFieldAccessLogicalFunction>::operator()(const UnboundFieldAccessLogicalFunction&, const ReflectionContext&) const
 {
     PRECONDITION(false, "UnboundFieldAccessLogicalFunction cannot be reflected, replace it with a FieldAccessLogicalFunction");
     std::unreachable();
