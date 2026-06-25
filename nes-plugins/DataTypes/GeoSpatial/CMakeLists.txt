@@ -12,7 +12,6 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_subdirectory(Functions)
-add_subdirectory(Meos)
 
 add_library(geospatial_datatype_plugins STATIC CircleDataType.cpp LineDataType.cpp MovingPolygonDataType.cpp MovingPolygonTrajectoryDataType.cpp PointDataType.cpp PolygonDataType.cpp)
 target_link_libraries(geospatial_datatype_plugins PRIVATE nes-data-types)
