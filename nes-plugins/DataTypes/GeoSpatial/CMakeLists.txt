@@ -12,7 +12,6 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_subdirectory(Functions)
-add_subdirectory(Meos)
 add_plugin_as_library(Point DataType point_data_type_plugin PointDataType.cpp)
 add_plugin_as_library(Line DataType line_data_type_plugin LineDataType.cpp)
 add_plugin_as_library(Circle DataType circle_data_type_plugin CircleDataType.cpp)

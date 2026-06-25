@@ -73,6 +73,7 @@ class Meos {
         TemporalInstant& operator=(TemporalInstant&& other) noexcept { if (this!=&other){ instant = other.instant; other.instant=nullptr;} return *this; }
 
         bool intersects(const TemporalInstant& point) const;
+        Temporal* getGeometry();
 
     private:
         Temporal* instant;
@@ -188,6 +189,12 @@ class Meos {
     // milliseconds, microseconds, or nanoseconds, and format as UTC.
     // Common thresholds: 10 digits (seconds), 13 (ms), 16 (us), 19 (ns).
     static std::string convertEpochToTimestamp(unsigned long long epochLike);
+
+    /// Converts epoch-like value that may be in  milliseconds, microseconds, or nanoseconds to the
+    /// Meos-compatible version of the timestamp (microseconds since the PostgreSQL epoch, 2000-01-01 00:00:00 UTC)
+    /// This does not require a int -> string conversion by avoiding the creation of a human-readable timestamp thus saving parsing time.
+    /// Common thresholds: 10 digits (seconds), 13 (ms), 16 (us), 19 (ns)
+    static TimestampTz convertEpochToTimestampTz(unsigned long long epochLike);
 
     // Thread-safe wrappers around selected MEOS functions to avoid internal races
     static int safe_edwithin_tgeo_geo(const Temporal* temp, const GSERIALIZED* gs, double dist);
