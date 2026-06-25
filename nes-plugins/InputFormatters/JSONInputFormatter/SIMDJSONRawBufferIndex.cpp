@@ -36,12 +36,12 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
-#include <SIMDJSONParsingUtil.hpp>
 #include <function.hpp>
 #include <static.hpp>
 #include <val.hpp>
@@ -50,8 +50,102 @@
 #include <val_ptr.hpp>
 #include <common/FunctionAttributes.hpp>
 
+#include <InputParser.hpp>
+#include <InputParserUtil.hpp>
+#include <SIMDJSONInputFormatIndexer.hpp>
+
 namespace NES
 {
+
+/// This is obtained after accessing the raw (unparsed) value of a specific field
+/// If the access of the value fails, ptrToRawJSON is set to nullptr and sizeOfRawJson is set to 0
+struct RawJsonAccessResult
+{
+    const int8_t* ptrToRawJson;
+    uint64_t sizeOfRawJson;
+};
+
+simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
+    simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
+{
+    const auto simdJsonResult = simdJsonReference[fieldName];
+    if (not simdJsonResult.has_value())
+    {
+        throw FieldNotFound(
+            "SimdJson has not found the fieldName {} with error: {}", fieldName, magic_enum::enum_name(simdJsonResult.error()));
+    }
+    return simdJsonResult;
+}
+
+bool checkIsNullJsonProxy(
+    const FieldIndex fieldIndex, const SIMDJSONRawBufferIndex* simdJsonRawBufferIndex, const SIMDJSONInputFormatIndexer* simdIndexer)
+{
+    const auto fieldNameStr = simdIndexer->getFieldNameInJsonAt(fieldIndex).asCanonicalString();
+    const std::string_view fieldName = fieldNameStr;
+    auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
+
+    /// First, we check if the key is not in the doc. If this is the case, we can return true, as this counts as null
+    if (not currentDoc[fieldName].has_value())
+    {
+        return true;
+    }
+
+    /// Second, we need to check if the key is equal to one of the null values
+    if (accessSIMDJsonFieldOrThrow(currentDoc, fieldName).is_null())
+    {
+        return true;
+    }
+    return false;
+}
+
+/// (Proxy) functions being called via nautilus::invoke() can not be member functions. Thus, we need to implement them outside of the class
+template <bool Nullable>
+RawJsonAccessResult* getRawValueFromIndex(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
+{
+    PRECONDITION(dynamic_cast<SIMDJSONRawBufferIndex*>(rawBufferIndex) != nullptr, "rawBufferIndex must be a SIMDJSONRawBufferIndex");
+    PRECONDITION(dynamic_cast<const SIMDJSONInputFormatIndexer*>(indexer) != nullptr, "indexer must be a SIMDJSONInputFormatIndexer");
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): type verified by PRECONDITION above.
+    auto* simdJsonRawBufferIndex = static_cast<SIMDJSONRawBufferIndex*>(rawBufferIndex);
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): type verified by PRECONDITION above.
+    const auto* simdIndexer = static_cast<const SIMDJSONInputFormatIndexer*>(indexer);
+    PRECONDITION(
+        fieldIndex < simdIndexer->getNumberOfFields(),
+        "fieldIndex {} is out of bounds for schema keys of size: {}",
+        fieldIndex,
+        simdIndexer->getNumberOfFields());
+
+    /// We use the thread local to return multiple values.
+    /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
+    thread_local static RawJsonAccessResult result;
+    result.ptrToRawJson = nullptr;
+    result.sizeOfRawJson = 0;
+
+    /// Checking if the field is null but only if the field is nullable
+    /// This null-check includes a check, if the key of the field exists in the object or if the value is set to NULL.
+    if constexpr (Nullable)
+    {
+        if (checkIsNullJsonProxy(fieldIndex, simdJsonRawBufferIndex, simdIndexer))
+        {
+            return &result;
+        }
+    }
+
+    const auto fieldNameStr = simdIndexer->getFieldNameInJsonAt(fieldIndex).asCanonicalString();
+    const std::string_view fieldName = fieldNameStr;
+    auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
+    std::string_view rawValue = accessSIMDJsonFieldOrThrow(currentDoc, fieldName).raw_json().value();
+    /// raw_json() may include trailing JSON whitespace (space, tab, newline, carriage return). We need to truncate it, otherwise the size of
+    /// the value is not correct, which will corrupt varsized values and chars
+    if (const auto lastNonWs = rawValue.find_last_not_of(" \t\n\r"); lastNonWs != std::string_view::npos)
+    {
+        rawValue = rawValue.substr(0, lastNonWs + 1);
+    }
+    /// The actual parse of the value will be handeled by the InputParser
+    result.ptrToRawJson = reinterpret_cast<const int8_t*>(rawValue.data());
+    result.sizeOfRawJson = rawValue.size();
+    return &result;
+}
+
 SIMDJSONRawBufferIndex::SIMDJSONRawBufferIndex()
 {
     INVARIANT(
@@ -64,74 +158,6 @@ SIMDJSONRawBufferIndex::hasNext(const nautilus::val<uint64_t>&, const nautilus::
 {
     const nautilus::val<bool> lastTuple = readValueFromMemRef<bool>(getMemberRef(rawBufferIndex, &SIMDJSONRawBufferIndex::isAtLastTuple));
     return not lastTuple;
-}
-
-void writeValueToRecord(
-    const DataType dataType,
-    Record& record,
-    const QualifiedIdentifier& fieldName,
-    const nautilus::val<FieldIndex>& fieldIndex,
-    const nautilus::val<RawBufferIndex*>& rawBufferIndex,
-    const nautilus::val<const InputFormatIndexer*>& indexer)
-{
-    switch (dataType.type)
-    {
-        case DataType::Type::INT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::INT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::INT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::INT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::UINT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<float>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<double>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::CHAR: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<char>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<bool>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
-            return;
-        }
-        case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseJsonVarSized(fieldIndex, rawBufferIndex, indexer, dataType.nullable));
-            return;
-        }
-        case DataType::Type::UNDEFINED:
-            throw NotImplemented("Cannot parse undefined type.");
-    }
-    std::unreachable();
 }
 
 Record SIMDJSONRawBufferIndex::readSpanningRecord(
@@ -155,8 +181,33 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
 
         auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
         const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
-        writeValueToRecord(
-            fieldDataType, record, fieldName, fieldIndex, rawBufferIndex, nautilus::val<const InputFormatIndexer*>(&indexer));
+
+        /// Retrieve the address and size of the raw field value
+        /// Workaround to pass nullable into the template. Will be resolved during tracetime as nullable will always be known before compiling the query.
+        const auto fieldAccessResult = fieldDataType.nullable ? nautilus::invoke(
+                                                                    {.modRefInfo = nautilus::ModRefInfo::Ref},
+                                                                    getRawValueFromIndex<true>,
+                                                                    fieldIndex,
+                                                                    rawBufferIndex,
+                                                                    nautilus::val<const InputFormatIndexer*>(&indexer))
+                                                              : nautilus::invoke(
+                                                                    {.modRefInfo = nautilus::ModRefInfo::Ref},
+                                                                    getRawValueFromIndex<false>,
+                                                                    fieldIndex,
+                                                                    rawBufferIndex,
+                                                                    nautilus::val<const InputFormatIndexer*>(&indexer));
+
+        const nautilus::val<int8_t*> address
+            = *getMemberWithOffset<int8_t*>(fieldAccessResult, offsetof(RawJsonAccessResult, ptrToRawJson));
+        const nautilus::val<uint64_t> size
+            = *getMemberWithOffset<uint64_t>(fieldAccessResult, offsetof(RawJsonAccessResult, sizeOfRawJson));
+
+        /// Create the parser for the field and parse the value.
+        /// These are the temporary defaults for our JSON format. Later, these arguments will be set by the user in the source definition.
+        const InputParserConfig parserConfig{.nullable = fieldDataType.nullable, .quotedText = true, .hasTrailingSpace = true};
+        const std::unique_ptr<InputParser> inputParser = provideInputParser(indexer.getParserType(fieldDataType.type), parserConfig);
+        const VarVal parsedVal = inputParser->parseToVarVal(address, size, indexer.getNullValues());
+        record.write(fieldName, parsedVal);
     }
     /// Increment iterator and return record
     nautilus::invoke(
@@ -205,5 +256,4 @@ std::pair<bool, FieldIndex> SIMDJSONRawBufferIndex::indexJSON(const std::string_
     isAtLastTuple = docStreamIterator == docStream->end();
     return {docStreamIterator.at_end(), docStream->truncated_bytes()};
 }
-
 }

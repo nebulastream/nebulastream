@@ -36,8 +36,8 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatterDescriptor.hpp>
+#include <InputParserUtil.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
 #include <static.hpp>
 
 namespace NES
@@ -82,13 +82,32 @@ public:
         const char tupleDelimiter,
         std::vector<Identifier> fieldNamesInJson,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
-        std::vector<DataType> fieldDataTypes)
+        std::vector<DataType> fieldDataTypes,
+        const std::string& parserOverrides)
         : tupleDelimiter(tupleDelimiter)
         , fieldNamesInJson(std::move(fieldNamesInJson))
         , fieldNamesOutput(std::move(fieldNamesOutput))
         , fieldDataTypes(std::move(fieldDataTypes))
         , nullValues({})
     {
+        parserTypes[DataType::Type::UINT8] = "DefaultUINT8";
+        parserTypes[DataType::Type::UINT16] = "DefaultUINT16";
+        parserTypes[DataType::Type::UINT32] = "DefaultUINT32";
+        parserTypes[DataType::Type::UINT64] = "DefaultUINT64";
+        parserTypes[DataType::Type::INT8] = "DefaultINT8";
+        parserTypes[DataType::Type::INT16] = "DefaultINT16";
+        parserTypes[DataType::Type::INT32] = "DefaultINT32";
+        parserTypes[DataType::Type::INT64] = "DefaultINT64";
+        parserTypes[DataType::Type::FLOAT32] = "DefaultF32";
+        parserTypes[DataType::Type::FLOAT64] = "DefaultF64";
+        parserTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
+        parserTypes[DataType::Type::CHAR] = "DefaultCHAR";
+        parserTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
+        /// Placeholder for UNDEFINED. Will throw an error if any field is UNDEFINED typed.
+        parserTypes[DataType::Type::UNDEFINED] = "";
+
+        /// Override default parsers with user-defined parsers.
+        parseInputParserOverrides(parserOverrides, parserTypes);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -111,7 +130,8 @@ public:
             config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER),
             std::move(fieldNamesInJson),
             std::move(fieldNamesOutput),
-            std::move(fieldDataTypes));
+            std::move(fieldDataTypes),
+            config.getFromConfig(InputFormatterDescriptor::INPUT_PARSERS));
     }
 
     ~SIMDJSONInputFormatIndexer() override = default;
@@ -121,8 +141,6 @@ public:
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const override { return {&tupleDelimiter, 1}; }
 
     [[nodiscard]] std::string_view getFieldDelimitingBytes() const override { return ""; }
-
-    [[nodiscard]] QuotationType getQuotationType() const override { return QuotationType::DOUBLE_QUOTE; }
 
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 

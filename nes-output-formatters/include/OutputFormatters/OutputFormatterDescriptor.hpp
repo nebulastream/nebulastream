@@ -15,13 +15,13 @@
 #pragma once
 
 #include <ostream>
+#include <unordered_map>
 #include <Configurations/Descriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 
 namespace NES
 {
 /// Descriptor that stores the configuration parameters of a specific OutputFormatter instance
-/// Currently, there are no parameters that are shared by all types of OutputFormatters.
 /// For a specific OutputFormatter, config parameters may be added by creating a ConfigParameters<Type> struct in the respective header.
 class OutputFormatterDescriptor final : public Descriptor
 {
@@ -29,6 +29,14 @@ public:
     ~OutputFormatterDescriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const OutputFormatterDescriptor& outputFormatterDescriptor);
+
+    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_PARSERS{
+        "OUTPUT_PARSERS",
+        "",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_PARSERS, config); }};
+
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_PARSERS);
 
 private:
     /// Add LowerSchemaProvider as friend, so that it can construct the descriptor

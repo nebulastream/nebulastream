@@ -46,8 +46,13 @@ public:
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TYPE, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<std::string> INPUT_PARSERS{
+        "INPUT_PARSERS",
+        "",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_PARSERS, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(TYPE);
+        = DescriptorConfig::createConfigParameterContainerMap(TYPE, INPUT_PARSERS);
 
 private:
     friend class SourceCatalog;

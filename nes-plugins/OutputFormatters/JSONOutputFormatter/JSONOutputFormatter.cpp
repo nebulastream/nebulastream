@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <simdjson.h>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
@@ -37,6 +37,7 @@
 #include <std/cstring.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <OutputFormatters/OutputParser.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
@@ -53,16 +54,6 @@ namespace NES
 {
 namespace
 {
-/// Escapes a raw byte string into a quoted JSON string literal. simdjson's string builder performs
-/// RFC 8259-conformant escaping (\b \f \n \r \t \" \\ short forms, \uXXXX for the remaining control
-/// characters) with a SIMD fast path that scans for characters needing escaping.
-std::string escapeAsJsonString(std::string_view input)
-{
-    simdjson::builder::string_builder builder;
-    builder.escape_and_append_with_quotes(input);
-    return std::string{builder.view().value()};
-}
-
 uint64_t writePreValueContents(
     const bool isFirstField,
     const char* fieldIdentifier,
@@ -79,99 +70,48 @@ uint64_t writePreValueContents(
     return writeValueToBuffer(preValueContentString.c_str(), remainingSpace, buffer, bufferProvider, bufferAddress);
 }
 
-uint64_t writeChar(
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    const char content,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    /// Chars are treated as strings in JSON
-    const std::string charAsJsonString = escapeAsJsonString(std::string_view(&content, 1));
-    return writeValueToBuffer(charAsJsonString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
-uint64_t writeVarsized(
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    const int8_t* varSizedContent,
-    const uint64_t contentSize,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) -- int8_t buffer reinterpreted as char* for string_view
-    const auto* const contentChars = reinterpret_cast<const char*>(varSizedContent);
-    const std::string jsonFormattedString = escapeAsJsonString(std::string_view(contentChars, contentSize));
-    return writeValueToBuffer(jsonFormattedString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
 void writeValue(
-    const DataType& fieldType,
     const VarVal& value,
     const nautilus::val<int8_t*>& fieldPointer,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     nautilus::val<uint64_t>& written,
-    nautilus::val<uint64_t>& currentRemainingSize)
+    nautilus::val<uint64_t>& currentRemainingSize,
+    const std::string& parserType)
 {
-    switch (fieldType.type)
-    {
-        case DataType::Type::CHAR: {
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeChar,
-                fieldPointer + written,
-                currentRemainingSize,
-                value.getRawValueAs<nautilus::val<char>>(),
-                recordBuffer.getReference(),
-                bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::VARSIZED: {
-            const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeVarsized,
-                fieldPointer + written,
-                currentRemainingSize,
-                varSizedValue.getContent(),
-                varSizedValue.getSize(),
-                recordBuffer.getReference(),
-                bufferProvider);
-
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::INT8:
-        case DataType::Type::INT16:
-        case DataType::Type::INT32:
-        case DataType::Type::INT64:
-        case DataType::Type::UINT8:
-        case DataType::Type::UINT16:
-        case DataType::Type::UINT32:
-        case DataType::Type::UINT64:
-        case DataType::Type::FLOAT32:
-        case DataType::Type::FLOAT64:
-        case DataType::Type::BOOLEAN: {
-            const nautilus::val<uint64_t> amountWritten
-                = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::UNDEFINED: {
-            throw UnknownDataType("JSON-OutputFormatting for type UNDEFINED is not supported.");
-        }
-    }
+    const OutputParserConfig config{.quoted = true};
+    const std::unique_ptr<OutputParser> outputParser = provideOutputParser(parserType, config);
+    const nautilus::val<uint64_t> amountWritten
+        = outputParser->parseAndWrite(value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer);
+    written += amountWritten;
+    currentRemainingSize -= amountWritten;
 }
 }
 
-JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames)
+JSONOutputFormatter::JSONOutputFormatter(
+    const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
     : OutputFormatter(fieldNames)
     , canonicalFieldNames(
           fieldNames | std::views::transform([](const auto& id) { return fmt::format("{}", id); }) | std::ranges::to<std::vector>())
 {
+    parserTypes[DataType::Type::UINT8] = "DefaultUINT8";
+    parserTypes[DataType::Type::UINT16] = "DefaultUINT16";
+    parserTypes[DataType::Type::UINT32] = "DefaultUINT32";
+    parserTypes[DataType::Type::UINT64] = "DefaultUINT64";
+    parserTypes[DataType::Type::INT8] = "DefaultINT8";
+    parserTypes[DataType::Type::INT16] = "DefaultINT16";
+    parserTypes[DataType::Type::INT32] = "DefaultINT32";
+    parserTypes[DataType::Type::INT64] = "DefaultINT64";
+    parserTypes[DataType::Type::FLOAT32] = "DefaultF32";
+    parserTypes[DataType::Type::FLOAT64] = "DefaultF64";
+    parserTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
+    parserTypes[DataType::Type::CHAR] = "JSONCHAR";
+    parserTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
+    /// Set placeholder for UNDEFINED, we throw an error later if a field type is UNDEFINED.
+    parserTypes[DataType::Type::UNDEFINED] = "";
+
+    /// Override default parsers with user specified ones
+    parseOutputParserOverrides(descriptor.getFromConfig(OutputFormatterDescriptor::OUTPUT_PARSERS), parserTypes);
 }
 
 nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
@@ -218,12 +158,14 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         }
         else
         {
-            writeValue(fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
+            writeValue(
+                value, fieldPointer + written, recordBuffer, bufferProvider, written, currentRemainingSize, parserTypes.at(fieldType.type));
         }
     }
     else
     {
-        writeValue(fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
+        writeValue(
+            value, fieldPointer + written, recordBuffer, bufferProvider, written, currentRemainingSize, parserTypes.at(fieldType.type));
     }
 
     /// Either write a , or a }\n depending on if this is the last value of the record
@@ -253,6 +195,6 @@ OutputFormatterValidationGeneratedRegistrar::RegisterJSONOutputFormatterValidati
 
 OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)
 {
-    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames));
+    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames), std::move(args.descriptor));
 }
 }

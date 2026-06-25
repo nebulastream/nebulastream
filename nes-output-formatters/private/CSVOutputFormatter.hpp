@@ -60,9 +60,9 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 
 private:
-    bool quoteStrings;
     std::string fieldDelimiter;
     std::string tupleDelimiter;
+    bool quoteStrings;
 };
 }
 
@@ -86,7 +86,8 @@ struct ConfigParametersCSV
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
+        = DescriptorConfig::createConfigParameterContainerMap(
+            OutputFormatterDescriptor::parameterMap, QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
 };
 }
 
