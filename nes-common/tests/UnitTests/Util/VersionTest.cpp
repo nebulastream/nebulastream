@@ -14,9 +14,9 @@
 
 #include <array>
 #include <string>
-#include <Version.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+#include <Version.hpp>
 
 namespace NES
 {
