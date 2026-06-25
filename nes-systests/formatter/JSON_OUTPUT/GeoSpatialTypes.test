@@ -9,6 +9,16 @@ ATTACH INLINE
 3.0,4.0,30.0,40.0,1.5
 0.0,0.0,-1.0,-2.0,7.25
 
+CREATE LOGICAL SOURCE temporal(lon FLOAT64 NOT NULL, lat FLOAT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR temporal TYPE FILE;
+ATTACH INLINE
+-73.9857,40.7484,1609459200
+-73.9855,40.7485,1609459260
+-73.9865,40.7475,1609459320
+-73.9855,40.7485,1609459380
+-73.9857,40.7485,1609459440
+-73.9855,40.7485,1609459500
+
 # Show a Point built from two FLOAT64 columns.
 SELECT Point(x1, y1) AS p FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
 ----
@@ -29,6 +39,10 @@ SELECT Circle(Point(x1, y1), r) AS c FROM geo INTO File('JSON' as `SINK`.OUTPUT_
 {"C":{"center":{"x":1.0,"y":2.0},"radius":5.0}}
 {"C":{"center":{"x":3.0,"y":4.0},"radius":1.5}}
 {"C":{"center":{"x":0.0,"y":0.0},"radius":7.25}}
+
+SELECT MovingPoint(lon, lat, ts) AS mp FROM temporal WHERE ts == UINT64(1609459200) INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"MP":{"lon":-73.9857,"lat":40.7484,"ts":1609459200}}
 
 # Point + Point dispatches to the Add_Point_Point PhysicalFunction (pairwise field add: x+x, y+y)
 SELECT Point(x1, y1) + Point(x2, y2) AS addedpoint FROM geo INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
