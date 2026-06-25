@@ -72,9 +72,9 @@ void configureArgumentParser(ArgumentParser& program)
     const auto defaultDisableConfigPath = std::string{TEST_CONFIGURATION_DIR} + "/systest-disable.yaml";
 
     program.add_argument("-t", "--testLocation")
-        .help("directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
+        .help("directly specified test file, e.g., filter.test, or a directory to discover test files in. Use "
               "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
-    program.add_argument("-g", "--groups").help("run a specific test groups").nargs(argparse::nargs_pattern::at_least_one);
+    program.add_argument("-g", "--groups").help("run specific test groups").nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
         .nargs(argparse::nargs_pattern::at_least_one);
@@ -106,7 +106,7 @@ void configureArgumentParser(ArgumentParser& program)
         .append()
         .help("changes optimizer default values. e.g. join_strategy=HASH_JOIN");
     program.add_argument("--")
-        .help("arguments passed to the worker config, e.g., `-- --worker.queryEngine.numberOfWorkerThreads=10`")
+        .help("arguments passed to the worker config, e.g., `-- --worker.query_engine.number_of_worker_threads=10`")
         .default_value(std::vector<std::string>{})
         .remaining();
     program.add_argument("-b")
