@@ -50,10 +50,10 @@ public:
         cv.wait(lock, [&] { return inUse < limit || token.stop_requested(); });
         if (token.stop_requested())
         {
-            return {false, wouldBlock};
+            return {.acquired = false, .waited = wouldBlock};
         }
         ++inUse;
-        return {true, wouldBlock};
+        return {.acquired = true, .waited = wouldBlock};
     }
 
     /// Returns one slot. Safe to call from any thread (e.g. the task-completion callback).
