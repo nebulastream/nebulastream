@@ -90,3 +90,12 @@ CREATE SINK mem5_sumChk(s1 UINT64 NOT NULL, s2 UINT64 NOT NULL, s3 UINT64 NOT NU
 # Q10 -- five computed UINT64 columns -> Checksum: integer-output-serialization bound
 SELECT key + v1 AS s1, key + v2 AS s2, key + v3 AS s3, v1 + v2 AS s4, v1 + v3 AS s5 FROM mem5 INTO mem5_sumChk;
 ----
+
+# Computed (non-lazy) FLOAT64 columns: each product is materialized by the kernel and serialized through
+# DefaultF64OutputParser (formatFloatFixed6). Five computed float columns make float output serialization the
+# dominant per-row cost -- the float analogue of Q10, for the parseF64 direct-write A/B.
+CREATE SINK mem5_fmulChk(f1 FLOAT64 NOT NULL, f2 FLOAT64 NOT NULL, f3 FLOAT64 NOT NULL, f4 FLOAT64 NOT NULL, f5 FLOAT64 NOT NULL) TYPE Checksum;
+
+# Q11 -- five computed FLOAT64 columns -> Checksum: float-output-serialization bound
+SELECT key * FLOAT64(1.5) AS f1, v1 * FLOAT64(1.5) AS f2, v2 * FLOAT64(1.5) AS f3, v3 * FLOAT64(1.5) AS f4, creationTS * FLOAT64(1.5) AS f5 FROM mem5 INTO mem5_fmulChk;
+----

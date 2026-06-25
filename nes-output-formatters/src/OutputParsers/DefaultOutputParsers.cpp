@@ -85,6 +85,32 @@ uint64_t writeIntegralValue(
     const auto [ptr, ec] = std::to_chars(tmp, tmp + sizeof(tmp), value);
     return writeBytesToBuffer(tmp, static_cast<size_t>(ptr - tmp), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
+
+/// Direct-write counterpart for floats (the same lever as writeIntegralValue): when the widest fixed-6 form
+/// fits in the remaining main-buffer space, formatFloatFixed6 serializes STRAIGHT into the output buffer --
+/// skipping the stack buffer and the writeBytesToBuffer memcpy. The widest fixed-6 form is ~47 chars for a
+/// float (3.4e38) and ~317 for a double (1.7e308); 48 / 344 bound those with slack. formatFloatFixed6 writes
+/// the full fixed-6 form (with trailing zeros) but returns the shorter stripped length; in direct-write mode
+/// the stripped-off zero bytes sit beyond the field's logical length and are overwritten by the next field
+/// write -- harmless, since used-size accounting is by the returned length. At a buffer boundary we serialize
+/// into a stack buffer and let writeBytesToBuffer spill the overflow into a child buffer.
+template <std::floating_point T>
+uint64_t writeFloatFixed6Value(
+    const T value,
+    int8_t* const bufferStartingAddress,
+    const uint64_t remainingSpace,
+    TupleBuffer* const tupleBuffer,
+    AbstractBufferProvider* const bufferProvider)
+{
+    constexpr uint64_t maxWidth = sizeof(T) == sizeof(float) ? 48 : 344;
+    if (remainingSpace >= maxWidth)
+    {
+        return formatFloatFixed6(value, reinterpret_cast<char*>(bufferStartingAddress), remainingSpace);
+    }
+    char tmp[344];
+    const size_t n = formatFloatFixed6(value, tmp, sizeof(tmp));
+    return writeBytesToBuffer(tmp, n, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -108,9 +134,7 @@ uint64_t parseF32(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    char tmp[344];
-    const size_t n = formatFloatFixed6(value, tmp, sizeof(tmp));
-    return writeBytesToBuffer(tmp, n, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeFloatFixed6Value(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
@@ -122,9 +146,7 @@ uint64_t parseF64(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    char tmp[344];
-    const size_t n = formatFloatFixed6(value, tmp, sizeof(tmp));
-    return writeBytesToBuffer(tmp, n, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return writeFloatFixed6Value(value, bufferStartingAddress, remainingSpace, tupleBuffer, bufferProvider);
 }
 
 NAUTILUS_TAGGED_INLINE(output_parse)
