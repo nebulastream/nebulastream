@@ -17,18 +17,21 @@
 #include <atomic>
 #include <bit>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <memory_resource>
 #include <optional>
 #include <utility>
+#include <vector>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FixedSizeClassPool.hpp>
 #include <TupleBufferImpl.hpp>
@@ -156,21 +159,25 @@ void BufferManager::initialize(uint32_t withAlignment, const std::optional<SizeC
 
     if (sizeClasses.has_value())
     {
-        const auto& sc = sizeClasses.value();
+        const auto& classSpec = sizeClasses.value();
         PRECONDITION(
-            std::has_single_bit(sc.minClassSize) && std::has_single_bit(sc.maxClassSize),
+            std::has_single_bit(classSpec.minClassSize) && std::has_single_bit(classSpec.maxClassSize),
             "Size class bounds must be powers of two, got min={} max={}",
-            sc.minClassSize,
-            sc.maxClassSize);
-        PRECONDITION(sc.minClassSize <= sc.maxClassSize, "minClassSize={} must be <= maxClassSize={}", sc.minClassSize, sc.maxClassSize);
+            classSpec.minClassSize,
+            classSpec.maxClassSize);
+        PRECONDITION(
+            classSpec.minClassSize <= classSpec.maxClassSize,
+            "minClassSize={} must be <= maxClassSize={}",
+            classSpec.minClassSize,
+            classSpec.maxClassSize);
 
         std::vector<size_t> classSizes;
-        for (size_t classSize = sc.minClassSize; classSize <= sc.maxClassSize; classSize *= 2)
+        for (size_t classSize = classSpec.minClassSize; classSize <= classSpec.maxClassSize; classSize *= 2)
         {
             classSizes.push_back(classSize);
         }
         const size_t numClasses = classSizes.size();
-        const size_t budget = (sc.totalBudgetBytes != 0) ? sc.totalBudgetBytes : (bufferSize * numOfBuffers);
+        const size_t budget = (classSpec.totalBudgetBytes != 0) ? classSpec.totalBudgetBytes : (bufferSize * numOfBuffers);
 
         for (const size_t classSize : classSizes)
         {
@@ -179,7 +186,7 @@ void BufferManager::initialize(uint32_t withAlignment, const std::optional<SizeC
                 continue; /// already provided by the default class
             }
             PoolSpec spec{};
-            switch (sc.policy)
+            switch (classSpec.policy)
             {
                 case BufferProvisioningPolicy::TotalBudgetSplit: {
                     const size_t perClassBytes = budget / numClasses;
@@ -190,16 +197,16 @@ void BufferManager::initialize(uint32_t withAlignment, const std::optional<SizeC
                     break;
                 }
                 case BufferProvisioningPolicy::EagerPerClass: {
-                    spec.initialCount = std::max<size_t>(1, sc.buffersPerClass);
+                    spec.initialCount = std::max<size_t>(1, classSpec.buffersPerClass);
                     spec.capacity = spec.initialCount;
                     spec.elastic = false;
                     spec.growthChunkBuffers = 0;
                     break;
                 }
                 case BufferProvisioningPolicy::LazyElastic: {
-                    spec.growthChunkBuffers = std::max<size_t>(1, sc.growthChunkBuffers);
-                    spec.initialCount = sc.floorBuffersPerClass;
-                    spec.capacity = std::max({sc.maxBuffersPerClass, spec.initialCount, spec.growthChunkBuffers});
+                    spec.growthChunkBuffers = std::max<size_t>(1, classSpec.growthChunkBuffers);
+                    spec.initialCount = classSpec.floorBuffersPerClass;
+                    spec.capacity = std::max({classSpec.maxBuffersPerClass, spec.initialCount, spec.growthChunkBuffers});
                     spec.elastic = true;
                     break;
                 }
@@ -217,7 +224,7 @@ void BufferManager::initialize(uint32_t withAlignment, const std::optional<SizeC
         const size_t stride = alignBufferSize(controlBlockSize + alignedBufferSize, withAlignment);
         requiredMemorySpace += stride * spec.initialCount;
     }
-    const double percentage = (100.0 * requiredMemorySpace) / memorySizeInBytes;
+    const double percentage = (100.0 * static_cast<double>(requiredMemorySpace)) / static_cast<double>(memorySizeInBytes);
     NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes, percentage);
     INVARIANT(
         requiredMemorySpace < memorySizeInBytes,

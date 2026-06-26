@@ -20,6 +20,7 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>

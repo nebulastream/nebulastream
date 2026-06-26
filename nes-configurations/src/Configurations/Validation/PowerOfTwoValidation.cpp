@@ -27,6 +27,7 @@ bool PowerOfTwoValidation::isValid(const std::string& parameter) const
 {
     uint64_t value = 0;
     const char* begin = parameter.data();
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     const char* end = begin + parameter.size();
     /// from_chars does not throw: it rejects non-numeric input, partial parses, and overflow via the error code.
     const auto [ptr, errorCode] = std::from_chars(begin, end, value);

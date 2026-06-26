@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+/// NOLINTBEGIN(readability-magic-numbers,readability-identifier-length,misc-include-cleaner)
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -294,3 +295,5 @@ RC_GTEST_FIXTURE_PROP(SizeClassBufferTest, ReturnedBufferFitsAndRecycles, (const
 }
 
 }
+
+/// NOLINTEND(readability-magic-numbers,readability-identifier-length,misc-include-cleaner)
