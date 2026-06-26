@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+/// Unit test: intentional magic literals and test-local using-directives.
+/// NOLINTBEGIN(readability-magic-numbers,google-build-using-namespace,misc-include-cleaner)
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -51,7 +53,7 @@ TEST_F(InflightThrottleTest, PolicyMultiplicativeDecreaseClampedToMin)
 TEST_F(InflightThrottleTest, AcquireReleaseAndWaitSignal)
 {
     InflightThrottle throttle(2);
-    std::stop_source stop;
+    const std::stop_source stop;
     const auto first = throttle.acquire(stop.get_token());
     EXPECT_TRUE(first.acquired);
     EXPECT_FALSE(first.waited);
@@ -118,3 +120,5 @@ TEST_F(InflightThrottleTest, SetLimitGrowWakesWaiter)
     EXPECT_TRUE(acquired.load());
     EXPECT_EQ(throttle.currentInUse(), 2U);
 }
+
+/// NOLINTEND(readability-magic-numbers,google-build-using-namespace,misc-include-cleaner)

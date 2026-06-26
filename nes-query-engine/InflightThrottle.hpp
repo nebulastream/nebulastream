@@ -117,9 +117,9 @@ private:
 /// timing and feeds it the stall signal and elapsed-idle.
 struct InflightPolicy
 {
-    std::size_t min;
-    std::size_t max;
-    std::size_t current;
+    std::size_t min{};
+    std::size_t max{};
+    std::size_t current{};
     std::size_t additiveStep = 4;
     /// Numerator/denominator of the multiplicative decrease (1/2 by default).
     std::size_t decayNum = 1;

@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <condition_variable>
 #include <cstdint>
 #include <functional>
 #include <limits>
@@ -41,6 +40,14 @@ namespace NES
 
 namespace
 {
+/// #1713: adaptive-throttle divisors. The throttle starts at maxLimit/ADAPTIVE_INITIAL_LIMIT_DIVISOR and the AIMD floor
+/// and additive step are maxLimit/ADAPTIVE_MIN_LIMIT_DIVISOR.
+constexpr size_t ADAPTIVE_INITIAL_LIMIT_DIVISOR = 4;
+constexpr size_t ADAPTIVE_MIN_LIMIT_DIVISOR = 8;
+/// Idle interval after which the adaptive cap decays one AIMD step.
+constexpr auto ADAPTIVE_IDLE_DECAY_INTERVAL = std::chrono::milliseconds(500);
+
+/// NOLINTNEXTLINE(readability-function-cognitive-complexity): the adaptive-inflight emit loop is inherently branchy.
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
     size_t numberOfInflightBuffers,
@@ -53,14 +60,15 @@ SourceReturnType::EmitFunction emitFunction(
     /// #1713: max = the configured inflight limit, so the adaptive cap never exceeds the non-adaptive baseline. When
     /// adaptive, the throttle starts low (max/4) and the AIMD policy grows it toward max on stall / decays it on idle.
     const auto maxLimit = std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max()));
-    const auto initialLimit = adaptiveInflight ? std::max<size_t>(1, maxLimit / 4) : maxLimit;
+    const auto initialLimit = adaptiveInflight ? std::max<size_t>(1, maxLimit / ADAPTIVE_INITIAL_LIMIT_DIVISOR) : maxLimit;
     auto availableBuffer = std::make_shared<InflightThrottle>(initialLimit);
     auto policy = std::make_shared<InflightPolicy>(InflightPolicy{
-        .min = std::max<size_t>(1, maxLimit / 8),
+        .min = std::max<size_t>(1, maxLimit / ADAPTIVE_MIN_LIMIT_DIVISOR),
         .max = maxLimit,
         .current = initialLimit,
-        .additiveStep = std::max<size_t>(1, maxLimit / 8)});
+        .additiveStep = std::max<size_t>(1, maxLimit / ADAPTIVE_MIN_LIMIT_DIVISOR)});
     auto lastActivity = std::make_shared<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+    /// NOLINTNEXTLINE(readability-function-cognitive-complexity): the per-event emit lambda mirrors the source state machine.
     return [&controller,
             successors = std::move(successors),
             source,
@@ -103,7 +111,7 @@ SourceReturnType::EmitFunction emitFunction(
                                 }
                                 *lastActivity = now;
                             }
-                            else if (now - *lastActivity > std::chrono::milliseconds(500))
+                            else if (now - *lastActivity > ADAPTIVE_IDLE_DECAY_INTERVAL)
                             {
                                 const auto prev = availableBuffer->currentLimit();
                                 const auto decayed = policy->onIdleDecay();
@@ -181,8 +189,8 @@ std::shared_ptr<RunningSource> RunningSource::create(
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
-        runningSource->source->start(
-            emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter, adaptiveInflight));
+        runningSource->source->start(emitFunction(
+            std::move(queryId), maxInflightBuffers, runningSource, std::move(successors), controller, emitter, adaptiveInflight));
     }
     return runningSource;
 }
