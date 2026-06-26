@@ -11,7 +11,7 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_library(meos_data_types STATIC TemporalPointDataType.cpp TemporalPointSequenceDataType.cpp)
+add_library(meos_data_types STATIC TemporalPointDataType.cpp TemporalPointSequenceDataType.cpp SpatioTemporalBoxDataType.cpp)
 target_link_libraries(meos_data_types PRIVATE nes-data-types)
 target_include_directories(meos_data_types PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -20,3 +20,4 @@ add_subdirectory(Functions)
 link_plugin_library(nes-data-types meos_data_types)
 add_registry_entry(DataType TemporalPoint)
 add_registry_entry(DataType TemporalPointSequence)
+add_registry_entry(DataType SpatioTemporalBox)
