@@ -27,7 +27,6 @@
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <std/cmath.h>
-#include <nautilus/std/vector.h>
 
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
