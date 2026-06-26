@@ -15,14 +15,16 @@ include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
 
 # Logical FUnction library
 add_library(meos_logical_functions STATIC
-        NearestApproachDistanceLogicalFunction.cpp)
+        NearestApproachDistanceLogicalFunction.cpp
+        TgeoAtStboxLogicalFunction.cpp)
 target_link_libraries(meos_logical_functions PRIVATE nes-logical-operators)
 target_include_directories(meos_logical_functions PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Physical Function library
 add_library(meos_physical_functions STATIC
         TemporalPointNearestApproachDistancePhysicalFunction.cpp
-        TemporalPointSequenceNearestApproachDistancePhysicalFunction.cpp)
+        TemporalPointSequenceNearestApproachDistancePhysicalFunction.cpp
+        TpointAtStboxPhysicalFunction.cpp)
 target_link_libraries(meos_physical_functions PRIVATE nes-physical-operators)
 target_link_libraries(meos_physical_functions PUBLIC nes-meos)
 target_include_directories(meos_physical_functions PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -30,11 +32,14 @@ target_include_directories(meos_physical_functions PUBLIC ${CMAKE_CURRENT_SOURCE
 # Logical Function registrations
 link_plugin_library(nes-logical-operators meos_logical_functions)
 add_registry_entry(LogicalFunction NearestApproachDistance KEY NEAREST_APPROACH_DISTANCE)
+add_registry_entry(LogicalFunction TgeoAtStbox KEY TGEO_AT_STBOX)
 
 # Physical Function registrations
 link_plugin_library(nes-physical-operators meos_physical_functions)
 add_registry_entry(PhysicalFunction TemporalPointNearestApproachDistance KEY NEAREST_APPROACH_DISTANCE_TemporalPoint_TemporalPoint)
 add_registry_entry(PhysicalFunction TemporalPointSequenceNearestApproachDistance KEY NEAREST_APPROACH_DISTANCE_TemporalPointSequence_TemporalPointSequence)
+add_registry_entry(PhysicalFunction TpointAtStbox KEY TGEO_AT_STBOX_TemporalPoint_SpatioTemporalBox)
 
 # Unreflection registrations
 add_unreflection_entry(LogicalFunction NearestApproachDistance KEY NEAREST_APPROACH_DISTANCE)
+add_unreflection_entry(LogicalFunction TgeoAtStbox KEY TGEO_AT_STBOX)
