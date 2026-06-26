@@ -126,7 +126,7 @@ void MonitoringSink::start(PipelineExecutionContext&)
 void MonitoringSink::stop(PipelineExecutionContext&)
 {
     NES_WARNING("Stopping monitoring sink");
-    if (this->bufferLatenciesInMS.empty())
+    if (this->bufferLatenciesInUS.empty())
     {
         NES_WARNING("Latencies empty");
         return;
@@ -140,20 +140,21 @@ void MonitoringSink::stop(PipelineExecutionContext&)
         for (const auto latency : bufferLatencies | std::views::values)
         {
             minLatency = (latency != 0) ? std::min(latency, minLatency) : minLatency;
-            maxLatency = std::max(latency, minLatency);
+            maxLatency = std::max(latency, maxLatency); /// was max(latency, minLatency) -- a bug
             latencySum += latency;
         }
         return LatencyMeasurements{
             .minLatency = minLatency, .maxLatency = maxLatency, .avgLatency = latencySum / static_cast<double>(bufferLatencies.size())};
-    }(this->bufferLatenciesInMS);
+    }(this->bufferLatenciesInUS);
 
     // Todo: is wrong for repititions
-    const auto processingTimeInSeconds = (this->timestampOfLastSN.second - this->timestampOfFirstSN) / static_cast<double>(1000);
+    /// timestamps are in us now: lastArrival - firstReadStart = ingestion-inclusive e2e span.
+    const auto processingTimeInSeconds = (this->timestampOfLastSN.second - this->timestampOfFirstSN) / static_cast<double>(1000000);
     const auto inputSizeInMegaBytes = this->sizeOfInputDataInBytes / 1000000;
     const auto throughputInMegaBytesPerSecond = inputSizeInMegaBytes / processingTimeInSeconds;
     // outputFileStream << fmt::format("Throughput in MB/s {}, {}", throughputInMegaBytesPerSecond, latencyMeasurements);
     outputFileStream << fmt::format(
-        "processing time in s,throughput in MB/s,average latency,min latency,max latency\n{},{},{},{},{}\n",
+        "processing time in s,throughput in MB/s,average latency us,min latency us,max latency us\n{},{},{},{},{}\n",
         processingTimeInSeconds,
         throughputInMegaBytesPerSecond,
         latencyMeasurements.avgLatency,
@@ -174,17 +175,19 @@ void MonitoringSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCo
     if (inputBuffer.getSourceCreationTimestampInMS().getRawValue() != Timestamp::INITIAL_VALUE)
     {
         const std::scoped_lock lock(mutex);
-        const auto arrivalTimeInMS = static_cast<uint64_t>(
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-        const auto bufferLatency = arrivalTimeInMS - inputBuffer.getSourceCreationTimestampInMS().getRawValue();
-        bufferLatenciesInMS.emplace(inputBuffer.getSequenceNumber(), bufferLatency);
+        /// us resolution: sourceCreationTimestamp is stamped at the source in us (read-start), so this
+        /// difference is the true end-to-end latency including the read/recv copy.
+        const auto arrivalTimeInUS = static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+        const auto bufferLatency = arrivalTimeInUS - inputBuffer.getSourceCreationTimestampInMS().getRawValue();
+        bufferLatenciesInUS.emplace(inputBuffer.getSequenceNumber(), bufferLatency);
         if (inputBuffer.getSequenceNumber() == INITIAL<SequenceNumber>)
         {
             timestampOfFirstSN = inputBuffer.getSourceCreationTimestampInMS().getRawValue();
         }
         if (timestampOfLastSN.first < inputBuffer.getSequenceNumber())
         {
-            timestampOfLastSN = std::make_pair(inputBuffer.getSequenceNumber(), arrivalTimeInMS);
+            timestampOfLastSN = std::make_pair(inputBuffer.getSequenceNumber(), arrivalTimeInUS);
         }
     }
 }

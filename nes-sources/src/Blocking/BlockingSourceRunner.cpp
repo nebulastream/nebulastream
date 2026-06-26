@@ -29,6 +29,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/BlockingSource.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceUtility.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
@@ -61,11 +62,13 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
 {
     /// set the origin id for this source
     buffer.setOriginId(originId);
-    /// set the creation timestamp
-    buffer.setCreationTimestampInMS(Timestamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-    buffer.setSourceCreationTimestampInMS(Timestamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+    /// creationTimestamp = ingestion/event time for windowing (ms, system_clock to match the sink).
+    /// NB: sourceCreationTimestamp is NOT set here -- the runner stamps it at READ-START (us) so the
+    /// sink's latency/throughput include the read copy (see SourceUtility.hpp). Previously this used
+    /// high_resolution_clock (= steady_clock here, boot epoch), mismatching the sink's system_clock and
+    /// producing garbage (absolute-timestamp) latencies.
+    buffer.setCreationTimestampInMS(Timestamp(static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())));
     /// Set the sequence number of this buffer.
     /// A data source generates a monotonic increasing sequence number
     buffer.setSequenceNumber(sequenceNumber);
@@ -89,12 +92,20 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutineSequential(
     BackpressureListener backpressureListener,
     BlockingSource& source,
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    const OriginId originId,
     const EmitWithResultFn& emitFn)
 {
     source.open(bufferProvider);
     SCOPE_EXIT
     {
         source.close();
+    };
+
+    /// Opt-in ingest-copy meter (see SourceUtility.hpp); free when NES_INGEST_COPY_STATS is unset.
+    IngestCopyMeter copyMeter;
+    SCOPE_EXIT
+    {
+        copyMeter.writeOnClose(originId);
     };
 
     const bool requiresMetadata = !source.addsMetadata();
@@ -132,7 +143,15 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutineSequential(
             priorBuffer.getAvailableMemoryArea().data() + offsetInPriorBuffer,
             priorTruncatedBytes);
 
+        /// Stamp sourceCreationTimestamp at READ-START (us) so the sink's e2e latency/throughput include
+        /// the read copy; bracket fillTupleBuffer (+ the prior-truncated-bytes memcpy above) for the meter.
+        const auto readStartMicros = ingestNowMicros();
+        emptyBuffer->setSourceCreationTimestampInMS(Timestamp(readStartMicros));
         const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken, priorTruncatedBytes);
+        if (copyMeter.enabled())
+        {
+            copyMeter.add(ingestNowMicros() - readStartMicros, fillTupleResult.getNumberOfBytes() + priorTruncatedBytes);
+        }
         if (fillTupleResult.isEoS())
         {
             if (stopToken.stop_requested())
@@ -158,12 +177,21 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
     BackpressureListener backpressureListener,
     BlockingSource& source,
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    const OriginId originId,
     const EmitFn& emit)
 {
     source.open(bufferProvider);
     SCOPE_EXIT
     {
         source.close();
+    };
+
+    /// Opt-in ingest-copy meter (see SourceUtility.hpp); free when NES_INGEST_COPY_STATS is unset.
+    /// (Not measured on the prefill path below -- those buffers are pre-filled, no in-window copy.)
+    IngestCopyMeter copyMeter;
+    SCOPE_EXIT
+    {
+        copyMeter.writeOnClose(originId);
     };
 
     const bool requiresMetadata = !source.addsMetadata();
@@ -205,7 +233,15 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
         }
 
         // Todo: before filling a buffer, copy truncated bytes from prior in
+        /// Stamp sourceCreationTimestamp at READ-START (us) so sink e2e latency/throughput include the
+        /// read copy; bracket fillTupleBuffer for the meter.
+        const auto readStartMicros = ingestNowMicros();
+        emptyBuffer->setSourceCreationTimestampInMS(Timestamp(readStartMicros));
         const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken, 0);
+        if (copyMeter.enabled())
+        {
+            copyMeter.add(ingestNowMicros() - readStartMicros, fillTupleResult.getNumberOfBytes());
+        }
 
         if (!fillTupleResult.isEoS())
         {
@@ -253,7 +289,7 @@ void dataBlockingSourceRunner(
                     emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
                 };
                 result.set_value_at_thread_exit(dataBlockingSourceRunnerRoutine(
-                    stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
+                    stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), originId, dataEmit));
                 if (!stopToken.stop_requested())
                 {
                     emit(originId, SourceReturnType::EoS{}, stopToken);
@@ -273,7 +309,7 @@ void dataBlockingSourceRunner(
                     return emit(originId, SourceReturnType::Execute{std::move(buffer), originId, std::move(bufferProvider)}, stopToken);
                 };
                 result.set_value_at_thread_exit(dataBlockingSourceRunnerRoutineSequential(
-                    stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
+                    stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), originId, dataEmit));
                 if (!stopToken.stop_requested())
                 {
                     emit(originId, SourceReturnType::EoS{}, stopToken);

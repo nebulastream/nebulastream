@@ -73,6 +73,8 @@ AsyncSourceRunner::runningRoutine(OriginId sourceId, std::shared_ptr<AbstractBuf
     /// b) An error occurs within the source
     /// c) EoS is signalled by the source
     AsyncSource::InternalSourceResult internalSourceResult = AsyncSource::Continue{};
+    /// Opt-in ingest-copy meter (see SourceUtility.hpp). Free when NES_INGEST_COPY_STATS is unset.
+    IngestCopyMeter copyMeter;
     while (std::holds_alternative<AsyncSource::Continue>(internalSourceResult))
     {
         /// If we see the cancellation request here, we can safely terminate, as no IO completion handlers can be queued
@@ -85,13 +87,22 @@ AsyncSourceRunner::runningRoutine(OriginId sourceId, std::shared_ptr<AbstractBuf
         /// TODO(yschroeder97): replace this with timeout-based approach
         /// In the future, we might replace this with an async call: when the system is running at capacity, blocking here can slow down all other sources.
         auto buffer = bufferProvider->getBufferBlocking();
-        /// 2. Let source ingest raw bytes into buffer
+        /// 2. Let source ingest raw bytes into buffer. Stamp sourceCreationTimestamp at READ-START (us)
+        /// so the sink's e2e latency/throughput include the read/recv copy (not just in-engine time);
+        /// bracket fillBuffer to accumulate the per-buffer copy cost.
         /// All IO-related errors are handled internally and returned via the result variant.
+        const auto readStartMicros = ingestNowMicros();
+        buffer.setSourceCreationTimestampInMS(Timestamp(readStartMicros));
         internalSourceResult = co_await sourceHandle.source.fillBuffer(buffer);
+        if (copyMeter.enabled())
+        {
+            copyMeter.add(ingestNowMicros() - readStartMicros, buffer.getNumberOfTuples());
+        }
         /// 3. Handle the result and communicate it to the query engine via the emitFn
         /// The returned value decides whether we should continue to ingest data.
         handleSourceResult(buffer, internalSourceResult, dataEmit, sourceId, stopToken);
     }
+    copyMeter.writeOnClose(sourceId);
 }
 
 void AsyncSourceRunner::handleSourceResult(

@@ -62,7 +62,10 @@ private:
     std::string outputFilePath;
     std::ofstream outputFileStream;
     uint64_t sizeOfInputDataInBytes;
-    std::unordered_map<SequenceNumber, uint64_t> bufferLatenciesInMS;
+    /// Latencies/timestamps are in MICROSECONDS: the source stamps sourceCreationTimestamp at read-start
+    /// in us (AsyncSourceRunner) and this sink records arrival in us, so latency = arrival - read-start =
+    /// true end-to-end latency including the read/recv copy (ms resolution was too coarse: 0/1 ms).
+    std::unordered_map<SequenceNumber, uint64_t> bufferLatenciesInUS;
     uint64_t timestampOfFirstSN{};
     std::pair<SequenceNumber, uint64_t> timestampOfLastSN;
     std::mutex mutex;
