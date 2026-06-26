@@ -75,11 +75,53 @@ void ireeCheckStatus(iree_status_t status, const char* msg)
     }
 }
 
+/// Creates a local-sync session on the instance. The session takes its own device reference, so the device is released here; the
+/// caller owns the returned session.
+iree_runtime_session_t* createLocalSyncSession(iree_runtime_instance_t* instance)
+{
+    iree_hal_device_t* dev = nullptr;
+    ireeCheckStatus(
+        iree_runtime_instance_try_create_default_device(instance, iree_make_cstring_view("local-sync"), &dev),
+        "Model Setup failed. Could not create IREE device");
+    iree_runtime_session_options_t sessionOptions;
+    iree_runtime_session_options_initialize(&sessionOptions);
+    iree_runtime_session_t* sess = nullptr;
+    const auto status
+        = iree_runtime_session_create_with_device(instance, &sessionOptions, dev, iree_runtime_instance_host_allocator(instance), &sess);
+    iree_hal_device_release(dev);
+    ireeCheckStatus(status, "Model Setup failed. Could not create Session");
+    return sess;
+}
+
+/// IREE registers several process-global tables lazily on first use: VM builtin types at instance creation, HAL types and CPU
+/// feature detection at device/session creation. Those first-time registrations are not thread-safe, so when worker threads each
+/// build their own IREE runtime concurrently they race (TSan: iree_vm_instance_register_type, iree_hal_*_type, iree_cpu_initialize).
+/// Share one instance across all threads and warm up a session once here, single-threaded, so every global is registered before any
+/// worker creates its own session; afterwards per-thread session creation only reads those tables. The Meyers singleton gives
+/// thread-safe one-time init for free.
+std::shared_ptr<iree_runtime_instance_t> sharedInstance()
+{
+    static std::shared_ptr<iree_runtime_instance_t> instance = []
+    {
+        iree_runtime_instance_options_t options;
+        iree_runtime_instance_options_initialize(&options);
+        iree_runtime_instance_options_use_all_available_drivers(&options);
+        iree_runtime_instance_t* inst = nullptr;
+        ireeCheckStatus(
+            iree_runtime_instance_create(&options, iree_allocator_system(), &inst),
+            "Model Setup failed. Could not create IREE runtime instance");
+        std::shared_ptr<iree_runtime_instance_t> ptr(inst, InstanceDeleter{});
+        iree_runtime_session_release(createLocalSyncSession(ptr.get()));
+        return ptr;
+    }();
+    return instance;
+}
+
 }
 
 struct InferenceRuntime::Impl
 {
-    std::unique_ptr<iree_runtime_instance_t, InstanceDeleter> instance;
+    std::shared_ptr<iree_runtime_instance_t> instance;
     std::unique_ptr<iree_runtime_session_t, SessionDeleter> session;
     iree_vm_function_t function{};
 };
@@ -94,40 +136,16 @@ InferenceRuntime& InferenceRuntime::operator=(InferenceRuntime&&) noexcept = def
 
 void InferenceRuntime::setup(const CompiledModel& model)
 {
-    iree_runtime_instance_options_t instanceOptions;
-    iree_runtime_instance_options_initialize(&instanceOptions);
-    iree_runtime_instance_options_use_all_available_drivers(&instanceOptions);
-
-    iree_runtime_instance_t* inst = nullptr;
-    iree_status_t status = iree_runtime_instance_create(&instanceOptions, iree_allocator_system(), &inst);
-    ireeCheckStatus(status, "Model Setup failed. Could not create IREE runtime instance");
-    std::unique_ptr<iree_runtime_instance_t, InstanceDeleter> instPtr(inst);
-
-    NES_DEBUG("Created IREE runtime instance")
-    iree_hal_device_t* dev = nullptr;
-    status = iree_runtime_instance_try_create_default_device(instPtr.get(), iree_make_cstring_view("local-sync"), &dev);
-    ireeCheckStatus(status, "Model Setup failed. Could not create IREE device");
-    /// Session takes a reference to the device, so we release our reference
-    SCOPE_EXIT
-    {
-        iree_hal_device_release(dev);
-    };
-
-    NES_DEBUG("Created IREE device")
-    iree_runtime_session_options_t sessionOptions;
-    iree_runtime_session_options_initialize(&sessionOptions);
-    iree_runtime_session_t* sess = nullptr;
-    status = iree_runtime_session_create_with_device(
-        instPtr.get(), &sessionOptions, dev, iree_runtime_instance_host_allocator(instPtr.get()), &sess);
-    ireeCheckStatus(status, "Model Setup failed. Could not create Session");
-    std::unique_ptr<iree_runtime_session_t, SessionDeleter> sessPtr(sess);
+    /// One IREE instance shared by all workers (globals already registered, see sharedInstance); the session below is per-thread.
+    std::shared_ptr<iree_runtime_instance_t> instPtr = sharedInstance();
+    std::unique_ptr<iree_runtime_session_t, SessionDeleter> sessPtr{createLocalSyncSession(instPtr.get())};
 
     NES_DEBUG("Read the model from the bytecode buffer");
     const iree_const_byte_span_t byteCodeSpan{
         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) IREE API requires const uint8_t* but bytecode is stored as std::byte
         .data = reinterpret_cast<const uint8_t*>(model.getData().data()),
         .data_length = model.getData().size()};
-    status = iree_runtime_session_append_bytecode_module_from_memory(sessPtr.get(), byteCodeSpan, iree_allocator_null());
+    const auto status = iree_runtime_session_append_bytecode_module_from_memory(sessPtr.get(), byteCodeSpan, iree_allocator_null());
     ireeCheckStatus(status, "Model Setup failed. Could not Load model");
 
     impl->instance = std::move(instPtr);
