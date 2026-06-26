@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+/// NOLINTBEGIN(readability-magic-numbers,readability-identifier-length,misc-include-cleaner)
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -63,7 +64,7 @@ class SizeClassBufferTest : public ::testing::Test
 /// getBuffer(size) rounds the request up to the smallest fitting power-of-two size class.
 TEST_F(SizeClassBufferTest, RoundsUpToSmallestFittingClass)
 {
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 16384, 4));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), eagerConfig(1024, 16384, 4));
 
     EXPECT_EQ(bm->getBuffer(1).getBufferSize(), 1024U);
     EXPECT_EQ(bm->getBuffer(1024).getBufferSize(), 1024U);
@@ -94,7 +95,7 @@ TEST_F(SizeClassBufferTest, BackwardCompatibleSingleClass)
 TEST_F(SizeClassBufferTest, EagerPerClassPreallocatesCounts)
 {
     /// Classes: 1024, 2048, 4096(default,8), 8192 -> 3 extra classes * 4 + default 8 = 20.
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 8192, 4));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), eagerConfig(1024, 8192, 4));
     EXPECT_EQ(bm->getNumOfPooledBuffers(), 20U);
     EXPECT_EQ(bm->getNumberOfAvailableBuffers(), 20U);
 }
@@ -102,7 +103,7 @@ TEST_F(SizeClassBufferTest, EagerPerClassPreallocatesCounts)
 /// TotalBudgetSplit distributes a byte budget across the classes; each class gets at least one buffer.
 TEST_F(SizeClassBufferTest, TotalBudgetSplitDistributesBudget)
 {
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, budgetConfig(1024, 8192, 1U << 20U));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), budgetConfig(1024, 8192, 1U << 20U));
     /// Default class (8) plus a positive number of buffers in each extra class.
     EXPECT_GT(bm->getNumOfPooledBuffers(), 8U);
     EXPECT_EQ(bm->getNumberOfAvailableBuffers(), bm->getNumOfPooledBuffers());
@@ -111,7 +112,7 @@ TEST_F(SizeClassBufferTest, TotalBudgetSplitDistributesBudget)
 /// A released pooled buffer is recycled back into its own size class and can be obtained again.
 TEST_F(SizeClassBufferTest, RecyclesBackIntoCorrectClass)
 {
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 8192, 2));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), eagerConfig(1024, 8192, 2));
     const auto totalAvailable = bm->getNumberOfAvailableBuffers();
 
     {
@@ -127,7 +128,7 @@ TEST_F(SizeClassBufferTest, RecyclesBackIntoCorrectClass)
 /// When the best-fit class is momentarily exhausted, getBuffer promotes to a larger pooled class.
 TEST_F(SizeClassBufferTest, PromotesToLargerClassWhenExhausted)
 {
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 8192, 1));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), eagerConfig(1024, 8192, 1));
 
     auto first = bm->getBuffer(1000); /// drains the single 1024-class buffer
     EXPECT_EQ(first.getBufferSize(), 1024U);
@@ -139,7 +140,7 @@ TEST_F(SizeClassBufferTest, PromotesToLargerClassWhenExhausted)
 /// LazyElastic starts near-empty and grows a class on demand up to its ceiling.
 TEST_F(SizeClassBufferTest, LazyElasticGrowsOnDemand)
 {
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, lazyConfig(2048, 8192, 0, 4, 64));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), lazyConfig(2048, 8192, 0, 4, 64));
 
     /// The lazy classes contribute nothing until first use.
     EXPECT_EQ(bm->getNumberOfAvailableBuffers(), 8U);
@@ -160,7 +161,7 @@ TEST_F(SizeClassBufferTest, LazyElasticGrowsOnDemand)
 /// Requests larger than the largest size class are served from the unpooled path.
 TEST_F(SizeClassBufferTest, LargerThanMaxClassUsesUnpooled)
 {
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 4096, 2));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), eagerConfig(1024, 4096, 2));
     const auto pooledBefore = bm->getNumberOfAvailableBuffers();
 
     auto buffer = bm->getBuffer(100000);
@@ -175,7 +176,7 @@ TEST_F(SizeClassBufferTest, LargerThanMaxClassUsesUnpooled)
 TEST_F(SizeClassBufferTest, NoBlockingReturnsNulloptWhenExhausted)
 {
     /// Classes >= 1000 bytes are 1024(1), 2048(1) and the 4096 default(1) -> three buffers total.
-    auto bm = BufferManager::create(4096, 1, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 2048, 1));
+    auto bm = BufferManager::create(4096, 1, std::make_shared<NesDefaultMemoryAllocator>(), eagerConfig(1024, 2048, 1));
     std::vector<TupleBuffer> held;
     held.push_back(bm->getBuffer(1000));
     held.push_back(bm->getBuffer(1000));
@@ -188,7 +189,7 @@ TEST_F(SizeClassBufferTest, NoBlockingReturnsNulloptWhenExhausted)
 /// TotalBudgetSplit provisions every class and serves the exact class for a request.
 TEST_F(SizeClassBufferTest, BudgetPolicyServesEveryClass)
 {
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, budgetConfig(1024, 8192, 1U << 20U));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), budgetConfig(1024, 8192, 1U << 20U));
     EXPECT_EQ(bm->getBuffer(1024).getBufferSize(), 1024U);
     EXPECT_EQ(bm->getBuffer(8192).getBufferSize(), 8192U);
 }
@@ -196,7 +197,7 @@ TEST_F(SizeClassBufferTest, BudgetPolicyServesEveryClass)
 /// LazyElastic grows to its ceiling and then promotes / falls back for further demand, leak-free.
 TEST_F(SizeClassBufferTest, LazyElasticPastCeiling)
 {
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, lazyConfig(2048, 4096, 0, 2, 4));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), lazyConfig(2048, 4096, 0, 2, 4));
     std::vector<TupleBuffer> held;
     held.reserve(12);
     for (int i = 0; i < 12; ++i)
@@ -212,7 +213,7 @@ TEST_F(SizeClassBufferTest, LazyElasticPastCeiling)
 /// deepCopyBuffer replicates the raw bytes, size and metadata into a fresh buffer.
 TEST_F(SizeClassBufferTest, DeepCopyReplicatesDataAndMetadata)
 {
-    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(1024, 8192, 4));
+    auto bm = BufferManager::create(4096, 8, std::make_shared<NesDefaultMemoryAllocator>(), eagerConfig(1024, 8192, 4));
     auto source = bm->getBuffer(2000); /// 2048 class
     auto bytes = source.getAvailableMemoryArea<uint8_t>();
     for (size_t i = 0; i < bytes.size(); ++i)
@@ -243,7 +244,7 @@ TEST_F(SizeClassBufferTest, BlockingThrowsWhenDefaultPoolExhausted)
 /// their buffers, every pooled buffer is available again and destroy() finds no live buffer.
 TEST_F(SizeClassBufferTest, ConcurrentMixedSizeAllocationsAreLeakFree)
 {
-    auto bm = BufferManager::create(8192, 64, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(512, 65536, 64));
+    auto bm = BufferManager::create(8192, 64, std::make_shared<NesDefaultMemoryAllocator>(), eagerConfig(512, 65536, 64));
     const auto totalPooled = bm->getNumOfPooledBuffers();
 
     constexpr size_t numThreads = 8;
@@ -279,7 +280,7 @@ TEST_F(SizeClassBufferTest, ConcurrentMixedSizeAllocationsAreLeakFree)
 /// buffer is released the pool returns to full availability (no buffers lost or duplicated).
 RC_GTEST_FIXTURE_PROP(SizeClassBufferTest, ReturnedBufferFitsAndRecycles, (const std::vector<uint32_t>& rawSizes))
 {
-    auto bm = BufferManager::create(4096, 16, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerConfig(512, 16384, 8));
+    auto bm = BufferManager::create(4096, 16, std::make_shared<NesDefaultMemoryAllocator>(), eagerConfig(512, 16384, 8));
     const auto totalPooled = bm->getNumOfPooledBuffers();
 
     for (const auto rawSize : rawSizes)
@@ -294,3 +295,5 @@ RC_GTEST_FIXTURE_PROP(SizeClassBufferTest, ReturnedBufferFitsAndRecycles, (const
 }
 
 }
+
+/// NOLINTEND(readability-magic-numbers,readability-identifier-length,misc-include-cleaner)

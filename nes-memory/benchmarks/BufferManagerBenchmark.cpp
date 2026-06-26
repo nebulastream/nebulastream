@@ -21,6 +21,7 @@
 /// Each iteration allocates one buffer and immediately releases it (RAII), so a pool of N buffers is
 /// never exhausted by up to N concurrent threads.
 
+/// NOLINTBEGIN(readability-magic-numbers,readability-identifier-length,google-build-using-namespace,cppcoreguidelines-narrowing-conversions,misc-include-cleaner)
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -119,7 +120,7 @@ int main()
         fixed.reset();
 
         auto sizeClass
-            = BufferManager::create(DEFAULT_SIZE, NUM_BUFFERS, std::make_shared<NesDefaultMemoryAllocator>(), 64, eagerSizeClasses());
+            = BufferManager::create(DEFAULT_SIZE, NUM_BUFFERS, std::make_shared<NesDefaultMemoryAllocator>(), eagerSizeClasses());
         report(
             "SizeClassPooled",
             threads,
@@ -148,3 +149,5 @@ int main()
     }
     return 0;
 }
+
+/// NOLINTEND(readability-magic-numbers,readability-identifier-length,google-build-using-namespace,cppcoreguidelines-narrowing-conversions,misc-include-cleaner)

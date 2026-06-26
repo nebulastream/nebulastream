@@ -20,6 +20,7 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
@@ -61,7 +62,6 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
         workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue(),
         workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
         std::make_shared<NesDefaultMemoryAllocator>(),
-        BufferManager::DEFAULT_ALIGNMENT,
         makeSizeClassConfig(workerConfiguration));
     auto queryLog = std::make_shared<QueryLog>();
 
