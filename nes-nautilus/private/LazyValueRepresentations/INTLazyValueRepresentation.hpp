@@ -28,13 +28,18 @@
 namespace NES
 {
 class VarVal;
+
 /// Intermediate LazyValueRepresentation class which every signed integer type's LazyValueRepresentation inherits from.
 /// Overrides a collection of logical functions which can be performed on lazy integer values.
 class INTLazyValueRepresentation : public LazyValueRepresentation
 {
 public:
     explicit INTLazyValueRepresentation(
-        const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size, const DataType type, const nautilus::val<bool>& isNull, const std::string& parserType)
+        const nautilus::val<int8_t*>& reference,
+        const nautilus::val<uint64_t>& size,
+        const DataType type,
+        const nautilus::val<bool>& isNull,
+        const std::string& parserType)
         : LazyValueRepresentation(reference, size, type, isNull, parserType)
     {
     }

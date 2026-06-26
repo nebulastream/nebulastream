@@ -1,0 +1,67 @@
+# MmapFile-source UNION producer scan: mmap the slice in open(), fillTupleBuffer memcpys from the mapped
+# region into a pool buffer (no read(2) syscall / _copy_to_iter). SIMDCSV->Checksum, io_threads=P, W=16.
+# q1=P1 q2=P2 q3=P3 q4=P4. Compare Checksum vs BlockingFile/async File (must match).
+
+CREATE LOGICAL SOURCE m1s0(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m1s0 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/bid_6GB.csv
+
+CREATE SINK m1_chk(m1s0.auctionId INT32 NOT NULL) TYPE Checksum;
+
+# q1 -- P=1
+SELECT auctionId FROM m1s0 INTO m1_chk;
+----
+
+CREATE LOGICAL SOURCE m2s0(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m2s0 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_0_of_2.csv
+
+CREATE LOGICAL SOURCE m2s1(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m2s1 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_1_of_2.csv
+
+CREATE SINK m2_chk(auctionId INT32 NOT NULL) TYPE Checksum;
+
+# q2 -- P=2
+SELECT auctionId FROM m2s0 UNION SELECT auctionId FROM m2s1 INTO m2_chk;
+----
+
+CREATE LOGICAL SOURCE m3s0(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m3s0 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_0_of_3.csv
+
+CREATE LOGICAL SOURCE m3s1(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m3s1 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_1_of_3.csv
+
+CREATE LOGICAL SOURCE m3s2(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m3s2 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_2_of_3.csv
+
+CREATE SINK m3_chk(auctionId INT32 NOT NULL) TYPE Checksum;
+
+# q3 -- P=3
+SELECT auctionId FROM m3s0 UNION SELECT auctionId FROM m3s1 UNION SELECT auctionId FROM m3s2 INTO m3_chk;
+----
+
+CREATE LOGICAL SOURCE m4s0(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m4s0 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_0_of_4.csv
+
+CREATE LOGICAL SOURCE m4s1(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m4s1 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_1_of_4.csv
+
+CREATE LOGICAL SOURCE m4s2(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m4s2 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_2_of_4.csv
+
+CREATE LOGICAL SOURCE m4s3(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m4s3 TYPE MmapFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_3_of_4.csv
+
+CREATE SINK m4_chk(auctionId INT32 NOT NULL) TYPE Checksum;
+
+# q4 -- P=4
+SELECT auctionId FROM m4s0 UNION SELECT auctionId FROM m4s1 UNION SELECT auctionId FROM m4s2 UNION SELECT auctionId FROM m4s3 INTO m4_chk;
+----

@@ -305,11 +305,11 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
             { \
                 if constexpr (std::is_same_v<LHS, std::shared_ptr<LazyValueRepresentation>>) \
                 { \
-                    return lhsVal->operatorName(VarVal{rhsVal,rightIsNullable,rightIsNull}); \
+                    return lhsVal->operatorName(VarVal{rhsVal, rightIsNullable, rightIsNull}); \
                 } \
                 else if constexpr (std::is_same_v<RHS, std::shared_ptr<LazyValueRepresentation>>) \
                 { \
-                    return VarVal{lhsVal,leftIsNullable,leftIsNull} op rhsVal; \
+                    return VarVal{lhsVal, leftIsNullable, leftIsNull} op rhsVal; \
                 } \
                 else if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
                 { \

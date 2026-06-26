@@ -65,6 +65,11 @@ private:
     const std::string filePath;
     std::optional<int32_t> fileDescriptor;
     std::optional<asio::posix::stream_descriptor> fileStream;
+    /// PROFILING-only (env NES_FILE_REPEAT=N, default 1): on EOF, lseek back to 0 and re-read the file N passes
+    /// back-to-back so a profiler sees a long steady window (no clean repeat mechanism otherwise; mirrors the
+    /// InMemory blob/prefill multi-pass). Single-pass cost unchanged at N==1. Throughput = reported * numPasses.
+    std::size_t numPasses = 1;
+    std::size_t passesDone = 0;
 };
 
 struct ConfigParametersFileSource

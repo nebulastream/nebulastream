@@ -91,7 +91,8 @@ VarVal VARSIZEDLazyValueRepresentation::operator!() const
 VarVal VARSIZEDLazyValueRepresentation::operator==(const VarVal& other) const
 {
     return other.customVisit(
-        [this, leftIsNullable = this->type.nullable,
+        [this,
+         leftIsNullable = this->type.nullable,
          rightIsNullable = other.isNullable(),
          leftIsNull = this->isNull,
          rightIsNull = other.isNull()]<typename T>(const T& val) -> VarVal
@@ -109,7 +110,7 @@ VarVal VARSIZEDLazyValueRepresentation::operator==(const VarVal& other) const
                 const auto result = this->eqImpl(val);
                 return VarVal{result, false, false};
             }
-            return LazyValueRepresentation::operator==({val,rightIsNullable,rightIsNull});
+            return LazyValueRepresentation::operator==({val, rightIsNullable, rightIsNull});
         });
 }
 
@@ -121,7 +122,8 @@ VarVal VARSIZEDLazyValueRepresentation::reverseEQ(const VarVal& other) const
 VarVal VARSIZEDLazyValueRepresentation::operator!=(const VarVal& other) const
 {
     return other.customVisit(
-        [this, leftIsNullable = this->type.nullable,
+        [this,
+         leftIsNullable = this->type.nullable,
          rightIsNullable = other.isNullable(),
          leftIsNull = this->isNull,
          rightIsNull = other.isNull()]<typename T>(const T& val) -> VarVal
@@ -139,7 +141,7 @@ VarVal VARSIZEDLazyValueRepresentation::operator!=(const VarVal& other) const
                 const auto result = this->neqImpl(val);
                 return VarVal{result, false, false};
             }
-            return LazyValueRepresentation::operator!=({val,rightIsNullable,rightIsNull});
+            return LazyValueRepresentation::operator!=({val, rightIsNullable, rightIsNull});
         });
 }
 

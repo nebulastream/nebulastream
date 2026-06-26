@@ -1,0 +1,69 @@
+# BlockingFile-source UNION producer scan: synchronous std::ifstream read (NO boost::asio coroutine),
+# runs on dedicated DataSrc threads. WITH the real file read (kernel page-cache copy). Isolates asio-coroutine
+# overhead from the kernel _copy_to_iter copy, and characterizes per-producer scaling vs the async File grid.
+# SIMDCSV -> Checksum, io_threads=P. Run like async File (re-reads file each batch): --repeat N, post-plateau.
+# q1=P1 q2=P2 q3=P3 q4=P4.
+
+# q1 -- P=1 BlockingFile single (whole file)
+CREATE LOGICAL SOURCE b1s1(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b1s1 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/bid_6GB.csv
+
+CREATE SINK b1_chk(b1s1.auctionId INT32 NOT NULL) TYPE Checksum;
+
+SELECT auctionId FROM b1s1 INTO b1_chk;
+----
+
+# q2 -- P=2 BlockingFile union
+CREATE LOGICAL SOURCE b2s1(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b2s1 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_0_of_2.csv
+
+CREATE LOGICAL SOURCE b2s2(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b2s2 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_1_of_2.csv
+
+CREATE SINK b2_chk(auctionId INT32 NOT NULL) TYPE Checksum;
+
+SELECT auctionId FROM b2s1 UNION SELECT auctionId FROM b2s2 INTO b2_chk;
+----
+
+# q3 -- P=3 BlockingFile union (3 slices, io_threads=3)
+CREATE LOGICAL SOURCE b3s1(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b3s1 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_0_of_3.csv
+
+CREATE LOGICAL SOURCE b3s2(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b3s2 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_1_of_3.csv
+
+CREATE LOGICAL SOURCE b3s3(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b3s3 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_2_of_3.csv
+
+CREATE SINK b3_chk(auctionId INT32 NOT NULL) TYPE Checksum;
+
+SELECT auctionId FROM b3s1 UNION SELECT auctionId FROM b3s2 UNION SELECT auctionId FROM b3s3 INTO b3_chk;
+----
+
+# q4 -- P=4 BlockingFile union
+CREATE LOGICAL SOURCE b4s1(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b4s1 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_0_of_4.csv
+
+CREATE LOGICAL SOURCE b4s2(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b4s2 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_1_of_4.csv
+
+CREATE LOGICAL SOURCE b4s3(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b4s3 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_2_of_4.csv
+
+CREATE LOGICAL SOURCE b4s4(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR b4s4 TYPE BlockingFile SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_3_of_4.csv
+
+CREATE SINK b4_chk(auctionId INT32 NOT NULL) TYPE Checksum;
+
+SELECT auctionId FROM b4s1 UNION SELECT auctionId FROM b4s2 UNION SELECT auctionId FROM b4s3 UNION SELECT auctionId FROM b4s4 INTO b4_chk;
+----

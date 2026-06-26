@@ -16,18 +16,19 @@
 
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Util/InlineTagMacro.hpp>
 #include <std/cstring.h>
 #include <LazyValueRepresentationRegistry.hpp>
 #include <inline.hpp>
 #include <select.hpp>
 #include <val_bool.hpp>
-#include <Util/InlineTagMacro.hpp>
 
 namespace NES
 {
 
 template <typename T>
-NAUTILUS_TAGGED_INLINE(lazy_overload) static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
+NAUTILUS_TAGGED_INLINE(lazy_overload)
+static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
 {
     const std::string_view lhsString{reinterpret_cast<const char*>(lazyPtr), lazySize};
     /// Will be skipped by compiler by preparing the ascii chars of the constant in memory
@@ -36,7 +37,8 @@ NAUTILUS_TAGGED_INLINE(lazy_overload) static bool constantEq(const int8_t* lazyP
 }
 
 template <typename T>
-NAUTILUS_TAGGED_INLINE(lazy_overload) static bool constantLt(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
+NAUTILUS_TAGGED_INLINE(lazy_overload)
+static bool constantLt(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
 {
     const std::string_view lhsString{reinterpret_cast<const char*>(lazyPtr), lazySize};
     /// UINTs can't be negative
@@ -155,7 +157,7 @@ VarVal UINTLazyValueRepresentation::operator==(const VarVal& other) const
             {
                 if (val->getType().type != DataType::Type::BOOLEAN && (!val->getType().isInteger() || val->getType().isSignedInteger()))
                 {
-                    return LazyValueRepresentation::operator==({val,rightIsNullable,rightIsNull});
+                    return LazyValueRepresentation::operator==({val, rightIsNullable, rightIsNull});
                 }
             }
             if constexpr (requires {
@@ -171,7 +173,7 @@ VarVal UINTLazyValueRepresentation::operator==(const VarVal& other) const
                 const auto result = this->eqImpl(val);
                 return VarVal{result, false, false};
             }
-            return LazyValueRepresentation::operator==({val,rightIsNullable,rightIsNull});
+            return LazyValueRepresentation::operator==({val, rightIsNullable, rightIsNull});
         });
 }
 
@@ -193,7 +195,7 @@ VarVal UINTLazyValueRepresentation::operator!=(const VarVal& other) const
             {
                 if (val->getType().type != DataType::Type::BOOLEAN && (!val->getType().isInteger() || val->getType().isSignedInteger()))
                 {
-                    return LazyValueRepresentation::operator!=({val,rightIsNullable,rightIsNull});
+                    return LazyValueRepresentation::operator!=({val, rightIsNullable, rightIsNull});
                 }
             }
 
@@ -210,7 +212,7 @@ VarVal UINTLazyValueRepresentation::operator!=(const VarVal& other) const
                 const auto result = !this->eqImpl(val);
                 return VarVal{result, false, false};
             }
-            return LazyValueRepresentation::operator!=({val,rightIsNullable,rightIsNull});
+            return LazyValueRepresentation::operator!=({val, rightIsNullable, rightIsNull});
         });
 }
 
@@ -232,7 +234,7 @@ VarVal UINTLazyValueRepresentation::operator<(const VarVal& other) const
             {
                 if (!val->getType().isInteger() || val->getType().isSignedInteger())
                 {
-                    return LazyValueRepresentation::operator<({val,rightIsNullable,rightIsNull});
+                    return LazyValueRepresentation::operator<({val, rightIsNullable, rightIsNull});
                 }
             }
             if constexpr (requires {
@@ -248,7 +250,7 @@ VarVal UINTLazyValueRepresentation::operator<(const VarVal& other) const
                 const auto result = this->ltImpl(val);
                 return VarVal{result, false, false};
             }
-            return LazyValueRepresentation::operator<({val,rightIsNullable,rightIsNull});
+            return LazyValueRepresentation::operator<({val, rightIsNullable, rightIsNull});
         });
 }
 
@@ -270,7 +272,7 @@ VarVal UINTLazyValueRepresentation::operator<=(const VarVal& other) const
             {
                 if (!val->getType().isInteger() || val->getType().isSignedInteger())
                 {
-                    return LazyValueRepresentation::operator<=({val,rightIsNullable,rightIsNull});
+                    return LazyValueRepresentation::operator<=({val, rightIsNullable, rightIsNull});
                 }
             }
 
@@ -294,7 +296,7 @@ VarVal UINTLazyValueRepresentation::operator<=(const VarVal& other) const
                 const auto result = this->eqImpl(val) || this->ltImpl(val);
                 return VarVal{result, false, false};
             }
-            return LazyValueRepresentation::operator<=({val,rightIsNullable,rightIsNull});
+            return LazyValueRepresentation::operator<=({val, rightIsNullable, rightIsNull});
         });
 }
 
@@ -316,7 +318,7 @@ VarVal UINTLazyValueRepresentation::operator>(const VarVal& other) const
             {
                 if (!val->getType().isInteger() || val->getType().isSignedInteger())
                 {
-                    return LazyValueRepresentation::operator>({val,rightIsNullable,rightIsNull});
+                    return LazyValueRepresentation::operator>({val, rightIsNullable, rightIsNull});
                 }
             }
 
@@ -340,7 +342,7 @@ VarVal UINTLazyValueRepresentation::operator>(const VarVal& other) const
                 const auto result = !this->eqImpl(val) && !this->ltImpl(val);
                 return VarVal{result, false, false};
             }
-            return LazyValueRepresentation::operator>({val,rightIsNullable,rightIsNull});
+            return LazyValueRepresentation::operator>({val, rightIsNullable, rightIsNull});
         });
 }
 
@@ -362,7 +364,7 @@ VarVal UINTLazyValueRepresentation::operator>=(const VarVal& other) const
             {
                 if (!val->getType().isInteger() || val->getType().isSignedInteger())
                 {
-                    return LazyValueRepresentation::operator>=({val,rightIsNullable,rightIsNull});
+                    return LazyValueRepresentation::operator>=({val, rightIsNullable, rightIsNull});
                 }
             }
 
@@ -379,7 +381,7 @@ VarVal UINTLazyValueRepresentation::operator>=(const VarVal& other) const
                 const auto result = !this->ltImpl(val);
                 return VarVal{result, false, false};
             }
-            return LazyValueRepresentation::operator>=({val,rightIsNullable,rightIsNull});
+            return LazyValueRepresentation::operator>=({val, rightIsNullable, rightIsNull});
         });
 }
 

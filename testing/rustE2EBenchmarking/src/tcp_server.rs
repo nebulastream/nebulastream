@@ -79,22 +79,19 @@ impl std::str::FromStr for SendingMode {
 }
 
 struct Server {
-    file_data: Arc<Vec<u8>>,
     args: Arc<Args>,
     barrier: Arc<Barrier>,
 }
 
 impl Server {
     fn new(args: Args) -> Result<Self, Box<dyn std::error::Error>> {
-        // Read file data
-        let mut file = File::open(&args.file)?;
-        let mut file_data = Vec::new();
-        file.read_to_end(&mut file_data)?;
-
+        // NOTE: the file is NOT read here. It is read in run() AFTER the listener binds, so the
+        // listening port is open within milliseconds of process start. This lets a client connect
+        // immediately (no connect-retry / no sleeping to wait for readiness) and simply block on
+        // recv() until data flows once the (potentially multi-GB) file finishes loading.
         let barrier = Arc::new(Barrier::new(args.clients + 1)); // +1 for main task
 
         Ok(Server {
-            file_data: Arc::new(file_data),
             args: Arc::new(args),
             barrier,
         })
@@ -105,6 +102,17 @@ impl Server {
         let listener = TcpListener::bind(addr).await?;
 
         println!("Server listening on {}", addr);
+
+        // Read the file AFTER binding (see Server::new). The port is already accepting; clients can
+        // connect now and will block on recv until this finishes.
+        let file_data: Arc<Vec<u8>> = {
+            let mut file = File::open(&self.args.file)?;
+            let mut data = Vec::new();
+            file.read_to_end(&mut data)?;
+            println!("Loaded {} bytes; ready to serve.", data.len());
+            Arc::new(data)
+        };
+
         println!("Waiting for {} clients to connect...", self.args.clients);
         println!(
             "Will serve file {} times to each client",
@@ -131,7 +139,7 @@ impl Server {
             println!("Client {} connected from {}", client_id, peer_addr);
 
             let barrier_clone = Arc::clone(&self.barrier);
-            let file_data = Arc::clone(&self.file_data);
+            let file_data = Arc::clone(&file_data);
             let args = Arc::clone(&self.args);
 
             let handle = tokio::spawn(async move {

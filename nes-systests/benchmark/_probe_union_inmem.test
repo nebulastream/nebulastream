@@ -1,0 +1,32 @@
+# InMemory-source UNION control for the multi-producer experiment. Mirrors _probe_union_bid.test but every
+# physical source is TYPE InMemory (no file-read path; slices preloaded into RAM). Isolates the union/multi-
+# producer machinery from the file-read software path. SELECT auctionId -> Checksum. io_threads=P.
+# Run with NES_INMEM_PREFILL=1 NES_INMEM_REPEAT=N; throughput = reported_rate (engine window already covers N passes).
+
+# q1 -- P=1 InMemory single (control; should match the ~40-45 GB/s single-InMemory ceiling)
+CREATE LOGICAL SOURCE m1s1(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m1s1 TYPE InMemory SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/bid_6GB.csv
+
+CREATE SINK m1_chk(m1s1.auctionId INT32 NOT NULL) TYPE Checksum;
+
+SELECT auctionId FROM m1s1 INTO m1_chk;
+----
+
+# q2 -- P=3 InMemory union (3 slices preloaded, io_threads=3)
+CREATE LOGICAL SOURCE m3s1(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m3s1 TYPE InMemory SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_0_of_3.csv
+
+CREATE LOGICAL SOURCE m3s2(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m3s2 TYPE InMemory SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_1_of_3.csv
+
+CREATE LOGICAL SOURCE m3s3(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m3s3 TYPE InMemory SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/uslices/slice_2_of_3.csv
+
+CREATE SINK m3_chk(auctionId INT32 NOT NULL) TYPE Checksum;
+
+SELECT auctionId FROM m3s1 UNION SELECT auctionId FROM m3s2 UNION SELECT auctionId FROM m3s3 INTO m3_chk;
+----

@@ -35,7 +35,11 @@ class VARSIZEDLazyValueRepresentation final : public LazyValueRepresentation
 {
 public:
     explicit VARSIZEDLazyValueRepresentation(
-        const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size, const DataType type, const nautilus::val<bool>& isNull, const std::string& parserType)
+        const nautilus::val<int8_t*>& reference,
+        const nautilus::val<uint64_t>& size,
+        const DataType type,
+        const nautilus::val<bool>& isNull,
+        const std::string& parserType)
         : LazyValueRepresentation(reference, size, type, isNull, parserType)
     {
     }

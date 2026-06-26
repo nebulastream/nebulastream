@@ -23,6 +23,7 @@
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Util/InlineTagMacro.hpp>
 #include <std/cstring.h>
 #include <LazyValueRepresentationRegistry.hpp>
 #include <function.hpp>
@@ -31,7 +32,6 @@
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
-#include <Util/InlineTagMacro.hpp>
 
 namespace NES
 {
@@ -39,7 +39,8 @@ namespace NES
 /// For lazy floats, comparing to constant floats is not always possible, due to rounding.
 /// We therefore only allow float - int comparisons here
 template <typename T>
-NAUTILUS_TAGGED_INLINE(lazy_overload) static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
+NAUTILUS_TAGGED_INLINE(lazy_overload)
+static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
 {
     const std::string_view lhsString{reinterpret_cast<const char*>(lazyPtr), lazySize};
     /// Will be skipped by compiler by preparing the ascii chars of the constant in memory
@@ -64,7 +65,9 @@ NAUTILUS_TAGGED_INLINE(lazy_overload) static bool constantEq(const int8_t* lazyP
 }
 
 /// Compares a lazy float lhs to a lazy integer rhs
-NAUTILUS_TAGGED_INLINE(lazy_overload) static bool lazyEqualFloatInt(const int8_t* lhsPtr, const uint64_t lhsSize, const int8_t* rhsPtr, const uint64_t rhsSize)
+NAUTILUS_TAGGED_INLINE(lazy_overload)
+
+static bool lazyEqualFloatInt(const int8_t* lhsPtr, const uint64_t lhsSize, const int8_t* rhsPtr, const uint64_t rhsSize)
 {
     /// RHS is an int. We create string views for both and cut lhs as much as possible
     const std::string_view lhsString{reinterpret_cast<const char*>(lhsPtr), lhsSize};

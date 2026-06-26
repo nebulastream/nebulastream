@@ -1,0 +1,57 @@
+# Nexmark-Q0-style simple projection (SELECT *) on the big bid file (bid_6GB.csv, 6.68 GB, 4 int cols),
+# InMemory vs File source, both SIMDCSV -> Checksum sink. Passthrough (lazy elision + coalesced output).
+# Run File via bench-runner --repeat (post-plateau); InMemory via warm NES_INMEM_REPEAT.
+
+CREATE LOGICAL SOURCE bidF(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidF TYPE File SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/bid_6GB.csv
+
+CREATE LOGICAL SOURCE bidM(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidM TYPE InMemory SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE large/nexmark/bid_6GB.csv
+
+CREATE SINK bidF_chk(bidF.timestamp UINT64 NOT NULL, bidF.auctionId INT32 NOT NULL, bidF.bidder INT32 NOT NULL, bidF.price INT64 NOT NULL) TYPE Checksum;
+CREATE SINK bidM_chk(bidM.timestamp UINT64 NOT NULL, bidM.auctionId INT32 NOT NULL, bidM.bidder INT32 NOT NULL, bidM.price INT64 NOT NULL) TYPE Checksum;
+
+# idx1 -- File source, SELECT * -> Checksum
+SELECT * FROM bidF INTO bidF_chk;
+----
+
+# idx2 -- InMemory source, SELECT * -> Checksum
+SELECT * FROM bidM INTO bidM_chk;
+----
+
+# Nexmark Q1 (currency conversion): single-field float projection. price (INT64 col4) * 0.89 -> FLOAT64.
+# Output-serialization-bound (the float formatter), unlike the Q0 passthrough.
+CREATE SINK bidF_q1(price FLOAT64 NOT NULL) TYPE Checksum;
+CREATE SINK bidM_q1(price FLOAT64 NOT NULL) TYPE Checksum;
+
+# idx3 -- File source, Nexmark Q1 (single-field float projection)
+SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bidF INTO bidF_q1;
+----
+
+# idx4 -- InMemory source, Nexmark Q1
+SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bidM INTO bidM_q1;
+----
+
+# Nexmark Q1 with the ZMIJF64 fast float output parser (Ryu shortest-form -> different checksum than idx3/4).
+# idx5 -- File source, Q1, ZMIJF64
+SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bidF INTO Checksum('ZMIJF64' as `OUTPUT_FORMATTER`.F64_PARSER);
+----
+
+# idx6 -- InMemory source, Q1, ZMIJF64
+SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bidM INTO Checksum('ZMIJF64' as `OUTPUT_FORMATTER`.F64_PARSER);
+----
+
+# Single-field passthrough projection (one field, NO arithmetic): lazy elision byte-copies auctionId only.
+# Cheapest shape -- memcpy-bound, no value parse, no output serialization.
+CREATE SINK bidF_proj(bidF.auctionId INT32 NOT NULL) TYPE Checksum;
+CREATE SINK bidM_proj(bidM.auctionId INT32 NOT NULL) TYPE Checksum;
+
+# idx7 -- File source, SELECT auctionId -> Checksum
+SELECT auctionId FROM bidF INTO bidF_proj;
+----
+
+# idx8 -- InMemory source, SELECT auctionId -> Checksum
+SELECT auctionId FROM bidM INTO bidM_proj;
+----

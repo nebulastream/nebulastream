@@ -29,9 +29,12 @@ std::shared_ptr<LazyValueRepresentation> provideLazyValueRepresentation(
     const std::string& typeName,
     const nautilus::val<int8_t*>& valueAddress,
     const nautilus::val<uint64_t>& size,
-    const DataType& type, const nautilus::val<bool>& isNull, const std::string& parserType)
+    const DataType& type,
+    const nautilus::val<bool>& isNull,
+    const std::string& parserType)
 {
-    auto args = LazyValueRepresentationRegistryArguments{.valueAddress = valueAddress, .size = size, .type = type, .isNull = isNull, .parserType = parserType};
+    auto args = LazyValueRepresentationRegistryArguments{
+        .valueAddress = valueAddress, .size = size, .type = type, .isNull = isNull, .parserType = parserType};
     if (auto optionalLazyVal = LazyValueRepresentationRegistry::instance().create(typeName, args))
     {
         return optionalLazyVal.value();

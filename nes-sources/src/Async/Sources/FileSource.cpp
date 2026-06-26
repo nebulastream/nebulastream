@@ -15,8 +15,11 @@
 #include <Async/Sources/FileSource.hpp>
 
 #include <fcntl.h>
+#include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <format>
 #include <memory>
@@ -53,6 +56,10 @@ namespace NES
 FileSource::FileSource(const SourceDescriptor& sourceDescriptor)
     : filePath(sourceDescriptor.getFromConfig(ConfigParametersFileSource::FILEPATH))
 {
+    if (const char* const env = std::getenv("NES_FILE_REPEAT"))
+    {
+        numPasses = std::max<std::size_t>(1, std::strtoul(env, nullptr, 10));
+    }
 }
 
 asio::awaitable<void, Executor> FileSource::open()
@@ -87,6 +94,15 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> FileSource::fillBuf
     {
         if (errorCode == asio::error::eof)
         {
+            /// PROFILING replay (NES_FILE_REPEAT=N): re-read the file N passes without recreating the source, so a
+            /// profiler gets a long steady window. lseek the fd back to 0 and continue (the partial tail buffer is
+            /// still delivered — one mis-parsed row per pass seam, negligible for throughput). N==1 = normal EOS.
+            if (passesDone + 1 < numPasses)
+            {
+                ++passesDone;
+                ::lseek(fileDescriptor.value(), 0, SEEK_SET);
+                co_return Continue{.bytesRead = bytesRead};
+            }
             co_return EndOfStream{.bytesRead = bytesRead};
         }
         if (errorCode == asio::error::operation_aborted)

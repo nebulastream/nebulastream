@@ -130,10 +130,20 @@ BlockingSource::FillTupleBufferResult
 InMemoryFileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&, const size_t offset)
 {
     const size_t capacity = tupleBuffer.getBufferSize() - offset;
-    const size_t remaining = this->blob.size() - this->cursor;
+    size_t remaining = this->blob.size() - this->cursor;
     if (remaining == 0)
     {
-        return BlockingSource::FillTupleBufferResult::eos();
+        /// PROFILING-only (NES_INMEM_REPEAT=N): replay the in-memory blob N passes back-to-back WITHOUT
+        /// reloading it, so a profiler sees a long steady window (mirrors prefill's takePreFilledBuffer()
+        /// multi-pass). Single-pass cost is unchanged when numPasses==1. Throughput convention matches
+        /// prefill: the runner counts file_size once, so true_throughput = reported * numPasses.
+        if (this->passesDone + 1 >= this->numPasses)
+        {
+            return BlockingSource::FillTupleBufferResult::eos();
+        }
+        ++this->passesDone;
+        this->cursor = 0;
+        remaining = this->blob.size();
     }
     const size_t numBytes = std::min(capacity, remaining);
     std::memcpy(tupleBuffer.getAvailableMemoryArea<char>().data() + offset, this->blob.data() + this->cursor, numBytes);

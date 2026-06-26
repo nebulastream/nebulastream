@@ -109,51 +109,63 @@ void SIMDJSONFIF::writeValueToRecord(
     switch (dataType.type)
     {
         case DataType::Type::INT8: {
-            parseJsonFixedSizeIntoVarVal<int8_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<int8_t>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::INT16: {
-            parseJsonFixedSizeIntoVarVal<int16_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<int16_t>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::INT32: {
-            parseJsonFixedSizeIntoVarVal<int32_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<int32_t>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::INT64: {
-            parseJsonFixedSizeIntoVarVal<int64_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<int64_t>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::UINT8: {
-            parseJsonFixedSizeIntoVarVal<uint8_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<uint8_t>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::UINT16: {
-            parseJsonFixedSizeIntoVarVal<uint16_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<uint16_t>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::UINT32: {
-            parseJsonFixedSizeIntoVarVal<uint32_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<uint32_t>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::UINT64: {
-            parseJsonFixedSizeIntoVarVal<uint64_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<uint64_t>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::FLOAT32: {
-            parseJsonFixedSizeIntoVarVal<float>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<float>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::FLOAT64: {
-            parseJsonFixedSizeIntoVarVal<double>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<double>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::CHAR: {
-            parseJsonFixedSizeIntoVarVal<char>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<char>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::BOOLEAN: {
-            parseJsonFixedSizeIntoVarVal<bool>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
+            parseJsonFixedSizeIntoVarVal<bool>(
+                dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType, lazyOverload);
             return;
         }
         case DataType::Type::VARSIZED: {
