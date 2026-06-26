@@ -59,7 +59,8 @@ VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     }
 
     /// Cast to the widened output type first, so that negating the most-negative value does not overflow.
-    const auto widenedValue = value.castToType(outputType.type);
+    /// Non-const so the `return widenedValue` path can move rather than copy (performance-no-automatic-move).
+    auto widenedValue = value.castToType(outputType.type);
     const auto zero = VarVal{0}.castToType(outputType.type);
     const auto negativeOne = VarVal{-1}.castToType(outputType.type);
     if (widenedValue < zero)
