@@ -23,10 +23,10 @@ namespace NES
 {
 
 /// Checks if the lhs point lies within the rhs circle
-class NearestApproachDistancePhysicalFunction final
+class PointPointNearestApproachDistancePhysicalFunction final
 {
 public:
-    explicit NearestApproachDistancePhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
+    explicit PointPointNearestApproachDistancePhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
@@ -34,6 +34,6 @@ private:
     PhysicalFunction rightPhysicalFunction;
 };
 
-static_assert(PhysicalFunctionConcept<NearestApproachDistancePhysicalFunction>);
+static_assert(PhysicalFunctionConcept<PointPointNearestApproachDistancePhysicalFunction>);
 
 }

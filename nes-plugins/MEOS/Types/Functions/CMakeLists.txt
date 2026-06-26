@@ -13,18 +13,18 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 add_plugin_as_library(NEAREST_APPROACH_DISTANCE LogicalFunction nes-logical-operators-registry nearest_approach_distance_logical_function NearestApproachDistanceLogicalFunction.cpp)
-add_plugin_as_library(NEAREST_APPROACH_DISTANCE PhysicalFunction nes-physical-operators-registry nearest_approach_distance_physical_function NearestApproachDistancePhysicalFunction.cpp)
+add_plugin_as_library(NEAREST_APPROACH_DISTANCE_MovingPoint_MovingPoint PhysicalFunction nes-physical-operators-registry nearest_approach_distance_physical_function_movingpoint_movingpoint PointPointNearestApproachDistancePhysicalFunction.cpp)
 
 
 target_include_directories(nearest_approach_distance_logical_function
         PUBLIC include
         PRIVATE .
 )
-target_include_directories(nearest_approach_distance_physical_function
+target_include_directories(nearest_approach_distance_physical_function_movingpoint_movingpoint
         PUBLIC include
         PRIVATE .
 )
-target_link_libraries(nearest_approach_distance_physical_function PUBLIC nes-meos)
+target_link_libraries(nearest_approach_distance_physical_function_movingpoint_movingpoint PUBLIC nes-meos)
 
 
 

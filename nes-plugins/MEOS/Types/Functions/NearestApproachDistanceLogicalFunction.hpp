@@ -28,7 +28,7 @@
 namespace NES
 {
 
-/// Measures the distance between two moving points
+/// Measures the nearest distance between two moving geometries
 class NearestApproachDistanceLogicalFunction final
 {
 public:

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NearestApproachDistancePhysicalFunction.hpp>
+#include <PointPointNearestApproachDistancePhysicalFunction.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -36,13 +36,13 @@
 namespace NES
 {
 
-NearestApproachDistancePhysicalFunction::NearestApproachDistancePhysicalFunction(
+PointPointNearestApproachDistancePhysicalFunction::PointPointNearestApproachDistancePhysicalFunction(
     PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
     : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 
-VarVal NearestApproachDistancePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+VarVal PointPointNearestApproachDistancePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftPoint = leftPhysicalFunction.execute(record, arena).getRawValueAs<StructData>();
     const auto lLon = leftPoint.at("lon").getRawValueAs<nautilus::val<double>>();
@@ -104,10 +104,10 @@ VarVal NearestApproachDistancePhysicalFunction::execute(const Record& record, Ar
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterNEAREST_APPROACH_DISTANCEPhysicalFunction(PhysicalFunctionRegistryArguments arguments)
+PhysicalFunctionGeneratedRegistrar::RegisterNEAREST_APPROACH_DISTANCE_MovingPoint_MovingPointPhysicalFunction(PhysicalFunctionRegistryArguments arguments)
 {
     PRECONDITION(arguments.childFunctions.size() == 2, "NearestApproachDistance expects exactly two children functions");
-    return NearestApproachDistancePhysicalFunction(arguments.childFunctions[0], arguments.childFunctions[1]);
+    return PointPointNearestApproachDistancePhysicalFunction(arguments.childFunctions[0], arguments.childFunctions[1]);
 }
 
 }

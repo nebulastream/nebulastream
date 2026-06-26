@@ -60,20 +60,6 @@ LogicalFunction NearestApproachDistanceLogicalFunction::withInferredDataType(con
         newChildren.size());
     const auto leftType = newChildren[0].getDataType();
     const auto rightType = newChildren[1].getDataType();
-    /// Check if the left child is of the moving point datatype structure and the right is of the moving point datatype structure
-    if (rightType.type != DataType::Type::STRUCT || rightType.fields.size() != 3 || leftType.fields[0].first != "lon"
-        || leftType.fields[0].second.type != DataType::Type::FLOAT64 || leftType.fields[1].first != "lat"
-        || leftType.fields[1].second.type != DataType::Type::FLOAT64 || leftType.fields[2].first != "ts"
-        || leftType.fields[2].second.type != DataType::Type::UINT64 || rightType.type != DataType::Type::STRUCT
-        || rightType.fields.size() != 3 || rightType.fields[0].first != "lon" || rightType.fields[0].second.type != DataType::Type::FLOAT64
-        || rightType.fields[1].first != "lat" || rightType.fields[1].second.type != DataType::Type::FLOAT64
-        || rightType.fields[2].first != "ts" || rightType.fields[2].second.type != DataType::Type::UINT64)
-    {
-        throw DifferentFieldTypeExpected(
-            "NearestApproachDistance expects a MovingPoint data type as left child and a MovingPoint type as right child, instead got: ",
-            leftType,
-            rightType);
-    }
     const auto nullable = leftType.nullable || rightType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
     auto newDataType = DataType{DataType::Type::FLOAT64, nullable};
     return withDataType(newDataType).withChildren(newChildren);
