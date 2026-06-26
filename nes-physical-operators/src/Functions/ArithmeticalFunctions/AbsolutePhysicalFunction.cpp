@@ -25,7 +25,6 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 #include <function.hpp>
-#include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 
