@@ -552,6 +552,21 @@ Meos::SpatioTemporalBox::SpatioTemporalBox(const std::string& wkt_string)
     }
 }
 
+Meos::SpatioTemporalBox::SpatioTemporalBox(double minX, double maxX, double minY, double maxY, long long minTs, long long maxTs, int srid)
+{
+    ensureMeosInitialized();
+    {
+        std::lock_guard<std::mutex> lk(meos_parse_mutex);
+        const TimestampTz convertedMinTs = convertEpochToTimestampTz(minTs);
+        const TimestampTz convertedMaxTs = convertEpochToTimestampTz(maxTs);
+        /// Create time span out of our ts (for now we assume they are inclusive)
+        const Span* timespan = tstzspan_make(convertedMinTs, convertedMaxTs, true, true);
+        /// Create STBox out of the given boundaries and the span
+        /// For now, we default geodetic to false
+        stbox_ptr= stbox_make(true, false, false, srid, minX, maxX, minY, maxY, 0, 0, timespan);
+    }
+}
+
 Meos::SpatioTemporalBox::~SpatioTemporalBox()
 {
     // Do not free; managed by MEOS.

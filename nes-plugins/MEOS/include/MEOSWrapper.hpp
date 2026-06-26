@@ -44,6 +44,9 @@ class Meos {
          * @param wkt_string String in format "SRID=4326;SpatioTemporal X((3.5, 50.5),(4.5, 51.5))"
          */
         explicit SpatioTemporalBox(const std::string& wkt_string);
+
+        /// Constructor to create a 2-dimensional STBox out of c-native input parameters
+        explicit SpatioTemporalBox(double minX, double maxX, double minY, double maxY, long long minTs, long long maxTs, int srid=4326);
         ~SpatioTemporalBox();
 
         // Non-copyable, movable to avoid double-free of MEOS-managed memory

@@ -13,18 +13,32 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 add_plugin_as_library(NEAREST_APPROACH_DISTANCE LogicalFunction nes-logical-operators-registry nearest_approach_distance_logical_function NearestApproachDistanceLogicalFunction.cpp)
-add_plugin_as_library(NEAREST_APPROACH_DISTANCE_MovingPoint_MovingPoint PhysicalFunction nes-physical-operators-registry nearest_approach_distance_physical_function_movingpoint_movingpoint PointPointNearestApproachDistancePhysicalFunction.cpp)
+add_plugin_as_library(NEAREST_APPROACH_DISTANCE_MovingPoint_MovingPoint PhysicalFunction nes-physical-operators-registry nearest_approach_distance_movingpoint_movingpoint_physical_function PointPointNearestApproachDistancePhysicalFunction.cpp)
 
+add_plugin_as_library(TGEO_AT_STBOX LogicalFunction nes-logical-operators-registry tgeo_at_stbox_logical_function TgeoAtStboxLogicalFunction.cpp)
+add_plugin_as_library(TGEO_AT_STBOX_MovingPoint_SpatioTemporalBox PhysicalFunction nes-physical-operators-registry tgeo_at_stbox_movingpoint_physical_function TpointAtStboxPhysicalFunction.cpp)
 
 target_include_directories(nearest_approach_distance_logical_function
         PUBLIC include
         PRIVATE .
 )
-target_include_directories(nearest_approach_distance_physical_function_movingpoint_movingpoint
+target_include_directories(nearest_approach_distance_movingpoint_movingpoint_physical_function
         PUBLIC include
         PRIVATE .
 )
-target_link_libraries(nearest_approach_distance_physical_function_movingpoint_movingpoint PUBLIC nes-meos)
+target_link_libraries(nearest_approach_distance_movingpoint_movingpoint_physical_function PUBLIC nes-meos)
+
+target_include_directories(tgeo_at_stbox_logical_function
+        PUBLIC include
+        PRIVATE .
+)
+target_include_directories(tgeo_at_stbox_movingpoint_physical_function
+        PUBLIC include
+        PRIVATE .
+)
+target_link_libraries(tgeo_at_stbox_movingpoint_physical_function PUBLIC nes-meos)
+
+
 
 
 

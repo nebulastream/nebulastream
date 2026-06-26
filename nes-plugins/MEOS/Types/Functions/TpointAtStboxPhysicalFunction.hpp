@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -22,11 +22,11 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace NES
 {
 
-/// Measures the distance between two moving points
-class PointPointNearestApproachDistancePhysicalFunction final
+/// Checks if the lhs point lies within the rhs circle
+class TpointAtStboxPhysicalFunction final
 {
 public:
-    explicit PointPointNearestApproachDistancePhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
+    explicit TpointAtStboxPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
@@ -34,6 +34,6 @@ private:
     PhysicalFunction rightPhysicalFunction;
 };
 
-static_assert(PhysicalFunctionConcept<PointPointNearestApproachDistancePhysicalFunction>);
+static_assert(PhysicalFunctionConcept<TpointAtStboxPhysicalFunction>);
 
 }
