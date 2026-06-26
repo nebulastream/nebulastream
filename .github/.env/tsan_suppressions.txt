@@ -18,3 +18,9 @@ race:__shared_count
 race:__shared_weak_count
 race:__assoc_state
 race:__assoc_sub_state
+
+# IREE registers global type tables and detects CPU features lazily on first instance/session/module load, and that init is not
+# thread-safe. InferenceRuntime warms up a shared instance+session to do most of it once, but each bytecode module's executable/CPU
+# init still registers lazily, racing across worker threads. The writes are idempotent (same values), so they are benign.
+race:iree_vm_instance_register_type
+race:iree_cpu_initialize
