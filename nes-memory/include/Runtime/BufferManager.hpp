@@ -15,6 +15,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <memory_resource>
@@ -58,9 +59,11 @@ struct SizeClassConfig
     /// EagerPerClass: buffers preallocated per size class.
     size_t buffersPerClass = 0;
     /// LazyElastic: floor preallocated per class, region growth step, and per-class ceiling.
+    static constexpr size_t DEFAULT_GROWTH_CHUNK_BUFFERS = 64;
+    static constexpr size_t DEFAULT_MAX_BUFFERS_PER_CLASS = 4096;
     size_t floorBuffersPerClass = 0;
-    size_t growthChunkBuffers = 64;
-    size_t maxBuffersPerClass = 4096;
+    size_t growthChunkBuffers = DEFAULT_GROWTH_CHUNK_BUFFERS;
+    size_t maxBuffersPerClass = DEFAULT_MAX_BUFFERS_PER_CLASS;
 };
 
 /**
@@ -122,6 +125,7 @@ public:
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
         const std::shared_ptr<std::pmr::memory_resource>& memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         std::optional<SizeClassConfig> sizeClasses = std::nullopt);
 
     BufferManager(const BufferManager&) = delete;

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+/// NOLINTBEGIN(readability-magic-numbers,bugprone-unchecked-optional-access)
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -58,3 +59,5 @@ GTEST_TEST(NodeEngineBuilderTest, MinGreaterThanMaxThrows)
 }
 
 }
+
+/// NOLINTEND(readability-magic-numbers,bugprone-unchecked-optional-access)

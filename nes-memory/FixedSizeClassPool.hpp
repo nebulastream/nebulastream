@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <memory>
@@ -27,6 +29,7 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <folly/MPMCQueue.h>
+#include <sys/types.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
@@ -67,6 +70,11 @@ public:
 
     FixedSizeClassPool(const FixedSizeClassPool&) = delete;
     FixedSizeClassPool& operator=(const FixedSizeClassPool&) = delete;
+    /// The pool is owned via unique_ptr and never moved; deleting the move members keeps the
+    /// raw MemorySegment* pointers handed out to TupleBuffers stable and satisfies the rule of five.
+    FixedSizeClassPool(FixedSizeClassPool&&) = delete;
+    FixedSizeClassPool& operator=(FixedSizeClassPool&&) = delete;
+    ~FixedSizeClassPool() = default;
 
     [[nodiscard]] uint32_t getBufferSize() const noexcept { return bufferSize; }
 
@@ -189,6 +197,7 @@ private:
         for (size_t i = 0; i < count; ++i)
         {
             uint8_t* controlBlock = ptr;
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             uint8_t* payload = ptr + controlBlockSize;
             allBuffers.emplace_back(
                 payload,
@@ -197,6 +206,7 @@ private:
                 controlBlock);
             USED_IN_DEBUG const auto enqueued = availableBuffers.writeIfNotFull(&allBuffers.back());
             INVARIANT(enqueued, "queue unexpectedly full while initializing a size class region");
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             ptr += stride;
         }
     }

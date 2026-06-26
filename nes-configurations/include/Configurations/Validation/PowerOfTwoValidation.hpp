@@ -24,6 +24,6 @@ namespace NES
 class PowerOfTwoValidation : public ConfigurationValidation
 {
 public:
-    bool isValid(const std::string& parameter) const override;
+    [[nodiscard]] bool isValid(const std::string& parameter) const override;
 };
 }
