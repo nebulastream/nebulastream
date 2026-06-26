@@ -13,11 +13,18 @@
 */
 
 #pragma once
+#include <memory>
 #include <Plans/LogicalPlan.hpp>
 #include <PhysicalPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
+namespace NES
+{
+class AbstractStatisticStore;
+}
+
 namespace NES::LowerToPhysicalOperators
 {
-PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf);
+PhysicalPlan
+apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf, std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
 }

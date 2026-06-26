@@ -23,11 +23,16 @@
 namespace NES
 {
 
+class AbstractStatisticStore;
+
 using LoweringRuleRegistryReturnType = std::unique_ptr<AbstractLoweringRule>;
 
 struct LoweringRuleRegistryArguments
 {
     QueryExecutionConfiguration conf;
+    /// Shared statistic store injected by the QueryCompiler (constructor DI). Only the statistic store
+    /// lowering rules use it; all other rules ignore it. nullptr for non-statistic query compilation.
+    std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr;
 };
 
 class LoweringRuleRegistry

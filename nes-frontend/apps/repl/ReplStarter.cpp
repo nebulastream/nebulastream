@@ -63,10 +63,21 @@
 #include <WorkerCatalog.hpp>
 
 #ifdef EMBED_ENGINE
+    #include <chrono>
+    #include <expected>
+    #include <thread>
+    #include <utility>
     #include <Configurations/Util.hpp>
+    #include <Identifiers/Identifiers.hpp>
+    #include <Plans/LogicalPlan.hpp>
     #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
     #include <SingleNodeWorkerConfiguration.hpp>
     #include <WorkerConfig.hpp>
+    #include <DefaultStatisticQueryGenerator.hpp>
+    #include <DistributedQuery.hpp>
+    #include <StatisticCoordinator.hpp>
+    #include <StatisticRetrievalService.hpp>
+    #include <StatisticStore/DefaultStatisticStore.hpp>
 #endif
 
 /// If repl is executed with an embedded worker, this switch prevents actual port allocation and routes all inter-worker communication
@@ -165,6 +176,12 @@ int main(int argc, char** argv)
 
 
 #ifdef EMBED_ENGINE
+        /// When set, the embedded worker is created with a statistic store and the optimizer is wired with the
+        /// StatisticOptimizationRule (PoC). Off by default so the engine pays nothing for statistics it won't use.
+        program.add_argument("--enable-statistics")
+            .flag()
+            .help("create a statistic store on the embedded worker and enable the StatisticOptimizationRule");
+
         /// single node worker config
         program.add_argument("--")
             .help("arguments passed to the worker config, e.g., `-- --worker.query_engine.number_of_worker_threads=10`")
@@ -243,6 +260,12 @@ int main(int argc, char** argv)
         auto binder = NES::StatementBinder{
             sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
+        /// PoC: optional statistic retrieval service handed to the QueryOptimizer so its StatisticOptimizationRule
+        /// can surface a statistic while optimizing user queries. Only created with --enable-statistics in the
+        /// embedded build (the coordinator serves its build/probe queries on the colocated embedded worker); left
+        /// null otherwise, which leaves the optimizer's rule set unchanged.
+        std::shared_ptr<const NES::StatisticRetrievalService> statRetrievalService;
+
 #ifdef EMBED_ENGINE
         enable_memcom();
         auto confVec = program.get<std::vector<std::string>>("--");
@@ -271,9 +294,94 @@ int main(int argc, char** argv)
             .config = singleNodeWorkerConfig,
         };
         workerCatalog->addWorker(workerConfig.host, workerConfig.dataAddress, workerConfig.maxOperators, workerConfig.downstream);
-        queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
+
+        /// --- Statistic control-plane PoC wiring (only with --enable-statistics) --------------------------------
+        /// Give the colocated embedded worker a statistic store so the StatisticStore build/probe operators have
+        /// somewhere to read/write. The coordinator deploys those queries through the SAME high-level QueryManager
+        /// as user queries (no second engine), and the StatisticOptimizationRule reads results back via the
+        /// StatisticRetrievalService. Recursion is prevented by the rule itself (it skips statistic plans); the
+        /// separate plain optimizer below exists for catalog isolation and to break a construction-order cycle, not
+        /// for recursion (see its comment).
+        const bool enableStatistics = program.get<bool>("--enable-statistics");
+        std::shared_ptr<NES::DefaultStatisticStore> statStore;
+        if (enableStatistics)
+        {
+            statStore = std::make_shared<NES::DefaultStatisticStore>();
+        }
+        queryManager
+            = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig, statStore));
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost(grpcAddr)};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};
+
+        std::shared_ptr<NES::StatisticCoordinator> statCoordinator;
+        if (enableStatistics)
+        {
+            /// A separate optimizer for the statistic queries, for two reasons (NOT recursion — the rule's own guard
+            /// handles that): (1) fresh source/sink/model catalogs so the inline statistic source/sink do not pollute
+            /// the user catalogs (the shared workerCatalog still drives placement); (2) it breaks a construction-order
+            /// cycle — the main optimizer needs the StatisticRetrievalService, which needs the coordinator, which
+            /// needs this submit path, so the main (rule-bearing) optimizer does not exist yet here.
+            auto statQueryOptimizer = std::make_shared<NES::QueryOptimizer>(
+                queryOptimizerConfig,
+                std::make_shared<NES::SourceCatalog>(),
+                std::make_shared<NES::SinkCatalog>(),
+                workerCatalog,
+                std::make_shared<NES::ModelCatalog>());
+            statCoordinator = std::make_shared<NES::StatisticCoordinator>(
+                std::make_unique<NES::DefaultStatisticQueryGenerator>(grpcAddr),
+                [queryManager, statQueryOptimizer](NES::LogicalPlan plan) -> std::expected<NES::DistributedQueryId, NES::Exception>
+                {
+                    try
+                    {
+                        auto distributedPlan = statQueryOptimizer->optimize(std::move(plan));
+                        auto queryId = queryManager->registerQuery(distributedPlan);
+                        if (not queryId.has_value())
+                        {
+                            return std::unexpected(queryId.error());
+                        }
+                        if (auto started = queryManager->start(queryId.value()); not started.has_value())
+                        {
+                            return std::unexpected(NES::QueryStartFailed(
+                                "{}", fmt::join(std::views::transform(started.error(), [](const auto& e) { return e.what(); }), ", ")));
+                        }
+                        return queryId.value();
+                    }
+                    catch (const NES::Exception& exception)
+                    {
+                        return std::unexpected(exception);
+                    }
+                },
+                [queryManager](const NES::DistributedQueryId queryId) -> std::expected<void, NES::Exception>
+                {
+                    if (auto stopped = queryManager->stop(queryId); not stopped.has_value())
+                    {
+                        return std::unexpected(NES::QueryStopFailed(
+                            "{}", fmt::join(std::views::transform(stopped.error(), [](const auto& e) { return e.what(); }), ", ")));
+                    }
+                    /// Block until the query reaches a terminal state, so the retrieval service can rely on the build
+                    /// query being torn down before it returns.
+                    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds{10};
+                    while (std::chrono::steady_clock::now() < deadline)
+                    {
+                        auto status = queryManager->status(queryId);
+                        if (not status.has_value())
+                        {
+                            return std::unexpected(NES::QueryStatusFailed(
+                                "{}", fmt::join(std::views::transform(status.error(), [](const auto& e) { return e.what(); }), ", ")));
+                        }
+                        const auto global = status->getGlobalQueryStatus();
+                        if (global == NES::DistributedQueryStatus::Stopped || global == NES::DistributedQueryStatus::Failed)
+                        {
+                            return {};
+                        }
+                        std::this_thread::sleep_for(std::chrono::milliseconds{20});
+                    }
+                    return {};
+                });
+            statCoordinator->startResultReader();
+            statRetrievalService = std::make_shared<NES::StatisticRetrievalService>(*statCoordinator);
+        }
+        /// ------------------------------------------------------------------------------------------------------
 #else
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::RequireHostConfig{}};
@@ -281,8 +389,8 @@ int main(int argc, char** argv)
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
-        auto queryOptimizer
-            = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+        auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+            queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, statRetrievalService);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),

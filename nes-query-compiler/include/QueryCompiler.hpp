@@ -21,6 +21,11 @@
 #include <CompiledQueryPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
+namespace NES
+{
+class AbstractStatisticStore;
+}
+
 namespace NES::QueryCompilation
 {
 
@@ -39,12 +44,15 @@ struct QueryCompilationRequest
 class QueryCompiler
 {
 public:
-    explicit QueryCompiler(QueryExecutionConfiguration defaultQueryExecution) : defaultQueryExecution(std::move(defaultQueryExecution)) { };
+    explicit QueryCompiler(
+        QueryExecutionConfiguration defaultQueryExecution, std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr)
+        : defaultQueryExecution(std::move(defaultQueryExecution)), statisticStore(std::move(statisticStore)) { };
 
     std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
 
 private:
     QueryExecutionConfiguration defaultQueryExecution;
+    std::shared_ptr<AbstractStatisticStore> statisticStore;
 };
 
 }

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
@@ -21,10 +22,17 @@
 
 namespace NES
 {
+class StatisticRetrievalService;
+
 class RuleBasedOptimizer
 {
 public:
-    explicit RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryOptimization);
+    /// If `statisticRetrievalService` is non-null, a StatisticOptimizationRule sharing ownership of that service is
+    /// added to the rule sequence (PoC: it fetches a mock statistic and prints it while leaving the plan
+    /// unmodified). When null, the default rule sequence is used unchanged.
+    explicit RuleBasedOptimizer(
+        QueryOptimizerConfiguration defaultQueryOptimization,
+        std::shared_ptr<const StatisticRetrievalService> statisticRetrievalService = nullptr);
 
     [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
 
