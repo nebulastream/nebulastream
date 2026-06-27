@@ -16,6 +16,12 @@ get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
 target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-executable nes-network-bindings)
 
+# liburing backs the IoUringFileSource (deep-QD cold file reads). Linked PRIVATE: only the source's
+# .cpp uses it, no nes-sources header exposes io_uring types. vcpkg's liburing port ships a static
+# lib + headers (the include dir is already on the vcpkg toolchain path).
+find_library(LIBURING_LIBRARY NAMES uring liburing REQUIRED)
+target_link_libraries(nes-sources PRIVATE ${LIBURING_LIBRARY})
+
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
