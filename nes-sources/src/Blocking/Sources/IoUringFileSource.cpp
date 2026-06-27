@@ -108,6 +108,7 @@ void IoUringFileSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     }
     ringInitialized = true;
     slots.assign(queueDepth, Slot{});
+    cqeBatch.assign(queueDepth, nullptr);
 
     /// Prime the pipeline: submit up to QD reads so QD completions are always in flight.
     const std::uint64_t initial = std::min<std::uint64_t>(queueDepth, numReads);
@@ -164,17 +165,11 @@ std::optional<TupleBuffer> IoUringFileSource::takePreFilledBuffer()
 
     Slot& head = slots[headSeq % queueDepth];
     /// Wait until the head (oldest) read has completed. Completions may arrive out of order, so we drain
-    /// CQEs, stash each slot's result, and only return once the in-order head is ready.
-    while (not head.ready)
+    /// CQEs, stash each slot's result, and only return once the in-order head is ready. Reaping is BATCHED
+    /// (io_uring_peek_batch_cqe + cq_advance) so one syscall drains all currently-ready completions instead
+    /// of one wait_cqe per completion; only block (wait_cqe) when nothing is ready yet.
+    const auto markReady = [this](const std::uint64_t seq, const int res)
     {
-        io_uring_cqe* cqe = nullptr;
-        if (const int rc = io_uring_wait_cqe(&ring, &cqe); rc < 0)
-        {
-            throw RunningRoutineFailure("IoUringFileSource: io_uring_wait_cqe failed: {}", std::strerror(-rc));
-        }
-        const std::uint64_t seq = io_uring_cqe_get_data64(cqe);
-        const int res = cqe->res;
-        io_uring_cqe_seen(&ring, cqe);
         if (res < 0)
         {
             throw RunningRoutineFailure("IoUringFileSource: read for offset {} failed: {}", seq * bufferSize, std::strerror(-res));
@@ -182,6 +177,29 @@ std::optional<TupleBuffer> IoUringFileSource::takePreFilledBuffer()
         Slot& slot = slots[seq % queueDepth];
         slot.length = static_cast<std::size_t>(res);
         slot.ready = true;
+    };
+    while (not head.ready)
+    {
+        if (const unsigned n = io_uring_peek_batch_cqe(&ring, cqeBatch.data(), static_cast<unsigned>(cqeBatch.size())); n > 0)
+        {
+            for (unsigned i = 0; i < n; ++i)
+            {
+                markReady(io_uring_cqe_get_data64(cqeBatch[i]), cqeBatch[i]->res);
+            }
+            io_uring_cq_advance(&ring, n);
+        }
+        else
+        {
+            io_uring_cqe* cqe = nullptr;
+            if (const int rc = io_uring_wait_cqe(&ring, &cqe); rc < 0)
+            {
+                throw RunningRoutineFailure("IoUringFileSource: io_uring_wait_cqe failed: {}", std::strerror(-rc));
+            }
+            const std::uint64_t seq = io_uring_cqe_get_data64(cqe);
+            const int res = cqe->res;
+            io_uring_cqe_seen(&ring, cqe);
+            markReady(seq, res);
+        }
     }
 
     TupleBuffer buffer = std::move(head.buffer);

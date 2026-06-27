@@ -116,6 +116,7 @@ private:
     };
 
     std::vector<Slot> slots;
+    std::vector<io_uring_cqe*> cqeBatch; ///< scratch for io_uring_peek_batch_cqe (drain many CQEs per syscall)
 
     std::uint64_t headSeq = 0; ///< next read (in file order) to emit
     std::uint64_t nextSubmitSeq = 0; ///< next read for which we still owe a submission
