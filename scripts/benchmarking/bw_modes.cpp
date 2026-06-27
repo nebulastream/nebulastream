@@ -112,6 +112,11 @@ int main(int argc, char** argv)
     {
         th.join();
     }
-    std::printf("mode=%-8s threads=%d : useful(src)=%.1f GB/s  sink=%llu\n", mode.c_str(), threads, g_gbs.load(), (unsigned long long)g_sink.load());
+    std::printf(
+        "mode=%-8s threads=%d : useful(src)=%.1f GB/s  sink=%llu\n",
+        mode.c_str(),
+        threads,
+        g_gbs.load(),
+        (unsigned long long)g_sink.load());
     return 0;
 }

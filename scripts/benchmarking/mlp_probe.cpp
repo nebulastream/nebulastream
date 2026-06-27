@@ -87,12 +87,23 @@ void worker(int acc, size_t bytes, double seconds, int W, std::barrier<>& gate)
     {
         switch (acc)
         {
-            case 1: sink += kernel<1>(buf, chunkWords, 1, W); break;
-            case 2: sink += kernel<2>(buf, chunkWords, 1, W); break;
-            case 4: sink += kernel<4>(buf, chunkWords, 1, W); break;
-            case 8: sink += kernel<8>(buf, chunkWords, 1, W); break;
-            case 16: sink += kernel<16>(buf, chunkWords, 1, W); break;
-            default: break;
+            case 1:
+                sink += kernel<1>(buf, chunkWords, 1, W);
+                break;
+            case 2:
+                sink += kernel<2>(buf, chunkWords, 1, W);
+                break;
+            case 4:
+                sink += kernel<4>(buf, chunkWords, 1, W);
+                break;
+            case 8:
+                sink += kernel<8>(buf, chunkWords, 1, W);
+                break;
+            case 16:
+                sink += kernel<16>(buf, chunkWords, 1, W);
+                break;
+            default:
+                break;
         }
         ++passes;
     }

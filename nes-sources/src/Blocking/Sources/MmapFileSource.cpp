@@ -15,9 +15,9 @@
 #include <Blocking/Sources/MmapFileSource.hpp>
 
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -108,8 +108,7 @@ void MmapFileSource::close()
     }
 }
 
-BlockingSource::FillTupleBufferResult
-MmapFileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&, const size_t offset)
+BlockingSource::FillTupleBufferResult MmapFileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&, const size_t offset)
 {
     const size_t capacity = tupleBuffer.getBufferSize() - offset;
     const size_t remaining = this->mapSize - this->cursor;
@@ -119,9 +118,7 @@ MmapFileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&
     }
     const size_t numBytes = std::min(capacity, remaining);
     std::memcpy(
-        tupleBuffer.getAvailableMemoryArea<char>().data() + offset,
-        static_cast<const char*>(this->mapBase) + this->cursor,
-        numBytes);
+        tupleBuffer.getAvailableMemoryArea<char>().data() + offset, static_cast<const char*>(this->mapBase) + this->cursor, numBytes);
     this->cursor += numBytes;
     this->totalNumBytesRead += numBytes;
     return BlockingSource::FillTupleBufferResult::withBytes(numBytes);

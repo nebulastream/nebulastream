@@ -111,7 +111,9 @@ int main(int argc, char** argv)
         th.join();
     }
     const double useful = g_usefulGBs.load();
-    const double trafficMult = (mode == "copy") ? 3.0 : 1.0; /// copy = read src + write dst + (the a0+=dst[0] is negligible); count read+write = 2x; src-stream useful x mult
+    const double trafficMult = (mode == "copy")
+        ? 3.0
+        : 1.0; /// copy = read src + write dst + (the a0+=dst[0] is negligible); count read+write = 2x; src-stream useful x mult
     std::printf(
         "mode=%s threads=%d MiB/thr=%zu : useful=%.1f GB/s  (program estimate of DRAM = useful x %.0f = %.1f GB/s)  sink=%llu\n",
         mode.c_str(),
