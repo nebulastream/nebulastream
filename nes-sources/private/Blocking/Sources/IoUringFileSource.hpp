@@ -80,16 +80,17 @@ public:
 
     [[nodiscard]] bool preFillsBuffers() const override { return true; }
 
-    /// Reap the next read in file order, refill the ring, and return the filled buffer (nullopt = EoS).
-    [[nodiscard]] std::optional<TupleBuffer> takePreFilledBuffer() override;
+    /// Reap the next read in file order, refill the ring, and return the filled buffer (nullopt = EoS/stop).
+    [[nodiscard]] std::optional<TupleBuffer> takePreFilledBuffer(const std::stop_token& stopToken) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    /// Acquire a pool buffer and queue a read for read `seq` at offset seq*bufferSize into slot seq%queueDepth.
-    void submitRead(std::uint64_t seq);
+    /// Acquire a pool buffer (stop-aware) and queue a read for read `seq` at offset seq*bufferSize into slot
+    /// seq%queueDepth. Returns false if it gave up acquiring because a stop was requested (no read queued).
+    bool submitRead(std::uint64_t seq, const std::stop_token& stopToken);
 
     /// Best-effort: register the pool's contiguous slab for fixed-buffer O_DIRECT reads. Sets
     /// `buffersRegistered` on success; on any unmet precondition (no slab, payloads not 512-aligned,
@@ -101,7 +102,11 @@ private:
     std::size_t fileSize = 0;
     std::size_t bufferSize = 0;
     std::size_t numReads = 0; ///< ceil(fileSize / bufferSize) -- total reads for one pass
+    /// Ring depth. Default: derived in open() from the (inflight-sized) pool as clamp(pool/2, 1, 64) so the
+    /// ring (QD buffers) plus the in-processing buffers both fit the pool -- the source can always refill
+    /// without self-stalling. NES_IOURING_QD overrides it (sets autoQueueDepth=false).
     unsigned queueDepth = 16;
+    bool autoQueueDepth = true;
     /// O_DIRECT (env NES_IOURING_DIRECT=1): bypass the page cache + readahead so each read is an
     /// independent device request -> deep QD reaches the device (buffered QD is readahead-bound).
     /// Requires 512-byte (device logical block) alignment of offset, length, and buffer.

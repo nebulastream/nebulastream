@@ -68,6 +68,7 @@ IoUringFileSource::IoUringFileSource(const SourceDescriptor& sourceDescriptor)
     if (const char* const env = std::getenv("NES_IOURING_QD"))
     {
         queueDepth = static_cast<unsigned>(std::max<unsigned long>(1, std::strtoul(env, nullptr, 10)));
+        autoQueueDepth = false;
     }
     if (const char* const env = std::getenv("NES_IOURING_DIRECT"))
     {
@@ -108,6 +109,15 @@ void IoUringFileSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     fileSize = static_cast<std::size_t>(st.st_size);
     numReads = bufferSize == 0 ? 0 : (fileSize + bufferSize - 1) / bufferSize;
 
+    /// Derive the ring depth from the (inflight-sized) pool unless NES_IOURING_QD pinned it: half the pool
+    /// for the ring, half as in-processing headroom, so the source never holds more than the pool allows and
+    /// can always refill. Cap at 64 (QD>=32 already saturates the device; >64 adds nothing).
+    if (autoQueueDepth)
+    {
+        const std::size_t poolBuffers = bufferProvider->getNumOfPooledBuffers();
+        queueDepth = static_cast<unsigned>(std::clamp<std::size_t>(poolBuffers / 2, 1, 64));
+    }
+
     if (const int rc = io_uring_queue_init(queueDepth, &ring, 0); rc < 0)
     {
         throw CannotOpenSource("IoUringFileSource: io_uring_queue_init(QD={}) failed: {}", queueDepth, std::strerror(-rc));
@@ -121,14 +131,22 @@ void IoUringFileSource::open(std::shared_ptr<AbstractBufferProvider> provider)
         maybeRegisterBuffers();
     }
 
-    /// Prime the pipeline: submit up to QD reads so QD completions are always in flight.
+    /// Prime the pipeline: submit up to QD reads so QD completions are always in flight. The pool holds
+    /// >= QD free buffers at open (it is inflight-sized, >= 2*QD), so these acquisitions never block; a
+    /// default (never-stopping) token is fine here.
     const std::uint64_t initial = std::min<std::uint64_t>(queueDepth, numReads);
+    const std::stop_token noStop;
+    std::uint64_t primed = 0;
     for (std::uint64_t seq = 0; seq < initial; ++seq)
     {
-        submitRead(seq);
+        if (not submitRead(seq, noStop))
+        {
+            break;
+        }
+        ++primed;
     }
-    nextSubmitSeq = initial;
-    if (initial > 0)
+    nextSubmitSeq = primed;
+    if (primed > 0)
     {
         io_uring_submit(&ring);
     }
@@ -173,10 +191,22 @@ void IoUringFileSource::maybeRegisterBuffers()
     buffersRegistered = true;
 }
 
-void IoUringFileSource::submitRead(const std::uint64_t seq)
+bool IoUringFileSource::submitRead(const std::uint64_t seq, const std::stop_token& stopToken)
 {
     Slot& slot = slots[seq % queueDepth];
-    slot.buffer = bufferProvider->getBufferBlocking();
+    /// Acquire a pool buffer. With the inflight-sized private pool, this blocks when all buffers are in
+    /// flight (= backpressure). Poll with a short timeout so a shutdown mid-acquire is abandoned promptly
+    /// instead of stalling for the full pool timeout.
+    std::optional<TupleBuffer> acquired;
+    while (not acquired.has_value())
+    {
+        acquired = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
+        if (not acquired.has_value() && stopToken.stop_requested())
+        {
+            return false;
+        }
+    }
+    slot.buffer = std::move(*acquired);
     slot.length = 0;
     slot.ready = false;
     /// Stamp the read-submit time (us): the deep-QD analog of the non-prefill path's read-start
@@ -213,9 +243,10 @@ void IoUringFileSource::submitRead(const std::uint64_t seq)
         io_uring_prep_read(sqe, fileDescriptor, dest, static_cast<unsigned>(length), offset);
     }
     io_uring_sqe_set_data64(sqe, seq);
+    return true;
 }
 
-std::optional<TupleBuffer> IoUringFileSource::takePreFilledBuffer()
+std::optional<TupleBuffer> IoUringFileSource::takePreFilledBuffer(const std::stop_token& stopToken)
 {
     if (headSeq >= numReads)
     {
@@ -267,12 +298,16 @@ std::optional<TupleBuffer> IoUringFileSource::takePreFilledBuffer()
     buffer.setSourceCreationTimestampInMS(Timestamp(head.submitTimeMicros));
     head.ready = false;
 
-    /// Refill: keep the ring at QD by submitting the next outstanding read into the slot we just freed.
+    /// Refill: keep the ring at QD by submitting the next outstanding read into the slot we just freed. If the
+    /// acquire was abandoned because a stop was requested, skip the refill -- we still return the head buffer
+    /// we already reaped; the runner exits at its next stop check.
     if (nextSubmitSeq < numReads)
     {
-        submitRead(nextSubmitSeq);
-        io_uring_submit(&ring);
-        ++nextSubmitSeq;
+        if (submitRead(nextSubmitSeq, stopToken))
+        {
+            io_uring_submit(&ring);
+            ++nextSubmitSeq;
+        }
     }
     ++headSeq;
     return buffer;

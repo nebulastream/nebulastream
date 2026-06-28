@@ -86,7 +86,14 @@ public:
     /// from the measured window. nullopt signals end-of-stream. Only honored in PARALLEL threading mode.
     [[nodiscard]] virtual bool preFillsBuffers() const { return false; }
 
-    [[nodiscard]] virtual std::optional<TupleBuffer> takePreFilledBuffer() { return std::nullopt; }
+    /// stopToken lets a prefill source that blocks on buffer-pool acquisition (e.g. a deep-QD source whose
+    /// private pool is sized to the inflight limit) abandon the acquire promptly on shutdown instead of
+    /// blocking to the pool timeout. nullopt signals end-of-stream OR stop.
+    [[nodiscard]] virtual std::optional<TupleBuffer> takePreFilledBuffer(const std::stop_token& stopToken)
+    {
+        (void)stopToken;
+        return std::nullopt;
+    }
 
     /// Implemented by children of BlockingSource. Called by '<<'. Allows to use '<<' on abstract BlockingSource.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;

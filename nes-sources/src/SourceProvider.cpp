@@ -18,10 +18,15 @@
 #include <string>
 #include <utility>
 
+#include <algorithm>
+#include <cstdint>
+
 #include <Async/AsyncSourceHandle.hpp>
 #include <Blocking/BlockingSourceHandle.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
@@ -57,12 +62,30 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
         SourceRuntimeConfiguration runtimeConfig{
             .inflightBufferLimit = maxInflightBuffers, .inputFormatterThreadingMode = inputFormatterThreadingMode};
 
+        /// Give the source its OWN buffer pool sized to the inflight limit, instead of the shared global pool.
+        /// The pool size IS the backpressure: the source blocks in getBuffer once all its buffers are inflight
+        /// (the same bound the inflight semaphore enforces), and a small pool that is reused over and over keeps
+        /// its pages faulted/warm -- avoiding the first-touch page faults that otherwise dominate cold reads from
+        /// a large pool (HANDOVER 2_engine_to_e2e §41/§43). Pipeline OUTPUTS still come from the global pool (the
+        /// worker pec), so a small source pool can never starve them. Match the global pool's buffer size and
+        /// alignment so io_uring registered-buffer O_DIRECT (which needs device-block aligned payloads) works on
+        /// this pool too when global_buffer_alignment is raised.
+        auto sourcePool = BufferManager::create(
+            static_cast<uint32_t>(bufferPool->getBufferSize()),
+            static_cast<uint32_t>(maxInflightBuffers),
+            std::make_shared<NesDefaultMemoryAllocator>(),
+            static_cast<uint32_t>(std::max<size_t>(bufferPool->getBufferAlignment(), 64)));
+
         return std::visit(
             Overloaded{
                 [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                 {
                     return std::make_unique<BlockingSourceHandle>(
-                        std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(sourceImpl));
+                        std::move(backpressureListener),
+                        std::move(originId),
+                        std::move(runtimeConfig),
+                        std::move(sourcePool),
+                        std::move(sourceImpl));
                 },
                 [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                 {
@@ -70,7 +93,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
                         std::move(backpressureListener),
                         std::move(originId),
                         std::move(runtimeConfig),
-                        bufferPool,
+                        std::move(sourcePool),
                         std::move(sourceImpl),
                         pinThreads,
                         numberOfIOThreads);

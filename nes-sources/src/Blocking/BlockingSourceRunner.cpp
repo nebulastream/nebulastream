@@ -211,9 +211,13 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
 
         if (preFill)
         {
-            auto preFilledBuffer = source.takePreFilledBuffer();
+            auto preFilledBuffer = source.takePreFilledBuffer(stopToken);
             if (!preFilledBuffer.has_value())
             {
+                if (stopToken.stop_requested())
+                {
+                    return {SourceImplementationTermination::StopRequested};
+                }
                 return {SourceImplementationTermination::EndOfStream};
             }
             emit(std::move(*preFilledBuffer), requiresMetadata);

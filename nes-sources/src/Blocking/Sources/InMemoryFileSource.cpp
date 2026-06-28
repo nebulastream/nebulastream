@@ -102,8 +102,9 @@ InMemoryFileSource::InMemoryFileSource(const SourceDescriptor& sourceDescriptor)
     }
 }
 
-std::optional<TupleBuffer> InMemoryFileSource::takePreFilledBuffer()
+std::optional<TupleBuffer> InMemoryFileSource::takePreFilledBuffer(const std::stop_token& stopToken)
 {
+    (void)stopToken; /// InMemory hands out pre-made buffers without blocking, so it needn't watch the token
     if (this->prefillCursor >= this->prefilled.size())
     {
         if (this->passesDone + 1 >= this->numPasses)

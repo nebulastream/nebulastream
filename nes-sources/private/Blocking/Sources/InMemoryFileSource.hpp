@@ -76,7 +76,7 @@ public:
     /// Prefill mode: hand the runner the next pre-filled buffer (nullopt = end-of-stream).
     [[nodiscard]] bool preFillsBuffers() const override { return prefillMode; }
 
-    [[nodiscard]] std::optional<TupleBuffer> takePreFilledBuffer() override;
+    [[nodiscard]] std::optional<TupleBuffer> takePreFilledBuffer(const std::stop_token& stopToken) override;
 
     /// validates and formats a string to string configuration
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
