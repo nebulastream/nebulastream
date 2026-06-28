@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -96,6 +97,7 @@ public:
         const LogicalPlan& queryPlan);
 
     static LogicalPlan addReplayStore(const DescriptorConfig::Config& config, const LogicalPlan& queryplan);
+    static LogicalPlan addUdbRecording(std::optional<std::string> traceName, const LogicalPlan& queryPlan);
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
     static LogicalPlan checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType);

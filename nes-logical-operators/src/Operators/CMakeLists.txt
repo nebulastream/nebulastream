@@ -26,6 +26,7 @@ add_plugin(EventTimeWatermarkAssigner LogicalOperator EventTimeWatermarkAssigner
 add_plugin(InferModel LogicalOperator InferModelLogicalOperator.cpp)
 add_plugin(InferModelName LogicalOperator InferModelNameLogicalOperator.cpp)
 add_plugin(ReplayStore LogicalOperator ReplayStoreLogicalOperator.cpp)
+add_plugin(UdbRecording LogicalOperator UdbRecordingLogicalOperator.cpp)
 
 add_unreflection_plugin(LogicalOperator Selection)
 add_unreflection_plugin(LogicalOperator Projection)
