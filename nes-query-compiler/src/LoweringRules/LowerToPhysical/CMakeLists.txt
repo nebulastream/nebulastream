@@ -22,3 +22,4 @@ add_plugin(IngestionTimeWatermarkAssigner LoweringRule LowerToPhysicalIngestionT
 add_plugin(EventTimeWatermarkAssigner LoweringRule LowerToPhysicalEventTimeWatermarkAssigner.cpp)
 add_plugin(InferModel LoweringRule LowerToPhysicalInferModel.cpp)
 add_plugin(ReplayStore LoweringRule LowerToPhysicalReplayStore.cpp)
+add_plugin(UdbRecording LoweringRule LowerToPhysicalUdbRecording.cpp)
