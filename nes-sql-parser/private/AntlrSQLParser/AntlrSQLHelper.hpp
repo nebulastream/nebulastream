@@ -81,6 +81,10 @@ public:
     std::vector<std::string> joinSourceRenames;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
     std::optional<std::unordered_map<std::string, std::string>> storeOptions;
+    
+    // UDB specific variables
+    bool hasUdbClause = false;
+    std::optional<std::string> udbTraceName;
 
     /// Utility variables to keep state between enter/exit parser function calls.
     size_t opBoolean{}; ///anonymous token enum in AntlrSQLLexer.h
