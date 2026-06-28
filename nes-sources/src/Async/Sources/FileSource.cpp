@@ -62,7 +62,7 @@ FileSource::FileSource(const SourceDescriptor& sourceDescriptor)
     }
 }
 
-asio::awaitable<void, Executor> FileSource::open()
+asio::awaitable<void, Executor> FileSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     PRECONDITION(!fileDescriptor.has_value() && !fileStream.has_value(), "open() may not be called twice on the same instance.");
     fileDescriptor.emplace(::open(filePath.c_str(), O_RDONLY));

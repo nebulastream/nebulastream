@@ -66,7 +66,7 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     return str;
 }
 
-asio::awaitable<void, Executor> TCPSource::open()
+asio::awaitable<void, Executor> TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
 try
 {
     NES_TRACE("Opening connection to {}:{}", socketHost, socketPort);

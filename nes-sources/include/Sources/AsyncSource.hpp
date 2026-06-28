@@ -16,6 +16,8 @@
 
 
 #include <cstddef>
+#include <memory>
+#include <optional>
 #include <variant>
 
 #include <boost/asio/awaitable.hpp>
@@ -28,6 +30,8 @@
 
 namespace NES
 {
+
+class AbstractBufferProvider;
 
 using Executor = boost::asio::io_context::executor_type;
 
@@ -68,11 +72,24 @@ public:
     AsyncSource& operator=(AsyncSource&&) = delete;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
-    virtual asio::awaitable<void, Executor> open() = 0;
+    /// The source's own (inflight-sized) buffer pool is handed in here -- mirroring BlockingSource::open --
+    /// so a source can acquire its own buffers (e.g. a deep-QD io_uring ring keeping many reads in flight).
+    /// Sources that only fill the single buffer the runner hands to fillBuffer() may ignore it.
+    virtual asio::awaitable<void, Executor> open(std::shared_ptr<AbstractBufferProvider> bufferProvider) = 0;
     /// Read data from a source into a buffer, until it is full or an EoS/Error occurs.
     virtual asio::awaitable<InternalSourceResult, Executor> fillBuffer(TupleBuffer& buffer) = 0;
     /// If applicable, closes a connection, e.g., a socket connection.
     virtual void close() = 0;
+
+    /// Prefill model (mirrors BlockingSource::preFillsBuffers): when true, the runner does NOT pre-acquire a
+    /// buffer and call fillBuffer(); instead it drains takePreFilledBuffer(), which hands back buffers the
+    /// source filled itself (from the pool it received in open()). This is what lets a source keep many reads
+    /// in flight (deep QD) -- impossible with the one-buffer-per-fillBuffer interface.
+    [[nodiscard]] virtual bool preFillsBuffers() const { return false; }
+
+    /// Reap and return the next ready buffer in source order (nullopt = end-of-stream). Only called when
+    /// preFillsBuffers() is true. Suspends (without blocking the io_context thread) until a buffer is ready.
+    virtual asio::awaitable<std::optional<TupleBuffer>, Executor> takePreFilledBuffer();
 
     friend std::ostream& operator<<(std::ostream& out, const AsyncSource& source);
 

@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <variant>
 
@@ -58,13 +59,51 @@ AsyncSourceRunner::runningRoutine(OriginId sourceId, std::shared_ptr<AbstractBuf
     const AsyncSourceWrapper sourceHandle{*source};
     try
     {
-        /// Try to open the source.
-        co_await sourceHandle.source.open();
+        /// Try to open the source. The source gets its own (inflight-sized) pool here so a deep-QD source can
+        /// keep many reads in flight; single-buffer sources ignore it.
+        co_await sourceHandle.source.open(bufferProvider);
     }
     catch (const Exception& exception)
     {
         auto backpressureListenerException = RunningRoutineFailure(exception.what());
         emitFn(sourceId, SourceReturnType::Error{std::move(backpressureListenerException)}, stopToken);
+        co_return;
+    }
+
+    /// Prefill model (mirrors the blocking runner): the source owns its buffers (deep QD) and hands back the
+    /// next completed one in order. We must NOT pre-acquire a buffer here -- that would contend with the
+    /// source's own ring for the same pool and can deadlock. nullopt => end-of-stream (unless cancelled).
+    if (sourceHandle.source.preFillsBuffers())
+    {
+        while (true)
+        {
+            if ((co_await asio::this_coro::cancellation_state).cancelled() == asio::cancellation_type::terminal)
+            {
+                break;
+            }
+            std::optional<TupleBuffer> preFilled;
+            try
+            {
+                preFilled = co_await sourceHandle.source.takePreFilledBuffer();
+            }
+            catch (const Exception& exception)
+            {
+                auto failure = RunningRoutineFailure(exception.what());
+                emitFn(sourceId, SourceReturnType::Error{std::move(failure)}, stopToken);
+                co_return;
+            }
+            if (not preFilled.has_value())
+            {
+                /// A cancelled takePreFilledBuffer also returns nullopt -- only signal EoS if we were not stopped.
+                if ((co_await asio::this_coro::cancellation_state).cancelled() == asio::cancellation_type::terminal)
+                {
+                    break;
+                }
+                emitFn(sourceId, SourceReturnType::EoS{}, stopToken);
+                break;
+            }
+            dataEmit(*preFilled);
+        }
         co_return;
     }
 

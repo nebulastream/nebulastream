@@ -13,15 +13,24 @@
 */
 #include <Sources/AsyncSource.hpp>
 
+#include <optional>
 #include <ostream>
 
-#include <ostream>
+#include <boost/asio/awaitable.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES
 {
 std::ostream& operator<<(std::ostream& out, const AsyncSource& source)
 {
     return source.toString(out);
+}
+
+/// Default: sources that do not prefill never have this called (preFillsBuffers() is false).
+asio::awaitable<std::optional<TupleBuffer>, Executor> AsyncSource::takePreFilledBuffer()
+{
+    co_return std::nullopt;
 }
 
 }

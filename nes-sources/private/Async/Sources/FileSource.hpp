@@ -51,8 +51,8 @@ public:
 
     asio::awaitable<InternalSourceResult, Executor> fillBuffer(TupleBuffer& buffer) override;
 
-    /// Open file stream
-    asio::awaitable<void, Executor> open() override;
+    /// Open file stream (this source fills the runner-provided buffer one at a time, so it ignores the pool).
+    asio::awaitable<void, Executor> open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     /// Close file stream
     void close() override;
 
