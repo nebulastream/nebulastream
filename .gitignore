@@ -62,3 +62,8 @@ scripts/__pycache__
 .claude/
 .codex/
 [Cc][Ll][Aa][Uu][Dd][Ee].md
+
+# Ignore env and direnv files
+.env
+.envrc
+.direnv/

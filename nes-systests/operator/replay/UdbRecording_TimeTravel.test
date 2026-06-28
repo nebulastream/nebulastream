@@ -1,0 +1,20 @@
+# name: operator/replay/UdbRecording_TimeTravel.test
+# description: Run a query with TIME_TRAVEL_UDB and verify the query produces the expected output
+# groups: [UdbRecording]
+
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
+
+CREATE SINK sink(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64) TYPE File;
+
+SELECT id, value, timestamp FROM stream INTO sink TIME_TRAVEL_UDB recording;
+----
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
