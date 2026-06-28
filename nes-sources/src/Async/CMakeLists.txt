@@ -16,6 +16,7 @@ add_source_files(nes-sources
     AsyncSourceRunner.cpp
     IOThread.cpp
     Sources/AsyncSource.cpp
+    Sources/IoUringAsyncSource.cpp
 )
 
 # Register plugins
@@ -23,9 +24,18 @@ add_plugin(File Source nes-sources Sources/FileSource.cpp)
 add_plugin(File SourceValidation nes-sources Sources/FileSource.cpp)
 add_plugin(TCP Source nes-sources Sources/TCPSource.cpp)
 add_plugin(TCP SourceValidation nes-sources Sources/TCPSource.cpp)
+# Async io_uring sources: deep-QD cold file reads + multishot-recv TCP (see IoUringAsyncSource.hpp)
+add_plugin(IoUringFileAsync Source nes-sources Sources/IoUringAsyncFileSource.cpp)
+add_plugin(IoUringFileAsync SourceValidation nes-sources Sources/IoUringAsyncFileSource.cpp)
+add_plugin(IoUringTCP Source nes-sources Sources/IoUringAsyncTCPSource.cpp)
+add_plugin(IoUringTCP SourceValidation nes-sources Sources/IoUringAsyncTCPSource.cpp)
 
 # Systest adaptors
 add_plugin(File InlineData nes-sources Sources/FileSource.cpp)
 add_plugin(File FileData nes-sources Sources/FileSource.cpp)
 add_plugin(TCP InlineData nes-sources Sources/TCPSource.cpp)
 add_plugin(TCP FileData nes-sources Sources/TCPSource.cpp)
+add_plugin(IoUringFileAsync InlineData nes-sources Sources/IoUringAsyncFileSource.cpp)
+add_plugin(IoUringFileAsync FileData nes-sources Sources/IoUringAsyncFileSource.cpp)
+add_plugin(IoUringTCP InlineData nes-sources Sources/IoUringAsyncTCPSource.cpp)
+add_plugin(IoUringTCP FileData nes-sources Sources/IoUringAsyncTCPSource.cpp)
