@@ -49,6 +49,17 @@ public:
            "Number buffers in global buffer pool.",
            {std::make_shared<NumberValidation>()}};
 
+    /// Alignment (in bytes, a power of two and <= page size) of every payload in the global buffer pool.
+    /// Default 64 (cache line). Set to the storage device's logical block size (typically 512) to enable
+    /// io_uring registered fixed-buffer O_DIRECT reads in IoUringFileSource, which require device-block
+    /// aligned payloads; otherwise that source transparently falls back to non-fixed reads. Larger alignment
+    /// costs a little control-block padding per buffer, which matters only for very large (million-buffer) pools.
+    UIntOption globalBufferAlignment
+        = {"global_buffer_alignment",
+           "64",
+           "Alignment in bytes of global pool buffer payloads (power of two, <= page size).",
+           {std::make_shared<NumberValidation>()}};
+
     /// Indicates how many buffers a single data source can allocate. This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
     UIntOption defaultMaxInflightBuffers
         = {"default_max_inflight_buffers",
@@ -73,6 +84,7 @@ private:
             &defaultQueryOptimization,
             &network,
             &numberOfBuffersInGlobalBufferManager,
+            &globalBufferAlignment,
             &defaultMaxInflightBuffers,
             &dumpQueryCompilationIR,
             &dumpGraph};

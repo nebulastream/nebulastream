@@ -15,7 +15,9 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
+#include <utility>
 #include <vector>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -52,6 +54,19 @@ public:
 
     /// Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
     virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
+
+    /// If this provider is backed by a SINGLE contiguous allocation (the pool slab carved into all pooled
+    /// buffers), return {base, byteSize}; otherwise nullopt. Lets a source register the whole region once
+    /// with io_uring (io_uring_register_buffers + prep_read_fixed): O_DIRECT reads then skip get_user_pages
+    /// per read (the pages are pinned once) and, on recent kernels, reuse a persistent DMA/IOMMU mapping --
+    /// the dominant per-read kernel cost (HANDOVER §34). Every pooled buffer's payload lies inside this
+    /// region, so one registered buffer (index 0) covers them all. Default: not slab-backed (registration off).
+    [[nodiscard]] virtual std::optional<std::pair<uint8_t*, size_t>> getContiguousSlab() const { return std::nullopt; }
+
+    /// Alignment (bytes) every pooled buffer payload is guaranteed to satisfy. A source can use this to decide
+    /// whether fixed-buffer O_DIRECT reads are safe (they need device-block, e.g. 512, aligned payloads).
+    /// Default 0 = no guarantee.
+    [[nodiscard]] virtual size_t getBufferAlignment() const { return 0; }
 };
 
 }

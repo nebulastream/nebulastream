@@ -49,8 +49,11 @@ BufferManager::BufferManager(
     , numOfBuffers(numOfBuffers)
     , memoryResource(std::move(memoryResource))
 {
-    ((void)withAlignment);
-    initialize(DEFAULT_ALIGNMENT);
+    /// Honor the requested alignment (previously ignored -- hardcoded to DEFAULT_ALIGNMENT). Lets the global
+    /// pool be created device-block (>=512) aligned so io_uring fixed-buffer O_DIRECT reads work (those
+    /// require 512-aligned payloads; the 64-byte cache-line default leaves payloads sub-512-aligned). All
+    /// existing callers pass the default, so their layout is unchanged.
+    initialize(withAlignment);
 }
 
 std::shared_ptr<BufferManager> BufferManager::create(
@@ -132,6 +135,7 @@ void BufferManager::initialize(uint32_t withAlignment)
         "Requested alignment is too small, must be at least {}",
         alignof(detail::BufferControlBlock));
 
+    bufferAlignment = withAlignment;
     allBuffers.reserve(numOfBuffers);
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), withAlignment);
     auto alignedBufferSize = alignBufferSize(bufferSize, withAlignment);
@@ -223,6 +227,15 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*, const AllocationThreadInfo&)
 {
     INVARIANT(false, "This method should not be called!");
+}
+
+std::optional<std::pair<uint8_t*, size_t>> BufferManager::getContiguousSlab() const
+{
+    if (basePointer == nullptr || allocatedAreaSize == 0)
+    {
+        return std::nullopt;
+    }
+    return std::pair{basePointer, allocatedAreaSize};
 }
 
 size_t BufferManager::getBufferSize() const

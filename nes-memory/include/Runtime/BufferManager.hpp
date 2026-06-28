@@ -117,6 +117,13 @@ public:
 
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
 
+    /// The pooled buffers are carved from one contiguous allocation (`basePointer`, `allocatedAreaSize`),
+    /// so expose it for io_uring fixed-buffer registration (see AbstractBufferProvider::getContiguousSlab).
+    [[nodiscard]] std::optional<std::pair<uint8_t*, size_t>> getContiguousSlab() const override;
+
+    /// Every payload is aligned to the alignment the pool was created with (slab base, control-block size and
+    /// buffer stride are all multiples of it), so this is the per-payload alignment guarantee.
+    [[nodiscard]] size_t getBufferAlignment() const override { return bufferAlignment; }
 
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
@@ -152,6 +159,7 @@ private:
 
     uint8_t* basePointer{nullptr};
     size_t allocatedAreaSize;
+    uint32_t bufferAlignment{DEFAULT_ALIGNMENT}; ///< alignment every payload satisfies (set in initialize)
 
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};

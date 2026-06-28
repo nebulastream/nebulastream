@@ -19,6 +19,7 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
@@ -35,9 +36,14 @@ NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfigurat
 
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 {
+    /// Global pool payload alignment (config `global_buffer_alignment`, default 64). Set to the device block
+    /// size (>=512) to enable io_uring registered fixed-buffer O_DIRECT reads (IoUringFileSource); see the
+    /// option doc in WorkerConfiguration.
     auto bufferManager = BufferManager::create(
         workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue(),
-        workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
+        workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
+        std::make_shared<NesDefaultMemoryAllocator>(),
+        workerConfiguration.globalBufferAlignment.getValue());
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);
