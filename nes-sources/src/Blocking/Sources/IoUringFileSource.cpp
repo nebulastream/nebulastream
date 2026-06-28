@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -44,6 +45,7 @@
 #include <Sources/SourceUtility.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Files.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
@@ -70,6 +72,10 @@ IoUringFileSource::IoUringFileSource(const SourceDescriptor& sourceDescriptor)
     if (const char* const env = std::getenv("NES_IOURING_DIRECT"))
     {
         directIo = std::string_view(env) != "0";
+    }
+    if (const char* const env = std::getenv("NES_IOURING_REGBUF"))
+    {
+        regBuf = std::string_view(env) != "0";
     }
 }
 
@@ -110,6 +116,11 @@ void IoUringFileSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     slots.assign(queueDepth, Slot{});
     cqeBatch.assign(queueDepth, nullptr);
 
+    if (regBuf)
+    {
+        maybeRegisterBuffers();
+    }
+
     /// Prime the pipeline: submit up to QD reads so QD completions are always in flight.
     const std::uint64_t initial = std::min<std::uint64_t>(queueDepth, numReads);
     for (std::uint64_t seq = 0; seq < initial; ++seq)
@@ -121,6 +132,45 @@ void IoUringFileSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     {
         io_uring_submit(&ring);
     }
+}
+
+void IoUringFileSource::maybeRegisterBuffers()
+{
+    const auto slab = bufferProvider->getContiguousSlab();
+    if (not slab)
+    {
+        NES_WARNING("IoUringFileSource: NES_IOURING_REGBUF set but the buffer provider is not slab-backed; using non-fixed reads");
+        return;
+    }
+    /// Fixed O_DIRECT reads require device-block (512) aligned payloads: the kernel checks the read offset
+    /// WITHIN the registered region, so every payload's offset must be 512-aligned. That holds iff the pool's
+    /// payload alignment is >= 512 (set `global_buffer_alignment: 512`). Check the guarantee up front rather
+    /// than probing one buffer (with smaller alignment only some payloads happen to align).
+    if (bufferProvider->getBufferAlignment() < DIRECT_IO_ALIGN)
+    {
+        NES_WARNING(
+            "IoUringFileSource: NES_IOURING_REGBUF needs payloads aligned to >= {} bytes but the pool guarantees "
+            "{} (set global_buffer_alignment: {}); using non-fixed reads",
+            DIRECT_IO_ALIGN,
+            bufferProvider->getBufferAlignment(),
+            DIRECT_IO_ALIGN);
+        return;
+    }
+
+    /// Register the whole slab as one buffer (index 0); every payload lies inside it. Round the base up to the
+    /// device block so payload offsets within the region stay aligned even if the slab base is only cache-line
+    /// aligned (with global_buffer_alignment >= 512 the base is already aligned and this is a no-op).
+    auto* const slabBase = slab->first;
+    auto* const regBase = reinterpret_cast<std::uint8_t*>(
+        (reinterpret_cast<std::uintptr_t>(slabBase) + DIRECT_IO_ALIGN - 1) & ~(DIRECT_IO_ALIGN - 1));
+    const std::size_t regLen = slab->second - static_cast<std::size_t>(regBase - slabBase);
+    const iovec iov{.iov_base = regBase, .iov_len = regLen};
+    if (const int rc = io_uring_register_buffers(&ring, &iov, 1); rc < 0)
+    {
+        NES_WARNING("IoUringFileSource: io_uring_register_buffers({} bytes) failed: {}; using non-fixed reads", regLen, std::strerror(-rc));
+        return;
+    }
+    buffersRegistered = true;
 }
 
 void IoUringFileSource::submitRead(const std::uint64_t seq)
@@ -152,7 +202,16 @@ void IoUringFileSource::submitRead(const std::uint64_t seq)
     }
     io_uring_sqe* const sqe = io_uring_get_sqe(&ring);
     INVARIANT(sqe != nullptr, "io_uring submission queue unexpectedly full (QD={})", queueDepth);
-    io_uring_prep_read(sqe, fileDescriptor, dest, static_cast<unsigned>(length), offset);
+    if (buffersRegistered)
+    {
+        /// dest lies within the single registered region (index 0); prep_read_fixed skips the per-read
+        /// get_user_pages because the pages are already pinned.
+        io_uring_prep_read_fixed(sqe, fileDescriptor, dest, static_cast<unsigned>(length), offset, 0);
+    }
+    else
+    {
+        io_uring_prep_read(sqe, fileDescriptor, dest, static_cast<unsigned>(length), offset);
+    }
     io_uring_sqe_set_data64(sqe, seq);
 }
 
@@ -172,7 +231,8 @@ std::optional<TupleBuffer> IoUringFileSource::takePreFilledBuffer()
     {
         if (res < 0)
         {
-            throw RunningRoutineFailure("IoUringFileSource: read for offset {} failed: {}", seq * bufferSize, std::strerror(-res));
+            throw RunningRoutineFailure(
+                "IoUringFileSource: read for offset {} failed: {}", seq * bufferSize, std::strerror(-res));
         }
         Slot& slot = slots[seq % queueDepth];
         slot.length = static_cast<std::size_t>(res);
@@ -246,7 +306,13 @@ DescriptorConfig::Config IoUringFileSource::validateAndFormat(std::unordered_map
 
 std::ostream& IoUringFileSource::toString(std::ostream& str) const
 {
-    str << std::format("\nIoUringFileSource(filepath: {}, queueDepth: {}, fileSize: {})", filePath, queueDepth, fileSize);
+    str << std::format(
+        "\nIoUringFileSource(filepath: {}, queueDepth: {}, fileSize: {}, directIo: {}, registeredBuffers: {})",
+        filePath,
+        queueDepth,
+        fileSize,
+        directIo,
+        buffersRegistered);
     return str;
 }
 

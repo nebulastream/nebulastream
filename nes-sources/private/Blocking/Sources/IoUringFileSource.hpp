@@ -50,12 +50,13 @@ namespace NES
 /// CSV formatter stitches partial tuples across consecutive buffers by sequence number), then refills the
 /// ring to keep QD full and hands the completed pool buffer straight to the engine -- no extra copy.
 ///
-/// SINGLE-PASS (cold reads are single-pass by nature). Env tunables: NES_IOURING_QD (default 16) and
+/// SINGLE-PASS (cold reads are single-pass by nature). Env tunables: NES_IOURING_QD (default 16);
 /// NES_IOURING_DIRECT=1 for O_DIRECT -- which bypasses the page cache AND readahead so deep QD reaches the
-/// device (buffered QD is readahead-bound: cold ~2.2 GB/s at any QD; O_DIRECT QD16 ~5.3 GB/s, 2.5x). O_DIRECT
+/// device (buffered QD is readahead-bound: cold ~2.2 GB/s at any QD; O_DIRECT QD16 ~5.3 GB/s, 2.5x);
+/// NES_IOURING_REGBUF=1 for registered fixed buffers (pin the pool slab once -> O_DIRECT reads skip
+/// get_user_pages per read; needs `global_buffer_alignment: 512`, else falls back to plain reads). O_DIRECT
 /// needs 512-byte (device logical block) alignment of offset/length/buffer -- the partial tail is rounded up
-/// and the pool buffer alignment is asserted. Follow-ons: registered fixed buffers, multi-pass. Keep the async
-/// `File` source as the A/B cold baseline.
+/// and the pool buffer alignment is asserted. Keep the async `File` source as the A/B cold baseline.
 class IoUringFileSource final : public BlockingSource
 {
 public:
@@ -90,6 +91,11 @@ private:
     /// Acquire a pool buffer and queue a read for read `seq` at offset seq*bufferSize into slot seq%queueDepth.
     void submitRead(std::uint64_t seq);
 
+    /// Best-effort: register the pool's contiguous slab for fixed-buffer O_DIRECT reads. Sets
+    /// `buffersRegistered` on success; on any unmet precondition (no slab, payloads not 512-aligned,
+    /// registration error) it logs and leaves `buffersRegistered` false so reads fall back to plain prep_read.
+    void maybeRegisterBuffers();
+
     std::string filePath;
     int fileDescriptor = -1;
     std::size_t fileSize = 0;
@@ -100,6 +106,14 @@ private:
     /// independent device request -> deep QD reaches the device (buffered QD is readahead-bound).
     /// Requires 512-byte (device logical block) alignment of offset, length, and buffer.
     bool directIo = false;
+    /// Registered fixed buffers (env NES_IOURING_REGBUF=1): register the buffer pool's contiguous slab once
+    /// (io_uring_register_buffers) and read via io_uring_prep_read_fixed. The pages are pinned once, so each
+    /// O_DIRECT read skips the per-read get_user_pages + page-dirty/unpin -- the dominant per-read kernel cost
+    /// (it makes the producer thread device-bound rather than CPU-bound). Best-effort: it engages only when the
+    /// provider exposes a contiguous slab AND the pool payloads are device-block (512) aligned (set
+    /// `global_buffer_alignment: 512`); otherwise it transparently falls back to plain reads.
+    bool regBuf = false;
+    bool buffersRegistered = false; ///< true once registration succeeded => use prep_read_fixed
     bool ringInitialized = false;
 
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
