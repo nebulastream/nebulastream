@@ -57,7 +57,7 @@ public:
             const NES::SequenceNumberType upperBound,
             const std::optional<NES::SequenceNumberType> fixedSeed,
             const NES::TupleBuffer& dummyBuffer)
-            : sequenceShredder(SequenceShredder{1}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
+            : currentSequenceNumber(1), completionLatch(NUM_THREADS)
         {
             for (size_t i = 0; i < NUM_THREADS; ++i)
             {

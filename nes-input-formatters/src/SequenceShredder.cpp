@@ -27,7 +27,6 @@
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -39,11 +38,9 @@
 namespace NES
 {
 
-SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiterInBytes)
+SequenceShredder::SequenceShredder()
 {
-    auto dummyBuffer = BufferManager::create(1, 1)->getBufferBlocking();
-    dummyBuffer.setNumberOfTuples(sizeOfTupleDelimiterInBytes);
-    this->spanningTupleBuffer = std::make_unique<SpanningTupleBuffer>(INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER, std::move(dummyBuffer));
+    this->spanningTupleBuffer = std::make_unique<SpanningTupleBuffer>(INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER);
 }
 
 SequenceShredder::~SequenceShredder()
