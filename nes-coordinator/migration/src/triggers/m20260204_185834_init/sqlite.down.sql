@@ -1,0 +1,11 @@
+DROP TRIGGER IF EXISTS cascade_query_failed_to_fragments;
+DROP TRIGGER IF EXISTS derive_query_state_on_fragment_update;
+DROP TRIGGER IF EXISTS release_fragment_capacity;
+DROP TRIGGER IF EXISTS acquire_worker_capacity;
+DROP TRIGGER IF EXISTS validate_query_state_transition;
+DROP TRIGGER IF EXISTS validate_fragment_state_transition;
+DROP TRIGGER IF EXISTS cascade_worker_removed_to_fragments;
+DROP TRIGGER IF EXISTS prevent_physical_source_drop_with_active_queries;
+DROP TRIGGER IF EXISTS prevent_sink_drop_with_active_queries;
+DROP TRIGGER IF EXISTS cleanup_orphaned_source;
+DROP TRIGGER IF EXISTS cleanup_orphaned_sink;
