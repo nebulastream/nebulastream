@@ -14,6 +14,7 @@
 
 #include <Async/IOThread.hpp>
 
+#include <cstdlib>
 #include <pthread.h>
 #include <sched.h>
 #include <boost/asio/executor_work_guard.hpp>
@@ -34,9 +35,13 @@ IOThread::IOThread(const bool pinThreads, const size_t poolSize) : ioContexts(po
         {
             workGuards.emplace_back(asio::make_work_guard(ioContexts.at(i)));
 
+            /// NES_PIN_CPU_OFFSET shifts the pin base CPU (default 0 = CCX0). Set e.g. 6 to pin the engine
+            /// onto CCX1 (cpu 6-11) -- used to test whether pinning's TCP penalty is cpu0/CCX0-softirq-specific.
+            const char* const pinOffsetEnv = std::getenv("NES_PIN_CPU_OFFSET");
+            const size_t pinOffset = pinOffsetEnv ? std::strtoul(pinOffsetEnv, nullptr, 10) : 0;
             threads.emplace_back(
                 fmt::format("IOThread_{}", i),
-                [ioc = &ioContexts.at(i), cpuId = i]()
+                [ioc = &ioContexts.at(i), cpuId = pinOffset + i]()
                 {
                     // Pin this thread to a specific CPU core
                     cpu_set_t cpuset;

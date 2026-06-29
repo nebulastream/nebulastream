@@ -809,7 +809,12 @@ QueryEngine::QueryEngine(
     , configuration(config)
 {
     /// if numberOfIOThreads is 0, we don't pin threads
-    const size_t workerThreadCPUOffset = config.numberOfIOThreads.getValue();
+    /// NES_PIN_CPU_OFFSET shifts the pin base CPU (default 0). Workers pin to OFFSET + numIOThreads + i, so the
+    /// engine (io + workers) lands on a contiguous core range starting at OFFSET (e.g. 6 -> CCX1 on a 5965WX).
+    /// Used to test whether pinning's TCP penalty is cpu0/CCX0-softirq-specific vs general CCX confinement.
+    const char* const pinOffsetEnv = std::getenv("NES_PIN_CPU_OFFSET");
+    const size_t pinCpuOffset = pinOffsetEnv ? std::strtoul(pinOffsetEnv, nullptr, 10) : 0;
+    const size_t workerThreadCPUOffset = pinCpuOffset + config.numberOfIOThreads.getValue();
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {
         threadPool->addThread(host, config.pinThreads.getValue(), workerThreadCPUOffset + i);
