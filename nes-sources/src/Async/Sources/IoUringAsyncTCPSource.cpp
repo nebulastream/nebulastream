@@ -217,7 +217,8 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterIoUringTCPInl
     }
 
     auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.tuples));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersIoUringTCP::PORT, std::to_string(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
+        ConfigParametersIoUringTCP::PORT, std::to_string(mockTCPServer->getPort()));
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersIoUringTCP::HOST, "localhost");
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
@@ -238,7 +239,8 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterIoUringTCPFileDat
     }
 
     auto mockTCPServer = std::make_unique<TCPDataServer>(systestAdaptorArguments.testFilePath);
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersIoUringTCP::PORT, std::to_string(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
+        ConfigParametersIoUringTCP::PORT, std::to_string(mockTCPServer->getPort()));
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersIoUringTCP::HOST, "localhost");
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });

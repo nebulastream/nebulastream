@@ -179,8 +179,8 @@ void IoUringFileSource::maybeRegisterBuffers()
     /// device block so payload offsets within the region stay aligned even if the slab base is only cache-line
     /// aligned (with global_buffer_alignment >= 512 the base is already aligned and this is a no-op).
     auto* const slabBase = slab->first;
-    auto* const regBase = reinterpret_cast<std::uint8_t*>(
-        (reinterpret_cast<std::uintptr_t>(slabBase) + DIRECT_IO_ALIGN - 1) & ~(DIRECT_IO_ALIGN - 1));
+    auto* const regBase
+        = reinterpret_cast<std::uint8_t*>((reinterpret_cast<std::uintptr_t>(slabBase) + DIRECT_IO_ALIGN - 1) & ~(DIRECT_IO_ALIGN - 1));
     const std::size_t regLen = slab->second - static_cast<std::size_t>(regBase - slabBase);
     const iovec iov{.iov_base = regBase, .iov_len = regLen};
     if (const int rc = io_uring_register_buffers(&ring, &iov, 1); rc < 0)
@@ -262,8 +262,7 @@ std::optional<TupleBuffer> IoUringFileSource::takePreFilledBuffer(const std::sto
     {
         if (res < 0)
         {
-            throw RunningRoutineFailure(
-                "IoUringFileSource: read for offset {} failed: {}", seq * bufferSize, std::strerror(-res));
+            throw RunningRoutineFailure("IoUringFileSource: read for offset {} failed: {}", seq * bufferSize, std::strerror(-res));
         }
         Slot& slot = slots[seq % queueDepth];
         slot.length = static_cast<std::size_t>(res);

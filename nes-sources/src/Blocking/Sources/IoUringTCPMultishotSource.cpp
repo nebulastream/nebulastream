@@ -153,7 +153,8 @@ void IoUringTCPMultishotSource::open(std::shared_ptr<AbstractBufferProvider> pro
     for (std::uint16_t bid = 0; bid < numBuffers; ++bid)
     {
         slotBuffers[bid] = bufferProvider->getBufferBlocking();
-        io_uring_buf_ring_add(bufRing, slotBuffers[bid].getAvailableMemoryArea<char>().data(), static_cast<unsigned>(bufferSize), bid, mask, bid);
+        io_uring_buf_ring_add(
+            bufRing, slotBuffers[bid].getAvailableMemoryArea<char>().data(), static_cast<unsigned>(bufferSize), bid, mask, bid);
     }
     io_uring_buf_ring_advance(bufRing, static_cast<int>(numBuffers));
 }
@@ -212,8 +213,7 @@ std::optional<TupleBuffer> IoUringTCPMultishotSource::takePreFilledBuffer(const 
         /// The timeout bounds the wait so a query stop is noticed promptly.
         io_uring_cqe* firstCqe = nullptr;
         auto timeout = WAIT_TIMEOUT;
-        if (const int rc = io_uring_submit_and_wait_timeout(&ring, &firstCqe, 1, &timeout, nullptr);
-            rc < 0 && rc != -ETIME && rc != -EINTR)
+        if (const int rc = io_uring_submit_and_wait_timeout(&ring, &firstCqe, 1, &timeout, nullptr); rc < 0 && rc != -ETIME && rc != -EINTR)
         {
             throw RunningRoutineFailure("IoUringTCPMultishot: io_uring_submit_and_wait_timeout failed: {}", std::strerror(-rc));
         }
@@ -366,7 +366,8 @@ InlineDataGeneratedRegistrar::RegisterIoUringTCPMultishotInlineData(InlineDataRe
     return systestAdaptorArguments.physicalSourceConfig;
 }
 
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterIoUringTCPMultishotFileData(FileDataRegistryArguments systestAdaptorArguments)
+FileDataRegistryReturnType
+FileDataGeneratedRegistrar::RegisterIoUringTCPMultishotFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
     if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersIoUringTCPMultishot::PORT))
     {

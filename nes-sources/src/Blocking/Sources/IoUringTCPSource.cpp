@@ -174,8 +174,7 @@ std::optional<TupleBuffer> IoUringTCPSource::takePreFilledBuffer(const std::stop
         /// timeout bounds the wait so a query stop is noticed promptly; on expiry it posts its own completion.
         io_uring_cqe* cqe = nullptr;
         auto timeout = WAIT_TIMEOUT;
-        if (const int rc = io_uring_submit_and_wait_timeout(&ring, &cqe, 1, &timeout, nullptr);
-            rc < 0 && rc != -ETIME && rc != -EINTR)
+        if (const int rc = io_uring_submit_and_wait_timeout(&ring, &cqe, 1, &timeout, nullptr); rc < 0 && rc != -ETIME && rc != -EINTR)
         {
             throw RunningRoutineFailure("IoUringTCPBlocking: io_uring_submit_and_wait_timeout failed: {}", std::strerror(-rc));
         }

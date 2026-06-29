@@ -14,8 +14,8 @@
 
 #include <Async/Sources/IoUringAsyncSource.hpp>
 
-#include <sys/eventfd.h>
 #include <unistd.h>
+#include <sys/eventfd.h>
 
 #include <algorithm>
 #include <cerrno>

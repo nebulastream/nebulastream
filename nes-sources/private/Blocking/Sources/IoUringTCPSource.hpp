@@ -121,7 +121,8 @@ struct ConfigParametersIoUringTCPBlocking
                 {
                     return portNumber;
                 }
-                NES_ERROR("IoUringTCPBlocking specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
+                NES_ERROR(
+                    "IoUringTCPBlocking specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
             }
             return portNumber;
         }};

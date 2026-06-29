@@ -142,8 +142,8 @@ void IoUringAsyncFileSource::maybeRegisterBuffers()
     }
 
     auto* const slabBase = slab->first;
-    auto* const regBase = reinterpret_cast<std::uint8_t*>(
-        (reinterpret_cast<std::uintptr_t>(slabBase) + DIRECT_IO_ALIGN - 1) & ~(DIRECT_IO_ALIGN - 1));
+    auto* const regBase
+        = reinterpret_cast<std::uint8_t*>((reinterpret_cast<std::uintptr_t>(slabBase) + DIRECT_IO_ALIGN - 1) & ~(DIRECT_IO_ALIGN - 1));
     const std::size_t regLen = slab->second - static_cast<std::size_t>(regBase - slabBase);
     const iovec iov{.iov_base = regBase, .iov_len = regLen};
     if (const int rc = io_uring_register_buffers(&ring, &iov, 1); rc < 0)

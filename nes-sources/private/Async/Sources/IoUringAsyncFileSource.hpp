@@ -91,6 +91,7 @@ private:
         std::uint64_t submitTimeMicros = 0; ///< read-submit time (us); stamped as sourceCreationTimestamp
         bool ready = false; ///< completion seen for this slot
     };
+
     std::vector<Slot> slots;
 
     std::uint64_t headSeq = 0; ///< next read (in file order) to emit
