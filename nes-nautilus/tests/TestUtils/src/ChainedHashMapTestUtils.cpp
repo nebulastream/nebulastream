@@ -109,7 +109,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     constexpr auto bufferSize = 4096;
     constexpr auto minimumBuffers = 4000UL;
     constexpr auto callsToCreateMonotonicValues = 3;
-    constexpr uint32_t bufferAlignment = 64;
+    constexpr NES::BufferAlignment bufferAlignment{64};
     constexpr double unpooledMemoryFraction = 0.9;
     const auto bufferNeeded = callsToCreateMonotonicValues * ((inputSchema.getSizeInBytes() * params.numberOfItems) / bufferSize + 1);
     bufferManager = BufferManager::create(

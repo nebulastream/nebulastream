@@ -12,25 +12,18 @@
     limitations under the License.
 */
 
-#include <Configurations/Validation/FloatValidation.hpp>
+#pragma once
 
-#include <regex>
 #include <string>
+#include <Configurations/Validation/ConfigurationValidation.hpp>
 
 namespace NES
 {
 
-bool FloatValidation::isValid(const std::string& parameter) const
+/// @brief Validates that a parameter is a positive power of two
+class PowerOfTwoValidation : public ConfigurationValidation
 {
-    /// Checking if the parameter can be parsed to a floating point
-    const std::regex numberRegex(R"(^\d*\.?\d+$)");
-    if (!std::regex_match(parameter, numberRegex))
-    {
-        return false;
-    }
-
-    /// Checking if the values lies between min and max
-    const double parsedNumber = std::stod(parameter);
-    return parsedNumber >= min && parsedNumber <= max;
-}
+public:
+    [[nodiscard]] bool isValid(const std::string& parameter) const override;
+};
 }

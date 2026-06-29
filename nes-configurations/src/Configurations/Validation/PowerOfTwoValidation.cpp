@@ -12,25 +12,26 @@
     limitations under the License.
 */
 
-#include <Configurations/Validation/FloatValidation.hpp>
+#include <Configurations/Validation/PowerOfTwoValidation.hpp>
 
+#include <cstdint>
 #include <regex>
 #include <string>
 
 namespace NES
 {
 
-bool FloatValidation::isValid(const std::string& parameter) const
+bool PowerOfTwoValidation::isValid(const std::string& parameter) const
 {
-    /// Checking if the parameter can be parsed to a floating point
-    const std::regex numberRegex(R"(^\d*\.?\d+$)");
-    if (!std::regex_match(parameter, numberRegex))
+    /// Reject anything that is not a plain integer, and cap the digit count so std::stoul cannot overflow.
+    const std::regex numberRegex("^\\d+$");
+    if (constexpr auto capDigitCount = 10; !std::regex_match(parameter, numberRegex) || parameter.length() > capDigitCount)
     {
         return false;
     }
 
-    /// Checking if the values lies between min and max
-    const double parsedNumber = std::stod(parameter);
-    return parsedNumber >= min && parsedNumber <= max;
+    /// A positive power of two has exactly one set bit, so n & (n - 1) clears it to zero.
+    const uint64_t value = std::stoul(parameter);
+    return value > 0 && (value & (value - 1)) == 0;
 }
 }

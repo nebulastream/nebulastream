@@ -84,7 +84,7 @@ nautilus::engine::NautilusEngine makeEngine(EngineMode mode)
 /// Marker pattern written into freshly handed-out buffers so tests notice if the PagedVector
 /// reads uninitialised memory: a dirty page surfaces as 0xDEADBEEF instead of zero.
 constexpr uint32_t DIRTY_FILL_PATTERN = 0xDEADBEEF;
-constexpr uint32_t BUFFER_ALIGNMENT = 64;
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 
 struct DirtyBufferProvider : AbstractBufferProvider
