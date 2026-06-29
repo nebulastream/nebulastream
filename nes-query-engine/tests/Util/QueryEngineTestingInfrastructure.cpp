@@ -273,7 +273,7 @@ QueryPlanBuilder::QueryPlanBuilder(
 
 TestingHarness::TestingHarness(size_t numberOfThreads, size_t numberOfBuffers)
     : bm(BufferManager::create(
-          10 * static_cast<size_t>(numberOfBuffers) * DEFAULT_BUFFER_SIZE,
+          10 * numberOfBuffers * DEFAULT_BUFFER_SIZE,
           UNPOOLED_MEMORY_FRACTION,
           BUFFER_ALIGNMENT,
           static_cast<uint32_t>(DEFAULT_BUFFER_SIZE),

@@ -37,7 +37,7 @@ namespace
 {
 constexpr uint32_t POOLED_BUFFER_SIZE = 8192;
 constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
-constexpr uint32_t BUFFER_ALIGNMENT = 64;
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
 }

@@ -189,7 +189,7 @@ public:
         /// To avoid (future) errors by creating a TupleBuffer without a valid control block, we create a single valid (dummy) tuple buffer
         /// All threads share the reference to that buffer throughout this test
         constexpr uint32_t dummyBufferSize = 1;
-        constexpr uint32_t bufferAlignment = 64;
+        constexpr NES::BufferAlignment bufferAlignment{64};
         constexpr double unpooledMemoryFraction = 0.0;
         const auto testBufferManager = NES::BufferManager::create(
             dummyBufferSize, unpooledMemoryFraction, bufferAlignment, dummyBufferSize, std::make_shared<NES::NesDefaultMemoryAllocator>());

@@ -57,7 +57,7 @@
 
 namespace NES::InputFormatterTestUtil
 {
-static constexpr uint32_t BUFFER_ALIGNMENT = 64;
+static constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
 /// Spanning tuples are stored in unpooled buffers (allocated in page-sized chunks), so the unpooled budget must
 /// comfortably exceed a page even though these tests use tiny pooled buffers. We reserve a fixed, generous unpooled
 /// budget (only a cap, not eagerly allocated) and size the total so the pooled pool still keeps the requested buffers.

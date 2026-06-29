@@ -61,7 +61,7 @@ BufferManager::BufferManager(
 std::shared_ptr<BufferManager> BufferManager::create(
     const size_t totalMemoryInBytes,
     const double unpooledMemoryFraction,
-    const uint32_t alignment,
+    const BufferAlignment alignment,
     const uint32_t bufferSize,
     const std::shared_ptr<std::pmr::memory_resource>& memoryResource)
 {
@@ -74,7 +74,8 @@ std::shared_ptr<BufferManager> BufferManager::create(
     const auto unpooledMemoryLimitInBytes = static_cast<size_t>(static_cast<double>(totalMemoryInBytes) * unpooledMemoryFraction);
     const size_t pooledMemoryInBytes = totalMemoryInBytes - unpooledMemoryLimitInBytes;
     const auto numOfBuffers = static_cast<uint32_t>(pooledMemoryInBytes / bufferSize);
-    return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment);
+    return std::make_shared<BufferManager>(
+        Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment.getRawValue());
 }
 
 BufferManager::~BufferManager()

@@ -106,6 +106,12 @@ function setup_distributed() {
     if [ "$has_config" = "true" ]; then
       local host=$(yq -r ".workers[$i].host" "$topology" | cut -d':' -f1)
       yq ".workers[$i].config" "$topology" > "$config_dir/$host.yaml"
+      # Override the per-worker memory budget with the value chosen in CMakeLists.txt, but only for topologies
+      # that already declare one (the large-scale topology). Others keep the worker default so the lightweight
+      # two-node/8-node tests do not reserve an oversized budget on dev laptops.
+      if [ -n "$WORKER_TOTAL_MEMORY_IN_BYTES" ] && grep -q 'total_memory_in_bytes' "$config_dir/$host.yaml"; then
+        yq -y -i ".worker.total_memory_in_bytes = (env.WORKER_TOTAL_MEMORY_IN_BYTES | tonumber)" "$config_dir/$host.yaml"
+      fi
     fi
   done
 

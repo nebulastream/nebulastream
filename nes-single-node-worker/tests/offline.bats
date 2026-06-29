@@ -70,7 +70,7 @@ teardown() {
 
   # Randomly pick words from the expected output
   echo "$output" | grep -q "worker"
-  echo "$output" | grep -q "number_of_buffers_in_global_buffer_manager"
+  echo "$output" | grep -q "total_memory_in_bytes"
   echo "$output" | grep -q "query_engine"
   echo "$output" | grep -q "INTERPRETER"
 }

@@ -25,6 +25,7 @@
 #include <mutex>
 #include <optional>
 #include <vector>
+#include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/UnpooledChunksManager.hpp>
@@ -32,6 +33,10 @@
 
 namespace NES
 {
+
+/// Strong type for create()'s alignment argument to reduce potential swapped as both are u32 and also
+/// readability-suspicious-call-argument on every call site
+using BufferAlignment = NESStrongType<uint32_t, struct BufferAlignment_, 0, 0>;
 
 /**
  * @brief The BufferManager is responsible for:
@@ -90,7 +95,7 @@ public:
     static std::shared_ptr<BufferManager> create(
         size_t totalMemoryInBytes,
         double unpooledMemoryFraction,
-        uint32_t alignment,
+        BufferAlignment alignment,
         uint32_t bufferSize,
         const std::shared_ptr<std::pmr::memory_resource>& memoryResource);
 

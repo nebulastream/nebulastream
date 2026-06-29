@@ -71,7 +71,7 @@ namespace NES
 static constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
 static constexpr uint32_t POOLED_BUFFER_SIZE = 8192;
 static constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
-static constexpr uint32_t BUFFER_ALIGNMENT = 64;
+static constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
 static constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 static constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
 static constexpr size_t NUMBER_OF_TUPLES_PER_BUFFER = 23;
