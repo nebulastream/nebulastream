@@ -124,6 +124,8 @@ pub struct TupleBuffer {
     pub chunk_number: u64,
     pub number_of_tuples: u64,
     pub last_chunk: bool,
+    // #1704: the sender's allocated buffer size, so the receiver can right-size its buffer.
+    pub buffer_size: u64,
     pub data: Vec<u8>,
     pub child_buffers: Vec<Vec<u8>>,
 }
