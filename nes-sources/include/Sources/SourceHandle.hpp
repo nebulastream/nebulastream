@@ -34,6 +34,8 @@ class SourceThread;
 struct SourceRuntimeConfiguration
 {
     size_t inflightBufferLimit;
+    /// #1713: when true, the per-source inflight cap adapts (AIMD) within [.., inflightBufferLimit] instead of staying fixed.
+    bool adaptiveInflight = false;
 };
 
 /// Interface class to handle sources.

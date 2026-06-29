@@ -143,7 +143,7 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
         {{Identifier::parse("type"), "CSV"}});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
-    const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
+    const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, /*enableAdaptiveInflight*/ false, std::move(sourceBufferPool));
     return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
 }
 
