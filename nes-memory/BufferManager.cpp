@@ -41,25 +41,20 @@ namespace NES
 {
 
 BufferManager::BufferManager(
-    Private,
-    const uint32_t bufferSize,
-    const uint32_t numOfBuffers,
-    std::shared_ptr<std::pmr::memory_resource> memoryResource,
-    const uint32_t withAlignment)
+    Private, const uint32_t bufferSize, const uint32_t numOfBuffers, std::shared_ptr<std::pmr::memory_resource> memoryResource)
     : availableBuffers(numOfBuffers)
     , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource))
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
     , memoryResource(std::move(memoryResource))
 {
-    ((void)withAlignment);
-    initialize(DEFAULT_ALIGNMENT);
+    initialize();
 }
 
-std::shared_ptr<BufferManager> BufferManager::create(
-    uint32_t bufferSize, uint32_t numOfBuffers, const std::shared_ptr<std::pmr::memory_resource>& memoryResource, uint32_t withAlignment)
+std::shared_ptr<BufferManager>
+BufferManager::create(uint32_t bufferSize, uint32_t numOfBuffers, const std::shared_ptr<std::pmr::memory_resource>& memoryResource)
 {
-    return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, memoryResource, withAlignment);
+    return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, memoryResource);
 }
 
 BufferManager::~BufferManager()
@@ -108,8 +103,10 @@ void BufferManager::destroy()
     }
 }
 
-void BufferManager::initialize(uint32_t withAlignment)
+void BufferManager::initialize()
 {
+    /// Buffers are always aligned to a cache line; the alignment is no longer configurable.
+    constexpr uint32_t withAlignment = DEFAULT_ALIGNMENT;
     const size_t pages = sysconf(_SC_PHYS_PAGES);
     size_t page_size = sysconf(_SC_PAGE_SIZE);
     auto memorySizeInBytes = pages * page_size;
