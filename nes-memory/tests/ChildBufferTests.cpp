@@ -18,17 +18,32 @@
 #include <ctime>
 #include <random>
 
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
+namespace
+{
+constexpr uint32_t POOLED_BUFFER_SIZE = 1000;
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
+constexpr uint32_t BUFFER_ALIGNMENT = 64;
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+}
 
 /// Testing if the buffer size stays the same during a store --> load with small, odd sizes
 TEST(ChildBufferTests, StoreAndLoadChildBufferOddSizes)
 {
     constexpr std::array<size_t, 6> oddSizes = {1, 3, 7, 13, 63, 127};
 
-    auto bufferManager = NES::BufferManager::create(1000);
+    auto bufferManager = NES::BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NES::NesDefaultMemoryAllocator>());
     auto baseBuffer = bufferManager->getBufferBlocking();
 
     for (size_t i = 0; i < std::size(oddSizes); ++i)
@@ -51,7 +66,12 @@ TEST(ChildBufferTests, StoreAndLoadChildBufferPowerOfTwoSizes)
 {
     constexpr std::array<size_t, 13> powerOfTwoSizes = {8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768};
 
-    auto bufferManager = NES::BufferManager::create(1000);
+    auto bufferManager = NES::BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NES::NesDefaultMemoryAllocator>());
     auto baseBuffer = bufferManager->getBufferBlocking();
 
     for (size_t i = 0; i < std::size(powerOfTwoSizes); ++i)
@@ -85,7 +105,12 @@ TEST(ChildBufferTests, StoreAndLoadChildBufferRandomSizes)
     std::uniform_int_distribution<size_t> countDist{minNumberOfRandomSizes, maxNumberOfRandomSizes};
     const size_t numberOfRandomSizes = countDist(gen);
 
-    auto bufferManager = NES::BufferManager::create(1000);
+    auto bufferManager = NES::BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NES::NesDefaultMemoryAllocator>());
     auto baseBuffer = bufferManager->getBufferBlocking();
 
     for (size_t i = 0; i < numberOfRandomSizes; ++i)

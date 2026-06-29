@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -187,7 +188,11 @@ public:
         PRECONDITION(upperBound <= std::numeric_limits<uint32_t>::max(), "Not supporting values larger than 4294967295");
         /// To avoid (future) errors by creating a TupleBuffer without a valid control block, we create a single valid (dummy) tuple buffer
         /// All threads share the reference to that buffer throughout this test
-        const auto testBufferManager = NES::BufferManager::create(1, 1);
+        constexpr uint32_t dummyBufferSize = 1;
+        constexpr uint32_t bufferAlignment = 64;
+        constexpr double unpooledMemoryFraction = 0.0;
+        const auto testBufferManager = NES::BufferManager::create(
+            dummyBufferSize, unpooledMemoryFraction, bufferAlignment, dummyBufferSize, std::make_shared<NES::NesDefaultMemoryAllocator>());
         const auto dummyBuffer = testBufferManager->getBufferBlocking();
         const TestThreadPool testThreadPool = TestThreadPool<NUM_THREADS>(upperBound, fixedSeed, dummyBuffer);
         testThreadPool.waitForCompletion();
