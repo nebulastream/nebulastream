@@ -265,10 +265,10 @@ private:
     {
         using NamedTupleType = rfl::named_tuple_t<T>;
         constexpr size_t numFields = NamedTupleType::size();
-
+        const auto namedTuple = rfl::to_named_tuple(data);
         rfl::Generic::Object object;
-        [&]<size_t... Is>(std::index_sequence<Is...>) { (reflect_field<T, Is>(data, object), ...); }(std::make_index_sequence<numFields>{});
-
+        [&]<size_t... Is>(std::index_sequence<Is...>)
+        { (reflect_field<T, Is>(namedTuple, object), ...); }(std::make_index_sequence<numFields>{});
         return Reflected{rfl::Generic{std::move(object)}};
     }
 
@@ -370,14 +370,12 @@ private:
     }
 
     template <typename T, size_t Index>
-    void reflect_field(const T& data, rfl::Generic::Object& object) const
+    void reflect_field(const rfl::named_tuple_t<T>& namedTuple, rfl::Generic::Object& object) const
     {
         using NamedTupleType = rfl::named_tuple_t<T>;
         using FieldType = rfl::tuple_element_t<Index, typename NamedTupleType::Fields>;
         const auto fieldName = typename FieldType::Name().str();
 
-        /// Extract the field value from the aggregate via rfl::to_named_tuple
-        const auto namedTuple = rfl::to_named_tuple(data);
         const auto& fieldValue = rfl::get<Index>(namedTuple);
 
         /// Recursively reflect through the context so nested contextful reflectors get the context
@@ -411,19 +409,7 @@ private:
     }
 };
 
-namespace detail
-{
-/// Helper to reflect a single field at compile-time
-/// Implementation in Reflection.hpp to ensure all reflect() overloads are visible
-template <typename T, size_t Index>
-auto reflect_field_at_index(const T& data);
-
-/// Reflect an aggregate type field-by-field to build a Generic::Object
-/// Implementation in Reflection.hpp to ensure all reflect() overloads are visible
-
-}
-
-/// Core Unreflector specializations
+/// Core Reflector / Unreflector specializations
 
 template <>
 struct Reflector<Reflected>
@@ -516,6 +502,9 @@ struct Reflector<T>
 {
     Reflected operator()(const T& data, const ReflectionContext& ctx) const
     {
+        static_assert(
+            !std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char>,
+            "Cannot reflect char*/const char* — use std::string instead");
         if (data == nullptr)
         {
             return Reflected{std::nullopt};
