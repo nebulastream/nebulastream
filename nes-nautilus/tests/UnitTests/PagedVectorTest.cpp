@@ -35,6 +35,7 @@
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -83,6 +84,8 @@ nautilus::engine::NautilusEngine makeEngine(EngineMode mode)
 /// Marker pattern written into freshly handed-out buffers so tests notice if the PagedVector
 /// reads uninitialised memory: a dirty page surfaces as 0xDEADBEEF instead of zero.
 constexpr uint32_t DIRTY_FILL_PATTERN = 0xDEADBEEF;
+constexpr uint32_t BUFFER_ALIGNMENT = 64;
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 
 struct DirtyBufferProvider : AbstractBufferProvider
 {
@@ -90,7 +93,12 @@ struct DirtyBufferProvider : AbstractBufferProvider
 
     static std::shared_ptr<DirtyBufferProvider> create(size_t bufferSize, size_t numberOfBuffers)
     {
-        return std::make_shared<DirtyBufferProvider>(BufferManager::create(bufferSize, numberOfBuffers));
+        return std::make_shared<DirtyBufferProvider>(BufferManager::create(
+            10 * numberOfBuffers * bufferSize,
+            UNPOOLED_MEMORY_FRACTION,
+            BUFFER_ALIGNMENT,
+            static_cast<uint32_t>(bufferSize),
+            std::make_shared<NesDefaultMemoryAllocator>()));
     }
 
     [[nodiscard]] BufferManagerType getBufferManagerType() const override { return bm->getBufferManagerType(); }

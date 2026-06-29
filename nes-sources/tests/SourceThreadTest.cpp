@@ -17,6 +17,7 @@
 #include <chrono>
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <mutex>
@@ -29,6 +30,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -52,6 +54,11 @@ constexpr std::chrono::milliseconds DEFAULT_LONG_TIMEOUT = std::chrono::millisec
 constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
 constexpr size_t DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER = 23;
 constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 100;
+constexpr uint32_t POOLED_BUFFER_SIZE = 8192;
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
+constexpr uint32_t BUFFER_ALIGNMENT = 64;
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
 
 }
 
@@ -172,7 +179,12 @@ void verify_number_of_emits(
 /// Internal Stop by destroying the SourceThread
 TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
 {
-    auto bm = BufferManager::create();
+    auto bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
@@ -200,7 +212,12 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
 
 TEST_F(SourceThreadTest, NoOpDestruction)
 {
-    auto bm = BufferManager::create();
+    auto bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
@@ -217,7 +234,12 @@ TEST_F(SourceThreadTest, NoOpDestruction)
 
 TEST_F(SourceThreadTest, FailureDuringRunning)
 {
-    auto bm = BufferManager::create();
+    auto bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
@@ -246,7 +268,12 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
 
 TEST_F(SourceThreadTest, FailureDuringOpen)
 {
-    auto bm = BufferManager::create();
+    auto bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
@@ -273,7 +300,12 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
 
 TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
 {
-    auto bm = BufferManager::create();
+    auto bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
@@ -302,7 +334,12 @@ TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
 
 TEST_F(SourceThreadTest, EoSFromSourceWithStop)
 {
-    auto bm = BufferManager::create();
+    auto bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     RecordingEmitFunction recorder(*bm);
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     auto control = std::make_shared<TestSourceControl>();
@@ -333,7 +370,12 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
 
 TEST_F(SourceThreadTest, ApplyBackbressure)
 {
-    auto bm = BufferManager::create();
+    auto bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     RecordingEmitFunction recorder(*bm);
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     backpressureController.applyPressure();
@@ -369,7 +411,12 @@ TEST_F(SourceThreadTest, ApplyBackbressure)
 
 TEST_F(SourceThreadTest, StopDuringBackpressure)
 {
-    auto bm = BufferManager::create();
+    auto bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     RecordingEmitFunction recorder(*bm);
     auto [backpressureController, ingestion] = createBackpressureChannel();
     backpressureController.applyPressure();

@@ -47,6 +47,7 @@
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -66,6 +67,10 @@ namespace NES
 {
 
 constexpr size_t bufferSize = 8192;
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 200;
+constexpr uint32_t BUFFER_ALIGNMENT = 64;
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * bufferSize;
 
 class InferModelPhysicalOperatorTest : public Testing::BaseUnitTest
 {
@@ -265,7 +270,8 @@ public:
     /// Creates an input TupleBuffer with VARSIZED records, each containing packed floats.
     static TupleBuffer createInputBuffer(const TestSchema& inputSchema, const std::vector<std::vector<float>>& recordFloats)
     {
-        auto bufMgr = BufferManager::create(bufferSize, 200);
+        auto bufMgr = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
         auto tupleBuffer = bufMgr->getBufferBlocking();
         tupleBuffer.setSequenceNumber(SequenceNumber(1));
         tupleBuffer.setChunkNumber(ChunkNumber(1));
@@ -313,7 +319,8 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
-        auto bufMgr = BufferManager::create(bufferSize, 200);
+        auto bufMgr = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
         MockedPipelineContext pec{emittedBuffers, bufMgr};
 
         stage.start(pec);
@@ -367,7 +374,8 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
-        auto bufMgr = BufferManager::create(bufferSize, 200);
+        auto bufMgr = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
         MockedPipelineContext pec{emittedBuffers, bufMgr};
 
         stage.start(pec);
@@ -421,7 +429,8 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
-        auto bufMgr = BufferManager::create(bufferSize, 200);
+        auto bufMgr = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
         MockedPipelineContext pec{emittedBuffers, bufMgr};
 
         stage.start(pec);
@@ -483,7 +492,8 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
-        auto bufMgr = BufferManager::create(bufferSize, 200);
+        auto bufMgr = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
         MockedPipelineContext pec{emittedBuffers, bufMgr};
 
         stage.start(pec);
@@ -538,7 +548,8 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
-        auto bufMgr = BufferManager::create(bufferSize, 200);
+        auto bufMgr = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
         MockedPipelineContext pec{emittedBuffers, bufMgr};
 
         stage.start(pec);
@@ -579,7 +590,12 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
 
     folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
     emittedBuffers.wlock()->reserve(numThreads * buffersPerThread * 2);
-    auto bufMgr = BufferManager::create(bufferSize, numThreads * buffersPerThread * 4);
+    auto bufMgr = BufferManager::create(
+        10 * static_cast<size_t>(numThreads) * buffersPerThread * 4 * bufferSize,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        bufferSize,
+        std::make_shared<NesDefaultMemoryAllocator>());
 
     {
         MockedPipelineContext startPec{emittedBuffers, bufMgr, INITIAL<WorkerThreadId>, static_cast<uint64_t>(numThreads)};
@@ -695,7 +711,8 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
-        auto bufMgr = BufferManager::create(bufferSize, 200);
+        auto bufMgr = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
         MockedPipelineContext pec{emittedBuffers, bufMgr};
 
         stage.start(pec);

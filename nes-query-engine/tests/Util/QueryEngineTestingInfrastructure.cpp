@@ -19,6 +19,7 @@
 #include <cassert>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <future>
@@ -35,6 +36,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -271,7 +273,13 @@ QueryPlanBuilder::QueryPlanBuilder(
 }
 
 TestingHarness::TestingHarness(size_t numberOfThreads, size_t numberOfBuffers)
-    : bm(BufferManager::create(DEFAULT_BUFFER_SIZE, numberOfBuffers)), numberOfThreads(numberOfThreads)
+    : bm(BufferManager::create(
+          10 * static_cast<size_t>(numberOfBuffers) * DEFAULT_BUFFER_SIZE,
+          UNPOOLED_MEMORY_FRACTION,
+          BUFFER_ALIGNMENT,
+          static_cast<uint32_t>(DEFAULT_BUFFER_SIZE),
+          std::make_shared<NesDefaultMemoryAllocator>()))
+    , numberOfThreads(numberOfThreads)
 {
 }
 
