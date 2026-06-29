@@ -74,7 +74,7 @@ std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema<NES::QualifiedUnbo
 /// NOLINTBEGIN(readability-magic-numbers)
 namespace NES
 {
-constexpr uint32_t BUFFER_ALIGNMENT = 64;
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 
 class SmallFilesTest : public Testing::BaseUnitTest

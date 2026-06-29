@@ -44,7 +44,7 @@ SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiterInBytes)
 {
     /// This dummy manager only ever hands out a single pooled buffer, so it needs no unpooled budget.
     constexpr uint32_t dummyBufferSize = 1;
-    constexpr uint32_t bufferAlignment = 64;
+    constexpr NES::BufferAlignment bufferAlignment{64};
     constexpr double unpooledMemoryFraction = 0.0;
     auto dummyBuffer
         = BufferManager::create(

@@ -16,11 +16,13 @@
 #include <Runtime/UnpooledChunksManager.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <memory_resource>
 #include <numeric>
+#include <optional>
 #include <ranges>
 #include <thread>
 #include <utility>
@@ -34,8 +36,9 @@
 
 namespace NES
 {
-UnpooledChunksManager::UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource)
-    : memoryResource(std::move(memoryResource))
+UnpooledChunksManager::UnpooledChunksManager(
+    std::shared_ptr<std::pmr::memory_resource> memoryResource, const size_t unpooledMemoryBudgetInBytes)
+    : memoryResource(std::move(memoryResource)), unpooledMemoryBudgetInBytes(unpooledMemoryBudgetInBytes)
 {
 }
 
@@ -114,9 +117,28 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     /// For now, we allocate multiple localLastAllocateChunkKeyrolling averages. If this is too small for the current bufferSize, we allocate at least the bufferSize
     const auto newAllocationSizeExact = std::max(neededSize, newRollingAverage * NUM_PRE_ALLOCATED_CHUNKS);
     const auto newAllocationSize = (newAllocationSizeExact + 4095U) & ~4095U; /// Round to the nearest multiple of 4KB (page size)
+
+    /// Enforce the global unpooled-memory budget before touching the allocator: optimistically reserve the bytes, and
+    /// roll the reservation back if we would breach the budget. This bounds unbounded operator state (hash maps, paged
+    /// vectors, var-sized data) so a runaway query fails cleanly instead of OOM-killing the whole worker process.
+    const auto bytesInUseBefore = currentlyAllocatedUnpooledBytes->fetch_add(newAllocationSize, std::memory_order_relaxed);
+    /// Underflow-safe budget check: bytesInUseBefore + newAllocationSize can wrap size_t (and SIZE_MAX is the
+    /// unbounded sentinel), and concurrent fetch_adds can transiently push bytesInUseBefore past the budget.
+    if (bytesInUseBefore >= unpooledMemoryBudgetInBytes || newAllocationSize > unpooledMemoryBudgetInBytes - bytesInUseBefore)
+    {
+        currentlyAllocatedUnpooledBytes->fetch_sub(newAllocationSize, std::memory_order_relaxed);
+        NES_WARNING(
+            "Unpooled memory budget of {}B would be exceeded by a {}B chunk ({}B already in use); refusing allocation.",
+            unpooledMemoryBudgetInBytes,
+            newAllocationSize,
+            bytesInUseBefore);
+        return {};
+    }
+
     auto* const newlyAllocatedMemory = static_cast<uint8_t*>(memoryResource->allocate(newAllocationSize, alignment));
     if (newlyAllocatedMemory == nullptr)
     {
+        currentlyAllocatedUnpooledBytes->fetch_sub(newAllocationSize, std::memory_order_relaxed);
         NES_WARNING("Could not allocate {} bytes for unpooled chunk!", newAllocationSize);
         return {};
     }
@@ -134,7 +156,7 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     return {localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer};
 }
 
-TupleBuffer
+std::optional<TupleBuffer>
 UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler)
 {
     const auto threadId = std::this_thread::get_id();
@@ -146,6 +168,14 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
     const auto& [localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer]
         = this->allocateSpace(threadId, alignedBufferSizePlusControlBlock, alignment);
 
+    /// allocateSpace returns a null pair when the budget is exhausted or the underlying allocation failed. Signal this
+    /// to the caller as an empty optional (callers turn it into CannotAllocateBuffer/BufferAllocationFailure) instead of
+    /// constructing a TupleBuffer over a null payload.
+    if (localMemoryForNewTupleBuffer == nullptr)
+    {
+        return std::nullopt;
+    }
+
     /// Creating a new memory segment, and adding it to the unpooledMemorySegments
     const auto alignedBufferSize = alignBufferSize(neededSize, alignment);
     const auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), alignment);
@@ -156,7 +186,8 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
         [copyOfMemoryResource = this->memoryResource,
          copyOLastChunkPtr = localKeyForUnpooledBufferChunk,
          copyOfChunk = chunk,
-         copyOfAlignment = alignment](detail::MemorySegment* memorySegment, BufferRecycler*)
+         copyOfAlignment = alignment,
+         copyOfAllocatedBytes = currentlyAllocatedUnpooledBytes](detail::MemorySegment* memorySegment, BufferRecycler*)
         {
             auto lockedLocalUnpooledBufferData = copyOfChunk->wlock();
             auto& curUnpooledChunk = lockedLocalUnpooledBufferData->chunks[copyOLastChunkPtr];
@@ -175,6 +206,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
                 lockedLocalUnpooledBufferData.unlock();
                 copyOfMemoryResource->deallocate(
                     extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize, copyOfAlignment);
+                copyOfAllocatedBytes->fetch_sub(extractedChunkControlBlock.totalSize, std::memory_order_relaxed);
             }
         });
 

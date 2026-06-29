@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstring>
 #include <deque>
+#include <limits>
 #include <memory>
 #include <memory_resource>
 #include <mutex>
@@ -58,10 +59,10 @@ BufferManager::BufferManager(
     initialize();
 }
 
-std::shared_ptr<BufferManager>
-BufferManager::create(const size_t totalMemoryInBytes,
+std::shared_ptr<BufferManager> BufferManager::create(
+    const size_t totalMemoryInBytes,
     const double unpooledMemoryFraction,
-    const uint32_t alignment,
+    const BufferAlignment alignment,
     const uint32_t bufferSize,
     const std::shared_ptr<std::pmr::memory_resource>& memoryResource)
 {
@@ -73,8 +74,13 @@ BufferManager::create(const size_t totalMemoryInBytes,
 
     const auto unpooledMemoryLimitInBytes = static_cast<size_t>(static_cast<double>(totalMemoryInBytes) * unpooledMemoryFraction);
     const size_t pooledMemoryInBytes = totalMemoryInBytes - unpooledMemoryLimitInBytes;
+    PRECONDITION(
+        pooledMemoryInBytes / bufferSize <= std::numeric_limits<uint32_t>::max(),
+        "pooled buffer count {} exceeds uint32_t; lower total_memory_in_bytes or raise buffer_size",
+        pooledMemoryInBytes / bufferSize);
     const auto numOfBuffers = static_cast<uint32_t>(pooledMemoryInBytes / bufferSize);
-    return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment);
+    return std::make_shared<BufferManager>(
+        Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment.getRawValue());
 }
 
 BufferManager::~BufferManager()

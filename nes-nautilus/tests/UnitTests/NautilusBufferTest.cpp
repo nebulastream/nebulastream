@@ -45,7 +45,7 @@ namespace
 /// NOLINTBEGIN(readability-magic-numbers, performance-unnecessary-value-param, performance-unnecessary-copy-initialization)
 constexpr size_t TEST_BUFFER_SIZE = 4096;
 constexpr size_t TEST_NUMBER_OF_BUFFERS = 16;
-constexpr uint32_t BUFFER_ALIGNMENT = 64;
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * TEST_NUMBER_OF_BUFFERS * TEST_BUFFER_SIZE;
 /// Number of records pre-set on the on-stack TupleBuffer, so that reads through a BorrowedNautilusBuffer can be verified.

@@ -70,7 +70,7 @@ teardown() {
 
   # Randomly pick words from the expected output
   echo "$output" | grep -q "worker"
-  echo "$output" | grep -q "number_of_buffers_in_global_buffer_manager"
+  echo "$output" | grep -q "total_memory_in_bytes"
   echo "$output" | grep -q "query_engine"
   echo "$output" | grep -q "INTERPRETER"
 }
@@ -128,6 +128,40 @@ teardown() {
 
   # The log should NOT contain the override warning for this key
   ! grep "enable_event_trace.*was already set" singleNodeWorker.log
+}
+
+# Locks the config contract for the memory-budget options. Degenerate values are rejected during BufferManager
+# construction at startup. The abort can happen in a startup thread while the main process lingers to the timeout,
+# so the exit code is not a reliable signal -- the logged error marker is. A healthy worker never logs these.
+
+@test "worker rejects total_memory_in_bytes of 0" {
+  # A zero budget yields zero pooled buffers, which cannot back the internal MPMC queues.
+  run timeout 5 $NES_WORKER --worker.total_memory_in_bytes=0
+  grep -E "capacity 0 is impossible|Precondition violated" singleNodeWorker.log
+}
+
+@test "worker rejects unpooled_memory_fraction out of range" {
+  # The fraction is validated to [0.0, 1.0] at config-parse time, so both bounds are rejected there.
+  run timeout 5 $NES_WORKER --worker.unpooled_memory_fraction=1.5
+  grep -E "invalid config parameter|Validator" singleNodeWorker.log
+  grep "unpooled_memory_fraction" singleNodeWorker.log
+
+  run timeout 5 $NES_WORKER --worker.unpooled_memory_fraction=-0.1
+  grep -E "invalid config parameter|Validator" singleNodeWorker.log
+  grep "unpooled_memory_fraction" singleNodeWorker.log
+}
+
+@test "worker rejects non-power-of-two buffer_alignment_in_bytes" {
+  # 48 is not a power of two. Rejected at config-parse time by PowerOfTwoValidation, so this holds on
+  # every build type (a BufferManager PRECONDITION would be compiled out in the no-assert Benchmark build).
+  run timeout 5 $NES_WORKER --worker.buffer_alignment_in_bytes=48
+  grep -E "invalid config parameter|Validator" singleNodeWorker.log
+  grep "buffer_alignment_in_bytes" singleNodeWorker.log
+}
+
+@test "worker accepts unpooled_memory_fraction of 0.0 (all pooled)" {
+  run timeout 5 $NES_WORKER --worker.unpooled_memory_fraction=0.0
+  [ "$status" -eq 124 ] # stays alive
 }
 
 

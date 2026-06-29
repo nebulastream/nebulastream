@@ -28,7 +28,7 @@ class BufferManagerDestroyTest : public ::testing::Test
 protected:
     static constexpr uint32_t BUFFER_SIZE = 4096;
     static constexpr uint32_t NUM_BUFFERS = 8;
-    static constexpr uint32_t BUFFER_ALIGNMENT = 64;
+    static constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
     static constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
     static constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUM_BUFFERS) * BUFFER_SIZE;
 };
