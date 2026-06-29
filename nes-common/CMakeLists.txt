@@ -53,10 +53,17 @@ target_include_directories(nes-grpc PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/grpc_generated_src>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+# Generate BuildInfo.hpp/.cpp (build metadata embedded at configure time) used by the --version flag.
+include(BuildInfo)
+set(NES_BUILD_INFO_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+generate_build_info("${NES_BUILD_INFO_DIR}")
+
 get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
-add_library(nes-common ${NES_COMMON_SOURCE_FILES})
+add_library(nes-common ${NES_COMMON_SOURCE_FILES} "${NES_BUILD_INFO_DIR}/BuildInfo.cpp")
+# The generated BuildInfo.cpp includes <BuildInfo.hpp> from the generated directory.
+target_include_directories(nes-common PRIVATE "${NES_BUILD_INFO_DIR}")
 
 find_package(cpptrace   CONFIG REQUIRED)
 find_package(fmt        CONFIG REQUIRED)
