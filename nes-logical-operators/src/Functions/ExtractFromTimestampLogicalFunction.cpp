@@ -120,9 +120,10 @@ std::string ExtractFromTimestampLogicalFunction::explain(ExplainVerbosity) const
     return fmt::format("{}: extract from unix timestamp (ms), outputType={}", getType(), outputType);
 }
 
-Reflected Reflector<ExtractFromTimestampLogicalFunction>::operator()(const ExtractFromTimestampLogicalFunction& function) const
+Reflected Reflector<ExtractFromTimestampLogicalFunction>::operator()(
+    const ExtractFromTimestampLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedExtractFromTimestampLogicalFunction{.unit = function.unit, .child = function.child});
+    return context.reflect(detail::ReflectedExtractFromTimestampLogicalFunction{.unit = function.unit, .child = function.child});
 }
 
 ExtractFromTimestampLogicalFunction

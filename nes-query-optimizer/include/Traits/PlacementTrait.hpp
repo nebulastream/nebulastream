@@ -50,7 +50,7 @@ struct PlacementTrait final
 template <>
 struct Reflector<PlacementTrait>
 {
-    Reflected operator()(const PlacementTrait& trait) const;
+    Reflected operator()(const PlacementTrait& trait, const ReflectionContext& context) const;
 };
 
 template <>

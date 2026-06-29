@@ -41,7 +41,6 @@ public:
 
     [[nodiscard]] CountAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] std::string_view getName() const noexcept;
-    [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] static DataType getAggregateType();
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
     [[nodiscard]] bool shallIncludeNullValues() const noexcept;
@@ -58,7 +57,7 @@ private:
 template <>
 struct Reflector<CountAggregationLogicalFunction>
 {
-    Reflected operator()(const CountAggregationLogicalFunction& function) const;
+    Reflected operator()(const CountAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

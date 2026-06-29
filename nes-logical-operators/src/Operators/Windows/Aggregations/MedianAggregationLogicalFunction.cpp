@@ -93,14 +93,10 @@ MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredT
     return newAgg;
 }
 
-Reflected MedianAggregationLogicalFunction::reflect() const
+Reflected Reflector<MedianAggregationLogicalFunction>::operator()(
+    const MedianAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<MedianAggregationLogicalFunction>::operator()(const MedianAggregationLogicalFunction& function) const
-{
-    return reflect(function.getInputFunction());
+    return context.reflect(function.getInputFunction());
 }
 
 MedianAggregationLogicalFunction

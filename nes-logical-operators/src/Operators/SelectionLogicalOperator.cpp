@@ -162,10 +162,10 @@ LogicalOperator SelectionLogicalOperator::getChild() const
     return child.value();
 }
 
-Reflected
-Reflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(
+    const TypedLogicalOperator<SelectionLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedSelectionLogicalOperator{.operatorId = op.getId(), .predicate = op->getPredicate()});
+    return context.reflect(detail::ReflectedSelectionLogicalOperator{.operatorId = op.getId(), .predicate = op->getPredicate()});
 }
 
 Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))

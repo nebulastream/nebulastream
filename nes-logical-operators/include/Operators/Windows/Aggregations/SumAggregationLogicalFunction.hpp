@@ -41,7 +41,6 @@ public:
 
     [[nodiscard]] SumAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] std::string_view getName() const noexcept;
-    [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] DataType getAggregateType() const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
@@ -59,7 +58,7 @@ private:
 template <>
 struct Reflector<SumAggregationLogicalFunction>
 {
-    Reflected operator()(const SumAggregationLogicalFunction& function) const;
+    Reflected operator()(const SumAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

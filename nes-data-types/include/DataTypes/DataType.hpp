@@ -139,7 +139,7 @@ struct DataType final
 template <>
 struct Reflector<DataType>
 {
-    Reflected operator()(const DataType& field) const;
+    Reflected operator()(const DataType& field, const ReflectionContext& context) const;
 };
 
 template <>

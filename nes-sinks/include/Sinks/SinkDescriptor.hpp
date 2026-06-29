@@ -204,7 +204,7 @@ public:
 template <>
 struct Reflector<SinkDescriptor>
 {
-    Reflected operator()(const SinkDescriptor& descriptor) const;
+    Reflected operator()(const SinkDescriptor& descriptor, const ReflectionContext& context) const;
 };
 
 template <>
@@ -239,7 +239,7 @@ struct ReflectedNamedSinkDescriptor
 template <>
 struct Reflector<NamedSinkDescriptor>
 {
-    Reflected operator()(const NamedSinkDescriptor& descriptor) const;
+    Reflected operator()(const NamedSinkDescriptor& descriptor, const ReflectionContext& context) const;
 };
 
 template <>
@@ -251,7 +251,7 @@ struct Unreflector<NamedSinkDescriptor>
 template <>
 struct Reflector<InlineSinkDescriptor>
 {
-    Reflected operator()(const InlineSinkDescriptor& descriptor) const;
+    Reflected operator()(const InlineSinkDescriptor& descriptor, const ReflectionContext& context) const;
 };
 
 template <>

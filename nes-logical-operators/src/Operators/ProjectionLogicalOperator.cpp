@@ -319,13 +319,13 @@ bool ProjectionLogicalOperator::hasAsterisk() const
     return asterisk;
 }
 
-Reflected
-Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(
+    const TypedLogicalOperator<ProjectionLogicalOperator>& op, const ReflectionContext& context) const
 {
     auto projections = op->getProjections()
         | std::views::transform([](const auto& projection) { return std::pair{projection.first.getLastName(), projection.second}; })
         | std::ranges::to<std::vector>();
-    return reflect(
+    return context.reflect(
         detail::ReflectedProjectionLogicalOperator{.operatorId = op.getId(), .asterisk = op->hasAsterisk(), .projections = projections});
 }
 

@@ -92,14 +92,10 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredType(co
     return newAggFunction;
 }
 
-Reflected AvgAggregationLogicalFunction::reflect() const
+Reflected
+Reflector<AvgAggregationLogicalFunction>::operator()(const AvgAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return NES::reflect(this);
-}
-
-Reflected Reflector<AvgAggregationLogicalFunction>::operator()(const AvgAggregationLogicalFunction& function) const
-{
-    return reflect(function.getInputFunction());
+    return context.reflect(function.getInputFunction());
 }
 
 AvgAggregationLogicalFunction

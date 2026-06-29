@@ -203,10 +203,10 @@ LogicalOperator InferModelLogicalOperator::getChild() const
     return child.value();
 }
 
-Reflected
-Reflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const TypedLogicalOperator<InferModelLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(
+    const TypedLogicalOperator<InferModelLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedInferModelLogicalOperator{.operatorId = op.getId(), .model = reflect(op->getModel())});
+    return context.reflect(detail::ReflectedInferModelLogicalOperator{.operatorId = op.getId(), .model = context.reflect(op->getModel())});
 }
 
 Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))

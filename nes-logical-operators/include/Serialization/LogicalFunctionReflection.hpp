@@ -35,22 +35,25 @@ namespace NES
 template <>
 struct Reflector<detail::ErasedLogicalFunction>
 {
-    Reflected operator()(const detail::ErasedLogicalFunction& function) const { return function.reflect(); }
+    Reflected operator()(const detail::ErasedLogicalFunction& function, const ReflectionContext& context) const
+    {
+        return function.reflect(context);
+    }
 };
 
 template <LogicalFunctionConcept Checked>
 struct Reflector<TypedLogicalFunction<Checked>>
 {
-    Reflected operator()(const TypedLogicalFunction<Checked>& function) const
+    Reflected operator()(const TypedLogicalFunction<Checked>& function, const ReflectionContext& context) const
     {
-        return reflect(detail::ReflectedLogicalFunction{std::string{function.getType()}, Reflector<Checked>{}(*function)});
+        return context.reflect(detail::ReflectedLogicalFunction{std::string{function.getType()}, Reflector<Checked>{}(*function, context)});
     }
 };
 
 template <>
 struct Reflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
 {
-    Reflected operator()(const TypedLogicalFunction<detail::ErasedLogicalFunction>& function) const;
+    Reflected operator()(const TypedLogicalFunction<detail::ErasedLogicalFunction>& function, const ReflectionContext& context) const;
 };
 
 template <>
@@ -73,8 +76,8 @@ struct Unreflector<TypedLogicalFunction<Checked>>
     }
 };
 
-static_assert(requires(LogicalFunction logicalFunction) {
-    { reflect(logicalFunction) } -> std::same_as<Reflected>;
+static_assert(requires(LogicalFunction logicalFunction, ReflectionContext& context) {
+    { context.reflect(logicalFunction) } -> std::same_as<Reflected>;
 });
 
 }

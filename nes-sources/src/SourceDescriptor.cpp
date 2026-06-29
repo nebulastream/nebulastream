@@ -111,7 +111,7 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
                descriptor.getInputFormatterDescriptor());
 }
 
-Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
+Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor, const ReflectionContext& context) const
 {
     const detail::ReflectedSourceDescriptor descriptor{
         .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
@@ -119,9 +119,9 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .type = sourceDescriptor.sourceType,
         .host = sourceDescriptor.host,
         .inputFormatterDescriptor = sourceDescriptor.inputFormatterDescriptor,
-        .config = sourceDescriptor.getReflectedConfig()};
+        .config = sourceDescriptor.getReflectedConfig(context)};
 
-    return reflect(descriptor);
+    return context.reflect(descriptor);
 }
 
 SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const

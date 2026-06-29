@@ -69,7 +69,7 @@ struct ReflectedVarSizedToNumericLogicalFunction
 template <>
 struct Reflector<VarSizedToNumericLogicalFunction>
 {
-    Reflected operator()(const VarSizedToNumericLogicalFunction& function) const;
+    Reflected operator()(const VarSizedToNumericLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

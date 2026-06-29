@@ -653,7 +653,8 @@ void doStatus(
         {
             throw std::move(result.error());
         }
-        auto rows = NES::rowsToJsonArray(NES::StatementOutputAssembler<NES::WorkerStatusStatementResult>{}.convert(result.value()));
+        auto rows = NES::rowsToJsonArray(
+            NES::StatementOutputAssembler<NES::WorkerStatusStatementResult>{}.convert(result.value()), NES::ReflectionContext{});
         std::cout << rfl::json::write(rows, rfl::json::pretty) << '\n';
     }
     else
@@ -668,8 +669,9 @@ void doStatus(
                 throw std::move(statementResult.error());
             }
 
-            auto results
-                = NES::rowsToJsonArray(NES::StatementOutputAssembler<NES::ShowQueriesStatementResult>{}.convert(statementResult.value()));
+            auto results = NES::rowsToJsonArray(
+                NES::StatementOutputAssembler<NES::ShowQueriesStatementResult>{}.convert(statementResult.value()),
+                NES::ReflectionContext{});
             result.insert(result.end(), std::make_move_iterator(results.begin()), std::make_move_iterator(results.end()));
         }
 
@@ -688,8 +690,8 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector
             throw std::move(statementResult.error());
         }
 
-        auto results
-            = NES::rowsToJsonArray(NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value()));
+        auto results = NES::rowsToJsonArray(
+            NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value()), NES::ReflectionContext{});
         result.insert(result.end(), std::make_move_iterator(results.begin()), std::make_move_iterator(results.end()));
     }
 
