@@ -25,11 +25,18 @@ namespace NES
 class DefaultStatisticQueryGenerator : public StatisticQueryGenerator
 {
 public:
+    /// @param workerHost the host (worker address, e.g. "localhost:8080") baked into the generated source/sink so
+    /// operator placement assigns them to the colocated worker. Defaults to "localhost".
+    explicit DefaultStatisticQueryGenerator(std::string workerHost = "localhost");
+
     [[nodiscard]] LogicalPlan
     generateBuildQuery(uint64_t statisticId, uint64_t windowSizeMs, const std::string& fifoPath) const override;
 
     [[nodiscard]] LogicalPlan
     generateProbeQuery(uint64_t statisticId, uint64_t startTs, uint64_t endTs, const std::string& fifoPath) const override;
+
+private:
+    std::string workerHost;
 };
 
 }

@@ -53,7 +53,8 @@ std::string constantSequenceField(const uint64_t value)
 /// A Generator heartbeat source whose four UINT64 fields (STATISTICID, STATISTICSTART, STATISTICEND, VALUE) are
 /// constants. We generate them directly (rather than via a projection of constants) so the operators downstream
 /// read real source fields — a pure-constant projection would access no input field and produce an empty scan.
-LogicalPlan generatorWithConstants(const uint64_t statisticId, const uint64_t startTs, const uint64_t endTs, const uint64_t value)
+LogicalPlan generatorWithConstants(
+    const uint64_t statisticId, const uint64_t startTs, const uint64_t endTs, const uint64_t value, const std::string& workerHost)
 {
     auto schema = std::vector<UnqualifiedUnboundField>{
                       UnqualifiedUnboundField{Identifier::parse(STAT_ID), DataType::Type::UINT64},
@@ -74,7 +75,7 @@ LogicalPlan generatorWithConstants(const uint64_t statisticId, const uint64_t st
         {Identifier::parse("GENERATOR_RATE_CONFIG"), "emit_rate 100"},
         {Identifier::parse("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"), "NONE"},
         /// "host" determines worker placement (consumed by the inline-source binding rule), not source behavior.
-        {Identifier::parse("host"), "localhost"}};
+        {Identifier::parse("host"), workerHost}};
 
     return LogicalPlanBuilder::createLogicalPlan(
         Identifier::parse("Generator"), std::move(schema), std::move(sourceConfig), {{Identifier::parse("type"), "CSV"}});
@@ -87,7 +88,7 @@ LogicalPlan promoteToRoot(const LogicalPlan& plan, const LogicalOperator& newRoo
     return LogicalPlan(plan.getQueryId(), {std::move(root)}, plan.getOriginalSql());
 }
 
-LogicalPlan addFifoFileSink(const LogicalPlan& plan, const std::string& fifoPath)
+LogicalPlan addFifoFileSink(const LogicalPlan& plan, const std::string& fifoPath, const std::string& workerHost)
 {
     return LogicalPlanBuilder::addInlineSink(
         Identifier::parse("File"),
@@ -96,30 +97,34 @@ LogicalPlan addFifoFileSink(const LogicalPlan& plan, const std::string& fifoPath
          {Identifier::parse("APPEND"), "true"},
          {Identifier::parse("OUTPUT_FORMAT"), "CSV"},
          /// "host" determines worker placement (consumed by the inline-sink binding rule), not sink behavior.
-         {Identifier::parse("host"), "localhost"}},
+         {Identifier::parse("host"), workerHost}},
         {},
         plan);
 }
 }
 
+DefaultStatisticQueryGenerator::DefaultStatisticQueryGenerator(std::string workerHost) : workerHost(std::move(workerHost))
+{
+}
+
 LogicalPlan DefaultStatisticQueryGenerator::generateBuildQuery(
     const uint64_t statisticId, const uint64_t windowSizeMs, const std::string& fifoPath) const
 {
-    auto plan = generatorWithConstants(statisticId, /*startTs=*/0, /*endTs=*/windowSizeMs, /*value=*/42);
+    auto plan = generatorWithConstants(statisticId, /*startTs=*/0, /*endTs=*/windowSizeMs, /*value=*/42, workerHost);
     plan = promoteToRoot(
         plan, StatisticStoreWriterLogicalOperator::create(statisticId, std::string{STAT_START}, std::string{STAT_END}, std::string{STAT_VALUE}));
-    return addFifoFileSink(plan, fifoPath);
+    return addFifoFileSink(plan, fifoPath, workerHost);
 }
 
 LogicalPlan DefaultStatisticQueryGenerator::generateProbeQuery(
     const uint64_t statisticId, const uint64_t startTs, const uint64_t endTs, const std::string& fifoPath) const
 {
-    auto plan = generatorWithConstants(statisticId, startTs, endTs, /*value=*/0);
+    auto plan = generatorWithConstants(statisticId, startTs, endTs, /*value=*/0, workerHost);
     plan = promoteToRoot(
         plan,
         StatisticStoreReaderLogicalOperator::create(
             std::string{STAT_ID}, std::string{STAT_START}, std::string{STAT_END}, std::string{STAT_VALUE}));
-    return addFifoFileSink(plan, fifoPath);
+    return addFifoFileSink(plan, fifoPath, workerHost);
 }
 
 }

@@ -22,6 +22,7 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <QueryId.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <folly/Synchronized.h>
 #include <CollectionDomain.hpp>
@@ -66,7 +67,7 @@ public:
 
     struct Entry
     {
-        QueryId queryId;
+        DistributedQueryId queryId;
         Statistic::StatisticId statisticId;
         std::vector<ConditionTrigger> triggers;
     };
@@ -77,7 +78,8 @@ public:
     [[nodiscard]] std::optional<Entry> find(const Key& key) const;
 
     /// Registers a new statistic tracking entry, optionally with initial triggers.
-    void registerStatistic(const Key& key, QueryId queryId, Statistic::StatisticId statisticId, std::vector<ConditionTrigger> triggers);
+    void registerStatistic(
+        const Key& key, DistributedQueryId queryId, Statistic::StatisticId statisticId, std::vector<ConditionTrigger> triggers);
 
     /// Appends a condition trigger to an existing entry. Returns false if the key is not found.
     bool addTrigger(const Key& key, ConditionTrigger trigger);

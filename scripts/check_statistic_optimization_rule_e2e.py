@@ -31,8 +31,11 @@ Flow:
 The value is deterministic: the PoC build query bakes the constant 42 into a generator constant-sequence source, so
 there is no randomness in the result.
 
+The script builds the nes-repl-embedded target first (pass --skip-build to skip).
+
 Usage:
-    scripts/check_statistic_optimization_rule_e2e.py [--repl-binary PATH] [--expected-value 42] [--timeout 180]
+    scripts/check_statistic_optimization_rule_e2e.py [--build-dir DIR] [--skip-build] [--repl-binary PATH]
+                                                     [--expected-value 42] [--timeout 180]
 
 Exit code 0 on success, non-zero otherwise.
 """
@@ -43,7 +46,19 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_REPL_BINARY = REPO_ROOT / "build_dir" / "nes-frontend" / "apps" / "nes-repl-embedded"
+DEFAULT_BUILD_DIR = REPO_ROOT / "build_dir"
+BUILD_TARGET = "nes-repl-embedded"
+REPL_BINARY_SUBPATH = Path("nes-frontend") / "apps" / "nes-repl-embedded"
+
+
+def build_repl(build_dir: Path) -> int:
+    """Builds the nes-repl-embedded target. Streams build output. Returns the build's exit code."""
+    cmd = ["cmake", "--build", str(build_dir), "--target", BUILD_TARGET, "-j"]
+    print(f"Building: {' '.join(cmd)}")
+    completed = subprocess.run(cmd, cwd=str(REPO_ROOT))
+    if completed.returncode != 0:
+        print(f"ERROR: build of {BUILD_TARGET} failed (exit {completed.returncode}).", file=sys.stderr)
+    return completed.returncode
 
 # A minimal deployable query for the embedded engine: a bounded generator source feeding a Void sink. Deploying the
 # SELECT triggers optimization (and therefore the StatisticOptimizationRule). MAX_RUNTIME_MS keeps the run short.
@@ -65,10 +80,17 @@ PRINT_RE = re.compile(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
+        "--build-dir",
+        type=Path,
+        default=DEFAULT_BUILD_DIR,
+        help=f"CMake build directory to build/run from (default: {DEFAULT_BUILD_DIR}).",
+    )
+    parser.add_argument("--skip-build", action="store_true", help="Do not build nes-repl-embedded before running.")
+    parser.add_argument(
         "--repl-binary",
         type=Path,
-        default=DEFAULT_REPL_BINARY,
-        help=f"Path to the nes-repl-embedded binary (default: {DEFAULT_REPL_BINARY})",
+        default=None,
+        help="Path to the nes-repl-embedded binary (default: <build-dir>/nes-frontend/apps/nes-repl-embedded).",
     )
     parser.add_argument(
         "--expected-value",
@@ -79,13 +101,20 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=180, help="Seconds to wait for the REPL to finish (default: 180).")
     args = parser.parse_args()
 
-    if not args.repl_binary.is_file():
-        print(f"ERROR: nes-repl-embedded binary not found: {args.repl_binary}", file=sys.stderr)
-        print("Build it first, e.g.: cmake --build build_dir --target nes-repl-embedded", file=sys.stderr)
+    if not args.skip_build:
+        build_rc = build_repl(args.build_dir)
+        if build_rc != 0:
+            return build_rc
+
+    repl_binary = args.repl_binary if args.repl_binary is not None else args.build_dir / REPL_BINARY_SUBPATH
+    if not repl_binary.is_file():
+        print(f"ERROR: nes-repl-embedded binary not found: {repl_binary}", file=sys.stderr)
+        print(f"Build it first, e.g.: cmake --build {args.build_dir} --target {BUILD_TARGET}", file=sys.stderr)
         return 2
 
+    # --enable-statistics gives the embedded worker a statistic store and wires the StatisticOptimizationRule.
     # --on-exit STOP_QUERIES tears the deployed query down cleanly before the process exits.
-    cmd = [str(args.repl_binary), "--on-exit", "STOP_QUERIES"]
+    cmd = [str(repl_binary), "--enable-statistics", "--on-exit", "STOP_QUERIES"]
     print(f"Starting NebulaStream instance: {' '.join(cmd)}")
     try:
         completed = subprocess.run(
