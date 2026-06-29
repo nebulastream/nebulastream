@@ -31,6 +31,7 @@ std::vector<BaseOption*> SystestConfiguration::getOptions()
         &testGroups,
         &disabledTestFiles,
         &testDataDir,
+        &validateQueryPlanSerialization,
         &endlessMode,
         &excludeGroups,
         &remoteWorker,
