@@ -28,24 +28,6 @@ namespace NES
 
 class StatisticRetrievalService;
 
-/**
- * @brief Proof-of-concept rule that demonstrates making statistics accessible to query-structuring decisions.
- *
- * The optimizer normally rewrites a plan from purely static information. This rule shows the missing piece for
- * *adaptive* optimization: pulling a runtime statistic about the data and letting a structuring decision depend on
- * it. A real future rule could, for example, reorder filters by the measured selectivity of the predicates over the
- * actual data, or pick a join side from cardinality estimates.
- *
- * For now this is only the data-flow skeleton: `apply` asks the StatisticRetrievalService for a (mock) statistic,
- * prints the returned value so a run is observable, and then returns the plan **unmodified** — we have no meaningful
- * statistic to act on yet. The point is solely to prove the control plane can surface a statistic value to the
- * optimizer at plan-rewrite time.
- *
- * Because it requires a wired-up StatisticRetrievalService (whose coordinator submits the build/probe queries), this
- * rule is constructed with that service rather than default-constructed, and is *not* part of the default
- * RuleBasedOptimizer sequence (running a statistic retrieval while optimizing the statistic queries themselves would
- * recurse). It is meant to be instantiated and applied explicitly.
- */
 class StatisticOptimizationRule
 {
 public:

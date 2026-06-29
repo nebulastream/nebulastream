@@ -34,8 +34,6 @@ class AbstractStatisticStore;
 class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    /// @param statisticStore optional statistic store injected into the worker so statistic build/probe queries can
-    /// read/write it. nullptr (the default) means the worker cannot serve statistic queries.
     EmbeddedWorkerQuerySubmissionBackend(
         WorkerConfig config,
         SingleNodeWorkerConfiguration workerConfiguration,
@@ -50,7 +48,6 @@ private:
     SingleNodeWorker worker;
 };
 
-/// @param statisticStore optional statistic store injected into the embedded worker (see the backend ctor).
 BackendProvider
 createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration, std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
 
