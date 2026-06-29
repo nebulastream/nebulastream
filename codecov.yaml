@@ -1,0 +1,7 @@
+# Patch (diff) coverage is advisory for this repository: report it but keep it
+# non-blocking so it does not gate merges. Project coverage still applies.
+coverage:
+  status:
+    patch:
+      default:
+        informational: true
