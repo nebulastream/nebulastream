@@ -1131,6 +1131,7 @@ void AntlrSQLQueryPlanCreator::enterTimeTravelClause(AntlrSQLParser::TimeTravelC
 void AntlrSQLQueryPlanCreator::enterUdbClause(AntlrSQLParser::UdbClauseContext* context)
 {
     helpers.top().hasUdbClause = true;
+    /// if no trace name is provided UDB auto generates one
     if (context->udbTraceName != nullptr)
         helpers.top().udbTraceName = context->udbTraceName->getText();
 }

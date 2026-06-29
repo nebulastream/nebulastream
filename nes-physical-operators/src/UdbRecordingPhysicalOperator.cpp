@@ -15,11 +15,12 @@
 #include <UdbRecordingPhysicalOperator.hpp>
 
 #include <cstdlib>
-#include <fcntl.h>
 #include <optional>
 #include <string>
-#include <sys/wait.h>
+#include <fcntl.h>
 #include <unistd.h>
+#include <sys/prctl.h>
+#include <sys/wait.h>
 
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -49,7 +50,7 @@ void spawnUdbProxy(const char* traceName)
     const char* udbBin = std::getenv("UDB_BINARY_PATH");
     if (udbBin == nullptr)
     {
-        NES_WARNING("UDB_BINARY_PATH is not set — skipping udb recording");
+        NES_ERROR("UDB_BINARY_PATH is not set — skipping udb recording");
         return;
     }
 
@@ -77,9 +78,9 @@ void spawnUdbProxy(const char* traceName)
     {
         /// Child: write end is O_CLOEXEC — exec closes it. On failure write a byte so parent detects it.
         if (traceName != nullptr)
-            ::execlp(udbBin, udbBin, "--pid", pidBuf, "--recording-file", traceFileBuf, nullptr);
+            ::execl(udbBin, udbBin, "--pid", pidBuf, "--recording-file", traceFileBuf, nullptr);
         else
-            ::execlp(udbBin, udbBin, "--pid", pidBuf, nullptr);
+            ::execl(udbBin, udbBin, "--pid", pidBuf, nullptr);
 
         /// execlp only returns on failure — only async-signal-safe calls allowed here.
         const char errByte = 1;
@@ -97,6 +98,12 @@ void spawnUdbProxy(const char* traceName)
         return;
     }
 
+    /// Grant ptrace permission to exactly this child; avoids having to lower yama/ptrace_scope to 0 (c.f. man 2 prctl)
+    if (::prctl(PR_SET_PTRACER, static_cast<unsigned long>(child)) < 0)
+    {
+        NES_ERROR("UdbRecordingPhysicalOperator: prctl(PR_SET_PTRACER) failed, errno={}", errno);
+    }
+
     char result = 0;
     if (::read(pipeFd[0], &result, 1) == 1)
     {
@@ -108,8 +115,7 @@ void spawnUdbProxy(const char* traceName)
 
 }
 
-UdbRecordingPhysicalOperator::UdbRecordingPhysicalOperator(std::optional<std::string> traceName)
-    : traceName(std::move(traceName))
+UdbRecordingPhysicalOperator::UdbRecordingPhysicalOperator(std::optional<std::string> traceName) : traceName(std::move(traceName))
 {
 }
 

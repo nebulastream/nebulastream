@@ -52,6 +52,7 @@ COLOR_RESET = "\033[0m"
 INGORED_ENDINGS = {
     "clang-format",
     "clang-tidy",
+    "clangd",
     "csv",
     "disabled",
     "dockerfile",
