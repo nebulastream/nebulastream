@@ -39,6 +39,7 @@
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -108,8 +109,15 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     constexpr auto bufferSize = 4096;
     constexpr auto minimumBuffers = 4000UL;
     constexpr auto callsToCreateMonotonicValues = 3;
+    constexpr uint32_t bufferAlignment = 64;
+    constexpr double unpooledMemoryFraction = 0.9;
     const auto bufferNeeded = callsToCreateMonotonicValues * ((inputSchema.getSizeInBytes() * params.numberOfItems) / bufferSize + 1);
-    bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
+    bufferManager = BufferManager::create(
+        10 * std::max(bufferNeeded, minimumBuffers) * bufferSize,
+        unpooledMemoryFraction,
+        bufferAlignment,
+        bufferSize,
+        std::make_shared<NesDefaultMemoryAllocator>());
 
     /// Creating a tuple buffer memory provider for the key and value buffers
     inputBufferRef = LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
