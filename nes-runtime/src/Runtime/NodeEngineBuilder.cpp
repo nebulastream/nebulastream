@@ -15,13 +15,16 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 
 #include <memory>
+#include <optional>
 #include <utility>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <ErrorHandling.hpp>
 #include <QueryEngine.hpp>
 
 namespace NES
@@ -33,11 +36,34 @@ NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfigurat
 {
 }
 
+std::optional<SizeClassConfig> NodeEngineBuilder::makeSizeClassConfig(const WorkerConfiguration& workerConfiguration)
+{
+    if (!workerConfiguration.enableBufferSizeClasses.getValue())
+    {
+        return std::nullopt;
+    }
+    const auto minClassSize = workerConfiguration.bufferSizeClassMinBytes.getValue();
+    const auto maxClassSize = workerConfiguration.bufferSizeClassMaxBytes.getValue();
+    if (minClassSize > maxClassSize)
+    {
+        throw InvalidConfigParameter(
+            "buffer_size_class_min_bytes ({}) must be <= buffer_size_class_max_bytes ({})", minClassSize, maxClassSize);
+    }
+    SizeClassConfig config{.minClassSize = minClassSize, .maxClassSize = maxClassSize};
+    config.policy = workerConfiguration.bufferSizeClassProvisioning.getValue();
+    config.totalBudgetBytes = workerConfiguration.bufferSizeClassBudgetBytes.getValue();
+    config.buffersPerClass = workerConfiguration.bufferSizeClassBuffersPerClass.getValue();
+    return config;
+}
+
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 {
     auto bufferManager = BufferManager::create(
         workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue(),
-        workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
+        workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
+        std::make_shared<NesDefaultMemoryAllocator>(),
+        BufferManager::DEFAULT_ALIGNMENT,
+        makeSizeClassConfig(workerConfiguration));
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);

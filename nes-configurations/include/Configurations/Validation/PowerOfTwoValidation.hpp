@@ -13,24 +13,17 @@
 */
 
 #pragma once
-#include <cstdint>
-#include <Interface/Hash/HashFunction.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
+
+#include <string>
+#include <Configurations/Validation/ConfigurationValidation.hpp>
 
 namespace NES
 {
 
-class AbstractHashMapEntry
+/// @brief Validates that a parameter is a positive power of two (e.g. buffer size class bounds).
+class PowerOfTwoValidation : public ConfigurationValidation
 {
 public:
-    virtual ~AbstractHashMapEntry() = default;
-};
-
-class HashMap
-{
-public:
-    virtual ~HashMap() = default;
-    virtual AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) = 0;
-    [[nodiscard]] virtual uint64_t getTotalNumberOfRecords() const = 0;
+    [[nodiscard]] bool isValid(const std::string& parameter) const override;
 };
 }

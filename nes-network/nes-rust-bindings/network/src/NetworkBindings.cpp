@@ -65,21 +65,18 @@ void TupleBufferBuilder::setData(rust::Slice<const uint8_t> data)
 
 void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child)
 {
-    auto childBuffer = bufferProvider.getUnpooledBuffer(child.size());
-    if (!childBuffer)
-    {
-        throw NES::CannotAllocateBuffer("allocating child buffer");
-    }
+    /// Serve the child buffer from the smallest fitting pooled size class (falling back to unpooled
+    /// for very large children). The returned buffer is guaranteed to be >= child.size().
+    auto childBuffer = bufferProvider.getBuffer(child.size());
 
     INVARIANT(
-        childBuffer->getBufferSize() >= child.length(),
-        "Unpooled Buffer size mismatch. Internal BufferSize: {} vs. External {}",
-        childBuffer->getBufferSize(),
+        childBuffer.getBufferSize() >= child.length(),
+        "Child buffer size mismatch. Internal BufferSize: {} vs. External {}",
+        childBuffer.getBufferSize(),
         child.length());
 
-    std::ranges::copy(child, childBuffer->getAvailableMemoryArea<uint8_t>().begin());
-    [[maybe_unused]] auto childIndex
-        = buffer.storeChildBuffer(*childBuffer); /// index should already be present in the owning parent buffer
+    std::ranges::copy(child, childBuffer.getAvailableMemoryArea<uint8_t>().begin());
+    [[maybe_unused]] auto childIndex = buffer.storeChildBuffer(childBuffer); /// index should already be present in the owning parent buffer
 }
 
 void identifyThread(const rust::str threadName, const rust::str host) /// NOLINT(misc-use-internal-linkage)

@@ -18,7 +18,6 @@
 #include <memory>
 #include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Interface/HashMap/HashMap.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
@@ -27,6 +26,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
@@ -60,10 +60,13 @@ public:
     }
 
 private:
+    /// `outerOffset`/`innerOffset` are the absolute child-buffer indices (on the record buffer) at which the outer's
+    /// resp. inner's hash map buffers start; left hash maps are stored before right ones.
     void performNullFillProbe(
-        nautilus::val<HashMap**> outerHashMapRefs,
+        const nautilus::val<TupleBuffer*>& recordBufferRef,
+        nautilus::val<uint64_t> outerOffset,
         nautilus::val<uint64_t> outerNumberOfHashMaps,
-        nautilus::val<HashMap**> innerHashMapRefs,
+        nautilus::val<uint64_t> innerOffset,
         nautilus::val<uint64_t> innerNumberOfHashMaps,
         const HashMapOptions& outerHashMapOptions,
         const HashMapOptions& innerHashMapOptions,

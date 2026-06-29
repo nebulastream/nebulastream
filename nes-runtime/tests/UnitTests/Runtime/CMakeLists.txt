@@ -11,3 +11,4 @@
 # limitations under the License.
 
 add_nes_runtime_test(query-log-test "QueryLogTest.cpp")
+add_nes_runtime_test(node-engine-builder-test "NodeEngineBuilderTest.cpp")
