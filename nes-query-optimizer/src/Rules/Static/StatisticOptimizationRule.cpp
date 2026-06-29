@@ -15,6 +15,7 @@
 #include <Rules/Static/StatisticOptimizationRule.hpp>
 
 #include <iostream>
+#include <memory>
 #include <set>
 #include <string_view>
 #include <typeindex>
@@ -25,9 +26,9 @@
 #include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
 #include <Operators/Statistic/StatisticStoreWriterLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <RequestStatisticStatement.hpp>
 #include <StatisticRetrievalService.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -40,8 +41,7 @@ namespace
 /// already run through a separate plain optimizer, so this is defense-in-depth.
 bool containsStatisticStoreOperator(const LogicalOperator& op)
 {
-    if (op.tryGetAs<StatisticStoreWriterLogicalOperator>().has_value()
-        || op.tryGetAs<StatisticStoreReaderLogicalOperator>().has_value())
+    if (op.tryGetAs<StatisticStoreWriterLogicalOperator>().has_value() || op.tryGetAs<StatisticStoreReaderLogicalOperator>().has_value())
     {
         return true;
     }
@@ -68,9 +68,8 @@ bool isStatisticQuery(const LogicalPlan& plan)
 }
 }
 
-StatisticOptimizationRule::StatisticOptimizationRule(
-    const StatisticRetrievalService& retrievalService, RequestStatisticBuildStatement statement)
-    : retrievalService(&retrievalService), statement(std::move(statement))
+StatisticOptimizationRule::StatisticOptimizationRule(std::shared_ptr<const StatisticRetrievalService> retrievalService)
+    : retrievalService(std::move(retrievalService))
 {
 }
 
@@ -83,14 +82,28 @@ LogicalPlan StatisticOptimizationRule::apply(LogicalPlan queryPlan) const
         return queryPlan;
     }
 
+    /// This is a RequestStatisticBuildStatement (not a probe-only request) on purpose: retrieveStatistic() drives an
+    /// ad-hoc build-then-probe round trip — it starts a build query described by this request, probes the result, and
+    /// then tears the build down — so the request describes WHAT statistic to build, even though we only read the
+    /// value back out.
+    /// TODO: instead of building (and tearing down) a statistic ad-hoc on every optimization, start the relevant
+    /// build queries up front (continuously) and have this rule only probe/retrieve from those already-running queries.
+    const RequestStatisticBuildStatement adHocBuildRequest{
+        .domain = DataDomain{.logicalSourceName = "optimizerSource", .fieldName = "value"},
+        .metric = Metric::Average,
+        .windowSizeMs = 1000,
+        .windowAdvanceMs = std::nullopt,
+        .eventTimeFieldName = std::nullopt,
+        .conditionTrigger = std::nullopt,
+        .options = {}};
+
     /// Fetch the (mock) statistic over the existing build/probe machinery and surface it. In a real adaptive rule
     /// this value would drive a rewrite (e.g. filter reordering by selectivity); for the PoC we only prove the value
     /// reaches the optimizer and then hand the plan back untouched.
-    if (const auto value = retrievalService->retrieveStatistic(statement); value.has_value())
+    if (const auto value = retrievalService->retrieveStatistic(adHocBuildRequest); value.has_value())
     {
         NES_INFO("StatisticOptimizationRule: retrieved statistic value {}; returning plan unmodified.", value.value());
-        std::cout << "StatisticOptimizationRule: retrieved statistic value " << value.value()
-                  << "; returning plan unmodified.\n";
+        std::cout << "StatisticOptimizationRule: retrieved statistic value " << value.value() << "; returning plan unmodified.\n";
     }
     else
     {
@@ -126,5 +139,4 @@ bool StatisticOptimizationRule::operator==(const StatisticOptimizationRule& othe
 {
     return retrievalService == other.retrievalService;
 }
-
 }
