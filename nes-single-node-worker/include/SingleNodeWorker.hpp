@@ -27,6 +27,7 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
@@ -35,8 +36,7 @@ namespace NES
 {
 
 /// @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
-/// coordination. The SingleNodeWorker can register LogicalQueryPlans which are lowered into an executable format, by the
-/// QueryCompiler. The user can manage the lifecycle of queries inside the NodeEngine using the SingleNodeWorkers interface.
+/// coordination. The SingleNodeWorker compiles and immediately starts LogicalQueryPlans via the QueryCompiler and NodeEngine.
 /// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
@@ -56,16 +56,11 @@ public:
     SingleNodeWorker(SingleNodeWorker&& other) noexcept;
     SingleNodeWorker& operator=(SingleNodeWorker&& other) noexcept;
 
-    /// Registers a DecomposedQueryPlan which internally triggers the QueryCompiler and registers the executable query plan. Once
-    /// returned the query can be started with the QueryId. The registered Query will be in the StoppedState
+    /// Compiles the LogicalPlan and immediately starts the query asynchronously. Query execution errors are only reported
+    /// during runtime of the query.
     /// @param plan Fully Specified LogicalQueryPlan.
-    /// @return QueryId which identifies the registered Query
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan plan) noexcept;
-
-    /// Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
-    /// of the query.
-    /// @param queryId identifies the registered query
-    std::expected<void, Exception> startQuery(QueryId queryId) noexcept;
+    /// @return QueryId which identifies the started query
+    [[nodiscard]] std::expected<QueryId, Exception> startQuery(LogicalPlan plan) noexcept;
 
     /// Stops the Query and moves it into the StoppedState.
     /// @param queryId identifies the registered query
