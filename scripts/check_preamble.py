@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
         suffix = filename.split(".")[-1]
 
-        if filename in VENDORED_FILES:
+        if filename in VENDORED_FILES or filename.startswith("cmake/corrosion/"):
             pass
         elif suffix in {"cpp", "proto", "java", "g4", "inc", "rs"}:
             with open(filename, "r", encoding="utf-8") as fp:
