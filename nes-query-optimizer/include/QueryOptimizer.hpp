@@ -15,6 +15,8 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <string>
 #include <utility>
 
 #include <Phases/OperatorPlacer.hpp>
@@ -51,7 +53,9 @@ public:
         , ruleBasedOptimization(defaultQueryOptimization, std::move(statisticRetrievalService))
         , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
 
-    [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;
+    /// `useStatisticSource` (optional) names the source whose statistic the StatisticOptimizationRule should fetch
+    /// during optimization (from the query's `USE_STATISTIC` option). When unset, that rule is not applied.
+    [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan, const std::optional<std::string>& useStatisticSource = std::nullopt) const;
 
 private:
     SemanticAnalyzer semanticAnalyzer;

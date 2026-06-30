@@ -17,14 +17,12 @@
 #include <iostream>
 #include <memory>
 #include <set>
+#include <string>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
 #include <utility>
 
-#include <Operators/LogicalOperator.hpp>
-#include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
-#include <Operators/Statistic/StatisticStoreWriterLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <StatisticRetrievalService.hpp>
@@ -32,67 +30,32 @@
 namespace NES
 {
 
-namespace
-{
-/// Recursion guard: the statistic build/probe queries the retrieval service submits contain the scalar
-/// StatisticStore operators. If this rule ever sees such a plan we must NOT fetch another statistic (that would
-/// recurse), so we detect those operators and leave the plan alone. In the daemon wiring the statistic queries
-/// already run through a separate plain optimizer, so this is defense-in-depth.
-bool containsStatisticStoreOperator(const LogicalOperator& op)
-{
-    if (op.tryGetAs<StatisticStoreWriterLogicalOperator>().has_value() || op.tryGetAs<StatisticStoreReaderLogicalOperator>().has_value())
-    {
-        return true;
-    }
-    for (const auto& child : op.getChildren())
-    {
-        if (containsStatisticStoreOperator(child))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool isStatisticQuery(const LogicalPlan& plan)
-{
-    for (const auto& root : plan.getRootOperators())
-    {
-        if (containsStatisticStoreOperator(root))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-}
-
-StatisticOptimizationRule::StatisticOptimizationRule(std::shared_ptr<const StatisticRetrievalService> retrievalService)
-    : retrievalService(std::move(retrievalService))
+StatisticOptimizationRule::StatisticOptimizationRule(
+    std::shared_ptr<const StatisticRetrievalService> retrievalService, std::string statisticSource)
+    : retrievalService(std::move(retrievalService)), statisticSource(std::move(statisticSource))
 {
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan StatisticOptimizationRule::apply(LogicalPlan queryPlan) const
 {
-    /// Never fetch a statistic while optimizing a statistic query itself — that would recurse.
-    if (isStatisticQuery(queryPlan))
+    /// Probe the build collecting `statisticSource` (deployed earlier by a GET_STATISTICS query) and surface its
+    /// value. In a real adaptive rule the value would drive a rewrite (e.g. filter reordering by selectivity); for
+    /// the PoC we only prove the requested statistic reaches the optimizer and then hand the plan back untouched.
+    if (const auto value = retrievalService->retrieveStatistic(statisticSource); value.has_value())
     {
-        return queryPlan;
-    }
-
-    /// Probe whatever statistic build is already running (deployed when a query carried GET_STATISTICS=true) and
-    /// surface its value. We do not build anything here — if no build is running this is a quiet no-op. In a real
-    /// adaptive rule the value would drive a rewrite (e.g. filter reordering by selectivity); for the PoC we only
-    /// prove the value reaches the optimizer and then hand the plan back untouched.
-    if (const auto value = retrievalService->retrieveStatistic(); value.has_value())
-    {
-        NES_INFO("StatisticOptimizationRule: retrieved statistic value {}; returning plan unmodified.", value.value());
-        std::cout << "StatisticOptimizationRule: retrieved statistic value " << value.value() << "; returning plan unmodified.\n";
+        NES_INFO(
+            "StatisticOptimizationRule: retrieved statistic value {} for source {}; returning plan unmodified.",
+            value.value(),
+            statisticSource);
+        std::cout << "StatisticOptimizationRule: retrieved statistic value " << value.value() << " for source " << statisticSource
+                  << "; returning plan unmodified.\n";
     }
     else
     {
-        NES_DEBUG("StatisticOptimizationRule: no running statistic build to probe; returning plan unmodified.");
+        NES_WARNING("StatisticOptimizationRule: no statistic available for source {}; returning plan unmodified.", statisticSource);
+        std::cout << "StatisticOptimizationRule: no statistic available for source " << statisticSource
+                  << "; returning plan unmodified.\n";
     }
     return queryPlan;
 }
@@ -121,6 +84,6 @@ std::set<std::type_index> StatisticOptimizationRule::requiredBy() const
 
 bool StatisticOptimizationRule::operator==(const StatisticOptimizationRule& other) const
 {
-    return retrievalService == other.retrievalService;
+    return retrievalService == other.retrievalService && statisticSource == other.statisticSource;
 }
 }

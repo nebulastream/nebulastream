@@ -207,10 +207,12 @@ TEST_F(StatisticCoordinatorE2ETest, BuildAndProbeRoundTripOverFifo)
 }
 
 /// Same dataflow, but driven through the StatisticRetrievalService's "continuous build, ad-hoc probe" model:
-/// deployStatisticBuildIfAbsent() spins up the (mock) build once, then retrieveStatistic() probes the running build
-/// and returns the scalar. The build is NOT torn down by the probe — it keeps running until the test stops it.
+/// deployStatisticBuild(source) spins up the (mock) build for a source, then retrieveStatistic(source) probes that
+/// running build and returns the scalar. The build is NOT torn down by the probe — it keeps running until stopped.
 TEST_F(StatisticCoordinatorE2ETest, AdHocScalarRetrievalViaService)
 {
+    const std::string statisticSource = "ADHOCSOURCE";
+
     auto store = std::make_shared<DefaultStatisticStore>();
     SingleNodeWorker worker(SingleNodeWorkerConfiguration{}, Host("localhost"), store);
 
@@ -226,11 +228,11 @@ TEST_F(StatisticCoordinatorE2ETest, AdHocScalarRetrievalViaService)
 
     const StatisticRetrievalService retrievalService(coordinator);
 
-    /// Deploy the continuous build, then probe it ad-hoc.
-    retrievalService.deployStatisticBuildIfAbsent();
+    /// Deploy the continuous build for a source, then probe that source ad-hoc.
+    retrievalService.deployStatisticBuild(statisticSource);
     /// Give the build query time to compile, run, and populate the store before we probe.
     std::this_thread::sleep_for(std::chrono::seconds{3});
-    const auto value = retrievalService.retrieveStatistic();
+    const auto value = retrievalService.retrieveStatistic(statisticSource);
 
     coordinator.stopResultReader();
 
@@ -259,21 +261,40 @@ TEST_F(StatisticCoordinatorE2ETest, OptimizationRulePrintsStatisticAndLeavesPlan
 
     auto retrievalService = std::make_shared<StatisticRetrievalService>(coordinator);
 
-    /// Deploy the continuous build (as GET_STATISTICS=true would) so the rule has a running build to probe, then
-    /// let it populate the store.
-    retrievalService->deployStatisticBuildIfAbsent();
+    /// Deploy the build for a source (as a GET_STATISTICS query on that source would), then let it populate the
+    /// store. The rule is constructed to fetch that same source's statistic (as USE_STATISTIC=<source> would).
+    const std::string statisticSource = "DEMOSOURCE";
+    retrievalService->deployStatisticBuild(statisticSource);
     std::this_thread::sleep_for(std::chrono::seconds{3});
 
-    /// A representative *user* query plan (one without statistic operators), so the rule's recursion guard does not
-    /// skip it. The rule does not inspect the plan beyond that guard, so a bare source plan suffices.
+    /// A representative *user* query plan; the rule fetches the named statistic and leaves the plan unmodified.
     const LogicalPlan inputPlan = LogicalPlanBuilder::createLogicalPlan(Identifier::parse("userSource"));
 
-    const StatisticOptimizationRule rule(retrievalService);
+    const StatisticOptimizationRule rule(retrievalService, statisticSource);
     const LogicalPlan outputPlan = rule.apply(inputPlan);
 
     coordinator.stopResultReader();
 
     EXPECT_EQ(outputPlan, inputPlan) << "StatisticOptimizationRule must return the plan unmodified";
+}
+
+/// Statistics are keyed by source: collecting on two distinct sources deploys two independent build queries, while
+/// re-requesting a source already being collected reuses the running build (no duplicate). We use a lightweight
+/// counting submit callback (no real worker) since we only care about how many builds are submitted.
+TEST_F(StatisticCoordinatorE2ETest, EachSourceDeploysItsOwnBuild)
+{
+    std::atomic<int> submitCount{0};
+    StatisticCoordinator::SubmitQueryFn countingSubmit = [&submitCount](LogicalPlan) -> std::expected<DistributedQueryId, Exception>
+    { return DistributedQueryId("build-" + std::to_string(submitCount.fetch_add(1))); };
+
+    StatisticCoordinator coordinator(std::make_unique<DefaultStatisticQueryGenerator>(), std::move(countingSubmit), nullptr);
+    const StatisticRetrievalService retrievalService(coordinator);
+
+    retrievalService.deployStatisticBuild("SOURCEA");
+    retrievalService.deployStatisticBuild("SOURCEB");
+    retrievalService.deployStatisticBuild("SOURCEA"); /// same source again -> deduplicated, no new build
+
+    EXPECT_EQ(submitCount.load(), 2) << "two distinct sources must deploy two builds; the repeated source must not";
 }
 
 }

@@ -14,16 +14,18 @@
 
 #include <QueryOptimizer.hpp>
 
+#include <optional>
+#include <string>
 #include <Plans/LogicalPlan.hpp>
 #include <DistributedLogicalPlan.hpp>
 
 namespace NES
 {
 
-DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
+DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan, const std::optional<std::string>& useStatisticSource) const
 {
     plan = semanticAnalyzer.analyse(plan);
-    plan = ruleBasedOptimization.optimize(plan);
+    plan = ruleBasedOptimization.optimize(plan, useStatisticSource);
     return operatorPlacement.place(plan);
 }
 

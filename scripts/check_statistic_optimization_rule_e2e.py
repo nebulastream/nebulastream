@@ -20,15 +20,15 @@ Unlike check_statistic_optimization_rule.py (which drives the rule directly from
 actual embedded single-node engine (`nes-repl-embedded`), deploys a genuine user query through the real frontend
 optimizer, and verifies the rule's print appears in the instance's output during query creation.
 
-Flow:
+Flow (the intended cross-query pattern: one query deploys a statistic, a *different* later query consults it):
   * `nes-repl-embedded` is wired (in the EMBED_ENGINE build) with a StatisticCoordinator + StatisticRetrievalService
     so the optimizer's StatisticOptimizationRule has a service to query.
-  * We pipe a small SQL script (create a generator source, then a SELECT carrying GET_STATISTICS=true) into the REPL.
-  * The GET_STATISTICS=true option makes the engine deploy the (continuous, mock) statistic build query before the
-    SELECT is optimized.
-  * Optimizing the SELECT then runs the StatisticOptimizationRule, which probes that already-running build for the
-    (deterministic, mock) statistic and prints:
-        StatisticOptimizationRule: retrieved statistic value 42; returning plan unmodified.
+  * We pipe a small SQL script into the REPL: create a generator source, then TWO separate SELECTs.
+  * Query 1 carries GET_STATISTICS=TRUE (no USE_STATISTIC): the engine deploys a continuous (mock) build collecting
+    ENDLESS's statistic. The rule does NOT run for this query.
+  * Query 2 is a different query carrying USE_STATISTIC='endless': during ITS optimization the rule probes the
+    statistic that query 1 previously deployed for ENDLESS, and prints:
+        StatisticOptimizationRule: retrieved statistic value 42 for source ENDLESS; returning plan unmodified.
   * We assert that line — with the expected value 42 — appears in stdout.
 
 The value is deterministic: the PoC build query bakes the constant 42 into a generator constant-sequence source, so
@@ -63,10 +63,10 @@ def build_repl(build_dir: Path) -> int:
         print(f"ERROR: build of {BUILD_TARGET} failed (exit {completed.returncode}).", file=sys.stderr)
     return completed.returncode
 
-# A minimal deployable query for the embedded engine: a bounded generator source feeding a Void sink. The query
-# carries GET_STATISTICS=true, which makes the engine spin up the (mock) statistic build query before optimizing.
-# Optimizing the SELECT then runs the StatisticOptimizationRule, which probes that running build. MAX_RUNTIME_MS
-# keeps the run short.
+# Two separate bounded queries over a generator source feeding a Void sink. Query 1 carries GET_STATISTICS=TRUE,
+# which makes the engine deploy the (mock) statistic build for ENDLESS (the rule does not run for it). Query 2 is a
+# DIFFERENT query carrying USE_STATISTIC='endless': during its optimization the StatisticOptimizationRule probes the
+# statistic query 1 deployed and prints it. MAX_RUNTIME_MS keeps the run short.
 QUERY_SCRIPT = """\
 CREATE LOGICAL SOURCE endless(val_1 UINT32, ts UINT64);
 CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
@@ -75,10 +75,11 @@ CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
     3000 as "SOURCE".MAX_RUNTIME_MS,
     'SEQUENCE UINT32 0 10000000 1, SEQUENCE UINT64 0 10000000 1' AS "SOURCE".GENERATOR_SCHEMA);
 SELECT TS FROM ENDLESS INTO Void('localhost:8080' AS "SINK"."HOST") SET(TRUE AS "QUERY"."GET_STATISTICS");
+SELECT TS FROM ENDLESS INTO Void('localhost:8080' AS "SINK"."HOST") SET('endless' AS "QUERY"."USE_STATISTIC");
 """
 
 PRINT_RE = re.compile(
-    r"StatisticOptimizationRule: retrieved statistic value (\d+(?:\.\d+)?); returning plan unmodified\."
+    r"StatisticOptimizationRule: retrieved statistic value (\d+(?:\.\d+)?) for source \S+; returning plan unmodified\."
 )
 
 

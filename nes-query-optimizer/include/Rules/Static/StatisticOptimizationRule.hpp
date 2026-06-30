@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <set>
+#include <string>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
@@ -28,11 +29,16 @@ namespace NES
 
 class StatisticRetrievalService;
 
+/// PoC rule that surfaces a statistic to the optimizer. It is applied per query (not as a standing rule) only when
+/// the query specifies which statistic to use (via the `USE_STATISTIC` query option). It fetches that statistic and
+/// prints it, leaving the plan unmodified — standing in for a future adaptive rewrite (e.g. filter reordering by
+/// selectivity).
 class StatisticOptimizationRule
 {
 public:
     /// @param retrievalService shared ownership of the service used to fetch the statistic.
-    explicit StatisticOptimizationRule(std::shared_ptr<const StatisticRetrievalService> retrievalService);
+    /// @param statisticSource the source whose statistic this rule fetches during optimization.
+    StatisticOptimizationRule(std::shared_ptr<const StatisticRetrievalService> retrievalService, std::string statisticSource);
 
     static constexpr std::string_view NAME = "StatisticOptimizationRule";
 
@@ -47,6 +53,8 @@ private:
     /// shared_ptr so the rule stays copyable/assignable as required by the type-erased Rule wrapper, while sharing
     /// ownership of the service.
     std::shared_ptr<const StatisticRetrievalService> retrievalService;
+    /// Which statistic (by source) to fetch when this rule is applied.
+    std::string statisticSource;
 };
 
 static_assert(RuleConcept<StatisticOptimizationRule, LogicalPlan>);

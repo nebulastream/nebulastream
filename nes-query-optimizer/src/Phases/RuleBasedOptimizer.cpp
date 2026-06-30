@@ -16,6 +16,8 @@
 #include <Phases/RuleBasedOptimizer.hpp>
 
 #include <memory>
+#include <optional>
+#include <string>
 #include <utility>
 
 #include <Plans/LogicalPlan.hpp>
@@ -34,17 +36,14 @@
 #include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <CollectionDomain.hpp>
-#include <Metric.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <RequestStatisticStatement.hpp>
 
 namespace NES
 {
 
 RuleBasedOptimizer::RuleBasedOptimizer(
     QueryOptimizerConfiguration defaultQueryOptimization, std::shared_ptr<const StatisticRetrievalService> statisticRetrievalService)
-    : defaultQueryOptimization(std::move(defaultQueryOptimization))
+    : defaultQueryOptimization(std::move(defaultQueryOptimization)), statisticRetrievalService(std::move(statisticRetrievalService))
 {
     RuleManager<LogicalPlan> ruleManager;
     ruleManager.addRule(DecideJoinTypesRule{this->defaultQueryOptimization.joinStrategy});
@@ -59,24 +58,22 @@ RuleBasedOptimizer::RuleBasedOptimizer(
     ruleManager.addRule(WatermarkAssignerPushdownRule{});
     ruleManager.addRule(ProjectionPushdownRule{});
 
-    /// PoC: when a statistic retrieval service is wired in, add a rule that surfaces a (mock) statistic to the
-    /// optimizer for each user query. The statement below selects which statistic to fetch; correctness is
-    /// irrelevant here (the PoC store returns the constant 42) — it only demonstrates the control-plane value
-    /// reaching the optimizer at plan-rewrite time.
-    if (statisticRetrievalService != nullptr)
-    {
-        ruleManager.addRule(StatisticOptimizationRule{std::move(statisticRetrievalService)});
-    }
-
     NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
     ruleSequence = ruleManager.getSequence();
 }
 
-LogicalPlan RuleBasedOptimizer::optimize(LogicalPlan plan) const
+LogicalPlan RuleBasedOptimizer::optimize(LogicalPlan plan, const std::optional<std::string>& useStatisticSource) const
 {
     for (const auto& rule : ruleSequence)
     {
         plan = rule.apply(std::move(plan));
+    }
+
+    /// PoC: only when the query requested a statistic (USE_STATISTIC) and a retrieval service is wired in do we
+    /// apply the StatisticOptimizationRule, fetching the requested statistic and surfacing it to the optimizer.
+    if (statisticRetrievalService != nullptr && useStatisticSource.has_value())
+    {
+        plan = StatisticOptimizationRule{statisticRetrievalService, *useStatisticSource}.apply(std::move(plan));
     }
     return plan;
 }

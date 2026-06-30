@@ -19,14 +19,20 @@
 #include <expected>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -49,6 +55,21 @@
 
 namespace NES
 {
+
+namespace
+{
+/// The source a GET_STATISTICS query collects its statistic on: the first named source in the plan, canonicalized
+/// so it matches a later USE_STATISTIC lookup. nullopt if the query has no named source (e.g. only inline sources).
+std::optional<std::string> primaryStatisticSource(const LogicalPlan& plan)
+{
+    const auto sources = getOperatorByType<SourceNameLogicalOperator>(plan);
+    if (sources.empty())
+    {
+        return std::nullopt;
+    }
+    return sources.front().get().getLogicalSourceName().asCanonicalString();
+}
+}
 
 SourceStatementHandler::SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog, HostPolicy hostPolicy)
     : sourceCatalog(sourceCatalog), hostPolicy(std::move(hostPolicy))
@@ -301,7 +322,9 @@ std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operat
 }
 
 QueryStatementHandler::QueryStatementHandler(
-    SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer, std::function<void()> deployStatisticBuild)
+    SharedPtr<QueryManager> queryManager,
+    SharedPtr<const QueryOptimizer> queryOptimizer,
+    std::function<void(const std::string& source)> deployStatisticBuild)
     : queryManager(std::move(queryManager))
     , queryOptimizer(std::move(queryOptimizer))
     , deployStatisticBuild(std::move(deployStatisticBuild))
@@ -355,14 +378,22 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
-        /// GET_STATISTICS=true: deploy the (continuous, mock) statistic build query before optimizing, so the
-        /// StatisticOptimizationRule has a running build to probe. Deduplicated downstream, so repeating it is cheap.
+        /// GET_STATISTICS=true: deploy a continuous (mock) statistic build query for this query's own source. The
+        /// statistic keeps running so that OTHER queries deployed later can consult it (via USE_STATISTIC) during
+        /// their own optimization — not this query itself. Deduplicated downstream by source.
         if (statement.collectStatistics && deployStatisticBuild)
         {
-            deployStatisticBuild();
+            if (const auto source = primaryStatisticSource(statement.plan); source.has_value())
+            {
+                deployStatisticBuild(*source);
+            }
+            else
+            {
+                NES_WARNING("GET_STATISTICS set but the query has no named source to collect a statistic on; skipping.");
+            }
         }
 
-        auto distributedPlan = queryOptimizer->optimize(statement.plan);
+        auto distributedPlan = queryOptimizer->optimize(statement.plan, statement.useStatisticSource);
 
         if (statement.id)
         {

@@ -15,6 +15,8 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <string>
 #include <vector>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
@@ -27,18 +29,21 @@ class StatisticRetrievalService;
 class RuleBasedOptimizer
 {
 public:
-    /// If `statisticRetrievalService` is non-null, a StatisticOptimizationRule sharing ownership of that service is
-    /// added to the rule sequence (PoC: it fetches a mock statistic and prints it while leaving the plan
-    /// unmodified). When null, the default rule sequence is used unchanged.
+    /// `statisticRetrievalService` (optional, may be null) enables the PoC StatisticOptimizationRule. The rule is
+    /// NOT a standing rule in the sequence; it is applied per query only when that query requests a statistic
+    /// (see optimize()'s `useStatisticSource`). When the service is null the rule is never applied.
     explicit RuleBasedOptimizer(
         QueryOptimizerConfiguration defaultQueryOptimization,
         std::shared_ptr<const StatisticRetrievalService> statisticRetrievalService = nullptr);
 
-    [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
+    /// If `useStatisticSource` is set and a retrieval service is wired in, the StatisticOptimizationRule is applied
+    /// for that source after the standing rules. Otherwise the standing rule sequence runs unchanged.
+    [[nodiscard]] LogicalPlan optimize(LogicalPlan plan, const std::optional<std::string>& useStatisticSource = std::nullopt) const;
 
 private:
     QueryOptimizerConfiguration defaultQueryOptimization;
     std::vector<Rule<LogicalPlan>> ruleSequence;
+    std::shared_ptr<const StatisticRetrievalService> statisticRetrievalService;
 };
 
 }
