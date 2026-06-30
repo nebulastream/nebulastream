@@ -265,6 +265,10 @@ int main(int argc, char** argv)
         /// embedded build (the coordinator serves its build/probe queries on the colocated embedded worker); left
         /// null otherwise, which leaves the optimizer's rule set unchanged.
         std::shared_ptr<const NES::StatisticRetrievalService> statRetrievalService;
+        /// When statistics are enabled, a query carrying GET_STATISTICS=true deploys the (continuous, mock) build via
+        /// the retrieval service before it is optimized; the StatisticOptimizationRule then probes that running build.
+        /// Left empty (and thus a no-op in QueryStatementHandler) when statistics are not enabled.
+        std::function<void()> deployStatisticBuild;
 
 #ifdef EMBED_ENGINE
         enable_memcom();
@@ -380,6 +384,7 @@ int main(int argc, char** argv)
                 });
             statCoordinator->startResultReader();
             statRetrievalService = std::make_shared<NES::StatisticRetrievalService>(*statCoordinator);
+            deployStatisticBuild = [statRetrievalService] { statRetrievalService->deployStatisticBuildIfAbsent(); };
         }
         /// ------------------------------------------------------------------------------------------------------
 #else
@@ -391,7 +396,8 @@ int main(int argc, char** argv)
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
         auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
             queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, statRetrievalService);
-        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
+        auto queryStatementHandler
+            = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer, std::move(deployStatisticBuild));
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),

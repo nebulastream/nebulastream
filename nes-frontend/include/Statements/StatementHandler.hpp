@@ -16,6 +16,7 @@
 
 #include <concepts>
 #include <expected>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -233,9 +234,15 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
     SharedPtr<QueryManager> queryManager;
     SharedPtr<const QueryOptimizer> queryOptimizer;
     SharedPtr<WorkerCatalog> workerCatalog;
+    /// Invoked before optimizing a query that requested statistics (GET_STATISTICS=true). Lets the frontend spin up
+    /// a statistic build query without this core handler depending on the statistics module. Null = no-op.
+    std::function<void()> deployStatisticBuild;
 
 public:
-    explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer);
+    explicit QueryStatementHandler(
+        SharedPtr<QueryManager> queryManager,
+        SharedPtr<const QueryOptimizer> queryOptimizer,
+        std::function<void()> deployStatisticBuild = nullptr);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);

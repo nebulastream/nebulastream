@@ -300,8 +300,11 @@ std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operat
     return DropModelStatementResult{.name = statement.name};
 }
 
-QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer)
-    : queryManager(std::move(queryManager)), queryOptimizer(std::move(queryOptimizer))
+QueryStatementHandler::QueryStatementHandler(
+    SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer, std::function<void()> deployStatisticBuild)
+    : queryManager(std::move(queryManager))
+    , queryOptimizer(std::move(queryOptimizer))
+    , deployStatisticBuild(std::move(deployStatisticBuild))
 {
 }
 
@@ -352,6 +355,13 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
+        /// GET_STATISTICS=true: deploy the (continuous, mock) statistic build query before optimizing, so the
+        /// StatisticOptimizationRule has a running build to probe. Deduplicated downstream, so repeating it is cheap.
+        if (statement.collectStatistics && deployStatisticBuild)
+        {
+            deployStatisticBuild();
+        }
+
         auto distributedPlan = queryOptimizer->optimize(statement.plan);
 
         if (statement.id)
