@@ -29,6 +29,8 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/IntervalJoin/IntervalJoinBuildPhysicalOperator.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
@@ -38,13 +40,12 @@
 #include <Join/IntervalJoin/IntervalSliceStoreRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/IntervalJoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Traits/FieldMappingTrait.hpp>
@@ -104,7 +105,6 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
     const auto logicalJoinFunction = intervalJoin->getJoinFunction();
     const auto lowerBound = intervalJoin->getLowerBound();
     const auto upperBound = intervalJoin->getUpperBound();
-    const auto pageSize = conf.pageSize.getValue();
 
     /// Outer interval joins null-fill the preserved side's unmatched tuples. Anchor-side unmatched tuples are
     /// null-filled inside each anchor-driven probe task; partner-side unmatched tuples are null-filled by a
@@ -130,8 +130,10 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
     FieldMappingTrait combinedFieldMapping{std::move(combinedFieldMappingVec)};
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
-    auto anchorBufferRef = LowerSchemaProvider::lowerSchema(pageSize, anchorInputSchema, memoryLayoutType);
-    auto partnerBufferRef = LowerSchemaProvider::lowerSchema(pageSize, partnerInputSchema, memoryLayoutType);
+    auto anchorTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(anchorInputSchema);
+    auto partnerTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(partnerInputSchema);
+    const uint64_t tupleSizeAnchor = anchorTupleLayout->getSchema().getSizeInBytes();
+    const uint64_t tupleSizePartner = partnerTupleLayout->getSchema().getSizeInBytes();
 
     /// The interval join carries one bound time characteristic per side; the anchor build reads the
     /// anchor timestamp field and the partner build reads the partner timestamp field.
@@ -156,36 +158,46 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
     /// SliceStoreRef per side, talking to the side-appropriate store on the handler.
     auto sliceStoreRefAnchor = createIntervalSliceStoreRef(
         handler->getAnchorStore(),
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             const auto& ijSlice = dynamic_cast<IntervalJoinSlice&>(slice);
-            auto* ptr = ijSlice.getPagedVectorRef(workerThreadId);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
+            const auto* ptr = ijSlice.getPagedVectorRef(workerThreadId);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
+            return const_cast<TupleBuffer*>(ptr);
         },
-        [](IntervalJoinOperatorHandler& h) { return h.getCreateNewSlicesFunction({}); },
+        [tupleSizeAnchor](IntervalJoinOperatorHandler& h, AbstractBufferProvider& bufferProvider)
+        {
+            const CreateNewIntervalJoinSliceArgs intervalSliceArgs{bufferProvider, tupleSizeAnchor};
+            return h.getCreateNewSlicesFunction(intervalSliceArgs);
+        },
         conf.sliceCacheConfiguration);
     auto sliceStoreRefPartner = createIntervalSliceStoreRef(
         handler->getPartnerStore(),
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             const auto& ijSlice = dynamic_cast<IntervalJoinSlice&>(slice);
-            auto* ptr = ijSlice.getPagedVectorRef(workerThreadId);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
+            const auto* ptr = ijSlice.getPagedVectorRef(workerThreadId);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
+            return const_cast<TupleBuffer*>(ptr);
         },
-        [](IntervalJoinOperatorHandler& h) { return h.getCreateNewSlicesFunction({}); },
+        [tupleSizePartner](IntervalJoinOperatorHandler& h, AbstractBufferProvider& bufferProvider)
+        {
+            const CreateNewIntervalJoinSliceArgs intervalSliceArgs{bufferProvider, tupleSizePartner};
+            return h.getCreateNewSlicesFunction(intervalSliceArgs);
+        },
         conf.sliceCacheConfiguration);
 
     const IntervalJoinBuildPhysicalOperator anchorBuildOperator{
         handlerId,
         IntervalJoinBuildSide::Anchor,
         TimeFunction::create(anchorTimeCharacteristic),
-        anchorBufferRef,
+        anchorTupleLayout,
         std::move(sliceStoreRefAnchor)};
     const IntervalJoinBuildPhysicalOperator partnerBuildOperator{
         handlerId,
         IntervalJoinBuildSide::Partner,
         TimeFunction::create(partnerTimeCharacteristic),
-        partnerBufferRef,
+        partnerTupleLayout,
         std::move(sliceStoreRefPartner)};
 
     const JoinSchema joinSchema{anchorInputSchema, partnerInputSchema, outputSchema};
@@ -201,8 +213,8 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
         TimeFunction::create(partnerTimeCharacteristic),
         lowerBound,
         upperBound,
-        anchorBufferRef,
-        partnerBufferRef,
+        anchorTupleLayout,
+        partnerTupleLayout,
         getJoinFieldNames(anchorInputSchema, logicalJoinFunction),
         getJoinFieldNames(partnerInputSchema, logicalJoinFunction),
         emitAnchorNullFill,

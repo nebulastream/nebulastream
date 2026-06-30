@@ -17,10 +17,11 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
 #include <Join/IntervalJoin/IntervalSliceStore.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -40,22 +41,24 @@ void intervalSliceStoreRefCacheMissProxy(
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
     const IntervalSliceStoreRef* sliceStoreRef,
-    IntervalSliceStore* sliceStore)
+    IntervalSliceStore* sliceStore,
+    AbstractBufferProvider* bufferProvider)
 {
     PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
     PRECONDITION(sliceStoreRef != nullptr, "slice store ref should not be null");
     PRECONDITION(sliceStore != nullptr, "slice store should not be null");
+    PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null");
 
     auto* intervalHandler = dynamic_cast<IntervalJoinOperatorHandler*>(operatorHandlerPtr);
     PRECONDITION(intervalHandler != nullptr, "operator handler should be an IntervalJoinOperatorHandler");
 
-    const auto createFunction = sliceStoreRef->createSlicesFunction(*intervalHandler);
+    const auto createFunction = sliceStoreRef->createSlicesFunction(*intervalHandler, *bufferProvider);
     const auto newSlices = sliceStore->getSlicesOrCreate(timestamp, createFunction);
     INVARIANT(newSlices.size() == 1, "Interval-join expects one slice per timestamp; got {}", newSlices.size());
 
     entryToReplace->sliceStart = newSlices[0]->getSliceStart().getRawValue();
     entryToReplace->sliceEnd = newSlices[0]->getSliceEnd().getRawValue();
-    entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(*newSlices[0], workerThreadId).data();
+    entryToReplace->dataStructure = sliceStoreRef->dataStructureExtractor(*newSlices[0], workerThreadId);
 }
 
 IntervalSliceStoreRef::IntervalSliceStoreRef(
@@ -86,7 +89,8 @@ std::unique_ptr<SliceStoreRef> IntervalSliceStoreRef::clone()
 nautilus::val<SliceCacheEntry::DataStructure> IntervalSliceStoreRef::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp,
     const nautilus::val<WorkerThreadId>& workerThreadId,
-    const nautilus::val<OperatorHandler*>& operatorHandler)
+    const nautilus::val<OperatorHandler*>& operatorHandler,
+    nautilus::val<AbstractBufferProvider*> bufferProvider)
 {
     nautilus::val<IntervalSliceStore*> sliceStoreVal{sliceStore};
     return sliceCache->getDataStructureRef(
@@ -101,7 +105,8 @@ nautilus::val<SliceCacheEntry::DataStructure> IntervalSliceStoreRef::getDataStru
                 timestamp,
                 workerThreadId,
                 nautilus::val<const IntervalSliceStoreRef*>(this),
-                sliceStoreVal);
+                sliceStoreVal,
+                bufferProvider);
         });
 }
 

@@ -268,7 +268,7 @@ std::array<LogicalOperator, 2> IntervalJoinLogicalOperator::getBothChildren() co
 Schema<Field, Unordered> IntervalJoinLogicalOperator::getOutputSchema() const
 {
     PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
-    return NES::bind(self.lock(), outputSchema.value());
+    return NES::bindToOperator(self.lock(), outputSchema.value());
 }
 
 const UnqualifiedUnboundField& IntervalJoinLogicalOperator::getStartField() const

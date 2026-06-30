@@ -19,12 +19,11 @@
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Time/IntervalBound.hpp>
 #include <Time/Timestamp.hpp>
@@ -58,8 +57,8 @@ public:
         std::unique_ptr<TimeFunction> partnerTimeFunction,
         IntervalBound lowerBound,
         IntervalBound upperBound,
-        std::shared_ptr<TupleBufferRef> anchorMemoryProvider,
-        std::shared_ptr<TupleBufferRef> partnerMemoryProvider,
+        std::shared_ptr<PagedVectorTupleLayout> anchorTupleLayout,
+        std::shared_ptr<PagedVectorTupleLayout> partnerTupleLayout,
         std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNames,
         std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNames,
         bool emitAnchorNullFill,
@@ -100,8 +99,8 @@ protected:
     std::unique_ptr<TimeFunction> partnerTimeFunction;
     IntervalBound lowerBound;
     IntervalBound upperBound;
-    std::shared_ptr<TupleBufferRef> anchorMemoryProvider;
-    std::shared_ptr<TupleBufferRef> partnerMemoryProvider;
+    std::shared_ptr<PagedVectorTupleLayout> anchorTupleLayout;
+    std::shared_ptr<PagedVectorTupleLayout> partnerTupleLayout;
     std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNames;
     std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNames;
     bool emitAnchorNullFill;

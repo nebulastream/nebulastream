@@ -182,13 +182,15 @@ void IntervalJoinOperatorHandler::onSideBuildTerminated(const IntervalJoinBuildS
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-IntervalJoinOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const
+IntervalJoinOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& args) const
 {
     const auto numWorkers = numberOfWorkerThreads.load(std::memory_order_acquire);
     PRECONDITION(numWorkers > 0, "numberOfWorkerThreads not yet set; was IntervalJoinOperatorHandler::start() called?");
+    const auto& intervalArgs = dynamic_cast<const CreateNewIntervalJoinSliceArgs&>(args);
     return std::function(
-        [numWorkers](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
-        { return {std::make_shared<IntervalJoinSlice>(sliceStart, sliceEnd, numWorkers)}; });
+        [numWorkers, bufferProvider = intervalArgs.bufferProvider, tupleSize = intervalArgs.tupleSize](
+            SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+        { return {std::make_shared<IntervalJoinSlice>(*bufferProvider, sliceStart, sliceEnd, numWorkers, tupleSize)}; });
 }
 
 IntervalSliceStore& IntervalJoinOperatorHandler::getAnchorStore() noexcept

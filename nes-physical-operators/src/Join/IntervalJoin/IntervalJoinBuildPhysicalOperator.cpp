@@ -17,12 +17,12 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/NautilusBuffer.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/Record.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -76,9 +76,9 @@ IntervalJoinBuildPhysicalOperator::IntervalJoinBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const IntervalJoinBuildSide buildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
     std::unique_ptr<SliceStoreRef> sliceStoreRef)
-    : StreamJoinBuildPhysicalOperator{operatorHandlerId, toJoinBuildSideType(buildSide), std::move(timeFunction), std::move(bufferRef), std::move(sliceStoreRef)}
+    : StreamJoinBuildPhysicalOperator{operatorHandlerId, toJoinBuildSideType(buildSide), std::move(timeFunction), std::move(tupleLayout), std::move(sliceStoreRef)}
     , buildSide{buildSide}
 {
 }
@@ -130,10 +130,11 @@ void IntervalJoinBuildPhysicalOperator::execute(ExecutionContext& executionCtx, 
     auto operatorHandler = localState->getOperatorHandler();
 
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto pagedVectorMemRef = sliceStoreRef->getDataStructureRef(timestamp, executionCtx.workerThreadId, operatorHandler);
+    auto pagedVectorMemRef = sliceStoreRef->getDataStructureRef(
+        timestamp, executionCtx.workerThreadId, operatorHandler, executionCtx.pipelineMemoryProvider.bufferProvider);
 
-    const PagedVectorRef pagedVectorRef{pagedVectorMemRef, bufferRef};
-    pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+    PagedVectorRef pagedVectorRef{BorrowedNautilusBuffer::from(pagedVectorMemRef), tupleLayout};
+    pagedVectorRef.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 
 void IntervalJoinBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const

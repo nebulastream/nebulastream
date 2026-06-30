@@ -14,13 +14,12 @@
 
 #pragma once
 
-#include <cstddef>
 #include <functional>
 #include <memory>
-#include <span>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Interface/TimestampRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
@@ -45,9 +44,9 @@ class IntervalJoinOperatorHandler;
 class IntervalSliceStoreRef final : public SliceStoreRef
 {
 public:
-    using DataStructureExtractor = std::function<std::span<const std::byte>(Slice&, WorkerThreadId)>;
+    using DataStructureExtractor = std::function<void*(Slice&, WorkerThreadId)>;
     using SliceCreateFunction = std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>;
-    using CreateSlicesFunction = std::function<SliceCreateFunction(IntervalJoinOperatorHandler&)>;
+    using CreateSlicesFunction = std::function<SliceCreateFunction(IntervalJoinOperatorHandler&, AbstractBufferProvider&)>;
 
     explicit IntervalSliceStoreRef(
         SliceCacheConfiguration sliceCacheConfiguration,
@@ -63,7 +62,8 @@ public:
     nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
-        const nautilus::val<OperatorHandler*>& operatorHandler) override;
+        const nautilus::val<OperatorHandler*>& operatorHandler,
+        nautilus::val<AbstractBufferProvider*> bufferProvider) override;
 
     void setupSliceStore(const nautilus::val<PipelineExecutionContext*>& pipelineCtx) override;
     std::unique_ptr<SliceStoreRef> clone() override;
@@ -77,7 +77,8 @@ private:
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
         const IntervalSliceStoreRef* sliceStoreRef,
-        IntervalSliceStore* sliceStore);
+        IntervalSliceStore* sliceStore,
+        AbstractBufferProvider* bufferProvider);
 
     DataStructureExtractor dataStructureExtractor;
     CreateSlicesFunction createSlicesFunction;

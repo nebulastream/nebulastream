@@ -15,43 +15,65 @@
 #include <Join/IntervalJoin/IntervalJoinSlice.hpp>
 
 #include <cstdint>
-#include <memory>
 #include <mutex>
 #include <numeric>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-IntervalJoinSlice::IntervalJoinSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const uint64_t numberOfWorkerThreads)
+IntervalJoinSlice::IntervalJoinSlice(
+    AbstractBufferProvider& bufferProvider,
+    const SliceStart sliceStart,
+    const SliceEnd sliceEnd,
+    const uint64_t numberOfWorkerThreads,
+    const uint64_t tupleSize)
     : Slice(sliceStart, sliceEnd)
 {
+    const uint64_t pvMainBufferSize = PagedVector::getMainBufferSize();
+    const uint64_t pvPageBufferSize = bufferProvider.getBufferSize();
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        pagedVectors.emplace_back(std::make_unique<PagedVector>());
+        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
+        {
+            /// initialize the paged vector tuple buffer
+            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSize);
+            pagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
+        }
+        else
+        {
+            throw BufferAllocationFailure("No unpooled TupleBuffer available for interval-join paged vector main buffer");
+        }
     }
 }
 
 uint64_t IntervalJoinSlice::getNumberOfTuples() const
 {
     return std::accumulate(
-        pagedVectors.begin(),
-        pagedVectors.end(),
+        pagedVectorBuffers.begin(),
+        pagedVectorBuffers.end(),
         uint64_t{0},
-        [](uint64_t sum, const auto& pagedVector) { return sum + (pagedVector ? pagedVector->getTotalNumberOfEntries() : 0); });
+        [](uint64_t sum, const TupleBuffer& buf)
+        {
+            auto pagedVector = PagedVector::load(buf);
+            return sum + pagedVector.getTotalNumberOfRecords();
+        });
 }
 
-PagedVector* IntervalJoinSlice::getPagedVectorRef(const WorkerThreadId workerThreadId) const
+const TupleBuffer* IntervalJoinSlice::getPagedVectorRef(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % pagedVectors.size();
-    return pagedVectors[pos].get();
+    const auto pos = workerThreadId % pagedVectorBuffers.size();
+    return &pagedVectorBuffers[pos];
 }
 
-PagedVector* IntervalJoinSlice::getMergedPagedVector() const
+const TupleBuffer* IntervalJoinSlice::getMergedPagedVector() const
 {
-    return pagedVectors[0].get();
+    return &pagedVectorBuffers[0];
 }
 
 void IntervalJoinSlice::combinePagedVectors()
@@ -59,8 +81,8 @@ void IntervalJoinSlice::combinePagedVectors()
     /// Double-checked locking. The release-store at the end of the slow path establishes
     /// happens-before for the acquire-load on the fast path: a concurrent caller that
     /// observes `combined == true` is guaranteed to see the completed merge (i.e. the
-    /// fully-populated pagedVectors[0]). An earlier draft set `combined = true` via CAS
-    /// *before* the merge, which let racers exit early while pagedVectors[0] was still
+    /// fully-populated pagedVectorBuffers[0]). An earlier draft set `combined = true` via CAS
+    /// *before* the merge, which let racers exit early while pagedVectorBuffers[0] was still
     /// being filled — a probe-worker would then read partial state.
     if (combined.load(std::memory_order_acquire))
     {
@@ -71,13 +93,15 @@ void IntervalJoinSlice::combinePagedVectors()
     {
         return;
     }
-    if (pagedVectors.size() > 1)
+    if (pagedVectorBuffers.size() > 1)
     {
-        for (uint64_t i = 1; i < pagedVectors.size(); ++i)
+        for (uint64_t i = 1; i < pagedVectorBuffers.size(); ++i)
         {
-            pagedVectors[0]->moveAllPages(*pagedVectors[i]);
+            auto firstPagedVector = PagedVector::load(pagedVectorBuffers[0]);
+            auto currPagedVector = PagedVector::load(pagedVectorBuffers[i]);
+            firstPagedVector.movePagesFrom(currPagedVector);
         }
-        pagedVectors.erase(pagedVectors.begin() + 1, pagedVectors.end());
+        pagedVectorBuffers.erase(pagedVectorBuffers.begin() + 1, pagedVectorBuffers.end());
     }
     combined.store(true, std::memory_order_release);
 }

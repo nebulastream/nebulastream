@@ -18,21 +18,23 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
 #include <Join/IntervalJoin/IntervalJoinSlice.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
@@ -106,7 +108,7 @@ IntervalJoinSlice* getPartnerSliceByEndProxy(OperatorHandler* ptrOpHandler, cons
     return ptr;
 }
 
-PagedVector* getMergedPagedVectorProxy(const IntervalJoinSlice* slice)
+const TupleBuffer* getMergedPagedVectorProxy(const IntervalJoinSlice* slice)
 {
     PRECONDITION(slice != nullptr, "slice should not be null");
     return slice->getMergedPagedVector();
@@ -138,8 +140,8 @@ IntervalJoinProbePhysicalOperator::IntervalJoinProbePhysicalOperator(
     std::unique_ptr<TimeFunction> partnerTimeFunctionParam,
     const IntervalBound lowerBoundParam,
     const IntervalBound upperBoundParam,
-    std::shared_ptr<TupleBufferRef> anchorMemoryProviderParam,
-    std::shared_ptr<TupleBufferRef> partnerMemoryProviderParam,
+    std::shared_ptr<PagedVectorTupleLayout> anchorTupleLayoutParam,
+    std::shared_ptr<PagedVectorTupleLayout> partnerTupleLayoutParam,
     std::vector<Record::RecordFieldIdentifier> anchorKeyFieldNamesParam,
     std::vector<Record::RecordFieldIdentifier> partnerKeyFieldNamesParam,
     const bool emitAnchorNullFillParam,
@@ -149,8 +151,8 @@ IntervalJoinProbePhysicalOperator::IntervalJoinProbePhysicalOperator(
     , partnerTimeFunction(std::move(partnerTimeFunctionParam))
     , lowerBound(lowerBoundParam)
     , upperBound(upperBoundParam)
-    , anchorMemoryProvider(std::move(anchorMemoryProviderParam))
-    , partnerMemoryProvider(std::move(partnerMemoryProviderParam))
+    , anchorTupleLayout(std::move(anchorTupleLayoutParam))
+    , partnerTupleLayout(std::move(partnerTupleLayoutParam))
     , anchorKeyFieldNames(std::move(anchorKeyFieldNamesParam))
     , partnerKeyFieldNames(std::move(partnerKeyFieldNamesParam))
     , emitAnchorNullFill(emitAnchorNullFillParam)
@@ -164,8 +166,8 @@ IntervalJoinProbePhysicalOperator::IntervalJoinProbePhysicalOperator(const Inter
     , partnerTimeFunction(other.partnerTimeFunction ? other.partnerTimeFunction->clone() : nullptr)
     , lowerBound(other.lowerBound)
     , upperBound(other.upperBound)
-    , anchorMemoryProvider(other.anchorMemoryProvider)
-    , partnerMemoryProvider(other.partnerMemoryProvider)
+    , anchorTupleLayout(other.anchorTupleLayout)
+    , partnerTupleLayout(other.partnerTupleLayout)
     , anchorKeyFieldNames(other.anchorKeyFieldNames)
     , partnerKeyFieldNames(other.partnerKeyFieldNames)
     , emitAnchorNullFill(other.emitAnchorNullFill)
@@ -294,7 +296,7 @@ IntervalJoinProbePhysicalOperator::intervalPredicateHolds(ExecutionContext& exec
 /// anchor/partner role swap is expressed once as a driver/partner selection rather than as a ternary at every use.
 struct ProbeSide
 {
-    const std::shared_ptr<TupleBufferRef>& provider;
+    const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout;
     const std::vector<Record::RecordFieldIdentifier>& keys;
     const std::vector<Record::RecordFieldIdentifier>& fields;
     IntervalJoinSlice* (*resolveSliceByEnd)(OperatorHandler*, SliceEnd);
@@ -310,27 +312,26 @@ void IntervalJoinProbePhysicalOperator::runJoinPass(
     const auto partnerCount = invoke(getPartnerCountProxy, triggerRef);
 
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    const auto anchorFieldNames = anchorMemoryProvider->getAllFieldNames();
-    const auto partnerFieldNames = partnerMemoryProvider->getAllFieldNames();
+    const auto anchorFieldNames = getOrderedFieldNames(anchorTupleLayout->getSchema());
+    const auto partnerFieldNames = getOrderedFieldNames(partnerTupleLayout->getSchema());
 
     /// Pick driver/partner roles once (at trace time). Anchor-driven pass: driver = anchor-store slice, partners =
     /// partner-store slices. Partner-null-fill pass: the roles swap. createJoinedRecord/intervalPredicateHolds still
     /// take (anchor, partner) order, so the few remaining driverIsAnchor branches below are genuinely behavioural.
-    const ProbeSide anchorSide{anchorMemoryProvider, anchorKeyFieldNames, anchorFieldNames, getAnchorSliceByEndProxy};
-    const ProbeSide partnerSide{partnerMemoryProvider, partnerKeyFieldNames, partnerFieldNames, getPartnerSliceByEndProxy};
+    const ProbeSide anchorSide{anchorTupleLayout, anchorKeyFieldNames, anchorFieldNames, getAnchorSliceByEndProxy};
+    const ProbeSide partnerSide{partnerTupleLayout, partnerKeyFieldNames, partnerFieldNames, getPartnerSliceByEndProxy};
     const ProbeSide& driver = driverIsAnchor ? anchorSide : partnerSide;
     const ProbeSide& partner = driverIsAnchor ? partnerSide : anchorSide;
 
     /// Driver slice: resolved once per buffer, then merged-page reused for every partner.
     const auto driverSliceRef = invoke(driver.resolveSliceByEnd, operatorHandlerMemRef, driverSliceEnd);
     const auto driverPagedVectorPtr = invoke(getMergedPagedVectorProxy, driverSliceRef);
-    const PagedVectorRef driverPagedVector{driverPagedVectorPtr, driver.provider};
+    const PagedVectorRef driverPagedVector{BorrowedNautilusBuffer::from(driverPagedVectorPtr), driver.tupleLayout};
 
     /// Outer loop over driver tuples so each is matched against every partner slice in a single pass. This lets
     /// an unmatched driver tuple be detected and null-filled here: the trigger gathers every partner slice that
     /// can fall inside this driver's interval range, so absence of a match across all partners means no partner.
-    nautilus::val<std::uint64_t> outerPos{0};
-    for (auto outerIt = driverPagedVector.begin(driver.keys); outerIt != driverPagedVector.end(driver.keys); ++outerIt)
+    for (auto outerIt = driverPagedVector.begin(); outerIt != driverPagedVector.end(); ++outerIt)
     {
         nautilus::val<bool> matched{false};
         for (nautilus::val<std::uint64_t> partnerIdx{0}; partnerIdx < partnerCount;
@@ -339,21 +340,22 @@ void IntervalJoinProbePhysicalOperator::runJoinPass(
             const auto partnerSliceEnd = invoke(getPartnerSliceEndProxy, triggerRef, partnerIdx);
             const auto partnerSliceRef = invoke(partner.resolveSliceByEnd, operatorHandlerMemRef, partnerSliceEnd);
             const auto partnerPagedVectorPtr = invoke(getMergedPagedVectorProxy, partnerSliceRef);
-            const PagedVectorRef partnerPagedVector{partnerPagedVectorPtr, partner.provider};
+            const PagedVectorRef partnerPagedVector{BorrowedNautilusBuffer::from(partnerPagedVectorPtr), partner.tupleLayout};
 
-            nautilus::val<std::uint64_t> innerPos{0};
-            for (auto innerIt = partnerPagedVector.begin(partner.keys); innerIt != partnerPagedVector.end(partner.keys); ++innerIt)
+            for (auto innerIt = partnerPagedVector.begin(); innerIt != partnerPagedVector.end(); ++innerIt)
             {
                 /// joinFunction expects (anchor, partner) field order. The anchor-side tuple is the driver in the
                 /// anchor-driven pass and the partner-slice tuple in the null-fill pass. User join expression first
                 /// (cheap join key compare); skip the interval check on failure.
+                auto driverRecord = *outerIt;
+                auto partnerSliceRecord = *innerIt;
                 const auto candidateRecord = driverIsAnchor
-                    ? createJoinedRecord(*outerIt, *innerIt, windowStart, windowEnd, anchorKeyFieldNames, partnerKeyFieldNames)
-                    : createJoinedRecord(*innerIt, *outerIt, windowStart, windowEnd, anchorKeyFieldNames, partnerKeyFieldNames);
+                    ? createJoinedRecord(
+                          driverRecord, partnerSliceRecord, windowStart, windowEnd, anchorKeyFieldNames, partnerKeyFieldNames)
+                    : createJoinedRecord(
+                          partnerSliceRecord, driverRecord, windowStart, windowEnd, anchorKeyFieldNames, partnerKeyFieldNames);
                 if (joinFunction.execute(candidateRecord, executionCtx.pipelineMemoryProvider.arena))
                 {
-                    auto driverRecord = driverPagedVector.readRecord(outerPos, driver.fields);
-                    auto partnerSliceRecord = partnerPagedVector.readRecord(innerPos, partner.fields);
                     auto& anchorRecord = driverIsAnchor ? driverRecord : partnerSliceRecord;
                     auto& partnerRecord = driverIsAnchor ? partnerSliceRecord : driverRecord;
                     if (intervalPredicateHolds(executionCtx, anchorRecord, partnerRecord))
@@ -369,7 +371,6 @@ void IntervalJoinProbePhysicalOperator::runJoinPass(
                         matched = nautilus::val<bool>{true};
                     }
                 }
-                innerPos = innerPos + nautilus::val<std::uint64_t>{1};
             }
         }
         /// Null-fill the unmatched driver tuple: anchor-driven pass only for LEFT/FULL (emitAnchorNullFill,
@@ -380,13 +381,12 @@ void IntervalJoinProbePhysicalOperator::runJoinPass(
         {
             if (!matched)
             {
-                auto driverRecord = driverPagedVector.readRecord(outerPos, driver.fields);
+                auto driverRecord = *outerIt;
                 const auto& nullSchema = driverIsAnchor ? joinSchema.rightSchema : joinSchema.leftSchema;
                 auto nullRecord = createNullFilledJoinedRecord(driverRecord, windowStart, windowEnd, driver.fields, nullSchema);
                 executeChild(executionCtx, nullRecord);
             }
         }
-        outerPos = outerPos + nautilus::val<std::uint64_t>{1};
     }
 }
 

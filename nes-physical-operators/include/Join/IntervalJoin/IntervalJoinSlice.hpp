@@ -16,15 +16,29 @@
 
 #include <atomic>
 #include <cstdint>
-#include <memory>
 #include <mutex>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 
 namespace NES
 {
+
+struct CreateNewIntervalJoinSliceArgs final : CreateNewSlicesArguments
+{
+    CreateNewIntervalJoinSliceArgs(AbstractBufferProvider& bufferProvider, uint64_t tupleSize)
+        : bufferProvider(&bufferProvider), tupleSize(tupleSize) /// NOLINT(clang-analyzer-optin.cplusplus.UninitializedObject)
+    {
+    }
+
+    ~CreateNewIntervalJoinSliceArgs() override = default;
+
+    AbstractBufferProvider* bufferProvider;
+    uint64_t tupleSize;
+};
 
 /// Single-sided slice for the streaming interval join.
 ///
@@ -33,6 +47,10 @@ namespace NES
 /// IntervalJoinOperatorHandler. The side is implicit in the store; the slice
 /// only needs one PagedVector array.
 ///
+/// Mirroring the refactored NLJSlice, the per-worker PagedVectors are views over
+/// TupleBuffers (PagedVector::init / PagedVector::load) rather than heap-allocated
+/// objects.
+///
 /// combinePagedVectors() is idempotent under an explicit atomic CAS gate. This
 /// matters here in a way it does not for NLJ: a single anchor slice can be
 /// referenced by multiple partner emissions; making the merge a no-op on
@@ -40,19 +58,24 @@ namespace NES
 class IntervalJoinSlice final : public Slice
 {
 public:
-    IntervalJoinSlice(SliceStart sliceStart, SliceEnd sliceEnd, uint64_t numberOfWorkerThreads);
+    IntervalJoinSlice(
+        AbstractBufferProvider& bufferProvider,
+        SliceStart sliceStart,
+        SliceEnd sliceEnd,
+        uint64_t numberOfWorkerThreads,
+        uint64_t tupleSize);
 
     /// Total tuple count across all per-worker PagedVectors. Safe to call before
     /// or after combinePagedVectors() — sums whichever vectors are still live.
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
-    /// Returns the per-worker PagedVector for the given worker. Used by the
-    /// build operator on the hot path.
-    [[nodiscard]] PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId) const;
+    /// Returns the per-worker PagedVector TupleBuffer for the given worker. Used by
+    /// the build operator on the hot path.
+    [[nodiscard]] const TupleBuffer* getPagedVectorRef(WorkerThreadId workerThreadId) const;
 
-    /// Returns the merged PagedVector (slot 0). The handler calls
+    /// Returns the merged PagedVector TupleBuffer (slot 0). The handler calls
     /// combinePagedVectors() before emit, so the probe operator reads from this.
-    [[nodiscard]] PagedVector* getMergedPagedVector() const;
+    [[nodiscard]] const TupleBuffer* getMergedPagedVector() const;
 
     /// Idempotent merge of per-worker PagedVectors into slot 0. The first call
     /// drains slots 1..N into slot 0 under combineMutex; subsequent calls return
@@ -71,7 +94,7 @@ public:
     [[nodiscard]] bool isTriggered() const noexcept;
 
 private:
-    std::vector<std::unique_ptr<PagedVector>> pagedVectors;
+    std::vector<TupleBuffer> pagedVectorBuffers;
     std::atomic<bool> combined{false};
     std::atomic<bool> triggered{false};
     std::mutex combineMutex;

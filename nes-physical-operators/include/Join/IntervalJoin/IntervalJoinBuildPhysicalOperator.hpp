@@ -16,10 +16,10 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/Record.hpp>
 #include <Join/IntervalJoin/IntervalJoinOperatorHandler.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
@@ -46,7 +46,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         IntervalJoinBuildSide buildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
 
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
