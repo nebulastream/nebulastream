@@ -142,6 +142,7 @@ For further information about our frontends, check out the [Frontend Reference](
 ## Documentation
 - Design proposals and architectural notes: [Design index](docs/design/README.md)
 - Developer workflows and environment setup: [Development environment](docs/development/development.md), [Run workflows locally](docs/development/running_workflows_locally.md)
+- Implementation guides: [Add a source](docs/guide/how_to_add_a_source.md), [Add a sink](docs/guide/how_to_add_a_sink.md), [Add a placement strategy](docs/guide/how_to_add_a_placement_strategy.md)
 - Technical deep dives: [Dependency architecture](docs/technical/dependency.md), [Query engine task queue](docs/technical/QueryEngine_TaskQueue.md), [Watermarking trigger details](docs/technical/watermarking_progress_window_triggering.md)
 - Organizational guidelines and processes: [Meetings overview](docs/organizational/meetings.md), [Nightly CI process](docs/organizational/processes/nightly_ci.md)
 
