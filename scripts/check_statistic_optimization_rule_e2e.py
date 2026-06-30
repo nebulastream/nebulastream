@@ -23,9 +23,12 @@ optimizer, and verifies the rule's print appears in the instance's output during
 Flow:
   * `nes-repl-embedded` is wired (in the EMBED_ENGINE build) with a StatisticCoordinator + StatisticRetrievalService
     so the optimizer's StatisticOptimizationRule has a service to query.
-  * We pipe a small SQL script (create a generator source, then a SELECT) into the REPL on stdin.
-  * Optimizing the SELECT runs the StatisticOptimizationRule, which fetches the (deterministic, mock) statistic and
-    prints:  StatisticOptimizationRule: retrieved statistic value 42; returning plan unmodified.
+  * We pipe a small SQL script (create a generator source, then a SELECT carrying GET_STATISTICS=true) into the REPL.
+  * The GET_STATISTICS=true option makes the engine deploy the (continuous, mock) statistic build query before the
+    SELECT is optimized.
+  * Optimizing the SELECT then runs the StatisticOptimizationRule, which probes that already-running build for the
+    (deterministic, mock) statistic and prints:
+        StatisticOptimizationRule: retrieved statistic value 42; returning plan unmodified.
   * We assert that line — with the expected value 42 — appears in stdout.
 
 The value is deterministic: the PoC build query bakes the constant 42 into a generator constant-sequence source, so
@@ -60,8 +63,10 @@ def build_repl(build_dir: Path) -> int:
         print(f"ERROR: build of {BUILD_TARGET} failed (exit {completed.returncode}).", file=sys.stderr)
     return completed.returncode
 
-# A minimal deployable query for the embedded engine: a bounded generator source feeding a Void sink. Deploying the
-# SELECT triggers optimization (and therefore the StatisticOptimizationRule). MAX_RUNTIME_MS keeps the run short.
+# A minimal deployable query for the embedded engine: a bounded generator source feeding a Void sink. The query
+# carries GET_STATISTICS=true, which makes the engine spin up the (mock) statistic build query before optimizing.
+# Optimizing the SELECT then runs the StatisticOptimizationRule, which probes that running build. MAX_RUNTIME_MS
+# keeps the run short.
 QUERY_SCRIPT = """\
 CREATE LOGICAL SOURCE endless(val_1 UINT32, ts UINT64);
 CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
@@ -69,7 +74,7 @@ CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
     'CSV' as INPUT_FORMATTER."TYPE",
     3000 as "SOURCE".MAX_RUNTIME_MS,
     'SEQUENCE UINT32 0 10000000 1, SEQUENCE UINT64 0 10000000 1' AS "SOURCE".GENERATOR_SCHEMA);
-SELECT TS FROM ENDLESS INTO Void('localhost:8080' AS "SINK"."HOST");
+SELECT TS FROM ENDLESS INTO Void('localhost:8080' AS "SINK"."HOST") SET(TRUE AS "QUERY"."GET_STATISTICS");
 """
 
 PRINT_RE = re.compile(

@@ -15,21 +15,20 @@
 #pragma once
 
 #include <optional>
-#include <RequestStatisticStatement.hpp>
 
 namespace NES
 {
 
 class StatisticCoordinator;
 
-/// Synchronous, one-shot access to a statistic value. This complements (does not replace) the continuous
-/// collection path (collectNewStatistic + condition-trigger callbacks): instead of registering a long-running
-/// query that fires callbacks, the caller asks for a value and blocks until it is produced.
-///
-/// retrieveStatistic() drives the full request/response over the existing query machinery:
-///   1. starts an ad-hoc build query that populates the StatisticStore,
-///   2. starts a probe query that reads the value back out of the store,
-///   3. blocks until the value arrives over the coordinator's result pipe, and returns it as a scalar.
+/// Synchronous, ad-hoc access to a statistic value. The model is "continuous build, ad-hoc probe":
+///   * deployStatisticBuildIfAbsent() spins up a long-running (mock) build query that keeps the StatisticStore
+///     populated. It is idempotent (the coordinator deduplicates), so the first call deploys the build and later
+///     calls are cheap no-ops. The decision of WHETHER to collect a statistic is the caller's: in the PoC this is
+///     only called for a query carrying `GET_STATISTICS=true`, simulating how a statistic would be collected
+///     alongside that query.
+///   * retrieveStatistic() probes that already-running build for its current value and returns it as a scalar. It
+///     does NOT build or tear anything down; it relies on a previously deployed build.
 ///
 /// The coordinator's result reader must be running (StatisticCoordinator::startResultReader) before use.
 class StatisticRetrievalService
@@ -37,9 +36,14 @@ class StatisticRetrievalService
 public:
     explicit StatisticRetrievalService(StatisticCoordinator& coordinator);
 
-    /// Blocks until the statistic described by `statement` has been built and probed; returns the scalar value,
-    /// or std::nullopt on submission failure or timeout.
-    [[nodiscard]] std::optional<double> retrieveStatistic(const RequestStatisticBuildStatement& statement) const;
+    /// Deploys the (mock) statistic build query unless one is already running. Idempotent: deduplicated by the
+    /// coordinator, so only the first call actually deploys the continuous build. This method always deploys when
+    /// called — the caller decides whether collection was requested (e.g. via GET_STATISTICS).
+    void deployStatisticBuildIfAbsent() const;
+
+    /// Probes the already-running build (ad-hoc) and returns its current value, or std::nullopt if no build is
+    /// running yet or the probe times out. Never deploys or tears down a build.
+    [[nodiscard]] std::optional<double> retrieveStatistic() const;
 
 private:
     StatisticCoordinator& coordinator;

@@ -14,9 +14,13 @@
 
 #include <StatisticRetrievalService.hpp>
 
+#include <cstdint>
 #include <optional>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <CollectionDomain.hpp>
+#include <ErrorHandling.hpp>
+#include <Metric.hpp>
 #include <RequestStatisticStatement.hpp>
 #include <StatisticCoordinator.hpp>
 #include <StatisticRegistry.hpp>
@@ -24,34 +28,61 @@
 namespace NES
 {
 
+namespace
+{
+/// The single mock statistic this PoC collects. Both the build (deployment) and the probe (retrieval) refer to the
+/// same metric/domain/window so the probe finds the build the coordinator registered under this key. In a real
+/// system this would be derived from the query being optimized; here it is a fixed stand-in.
+constexpr uint64_t MOCK_WINDOW_SIZE_MS = 1000;
+
+RequestStatisticBuildStatement mockBuildRequest()
+{
+    return RequestStatisticBuildStatement{
+        .domain = DataDomain{.logicalSourceName = "optimizerSource", .fieldName = "value"},
+        .metric = Metric::Average,
+        .windowSizeMs = MOCK_WINDOW_SIZE_MS,
+        .windowAdvanceMs = std::nullopt,
+        .eventTimeFieldName = std::nullopt,
+        .conditionTrigger = std::nullopt,
+        .options = {}};
+}
+
+StatisticRegistry::Key mockKey()
+{
+    const auto request = mockBuildRequest();
+    return StatisticRegistry::Key{
+        .metric = request.metric, .collectionDomain = request.domain, .windowSize = Windowing::TimeMeasure{request.windowSizeMs}};
+}
+}
+
 StatisticRetrievalService::StatisticRetrievalService(StatisticCoordinator& coordinator) : coordinator(coordinator)
 {
 }
 
-std::optional<double> StatisticRetrievalService::retrieveStatistic(const RequestStatisticBuildStatement& statement) const
+void StatisticRetrievalService::deployStatisticBuildIfAbsent() const
 {
-    /// 1. Start the ad-hoc build query (deduplicated by the coordinator); it populates the StatisticStore.
-    const auto collectResult = coordinator.collectNewStatistic(statement);
-    if (not collectResult.has_value())
+    /// Deduplicated by the coordinator: the first call deploys the continuous build query, later calls return the
+    /// existing entry without redeploying.
+    if (const auto result = coordinator.collectNewStatistic(mockBuildRequest()); not result.has_value())
     {
-        NES_WARNING("StatisticRetrievalService: failed to start build query: {}", collectResult.error().what());
+        NES_WARNING("StatisticRetrievalService: failed to deploy statistic build query: {}", result.error().what());
+    }
+}
+
+std::optional<double> StatisticRetrievalService::retrieveStatistic() const
+{
+    /// Probe the already-running build. The build writes (statisticId, 0, windowSizeMs, value), so we probe that
+    /// exact window. getStatistics throws if no build is registered for the key (none was deployed yet); treat that
+    /// as "no statistic available" rather than an error.
+    try
+    {
+        return coordinator.getStatistics(mockKey(), Windowing::TimeMeasure{0}, Windowing::TimeMeasure{MOCK_WINDOW_SIZE_MS});
+    }
+    catch (const Exception& exception)
+    {
+        NES_DEBUG("StatisticRetrievalService: no running build to probe: {}", exception.what());
         return std::nullopt;
     }
-
-    /// 2. + 3. Start a probe query for the same key and block until its value travels back over the pipe.
-    /// The build query writes (statisticId, 0, windowSizeMs, value), so the probe queries that exact window.
-    const StatisticRegistry::Key key{
-        .metric = statement.metric,
-        .collectionDomain = statement.domain,
-        .windowSize = Windowing::TimeMeasure{statement.windowSizeMs}};
-
-    const auto value = coordinator.getStatistics(key, Windowing::TimeMeasure{0}, Windowing::TimeMeasure{statement.windowSizeMs});
-
-    /// 4. Tear down the ad-hoc build query (blocking) before returning, so it does not keep running after the
-    /// one-shot retrieval. A fresh retrieval with the same request will start a new build.
-    coordinator.stopStatistic(key);
-
-    return value;
 }
 
 }

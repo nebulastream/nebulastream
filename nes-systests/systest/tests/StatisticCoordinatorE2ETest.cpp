@@ -206,12 +206,11 @@ TEST_F(StatisticCoordinatorE2ETest, BuildAndProbeRoundTripOverFifo)
     EXPECT_DOUBLE_EQ(value.value(), 42.0);
 }
 
-/// Same dataflow, but driven through the synchronous StatisticRetrievalService: a single blocking call starts
-/// the ad-hoc build, starts the probe, waits for the value over the pipe, and returns the scalar.
+/// Same dataflow, but driven through the StatisticRetrievalService's "continuous build, ad-hoc probe" model:
+/// deployStatisticBuildIfAbsent() spins up the (mock) build once, then retrieveStatistic() probes the running build
+/// and returns the scalar. The build is NOT torn down by the probe — it keeps running until the test stops it.
 TEST_F(StatisticCoordinatorE2ETest, AdHocScalarRetrievalViaService)
 {
-    constexpr uint64_t windowSizeMs = 1000;
-
     auto store = std::make_shared<DefaultStatisticStore>();
     SingleNodeWorker worker(SingleNodeWorkerConfiguration{}, Host("localhost"), store);
 
@@ -226,16 +225,12 @@ TEST_F(StatisticCoordinatorE2ETest, AdHocScalarRetrievalViaService)
     coordinator.startResultReader();
 
     const StatisticRetrievalService retrievalService(coordinator);
-    const RequestStatisticBuildStatement statement{
-        .domain = DataDomain{.logicalSourceName = "adhocSource", .fieldName = "value"},
-        .metric = Metric::Average,
-        .windowSizeMs = windowSizeMs,
-        .windowAdvanceMs = std::nullopt,
-        .eventTimeFieldName = std::nullopt,
-        .conditionTrigger = std::nullopt,
-        .options = {}};
 
-    const auto value = retrievalService.retrieveStatistic(statement);
+    /// Deploy the continuous build, then probe it ad-hoc.
+    retrievalService.deployStatisticBuildIfAbsent();
+    /// Give the build query time to compile, run, and populate the store before we probe.
+    std::this_thread::sleep_for(std::chrono::seconds{3});
+    const auto value = retrievalService.retrieveStatistic();
 
     coordinator.stopResultReader();
 
@@ -263,6 +258,11 @@ TEST_F(StatisticCoordinatorE2ETest, OptimizationRulePrintsStatisticAndLeavesPlan
     coordinator.startResultReader();
 
     auto retrievalService = std::make_shared<StatisticRetrievalService>(coordinator);
+
+    /// Deploy the continuous build (as GET_STATISTICS=true would) so the rule has a running build to probe, then
+    /// let it populate the store.
+    retrievalService->deployStatisticBuildIfAbsent();
+    std::this_thread::sleep_for(std::chrono::seconds{3});
 
     /// A representative *user* query plan (one without statistic operators), so the rule's recursion guard does not
     /// skip it. The rule does not inspect the plan beyond that guard, so a bare source plan suffices.
