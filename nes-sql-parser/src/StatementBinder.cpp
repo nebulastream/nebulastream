@@ -555,11 +555,13 @@ public:
             if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {
                 std::optional<DistributedQueryId> queryId;
+                bool collectStatistics = false;
                 if (queryAst->optionsClause() != nullptr)
                 {
                     auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
                     static const auto QueryIdentifier = Identifier::parse("QUERY");
                     static const auto IdIdentifier = Identifier::parse("ID");
+                    static const auto GetStatisticsIdentifier = Identifier::parse("GET_STATISTICS");
                     if (auto optionsIter = options.find(QueryIdentifier); optionsIter != options.end())
                     {
                         if (auto idIter = optionsIter->second.find(IdIdentifier); idIter != optionsIter->second.end())
@@ -571,9 +573,31 @@ public:
                             }
                             queryId = DistributedQueryId(std::get<std::string>(*literal));
                         }
+                        if (auto statIter = optionsIter->second.find(GetStatisticsIdentifier); statIter != optionsIter->second.end())
+                        {
+                            auto* literal = std::get_if<Literal>(&statIter->second);
+                            if (literal == nullptr)
+                            {
+                                throw InvalidQuerySyntax("QUERY.GET_STATISTICS must be a boolean");
+                            }
+                            /// Accept either a boolean (SET(true AS ...)) or the string "true".
+                            if (auto* const boolValue = std::get_if<bool>(literal))
+                            {
+                                collectStatistics = *boolValue;
+                            }
+                            else if (auto* const stringValue = std::get_if<std::string>(literal))
+                            {
+                                collectStatistics = *stringValue == "true" || *stringValue == "TRUE";
+                            }
+                            else
+                            {
+                                throw InvalidQuerySyntax("QUERY.GET_STATISTICS must be a boolean");
+                            }
+                        }
                     }
                 }
-                return QueryStatement{.plan = queryBinder(queryAst->query()), .id = queryId};
+                return QueryStatement{
+                    .plan = queryBinder(queryAst->query()), .id = queryId, .collectStatistics = collectStatistics};
             }
 
             throw InvalidStatement(statementAST->toString());
