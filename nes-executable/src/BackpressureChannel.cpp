@@ -14,6 +14,7 @@
 
 #include <BackpressureChannel.hpp>
 
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -77,22 +78,23 @@ bool BackpressureController::releasePressure()
 void BackpressureListener::wait(const std::stop_token& stopToken) const
 {
     auto state = channel->stateMtx.lock();
-    /// If the channel is open, backpressureListener can proceed
-    if (*state == Channel::State::OPEN)
-    {
-        return;
-    }
 
     bool destroyed = false;
-    /// Wait for the channel state to change
-    channel->change.wait(
-        state.as_lock(),
-        stopToken,
-        [&destroyed, &state] -> bool
-        {
-            destroyed = *state == Channel::DESTROYED;
-            return destroyed || *state == Channel::OPEN;
-        });
+    const auto channelChanged = [&destroyed, &state] -> bool
+    {
+        destroyed = *state == Channel::DESTROYED;
+        return destroyed || *state == Channel::OPEN;
+    };
+
+    /// Bounded poll instead of an unbounded wait: a missed condition_variable_any/stop_token wakeup (a known
+    /// hazard on some libc++/libstdc++ versions) must not park a source forever and stall query teardown. We
+    /// re-arm on a short timeout and re-check the stop token, but still only return once the channel is OPEN/
+    /// DESTROYED or a stop was requested -- so backpressure semantics are preserved (the source does not resume
+    /// producing while the channel is CLOSED).
+    while (!channelChanged() && !stopToken.stop_requested())
+    {
+        channel->change.wait_for(state.as_lock(), stopToken, std::chrono::milliseconds{100}, channelChanged);
+    }
 
     INVARIANT(!destroyed, "Backpressure Controller was destroyed before the BackpressureListener");
 }
