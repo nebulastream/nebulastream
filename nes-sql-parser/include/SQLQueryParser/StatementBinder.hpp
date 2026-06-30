@@ -124,8 +124,13 @@ struct QueryStatement
     LogicalPlan plan;
     std::optional<DistributedQueryId> id;
     /// Set via the query option `SET(TRUE AS "QUERY"."GET_STATISTICS")`. When true, the engine spins up a (mock)
-    /// statistic build query alongside this normal query, simulating how a statistic would be collected for it.
+    /// statistic build query collecting a statistic on this query's own source, simulating how a statistic would be
+    /// collected for it.
     bool collectStatistics = false;
+    /// Set via the query option `SET('<source>' AS "QUERY"."USE_STATISTIC")`. Names the source whose statistic the
+    /// optimizer should fetch during this query's optimization (canonicalized). When unset, the statistic rule does
+    /// not run for this query.
+    std::optional<std::string> useStatisticSource;
 };
 
 struct ExplainQueryStatement

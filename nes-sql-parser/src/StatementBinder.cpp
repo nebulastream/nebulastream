@@ -556,12 +556,14 @@ public:
             {
                 std::optional<DistributedQueryId> queryId;
                 bool collectStatistics = false;
+                std::optional<std::string> useStatisticSource;
                 if (queryAst->optionsClause() != nullptr)
                 {
                     auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
                     static const auto QueryIdentifier = Identifier::parse("QUERY");
                     static const auto IdIdentifier = Identifier::parse("ID");
                     static const auto GetStatisticsIdentifier = Identifier::parse("GET_STATISTICS");
+                    static const auto UseStatisticIdentifier = Identifier::parse("USE_STATISTIC");
                     if (auto optionsIter = options.find(QueryIdentifier); optionsIter != options.end())
                     {
                         if (auto idIter = optionsIter->second.find(IdIdentifier); idIter != optionsIter->second.end())
@@ -594,10 +596,23 @@ public:
                                 throw InvalidQuerySyntax("QUERY.GET_STATISTICS must be a boolean");
                             }
                         }
+                        if (auto useIter = optionsIter->second.find(UseStatisticIdentifier); useIter != optionsIter->second.end())
+                        {
+                            auto* literal = std::get_if<Literal>(&useIter->second);
+                            if ((literal == nullptr) || !std::holds_alternative<std::string>(*literal))
+                            {
+                                throw InvalidQuerySyntax("QUERY.USE_STATISTIC must be a string naming the source");
+                            }
+                            /// Canonicalize so it matches the source name extracted from the plan (unquoted -> upper).
+                            useStatisticSource = Identifier::parse(std::get<std::string>(*literal)).asCanonicalString();
+                        }
                     }
                 }
                 return QueryStatement{
-                    .plan = queryBinder(queryAst->query()), .id = queryId, .collectStatistics = collectStatistics};
+                    .plan = queryBinder(queryAst->query()),
+                    .id = queryId,
+                    .collectStatistics = collectStatistics,
+                    .useStatisticSource = useStatisticSource};
             }
 
             throw InvalidStatement(statementAST->toString());
