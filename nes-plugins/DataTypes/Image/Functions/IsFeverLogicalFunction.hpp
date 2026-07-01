@@ -42,7 +42,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] IsFeverLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] IsFeverLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -57,28 +57,30 @@ private:
     friend Reflector<IsFeverLogicalFunction>;
 };
 
+namespace detail
+{
+
+struct ReflectedIsFeverLogicalFunction
+{
+    LogicalFunction child;
+};
+
+}
+
 template <>
 struct Reflector<IsFeverLogicalFunction>
 {
-    Reflected operator()(const IsFeverLogicalFunction& function) const;
+    Reflected operator()(const IsFeverLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
 struct Unreflector<IsFeverLogicalFunction>
 {
-    IsFeverLogicalFunction operator()(const Reflected& reflected) const;
+    IsFeverLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<IsFeverLogicalFunction>);
 
-}
-
-namespace NES::detail
-{
-struct ReflectedIsFeverLogicalFunction
-{
-    std::optional<LogicalFunction> child;
-};
 }
 
 FMT_OSTREAM(NES::IsFeverLogicalFunction);

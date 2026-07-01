@@ -11,11 +11,11 @@ ATTACH INLINE
 2,24.0,200
 3,25.5,300
 
-SELECT Reading(celsius, FLOAT64(60.5)) AS reading FROM thermometer WHERE Reading(celsius, FLOAT64(60.5)) = Reading(FLOAT64(23.5), FLOAT64(60.5)) INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+SELECT Reading(celsius, FLOAT64(60.5)) AS reading FROM thermometer WHERE Reading(celsius, FLOAT64(60.5)) = Reading(FLOAT64(23.5), FLOAT64(60.5)) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
 ----
 {"READING":{"temperature":23.5,"humidity":60.5}}
 
-SELECT Reading(celsius, FLOAT64(60.5)) AS reading FROM thermometer WHERE Reading(celsius, FLOAT64(60.5)) > Reading(FLOAT64(23.5), FLOAT64(60.5)) INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+SELECT Reading(celsius, FLOAT64(60.5)) AS reading FROM thermometer WHERE Reading(celsius, FLOAT64(60.5)) > Reading(FLOAT64(23.5), FLOAT64(60.5)) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
 ----
 {"READING":{"temperature":24.0,"humidity":60.5}}
 {"READING":{"temperature":25.5,"humidity":60.5}}

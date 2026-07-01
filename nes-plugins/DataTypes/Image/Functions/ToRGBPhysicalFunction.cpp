@@ -20,11 +20,11 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/FixedSizedData.hpp>
-#include <Nautilus/DataTypes/StructData.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <DataTypes/FixedSizedData.hpp>
+#include <DataTypes/StructData.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
+#include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>

@@ -14,8 +14,8 @@
 
 #pragma once
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <Interface/Record.hpp>
 #include <Arena.hpp>
 
 namespace NES

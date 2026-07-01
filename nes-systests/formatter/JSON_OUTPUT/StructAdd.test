@@ -13,7 +13,7 @@ ATTACH INLINE
 3,25.5,300
 
 # Reading(celsius, 50.0) + Reading(1.0, 5.0) → temperature += 1, humidity += 5
-SELECT Reading(celsius, FLOAT64(50.0)) + Reading(FLOAT64(1.0), FLOAT64(5.0)) AS combined FROM thermometer INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+SELECT Reading(celsius, FLOAT64(50.0)) + Reading(FLOAT64(1.0), FLOAT64(5.0)) AS combined FROM thermometer INTO File('JSON' as "SINK".OUTPUT_FORMAT);
 ----
 {"COMBINED":{"temperature":24.5,"humidity":55.0}}
 {"COMBINED":{"temperature":25.0,"humidity":55.0}}

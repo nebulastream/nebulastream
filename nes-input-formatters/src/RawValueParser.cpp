@@ -134,6 +134,8 @@ void parseRawValueIntoRecord(
             throw NotImplemented("Flat textual formatters do not support FIXEDSIZED arrays.");
         case DataType::Type::STRUCT:
             throw NotImplemented("Flat textual formatters do not support STRUCT types.");
+        case DataType::Type::VECTOR:
+            throw NotImplemented("Flat textual formatters do not support VECTOR types.");
         case DataType::Type::UNDEFINED:
             throw NotImplemented("Cannot parse undefined type.");
     }

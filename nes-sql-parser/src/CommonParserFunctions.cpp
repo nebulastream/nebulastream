@@ -404,7 +404,7 @@ DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const D
         const auto elementType = DataTypeProvider::tryProvideDataType(dataTypeText, DataType::NULLABLE::NOT_NULLABLE);
         if (not elementType.has_value() || elementType->type == DataType::Type::VARSIZED
             || elementType->type == DataType::Type::FIXEDSIZED || elementType->type == DataType::Type::STRUCT
-            || elementType->type == DataType::Type::UNDEFINED)
+            || elementType->type == DataType::Type::UNDEFINED || elementType->type == DataType::Type::VECTOR)
         {
             throw UnknownDataType(
                 "{} is not a supported element type for `ARRAY[N]`; only primitive scalar types are allowed", dataTypeText);
@@ -424,6 +424,20 @@ DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const D
             throw UnknownDataType("FIXEDSIZED array count must be greater than zero");
         }
         return DataType{DataType::Type::FIXEDSIZED, isNullable, elementType->type, count};
+    }
+
+    /// T VECTOR -> Vector with element type T -> map to VECTOR type
+    if (typeDefAST->VECTOR() != nullptr)
+    {
+        const auto elementType = DataTypeProvider::tryProvideDataType(dataTypeText, DataType::NULLABLE::NOT_NULLABLE);
+        if (not elementType.has_value() || elementType->type == DataType::Type::VARSIZED
+            || elementType->type == DataType::Type::FIXEDSIZED || elementType->type == DataType::Type::STRUCT
+            || elementType->type == DataType::Type::UNDEFINED || elementType->type == DataType::Type::VECTOR)
+        {
+            throw UnknownDataType(
+                "{} is not a supported element type for `VECTOR`; only primitive scalar types are allowed", dataTypeText);
+        }
+        return DataType{DataType::Type::VECTOR, isNullable, elementType->type};
     }
 
     const auto dataType = DataTypeProvider::tryProvideDataType(dataTypeText, isNullable);

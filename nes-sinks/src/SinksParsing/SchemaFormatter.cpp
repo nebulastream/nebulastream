@@ -38,6 +38,10 @@ std::string formatTypeForHeader(const DataType& dataType)
         /// field split in `SystestResultCheck::parseFieldNames` doesn't tokenize it.
         return fmt::format("FIXEDSIZED<{};{}>", magic_enum::enum_name(dataType.elementType), dataType.count);
     }
+    if (dataType.type == DataType::Type::VECTOR)
+    {
+        return fmt::format("VECTOR<{}>", magic_enum::enum_name(dataType.elementType));
+    }
     if (dataType.type == DataType::Type::STRUCT)
     {
         /// Nominal STRUCTs are identified by their registered name; emitting that

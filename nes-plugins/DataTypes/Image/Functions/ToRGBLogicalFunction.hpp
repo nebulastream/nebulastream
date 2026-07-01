@@ -42,7 +42,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] ToRGBLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] ToRGBLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -58,29 +58,29 @@ private:
     friend Reflector<ToRGBLogicalFunction>;
 };
 
+namespace detail
+{
+struct ReflectedToRGBLogicalFunction
+{
+    LogicalFunction frame;
+    LogicalFunction colormap;
+};
+}
+
 template <>
 struct Reflector<ToRGBLogicalFunction>
 {
-    Reflected operator()(const ToRGBLogicalFunction& function) const;
+    Reflected operator()(const ToRGBLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
 struct Unreflector<ToRGBLogicalFunction>
 {
-    ToRGBLogicalFunction operator()(const Reflected& reflected) const;
+    ToRGBLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<ToRGBLogicalFunction>);
 
-}
-
-namespace NES::detail
-{
-struct ReflectedToRGBLogicalFunction
-{
-    std::optional<LogicalFunction> frame;
-    std::optional<LogicalFunction> colormap;
-};
 }
 
 FMT_OSTREAM(NES::ToRGBLogicalFunction);

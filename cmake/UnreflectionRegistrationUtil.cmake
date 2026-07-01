@@ -86,6 +86,13 @@ function(add_unreflection_plugin registry plugin_name)
     get_property(type_template GLOBAL PROPERTY "${registry}_UNREFLECTION_TYPE_TEMPLATE")
     get_property(header_template GLOBAL PROPERTY "${registry}_UNREFLECTION_HEADER_TEMPLATE")
 
+    # The glue TU includes the plugin's header, but it compiles into the registry's glue
+    # sub-library, which only sees the registry dir and the parent target's include path.
+    # In-tree components keep their headers under <component>/include, which the parent
+    # already exposes; out-of-tree plugins (nes-plugins/...) keep the header next to the
+    # CMakeLists, so put the calling directory on the glue lib's include path as well.
+    target_include_directories(${glue_lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
     if(ARG_KEY)
         set(registry_key "${ARG_KEY}")
     else()

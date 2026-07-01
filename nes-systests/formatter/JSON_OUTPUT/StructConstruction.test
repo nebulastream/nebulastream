@@ -14,7 +14,7 @@ ATTACH INLINE
 # Hygrometer: a *different-shape* sensor stream. Wider schema (battery + uptime
 # metadata that the Reading struct doesn't care about) and entirely different
 # field names. Only `humidity_pct` ever contributes to a Reading.
-CREATE LOGICAL SOURCE hygrometer(device_id UINT64 NOT NULL, humidity_pct FLOAT64 NOT NULL, battery_pct UINT8 NOT NULL, ts UINT64 NOT NULL);
+CREATE LOGICAL SOURCE hygrometer(device_id UINT64 NOT NULL, humidity_pct FLOAT64 NOT NULL, battery_pct UINT8 NOT NULL, ts2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR hygrometer TYPE File;
 ATTACH INLINE
 1,65.0,87,100
@@ -22,21 +22,21 @@ ATTACH INLINE
 3,55.0,72,300
 
 # Construct struct from constants
-SELECT Reading(FLOAT64(1.5), FLOAT64(60.5)) AS reading FROM thermometer INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+SELECT Reading(FLOAT64(1.5), FLOAT64(60.5)) AS reading FROM thermometer INTO File('JSON' as "SINK".OUTPUT_FORMAT);
 ----
 {"READING":{"temperature":1.5,"humidity":60.5}}
 {"READING":{"temperature":1.5,"humidity":60.5}}
 {"READING":{"temperature":1.5,"humidity":60.5}}
 
 # Construct struct from constant and literal
-SELECT Reading(celsius, FLOAT64(60.5)) AS reading FROM thermometer INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+SELECT Reading(celsius, FLOAT64(60.5)) AS reading FROM thermometer INTO File('JSON' as "SINK".OUTPUT_FORMAT);
 ----
 {"READING":{"temperature":23.5,"humidity":60.5}}
 {"READING":{"temperature":24.0,"humidity":60.5}}
 {"READING":{"temperature":25.5,"humidity":60.5}}
 
 # Construct struct from constant and literal-addition
-SELECT Reading(celsius + FLOAT64(10.0), FLOAT64(60.5)) AS reading FROM thermometer INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+SELECT Reading(celsius + FLOAT64(10.0), FLOAT64(60.5)) AS reading FROM thermometer INTO File('JSON' as "SINK".OUTPUT_FORMAT);
 ----
 {"READING":{"temperature":33.5,"humidity":60.5}}
 {"READING":{"temperature":34.0,"humidity":60.5}}
@@ -48,7 +48,7 @@ SELECT Reading(celsius + FLOAT64(10.0), FLOAT64(60.5)) AS reading FROM thermomet
 # all dropped on the floor by the projection.
 SELECT Reading(celsius, humidity_pct) AS reading
 FROM (SELECT * FROM thermometer) JOIN (SELECT * FROM hygrometer) ON sensor_id = device_id
-  WINDOW TUMBLING (ts, size 1 sec) INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
 ----
 {"READING":{"temperature":23.5,"humidity":65.0}}
 {"READING":{"temperature":24.0,"humidity":70.0}}
@@ -57,7 +57,7 @@ FROM (SELECT * FROM thermometer) JOIN (SELECT * FROM hygrometer) ON sensor_id = 
 # Add celsius and humidity
 SELECT Reading(celsius + humidity_pct, humidity_pct) AS reading
 FROM (SELECT * FROM thermometer) JOIN (SELECT * FROM hygrometer) ON sensor_id = device_id
-  WINDOW TUMBLING (ts, size 1 sec) INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+  WINDOW TUMBLING (ts, ts2, size 1 sec) INTO File('JSON' as "SINK".OUTPUT_FORMAT);
 ----
 {"READING":{"temperature":88.5,"humidity":65.0}}
 {"READING":{"temperature":94.0,"humidity":70.0}}

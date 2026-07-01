@@ -49,7 +49,7 @@ IsFeverLogicalFunction IsFeverLogicalFunction::withDataType(const DataType& data
     return copy;
 }
 
-LogicalFunction IsFeverLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction IsFeverLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& c) { return c.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();
@@ -102,28 +102,20 @@ std::string IsFeverLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("is_fever({})", child.explain(verbosity));
 }
 
-Reflected Reflector<IsFeverLogicalFunction>::operator()(const IsFeverLogicalFunction& function) const
+Reflected Reflector<IsFeverLogicalFunction>::operator()(const IsFeverLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedIsFeverLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedIsFeverLogicalFunction{.child = function.child});
 }
 
-IsFeverLogicalFunction Unreflector<IsFeverLogicalFunction>::operator()(const Reflected& reflected) const
+IsFeverLogicalFunction Unreflector<IsFeverLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [child] = unreflect<detail::ReflectedIsFeverLogicalFunction>(reflected);
-    if (!child.has_value())
-    {
-        throw CannotDeserialize("IsFeverLogicalFunction is missing its child");
-    }
-    return IsFeverLogicalFunction(child.value());
+    auto [child] = context.unreflect<detail::ReflectedIsFeverLogicalFunction>(reflected);
+    return IsFeverLogicalFunction(child);
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterIS_FEVERLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<IsFeverLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("IsFeverLogicalFunction requires exactly one child, but got {}", arguments.children.size());
