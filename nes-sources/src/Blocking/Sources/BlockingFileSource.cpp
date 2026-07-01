@@ -14,6 +14,7 @@
 
 #include <Blocking/Sources/BlockingFileSource.hpp>
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -45,6 +46,10 @@ namespace NES
 BlockingFileSource::BlockingFileSource(const SourceDescriptor& sourceDescriptor)
     : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
 {
+    if (const char* const env = std::getenv("NES_FILE_REPEAT"))
+    {
+        numPasses = std::max<std::size_t>(1, std::strtoul(env, nullptr, 10));
+    }
 }
 
 void BlockingFileSource::open(std::shared_ptr<AbstractBufferProvider>)
@@ -65,10 +70,20 @@ void BlockingFileSource::close()
 BlockingSource::FillTupleBufferResult
 BlockingFileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&, const size_t offset)
 {
-    this->inputFile.read(
-        tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data() + offset,
-        static_cast<std::streamsize>(tupleBuffer.getBufferSize() - offset));
-    const auto numBytesRead = this->inputFile.gcount();
+    const auto dst = tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data() + offset;
+    const auto len = static_cast<std::streamsize>(tupleBuffer.getBufferSize() - offset);
+    this->inputFile.read(dst, len);
+    auto numBytesRead = this->inputFile.gcount();
+    if (numBytesRead == 0 && this->passesDone + 1 < this->numPasses)
+    {
+        /// NES_FILE_REPEAT=N: hit EOF but more passes remain -> rewind and re-read into this buffer
+        /// so the source keeps streaming a long steady window (mirrors the async FileSource).
+        ++this->passesDone;
+        this->inputFile.clear();
+        this->inputFile.seekg(0, std::ios::beg);
+        this->inputFile.read(dst, len);
+        numBytesRead = this->inputFile.gcount();
+    }
     this->totalNumBytesRead += numBytesRead;
     if (numBytesRead == 0)
     {

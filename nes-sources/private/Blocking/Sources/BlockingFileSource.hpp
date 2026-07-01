@@ -63,6 +63,11 @@ private:
     std::ifstream inputFile;
     std::string filePath;
     std::atomic<size_t> totalNumBytesRead;
+    /// PROFILING-only (env NES_FILE_REPEAT=N, default 1): on EOF, seek back to 0 and re-read the file
+    /// N passes back-to-back so latency/throughput sees a long steady window (mirrors the async
+    /// FileSource; no clean repeat mechanism otherwise). One mis-parsed row per pass seam, negligible.
+    std::size_t numPasses = 1;
+    std::size_t passesDone = 0;
 };
 
 struct ConfigParametersCSV
