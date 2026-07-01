@@ -1,0 +1,106 @@
+# name: function/dspro/FormatInvalid.test
+# description: Negative tests for invalid Format calls.
+# groups: [Function, Format]
+
+CREATE LOGICAL SOURCE stream(
+    value INT32 NOT NULL,
+    other_value INT32 NOT NULL,
+    third_value INT32 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+
+ATTACH INLINE
+1,10,100
+
+CREATE SINK sinkStream(formatted VARSIZED NOT NULL) TYPE File;
+
+########################################
+# Placeholder / argument count mismatch
+########################################
+
+SELECT
+    Format(VARSIZED("{}"), value, other_value, third_value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format string has 1 placeholder(s) but 3 argument(s) were provided"
+
+SELECT
+    Format(VARSIZED("{} {} {}"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format string has 3 placeholder(s) but 1 argument(s) were provided"
+
+SELECT
+    Format(VARSIZED("No placeholders"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format string has 0 placeholder(s) but 1 argument(s) were provided"
+
+########################################
+# Invalid format for first argument
+########################################
+
+SELECT
+    Format(value, other_value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format requires a constant VARSIZED literal as its first argument"
+
+SELECT
+    Format(INT32(1), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format requires a VARSIZED format string as its first argument, but got data type DataType(type: INT32 nullable: false)"
+
+CREATE LOGICAL SOURCE formatStream(
+    fmt VARSIZED NOT NULL,
+    value INT32 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR formatStream TYPE File;
+
+ATTACH INLINE
+value={},1
+
+SELECT
+    Format(fmt, value) AS formatted
+FROM formatStream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format requires a constant VARSIZED literal as its first argument"
+
+########################################
+# Invalid placeholder syntax
+########################################
+
+SELECT
+    Format(VARSIZED("{"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format string contains unmatched '{'"
+
+SELECT
+    Format(VARSIZED("}"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format string contains unmatched '}'"
+
+SELECT
+    Format(VARSIZED("{value}"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format only supports '{}' placeholders and '{{' escapes"
+
+SELECT
+    Format(VARSIZED("{ }"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format only supports '{}' placeholders and '{{' escapes"
+
+########################################
+# No argument
+########################################
+
+SELECT
+    Format() AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotDeserialize
