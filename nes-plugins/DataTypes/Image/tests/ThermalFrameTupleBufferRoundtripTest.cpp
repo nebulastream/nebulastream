@@ -19,15 +19,17 @@
 #include <memory>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/FixedSizedData.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/DataTypes/FixedSizedData.hpp>
-#include <Nautilus/DataTypes/StructData.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <DataTypes/StructData.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -48,12 +50,14 @@ public:
         Logger::setupLogging("ThermalFrameTupleBufferRoundtripTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup ThermalFrameTupleBufferRoundtripTest class.");
     }
+
     static void TearDownTestSuite() { NES_INFO("Tear down ThermalFrameTupleBufferRoundtripTest class."); }
 
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = BufferManager::create();
+        bufferManager
+            = BufferManager::create(1024 * 8 * 1024, 0.9, BufferAlignment{64}, 8 * 1024, std::make_shared<NesDefaultMemoryAllocator>());
     }
 
     std::shared_ptr<BufferManager> bufferManager;
@@ -80,7 +84,7 @@ TEST_F(ThermalFrameTupleBufferRoundtripTest, RoundtripsThermalFrameThroughRowTup
 {
     constexpr uint32_t pixelCount = 16;
     const auto frameType = thermalFrameDataType(pixelCount);
-    const auto schema = Schema().addField("frame", frameType);
+    const Schema<UnqualifiedUnboundField, Ordered> schema{UnqualifiedUnboundField{Identifier::parse("frame"), frameType}};
 
     auto buffer = bufferManager->getBufferBlocking();
     auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
@@ -98,7 +102,7 @@ TEST_F(ThermalFrameTupleBufferRoundtripTest, RoundtripsThermalFrameThroughRowTup
         auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(bufferManager.get());
 
         Record record;
-        record.write("frame", VarVal{srcFrame.asStructData()});
+        record.write(schema.getFieldByName(Identifier::parse("frame"))->getFullyQualifiedName(), VarVal{srcFrame.asStructData()});
         const auto result = bufRef->writeRecord(recordIdx, recordBuffer, record, bufProviderVal);
         ASSERT_TRUE(static_cast<bool>(result.successful));
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
@@ -109,8 +113,8 @@ TEST_F(ThermalFrameTupleBufferRoundtripTest, RoundtripsThermalFrameThroughRowTup
     auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(buffer));
     const RecordBuffer recordBuffer(bufPtr);
 
-    auto record = bufRef->readRecord({"frame"}, recordBuffer, recordIdx);
-    const auto& varVal = record.read("frame");
+    auto record = bufRef->readRecord({schema.getFieldByName(Identifier::parse("frame"))->getFullyQualifiedName()}, recordBuffer, recordIdx);
+    const auto& varVal = record.read(schema.getFieldByName(Identifier::parse("frame"))->getFullyQualifiedName());
     const auto readStruct = varVal.getRawValueAs<StructData>();
 
     ASSERT_EQ(readStruct.getNumFields(), 1U);

@@ -24,17 +24,18 @@
 #include <fmt/format.h>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatIndexerRegistry.hpp>
+#include <InputFormatterValidationRegistry.hpp>
 #include <NestedJSONRawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 
 namespace NES
 {
 
-std::unique_ptr<RawBufferIndex> NestedJSONInputFormatIndexer::indexRawBuffer(const RawTupleBuffer& rawBuffer) const
+std::unique_ptr<RawBufferIndex> NestedJSONInputFormatIndexer::indexRawBuffer(const std::string_view rawBuffer) const
 {
     auto rawBufferIndex = std::make_unique<NestedJSONRawBufferIndex>();
 
-    const auto offsetOfFirstTuple = static_cast<FieldIndex>(rawBuffer.getBufferView().find(TUPLE_DELIMITER));
+    const auto offsetOfFirstTuple = static_cast<FieldIndex>(rawBuffer.find(TUPLE_DELIMITER));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTuple' to a value larger than the buffer size to tell
     /// the InputFormatter that there was no tuple delimiter in the buffer and return
@@ -47,24 +48,34 @@ std::unique_ptr<RawBufferIndex> NestedJSONInputFormatIndexer::indexRawBuffer(con
     /// If the buffer contains at least one delimiter, check if it contains more and index all tuples between the tuple delimiters
     const auto startIdxOfNextTuple = offsetOfFirstTuple + DELIMITER_SIZE;
 
-    const auto jsonSV = rawBuffer.getBufferView().substr(startIdxOfNextTuple);
+    const auto jsonSV = rawBuffer.substr(startIdxOfNextTuple);
     const auto [isNoTuple, truncatedBytes] = rawBufferIndex->indexJSON(jsonSV);
     const auto offsetOfLastTuple = static_cast<FieldIndex>(
-        (isNoTuple) ? offsetOfFirstTuple : rawBuffer.getBufferView().size() - truncatedBytes - this->getTupleDelimitingBytes().size());
+        (isNoTuple) ? offsetOfFirstTuple : rawBuffer.size() - truncatedBytes - this->getTupleDelimitingBytes().size());
 
     rawBufferIndex->markWithTupleDelimiters(offsetOfFirstTuple, offsetOfLastTuple);
     return rawBufferIndex;
 }
 
-std::ostream& operator<<(std::ostream& os, const NestedJSONInputFormatIndexer&)
+std::ostream& NestedJSONInputFormatIndexer::toString(std::ostream& str) const
 {
-    return os << fmt::format("NestedJSONInputFormatIndexer(tupleDelimiter: {})", NestedJSONInputFormatIndexer::TUPLE_DELIMITER);
+    return str << fmt::format("NestedJSONInputFormatIndexer(tupleDelimiter: {})", NestedJSONInputFormatIndexer::TUPLE_DELIMITER);
+}
+
+DescriptorConfig::Config NestedJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<ConfigParametersNestedJSON>(std::move(config), NAME);
 }
 
 InputFormatIndexerRegistryReturnType RegisterNestedJSONInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
     return arguments.createInputFormatterWithIndexer(
         NestedJSONInputFormatIndexer::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
+}
+
+InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterNestedJSONInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+{
+    return NestedJSONInputFormatIndexer::validateAndFormat(arguments.config);
 }
 
 }

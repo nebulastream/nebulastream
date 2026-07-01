@@ -17,8 +17,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/FixedSizedData.hpp>
-#include <Nautilus/DataTypes/StructData.hpp>
+#include <DataTypes/FixedSizedData.hpp>
+#include <DataTypes/StructData.hpp>
 #include <nautilus/val.hpp>
 
 namespace NES

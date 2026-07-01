@@ -145,6 +145,7 @@ void SequenceField::validate(std::string_view rawSchemaLine)
         case DataType::Type::UNDEFINED:
         case DataType::Type::VARSIZED:
         case DataType::Type::FIXEDSIZED:
+        case DataType::Type::VARARRAY:
         case DataType::Type::STRUCT: {
             throw InvalidConfigParameter("Could not parse {} as SequenceField!", type);
         }
@@ -229,6 +230,7 @@ SequenceField::SequenceField(std::string_view rawSchemaLine)
         case DataType::Type::UNDEFINED:
         case DataType::Type::VARSIZED:
         case DataType::Type::FIXEDSIZED:
+        case DataType::Type::VARARRAY:
         case DataType::Type::STRUCT: {
             INVARIANT(false, "Unknown Type \"{}\" in: {}", type, rawSchemaLine);
         }
@@ -338,6 +340,7 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
         case DataType::Type::UNDEFINED:
         case DataType::Type::VARSIZED:
         case DataType::Type::FIXEDSIZED:
+        case DataType::Type::VARARRAY:
         case DataType::Type::STRUCT: {
             INVARIANT(false, "Output Type \"{}\" is not supported for normal or binomial distribution.", outputType);
         }

@@ -17,6 +17,7 @@
 #include <memory>
 #include <DataTypes/FixedSizedData.hpp>
 #include <DataTypes/StructData.hpp>
+#include <DataTypes/VarArrayData.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Hash/HashFunction.hpp>
@@ -133,6 +134,10 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 else if constexpr (std::is_same_v<T, FixedSizedData>)
                 {
                     return hash ^ nautilus::invoke(hashBytes, val.getRawPtr(), nautilus::val<uint64_t>(val.getTotalSizeInBytes()));
+                }
+                else if constexpr (std::is_same_v<T, VarArrayData>)
+                {
+                    return hash ^ nautilus::invoke(hashBytes, val.getRawPtr(), val.getTotalSizeInBytes());
                 }
                 else if constexpr (std::is_same_v<T, StructData>)
                 {

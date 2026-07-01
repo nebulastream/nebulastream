@@ -127,6 +127,16 @@ DataType::DataType(const Type type, const NULLABLE nullable) : type(type), nulla
 {
 }
 
+DataType::DataType(const Type type, const NULLABLE nullable, const Type elementType)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(elementType)
+{
+    if (type != Type::VARARRAY)
+    {
+        throw DifferentFieldTypeExpected(
+            "The elementType/count DataType constructor is for vararrays only, but got: {}", magic_enum::enum_name(type));
+    }
+}
+
 DataType::DataType(const Type type, const NULLABLE nullable, const Type elementType, const uint32_t count)
     : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(elementType), count(count)
 {
@@ -137,8 +147,7 @@ DataType::DataType(const Type type, const NULLABLE nullable, const Type elementT
     }
 }
 
-DataType::DataType(
-    const Type type, const NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields)
+DataType::DataType(const Type type, const NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields)
     : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), structName(std::move(structName)), fields(std::move(fields))
 {
     if (type != Type::STRUCT)
@@ -203,7 +212,8 @@ uint32_t DataType::getSizeInBytesWithoutNull() const
         case Type::FLOAT32:
             return 4;
         case Type::VARSIZED:
-            /// Returning '16' for VARSIZED, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
+        case Type::VARARRAY:
+            /// Returning '16' for VARSIZED / VARARRAY, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
             /// and 8 bytes for the size of the VARSIZED
             return 16;
         case Type::FIXEDSIZED:
@@ -333,6 +343,11 @@ bool DataType::isNumeric() const
     return isInteger() or isFloat();
 }
 
+bool DataType::isStruct() const
+{
+    return this->type == Type::STRUCT;
+}
+
 DataType::NULLABLE DataType::joinNullable(const DataType& otherDataType) const
 {
     const auto isNullableResult
@@ -351,6 +366,14 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     {
         return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED, isNullableResult)}
                                                       : std::nullopt;
+    }
+    if (this->type == Type::VARARRAY)
+    {
+        if (otherDataType.type == Type::VARARRAY && otherDataType.elementType == this->elementType)
+        {
+            return DataType{Type::VARARRAY, isNullableResult, this->elementType};
+        }
+        return std::nullopt;
     }
     if (this->type == Type::FIXEDSIZED)
     {
@@ -436,6 +459,10 @@ DataType Unreflector<DataType>::operator()(const Reflected& rfl, const Reflectio
     {
         return DataType{reflected.type, nullableEnum, reflected.structName, reflected.fields};
     }
+    if (reflected.type == DataType::Type::VARARRAY)
+    {
+        return DataType{reflected.type, nullableEnum, reflected.elementType};
+    }
     return DataTypeProvider::provideDataType(reflected.type, nullableEnum);
 }
 
@@ -445,6 +472,14 @@ std::ostream& operator<<(std::ostream& os, const DataType& dataType)
     {
         return os << fmt::format(
                    "DataType(type: FIXEDSIZED<{}, {}> nullable: {})",
+                   magic_enum::enum_name(dataType.elementType),
+                   dataType.count,
+                   dataType.nullable);
+    }
+    if (dataType.type == DataType::Type::VARARRAY)
+    {
+        return os << fmt::format(
+                   "DataType(type: VARARRAY<{}> nullable: {})",
                    magic_enum::enum_name(dataType.elementType),
                    dataType.count,
                    dataType.nullable);

@@ -25,7 +25,7 @@
 #include <vector>
 #include <simdjson.h>
 
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
 #include <JsonValueParser.hpp>

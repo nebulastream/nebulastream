@@ -61,7 +61,7 @@ LogicalFunction GreaterLogicalFunction::withInferredDataType(const Schema<Field,
     auto copy = *this;
     copy.left = copy.left.withInferredDataType(schema);
     copy.right = copy.right.withInferredDataType(schema);
-    if (!copy.left.getDataType().isNumeric() or !copy.right.getDataType().isNumeric())
+    if ((!copy.left.getDataType().isNumeric() or !copy.right.getDataType().isNumeric()) && !(copy.left.getDataType().isStruct() && copy.right.getDataType().isStruct() && (copy.left.getDataType() == copy.right.getDataType())))
     {
         throw CannotInferStamp(
             "Can only apply greater than to two functions with numeric data types, but got left: {}, right: {}", copy.left, copy.right);

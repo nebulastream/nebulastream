@@ -173,6 +173,7 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
                     case DataType::Type::CHAR:
                     case DataType::Type::FIXEDSIZED:
                     case DataType::Type::STRUCT:
+                    case DataType::Type::VARARRAY:
                     case DataType::Type::UNDEFINED:
                         throw TestException("Unsupported type for genAnyVec");
                 }
@@ -225,6 +226,7 @@ int compareAnyField(const std::any& lhs, const std::any& rhs, DataType type)
         case DataType::Type::CHAR:
         case DataType::Type::FIXEDSIZED:
         case DataType::Type::STRUCT:
+        case DataType::Type::VARARRAY:
         case DataType::Type::UNDEFINED:
             throw TestException("Unsupported type for compareAnyField");
     }
@@ -272,6 +274,7 @@ size_t hashAnyField(const std::any& value, DataType type)
         case DataType::Type::CHAR:
         case DataType::Type::FIXEDSIZED:
         case DataType::Type::STRUCT:
+        case DataType::Type::VARARRAY:
         case DataType::Type::UNDEFINED:
             throw TestException("Unsupported type for hashAnyField");
     }
@@ -378,6 +381,7 @@ void storeVarValToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t pos, const 
         case DataType::Type::CHAR:
         case DataType::Type::FIXEDSIZED:
         case DataType::Type::STRUCT:
+        case DataType::Type::VARARRAY:
         case DataType::Type::UNDEFINED:
             throw TestException("Unsupported type for TestablePagedVector");
     }
@@ -502,6 +506,7 @@ VarVal buildVarVal(const nautilus::val<AnyVec*>& rec, uint64_t fieldIdx, DataTyp
         case DataType::Type::CHAR:
         case DataType::Type::FIXEDSIZED:
         case DataType::Type::STRUCT:
+        case DataType::Type::VARARRAY:
         case DataType::Type::UNDEFINED:
             break;
     }

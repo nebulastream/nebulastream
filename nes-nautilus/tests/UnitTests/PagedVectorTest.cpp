@@ -388,6 +388,7 @@ rc::Gen<TestUtils::AnyVec> genAnyVec(std::vector<DataType> types, uint64_t buffe
                     case DataType::Type::UNDEFINED:
                     case DataType::Type::FIXEDSIZED:
                     case DataType::Type::STRUCT:
+                    case DataType::Type::VARARRAY:
                         throw TestException("Unsupported type for genAnyVec");
                 }
             }

@@ -15,4 +15,5 @@ add_source_files(nes-nautilus
         StructData.cpp
         VariableSizedData.cpp
         VarVal.cpp
+        VarArrayData.cpp
 )
