@@ -34,9 +34,14 @@ std::optional<StatisticRegistry::Entry> StatisticRegistry::find(const Key& key) 
 }
 
 void StatisticRegistry::registerStatistic(
-    const Key& key, const DistributedQueryId queryId, const Statistic::StatisticId statisticId, std::vector<ConditionTrigger> triggers)
+    const Key& key,
+    const DistributedQueryId queryId,
+    const Statistic::StatisticId statisticId,
+    std::vector<ConditionTrigger> triggers,
+    const StatisticQueryKind kind)
 {
-    registry.wlock()->insert_or_assign(key, Entry{.queryId = queryId, .statisticId = statisticId, .triggers = std::move(triggers)});
+    registry.wlock()->insert_or_assign(
+        key, Entry{.queryId = queryId, .statisticId = statisticId, .triggers = std::move(triggers), .kind = kind});
 }
 
 bool StatisticRegistry::addTrigger(const Key& key, ConditionTrigger trigger)

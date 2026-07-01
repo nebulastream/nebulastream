@@ -53,8 +53,14 @@ std::string constantSequenceField(const uint64_t value)
 /// A Generator heartbeat source whose four UINT64 fields (STATISTICID, STATISTICSTART, STATISTICEND, VALUE) are
 /// constants. We generate them directly (rather than via a projection of constants) so the operators downstream
 /// read real source fields — a pure-constant projection would access no input field and produce an empty scan.
+/// `emitRate` is the generator emit rate (tuples/second); throttle it for queries whose every tuple is observed.
 LogicalPlan generatorWithConstants(
-    const uint64_t statisticId, const uint64_t startTs, const uint64_t endTs, const uint64_t value, const std::string& workerHost)
+    const uint64_t statisticId,
+    const uint64_t startTs,
+    const uint64_t endTs,
+    const uint64_t value,
+    const std::string& workerHost,
+    const std::string& emitRate = "emit_rate 100")
 {
     auto schema = std::vector<UnqualifiedUnboundField>{
                       UnqualifiedUnboundField{Identifier::parse(STAT_ID), DataType::Type::UINT64},
@@ -72,7 +78,7 @@ LogicalPlan generatorWithConstants(
 
     std::unordered_map<Identifier, std::string> sourceConfig{
         {Identifier::parse("GENERATOR_SCHEMA"), generatorSchema},
-        {Identifier::parse("GENERATOR_RATE_CONFIG"), "emit_rate 100"},
+        {Identifier::parse("GENERATOR_RATE_CONFIG"), emitRate},
         {Identifier::parse("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"), "NONE"},
         /// "host" determines worker placement (consumed by the inline-source binding rule), not source behavior.
         {Identifier::parse("host"), workerHost}};
@@ -120,6 +126,22 @@ LogicalPlan DefaultStatisticQueryGenerator::generateProbeQuery(
     const uint64_t statisticId, const uint64_t startTs, const uint64_t endTs, const std::string& fifoPath) const
 {
     auto plan = generatorWithConstants(statisticId, startTs, endTs, /*value=*/0, workerHost);
+    plan = promoteToRoot(
+        plan,
+        StatisticStoreReaderLogicalOperator::create(
+            std::string{STAT_ID}, std::string{STAT_START}, std::string{STAT_END}, std::string{STAT_VALUE}));
+    return addFifoFileSink(plan, fifoPath, workerHost);
+}
+
+LogicalPlan DefaultStatisticQueryGenerator::generateWatchQuery(
+    const uint64_t statisticId, const uint64_t windowSizeMs, const std::string& fifoPath) const
+{
+    /// Combined build+probe: generator -> writer (into store) -> reader (out of store) -> FIFO. The record flowing
+    /// from the writer to the reader is the impulse; the value round-trips through the store. Throttled so each
+    /// impulse produces an observable, periodic result rather than a flood.
+    auto plan = generatorWithConstants(statisticId, /*startTs=*/0, /*endTs=*/windowSizeMs, /*value=*/42, workerHost, "emit_rate 2");
+    plan = promoteToRoot(
+        plan, StatisticStoreWriterLogicalOperator::create(statisticId, std::string{STAT_START}, std::string{STAT_END}, std::string{STAT_VALUE}));
     plan = promoteToRoot(
         plan,
         StatisticStoreReaderLogicalOperator::create(

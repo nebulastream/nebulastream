@@ -15,14 +15,17 @@
 #include <StatisticRetrievalService.hpp>
 
 #include <cstdint>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <CollectionDomain.hpp>
+#include <ConditionTrigger.hpp>
 #include <ErrorHandling.hpp>
 #include <Metric.hpp>
 #include <RequestStatisticStatement.hpp>
+#include <Statistic.hpp>
 #include <StatisticCoordinator.hpp>
 #include <StatisticRegistry.hpp>
 
@@ -84,6 +87,38 @@ std::optional<double> StatisticRetrievalService::retrieveStatistic(const std::st
     {
         NES_DEBUG("StatisticRetrievalService: no running build to probe for source {}: {}", source, exception.what());
         return std::nullopt;
+    }
+}
+
+void StatisticRetrievalService::watchStatistic(const std::string& source) const
+{
+    /// Same key as a plain build for this source (a watch subsumes a build), so USE_STATISTIC probes read the watch's
+    /// store writes. The registry distinguishes the two by their query shape. The trigger fires (and prints) on every
+    /// impulse the combined watch query reports.
+    RequestStatisticBuildStatement request{
+        .domain = DataDomain{.logicalSourceName = source, .fieldName = "value"},
+        .metric = Metric::Average,
+        .windowSizeMs = MOCK_WINDOW_SIZE_MS,
+        .windowAdvanceMs = std::nullopt,
+        .eventTimeFieldName = std::nullopt,
+        .conditionTrigger
+        = ConditionTrigger{
+            .condition = std::nullopt,
+            .callback =
+                [source](
+                    const Statistic::StatisticId statisticId,
+                    const Windowing::TimeMeasure /*startTs*/,
+                    const Windowing::TimeMeasure /*endTs*/,
+                    const double value)
+            {
+                NES_INFO("StatisticWatch: source {} statistic {} reported value {}", source, statisticId.getRawValue(), value);
+                std::cout << "StatisticWatch: source " << source << " received data; statistic value " << value << "\n";
+            }},
+        .options = {}};
+
+    if (const auto result = coordinator.watchStatistic(request); not result.has_value())
+    {
+        NES_WARNING("StatisticRetrievalService: failed to deploy watch query for source {}: {}", source, result.error().what());
     }
 }
 

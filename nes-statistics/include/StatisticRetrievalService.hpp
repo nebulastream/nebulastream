@@ -45,6 +45,11 @@ public:
     /// no build for `source` is running or the probe times out. Never deploys or tears down a build.
     [[nodiscard]] std::optional<double> retrieveStatistic(const std::string& source) const;
 
+    /// Deploys (or reuses) a continuous "watch" query for `source` — a combined writer->reader query that reports
+    /// the stored value on every impulse — and registers a condition-trigger callback that prints on each report.
+    /// Use to observe the trigger flow: as data flows, the print fires periodically.
+    void watchStatistic(const std::string& source) const;
+
 private:
     StatisticCoordinator& coordinator;
 };

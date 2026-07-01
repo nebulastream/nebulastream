@@ -297,4 +297,102 @@ TEST_F(StatisticCoordinatorE2ETest, EachSourceDeploysItsOwnBuild)
     EXPECT_EQ(submitCount.load(), 2) << "two distinct sources must deploy two builds; the repeated source must not";
 }
 
+/// The "watch" flow: a single combined query (generator -> store writer -> store reader -> FIFO) with NO separate
+/// probe. The writer puts the value into the store and forwards the record as an impulse; the reader reads the value
+/// back out and reports it on every impulse. We register a condition trigger and assert it fires repeatedly (data
+/// received) and that the reported value round-tripped through the store (42).
+TEST_F(StatisticCoordinatorE2ETest, WatchQueryFiresConditionTriggerOnImpulse)
+{
+    auto store = std::make_shared<DefaultStatisticStore>();
+    SingleNodeWorker worker(SingleNodeWorkerConfiguration{}, Host("localhost"), store);
+
+    const auto sourceCatalog = std::make_shared<SourceCatalog>();
+    const auto sinkCatalog = std::make_shared<SinkCatalog>();
+    const auto modelCatalog = std::make_shared<ModelCatalog>();
+    const SemanticAnalyzer semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog);
+    const RuleBasedOptimizer ruleOptimizer{QueryOptimizerConfiguration{}};
+
+    auto [submitFn, stopFn] = bareWorkerCallbacks(worker, semanticAnalyzer, ruleOptimizer);
+    StatisticCoordinator coordinator(std::make_unique<DefaultStatisticQueryGenerator>(), std::move(submitFn), std::move(stopFn));
+    coordinator.startResultReader();
+
+    std::atomic<int> fireCount{0};
+    std::atomic<double> lastValue{0.0};
+    const DataDomain domain{.logicalSourceName = "WATCHSOURCE", .fieldName = "value"};
+    const RequestStatisticBuildStatement statement{
+        .domain = domain,
+        .metric = Metric::Average,
+        .windowSizeMs = 1000,
+        .windowAdvanceMs = std::nullopt,
+        .eventTimeFieldName = std::nullopt,
+        .conditionTrigger
+        = ConditionTrigger{
+            .condition = std::nullopt,
+            .callback = [&fireCount, &lastValue](
+                            Statistic::StatisticId, Windowing::TimeMeasure, Windowing::TimeMeasure, const double value)
+            {
+                fireCount.fetch_add(1);
+                lastValue.store(value);
+            }},
+        .options = {}};
+
+    const auto result = coordinator.watchStatistic(statement);
+    ASSERT_TRUE(result.has_value()) << "watchStatistic failed: " << (result.has_value() ? "" : result.error().what());
+
+    /// Let the combined query run so impulses flow and the trigger fires repeatedly.
+    std::this_thread::sleep_for(std::chrono::seconds{4});
+
+    const StatisticRegistry::Key key{.metric = Metric::Average, .collectionDomain = domain, .windowSize = Windowing::TimeMeasure{1000}};
+    coordinator.stopStatistic(key);
+    coordinator.stopResultReader();
+
+    EXPECT_GT(fireCount.load(), 0) << "the watch query must fire the condition trigger as data flows";
+    EXPECT_DOUBLE_EQ(lastValue.load(), 42.0) << "the reported value must round-trip through the store";
+}
+
+/// Build and watch share one key per source (a watch subsumes a build). The asymmetry: requesting a build for a
+/// source already watched reuses the watch (fine), but requesting a watch for a source already built is an
+/// unsupported build->watch upgrade and is rejected with NotImplemented. A lightweight submit callback suffices
+/// since we only exercise the registry logic.
+TEST_F(StatisticCoordinatorE2ETest, WatchSubsumesBuildAndBuildToWatchUpgradeRejected)
+{
+    const DataDomain domain{.logicalSourceName = "SHARED", .fieldName = "value"};
+    const RequestStatisticBuildStatement request{
+        .domain = domain,
+        .metric = Metric::Average,
+        .windowSizeMs = 1000,
+        .windowAdvanceMs = std::nullopt,
+        .eventTimeFieldName = std::nullopt,
+        .conditionTrigger = std::nullopt,
+        .options = {}};
+
+    {
+        /// Watch first, then build: the build reuses the running watch (no second query).
+        StatisticCoordinator::SubmitQueryFn dummySubmit
+            = [](LogicalPlan) -> std::expected<DistributedQueryId, Exception> { return DistributedQueryId("q"); };
+        StatisticCoordinator coordinator(std::make_unique<DefaultStatisticQueryGenerator>(), std::move(dummySubmit), nullptr);
+        ASSERT_TRUE(coordinator.watchStatistic(request).has_value());
+        const auto buildOnWatch = coordinator.collectNewStatistic(request);
+        ASSERT_TRUE(buildOnWatch.has_value());
+        EXPECT_TRUE(buildOnWatch->alreadyExisted) << "a build request must reuse the running watch, not deploy a second query";
+    }
+
+    {
+        /// Build first, then watch: an unsupported build->watch upgrade -> NotImplemented.
+        StatisticCoordinator::SubmitQueryFn dummySubmit
+            = [](LogicalPlan) -> std::expected<DistributedQueryId, Exception> { return DistributedQueryId("q"); };
+        StatisticCoordinator coordinator(std::make_unique<DefaultStatisticQueryGenerator>(), std::move(dummySubmit), nullptr);
+        ASSERT_TRUE(coordinator.collectNewStatistic(request).has_value());
+        try
+        {
+            (void)coordinator.watchStatistic(request);
+            FAIL() << "watchStatistic on a running build must throw";
+        }
+        catch (const Exception& exception)
+        {
+            EXPECT_EQ(exception.code(), ErrorCode::NotImplemented);
+        }
+    }
+}
+
 }

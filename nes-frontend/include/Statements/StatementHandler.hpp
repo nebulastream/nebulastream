@@ -238,12 +238,17 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
     /// (GET_STATISTICS=true). Lets the frontend spin up a statistic build query without this core handler depending
     /// on the statistics module. Null = no-op.
     std::function<void(const std::string& source)> deployStatisticBuild;
+    /// Invoked (with the query's own source name) for a query that requested a statistic watch (WATCH_STATISTIC=true):
+    /// deploys a continuous watch query whose condition-trigger callback fires (and prints) each time the query writes
+    /// a statistic to the store. The query's own dataflow is the impulse — there is no separate probe query. Null = no-op.
+    std::function<void(const std::string& source)> watchStatistic;
 
 public:
     explicit QueryStatementHandler(
         SharedPtr<QueryManager> queryManager,
         SharedPtr<const QueryOptimizer> queryOptimizer,
-        std::function<void(const std::string& source)> deployStatisticBuild = nullptr);
+        std::function<void(const std::string& source)> deployStatisticBuild = nullptr,
+        std::function<void(const std::string& source)> watchStatistic = nullptr);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);

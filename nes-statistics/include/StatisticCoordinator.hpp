@@ -76,6 +76,13 @@ public:
     /// assigns a StatisticId, generates the build query (writing into the FIFO), submits it, and registers it.
     [[nodiscard]] std::expected<CollectStatisticResult, Exception> collectNewStatistic(const RequestStatisticBuildStatement& statement);
 
+    /// Like collectNewStatistic, but deploys a combined "watch" query (generator -> store writer -> store reader ->
+    /// FIFO) that has NO separate probe: the writer puts the value into the store and forwards the record as an
+    /// impulse to the reader, which reads the value back out and reports it on every impulse. The statement's
+    /// conditionTrigger therefore fires periodically (on each report). Deduplicated on the same key as
+    /// collectNewStatistic.
+    [[nodiscard]] std::expected<CollectStatisticResult, Exception> watchStatistic(const RequestStatisticBuildStatement& statement);
+
     /// Adds a condition trigger to an existing statistic entry. Returns false if the key is not found.
     bool addConditionTrigger(const StatisticRegistry::Key& key, ConditionTrigger trigger);
 

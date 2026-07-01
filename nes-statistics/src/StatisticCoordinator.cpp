@@ -90,6 +90,43 @@ std::expected<CollectStatisticResult, Exception> StatisticCoordinator::collectNe
             });
 }
 
+std::expected<CollectStatisticResult, Exception> StatisticCoordinator::watchStatistic(const RequestStatisticBuildStatement& statement)
+{
+    const StatisticRegistry::Key key{
+        .metric = statement.metric, .collectionDomain = statement.domain, .windowSize = Windowing::TimeMeasure{statement.windowSizeMs}};
+
+    if (const auto existing = registry.find(key))
+    {
+        /// A watch subsumes a build, but a build cannot serve as a watch (it never reads the store back). Turning a
+        /// running build into a watch would mean redeploying it with a different query shape — not supported yet.
+        if (existing->kind == StatisticQueryKind::Build)
+        {
+            throw NotImplemented("upgrading a running statistic build query to a watch query is not implemented");
+        }
+        if (statement.conditionTrigger.has_value())
+        {
+            registry.addTrigger(key, statement.conditionTrigger.value());
+        }
+        return CollectStatisticResult{.queryId = existing->queryId, .statisticId = existing->statisticId, .alreadyExisted = true};
+    }
+
+    const auto statisticId = Statistic::StatisticId{nextStatisticId.fetch_add(1)};
+    auto plan = queryGenerator->generateWatchQuery(statisticId.getRawValue(), statement.windowSizeMs, fifoPath);
+
+    return submitQuery(std::move(plan))
+        .transform(
+            [this, &key, statisticId, &statement](auto queryId)
+            {
+                std::vector<ConditionTrigger> triggers;
+                if (statement.conditionTrigger.has_value())
+                {
+                    triggers.emplace_back(*statement.conditionTrigger);
+                }
+                registry.registerStatistic(key, queryId, statisticId, std::move(triggers), StatisticQueryKind::Watch);
+                return CollectStatisticResult{.queryId = queryId, .statisticId = statisticId, .alreadyExisted = false};
+            });
+}
+
 bool StatisticCoordinator::addConditionTrigger(const StatisticRegistry::Key& key, ConditionTrigger trigger)
 {
     return registry.addTrigger(key, std::move(trigger));
@@ -296,7 +333,7 @@ void StatisticCoordinator::onStatisticReport(
             {
                 for (const auto& trigger : entry.triggers)
                 {
-                    trigger.callback(statisticId, startTs, endTs);
+                    trigger.callback(statisticId, startTs, endTs, value);
                 }
             }
         });

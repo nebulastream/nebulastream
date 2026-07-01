@@ -35,6 +35,9 @@ public:
     [[nodiscard]] LogicalPlan
     generateProbeQuery(uint64_t statisticId, uint64_t startTs, uint64_t endTs, const std::string& fifoPath) const override;
 
+    [[nodiscard]] LogicalPlan
+    generateWatchQuery(uint64_t statisticId, uint64_t windowSizeMs, const std::string& fifoPath) const override;
+
 private:
     std::string workerHost;
 };

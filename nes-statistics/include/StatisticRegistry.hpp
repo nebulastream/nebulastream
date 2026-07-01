@@ -33,6 +33,15 @@
 namespace NES
 {
 
+/// The shape of the data-plane query backing a statistic entry. A Build query only writes the store (probeable via
+/// an ad-hoc probe); a Watch query additionally reads the store back and reports on every impulse (firing condition
+/// triggers). A Watch subsumes a Build (it also writes the store), but a Build cannot serve as a Watch.
+enum class StatisticQueryKind : uint8_t
+{
+    Build,
+    Watch,
+};
+
 /// Tracks which statistic requests are currently active (i.e., have a running query).
 /// Deduplication is exact match: same metric, same collection domain, and same window size.
 class StatisticRegistry
@@ -70,6 +79,8 @@ public:
         DistributedQueryId queryId;
         Statistic::StatisticId statisticId;
         std::vector<ConditionTrigger> triggers;
+        /// The shape of the running query for this statistic; lets a later request tell a build from a watch.
+        StatisticQueryKind kind = StatisticQueryKind::Build;
     };
 
     StatisticRegistry() = default;
@@ -77,9 +88,13 @@ public:
     /// Returns existing entry if same key already registered.
     [[nodiscard]] std::optional<Entry> find(const Key& key) const;
 
-    /// Registers a new statistic tracking entry, optionally with initial triggers.
+    /// Registers a new statistic tracking entry, optionally with initial triggers, recording the query shape.
     void registerStatistic(
-        const Key& key, DistributedQueryId queryId, Statistic::StatisticId statisticId, std::vector<ConditionTrigger> triggers);
+        const Key& key,
+        DistributedQueryId queryId,
+        Statistic::StatisticId statisticId,
+        std::vector<ConditionTrigger> triggers,
+        StatisticQueryKind kind = StatisticQueryKind::Build);
 
     /// Appends a condition trigger to an existing entry. Returns false if the key is not found.
     bool addTrigger(const Key& key, ConditionTrigger trigger);

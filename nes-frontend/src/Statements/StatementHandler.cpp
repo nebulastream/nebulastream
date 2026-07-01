@@ -18,6 +18,7 @@
 #include <chrono>
 #include <expected>
 #include <filesystem>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -324,10 +325,12 @@ std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operat
 QueryStatementHandler::QueryStatementHandler(
     SharedPtr<QueryManager> queryManager,
     SharedPtr<const QueryOptimizer> queryOptimizer,
-    std::function<void(const std::string& source)> deployStatisticBuild)
+    std::function<void(const std::string& source)> deployStatisticBuild,
+    std::function<void(const std::string& source)> watchStatistic)
     : queryManager(std::move(queryManager))
     , queryOptimizer(std::move(queryOptimizer))
     , deployStatisticBuild(std::move(deployStatisticBuild))
+    , watchStatistic(std::move(watchStatistic))
 {
 }
 
@@ -378,18 +381,36 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
-        /// GET_STATISTICS=true: deploy a continuous (mock) statistic build query for this query's own source. The
-        /// statistic keeps running so that OTHER queries deployed later can consult it (via USE_STATISTIC) during
-        /// their own optimization — not this query itself. Deduplicated downstream by source.
-        if (statement.collectStatistics && deployStatisticBuild)
+        /// Statistic collection for this query's own source, deployed before optimizing so other queries can later
+        /// consult it (GET_STATISTICS via USE_STATISTIC) or so this query's watch reports (WATCH_STATISTIC). A watch
+        /// query subsumes a build (it also writes the store), so when both are requested we deploy only the watch and
+        /// skip the redundant build. Handling the watch first guarantees the correct (watch) shape wins within a
+        /// single query; a build-vs-watch conflict can then only arise across separate queries on the same source
+        /// (where the coordinator rejects a build->watch upgrade).
+        const bool wantWatch = statement.watchStatistics && watchStatistic;
+        const bool wantBuild = statement.collectStatistics && deployStatisticBuild;
+        if (wantWatch || wantBuild)
         {
-            if (const auto source = primaryStatisticSource(statement.plan); source.has_value())
+            if (const auto source = primaryStatisticSource(statement.plan); not source.has_value())
             {
-                deployStatisticBuild(*source);
+                NES_WARNING("GET_STATISTICS/WATCH_STATISTIC set but the query has no named source; skipping statistic deployment.");
+            }
+            else if (wantWatch)
+            {
+                watchStatistic(*source);
+                if (statement.collectStatistics)
+                {
+                    const auto message = fmt::format(
+                        "Both WATCH_STATISTIC and GET_STATISTICS requested for source {}; the watch already collects "
+                        "the statistic, so the redundant build is skipped.",
+                        *source);
+                    NES_WARNING("{}", message);
+                    std::cout << "WARNING: " << message << '\n';
+                }
             }
             else
             {
-                NES_WARNING("GET_STATISTICS set but the query has no named source to collect a statistic on; skipping.");
+                deployStatisticBuild(*source);
             }
         }
 

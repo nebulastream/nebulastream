@@ -23,13 +23,13 @@
 namespace NES
 {
 
-/// A condition-callback pair. When a statistic result arrives the callback fires.
+/// A condition-callback pair. When a statistic result arrives the callback fires (with the reported value).
 /// If condition is set, only results satisfying it trigger the callback.
 /// If condition is std::nullopt, the callback fires unconditionally on every result.
 struct ConditionTrigger
 {
     std::optional<LogicalFunction> condition;
-    std::function<void(Statistic::StatisticId, Windowing::TimeMeasure startTs, Windowing::TimeMeasure endTs)> callback;
+    std::function<void(Statistic::StatisticId, Windowing::TimeMeasure startTs, Windowing::TimeMeasure endTs, double value)> callback;
 };
 
 }

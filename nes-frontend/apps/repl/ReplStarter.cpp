@@ -265,10 +265,12 @@ int main(int argc, char** argv)
         /// embedded build (the coordinator serves its build/probe queries on the colocated embedded worker); left
         /// null otherwise, which leaves the optimizer's rule set unchanged.
         std::shared_ptr<const NES::StatisticRetrievalService> statRetrievalService;
-        /// When statistics are enabled, a query carrying GET_STATISTICS=true deploys the (continuous, mock) build for
+        /// When statistics are enabled, a query carrying GET_STATISTICS=true deploys the (continuous, mock) build keyed with the name of
         /// its own source via the retrieval service before it is optimized; a USE_STATISTIC query then probes it.
         /// Left empty (and thus a no-op in QueryStatementHandler) when statistics are not enabled.
         std::function<void(const std::string& source)> deployStatisticBuild;
+        /// WATCH_STATISTIC=true deploys a continuous watch query whose condition-trigger callback prints on each impulse.
+        std::function<void(const std::string& source)> watchStatistic;
 
 #ifdef EMBED_ENGINE
         enable_memcom();
@@ -386,6 +388,7 @@ int main(int argc, char** argv)
             statRetrievalService = std::make_shared<NES::StatisticRetrievalService>(*statCoordinator);
             deployStatisticBuild
                 = [statRetrievalService](const std::string& source) { statRetrievalService->deployStatisticBuild(source); };
+            watchStatistic = [statRetrievalService](const std::string& source) { statRetrievalService->watchStatistic(source); };
         }
         /// ------------------------------------------------------------------------------------------------------
 #else
@@ -397,8 +400,8 @@ int main(int argc, char** argv)
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
         auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
             queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, statRetrievalService);
-        auto queryStatementHandler
-            = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer, std::move(deployStatisticBuild));
+        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(
+            queryManager, queryOptimizer, std::move(deployStatisticBuild), std::move(watchStatistic));
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),

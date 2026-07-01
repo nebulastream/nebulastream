@@ -53,7 +53,7 @@ public:
     static ConditionTrigger makeTrigger(const std::string& /*fieldName*/, const std::string& /*threshold*/)
     {
         /// The condition content is irrelevant for registry/dedup tests; use an unconditional trigger.
-        return {.condition = std::nullopt, .callback = [](Statistic::StatisticId, Windowing::TimeMeasure, Windowing::TimeMeasure) { }};
+        return {.condition = std::nullopt, .callback = [](Statistic::StatisticId, Windowing::TimeMeasure, Windowing::TimeMeasure, double) { }};
     }
 
     static std::vector<ConditionTrigger> makeTriggers(size_t count)
@@ -137,7 +137,7 @@ TEST_F(StatisticRegistryTest, RegisterWithTriggers)
     bool callbackInvoked = false;
     ConditionTrigger trigger{
         .condition = std::nullopt,
-        .callback = [&](Statistic::StatisticId, Windowing::TimeMeasure, Windowing::TimeMeasure) { callbackInvoked = true; }};
+        .callback = [&](Statistic::StatisticId, Windowing::TimeMeasure, Windowing::TimeMeasure, double) { callbackInvoked = true; }};
 
     std::vector<ConditionTrigger> triggers;
     triggers.push_back(std::move(trigger));
@@ -158,7 +158,7 @@ TEST_F(StatisticRegistryTest, AddTriggerToExistingEntry)
     EXPECT_EQ(resultBefore->triggers.size(), 0);
 
     ConditionTrigger trigger{
-        .condition = std::nullopt, .callback = [](Statistic::StatisticId, Windowing::TimeMeasure, Windowing::TimeMeasure) { }};
+        .condition = std::nullopt, .callback = [](Statistic::StatisticId, Windowing::TimeMeasure, Windowing::TimeMeasure, double) { }};
     EXPECT_TRUE(registry.addTrigger(key, std::move(trigger)));
 
     auto resultAfter = registry.find(key);
@@ -169,7 +169,7 @@ TEST_F(StatisticRegistryTest, AddTriggerToExistingEntry)
 TEST_F(StatisticRegistryTest, AddTriggerToNonExistentKeyReturnsFalse)
 {
     ConditionTrigger trigger{
-        .condition = std::nullopt, .callback = [](Statistic::StatisticId, Windowing::TimeMeasure, Windowing::TimeMeasure) { }};
+        .condition = std::nullopt, .callback = [](Statistic::StatisticId, Windowing::TimeMeasure, Windowing::TimeMeasure, double) { }};
     EXPECT_FALSE(registry.addTrigger(makeKey(Metric::Rate, "unknown", "field", 5000), std::move(trigger)));
 }
 

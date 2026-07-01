@@ -39,6 +39,13 @@ public:
     /// ships the value over the FIFO at `fifoPath`. Keys are baked in as constants (no request channel).
     [[nodiscard]] virtual LogicalPlan
     generateProbeQuery(uint64_t statisticId, uint64_t startTs, uint64_t endTs, const std::string& fifoPath) const = 0;
+
+    /// Combined watch query (continuous, no separate probe): the writer puts (statisticId, 0, windowSizeMs, value)
+    /// into the store and forwards the record as an impulse to the reader, which reads the value back out of the
+    /// store and ships it over the FIFO. The generator is throttled so each impulse (one emitted tuple, standing in
+    /// for one completed window) produces an observable, periodic result.
+    [[nodiscard]] virtual LogicalPlan
+    generateWatchQuery(uint64_t statisticId, uint64_t windowSizeMs, const std::string& fifoPath) const = 0;
 };
 
 }
