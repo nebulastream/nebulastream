@@ -7,6 +7,10 @@ on:
   pull_request_target:
     types: [ synchronize, opened, reopened ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.head_ref || github.ref }}-pr
+  cancel-in-progress: true
+
 jobs:
   get-dev-images:
     if: github.event.pull_request.head.repo.fork == true
