@@ -103,6 +103,15 @@ jobs:
       number_of_commits: ${{ github.event.pull_request.commits || -1 }}
     secrets: inherit
 
+  clang-tidy-diff-nix:
+    if: github.repository != 'nebulastream/nebulastream'
+    uses: ./.github/workflows/clang_tidy_diff.yml
+    with:
+      use_nix: true
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      base_sha: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+      number_of_commits: ${{ github.event.pull_request.commits || -1 }}
+
   nix-build:
     if: always() && (github.repository != 'nebulastream/nebulastream' || needs.smoke-tests.result == 'success')
     needs: [ smoke-tests ]

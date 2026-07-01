@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   get-dev-images:
-    if: github.event.pull_request.head.repo.fork == true
+    if: github.repository == 'nebulastream/nebulastream' && github.event.pull_request.head.repo.fork == true
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
@@ -21,7 +21,7 @@ jobs:
       head_sha: ${{ github.event.pull_request.head.sha }}
 
   clang-tidy-diff:
-    if: github.event.pull_request.head.repo.fork == true
+    if: github.repository == 'nebulastream/nebulastream' && github.event.pull_request.head.repo.fork == true
     needs: [ get-dev-images ]
     uses: ./.github/workflows/clang_tidy_diff.yml
     with:
