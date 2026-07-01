@@ -14,14 +14,17 @@
 
 #include <MonitoringSink.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <system_error>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -44,17 +47,22 @@ namespace NES
 struct LatencyMeasurements
 {
     uint64_t minLatency = 0;
-    uint64_t maxLatency = std::numeric_limits<uint64_t>::max();
+    uint64_t maxLatency = 0;
     double avgLatency = 0;
+    uint64_t p50 = 0;
+    uint64_t p99 = 0;
+    uint64_t p999 = 0;
 
-    // friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj);
     friend std::ostream& operator<<(std::ostream& os, const LatencyMeasurements& latencyMeasurements)
     {
         return os << fmt::format(
-                   "average latency, min latency, max latency\n{},{},{}",
+                   "average latency, min latency, max latency, p50, p99, p999\n{},{},{},{},{},{}",
                    latencyMeasurements.avgLatency,
                    latencyMeasurements.minLatency,
-                   latencyMeasurements.maxLatency);
+                   latencyMeasurements.maxLatency,
+                   latencyMeasurements.p50,
+                   latencyMeasurements.p99,
+                   latencyMeasurements.p999);
     }
 };
 }
@@ -134,17 +142,46 @@ void MonitoringSink::stop(PipelineExecutionContext&)
 
     const auto latencyMeasurements = [](const std::unordered_map<SequenceNumber, uint64_t>& bufferLatencies)
     {
-        uint64_t minLatency = std::numeric_limits<uint64_t>::max();
-        uint64_t maxLatency = 0;
+        /// Collect all per-buffer latencies and sort once: avg/min/max AND the percentiles
+        /// (p50/p99/p999) all come from the same sorted vector -- every sample is retained
+        /// (no reservoir), so the percentiles are exact for this query.
+        std::vector<uint64_t> sorted;
+        sorted.reserve(bufferLatencies.size());
         uint64_t latencySum = 0;
         for (const auto latency : bufferLatencies | std::views::values)
         {
-            minLatency = (latency != 0) ? std::min(latency, minLatency) : minLatency;
-            maxLatency = std::max(latency, maxLatency); /// was max(latency, minLatency) -- a bug
+            sorted.push_back(latency);
             latencySum += latency;
         }
+        std::ranges::sort(sorted);
+        const auto n = sorted.size();
+        /// nearest-rank percentile over the sorted samples (clamped). p in [0,1].
+        const auto pct = [&](const double p) -> uint64_t
+        {
+            if (n == 0)
+            {
+                return 0;
+            }
+            const auto idx = static_cast<size_t>((p * static_cast<double>(n - 1)) + 0.5);
+            return sorted[std::min(idx, n - 1)];
+        };
+        /// min excludes spurious 0s (same-us stamps); avg/percentiles include every sample.
+        uint64_t minLatency = 0;
+        for (const auto v : sorted)
+        {
+            if (v != 0)
+            {
+                minLatency = v;
+                break;
+            }
+        }
         return LatencyMeasurements{
-            .minLatency = minLatency, .maxLatency = maxLatency, .avgLatency = latencySum / static_cast<double>(bufferLatencies.size())};
+            .minLatency = minLatency,
+            .maxLatency = (n != 0) ? sorted.back() : 0,
+            .avgLatency = (n != 0) ? latencySum / static_cast<double>(n) : 0.0,
+            .p50 = pct(0.50),
+            .p99 = pct(0.99),
+            .p999 = pct(0.999)};
     }(this->bufferLatenciesInUS);
 
     // Todo: is wrong for repititions
@@ -153,13 +190,23 @@ void MonitoringSink::stop(PipelineExecutionContext&)
     const auto inputSizeInMegaBytes = this->sizeOfInputDataInBytes / 1000000;
     const auto throughputInMegaBytesPerSecond = inputSizeInMegaBytes / processingTimeInSeconds;
     // outputFileStream << fmt::format("Throughput in MB/s {}, {}", throughputInMegaBytesPerSecond, latencyMeasurements);
+    /// first read start / last arrival are ABSOLUTE epoch microseconds (not a per-query span):
+    /// pbench takes min(first) and max(last) ACROSS all concurrent queries to recover the true
+    /// system wall-span, so aggregate throughput = total bytes / wall-span -- instead of summing
+    /// per-query rates over staggered windows (which overcounts past DRAM peak).
     outputFileStream << fmt::format(
-        "processing time in s,throughput in MB/s,average latency us,min latency us,max latency us\n{},{},{},{},{}\n",
+        "processing time in s,throughput in MB/s,average latency us,min latency us,max latency us,p50 latency us,p99 "
+        "latency us,p999 latency us,first read start us,last arrival us\n{},{},{},{},{},{},{},{},{},{}\n",
         processingTimeInSeconds,
         throughputInMegaBytesPerSecond,
         latencyMeasurements.avgLatency,
         latencyMeasurements.minLatency,
-        latencyMeasurements.maxLatency);
+        latencyMeasurements.maxLatency,
+        latencyMeasurements.p50,
+        latencyMeasurements.p99,
+        latencyMeasurements.p999,
+        this->timestampOfFirstSN,
+        this->timestampOfLastSN.second);
     outputFileStream.close();
     isOpen = false;
 }
