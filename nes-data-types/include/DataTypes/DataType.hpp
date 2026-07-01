@@ -49,7 +49,8 @@ struct DataType final
         UNDEFINED,
         VARSIZED,
         FIXEDSIZED,
-        STRUCT
+        STRUCT,
+        VECTOR
     };
 
     enum class NULLABLE : uint8_t
@@ -59,8 +60,10 @@ struct DataType final
     };
 
     DataType(Type type, NULLABLE nullable);
-    /// FIXEDSIZED-only constructor: also carries element type and count. The element type can be any DataType, enabling nesting.
     /// Todo: remove in a proper frontend datatype refactoring
+    /// Constructor for vectors -> no fixed size but an element type
+    DataType(Type type, NULLABLE nullable, DataType elementType);
+    /// /// FIXEDSIZED-only constructor: also carries element type and count. The element type can be any DataType, enabling nesting.
     DataType(Type type, NULLABLE nullable, DataType elementType, uint32_t count);
     /// STRUCT-only constructor: nominal name + ordered named field layout.
     /// Hacky PoC for extensible composite types — plugins register a creator that

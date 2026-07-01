@@ -10,10 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-nautilus
-        FixedSizedData.cpp
-        StructData.cpp
-        VariableSizedData.cpp
-        VarVal.cpp
-        VectorData.cpp
-)
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+
+add_library(matrices_data_type_plugins STATIC 3x3MatrixDataType.cpp)
+target_link_libraries(matrices_data_type_plugins PRIVATE nes-data-types)
+target_include_directories(matrices_data_type_plugins PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+link_plugin_library(nes-data-types matrices_data_type_plugins)
+add_registry_entry(DataType 3x3Matrix KEY Matrix)

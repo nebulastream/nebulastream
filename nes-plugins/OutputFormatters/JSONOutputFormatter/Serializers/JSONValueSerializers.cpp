@@ -225,6 +225,62 @@ nautilus::val<uint64_t> JSONFIXEDSIZEDValueSerializer::serializeAndWrite(
     return bytesWritten;
 }
 
+nautilus::val<uint64_t> JSONVECTORValueSerializer::serializeAndWrite(
+    const VarVal& value,
+    const nautilus::val<uint64_t>& remainingSize,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+    const DataType& valueType) const
+{
+    /// Works basically identical to the fixedsized counterpart.
+    /// The only difference is that the loop variable is a nautilus::val instead of nautilus::static_val, as the number of elements varies
+    /// for each vector value of a field.
+    const auto castedVal = value.getRawValueAs<VectorData>();
+
+    /// Construct the serializer for the elements of the array
+    const ValueSerializerConfig config{.quoted = true};
+    const std::unique_ptr<ValueSerializer> elementSerializer
+        = provideValueSerializer(serializerTypes.at(castedVal.getElementType().type), config);
+
+    nautilus::val<uint64_t> bytesWritten{0};
+    for (nautilus::val<size_t> i = 0; i < castedVal.getNumElements(); ++i)
+    {
+        /// Write either beginning bracket or the element-delimiting comma
+        /// const nautilus::val<const char*> arrayPrefix
+        const nautilus::val<const char*> elementPrefix = i == nautilus::val<size_t>{0} ? "[" : ",";
+        bytesWritten += nautilus::invoke(
+            writeValueToBuffer,
+            elementPrefix,
+            nautilus::val<size_t>{1},
+            remainingSize - bytesWritten,
+            recordBuffer.getReference(),
+            bufferProvider,
+            startingAddress + bytesWritten);
+
+        /// Write the serialized element at i
+        bytesWritten += elementSerializer->serializeAndWrite(
+            castedVal.at(i),
+            remainingSize - bytesWritten,
+            recordBuffer,
+            bufferProvider,
+            startingAddress + bytesWritten,
+            serializerTypes,
+            *valueType.elementType);
+    }
+    /// Write closing bracket
+    bytesWritten += nautilus::invoke(
+        writeValueToBuffer,
+        nautilus::val<const char*>("]"),
+        nautilus::val<size_t>{1},
+        remainingSize - bytesWritten,
+        recordBuffer.getReference(),
+        bufferProvider,
+        startingAddress + bytesWritten);
+    return bytesWritten;
+}
+
 ValueSerializerRegistryReturnType JSONCHARValueSerializer::provideSerializer(ValueSerializerRegistryArguments)
 {
     return std::make_unique<JSONCHARValueSerializer>();
@@ -243,5 +299,10 @@ ValueSerializerRegistryReturnType JSONSTRUCTValueSerializer::provideSerializer(V
 ValueSerializerRegistryReturnType JSONFIXEDSIZEDValueSerializer::provideSerializer(ValueSerializerRegistryArguments)
 {
     return std::make_unique<JSONFIXEDSIZEDValueSerializer>();
+}
+
+std::unique_ptr<ValueSerializer> JSONVECTORValueSerializer::provideSerializer(ValueSerializerRegistryArguments)
+{
+    return std::make_unique<JSONVECTORValueSerializer>();
 }
 }

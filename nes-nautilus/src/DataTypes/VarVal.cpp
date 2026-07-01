@@ -78,6 +78,12 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
                 *static_cast<nautilus::val<int8_t**>>(memRef) = val.getContent();
                 *static_cast<nautilus::val<uint64_t*>>(memRef + nautilus::val<size_t>(sizeof(int8_t*))) = val.getSize();
             }
+            else if constexpr (std::is_same_v<ValType, VectorData>)
+            {
+                /// Write ptr and size byte aligned to memory
+                *static_cast<nautilus::val<int8_t**>>(memRef) = val.getRawPtr();
+                *static_cast<nautilus::val<uint64_t*>>(memRef + nautilus::val<size_t>(sizeof(int8_t*))) = val.getTotalSizeInBytes();
+            }
             else if constexpr (std::is_same_v<ValType, FixedSizedData>)
             {
                 /// All elements are written byte-aligned into memory
@@ -172,6 +178,9 @@ VarVal VarVal::castToType(const DataType::Type type) const
         case DataType::Type::VARSIZED: {
             return {getRawValueAs<VariableSizedData>(), nullable, null};
         }
+        case DataType::Type::VECTOR: {
+            return {getRawValueAs<VectorData>(), nullable, null};
+        }
         case DataType::Type::FIXEDSIZED: {
             return {getRawValueAs<FixedSizedData>(), nullable, null};
         }
@@ -248,6 +257,14 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
             /// Like struct, fixedsized is always stored inline
             return {FixedSizedData{memRef, type.count, *type.elementType}, type.nullable, null};
         }
+        case DataType::Type::VECTOR: {
+            /// Expects the ptr and size to be bytealigned at memref.
+            /// This is currently the assumption we take for the accessing vector elements of a struct / fixedsized.
+            /// Please use with caution.
+            const nautilus::val<int8_t*> ptr = readValueFromMemRef<int8_t*>(memRef);
+            const nautilus::val<uint64_t> size = readValueFromMemRef<uint64_t>(memRef + nautilus::val<size_t>(sizeof(int8_t*)));
+            return {VectorData{ptr, *type.elementType, size}, type.nullable, null};
+        }
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type.type));
     }
@@ -261,7 +278,7 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
         {
             if constexpr (
                 std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData> && !std::same_as<LHS, FixedSizedData>
-                && !std::same_as<LHS, StructData>)
+                && !std::same_as<LHS, StructData> && !std::same_as<LHS, VectorData>)
             {
                 return VarVal{
                     nautilus::select(condition, trueUnderlying, falseUnderlying),
@@ -296,6 +313,22 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
                         nautilus::select(condition, trueUnderlying.getRawPtr(), falseUnderlying.getRawPtr()),
                         trueUnderlying.getNumElements(),
                         trueUnderlying.getElementType()},
+                    trueValue.nullable or falseValue.nullable,
+                    nautilus::select(condition, trueValue.null, falseValue.null)};
+            }
+
+            if constexpr (std::same_as<LHS, RHS> && std::same_as<LHS, VectorData>)
+            {
+                INVARIANT(
+                    trueUnderlying.getElementType() == falseUnderlying.getElementType(),
+                    "VectorData select with mismatched shape: ({}) vs ({})",
+                    magic_enum::enum_name(trueUnderlying.getElementType().type),
+                    magic_enum::enum_name(falseUnderlying.getElementType().type));
+                return VarVal{
+                    VectorData{
+                        nautilus::select(condition, trueUnderlying.getRawPtr(), falseUnderlying.getRawPtr()),
+                        trueUnderlying.getElementType(),
+                        nautilus::select(condition, trueUnderlying.getTotalSizeInBytes(), falseUnderlying.getTotalSizeInBytes())},
                     trueValue.nullable or falseValue.nullable,
                     nautilus::select(condition, trueValue.null, falseValue.null)};
             }

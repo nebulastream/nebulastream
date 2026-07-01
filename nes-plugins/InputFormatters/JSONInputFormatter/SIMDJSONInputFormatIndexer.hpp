@@ -114,6 +114,7 @@ public:
         deserializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
         deserializerTypes[DataType::Type::STRUCT] = "JSONSTRUCT";
         deserializerTypes[DataType::Type::FIXEDSIZED] = "JSONFIXEDSIZED";
+        deserializerTypes[DataType::Type::VECTOR] = "JSONVECTOR";
 
         /// Override the datatype defaults for the fields that the user configured a deserializer for
         fieldDeserializerTypes = parseValueDeserializerOverrides(deserializerOverrides, this->fieldNamesOutput);
