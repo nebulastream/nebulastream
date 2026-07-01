@@ -32,6 +32,7 @@
 #include <DataTypes/StructData.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
+#include <DataTypes/VectorData.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/VariableSizedAccess.hpp>
@@ -178,6 +179,22 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
                 fixedSizedAccess);
             return VarVal{FixedSizedData(fixedSizedPtr, physicalType.count, physicalType.elementType), physicalType.nullable, null};
         }
+        case DataType::Type::VECTOR: {
+            /// Vectors are stored identically to VARSIZED values
+            auto vectorAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
+            const auto vectorPtr = invoke(
+                {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+                +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
+                {
+                    INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+                    INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
+                    return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
+                },
+                recordBuffer.getReference(),
+                vectorAccess);
+            const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(vectorAccess, offsetof(VariableSizedAccess, size));
+            return VarVal{VectorData(vectorPtr, physicalType.elementType, size), physicalType.nullable, null};
+        }
         case DataType::Type::STRUCT: {
             /// Inline storage: the struct's bytes live directly in the tuple at
             /// `varValRef`. Per-field offsets are determined by `StructData`'s
@@ -226,7 +243,8 @@ VarVal TupleBufferRef::storeValue(
         return value;
     }
 
-    if (physicalType.type != DataType::Type::VARSIZED && physicalType.type != DataType::Type::FIXEDSIZED)
+    if (physicalType.type != DataType::Type::VARSIZED && physicalType.type != DataType::Type::FIXEDSIZED
+        && physicalType.type != DataType::Type::VECTOR)
     {
         /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
         /// We get the correct function to call via a unordered_map
@@ -237,7 +255,7 @@ VarVal TupleBufferRef::storeValue(
         throw UnknownDataType("Physical Type: {} is currently not supported", physicalType);
     }
 
-    /// VARSIZED and FIXEDSIZED both bottom out in `writeVarSized`: it copies the payload
+    /// VARSIZED, VECTOR, and FIXEDSIZED both bottom out in `writeVarSized`: it copies the payload
     /// into a child buffer and returns the 16-byte `VariableSizedAccess` for the slot.
     /// Only the source of (pointer, byte-count) differs.
     auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
@@ -250,6 +268,12 @@ VarVal TupleBufferRef::storeValue(
         const auto totalBytes = static_cast<uint64_t>(fixedValue.getTotalSizeInBytes());
         payloadPtr = fixedValue.getRawPtr();
         payloadLength = nautilus::val<uint64_t>(totalBytes);
+    }
+    else if (physicalType.type == DataType::Type::VECTOR)
+    {
+        const auto vectorData = value.getRawValueAs<VectorData>();
+        payloadPtr = vectorData.getRawPtr();
+        payloadLength = vectorData.getTotalSizeInBytes();
     }
     else
     {

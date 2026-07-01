@@ -135,6 +135,9 @@ void writeValue(
         case DataType::Type::STRUCT: {
             throw UnknownDataType("CSV-OutputFormatting for STRUCT types is not yet supported.");
         }
+        case DataType::Type::VECTOR: {
+            throw UnknownDataType("CSV-OutputFormatting for VECTOR is not yet supported.");
+        }
         case DataType::Type::UNDEFINED: {
             throw UnknownDataType("CSV-OutputFormatting for type UNDEFINED is not supported.");
         }

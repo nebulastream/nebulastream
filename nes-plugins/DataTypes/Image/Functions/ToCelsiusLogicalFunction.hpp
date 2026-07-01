@@ -41,7 +41,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] ToCelsiusLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] ToCelsiusLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -56,28 +56,30 @@ private:
     friend Reflector<ToCelsiusLogicalFunction>;
 };
 
+namespace detail
+{
+
+struct ReflectedToCelsiusLogicalFunction
+{
+    LogicalFunction child;
+};
+
+}
+
 template <>
 struct Reflector<ToCelsiusLogicalFunction>
 {
-    Reflected operator()(const ToCelsiusLogicalFunction& function) const;
+    Reflected operator()(const ToCelsiusLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
 struct Unreflector<ToCelsiusLogicalFunction>
 {
-    ToCelsiusLogicalFunction operator()(const Reflected& reflected) const;
+    ToCelsiusLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<ToCelsiusLogicalFunction>);
 
-}
-
-namespace NES::detail
-{
-struct ReflectedToCelsiusLogicalFunction
-{
-    std::optional<LogicalFunction> child;
-};
 }
 
 FMT_OSTREAM(NES::ToCelsiusLogicalFunction);

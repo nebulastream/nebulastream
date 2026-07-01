@@ -66,7 +66,7 @@ ToRGBLogicalFunction ToRGBLogicalFunction::withDataType(const DataType& dataType
     return copy;
 }
 
-LogicalFunction ToRGBLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction ToRGBLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& c) { return c.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();
@@ -131,28 +131,20 @@ std::string ToRGBLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("to_rgb({}, {})", frame.explain(verbosity), colormap.explain(verbosity));
 }
 
-Reflected Reflector<ToRGBLogicalFunction>::operator()(const ToRGBLogicalFunction& function) const
+Reflected Reflector<ToRGBLogicalFunction>::operator()(const ToRGBLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedToRGBLogicalFunction{.frame = function.frame, .colormap = function.colormap});
+    return context.reflect(detail::ReflectedToRGBLogicalFunction{.frame = function.frame, .colormap = function.colormap});
 }
 
-ToRGBLogicalFunction Unreflector<ToRGBLogicalFunction>::operator()(const Reflected& reflected) const
+ToRGBLogicalFunction Unreflector<ToRGBLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [frame, colormap] = unreflect<detail::ReflectedToRGBLogicalFunction>(reflected);
-    if (!frame.has_value() || !colormap.has_value())
-    {
-        throw CannotDeserialize("ToRGBLogicalFunction is missing one of its children");
-    }
-    return ToRGBLogicalFunction(frame.value(), colormap.value());
+    auto [frame, colormap] = context.unreflect<detail::ReflectedToRGBLogicalFunction>(reflected);
+    return ToRGBLogicalFunction(frame, colormap);
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterTO_RGBLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<ToRGBLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("ToRGBLogicalFunction requires exactly two children, but got {}", arguments.children.size());

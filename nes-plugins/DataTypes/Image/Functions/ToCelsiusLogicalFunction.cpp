@@ -49,7 +49,7 @@ ToCelsiusLogicalFunction ToCelsiusLogicalFunction::withDataType(const DataType& 
     return copy;
 }
 
-LogicalFunction ToCelsiusLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction ToCelsiusLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& c) { return c.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();
@@ -58,13 +58,11 @@ LogicalFunction ToCelsiusLogicalFunction::withInferredDataType(const Schema& sch
     /// "pixels" works (e.g. both `ThermalFrame` and `ThermalImage`). Output is
     /// FIXEDSIZED<FLOAT32, count> derived from the frame's pixels field.
     const auto childType = newChildren[0].getDataType();
-    if (childType.type != DataType::Type::STRUCT || childType.fields.size() != 1
-        || childType.fields[0].first != "pixels"
+    if (childType.type != DataType::Type::STRUCT || childType.fields.size() != 1 || childType.fields[0].first != "pixels"
         || childType.fields[0].second.type != DataType::Type::FIXEDSIZED
         || childType.fields[0].second.elementType != DataType::Type::UINT16)
     {
-        throw DifferentFieldTypeExpected(
-            "to_celsius expects a STRUCT with a single FIXEDSIZED<UINT16> 'pixels' field, got {}", childType);
+        throw DifferentFieldTypeExpected("to_celsius expects a STRUCT with a single FIXEDSIZED<UINT16> 'pixels' field, got {}", childType);
     }
     const auto pixelCount = childType.fields[0].second.count;
     const auto nullable = childType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
@@ -104,28 +102,21 @@ std::string ToCelsiusLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("to_celsius({})", child.explain(verbosity));
 }
 
-Reflected Reflector<ToCelsiusLogicalFunction>::operator()(const ToCelsiusLogicalFunction& function) const
+Reflected Reflector<ToCelsiusLogicalFunction>::operator()(const ToCelsiusLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedToCelsiusLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedToCelsiusLogicalFunction{.child = function.child});
 }
 
-ToCelsiusLogicalFunction Unreflector<ToCelsiusLogicalFunction>::operator()(const Reflected& reflected) const
+ToCelsiusLogicalFunction
+Unreflector<ToCelsiusLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [child] = unreflect<detail::ReflectedToCelsiusLogicalFunction>(reflected);
-    if (!child.has_value())
-    {
-        throw CannotDeserialize("ToCelsiusLogicalFunction is missing its child");
-    }
-    return ToCelsiusLogicalFunction(child.value());
+    auto [child] = context.unreflect<detail::ReflectedToCelsiusLogicalFunction>(reflected);
+    return ToCelsiusLogicalFunction(child);
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterTO_CELSIUSLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<ToCelsiusLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("ToCelsiusLogicalFunction requires exactly one child, but got {}", arguments.children.size());

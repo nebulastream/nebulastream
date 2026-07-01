@@ -13,14 +13,14 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 # Reading STRUCT registration. Reachable via `DataTypeProvider::provideDataType("Reading")`.
-add_plugin_as_library(Reading DataType nes-data-types-registry reading_data_type_plugin ReadingDataType.cpp)
+add_plugin_as_library(Reading DataType reading_data_type_plugin ReadingDataType.cpp)
 
 # Per-struct operator overrides for `Reading`. Picked up automatically by
 # `FunctionProvider`'s struct-aware dispatch when both operands of the SQL `>` /
 # `+` are nominal-typed `Reading`. No core change is needed to add another
 # operator/struct combo — a new `add_plugin_as_library(<Op>_Reading_<Other> ...)`
 # entry suffices.
-add_plugin_as_library(Greater_Reading_Reading PhysicalFunction nes-physical-operators-registry reading_greater_physical_function ReadingGreaterPhysicalFunction.cpp)
-add_plugin_as_library(Add_Reading_Reading     PhysicalFunction nes-physical-operators-registry reading_add_physical_function     ReadingAddPhysicalFunction.cpp)
+add_plugin_as_library(Greater_Reading_Reading PhysicalFunction reading_greater_physical_function ReadingGreaterPhysicalFunction.cpp)
+add_plugin_as_library(Add_Reading_Reading     PhysicalFunction reading_add_physical_function     ReadingAddPhysicalFunction.cpp)
 target_include_directories(reading_greater_physical_function PRIVATE .)
 target_include_directories(reading_add_physical_function     PRIVATE .)
