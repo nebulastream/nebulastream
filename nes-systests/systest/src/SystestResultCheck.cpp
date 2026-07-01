@@ -272,7 +272,8 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
         case NES::DataType::Type::FLOAT64:
             return NES::compareStringAsTypeWithError<double>(left.getRawValue(), right.getRawValue());
         case NES::DataType::Type::FIXEDSIZED:
-            /// FIXEDSIZED renders as a JSON array literal `[v0,v1,...]` from the JSON
+        case NES::DataType::Type::VARARRAY:
+            /// FIXEDSIZED and VARARRAY render as a JSON array literal `[v0,v1,...]` from the JSON
             /// output formatter; the systest compares against the same string in the
             /// expected-result block of the .test file.
             return left.getRawValue() == right.getRawValue();
@@ -348,6 +349,18 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
                 throw NES::SLTUnexpectedToken("Could not parse FIXEDSIZED count: {}", countStr);
             }
             dataType = NES::DataType{NES::DataType::Type::FIXEDSIZED, isNullable, elementType.value(), count};
+        }
+        else if (typeTrimmed.starts_with("VARARRAY<") && typeTrimmed.ends_with('>'))
+        {
+            const auto inner = typeTrimmed.substr(std::string_view("VARARRAY<").size(),
+                typeTrimmed.size() - std::string_view("VARARRAY<").size() - 1);
+            const auto elementTypeStr = NES::trimWhiteSpaces(inner);
+            const auto elementType = magic_enum::enum_cast<NES::DataType::Type>(elementTypeStr);
+            if (not elementType.has_value())
+            {
+                throw NES::SLTUnexpectedToken("Unknown VARARRAY element type: {}", elementTypeStr);
+            }
+            dataType = NES::DataType{NES::DataType::Type::VARARRAY, isNullable, elementType.value()};
         }
         else if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed);
                  type.has_value() && type.value() != NES::DataType::Type::STRUCT)

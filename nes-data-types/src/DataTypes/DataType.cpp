@@ -127,6 +127,16 @@ DataType::DataType(const Type type, const NULLABLE nullable) : type(type), nulla
 {
 }
 
+DataType::DataType(const Type type, const NULLABLE nullable, const Type elementType)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(elementType)
+{
+    if (type != Type::VARARRAY)
+    {
+        throw DifferentFieldTypeExpected(
+            "The elementType/count DataType constructor is for vararrays only, but got: {}", magic_enum::enum_name(type));
+    }
+}
+
 DataType::DataType(const Type type, const NULLABLE nullable, const Type elementType, const uint32_t count)
     : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(elementType), count(count)
 {
@@ -137,8 +147,7 @@ DataType::DataType(const Type type, const NULLABLE nullable, const Type elementT
     }
 }
 
-DataType::DataType(
-    const Type type, const NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields)
+DataType::DataType(const Type type, const NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields)
     : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), structName(std::move(structName)), fields(std::move(fields))
 {
     if (type != Type::STRUCT)
@@ -203,7 +212,8 @@ uint32_t DataType::getSizeInBytesWithoutNull() const
         case Type::FLOAT32:
             return 4;
         case Type::VARSIZED:
-            /// Returning '16' for VARSIZED, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
+        case Type::VARARRAY:
+            /// Returning '16' for VARSIZED / VARARRAY, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
             /// and 8 bytes for the size of the VARSIZED
             return 16;
         case Type::FIXEDSIZED:
@@ -236,88 +246,6 @@ uint32_t DataType::getSizeInBytesWithNull() const
 }
 
 /// NOLINTEND(readability-magic-numbers)
-
-std::string DataType::formattedBytesToString(const void* data) const
-{
-    PRECONDITION(data != nullptr, "Pointer to data is invalid.");
-    switch (type)
-    {
-        case Type::INT8:
-            return std::to_string(*static_cast<const int8_t*>(data));
-        case Type::UINT8:
-            return std::to_string(*static_cast<const uint8_t*>(data));
-        case Type::INT16:
-            return std::to_string(*static_cast<const int16_t*>(data));
-        case Type::UINT16:
-            return std::to_string(*static_cast<const uint16_t*>(data));
-        case Type::INT32:
-            return std::to_string(*static_cast<const int32_t*>(data));
-        case Type::UINT32:
-            return std::to_string(*static_cast<const uint32_t*>(data));
-        case Type::INT64:
-            return std::to_string(*static_cast<const int64_t*>(data));
-        case Type::UINT64:
-            return std::to_string(*static_cast<const uint64_t*>(data));
-        case Type::FLOAT32:
-            return formatFloat(*static_cast<const float*>(data));
-        case Type::FLOAT64:
-            return formatFloat(*static_cast<const double*>(data));
-        case Type::BOOLEAN:
-            return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
-        case Type::CHAR: {
-            if (getSizeInBytesWithoutNull() != 1)
-            {
-                return "invalid char type";
-            }
-            return std::string{*static_cast<const char*>(data)};
-        }
-        case Type::VARSIZED: {
-            const auto* textPointer = static_cast<const char*>(data);
-            return textPointer;
-        }
-        case Type::FIXEDSIZED: {
-            /// Best-effort textual rendering for output formatting; consumers that need
-            /// typed access should go through `FixedSizedData::at()` instead.
-            const auto elementSize = DataType{elementType, NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
-            std::string out = "[";
-            const auto* bytes = static_cast<const std::byte*>(data);
-            for (uint32_t i = 0; i < count; ++i)
-            {
-                if (i > 0)
-                {
-                    out += ",";
-                }
-                out += DataType{elementType, NULLABLE::NOT_NULLABLE}.formattedBytesToString(bytes + (i * elementSize));
-            }
-            out += "]";
-            return out;
-        }
-        case Type::STRUCT: {
-            /// Walks the inline struct bytes in field order; offsets follow the
-            /// same rules as `inlineFieldSizeInBytes` so this stays in sync with
-            /// how the bytes were written.
-            std::string out = structName + "{";
-            const auto* bytes = static_cast<const std::byte*>(data);
-            uint32_t offset = 0;
-            bool first = true;
-            for (const auto& [name, field] : fields)
-            {
-                if (!first)
-                {
-                    out += ",";
-                }
-                first = false;
-                out += name + ":" + field.formattedBytesToString(bytes + offset);
-                offset += inlineFieldSizeInBytes(field);
-            }
-            out += "}";
-            return out;
-        }
-        case Type::UNDEFINED:
-            return "invalid physical type";
-    }
-    std::unreachable();
-}
 
 bool DataType::isType(const Type type) const
 {
@@ -434,6 +362,14 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
         return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED, isNullableResult)}
                                                       : std::nullopt;
     }
+    if (this->type == Type::VARARRAY)
+    {
+        if (otherDataType.type == Type::VARARRAY && otherDataType.elementType == this->elementType)
+        {
+            return DataType{Type::VARARRAY, isNullableResult, this->elementType};
+        }
+        return std::nullopt;
+    }
     if (this->type == Type::FIXEDSIZED)
     {
         if (otherDataType.type == Type::FIXEDSIZED && otherDataType.elementType == this->elementType && otherDataType.count == this->count)
@@ -499,8 +435,7 @@ Reflected Reflector<DataType>::operator()(const DataType& field) const
 
 DataType Unreflector<DataType>::operator()(const Reflected& rfl) const
 {
-    using TupleT
-        = std::tuple<DataType::Type, bool, DataType::Type, uint32_t, std::string, std::vector<std::pair<std::string, DataType>>>;
+    using TupleT = std::tuple<DataType::Type, bool, DataType::Type, uint32_t, std::string, std::vector<std::pair<std::string, DataType>>>;
     const auto [type, nullable, elementType, count, structName, fields] = unreflect<TupleT>(rfl);
     const auto nullableEnum = nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
     if (type == DataType::Type::FIXEDSIZED)
@@ -511,6 +446,10 @@ DataType Unreflector<DataType>::operator()(const Reflected& rfl) const
     {
         return DataType{type, nullableEnum, structName, fields};
     }
+    if (type == DataType::Type::VARARRAY)
+    {
+        return DataType{type, nullableEnum, elementType};
+    }
     return DataTypeProvider::provideDataType(type, nullableEnum);
 }
 
@@ -520,6 +459,14 @@ std::ostream& operator<<(std::ostream& os, const DataType& dataType)
     {
         return os << fmt::format(
                    "DataType(type: FIXEDSIZED<{}, {}> nullable: {})",
+                   magic_enum::enum_name(dataType.elementType),
+                   dataType.count,
+                   dataType.nullable);
+    }
+    if (dataType.type == DataType::Type::VARARRAY)
+    {
+        return os << fmt::format(
+                   "DataType(type: VARARRAY<{}> nullable: {})",
                    magic_enum::enum_name(dataType.elementType),
                    dataType.count,
                    dataType.nullable);
