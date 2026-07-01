@@ -19,6 +19,7 @@
 #include <random>
 
 
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,6 +27,10 @@
 
 namespace NES
 {
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+
 /// Helper for running the tests with all the data types below
 using TestTypes = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t>;
 
@@ -54,7 +59,12 @@ TYPED_TEST_SUITE(TupleBufferMemoryAccessTest, TestTypes);
 TYPED_TEST(TupleBufferMemoryAccessTest, FillAndRetrieveFromSpan)
 {
     using T = TypeParam;
-    auto bufferManager = BufferManager::create(this->bufferSize);
+    auto bufferManager = BufferManager::create(
+        10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * this->bufferSize,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        static_cast<uint32_t>(this->bufferSize),
+        std::make_shared<NesDefaultMemoryAllocator>());
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto span = tupleBuffer.template getAvailableMemoryArea<T>();
 

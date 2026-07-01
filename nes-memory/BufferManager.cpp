@@ -45,21 +45,37 @@ BufferManager::BufferManager(
     const uint32_t bufferSize,
     const uint32_t numOfBuffers,
     std::shared_ptr<std::pmr::memory_resource> memoryResource,
-    const uint32_t withAlignment)
+    const size_t unpooledMemoryLimitInBytes,
+    const uint32_t alignment)
     : availableBuffers(numOfBuffers)
-    , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource))
+    , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource, unpooledMemoryLimitInBytes))
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
+    , alignment(alignment)
     , memoryResource(std::move(memoryResource))
 {
-    ((void)withAlignment);
-    initialize(DEFAULT_ALIGNMENT);
+    PRECONDITION(numOfBuffers > 0, "BufferManager requires at least one pooled buffer, but the configured budget yields {}", numOfBuffers);
+    initialize();
 }
 
 std::shared_ptr<BufferManager> BufferManager::create(
-    uint32_t bufferSize, uint32_t numOfBuffers, const std::shared_ptr<std::pmr::memory_resource>& memoryResource, uint32_t withAlignment)
+    const size_t totalMemoryInBytes,
+    const double unpooledMemoryFraction,
+    const BufferAlignment alignment,
+    const uint32_t bufferSize,
+    const std::shared_ptr<std::pmr::memory_resource>& memoryResource)
 {
-    return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, memoryResource, withAlignment);
+    PRECONDITION(
+        unpooledMemoryFraction >= 0.0 and unpooledMemoryFraction <= 1.0,
+        "unpooledMemoryFraction must be in [0.0, 1.0] but is {}",
+        unpooledMemoryFraction);
+    PRECONDITION(bufferSize > 0, "bufferSize must be greater than zero");
+
+    const auto unpooledMemoryLimitInBytes = static_cast<size_t>(static_cast<double>(totalMemoryInBytes) * unpooledMemoryFraction);
+    const size_t pooledMemoryInBytes = totalMemoryInBytes - unpooledMemoryLimitInBytes;
+    const auto numOfBuffers = static_cast<uint32_t>(pooledMemoryInBytes / bufferSize);
+    return std::make_shared<BufferManager>(
+        Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment.getRawValue());
 }
 
 BufferManager::~BufferManager()
@@ -100,7 +116,7 @@ void BufferManager::destroy()
 
         availableBuffers = decltype(availableBuffers)();
         NES_DEBUG("Shutting down Buffer Manager completed");
-        memoryResource->deallocate(basePointer, allocatedAreaSize, DEFAULT_ALIGNMENT);
+        memoryResource->deallocate(basePointer, allocatedAreaSize, alignment);
         allocatedAreaSize = 0;
 
         /// Destroying the unpooled chunks
@@ -108,8 +124,10 @@ void BufferManager::destroy()
     }
 }
 
-void BufferManager::initialize(uint32_t withAlignment)
+void BufferManager::initialize()
 {
+    /// Buffer alignment is configured at construction (a cache line is 64 bytes).
+    const uint32_t withAlignment = alignment;
     const size_t pages = sysconf(_SC_PHYS_PAGES);
     size_t page_size = sysconf(_SC_PAGE_SIZE);
     auto memorySizeInBytes = pages * page_size;
@@ -218,7 +236,7 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
-    return unpooledChunksManager->getUnpooledBuffer(bufferSize, DEFAULT_ALIGNMENT, shared_from_this());
+    return unpooledChunksManager->getUnpooledBuffer(bufferSize, alignment, shared_from_this());
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)

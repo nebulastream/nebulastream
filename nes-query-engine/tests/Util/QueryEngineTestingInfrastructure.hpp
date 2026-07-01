@@ -40,6 +40,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/MemoryUtils.hpp>
@@ -68,6 +69,11 @@
 namespace NES
 {
 static constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
+static constexpr uint32_t POOLED_BUFFER_SIZE = 8192;
+static constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
+static constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
+static constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+static constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
 static constexpr size_t NUMBER_OF_TUPLES_PER_BUFFER = 23;
 static constexpr size_t NUMBER_OF_BUFFERS_PER_SOURCE = 300;
 static constexpr size_t NUMBER_OF_THREADS = 2;
@@ -498,7 +504,12 @@ struct TestingHarness
     explicit TestingHarness(size_t numberOfThreads, size_t numberOfBuffers);
     explicit TestingHarness();
 
-    std::shared_ptr<BufferManager> bm = BufferManager::create();
+    std::shared_ptr<BufferManager> bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     std::shared_ptr<TestQueryStatisticListener> statListener = std::make_shared<TestQueryStatisticListener>();
     ExpectStats stats{statListener};
     std::shared_ptr<QueryStatusListener> status = std::make_shared<QueryStatusListener>();

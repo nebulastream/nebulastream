@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -44,6 +45,9 @@ namespace
 /// NOLINTBEGIN(readability-magic-numbers, performance-unnecessary-value-param, performance-unnecessary-copy-initialization)
 constexpr size_t TEST_BUFFER_SIZE = 4096;
 constexpr size_t TEST_NUMBER_OF_BUFFERS = 16;
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * TEST_NUMBER_OF_BUFFERS * TEST_BUFFER_SIZE;
 /// Number of records pre-set on the on-stack TupleBuffer, so that reads through a BorrowedNautilusBuffer can be verified.
 constexpr uint64_t ON_STACK_RECORD_COUNT = 11;
 
@@ -81,7 +85,12 @@ protected:
             std::function([&body](nautilus::val<TupleBuffer*> onStackBuffer, nautilus::val<AbstractBufferProvider*> provider)
                           { body(onStackBuffer, provider); }));
 
-        const auto bufferManager = BufferManager::create(TEST_BUFFER_SIZE, TEST_NUMBER_OF_BUFFERS);
+        const auto bufferManager = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES,
+            UNPOOLED_MEMORY_FRACTION,
+            BUFFER_ALIGNMENT,
+            TEST_BUFFER_SIZE,
+            std::make_shared<NesDefaultMemoryAllocator>());
         {
             TupleBuffer onStackBuffer = bufferManager->getBufferBlocking();
             onStackBuffer.setNumberOfTuples(ON_STACK_RECORD_COUNT);

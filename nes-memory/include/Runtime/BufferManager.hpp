@@ -16,20 +16,27 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
 #include <deque>
+#include <limits>
 #include <memory>
 #include <memory_resource>
 #include <mutex>
 #include <optional>
 #include <vector>
+#include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/UnpooledChunksManager.hpp>
 #include <folly/MPMCQueue.h>
 
 namespace NES
 {
+
+/// Strong type for create()'s alignment argument to reduce potential swapped as both are u32 and also
+/// readability-suspicious-call-argument on every call site
+using BufferAlignment = NESStrongType<uint32_t, struct BufferAlignment_, 0, 0>;
 
 /**
  * @brief The BufferManager is responsible for:
@@ -68,28 +75,29 @@ class BufferManager final : public std::enable_shared_from_this<BufferManager>, 
         explicit Private() = default;
     };
 
-    static constexpr auto DEFAULT_BUFFER_SIZE = 8 * 1024;
-    static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
-    static constexpr auto DEFAULT_ALIGNMENT = 64;
-
 public:
     explicit BufferManager(
         Private,
         uint32_t bufferSize,
         uint32_t numOfBuffers,
         std::shared_ptr<std::pmr::memory_resource> memoryResource,
-        uint32_t withAlignment);
+        size_t unpooledMemoryLimitInBytes,
+        uint32_t alignment);
 
-    /// Creates a new global buffer manager
-    /// @param bufferSize the size of each buffer in bytes
-    /// @param numOfBuffers the total number of buffers in the pool
-    /// @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
+    /// Creates a new global buffer manager from a total memory budget. The pooled buffer count and the unpooled
+    /// memory limit are derived: unpooledLimit = totalMemoryInBytes * unpooledMemoryFraction, the remaining
+    /// pooled bytes are split into floor(pooledBytes / bufferSize) buffers.
+    /// @param totalMemoryInBytes total memory budget shared by the pooled and unpooled pools
+    /// @param unpooledMemoryFraction share of the total budget reserved for unpooled buffers, in [0.0, 1.0]
+    /// @param alignment byte alignment of every buffer; must be a power of two <= page size (a cache line is 64 bytes)
+    /// @param bufferSize the size of each pooled buffer in bytes
     /// @param memoryResource resource for allocating and deallocating memory
     static std::shared_ptr<BufferManager> create(
-        uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
-        uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
-        const std::shared_ptr<std::pmr::memory_resource>& memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
-        uint32_t withAlignment = DEFAULT_ALIGNMENT);
+        size_t totalMemoryInBytes,
+        double unpooledMemoryFraction,
+        BufferAlignment alignment,
+        uint32_t bufferSize,
+        const std::shared_ptr<std::pmr::memory_resource>& memoryResource);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
@@ -99,11 +107,10 @@ public:
 
 private:
     /**
-     * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes.
-     * This is a one shot call. A second invocation of this call will fail
-     * @param withAlignment
+     * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes, aligned to
+     * a cache line. This is a one shot call. A second invocation of this call will fail
      */
-    void initialize(uint32_t withAlignment);
+    void initialize();
 
 public:
     /// This blocks until a buffer is available.
@@ -154,6 +161,7 @@ private:
 
     size_t bufferSize;
     size_t numOfBuffers;
+    uint32_t alignment;
 
     uint8_t* basePointer{nullptr};
     size_t allocatedAreaSize;

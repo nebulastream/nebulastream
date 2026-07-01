@@ -112,17 +112,24 @@ endif (NOT CODE_COVERAGE)
 if (ENABLE_LARGE_TESTS)
     message(STATUS "Large scale tests enabled")
 
+    # Total memory budget for the large systests, split into a pooled and an unpooled share. With #1701/#1702 the
+    # unpooled pool (hash maps, paged vectors, var-sized data) is bounded so a runaway query fails cleanly instead of
+    # OOM-killing the worker. Sized so the pooled share keeps ~2,000,000 operator buffers (the previous setting) while
+    # leaving 32 GiB for unpooled state; raise it if a future large test legitimately needs more memory.
+    set(LARGE_TEST_TOTAL_MEMORY_BYTES 42551738368) # 8 GiB pooled (2,000,000 * 4096) + 32 GiB unpooled
+    set(LARGE_TEST_UNPOOLED_FRACTION 0.8075) # 34359738368 / 42551738368
+
     set(joinStrategy HASH_JOIN) # We simply test here with a hash join, as a NLJ does not finish in 2h
     ExternalData_Add_Test(test-data
             # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_${joinStrategy}
-            COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
 
     ExternalData_Add_Test(test-data
             # currently, 16 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_benchmark_${joinStrategy}
-            COMMAND systest -b --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=16 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -b --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=16 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_large_benchmark_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 16)
 
     # Running here the Nexmark.test queries with NLJ to test it for larger data sets but the input data size
@@ -130,7 +137,7 @@ if (ENABLE_LARGE_TESTS)
     set(joinStrategy NESTED_LOOP_JOIN)
     ExternalData_Add_Test(TEST_DATA_LARGE
             NAME systest_large_${joinStrategy}
-            COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark/Nexmark.test:05 --optimizer join_strategy=${joinStrategy} -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark/Nexmark.test:05 --optimizer join_strategy=${joinStrategy} -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=16384000000 --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
 endif ()
 
@@ -145,27 +152,27 @@ if (NOT CODE_COVERAGE)
                         COMMAND systest -n 6 --show-query-performance --groups Join --exclude-groups ${SYSTEST_EXCLUDE_GROUPS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_interpreter_join --data ${EXPANDED_TEST_DATA_PATH}
                         --optimizer join_strategy=${joinStrategy}
                         --
-                        --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
+                        --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.total_memory_in_bytes=163840000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
                 set_tests_properties(systest_join_${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_interpreter PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
                 ExternalData_Add_Test(test-data
                         NAME systest_join_${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_compiler
                         COMMAND systest -n 6 --show-query-performance --groups Join --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_compiler_join --data ${EXPANDED_TEST_DATA_PATH}
                         --optimizer join_strategy=${joinStrategy}
                         --
-                        --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
+                        --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=163840000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
                 set_tests_properties(systest_join_${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_compiler PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
             endforeach ()
             ExternalData_Add_Test(test-data
                     NAME systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_interpreter
                     COMMAND systest -n 6 --show-query-performance --groups Aggregation --exclude-groups ${SYSTEST_EXCLUDE_GROUPS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_sliceCache_${enableSliceCache}_interpreter_aggregation --data ${EXPANDED_TEST_DATA_PATH}
                     --
-                    --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
+                    --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.total_memory_in_bytes=163840000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
             set_tests_properties(systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_interpreter PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
             ExternalData_Add_Test(test-data
                     NAME systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_compiler
                     COMMAND systest -n 6 --show-query-performance --groups Aggregation --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_sliceCache_${enableSliceCache}_compiler_aggregation --data ${EXPANDED_TEST_DATA_PATH}
                     --
-                    --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
+                    --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=163840000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
             set_tests_properties(systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_compiler PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
         endforeach ()
     endforeach ()
@@ -177,11 +184,30 @@ add_dependencies(nes-systest-lib test-data)
 
 add_tests_if_enabled(tests)
 
-add_e2e_test(
-    NAME systest-remote-test
-    BATS_FILE remote-test/distributed.bats
-    DOCKER_COMPOSE
-    EXTRA_ENV
-        DATADIR=${EXPANDED_TEST_DATA_PATH}
-        ENABLE_LARGE_TESTS=${ENABLE_LARGE_TESTS}
-)
+# Per-worker memory budget injected into the distributed bats workers that declare a config block (currently the
+# large-scale two-node topology). The large varsized HASH_JOIN workload needs ~72 GiB (64 GiB unpooled); with large tests off we cap at 16 GiB
+# so the remote suite also fits dev laptops (<= 32 GiB RAM). distributed.bats (setup_distributed) applies it.
+if (ENABLE_LARGE_TESTS)
+    set(REMOTE_TEST_TOTAL_MEMORY_BYTES 76911476736) # 8 GiB pooled (2,000,000 * 4096) + 64 GiB unpooled
+else ()
+    set(REMOTE_TEST_TOTAL_MEMORY_BYTES 17179869184) # 16 GiB
+endif ()
+
+# The remote (distributed) systest spins up worker containers that each request the budget above. Skip it on hosts
+# that do not have enough physical RAM to back that budget, so a dev laptop does not OOM (or thrash) running it.
+cmake_host_system_information(RESULT _host_physical_memory_mib QUERY TOTAL_PHYSICAL_MEMORY)
+math(EXPR _remote_test_required_mib "${REMOTE_TEST_TOTAL_MEMORY_BYTES} / 1048576")
+if (_host_physical_memory_mib LESS _remote_test_required_mib)
+    message(STATUS "Skipping systest-remote-test: host has ${_host_physical_memory_mib} MiB physical memory, "
+                   "but the test requires ${_remote_test_required_mib} MiB (per-worker total_memory_in_bytes budget).")
+else ()
+    add_e2e_test(
+        NAME systest-remote-test
+        BATS_FILE remote-test/distributed.bats
+        DOCKER_COMPOSE
+        EXTRA_ENV
+            DATADIR=${EXPANDED_TEST_DATA_PATH}
+            ENABLE_LARGE_TESTS=${ENABLE_LARGE_TESTS}
+            WORKER_TOTAL_MEMORY_IN_BYTES=${REMOTE_TEST_TOTAL_MEMORY_BYTES}
+    )
+endif ()

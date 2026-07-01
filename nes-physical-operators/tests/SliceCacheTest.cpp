@@ -49,6 +49,7 @@
 
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -57,6 +58,15 @@
 
 namespace NES
 {
+
+namespace
+{
+constexpr uint32_t POOLED_BUFFER_SIZE = 512;
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 100000;
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+}
 
 /// Reference implementation of a second-chance (clock) cache for verifying the Nautilus
 /// cache implementation. This uses standard C++ data structures and prioritizes simplicity
@@ -219,7 +229,12 @@ public:
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
 
-        const std::shared_ptr<AbstractBufferProvider> bm = BufferManager::create(512, 100000);
+        const std::shared_ptr<AbstractBufferProvider> bm = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES,
+            UNPOOLED_MEMORY_FRACTION,
+            BUFFER_ALIGNMENT,
+            POOLED_BUFFER_SIZE,
+            std::make_shared<NesDefaultMemoryAllocator>());
         pec = std::make_unique<MockedPipelineContext>(bm);
     }
 

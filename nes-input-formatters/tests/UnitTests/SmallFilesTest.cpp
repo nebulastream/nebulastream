@@ -36,6 +36,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -73,6 +74,9 @@ std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema<NES::QualifiedUnbo
 /// NOLINTBEGIN(readability-magic-numbers)
 namespace NES
 {
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+
 class SmallFilesTest : public Testing::BaseUnitTest
 {
     struct TestFile
@@ -217,7 +221,12 @@ public:
 
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
         const auto numberOfRequiredSourceBuffers = static_cast<uint16_t>(numberOfExpectedRawBuffers + 1);
-        std::shared_ptr<BufferManager> sourceBufferPool = BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
+        std::shared_ptr<BufferManager> sourceBufferPool = BufferManager::create(
+            10 * static_cast<size_t>(numberOfRequiredSourceBuffers) * testConfig.sizeOfRawBuffers,
+            UNPOOLED_MEMORY_FRACTION,
+            BUFFER_ALIGNMENT,
+            testConfig.sizeOfRawBuffers,
+            std::make_shared<NesDefaultMemoryAllocator>());
 
         /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
         const auto [backpressureController, fileSource] = InputFormatterTestUtil::createFileSource(
@@ -292,8 +301,12 @@ public:
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
             /// Prepare TestTaskQueue for processing the input formatter tasks
-            auto testBufferManager
-                = BufferManager::create(setupResult.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
+            auto testBufferManager = BufferManager::create(
+                10 * static_cast<size_t>(setupResult.numberOfRequiredFormattedBuffers) * setupResult.sizeOfFormattedBuffers,
+                UNPOOLED_MEMORY_FRACTION,
+                BUFFER_ALIGNMENT,
+                setupResult.sizeOfFormattedBuffers,
+                std::make_shared<NesDefaultMemoryAllocator>());
 
             /// Create compiled pipeline stage containing InputFormatter and EmitOperator(emits formatted buffers into 'resultBuffers')
 

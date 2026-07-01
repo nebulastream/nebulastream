@@ -308,27 +308,33 @@ std::unique_ptr<ExecutableQueryPlan> RunningQueryPlan::dispose(std::unique_ptr<R
 
 RunningQueryPlan::~RunningQueryPlan()
 {
-    auto lock = this->internal.lock();
-    auto& internal = *lock;
-
-
-    /// CRITICAL: Disable pipeline setup callback during destruction to prevent race condition.
-    ///
-    /// This prevents any pending pipeline setup callbacks from executing after the
-    /// RunningQueryPlan starts being destroyed. Without this, callbacks could access
-    /// partially destroyed object state, leading to use-after-free errors.
-    ///
-    /// The callback may have captured a raw pointer to this RunningQueryPlan during
-    /// the start() method, and this ensures it cannot execute after destruction begins.
-    internal.allPipelinesStarted = {};
-
-    for (const auto& weakRef : internal.pipelines)
+    /// Destroying a source joins its thread, which may run successor-pipeline callbacks that re-acquire the
+    /// internal AtomicState lock. Destroying sources while holding that lock therefore deadlocks (see the note on
+    /// RunningQueryPlan::stop). Mirror stop(): move the sources out under the lock, release it, then destroy them.
+    std::unordered_map<OriginId, std::shared_ptr<RunningSource>> sources;
     {
-        if (auto strongRef = weakRef.lock())
+        auto lock = this->internal.lock();
+        auto& internal = *lock;
+
+        /// CRITICAL: Disable pipeline setup callback during destruction to prevent race condition.
+        ///
+        /// This prevents any pending pipeline setup callbacks from executing after the
+        /// RunningQueryPlan starts being destroyed. Without this, callbacks could access
+        /// partially destroyed object state, leading to use-after-free errors.
+        ///
+        /// The callback may have captured a raw pointer to this RunningQueryPlan during
+        /// the start() method, and this ensures it cannot execute after destruction begins.
+        internal.allPipelinesStarted = {};
+
+        for (const auto& weakRef : internal.pipelines)
         {
-            strongRef->requiresTermination = false;
+            if (auto strongRef = weakRef.lock())
+            {
+                strongRef->requiresTermination = false;
+            }
         }
+        sources = std::move(internal.sources);
     }
-    internal.sources.clear();
+    sources.clear();
 }
 }
