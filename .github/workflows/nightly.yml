@@ -18,7 +18,7 @@ on:
 
 jobs:
   fetch-current-main-commit:
-    runs-on: [ self-hosted ]
+    runs-on: [ ubuntu-latest ]
     outputs:
       sha: ${{ steps.fetch-sha.outputs.sha }}
     steps:
@@ -32,6 +32,7 @@ jobs:
           echo "sha=$(git rev-parse --verify HEAD)" >> "$GITHUB_OUTPUT"
 
   get-dev-images:
+    if: github.repository == 'nebulastream/nebulastream'
     needs: fetch-current-main-commit
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
@@ -144,7 +145,7 @@ jobs:
     # Only publish the `:latest` release image when the nightly job actually runs on `main`
     # (scheduled run, or a manual dispatch from the `main` branch). This prevents anyone
     # triggering the nightly on a different branch from unintentionally overwriting `:latest`.
-    if: ${{ !github.event.act && github.ref == 'refs/heads/main' }}
+    if: ${{ github.repository == 'nebulastream/nebulastream' && !github.event.act && github.ref == 'refs/heads/main' }}
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit
     with:
@@ -154,7 +155,7 @@ jobs:
   send-zulip-msg-on-failure:
     needs: [ compile-time-regression, create-nightly-image, large-tests, full-clang-tidy ]
     runs-on: [ self-hosted ]
-    if: ${{ failure() && !github.event.act }}
+    if: ${{ github.repository == 'nebulastream/nebulastream' && failure() && !github.event.act }}
     steps:
     - name: Notify Zulip
       uses: zulip/github-actions-zulip/send-message@v1

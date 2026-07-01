@@ -15,15 +15,6 @@ on:
         type: boolean
         required: false
         default: false
-    secrets:
-      SCCACHE_CACHE_BUCKET:
-        required: false
-      SCCACHE_CACHE_ENDPOINT:
-        required: false
-      SCCACHE_CACHE_ACCESS_KEY:
-        required: false
-      SCCACHE_CACHE_SECRET_KEY:
-        required: false
   workflow_dispatch:
     inputs:
       head_sha:
@@ -47,6 +38,7 @@ jobs:
           ref: ${{ inputs.head_sha || github.sha }}
           fetch-depth: 0
           submodules: recursive
+          persist-credentials: false
 
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
@@ -61,41 +53,33 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: nix run .#format -- --check
 
-      - uses: ./.github/steps/setup-sccache
+      - name: Restore ccache
+        id: restore-ccache
+        uses: actions/cache/restore@v4
         with:
-          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
-          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
-          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
-          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
-
-      - name: Install sccache
-        shell: bash
-        run: |
-          set -euo pipefail
-          version=0.14.0
-          case "$(uname -m)" in
-            x86_64) target=x86_64-unknown-linux-musl ;;
-            aarch64) target=aarch64-unknown-linux-musl ;;
-            *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
-          esac
-          install_dir="$RUNNER_TEMP/sccache"
-          mkdir -p "$install_dir"
-          curl -fsSL "https://github.com/mozilla/sccache/releases/download/v${version}/sccache-v${version}-${target}.tar.gz" \
-            | tar xz -C "$install_dir" --strip-components=1 "sccache-v${version}-${target}/sccache"
-          chmod +x "$install_dir/sccache"
-          echo "SCCACHE_BIN=$install_dir/sccache" >> "$GITHUB_ENV"
-          "$install_dir/sccache" --version
+          path: .ccache
+          key: ${{ runner.os }}-nix-ccache-${{ hashFiles('flake.lock') }}-${{ github.job }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nix-ccache-${{ hashFiles('flake.lock') }}-
+            ${{ runner.os }}-nix-ccache-
 
       - name: Configure via devShell
         run: |
-          ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -DUSE_BUILD_CACHE=OFF -DCMAKE_C_COMPILER_LAUNCHER="$SCCACHE_BIN" -DCMAKE_CXX_COMPILER_LAUNCHER="$SCCACHE_BIN" -G Ninja -S . -B cmake-build-nix
+          ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -G Ninja -S . -B cmake-build-nix
 
       - name: Build via devShell
         run: |
-          "$SCCACHE_BIN" --show-stats
+          ./.nix/nix-run.sh ccache --show-stats
           ./.nix/nix-cmake.sh --build cmake-build-nix -j"$(nproc)" -- -k 0
-          "$SCCACHE_BIN" --show-stats
-          "$SCCACHE_BIN" --stop-server
+          ./.nix/nix-run.sh ccache --show-stats
+
+      - name: Save ccache
+        if: ${{ steps.restore-ccache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        continue-on-error: true
+        with:
+          path: .ccache
+          key: ${{ steps.restore-ccache.outputs.cache-primary-key }}
 
       - name: Run Unit Tests via devShell
         run: |
