@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   get-dev-images:
+    if: github.repository == 'nebulastream/nebulastream'
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
@@ -26,6 +27,7 @@ jobs:
       head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   smoke-tests:
+    if: github.repository == 'nebulastream/nebulastream'
     needs: [ get-dev-images ]
     uses: ./.github/workflows/smoke-tests.yml
     with:
@@ -35,6 +37,7 @@ jobs:
     secrets: inherit
 
   build-and-test:
+    if: github.repository == 'nebulastream/nebulastream'
     needs: [ get-dev-images, smoke-tests ]
     name: "Run build and test"
     uses: ./.github/workflows/build_and_test.yml
@@ -45,6 +48,7 @@ jobs:
       matrix_config: pr_matrix.yaml
 
   large-tests:
+    if: github.repository == 'nebulastream/nebulastream'
     needs: [ get-dev-images, smoke-tests ]
     name: "Run large scale tests"
     uses: ./.github/workflows/large_test.yml
@@ -54,6 +58,7 @@ jobs:
       head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   run_code_coverage:
+    if: github.repository == 'nebulastream/nebulastream'
     needs: [ get-dev-images, smoke-tests ]
     name: "Run Code Coverage"
     uses: ./.github/workflows/code_coverage.yml
@@ -63,6 +68,7 @@ jobs:
     secrets: inherit
 
   run_endless_mode:
+    if: github.repository == 'nebulastream/nebulastream'
     needs: [ get-dev-images, smoke-tests ]
     name: "Run Endless Mode"
     uses: ./.github/workflows/endless-mode.yml
@@ -72,6 +78,7 @@ jobs:
       head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   test-nebuli-and-single-node-worker:
+    if: github.repository == 'nebulastream/nebulastream'
     needs: [ get-dev-images, smoke-tests ]
     name: "E2E Test using Nebuli and SingleNodeWorker"
     strategy:
@@ -86,7 +93,7 @@ jobs:
       arch: ${{ matrix.arch }}
 
   clang-tidy-diff:
-    if: github.event_name == 'merge_group' || github.event.pull_request.head.repo.fork == false
+    if: github.repository == 'nebulastream/nebulastream' && (github.event_name == 'merge_group' || github.event.pull_request.head.repo.fork == false)
     needs: [ get-dev-images, smoke-tests ]
     uses: ./.github/workflows/clang_tidy_diff.yml
     with:
@@ -97,6 +104,7 @@ jobs:
     secrets: inherit
 
   nix-build:
+    if: always() && (github.repository != 'nebulastream/nebulastream' || needs.smoke-tests.result == 'success')
     needs: [ smoke-tests ]
     name: "Run Nix Build"
     uses: ./.github/workflows/nix-build.yml
