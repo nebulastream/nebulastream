@@ -26,6 +26,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
+#include <DataTypes/VectorData.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <ValueDeserializerRegistry.hpp>
@@ -126,6 +127,19 @@ void getArrayElementAt(const int8_t* arrayAddress, const uint64_t arraySize, con
     const std::string_view rawElement = simdArray.at(i).raw_json().value();
     element->elementPtr = reinterpret_cast<const int8_t*>(rawElement.data());
     element->elementSize = rawElement.size();
+}
+
+/// We need this function as for VECTOR typed fields, we do not know the number of elements beforehand.
+size_t getNumberOfVectorElements(const int8_t* vectorAddress, const uint64_t vectorSize)
+{
+    /// Create a simdjson array out of the pointer and size like in the function above
+    const simdjson::padded_string_view arrayView(
+        reinterpret_cast<const char*>(vectorAddress), vectorSize, vectorSize + simdjson::SIMDJSON_PADDING);
+    simdjson::ondemand::parser arrayParser;
+
+    simdjson::ondemand::document doc = arrayParser.iterate(arrayView);
+    simdjson::ondemand::array simdArray = doc.get_array();
+    return simdArray.count_elements();
 }
 
 }
@@ -318,7 +332,7 @@ VarVal JSONFIXEDSIZEDValueDeserializer::deserializeToVarVal(
         const nautilus::val<const int8_t*> elementAddress = element.get(&JSONValueDeserializer::JSONElement::elementPtr);
         const nautilus::val<uint64_t> rawSize = element.get(&JSONValueDeserializer::JSONElement::elementSize);
 
-        /// Deserialize element into teh allocated buffer
+        /// Deserialize element into the allocated buffer
         elementDeserializer->deserializeIntoBuffer(
             static_cast<nautilus::val<int8_t*>>(elementAddress),
             rawSize,
@@ -365,6 +379,60 @@ void JSONFIXEDSIZEDValueDeserializer::deserializeIntoBuffer(
             *valueType.elementType,
             bufferAddress + nautilus::val<uint64_t>{i * elementSize});
     }
+}
+
+VarVal JSONVECTORValueDeserializer::deserializeToVarVal(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType) const
+{
+    /// Allocate memory for the vector buffer
+    const auto elementSize = valueType.elementType->getSizeInBytesWithoutNull();
+    const nautilus::val<size_t> elementCount = nautilus::invoke(JSONValueDeserializer::getNumberOfVectorElements, fieldAddress, fieldSize);
+    const nautilus::val<int8_t*> buffer = arena.allocateMemory(elementCount * elementSize);
+
+    /// Create deserializer for element type
+    const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
+    const std::unique_ptr<ValueDeserializer> elementDeserializer
+        = provideValueDeserializer(deserializerTypes.at(valueType.elementType->type), config);
+    for (nautilus::val<size_t> i; i < elementCount; ++i)
+    {
+        /// Get address and size of element i
+        nautilus::val<JSONValueDeserializer::JSONElement> element;
+        nautilus::invoke(JSONValueDeserializer::getArrayElementAt, fieldAddress, fieldSize, nautilus::val<size_t>{i}, &element);
+        const nautilus::val<const int8_t*> elementAddress = element.get(&JSONValueDeserializer::JSONElement::elementPtr);
+        const nautilus::val<uint64_t> rawSize = element.get(&JSONValueDeserializer::JSONElement::elementSize);
+
+        /// Deserialize element into the allocated buffer
+        elementDeserializer->deserializeIntoBuffer(
+            static_cast<nautilus::val<int8_t*>>(elementAddress),
+            rawSize,
+            nullValues,
+            arena,
+            deserializerTypes,
+            *valueType.elementType,
+            buffer + nautilus::val{i * elementSize});
+    }
+    const VectorData vectorData{buffer, *valueType.elementType, elementCount * elementSize};
+    return VarVal{vectorData, false, false};
+}
+
+void JSONVECTORValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const ArenaRef& arena,
+    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const DataType& valueType,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    /// BufferAddress only allocated 16 bytes for the ptr and size of the memory of the vector, because we do not know the size of every received vector beforehand.
+    /// Therefore, we can call deserializeToVarVal here and write the 16 byte representation of the varval to bufferAddress.
+    const VarVal vectorVal = deserializeToVarVal(fieldAddress, fieldSize, nullValues, arena, deserializerTypes, valueType);
+    vectorVal.writeToMemory(bufferAddress);
 }
 
 VarVal NullableJSONCHARValueDeserializer::deserializeToVarVal(
@@ -451,6 +519,11 @@ ValueDeserializerRegistryReturnType JSONSTRUCTValueDeserializer::provideDeserial
 ValueDeserializerRegistryReturnType JSONFIXEDSIZEDValueDeserializer::provideDeserializer(ValueDeserializerRegistryArguments)
 {
     return std::make_unique<JSONFIXEDSIZEDValueDeserializer>();
+}
+
+ValueDeserializerRegistryReturnType JSONVECTORValueDeserializer::provideDeserializer(ValueDeserializerRegistryArguments)
+{
+    return std::make_unique<JSONVECTORValueDeserializer>();
 }
 
 ValueDeserializerRegistryReturnType NullableJSONCHARValueDeserializer::provideDeserializer(ValueDeserializerRegistryArguments)

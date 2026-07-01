@@ -21,6 +21,7 @@ add_registry_entry(ValueDeserializer JSONCHAR HEADER JSONValueDeserializers.hpp)
 add_registry_entry(ValueDeserializer JSONVARSIZED HEADER JSONValueDeserializers.hpp)
 add_registry_entry(ValueDeserializer JSONSTRUCT HEADER JSONValueDeserializers.hpp)
 add_registry_entry(ValueDeserializer JSONFIXEDSIZED HEADER JSONValueDeserializers.hpp)
+add_registry_entry(ValueDeserializer JSONVECTOR HEADER JSONValueDeserializers.hpp)
 add_registry_entry(ValueDeserializer NullableJSONCHAR HEADER JSONValueDeserializers.hpp)
 add_registry_entry(ValueDeserializer NullableJSONVARSIZED HEADER JSONValueDeserializers.hpp)
 

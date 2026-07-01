@@ -21,6 +21,7 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
+#include <DataTypes/VectorData.hpp>
 #include <Interface/Record.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -74,6 +75,13 @@ void convertVarsizedReferences(const DataType& dataType, const nautilus::val<int
                 variableSizedVal.writeToMemory(varValRef);
                 return;
             }
+            case DataType::Type::VECTOR: {
+                /// Load variablesized access as pointer and size and write these values byte-aligned into varValRef.
+                const auto [ptr, size] = loadVarSized(varValRef);
+                const VarVal variableSizedVal{VectorData{ptr, *dataType.elementType, size}, false, false};
+                variableSizedVal.writeToMemory(varValRef);
+                return;
+            }
             default: {
                 /// Santity check. The other datatypes should never be deemed as not fixed sized.
                 INVARIANT(false, "Type {} was deemed as not fixed-sized!", magic_enum::enum_name(dataType.type));
@@ -114,6 +122,11 @@ VarVal readFieldValue(const DataType& dataType, const nautilus::val<int8_t*>& ad
     {
         const auto [ptr, len] = loadVarSized(varValRef);
         return VarVal{VariableSizedData{ptr, len}, dataType.nullable, null};
+    }
+    if (dataType.type == DataType::Type::VECTOR)
+    {
+        const auto [ptr, len] = loadVarSized(varValRef);
+        return VarVal{VectorData{ptr, *dataType.elementType, len}, dataType.nullable, null};
     }
     return VarVal::readVarValFromMemory(varValRef, dataType, null);
 }
@@ -176,6 +189,13 @@ void writeFieldValue(
     {
         const auto src = value.getRawValueAs<VariableSizedData>();
         storeVarSized(addressToWriteValue, src.getContent(), src.getSize());
+        return;
+    }
+    if (dataType.type == DataType::Type::VECTOR)
+    {
+        /// Vector is stored like varsized, writes its contents into a child buffer and stores a variablesized access
+        const auto src = value.getRawValueAs<VectorData>();
+        storeVarSized(addressToWriteValue, src.getRawPtr(), src.getTotalSizeInBytes());
         return;
     }
     /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16.
