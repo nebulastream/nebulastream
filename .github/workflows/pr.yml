@@ -111,3 +111,5 @@ jobs:
     secrets: inherit
     with:
       head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      number_of_commits: ${{ github.event.pull_request.commits || -1 }}
+      run_format_check: ${{ github.repository != 'nebulastream/nebulastream' }}

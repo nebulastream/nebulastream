@@ -7,6 +7,14 @@ on:
         type: string
         required: true
         description: "ref of the branch"
+      number_of_commits:
+        type: number
+        required: false
+        default: -1
+      run_format_check:
+        type: boolean
+        required: false
+        default: false
     secrets:
       SCCACHE_CACHE_BUCKET:
         required: false
@@ -45,6 +53,13 @@ jobs:
         with:
           use-flakehub: false
           use-gha-cache: true
+
+      - name: Check formatting via Nix
+        if: ${{ inputs.run_format_check }}
+        env:
+          DISTANCE_MERGE_BASE: ${{ inputs.number_of_commits }}
+          GH_TOKEN: ${{ github.token }}
+        run: nix run .#format -- --check
 
       - uses: ./.github/steps/setup-sccache
         with:
