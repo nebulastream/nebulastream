@@ -1,6 +1,6 @@
 # name: join/IntervalJoinLarge.test
 # description: Large-input interval join validated with the ChecksumSink. Two queries run two different interval window sizes over two input scales (~10 kB and ~100 kB). The inputs are generated deterministically and the expected count,checksum pairs are produced by the independent Python oracle in nes-systests/utils/interval_join_checksum.py, fed through the ChecksumStarter tool. To regenerate: `interval_join_checksum.py gen ...` then `... join ...` then run the `checksum` binary over the join output (see that script's header).
-# groups: [WindowOperators, IntervalJoin]
+# groups: [WindowOperators, Join, IntervalJoin]
 
 CREATE LOGICAL SOURCE l10(id UINT64 NOT NULL, value UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR l10 TYPE File;

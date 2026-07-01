@@ -54,6 +54,10 @@ IntervalJoinSlice::IntervalJoinSlice(
 
 uint64_t IntervalJoinSlice::getNumberOfTuples() const
 {
+    /// Serialize against combinePagedVectors(): it mutates pagedVectorBuffers (movePagesFrom + erase), and a partner
+    /// slice shared by several anchors can be merged by one trigger-assembly thread while another counts tuples here.
+    /// Without this lock the accumulate iterates the vector mid-erase and loads a half-moved PagedVector -> SIGSEGV.
+    const std::scoped_lock guard(combineMutex);
     return std::accumulate(
         pagedVectorBuffers.begin(),
         pagedVectorBuffers.end(),
@@ -120,6 +124,23 @@ bool IntervalJoinSlice::claimTriggered() noexcept
 bool IntervalJoinSlice::isTriggered() const noexcept
 {
     return triggered.load(std::memory_order_acquire);
+}
+
+void IntervalJoinSlice::acquireForTrigger() noexcept
+{
+    outstandingTriggers.fetch_add(1, std::memory_order_acq_rel);
+}
+
+uint64_t IntervalJoinSlice::releaseFromTrigger() noexcept
+{
+    const auto previous = outstandingTriggers.fetch_sub(1, std::memory_order_acq_rel);
+    INVARIANT(previous > 0, "releaseFromTrigger called on a slice with no outstanding triggers");
+    return previous - 1;
+}
+
+bool IntervalJoinSlice::hasOutstandingTriggers() const noexcept
+{
+    return outstandingTriggers.load(std::memory_order_acquire) > 0;
 }
 
 }

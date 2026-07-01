@@ -134,6 +134,10 @@ void IntervalJoinOperatorHandler::notifyBufferDoneProbe(const BufferMetaData& bu
     std::ignore = watermarkProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     const auto probeWatermark = watermarkProbe->getCurrentWatermark();
 
+    /// Release the slice pins this probe buffer held, BEFORE any early return, so they are dropped even when
+    /// garbage collection is suppressed. Once unpinned, the slices become eligible for the GC passes below.
+    releaseInFlightSlices(bufferMetaData.seqNumber.sequenceNumber);
+
     /// RIGHT/FULL outer interval join performs a partner-anchored null-fill pass at termination that needs
     /// every anchor-side partner still present. Suppress incremental garbage collection so no partner is reclaimed beforehand.
     if (emitPartnerNullFill)
@@ -150,6 +154,24 @@ void IntervalJoinOperatorHandler::notifyBufferDoneProbe(const BufferMetaData& bu
     if (probeWatermarkRaw > partnerShift)
     {
         partnerStore->garbageCollectExpired(Timestamp{static_cast<Timestamp::Underlying>(probeWatermarkRaw - partnerShift)});
+    }
+}
+
+void IntervalJoinOperatorHandler::releaseInFlightSlices(const SequenceNumber::Underlying probeSequenceNumber)
+{
+    std::vector<std::shared_ptr<IntervalJoinSlice>> released;
+    {
+        auto locked = inFlightTriggerSlices.wlock();
+        if (const auto it = locked->find(probeSequenceNumber); it != locked->end())
+        {
+            released = std::move(it->second);
+            locked->erase(it);
+        }
+    }
+    /// Decrement outside the lock; the last release lets the next GC pass reclaim the slice.
+    for (const auto& slice : released)
+    {
+        std::ignore = slice->releaseFromTrigger();
     }
 }
 
@@ -300,8 +322,15 @@ void IntervalJoinOperatorHandler::assembleAndEmitTriggers(
     const auto widthSigned = static_cast<std::int64_t>(sliceWidth);
     for (auto& anchor : drivingSlices)
     {
+        /// The driving slice arrives pinned by the claim (claimTriggerable / claimAllNonTriggered). Collect every
+        /// slice pinned for this trigger so we can either release the pins on a skipped emission, or hand them to
+        /// the in-flight table to be released once the probe buffer completes. Keeping these slices pinned is what
+        /// prevents garbage collection from erasing them from their stores across the trigger->probe gap.
+        std::vector<std::shared_ptr<IntervalJoinSlice>> pinnedForTrigger{anchor};
+
         if (anchor->getNumberOfTuples() == 0)
         {
+            anchor->releaseFromTrigger();
             continue;
         }
         anchor->combinePagedVectors();
@@ -323,29 +352,41 @@ void IntervalJoinOperatorHandler::assembleAndEmitTriggers(
                 continue;
             }
             const SliceEnd partnerEnd{static_cast<Timestamp::Underlying>(partnerEndRaw)};
-            const auto partnerOpt = partnerStoreParam.getSliceBySliceEnd(partnerEnd);
+            auto partnerOpt = partnerStoreParam.getSliceBySliceEndAndPin(partnerEnd);
             if (!partnerOpt.has_value())
             {
                 continue;
             }
-            auto partnerSlice = std::dynamic_pointer_cast<IntervalJoinSlice>(partnerOpt.value());
-            INVARIANT(partnerSlice != nullptr, "Interval-join slice store should hold IntervalJoinSlice instances");
+            auto partnerSlice = std::move(partnerOpt.value());
             if (partnerSlice->getNumberOfTuples() == 0)
             {
+                /// Empty partner is not referenced by the emitted trigger; drop the pin we just took.
+                partnerSlice->releaseFromTrigger();
                 continue;
             }
             partnerSlice->combinePagedVectors();
             trigger.partnerSliceEnds[trigger.partnerCount++] = partnerEnd;
             minPartnerStart = std::min(minPartnerStart, partnerSlice->getSliceStart());
+            pinnedForTrigger.emplace_back(std::move(partnerSlice));
         }
         if (!partnerNullFillPass && trigger.partnerCount == 0 && !emitAnchorNullFill)
         {
             /// No non-empty partners and not a left-outer join — skip emit; sequence number is NOT consumed.
             /// For a left-outer join we still emit so the probe can null-fill the unmatched anchor tuples.
+            /// Release every pin taken for this (un-emitted) trigger.
+            for (const auto& slice : pinnedForTrigger)
+            {
+                slice->releaseFromTrigger();
+            }
             continue;
         }
 
         const auto seqRaw = nextProbeSequence.fetch_add(1, std::memory_order_relaxed);
+
+        /// Register the pins under the probe sequence number BEFORE emitting, so the entry is guaranteed present
+        /// by the time the probe consumes the buffer and calls notifyBufferDoneProbe with that sequence number.
+        inFlightTriggerSlices.wlock()->emplace(seqRaw, std::move(pinnedForTrigger));
+
         const SequenceData sequenceData{SequenceNumber{seqRaw}, ChunkNumber{ChunkNumber::INITIAL}, /*lastChunk=*/true};
 
         /// Per-buffer watermark = min(anchorStart, min(partnerStarts)). Conservative; partner

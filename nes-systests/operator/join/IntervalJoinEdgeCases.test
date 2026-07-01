@@ -1,6 +1,6 @@
 # name: join/IntervalJoinEdgeCases.test
 # description: Interval-join edge cases — out-of-order input and empty left/right inputs. Merged from the former single-query IntervalJoin{OutOfOrder,EmptyLeft,EmptyRight} tests, each query using its own input streams.
-# groups: [WindowOperators, IntervalJoin]
+# groups: [WindowOperators, Join, IntervalJoin]
 
 CREATE LOGICAL SOURCE oooLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR oooLeft TYPE File;

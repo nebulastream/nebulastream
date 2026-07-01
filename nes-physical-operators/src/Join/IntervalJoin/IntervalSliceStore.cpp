@@ -92,6 +92,19 @@ std::optional<std::shared_ptr<Slice>> IntervalSliceStore::getSliceBySliceEnd(con
     return std::nullopt;
 }
 
+std::optional<std::shared_ptr<IntervalJoinSlice>> IntervalSliceStore::getSliceBySliceEndAndPin(const SliceEnd sliceEnd)
+{
+    const auto slicesReadLocked = slices.rlock();
+    if (const auto it = slicesReadLocked->find(sliceEnd); it != slicesReadLocked->end())
+    {
+        /// Pin under the read-lock: a concurrent GC erase needs the write-lock and therefore cannot interleave
+        /// between this find and the pin, so the returned slice is guaranteed to still be in the store.
+        it->second->acquireForTrigger();
+        return it->second;
+    }
+    return std::nullopt;
+}
+
 std::vector<std::shared_ptr<IntervalJoinSlice>> IntervalSliceStore::claimTriggerable(const Timestamp triggerWatermark)
 {
     std::vector<std::shared_ptr<IntervalJoinSlice>> claimed;
@@ -105,6 +118,10 @@ std::vector<std::shared_ptr<IntervalJoinSlice>> IntervalSliceStore::claimTrigger
         }
         if (slicePtr->claimTriggered())
         {
+            /// Pin under the read-lock (same reasoning as getSliceBySliceEndAndPin): a just-claimed driving slice
+            /// can already be below the probe watermark, so without the pin a concurrent GC could erase it before
+            /// the trigger is assembled. The caller releases the pin on skip or when the probe buffer completes.
+            slicePtr->acquireForTrigger();
             claimed.emplace_back(slicePtr);
         }
     }
@@ -119,6 +136,7 @@ std::vector<std::shared_ptr<IntervalJoinSlice>> IntervalSliceStore::claimAllNonT
     {
         if (slicePtr->claimTriggered())
         {
+            slicePtr->acquireForTrigger();
             claimed.emplace_back(slicePtr);
         }
     }
@@ -138,7 +156,8 @@ void IntervalSliceStore::garbageCollectTriggered(const Timestamp gcWatermark)
                 /// Map is sorted; everything from here onward has not yet expired.
                 break;
             }
-            if (slicePtr->isTriggered())
+            /// Skip slices an in-flight probe buffer still references; a later GC pass reclaims them once unpinned.
+            if (slicePtr->isTriggered() && not slicePtr->hasOutstandingTriggers())
             {
                 slicesToDelete.emplace_back(slicePtr);
                 it = slicesWriteLocked->erase(it);
@@ -164,6 +183,12 @@ void IntervalSliceStore::garbageCollectExpired(const Timestamp gcWatermark)
             if (sliceEnd >= gcWatermark)
             {
                 break;
+            }
+            /// Skip slices an in-flight probe buffer still references; a later GC pass reclaims them once unpinned.
+            if (slicePtr->hasOutstandingTriggers())
+            {
+                ++it;
+                continue;
             }
             slicesToDelete.emplace_back(slicePtr);
             it = slicesWriteLocked->erase(it);

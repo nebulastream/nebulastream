@@ -1,6 +1,6 @@
 # name: join/IntervalJoinCommutativity.test
 # description: Interval-join commutativity (ports CommutativeTest.java). A INTERVAL-JOIN B with bounds [L,U] selects the same key/value pairs as B INTERVAL-JOIN A with the swapped+negated bounds [-U,-L]. Queries project the joined keys/values into a canonical column order (window start/end and the per-side event timestamps are dropped because the two join orders anchor the window differently). Non-commutative cases (asymmetric bounds without the swap) are assertNotEquals in the original and cannot be expressed as a query-vs-query equivalence here.
-# groups: [WindowOperators, IntervalJoin]
+# groups: [WindowOperators, Join, IntervalJoin]
 
 CREATE LOGICAL SOURCE sA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR sA TYPE File;

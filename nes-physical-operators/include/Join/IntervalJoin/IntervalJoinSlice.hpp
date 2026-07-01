@@ -93,11 +93,28 @@ public:
     /// True iff the slice has been claimed for trigger.
     [[nodiscard]] bool isTriggered() const noexcept;
 
+    /// In-flight probe-reference count. A slice is pinned while it is referenced by an emitted-but-not-yet-probed
+    /// trigger buffer (as driver or partner). Garbage collection must not erase a pinned slice from its store,
+    /// otherwise a concurrent probe's by-sliceEnd lookup misses, or it reads a freed PagedVector. The pin is taken
+    /// under the store read-lock at trigger-assembly time and released when the probe buffer completes
+    /// (notifyBufferDoneProbe). A slice can be pinned by several concurrent triggers, so this is a counter.
+    void acquireForTrigger() noexcept;
+
+    /// Releases one in-flight probe reference; returns the remaining count.
+    uint64_t releaseFromTrigger() noexcept;
+
+    /// True iff at least one emitted probe buffer still references this slice.
+    [[nodiscard]] bool hasOutstandingTriggers() const noexcept;
+
 private:
     std::vector<TupleBuffer> pagedVectorBuffers;
     std::atomic<bool> combined{false};
     std::atomic<bool> triggered{false};
-    std::mutex combineMutex;
+    std::atomic<uint64_t> outstandingTriggers{0};
+    /// Guards the pagedVectorBuffers mutation in combinePagedVectors(). Also taken by the const getNumberOfTuples()
+    /// (hence mutable): a partner slice shared by several anchors can be combined by one trigger-assembly thread
+    /// while another counts its tuples, so the count must serialize against the merge.
+    mutable std::mutex combineMutex;
 };
 
 }

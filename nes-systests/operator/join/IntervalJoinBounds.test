@@ -1,6 +1,6 @@
 # name: join/IntervalJoinBounds.test
 # description: Interval-join bound variations — future-only, past-only, mixed, and closed (exclusive) bounds. Merges the former single-query IntervalJoin{FutureOnly,PastOnly,MixedBounds,ExclusiveBound} tests and adds the canonical private-repo StreamIntervalJoinExecution cases (Test 1-4), each with its own input streams.
-# groups: [WindowOperators, IntervalJoin]
+# groups: [WindowOperators, Join, IntervalJoin]
 
 CREATE LOGICAL SOURCE futLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR futLeft TYPE File;

@@ -69,8 +69,14 @@ public:
     std::vector<std::shared_ptr<Slice>>
     getSlicesOrCreate(Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice);
 
-    /// Exact-key lookup. Used by the handler when assembling anchor/partner pairs.
+    /// Exact-key lookup. Used by the probe proxies to re-resolve a slice that is already pinned.
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd);
+
+    /// Exact-key lookup that atomically pins the slice for trigger emission before returning it. The pin is
+    /// taken under the same read-lock as the lookup, so it cannot race a concurrent garbage-collect erase
+    /// (which needs the write-lock): either the erase already happened (lookup misses) or the pin wins and
+    /// the erase then skips the slice. The caller must balance every returned slice with releaseFromTrigger().
+    std::optional<std::shared_ptr<IntervalJoinSlice>> getSliceBySliceEndAndPin(SliceEnd sliceEnd);
 
     /// Anchor-side trigger primitive. Atomically claim every slice with
     /// sliceEnd <= triggerWatermark whose triggered flag is still false; return them
@@ -84,12 +90,14 @@ public:
     std::vector<std::shared_ptr<IntervalJoinSlice>> claimAllNonTriggered();
 
     /// Anchor-side GC: drop slices that have been triggered AND ended below
-    /// `gcWatermark` (probe watermark). Called from notifyBufferDoneProbe.
+    /// `gcWatermark` (probe watermark). Called from notifyBufferDoneProbe. Slices still pinned by an in-flight
+    /// probe buffer (hasOutstandingTriggers) are skipped and reclaimed by a later pass once unpinned.
     void garbageCollectTriggered(Timestamp gcWatermark);
 
     /// Partner-side GC: drop slices whose end is below `gcWatermark`. The handler
     /// computes `gcWatermark = probeWatermark - max(0, -offsetLow) * sliceWidth` so that partner
-    /// slices outlive the last possible anchor that could reference them.
+    /// slices outlive the last possible anchor that could reference them. Slices still pinned by an in-flight
+    /// probe buffer (hasOutstandingTriggers) are skipped and reclaimed by a later pass once unpinned.
     void garbageCollectExpired(Timestamp gcWatermark);
 
     /// Per-pipeline cache memory allocation, invoked from

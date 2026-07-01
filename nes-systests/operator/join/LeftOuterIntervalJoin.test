@@ -1,6 +1,6 @@
-# name: join/LeftOuterInterightValJoin.test
+# name: join/LeftOuterIntervalJoin.test
 # description: LEFT OUTER interightVal join — every left tuple is emitted; a left tuple with no right partner inside its interightVal [lower, upper] gets NULL-filled right fields. Inputs span three interightVal windows (~1000/2000/3000 ms, width 3) and produce ten output rows. Queries project the join keys/values (dropping window start/end and the per-side event timestamps) to keep the expected output deterministic.
-# groups: [WindowOperators, InterightValJoin, OuterJoin]
+# groups: [WindowOperators, Join, IntervalJoin, OuterJoin]
 
 CREATE LOGICAL SOURCE leftOuterLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR leftOuterLeft TYPE File;

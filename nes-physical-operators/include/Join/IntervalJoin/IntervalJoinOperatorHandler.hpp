@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/IntervalJoin/IntervalSliceStore.hpp>
@@ -30,6 +31,7 @@
 #include <Time/IntervalBound.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <folly/Synchronized.h>
 #include <SliceCacheConfiguration.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
@@ -166,6 +168,11 @@ private:
         Timestamp watermark,
         PipelineExecutionContext* pipelineCtx) const;
 
+    /// Releases the trigger pins held for a completed probe buffer. Called from notifyBufferDoneProbe with the
+    /// buffer's probe sequence number; drops the slices registered for that sequence in assembleAndEmitTriggers
+    /// and decrements each slice's outstanding-trigger count so garbage collection may reclaim it.
+    void releaseInFlightSlices(SequenceNumber::Underlying probeSequenceNumber);
+
     const IntervalBound lowerBound;
     const IntervalBound upperBound;
     const std::uint64_t sliceWidth;
@@ -196,6 +203,14 @@ private:
 
     std::atomic<SequenceNumber::Underlying> nextProbeSequence;
     std::atomic<std::uint64_t> numberOfWorkerThreads;
+
+    /// Slices pinned by each emitted-but-not-yet-probed trigger buffer, keyed by the buffer's probe sequence
+    /// number. assembleAndEmitTriggers registers the driving slice plus its partner slices before emitting;
+    /// notifyBufferDoneProbe drops the entry and releases the pins when that buffer completes. This is what keeps
+    /// a referenced slice alive in its store across the trigger->probe gap, so the probe's by-sliceEnd lookup
+    /// cannot miss and its PagedVector read cannot dangle under concurrent garbage collection.
+    folly::Synchronized<std::unordered_map<SequenceNumber::Underlying, std::vector<std::shared_ptr<IntervalJoinSlice>>>>
+        inFlightTriggerSlices;
 
     /// Set from each build side's terminate(), which run concurrently on independent pipeline threads;
     /// atomic so the "both sides done" check that fires the end-of-stream flush stays race-free.

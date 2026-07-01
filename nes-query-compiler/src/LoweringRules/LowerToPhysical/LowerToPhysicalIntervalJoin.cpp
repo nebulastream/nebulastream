@@ -251,7 +251,7 @@ LoweringRuleResultSubgraph LowerToPhysicalIntervalJoin::apply(LogicalOperator lo
         PhysicalOperatorWrapper::PipelineLocation::SCAN,
         std::vector{anchorBuildWrapper, partnerBuildWrapper});
 
-    return {.root = {probeWrapper}, .leafs = {anchorBuildWrapper, partnerBuildWrapper}};
+    return {.root = {probeWrapper}, .leaves = {anchorBuildWrapper, partnerBuildWrapper}};
 }
 
 std::unique_ptr<AbstractLoweringRule>

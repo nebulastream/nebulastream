@@ -1,6 +1,6 @@
-# name: join/FullOuterInterightValJoin.test
+# name: join/FullOuterIntervalJoin.test
 # description: FULL OUTER interightVal join — every left and every right tuple is emitted; unmatched tuples get the other side NULL-filled. Inputs span three interightVal windows (~1000/2000/3000 ms, width 3) and produce ten output rows: matches and left-null-fills come from the left-anchored pass, right-null-fills from the right-anchored end-of-stream pass (so they trail). Projects the join keys/values to keep the expected output deterministic.
-# groups: [WindowOperators, InterightValJoin, OuterJoin]
+# groups: [WindowOperators, Join, IntervalJoin, OuterJoin]
 
 CREATE LOGICAL SOURCE fullOuterLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR fullOuterLeft TYPE File;

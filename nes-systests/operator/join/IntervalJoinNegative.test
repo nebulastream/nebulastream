@@ -1,6 +1,6 @@
 # name: join/IntervalJoinNegative.test
 # description: Interval-join negative cases — degenerate/inverted bounds are rejected at SQL/logical-operator construction. Merged from IntervalJoinPointPredicate and the private-repo exact-match (lower == upper) case, which NebulaStream rejects.
-# groups: [WindowOperators, IntervalJoin, Parser]
+# groups: [WindowOperators, Join, IntervalJoin, Parser]
 
 CREATE LOGICAL SOURCE negLeft(id1 UINT64 NOT NULL, value1 UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR negLeft TYPE File;
