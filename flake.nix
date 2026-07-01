@@ -529,6 +529,14 @@
           '';
         };
 
+        clangTidyCheckRunner = pkgs.writeShellApplication {
+          name = "nes-clang-tidy-check";
+          runtimeInputs = llvmTools;
+          text = ''
+            exec clang-tidy "$@"
+          '';
+        };
+
         clangTidyRunner = pkgs.writeShellApplication {
           name = "nes-clang-tidy";
           runtimeInputs = [ pkgs.coreutils pkgs.git pkgs.gnugrep pkgs.nix ];
@@ -536,13 +544,13 @@
             set -euo pipefail
 
             usage() {
-              printf '%s\n' 'Run the official clang-tidy-diff.py workflow inside the Nix development shell and apply fixes in place.'
+              printf '%s\n' 'Run the official clang-tidy-diff.py workflow inside the Nix development shell.'
               printf '\n'
-              printf '%s\n' 'Usage:' '  nix run .#clang-tidy -- [<base-ref>]'
+              printf '%s\n' 'Usage:' '  nix run .#clang-tidy -- [<base-ref>]' '  nix run .#clang-tidy -- --check [<base-ref>] [<export-fixes-path>]'
               printf '\n'
-              printf '%s\n' 'Defaults:' '  <base-ref> = origin/main'
+              printf '%s\n' 'Defaults:' '  <base-ref> = origin/main' '  <export-fixes-path> = clang-tidy-result/fixes.yml'
               printf '\n'
-              printf '%s\n' 'Behavior:' '  Runs clang-tidy-diff.py with --fix and clang-tidy with --fix-errors --fix-notes'
+              printf '%s\n' 'Behavior:' '  Default mode applies fixes in place.' '  --check mode only reports issues and exports fixes for CI artifacts.'
             }
 
             if [ ! -x ./.nix/nix-cmake.sh ] || [ ! -x ./.nix/nix-run.sh ]; then
@@ -550,20 +558,27 @@
               exit 1
             fi
 
-            if [ "$#" -gt 1 ]; then
-              usage >&2
-              exit 1
+            mode="fix"
+            if [ "''${1-}" = "--check" ]; then
+              mode="check"
+              shift
             fi
 
-            if [ "$#" -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+            if [ "$#" -ge 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
               usage
               exit 0
             fi
 
+            if [ "$#" -gt 2 ]; then
+              usage >&2
+              exit 1
+            fi
+
             base_ref="''${1:-origin/main}"
+            export_fixes="''${2:-clang-tidy-result/fixes.yml}"
             jobs="$(nproc)"
 
-            if ! git diff --name-only "$base_ref" -- '*.c' '*.cc' '*.cpp' '*.cxx' '*.h' '*.hh' '*.hpp' ':!*.inc' | grep -q .; then
+            if ! git diff --name-only "$base_ref" -- '*.c' '*.cc' '*.cpp' '*.cxx' '*.h' '*.hh' '*.hpp' ':!*.inc' ':!*nes-rust-bindings' ':!vcpkg/**' | grep -q .; then
               echo "nes-clang-tidy: no changed C/C++ files relative to $base_ref"
               exit 0
             fi
@@ -571,8 +586,19 @@
             # shellcheck disable=SC2016
             exec ./.nix/nix-run.sh bash -lc '
               set -euo pipefail
-              base_ref="$1"
-              jobs="$2"
+              mode="$1"
+              base_ref="$2"
+              jobs="$3"
+              export_fixes="$4"
+
+              clang_tidy_binary="${clangTidyFixRunner}/bin/nes-clang-tidy-fix"
+              clang_tidy_args=(-fix)
+              if [ "$mode" = "check" ]; then
+                clang_tidy_binary="${clangTidyCheckRunner}/bin/nes-clang-tidy-check"
+                mkdir -p "$(dirname "$export_fixes")"
+                rm -f "$export_fixes"
+                clang_tidy_args=(-export-fixes "$export_fixes")
+              fi
 
               echo "nes-clang-tidy: configuring build/"
               ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=none -DCMAKE_BUILD_TYPE=Debug -DNES_LOG_LEVEL=DEBUG
@@ -580,29 +606,29 @@
               echo "nes-clang-tidy: building generated headers"
               ./.nix/nix-cmake.sh --build build -j -- -k 0
 
-              echo "nes-clang-tidy: running readability-duplicate-include pre-check with fixes against $base_ref"
-              git diff -U0 "$base_ref" -- ":!*.inc" | \
+              echo "nes-clang-tidy: running readability-duplicate-include pre-check against $base_ref"
+              git diff -U0 "$base_ref" -- ":!*.inc" ":!*nes-rust-bindings" ":!vcpkg/**" | \
                 ${clangTidyDiffRunner}/bin/${clangTidyDiffCommand} \
-                  -clang-tidy-binary ${clangTidyFixRunner}/bin/nes-clang-tidy-fix \
+                  -clang-tidy-binary "$clang_tidy_binary" \
                   -p1 \
                   -path build \
                   -checks="-*,readability-duplicate-include" \
                   -config-file .clang-tidy \
                   -use-color \
-                  -fix \
+                  "''${clang_tidy_args[@]}" \
                   -j "$jobs"
 
-              echo "nes-clang-tidy: running full clang-tidy diff with fixes against $base_ref"
-              git diff -U0 "$base_ref" -- ":!*.inc" | \
+              echo "nes-clang-tidy: running full clang-tidy diff against $base_ref"
+              git diff -U0 "$base_ref" -- ":!*.inc" ":!*nes-rust-bindings" ":!vcpkg/**" | \
                 ${clangTidyDiffRunner}/bin/${clangTidyDiffCommand} \
-                  -clang-tidy-binary ${clangTidyFixRunner}/bin/nes-clang-tidy-fix \
+                  -clang-tidy-binary "$clang_tidy_binary" \
                   -p1 \
                   -path build \
                   -config-file .clang-tidy \
                   -use-color \
-                  -fix \
+                  "''${clang_tidy_args[@]}" \
                   -j "$jobs"
-            ' bash "$base_ref" "$jobs"
+            ' bash "$mode" "$base_ref" "$jobs" "$export_fixes"
           '';
         };
 
