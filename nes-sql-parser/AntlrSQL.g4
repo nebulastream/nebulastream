@@ -88,7 +88,8 @@ columnDefinition: identifierChain typeDefinition nullableDefinition?;
 /// `UINT16 ARRAY[16]`); the element type is the leading `DATA_TYPE` and the
 /// count must be a positive integer literal. Resolved to `DataType::Type::FIXEDSIZED`
 /// in `bindDataType` (CommonParserFunctions.cpp).
-typeDefinition: DATA_TYPE (ARRAY '[' count=INTEGER_VALUE ']')?;
+/// DATA_TYPE VARARRAY is a variablesized array of the DATA_TYPE.
+typeDefinition: DATA_TYPE (ARRAY '[' count=INTEGER_VALUE ']' | VARARRAY)?;
 nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
@@ -494,6 +495,7 @@ UNKNOWN: 'UNKNOWN';
 USE: 'USE';
 USING: 'USING';
 VALUES: 'VALUES';
+VARARRAY: 'VARARRAY' | 'vararray';
 WHEN: 'WHEN';
 WHERE: 'WHERE' | 'where';
 WINDOW: 'WINDOW' | 'window';

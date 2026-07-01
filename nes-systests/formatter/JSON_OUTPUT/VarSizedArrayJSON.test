@@ -1,0 +1,14 @@
+# name: VarSizedArrayJSON.test
+# description: Round-trips a var-size array column from JSON input through the NestedJSON parser, the VARARRAY indirect-storage path, and the JSON output formatter.
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE polygons(`timestamp` UINT64 NOT NULL, `lon` UINT64 VARARRAY  NOT NULL, `lat` UINT64 VARARRAY NOT NULL);
+CREATE PHYSICAL SOURCE FOR polygons TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+ATTACH INLINE
+{"timestamp": 1714060800000, "lon": [1, 2, 4, 3, 2], "lat": [50, 60, 80, 60, 30]}
+{"timestamp": 1714060800040, "lon": [1, 2, 3], "lat": [30, 40, 90]}
+
+SELECT * FROM polygons INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"POLYGONS$timestamp":1714060800000,"POLYGONS$lon":[1,2,4,3,2],"POLYGONS$lat":[50,60,80,60,30]}
+{"POLYGONS$timestamp":1714060800040,"POLYGONS$lon":[1,2,3],"POLYGONS$lat":[30,40,90]}

@@ -37,6 +37,12 @@ std::string formatTypeForHeader(const DataType& dataType)
         /// field split in `SystestResultCheck::parseFieldNames` doesn't tokenize it.
         return fmt::format("FIXEDSIZED<{};{}>", magic_enum::enum_name(dataType.elementType), dataType.count);
     }
+    if (dataType.type == DataType::Type::VARARRAY)
+    {
+        /// `;` (not `,`) inside the angle brackets so the comma-separated outer
+        /// field split in `SystestResultCheck::parseFieldNames` doesn't tokenize it.
+        return fmt::format("VARARRAY<{}>", magic_enum::enum_name(dataType.elementType));
+    }
     if (dataType.type == DataType::Type::STRUCT)
     {
         /// Nominal STRUCTs are identified by their registered name; emitting that

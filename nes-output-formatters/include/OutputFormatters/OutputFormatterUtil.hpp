@@ -217,9 +217,10 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
         }
         case DataType::Type::VARSIZED:
         case DataType::Type::FIXEDSIZED:
+        case DataType::Type::VARARRAY:
         case DataType::Type::STRUCT:
         case DataType::Type::UNDEFINED: {
-            INVARIANT(false, "formatAndWriteVal is not supported for VARSIZED, FIXEDSIZED, STRUCT and UNDEFINED types.");
+            INVARIANT(false, "formatAndWriteVal is not supported for VARSIZED, VARARRAY, FIXEDSIZED, STRUCT and UNDEFINED types.");
         }
     }
     return writtenBytes;

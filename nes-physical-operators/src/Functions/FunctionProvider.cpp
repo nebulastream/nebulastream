@@ -137,6 +137,9 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
         case DataType::Type::FIXEDSIZED: {
             throw UnknownPhysicalType("FIXEDSIZED arrays cannot appear as constant values");
         };
+        case DataType::Type::VARARRAY: {
+            throw UnknownPhysicalType("VARARRAY types cannot appear as constant values (PoC).");
+        };
         case DataType::Type::STRUCT: {
             throw UnknownPhysicalType("STRUCT types cannot appear as constant values (PoC).");
         };

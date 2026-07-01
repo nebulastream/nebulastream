@@ -28,13 +28,13 @@
 #include <Nautilus/DataTypes/StructData.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Util/Strings.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <std/cstring.h>
 
 #include <Configurations/Descriptor.hpp>
@@ -50,6 +50,7 @@
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <Nautilus/DataTypes/VarArrayData.hpp>
 
 namespace NES
 {
@@ -174,11 +175,8 @@ uint64_t writeStructFieldNamePrefix(
     return writeValueToBuffer(out.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferAddress);
 }
 
-uint64_t writeStructEnd(
-    int8_t* bufferAddress,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
+uint64_t
+writeStructEnd(int8_t* bufferAddress, const uint64_t remainingSpace, TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider)
 {
     return writeValueToBuffer("}", remainingSpace, tupleBuffer, bufferProvider, bufferAddress);
 }
@@ -377,6 +375,146 @@ void writeValue(
                     break;
                 case DataType::Type::VARSIZED:
                 case DataType::Type::FIXEDSIZED:
+                case DataType::Type::VARARRAY:
+                case DataType::Type::STRUCT:
+                case DataType::Type::UNDEFINED:
+                    throw UnknownDataType(
+                        "JSON-OutputFormatting for FIXEDSIZED arrays of {} is not supported", magic_enum::enum_name(fieldType.elementType));
+            }
+            written += amountWritten;
+            currentRemainingSize -= amountWritten;
+            break;
+        }
+        case DataType::Type::VARARRAY: {
+            /// Vararray can use the same method as Fixedsized
+            const auto varArray = value.getRawValueAs<VarArrayData>();
+            const auto numElements = varArray.getNumElements();
+            nautilus::val<uint64_t> amountWritten{0};
+            switch (fieldType.elementType)
+            {
+                case DataType::Type::INT8:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<int8_t>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::INT16:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<int16_t>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::INT32:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<int32_t>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::INT64:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<int64_t>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::UINT8:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<uint8_t>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::UINT16:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<uint16_t>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::UINT32:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<uint32_t>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::UINT64:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<uint64_t>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::FLOAT32:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<float>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::FLOAT64:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<double>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::BOOLEAN:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<bool>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::CHAR:
+                    amountWritten = nautilus::invoke(
+                        writeFixedSizedAsJsonArray<char>,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        varArray.getRawPtr(),
+                        numElements,
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    break;
+                case DataType::Type::VARSIZED:
+                case DataType::Type::FIXEDSIZED:
+                case DataType::Type::VARARRAY:
                 case DataType::Type::STRUCT:
                 case DataType::Type::UNDEFINED:
                     throw UnknownDataType(

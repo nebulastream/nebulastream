@@ -49,6 +49,7 @@ struct DataType final
         VARSIZED,
         FIXEDSIZED,
         STRUCT,
+        VARARRAY
     };
 
     enum class NULLABLE : uint8_t
@@ -58,6 +59,8 @@ struct DataType final
     };
 
     DataType(Type type, NULLABLE nullable);
+    /// Constructor for vararrays -> no fixed size but an element type
+    DataType(Type type, NULLABLE nullable, Type elementType);
     /// FIXEDSIZED-only constructor: also carries element type and count.
     /// Todo: remove in a proper frontend datatype refactoring
     DataType(Type type, NULLABLE nullable, Type elementType, uint32_t count);
@@ -135,7 +138,6 @@ struct DataType final
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'
     [[nodiscard]] std::optional<DataType> join(const DataType& otherDataType) const;
     [[nodiscard]] DataType::NULLABLE joinNullable(const DataType& otherDataType) const;
-    [[nodiscard]] std::string formattedBytesToString(const void* data) const;
 
     [[nodiscard]] bool isType(Type type) const;
     [[nodiscard]] bool isInteger() const;

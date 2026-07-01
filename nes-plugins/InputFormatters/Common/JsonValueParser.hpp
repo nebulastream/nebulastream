@@ -28,6 +28,7 @@
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/FixedSizedData.hpp>
 #include <Nautilus/DataTypes/StructData.hpp>
+#include <Nautilus/DataTypes/VarArrayData.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -83,8 +84,7 @@ inline bool isNullOrMissing(simdjson::simdjson_result<simdjson::ondemand::value>
 [[noreturn]] inline void throwFieldNotFound(const std::string_view fieldName)
 {
     throw FieldNotFound(
-        "Required field '{}' is missing or null in the JSON document; declare the field as nullable or fix the input.",
-        fieldName);
+        "Required field '{}' is missing or null in the JSON document; declare the field as nullable or fix the input.", fieldName);
 }
 
 /// Inline byte size of a single field for STRUCT layouts. Mirrors the
@@ -94,8 +94,7 @@ inline size_t inlineFieldSizeInBytes(const DataType& field)
 {
     if (field.type == DataType::Type::FIXEDSIZED)
     {
-        const auto elementSize
-            = DataType{field.elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+        const auto elementSize = DataType{field.elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
         return static_cast<size_t>(field.count) * elementSize;
     }
     if (field.type == DataType::Type::STRUCT)
@@ -115,10 +114,8 @@ inline size_t inlineFieldSizeInBytes(const DataType& field)
 /// either returns `nullopt` (nullable fields → null sentinel) or throws
 /// (non-nullable fields → CannotFormatMalformedStringValue).
 template <typename T>
-inline std::optional<T> extractPrimitive(
-    simdjson::simdjson_result<simdjson::ondemand::value>& jsonValue,
-    const std::string_view fieldName,
-    const bool nullable)
+inline std::optional<T>
+extractPrimitive(simdjson::simdjson_result<simdjson::ondemand::value>& jsonValue, const std::string_view fieldName, const bool nullable)
 {
     auto fail = [&](auto err, const std::string_view expectedType) -> std::optional<T>
     {
@@ -178,10 +175,7 @@ inline void writePrimitive(int8_t* output, const T value, const bool nullable, c
 
 template <typename T>
 inline void writePrimitiveFromJson(
-    int8_t* output,
-    simdjson::simdjson_result<simdjson::ondemand::value>& jsonValue,
-    const std::string_view fieldName,
-    const bool nullable)
+    int8_t* output, simdjson::simdjson_result<simdjson::ondemand::value>& jsonValue, const std::string_view fieldName, const bool nullable)
 {
     if (auto parsed = extractPrimitive<T>(jsonValue, fieldName, nullable); parsed.has_value())
     {
@@ -197,18 +191,42 @@ inline void writeNullPrimitive(const DataType::Type type, int8_t* output)
 {
     switch (type)
     {
-        case DataType::Type::BOOLEAN: writePrimitive<bool>(output, false, true, true); return;
-        case DataType::Type::CHAR:    writePrimitive<char>(output, 0, true, true); return;
-        case DataType::Type::INT8:    writePrimitive<int8_t>(output, 0, true, true); return;
-        case DataType::Type::INT16:   writePrimitive<int16_t>(output, 0, true, true); return;
-        case DataType::Type::INT32:   writePrimitive<int32_t>(output, 0, true, true); return;
-        case DataType::Type::INT64:   writePrimitive<int64_t>(output, 0, true, true); return;
-        case DataType::Type::UINT8:   writePrimitive<uint8_t>(output, 0, true, true); return;
-        case DataType::Type::UINT16:  writePrimitive<uint16_t>(output, 0, true, true); return;
-        case DataType::Type::UINT32:  writePrimitive<uint32_t>(output, 0, true, true); return;
-        case DataType::Type::UINT64:  writePrimitive<uint64_t>(output, 0, true, true); return;
-        case DataType::Type::FLOAT32: writePrimitive<float>(output, 0.0F, true, true); return;
-        case DataType::Type::FLOAT64: writePrimitive<double>(output, 0.0, true, true); return;
+        case DataType::Type::BOOLEAN:
+            writePrimitive<bool>(output, false, true, true);
+            return;
+        case DataType::Type::CHAR:
+            writePrimitive<char>(output, 0, true, true);
+            return;
+        case DataType::Type::INT8:
+            writePrimitive<int8_t>(output, 0, true, true);
+            return;
+        case DataType::Type::INT16:
+            writePrimitive<int16_t>(output, 0, true, true);
+            return;
+        case DataType::Type::INT32:
+            writePrimitive<int32_t>(output, 0, true, true);
+            return;
+        case DataType::Type::INT64:
+            writePrimitive<int64_t>(output, 0, true, true);
+            return;
+        case DataType::Type::UINT8:
+            writePrimitive<uint8_t>(output, 0, true, true);
+            return;
+        case DataType::Type::UINT16:
+            writePrimitive<uint16_t>(output, 0, true, true);
+            return;
+        case DataType::Type::UINT32:
+            writePrimitive<uint32_t>(output, 0, true, true);
+            return;
+        case DataType::Type::UINT64:
+            writePrimitive<uint64_t>(output, 0, true, true);
+            return;
+        case DataType::Type::FLOAT32:
+            writePrimitive<float>(output, 0.0F, true, true);
+            return;
+        case DataType::Type::FLOAT64:
+            writePrimitive<double>(output, 0.0, true, true);
+            return;
         default:
             throw NotImplemented("Null sentinel for type {} is not supported.", magic_enum::enum_name(type));
     }
@@ -237,7 +255,7 @@ inline void parseValue(
 {
     if (isNullOrMissing(jsonValue))
     {
-        if (dataType.nullable && dataType.type != DataType::Type::FIXEDSIZED)
+        if (dataType.nullable && dataType.type != DataType::Type::FIXEDSIZED && dataType.type != DataType::Type::VARARRAY)
         {
             if (dataType.type == DataType::Type::VARSIZED)
             {
@@ -252,18 +270,42 @@ inline void parseValue(
 
     switch (dataType.type)
     {
-        case DataType::Type::BOOLEAN:  detail::writePrimitiveFromJson<bool>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::CHAR:     detail::writePrimitiveFromJson<char>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::INT8:     detail::writePrimitiveFromJson<int8_t>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::INT16:    detail::writePrimitiveFromJson<int16_t>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::INT32:    detail::writePrimitiveFromJson<int32_t>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::INT64:    detail::writePrimitiveFromJson<int64_t>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::UINT8:    detail::writePrimitiveFromJson<uint8_t>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::UINT16:   detail::writePrimitiveFromJson<uint16_t>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::UINT32:   detail::writePrimitiveFromJson<uint32_t>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::UINT64:   detail::writePrimitiveFromJson<uint64_t>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::FLOAT32:  detail::writePrimitiveFromJson<float>(output, jsonValue, fieldName, dataType.nullable); return;
-        case DataType::Type::FLOAT64:  detail::writePrimitiveFromJson<double>(output, jsonValue, fieldName, dataType.nullable); return;
+        case DataType::Type::BOOLEAN:
+            detail::writePrimitiveFromJson<bool>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::CHAR:
+            detail::writePrimitiveFromJson<char>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::INT8:
+            detail::writePrimitiveFromJson<int8_t>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::INT16:
+            detail::writePrimitiveFromJson<int16_t>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::INT32:
+            detail::writePrimitiveFromJson<int32_t>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::INT64:
+            detail::writePrimitiveFromJson<int64_t>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::UINT8:
+            detail::writePrimitiveFromJson<uint8_t>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::UINT16:
+            detail::writePrimitiveFromJson<uint16_t>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::UINT32:
+            detail::writePrimitiveFromJson<uint32_t>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::UINT64:
+            detail::writePrimitiveFromJson<uint64_t>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::FLOAT32:
+            detail::writePrimitiveFromJson<float>(output, jsonValue, fieldName, dataType.nullable);
+            return;
+        case DataType::Type::FLOAT64:
+            detail::writePrimitiveFromJson<double>(output, jsonValue, fieldName, dataType.nullable);
+            return;
         case DataType::Type::VARSIZED: {
             auto sv = jsonValue.get_string();
             if (not sv.has_value())
@@ -286,9 +328,7 @@ inline void parseValue(
             if (not array.has_value())
             {
                 throw CannotFormatMalformedStringValue(
-                    "Field '{}': expected JSON array, simdjson reported error '{}'",
-                    fieldName,
-                    magic_enum::enum_name(array.error()));
+                    "Field '{}': expected JSON array, simdjson reported error '{}'", fieldName, magic_enum::enum_name(array.error()));
             }
             uint64_t i = 0;
             for (auto element : array.value())
@@ -308,14 +348,30 @@ inline void parseValue(
             }
             return;
         }
+        case DataType::Type::VARARRAY: {
+            /// Treat like fixedsized, but do not check if the number of fields in the array are higfher than the count member of the datatype
+            const DataType elementType{dataType.elementType, DataType::NULLABLE::NOT_NULLABLE};
+            const auto elementSize = elementType.getSizeInBytesWithoutNull();
+            auto array = jsonValue.get_array();
+            if (not array.has_value())
+            {
+                throw CannotFormatMalformedStringValue(
+                    "Field '{}': expected JSON array, simdjson reported error '{}'", fieldName, magic_enum::enum_name(array.error()));
+            }
+            uint64_t i = 0;
+            for (auto element : array.value())
+            {
+                parseValue(elementType, element, fieldName, output + i * elementSize);
+                ++i;
+            }
+            return;
+        }
         case DataType::Type::STRUCT: {
             auto object = jsonValue.get_object();
             if (not object.has_value())
             {
                 throw CannotFormatMalformedStringValue(
-                    "Field '{}': expected JSON object, simdjson reported error '{}'",
-                    fieldName,
-                    magic_enum::enum_name(object.error()));
+                    "Field '{}': expected JSON object, simdjson reported error '{}'", fieldName, magic_enum::enum_name(object.error()));
             }
             int8_t* fieldOutput = output;
             for (const auto& [name, fieldType] : dataType.fields)
@@ -353,11 +409,8 @@ struct JsonRecordParser
 {
     /// Navigates to the field with simdjson and dispatches `parseValue` into
     /// `output`. Shared by all three per-kind proxies below.
-    static void navigateAndParse(
-        const FieldIndex fieldIndex,
-        RawBufferIndex* rawBufferIndex,
-        const InputFormatIndexer* indexer,
-        int8_t* output)
+    static void
+    navigateAndParse(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, int8_t* output)
     {
         auto* concreteRbi = static_cast<typename Traits::BufferIndex*>(rawBufferIndex);
         const auto* concreteIndexer = static_cast<const typename Traits::Indexer*>(indexer);
@@ -373,8 +426,7 @@ struct JsonRecordParser
     /// parsed value into a typed thread-local `ParseResult<T>` and returns
     /// its address.
     template <typename T>
-    static ParseResult<T>* primitiveProxy(
-        const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
+    static ParseResult<T>* primitiveProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
     {
         thread_local ParseResult<T> slot{};
         navigateAndParse(fieldIndex, rawBufferIndex, indexer, reinterpret_cast<int8_t*>(&slot));
@@ -384,8 +436,8 @@ struct JsonRecordParser
     /// nautilus::invoke target for a top-level VARSIZED field. The simdjson
     /// string buffer outlives the per-record parse, so the returned pointer
     /// stays valid until the trace materializes the record.
-    static ParseResultVarSized* varSizedProxy(
-        const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
+    static ParseResultVarSized*
+    varSizedProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
     {
         thread_local ParseResultVarSized slot{};
         navigateAndParse(fieldIndex, rawBufferIndex, indexer, reinterpret_cast<int8_t*>(&slot));
@@ -394,22 +446,48 @@ struct JsonRecordParser
 
     /// nautilus::invoke target for a FIXEDSIZED field. Writes elements
     /// straight into the arena-allocated buffer the trace handed in.
-    static void fixedSizedProxy(
-        const FieldIndex fieldIndex,
-        RawBufferIndex* rawBufferIndex,
-        const InputFormatIndexer* indexer,
-        int8_t* output)
+    static void
+    fixedSizedProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, int8_t* output)
     {
         navigateAndParse(fieldIndex, rawBufferIndex, indexer, output);
     }
 
+    /// nautilus::invoke target for a VARARRAY field. Allocates buffer via the arena based on the number of elements in the json array,
+    /// and writes the parsed elements into the allocated buffer. Returns it as a pointer to a ParseResultVarsized object containing the ptr
+    /// to the buffer and the size of the buffer.
+    static ParseResultVarSized*
+    varArrayProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, Arena* arena)
+    {
+        thread_local ParseResultVarSized slot{};
+        /// Omitted for POC
+        slot.isNull = false;
+
+        /// Get the needed value out of the indexer early to allocate the memory for the vararray
+        auto* concreteRbi = static_cast<typename Traits::BufferIndex*>(rawBufferIndex);
+        const auto* concreteIndexer = static_cast<const typename Traits::Indexer*>(indexer);
+        const DataType type = concreteIndexer->getFieldDataTypeAt(fieldIndex);
+        const auto& fieldName = concreteIndexer->getFieldNameInJsonAt(fieldIndex);
+
+        /// Retrieve number of elements from array
+        auto currentDoc = *concreteRbi->getDocStreamIterator();
+        simdjson::simdjson_result<simdjson::ondemand::value> navigated = Traits::navigate(currentDoc, fieldName);
+        auto jsonArray = navigated.get_array();
+        const size_t numberOfElements = jsonArray.count_elements();
+
+        /// Calculate size of the buffer to allocate buffer
+        const size_t neededSpace = numberOfElements * DataType{type.elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+        auto buffer = reinterpret_cast<int8_t*>(arena->allocateMemory(neededSpace).data());
+        /// We can skip navigateAndParse and go directly to parse, as we would just repeat the previous steps again anyway.
+        parseValue(type, navigated, fieldName, buffer);
+
+        slot.ptr = reinterpret_cast<char*>(buffer);
+        slot.size = neededSpace;
+        return &slot;
+    }
+
     /// Same shape as `fixedSizedProxy` — the trace pre-allocates a struct-sized
     /// arena buffer and the simdjson side parses field-by-field into it.
-    static void structProxy(
-        const FieldIndex fieldIndex,
-        RawBufferIndex* rawBufferIndex,
-        const InputFormatIndexer* indexer,
-        int8_t* output)
+    static void structProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, int8_t* output)
     {
         navigateAndParse(fieldIndex, rawBufferIndex, indexer, output);
     }
@@ -426,19 +504,32 @@ struct JsonRecordParser
     {
         switch (dataType.type)
         {
-            case DataType::Type::BOOLEAN:  return wrapPrimitive<bool>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::CHAR:     return wrapPrimitive<char>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::INT8:     return wrapPrimitive<int8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::INT16:    return wrapPrimitive<int16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::INT32:    return wrapPrimitive<int32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::INT64:    return wrapPrimitive<int64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::UINT8:    return wrapPrimitive<uint8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::UINT16:   return wrapPrimitive<uint16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::UINT32:   return wrapPrimitive<uint32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::UINT64:   return wrapPrimitive<uint64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::FLOAT32:  return wrapPrimitive<float>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::FLOAT64:  return wrapPrimitive<double>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
-            case DataType::Type::VARSIZED: return wrapVarSized(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::BOOLEAN:
+                return wrapPrimitive<bool>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::CHAR:
+                return wrapPrimitive<char>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::INT8:
+                return wrapPrimitive<int8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::INT16:
+                return wrapPrimitive<int16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::INT32:
+                return wrapPrimitive<int32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::INT64:
+                return wrapPrimitive<int64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::UINT8:
+                return wrapPrimitive<uint8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::UINT16:
+                return wrapPrimitive<uint16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::UINT32:
+                return wrapPrimitive<uint32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::UINT64:
+                return wrapPrimitive<uint64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::FLOAT32:
+                return wrapPrimitive<float>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::FLOAT64:
+                return wrapPrimitive<double>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+            case DataType::Type::VARSIZED:
+                return wrapVarSized(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
             case DataType::Type::FIXEDSIZED:
                 if constexpr (Traits::supportsFixedSized)
                 {
@@ -446,8 +537,17 @@ struct JsonRecordParser
                 }
                 else
                 {
+                    throw NotImplemented("This JSON formatter does not support FIXEDSIZED arrays; use the NestedJSON formatter instead.");
+                }
+            case DataType::Type::VARARRAY:
+                if constexpr (Traits::supportsFixedSized)
+                {
+                    return wrapVarArray(dataType, fieldIndex, rawBufferIndex, indexer, arena);
+                }
+                else
+                {
                     throw NotImplemented(
-                        "This JSON formatter does not support FIXEDSIZED arrays; use the NestedJSON formatter instead.");
+                        "This JSON formatter does not support variable-sized arrays; use the NestedJSON formatter instead.");
                 }
             case DataType::Type::STRUCT:
                 if constexpr (Traits::supportsFixedSized)
@@ -456,8 +556,7 @@ struct JsonRecordParser
                 }
                 else
                 {
-                    throw NotImplemented(
-                        "This JSON formatter does not support STRUCT types; use the NestedJSON formatter instead.");
+                    throw NotImplemented("This JSON formatter does not support STRUCT types; use the NestedJSON formatter instead.");
                 }
             case DataType::Type::UNDEFINED:
                 throw NotImplemented("Cannot parse undefined type.");
@@ -472,8 +571,7 @@ struct JsonRecordParser
         const nautilus::val<RawBufferIndex*>& rawBufferIndex,
         const nautilus::val<const InputFormatIndexer*>& indexer)
     {
-        const auto buffer = nautilus::invoke(
-            {nautilus::ModRefInfo::Ref}, primitiveProxy<T>, fieldIndex, rawBufferIndex, indexer);
+        const auto buffer = nautilus::invoke({nautilus::ModRefInfo::Ref}, primitiveProxy<T>, fieldIndex, rawBufferIndex, indexer);
         const nautilus::val<T> value = *getMemberWithOffset<T>(buffer, offsetof(ParseResult<T>, value));
         if (nullable)
         {
@@ -489,15 +587,13 @@ struct JsonRecordParser
         const nautilus::val<RawBufferIndex*>& rawBufferIndex,
         const nautilus::val<const InputFormatIndexer*>& indexer)
     {
-        const auto buffer = nautilus::invoke(
-            {nautilus::ModRefInfo::Ref}, varSizedProxy, fieldIndex, rawBufferIndex, indexer);
+        const auto buffer = nautilus::invoke({nautilus::ModRefInfo::Ref}, varSizedProxy, fieldIndex, rawBufferIndex, indexer);
         const VariableSizedData varSized{
             *getMemberWithOffset<int8_t*>(buffer, offsetof(ParseResultVarSized, ptr)),
             *getMemberWithOffset<uint64_t>(buffer, offsetof(ParseResultVarSized, size))};
         if (nullable)
         {
-            const nautilus::val<bool> isNull
-                = *getMemberWithOffset<bool>(buffer, offsetof(ParseResultVarSized, isNull));
+            const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(buffer, offsetof(ParseResultVarSized, isNull));
             return VarVal{varSized, true, isNull};
         }
         return VarVal{varSized, false, false};
@@ -510,13 +606,31 @@ struct JsonRecordParser
         const nautilus::val<const InputFormatIndexer*>& indexer,
         ArenaRef& arena)
     {
-        const auto elementSize
-            = DataType{dataType.elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
-        const nautilus::val<int8_t*> buffer
-            = arena.allocateMemory(static_cast<size_t>(dataType.count) * elementSize);
+        const auto elementSize = DataType{dataType.elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+        const nautilus::val<int8_t*> buffer = arena.allocateMemory(static_cast<size_t>(dataType.count) * elementSize);
         nautilus::invoke({nautilus::ModRefInfo::Ref}, fixedSizedProxy, fieldIndex, rawBufferIndex, indexer, buffer);
         const FixedSizedData fixedArray{buffer, dataType.count, dataType.elementType};
         return VarVal{fixedArray, dataType.nullable, nautilus::val<bool>{false}};
+    }
+
+    static VarVal wrapVarArray(
+        const DataType& dataType,
+        const nautilus::val<FieldIndex>& fieldIndex,
+        const nautilus::val<RawBufferIndex*>& rawBufferIndex,
+        const nautilus::val<const InputFormatIndexer*>& indexer,
+        ArenaRef& arena)
+    {
+        /// Pass arena into the proxy call: The number of elements and thus the space that should be allocated can only be retrieved from the simdjson value itself.
+        /// We return the ptr to the allocated space together with the size as ParseResultVarSized object.
+        const nautilus::val<ParseResultVarSized*> parseResult
+            = nautilus::invoke({nautilus::ModRefInfo::Ref}, varArrayProxy, fieldIndex, rawBufferIndex, indexer, arena.getArena());
+        const VarArrayData varArrayData{
+            *getMemberWithOffset<int8_t*>(parseResult, offsetof(ParseResultVarSized, ptr)),
+            dataType.elementType,
+            *getMemberWithOffset<uint64_t>(parseResult, offsetof(ParseResultVarSized, size))};
+
+        /// This is a POC, we omit the is null case for now
+        return VarVal{varArrayData, dataType.nullable, nautilus::val<bool>{false}};
     }
 
     static VarVal wrapStruct(
