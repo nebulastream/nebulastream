@@ -557,6 +557,7 @@ public:
                 std::optional<DistributedQueryId> queryId;
                 bool collectStatistics = false;
                 std::optional<std::string> useStatisticSource;
+                bool watchStatistics = false;
                 if (queryAst->optionsClause() != nullptr)
                 {
                     auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
@@ -564,6 +565,7 @@ public:
                     static const auto IdIdentifier = Identifier::parse("ID");
                     static const auto GetStatisticsIdentifier = Identifier::parse("GET_STATISTICS");
                     static const auto UseStatisticIdentifier = Identifier::parse("USE_STATISTIC");
+                    static const auto WatchStatisticIdentifier = Identifier::parse("WATCH_STATISTIC");
                     if (auto optionsIter = options.find(QueryIdentifier); optionsIter != options.end())
                     {
                         if (auto idIter = optionsIter->second.find(IdIdentifier); idIter != optionsIter->second.end())
@@ -606,13 +608,34 @@ public:
                             /// Canonicalize so it matches the source name extracted from the plan (unquoted -> upper).
                             useStatisticSource = Identifier::parse(std::get<std::string>(*literal)).asCanonicalString();
                         }
+                        if (auto watchIter = optionsIter->second.find(WatchStatisticIdentifier); watchIter != optionsIter->second.end())
+                        {
+                            auto* literal = std::get_if<Literal>(&watchIter->second);
+                            if (literal == nullptr)
+                            {
+                                throw InvalidQuerySyntax("QUERY.WATCH_STATISTIC must be a boolean");
+                            }
+                            if (auto* const boolValue = std::get_if<bool>(literal))
+                            {
+                                watchStatistics = *boolValue;
+                            }
+                            else if (auto* const stringValue = std::get_if<std::string>(literal))
+                            {
+                                watchStatistics = *stringValue == "true" || *stringValue == "TRUE";
+                            }
+                            else
+                            {
+                                throw InvalidQuerySyntax("QUERY.WATCH_STATISTIC must be a boolean");
+                            }
+                        }
                     }
                 }
                 return QueryStatement{
                     .plan = queryBinder(queryAst->query()),
                     .id = queryId,
                     .collectStatistics = collectStatistics,
-                    .useStatisticSource = useStatisticSource};
+                    .useStatisticSource = useStatisticSource,
+                    .watchStatistics = watchStatistics};
             }
 
             throw InvalidStatement(statementAST->toString());

@@ -131,6 +131,9 @@ struct QueryStatement
     /// optimizer should fetch during this query's optimization (canonicalized). When unset, the statistic rule does
     /// not run for this query.
     std::optional<std::string> useStatisticSource;
+    /// Set via the query option `SET(TRUE AS "QUERY"."WATCH_STATISTIC")`. When true, the engine deploys a continuous
+    /// "watch" query on this query's own source that fires a (printing) condition-trigger callback on every impulse.
+    bool watchStatistics = false;
 };
 
 struct ExplainQueryStatement
