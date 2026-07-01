@@ -74,11 +74,7 @@ createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identi
 
 createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
 
-createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
-                       INPUT '(' modelInputField (',' modelInputField)* ')'
-                       OUTPUT '(' modelOutputField (',' modelOutputField)* ')';
-modelInputField: identifier typeDefinition;
-modelOutputField: identifier typeDefinition;
+createModelDefinition: MODEL modelName=identifier optionsClause?;
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
@@ -102,11 +98,12 @@ dropFilter: attr=strictIdentifier EQ value=constant;
 
 showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT showFormat)?;
 showFormat: TEXT | JSON;
-showSubject: QUERIES #showQueriesSubject
-    | LOGICAL SOURCES #showLogicalSourcesSubject
-    | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
-    | SINKS #showSinksSubject
-    | MODELS #showModelsSubject;
+showSubject: showQueriesSubject | showLogicalSourcesSubject | showPhysicalSourcesSubject | showSinksSubject | showModelsSubject;
+showQueriesSubject: QUERIES;
+showLogicalSourcesSubject: LOGICAL SOURCES;
+showPhysicalSourcesSubject: PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier);
+showSinksSubject: SINKS;
+showModelsSubject: MODELS;
 
 showFilter: attr=strictIdentifier EQ value=constant;
 
@@ -523,8 +520,6 @@ EXPLAIN: 'EXPLAIN' | 'explain';
 MODEL: 'MODEL';
 MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';
-INPUT: 'INPUT';
-OUTPUT: 'OUTPUT';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

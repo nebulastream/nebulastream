@@ -41,6 +41,7 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include "Util/Variant.hpp"
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
@@ -256,7 +257,28 @@ public:
     CreateModelStatement bindCreateModelStatement(AntlrSQLParser::CreateModelDefinitionContext* modelDefAST) const
     {
         const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
-        const auto modelPath = bindStringLiteral(modelDefAST->modelPath);
+        const auto configOptions = [&]()
+        {
+            if (modelDefAST->optionsClause() != nullptr)
+            {
+                return bindConfigOptions(modelDefAST->optionsClause()->options->namedConfigExpression());
+            }
+            return ConfigMap{};
+        }();
+
+        static const auto ModelIdentifier = Identifier::parse("MODEL");
+        const auto modelOptions = [&]
+        {
+            if (const auto it = configOptions.find(ModelIdentifier); it != configOptions.end())
+            {
+                return it->second;
+            }
+            throw InvalidQuerySyntax("MODEL options must be specified in the MODEL options clause");
+        }();
+
+        const auto inputSchema = NES::get<Schema<UnqualifiedUnboundField, Ordered>>(modelOptions.at(Identifier::parse("INPUT")));
+        const auto outputSchema = NES::get<Schema<UnqualifiedUnboundField, Ordered>>(modelOptions.at(Identifier::parse("OUTPUT")));
+        const auto modelPath = NES::get<std::string>(NES::get<Literal>(modelOptions.at(Identifier::parse("PATH"))));
 
         std::vector<UnqualifiedUnboundField> inputs;
         for (auto* const inputField : modelDefAST->modelInputField())
