@@ -129,6 +129,16 @@ DataType::DataType(const Type type, const NULLABLE nullable) : type(type), nulla
 {
 }
 
+DataType::DataType(const Type type, const NULLABLE nullable, const DataType elementType)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(elementType)
+{
+    if (type != Type::VECTOR)
+    {
+        throw DifferentFieldTypeExpected(
+            "The elementType/count DataType constructor is for vectors only, but got: {}", magic_enum::enum_name(type));
+    }
+}
+
 DataType::DataType(const Type type, const NULLABLE nullable, DataType elementType, const uint32_t count)
     : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(std::move(elementType)), count(count)
 {
@@ -171,7 +181,8 @@ uint32_t DataType::getSizeInBytesWithoutNull() const
         case Type::FLOAT32:
             return 4;
         case Type::VARSIZED:
-            /// Returning '16' for VARSIZED, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
+        case Type::VECTOR:
+            /// Returning '16' for VARSIZED / VECTOR, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
             /// and 8 bytes for the size of the VARSIZED
             return 16;
         case Type::FIXEDSIZED: {
@@ -238,6 +249,7 @@ bool DataType::isFlat() const
     switch (type)
     {
         case Type::VARSIZED:
+        case Type::VECTOR:
             return false;
         case Type::STRUCT: {
             for (const auto& field : fields | std::views::values)
@@ -287,6 +299,14 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     {
         return (otherDataType.isType(Type::VARSIZED)) ? std::optional{DataTypeProvider::provideDataType(Type::VARSIZED, isNullableResult)}
                                                       : std::nullopt;
+    }
+    if (this->type == Type::VECTOR)
+    {
+        if (otherDataType.type == Type::VECTOR && otherDataType.elementType == this->elementType)
+        {
+            return DataType{Type::VECTOR, isNullableResult, *this->elementType};
+        }
+        return std::nullopt;
     }
     if (this->type == Type::FIXEDSIZED)
     {
@@ -376,6 +396,10 @@ DataType Unreflector<DataType>::operator()(const Reflected& rfl, const Reflectio
     {
         return DataType{reflected.type, nullableEnum, reflected.structName, reflected.fields};
     }
+    if (reflected.type == DataType::Type::VECTOR || reflected.type == DataType::Type::FIXEDSIZED)
+    {
+        return DataType{reflected.type, nullableEnum, *reflected.elementType};
+    }
     return DataTypeProvider::provideDataType(reflected.type, nullableEnum);
 }
 
@@ -385,6 +409,10 @@ std::ostream& operator<<(std::ostream& os, const DataType& dataType)
     {
         return os << fmt::format(
                    "DataType(type: FIXEDSIZED<{}, {}> nullable: {})", *dataType.elementType, dataType.count, dataType.nullable);
+    }
+    if (dataType.type == DataType::Type::VECTOR)
+    {
+        return os << fmt::format("DataType(type: VECTOR<{}> nullable: {})", *dataType.elementType, dataType.nullable);
     }
     if (dataType.type == DataType::Type::STRUCT)
     {

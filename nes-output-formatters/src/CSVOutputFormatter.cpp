@@ -92,7 +92,7 @@ CSVOutputFormatter::CSVOutputFormatter(
     serializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
     serializerTypes[DataType::Type::CHAR] = "DefaultCHAR";
     serializerTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
-    /// We intentionally do not define defaults for STRUCT and FIXEDSIZED here, as CSV does not support these variants by default.
+    /// We intentionally do not define defaults for STRUCT, VECTOR and FIXEDSIZED here, as CSV does not support these variants by default.
     /// Should the user try to create CSV-formatted data with such types, they will encounter an error, unless a specific serializer
     /// was defined for these fields or the STRUCT-plugin field defines its own default serializer.
 

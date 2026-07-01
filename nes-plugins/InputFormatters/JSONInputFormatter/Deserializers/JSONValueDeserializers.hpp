@@ -187,4 +187,35 @@ public:
 
     static std::unique_ptr<ValueDeserializer> provideDeserializer(ValueDeserializerRegistryArguments args);
 };
+
+/// Deserializer for json formatted arrays in [value, value, ...] form.
+/// For simplicity, this PoC assumes that the fieldAddress points to a raw json array within a simdjson document.
+/// Therefore, it cannot not be used for any arbitrary json-formatted struct.
+/// For these cases, a separate deserializer including a full json-array parser should be written.
+/// This works identical to the JSONFIXEDSIZED deserializer, since JSON itself does not differentiate between fixedsized arrays and variable-sized lists / vectors.
+/// However, this function will return the value as VectorData.
+class JSONVECTORValueDeserializer final : public ValueDeserializer
+{
+public:
+    explicit JSONVECTORValueDeserializer() noexcept = default;
+
+    [[nodiscard]] VarVal deserializeToVarVal(
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize,
+        const std::vector<std::string>& nullValues,
+        const ArenaRef& arena,
+        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const DataType& valueType) const override;
+
+    void deserializeIntoBuffer(
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize,
+        const std::vector<std::string>& nullValues,
+        const ArenaRef& arena,
+        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const DataType& valueType,
+        const nautilus::val<int8_t*>& bufferAddress) const override;
+
+    static std::unique_ptr<ValueDeserializer> provideDeserializer(ValueDeserializerRegistryArguments args);
+};
 }

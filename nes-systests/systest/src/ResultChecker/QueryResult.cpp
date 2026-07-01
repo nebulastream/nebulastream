@@ -91,6 +91,18 @@ std::expected<UnqualifiedUnboundField, std::string> parseField(const std::string
         }
         dataType = DataType{DataType::Type::FIXEDSIZED, *nullable, DataType{*elementType, DataType::NULLABLE::NOT_NULLABLE}, count};
     }
+    else if (parts.at(1).starts_with("VECTOR<") && parts.at(1).ends_with('>'))
+    {
+        const auto inner
+            = parts.at(1).substr(std::string_view("VECTOR<").size(), parts.at(1).size() - std::string_view("VECTOR<").size() - 1);
+        const auto elementTypeStr = trimWhiteSpaces(inner);
+        const auto elementType = magic_enum::enum_cast<DataType::Type>(elementTypeStr);
+        if (not elementType.has_value())
+        {
+            return std::unexpected(fmt::format("Unknown VECTOR element type: {}", elementTypeStr));
+        }
+        dataType = DataType{DataType::Type::VECTOR, *nullable, DataType{*elementType, DataType::NULLABLE::NOT_NULLABLE}};
+    }
     else if (auto type = magic_enum::enum_cast<DataType::Type>(parts.at(1)); type.has_value() && type.value() != DataType::Type::STRUCT)
     {
         /// STRUCT explicitly excluded — its enum name carries no layout, so

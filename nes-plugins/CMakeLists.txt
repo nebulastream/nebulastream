@@ -30,6 +30,8 @@ add_plugin("OutputFormatters/JSONOutputFormatter/Serializers")
 add_plugin("InputFormatters/JSONInputFormatter/Deserializers")
 add_plugin("DataTypes/Image")
 add_plugin("DataTypes/Reading")
+add_plugin("DataTypes/GeoSpatial")
+add_plugin("DataTypes/Matrices")
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

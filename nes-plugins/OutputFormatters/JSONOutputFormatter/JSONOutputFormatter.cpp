@@ -114,6 +114,7 @@ JSONOutputFormatter::JSONOutputFormatter(
     serializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
     serializerTypes[DataType::Type::STRUCT] = "JSONSTRUCT";
     serializerTypes[DataType::Type::FIXEDSIZED] = "JSONFIXEDSIZED";
+    serializerTypes[DataType::Type::VECTOR] = "JSONVECTOR";
 
     /// Override the datatype defaults for the fields that the user configured a serializer for
     fieldSerializerTypes

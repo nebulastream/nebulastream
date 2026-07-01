@@ -104,7 +104,7 @@ public:
         , nullValues({""})
         , fieldDataTypes(std::move(fieldDataTypes))
     {
-        /// We intentionally do not define defaults for STRUCT and FIXEDSIZED here, as CSV does not support these variants by default.
+        /// We intentionally do not define defaults for STRUCT, VECTOR and FIXEDSIZED here, as CSV does not support these variants by default.
         /// Should the user try to receive CSV-formatted data with such types, they will encounter an error, unless a specific deserializer
         /// was defined for these fields or the STRUCT-plugin field defines its own default deserializer.
         deserializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
