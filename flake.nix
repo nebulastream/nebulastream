@@ -475,12 +475,15 @@
           name = "nes-format";
           runtimeInputs =
             [
+              pkgs.bash
               pkgs.git
               pkgs.coreutils
               pkgs.findutils
               pkgs.gnugrep
+              pkgs.gnused
               pkgs.gawk
               pkgs.python3
+              pkgs.rustfmt
               pkgs.util-linux
             ]
             ++ llvmTools;
@@ -490,10 +493,18 @@
               echo "nes-format: run this command from the NebulaStream repository root" >&2
               exit 1
             fi
+            if [ "''${1-}" = "--check" ]; then
+              shift
+              if [ "$#" -gt 0 ]; then
+                echo "nes-format: --check does not accept extra arguments: $*" >&2
+                exit 1
+              fi
+              exec ./scripts/format.sh
+            fi
             if [ "$#" -gt 0 ]; then
               echo "nes-format: always runs with -i; ignoring extra arguments: $*" >&2
             fi
-            ./scripts/format.sh -i
+            exec ./scripts/format.sh -i
           '';
         };
 
