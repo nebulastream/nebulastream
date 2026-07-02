@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>

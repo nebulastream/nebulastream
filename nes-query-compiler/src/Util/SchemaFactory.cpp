@@ -17,10 +17,10 @@
 #include <ranges>
 #include <unordered_map>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/TraitSet.hpp>

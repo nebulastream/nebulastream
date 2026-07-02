@@ -26,9 +26,9 @@
 #include <Functions/LogicalFunction.hpp>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/PlanRenderer.hpp>
 
 namespace NES
