@@ -75,53 +75,61 @@ private:
 /// NOLINTBEGIN(cert-err58-cpp)
 struct ConfigParametersNetworkSource
 {
-    static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
+    static inline const ConfigField<std::string> CHANNEL{
         "CHANNEL",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
+        [](const ConfigLiteral& literal)
         {
-            auto value = DescriptorConfig::tryGet(CHANNEL, config);
-            if (value && !stringToUUID(*value))
-            {
-                NES_ERROR("NetworkSource: channel must be a valid UUID, got: {}", *value);
-                return std::nullopt;
-            }
-            return value;
+            return NES::tryGetOr<std::string>(literal, NES::expectedType<std::string>())
+                .and_then(
+                    [](const std::string& value) -> std::expected<std::string, Exception>
+                    {
+                        if (!stringToUUID(value))
+                        {
+                            return std::unexpected{InvalidConfigParameter("NetworkSource: channel must be a valid UUID, got: {}", value)};
+                        }
+                        return value;
+                    });
         }};
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
+    static inline const ConfigField<std::string> BIND{
         "BIND",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
+        [](const ConfigLiteral& config)
         {
-            auto value = DescriptorConfig::tryGet(BIND, config);
-            if (value && !EndpointValidation{}.isValid(*value))
-            {
-                NES_ERROR("NetworkSource: bind must be host:port format, got: {}", *value);
-                return std::nullopt;
-            }
-            return value;
+            return NES::tryGetOr<std::string>(config, NES::expectedType<std::string>())
+                .and_then(
+                    [](const std::string& value) -> std::expected<std::string, Exception>
+                    {
+                        if (!EndpointValidation{}.isValid(value))
+                        {
+                            return std::unexpected{InvalidConfigParameter("NetworkSource: bind must be host:port format, got: {}", value)};
+                        }
+                        return value;
+                    });
         }};
 
     /// Per-channel receiver queue size override. 0 means use the worker-level default.
     /// When a user explicitly sets receiver_queue_size=0, the lambda rejects it with an error.
     /// The default value (0) is returned directly by the config system, bypassing the lambda.
-    static inline const DescriptorConfig::ConfigParameter<size_t> RECEIVER_QUEUE_SIZE{
+    static inline const ConfigField<size_t> RECEIVER_QUEUE_SIZE{
         "RECEIVER_QUEUE_SIZE",
-        size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
+        [](const ConfigLiteral& config)
         {
-            auto value = DescriptorConfig::tryGet(RECEIVER_QUEUE_SIZE, config);
-            if (value && *value == 0)
-            {
-                NES_ERROR("NetworkSource: receiver_queue_size must be > 0 when explicitly set");
-                return std::nullopt;
-            }
-            return value;
-        }};
+            return NES::tryGetOr<size_t>(config, NES::expectedType<size_t>())
+                .and_then(
+                    [](const size_t& value) -> std::expected<size_t, Exception>
+                    {
+                        if (value == 0)
+                        {
+                            return std::unexpected{
+                                InvalidConfigParameter("NetworkSource: receiver_queue_size must be > 0 when explicitly set")};
+                        }
+                        return value;
+                    });
+        },
+        size_t{0},
+    };
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL, BIND, RECEIVER_QUEUE_SIZE);
+    static inline auto configSchema = createConfigSchema(Identifier::parse("NETWORK_SOURCE"), CHANNEL, BIND, RECEIVER_QUEUE_SIZE);
 };
 
 /// NOLINTEND(cert-err58-cpp)

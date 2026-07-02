@@ -38,5 +38,11 @@ public:
         PRECONDITION(typeid(T) == value.type(), "Stored config type {} does not match requested type {}", boost::core::demangle(value.type().name()), boost::core::demangle(typeid(T).name()));
         return value;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const ConfigValue& value) {
+        return os << value.getFullyQualifiedName();
+    }
 };
 }
+
+FMT_OSTREAM(NES::ConfigValue);

@@ -31,6 +31,13 @@
 
 namespace NES
 {
+
+struct SchemaSize
+{
+    uint64_t sizeWithNull;
+    uint64_t sizeWithoutNull;
+};
+
 template <size_t IdListExtent>
 struct UnboundFieldBase
 {
@@ -65,11 +72,7 @@ struct UnboundFieldBase
         return os << fmt::format("QualifiedUnboundField: (name: {}, type: {})", obj.getFullyQualifiedName(), obj.getDataType());
     }
 
-    struct SchemaSize
-    {
-        uint64_t sizeWithNull;
-        uint64_t sizeWithoutNull;
-    };
+    using SchemaAggregate = SchemaSize;
 
     static constexpr SchemaSize addFieldSizes(SchemaSize agg, const UnboundFieldBase& field)
     {
@@ -111,6 +114,18 @@ struct Unreflector<UnboundFieldBase<IdListExtent>>
     {
         const auto unreflected = context.unreflect<ReflectedUnboundFieldBase<IdListExtent>>(rfl);
         return UnboundFieldBase<IdListExtent>(unreflected.name, unreflected.dataType);
+    }
+};
+
+template <typename FieldType>
+struct SchemaAccumulator;
+
+template <size_t IdListExtent>
+struct SchemaAccumulator<UnboundFieldBase<IdListExtent>>
+{
+    SchemaSize operator()(const SchemaSize& agg, const UnboundFieldBase<IdListExtent>& field) const
+    {
+        return UnboundFieldBase<IdListExtent>::addFieldSizes(agg, field);
     }
 };
 }

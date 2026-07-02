@@ -43,14 +43,30 @@
 
 namespace NES
 {
-
 template <typename FieldType>
 struct SchemaAccumulator;
 
 template <typename FieldType, typename Aggregate>
-concept HasSchemaAccumulator = requires(const FieldType& fieldType, const Aggregate& aggregate) {
+concept HasSchemaAccumulator = requires(const Aggregate& aggregate, const FieldType& fieldType) {
     { SchemaAccumulator<FieldType>{}(aggregate, fieldType) } -> std::same_as<Aggregate>;
 };
+
+namespace detail
+{
+struct NoAggregate {};
+
+template <typename T, typename = void>
+struct AggregateOf
+{
+    using type = NoAggregate;
+};
+
+template <typename T>
+struct AggregateOf<T, std::void_t<typename T::SchemaAggregate>>
+{
+    using type = typename T::SchemaAggregate;
+};
+}
 
 /// This class represents a container of fields, where we calculate for every field by which names its addressable unambiguously.
 /// Other than that, its interface is what you would expect of an std::vector or std::unordered_set of the specified field type.
@@ -65,10 +81,11 @@ class Schema
     using IdList = QualifiedIdentifierBase<IdListExtent>;
     using FieldByNameType = std::unordered_map<IdList, FieldType>;
     using CollisionsType = std::unordered_map<IdList, std::vector<FieldType>>;
-
     using FieldContainer = std::conditional_t<IsOrdered.ordered, std::vector<FieldType>, std::unordered_multiset<FieldType>>;
-    using AggregateType = std::conditional_t<requires(){FieldType::SchemaAggregate{};}, typename FieldType::SchemaAggregate, void>;
+
+    using AggregateType = typename detail::AggregateOf<FieldType>::type;
     static constexpr bool hasAccumulator = HasSchemaAccumulator<FieldType, AggregateType>;
+
     static std::pair<FieldByNameType, CollisionsType> initialize(const FieldContainer& fields);
 
 public:
@@ -122,6 +139,7 @@ public:
 
     [[nodiscard]] std::unordered_set<IdList> getUniqueFieldNames() const;
 
+    [[nodiscard]] const AggregateType& getAggregate() const requires (hasAccumulator);
     [[nodiscard]] size_t getSizeInBytes() const;
 
     [[nodiscard]] auto begin() const -> decltype(std::declval<FieldContainer>().cbegin());
@@ -133,7 +151,7 @@ public:
 private:
     FieldContainer fields;
     FieldByNameType fieldsByName;
-    size_t sizeInBytes{};
+    AggregateType aggregate{};
 };
 
 template <typename FieldType, OrderType IsOrdered>
@@ -178,8 +196,11 @@ Schema<FieldType, IsOrdered>::Schema(FieldContainer fields) : fields(std::move(f
         NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
     }
     this->fieldsByName = fieldsByName;
-    sizeInBytes = std::ranges::fold_left(
-        this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
+    if constexpr (hasAccumulator)
+    {
+        aggregate = std::ranges::fold_left(
+            this->fields, AggregateType{}, [](const AggregateType& acc, const auto& field) { return SchemaAccumulator<FieldType>{}(acc, field); });
+    }
 }
 
 template <typename FieldType, OrderType IsOrdered>
@@ -195,8 +216,11 @@ Schema<FieldType, IsOrdered>::Schema(Range&& input) : fields{std::forward<Range>
         NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
     }
     this->fieldsByName = std::move(calculatedFieldsByName);
-    sizeInBytes = std::ranges::fold_left(
-        this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
+    if constexpr (hasAccumulator)
+    {
+        aggregate = std::ranges::fold_left(
+            this->fields, AggregateType{}, [](const AggregateType& acc, const auto& field) { return SchemaAccumulator<FieldType>{}(acc, field); });
+    }
 }
 
 template <typename FieldType, OrderType IsOrdered>
@@ -332,9 +356,9 @@ auto Schema<FieldType, IsOrdered>::getUniqueFieldNames() const -> std::unordered
 }
 
 template <typename FieldType, OrderType IsOrdered>
-size_t Schema<FieldType, IsOrdered>::getSizeInBytes() const
+const Schema<FieldType, IsOrdered>::AggregateType& Schema<FieldType, IsOrdered>::getAggregate() const requires (hasAccumulator)
 {
-    return sizeInBytes;
+    return aggregate;
 }
 
 template <typename FieldType, OrderType IsOrdered>

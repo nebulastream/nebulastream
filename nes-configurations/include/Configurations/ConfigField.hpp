@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <optional>
 
+#include <nameof.hpp>
 #include "DataTypes/UnboundField.hpp"
 #include "Identifiers/QualifiedIdentifier.hpp"
 #include "Schema/Schema.hpp"
@@ -35,13 +36,47 @@ class ConfigField
     std::optional<std::function<T()>> defaultSupplier;
 
 public:
+    ConfigField(std::string name, std::function<std::expected<T, Exception>(const ConfigLiteral&)> factory)
+        : name(Identifier::parse(std::move(name)))
+        , type(std::type_index(typeid(T)))
+        , factory(std::move(factory))
+        , defaultSupplier(std::nullopt)
+    {
+    }
+
+    ConfigField(
+        std::string name, std::function<std::expected<T, Exception>(const ConfigLiteral&)> factory, std::function<T()> defaultSupplier)
+        : name(Identifier::parse(std::move(name)))
+        , type(std::type_index(typeid(T)))
+        , factory(std::move(factory))
+        , defaultSupplier(std::move(defaultSupplier))
+    {
+    }
+
+    ConfigField(std::string name, std::function<std::expected<T, Exception>(const ConfigLiteral&)> factory, T defaultValue)
+        : name(Identifier::parse(std::move(name)))
+        , type(std::type_index(typeid(T)))
+        , factory(std::move(factory))
+        , defaultSupplier([defaultValue] { return defaultValue; })
+    {
+    }
+
     ConfigField(Identifier name, std::function<std::expected<T, Exception>(const ConfigLiteral&)> factory)
         : name(std::move(name)), type(std::type_index(typeid(T))), factory(std::move(factory)), defaultSupplier(std::nullopt)
     {
     }
 
-    ConfigField(Identifier name, std::function<std::expected<T, Exception>(const ConfigLiteral&)> factory, std::function<T()> defaultSupplier)
+    ConfigField(
+        Identifier name, std::function<std::expected<T, Exception>(const ConfigLiteral&)> factory, std::function<T()> defaultSupplier)
         : name(std::move(name)), type(std::type_index(typeid(T))), factory(std::move(factory)), defaultSupplier(std::move(defaultSupplier))
+    {
+    }
+
+    ConfigField(Identifier name, std::function<std::expected<T, Exception>(const ConfigLiteral&)> factory, T defaultValue)
+        : name(std::move(name))
+        , type(std::type_index(typeid(T)))
+        , factory(std::move(factory))
+        , defaultSupplier([defaultValue] { return defaultValue; })
     {
     }
 
@@ -50,6 +85,7 @@ public:
     [[nodiscard]] std::type_index getType() const { return type; }
 
     [[nodiscard]] std::function<std::expected<T, Exception>(const ConfigLiteral&)> getFactory() const { return factory; }
+
     [[nodiscard]] std::optional<std::function<T()>> getDefaultSupplier() const { return defaultSupplier; }
 };
 
@@ -60,7 +96,10 @@ class QualifiedErasedConfigField
     std::optional<std::function<std::any()>> defaultSupplier;
 
 public:
-    QualifiedErasedConfigField(QualifiedIdentifier name, std::function<std::expected<std::any, Exception>(const ConfigLiteral&)> factory, std::optional<std::function<std::any()>> defaultFactory)
+    QualifiedErasedConfigField(
+        QualifiedIdentifier name,
+        std::function<std::expected<std::any, Exception>(const ConfigLiteral&)> factory,
+        std::optional<std::function<std::any()>> defaultFactory)
         : name(std::move(name)), factory(std::move(factory)), defaultSupplier(std::move(defaultFactory))
     {
     }
@@ -68,7 +107,9 @@ public:
     [[nodiscard]] QualifiedIdentifier getFullyQualifiedName() const { return name; }
 
     [[nodiscard]] std::expected<std::any, Exception> apply(const ConfigLiteral& literal) const { return factory(literal); }
+
     [[nodiscard]] bool hasDefault() const { return defaultSupplier.has_value(); }
+
     [[nodiscard]] std::any getDefault() const { return defaultSupplier.value()(); }
 };
 
@@ -78,13 +119,18 @@ Schema<QualifiedErasedConfigField, Ordered> createConfigSchema(Identifier prefix
     auto convertField = [&prefix]<typename R>(ConfigField<R> field)
     {
         return QualifiedErasedConfigField{
-            prefix + field.name,
+            QualifiedIdentifier::create(prefix, field.getName()),
             [factory = field.getFactory()](const ConfigLiteral& value)
             { return std::move(factory(value)).transform([](auto val) { return std::any(std::move(val)); }); },
-            field.getDefaultSupplier()
-        };
+            field.getDefaultSupplier()};
     };
     return Schema<QualifiedErasedConfigField, Ordered>{convertField(fields)...};
+}
+
+template <typename T>
+std::function<Exception()> expectedType()
+{
+    return [] { return InvalidConfigParameter("Expected type: {}", NAMEOF_TYPE(T)); };
 }
 
 }

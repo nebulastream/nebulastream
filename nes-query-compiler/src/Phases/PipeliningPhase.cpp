@@ -98,11 +98,11 @@ PhysicalOperator createScanOperator(
 {
     INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
     INVARIANT(memoryLayout.has_value(), "Wrapped operator has no input memory layout type");
-    if (inputSchema.value().getSizeInBytes() > configuredBufferSize)
+    if (inputSchema.value().getAggregate().sizeWithNull > configuredBufferSize)
     {
         throw TuplesTooLargeForPipelineBufferSize(
             "Got pipeline with an input schema size of {}, which is larger than the configured buffer size of the pipeline, which is {}",
-            inputSchema.value().getSizeInBytes(),
+            inputSchema.value().getAggregate().sizeWithNull,
             configuredBufferSize);
     }
 

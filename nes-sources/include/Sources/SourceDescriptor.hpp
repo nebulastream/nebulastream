@@ -35,6 +35,9 @@
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <InputFormatterDescriptor.hpp>
+#include "Configurations/ConfigField.hpp"
+#include "Identifiers/Identifier.hpp"
+#include "Util/Variant.hpp"
 
 namespace NES
 {
@@ -94,15 +97,15 @@ public:
     /// Given an invalid value, the NodeEngine takes its configured value. Otherwise, the source-specific configuration takes priority.
     static constexpr size_t INVALID_MAX_INFLIGHT_BUFFERS = 0;
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_INFLIGHT_BUFFERS{
-        "MAX_INFLIGHT_BUFFERS",
-        INVALID_MAX_INFLIGHT_BUFFERS,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
+    static inline const ConfigField<size_t> MAX_INFLIGHT_BUFFERS{
+        Identifier::parse("MAX_INFLIGHT_BUFFERS"),
+        [](const ConfigLiteral& literal) { return tryGetOr<size_t>(literal, expectedType<size_t>());},
+        INVALID_MAX_INFLIGHT_BUFFERS
+    };
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
+    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS);
 };
 
 template <>
