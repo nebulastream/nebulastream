@@ -229,11 +229,6 @@ VarVal FormatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
 
     const auto argCount = childPhysicalFunctions.size() - 1;
 
-    if (argCount == 0)
-    {
-        return formatStringValue;
-    }
-
     auto argPtrsBuffer = arena.allocateVariableSizedData(
         nautilus::val<uint64_t>{argCount * sizeof(int8_t*)});
 
