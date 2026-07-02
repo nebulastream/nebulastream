@@ -1,0 +1,115 @@
+# name: function/dspro/FormatNull.test
+# description: Null-handling tests for Format.
+# groups: [Function, Format]
+
+CREATE LOGICAL SOURCE nullableStream(
+    value INT32,
+    other_value INT32,
+    text_value VARSIZED,
+    flag BOOLEAN
+);
+
+CREATE PHYSICAL SOURCE FOR nullableStream TYPE File;
+
+ATTACH INLINE
+1,10,hello,true
+NULL,20,world,false
+3,NULL,test,true
+4,40,NULL,false
+5,50,text,NULL
+
+########################################
+# NULL in first formatted argument
+########################################
+
+CREATE SINK sinkNullFirstArg(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("value={}, other={}"), value, other_value) AS formatted
+FROM nullableStream INTO sinkNullFirstArg;
+----
+value=1, other=10
+NULL
+NULL
+value=4, other=40
+value=5, other=50
+
+########################################
+# NULL in VARSIZED argument
+########################################
+
+CREATE SINK sinkNullStringArg(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("text={}"), text_value) AS formatted
+FROM nullableStream INTO sinkNullStringArg;
+----
+text=hello
+text=world
+text=test
+text=NULL
+text=text
+
+########################################
+# NULL in BOOLEAN argument
+########################################
+
+CREATE SINK sinkNullBoolArg(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("flag={}"), flag) AS formatted
+FROM nullableStream INTO sinkNullBoolArg;
+----
+flag=true
+flag=false
+flag=true
+flag=false
+NULL
+
+########################################
+# Multiple mixed nullable arguments
+########################################
+
+CREATE SINK sinkMixedNullable(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("value={} text={} flag={}"), value, text_value, flag) AS formatted
+FROM nullableStream INTO sinkMixedNullable;
+----
+value=1 text=hello flag=true
+NULL
+value=3 text=test flag=true
+value=4 text=NULL flag=false
+NULL
+
+########################################
+# No nullable argument used
+########################################
+
+CREATE SINK sinkOnlyNonNullLiteral(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("constant output")) AS formatted
+FROM nullableStream INTO sinkOnlyNonNullLiteral;
+----
+constant output
+constant output
+constant output
+constant output
+constant output
+
+########################################
+# Multiple nullable numeric/boolean arguments
+########################################
+
+CREATE SINK sinkNumericBoolNulls(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("value={} other={} flag={}"), value, other_value, flag) AS formatted
+FROM nullableStream INTO sinkNumericBoolNulls;
+----
+value=1 other=10 flag=true
+NULL
+NULL
+value=4 other=40 flag=false
+NULL
