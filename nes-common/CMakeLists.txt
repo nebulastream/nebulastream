@@ -80,4 +80,14 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")
 endif ()
 
+# The Schema headers live in their own include directory behind a dedicated target on purpose:
+# Schema is meant for the logical/frontend layers, not for components that operate on
+# TupleBufferRefs or MemoryLayouts (e.g. nes-memory, nes-query-engine). Requiring an explicit
+# nes-schema dependency keeps those components from picking up Schema by accident via nes-common.
+add_library(nes-schema INTERFACE)
+target_link_libraries(nes-schema INTERFACE nes-common)
+target_include_directories(nes-schema INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/schema/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+
 add_tests_if_enabled(tests)

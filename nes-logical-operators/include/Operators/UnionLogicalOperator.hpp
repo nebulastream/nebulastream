@@ -29,12 +29,12 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Reorderer.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/DynamicBase.hpp>
 
 namespace NES

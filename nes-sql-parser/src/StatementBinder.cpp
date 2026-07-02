@@ -56,10 +56,10 @@
 #include <Util/URI.hpp>
 #include <ErrorHandling.hpp>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <CommonParserFunctions.hpp>
 
 namespace NES

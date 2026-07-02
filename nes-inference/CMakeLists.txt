@@ -21,7 +21,7 @@ add_library(nes-inference
 target_include_directories(nes-inference PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(nes-inference PUBLIC nes-data-types PRIVATE nes-common)
+target_link_libraries(nes-inference PUBLIC nes-data-types nes-schema PRIVATE nes-common)
 
 add_subdirectory(runtime)
 
