@@ -19,12 +19,12 @@
 #include <ranges>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>

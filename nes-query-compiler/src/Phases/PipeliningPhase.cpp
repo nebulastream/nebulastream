@@ -26,8 +26,6 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -35,6 +33,8 @@
 #include <Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <EmitOperatorHandler.hpp>

@@ -37,9 +37,9 @@
 #include <network/lib.h>
 #include <rust/cxx.h>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>

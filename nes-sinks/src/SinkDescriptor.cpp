@@ -34,10 +34,10 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <SinkValidationRegistry.hpp>

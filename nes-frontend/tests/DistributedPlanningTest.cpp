@@ -25,8 +25,6 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -39,6 +37,8 @@
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Statements/StatementHandler.hpp>

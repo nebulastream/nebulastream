@@ -27,7 +27,6 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
-#include <DataTypes/Schema.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
@@ -36,6 +35,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
+#include <Schema/Schema.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>

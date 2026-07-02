@@ -31,8 +31,6 @@
 /// NOLINTNEXTLINE(misc-include-cleaner)
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -44,6 +42,8 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Serialization/WindowAggregationLogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>

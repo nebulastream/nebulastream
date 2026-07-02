@@ -28,7 +28,6 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
@@ -38,6 +37,7 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
