@@ -509,3 +509,63 @@ FROM stringStream INTO sinkSpacesBetween;
 one   ten
 two   twenty
 three   thirty
+
+CREATE LOGICAL SOURCE negativeStream(value INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR negativeStream TYPE File;
+
+ATTACH INLINE
+-1
+-42
+-999
+
+CREATE SINK sinkNegative(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("value={}"), value) AS formatted
+FROM negativeStream INTO sinkNegative;
+----
+value=-1
+value=-42
+value=-999
+
+########################################
+# Edge case: escaped braces without placeholders
+########################################
+
+CREATE SINK sinkEscapedOnly(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("{{literal}}")) AS formatted
+FROM stringStream INTO sinkEscapedOnly;
+----
+{literal}
+{literal}
+{literal}
+
+########################################
+# Edge case: repeated argument values
+########################################
+
+CREATE SINK sinkRepeatedArg(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("value={} again={}"), value, value) AS formatted
+FROM stringStream INTO sinkRepeatedArg;
+----
+value=one again=one
+value=two again=two
+value=three again=three
+
+########################################
+# Edge case: long literal around placeholder
+########################################
+
+CREATE SINK sinkLongLiteral(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("prefix-prefix-prefix value={} suffix-suffix-suffix"), value) AS formatted
+FROM stringStream INTO sinkLongLiteral;
+----
+prefix-prefix-prefix value=one suffix-suffix-suffix
+prefix-prefix-prefix value=two suffix-suffix-suffix
+prefix-prefix-prefix value=three suffix-suffix-suffix
