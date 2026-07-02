@@ -65,6 +65,19 @@ struct UnboundFieldBase
         return os << fmt::format("QualifiedUnboundField: (name: {}, type: {})", obj.getFullyQualifiedName(), obj.getDataType());
     }
 
+    struct SchemaSize
+    {
+        uint64_t sizeWithNull;
+        uint64_t sizeWithoutNull;
+    };
+
+    static constexpr SchemaSize addFieldSizes(SchemaSize agg, const UnboundFieldBase& field)
+    {
+        return SchemaSize{
+            .sizeWithNull = agg.sizeWithNull + field.getDataType().getSizeInBytesWithNull(),
+            .sizeWithoutNull = agg.sizeWithoutNull + field.getDataType().getSizeInBytesWithoutNull()};
+    };
+
 private:
     QualifiedIdentifierBase<IdListExtent> name;
     DataType dataType;

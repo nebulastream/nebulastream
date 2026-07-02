@@ -19,14 +19,14 @@ get_source(nes-configurations NES_CONFIGURATIONS_SOURCE_FILES)
 add_library(nes-configurations ${NES_CONFIGURATIONS_SOURCE_FILES}
         include/Configurations/OptionVisitor.hpp
         include/Configurations/PrintingVisitor.hpp)
-target_link_libraries(nes-configurations PUBLIC nes-common)
+target_link_libraries(nes-configurations PUBLIC nes-common nes-data-types)
 
 target_include_directories(nes-configurations PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-configurations REUSE_FROM nes-common)
+    target_precompile_headers(nes-configurations REUSE_FROM nes-common nes-datatypes)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
     target_compile_options(nes-configurations PUBLIC "-fPIC")
 endif ()
