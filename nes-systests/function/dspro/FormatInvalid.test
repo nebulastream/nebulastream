@@ -95,6 +95,30 @@ FROM stream INTO sinkStream;
 ----
 ERROR CannotInferSchema "Format only supports '{}' placeholders and '{{' escapes"
 
+SELECT
+    Format(VARSIZED("{{{"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format string contains unmatched '{'"
+
+SELECT
+    Format(VARSIZED("}}}"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format string contains unmatched '}'"
+
+SELECT
+    Format(VARSIZED("{{ {"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format string contains unmatched '{'"
+
+SELECT
+    Format(VARSIZED("{{ }"), value) AS formatted
+FROM stream INTO sinkStream;
+----
+ERROR CannotInferSchema "Format string contains unmatched '}'"
+
 ########################################
 # No argument
 ########################################
