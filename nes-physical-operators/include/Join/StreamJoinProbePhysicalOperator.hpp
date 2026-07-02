@@ -17,13 +17,13 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Schema/Schema.hpp>
 #include <Time/Timestamp.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 #include <val_concepts.hpp>

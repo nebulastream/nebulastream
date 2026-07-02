@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
@@ -27,6 +26,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Schema/Schema.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>

@@ -34,8 +34,6 @@
 #include <fmt/ranges.h>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -45,6 +43,8 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Reprojecter.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/DynamicBase.hpp>

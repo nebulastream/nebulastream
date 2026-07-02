@@ -27,9 +27,9 @@
 #include <fmt/ranges.h>
 #include <folly/hash/Hash.h>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/PlanRenderer.hpp>
 
 namespace NES

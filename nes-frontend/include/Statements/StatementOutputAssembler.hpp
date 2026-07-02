@@ -28,12 +28,12 @@
 #include <vector>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <magic_enum/magic_enum.hpp>

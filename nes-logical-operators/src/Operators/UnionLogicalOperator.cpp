@@ -28,8 +28,6 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <DataTypes/Schema.hpp> /// NOLINT(misc-include-cleaner)
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/UnboundSchema.hpp> /// NOLINT(misc-include-cleaner)
 #include <Identifiers/Identifiers.hpp>
@@ -37,6 +35,8 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>

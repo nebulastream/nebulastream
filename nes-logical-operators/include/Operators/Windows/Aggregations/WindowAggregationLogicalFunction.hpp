@@ -25,12 +25,12 @@
 #include <variant>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>

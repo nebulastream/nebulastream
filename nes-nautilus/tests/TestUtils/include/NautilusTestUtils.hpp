@@ -25,8 +25,6 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
@@ -35,6 +33,8 @@
 #include <Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <nautilus/Engine.hpp>
 #include <ErrorHandling.hpp>

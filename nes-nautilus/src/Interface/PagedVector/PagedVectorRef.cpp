@@ -25,7 +25,6 @@
 #include <ranges>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
-#include <DataTypes/Schema.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
@@ -35,6 +34,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
+#include <Schema/Schema.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>

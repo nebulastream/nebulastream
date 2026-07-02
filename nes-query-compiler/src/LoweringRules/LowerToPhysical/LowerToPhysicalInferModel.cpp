@@ -21,12 +21,12 @@
 #include <ranges>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/InferModelLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/SchemaFactory.hpp>

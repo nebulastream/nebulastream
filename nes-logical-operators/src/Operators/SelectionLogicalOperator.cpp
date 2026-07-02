@@ -25,11 +25,11 @@
 #include <variant>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <fmt/format.h>
 
 #include <Configurations/Descriptor.hpp>

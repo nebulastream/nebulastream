@@ -23,7 +23,6 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/BufferRef/ColumnTupleBufferRef.hpp>
@@ -35,6 +34,7 @@
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/OutputFormatterProvider.hpp>
 #include <OutputFormatters/OutputFormatterValidationProvider.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES

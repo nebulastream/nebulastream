@@ -22,8 +22,6 @@
 #include <vector>
 
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -33,6 +31,8 @@
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Schema/Binder.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
