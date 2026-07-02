@@ -14,14 +14,19 @@
 #pragma once
 
 #include <optional>
-#include <string>
 #include <string_view>
-#include <unordered_map>
 
-#include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifier.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES::SourceValidationProvider
 {
-std::optional<DescriptorConfig::Config> provide(std::string_view sourceType, std::unordered_map<Identifier, std::string> configMap);
+
+/// Returns the config schema the source itself declares (via the SourceConfigSchema registry).
+/// The source-independent descriptor fields (SourceDescriptor::configSchema, e.g.
+/// MAX_INFLIGHT_BUFFERS, HOST) are combined in by the SourceCatalog where needed.
+/// Returns nullopt if the source type is not registered.
+std::optional<Schema<QualifiedErasedConfigField, Ordered>> provide(std::string_view sourceType);
+
 }

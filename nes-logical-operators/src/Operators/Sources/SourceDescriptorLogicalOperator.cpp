@@ -63,7 +63,7 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
 
 void SourceDescriptorLogicalOperator::inferLocalSchema()
 {
-    outputSchema = *sourceDescriptor.getLogicalSource().getSchema() | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>();
+    outputSchema = sourceDescriptor.getSchema() | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>();
 }
 
 SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSchema() const
@@ -133,7 +133,7 @@ SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 
 Schema<Field, Ordered> SourceDescriptorLogicalOperator::getOrderedOutputSchema(ChildOutputOrderProvider) const
 {
-    return bindToOperator(self.lock(), *sourceDescriptor.getLogicalSource().getSchema());
+    return bindToOperator(self.lock(), sourceDescriptor.getSchema());
 }
 
 const detail::DynamicBase* SourceDescriptorLogicalOperator::getDynamicBase() const

@@ -222,7 +222,7 @@ Record MedianAggregationPhysicalFunction::lower(
 void MedianAggregationPhysicalFunction::reset(
     const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
+    const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getAggregate().sizeWithNull;
     nautilus::invoke(
         +[](AggregationState* pagedVectorMemArea, AbstractBufferProvider* bufferProvider, uint64_t tupleSize) -> void
         {

@@ -72,11 +72,12 @@ installErrorListenerAndHandler(std::string_view query, antlr4::Lexer& lexer, ant
 }
 }
 
-LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
+
+LogicalPlan QueryBinder::bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst) const
 {
     try
     {
-        Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
+        Parsers::AntlrSQLQueryPlanCreator queryPlanCreator{defaultConfigValues, configTransformations};
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, queryAst);
         auto queryPlan = queryPlanCreator.getQueryPlan();
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
@@ -88,7 +89,7 @@ LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
     }
 }
 
-LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
+LogicalPlan QueryBinder::createLogicalQueryPlanFromSQLString(std::string_view queryString) const
 {
     try
     {
@@ -98,7 +99,7 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
         AntlrSQLParser parser(&tokens);
         [[maybe_unused]] auto listener = installErrorListenerAndHandler(queryString, lexer, parser);
         AntlrSQLParser::QueryContext* tree = parser.query();
-        Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
+        Parsers::AntlrSQLQueryPlanCreator queryPlanCreator{defaultConfigValues, configTransformations};
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
         auto queryPlan = queryPlanCreator.getQueryPlan();
         queryPlan.setOriginalSql(std::string(queryString));

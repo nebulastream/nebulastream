@@ -14,15 +14,19 @@
 
 #pragma once
 
+#include <any>
 #include <atomic>
 #include <cstdint>
 #include <expected>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
+
+#include <Configurations/ConfigResolution.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -31,16 +35,75 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include "Util/Pointers.hpp"
 
 namespace NES
 {
+
+struct GeneralSourceConfig
+{
+    Host host;
+    std::optional<size_t> maxInflightBuffers;
+    bool operator==(const GeneralSourceConfig&) const = default;
+
+    friend std::ostream& operator<<(std::ostream& os, const GeneralSourceConfig& config);
+};
+
+class SourceCatalog;
+
+class PhysicalSourceBuilder
+{
+public:
+    PhysicalSourceBuilder(
+        GeneralSourceConfig generalSourceConfig,
+        PluginSourceConfiguration sourcePluginConfig,
+        InputFormatterDescriptor inputFormatterPluginConfig,
+        std::shared_ptr<const SourceCatalog> catalog);
+    std::expected<SourceDescriptor, Exception> build(Schema<UnqualifiedUnboundField, Ordered> schema) &&;
+    PhysicalSourceBuilder(const PhysicalSourceBuilder& other) = delete;
+    PhysicalSourceBuilder(PhysicalSourceBuilder&& other) noexcept = default;
+    PhysicalSourceBuilder& operator=(const PhysicalSourceBuilder& other) = delete;
+    PhysicalSourceBuilder& operator=(PhysicalSourceBuilder&& other) noexcept = default;
+
+private:
+    GeneralSourceConfig generalSourceConfig;
+    PluginSourceConfiguration sourcePluginConfig;
+    InputFormatterDescriptor inputFormatterPluginConfig;
+    std::shared_ptr<const SourceCatalog> catalog;
+    bool wasCalled = false;
+};
+
+class SourceConfigSchema
+{
+public:
+    std::expected<std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, std::optional<Schema<UnqualifiedUnboundField, Ordered>>>, Exception>
+    resolveConfigs(const Schema<LiteralConfigValue, Ordered>& values) const;
+    SourceConfigSchema withConfigDefaults(Schema<ConfigFieldDefault, Ordered> configDefaults) const;
+    SourceConfigSchema withConfigTransformations(Schema<ConfigFieldTransformation, Unordered> configTransformations) const;
+
+private:
+    SourceConfigSchema(Identifier sourceType, Identifier inputFormatterType, Schema<QualifiedErasedConfigField, Ordered> configSchema);
+    Identifier sourceType;
+    Identifier inputFormatterType;
+    Schema<QualifiedErasedConfigField, Ordered> configSchema;
+    Schema<ConfigFieldDefault, Ordered> configDefaults;
+    Schema<ConfigFieldTransformation, Unordered> configTransformations;
+    friend class SourceCatalog;
+};
+
 /// @brief The source catalog handles the mapping of logical to physical sources.
 /// We expect the class to be used behind frontends that permit concurrent read-write access (like a REST server),
 /// so all individual operations in this class are thread safe and atomic.
-class SourceCatalog
+class SourceCatalog : std::enable_shared_from_this<SourceCatalog>
 {
+    struct Private
+    {
+        explicit Private() = default;
+    };
+
 public:
-    SourceCatalog() = default;
+    explicit SourceCatalog(Private);
+    static SharedPtr<SourceCatalog> create();
     ~SourceCatalog() = default;
 
     SourceCatalog(const SourceCatalog&) = delete;
@@ -54,19 +117,14 @@ public:
     [[nodiscard]] std::optional<NES::LogicalSource>
     addLogicalSource(const Identifier& logicalSourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema);
 
-
     /// @brief method to delete a logical source and any associated physical source.
     /// @return bool indicating if this logical source was registered by name and removed
     [[nodiscard]] bool removeLogicalSource(const LogicalSource& logicalSource);
 
-    /// @brief creates a new physical source and associates it with a logical source
-    /// @return nullopt if the logical source is not registered anymore, otherwise a source descriptor with an assigned id
-    [[nodiscard]] std::expected<SourceDescriptor, Exception> addPhysicalSource(
-        const LogicalSource& logicalSource,
-        const Identifier& sourceType,
-        Host host,
-        std::unordered_map<Identifier, std::string> descriptorConfig,
-        const std::unordered_map<Identifier, std::string>& parserConfig);
+    [[nodiscard]] static std::expected<SourceConfigSchema, Exception>
+    getConfigSchema(const Identifier& sourceType, const Identifier& inputFormatterType);
+
+    std::expected<SourceDescriptor, Exception> registerWithLogicalSource(PhysicalSourceBuilder builder, const Identifier& logicalSourceName);
 
     /// @brief removes a physical source
     /// @return true if there is a source descriptor with that id registered and it was removed
@@ -78,13 +136,6 @@ public:
     [[nodiscard]] bool containsLogicalSource(const Identifier& logicalSourceName) const;
 
     [[nodiscard]] std::optional<SourceDescriptor> getPhysicalSource(PhysicalSourceId physicalSourceId) const;
-
-    [[nodiscard]] std::optional<SourceDescriptor> getAnonymousSource(
-        const Identifier& sourceType,
-        const Schema<UnqualifiedUnboundField, Ordered>& schema,
-        Host host,
-        const std::unordered_map<Identifier, std::string>& parserConfigMap,
-        std::unordered_map<Identifier, std::string> sourceConfigMap) const;
 
     /// @brief retrieves physical sources for a logical source
     /// @returns nullopt if the logical source is not registered anymore, else the set of source descriptors associated with it
@@ -100,5 +151,9 @@ private:
     std::unordered_map<Identifier, LogicalSource> namesToLogicalSourceMapping;
     std::unordered_map<PhysicalSourceId, SourceDescriptor> idsToPhysicalSources;
     std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> logicalToPhysicalSourceMapping;
+
+    friend PhysicalSourceBuilder;
 };
 }
+
+FMT_OSTREAM(NES::GeneralSourceConfig);

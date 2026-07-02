@@ -12,15 +12,16 @@
     limitations under the License.
 */
 
-#include <SourceValidationRegistry.hpp>
+#pragma once
 
-namespace NES
-{
+namespace NES {
 
-SourceValidationRegistry& SourceValidationRegistry::instance()
-{
-    static SourceValidationRegistry inst;
-    return inst;
+template <typename T, typename E, typename ESupplier>
+std::expected<T, E> optionalToExpected(std::optional<T> optional, ESupplier orElse) {
+    if (optional.has_value()) {
+        return std::move(optional.value());
+    }
+    return std::unexpected<E>{orElse()};
 }
 
 }

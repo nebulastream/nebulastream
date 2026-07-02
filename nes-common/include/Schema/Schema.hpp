@@ -57,8 +57,10 @@ class Schema
     using IdList = QualifiedIdentifierBase<IdListExtent>;
     using FieldByNameType = std::unordered_map<IdList, FieldType>;
     using CollisionsType = std::unordered_map<IdList, std::vector<FieldType>>;
-
     using FieldContainer = std::conditional_t<IsOrdered.ordered, std::vector<FieldType>, std::unordered_multiset<FieldType>>;
+
+    using AggregateType = typename detail::AggregateOf<FieldType>::type;
+    static constexpr bool hasAccumulator = HasSchemaAccumulator<FieldType, AggregateType>;
 
     static std::pair<FieldByNameType, CollisionsType> initialize(const FieldContainer& fields);
 
@@ -113,6 +115,7 @@ public:
 
     [[nodiscard]] std::unordered_set<IdList> getUniqueFieldNames() const;
 
+    [[nodiscard]] const AggregateType& getAggregate() const requires (hasAccumulator);
     [[nodiscard]] size_t getSizeInBytes() const;
 
     [[nodiscard]] auto begin() const -> decltype(std::declval<FieldContainer>().cbegin());
@@ -124,7 +127,7 @@ public:
 private:
     FieldContainer fields;
     FieldByNameType fieldsByName;
-    size_t sizeInBytes{};
+    AggregateType aggregate{};
 };
 
 template <typename FieldType, OrderType IsOrdered>
@@ -169,8 +172,11 @@ Schema<FieldType, IsOrdered>::Schema(FieldContainer fields) : fields(std::move(f
         NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
     }
     this->fieldsByName = fieldsByName;
-    sizeInBytes = std::ranges::fold_left(
-        this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
+    if constexpr (hasAccumulator)
+    {
+        aggregate = std::ranges::fold_left(
+            this->fields, AggregateType{}, [](const AggregateType& acc, const auto& field) { return SchemaAccumulator<FieldType>{}(acc, field); });
+    }
 }
 
 template <typename FieldType, OrderType IsOrdered>
@@ -186,8 +192,11 @@ Schema<FieldType, IsOrdered>::Schema(Range&& input) : fields{std::forward<Range>
         NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
     }
     this->fieldsByName = std::move(calculatedFieldsByName);
-    sizeInBytes = std::ranges::fold_left(
-        this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
+    if constexpr (hasAccumulator)
+    {
+        aggregate = std::ranges::fold_left(
+            this->fields, AggregateType{}, [](const AggregateType& acc, const auto& field) { return SchemaAccumulator<FieldType>{}(acc, field); });
+    }
 }
 
 template <typename FieldType, OrderType IsOrdered>
@@ -323,9 +332,16 @@ auto Schema<FieldType, IsOrdered>::getUniqueFieldNames() const -> std::unordered
 }
 
 template <typename FieldType, OrderType IsOrdered>
+const Schema<FieldType, IsOrdered>::AggregateType& Schema<FieldType, IsOrdered>::getAggregate() const requires (hasAccumulator)
+{
+    return aggregate;
+}
+
+template <typename FieldType, OrderType IsOrdered>
 size_t Schema<FieldType, IsOrdered>::getSizeInBytes() const
 {
-    return sizeInBytes;
+    return std::ranges::fold_left(
+        this->fields, size_t{0}, [](const size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
 }
 
 template <typename FieldType, OrderType IsOrdered>

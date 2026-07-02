@@ -33,8 +33,12 @@ class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
     std::stack<AntlrSQLHelper> helpers;
     std::vector<std::variant<Identifier, std::pair<Identifier, ConfigMap>>> sinks;
     std::stack<LogicalPlan> queryPlans;
+    Schema<ConfigFieldDefault, Ordered> defaultConfigValues;
+    Schema<ConfigFieldTransformation, Unordered> configTransformations;
 
 public:
+    explicit AntlrSQLQueryPlanCreator(
+        Schema<ConfigFieldDefault, Ordered> defaultConfigValues, Schema<ConfigFieldTransformation, Unordered> configTransformations);
     [[nodiscard]] LogicalPlan getQueryPlan() const;
 
     /// Parsing listener methods (enter/exit pairs)

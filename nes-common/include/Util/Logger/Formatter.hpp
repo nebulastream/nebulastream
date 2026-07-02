@@ -22,3 +22,11 @@
     struct fmt::formatter<typename TypeName> : fmt::ostream_formatter \
     { \
     }
+
+namespace NES
+{
+std::string fmtToString(const auto& val)
+{
+    return fmt::format("{}", val);
+}
+}

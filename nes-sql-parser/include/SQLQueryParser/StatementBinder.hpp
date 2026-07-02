@@ -29,6 +29,7 @@
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
+#include <Configurations/ConfigResolution.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -65,11 +66,10 @@ struct CreateLogicalSourceStatement
 
 struct CreatePhysicalSourceStatement
 {
-    LogicalSourceName attachedTo;
-    Identifier sourceType;
-    std::optional<Host> host;
-    std::unordered_map<Identifier, std::string> sourceConfig;
-    std::unordered_map<Identifier, std::string> parserConfig;
+    Identifier logicalSourceName;
+    GeneralSourceConfig generalSourceConfig;
+    PluginSourceConfiguration pluginSourceConfig;
+    InputFormatterDescriptor pluginInputFormatterConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
@@ -234,6 +234,17 @@ inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& sta
     return std::visit(visitor, statement);
 }
 
+struct DefaultHost
+{
+    std::string hostName;
+};
+
+struct RequireHostConfig
+{
+};
+
+using HostPolicy = std::variant<RequireHostConfig, DefaultHost>;
+
 class StatementBinder
 {
     /// PIMPL pattern to hide all the internally used binder member functions
@@ -242,6 +253,8 @@ class StatementBinder
 
 public:
     explicit StatementBinder(
+        Schema<ConfigFieldDefault, Ordered> defaultConfigValues,
+        Schema<ConfigFieldTransformation, Unordered> configTransformations,
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
         const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
 

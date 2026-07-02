@@ -37,6 +37,9 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <rfl/Generic.hpp>
+#include <rfl/json/write.hpp>
+#include <SourceConfigRegistry.hpp>
 #include <DistributedQuery.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <QueryStatus.hpp>
@@ -78,10 +81,23 @@ using SourceDescriptorOutputRowType = std::tuple<
     Schema<UnqualifiedUnboundField, Ordered>,
     std::string,
     InputFormatterDescriptor,
-    NES::DescriptorConfig::Config,
+    /// The source-defined config struct, rendered to JSON via the source's SourceConfigRegistry entry.
+    std::string,
     Host>;
 constexpr std::array<std::string_view, 7> sourceDescriptorOutputColumns{
     "physical_source_id", "source_name", "schema", "source_type", "input_formatter_config", "source_config", "host"};
+
+/// Serialize the descriptor's type-erased config for display; only the source's registry entry
+/// knows the concrete type behind the std::any.
+inline std::string renderSourceConfig(const SourceDescriptor& descriptor)
+{
+    if (const auto* configEntry = SourceConfigRegistry::instance().find(descriptor.getSourceType()))
+    {
+        const rfl::Generic reflectedConfig = configEntry->reflect(descriptor.getPluginData());
+        return rfl::json::write(reflectedConfig);
+    }
+    return "{}";
+}
 
 using SinkDescriptorOutputRowType = std::tuple<
     Identifier,
@@ -145,7 +161,7 @@ struct StatementOutputAssembler<CreatePhysicalSourceStatementResult>
                 *result.created.getLogicalSource().getSchema(),
                 result.created.getSourceType(),
                 result.created.getInputFormatterDescriptor(),
-                result.created.getConfig(),
+                renderSourceConfig(result.created),
                 result.created.getHost())});
     }
 };
@@ -203,7 +219,7 @@ struct StatementOutputAssembler<ShowPhysicalSourcesStatementResult>
                 *source.getLogicalSource().getSchema(),
                 source.getSourceType(),
                 source.getInputFormatterDescriptor(),
-                source.getConfig(),
+                renderSourceConfig(source),
                 source.getHost());
         }
         return std::make_pair(sourceDescriptorOutputColumns, output);
@@ -259,7 +275,7 @@ struct StatementOutputAssembler<DropPhysicalSourceStatementResult>
                 *result.dropped.getLogicalSource().getSchema(),
                 result.dropped.getSourceType(),
                 result.dropped.getInputFormatterDescriptor(),
-                result.dropped.getConfig(),
+                renderSourceConfig(result.dropped),
                 result.dropped.getHost())});
     }
 };

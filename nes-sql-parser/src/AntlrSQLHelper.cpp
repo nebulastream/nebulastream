@@ -46,12 +46,12 @@ void AntlrSQLHelper::setSource(Identifier sourceName)
     this->source = std::move(sourceName);
 }
 
-void AntlrSQLHelper::setAnonymousSource(const Identifier& type, const ConfigMap& parameters)
+void AntlrSQLHelper::setAnonymousSource(std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>> sourceBuilder)
 {
-    this->anonymousSourceConfig = std::make_pair(type, parameters);
+    this->anonymousSourceConfig = std::move(sourceBuilder);
 }
 
-std::optional<std::pair<Identifier, ConfigMap>> AntlrSQLHelper::getAnonymousSourceConfig()
+const std::optional<std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>>& AntlrSQLHelper::getAnonymousSourceConfig()
 {
     return this->anonymousSourceConfig;
 }

@@ -79,15 +79,15 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 }
 
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
-    Identifier anonymousSourceType,
-    Schema<UnqualifiedUnboundField, Ordered> schema,
-    std::unordered_map<Identifier, std::string> sourceConfig,
-    std::unordered_map<Identifier, std::string> parserConfig)
+    GeneralSourceConfig generalSourceConfig,
+    PluginSourceConfiguration pluginSourceConfig,
+    InputFormatterDescriptor pluginInputFormatterConfig,
+    Schema<UnqualifiedUnboundField, Ordered> schema)
 {
     return LogicalPlan(
         INVALID_QUERY_ID,
         {AnonymousSourceLogicalOperator::create(
-            std::move(anonymousSourceType), std::move(schema), std::move(sourceConfig), std::move(parserConfig))});
+            std::move(schema), std::move(generalSourceConfig), std::move(pluginSourceConfig), std::move(pluginInputFormatterConfig))});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
@@ -215,8 +215,7 @@ LogicalPlan LogicalPlanBuilder::addAnonymousSink(
     const LogicalPlan& queryPlan)
 {
     return promoteOperatorToRoot(
-        queryPlan,
-        AnonymousSinkLogicalOperator::create(std::move(type), std::move(schema), std::move(sinkConfig), std::move(formatConfig)));
+        queryPlan, AnonymousSinkLogicalOperator::create(std::move(type), std::move(schema), std::move(sinkConfig), std::move(formatConfig)));
 }
 
 LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic)

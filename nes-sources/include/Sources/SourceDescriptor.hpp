@@ -35,13 +35,27 @@
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <InputFormatterDescriptor.hpp>
+#include "Configurations/ConfigField.hpp"
+#include "Identifiers/Identifier.hpp"
+#include "Util/Variant.hpp"
 
 namespace NES
 {
 class SourceCatalog;
 class OperatorSerializationUtil;
 
-class SourceDescriptor final : public Descriptor
+class PluginSourceConfiguration
+{
+public:
+    PluginSourceConfiguration(Identifier type, ExplicitAny pluginData) : type(type), pluginData(std::move(pluginData)) {}
+    [[nodiscard]] const Identifier& getType() const { return type; }
+    [[nodiscard]] const ExplicitAny& getPluginData() const { return pluginData; }
+private:
+    Identifier type;
+    ExplicitAny pluginData;
+};
+
+class SourceDescriptor final
 {
 public:
     ~SourceDescriptor() = default;
@@ -52,61 +66,94 @@ public:
     SourceDescriptor& operator=(SourceDescriptor&& other) noexcept = delete;
 
     friend std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
-    friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs) = default;
+    /// The type-erased plugin config (std::any) is not comparable; two descriptors are considered
+    /// equal if their identity and wiring match.
+    friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
+    {
+        return lhs.physicalSourceId == rhs.physicalSourceId;
+    }
 
 
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor);
 
-    [[nodiscard]] LogicalSource getLogicalSource() const;
-    [[nodiscard]] std::string getSourceType() const;
-    [[nodiscard]] std::string getInputFormatType() const;
+    [[nodiscard]] const Identifier& getSourceType() const;
+    [[nodiscard]] const Identifier& getInputFormatType() const;
     [[nodiscard]] InputFormatterDescriptor getInputFormatterDescriptor() const;
 
     [[nodiscard]] Host getHost() const;
-    [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
-    [[nodiscard]] bool isAnonymousSource() const;
+    [[nodiscard]] const Schema<UnqualifiedUnboundField, Ordered>& getSchema() const;
+    ///@returns either a number greater than zero, or a nullopt, indicating that the default value should be used
+    [[nodiscard]] std::optional<size_t> getMaxInflightBuffers() const;
+    [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
+    /// The source-defined config struct (e.g. GeneratorSourceConfig), type-erased. Produced by the
+    /// source's SourceConfigRegistry entry, so the source factory can safely any_cast it back.
+    [[nodiscard]] const ExplicitAny& getPluginData() const;
+
+    [[nodiscard]] const std::optional<Identifier>& getLogicalSourceName() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     friend class SourceCatalog;
+    friend class PhysicalSourceBuilder;
     friend OperatorSerializationUtil;
     friend struct Unreflector<SourceDescriptor>;
     friend struct Reflector<SourceDescriptor>;
 
     PhysicalSourceId physicalSourceId;
-    LogicalSource logicalSource;
-    std::string sourceType;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
     Host host;
+    std::optional<size_t> maxInflightBuffers;
+    PluginSourceConfiguration pluginSourceConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
-    bool isAnonymous = false;
 
+    std::optional<Identifier> logicalSourceName;
 
-    /// Used by Sources to create a valid SourceDescriptor.
+    /// Used by the SourceCatalog (and descriptor unreflection) to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         PhysicalSourceId physicalSourceId,
-        LogicalSource logicalSource,
-        std::string_view sourceType,
+        Schema<UnqualifiedUnboundField, Ordered> schema,
         Host host,
-        DescriptorConfig::Config config,
-        const InputFormatterDescriptor& inputFormatterDescriptor,
-        bool isAnonymous);
+        std::optional<size_t> maxInflightBuffers,
+        PluginSourceConfiguration pluginData,
+        InputFormatterDescriptor inputFormatterDescriptor,
+        std::optional<Identifier> logicalSourceName);
 
 public:
-    /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
-    /// Given an invalid value, the NodeEngine takes its configured value. Otherwise, the source-specific configuration takes priority.
-    static constexpr size_t INVALID_MAX_INFLIGHT_BUFFERS = 0;
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_INFLIGHT_BUFFERS{
-        "MAX_INFLIGHT_BUFFERS",
-        INVALID_MAX_INFLIGHT_BUFFERS,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
-
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
+    static inline const ConfigField<std::optional<Schema<UnqualifiedUnboundField, Ordered>>> SCHEMA{
+        "SCHEMA",
+            [](const ConfigLiteral& literal){ return tryGetOr<Schema<UnqualifiedUnboundField, Ordered>>(literal, expectedType<Schema<UnqualifiedUnboundField, Ordered>>()); },
+            std::nullopt
+        };
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const ConfigField<std::optional<size_t>> MAX_INFLIGHT_BUFFERS{
+        Identifier::parse("MAX_INFLIGHT_BUFFERS"),
+        [](const ConfigLiteral& literal)
+        { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(downcastConfigValue<int64_t, size_t>).transform([](const size_t& value) -> std::optional<size_t>
+        {
+            if (value == 0)
+            {
+                return std::nullopt;
+            }
+            return value;
+        }); },
+        std::nullopt};
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const ConfigField<Host> HOST{
+        "HOST",
+        [](const ConfigLiteral& literal) -> std::expected<Host, Exception>
+        {
+            return tryGetOr<std::string>(literal, expectedType<std::string>())
+                .transform([](std::string&& value) { return Host{std::move(value)}; });
+        }};
+        /// Optional: attached workers pass the host out of band (e.g. as a catalog argument).
+
+    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST, SCHEMA);
 };
 
 template <>
@@ -121,6 +168,16 @@ struct Unreflector<SourceDescriptor>
     SourceDescriptor operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
+template <>
+struct Reflector<PluginSourceConfiguration> {
+    Reflected operator()(const PluginSourceConfiguration& config, const ReflectionContext& context) const;
+};
+
+template <>
+struct Unreflector<PluginSourceConfiguration> {
+    PluginSourceConfiguration operator()(const Reflected& rfl, const ReflectionContext& context) const;
+};
+
 }
 
 template <>
@@ -128,21 +185,28 @@ struct std::hash<NES::SourceDescriptor>
 {
     size_t operator()(const NES::SourceDescriptor& sourceDescriptor) const noexcept
     {
-        return folly::hash::hash_combine(sourceDescriptor.getLogicalSource(), sourceDescriptor.getPhysicalSourceId());
+        return folly::hash::hash_combine(sourceDescriptor.getSchema(), sourceDescriptor.getPhysicalSourceId());
     }
 };
 
 namespace NES::detail
 {
+struct ReflectedPluginSourceConfiguration
+{
+    Identifier type;
+    Reflected pluginData;
+};
+
 struct ReflectedSourceDescriptor
 {
-    uint64_t physicalSourceId;
-    LogicalSource logicalSource;
-    std::string type;
+    PhysicalSourceId physicalSourceId;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
     Host host;
+    std::optional<size_t> maxInflightBuffers;
+    PluginSourceConfiguration pluginSourceConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
-    bool isAnonymous;
-    Reflected config;
+
+    std::optional<Identifier> logicalSourceName;
 };
 }
 

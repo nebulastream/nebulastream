@@ -57,4 +57,12 @@ struct ExtractParameter<T<N>>
     static constexpr auto value = N;
 };
 
+template <typename T>
+struct ExtractSecondParameter;
+
+template <template <typename , typename > class T, typename  FST, typename SND>
+struct ExtractSecondParameter<T<FST, SND>> {
+    using type = SND;
+};
+
 }

@@ -43,4 +43,14 @@ T get(Variant variant)
     PRECONDITION(std::holds_alternative<T>(variant), "Variant does not hold type {}", NAMEOF_TYPE(T));
     return std::get<T>(variant);
 }
+
+template <typename T, typename Variant>
+std::expected<T, Exception> tryGetOr(Variant variant, const std::function<Exception()>& orElse) {
+    if (auto* ptr = std::get_if<T>(&variant)) {
+        return *ptr;
+    }
+
+    return std::unexpected{orElse()};
+}
+
 }

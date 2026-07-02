@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <functional>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <folly/hash/Hash.h>
@@ -46,10 +47,18 @@ struct Hash
         return folly::hash::hash_range(array.begin(), array.end());
     }
 
+    /// Hashes the entries through NES::Hash itself (not folly's default hasher), so maps whose
+    /// key/value types are only std::hash-able or are variants hash correctly.
     template <typename K, typename V, typename Hash, typename KeyEqual, typename Allocator>
     [[nodiscard]] size_t operator()(const std::unordered_map<K, V, Hash, KeyEqual, Allocator>& map) const noexcept
     {
-        return folly::hash::commutative_hash_combine_range(map.begin(), map.end());
+        return folly::hash::commutative_hash_combine_range_generic(0, *this, map.begin(), map.end());
+    }
+
+    template <typename A, typename B>
+    [[nodiscard]] size_t operator()(const std::pair<A, B>& pair) const noexcept
+    {
+        return folly::hash::hash_combine_generic(*this, pair.first, pair.second);
     }
 
     /// Visits the active alternative and recurses into NES::Hash itself, so a variant whose

@@ -129,8 +129,8 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
     auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(leftInputSchema);
     auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(rightInputSchema);
-    const uint64_t tupleSizeLeft = leftTupleLayout->getSchema().getSizeInBytes();
-    const uint64_t tupleSizeRight = rightTupleLayout->getSchema().getSizeInBytes();
+    const uint64_t tupleSizeLeft = leftTupleLayout->getSchema().getAggregate().sizeWithNull;
+    const uint64_t tupleSizeRight = rightTupleLayout->getSchema().getAggregate().sizeWithNull;
 
     const auto& joinTimeCharacteristicsVariant = join->getJoinTimeCharacteristics();
     auto characteristicsAreBound

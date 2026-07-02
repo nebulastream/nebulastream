@@ -21,6 +21,9 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include <nameof.hpp>
+
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
@@ -28,11 +31,27 @@
 #include <ParserRuleContext.h>
 #include <Plans/LogicalPlan.hpp>
 
+#include "StatementBinder.hpp"
+
 namespace NES::AntlrSQLQueryParser
 {
 
-LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst);
-LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString);
+class QueryBinder
+{
+public:
+    explicit QueryBinder(
+        Schema<ConfigFieldDefault, Ordered> defaultConfigValues, Schema<ConfigFieldTransformation, Unordered> configTransformations)
+        : defaultConfigValues(std::move(defaultConfigValues)), configTransformations(std::move(configTransformations))
+    {
+    }
+
+    LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst) const;
+    LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString) const;
+
+private:
+    Schema<ConfigFieldDefault, Ordered> defaultConfigValues;
+    Schema<ConfigFieldTransformation, Unordered> configTransformations;
+};
 
 /// @brief Safe, heap allocated wrapper around an ANTLR chain instance. ASTs lifetime is owned by the chain that created them.
 class ManagedAntlrParser : public std::enable_shared_from_this<ManagedAntlrParser>

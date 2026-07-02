@@ -25,22 +25,51 @@
 #include <ostream>
 #include <stop_token>
 #include <string>
-#include <unordered_map>
-#include <utility>
-#include <Configurations/Descriptor.hpp>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Files.hpp>
+#include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
+#include "Sources/SourceDescriptor.hpp"
 
 namespace NES
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+namespace
+{
+
+/// Config fields of the file source, shared by getConfigSchema (declaration) and
+/// FileSourceConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+static const ConfigField<std::filesystem::path> FILE_PATH{
+    "FILE_PATH",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .transform([](const auto& val) { return std::filesystem::path{val}; });
+    }};
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> FileSource::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("FILE_SOURCE"), FILE_PATH);
+}
+
+std::expected<FileSourceConfig, Exception> FileSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return FileSourceConfig{.filePath = config.get(FILE_PATH)};
+}
+
+FileSource::FileSource(const FileSourceConfig& config) : filePath(config.filePath)
 {
 }
 
@@ -72,11 +101,6 @@ Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuff
     return FillTupleBufferResult::withBytes(numBytesRead);
 }
 
-DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
-}
-
 std::ostream& FileSource::toString(std::ostream& str) const
 {
     str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
@@ -85,16 +109,13 @@ std::ostream& FileSource::toString(std::ostream& str) const
 
 InlineDataRegistryReturnType FileSource::provideInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
+    auto config = std::any_cast<FileSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData().getValue());
+    if (!config.filePath.string().ends_with(".systest.csv"))
     {
-        throw InvalidConfigParameter("Mock FileSource cannot use given inline data if a 'file_path' is set");
+        throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
     }
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.try_emplace(
-        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
-
-
-    if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
+    if (std::ofstream testFile(config.filePath); testFile.is_open())
     {
         /// Write inline tuples to test file.
         for (const auto& tuple : systestAdaptorArguments.tuples)
@@ -102,22 +123,28 @@ InlineDataRegistryReturnType FileSource::provideInlineData(InlineDataRegistryArg
             testFile << tuple << "\n";
         }
         testFile.flush();
-        return systestAdaptorArguments.physicalSourceConfig;
+
+        auto copy = systestAdaptorArguments.physicalSourceConfig;
+        copy.pluginSourceConfig = PluginSourceConfiguration{copy.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
+        return copy;
     }
-    throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
+    throw TestException("Could not open source file \"{}\"", config.filePath);
 }
 
 FileDataRegistryReturnType FileSource::provideFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
+    auto config = std::any_cast<FileSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData().getValue());
+    if (!config.filePath.string().ends_with(".systest.csv"))
     {
         throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
     }
+    config.filePath = systestAdaptorArguments.testFilePath;
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
-        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
+    auto argCopy = systestAdaptorArguments.physicalSourceConfig;
+    argCopy.pluginSourceConfig = PluginSourceConfiguration{argCopy.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
 
-    return systestAdaptorArguments.physicalSourceConfig;
+    return argCopy;
 }
+
 
 }

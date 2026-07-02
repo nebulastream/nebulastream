@@ -30,12 +30,15 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <unistd.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Configurations/ConfigResolution.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plugins/BuiltinPlugins.hpp>
@@ -561,6 +564,50 @@ std::unordered_map<NES::Identifier, std::string> bindConfig(const std::unordered
     return boundConfig;
 }
 
+/// The CLI/YAML frontend only has strings; type each value once at this boundary. Mirrors the
+/// SQL parser's literal typing: bool, then signed integer (integers are always passed down as
+/// int64_t; fields needing unsigned lower with a range check), then floating point; falls back
+/// to the string itself.
+NES::ConfigLiteral parseConfigLiteral(const std::string& raw)
+{
+    const auto lowered = NES::toLowerCase(raw);
+    if (lowered == "true")
+    {
+        return true;
+    }
+    if (lowered == "false")
+    {
+        return false;
+    }
+    if (const auto asSigned = NES::from_chars<int64_t>(raw))
+    {
+        return *asSigned;
+    }
+    if (const auto asDouble = NES::from_chars<double>(raw))
+    {
+        return *asDouble;
+    }
+    return raw;
+}
+
+NES::Schema<NES::LiteralConfigValue, NES::Ordered> bindSourceConfig(const std::unordered_map<std::string, std::string>& config)
+{
+    auto boundConfig = config
+        | std::views::transform(
+            [](const auto& rawPair) {
+                return NES::LiteralConfigValue{
+                    NES::QualifiedIdentifier::create(bindIdentifierName(rawPair.first)), parseConfigLiteral(rawPair.second)};
+            })
+        | std::ranges::to<std::vector>();
+    if (std::ranges::size(config)
+        != std::ranges::size(boundConfig | std::views::transform([](const auto& value) { return value.getFullyQualifiedName(); })
+                             | std::ranges::to<std::unordered_set<NES::QualifiedIdentifier>>()))
+    {
+        throw NES::InvalidConfigParameter("Duplicate parameters with different casing");
+    }
+    return NES::Schema<NES::LiteralConfigValue, NES::Ordered>{std::move(boundConfig)};
+}
+
 NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> bindSchema(const std::vector<NES::CLI::SchemaField>& schemaFields)
 {
     const auto boundSchema = NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>::tryCreateCollisionFree(
@@ -596,8 +643,8 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             .attachedTo = bindIdentifierName(logical),
             .sourceType = bindIdentifierName(type),
             .host = NES::Host(host),
-            .sourceConfig = bindConfig(sourceConfig),
-            .parserConfig = bindConfig(parserConfig)});
+            .sourceConfig = bindSourceConfig(sourceConfig),
+            .parserConfig = bindSourceConfig(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
     {
