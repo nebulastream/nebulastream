@@ -33,8 +33,8 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/SchemaFwd.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/TypeTraits.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>

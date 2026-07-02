@@ -17,7 +17,6 @@
 #include <memory>
 #include <utility>
 #include <DataTypes/DataTypesUtil.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
@@ -33,6 +32,7 @@
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <magic_enum/magic_enum.hpp>

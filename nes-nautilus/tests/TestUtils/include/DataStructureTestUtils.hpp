@@ -25,11 +25,11 @@
 #include <span>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <nautilus/Engine.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>

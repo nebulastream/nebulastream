@@ -16,7 +16,6 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
@@ -28,6 +27,7 @@
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>

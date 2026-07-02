@@ -24,12 +24,12 @@
 #include <utility>
 #include <variant>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/Reflection.hpp>

@@ -19,7 +19,6 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -30,6 +29,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Schema/Schema.hpp>
 #include <Time/Timestamp.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
