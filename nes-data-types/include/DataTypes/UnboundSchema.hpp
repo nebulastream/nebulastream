@@ -14,9 +14,9 @@
 
 #pragma once
 #include <span>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 

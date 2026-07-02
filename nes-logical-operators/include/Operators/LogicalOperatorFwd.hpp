@@ -21,8 +21,8 @@
 #include <type_traits>
 #include <vector>
 
-#include <DataTypes/SchemaFwd.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Traits/TraitSet.hpp>
 
 namespace NES

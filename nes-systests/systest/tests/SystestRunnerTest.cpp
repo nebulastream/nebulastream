@@ -52,11 +52,11 @@
 #include <QuerySubmitter.hpp>
 #include <SystestProgressTracker.hpp>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>

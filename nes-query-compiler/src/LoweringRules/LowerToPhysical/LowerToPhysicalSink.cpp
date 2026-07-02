@@ -34,10 +34,10 @@
 #include <PhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <MapPhysicalOperator.hpp>
 
 namespace NES

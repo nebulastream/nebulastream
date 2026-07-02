@@ -20,10 +20,10 @@
 #include <ostream>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 ///NOLINTNEXTLINE(misc-include-cleaner)

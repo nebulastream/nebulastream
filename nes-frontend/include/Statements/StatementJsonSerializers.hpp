@@ -27,10 +27,10 @@
 #include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/TypeTraits.hpp>
 #include <fmt/chrono.h> /// NOLINT(misc-include-cleaner) -- required for fmt::format of std::chrono::time_point
 #include <fmt/format.h>

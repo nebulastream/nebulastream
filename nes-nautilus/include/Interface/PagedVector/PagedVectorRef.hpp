@@ -22,12 +22,12 @@
 #include <functional>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Schema/Schema.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
