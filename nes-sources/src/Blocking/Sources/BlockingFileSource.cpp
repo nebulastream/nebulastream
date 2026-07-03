@@ -14,14 +14,16 @@
 
 #include <Blocking/Sources/BlockingFileSource.hpp>
 
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <algorithm>
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <format>
 #include <fstream>
-#include <ios>
-#include <istream>
 #include <memory>
 #include <ostream>
 #include <stop_token>
@@ -55,34 +57,56 @@ BlockingFileSource::BlockingFileSource(const SourceDescriptor& sourceDescriptor)
 void BlockingFileSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
-    this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
-    if (not this->inputFile)
+    if (not realCSVPath)
     {
         throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
+    }
+    this->fileDescriptor = ::open(realCSVPath.get(), O_RDONLY);
+    if (this->fileDescriptor == -1)
+    {
+        throw InvalidConfigParameter("Could not open file: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
     }
 }
 
 void BlockingFileSource::close()
 {
-    this->inputFile.close();
+    if (this->fileDescriptor != -1)
+    {
+        ::close(this->fileDescriptor);
+        this->fileDescriptor = -1;
+    }
 }
 
 BlockingSource::FillTupleBufferResult
 BlockingFileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&, const size_t offset)
 {
-    const auto dst = tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data() + offset;
-    const auto len = static_cast<std::streamsize>(tupleBuffer.getBufferSize() - offset);
-    this->inputFile.read(dst, len);
-    auto numBytesRead = this->inputFile.gcount();
+    char* const dst = tupleBuffer.getAvailableMemoryArea<char>().data() + offset;
+    const std::size_t capacity = tupleBuffer.getBufferSize() - offset;
+    /// Read straight into the pool buffer with ::read (no ifstream double-buffering). A single read()
+    /// on a regular file may short-return, so loop until the buffer is full or EOF; the formatter then
+    /// string_views into this buffer exactly as on the parallel/io_uring paths.
+    const auto readFully = [this](char* buf, std::size_t n) -> std::size_t
+    {
+        std::size_t got = 0;
+        while (got < n)
+        {
+            const ssize_t r = ::read(this->fileDescriptor, buf + got, n - got);
+            if (r <= 0) /// 0 = EOF, <0 = error: end this pass (matches the old gcount()==0 behaviour)
+            {
+                break;
+            }
+            got += static_cast<std::size_t>(r);
+        }
+        return got;
+    };
+    std::size_t numBytesRead = readFully(dst, capacity);
     if (numBytesRead == 0 && this->passesDone + 1 < this->numPasses)
     {
         /// NES_FILE_REPEAT=N: hit EOF but more passes remain -> rewind and re-read into this buffer
         /// so the source keeps streaming a long steady window (mirrors the async FileSource).
         ++this->passesDone;
-        this->inputFile.clear();
-        this->inputFile.seekg(0, std::ios::beg);
-        this->inputFile.read(dst, len);
-        numBytesRead = this->inputFile.gcount();
+        ::lseek(this->fileDescriptor, 0, SEEK_SET);
+        numBytesRead = readFully(dst, capacity);
     }
     this->totalNumBytesRead += numBytesRead;
     if (numBytesRead == 0)

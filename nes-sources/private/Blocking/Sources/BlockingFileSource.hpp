@@ -16,7 +16,6 @@
 
 #include <atomic>
 #include <cstddef>
-#include <fstream>
 #include <memory>
 #include <optional>
 #include <stop_token>
@@ -60,7 +59,11 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    std::ifstream inputFile;
+    /// Raw file descriptor read directly into the pool TupleBuffer via ::read (no std::ifstream: its
+    /// filebuf double-buffers -> an extra page-cache->filebuf->dst __memmove + the _IO_* machinery,
+    /// ~16% of the source thread; a plain read leaves only the one unavoidable page-cache->dst copy,
+    /// exactly like the io_uring/File sources). The formatter string_views into this buffer as before.
+    int fileDescriptor = -1;
     std::string filePath;
     std::atomic<size_t> totalNumBytesRead;
     /// PROFILING-only (env NES_FILE_REPEAT=N, default 1): on EOF, seek back to 0 and re-read the file
