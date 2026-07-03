@@ -14,14 +14,17 @@
 
 #pragma once
 #include <any>
+#include <concepts>
 #include <cstdint>
 #include <optional>
+#include <ostream>
 
 #include <nameof.hpp>
 #include "DataTypes/UnboundField.hpp"
 #include "Identifiers/QualifiedIdentifier.hpp"
 #include "Schema/Schema.hpp"
 #include "Schema/SchemaFwd.hpp"
+#include "Util/Logger/Formatter.hpp"
 
 namespace NES
 {
@@ -89,16 +92,35 @@ public:
     [[nodiscard]] std::optional<std::function<T()>> getDefaultSupplier() const { return defaultSupplier; }
 };
 
+/// Wraps std::any for use as the value type of std::expected. std::expected<std::any, E> itself is ill-formed with
+/// clang + libstdc++: std::any is constructible from anything, including the expected itself, so the constraints on
+/// expected's converting constructors (__cons_from_expected) recursively depend on themselves. Restricting the
+/// constructor to exactly std::any makes this type not constructible from the surrounding expected, breaking the cycle.
+/// The same_as constraint is load-bearing: a plain std::any parameter would accept the expected via std::any's
+/// implicit converting constructor, and checking that conversion re-enters the same constraint recursion.
+class ErasedConfigValue
+{
+    std::any value;
+
+public:
+    template <std::same_as<std::any> A>
+    explicit ErasedConfigValue(A value) : value(std::move(value))
+    {
+    }
+
+    [[nodiscard]] const std::any& getValue() const { return value; }
+};
+
 class QualifiedErasedConfigField
 {
     QualifiedIdentifier name;
-    std::function<std::expected<std::any, Exception>(const ConfigLiteral&)> factory;
+    std::function<std::expected<ErasedConfigValue, Exception>(const ConfigLiteral&)> factory;
     std::optional<std::function<std::any()>> defaultSupplier;
 
 public:
     QualifiedErasedConfigField(
         QualifiedIdentifier name,
-        std::function<std::expected<std::any, Exception>(const ConfigLiteral&)> factory,
+        std::function<std::expected<ErasedConfigValue, Exception>(const ConfigLiteral&)> factory,
         std::optional<std::function<std::any()>> defaultFactory)
         : name(std::move(name)), factory(std::move(factory)), defaultSupplier(std::move(defaultFactory))
     {
@@ -106,11 +128,13 @@ public:
 
     [[nodiscard]] QualifiedIdentifier getFullyQualifiedName() const { return name; }
 
-    [[nodiscard]] std::expected<std::any, Exception> apply(const ConfigLiteral& literal) const { return factory(literal); }
+    [[nodiscard]] std::expected<ErasedConfigValue, Exception> apply(const ConfigLiteral& literal) const { return factory(literal); }
 
     [[nodiscard]] bool hasDefault() const { return defaultSupplier.has_value(); }
 
     [[nodiscard]] std::any getDefault() const { return defaultSupplier.value()(); }
+
+    friend std::ostream& operator<<(std::ostream& os, const QualifiedErasedConfigField& field) { return os << field.name; }
 };
 
 template <typename... T>
@@ -121,7 +145,7 @@ Schema<QualifiedErasedConfigField, Ordered> createConfigSchema(Identifier prefix
         return QualifiedErasedConfigField{
             QualifiedIdentifier::create(prefix, field.getName()),
             [factory = field.getFactory()](const ConfigLiteral& value)
-            { return std::move(factory(value)).transform([](auto val) { return std::any(std::move(val)); }); },
+            { return std::move(factory(value)).transform([](auto val) { return ErasedConfigValue{std::any(std::move(val))}; }); },
             field.getDefaultSupplier()};
     };
     return Schema<QualifiedErasedConfigField, Ordered>{convertField(fields)...};
@@ -134,3 +158,5 @@ std::function<Exception()> expectedType()
 }
 
 }
+
+FMT_OSTREAM(NES::QualifiedErasedConfigField);
