@@ -69,13 +69,30 @@ IoUringAsyncSource::~IoUringAsyncSource()
 
 unsigned IoUringAsyncSource::resolveQueueDepth(const std::size_t poolBuffers) const
 {
+    /// Half the pool for the in-flight ring, half as in-processing headroom, so the source never holds more
+    /// than the pool allows and can always refill (priming QD reads must not exceed what the private source
+    /// pool can hand out, or open() deadlocks). pool/2 is that safety bound.
+    const auto poolCap = static_cast<unsigned>(std::max<std::size_t>(poolBuffers / 2, 1));
     if (not autoQueueDepth)
     {
-        return queueDepth; /// NES_IOURING_QD pinned it
+        /// NES_IOURING_QD pinned it -- but a forced value larger than the pool would deadlock priming, so
+        /// clamp it down (with a warning) rather than hang. Raise worker.default_max_inflight_buffers for a
+        /// deeper queue. A smaller forced value is honored as-is.
+        if (queueDepth > poolCap)
+        {
+            NES_WARNING(
+                "IoUringAsyncSource: NES_IOURING_QD={} exceeds half the source pool ({} buffers, pool/2={}); clamping to "
+                "{} to avoid a prime-time deadlock (raise worker.default_max_inflight_buffers for a deeper queue)",
+                queueDepth,
+                poolBuffers,
+                poolCap,
+                poolCap);
+            return poolCap;
+        }
+        return queueDepth;
     }
-    /// Half the pool for the in-flight ring, half as in-processing headroom, so the source never holds more
-    /// than the pool allows and can always refill. Cap at 64 (QD>=32 already saturates an NVMe).
-    return static_cast<unsigned>(std::clamp<std::size_t>(poolBuffers / 2, 1, 64));
+    /// Auto: derive at pool/2, capped at 64 (QD>=32 already saturates an NVMe).
+    return std::min(poolCap, 64U);
 }
 
 asio::awaitable<void, Executor> IoUringAsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)

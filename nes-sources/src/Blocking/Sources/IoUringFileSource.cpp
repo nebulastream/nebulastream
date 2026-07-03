@@ -109,13 +109,28 @@ void IoUringFileSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     fileSize = static_cast<std::size_t>(st.st_size);
     numReads = bufferSize == 0 ? 0 : (fileSize + bufferSize - 1) / bufferSize;
 
-    /// Derive the ring depth from the (inflight-sized) pool unless NES_IOURING_QD pinned it: half the pool
-    /// for the ring, half as in-processing headroom, so the source never holds more than the pool allows and
-    /// can always refill. Cap at 64 (QD>=32 already saturates the device; >64 adds nothing).
+    /// Derive the ring depth from the (inflight-sized) pool: half the pool for the ring, half as in-processing
+    /// headroom, so the source never holds more than the pool allows and can always refill. Cap at 64 (QD>=32
+    /// already saturates the device; >64 adds nothing). Priming QD reads must not exceed what the private
+    /// source pool can hand out, or open() deadlocks -- so pool/2 also bounds a FORCED NES_IOURING_QD.
+    const std::size_t poolBuffers = bufferProvider->getNumOfPooledBuffers();
+    const auto poolCap = static_cast<unsigned>(std::max<std::size_t>(poolBuffers / 2, 1));
     if (autoQueueDepth)
     {
-        const std::size_t poolBuffers = bufferProvider->getNumOfPooledBuffers();
-        queueDepth = static_cast<unsigned>(std::clamp<std::size_t>(poolBuffers / 2, 1, 64));
+        queueDepth = std::min(poolCap, 64U);
+    }
+    else if (queueDepth > poolCap)
+    {
+        /// NES_IOURING_QD forced a value larger than the pool can satisfy -> clamp it down (with a warning)
+        /// rather than deadlock priming. Raise worker.default_max_inflight_buffers for a deeper queue.
+        NES_WARNING(
+            "IoUringFileSource: NES_IOURING_QD={} exceeds half the source pool ({} buffers, pool/2={}); clamping to {} "
+            "to avoid a prime-time deadlock (raise worker.default_max_inflight_buffers for a deeper queue)",
+            queueDepth,
+            poolBuffers,
+            poolCap,
+            poolCap);
+        queueDepth = poolCap;
     }
 
     if (const int rc = io_uring_queue_init(queueDepth, &ring, 0); rc < 0)
