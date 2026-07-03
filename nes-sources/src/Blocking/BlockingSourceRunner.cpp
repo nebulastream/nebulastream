@@ -109,65 +109,52 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutineSequential(
     };
 
     const bool requiresMetadata = !source.addsMetadata();
-    TupleBuffer priorBuffer = bufferProvider->getBufferBlocking();
-    priorBuffer.setNumberOfTuples(0);
+    /// The runner hands the sequential formatter FULL buffers and NEVER prepends: the formatter stitches
+    /// spanning tuples across buffers itself (it keeps the prior buffer's trailing partial alive in its
+    /// accumulator, zero copy). This lets a PREFILL source (io_uring deep-QD) be consumed IN PLACE.
+    const bool preFill = source.preFillsBuffers();
     while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
     {
-        /// 4 Things that could happen:
-        /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
-        /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.
-        ///    The thread exits with `StopRequested`
-        /// 3. EndOfStream was signaled by the source implementation. It returned 0 bytes, but the Stop Token was not triggered.
-        ///    The thread exits with `EndOfStream`
-        /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the BlockingSourceRunner via the return promise.
-        ///    The thread exists with an exception
-
-
-        /// at this point we are guaranteed that if threading mode is sequential, the type is also sequential
-        std::optional<TupleBuffer> emptyBuffer;
-
-        while (!emptyBuffer && !stopToken.stop_requested())
+        std::optional<TupleBuffer> buffer;
+        if (preFill)
         {
-            emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
+            /// io_uring: a deep-QD read already filled a pool buffer -> take it in place (zero extra copy).
+            buffer = source.takePreFilledBuffer(stopToken);
+            if (not buffer.has_value())
+            {
+                return {
+                    stopToken.stop_requested() ? SourceImplementationTermination::StopRequested
+                                               : SourceImplementationTermination::EndOfStream};
+            }
         }
-        if (stopToken.stop_requested())
+        else
         {
-            return {SourceImplementationTermination::StopRequested};
-        }
-
-        /// copy truncated bytes from prior buffer to current buffer
-        const auto priorTruncatedBytes = priorBuffer.getNumberOfTuples();
-        const auto offsetInPriorBuffer = priorBuffer.getBufferSize() - priorTruncatedBytes;
-        std::memcpy(
-            emptyBuffer.value().getAvailableMemoryArea().data(),
-            priorBuffer.getAvailableMemoryArea().data() + offsetInPriorBuffer,
-            priorTruncatedBytes);
-
-        /// Stamp sourceCreationTimestamp at READ-START (us) so the sink's e2e latency/throughput include
-        /// the read copy; bracket fillTupleBuffer (+ the prior-truncated-bytes memcpy above) for the meter.
-        const auto readStartMicros = ingestNowMicros();
-        emptyBuffer->setSourceCreationTimestampInMS(Timestamp(readStartMicros));
-        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken, priorTruncatedBytes);
-        if (copyMeter.enabled())
-        {
-            copyMeter.add(ingestNowMicros() - readStartMicros, fillTupleResult.getNumberOfBytes() + priorTruncatedBytes);
-        }
-        if (fillTupleResult.isEoS())
-        {
+            /// BlockingFile etc: read the next bulk straight into a fresh pool buffer at offset 0.
+            while (!buffer && !stopToken.stop_requested())
+            {
+                buffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
+            }
             if (stopToken.stop_requested())
             {
                 return {SourceImplementationTermination::StopRequested};
             }
-
-            return {SourceImplementationTermination::EndOfStream};
+            /// Stamp sourceCreationTimestamp at READ-START (us) so sink e2e latency/throughput include the read.
+            const auto readStartMicros = ingestNowMicros();
+            buffer->setSourceCreationTimestampInMS(Timestamp(readStartMicros));
+            const auto fillTupleResult = source.fillTupleBuffer(*buffer, stopToken, 0);
+            if (copyMeter.enabled())
+            {
+                copyMeter.add(ingestNowMicros() - readStartMicros, fillTupleResult.getNumberOfBytes());
+            }
+            if (fillTupleResult.isEoS())
+            {
+                return {
+                    stopToken.stop_requested() ? SourceImplementationTermination::StopRequested
+                                               : SourceImplementationTermination::EndOfStream};
+            }
+            buffer->setNumberOfTuples(fillTupleResult.getNumberOfBytes());
         }
-
-        emptyBuffer->setNumberOfTuples(fillTupleResult.getNumberOfBytes() + priorTruncatedBytes);
-        // the 'priorBuffer' should point to the same control block as the emptyBuffer
-        priorBuffer = emptyBuffer.value();
-        // emit should only return if
-        const auto emitResult = emitFn(std::move(*emptyBuffer), requiresMetadata, bufferProvider);
-        (void)emitResult;
+        emitFn(std::move(*buffer), requiresMetadata, bufferProvider);
     }
     return {SourceImplementationTermination::StopRequested};
 }

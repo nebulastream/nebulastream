@@ -253,10 +253,18 @@ private:
     /// Concurrent mode only: lock-free spanning tuple resolution across threads
     [[no_unique_address]] std::conditional_t<not isSequential(), std::unique_ptr<SequenceShredder>, Empty> sequenceShredder;
 
-    /// Sequential mode only: accumulates delimiter-less buffers that are part of a multi-buffer spanning tuple.
-    /// Stores (TupleBuffer, byteCount) pairs — byteCount is saved before setNumberOfTuples(0) since TupleBuffer is ref-counted.
-    [[no_unique_address]] std::conditional_t<isSequential(), std::vector<std::pair<TupleBuffer, size_t>>, Empty>
-        accumulatedSpanningTupleBuffers;
+    /// Sequential mode only: the tail region of a buffer that is part of a spanning tuple straddling
+    /// buffers, kept alive (TupleBuffer is ref-counted) with ZERO copy until the next buffer completes the
+    /// tuple. `offset..offset+length` is the carried region: a trailing partial uses
+    /// offset=lastDelimiter+delimiterSize; a whole delimiter-less interior buffer uses offset 0.
+    struct SequentialCarry
+    {
+        TupleBuffer buffer;
+        size_t offset;
+        size_t length;
+    };
+
+    [[no_unique_address]] std::conditional_t<isSequential(), std::vector<SequentialCarry>, Empty> accumulatedSpanningTupleBuffers;
     std::unordered_map<DataType::Type, std::string> parserTypes;
     /// Signalizes, if we allow logical function overloads on lazy value representations
     std::unordered_map<DataType::Type, bool> lazyValueOverloads;
@@ -380,20 +388,21 @@ private:
             return sizeOfSpanningTuple;
         }
 
-        /// Sequential mode: assembles a leading spanning tuple from accumulated buffers + leading bytes of the current buffer.
+        /// Sequential mode: assembles a leading spanning tuple from the carried tail(s) + leading bytes of the
+        /// current buffer into the arena (the ONLY copy -- ~one row). The 128 KiB bulk is parsed in place.
         static void constructAndIndexSequentialLeadingSpanningTuple(
-            std::vector<std::pair<TupleBuffer, size_t>>& accumulatedBuffers,
+            std::vector<SequentialCarry>& accumulatedBuffers,
             const std::string_view leadingBytes,
             InputFormatter& inputFormatter,
             Arena& arenaRef)
         {
             const auto delimiterBytes = inputFormatter.indexerMetaData.getTupleDelimitingBytes();
 
-            /// Compute total size: delimiter + accumulated_data + leading_bytes + delimiter
+            /// Compute total size: delimiter + carried_tails + leading_bytes + delimiter
             size_t totalSize = 2 * delimiterBytes.size() + leadingBytes.size();
-            for (const auto& [buffer, byteCount] : accumulatedBuffers)
+            for (const auto& carry : accumulatedBuffers)
             {
-                totalSize += byteCount;
+                totalSize += carry.length;
             }
 
             /// Arena-allocate and copy
@@ -408,14 +417,14 @@ private:
             };
 
             copyTo(delimiterBytes);
-            for (const auto& [buffer, byteCount] : accumulatedBuffers)
+            for (const auto& carry : accumulatedBuffers)
             {
-                copyTo(std::string_view(buffer.getAvailableMemoryArea<char>().data(), byteCount));
+                copyTo(std::string_view(carry.buffer.template getAvailableMemoryArea<char>().data() + carry.offset, carry.length));
             }
             copyTo(leadingBytes);
             copyTo(delimiterBytes);
 
-            /// Release accumulated buffers
+            /// Release the carried buffers
             accumulatedBuffers.clear();
 
             /// Index the assembled spanning tuple
@@ -451,27 +460,34 @@ private:
         const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]
             = IndexPhaseResultBuilder::indexRawBuffer(*inputFormatter, *tupleBuffer);
 
+        const auto totalBytes = tupleBuffer->getNumberOfTuples();
         if (hasTupleDelimiter)
         {
-            if (not inputFormatter->accumulatedSpanningTupleBuffers.empty())
+            /// The first complete row of this buffer, [0 -> firstDelimiter), is NOT in the bulk parse (parallel
+            /// finalize starts b0 at the first newline). Complete it with the carried tail(s) (if any) and parse
+            /// it via the arena leading spanning tuple (parseLeadingRecord). This handles BOTH a spanning row
+            /// (accumulated non-empty) and a standalone first-of-buffer row (accumulated empty, firstDelimiter>0).
+            /// Skip only when there is nothing to make a row (buffer starts with a delimiter and no carry).
+            if (not inputFormatter->accumulatedSpanningTupleBuffers.empty() || offsetOfFirstTupleDelimiter > 0)
             {
-                /// Bytes before the first delimiter are the tail of the spanning tuple
                 const auto leadingBytes = std::string_view(tupleBuffer->getAvailableMemoryArea<char>().data(), offsetOfFirstTupleDelimiter);
                 IndexPhaseResultBuilder::constructAndIndexSequentialLeadingSpanningTuple(
                     inputFormatter->accumulatedSpanningTupleBuffers, leadingBytes, *inputFormatter, *arenaRef);
             }
 
-            /// Report truncated trailing bytes so the outside can prepend them to the next buffer
+            /// Carry THIS buffer's trailing partial (after the last delimiter) for the next buffer -- keep the
+            /// buffer ALIVE (ref-counted), ZERO copy. Replaces the old runner-prepend (setNumberOfTuples-for-runner).
             const auto delimiterSize = inputFormatter->indexerMetaData.getTupleDelimitingBytes().size();
-            const auto truncatedByteCount = tupleBuffer->getNumberOfTuples() - (offsetOfLastTupleDelimiter + delimiterSize);
-            tupleBuffer->setNumberOfTuples(truncatedByteCount);
+            const auto tailStart = static_cast<size_t>(offsetOfLastTupleDelimiter) + delimiterSize;
+            if (tailStart < totalBytes)
+            {
+                inputFormatter->accumulatedSpanningTupleBuffers.push_back({*tupleBuffer, tailStart, totalBytes - tailStart});
+            }
         }
         else
         {
-            /// No delimiter: accumulate entire buffer
-            const auto byteCount = tupleBuffer->getNumberOfTuples();
-            inputFormatter->accumulatedSpanningTupleBuffers.emplace_back(*tupleBuffer, byteCount);
-            tupleBuffer->setNumberOfTuples(0);
+            /// No delimiter: the entire buffer is interior of a spanning tuple -> carry the whole buffer.
+            inputFormatter->accumulatedSpanningTupleBuffers.push_back({*tupleBuffer, 0, totalBytes});
         }
         return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
     }

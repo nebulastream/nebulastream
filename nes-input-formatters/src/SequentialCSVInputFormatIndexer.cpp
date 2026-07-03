@@ -42,8 +42,12 @@ SequentialCSVInputFormatIndexer::SequentialCSVInputFormatIndexer(const InputForm
 
 void SequentialCSVInputFormatIndexer::indexRawBuffer(FieldBand& band, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
 {
-    /// Branchless SIMD flat-band scan with the synthetic leading anchor (aligned buffer -> tuple 0 at byte 0).
-    SimdCsv::indexBandSequentialInto(
+    /// Branchless SIMD flat-band scan with PARALLEL finalize (b0 at the first newline). The source runner no
+    /// longer prepends the prior buffer's trailing partial, so byte 0 is NOT a complete tuple: the leading row
+    /// [0 -> firstNewline] is completed from the formatter's zero-copy accumulator (leading spanning tuple) and
+    /// the bulk (firstNewline -> lastNewline) is parsed in place -- the parallel per-buffer model, but with
+    /// single-threaded accumulator spanning instead of the SequenceShredder.
+    SimdCsv::indexBandInto(
         band,
         rawBuffer.getBufferView(),
         metaData.getFieldDelimiter(),
