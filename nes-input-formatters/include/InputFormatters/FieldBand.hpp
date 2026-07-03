@@ -200,6 +200,38 @@ public:
         this->totalNumberOfTuples = (numberOfFieldsInSchema == 0) ? 0 : ((bLast - b0) / numberOfFieldsInSchema);
     }
 
+    /// SEQUENTIAL (synthetic-anchor) finalize. Unlike the parallel finalize, the aligned leading tuple
+    /// [0 -> firstNewline] IS a complete tuple (tuple 0), because the blocking source runner prepends the
+    /// prior buffer's truncated bytes so byte 0 always starts a tuple. `indexBandSequentialInto` writes a
+    /// synthetic anchor band[0] = FieldIndex max (-1); the real structural positions live at band[1 ..
+    /// 1+count] in document order. So b0 is fixed at 0 and tuple 0 field 0 reads byte 0 via uint32
+    /// wraparound (start+1 -> 0). The last complete tuple ends at lastNewline, which sits at band index
+    /// T*N, so T = bandIndexOf(lastNewline) / N. offsetOfFirstTuple stays the first newline byte offset:
+    /// the sequential glue uses it to split leading spanning bytes / detect hasTupleDelimiter.
+    void finalizeSequential(size_t count, FieldIndex firstNewline, FieldIndex lastNewline)
+    {
+        this->firstTupleBandIndex = 0;
+        this->offsetOfFirstTuple = firstNewline;
+        this->offsetOfLastTuple = lastNewline;
+        const auto begin = band + 1; /// skip the synthetic anchor at band[0]
+        const auto end = band + 1 + static_cast<std::ptrdiff_t>(count);
+        const auto bLast = static_cast<size_t>(std::lower_bound(begin, end, lastNewline) - band);
+        this->totalNumberOfTuples = (numberOfFieldsInSchema == 0) ? 0 : (bLast / numberOfFieldsInSchema);
+    }
+
+    /// Sequential spanning: when the leading bytes [0 -> firstNewline] are the tail of a spanning tuple
+    /// (parsed separately as the leading record via parseLeadingRecord), drop band tuple 0 from the
+    /// raw-buffer read so it is not parsed twice. Advancing the anchor by N lands b0 on the first real
+    /// newline (parallel semantics for the remaining complete tuples).
+    void skipFirstTuple()
+    {
+        if (totalNumberOfTuples > 0)
+        {
+            firstTupleBandIndex += numberOfFieldsInSchema;
+            totalNumberOfTuples -= 1;
+        }
+    }
+
 private:
     size_t numberOfFieldsInSchema{};
     size_t totalNumberOfTuples{};

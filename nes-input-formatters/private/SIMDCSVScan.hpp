@@ -18,6 +18,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <string_view>
 #include <vector>
 
@@ -306,6 +307,107 @@ void indexBandInto(
         return;
     }
     band.finalize(static_cast<size_t>(cursor - out), firstNewline, lastNewline);
+}
+
+/// SEQUENTIAL flat-band indexer. Identical branchless scan as indexBandInto, but written for the
+/// blocking/sequential threading mode where buffers arrive IN ORDER and ALIGNED (the source runner
+/// prepends the prior buffer's truncated bytes, so byte 0 always starts a tuple). It writes a synthetic
+/// anchor `FieldIndex(-1)` at band[0] so the aligned leading tuple [0 -> firstNewline] becomes tuple 0
+/// (read via uint32 wraparound in FieldBand::applyReadSpanningRecord); the real structural positions
+/// follow at band[1..]. Finalized with FieldBand::finalizeSequential (b0 fixed at 0). `Band` must
+/// provide startSetup, prepareBand, finalizeSequential, markNoTupleDelimiters -- FieldBand does.
+template <typename Band>
+void indexBandSequentialInto(
+    Band& band,
+    const std::string_view view,
+    const char fieldDelim,
+    const char tupleDelim,
+    const bool quoteAware,
+    const uint64_t numFields,
+    const ComputeBlocksFn computeBlocks)
+{
+    constexpr size_t sizeOfFieldDelimiter = 1;
+    band.startSetup(numFields, sizeOfFieldDelimiter);
+
+    const char* data = view.data();
+    const size_t numBytes = view.size();
+    /// +1 for the synthetic anchor at band[0]; the reader/finalize treat band[1..] as the real positions.
+    uint32_t* const out = band.prepareBand(numBytes + 1);
+    out[0] = std::numeric_limits<uint32_t>::max(); /// synthetic anchor: makes tuple 0 start at byte 0
+    uint32_t* cursor = out + 1;
+
+    bool seenNewline = false;
+    uint32_t firstNewline = 0;
+    uint32_t lastNewline = 0;
+    uint64_t quoteCarry = 0;
+
+    const size_t numBlocks = numBytes / 64;
+    constexpr size_t chunkBlocks = 16;
+    std::array<BlockBits, chunkBlocks> chunk{};
+    for (size_t base = 0; base < numBlocks; base += chunkBlocks)
+    {
+        const size_t count = std::min(chunkBlocks, numBlocks - base);
+        computeBlocks(data + (base * 64), count, chunk.data(), fieldDelim, tupleDelim);
+        for (size_t i = 0; i < count; ++i)
+        {
+            const BlockBits bits = chunk[i];
+            const auto blockBase = static_cast<uint32_t>((base + i) * 64);
+            uint64_t fieldSep = 0;
+            if (quoteAware)
+            {
+                uint64_t quoted = prefixXor(bits.quote);
+                quoted ^= quoteCarry;
+                quoteCarry = uint64_t{0} - (quoted >> 63);
+                fieldSep = (bits.comma & ~quoted) | bits.newline;
+            }
+            else
+            {
+                fieldSep = bits.comma | bits.newline;
+            }
+            cursor = flattenBits(cursor, blockBase, fieldSep);
+            if (bits.newline != 0)
+            {
+                if (!seenNewline)
+                {
+                    seenNewline = true;
+                    firstNewline = blockBase + static_cast<uint32_t>(__builtin_ctzll(bits.newline));
+                }
+                lastNewline = blockBase + static_cast<uint32_t>(63 - __builtin_clzll(bits.newline));
+            }
+        }
+    }
+
+    bool insideQuote = quoteAware && (quoteCarry != 0);
+    for (size_t i = numBlocks * 64; i < numBytes; ++i)
+    {
+        const char byte = data[i];
+        const bool isNewline = (byte == tupleDelim);
+        if (isNewline || (byte == fieldDelim && (!quoteAware || !insideQuote)))
+        {
+            *cursor++ = static_cast<uint32_t>(i);
+            if (isNewline)
+            {
+                if (!seenNewline)
+                {
+                    seenNewline = true;
+                    firstNewline = static_cast<uint32_t>(i);
+                }
+                lastNewline = static_cast<uint32_t>(i);
+            }
+        }
+        if (quoteAware && byte == '"')
+        {
+            insideQuote = !insideQuote;
+        }
+    }
+
+    if (!seenNewline)
+    {
+        band.markNoTupleDelimiters();
+        return;
+    }
+    /// count = number of REAL structural positions (excludes the synthetic anchor at band[0]).
+    band.finalizeSequential(static_cast<size_t>(cursor - out - 1), firstNewline, lastNewline);
 }
 
 }

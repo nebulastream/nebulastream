@@ -14,138 +14,43 @@
 
 #include <SequentialCSVInputFormatIndexer.hpp>
 
-#include <cstddef>
 #include <ostream>
 #include <string>
-#include <string_view>
+#include <unordered_map>
 #include <utility>
 
-#include <Sources/SourceDescriptor.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <fmt/format.h>
-#include <ErrorHandling.hpp>
-#include <FieldOffsets.hpp>
+#include <CSVInputFormatIndexer.hpp>
+#include <FieldBand.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
 #include <InputFormatterValidationRegistry.hpp>
-
-namespace
-{
-
-void initializeIndexFunctionForTupleWithCommasInStrings(
-    NES::FieldOffsets<NES::CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
-    const std::string_view tuple,
-    const NES::FieldIndex startIdxOfTuple,
-    const NES::CSVMetaData& metaData)
-{
-    fieldOffsets.emplaceFieldOffset(startIdxOfTuple);
-    size_t fieldIdx = 1;
-
-    bool isQuoted = false;
-    for (const auto [i, character] : tuple | NES::views::enumerate)
-    {
-        if (not isQuoted and character == metaData.getFieldDelimiter())
-        {
-            constexpr size_t sizeOfFieldDelimiter = 1;
-            fieldOffsets.emplaceFieldOffset(startIdxOfTuple + i + sizeOfFieldDelimiter);
-            ++fieldIdx;
-        }
-        isQuoted = isQuoted xor (character == '"');
-    }
-
-    fieldOffsets.emplaceFieldOffset(startIdxOfTuple + tuple.size());
-    if (fieldIdx != metaData.getNumberOfFields())
-    {
-        throw NES::CannotFormatSourceData(
-            "Number of parsed fields does not match number of fields in schema (parsed {} vs {} schema",
-            fieldIdx,
-            metaData.getNumberOfFields());
-    }
-}
-
-void initializeIndexFunctionForTuple(
-    NES::FieldOffsets<NES::CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
-    const std::string_view tuple,
-    const NES::FieldIndex startIdxOfTuple,
-    const NES::CSVMetaData& metaData)
-{
-    fieldOffsets.emplaceFieldOffset(startIdxOfTuple);
-    size_t fieldIdx = 1;
-    for (size_t nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), 0); nextFieldOffset != std::string_view::npos;
-         nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), nextFieldOffset))
-    {
-        nextFieldOffset += NES::CSVMetaData::SIZE_OF_FIELD_DELIMITER;
-        fieldOffsets.emplaceFieldOffset(startIdxOfTuple + nextFieldOffset);
-        ++fieldIdx;
-    }
-    fieldOffsets.emplaceFieldOffset(startIdxOfTuple + tuple.size());
-    if (fieldIdx != metaData.getNumberOfFields())
-    {
-        throw NES::CannotFormatSourceData(
-            "Number of parsed fields does not match number of fields in schema (parsed {} vs {} schema",
-            fieldIdx,
-            metaData.getNumberOfFields());
-    }
-}
-}
+#include <RawTupleBuffer.hpp>
+#include <SIMDCSVKernel.hpp>
+#include <SIMDCSVScan.hpp>
 
 namespace NES
 {
 
 SequentialCSVInputFormatIndexer::SequentialCSVInputFormatIndexer(const InputFormatterDescriptor& config)
     : allowCommasInStrings(config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS))
+    , computeBlocks(SimdCsv::selectComputeBlocks())
 {
 }
 
-void SequentialCSVInputFormatIndexer::indexRawBuffer(
-    FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
+void SequentialCSVInputFormatIndexer::indexRawBuffer(FieldBand& band, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
 {
-    fieldOffsets.startSetup(metaData.getNumberOfFields(), NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
-
-    const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(metaData.getTupleDelimiter()));
-
-    if (offsetOfFirstTupleDelimiter == static_cast<FieldIndex>(std::string::npos))
-    {
-        fieldOffsets.markNoTupleDelimiters();
-        return;
-    }
-
-    /// Sequential mode: buffer is aligned, so the first tuple starts at position 0
-    const auto firstTuple = rawBuffer.getBufferView().substr(0, offsetOfFirstTupleDelimiter);
-    if (allowCommasInStrings)
-    {
-        initializeIndexFunctionForTupleWithCommasInStrings(fieldOffsets, firstTuple, 0, metaData);
-    }
-    else
-    {
-        initializeIndexFunctionForTuple(fieldOffsets, firstTuple, 0, metaData);
-    }
-
-    /// Index remaining tuples between consecutive delimiters (same as concurrent version)
-    auto startIdxOfNextTuple = offsetOfFirstTupleDelimiter + NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER;
-    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
-
-    while (endIdxOfNextTuple != std::string::npos)
-    {
-        INVARIANT(startIdxOfNextTuple <= endIdxOfNextTuple, "The start index of a tuple cannot be larger than the end index.");
-        const auto sizeOfNextTuple = endIdxOfNextTuple - startIdxOfNextTuple;
-        const auto nextTuple = rawBuffer.getBufferView().substr(startIdxOfNextTuple, sizeOfNextTuple);
-
-        if (allowCommasInStrings)
-        {
-            initializeIndexFunctionForTupleWithCommasInStrings(fieldOffsets, nextTuple, startIdxOfNextTuple, metaData);
-        }
-        else
-        {
-            initializeIndexFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, metaData);
-        }
-
-        startIdxOfNextTuple = endIdxOfNextTuple + NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER;
-        endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
-    }
-
-    const auto offsetOfLastTupleDelimiter = static_cast<FieldIndex>(startIdxOfNextTuple - NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
-    fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
+    /// Branchless SIMD flat-band scan with the synthetic leading anchor (aligned buffer -> tuple 0 at byte 0).
+    SimdCsv::indexBandSequentialInto(
+        band,
+        rawBuffer.getBufferView(),
+        metaData.getFieldDelimiter(),
+        metaData.getTupleDelimiter(),
+        allowCommasInStrings,
+        metaData.getNumberOfFields(),
+        computeBlocks);
 }
 
 DescriptorConfig::Config SequentialCSVInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
