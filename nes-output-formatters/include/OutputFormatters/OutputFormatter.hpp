@@ -83,12 +83,22 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
 
-    /// Optional whole-record fast path. Returns the number of bytes written into the main record buffer, or
-    /// std::nullopt to decline -- in which case the caller formats the record field-by-field via
-    /// writeFormattedValue(). A formatter overrides this to coalesce a run of adjacent passthrough fields into
-    /// a single copy (e.g. CSV byte-passthrough of contiguous lazy values). Default: decline.
-    [[nodiscard]] virtual std::optional<nautilus::val<uint64_t>> tryWriteCoalescedRecord(
+    /// Host-time predicate: may the caller group contiguous non-nullable lazy passthrough fields into runs and
+    /// offer them to tryWriteCoalescedRun()? Only formatters that ALWAYS accept such a run (never return
+    /// nullopt for it) should return true, so the caller can safely skip a run's interior fields. Default: no.
+    [[nodiscard]] virtual bool supportsRunCoalescing() const { return false; }
+
+    /// Optional coalesced fast path for a RUN of adjacent non-nullable lazy passthrough fields (raw input
+    /// bytes). The caller groups maximal contiguous runs of such fields and offers each here; `runFieldNames`
+    /// is the run's fields in order and `runEndsRecord` is true iff the run's last field is the record's last
+    /// field (=> a tuple delimiter follows, else a field delimiter). Returns the bytes written into the main
+    /// buffer, or std::nullopt to decline -- in which case the caller formats the run field-by-field via
+    /// writeFormattedValue(). A formatter overrides this to emit the run as ONE copy (the in-between field
+    /// delimiters ride along) when the fields are actually adjacent in the source buffer. Default: decline.
+    [[nodiscard]] virtual std::optional<nautilus::val<uint64_t>> tryWriteCoalescedRun(
         const Record&,
+        const std::vector<Record::RecordFieldIdentifier>& /*runFieldNames*/,
+        bool /*runEndsRecord*/,
         const nautilus::val<int8_t*>& /*recordAddress*/,
         const nautilus::val<uint64_t>& /*remainingSize*/,
         const RecordBuffer&,

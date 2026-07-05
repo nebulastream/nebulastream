@@ -263,41 +263,35 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
     return written;
 }
 
-std::optional<nautilus::val<uint64_t>> CSVOutputFormatter::tryWriteCoalescedRecord(
+std::optional<nautilus::val<uint64_t>> CSVOutputFormatter::tryWriteCoalescedRun(
     const Record& record,
+    const std::vector<Record::RecordFieldIdentifier>& runFieldNames,
+    const bool runEndsRecord,
     const nautilus::val<int8_t*>& recordAddress,
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    /// Host-time gate: coalescing only applies when the field delimiter is a single byte and every output
-    /// field is a lazy passthrough value (raw input bytes, written unquoted -- like the lazy branch of
-    /// writeValue). Otherwise decline and let the caller format field-by-field.
+    /// Host-time gate: coalescing rides the in-between bytes as field delimiters, so it needs a single-byte
+    /// field delimiter. Otherwise decline and let the caller format the run field-by-field. The caller
+    /// guarantees every field in the run is a non-nullable lazy passthrough value, so no type/NULL handling
+    /// is needed here. The delimiter AFTER the run is a tuple delimiter iff the run ends the record.
     if (fieldDelimiter.size() != 1)
     {
         return std::nullopt;
     }
-    for (const auto& name : fieldNames)
-    {
-        const auto& value = record.read(name);
-        /// Nullable fields need per-field NULL handling (write "NULL"); a raw byte copy would emit the
-        /// underlying bytes instead. Only coalesce non-nullable lazy passthrough fields.
-        if (not value.isLazyValue() or value.isNullable())
-        {
-            return std::nullopt;
-        }
-    }
+    const auto& trailingDelimiter = runEndsRecord ? tupleDelimiter : fieldDelimiter;
 
-    /// Runtime check: is the whole row contiguous in the source buffer, with the field delimiter as the byte
-    /// between consecutive fields? If so, "f0<delim>f1...<delim>fN-1" already exists verbatim in the input and
-    /// can be emitted with a single copy (the in-between delimiters ride along), then the tuple delimiter.
+    /// Runtime check: are the run's fields contiguous in the source buffer, with the field delimiter as the
+    /// byte between consecutive fields? If so, "f0<delim>...<delim>fN-1" already exists verbatim in the input
+    /// and is emitted with a single copy (the in-between delimiters ride along), then the trailing delimiter.
     const auto fieldDelimByte = nautilus::val<int8_t>(static_cast<int8_t>(fieldDelimiter[0]));
-    const auto firstLazy = record.read(fieldNames.front()).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+    const auto firstLazy = record.read(runFieldNames.front()).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
     nautilus::val<bool> contiguous{true};
     auto prevEnd = firstLazy->getContent() + firstLazy->getSize();
-    for (nautilus::static_val<uint64_t> i = 1; i < fieldNames.size(); ++i)
+    for (nautilus::static_val<uint64_t> i = 1; i < runFieldNames.size(); ++i)
     {
-        const auto lazy = record.read(fieldNames.at(i)).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+        const auto lazy = record.read(runFieldNames.at(i)).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
         contiguous = contiguous and (lazy->getContent() == prevEnd + nautilus::val<uint64_t>{1})
             and (readValueFromMemRef<int8_t>(prevEnd) == fieldDelimByte);
         prevEnd = lazy->getContent() + lazy->getSize();
@@ -306,10 +300,10 @@ std::optional<nautilus::val<uint64_t>> CSVOutputFormatter::tryWriteCoalescedReco
     nautilus::val<uint64_t> written{0};
     if (contiguous)
     {
-        const auto lastLazy = record.read(fieldNames.back()).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+        const auto lastLazy = record.read(runFieldNames.back()).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
         const nautilus::val<int8_t*> spanBegin = firstLazy->getContent();
         const nautilus::val<uint64_t> spanLen = (lastLazy->getContent() + lastLazy->getSize()) - spanBegin;
-        /// One copy of the whole row's fields + their in-between delimiters (quoteStrings=false: byte path).
+        /// One copy of the run's fields + their in-between delimiters (quoteStrings=false: byte path).
         written += nautilus::invoke(
             writeVarsized,
             recordAddress,
@@ -321,8 +315,8 @@ std::optional<nautilus::val<uint64_t>> CSVOutputFormatter::tryWriteCoalescedReco
             bufferProvider);
         written += nautilus::invoke(
             writeBytesToBuffer,
-            nautilus::val<const char*>{tupleDelimiter.c_str()},
-            nautilus::val<uint64_t>{tupleDelimiter.size()},
+            nautilus::val<const char*>{trailingDelimiter.c_str()},
+            nautilus::val<uint64_t>{trailingDelimiter.size()},
             remainingSize - written,
             recordBuffer.getReference(),
             bufferProvider,
@@ -331,10 +325,11 @@ std::optional<nautilus::val<uint64_t>> CSVOutputFormatter::tryWriteCoalescedReco
     }
 
     /// Not contiguous (e.g. fields produced/rearranged by an upstream operator): still no parse/serialize --
-    /// write each lazy field's raw bytes plus its delimiter, exactly as the per-field lazy path would.
-    for (nautilus::static_val<uint64_t> i = 0; i < fieldNames.size(); ++i)
+    /// write each lazy field's raw bytes plus its delimiter, exactly as the per-field lazy path would. Only
+    /// the run's last field takes the trailing delimiter; the others take a field delimiter.
+    for (nautilus::static_val<uint64_t> i = 0; i < runFieldNames.size(); ++i)
     {
-        const auto lazy = record.read(fieldNames.at(i)).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+        const auto lazy = record.read(runFieldNames.at(i)).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
         written += nautilus::invoke(
             writeVarsized,
             recordAddress + written,
@@ -344,7 +339,7 @@ std::optional<nautilus::val<uint64_t>> CSVOutputFormatter::tryWriteCoalescedReco
             lazy->getSize(),
             recordBuffer.getReference(),
             bufferProvider);
-        const auto& delimiter = (i + 1 == fieldNames.size()) ? tupleDelimiter : fieldDelimiter;
+        const auto& delimiter = (i + 1 == runFieldNames.size()) ? trailingDelimiter : fieldDelimiter;
         written += nautilus::invoke(
             writeBytesToBuffer,
             nautilus::val<const char*>{delimiter.c_str()},

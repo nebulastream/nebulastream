@@ -1,0 +1,51 @@
+# name: formatter/CoalesceRuns.test
+# description: CSV output coalescing of contiguous passthrough runs in MIXED (computed + passthrough) projections.
+# groups: [Formatter]
+
+# Every query uses identity compute (x * INT64(1) == x), so ALL projections must emit byte-identical CSV to a
+# pure passthrough of the same column order. Any bug in run boundaries / trailing delimiters (field vs tuple)
+# would corrupt commas or line breaks and diverge from the expected block below. Computed fields keep their
+# bare alias name (a); passthrough fields keep the qualified source name (m.b) -- each sink matches accordingly.
+
+CREATE LOGICAL SOURCE m(a INT64 NOT NULL, b INT64 NOT NULL, c INT64 NOT NULL, d INT64 NOT NULL, e INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR m TYPE File;
+ATTACH INLINE
+10,20,30,40,50
+11,21,31,41,51
+
+CREATE SINK sAll(m.a INT64 NOT NULL, m.b INT64 NOT NULL, m.c INT64 NOT NULL, m.d INT64 NOT NULL, m.e INT64 NOT NULL) TYPE File;
+CREATE SINK sQ2(a INT64 NOT NULL, m.b INT64 NOT NULL, m.c INT64 NOT NULL, m.d INT64 NOT NULL, m.e INT64 NOT NULL) TYPE File;
+CREATE SINK sQ3(m.a INT64 NOT NULL, m.b INT64 NOT NULL, c INT64 NOT NULL, m.d INT64 NOT NULL, m.e INT64 NOT NULL) TYPE File;
+CREATE SINK sQ4(m.a INT64 NOT NULL, m.b INT64 NOT NULL, m.c INT64 NOT NULL, m.d INT64 NOT NULL, e INT64 NOT NULL) TYPE File;
+CREATE SINK sQ5(a INT64 NOT NULL, m.b INT64 NOT NULL, c INT64 NOT NULL, m.d INT64 NOT NULL, e INT64 NOT NULL) TYPE File;
+
+# Pure passthrough: one run over all 5 fields (regression of the old whole-record coalescing).
+SELECT * FROM m INTO sAll;
+----
+10,20,30,40,50
+11,21,31,41,51
+
+# Computed FIRST, then a passthrough run [b,c,d,e]: coalesce the run, computed a per-field.
+SELECT a * INT64(1) AS a, b, c, d, e FROM m INTO sQ2;
+----
+10,20,30,40,50
+11,21,31,41,51
+
+# Passthrough run [a,b], computed c in the MIDDLE, passthrough run [d,e] at the END: exercises a run with a
+# trailing FIELD delimiter (before c) AND a run with a trailing TUPLE delimiter (end of record).
+SELECT a, b, c * INT64(1) AS c, d, e FROM m INTO sQ3;
+----
+10,20,30,40,50
+11,21,31,41,51
+
+# Passthrough run [a,b,c,d] then computed e last: run trailing FIELD delimiter, computed e takes tuple delim.
+SELECT a, b, c, d, e * INT64(1) AS e FROM m INTO sQ4;
+----
+10,20,30,40,50
+11,21,31,41,51
+
+# Alternating computed/passthrough so no run reaches length 2 (all per-field): a*1, b, c*1, d, e*1.
+SELECT a * INT64(1) AS a, b, c * INT64(1) AS c, d, e * INT64(1) AS e FROM m INTO sQ5;
+----
+10,20,30,40,50
+11,21,31,41,51

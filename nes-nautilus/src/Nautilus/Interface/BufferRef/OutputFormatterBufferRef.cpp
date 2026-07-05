@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <utility>
@@ -67,25 +68,84 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
         const auto bufferAddress = recordBuffer.getMemArea();
         const auto recordAddress = bufferAddress + bytesWritten;
 
-        /// Whole-record fast path: a formatter may write the entire record at once (e.g. CSV coalescing of
-        /// contiguous passthrough fields). If it declines, fall back to formatting field-by-field.
-        if (auto coalesced = formatter->tryWriteCoalescedRecord(
-                rec, recordAddress, nautilus::val<uint64_t>{bufferSize} - bytesWritten, recordBuffer, bufferProvider))
+        /// Format the record, grouping maximal contiguous RUNS of non-nullable lazy passthrough fields (raw
+        /// input bytes) so the formatter can emit each run as a single coalesced copy (e.g. CSV) instead of
+        /// one copy per field. Which fields are lazy passthrough is fixed at trace time, so the grouping is
+        /// pure host-side control flow computed up front; the emit loop then uses a single static induction
+        /// variable (as elsewhere in this file), emitting a coalesceable run at its start, skipping the run's
+        /// interior fields, and writing everything else per-field. Computed/nullable fields (and any run the
+        /// formatter declines, e.g. non-CSV or a multi-byte delimiter) go through per-field writeFormattedValue().
+        const std::size_t numberOfFields = fields.size();
+
+        /// Host pre-pass: is each field a non-nullable lazy passthrough value (raw input bytes)?
+        std::vector<bool> isLazyPassthrough(numberOfFields);
+        for (std::size_t i = 0; i < numberOfFields; ++i)
         {
-            writtenForThisRecord = *coalesced;
+            const auto& value = rec.read(fields.at(i).name);
+            isLazyPassthrough[i] = value.isLazyValue() and not value.isNullable();
         }
-        else
+
+        /// Host: length of the coalesceable run STARTING at each field (>= 2 => coalesce), and whether a field
+        /// is interior to a run started earlier (=> skip, already emitted by that run's start). Only formed
+        /// when the formatter guarantees it accepts such runs (supportsRunCoalescing); otherwise every field
+        /// stays per-field so a declined run can never drop its interior fields.
+        std::vector<std::size_t> runLengthAt(numberOfFields, 0);
+        std::vector<bool> interiorToRun(numberOfFields, false);
+        for (std::size_t i = 0; formatter->supportsRunCoalescing() and i < numberOfFields;)
         {
-            /// Iterate through the vals of the record and pass them to the output formatter for formatting
-            for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+            if (not isLazyPassthrough[i])
             {
-                const auto& [name, type] = fields.at(i);
-                const auto fieldAddress = recordAddress + writtenForThisRecord;
-                const nautilus::val remainingBytes{bufferSize - bytesWritten - writtenForThisRecord};
-                const auto& value = rec.read(name);
-                const auto amountWritten
-                    = formatter->writeFormattedValue(value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
-                writtenForThisRecord += amountWritten;
+                ++i;
+                continue;
+            }
+            std::size_t runEnd = i;
+            while (runEnd < numberOfFields and isLazyPassthrough[runEnd])
+            {
+                ++runEnd;
+            }
+            if (runEnd - i >= 2)
+            {
+                runLengthAt[i] = runEnd - i;
+                for (std::size_t k = i + 1; k < runEnd; ++k)
+                {
+                    interiorToRun[k] = true;
+                }
+            }
+            i = runEnd;
+        }
+
+        for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
+        {
+            const std::size_t fieldIndex = i;
+            if (interiorToRun.at(fieldIndex))
+            {
+                continue;
+            }
+            const auto fieldAddress = recordAddress + writtenForThisRecord;
+            const nautilus::val<uint64_t> remainingBytes{bufferSize - bytesWritten - writtenForThisRecord};
+
+            std::optional<nautilus::val<uint64_t>> coalesced;
+            if (const std::size_t runLength = runLengthAt.at(fieldIndex); runLength >= 2)
+            {
+                std::vector<Record::RecordFieldIdentifier> runFieldNames;
+                runFieldNames.reserve(runLength);
+                for (std::size_t k = fieldIndex; k < fieldIndex + runLength; ++k)
+                {
+                    runFieldNames.push_back(fields.at(k).name);
+                }
+                const bool runEndsRecord = fieldIndex + runLength == numberOfFields;
+                coalesced = formatter->tryWriteCoalescedRun(
+                    rec, runFieldNames, runEndsRecord, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
+            }
+            if (coalesced)
+            {
+                writtenForThisRecord += *coalesced;
+            }
+            else
+            {
+                const auto& [name, type] = fields.at(fieldIndex);
+                writtenForThisRecord
+                    += formatter->writeFormattedValue(rec.read(name), type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
             }
         }
     }

@@ -53,13 +53,21 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
-    /// Coalesced fast path: if every output field is a lazy passthrough value (raw input bytes, written
-    /// unquoted) and the field delimiter is a single byte, a run of fields that are actually adjacent in the
-    /// source buffer -- checked at runtime, with the in-between byte verified to be the field delimiter -- is
-    /// emitted as ONE copy plus the tuple delimiter, instead of one copy per field. Declines (nullopt) when a
-    /// field is not a lazy value or the delimiter is multi-byte, leaving those records to the per-field path.
-    [[nodiscard]] std::optional<nautilus::val<uint64_t>> tryWriteCoalescedRecord(
+    /// Coalesced fast path for a RUN of contiguous non-nullable lazy passthrough fields: if the field
+    /// delimiter is a single byte and the run's fields are actually adjacent in the source buffer -- checked
+    /// at runtime, with the in-between byte verified to be the field delimiter -- the run is emitted as ONE
+    /// copy (the in-between field delimiters ride along) plus the trailing delimiter (tuple if `runEndsRecord`,
+    /// else field). Runtime-non-contiguous runs fall back to per-field lazy byte copies (still no parse). Only
+    /// the multi-byte-delimiter case declines (nullopt). Generalises the previous whole-record coalescing so a
+    /// projection that MIXES computed and passthrough columns still coalesces each contiguous passthrough run.
+    /// A single-byte field delimiter is the only condition under which tryWriteCoalescedRun accepts a run, so
+    /// runs are only formed then -- guaranteeing no run's interior fields are skipped without being written.
+    [[nodiscard]] bool supportsRunCoalescing() const override { return fieldDelimiter.size() == 1; }
+
+    [[nodiscard]] std::optional<nautilus::val<uint64_t>> tryWriteCoalescedRun(
         const Record& record,
+        const std::vector<Record::RecordFieldIdentifier>& runFieldNames,
+        bool runEndsRecord,
         const nautilus::val<int8_t*>& recordAddress,
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
