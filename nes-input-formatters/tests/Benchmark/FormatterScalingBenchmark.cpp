@@ -665,6 +665,12 @@ int main(int argc, char** argv)
     /// Default vs a fast integer-parser plugin with the producer removed. "" / "-" = DefaultUINT64.
     const std::string uint64Parser = (argc > 11 && std::string(argv[11]) != "-") ? argv[11] : "";
 
+    /// allow_commas_in_strings knob for the SIMDCSV indexer (default = descriptor default, true). Set
+    /// NES_INDEX_ALLOW_COMMAS=false to A/B the quote-aware cost (driver prefixXor + the always-computed
+    /// quote SIMD compare) for quote-free numeric data. Compare the DIAG_SIMDINDEX index_cpu line + GB/s.
+    const char* const allowCommasEnv = std::getenv("NES_INDEX_ALLOW_COMMAS");
+    const std::string allowCommas = (allowCommasEnv != nullptr) ? allowCommasEnv : "";
+
     /// Track the raw buffer size so memory stays ~= input size as we shrink buffers to stress the
     /// shredder (output of the parse is <= input bytes, so it fits a same-size buffer).
     const size_t sizeOfFormattedBuffers = sizeOfRawBuffers;
@@ -702,11 +708,12 @@ int main(int argc, char** argv)
         static_cast<double>(totalBytes) / (1024 * 1024),
         reps);
     std::printf(
-        "drain mode: %s | project: %s | fnattr: %s | uint64 parser: %s\n",
+        "drain mode: %s | project: %s | fnattr: %s | uint64 parser: %s | allow_commas: %s\n",
         drainMode.c_str(),
         projectField.empty() ? "(none, parse all cols)" : projectField.c_str(),
         fnattrPath.empty() ? "off" : "on",
-        uint64Parser.empty() ? "DefaultUINT64" : uint64Parser.c_str());
+        uint64Parser.empty() ? "DefaultUINT64" : uint64Parser.c_str(),
+        allowCommas.empty() ? "default(true)" : allowCommas.c_str());
 
     /// Formatted-buffer pool sized by task count (the emit operator flushes ~one output buffer per
     /// task) with generous headroom for per-thread fragmentation + spanning-tuple buffers.
@@ -732,8 +739,13 @@ int main(int argc, char** argv)
         const auto runOnce = [&](const size_t workerThreads) -> double
         {
             auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(workerThreads);
-            const auto conf = InputFormatterValidationProvider::provide(
-                "SIMDCSV", {{"type", "SIMDCSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}, {"sequence_shredder_mode", mode}});
+            std::unordered_map<std::string, std::string> idxParams{
+                {"type", "SIMDCSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}, {"sequence_shredder_mode", mode}};
+            if (not allowCommas.empty())
+            {
+                idxParams["allow_commas_in_strings"] = allowCommas;
+            }
+            const auto conf = InputFormatterValidationProvider::provide("SIMDCSV", idxParams);
             if (not conf.has_value())
             {
                 throw std::runtime_error("Invalid SIMDCSV indexer config");
