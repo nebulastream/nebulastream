@@ -36,6 +36,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceUtility.hpp>
 #include <Util/Files.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
@@ -116,7 +117,14 @@ std::optional<TupleBuffer> InMemoryFileSource::takePreFilledBuffer(const std::st
     }
     /// On the final pass we still copy (cheap refcount bump); keeping originals intact is required so an
     /// earlier pass can be replayed. numPasses==1 reproduces the original single-pass move-equivalent cost.
-    return this->prefilled[this->prefillCursor++];
+    TupleBuffer buffer = this->prefilled[this->prefillCursor++];
+    /// Stamp the source-creation timestamp (system_clock us) at HAND-OUT time -- mirrors the io_uring
+    /// prefill sources (e.g. IoUringFileSource::takePreFilledBuffer). Without a stamp the buffer reaches
+    /// the MonitoringSink with sourceCreationTimestamp == INITIAL_VALUE, so execute() records no latency
+    /// and stop() bails on an empty latency map -> no throughput CSV. Stamped per hand-out (NOT in the
+    /// ctor, which runs at deploy time outside the window) so each replay pass gets a fresh, in-window ts.
+    buffer.setSourceCreationTimestampInMS(Timestamp(ingestNowMicros()));
+    return buffer;
 }
 
 void InMemoryFileSource::open(std::shared_ptr<AbstractBufferProvider>)
