@@ -29,6 +29,7 @@ activate_optional_plugin("InputParsers/FastIntegerInputParsers" ON)
 activate_optional_plugin("InputParsers/TracedIntegerInputParsers" ON)
 activate_optional_plugin("InputParsers/SimdIntegerInputParsers" ON)
 activate_optional_plugin("InputParsers/EiselFloatInputParsers" ON)
+activate_optional_plugin("InputParsers/TracedFloatInputParsers" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
