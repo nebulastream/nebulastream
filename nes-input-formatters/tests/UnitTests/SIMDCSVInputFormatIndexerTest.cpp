@@ -307,6 +307,45 @@ TEST_F(SIMDCSVInputFormatIndexerTest, differentialFuzzAgainstOracle)
     }
 }
 
+/// The no-quote kernel specialization (`selectComputeBlocks(false)`, installed when the indexer runs
+/// with allow_commas_in_strings=false) skips the quote SIMD compare and leaves the quote mask zero. On
+/// quote-free data it must emit EXACTLY the offsets the scalar oracle and the quote-aware kernel produce
+/// when driven with quoteAware=false. Fuzzed over sizes spanning many 64-byte SIMD blocks + every tail.
+TEST_F(SIMDCSVInputFormatIndexerTest, noQuoteKernelMatchesOracleOnQuoteFreeData)
+{
+    const auto noQuoteFn = SimdCsv::selectComputeBlocks(false);
+    const auto quoteAwareFn = SimdCsv::selectComputeBlocks(true);
+    std::mt19937 rng(0x9E'37'79'B1U);
+    constexpr int iterations = 4000;
+    for (int iter = 0; iter < iterations; ++iter)
+    {
+        const uint64_t numFields = 1 + (rng() % 6);
+        const auto rows = rng() % 60;
+        std::string csv;
+        for (unsigned r = 0; r < rows; ++r)
+        {
+            for (uint64_t f = 0; f < numFields; ++f)
+            {
+                if (f != 0)
+                {
+                    csv += ',';
+                }
+                const auto len = rng() % 6; /// includes 0 (empty field) to hit adjacent delimiters
+                for (unsigned k = 0; k < len; ++k)
+                {
+                    csv += static_cast<char>('a' + (rng() % 5)); /// quote-free alphabet
+                }
+            }
+            csv += '\n';
+        }
+        const auto expected = runOracle(csv, ',', '\n', false, numFields);
+        const auto noQuote = runDriver(noQuoteFn, csv, ',', '\n', false, numFields);
+        const auto quoteAware = runDriver(quoteAwareFn, csv, ',', '\n', false, numFields);
+        ASSERT_EQ(noQuote, expected) << "no-quote kernel vs oracle iter=" << iter << " numFields=" << numFields << " size=" << csv.size();
+        ASSERT_EQ(noQuote, quoteAware) << "no-quote vs quote-aware kernel iter=" << iter << " size=" << csv.size();
+    }
+}
+
 /// End-to-end through the real InputFormatIndexer registry + InputFormatter pipeline: selecting
 /// "SIMDCSV" must produce the same tuples the scalar "CSV" indexer would. Mirrors SpecificSequenceTest.
 TEST_F(SIMDCSVInputFormatIndexerTest, pipelineOneTupleAcrossTwoBuffers)

@@ -36,7 +36,8 @@ namespace NES
 
 SequentialCSVInputFormatIndexer::SequentialCSVInputFormatIndexer(const InputFormatterDescriptor& config)
     : allowCommasInStrings(config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS))
-    , computeBlocks(SimdCsv::selectComputeBlocks())
+    /// No-quote kernel when quotes are not honored (skips the quote SIMD compare the driver never reads).
+    , computeBlocks(SimdCsv::selectComputeBlocks(allowCommasInStrings))
 {
 }
 

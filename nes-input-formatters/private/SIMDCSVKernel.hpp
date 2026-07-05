@@ -49,6 +49,11 @@ using ComputeBlocksFn = void (*)(const char* data, size_t numBlocks, BlockBits* 
 /// called once and cached (the indexer stores the result as a member).
 ComputeBlocksFn selectComputeBlocks();
 
+/// As above, but selects the no-quote kernel specialization when `computeQuote` is false (skips the
+/// quote SIMD compare -- valid when the indexer runs with allow_commas_in_strings=false, i.e. the
+/// driver never consults the quote mask). Cache the result; do not call on the hot path.
+ComputeBlocksFn selectComputeBlocks(bool computeQuote);
+
 /// A named block kernel. Used by the differential test to exercise every kernel that is both
 /// compiled for and runnable on the current CPU against the same input.
 struct KernelEntry
