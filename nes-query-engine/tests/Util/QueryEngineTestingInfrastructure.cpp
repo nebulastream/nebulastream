@@ -329,7 +329,7 @@ void TestingHarness::expectQueryStatusEvents(const QueryId& id, std::initializer
                 EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Running, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
-                        [this](auto id, auto, auto)
+                        [this](const auto& id, auto, auto)
                         {
                             queryRunning.at(id)->set_value();
                             return true;
@@ -341,7 +341,7 @@ void TestingHarness::expectQueryStatusEvents(const QueryId& id, std::initializer
                 EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Stopped, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
-                        [this](auto id, auto, auto)
+                        [this](const auto& id, auto, auto)
                         {
                             queryTermination.at(id)->set_value();
                             return true;
