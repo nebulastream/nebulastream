@@ -266,7 +266,7 @@ std::unique_ptr<Terminations> Terminations::setup(const RangeOf<ExecutablePipeli
     for (auto* stage : stages)
     {
         EXPECT_CALL(emitter, emitPipelineStop(::testing::_, UniquePtrStageMatcher(stage), ::testing::_))
-            .WillOnce(::testing::Invoke([&terminations, stage](auto, auto termination, auto callback)
+            .WillOnce(::testing::Invoke([&terminations, stage](const auto&, auto termination, auto callback)
                                         { terminations->add(stage, std::move(termination), std::move(callback)); }));
     }
 
@@ -308,7 +308,7 @@ std::unique_ptr<Setups> Setups::setup(const RangeOf<ExecutablePipelineStage*> au
     for (auto* stage : stages)
     {
         EXPECT_CALL(emitter, emitPipelineStart(::testing::_, StageMatcher(stage), ::testing::_))
-            .WillOnce(::testing::Invoke([&setups, stage](auto, const auto& setup, auto callback)
+            .WillOnce(::testing::Invoke([&setups, stage](const auto&, const auto& setup, auto callback)
                                         { setups->add(stage, std::move(setup), std::move(callback)); }));
     }
 
