@@ -1,0 +1,34 @@
+diff --git a/nautilus/src/nautilus/compiler/DumpHandler.cpp b/nautilus/src/nautilus/compiler/DumpHandler.cpp
+index 9a0b1c8d..2f6aa2c1 100644
+--- a/nautilus/src/nautilus/compiler/DumpHandler.cpp
++++ b/nautilus/src/nautilus/compiler/DumpHandler.cpp
+@@ -1,5 +1,6 @@
+ #include "nautilus/compiler/DumpHandler.hpp"
+ #include "fmt/core.h"
++#include "fmt/format.h"
+ #include "nautilus/common/File.hpp"
+ #include <filesystem>
+ 
+diff --git a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+index 99df9de4..88fefa92 100644
+--- a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
++++ b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+@@ -1,5 +1,6 @@
+ 
+ #include "fmt/core.h"
++#include "fmt/format.h"
+ #include <algorithm>
+ #include <nautilus/exceptions/RuntimeException.hpp>
+ #include <nautilus/tracing/ExecutionTrace.hpp>
+diff --git a/nautilus/src/nautilus/tracing/phases/SSAVerifier.cpp b/nautilus/src/nautilus/tracing/phases/SSAVerifier.cpp
+index 54224a25..e926898a 100644
+--- a/nautilus/src/nautilus/tracing/phases/SSAVerifier.cpp
++++ b/nautilus/src/nautilus/tracing/phases/SSAVerifier.cpp
+@@ -1,6 +1,7 @@
+ 
+ #include "SSAVerifier.hpp"
+ #include "fmt/core.h"
++#include "fmt/format.h"
+ #include <nautilus/tracing/ExecutionTrace.hpp>
+ #include <unordered_map>
+ #include <unordered_set>
