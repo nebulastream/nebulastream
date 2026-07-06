@@ -44,6 +44,10 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// Resharper disable once CppPassValueParameterByConstReference
+    /// clang-analyzer-cplusplus.NewDeleteLeaks: false positive from libc++'s std::function copy path
+    /// inside the vendored nautilus/Engine.hpp when wrapping the lambda for JIT registration; the
+    /// allocated __func is owned by std::function and freed by its destructor, not leaked.
+    /// NOLINTBEGIN(performance-unnecessary-value-param, bugprone-exception-escape, clang-analyzer-cplusplus.NewDeleteLeaks)
     return nautilusEngine->registerFunction(
         std::function(
             [this, projectionAllFields](
@@ -93,6 +97,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
                     pagedVectorRef.pushBack(recordValue, bufferManagerVal);
                 }
             }));
+    /// NOLINTEND(performance-unnecessary-value-param, bugprone-exception-escape, clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
 nautilus::engine::CompiledFunction<void(TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*)>
@@ -101,7 +106,10 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
-    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    /// clang-analyzer-cplusplus.NewDeleteLeaks: false positive from libc++'s std::function copy path
+    /// inside the vendored nautilus/Engine.hpp when wrapping the lambda for JIT registration; the
+    /// allocated __func is owned by std::function and freed by its destructor, not leaked.
+    /// NOLINTBEGIN(performance-unnecessary-value-param, bugprone-exception-escape, clang-analyzer-cplusplus.NewDeleteLeaks)
     return nautilusEngine->registerFunction(
         std::function(
             [this, projectionAllFields, tupleBufferRef](
@@ -129,7 +137,7 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
                     recordBufferOutput.setNumRecords(recordBufferIndex);
                 }
             }));
-    /// NOLINTEND(performance-unnecessary-value-param)
+    /// NOLINTEND(performance-unnecessary-value-param, bugprone-exception-escape, clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
 }

@@ -30,7 +30,6 @@
 #include <rfl/Generic.hpp>
 #include <rfl/Tuple.hpp>
 #include <rfl/from_generic.hpp>
-#include <rfl/json/Parser.hpp>
 #include <rfl/json/write.hpp>
 #include <rfl/named_tuple_t.hpp>
 
