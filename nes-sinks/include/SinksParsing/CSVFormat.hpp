@@ -41,16 +41,19 @@ public:
         size_t schemaSizeInBytes{};
         std::vector<size_t> offsets;
         std::vector<DataType> physicalTypes;
+        std::vector<size_t> sizesWithNull; ///< precomputed getSizeInBytesWithNull() per field (avoid the per-field call)
     };
 
     explicit CSVFormat(const Schema& schema);
     explicit CSVFormat(const Schema& schema, bool escapeStrings);
 
-    /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
+    /// Return formatted content of TupleBuffer, contains timestamp if specified in config. Delegates to
+    /// formatToBuffer (the fast direct-write path) and materializes a string only for this convenience API.
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;
 
-    /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
-    [[nodiscard]] std::string tupleBufferToFormattedCSVString(TupleBuffer tbuffer, const FormattingContext& formattingContext) const;
+    /// Fast path: format DIRECTLY into `out` via std::to_chars (int) / zmij::write (float) -- no std::string,
+    /// no per-field append. Returns the number of bytes written.
+    [[nodiscard]] size_t formatToBuffer(const TupleBuffer& inputBuffer, std::vector<char>& out) const override;
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 

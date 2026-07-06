@@ -214,8 +214,10 @@ void MonitoringSink::stop(PipelineExecutionContext&)
 void MonitoringSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in MonitoringSink.");
-    /// Obligatory legacy formatting step
-    (void)format->getFormattedBuffer(inputBuffer);
+    /// Obligatory legacy formatting step (direct-buffer path: writes into a reused per-thread buffer, no
+    /// per-call std::string) -- measured for its cost, then discarded (this is a throughput/latency meter).
+    thread_local std::vector<char> formatBuffer;
+    (void)format->formatToBuffer(inputBuffer, formatBuffer);
 
     // if (inputBuffer.isLastChunk())
     /// If the current buffer contains the source creation timestamp marker, measure the latency

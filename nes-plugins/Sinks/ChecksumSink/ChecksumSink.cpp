@@ -20,9 +20,11 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -102,8 +104,10 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
-    const std::string inputBufferAsString = format->getFormattedBuffer(inputBuffer);
-    checksum.add(inputBufferAsString);
+    /// Direct-buffer format: bytes go straight into a reused per-thread buffer (no per-call std::string).
+    thread_local std::vector<char> formatBuffer;
+    const auto bytes = format->formatToBuffer(inputBuffer, formatBuffer);
+    checksum.add(std::string_view(formatBuffer.data(), bytes));
 }
 
 DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)

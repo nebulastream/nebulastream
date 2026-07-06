@@ -15,11 +15,13 @@
 #pragma once
 #include <concepts>
 #include <cstdint>
+#include <cstring>
 #include <ostream>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -52,6 +54,22 @@ public:
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
     [[nodiscard]] virtual std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const = 0;
+
+    /// Format `inputBuffer` DIRECTLY into the caller-owned `out` buffer (grown as needed, never shrunk), and
+    /// return the number of bytes written (`out.data()[0..return)` is valid). This is the fast, fair path:
+    /// the sink passes a reused thread_local buffer and the formatter writes bytes straight in (no per-call
+    /// std::string, no per-field append) -- mirroring the compiled output formatter, which writes into the
+    /// output TupleBuffer. The default keeps the old behavior for formatters that have not overridden it.
+    [[nodiscard]] virtual size_t formatToBuffer(const TupleBuffer& inputBuffer, std::vector<char>& out) const
+    {
+        const std::string formatted = getFormattedBuffer(inputBuffer);
+        if (out.size() < formatted.size())
+        {
+            out.resize(formatted.size());
+        }
+        std::memcpy(out.data(), formatted.data(), formatted.size());
+        return formatted.size();
+    }
 
     virtual std::ostream& toString(std::ostream&) const = 0;
 

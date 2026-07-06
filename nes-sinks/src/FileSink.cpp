@@ -24,6 +24,7 @@
 #include <system_error>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
@@ -118,9 +119,12 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     PRECONDITION(isOpen, "Sink was not opened");
 
     {
+        /// Direct-buffer format: the formatter writes CSV bytes straight into this reused per-thread buffer
+        /// (no per-call std::string), then we write those bytes to the file.
+        thread_local std::vector<char> formatBuffer;
+        const auto bytes = format->formatToBuffer(inputTupleBuffer, formatBuffer);
         const auto wlocked = outputFileStream.wlock();
-        const std::string formattedBufferString = format->getFormattedBuffer(inputTupleBuffer);
-        wlocked->write(formattedBufferString.data(), static_cast<std::streamsize>(formattedBufferString.length()));
+        wlocked->write(formatBuffer.data(), static_cast<std::streamsize>(bytes));
         wlocked->flush();
     }
 }
