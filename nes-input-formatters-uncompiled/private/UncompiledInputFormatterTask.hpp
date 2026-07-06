@@ -37,6 +37,7 @@
 #include <Concepts.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <UncompiledFastParse.hpp>
 #include <UncompiledFieldIndexFunction.hpp>
 #include <UncompiledParserProvider.hpp>
 #include <UncompiledRawTupleBuffer.hpp>
@@ -99,7 +100,45 @@ void processUncompiledTuple(
         /// Get the current field, parse it, and write it to the correct position in the formatted buffer
         const auto currentFieldSV = fieldIndexFunction.readFieldAt(tupleView, numTuplesReadFromRawBuffer, fieldIndex);
         const auto writeOffsetInBytes = offsetOfCurrentTupleInBytes + offsetOfCurrentFieldInBytes;
-        parseFunctions[fieldIndex](currentFieldSV, writeOffsetInBytes, bufferProvider, formattedBuffer);
+        /// Hardcoded fast parsers (fast_float) for the fixed-size numeric types, dispatched DIRECTLY -- no
+        /// per-field std::function/registry indirection on the hot loop. Non-numeric types (BOOL/CHAR/VARSIZED)
+        /// keep the registry parse function (rare, and VARSIZED needs the child-buffer machinery).
+        switch (schemaInfo.getFieldTypes()[fieldIndex])
+        {
+            case DataType::Type::INT8:
+                uncompiledWriteFixed(uncompiledFastParse<int8_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            case DataType::Type::INT16:
+                uncompiledWriteFixed(uncompiledFastParse<int16_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            case DataType::Type::INT32:
+                uncompiledWriteFixed(uncompiledFastParse<int32_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            case DataType::Type::INT64:
+                uncompiledWriteFixed(uncompiledFastParse<int64_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            case DataType::Type::UINT8:
+                uncompiledWriteFixed(uncompiledFastParse<uint8_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            case DataType::Type::UINT16:
+                uncompiledWriteFixed(uncompiledFastParse<uint16_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            case DataType::Type::UINT32:
+                uncompiledWriteFixed(uncompiledFastParse<uint32_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            case DataType::Type::UINT64:
+                uncompiledWriteFixed(uncompiledFastParse<uint64_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            case DataType::Type::FLOAT32:
+                uncompiledWriteFixed(uncompiledFastParse<float>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            case DataType::Type::FLOAT64:
+                uncompiledWriteFixed(uncompiledFastParse<double>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                break;
+            default:
+                parseFunctions[fieldIndex](currentFieldSV, writeOffsetInBytes, bufferProvider, formattedBuffer);
+                break;
+        }
 
         /// Add the size of the current field to the running offset to get the offset of the next field
         const auto sizeOfCurrentFieldInBytes = schemaInfo.getFieldSizesInBytes().at(fieldIndex);
@@ -267,15 +306,14 @@ public:
 
         if (fieldIndexFunction.getOffsetOfFirstTupleDelimiter() < rawBuffer.getBufferSize())
         {
-            /// Buffer has at least one delimiter — process full tuples and report truncated bytes
+            /// Buffer has at least one delimiter — complete the leading row, parse the bulk, carry the tail
             processSequentialBufferWithDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
         }
         else
         {
-            /// Buffer has no delimiter — entire buffer is part of a multi-buffer spanning tuple
-            const auto byteCount = rawBuffer.getNumberOfBytes();
-            accumulatedSpanningTupleBuffers.emplace_back(rawBuffer.getRawBuffer(), byteCount);
-            rawBuffer.setNumberOfTuples(0);
+            /// Buffer has no delimiter — the whole buffer is interior of a multi-buffer spanning tuple; carry it
+            /// (zero-copy, ref-counted) for the next buffer that completes the row.
+            accumulatedSpanningTupleBuffers.push_back({rawBuffer.getRawBuffer(), 0, rawBuffer.getNumberOfBytes()});
         }
     }
 
@@ -354,10 +392,18 @@ private:
 
     std::vector<UncompiledParseFunctionSignature> parseFunctions;
 
-    /// Sequential mode only: accumulates delimiter-less buffers that are part of a multi-buffer spanning tuple.
-    /// Stores (TupleBuffer, byteCount) pairs — byteCount is saved before setNumberOfTuples(0) since TupleBuffer is ref-counted.
-    [[no_unique_address]] std::conditional_t<isSequential(), std::vector<std::pair<TupleBuffer, size_t>>, Empty>
-        accumulatedSpanningTupleBuffers;
+    /// Sequential mode only: the region of a buffer that is part of a spanning tuple straddling buffers, kept
+    /// alive (TupleBuffer is ref-counted) with ZERO copy until the next buffer completes the tuple.
+    /// `offset..offset+length` is the carried region: a trailing partial uses offset = lastDelimiter +
+    /// delimiterSize; a whole delimiter-less interior buffer uses offset 0. Mirrors the compiled SequentialCarry.
+    struct SequentialCarry
+    {
+        TupleBuffer buffer;
+        size_t offset;
+        size_t length;
+    };
+
+    [[no_unique_address]] std::conditional_t<isSequential(), std::vector<SequentialCarry>, Empty> accumulatedSpanningTupleBuffers;
 
     /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
     /// Iterates over all full tuples using hasNext() and parses the tuples into formatted data.
@@ -505,7 +551,10 @@ private:
     }
 
 private:
-    /// Sequential path: buffer has at least one delimiter.
+    /// Sequential path: buffer has at least one delimiter. Mirrors the compiled SequentialCSV (indexRawBuffer
+    /// uses the PARALLEL band, b0 at the first newline): the leading row [0 -> firstDelim] is NOT in the band --
+    /// complete it from the carry accumulator and parse it as one leading record; parse the bulk between the
+    /// first and last delimiter in place; carry the trailing partial after the last delimiter to the next buffer.
     void processSequentialBufferWithDelimiter(
         const UncompiledRawTupleBuffer& rawBuffer,
         ChunkNumber::Underlying& runningChunkNumber,
@@ -514,20 +563,31 @@ private:
     {
         const auto bufferProvider = pec.getBufferManager();
         auto formattedBuffer = bufferProvider->getBufferBlocking();
-        size_t startTupleIdx = 0;
 
-        /// If we have accumulated buffers from previous no-delimiter calls, assemble and process the spanning tuple
-        if (!accumulatedSpanningTupleBuffers.empty())
+        /// 1. Leading record: [0 -> firstDelim] completed with the carried tail(s). Fires for a spanning row
+        /// (carry non-empty) OR a standalone first-of-buffer row (firstDelim > 0). Skipped only when the buffer
+        /// starts with a delimiter and there is no carry (nothing to make a row from).
+        const auto offsetOfFirstDelimiter = fieldIndexFunction.getOffsetOfFirstTupleDelimiter();
+        if (!accumulatedSpanningTupleBuffers.empty() || offsetOfFirstDelimiter > 0)
         {
-            processSequentialSpanningTuple(rawBuffer, fieldIndexFunction, formattedBuffer, *bufferProvider);
-            /// The first indexed "tuple" (from byte 0 to first delimiter) was the spanning tuple tail — skip it
-            startTupleIdx = 1;
+            const auto leadingBytes = rawBuffer.getBufferView().substr(0, offsetOfFirstDelimiter);
+            processSequentialLeadingRecord(rawBuffer, leadingBytes, formattedBuffer, *bufferProvider);
         }
 
-        /// Process remaining full tuples
-        if (fieldIndexFunction.hasNext(startTupleIdx))
+        /// 2. Bulk: the complete tuples the band found (between the first and last delimiter).
+        if (fieldIndexFunction.hasNext(0))
         {
-            parseRawBuffer(rawBuffer, runningChunkNumber, fieldIndexFunction, formattedBuffer, pec, startTupleIdx);
+            parseRawBuffer(rawBuffer, runningChunkNumber, fieldIndexFunction, formattedBuffer, pec, 0);
+        }
+
+        /// 3. Carry THIS buffer's trailing partial (bytes after the last delimiter) for the next buffer, keeping
+        /// the buffer alive (ref-counted), ZERO copy. Replaces the old runner-prepend (setNumberOfTuples) contract.
+        const auto delimiterSize = uncompiledIndexerMetaData.getTupleDelimitingBytes().size();
+        const auto tailStart = static_cast<size_t>(fieldIndexFunction.getOffsetOfLastTupleDelimiter()) + delimiterSize;
+        const auto totalBytes = rawBuffer.getNumberOfBytes();
+        if (tailStart < totalBytes)
+        {
+            accumulatedSpanningTupleBuffers.push_back({rawBuffer.getRawBuffer(), tailStart, totalBytes - tailStart});
         }
 
         /// Emit the formatted buffer if it has tuples
@@ -536,49 +596,41 @@ private:
             setUncompiledMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedBuffer, runningChunkNumber, true);
             pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
         }
-
-        /// Report truncated trailing bytes (bytes after the last delimiter) so the outside can prepend them to the next buffer
-        const auto delimiterSize = uncompiledIndexerMetaData.getTupleDelimitingBytes().size();
-
-        // Todo: offsetOfLastDelimiter is not always known!
-        const auto truncatedByteCount = rawBuffer.getNumberOfBytes() - (fieldIndexFunction.getOffsetOfLastTupleDelimiter() + delimiterSize);
-        rawBuffer.setNumberOfTuples(truncatedByteCount);
     }
 
-    /// Sequential path: assembles a spanning tuple from accumulated buffers + leading bytes of current buffer.
-    void processSequentialSpanningTuple(
+    /// Sequential path: completes the leading row of a buffer -- assembles `delim + carried_tail(s) +
+    /// leadingBytes + delim`, indexes it, and parses it as one record. Handles both a spanning row (carry
+    /// non-empty) and a standalone first-of-buffer row (carry empty, leadingBytes = the whole first row).
+    void processSequentialLeadingRecord(
         const UncompiledRawTupleBuffer& rawBuffer,
-        const UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
+        const std::string_view leadingBytes,
         TupleBuffer& formattedBuffer,
         AbstractBufferProvider& bufferProvider)
     {
         const auto delimiterBytes = uncompiledIndexerMetaData.getTupleDelimitingBytes();
 
-        /// Build the spanning tuple: delimiter + accumulated_data + leading_bytes + delimiter
+        /// Build the leading spanning tuple: delimiter + carried_tail(s) + leading_bytes + delimiter
         std::stringstream spanningTupleStringStream;
         spanningTupleStringStream << delimiterBytes;
-
-        for (const auto& [buffer, byteCount] : accumulatedSpanningTupleBuffers)
+        for (const auto& carry : accumulatedSpanningTupleBuffers)
         {
-            spanningTupleStringStream << std::string_view(buffer.template getAvailableMemoryArea<char>().data(), byteCount);
+            spanningTupleStringStream << std::string_view(
+                carry.buffer.template getAvailableMemoryArea<char>().data() + carry.offset, carry.length);
         }
-
-        /// Leading bytes = bytes before first delimiter in current buffer (tail of spanning tuple)
-        const auto leadingBytes = rawBuffer.getBufferView().substr(0, fieldIndexFunction.getOffsetOfFirstTupleDelimiter());
         spanningTupleStringStream << leadingBytes;
         spanningTupleStringStream << delimiterBytes;
 
         const std::string completeSpanningTuple(spanningTupleStringStream.str());
 
-        /// Release accumulated buffers — moves ownership back to the buffer pool
+        /// Release the carried buffers back to the pool
         accumulatedSpanningTupleBuffers.clear();
 
-        /// Process the spanning tuple if it contains actual data (not just two delimiters)
+        /// Parse only if there is an actual row between the two delimiters
         const auto sizeOfTwoDelimiters = 2 * delimiterBytes.size();
         if (completeSpanningTuple.size() > sizeOfTwoDelimiters)
         {
             auto tempFIF = typename FormatterType::UncompiledFieldIndexFunctionType();
-            auto tempRawBuffer = rawBuffer; /// shallow copy (TupleBuffer is ref-counted)
+            auto tempRawBuffer = rawBuffer; /// shallow copy (TupleBuffer is ref-counted); only its view is used
             tempRawBuffer.setSpanningTuple(completeSpanningTuple);
             inputFormatIndexer.indexRawBuffer(tempFIF, tempRawBuffer, uncompiledIndexerMetaData);
 

@@ -39,15 +39,22 @@ public:
         this->fieldSizesInBytes = schema.getFields()
             | std::views::transform([](const auto& field) { return static_cast<size_t>(field.dataType.getSizeInBytesWithoutNull()); })
             | std::ranges::to<std::vector>();
+        /// Per-field DataType, so the parse loop can dispatch directly to the hardcoded fast parser (fast_float)
+        /// for the fixed-size numeric types instead of going through the per-field parse-function indirection.
+        this->fieldTypes = schema.getFields() | std::views::transform([](const auto& field) { return field.dataType.type; })
+            | std::ranges::to<std::vector>();
     }
 
     [[nodiscard]] size_t getSizeOfTupleInBytes() const { return sizeOfTupleInBytes; }
 
     [[nodiscard]] const std::vector<size_t>& getFieldSizesInBytes() const { return fieldSizesInBytes; }
 
+    [[nodiscard]] const std::vector<DataType::Type>& getFieldTypes() const { return fieldTypes; }
+
 private:
     size_t sizeOfTupleInBytes;
     std::vector<size_t> fieldSizesInBytes;
+    std::vector<DataType::Type> fieldTypes;
 };
 
 /// CRTP Interface that enables InputFormatters to define specialized functions to access fields that the UncompiledInputFormatterTask can call directly

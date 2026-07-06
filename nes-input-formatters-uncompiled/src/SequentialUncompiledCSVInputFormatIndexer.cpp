@@ -23,40 +23,12 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <UncompiledInputFormatters/UncompiledInputFormatterTaskPipeline.hpp>
 #include <fmt/format.h>
-#include <ErrorHandling.hpp>
 #include <InputFormatterValidationRegistry.hpp>
-#include <UncompiledFieldOffsets.hpp>
+#include <SIMDCSVKernel.hpp>
+#include <SIMDCSVScan.hpp>
+#include <UncompiledFieldBand.hpp>
 #include <UncompiledInputFormatIndexerRegistry.hpp>
 #include <UncompiledInputFormatterTask.hpp>
-
-namespace
-{
-
-/// Reuses the same field-offset logic as the concurrent CSV indexer
-void initializeIndexFunctionForTuple(
-    NES::UncompiledFieldOffsets<NES::UNCOMPILED_CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
-    const std::string_view tuple,
-    const NES::UncompiledFieldIndex startIdxOfTuple,
-    const char fieldDelimiter,
-    size_t numberOfFieldsInSchema)
-{
-    fieldOffsets.emplaceFieldOffset(startIdxOfTuple);
-    size_t fieldIdx = 1;
-    for (size_t nextFieldOffset = tuple.find(fieldDelimiter, 0); nextFieldOffset != std::string_view::npos;
-         nextFieldOffset = tuple.find(fieldDelimiter, nextFieldOffset))
-    {
-        nextFieldOffset += 1;
-        fieldOffsets.emplaceFieldOffset(startIdxOfTuple + nextFieldOffset);
-        ++fieldIdx;
-    }
-    fieldOffsets.emplaceFieldOffset(startIdxOfTuple + tuple.size());
-    if (fieldIdx != numberOfFieldsInSchema)
-    {
-        throw NES::CannotFormatSourceData(
-            "Number of parsed fields does not match number of fields in schema (parsed {} vs {} schema", fieldIdx, numberOfFieldsInSchema);
-    }
-}
-}
 
 namespace NES
 {
@@ -66,47 +38,23 @@ SequentialUncompiledCSVInputFormatIndexer::SequentialUncompiledCSVInputFormatInd
     : tupleDelimiter(config.getFromConfig(ConfigParametersUncompiledCSVInputFormatIndexer::TUPLE_DELIMITER).front())
     , fieldDelimiter(config.getFromConfig(ConfigParametersUncompiledCSVInputFormatIndexer::FIELD_DELIMITER).front())
     , numberOfFieldsInSchema(numberOfFieldsInSchema)
+    , allowCommasInStrings(config.getFromConfig(ConfigParametersUncompiledCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS))
+    /// Member-init order: allowCommasInStrings is declared before computeBlocks, so it is set here.
+    , computeBlocks(SimdCsv::selectComputeBlocks(allowCommasInStrings))
 {
 }
 
 void SequentialUncompiledCSVInputFormatIndexer::indexRawBuffer(
-    UncompiledFieldOffsets<UNCOMPILED_CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
-    const UncompiledRawTupleBuffer& rawBuffer,
-    const UncompiledCSVMetaData&) const
+    UncompiledFieldBand& band, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledCSVMetaData&) const
 {
-    fieldOffsets.startSetup(numberOfFieldsInSchema, 1);
-
-    constexpr size_t sizeOfTupleDelimiter = 1;
-    const auto offsetOfFirstTupleDelimiter = static_cast<UncompiledFieldIndex>(rawBuffer.getBufferView().find(this->tupleDelimiter));
-
-    if (offsetOfFirstTupleDelimiter == static_cast<UncompiledFieldIndex>(std::string::npos))
-    {
-        fieldOffsets.markNoTupleDelimiters();
-        return;
-    }
-
-    /// Sequential mode: buffer is aligned, so the first tuple starts at position 0
-    const auto firstTuple = rawBuffer.getBufferView().substr(0, offsetOfFirstTupleDelimiter);
-    initializeIndexFunctionForTuple(fieldOffsets, firstTuple, 0, fieldDelimiter, this->numberOfFieldsInSchema);
-
-    /// Index remaining tuples between consecutive delimiters (same as concurrent version)
-    auto startIdxOfNextTuple = offsetOfFirstTupleDelimiter + sizeOfTupleDelimiter;
-    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(this->tupleDelimiter, startIdxOfNextTuple);
-
-    while (endIdxOfNextTuple != std::string::npos)
-    {
-        INVARIANT(startIdxOfNextTuple <= endIdxOfNextTuple, "The start index of a tuple cannot be larger than the end index.");
-        const auto sizeOfNextTuple = endIdxOfNextTuple - startIdxOfNextTuple;
-        const auto nextTuple = rawBuffer.getBufferView().substr(startIdxOfNextTuple, sizeOfNextTuple);
-
-        initializeIndexFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, fieldDelimiter, this->numberOfFieldsInSchema);
-
-        startIdxOfNextTuple = endIdxOfNextTuple + sizeOfTupleDelimiter;
-        endIdxOfNextTuple = rawBuffer.getBufferView().find(this->tupleDelimiter, startIdxOfNextTuple);
-    }
-
-    const auto offsetOfLastTupleDelimiter = static_cast<UncompiledFieldIndex>(startIdxOfNextTuple - sizeOfTupleDelimiter);
-    fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
+    /// Same PARALLEL flat band as the compiled SequentialCSVInputFormatIndexer (b0 at the first newline):
+    /// the leading row [0 -> firstNewline] is NOT in the band -- the sequential task glue completes it from
+    /// its single-threaded carry accumulator (leading spanning tuple), the bulk between the first and last
+    /// newline is parsed in place, and the trailing partial is carried to the next buffer. Byte 0 of the
+    /// glue's re-indexed `<delim><record><delim>` spanning buffer is a delimiter, which this handles too
+    /// (b0 == 0, one complete tuple).
+    SimdCsv::indexBandInto(
+        band, rawBuffer.getBufferView(), fieldDelimiter, tupleDelimiter, allowCommasInStrings, numberOfFieldsInSchema, computeBlocks);
 }
 
 DescriptorConfig::Config SequentialUncompiledCSVInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)

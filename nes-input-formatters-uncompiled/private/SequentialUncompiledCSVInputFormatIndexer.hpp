@@ -21,8 +21,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <UncompiledInputFormatters/UncompiledInputFormatterTaskPipeline.hpp>
+#include <SIMDCSVKernel.hpp>
 #include <UncompiledCSVInputFormatIndexer.hpp>
-#include <UncompiledFieldOffsets.hpp>
+#include <UncompiledFieldBand.hpp>
 #include <UncompiledInputFormatIndexer.hpp>
 
 namespace NES
@@ -36,15 +37,12 @@ public:
     static constexpr bool HasSpanningTuple = true;
     static constexpr bool IsSequential = true;
     using UncompiledIndexerMetaData = UncompiledCSVMetaData;
-    using UncompiledFieldIndexFunctionType = UncompiledFieldOffsets<UNCOMPILED_CSV_NUM_OFFSETS_PER_FIELD>;
+    using UncompiledFieldIndexFunctionType = UncompiledFieldBand;
 
     explicit SequentialUncompiledCSVInputFormatIndexer(InputFormatterDescriptor config, size_t numberOfFieldsInSchema);
     ~SequentialUncompiledCSVInputFormatIndexer() = default;
 
-    void indexRawBuffer(
-        UncompiledFieldOffsets<UNCOMPILED_CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
-        const UncompiledRawTupleBuffer& rawBuffer,
-        const UncompiledCSVMetaData&) const;
+    void indexRawBuffer(UncompiledFieldBand& band, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledCSVMetaData&) const;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& os, const SequentialUncompiledCSVInputFormatIndexer& obj);
@@ -53,6 +51,10 @@ private:
     char tupleDelimiter;
     char fieldDelimiter;
     size_t numberOfFieldsInSchema;
+    /// allow_commas_in_strings: when false, the no-quote SIMD kernel is selected (skips the quote compare).
+    bool allowCommasInStrings;
+    /// Best block kernel for this CPU, resolved once at construction (runtime dispatch); do not call per buffer.
+    SimdCsv::ComputeBlocksFn computeBlocks;
 };
 
 }
