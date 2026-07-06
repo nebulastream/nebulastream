@@ -75,10 +75,16 @@ Reflected reflect_aggregate_impl(const T& data)
 
     rfl::Generic::Object obj;
 
-    /// Reflect each field and add to the object
+    /// Reflect each field and add to the object.
     [&]<size_t... Is>(std::index_sequence<Is...>)
     {
-        ((obj[reflect_field_at_index<T, Is>(data).first] = *reflect_field_at_index<T, Is>(data).second), ...);
+        ((
+             [&]
+             {
+                 auto field = reflect_field_at_index<T, Is>(data);
+                 obj[std::move(field.first)] = *std::move(field.second);
+             }()),
+         ...);
     }(std::make_index_sequence<numFields>{});
 
     return Reflected{rfl::Generic::Object{std::move(obj)}};
