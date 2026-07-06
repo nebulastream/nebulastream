@@ -143,7 +143,7 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                                                              .data());
                     }
                 }
-                TupleBuffer newVarSizedBuffer = bufferProvider->getBufferBlocking();
+                TupleBuffer newVarSizedBuffer = bufferProvider->getBuffer(DEFAULT_PAGE_SIZE);
                 auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
                 newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
                 /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.

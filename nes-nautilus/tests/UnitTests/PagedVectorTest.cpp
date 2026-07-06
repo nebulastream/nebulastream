@@ -95,7 +95,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
 
     [[nodiscard]] BufferManagerType getBufferManagerType() const override { return bm->getBufferManagerType(); }
 
-    [[nodiscard]] size_t getBufferSize() const override { return bm->getBufferSize(); }
+    [[nodiscard]] size_t getMaxBufferSize() const override { return bm->getMaxBufferSize(); }
 
     [[nodiscard]] size_t getNumOfPooledBuffers() const override { return bm->getNumOfPooledBuffers(); }
 
@@ -721,7 +721,7 @@ public:
         engine = std::make_unique<nautilus::engine::NautilusEngine>(makeEngine(mode));
 
         pagedVector = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
-        PagedVector::init(pagedVector, bufferManager.getBufferSize(), layout->getSchema().getSizeInBytes());
+        PagedVector::init(pagedVector, bufferManager.getMaxBufferSize(), layout->getSchema().getSizeInBytes());
 
         /// NOLINTBEGIN(performance-unnecessary-value-param)
         pushbackFn.emplace(engine->registerFunction(std::function(

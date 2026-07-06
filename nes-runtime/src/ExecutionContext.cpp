@@ -71,16 +71,17 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 {
 }
 
-nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer() const
+nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer(nautilus::val<size_t> bufferSize) const
 {
     auto bufferPtr = nautilus::invoke(
-        +[](PipelineExecutionContext* pec)
+        +[](PipelineExecutionContext* pec, size_t bufferSize)
         {
             PRECONDITION(pec, "pipeline execution context should not be null");
-            auto newTupleBuffer = pec->allocateTupleBuffer();
+            auto newTupleBuffer = pec->allocateTupleBuffer(bufferSize);
             return std::addressof(pec->pinBuffer(std::move(newTupleBuffer)));
         },
-        pipelineContext);
+        pipelineContext,
+        bufferSize);
     return bufferPtr;
 }
 

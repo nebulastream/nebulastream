@@ -39,6 +39,7 @@ namespace NES
 /// @brief Forward declaration of PagedVectorRefIter so that we can use it in PagedVectorRef
 class PagedVectorRefIter;
 class PagedVectorRefIterSentinel;
+static constexpr size_t DEFAULT_PAGE_SIZE = 4096U;
 
 /// @brief Load function that reads a varsized field from a specific address in memory
 using LoadVarSizedFunction = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> fieldSlot)>;

@@ -69,7 +69,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
                             if (auto pagedVectorBuffer = bufferManager->getUnpooledBuffer(PagedVector::getMainBufferSize()))
                             {
                                 /// initialize paged vector buffer
-                                PagedVector::init(pagedVectorBuffer.value(), bufferManager->getBufferSize(), tupleSize);
+                                PagedVector::init(pagedVectorBuffer.value(), bufferManager->getMaxBufferSize(), tupleSize);
                                 /// @warning: this will be refactored again during the ChainedHashMap refactor
                                 new (pagedVectorMemArea) TupleBuffer(pagedVectorBuffer.value());
                                 return;

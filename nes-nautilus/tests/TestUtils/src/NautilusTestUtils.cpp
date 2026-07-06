@@ -100,7 +100,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const uint64_t maxSizeVarSizedData)
 {
     /// Creating here the memory provider for the tuple buffers that store the data
-    const auto memoryProviderInputBuffer = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, memoryLayout);
+    const auto memoryProviderInputBuffer = LowerSchemaProvider::lowerSchema(bufferManager.getMaxBufferSize(), schema, memoryLayout);
 
 
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.

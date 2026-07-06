@@ -278,34 +278,6 @@ TupleBuffer BufferManager::wrapSegment(detail::MemorySegment* segment)
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
-TupleBuffer BufferManager::getBufferBlocking()
-{
-    if (auto* segment = pools[defaultPoolIndex]->popUntil(std::chrono::steady_clock::now() + GET_BUFFER_TIMEOUT))
-    {
-        return wrapSegment(segment);
-    }
-    /// Throw exception if no buffer was returned allocated after timeout.
-    throw BufferAllocationFailure("Global buffer pool could not allocate buffer before timeout({})", GET_BUFFER_TIMEOUT);
-}
-
-std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
-{
-    if (auto* segment = pools[defaultPoolIndex]->tryPop())
-    {
-        return wrapSegment(segment);
-    }
-    return std::nullopt;
-}
-
-std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
-{
-    if (auto* segment = pools[defaultPoolIndex]->popUntil(std::chrono::steady_clock::now() + timeoutMs))
-    {
-        return wrapSegment(segment);
-    }
-    return std::nullopt;
-}
-
 std::optional<TupleBuffer> BufferManager::getBufferNoBlocking(const size_t size)
 {
     const size_t index = classIndexForSize(size);
@@ -384,7 +356,7 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*, const Allocati
     INVARIANT(false, "This method should not be called!");
 }
 
-size_t BufferManager::getBufferSize() const
+size_t BufferManager::getMaxBufferSize() const
 {
     return bufferSize;
 }

@@ -39,7 +39,7 @@ NLJSlice::NLJSlice(
     : Slice(sliceStart, sliceEnd)
 {
     const uint64_t pvMainBufferSize = PagedVector::getMainBufferSize();
-    const uint64_t pvPageBufferSize = bufferProvider.getBufferSize();
+    const uint64_t pvPageBufferSize = bufferProvider.getMaxBufferSize();
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
         if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))

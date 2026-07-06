@@ -40,6 +40,8 @@
 namespace NES
 {
 
+static constexpr size_t DEFAULT_OUTPUT_BUFFER_SIZE = 4096;
+
 SourceThread::SourceThread(
     BackpressureListener backpressureListener,
     OriginId originId,
@@ -103,24 +105,20 @@ SourceImplementationTermination dataSourceThreadRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
 
-        std::optional<TupleBuffer> emptyBuffer;
-        while (!emptyBuffer && !stopToken.stop_requested())
-        {
-            emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
-        }
+        TupleBuffer emptyBuffer = bufferProvider->getBuffer(DEFAULT_OUTPUT_BUFFER_SIZE);
         if (stopToken.stop_requested())
         {
             return {SourceImplementationTermination::StopRequested};
         }
 
-        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
+        const auto fillTupleResult = source.fillTupleBuffer(emptyBuffer, stopToken);
 
         if (!fillTupleResult.isEoS())
         {
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatter expects that the source set the number of bytes this way and uses it to determine the number of tuples.
-            emptyBuffer->setNumberOfTuples(fillTupleResult.getNumberOfBytes());
-            emit(std::move(*emptyBuffer), requiresMetadata);
+            emptyBuffer.setNumberOfTuples(fillTupleResult.getNumberOfBytes());
+            emit(std::move(emptyBuffer), requiresMetadata);
         }
         else
         {

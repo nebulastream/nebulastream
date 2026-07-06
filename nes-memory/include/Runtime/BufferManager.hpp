@@ -148,12 +148,6 @@ private:
     TupleBuffer wrapSegment(NES::detail::MemorySegment* segment);
 
 public:
-    /// This blocks until a buffer is available.
-    TupleBuffer getBufferBlocking() override;
-
-    /// invalid optional if there is no buffer.
-    std::optional<TupleBuffer> getBufferNoBlocking() override;
-
     /// Blocks until a pooled buffer of at least `size` bytes is available, served from the smallest
     /// fitting size class. Requests larger than the largest class fall back to an unpooled buffer.
     TupleBuffer getBuffer(size_t size) override;
@@ -161,18 +155,9 @@ public:
     /// Non-blocking variant of getBuffer(size).
     std::optional<TupleBuffer> getBufferNoBlocking(size_t size) override;
 
-    /**
-     * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
-     * timeoutMs.
-     * @param timeoutMs the amount of time to wait for a new buffer to be retuned
-     * @return a new buffer
-     */
-    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override;
-
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
 
-
-    size_t getBufferSize() const override;
+    size_t getMaxBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
     size_t getNumberOfAvailableBuffers() const;

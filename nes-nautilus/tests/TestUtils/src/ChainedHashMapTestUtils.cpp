@@ -112,7 +112,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
-    inputBufferRef = LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+    inputBufferRef = LowerSchemaProvider::lowerSchema(bufferManager->getMaxBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
     tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(inputSchema);
 
     /// Creating the fields for the key and value from the schema

@@ -53,9 +53,9 @@ namespace
 TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
 {
     /// If the fixed size buffers are not large enough, we get an unpooled buffer
-    if (tupleBufferProvider.getBufferSize() > newBufferSize)
+    if (tupleBufferProvider.getMaxBufferSize() > newBufferSize)
     {
-        if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(); newBuffer.has_value())
+        if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(newBufferSize); newBuffer.has_value())
         {
             return newBuffer.value();
         }

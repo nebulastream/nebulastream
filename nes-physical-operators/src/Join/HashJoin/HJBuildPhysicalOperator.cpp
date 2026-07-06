@@ -142,7 +142,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                         if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
                         {
                             /// initialize paged vector buffer
-                            PagedVector::init(pagedVectorBuffer.value(), bufferProvider->getBufferSize(), tupleSize);
+                            PagedVector::init(pagedVectorBuffer.value(), bufferProvider->getMaxBufferSize(), tupleSize);
                             /// @warning: this will be refactored again during the ChainedHashMap refactor
                             new (pagedVectorBufferMemArea) TupleBuffer(pagedVectorBuffer.value());
                             return;

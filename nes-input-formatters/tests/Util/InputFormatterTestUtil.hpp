@@ -393,7 +393,7 @@ TupleBuffer createTupleBufferFromTuples(
     const Schema<QualifiedUnboundField, Ordered>& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
     PRECONDITION(bufferManager.getNumberOfAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
-    auto tupleBufferRef = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
+    auto tupleBufferRef = LowerSchemaProvider::lowerSchema(bufferManager.getMaxBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
     auto tupleBuffer = bufferManager.getBufferBlocking();
 
     for (const auto& tuple : tuples)

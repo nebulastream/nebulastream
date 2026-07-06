@@ -84,7 +84,7 @@ TEST_F(SizeClassBufferTest, BackwardCompatibleSingleClass)
 {
     auto bm = BufferManager::create(4096, 8);
 
-    EXPECT_EQ(bm->getBufferSize(), 4096U);
+    EXPECT_EQ(bm->getMaxBufferSize(), 4096U);
     EXPECT_EQ(bm->getNumOfPooledBuffers(), 8U);
     EXPECT_EQ(bm->getBuffer(2000).getBufferSize(), 4096U);
     EXPECT_EQ(bm->getBuffer(4096).getBufferSize(), 4096U);
