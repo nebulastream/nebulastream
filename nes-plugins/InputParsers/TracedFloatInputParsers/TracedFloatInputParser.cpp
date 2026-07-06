@@ -50,6 +50,7 @@ struct FastTraits<double>
     /// 10^15 < 2^53, so a <=15-digit mantissa is exactly representable -> Clinger fast path is exact.
     static constexpr uint64_t MAX_FAST_DIGITS = 15;
     static constexpr uint64_t MAX_FRAC = 22;
+
     static const double* pow10() noexcept { return POW10_F64; }
 };
 
@@ -59,6 +60,7 @@ struct FastTraits<float>
     /// 10^7 < 2^24, exactly representable in float.
     static constexpr uint64_t MAX_FAST_DIGITS = 7;
     static constexpr uint64_t MAX_FRAC = 10;
+
     static const float* pow10() noexcept { return POW10_F32; }
 };
 
