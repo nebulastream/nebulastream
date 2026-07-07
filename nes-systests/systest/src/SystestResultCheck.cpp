@@ -23,6 +23,7 @@
 #include <optional>
 #include <ostream>
 #include <ranges>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -927,12 +928,79 @@ std::optional<std::string> checkExplainResult(const Systest::RunningQuery& runni
         runningQuery.systestQuery.actualExplainOutput.value() | std::views::split('\n')
         | std::views::transform([](auto&& split) { return std::string_view(split.begin(), split.end()); }));
 
+    static constexpr std::string_view RegexPrefix = "<REGEX>:";
+    static constexpr std::string_view NegativeRegexPrefix = "<!REGEX>:";
+    const auto regexAssertion = [](const std::string& expectedLine) -> std::optional<std::pair<std::string_view, bool>>
+    {
+        const std::string_view line{expectedLine};
+        if (line.starts_with(RegexPrefix))
+        {
+            return std::pair{line.substr(RegexPrefix.size()), true};
+        }
+        if (line.starts_with(NegativeRegexPrefix))
+        {
+            return std::pair{line.substr(NegativeRegexPrefix.size()), false};
+        }
+        return std::nullopt;
+    };
+
+    if (std::ranges::any_of(expected, [&regexAssertion](const auto& line) { return regexAssertion(line).has_value(); }))
+    {
+        const auto actualOutput = fmt::format("{}", fmt::join(actual, "\n"));
+        for (size_t assertionIndex = 0; assertionIndex < expected.size(); ++assertionIndex)
+        {
+            const auto& expectedLine = expected[assertionIndex];
+            if (const auto assertion = regexAssertion(expectedLine))
+            {
+                const auto [pattern, shouldMatch] = assertion.value();
+                try
+                {
+                    const auto matches = std::regex_search(actualOutput, std::regex(std::string{pattern}));
+                    if (matches != shouldMatch)
+                    {
+                        return fmt::format(
+                            "\n\n"
+                            "Explain Output Regex Assertion Failed (line {}, expected pattern \"{}\" {} match)\n"
+                            "----------------------\n"
+                            "Actual:\n{}",
+                            assertionIndex + 1,
+                            pattern,
+                            shouldMatch ? "to" : "not to",
+                            actualOutput);
+                    }
+                }
+                catch (const std::regex_error& exception)
+                {
+                    return fmt::format(
+                        "\n\n"
+                        "Invalid Explain Output Regex (line {}, pattern \"{}\"): {}",
+                        assertionIndex + 1,
+                        pattern,
+                        exception.what());
+                }
+            }
+            else if (!std::ranges::contains(actual, expectedLine))
+            {
+                return fmt::format(
+                    "\n\n"
+                    "Explain Output Mismatch (line {}, expected line \"{}\" was not found)\n"
+                    "----------------------\n"
+                    "Actual:\n{}",
+                    assertionIndex + 1,
+                    expectedLine,
+                    actualOutput);
+            }
+        }
+        return std::nullopt;
+    }
+
     if (expected == actual)
     {
         return std::nullopt;
     }
 
     auto firstDifferingLine = std::ranges::mismatch(expected, actual).in1 - expected.begin();
+
     static constexpr std::string_view EndOfOutput = "<end of output>";
     return fmt::format(
         "\n\n"
