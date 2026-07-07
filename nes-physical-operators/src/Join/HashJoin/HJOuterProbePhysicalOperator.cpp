@@ -33,7 +33,6 @@
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -60,7 +59,7 @@ loadEntryPagedVector(const ChainedHashMapRef::ChainedEntryRef& entryRef, const s
     OwnedNautilusBuffer pagedVectorBuffer;
     nautilus::invoke(
         +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
-        { *out = hashMapBuf->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
+        { *out = hashMapBuf->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
         entryRef.hashMapBuffer,
         pagedVectorBuffer.asArg(),
         static_cast<nautilus::val<uint32_t*>>(valueMemArea));

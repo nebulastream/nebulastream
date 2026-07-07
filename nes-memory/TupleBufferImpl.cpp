@@ -22,7 +22,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <include/Runtime/VariableSizedAccess.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
@@ -303,19 +302,18 @@ void BufferControlBlock::setOriginId(const OriginId originId)
 /// ------------------ VarLen fields support for TupleBuffer --------------------
 /// -----------------------------------------------------------------------------
 
-VariableSizedAccess::Index BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
+ChildBufferIndex BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
 {
     control->retain();
     children.emplace_back(control->owner);
-    return VariableSizedAccess::Index{children.size() - 1};
+    return ChildBufferIndex{static_cast<uint32_t>(children.size() - 1)};
 }
 
-bool BufferControlBlock::loadChildBuffer(
-    const VariableSizedAccess::Index index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
+bool BufferControlBlock::loadChildBuffer(const ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
 {
-    PRECONDITION(index.index < children.size(), "Index={} is out of range={}", index, children.size());
+    PRECONDITION(index.getRawValue() < children.size(), "Index={} is out of range={}", index, children.size());
 
-    auto* child = children[index.index];
+    auto* child = children[index.getRawValue()];
     control = child->controlBlock->retain();
     ptr = child->ptr;
     size = child->size;

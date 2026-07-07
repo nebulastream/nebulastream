@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Runtime/VariableSizedAccess.hpp>
+#include <Interface/VariableSizedAccess.hpp>
 
 #include <cstdint>
 #include <ostream>
@@ -19,32 +19,6 @@
 
 namespace NES
 {
-VariableSizedAccess::Index::Index(const uint64_t index) noexcept : index(index)
-{
-}
-
-VariableSizedAccess::Index::Underlying VariableSizedAccess::Index::getRawIndex() const
-{
-    return index;
-}
-
-std::ostream& operator<<(std::ostream& os, const VariableSizedAccess::Index& index)
-{
-    return os << index.index;
-}
-
-VariableSizedAccess::Index::Underlying
-operator/(const VariableSizedAccess::Index& index, const VariableSizedAccess::Index::Underlying other)
-{
-    return index.index / other;
-}
-
-VariableSizedAccess::Index::Underlying
-operator%(const VariableSizedAccess::Index& index, const VariableSizedAccess::Index::Underlying other)
-{
-    return index.index % other;
-}
-
 VariableSizedAccess::Offset::Offset(const uint64_t offset) : offset(offset)
 {
 }

@@ -23,7 +23,6 @@
 #include <Identifiers/NESStrongTypeFormat.hpp> ///NOLINT: required for fmt
 #include <Time/Timestamp.hpp>
 #include <fmt/format.h>
-#include <include/Runtime/VariableSizedAccess.hpp>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
@@ -174,7 +173,7 @@ void TupleBuffer::setOriginId(const OriginId id) noexcept
     controlBlock->setOriginId(id);
 }
 
-VariableSizedAccess::Index TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept
+ChildBufferIndex TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept
 {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
@@ -184,7 +183,7 @@ VariableSizedAccess::Index TupleBuffer::storeChildBuffer(TupleBuffer& buffer) no
     return index;
 }
 
-TupleBuffer TupleBuffer::loadChildBuffer(VariableSizedAccess::Index bufferIndex) const noexcept
+TupleBuffer TupleBuffer::loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept
 {
     TupleBuffer childBuffer;
     const auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);

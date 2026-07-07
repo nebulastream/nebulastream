@@ -22,8 +22,8 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
-#include <include/Runtime/VariableSizedAccess.hpp>
 #include <TaggedPointer.hpp>
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <deque>
@@ -98,8 +98,8 @@ public:
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Timestamp timestamp);
     [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
-    [[nodiscard]] VariableSizedAccess::Index storeChildBuffer(BufferControlBlock* control);
-    [[nodiscard]] bool loadChildBuffer(VariableSizedAccess::Index index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
+    [[nodiscard]] ChildBufferIndex storeChildBuffer(BufferControlBlock* control);
+    [[nodiscard]] bool loadChildBuffer(ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

@@ -15,7 +15,7 @@
 #pragma once
 
 #include <type_traits>
-#include <Runtime/VariableSizedAccess.hpp>
+#include <Interface/VariableSizedAccess.hpp>
 #include <nautilus/tracing/TypedValueRef.hpp>
 #include <nautilus/tracing/Types.hpp>
 #include <nautilus/val.hpp>
@@ -23,41 +23,6 @@
 
 namespace nautilus
 {
-namespace tracing
-{
-template <typename T>
-requires(std::is_base_of_v<NES::VariableSizedAccess, T>)
-struct TypeResolver<T>
-{
-    [[nodiscard]] static constexpr Type to_type() { return TypeResolver<typename T::CombinedIndex>::to_type(); }
-};
-
-}
-
-namespace details
-{
-template <typename LHS>
-requires(std::is_base_of_v<NES::VariableSizedAccess, LHS>)
-struct RawValueResolver<LHS>
-{
-    static LHS getRawValue(const val<LHS>& val)
-    {
-        return LHS{details::RawValueResolver<typename LHS::CombinedIndex>::getRawValue(val.variableSizedAccess)};
-    }
-};
-
-template <typename T>
-requires(std::is_base_of_v<val<NES::VariableSizedAccess>, std::remove_cvref_t<T>>)
-struct StateResolver<T>
-{
-    template <typename U = T>
-    static tracing::TypedValueRef getState(U&& value)
-    {
-        return StateResolver<typename std::remove_cvref_t<T>::Underlying>::getState(value.variableSizedAccess);
-    }
-};
-
-}
 
 /// We are specializing the nautilus::val<> implementation so that we can use nautilus::val<VariableSizedAccess>
 template <>
@@ -75,7 +40,7 @@ public:
 
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     explicit val(const Underlying variableSizedAccess)
-        : index(variableSizedAccess.getIndex().getRawIndex())
+        : index(variableSizedAccess.getIndex().getRawValue())
         , offset(variableSizedAccess.getOffset().getRawOffset())
         , size(variableSizedAccess.getSize().getRawSize())
     {

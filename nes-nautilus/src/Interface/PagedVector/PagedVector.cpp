@@ -28,7 +28,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -86,12 +85,12 @@ void PagedVector::updateCumulativeSumLastItem() const
     uint64_t penultimateCumulativeSum = 0;
     if (lastPageIndex >= 1)
     {
-        const VariableSizedAccess::Index childBufferIndex{lastPageIndex - 1};
+        const ChildBufferIndex childBufferIndex{static_cast<uint32_t>(lastPageIndex - 1)};
         auto childBuffer = buffer.loadChildBuffer(childBufferIndex);
         const Page penultimatePage = Page::load(childBuffer);
         penultimateCumulativeSum = penultimatePage.getCumulativeSum();
     }
-    const VariableSizedAccess::Index lastBufferIndex{lastPageIndex};
+    const ChildBufferIndex lastBufferIndex{static_cast<uint32_t>(lastPageIndex)};
     auto lastBuffer = buffer.loadChildBuffer(lastBufferIndex);
     Page lastPage = Page::load(lastBuffer);
     lastPage.setCumulativeSum(lastPage.getNumberOfTuples() + penultimateCumulativeSum);
@@ -103,7 +102,7 @@ void PagedVector::updateCumulativeSumAllPages() const
     const uint64_t totalPages = getNumberOfPages();
     for (uint64_t i = 0; i < totalPages; i++)
     {
-        const VariableSizedAccess::Index pageChildIdx{i};
+        const ChildBufferIndex pageChildIdx{static_cast<uint32_t>(i)};
         auto pageBuffer = buffer.loadChildBuffer(pageChildIdx);
         Page page = Page::load(pageBuffer);
         page.setCumulativeSum(page.getNumberOfTuples() + curCumulativeSum);
@@ -121,7 +120,7 @@ void PagedVector::copyPagesFrom(AbstractBufferProvider& bufferProvider, const Pa
 
     for (uint64_t pageIdx = 0; pageIdx < numPagesToCopy; ++pageIdx)
     {
-        auto sourcePage = other.buffer.loadChildBuffer(VariableSizedAccess::Index{pageIdx});
+        auto sourcePage = other.buffer.loadChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx)});
         auto destPage = deepCopyBuffer(sourcePage, bufferProvider);
         std::ignore = buffer.storeChildBuffer(destPage);
         header().numPages++;
@@ -138,7 +137,7 @@ void PagedVector::movePagesFrom(PagedVector& other)
     const uint64_t numPages = other.getNumberOfPages();
     for (uint64_t i = 0; i < numPages; ++i)
     {
-        auto otherPageBuffer = other.buffer.loadChildBuffer(VariableSizedAccess::Index{i});
+        auto otherPageBuffer = other.buffer.loadChildBuffer(ChildBufferIndex{static_cast<uint32_t>(i)});
         std::ignore = buffer.storeChildBuffer(otherPageBuffer);
         header().numPages++;
     }
@@ -174,7 +173,7 @@ void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider)
     auto numPages = getNumberOfPages();
     if (numPages > 0)
     {
-        const VariableSizedAccess::Index lastPageIndex{numPages - 1};
+        const ChildBufferIndex lastPageIndex{static_cast<uint32_t>(numPages - 1)};
         auto lastPage = buffer.loadChildBuffer(lastPageIndex);
         if (lastPage.getNumberOfTuples() < getPageCapacity())
         {
@@ -197,7 +196,7 @@ size_t PagedVector::getPageIndex(const uint64_t recordIndex) const
     /// so for it we recompute the effective cumSum from penultimate + current numTuples.
     const auto effectiveCumulativeSum = [this, numPages](uint64_t pageIdx) -> uint64_t
     {
-        const auto pageBuffer = buffer.loadChildBuffer(VariableSizedAccess::Index{pageIdx});
+        const auto pageBuffer = buffer.loadChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx)});
         const Page page = Page::load(pageBuffer);
         if (pageIdx + 1 < numPages)
         {
@@ -206,7 +205,7 @@ size_t PagedVector::getPageIndex(const uint64_t recordIndex) const
         uint64_t penultimateCumulativeSum = 0;
         if (pageIdx > 0)
         {
-            const auto penultimateBuffer = buffer.loadChildBuffer(VariableSizedAccess::Index{pageIdx - 1});
+            const auto penultimateBuffer = buffer.loadChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx - 1)});
             penultimateCumulativeSum = Page::load(penultimateBuffer).getCumulativeSum();
         }
         return penultimateCumulativeSum + page.getNumberOfTuples();
@@ -226,7 +225,7 @@ uint64_t PagedVector::getTotalNumberOfRecords() const
     uint64_t penultimateCumulativeSum = 0;
     if (numPages > 1)
     {
-        const VariableSizedAccess::Index penultimateIndex{numPages - 2};
+        const ChildBufferIndex penultimateIndex{static_cast<uint32_t>(numPages - 2)};
         auto penultimateBuffer = buffer.loadChildBuffer(penultimateIndex);
         const Page penultimatePage = Page::load(penultimateBuffer);
         penultimateCumulativeSum = penultimatePage.getCumulativeSum();
@@ -234,7 +233,7 @@ uint64_t PagedVector::getTotalNumberOfRecords() const
     uint64_t lastNumberOfTuples = 0;
     if (numPages > 0)
     {
-        const VariableSizedAccess::Index lastIndex{numPages - 1};
+        const ChildBufferIndex lastIndex{static_cast<uint32_t>(numPages - 1)};
         auto lastBuffer = buffer.loadChildBuffer(lastIndex);
         const Page lastPage = Page::load(lastBuffer);
         lastNumberOfTuples = lastPage.getNumberOfTuples();
