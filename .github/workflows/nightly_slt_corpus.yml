@@ -1,0 +1,108 @@
+name: Nightly SLT Corpus
+
+description: Run the generated SQL Logic Test corpus during nightly CI.
+
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      head_sha:
+        required: true
+        type: string
+        description: "head_sha of the branch"
+      corpus_ref:
+        required: false
+        type: string
+        default: main
+        description: "Nightly-Systest-Corpus ref to check out"
+      corpus_path:
+        required: false
+        type: string
+        default: slt
+        description: "Path to the generated systest corpus inside Nightly-Systest-Corpus"
+
+jobs:
+  run-slt-corpus:
+    name: "Run SLT corpus"
+    timeout-minutes: 720
+    runs-on: [ self-hosted, linux, Build, x64 ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+
+      - uses: actions/checkout@v4
+        with:
+          repository: nebulastream/Nightly-Systest-Corpus
+          ref: ${{ inputs.corpus_ref }}
+          path: nightly-systest-corpus
+
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+
+      - uses: ./.github/steps/prepare-github
+        name: Preparing Github Runners
+        with:
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+
+      - uses: ./.github/steps/run-in-container
+        name: Build systest
+        with:
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+          run: |
+            source .github/.env/test-none.env
+            sccache --start-server
+            sccache --show-stats
+            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DNES_LOG_LEVEL=INFO
+            cmake --build build --target systest -j -- -k 0
+            sccache --show-stats
+            sccache --stop-server
+
+      - uses: ./.github/steps/run-in-container
+        name: Run SLT corpus
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-libcxx-none
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+          run: |
+            source .github/.env/test-none.env
+            corpus_root="nightly-systest-corpus/${{ inputs.corpus_path }}"
+            result_root="build/nes-systests/nightly-slt-corpus"
+            if [ ! -d "${corpus_root}" ]; then
+              echo "Corpus directory does not exist: ${corpus_root}"
+              exit 1
+            fi
+            test_count=$(find "${corpus_root}" -type f -name "*.test" | wc -l)
+            if [ "${test_count}" -eq 0 ]; then
+              echo "No .test files found in ${corpus_root}"
+              exit 1
+            fi
+            echo "Running ${test_count} generated SLT files from ${corpus_root} in a single systest invocation"
+            mkdir -p "${result_root}"
+            build/nes-systests/systest/systest \
+              -t "${corpus_root}" \
+              --workingDir "${result_root}" \
+              --skip-query-plan-serialization-validation \
+              -- \
+              --worker.default_query_execution.execution_mode=COMPILER
+
+      - name: Upload SLT corpus logs on failure
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !cancelled() && !github.event.act }}
+        with:
+          name: nightly-slt-corpus-logs
+          path: |
+            build/nes-systests/SystemTest_*.log
+            build/nes-systests/latest.log
+            build/nes-systests/nightly-slt-corpus/**
