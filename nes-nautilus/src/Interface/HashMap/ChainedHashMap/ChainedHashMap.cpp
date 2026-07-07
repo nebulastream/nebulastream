@@ -24,7 +24,6 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include <Runtime/VariableSizedAccess.hpp>
 
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
@@ -319,12 +318,12 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     return newEntry;
 }
 
-[[nodiscard]] VariableSizedAccess::Index ChainedHashMap::getStorageBufferIdx() const
+[[nodiscard]] ChildBufferIndex ChainedHashMap::getStorageBufferIdx() const
 {
     return header().storageSpaceIndex;
 }
 
-[[nodiscard]] VariableSizedAccess::Index ChainedHashMap::getVarSizedBufferIdx() const
+[[nodiscard]] ChildBufferIndex ChainedHashMap::getVarSizedBufferIdx() const
 {
     return header().varSizedSpaceIndex;
 }
@@ -336,7 +335,7 @@ TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const
     auto storageBuffer = buffer.loadChildBuffer(storageBufferIdx);
     uint64_t numberOfPages = storageBuffer.getNumberOfChildBuffers();
     PRECONDITION(pageIndex < numberOfPages, "Page index {} is greater than the number of pages {}", pageIndex, numberOfPages);
-    const VariableSizedAccess::Index pageBufferIdx{pageIndex};
+    const ChildBufferIndex pageBufferIdx{static_cast<uint32_t>(pageIndex)};
     TupleBuffer page = storageBuffer.loadChildBuffer(pageBufferIdx);
     return page;
 }
@@ -349,7 +348,7 @@ TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
     auto varSizedBuffer = buffer.loadChildBuffer(varSizedSpaceIdx);
     uint64_t numberOfPages = varSizedBuffer.getNumberOfChildBuffers();
     PRECONDITION(pageIndex < numberOfPages, "Page index {} is greater than the number of pages {}", pageIndex, numberOfPages);
-    const VariableSizedAccess::Index pageBufferIdx{pageIndex};
+    const ChildBufferIndex pageBufferIdx{static_cast<uint32_t>(pageIndex)};
     TupleBuffer page = varSizedBuffer.loadChildBuffer(pageBufferIdx);
     return page;
 }

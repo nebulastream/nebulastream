@@ -23,7 +23,6 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
@@ -53,7 +52,7 @@ HJSlice::getHashMapBufferRefForSide(WorkerThreadId workerThreadId, const JoinBui
         workerThreadId,
         pos,
         numHashMaps);
-    const VariableSizedAccess::Index bufferIndex(pos);
+    const ChildBufferIndex bufferIndex(pos);
     return getHashMapBufferRef(bufferIndex);
 }
 

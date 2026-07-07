@@ -26,7 +26,6 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 
 namespace NES
 {
@@ -100,8 +99,8 @@ public:
 
     [[nodiscard]] uint64_t getMask() const { return header().mask; }
 
-    [[nodiscard]] VariableSizedAccess::Index getStorageBufferIdx() const;
-    [[nodiscard]] VariableSizedAccess::Index getVarSizedBufferIdx() const;
+    [[nodiscard]] ChildBufferIndex getStorageBufferIdx() const;
+    [[nodiscard]] ChildBufferIndex getVarSizedBufferIdx() const;
     [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos);
 
     /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
@@ -135,8 +134,8 @@ private:
         uint64_t entriesPerPage;
         uint64_t numRecords = 0;
         uint64_t mask;
-        VariableSizedAccess::Index storageSpaceIndex;
-        VariableSizedAccess::Index varSizedSpaceIndex;
+        ChildBufferIndex storageSpaceIndex;
+        ChildBufferIndex varSizedSpaceIndex;
 
         /// Chains array starts immediately after this header
         /// it is dynamically sized based on numChains, so nothing to store in here.

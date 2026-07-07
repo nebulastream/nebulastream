@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <variant>
+#include <Interface/NESStrongTypeRef.hpp> /// NOLINT(misc-include-cleaner): re-exported so callers get the nautilus val<> specialization for ChildBufferIndex.
 #include <Runtime/TupleBuffer.hpp>
 #include <val_details.hpp>
 #include <val_ptr.hpp>
@@ -58,9 +59,9 @@ public:
 
     [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
 
-    nautilus::val<size_t> storeChild(OwnedNautilusBuffer&& child);
-    nautilus::val<size_t> storeChild(BorrowedNautilusBuffer&& child);
-    [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<size_t>& index) const;
+    nautilus::val<ChildBufferIndex> storeChild(OwnedNautilusBuffer&& child);
+    nautilus::val<ChildBufferIndex> storeChild(BorrowedNautilusBuffer&& child);
+    [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<ChildBufferIndex>& index) const;
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
     /// Returns a pointer to the wrapped TupleBuffer that is only valid for as long as this buffer is alive.
@@ -87,11 +88,11 @@ public:
 
     [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
 
-    [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<size_t>& index) const;
+    [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<ChildBufferIndex>& index) const;
 
-    nautilus::val<size_t> storeChild(OwnedNautilusBuffer&& child);
+    nautilus::val<ChildBufferIndex> storeChild(OwnedNautilusBuffer&& child);
 
-    nautilus::val<size_t> storeChild(BorrowedNautilusBuffer&& child);
+    nautilus::val<ChildBufferIndex> storeChild(BorrowedNautilusBuffer&& child);
 
     /// Returns a pointer to the wrapped TupleBuffer that is only valid for as long as this buffer is alive.
     /// It is solely intended to be passed as an argument to a `nautilus::invoke` and MUST NOT be stored or used to outlive this buffer.
@@ -108,10 +109,10 @@ public:
 
     nautilus::val<int8_t*> data();
 
-    nautilus::val<size_t> storeChild(NautilusBuffer&& buffer);
+    nautilus::val<ChildBufferIndex> storeChild(NautilusBuffer&& buffer);
 
     /// Loading a child buffer always yields an owned buffer, as its lifetime must be managed by the nautilus execution.
-    [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<size_t>& index) const;
+    [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<ChildBufferIndex>& index) const;
 
     [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
 
