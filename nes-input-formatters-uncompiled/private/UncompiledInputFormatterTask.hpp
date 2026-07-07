@@ -55,6 +55,10 @@ inline void setUncompiledMetadataOfFormattedBuffer(
     formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
     formattedBuffer.setChunkNumber(ChunkNumber(runningChunkNumber++));
     formattedBuffer.setOriginId(rawBuffer.getOriginId());
+    /// Propagate the source read-start stamp like the compiled scan/emit pair does (ScanPhysicalOperator ->
+    /// ctx.sourceCreationTimestamp -> EmitPhysicalOperator); pooled buffers otherwise carry 0/stale stamps and
+    /// latency-metering sinks (MonitoringSink) compute garbage latencies and a zero wall-span start.
+    formattedBuffer.setSourceCreationTimestampInMS(rawBuffer.getSourceCreationTimestampInMS());
 }
 
 /// Given that we know the number of tuples in a raw buffer, the number of (spanning) tuples that we already wrote into our current formatted
@@ -547,6 +551,7 @@ private:
         formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
         formattedBuffer.setChunkNumber(ChunkNumber(runningChunkNumber++));
         formattedBuffer.setOriginId(rawBuffer.getOriginId());
+        formattedBuffer.setSourceCreationTimestampInMS(rawBuffer.getRawBuffer().getSourceCreationTimestampInMS());
         pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 
