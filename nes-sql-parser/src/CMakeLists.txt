@@ -18,4 +18,3 @@ add_source_files(nes-sql-parser
         StatementBinder.cpp
 )
 
-add_subdirectory(Configurations)

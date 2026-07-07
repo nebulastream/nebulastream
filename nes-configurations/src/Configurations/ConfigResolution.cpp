@@ -15,19 +15,13 @@
 #include <Configurations/ConfigResolution.hpp>
 
 #include <algorithm>
-#include <cstdint>
 #include <expected>
 #include <ranges>
-#include <string>
-#include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 
-#include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
-#include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
@@ -58,49 +52,24 @@ std::ostream& operator<<(std::ostream& os, const InvalidConfigSpecification& err
     return os;
 }
 
-ConfigLiteral parseConfigLiteral(const std::string& raw)
-{
-    const auto lowered = toLowerCase(raw);
-    if (lowered == "true")
-    {
-        return true;
-    }
-    if (lowered == "false")
-    {
-        return false;
-    }
-    /// Integer literals are always passed down signed (int64_t), matching the SQL parser; a
-    /// field's factory lowers into its declared type via downcastConfigValue.
-    if (const auto asSigned = from_chars<int64_t>(raw))
-    {
-        return *asSigned;
-    }
-    if (const auto asDouble = from_chars<double>(raw))
-    {
-        return *asDouble;
-    }
-    return raw;
-}
-
-std::expected<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> resolveConfig(
-    const std::vector<std::pair<QualifiedIdentifier, ConfigLiteral>>& passedConfig,
-    const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig)
+std::expected<Schema<ConfigValue, Ordered>, InvalidConfigSpecification>
+resolveConfig(const Schema<LiteralConfigValue, Ordered>& passedConfig, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig)
 {
     InvalidConfigSpecification errors;
     std::vector<ConfigValue> resolvedConfig;
 
-    for (const auto& [passedName, passedLiteral] : passedConfig)
+    for (const auto& passedValue : passedConfig)
     {
-        const auto configField = declaredConfig.getFieldByName(passedName);
+        const auto configField = declaredConfig.getFieldByName(passedValue.getFullyQualifiedName());
         if (not configField.has_value())
         {
-            errors.unresolvableFields.push_back(passedName);
+            errors.unresolvableFields.push_back(passedValue.getFullyQualifiedName());
             continue;
         }
-        auto created = configField->apply(passedLiteral);
+        auto created = configField->apply(passedValue.getValue());
         if (not created.has_value())
         {
-            errors.failedInstantiations.emplace_back(passedName, created.error());
+            errors.failedInstantiations.emplace_back(passedValue.getFullyQualifiedName(), created.error());
             continue;
         }
         resolvedConfig.emplace_back(configField->getFullyQualifiedName(), std::move(created).value().getValue());
@@ -134,18 +103,6 @@ std::expected<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> resolveC
         return std::unexpected{std::move(errors)};
     }
     return Schema<ConfigValue, Ordered>{std::move(resolvedConfig)};
-}
-
-std::expected<InstantiatedConfig, InvalidConfigSpecification> instantiateConfig(
-    const std::unordered_map<Identifier, ConfigLiteral>& passedConfig, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig)
-{
-    std::vector<std::pair<QualifiedIdentifier, ConfigLiteral>> passedLiterals;
-    passedLiterals.reserve(passedConfig.size());
-    for (const auto& [name, value] : passedConfig)
-    {
-        passedLiterals.emplace_back(QualifiedIdentifier{std::vector{name}}, value);
-    }
-    return resolveConfig(passedLiterals, declaredConfig).transform([](auto&& resolved) { return InstantiatedConfig{std::move(resolved)}; });
 }
 
 }

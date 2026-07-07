@@ -15,16 +15,18 @@
 
 #include <ranges>
 #include <set>
+#include <string>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <Configurations/ConfigResolution.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -78,25 +80,25 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
         auto sourceConfig = inlineSource.value()->getSourceConfig();
 
         /// "host" is not part of the source config — it determines placement, not source behavior.
-        /// It is stored in the config map only because InlineSourceLogicalOperator lacks a dedicated host field.
-        auto hostIt = sourceConfig.find(Identifier::parse("host"));
-        if (hostIt == sourceConfig.end())
+        /// It is stored in the config only because InlineSourceLogicalOperator lacks a dedicated host field.
+        const auto hostName = QualifiedIdentifier::create(Identifier::parse("host"));
+        const auto hostValue = sourceConfig.getFieldByName(hostName);
+        if (not hostValue.has_value())
         {
             throw InvalidConfigParameter("`host`");
         }
-        auto host = Host(hostIt->second);
-        sourceConfig.erase(hostIt);
-
-        /// The inline source operator carries its config as raw strings; type them at this
-        /// boundary before handing them to config resolution.
-        auto sourceConfigLiterals = std::unordered_map<Identifier, ConfigLiteral>{};
-        sourceConfigLiterals.reserve(sourceConfig.size());
-        for (const auto& [name, value] : sourceConfig)
+        const auto hostLiteral = hostValue->getValue();
+        const auto* hostString = std::get_if<std::string>(&hostLiteral);
+        if (hostString == nullptr)
         {
-            sourceConfigLiterals.emplace(name, parseConfigLiteral(value));
+            throw InvalidConfigParameter("host must be a string literal");
         }
+        auto host = Host(*hostString);
+        sourceConfig = Schema<LiteralConfigValue, Ordered>{
+            sourceConfig | std::views::filter([&](const auto& value) { return value.getFullyQualifiedName() != hostName; })
+            | std::ranges::to<std::vector>()};
 
-        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, std::move(sourceConfigLiterals));
+        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, sourceConfig);
 
         if (!descriptorOpt.has_value())
         {

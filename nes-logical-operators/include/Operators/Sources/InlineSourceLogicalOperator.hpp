@@ -20,6 +20,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Configurations/ConfigResolution.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -46,13 +47,13 @@ public:
         WeakLogicalOperator self,
         Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-        std::unordered_map<Identifier, std::string> sourceConfig,
+        Schema<LiteralConfigValue, Ordered> sourceConfig,
         std::unordered_map<Identifier, std::string> parserConfig);
 
     static TypedLogicalOperator<InlineSourceLogicalOperator> create(
         Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-        std::unordered_map<Identifier, std::string> sourceConfig,
+        Schema<LiteralConfigValue, Ordered> sourceConfig,
         std::unordered_map<Identifier, std::string> parserConfig);
 
     [[nodiscard]] bool operator==(const InlineSourceLogicalOperator& rhs) const;
@@ -72,7 +73,9 @@ public:
     [[nodiscard]] static InlineSourceLogicalOperator withInferredSchema();
 
     [[nodiscard]] Identifier getSourceType() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getSourceConfig() const;
+    /// The literals exactly as the parser produced them (see getSourceConfigLiterals); resolved
+    /// against the source's declared config schema in the InlineSourceBindingRule.
+    [[nodiscard]] Schema<LiteralConfigValue, Ordered> getSourceConfig() const;
     [[nodiscard]] std::unordered_map<Identifier, std::string> getParserConfig() const;
     [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getSourceSchema() const;
 
@@ -81,7 +84,7 @@ private:
 
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema;
     Identifier sourceType;
-    std::unordered_map<Identifier, std::string> sourceConfig;
+    Schema<LiteralConfigValue, Ordered> sourceConfig;
     std::unordered_map<Identifier, std::string> parserConfig;
 
     std::vector<LogicalOperator> children;

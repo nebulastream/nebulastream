@@ -37,12 +37,14 @@
 #include <variant>
 #include <vector>
 
+#include <Configurations/ConfigResolution.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -78,6 +80,35 @@
 
 namespace NES::Systest
 {
+
+namespace
+{
+
+/// The systest data adaptors (PhysicalSourceConfig, InlineData/FileData registries) mutate the
+/// source config as a map; the catalog and the inline source operator carry it as an ordered
+/// schema of literal config values. These two helpers convert at that boundary.
+std::unordered_map<Identifier, ConfigLiteral> toConfigMap(const Schema<LiteralConfigValue, Ordered>& config)
+{
+    std::unordered_map<Identifier, ConfigLiteral> configMap;
+    for (const auto& value : config)
+    {
+        configMap.insert_or_assign(*value.getFullyQualifiedName().begin(), value.getValue());
+    }
+    return configMap;
+}
+
+Schema<LiteralConfigValue, Ordered> toLiteralConfigSchema(const std::unordered_map<Identifier, ConfigLiteral>& config)
+{
+    std::vector<LiteralConfigValue> values;
+    values.reserve(config.size());
+    for (const auto& [name, value] : config)
+    {
+        values.emplace_back(QualifiedIdentifier::create(name), value);
+    }
+    return Schema<LiteralConfigValue, Ordered>{std::move(values)};
+}
+
+}
 
 /// Helper class to model the two-step process of creating sinks in systest. We cannot create sink descriptors directly from sink definitions, because
 /// every query should write to a separate file sink, while being able to share the sink definitions with other queries.
@@ -594,7 +625,7 @@ struct SystestBinder::Impl
             .logical = statement.attachedTo.asCanonicalString(),
             .type = statement.sourceType,
             .parserConfig = statement.parserConfig,
-            .sourceConfig = statement.sourceConfig};
+            .sourceConfig = toConfigMap(statement.sourceConfig)};
 
         std::unordered_map<Identifier, std::string> defaultParserConfig{{Identifier::parse("type"), "CSV"}};
         physicalSourceConfig.parserConfig.merge(defaultParserConfig);
@@ -611,7 +642,11 @@ struct SystestBinder::Impl
         }
 
         if (const auto created = sourceCatalog->addPhysicalSource(
-                *logicalSource, physicalSourceConfig.type, host, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig);
+                *logicalSource,
+                physicalSourceConfig.type,
+                host,
+                toLiteralConfigSchema(physicalSourceConfig.sourceConfig),
+                physicalSourceConfig.parserConfig);
             not created.has_value())
         {
             throw Exception(created.error());
@@ -696,18 +731,20 @@ struct SystestBinder::Impl
 
         if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
         {
-            auto sourceConfig = inlineSource.value()->getSourceConfig();
+            const auto originalSourceConfig = toConfigMap(inlineSource.value()->getSourceConfig());
+            auto sourceConfig = originalSourceConfig;
             auto parserConfig = inlineSource.value()->getParserConfig();
 
             parserConfig.try_emplace(Identifier::parse("type"), "CSV");
 
             /// By default, all relative paths are relative to the testDataDir.
-            if (sourceConfig.contains(Identifier::parse("file_path")) && !sourceConfig.at(Identifier::parse("file_path")).starts_with("/"))
+            if (const auto filePathIt = sourceConfig.find(Identifier::parse("file_path")); filePathIt != sourceConfig.end())
             {
-                auto filePath = inlineSource.value()->getSourceConfig().at(Identifier::parse("file_path"));
-                filePath = testDataDir / filePath;
-                sourceConfig.erase(Identifier::parse("file_path"));
-                sourceConfig.emplace(Identifier::parse("file_path"), filePath);
+                if (const auto* filePath = std::get_if<std::string>(&filePathIt->second);
+                    filePath != nullptr && !filePath->starts_with("/"))
+                {
+                    filePathIt->second = (testDataDir / *filePath).string();
+                }
             }
 
             PRECONDITION(
@@ -715,10 +752,13 @@ struct SystestBinder::Impl
                 "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
             sourceConfig.try_emplace(Identifier::parse("host"), clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
-            if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
+            if (sourceConfig != originalSourceConfig || parserConfig != inlineSource.value()->getParserConfig())
             {
                 const auto newOperator = InlineSourceLogicalOperator::create(
-                    inlineSource.value()->getSourceType(), inlineSource.value()->getSourceSchema(), sourceConfig, parserConfig);
+                    inlineSource.value()->getSourceType(),
+                    inlineSource.value()->getSourceSchema(),
+                    toLiteralConfigSchema(sourceConfig),
+                    parserConfig);
 
                 return newOperator.withChildrenUnsafe(newChildren);
             }

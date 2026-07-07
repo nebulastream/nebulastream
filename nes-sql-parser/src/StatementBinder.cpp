@@ -123,17 +123,21 @@ public:
         const auto parserConfig = parseInputFormatterConfig(configOptions);
         auto sourceConfig = getSourceConfigLiterals(configOptions);
 
-        /// "host" determines worker placement, not source behavior — extract it from the config map into a dedicated field.
+        /// "host" determines worker placement, not source behavior — extract it from the config into a dedicated field.
         std::optional<Host> host;
-        if (auto it = sourceConfig.find(Identifier::parse("host")); it != sourceConfig.end())
+        const auto hostName = QualifiedIdentifier::create(Identifier::parse("host"));
+        if (const auto hostValue = sourceConfig.getFieldByName(hostName))
         {
-            const auto* hostString = std::get_if<std::string>(&it->second);
+            const auto hostLiteral = hostValue->getValue();
+            const auto* hostString = std::get_if<std::string>(&hostLiteral);
             if (hostString == nullptr)
             {
                 throw InvalidQuerySyntax("host must be a string literal");
             }
             host = Host(*hostString);
-            sourceConfig.erase(it);
+            sourceConfig = Schema<LiteralConfigValue, Ordered>{
+                sourceConfig | std::views::filter([&](const auto& value) { return value.getFullyQualifiedName() != hostName; })
+                | std::ranges::to<std::vector>()};
         }
 
         return CreatePhysicalSourceStatement{

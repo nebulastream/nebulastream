@@ -22,6 +22,7 @@
 
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Configurations/ConfigResolution.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -50,7 +51,7 @@ public:
     static LogicalPlan createLogicalPlan(
         Identifier inlineSourceType,
         Schema<UnqualifiedUnboundField, Ordered> schema,
-        std::unordered_map<Identifier, std::string> sourceConfig,
+        Schema<LiteralConfigValue, Ordered> sourceConfig,
         std::unordered_map<Identifier, std::string> parserConfig);
 
     /// @brief this call projects out the attributes in the parameter list

@@ -211,44 +211,44 @@ std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& con
     return sourceOptions;
 }
 
-std::unordered_map<Identifier, ConfigLiteral> getSourceConfigLiterals(const ConfigMap& configOptions)
+Schema<LiteralConfigValue, Ordered> getSourceConfigLiterals(const ConfigMap& configOptions)
 {
-    auto toConfigLiteral = [](const std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>& value) -> ConfigLiteral
+    auto toConfigLiteral = [](const Literal& literal)
     {
-        if (const auto* schema = std::get_if<Schema<UnqualifiedUnboundField, Ordered>>(&value))
-        {
-            return *schema;
-        }
         return std::visit(
-            []<typename T>(const T& literal) -> ConfigLiteral
+            []<typename T>(const T& value) -> ConfigLiteral
             {
                 if constexpr (std::is_same_v<T, uint64_t>)
                 {
                     /// Integers are always passed down signed; a field that needs an unsigned type
                     /// lowers the int64_t with a range check (see downcastConfigValue).
-                    if (not std::in_range<int64_t>(literal))
+                    if (not std::in_range<int64_t>(value))
                     {
-                        throw InvalidQuerySyntax("Integer literal {} exceeds the supported signed integer range", literal);
+                        throw InvalidQuerySyntax("Integer literal {} exceeds the supported signed integer range", value);
                     }
-                    return static_cast<int64_t>(literal);
+                    return static_cast<int64_t>(value);
                 }
                 else
                 {
-                    return literal;
+                    return value;
                 }
             },
-            std::get<Literal>(value));
+            literal);
     };
 
-    std::unordered_map<Identifier, ConfigLiteral> sourceOptions{};
+    std::vector<LiteralConfigValue> sourceOptions{};
     if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SOURCE")); sourceConfigIter != configOptions.end())
     {
         for (const auto& [name, value] : sourceConfigIter->second)
         {
-            sourceOptions.insert_or_assign(name, toConfigLiteral(value));
+            /// Schema-typed options define the source schema and are extracted via getSourceSchema.
+            if (const auto* literal = std::get_if<Literal>(&value))
+            {
+                sourceOptions.emplace_back(QualifiedIdentifier::create(name), toConfigLiteral(*literal));
+            }
         }
     }
-    return sourceOptions;
+    return Schema<LiteralConfigValue, Ordered>{std::move(sourceOptions)};
 }
 
 std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions)

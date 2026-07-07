@@ -84,7 +84,7 @@ TypedLogicalOperator<SourceDescriptorLogicalOperator>
 makeSourceWithSchema(SourceCatalog& catalog, std::string_view sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
     const auto logical = catalog.addLogicalSource(Identifier::parse(std::string{sourceName}), schema).value();
-    const std::unordered_map<Identifier, ConfigLiteral> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
+    const Schema<LiteralConfigValue, Ordered> sourceConfig{{QualifiedIdentifier::create(Identifier::parse("file_path")), "/dev/null"}};
     const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
     const auto descriptor
         = catalog.addPhysicalSource(logical, Identifier::parse("file"), Host("localhost"), sourceConfig, parserConfig).value();

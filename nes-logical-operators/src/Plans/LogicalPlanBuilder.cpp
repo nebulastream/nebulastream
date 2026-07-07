@@ -81,7 +81,7 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
     Identifier inlineSourceType,
     Schema<UnqualifiedUnboundField, Ordered> schema,
-    std::unordered_map<Identifier, std::string> sourceConfig,
+    Schema<LiteralConfigValue, Ordered> sourceConfig,
     std::unordered_map<Identifier, std::string> parserConfig)
 {
     return LogicalPlan(

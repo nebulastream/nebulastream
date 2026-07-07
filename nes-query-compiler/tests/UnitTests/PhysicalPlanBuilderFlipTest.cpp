@@ -78,7 +78,7 @@ public:
             schema,
             Host("localhost"),
             {{Identifier::parse(InputFormatterDescriptor::getTypeString()), "CSV"}},
-            {{Identifier::parse("file_path"), "/dev/null"}});
+            Schema<LiteralConfigValue, Ordered>{{QualifiedIdentifier::create(Identifier::parse("file_path")), "/dev/null"}});
         EXPECT_TRUE(descriptor.has_value());
         auto sourceOp = SourceDescriptorPhysicalOperator(
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)

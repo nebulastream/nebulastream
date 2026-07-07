@@ -67,7 +67,7 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
     const Identifier& sourceType,
     Host host,
-    std::unordered_map<Identifier, ConfigLiteral> descriptorConfig,
+    const Schema<LiteralConfigValue, Ordered>& descriptorConfig,
     const std::unordered_map<Identifier, std::string>& parserConfig)
 {
     const std::unique_lock lock(catalogMutex);
@@ -85,11 +85,12 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         return std::unexpected{
             UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
     }
-    auto instantiatedConfig = instantiateConfig(descriptorConfig, *declaredSchema);
-    if (not instantiatedConfig.has_value())
+    auto resolvedConfig = resolveConfig(descriptorConfig, *declaredSchema);
+    if (not resolvedConfig.has_value())
     {
-        return std::unexpected{InvalidConfigParameter("Invalid config for source type '{}': {}", sourceType, instantiatedConfig.error())};
+        return std::unexpected{InvalidConfigParameter("Invalid config for source type '{}': {}", sourceType, resolvedConfig.error())};
     }
+    auto instantiatedConfig = InstantiatedConfig{std::move(resolvedConfig).value()};
     const auto* sourceConfigEntry = SourceConfigRegistry::instance().find(sourceType.asCanonicalString());
     if (sourceConfigEntry == nullptr)
     {
@@ -117,15 +118,15 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     }
     const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
 
-    auto pluginData = sourceConfigEntry->instantiate(*instantiatedConfig);
-    const auto maxInflightBuffers = instantiatedConfig->get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
+    auto pluginData = sourceConfigEntry->instantiate(instantiatedConfig);
+    const auto maxInflightBuffers = instantiatedConfig.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
     SourceDescriptor descriptor{
         id,
         logicalSource,
         sourceType.asCanonicalString(),
         std::move(host),
         maxInflightBuffers,
-        std::move(instantiatedConfig).value(),
+        std::move(instantiatedConfig),
         std::move(pluginData),
         formatDescriptor};
     idsToPhysicalSources.emplace(id, descriptor);
@@ -180,19 +181,20 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     Host host,
     const std::unordered_map<Identifier, std::string>& parserConfigMap,
-    std::unordered_map<Identifier, ConfigLiteral> sourceConfigMap) const
+    const Schema<LiteralConfigValue, Ordered>& sourceConfig) const
 {
     const auto declaredSchema = SourceValidationProvider::provide(sourceType.asCanonicalString());
     if (not declaredSchema.has_value())
     {
         return std::nullopt;
     }
-    auto instantiatedConfig = instantiateConfig(sourceConfigMap, *declaredSchema);
-    if (not instantiatedConfig.has_value())
+    auto resolvedConfig = resolveConfig(sourceConfig, *declaredSchema);
+    if (not resolvedConfig.has_value())
     {
-        NES_ERROR("Invalid config for inline source of type '{}': {}", sourceType, instantiatedConfig.error());
+        NES_ERROR("Invalid config for inline source of type '{}': {}", sourceType, resolvedConfig.error());
         return std::nullopt;
     }
+    auto instantiatedConfig = InstantiatedConfig{std::move(resolvedConfig).value()};
     const auto* sourceConfigEntry = SourceConfigRegistry::instance().find(sourceType.asCanonicalString());
     if (sourceConfigEntry == nullptr)
     {
@@ -224,15 +226,15 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     auto name = Identifier::parse(physicalId.toString());
 
     const auto logicalSource = LogicalSource{name, schema};
-    auto pluginData = sourceConfigEntry->instantiate(*instantiatedConfig);
-    const auto maxInflightBuffers = instantiatedConfig->get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
+    auto pluginData = sourceConfigEntry->instantiate(instantiatedConfig);
+    const auto maxInflightBuffers = instantiatedConfig.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
     SourceDescriptor sourceDescriptor{
         physicalId,
         logicalSource,
         sourceType.asCanonicalString(),
         std::move(host),
         maxInflightBuffers,
-        std::move(instantiatedConfig).value(),
+        std::move(instantiatedConfig),
         std::move(pluginData),
         formatDescriptor};
     return sourceDescriptor;

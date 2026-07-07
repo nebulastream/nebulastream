@@ -494,7 +494,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             }
             const auto [type, configOptions] = inlineSourceConfig.value();
             const auto parserConfig = parseInputFormatterConfig(configOptions);
-            const auto sourceConfig = getSourceConfig(configOptions);
+            const auto sourceConfig = getSourceConfigLiterals(configOptions);
             const auto schema = getSourceSchema(configOptions);
             if (!schema.has_value())
             {

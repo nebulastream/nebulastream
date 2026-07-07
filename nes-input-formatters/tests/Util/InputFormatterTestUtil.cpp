@@ -130,9 +130,9 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     std::shared_ptr<BufferManager> sourceBufferPool,
     const size_t numberOfRequiredSourceBuffers)
 {
-    std::unordered_map<Identifier, ConfigLiteral> fileSourceConfiguration{
-        {Identifier::parse("file_path"), filePath},
-        {Identifier::parse("max_inflight_buffers"), static_cast<int64_t>(numberOfRequiredSourceBuffers)}};
+    const Schema<LiteralConfigValue, Ordered> fileSourceConfiguration{
+        {QualifiedIdentifier::create(Identifier::parse("file_path")), filePath},
+        {QualifiedIdentifier::create(Identifier::parse("max_inflight_buffers")), static_cast<int64_t>(numberOfRequiredSourceBuffers)}};
     const auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("TestSource"), schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor = sourceCatalog.addPhysicalSource(

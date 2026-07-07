@@ -237,7 +237,8 @@ TEST_F(StatementBinderTest, InlineSourceQuery)
 
     ASSERT_EQ(Identifier::parse("FILE"), inlineSourceOperator->getSourceType());
 
-    const std::unordered_map<Identifier, std::string> expectedSourceConfig = {{Identifier::parse("file_path"), "input.csv"}};
+    const Schema<LiteralConfigValue, Ordered> expectedSourceConfig{
+        {QualifiedIdentifier::create(Identifier::parse("file_path")), "input.csv"}};
     ASSERT_EQ(expectedSourceConfig, inlineSourceOperator->getSourceConfig());
 
     const std::unordered_map<Identifier, std::string> expectedParserConfig = {{Identifier::parse("type"), "CSV"}};

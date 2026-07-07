@@ -23,7 +23,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
-#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigResolution.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -66,7 +66,7 @@ public:
         const LogicalSource& logicalSource,
         const Identifier& sourceType,
         Host host,
-        std::unordered_map<Identifier, ConfigLiteral> descriptorConfig,
+        const Schema<LiteralConfigValue, Ordered>& descriptorConfig,
         const std::unordered_map<Identifier, std::string>& parserConfig);
 
     /// @brief removes a physical source
@@ -85,7 +85,7 @@ public:
         const Schema<UnqualifiedUnboundField, Ordered>& schema,
         Host host,
         const std::unordered_map<Identifier, std::string>& parserConfigMap,
-        std::unordered_map<Identifier, ConfigLiteral> sourceConfigMap) const;
+        const Schema<LiteralConfigValue, Ordered>& sourceConfig) const;
 
     /// @brief retrieves physical sources for a logical source
     /// @returns nullopt if the logical source is not registered anymore, else the set of source descriptors associated with it
