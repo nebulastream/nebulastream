@@ -95,6 +95,15 @@ jobs:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       matrix_config: nightly_matrix.yaml
 
+  slt-corpus:
+    name: "Run Nightly SLT Corpus"
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/nightly_slt_corpus.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
   run_large_scale_tests_random_config:
     name: Large Scale Tests Random Worker Config
     needs: [ fetch-current-main-commit, get-dev-images ]
@@ -152,7 +161,7 @@ jobs:
       dockerhub-tag: "latest"
 
   send-zulip-msg-on-failure:
-    needs: [ compile-time-regression, create-nightly-image, large-tests, full-clang-tidy ]
+    needs: [ compile-time-regression, create-nightly-image, large-tests, full-clang-tidy, slt-corpus ]
     runs-on: [ self-hosted ]
     if: ${{ failure() && !github.event.act }}
     steps:
