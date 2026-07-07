@@ -43,30 +43,6 @@
 
 namespace NES
 {
-template <typename FieldType>
-struct SchemaAccumulator;
-
-template <typename FieldType, typename Aggregate>
-concept HasSchemaAccumulator = requires(const Aggregate& aggregate, const FieldType& fieldType) {
-    { SchemaAccumulator<FieldType>{}(aggregate, fieldType) } -> std::same_as<Aggregate>;
-};
-
-namespace detail
-{
-struct NoAggregate {};
-
-template <typename T, typename = void>
-struct AggregateOf
-{
-    using type = NoAggregate;
-};
-
-template <typename T>
-struct AggregateOf<T, std::void_t<typename T::SchemaAggregate>>
-{
-    using type = typename T::SchemaAggregate;
-};
-}
 
 /// This class represents a container of fields, where we calculate for every field by which names its addressable unambiguously.
 /// Other than that, its interface is what you would expect of an std::vector or std::unordered_set of the specified field type.

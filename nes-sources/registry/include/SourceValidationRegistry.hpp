@@ -22,11 +22,10 @@
 namespace NES
 {
 
-using SourceValidationRegistryReturnType = DescriptorConfig::Config;
+using SourceValidationRegistryReturnType = Schema<QualifiedErasedConfigField, Ordered>;
 
 struct SourceValidationRegistryArguments
 {
-    std::unordered_map<std::string, std::string> config;
 };
 
 class SourceValidationRegistry final

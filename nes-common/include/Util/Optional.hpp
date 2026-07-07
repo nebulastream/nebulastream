@@ -11,25 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <SinusGeneratorRate.hpp>
 
-#include <cctype>
-#include <chrono>
-#include <cmath>
-#include <cstdint>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <tuple>
-#include <vector>
-#include <Util/Strings.hpp>
+#pragma once
 
-namespace NES
-{
+namespace NES {
 
-SinusGeneratorRate::SinusGeneratorRate(const double frequency, const double amplitude) : frequency(frequency), amplitude(amplitude)
-{
+template <typename T, typename E, typename ESupplier>
+std::expected<T, E> optionalToExpected(std::optional<T> optional, ESupplier orElse) {
+    if (optional.has_value()) {
+        return std::move(optional.value());
+    }
+    return std::unexpected<E>{orElse()};
 }
-
 
 }

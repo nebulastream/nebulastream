@@ -73,14 +73,6 @@ struct UnboundFieldBase
     }
 
     using SchemaAggregate = SchemaSize;
-
-    static constexpr SchemaSize addFieldSizes(SchemaSize agg, const UnboundFieldBase& field)
-    {
-        return SchemaSize{
-            .sizeWithNull = agg.sizeWithNull + field.getDataType().getSizeInBytesWithNull(),
-            .sizeWithoutNull = agg.sizeWithoutNull + field.getDataType().getSizeInBytesWithoutNull()};
-    };
-
 private:
     QualifiedIdentifierBase<IdListExtent> name;
     DataType dataType;
@@ -125,7 +117,10 @@ struct SchemaAccumulator<UnboundFieldBase<IdListExtent>>
 {
     SchemaSize operator()(const SchemaSize& agg, const UnboundFieldBase<IdListExtent>& field) const
     {
-        return UnboundFieldBase<IdListExtent>::addFieldSizes(agg, field);
+        return SchemaSize{
+            .sizeWithNull = agg.sizeWithNull + field.getDataType().getSizeInBytesWithNull(),
+            .sizeWithoutNull = agg.sizeWithoutNull + field.getDataType().getSizeInBytesWithoutNull()
+        };
     }
 };
 }

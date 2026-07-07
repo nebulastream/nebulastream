@@ -14,8 +14,11 @@
 
 #pragma once
 #include <any>
+#include <Schema/Schema.hpp>
 #include <boost/core/demangle.hpp>
 #include "Identifiers/QualifiedIdentifier.hpp"
+
+#include "ConfigField.hpp"
 
 namespace NES
 {
@@ -26,7 +29,13 @@ class ConfigValue
     std::any value;
 
 public:
-    ConfigValue(QualifiedIdentifier name, std::any value) : name(std::move(name)), value(std::move(value)) {
+    ConfigValue(
+        QualifiedIdentifier name,
+        std::any value,
+        std::function<Reflected(const std::any&)> reflector,
+        std::function<std::any(const Reflected&)>)
+        : name(std::move(name)), value(std::move(value))
+    {
         PRECONDITION(value.has_value(), "Cannot create a ConfigValue with an empty value");
     }
 
@@ -35,12 +44,33 @@ public:
     template <typename T>
     [[nodiscard]] T getValue() const
     {
-        PRECONDITION(typeid(T) == value.type(), "Stored config type {} does not match requested type {}", boost::core::demangle(value.type().name()), boost::core::demangle(typeid(T).name()));
-        return value;
+        PRECONDITION(
+            typeid(T) == value.type(),
+            "Stored config type {} does not match requested type {}",
+            boost::core::demangle(value.type().name()),
+            boost::core::demangle(typeid(T).name()));
+        return std::any_cast<T>(value);
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const ConfigValue& value) {
-        return os << value.getFullyQualifiedName();
+    friend std::ostream& operator<<(std::ostream& os, const ConfigValue& value) { return os << value.getFullyQualifiedName(); }
+
+    friend Reflector<ConfigValue>;
+    friend Unreflector<ConfigValue>;
+};
+
+class InstantiatedConfig
+{
+    Schema<ConfigValue, Ordered> values;
+
+public:
+    explicit InstantiatedConfig(Schema<ConfigValue, Ordered> values) : values(std::move(values)) { }
+
+    template <typename T>
+    T get(ConfigField<T> field) const
+    {
+        auto valueOpt = values.getFieldByName(field.getName());
+        PRECONDITION(valueOpt.has_value(), "Could not find config value for field {}", field.getName());
+        return valueOpt.value().template getValue<T>();
     }
 };
 }

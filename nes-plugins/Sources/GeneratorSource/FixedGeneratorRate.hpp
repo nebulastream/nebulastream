@@ -27,8 +27,8 @@ class FixedGeneratorRate final : public GeneratorRate
     double emitRateTuplesPerSecond;
 
 public:
+    explicit FixedGeneratorRate(double emitRateTuplesPerSecond);
     static std::optional<double> parseAndValidateConfigString(std::string_view configString);
-    explicit FixedGeneratorRate(std::string_view configString);
     ~FixedGeneratorRate() override = default;
     uint64_t calcNumberOfTuplesForInterval(
         const std::chrono::time_point<std::chrono::system_clock>& start,

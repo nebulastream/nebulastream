@@ -53,17 +53,17 @@
 namespace NES
 {
 
-TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
+TCPSource::TCPSource(const InstantiatedConfig& config)
     : errBuffer{}
-    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
-    , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
-    , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
-    , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
-    , tupleDelimiter(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
-    , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
-    , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
-    , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
-    , connectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCP::CONNECT_TIMEOUT))
+    , socketHost(config.get(ConfigParametersTCP::HOST))
+    , socketPort(std::to_string(config.get(ConfigParametersTCP::PORT)))
+    , socketType(config.get(ConfigParametersTCP::TYPE))
+    , socketDomain(config.get(ConfigParametersTCP::DOMAIN))
+    , tupleDelimiter(config.get(ConfigParametersTCP::SEPARATOR))
+    , socketBufferSize(config.get(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
+    , bytesUsedForSocketBufferSizeTransfer(config.get(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
+    , flushIntervalInMs(config.get(ConfigParametersTCP::FLUSH_INTERVAL_MS))
+    , connectionTimeout(config.get(ConfigParametersTCP::CONNECT_TIMEOUT))
 {
     NES_TRACE("Init TCPSource.");
 }

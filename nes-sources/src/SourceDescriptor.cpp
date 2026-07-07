@@ -40,13 +40,15 @@ SourceDescriptor::SourceDescriptor(
     LogicalSource logicalSource,
     std::string_view sourceType,
     Host host,
-    DescriptorConfig::Config config,
+    const size_t maxInflightBuffers,
+    InstantiatedConfig pluginConfig,
     const InputFormatterDescriptor& inputFormatterDescriptor)
-    : Descriptor(std::move(config))
-    , physicalSourceId(physicalSourceId)
+    : physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
     , sourceType(std::move(sourceType))
     , host(std::move(host))
+    , maxInflightBuffers(maxInflightBuffers)
+    , pluginConfig(std::move(pluginConfig))
     , inputFormatterDescriptor(inputFormatterDescriptor)
 {
 }
@@ -74,6 +76,16 @@ std::string SourceDescriptor::getInputFormatType() const
 Host SourceDescriptor::getHost() const
 {
     return host;
+}
+
+size_t SourceDescriptor::getMaxInflightBuffers() const
+{
+    return maxInflightBuffers;
+}
+
+const InstantiatedConfig& SourceDescriptor::getPluginConfig() const
+{
+    return pluginConfig;
 }
 
 PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const

@@ -36,6 +36,7 @@
 #include <folly/hash/Hash.h>
 #include <InputFormatterDescriptor.hpp>
 #include "Configurations/ConfigField.hpp"
+#include "Configurations/ConfigValue.hpp"
 #include "Identifiers/Identifier.hpp"
 #include "Util/Variant.hpp"
 
@@ -44,7 +45,7 @@ namespace NES
 class SourceCatalog;
 class OperatorSerializationUtil;
 
-class SourceDescriptor final : public Descriptor
+class SourceDescriptor final
 {
 public:
     ~SourceDescriptor() = default;
@@ -66,7 +67,9 @@ public:
     [[nodiscard]] InputFormatterDescriptor getInputFormatterDescriptor() const;
 
     [[nodiscard]] Host getHost() const;
+    [[nodiscard]] size_t getMaxInflightBuffers() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
+    [[nodiscard]] const InstantiatedConfig& getPluginConfig() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
@@ -80,6 +83,9 @@ private:
     LogicalSource logicalSource;
     std::string sourceType;
     Host host;
+    size_t maxInflightBuffers;
+    std::any pluginData;
+    InstantiatedConfig pluginConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
 
 
@@ -89,7 +95,8 @@ private:
         LogicalSource logicalSource,
         std::string_view sourceType,
         Host host,
-        DescriptorConfig::Config config,
+        size_t maxInflightBuffers,
+        InstantiatedConfig pluginConfig,
         const InputFormatterDescriptor& inputFormatterDescriptor);
 
 public:
@@ -99,13 +106,21 @@ public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const ConfigField<size_t> MAX_INFLIGHT_BUFFERS{
         Identifier::parse("MAX_INFLIGHT_BUFFERS"),
-        [](const ConfigLiteral& literal) { return tryGetOr<size_t>(literal, expectedType<size_t>());},
-        INVALID_MAX_INFLIGHT_BUFFERS
+        [](const ConfigLiteral& literal) { return tryGetOr<size_t>(literal, expectedType<size_t>()); },
+        INVALID_MAX_INFLIGHT_BUFFERS};
+
+    static inline const ConfigField<Host> HOST{
+        "HOST",
+        [](const ConfigLiteral& literal) -> std::expected<Host, Exception>
+        {
+            return tryGetOr<std::string>(literal, expectedType<std::string>())
+                .transform([](std::string&& value) { return Host{std::move(value)}; });
+        }
     };
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS);
+    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST);
 };
 
 template <>

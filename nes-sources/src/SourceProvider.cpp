@@ -42,10 +42,10 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
     {
         /// The source-specific configuration of maxInflightBuffers takes priority.
         /// If not specified (0), we take the NodeEngine-wide configuration.
-        const auto maxInflightBuffers = (sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS) > 0)
-            ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
+        const auto maxInflightBuffers = (sourceDescriptor.getMaxInflightBuffers() > 0)
+            ? sourceDescriptor.getMaxInflightBuffers()
             : defaultMaxInflightBuffers;
-        SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
+        SourceRuntimeConfiguration const runtimeConfig{maxInflightBuffers};
 
         return std::make_unique<SourceHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));

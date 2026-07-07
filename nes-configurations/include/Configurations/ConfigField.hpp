@@ -26,11 +26,17 @@
 #include "Schema/SchemaFwd.hpp"
 #include "Util/Logger/Formatter.hpp"
 
+#include "ConfigField.hpp"
+
 namespace NES
 {
 using ConfigLiteral = std::variant<std::string, int64_t, uint64_t, double, bool, Schema<UnqualifiedUnboundField, Ordered>>;
 
 template <typename T>
+requires requires(const T& instance, const Reflected& reflected) {
+    { reflect<T>(instance) } -> std::same_as<Reflected>;
+    { ReflectionContext{}.unreflect<T>(reflected) } -> std::same_as<T>;
+}
 class ConfigField
 {
     Identifier name;
@@ -116,13 +122,21 @@ class QualifiedErasedConfigField
     QualifiedIdentifier name;
     std::function<std::expected<ErasedConfigValue, Exception>(const ConfigLiteral&)> factory;
     std::optional<std::function<std::any()>> defaultSupplier;
+    std::function<Reflected(const std::any&)> reflector;
+    std::function<std::any(const Reflected&)> unreflector;
 
 public:
     QualifiedErasedConfigField(
         QualifiedIdentifier name,
         std::function<std::expected<ErasedConfigValue, Exception>(const ConfigLiteral&)> factory,
-        std::optional<std::function<std::any()>> defaultFactory)
-        : name(std::move(name)), factory(std::move(factory)), defaultSupplier(std::move(defaultFactory))
+        std::optional<std::function<std::any()>> defaultFactory,
+        std::function<Reflected(const std::any&)> reflector,
+        std::function<std::any(const Reflected&)> unreflector)
+        : name(std::move(name))
+        , factory(std::move(factory))
+        , defaultSupplier(std::move(defaultFactory))
+        , reflector(std::move(reflector))
+        , unreflector(std::move(unreflector))
     {
     }
 
@@ -146,7 +160,9 @@ Schema<QualifiedErasedConfigField, Ordered> createConfigSchema(Identifier prefix
             QualifiedIdentifier::create(prefix, field.getName()),
             [factory = field.getFactory()](const ConfigLiteral& value)
             { return std::move(factory(value)).transform([](auto val) { return ErasedConfigValue{std::any(std::move(val))}; }); },
-            field.getDefaultSupplier()};
+            field.getDefaultSupplier(),
+            [](const std::any& value) { return reflect<R>(std::any_cast<R>(value)); },
+            [](const Reflected& reflected) { return ReflectionContext{}.unreflect<R>(reflected); }};
     };
     return Schema<QualifiedErasedConfigField, Ordered>{convertField(fields)...};
 }
@@ -156,6 +172,22 @@ std::function<Exception()> expectedType()
 {
     return [] { return InvalidConfigParameter("Expected type: {}", NAMEOF_TYPE(T)); };
 }
+
+template <typename From, typename To, auto Max = std::numeric_limits<To>::max()>
+requires std::convertible_to<From, To>
+std::expected<To, Exception> downcastConfigValue(From from)
+{
+    if constexpr (std::is_same_v<From, To>)
+    {
+        return from;
+    }
+    if (from > Max)
+    {
+        return std::unexpected{InvalidConfigParameter("Value {} out of range, maximum is: {}", from, Max)};
+    }
+    return static_cast<To>(from);
+}
+
 
 }
 
