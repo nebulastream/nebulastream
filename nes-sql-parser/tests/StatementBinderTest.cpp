@@ -224,7 +224,7 @@ TEST_F(StatementBinderTest, BindQueryWithNotInPredicate)
 
 TEST_F(StatementBinderTest, BindQueryWithIsNullPredicate)
 {
-    const std::string queryString = "SELECT a FROM inputStream WHERE b IS NULL INTO outputStream";
+    const std::string queryString = "SELECT a FROM inputStream WHERE b is NULL INTO outputStream";
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
@@ -250,6 +250,14 @@ TEST_F(StatementBinderTest, BindQueryWithIsNotNullPredicate)
 
     const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
     EXPECT_EQ(predicate, "NOT(ISNULL(B))");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithUnsupportedIsTruePredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b IS TRUE INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::UnsupportedQuery);
 }
 
 TEST_F(StatementBinderTest, Nullable)
