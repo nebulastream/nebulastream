@@ -196,6 +196,35 @@ LogicalFunction createInFunction(const LogicalFunction& valueFunction, std::vect
     return function;
 }
 
+void negateTopFunction(std::stack<AntlrSQLHelper>& helpers, const std::string& expressionText)
+{
+    if (helpers.empty())
+    {
+        throw InvalidQuerySyntax("Parser is confused at {}", expressionText);
+    }
+
+    if (helpers.top().isJoinRelation)
+    {
+        if (helpers.top().joinKeyRelationHelper.empty())
+        {
+            throw InvalidQuerySyntax("Negate requires child op at {}", expressionText);
+        }
+        auto innerFunction = std::move(helpers.top().joinKeyRelationHelper.back());
+        helpers.top().joinKeyRelationHelper.pop_back();
+        helpers.top().joinKeyRelationHelper.emplace_back(NegateLogicalFunction(std::move(innerFunction)));
+    }
+    else
+    {
+        if (helpers.top().functionBuilder.empty())
+        {
+            throw InvalidQuerySyntax("Negate requires child op at {}", expressionText);
+        }
+        auto innerFunction = std::move(helpers.top().functionBuilder.back());
+        helpers.top().functionBuilder.pop_back();
+        helpers.top().functionBuilder.emplace_back(NegateLogicalFunction(std::move(innerFunction)));
+    }
+}
+
 }
 
 void AntlrSQLQueryPlanCreator::enterSelectClause(AntlrSQLParser::SelectClauseContext* context)
@@ -1000,33 +1029,14 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
 
 void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext* context)
 {
-    if (helpers.empty())
-    {
-        throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
-    }
-
-    if (helpers.top().isJoinRelation)
-    {
-        if (helpers.top().joinKeyRelationHelper.empty())
-        {
-            throw InvalidQuerySyntax("Negate requires child op at {}", context->getText());
-        }
-        const auto innerFunction = helpers.top().joinKeyRelationHelper.back();
-        helpers.top().joinKeyRelationHelper.pop_back();
-        auto negatedFunction = NegateLogicalFunction(innerFunction);
-        helpers.top().joinKeyRelationHelper.emplace_back(negatedFunction);
-    }
-    else
-    {
-        if (helpers.top().functionBuilder.empty())
-        {
-            throw InvalidQuerySyntax("Negate requires child op at {}", context->getText());
-        }
-        const auto innerFunction = helpers.top().functionBuilder.back();
-        helpers.top().functionBuilder.pop_back();
-        helpers.top().functionBuilder.emplace_back(NegateLogicalFunction(innerFunction));
-    }
+    negateTopFunction(helpers, context->getText());
     AntlrSQLBaseListener::exitLogicalNot(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitLogicalNotPredicate(AntlrSQLParser::LogicalNotPredicateContext* context)
+{
+    negateTopFunction(helpers, context->getText());
+    AntlrSQLBaseListener::exitLogicalNotPredicate(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)

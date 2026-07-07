@@ -259,7 +259,8 @@ booleanExpression
     ;
 
 predicate
-    : valueExpression booleanComparison?                     #boolComparison
+    : NOT predicate                                          #logicalNotPredicate
+    | valueExpression booleanComparison?                     #boolComparison
     | left=predicate op=AND right=predicate                  #logicalBinary
     | left=predicate op=OR right=predicate                   #logicalBinary
     ;
