@@ -171,14 +171,17 @@ static LogicalFunction createLogicalBinaryFunction(LogicalFunction leftFunction,
     }
 }
 
-static LogicalFunction createBetweenFunction(LogicalFunction valueFunction, LogicalFunction lowerFunction, LogicalFunction upperFunction)
+namespace
+{
+
+LogicalFunction createBetweenFunction(const LogicalFunction& valueFunction, LogicalFunction lowerFunction, LogicalFunction upperFunction)
 {
     return AndLogicalFunction(
         GreaterEqualsLogicalFunction(valueFunction, std::move(lowerFunction)),
-        LessEqualsLogicalFunction(std::move(valueFunction), std::move(upperFunction)));
+        LessEqualsLogicalFunction(valueFunction, std::move(upperFunction)));
 }
 
-static LogicalFunction createInFunction(LogicalFunction valueFunction, std::vector<LogicalFunction> candidateFunctions)
+LogicalFunction createInFunction(const LogicalFunction& valueFunction, std::vector<LogicalFunction> candidateFunctions)
 {
     if (candidateFunctions.empty())
     {
@@ -191,6 +194,8 @@ static LogicalFunction createInFunction(LogicalFunction valueFunction, std::vect
         function = OrLogicalFunction(std::move(function), EqualsLogicalFunction(valueFunction, std::move(candidateFunction)));
     }
     return function;
+}
+
 }
 
 void AntlrSQLQueryPlanCreator::enterSelectClause(AntlrSQLParser::SelectClauseContext* context)
@@ -268,21 +273,21 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
     }
 }
 
-void AntlrSQLQueryPlanCreator::exitPredicated(AntlrSQLParser::PredicatedContext* context)
+void AntlrSQLQueryPlanCreator::exitBoolComparison(AntlrSQLParser::BoolComparisonContext* context)
 {
-    auto* predicate = context->predicate();
-    if (predicate == nullptr)
+    auto* comparison = context->booleanComparison();
+    if (comparison == nullptr)
     {
-        AntlrSQLBaseListener::exitPredicated(context);
+        AntlrSQLBaseListener::exitBoolComparison(context);
         return;
     }
 
     auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
-    const auto popFunction = [&functions, predicate]()
+    const auto popFunction = [&functions, comparison]()
     {
         if (functions.empty())
         {
-            throw InvalidQuerySyntax("Predicate {} is missing an operand", predicate->getText());
+            throw InvalidQuerySyntax("Predicate {} is missing an operand", comparison->getText());
         }
         auto function = std::move(functions.back());
         functions.pop_back();
@@ -290,61 +295,61 @@ void AntlrSQLQueryPlanCreator::exitPredicated(AntlrSQLParser::PredicatedContext*
     };
 
     LogicalFunction function;
-    if (predicate->BETWEEN() != nullptr)
+    if (comparison->BETWEEN() != nullptr)
     {
         if (functions.size() < 3)
         {
-            throw InvalidQuerySyntax("BETWEEN predicate requires a value, lower bound, and upper bound: {}", predicate->getText());
+            throw InvalidQuerySyntax("BETWEEN predicate requires a value, lower bound, and upper bound: {}", comparison->getText());
         }
         auto upperFunction = popFunction();
         auto lowerFunction = popFunction();
         auto valueFunction = popFunction();
-        function = createBetweenFunction(std::move(valueFunction), std::move(lowerFunction), std::move(upperFunction));
-        if (predicate->NOT() != nullptr)
+        function = createBetweenFunction(valueFunction, std::move(lowerFunction), std::move(upperFunction));
+        if (comparison->NOT() != nullptr)
         {
             function = NegateLogicalFunction(std::move(function));
         }
     }
-    else if (predicate->IN() != nullptr)
+    else if (comparison->IN() != nullptr)
     {
-        if (predicate->query() != nullptr)
+        if (comparison->query() != nullptr)
         {
-            throw UnsupportedQuery("IN subqueries are currently not supported: {}", predicate->getText());
+            throw UnsupportedQuery("IN subqueries are currently not supported: {}", comparison->getText());
         }
-        const auto candidateCount = predicate->expression().size();
+        const auto candidateCount = comparison->expression().size();
         if (candidateCount == 0)
         {
-            throw InvalidQuerySyntax("IN predicate requires at least one candidate value: {}", predicate->getText());
+            throw InvalidQuerySyntax("IN predicate requires at least one candidate value: {}", comparison->getText());
         }
         if (functions.size() < candidateCount + 1)
         {
-            throw InvalidQuerySyntax("IN predicate {} is missing operands", predicate->getText());
+            throw InvalidQuerySyntax("IN predicate {} is missing operands", comparison->getText());
         }
         const auto candidatesBegin = functions.end() - static_cast<std::ptrdiff_t>(candidateCount);
         std::vector<LogicalFunction> candidateFunctions(candidatesBegin, functions.end());
         functions.erase(candidatesBegin, functions.end());
         auto valueFunction = popFunction();
-        function = createInFunction(std::move(valueFunction), std::move(candidateFunctions));
-        if (predicate->NOT() != nullptr)
+        function = createInFunction(valueFunction, std::move(candidateFunctions));
+        if (comparison->NOT() != nullptr)
         {
             function = NegateLogicalFunction(std::move(function));
         }
     }
-    else if (predicate->IS() != nullptr && predicate->nullNotnull() != nullptr)
+    else if (comparison->IS() != nullptr && comparison->nullNotnull() != nullptr)
     {
         function = IsNullCheckLogicalFunction(popFunction());
-        if (predicate->nullNotnull()->NOT() != nullptr)
+        if (comparison->nullNotnull()->NOT() != nullptr)
         {
             function = NegateLogicalFunction(std::move(function));
         }
     }
     else
     {
-        throw UnsupportedQuery("Predicate is currently not supported: {}", predicate->getText());
+        throw UnsupportedQuery("Predicate is currently not supported: {}", comparison->getText());
     }
 
     functions.push_back(std::move(function));
-    AntlrSQLBaseListener::exitPredicated(context);
+    AntlrSQLBaseListener::exitBoolComparison(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseContext* context)
