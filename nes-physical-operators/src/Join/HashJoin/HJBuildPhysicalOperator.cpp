@@ -32,7 +32,6 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -100,7 +99,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                         {
                             PagedVector::init(pagedVectorBuffer.value(), bufferProvider->getBufferSize(), tupleSize);
                             auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer.value());
-                            *valueMemArea = childIndex.getRawIndex();
+                            *valueMemArea = childIndex.getRawValue();
                             return;
                         }
                         throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
@@ -119,7 +118,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         OwnedNautilusBuffer pagedVecBuffer;
         nautilus::invoke(
             +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
-            { *out = hashMapBuf->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
+            { *out = hashMapBuf->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
             hashMapBuffer.asArg(),
             pagedVecBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(entryMemArea));

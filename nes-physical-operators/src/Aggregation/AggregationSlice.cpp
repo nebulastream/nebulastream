@@ -21,7 +21,6 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
@@ -41,7 +40,7 @@ const TupleBuffer* AggregationSlice::getHashMapBufferRefForWorker(const WorkerTh
 {
     const auto hashMapIndex = workerThreadId % getNumberOfHashMaps();
     INVARIANT(hashMapIndex < getNumberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
-    return getHashMapBufferRef(VariableSizedAccess::Index{hashMapIndex});
+    return getHashMapBufferRef(ChildBufferIndex{static_cast<uint32_t>(hashMapIndex)});
 }
 
 const TupleBuffer*
@@ -49,7 +48,7 @@ AggregationSlice::getOrCreateHashMapBufferRefForWorker(AbstractBufferProvider& b
 {
     const auto hashMapIndex = workerThreadId % getNumberOfHashMaps();
     INVARIANT(hashMapIndex < getNumberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
-    return getOrCreateHashMapBufferRef(bufferProvider, VariableSizedAccess::Index{hashMapIndex});
+    return getOrCreateHashMapBufferRef(bufferProvider, ChildBufferIndex{static_cast<uint32_t>(hashMapIndex)});
 }
 
 }

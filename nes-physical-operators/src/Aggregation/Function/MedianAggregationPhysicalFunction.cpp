@@ -30,7 +30,6 @@
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -74,7 +73,7 @@ void MedianAggregationPhysicalFunction::lift(
             OwnedNautilusBuffer pagedVecBuffer;
             nautilus::invoke(
                 +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
-                { *out = parent->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
+                { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
                 parentBuffer,
                 pagedVecBuffer.asArg(),
                 static_cast<nautilus::val<uint32_t*>>(memArea));
@@ -90,7 +89,7 @@ void MedianAggregationPhysicalFunction::lift(
         OwnedNautilusBuffer pagedVecBuffer;
         nautilus::invoke(
             +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
-            { *out = parent->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
+            { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
             parentBuffer,
             pagedVecBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(memArea));
@@ -130,8 +129,8 @@ void MedianAggregationPhysicalFunction::combine(
             TupleBuffer* parent2,
             const uint32_t* indexPtr2) -> void
         {
-            const TupleBuffer vec1Buf = parent1->loadChildBuffer(VariableSizedAccess::Index{*indexPtr1});
-            const TupleBuffer vec2Buf = parent2->loadChildBuffer(VariableSizedAccess::Index{*indexPtr2});
+            const TupleBuffer vec1Buf = parent1->loadChildBuffer(ChildBufferIndex{*indexPtr1});
+            const TupleBuffer vec2Buf = parent2->loadChildBuffer(ChildBufferIndex{*indexPtr2});
             auto vector1 = PagedVector::load(vec1Buf);
             const auto vector2 = PagedVector::load(vec2Buf);
             vector1.copyPagesFrom(*bufferProvider, vector2);
@@ -166,7 +165,7 @@ Record MedianAggregationPhysicalFunction::lower(
         OwnedNautilusBuffer pagedVecBuffer;
         nautilus::invoke(
             +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
-            { *out = parent->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
+            { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
             parentBuffer,
             pagedVecBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(memArea));
@@ -273,7 +272,7 @@ void MedianAggregationPhysicalFunction::reset(
                 auto pagedVectorBuffer = pagedVectorBufferOpt.value();
                 PagedVector::init(pagedVectorBuffer, bufferProvider->getBufferSize(), tupleSize);
                 auto childBufferIndex = parentBuffer->storeChildBuffer(pagedVectorBuffer);
-                return childBufferIndex.getRawIndex();
+                return childBufferIndex.getRawValue();
             }
             throw BufferAllocationFailure("No unpooled TupleBuffer available for median aggregation paged vector!");
         },

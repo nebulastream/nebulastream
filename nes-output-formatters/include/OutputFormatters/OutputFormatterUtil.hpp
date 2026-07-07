@@ -28,7 +28,6 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
@@ -73,7 +72,7 @@ inline uint64_t writeValueToBuffer(
     while (remainingBytes > 0)
     {
         /// Write as many bytes in the latest child buffer as possible and allocate a new one if space does not suffice
-        const VariableSizedAccess::Index childIndex{numOfChildBuffers - 1};
+        const ChildBufferIndex childIndex{numOfChildBuffers - 1};
         auto lastChildBuffer = tupleBuffer->loadChildBuffer(childIndex);
         const auto bufferOffset = lastChildBuffer.getNumberOfTuples();
         const uint32_t valueOffset = valueString.size() - remainingBytes;

@@ -29,9 +29,9 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
@@ -255,9 +255,9 @@ inline void updateChildBufferIdx(
     const size_t sizeOfSchemaInBytes)
 {
     /// Write index of child buffer that 'parentBuffer' returned to the corresponding place in the parent buffer
-    const auto tupleIdx = varSizedAccess.getIndex() / varSizedFieldOffsets.size();
+    const auto tupleIdx = varSizedAccess.getIndex().getRawValue() / varSizedFieldOffsets.size();
     const auto tupleByteOffset = tupleIdx * sizeOfSchemaInBytes;
-    const size_t varSizedOffsetIdx = varSizedAccess.getIndex() % varSizedFieldOffsets.size();
+    const size_t varSizedOffsetIdx = varSizedAccess.getIndex().getRawValue() % varSizedFieldOffsets.size();
     const auto varSizedOffset = varSizedFieldOffsets.at(varSizedOffsetIdx) + tupleByteOffset;
     const auto combinedIndexOffsetBytes = std::as_bytes(std::span{&varSizedAccess, 1});
     std::ranges::copy(combinedIndexOffsetBytes, parentBuffer.getAvailableMemoryArea().begin() + varSizedOffset);

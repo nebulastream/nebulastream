@@ -27,7 +27,6 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 
@@ -65,18 +64,18 @@ uint64_t HashMapSlice::getNumHashMapsPerInputStream() const
     return numHashmapsPerInputStream;
 }
 
-const TupleBuffer* HashMapSlice::getHashMapBufferRef(const VariableSizedAccess::Index childBufferIndex) const
+const TupleBuffer* HashMapSlice::getHashMapBufferRef(const ChildBufferIndex childBufferIndex) const
 {
-    PRECONDITION(childBufferIndex.getRawIndex() < numHashMaps, "Hash Map index out of range in hash map slice getHashMapBufferRef!");
-    const auto pos = childBufferIndex.getRawIndex();
+    PRECONDITION(childBufferIndex.getRawValue() < numHashMaps, "Hash Map index out of range in hash map slice getHashMapBufferRef!");
+    const auto pos = childBufferIndex.getRawValue();
     return hashMapBuffersState[pos] == HashMapBufferState::INITIALIZED ? &hashMapBuffers[pos] : nullptr;
 }
 
 const TupleBuffer*
-HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, const VariableSizedAccess::Index childBufferIndex)
+HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, const ChildBufferIndex childBufferIndex)
 {
-    PRECONDITION(childBufferIndex.getRawIndex() < numHashMaps, "Hash Map index out of range in hash map slice loadHashMapBuffer!");
-    const auto pos = childBufferIndex.getRawIndex();
+    PRECONDITION(childBufferIndex.getRawValue() < numHashMaps, "Hash Map index out of range in hash map slice loadHashMapBuffer!");
+    const auto pos = childBufferIndex.getRawValue();
     /// Check whether the hash map is initialized
     if (hashMapBuffersState[pos] == HashMapBufferState::UNINITIALIZED)
     {

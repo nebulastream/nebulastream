@@ -25,7 +25,6 @@
 #include <MQTTAsync.h>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -114,7 +113,7 @@ MQTTSink::PublishResult MQTTSink::tryPublish(const TupleBuffer& buffer)
     size_t messageSize = buffer.getNumberOfTuples();
     for (size_t index = 0; index < buffer.getNumberOfChildBuffers(); index++)
     {
-        messageSize += buffer.loadChildBuffer(VariableSizedAccess::Index(index)).getNumberOfTuples();
+        messageSize += buffer.loadChildBuffer(ChildBufferIndex(index)).getNumberOfTuples();
     }
     mqtt::binary payload;
     payload.reserve(messageSize);
@@ -122,7 +121,7 @@ MQTTSink::PublishResult MQTTSink::tryPublish(const TupleBuffer& buffer)
     payload.append(data.begin(), data.end());
     for (size_t index = 0; index < buffer.getNumberOfChildBuffers(); index++)
     {
-        auto child = buffer.loadChildBuffer(VariableSizedAccess::Index(index));
+        auto child = buffer.loadChildBuffer(ChildBufferIndex(index));
         auto childData = child.getAvailableMemoryArea<char>().first(child.getNumberOfTuples());
         payload.append(childData.begin(), childData.end());
     }

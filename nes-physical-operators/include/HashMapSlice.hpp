@@ -25,7 +25,6 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <CompilationContext.hpp>
 
@@ -104,11 +103,10 @@ protected:
     /// otherwise. Never allocates, so it is safe to call without synchronization: it only ever reads state that
     /// is either not-yet-written (nullptr) or was already fully written by whichever thread first-touched this
     /// index via getOrCreateHashMapBufferRef.
-    [[nodiscard]] const TupleBuffer* getHashMapBufferRef(VariableSizedAccess::Index childBufferIndex) const;
+    [[nodiscard]] const TupleBuffer* getHashMapBufferRef(ChildBufferIndex childBufferIndex) const;
 
     /// @brief Loads a specific hash map from the slice based on the index, lazily allocating it on first access.
-    [[nodiscard]] const TupleBuffer*
-    getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, VariableSizedAccess::Index childBufferIndex);
+    [[nodiscard]] const TupleBuffer* getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, ChildBufferIndex childBufferIndex);
 
     /// metadata
     uint64_t numHashMaps;
