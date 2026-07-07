@@ -15,33 +15,24 @@
 #pragma once
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <ostream>
-#include <ranges>
 #include <sstream>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
+#include <variant>
 
-#include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
-#include <ErrorHandling.hpp>
-#include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
-#include <GeneratorFields.hpp>
 #include <GeneratorRate.hpp>
-#include <SinusGeneratorRate.hpp>
-#include "Configurations/ConfigValue.hpp"
 
 namespace NES
 {
@@ -59,6 +50,9 @@ struct SinusGeneratorRateConfig
 
 using GeneratorRateVariant = std::variant<FixedGeneratorRateConfig, SinusGeneratorRateConfig>;
 
+/// Source-defined config struct: instantiated from the generic config by the SourceConfig
+/// registry entry, carried through the SourceDescriptor as std::any, and serialized via
+/// reflection of exactly this struct (all members are reflectable).
 struct GeneratorSourceConfig
 {
     uint32_t seed;
@@ -67,6 +61,8 @@ struct GeneratorSourceConfig
     GeneratorStop stopGeneratorWhenSequenceFinishes;
     std::chrono::milliseconds flushInterval;
     GeneratorRateVariant generatorRateConfig;
+
+    static GeneratorSourceConfig fromConfig(const InstantiatedConfig& config);
 };
 
 class GeneratorSource : public Source
@@ -88,8 +84,6 @@ public:
 
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     void close() override;
-
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 

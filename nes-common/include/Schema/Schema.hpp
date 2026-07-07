@@ -338,6 +338,13 @@ const Schema<FieldType, IsOrdered>::AggregateType& Schema<FieldType, IsOrdered>:
 }
 
 template <typename FieldType, OrderType IsOrdered>
+size_t Schema<FieldType, IsOrdered>::getSizeInBytes() const
+{
+    return std::ranges::fold_left(
+        this->fields, size_t{0}, [](const size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
+}
+
+template <typename FieldType, OrderType IsOrdered>
 auto Schema<FieldType, IsOrdered>::begin() const -> decltype(std::declval<FieldContainer>().cbegin())
 {
     return fields.cbegin();

@@ -14,6 +14,8 @@
 
 #pragma once
 #include <any>
+#include <utility>
+#include <vector>
 #include <Schema/Schema.hpp>
 #include <boost/core/demangle.hpp>
 #include "Identifiers/QualifiedIdentifier.hpp"
@@ -23,20 +25,18 @@
 namespace NES
 {
 
+/// A single instantiated configuration value: the declared field's name plus the type-erased value
+/// its factory produced. Deliberately not serializable — serialization of catalog objects goes
+/// through the source-defined config struct (see the SourceConfig registry), not the generic config.
 class ConfigValue
 {
     QualifiedIdentifier name;
     std::any value;
 
 public:
-    ConfigValue(
-        QualifiedIdentifier name,
-        std::any value,
-        std::function<Reflected(const std::any&)> reflector,
-        std::function<std::any(const Reflected&)>)
-        : name(std::move(name)), value(std::move(value))
+    ConfigValue(QualifiedIdentifier name, std::any value) : name(std::move(name)), value(std::move(value))
     {
-        PRECONDITION(value.has_value(), "Cannot create a ConfigValue with an empty value");
+        PRECONDITION(this->value.has_value(), "Cannot create a ConfigValue with an empty value");
     }
 
     [[nodiscard]] QualifiedIdentifier getFullyQualifiedName() const { return name; }
@@ -52,10 +52,17 @@ public:
         return std::any_cast<T>(value);
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const ConfigValue& value) { return os << value.getFullyQualifiedName(); }
+    template <typename T>
+    [[nodiscard]] std::optional<T> tryGetValue() const
+    {
+        if (const auto* typed = std::any_cast<T>(&value))
+        {
+            return *typed;
+        }
+        return std::nullopt;
+    }
 
-    friend Reflector<ConfigValue>;
-    friend Unreflector<ConfigValue>;
+    friend std::ostream& operator<<(std::ostream& os, const ConfigValue& value) { return os << value.getFullyQualifiedName(); }
 };
 
 class InstantiatedConfig
@@ -66,11 +73,26 @@ public:
     explicit InstantiatedConfig(Schema<ConfigValue, Ordered> values) : values(std::move(values)) { }
 
     template <typename T>
-    T get(ConfigField<T> field) const
+    T get(const ConfigField<T>& field) const
     {
-        auto valueOpt = values.getFieldByName(field.getName());
+        /// Field names are unqualified; the schema resolves them against any unambiguous suffix
+        /// of the stored fully qualified names (e.g. SEED matches GENERATOR_SOURCE.SEED).
+        auto valueOpt = values.getFieldByName(QualifiedIdentifier{std::vector{field.getName()}});
         PRECONDITION(valueOpt.has_value(), "Could not find config value for field {}", field.getName());
         return valueOpt.value().template getValue<T>();
+    }
+
+    /// Non-throwing lookup by name, for callers without the declaring ConfigField at hand
+    /// (e.g. tooling that inspects configs). Returns nullopt if the field is absent or the
+    /// stored type differs.
+    template <typename T>
+    [[nodiscard]] std::optional<T> tryGet(const Identifier& name) const
+    {
+        if (auto valueOpt = values.getFieldByName(QualifiedIdentifier{std::vector{name}}))
+        {
+            return valueOpt->template tryGetValue<T>();
+        }
+        return std::nullopt;
     }
 };
 }

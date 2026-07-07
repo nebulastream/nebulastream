@@ -17,6 +17,7 @@
 ///NOLINTBEGIN(misc-include-cleaner)
 #include <cstddef>
 #include <utility>
+#include <Util/Reflection/ChronoReflection.hpp>
 #include <Util/Reflection/NESStrongTypeReflection.hpp>
 #include <Util/Reflection/OptionalReflection.hpp>
 #include <Util/Reflection/PairReflection.hpp>

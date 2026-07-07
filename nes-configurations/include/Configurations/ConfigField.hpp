@@ -16,8 +16,10 @@
 #include <any>
 #include <concepts>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <ostream>
+#include <utility>
 
 #include <nameof.hpp>
 #include "DataTypes/UnboundField.hpp"
@@ -30,13 +32,15 @@
 
 namespace NES
 {
-using ConfigLiteral = std::variant<std::string, int64_t, uint64_t, double, bool, Schema<UnqualifiedUnboundField, Ordered>>;
+/// Integer literals are always signed: frontends never produce an unsigned literal, and a field
+/// that needs an unsigned type lowers the int64_t with a range check (see downcastConfigValue).
+using ConfigLiteral = std::variant<std::string, int64_t, double, bool, Schema<UnqualifiedUnboundField, Ordered>>;
 
+/// Declares a single typed config parameter: its name, how to instantiate it from a literal the
+/// frontend passed, and (optionally) its default. The field type T is arbitrary — it does not
+/// need to be serializable, because serialization of catalog objects goes through the
+/// source-defined config struct, not through individual config fields.
 template <typename T>
-requires requires(const T& instance, const Reflected& reflected) {
-    { reflect<T>(instance) } -> std::same_as<Reflected>;
-    { ReflectionContext{}.unreflect<T>(reflected) } -> std::same_as<T>;
-}
 class ConfigField
 {
     Identifier name;
@@ -117,26 +121,21 @@ public:
     [[nodiscard]] const std::any& getValue() const { return value; }
 };
 
+/// Type-erased view of a ConfigField, addressable by its fully qualified name. Erasure keeps the
+/// schema container homogeneous; the typed value is recovered by the source's config struct (see
+/// InstantiatedConfig::get), so the field itself carries no serialization machinery.
 class QualifiedErasedConfigField
 {
     QualifiedIdentifier name;
     std::function<std::expected<ErasedConfigValue, Exception>(const ConfigLiteral&)> factory;
     std::optional<std::function<std::any()>> defaultSupplier;
-    std::function<Reflected(const std::any&)> reflector;
-    std::function<std::any(const Reflected&)> unreflector;
 
 public:
     QualifiedErasedConfigField(
         QualifiedIdentifier name,
         std::function<std::expected<ErasedConfigValue, Exception>(const ConfigLiteral&)> factory,
-        std::optional<std::function<std::any()>> defaultFactory,
-        std::function<Reflected(const std::any&)> reflector,
-        std::function<std::any(const Reflected&)> unreflector)
-        : name(std::move(name))
-        , factory(std::move(factory))
-        , defaultSupplier(std::move(defaultFactory))
-        , reflector(std::move(reflector))
-        , unreflector(std::move(unreflector))
+        std::optional<std::function<std::any()>> defaultFactory)
+        : name(std::move(name)), factory(std::move(factory)), defaultSupplier(std::move(defaultFactory))
     {
     }
 
@@ -156,13 +155,14 @@ Schema<QualifiedErasedConfigField, Ordered> createConfigSchema(Identifier prefix
 {
     auto convertField = [&prefix]<typename R>(ConfigField<R> field)
     {
+        auto defaultSupplier = field.getDefaultSupplier();
         return QualifiedErasedConfigField{
             QualifiedIdentifier::create(prefix, field.getName()),
             [factory = field.getFactory()](const ConfigLiteral& value)
             { return std::move(factory(value)).transform([](auto val) { return ErasedConfigValue{std::any(std::move(val))}; }); },
-            field.getDefaultSupplier(),
-            [](const std::any& value) { return reflect<R>(std::any_cast<R>(value)); },
-            [](const Reflected& reflected) { return ReflectionContext{}.unreflect<R>(reflected); }};
+            defaultSupplier.has_value()
+                ? std::optional<std::function<std::any()>>{[supplier = std::move(*defaultSupplier)] { return std::any{supplier()}; }}
+                : std::nullopt};
     };
     return Schema<QualifiedErasedConfigField, Ordered>{convertField(fields)...};
 }
@@ -173,6 +173,9 @@ std::function<Exception()> expectedType()
     return [] { return InvalidConfigParameter("Expected type: {}", NAMEOF_TYPE(T)); };
 }
 
+/// Monadic lowering of a literal's type into a field's type, e.g.
+/// tryGetOr<uint64_t>(literal, ...).and_then(downcastConfigValue<uint64_t, uint32_t>).
+/// Max can further restrict the range (e.g. 65535 for ports).
 template <typename From, typename To, auto Max = std::numeric_limits<To>::max()>
 requires std::convertible_to<From, To>
 std::expected<To, Exception> downcastConfigValue(From from)
@@ -181,11 +184,22 @@ std::expected<To, Exception> downcastConfigValue(From from)
     {
         return from;
     }
-    if (from > Max)
+    else if constexpr (std::integral<From> && std::integral<To>)
     {
-        return std::unexpected{InvalidConfigParameter("Value {} out of range, maximum is: {}", from, Max)};
+        if (std::cmp_less(from, std::numeric_limits<To>::lowest()) || std::cmp_greater(from, Max))
+        {
+            return std::unexpected{InvalidConfigParameter("Value {} out of range, maximum is: {}", from, Max)};
+        }
+        return static_cast<To>(from);
     }
-    return static_cast<To>(from);
+    else
+    {
+        if (from > Max)
+        {
+            return std::unexpected{InvalidConfigParameter("Value {} out of range, maximum is: {}", from, Max)};
+        }
+        return static_cast<To>(from);
+    }
 }
 
 

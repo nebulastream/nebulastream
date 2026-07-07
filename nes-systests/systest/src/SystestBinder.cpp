@@ -229,7 +229,8 @@ public:
             [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
                 if (const auto path
-                    = logicalSourceOperator->getSourceDescriptor().template tryGetFromConfig<std::string>(std::string{"file_path"});
+                    = logicalSourceOperator->getSourceDescriptor().getPluginConfig().template tryGet<std::string>(
+                        Identifier::parse("file_path"));
                     path.has_value())
                 {
                     if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());

@@ -14,6 +14,7 @@
 
 #include <Sources/SourceDescriptor.hpp>
 
+#include <any>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -31,6 +32,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
+#include <SourceConfigRegistry.hpp>
 
 namespace NES
 {
@@ -42,12 +44,14 @@ SourceDescriptor::SourceDescriptor(
     Host host,
     const size_t maxInflightBuffers,
     InstantiatedConfig pluginConfig,
+    std::any pluginData,
     const InputFormatterDescriptor& inputFormatterDescriptor)
     : physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
-    , sourceType(std::move(sourceType))
+    , sourceType(sourceType)
     , host(std::move(host))
     , maxInflightBuffers(maxInflightBuffers)
+    , pluginData(std::move(pluginData))
     , pluginConfig(std::move(pluginConfig))
     , inputFormatterDescriptor(inputFormatterDescriptor)
 {
@@ -88,6 +92,11 @@ const InstantiatedConfig& SourceDescriptor::getPluginConfig() const
     return pluginConfig;
 }
 
+const std::any& SourceDescriptor::getPluginData() const
+{
+    return pluginData;
+}
+
 PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
 {
     return physicalSourceId;
@@ -125,13 +134,23 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 
 Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
 {
+    /// The generic InstantiatedConfig is a frontend artifact and does not travel. The wire format
+    /// carries the source-defined config struct, serialized by the source's SourceConfigRegistry
+    /// entry — the only place that knows the concrete type behind the std::any.
+    const auto* configEntry = SourceConfigRegistry::instance().find(sourceDescriptor.sourceType);
+    INVARIANT(
+        configEntry != nullptr,
+        "Source type {} has a descriptor but no SourceConfigRegistry entry",
+        sourceDescriptor.sourceType);
+
     const detail::ReflectedSourceDescriptor descriptor{
         .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
         .logicalSource = sourceDescriptor.logicalSource,
         .type = sourceDescriptor.sourceType,
         .host = sourceDescriptor.host,
+        .maxInflightBuffers = sourceDescriptor.maxInflightBuffers,
         .inputFormatterDescriptor = sourceDescriptor.inputFormatterDescriptor,
-        .config = sourceDescriptor.getReflectedConfig()};
+        .config = configEntry->reflect(sourceDescriptor.pluginData)};
 
     return reflect(descriptor);
 }
@@ -140,12 +159,21 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl,
 {
     auto reflectedSourceDescriptor = context.unreflect<detail::ReflectedSourceDescriptor>(rfl);
 
+    const auto* configEntry = SourceConfigRegistry::instance().find(reflectedSourceDescriptor.type);
+    if (configEntry == nullptr)
+    {
+        throw UnknownSourceType(
+            "Cannot deserialize source descriptor: source type {} has no SourceConfigRegistry entry", reflectedSourceDescriptor.type);
+    }
+
     return SourceDescriptor{
         PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
         LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
         reflectedSourceDescriptor.type,
         reflectedSourceDescriptor.host,
-        Descriptor::unreflectConfig(reflectedSourceDescriptor.config, context),
+        reflectedSourceDescriptor.maxInflightBuffers,
+        InstantiatedConfig{Schema<ConfigValue, Ordered>{}},
+        configEntry->unreflect(reflectedSourceDescriptor.config, context),
         reflectedSourceDescriptor.inputFormatterDescriptor};
 }
 }

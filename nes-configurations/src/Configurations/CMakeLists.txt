@@ -15,6 +15,7 @@ add_source_files(nes-configurations
         BaseOption.cpp
         Descriptor.cpp
         ConfigField.cpp
+        ConfigResolution.cpp
         ConfigValue.cpp
 )
 

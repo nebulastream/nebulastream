@@ -27,6 +27,7 @@
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -66,7 +67,9 @@ struct CreatePhysicalSourceStatement
     LogicalSourceName attachedTo;
     Identifier sourceType;
     std::optional<Host> host;
-    std::unordered_map<Identifier, std::string> sourceConfig;
+    /// The literals exactly as the parser produced them; resolved against the source's declared
+    /// config schema when the catalog creates the physical source.
+    std::unordered_map<Identifier, ConfigLiteral> sourceConfig;
     std::unordered_map<Identifier, std::string> parserConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };

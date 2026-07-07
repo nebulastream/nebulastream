@@ -22,6 +22,7 @@
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -46,6 +47,10 @@ ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpress
 std::unordered_map<Identifier, std::string> parseInputFormatterConfig(const ConfigMap& configOptions);
 std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions);
 std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions);
+/// Like getSourceConfig, but preserves the parsed literals instead of rendering them to strings,
+/// so config resolution sees exactly what the parser produced. Unsigned integer literals are
+/// lowered to int64_t (integers are always passed down signed); out-of-range values are rejected.
+std::unordered_map<Identifier, ConfigLiteral> getSourceConfigLiterals(const ConfigMap& configOptions);
 std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions);
 std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSourceSchema(ConfigMap configOptions);
 std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSinkSchema(ConfigMap configOptions);

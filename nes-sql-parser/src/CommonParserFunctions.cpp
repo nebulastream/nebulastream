@@ -211,6 +211,46 @@ std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& con
     return sourceOptions;
 }
 
+std::unordered_map<Identifier, ConfigLiteral> getSourceConfigLiterals(const ConfigMap& configOptions)
+{
+    auto toConfigLiteral = [](const std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>& value) -> ConfigLiteral
+    {
+        if (const auto* schema = std::get_if<Schema<UnqualifiedUnboundField, Ordered>>(&value))
+        {
+            return *schema;
+        }
+        return std::visit(
+            []<typename T>(const T& literal) -> ConfigLiteral
+            {
+                if constexpr (std::is_same_v<T, uint64_t>)
+                {
+                    /// Integers are always passed down signed; a field that needs an unsigned type
+                    /// lowers the int64_t with a range check (see downcastConfigValue).
+                    if (not std::in_range<int64_t>(literal))
+                    {
+                        throw InvalidQuerySyntax("Integer literal {} exceeds the supported signed integer range", literal);
+                    }
+                    return static_cast<int64_t>(literal);
+                }
+                else
+                {
+                    return literal;
+                }
+            },
+            std::get<Literal>(value));
+    };
+
+    std::unordered_map<Identifier, ConfigLiteral> sourceOptions{};
+    if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SOURCE")); sourceConfigIter != configOptions.end())
+    {
+        for (const auto& [name, value] : sourceConfigIter->second)
+        {
+            sourceOptions.insert_or_assign(name, toConfigLiteral(value));
+        }
+    }
+    return sourceOptions;
+}
+
 std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions)
 {
     std::unordered_map<Identifier, std::string> sinkOptions{};

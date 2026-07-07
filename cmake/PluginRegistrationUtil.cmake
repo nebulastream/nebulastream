@@ -47,6 +47,13 @@ function(add_plugin_as_library plugin_name plugin_registry plugin_library)
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
 endfunction()
 
+# register an EXISTING library as a plugin for a compile-time registry. Useful when the same
+# implementation library serves several registries (add_plugin_as_library would create it twice).
+function(register_plugin_library plugin_name plugin_registry plugin_library)
+    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
+    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
+endfunction()
+
 # adds the source files of the plugin to the source files of the component that the plugin registry belongs to
 # adds the name of plugin to the list of plugin names for the plugin registry
 # the component is inferred from the registry name later in generate_plugin_registrar

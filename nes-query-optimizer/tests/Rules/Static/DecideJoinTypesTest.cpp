@@ -95,7 +95,7 @@ public:
 
     static SourceDescriptor createSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
     {
-        const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
+        const std::unordered_map<Identifier, ConfigLiteral> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
         const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("TYPE"), "CSV"}};
         return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig)
             .value();

@@ -13,29 +13,37 @@
 */
 
 #pragma once
-#include "Configurations/ConfigField.hpp"
-#include "Configurations/ConfigValue.hpp"
-#include "Identifiers/QualifiedIdentifier.hpp"
 
-namespace NES {
+#include <expected>
+#include <utility>
 
-class SQLConfigValue {
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigResolution.hpp>
+#include <Configurations/ConfigValue.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+
+namespace NES
+{
+
+/// A single (possibly qualified) config assignment as parsed from SQL, e.g.
+/// `'ALL' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES`. The literal is typed by the parser.
+class SQLConfigValue
+{
     QualifiedIdentifier name;
     ConfigLiteral value;
+
 public:
     SQLConfigValue(QualifiedIdentifier name, ConfigLiteral value) : name(std::move(name)), value(std::move(value)) { }
     [[nodiscard]] QualifiedIdentifier getFullyQualifiedName() const { return name; }
     [[nodiscard]] ConfigLiteral getValue() const { return value; }
 };
 
-struct InvalidSQLConfigSpecification {
-    std::vector<QualifiedIdentifier> unresolvableFields;
-    std::vector<std::pair<QualifiedIdentifier, Exception>> failedInstantiations;
-    std::vector<QualifiedIdentifier> missingFields;
+/// SQL frontend adapter over the generic config resolution (Configurations/ConfigResolution.hpp).
+using InvalidSQLConfigSpecification = InvalidConfigSpecification;
 
-    friend std::ostream& operator<<(std::ostream& os, const InvalidSQLConfigSpecification&);
-};
-
-std::expected<Schema<ConfigValue, Ordered>, InvalidSQLConfigSpecification> resolveConfig(Schema<SQLConfigValue, Ordered> passedConfig, Schema<QualifiedErasedConfigField, Ordered> declaredConfig);
+std::expected<Schema<ConfigValue, Ordered>, InvalidSQLConfigSpecification>
+resolveConfig(const Schema<SQLConfigValue, Ordered>& passedConfig, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig);
 
 }

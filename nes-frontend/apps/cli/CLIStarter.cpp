@@ -36,6 +36,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Configurations/ConfigResolution.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
@@ -560,6 +561,22 @@ std::unordered_map<NES::Identifier, std::string> bindConfig(const std::unordered
     return boundConfig;
 }
 
+/// The CLI/YAML frontend only has strings; type each value once at this boundary before it enters
+/// config resolution (see parseConfigLiteral).
+std::unordered_map<NES::Identifier, NES::ConfigLiteral> bindSourceConfig(const std::unordered_map<std::string, std::string>& config)
+{
+    const auto boundConfig = config
+        | std::views::transform(
+            [](const auto& rawPair)
+            { return std::make_pair(bindIdentifierName(rawPair.first), NES::parseConfigLiteral(rawPair.second)); })
+        | std::ranges::to<std::unordered_map<NES::Identifier, NES::ConfigLiteral>>();
+    if (std::ranges::size(config) != std::ranges::size(boundConfig))
+    {
+        throw NES::InvalidConfigParameter("Duplicate parameters with different casing");
+    }
+    return boundConfig;
+}
+
 NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> bindSchema(const std::vector<NES::CLI::SchemaField>& schemaFields)
 {
     const auto boundSchema = NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>::tryCreateCollisionFree(
@@ -595,7 +612,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             .attachedTo = bindIdentifierName(logical),
             .sourceType = bindIdentifierName(type),
             .host = NES::Host(host),
-            .sourceConfig = bindConfig(sourceConfig),
+            .sourceConfig = bindSourceConfig(sourceConfig),
             .parserConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)

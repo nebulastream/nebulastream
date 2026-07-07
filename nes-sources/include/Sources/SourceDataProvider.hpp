@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <Configurations/ConfigField.hpp>
 #include <Identifiers/Identifier.hpp>
 
 namespace NES
@@ -30,7 +31,7 @@ struct PhysicalSourceConfig
     std::string logical;
     Identifier type;
     std::unordered_map<Identifier, std::string> parserConfig;
-    std::unordered_map<Identifier, std::string> sourceConfig;
+    std::unordered_map<Identifier, ConfigLiteral> sourceConfig;
 };
 
 class SourceDataProvider

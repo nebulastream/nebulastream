@@ -18,22 +18,27 @@
 #include <ranges>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <utility>
-#include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifier.hpp>
-#include <ErrorHandling.hpp>
-#include <SourceValidationRegistry.hpp>
+#include <vector>
+
+#include <Configurations/ConfigField.hpp>
+#include <Schema/Schema.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <SourceConfigSchemaRegistry.hpp>
 
 namespace NES::SourceValidationProvider
 {
 
-std::optional<DescriptorConfig::Config> provide(const std::string_view sourceType, std::unordered_map<Identifier, std::string> configMap)
+std::optional<Schema<QualifiedErasedConfigField, Ordered>> provide(const std::string_view sourceType)
 {
-    const std::unordered_map<std::string, std::string> stringConfigMap = configMap
-        | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
-        | std::ranges::to<std::unordered_map>();
-    auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(stringConfigMap);
-    return SourceValidationRegistry::instance().create(std::string{sourceType}, std::move(sourceValidationRegistryArguments));
+    auto sourceSchema = SourceConfigSchemaRegistry::instance().getSchema(std::string{sourceType});
+    if (not sourceSchema.has_value())
+    {
+        return std::nullopt;
+    }
+    /// Combine the source-declared fields with the source-independent descriptor fields.
+    auto combined = *sourceSchema | std::ranges::to<std::vector>();
+    std::ranges::copy(SourceDescriptor::configSchema, std::back_inserter(combined));
+    return Schema<QualifiedErasedConfigField, Ordered>{std::move(combined)};
 }
+
 }

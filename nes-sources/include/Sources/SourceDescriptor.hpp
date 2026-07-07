@@ -56,7 +56,14 @@ public:
     SourceDescriptor& operator=(SourceDescriptor&& other) noexcept = delete;
 
     friend std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
-    friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs) = default;
+    /// The type-erased plugin config (std::any) is not comparable; two descriptors are considered
+    /// equal if their identity and wiring match.
+    friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
+    {
+        return lhs.physicalSourceId == rhs.physicalSourceId && lhs.logicalSource == rhs.logicalSource
+            && lhs.sourceType == rhs.sourceType && lhs.host == rhs.host && lhs.maxInflightBuffers == rhs.maxInflightBuffers
+            && lhs.inputFormatterDescriptor == rhs.inputFormatterDescriptor;
+    }
 
 
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor);
@@ -70,6 +77,9 @@ public:
     [[nodiscard]] size_t getMaxInflightBuffers() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
     [[nodiscard]] const InstantiatedConfig& getPluginConfig() const;
+    /// The source-defined config struct (e.g. GeneratorSourceConfig), type-erased. Produced by the
+    /// source's SourceConfigRegistry entry, so the source factory can safely any_cast it back.
+    [[nodiscard]] const std::any& getPluginData() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
@@ -89,7 +99,7 @@ private:
     InputFormatterDescriptor inputFormatterDescriptor;
 
 
-    /// Used by Sources to create a valid SourceDescriptor.
+    /// Used by the SourceCatalog (and descriptor unreflection) to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         PhysicalSourceId physicalSourceId,
         LogicalSource logicalSource,
@@ -97,6 +107,7 @@ private:
         Host host,
         size_t maxInflightBuffers,
         InstantiatedConfig pluginConfig,
+        std::any pluginData,
         const InputFormatterDescriptor& inputFormatterDescriptor);
 
 public:
@@ -106,17 +117,20 @@ public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const ConfigField<size_t> MAX_INFLIGHT_BUFFERS{
         Identifier::parse("MAX_INFLIGHT_BUFFERS"),
-        [](const ConfigLiteral& literal) { return tryGetOr<size_t>(literal, expectedType<size_t>()); },
+        [](const ConfigLiteral& literal)
+        { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(downcastConfigValue<int64_t, size_t>); },
         INVALID_MAX_INFLIGHT_BUFFERS};
 
+    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const ConfigField<Host> HOST{
         "HOST",
         [](const ConfigLiteral& literal) -> std::expected<Host, Exception>
         {
             return tryGetOr<std::string>(literal, expectedType<std::string>())
                 .transform([](std::string&& value) { return Host{std::move(value)}; });
-        }
-    };
+        },
+        /// Optional: attached workers pass the host out of band (e.g. as a catalog argument).
+        Host{""}};
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
@@ -154,7 +168,10 @@ struct ReflectedSourceDescriptor
     LogicalSource logicalSource;
     std::string type;
     Host host;
+    uint64_t maxInflightBuffers;
     InputFormatterDescriptor inputFormatterDescriptor;
+    /// The source-defined config struct, reflected by the source's SourceConfigRegistry entry.
+    /// The generic InstantiatedConfig does not travel; only the typed config does.
     Reflected config;
 };
 }

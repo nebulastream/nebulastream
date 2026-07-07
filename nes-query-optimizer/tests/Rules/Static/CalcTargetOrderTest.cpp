@@ -68,7 +68,7 @@ LogicalSource createLogicalTestSource(SourceCatalog& sourceCatalog)
 
 SourceDescriptor createTestSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
 {
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
+    const std::unordered_map<Identifier, ConfigLiteral> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
     const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
     return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), Host("localhost"), sourceConfig, parserConfig).value();
 }

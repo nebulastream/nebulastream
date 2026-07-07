@@ -18,8 +18,11 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
+#include <Configurations/ConfigResolution.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -84,7 +87,16 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
         auto host = Host(hostIt->second);
         sourceConfig.erase(hostIt);
 
-        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, sourceConfig);
+        /// The inline source operator carries its config as raw strings; type them at this
+        /// boundary before handing them to config resolution.
+        auto sourceConfigLiterals = std::unordered_map<Identifier, ConfigLiteral>{};
+        sourceConfigLiterals.reserve(sourceConfig.size());
+        for (const auto& [name, value] : sourceConfig)
+        {
+            sourceConfigLiterals.emplace(name, parseConfigLiteral(value));
+        }
+
+        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, std::move(sourceConfigLiterals));
 
         if (!descriptorOpt.has_value())
         {

@@ -14,33 +14,128 @@
 
 #include <Sources/NetworkSource.hpp>
 
+#include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <ostream>
 #include <stop_token>
 #include <string>
-#include <unordered_map>
 #include <utility>
-#include <Configurations/Descriptor.hpp>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
+#include <Configurations/Validation/EndpointValidation.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UUID.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <network/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
 
-NetworkSource::NetworkSource(const SourceDescriptor& sourceDescriptor)
-    : channelId(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::CHANNEL))
-    , receiverQueueSize(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::RECEIVER_QUEUE_SIZE))
-    , receiverServer(receiver_instance(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::BIND)))
+namespace
+{
+
+/// All config fields of the network source, shared by getConfigSchema (declaration) and
+/// NetworkSourceConfig::fromConfig (typed extraction). Constructed lazily on first use so no
+/// exception can escape static initialization.
+struct NetworkConfigFields
+{
+    ConfigField<std::string> channel;
+    ConfigField<std::string> bind;
+    ConfigField<size_t> receiverQueueSize;
+};
+
+const NetworkConfigFields& configFields()
+{
+    static const NetworkConfigFields fields{
+        .channel
+        = {"CHANNEL",
+           [](const ConfigLiteral& literal)
+           {
+               return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+                   .and_then(
+                       [](const std::string& value) -> std::expected<std::string, Exception>
+                       {
+                           if (!stringToUUID(value))
+                           {
+                               return std::unexpected{
+                                   InvalidConfigParameter("NetworkSource: channel must be a valid UUID, got: {}", value)};
+                           }
+                           return value;
+                       });
+           }},
+        .bind
+        = {"BIND",
+           [](const ConfigLiteral& literal)
+           {
+               return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+                   .and_then(
+                       [](const std::string& value) -> std::expected<std::string, Exception>
+                       {
+                           if (!EndpointValidation{}.isValid(value))
+                           {
+                               return std::unexpected{
+                                   InvalidConfigParameter("NetworkSource: bind must be host:port format, got: {}", value)};
+                           }
+                           return value;
+                       });
+           }},
+        /// Per-channel receiver queue size override. 0 means use the worker-level default.
+        /// When a user explicitly sets receiver_queue_size=0, the lambda rejects it with an error.
+        /// The default value (0) is returned directly by the config system, bypassing the lambda.
+        .receiverQueueSize
+        = {"RECEIVER_QUEUE_SIZE",
+           [](const ConfigLiteral& literal)
+           {
+               /// Integer literals are always passed down signed; lower into size_t.
+               return NES::tryGetOr<int64_t>(literal, expectedType<size_t>())
+                   .and_then(downcastConfigValue<int64_t, size_t>)
+                   .and_then(
+                       [](const size_t value) -> std::expected<size_t, Exception>
+                       {
+                           if (value == 0)
+                           {
+                               return std::unexpected{
+                                   InvalidConfigParameter("NetworkSource: receiver_queue_size must be > 0 when explicitly set")};
+                           }
+                           return value;
+                       });
+           },
+           size_t{0}},
+    };
+    return fields;
+}
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> NetworkSource::getConfigSchema()
+{
+    const auto& fields = configFields();
+    return createConfigSchema(Identifier::parse("NETWORK_SOURCE"), fields.channel, fields.bind, fields.receiverQueueSize);
+}
+
+NetworkSourceConfig NetworkSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    const auto& fields = configFields();
+    return NetworkSourceConfig{
+        .channel = config.get(fields.channel),
+        .bind = config.get(fields.bind),
+        .receiverQueueSize = config.get(fields.receiverQueueSize)};
+}
+
+NetworkSource::NetworkSource(const NetworkSourceConfig& config)
+    : channelId(config.channel), receiverQueueSize(config.receiverQueueSize), receiverServer(receiver_instance(config.bind))
 {
 }
 
@@ -86,22 +181,6 @@ void NetworkSource::close()
     PRECONDITION(channel.has_value(), "Network Source was closed multiple times or never opened");
     close_receiver_channel(std::move(*channel));
     NES_DEBUG("Receiver channel closed: {}", channelId);
-}
-
-DescriptorConfig::Config NetworkSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersNetworkSource>(std::move(config), name());
-}
-
-SourceValidationRegistryReturnType RegisterNetworkSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return NetworkSource::validateAndFormat(std::move(sourceConfig.config));
-}
-
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterNetworkSource(
-    SourceRegistryArguments sourceRegistryArguments) /// NOLINT(performance-unnecessary-value-param)
-{
-    return std::make_unique<NetworkSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
 }

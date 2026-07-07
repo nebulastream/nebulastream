@@ -72,7 +72,7 @@ OptimizerTestUtils::createSourceDescriptor(const Identifier& identifier, const S
     {
         throw TestException();
     }
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
+    const std::unordered_map<Identifier, ConfigLiteral> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
     const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("TYPE"), "CSV"}};
     auto result = sourceCatalog.addPhysicalSource(source.value(), Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig);
 

@@ -15,156 +15,43 @@
 #pragma once
 
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <netdb.h>
+#include <sys/types.h>
 
-#include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <sys/socket.h> /// For socket functions
-#include <sys/types.h>
-#include "Configurations/ConfigValue.hpp"
 
 namespace NES
 {
 
-/// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
-struct ConfigParametersTCP
+/// Source-defined config struct: instantiated from the generic config by the SourceConfig
+/// registry entry, carried through the SourceDescriptor as std::any, and serialized via
+/// reflection of exactly this struct (all members are reflectable).
+struct TCPSourceConfig
 {
-    static inline const ConfigField<std::string> HOST{
-        "SOCKET_HOST", [](const ConfigLiteral& config) { return NES::tryGetOr<std::string>(config, expectedType<std::string>()); }};
+    std::string socketHost;
+    uint32_t socketPort;
+    int32_t socketDomain;
+    int32_t socketType;
+    char tupleDelimiter;
+    uint32_t socketBufferSize;
+    uint32_t bytesUsedForSocketBufferSizeTransfer;
+    float flushIntervalInMs;
+    uint32_t connectTimeoutSeconds;
 
-    static inline const ConfigField<uint32_t> PORT{
-        "SOCKET_PORT",
-        [](const ConfigLiteral& literal)
-        {
-            return NES::tryGetOr<std::uint64_t>(literal, expectedType<std::uint64_t>())
-                .and_then(downcastConfigValue<std::uint64_t, uint32_t, 65535>);
-        }};
-    static inline const ConfigField<int32_t> DOMAIN{
-        "SOCKET_DOMAIN",
-        [](const ConfigLiteral& literal)
-        {
-            return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-                .and_then(
-                    [](const std::string& value) -> std::expected<int32_t, Exception>
-                    {
-                        if (strcasecmp(value.c_str(), "AF_INET") == 0)
-                        {
-                            return AF_INET;
-                        }
-                        if (strcasecmp(value.c_str(), "AF_INET6") == 0)
-                        {
-                            return AF_INET6;
-                        }
-                        return std::unexpected{InvalidConfigParameter(
-                            "TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", value)};
-                    });
-        },
-        [] { return AF_INET; } /// For some reason I couldn't pass the macro as an argument here
-    };
-
-    static inline const ConfigField<int32_t> TYPE{
-        "SOCKET_TYPE",
-        [](const ConfigLiteral& literal)
-        {
-            return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-                .and_then(Identifier::tryParse)
-                .and_then(
-                    [](const Identifier& socketType) -> std::expected<int32_t, Exception>
-                    {
-                        if (socketType == Identifier::parse("SOCK_STREAM"))
-                        {
-                            return SOCK_STREAM;
-                        }
-                        if (socketType == Identifier::parse("SOCK_DGRAM"))
-                        {
-                            return SOCK_DGRAM;
-                        }
-                        if (socketType == Identifier::parse("SOCK_SEQPACKET"))
-                        {
-                            return SOCK_SEQPACKET;
-                        }
-                        if (socketType == Identifier::parse("SOCK_RAW"))
-                        {
-                            return SOCK_RAW;
-                        }
-                        if (socketType == Identifier::parse("SOCK_RDM"))
-                        {
-                            return SOCK_RDM;
-                        }
-                        return std::unexpected{InvalidConfigParameter(
-                            "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, "
-                            "or "
-                            "SOCK_RDM",
-                            socketType)};
-                    });
-        },
-        SOCK_STREAM,
-    };
-    static inline const ConfigField<char> SEPARATOR{
-        "TUPLE_DELIMITER",
-        [](const ConfigLiteral& literal)
-        {
-            return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-                .and_then(
-                    [](const std::string& value) -> std::expected<char, Exception>
-                    {
-                        if (std::ranges::size(value) == 1)
-                        {
-                            return value.front();
-                        }
-                        return std::unexpected{InvalidConfigParameter("Expected a single character, got {}", value)};
-                    });
-        },
-        '\n',
-    };
-    static inline const ConfigField<float> FLUSH_INTERVAL_MS{
-        "FLUSH_INTERVAL_MS",
-        [](const ConfigLiteral& literal) -> std::expected<float, Exception>
-        { return NES::tryGetOr<double>(literal, expectedType<float>()).and_then(downcastConfigValue<double, float>); },
-        1.0};
-
-    static inline const ConfigField<uint32_t> SOCKET_BUFFER_SIZE{
-        "SOCKET_BUFFER_SIZE",
-        [](const ConfigLiteral& config)
-        { return NES::tryGetOr<uint64_t>(config, expectedType<uint64_t>()).and_then(downcastConfigValue<uint64_t, uint32_t>); },
-        1024};
-    static inline const ConfigField<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
-        "BYTES_SED_FOR_SOCKET_BUFFER_SIZE_TRANSFER",
-        [](const ConfigLiteral& literal)
-        { return NES::tryGetOr<uint64_t>(literal, expectedType<uint64_t>()).and_then(downcastConfigValue<uint64_t, uint32_t>);
-        },
-        0};
-    static inline const ConfigField<uint32_t> CONNECT_TIMEOUT{
-        "CONNECT_TIMEOUT_SECONDS",
-        [](const ConfigLiteral& literal) { return NES::tryGetOr<uint64_t>(literal, expectedType<uint64_t>()).and_then(downcastConfigValue<uint64_t, uint32_t>); },
-    10};
-
-    static inline const auto configSchema = createConfigSchema(
-        Identifier::parse("TCP_SOURCE"),
-        HOST,
-        PORT,
-        DOMAIN,
-        TYPE,
-        SEPARATOR,
-        FLUSH_INTERVAL_MS,
-        SOCKET_BUFFER_SIZE,
-        SOCKET_BUFFER_TRANSFER_SIZE
-    );
+    static TCPSourceConfig fromConfig(const InstantiatedConfig& config);
 };
 
 class TCPSource : public Source
@@ -178,13 +65,9 @@ class TCPSource : public Source
     constexpr static size_t ERROR_MESSAGE_BUFFER_SIZE = 256;
 
 public:
-    static const std::string& name()
-    {
-        static const std::string Instance = "TCP";
-        return Instance;
-    }
+    constexpr static std::string_view NAME = "TCP";
 
-    explicit TCPSource(const InstantiatedConfig& sourceDescriptor);
+    explicit TCPSource(const TCPSourceConfig& config);
     ~TCPSource() override = default;
 
     TCPSource(const TCPSource&) = delete;
@@ -199,7 +82,7 @@ public:
     /// Close TCP connection.
     void close() override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -223,7 +106,7 @@ private:
     float flushIntervalInMs;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
-    u_int32_t connectionTimeout;
+    uint32_t connectionTimeout;
 };
 
 }

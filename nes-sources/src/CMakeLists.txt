@@ -20,15 +20,19 @@ add_source_files(nes-sources
         SourceValidationProvider.cpp
         LogicalSource.cpp
         SourceCatalog.cpp
+        FileSource.cpp
+        NetworkSource.cpp
 )
 
-# Register plugins
-add_plugin(File Source FileSource.cpp)
-add_plugin(File SourceValidation FileSource.cpp)
+# Runtime registry entries (source factory, config schema, typed config)
+add_registry_entry(Source File)
+add_registry_entry(SourceConfigSchema File)
+add_registry_entry(SourceConfig File)
 
-# Systest adaptors
+add_registry_entry(Source Network HEADER Sources/NetworkSource.hpp)
+add_registry_entry(SourceConfigSchema Network HEADER Sources/NetworkSource.hpp)
+add_registry_entry(SourceConfig Network HEADER Sources/NetworkSource.hpp)
+
+# Systest adaptors (compile-time plugin registries)
 add_plugin(File InlineData FileSource.cpp)
 add_plugin(File FileData FileSource.cpp)
-
-add_plugin(Network Source NetworkSource.cpp)
-add_plugin(Network SourceValidation NetworkSource.cpp)

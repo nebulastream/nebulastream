@@ -25,24 +25,57 @@
 #include <ostream>
 #include <stop_token>
 #include <string>
-#include <unordered_map>
-#include <utility>
-#include <Configurations/Descriptor.hpp>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Files.hpp>
+#include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+namespace
+{
+
+/// All config fields of the file source, shared by getConfigSchema (declaration) and
+/// FileSourceConfig::fromConfig (typed extraction). Constructed lazily on first use so no
+/// exception can escape static initialization.
+struct FileConfigFields
+{
+    ConfigField<std::string> filePath;
+};
+
+const FileConfigFields& configFields()
+{
+    static const FileConfigFields fields{
+        .filePath
+        = {"FILE_PATH", [](const ConfigLiteral& literal) { return NES::tryGetOr<std::string>(literal, expectedType<std::string>()); }},
+    };
+    return fields;
+}
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> FileSource::getConfigSchema()
+{
+    const auto& fields = configFields();
+    return createConfigSchema(Identifier::parse("FILE_SOURCE"), fields.filePath);
+}
+
+FileSourceConfig FileSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    const auto& fields = configFields();
+    return FileSourceConfig{.filePath = config.get(fields.filePath)};
+}
+
+FileSource::FileSource(const FileSourceConfig& config) : filePath(config.filePath)
 {
 }
 
@@ -74,25 +107,10 @@ Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuff
     return FillTupleBufferResult::withBytes(numBytesRead);
 }
 
-DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
-}
-
 std::ostream& FileSource::toString(std::ostream& str) const
 {
     str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
     return str;
-}
-
-SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return FileSource::validateAndFormat(std::move(sourceConfig.config));
-}
-
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
-{
-    return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)

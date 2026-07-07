@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Configurations/ConfigField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -92,11 +93,11 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& downstreamData = downstreamWorker->dataAddress;
     const auto& upstreamData = upstreamWorker->dataAddress;
 
-    auto sourceConfig = std::unordered_map<Identifier, std::string>{
+    auto sourceConfig = std::unordered_map<Identifier, ConfigLiteral>{
         {Identifier::parse("channel"), channel.id.getRawValue()}, {Identifier::parse("bind"), downstreamData}};
     if (context.config.receiverQueueSize.isExplicitlySet())
     {
-        sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string(context.config.receiverQueueSize.getValue()));
+        sourceConfig.emplace(Identifier::parse("receiver_queue_size"), static_cast<int64_t>(context.config.receiverQueueSize.getValue()));
     }
 
     auto sinkConfig = std::unordered_map<Identifier, std::string>{

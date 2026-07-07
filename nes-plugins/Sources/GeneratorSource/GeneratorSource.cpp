@@ -15,36 +15,47 @@
 #include <GeneratorSource.hpp>
 
 #include <chrono>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
-#include <iostream>
+#include <expected>
+#include <ios>
 #include <memory>
 #include <stop_token>
 #include <string>
 #include <thread>
-#include <unordered_map>
 #include <utility>
-#include <Configurations/Descriptor.hpp>
+#include <variant>
+#include <vector>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Optional.hpp>
-#include <FixedGeneratorRate.hpp>
+#include <Util/Strings.hpp>
+#include <Util/Variant.hpp>
+#include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
+#include <ErrorHandling.hpp>
 #include <Generator.hpp>
+#include <GeneratorFields.hpp>
 #include <GeneratorRate.hpp>
-#include <SinusGeneratorRate.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
 
 namespace
 {
-std::optional<std::expected<FixedGeneratorRateConfig, Exception>> parseValidateFixedRateConfigString(std::string_view configString)
+
+/// Parsers for the rate config string. The outer optional signals "not this rate type", the inner
+/// expected carries parse/validation errors for the matched type.
+std::optional<std::expected<FixedGeneratorRateConfig, Exception>> parseValidateFixedRateConfigString(const std::string_view configString)
 {
     if (const auto params = splitWithStringDelimiter<std::string_view>(configString, " "); params.size() == 2)
     {
@@ -57,18 +68,7 @@ std::optional<std::expected<FixedGeneratorRateConfig, Exception>> parseValidateF
     return {};
 }
 
-uint64_t calcNumberOfTuplesForInterval(
-    const FixedGeneratorRateConfig& rate,
-    const std::chrono::time_point<std::chrono::system_clock>& start,
-    const std::chrono::time_point<std::chrono::system_clock>& end)
-{
-    /// As the emit rate is fixed, we have to multiply the interval duration (or size) with the emit rate.
-    const auto duration = std::chrono::duration<double>(end - start);
-    const auto numberOfTuples = static_cast<uint64_t>(rate.emitRate * static_cast<double>(duration.count()));
-    return numberOfTuples;
-}
-
-std::optional<std::expected<SinusGeneratorRateConfig, Exception>> parseValidateSinusRateConfigString(std::string_view configString)
+std::optional<std::expected<SinusGeneratorRateConfig, Exception>> parseValidateSinusRateConfigString(const std::string_view configString)
 {
     std::optional<std::expected<double, Exception>> amplitude = {};
     std::optional<std::expected<double, Exception>> frequency = {};
@@ -77,7 +77,7 @@ std::optional<std::expected<SinusGeneratorRateConfig, Exception>> parseValidateS
 
     for (const auto& param : splitOnMultipleDelimiters(configString, {'\n', ','}))
     {
-        params.emplace_back(trimWhiteSpaces(std::string_view(param)));
+        params.emplace_back(trimWhiteSpaces(param));
     }
 
     if (params.size() == 2)
@@ -117,6 +117,17 @@ std::optional<std::expected<SinusGeneratorRateConfig, Exception>> parseValidateS
 }
 
 uint64_t calcNumberOfTuplesForInterval(
+    const FixedGeneratorRateConfig& rate,
+    const std::chrono::time_point<std::chrono::system_clock>& start,
+    const std::chrono::time_point<std::chrono::system_clock>& end)
+{
+    /// As the emit rate is fixed, we have to multiply the interval duration (or size) with the emit rate.
+    const auto duration = std::chrono::duration<double>(end - start);
+    const auto numberOfTuples = static_cast<uint64_t>(rate.emitRate * static_cast<double>(duration.count()));
+    return numberOfTuples;
+}
+
+uint64_t calcNumberOfTuplesForInterval(
     const SinusGeneratorRateConfig& rate,
     const std::chrono::time_point<std::chrono::system_clock>& start,
     const std::chrono::time_point<std::chrono::system_clock>& end)
@@ -141,31 +152,179 @@ uint64_t calcNumberOfTuplesForInterval(
     return numberOfTuples;
 }
 
+/// All config fields of the generator source, shared by getConfigSchema (declaration) and
+/// GeneratorSourceConfig::fromConfig (typed extraction). Constructed lazily on first use so no
+/// exception can escape static initialization.
+struct GeneratorConfigFields
+{
+    ConfigField<GeneratorStop> sequenceStopsGenerator;
+    ConfigField<int64_t> seed;
+    ConfigField<GeneratorRate::Type> generatorRateType;
+    ConfigField<GeneratorRateVariant> generatorRateConfig;
+    ConfigField<std::string> generatorSchema;
+    ConfigField<uint64_t> flushIntervalMs;
+    ConfigField<int64_t> maxRuntimeMs;
+};
+
+const GeneratorConfigFields& configFields()
+{
+    static const GeneratorConfigFields fields{
+        .sequenceStopsGenerator
+        = {"STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
+           [](const ConfigLiteral& literal)
+           {
+               return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+                   .and_then(
+                       [](std::string&& value) -> std::expected<GeneratorStop, Exception>
+                       {
+                           auto optToken = EnumWrapper{value}.asEnum<GeneratorStop>();
+                           if (not optToken.has_value())
+                           {
+                               return std::unexpected{
+                                   InvalidConfigParameter("Invalid value, must be ALL, ONE or NONE, but was: {}!", value)};
+                           }
+                           return optToken.value();
+                       });
+           }},
+        .seed
+        = {"SEED",
+           [](const ConfigLiteral& config) { return NES::tryGetOr<int64_t>(config, expectedType<int64_t>()); },
+           [] { return std::chrono::high_resolution_clock::now().time_since_epoch().count(); }},
+        .generatorRateType
+        = {"GENERATOR_RATE_TYPE",
+           [](const ConfigLiteral& config)
+           {
+               return NES::tryGetOr<std::string>(config, expectedType<std::string>())
+                   .and_then(
+                       [](std::string&& value) -> std::expected<GeneratorRate::Type, Exception>
+                       {
+                           auto enumOpt = EnumWrapper{value}.asEnum<GeneratorRate::Type>();
+                           if (not enumOpt.has_value())
+                           {
+                               return std::unexpected{InvalidConfigParameter("Invalid value, must be FIXED or SINUS, but was: {}!", value)};
+                           }
+                           return enumOpt.value();
+                       });
+           },
+           GeneratorRate::Type::FIXED},
+        .generatorRateConfig
+        = {"GENERATOR_RATE_CONFIG",
+           [](const ConfigLiteral& config)
+           {
+               return NES::tryGetOr<std::string>(config, expectedType<std::string>())
+                   .and_then(
+                       [](const std::string& value) -> std::expected<GeneratorRateVariant, Exception>
+                       {
+                           if (const auto sinusGeneratorRate = parseValidateSinusRateConfigString(value))
+                           {
+                               return sinusGeneratorRate->transform([](const SinusGeneratorRateConfig& rate)
+                                                                    { return GeneratorRateVariant{rate}; });
+                           }
+                           if (const auto fixedGeneratorRate = parseValidateFixedRateConfigString(value))
+                           {
+                               return fixedGeneratorRate->transform([](const FixedGeneratorRateConfig& rate)
+                                                                    { return GeneratorRateVariant{rate}; });
+                           }
+                           return std::unexpected{
+                               InvalidConfigParameter("Invalid value, must be a sinus or fixed generator rate, but was: {}!", value)};
+                       });
+           },
+           GeneratorRateVariant{FixedGeneratorRateConfig{.emitRate = 1000}}},
+        .generatorSchema
+        = {"GENERATOR_SCHEMA",
+           [](const ConfigLiteral& config)
+           {
+               return NES::tryGetOr<std::string>(config, expectedType<std::string>())
+                   .and_then(
+                       [](const std::string& value) -> std::expected<std::string, Exception>
+                       {
+                           if (value.empty())
+                           {
+                               return std::unexpected{InvalidConfigParameter("Generator schema cannot be empty!")};
+                           }
+                           std::vector<std::pair<std::string, Exception>> exceptions;
+                           for (const auto lines = splitOnMultipleDelimiters(value, {',', '\n'}); auto line : lines)
+                           {
+                               line = trimWhiteSpaces(line);
+                               const auto foundIdentifier = magic_enum::enum_cast<GeneratorFields::FieldIdentifier>(
+                                   NES::toUpperCase(line.substr(0, line.find_first_of(' '))));
+                               bool validatorExists = false;
+                               for (const auto& [identifier, validator] : GeneratorFields::Validators)
+                               {
+                                   if (identifier == foundIdentifier)
+                                   {
+                                       try
+                                       {
+                                           validator(line);
+                                       }
+                                       catch (Exception& e)
+                                       {
+                                           exceptions.emplace_back(line, e);
+                                       }
+                                       validatorExists = true;
+                                       break;
+                                   }
+                               }
+                               if (not validatorExists)
+                               {
+                                   exceptions.emplace_back(
+                                       line,
+                                       InvalidConfigParameter(
+                                           "Cannot identify the type of field in \"{}\", does the field have a registered validator?",
+                                           line));
+                               }
+                           }
+                           if (not exceptions.empty())
+                           {
+                               return std::unexpected{InvalidConfigParameter("Invalid Generator schema:\n{}", fmt::join(exceptions, ","))};
+                           }
+                           return value;
+                       });
+           }},
+        .flushIntervalMs
+        = {"FLUSH_INTERVAL_MS",
+           [](const ConfigLiteral& config)
+           { return NES::tryGetOr<int64_t>(config, expectedType<uint64_t>()).and_then(downcastConfigValue<int64_t, uint64_t>); },
+           10},
+        /// Max runtime in ms; if set to -1 the source runs until stopped by another thread.
+        .maxRuntimeMs
+        = {"MAX_RUNTIME_MS", [](const ConfigLiteral& config) { return NES::tryGetOr<int64_t>(config, expectedType<int64_t>()); }, -1},
+    };
+    return fields;
 }
 
-GeneratorSource::GeneratorSource(const InstantiatedConfig& config)
-    : seed(config.get(ConfigParametersGenerator::SEED))
-    , maxRuntime(config.get(ConfigParametersGenerator::MAX_RUNTIME_MS))
-    , generatorSchemaRaw(config.get(ConfigParametersGenerator::GENERATOR_SCHEMA))
-    , generator(
-          seed, config.get(ConfigParametersGenerator::SEQUENCE_STOPS_GENERATOR), config.get(ConfigParametersGenerator::GENERATOR_SCHEMA))
-    , flushInterval(std::chrono::milliseconds{config.get(ConfigParametersGenerator::FLUSH_INTERVAL_MS)})
+}
+
+Schema<QualifiedErasedConfigField, Ordered> GeneratorSource::getConfigSchema()
+{
+    const auto& fields = configFields();
+    return createConfigSchema(
+        Identifier::parse("GENERATOR_SOURCE"),
+        fields.seed,
+        fields.generatorSchema,
+        fields.maxRuntimeMs,
+        fields.sequenceStopsGenerator,
+        fields.generatorRateType,
+        fields.generatorRateConfig,
+        fields.flushIntervalMs);
+}
+
+GeneratorSourceConfig GeneratorSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    const auto& fields = configFields();
+    return GeneratorSourceConfig{
+        .seed = static_cast<uint32_t>(config.get(fields.seed)),
+        .maxRuntime = static_cast<int32_t>(config.get(fields.maxRuntimeMs)),
+        .generatorSchemaRaw = config.get(fields.generatorSchema),
+        .stopGeneratorWhenSequenceFinishes = config.get(fields.sequenceStopsGenerator),
+        .flushInterval = std::chrono::milliseconds{config.get(fields.flushIntervalMs)},
+        .generatorRateConfig = config.get(fields.generatorRateConfig)};
+}
+
+GeneratorSource::GeneratorSource(const GeneratorSourceConfig& config)
+    : config(config), generator(config.seed, config.stopGeneratorWhenSequenceFinishes, config.generatorSchemaRaw)
 {
     NES_TRACE("Init GeneratorSource.")
-    switch (config.get(ConfigParametersGenerator::GENERATOR_RATE_TYPE))
-    {
-        case GeneratorRate::Type::FIXED:
-            generatorRate = std::make_unique<FixedGeneratorRate>(
-                NES::get<ConfigParametersGenerator::FixedGeneratorRateConfig>(config.get(ConfigParametersGenerator::GENERATOR_RATE_CONFIG))
-                    .emitRate);
-            break;
-        case GeneratorRate::Type::SINUS:
-            /// We can assume that the parsing will work, as the config has been validated
-            auto [amplitude, frequency] = NES::get<ConfigParametersGenerator::SinusGeneratorRateConfig>(
-                config.get(ConfigParametersGenerator::GENERATOR_RATE_CONFIG));
-            generatorRate = std::make_unique<SinusGeneratorRate>(frequency, amplitude);
-            break;
-    }
 }
 
 void GeneratorSource::open(std::shared_ptr<AbstractBufferProvider>)
@@ -287,151 +446,4 @@ std::ostream& GeneratorSource::toString(std::ostream& str) const
     return str;
 }
 
-SourceValidationRegistryReturnType
-///NOLINTNEXTLINE (performance-unnecessary-value-param)
-RegisterGeneratorSourceValidation(SourceValidationRegistryArguments)
-{
-    return GeneratorSource::getConfigSchema();
-}
-
-///NOLINTNEXTLINE (performance-unnecessary-value-param)
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterGeneratorSource(SourceRegistryArguments sourceRegistryArguments)
-{
-    return std::make_unique<GeneratorSource>(sourceRegistryArguments.sourceDescriptor);
-}
-
-Schema<QualifiedErasedConfigField, Ordered> GeneratorSource::getConfigSchema()
-{
-    const ConfigField<GeneratorStop> SEQUENCE_STOPS_GENERATOR{
-        "STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
-        [](const ConfigLiteral& literal)
-        {
-            return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-                .and_then(
-                    [](std::string&& value) -> std::expected<GeneratorStop, Exception>
-                    {
-                        auto optToken = EnumWrapper{std::move(value)}.asEnum<GeneratorStop>();
-                        if (not optToken.has_value())
-                        {
-                            return std::unexpected{InvalidConfigParameter("Invalid value, must be ALL, ONE or NONE, but was: {}!", value)};
-                        }
-                        return optToken.value();
-                    });
-        }};
-
-    const ConfigField<int64_t> SEED{
-        "SEED",
-        [](const ConfigLiteral& config) { return NES::tryGetOr<int64_t>(config, expectedType<uint32_t>()); },
-        std::chrono::high_resolution_clock::now().time_since_epoch().count()};
-
-    const ConfigField<GeneratorRate::Type> GENERATOR_RATE_TYPE{
-        "GENERATOR_RATE_TYPE",
-        [](const ConfigLiteral& config)
-        {
-            return NES::tryGetOr<std::string>(config, expectedType<std::string>())
-                .and_then(
-                    [](std::string&& value) -> std::expected<GeneratorRate::Type, Exception>
-                    {
-                        auto enumOpt = EnumWrapper{std::move(value)}.asEnum<GeneratorRate::Type>();
-                        if (not enumOpt.has_value())
-                        {
-                            return std::unexpected{InvalidConfigParameter("Invalid value, must be FIXED or SINUS, but was: {}!", value)};
-                        }
-                        return enumOpt.value();
-                    });
-        },
-        GeneratorRate::Type::FIXED,
-    };
-
-    const ConfigField<GeneratorRateVariant> GENERATOR_RATE_CONFIG{
-        "GENERATOR_RATE_CONFIG",
-        [](const ConfigLiteral& config)
-        {
-            return NES::tryGetOr<std::string>(config, expectedType<std::string>())
-                .and_then(
-                    [](const std::string& value) -> std::expected<GeneratorRateVariant, Exception>
-                    {
-                        if (const auto sinusGeneratorRate = SinusGeneratorRate::parseAndValidateConfigString(value))
-                        {
-                            return GeneratorRateVariant{SinusGeneratorRateConfig{
-                                .amplitude = std::get<0>(*sinusGeneratorRate), .frequency = std::get<1>(*sinusGeneratorRate)}};
-                        }
-                        if (const auto fixedGeneratorRate = FixedGeneratorRate::parseAndValidateConfigString(value))
-                        {
-                            return GeneratorRateVariant{FixedGeneratorRateConfig{.emitRate = fixedGeneratorRate.value()}};
-                        }
-                        return std::unexpected{
-                            InvalidConfigParameter("Invalid value, must be a sinus or fixed generator rate, but was: {}!", value)};
-                    });
-        },
-        FixedGeneratorRateConfig{.emitRate = 1000}};
-
-    const ConfigField<std::string> GENERATOR_SCHEMA{
-        "GENERATOR_SCHEMA",
-        [](const ConfigLiteral& config)
-        {
-            return NES::tryGetOr<std::string>(config, expectedType<std::string>())
-                .and_then(
-                    [](const std::string& value) -> std::expected<std::string, Exception>
-                    {
-                        if (value.empty())
-                        {
-                            return std::unexpected{InvalidConfigParameter("Generator schema cannot be empty!")};
-                        }
-                        std::vector<std::pair<std::string, Exception>> exceptions;
-                        for (const auto lines = splitOnMultipleDelimiters(value, {',', '\n'}); auto line : lines)
-                        {
-                            line = trimWhiteSpaces(line);
-                            const auto foundIdentifier = magic_enum::enum_cast<GeneratorFields::FieldIdentifier>(
-                                NES::toUpperCase(line.substr(0, line.find_first_of(' '))));
-                            bool validatorExists = false;
-                            for (const auto& [identifier, validator] : GeneratorFields::Validators)
-                            {
-                                if (identifier == foundIdentifier)
-                                {
-                                    try
-                                    {
-                                        validator(line);
-                                    }
-                                    catch (Exception& e)
-                                    {
-                                        exceptions.emplace_back(line, e);
-                                    }
-                                    validatorExists = true;
-                                    break;
-                                }
-                            }
-                            if (not validatorExists)
-                            {
-                                exceptions.emplace_back(
-                                    line,
-                                    InvalidConfigParameter(
-                                        "Cannot identify the type of field in \"{}\", does the field have a registered validator?", line));
-                            }
-                        }
-                        if (not exceptions.empty())
-                        {
-                            return std::unexpected{InvalidConfigParameter("Invalid Generator schema:\n{}", fmt::join(exceptions, ","))};
-                        }
-                        return value;
-                    });
-        }};
-
-    const ConfigField<uint64_t> FLUSH_INTERVAL_MS{
-        "FLUSH_INTERVAL_MS", [](const ConfigLiteral& config) { return NES::tryGetOr<uint64_t>(config, expectedType<uint64_t>()); }, 10};
-
-    /// @brief config option for setting the max runtime in ms, if set to -1 the source will run till stopped by another thread
-    const ConfigField<int64_t> MAX_RUNTIME_MS{
-        "MAX_RUNTIME_MS", [](const ConfigLiteral& config) { return NES::tryGetOr<int64_t>(config, expectedType<int32_t>()); }, -1};
-
-    return createConfigSchema(
-        Identifier::parse("GENERATOR_SOURCE"),
-        SEED,
-        GENERATOR_SCHEMA,
-        MAX_RUNTIME_MS,
-        SEQUENCE_STOPS_GENERATOR,
-        GENERATOR_RATE_TYPE,
-        GENERATOR_RATE_CONFIG,
-        FLUSH_INTERVAL_MS);
-}
 }

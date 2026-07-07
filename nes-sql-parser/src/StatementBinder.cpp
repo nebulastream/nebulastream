@@ -41,6 +41,7 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include <fmt/std.h>
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
@@ -120,13 +121,18 @@ public:
         }();
 
         const auto parserConfig = parseInputFormatterConfig(configOptions);
-        auto sourceConfig = getSourceConfig(configOptions);
+        auto sourceConfig = getSourceConfigLiterals(configOptions);
 
         /// "host" determines worker placement, not source behavior — extract it from the config map into a dedicated field.
         std::optional<Host> host;
         if (auto it = sourceConfig.find(Identifier::parse("host")); it != sourceConfig.end())
         {
-            host = Host(it->second);
+            const auto* hostString = std::get_if<std::string>(&it->second);
+            if (hostString == nullptr)
+            {
+                throw InvalidQuerySyntax("host must be a string literal");
+            }
+            host = Host(*hostString);
             sourceConfig.erase(it);
         }
 

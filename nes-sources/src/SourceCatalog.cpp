@@ -26,6 +26,8 @@
 #include <unordered_set>
 #include <utility>
 
+#include <Configurations/ConfigResolution.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -40,6 +42,7 @@
 #include <InputFormatterDescriptor.hpp>
 #include <InputFormatterProvider.hpp>
 #include <InputFormatterValidationProvider.hpp>
+#include <SourceConfigRegistry.hpp>
 
 namespace NES
 {
@@ -64,7 +67,7 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
     const Identifier& sourceType,
     Host host,
-    std::unordered_map<Identifier, std::string> descriptorConfig,
+    std::unordered_map<Identifier, ConfigLiteral> descriptorConfig,
     const std::unordered_map<Identifier, std::string>& parserConfig)
 {
     const std::unique_lock lock(catalogMutex);
@@ -76,11 +79,22 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         return std::unexpected{UnknownSourceName("Logical source {} does not exist.", logicalSource.getLogicalSourceName())};
     }
     auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType.asCanonicalString(), std::move(descriptorConfig));
-    if (not descriptorConfigOpt.has_value())
+    const auto declaredSchema = SourceValidationProvider::provide(sourceType.asCanonicalString());
+    if (not declaredSchema.has_value())
     {
         return std::unexpected{
             UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
+    }
+    auto instantiatedConfig = instantiateConfig(descriptorConfig, *declaredSchema);
+    if (not instantiatedConfig.has_value())
+    {
+        return std::unexpected{InvalidConfigParameter("Invalid config for source type '{}': {}", sourceType, instantiatedConfig.error())};
+    }
+    const auto* sourceConfigEntry = SourceConfigRegistry::instance().find(sourceType.asCanonicalString());
+    if (sourceConfigEntry == nullptr)
+    {
+        return std::unexpected{
+            UnknownSourceType("The source type '{}' declares a config schema but no SourceConfig registry entry.", sourceType)};
     }
 
     std::unordered_map<std::string, std::string> parserConfigStringMap;
@@ -103,8 +117,17 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     }
     const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
 
+    auto pluginData = sourceConfigEntry->instantiate(*instantiatedConfig);
+    const auto maxInflightBuffers = instantiatedConfig->get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
     SourceDescriptor descriptor{
-        id, logicalSource, sourceType.asCanonicalString(), std::move(host), std::move(descriptorConfigOpt.value()), formatDescriptor};
+        id,
+        logicalSource,
+        sourceType.asCanonicalString(),
+        std::move(host),
+        maxInflightBuffers,
+        std::move(instantiatedConfig).value(),
+        std::move(pluginData),
+        formatDescriptor};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
     NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);
@@ -157,10 +180,21 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     Host host,
     const std::unordered_map<Identifier, std::string>& parserConfigMap,
-    std::unordered_map<Identifier, std::string> sourceConfigMap) const
+    std::unordered_map<Identifier, ConfigLiteral> sourceConfigMap) const
 {
-    auto descriptorConfig = SourceValidationProvider::provide(sourceType.asCanonicalString(), std::move(sourceConfigMap));
-    if (!descriptorConfig.has_value())
+    const auto declaredSchema = SourceValidationProvider::provide(sourceType.asCanonicalString());
+    if (not declaredSchema.has_value())
+    {
+        return std::nullopt;
+    }
+    auto instantiatedConfig = instantiateConfig(sourceConfigMap, *declaredSchema);
+    if (not instantiatedConfig.has_value())
+    {
+        NES_ERROR("Invalid config for inline source of type '{}': {}", sourceType, instantiatedConfig.error());
+        return std::nullopt;
+    }
+    const auto* sourceConfigEntry = SourceConfigRegistry::instance().find(sourceType.asCanonicalString());
+    if (sourceConfigEntry == nullptr)
     {
         return std::nullopt;
     }
@@ -190,8 +224,17 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     auto name = Identifier::parse(physicalId.toString());
 
     const auto logicalSource = LogicalSource{name, schema};
+    auto pluginData = sourceConfigEntry->instantiate(*instantiatedConfig);
+    const auto maxInflightBuffers = instantiatedConfig->get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
     SourceDescriptor sourceDescriptor{
-        physicalId, logicalSource, sourceType.asCanonicalString(), std::move(host), descriptorConfig.value(), formatDescriptor};
+        physicalId,
+        logicalSource,
+        sourceType.asCanonicalString(),
+        std::move(host),
+        maxInflightBuffers,
+        std::move(instantiatedConfig).value(),
+        std::move(pluginData),
+        formatDescriptor};
     return sourceDescriptor;
 }
 

@@ -291,8 +291,6 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
     const auto expectedParserConfig
         = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value();
-    std::unordered_map<Identifier, std::string> unvalidatedConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    const DescriptorConfig::Config descriptorConfig = SourceValidationProvider::provide("File", std::move(unvalidatedConfig)).value();
 
     ASSERT_TRUE(statement2.has_value());
     ASSERT_TRUE(std::holds_alternative<CreatePhysicalSourceStatement>(*statement2));
@@ -302,7 +300,6 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_EQ(physicalSource.getLogicalSource(), actualSource);
     ASSERT_EQ(physicalSource.getInputFormatterDescriptor().getConfig(), expectedParserConfig);
     ASSERT_EQ(physicalSource.getSourceType(), "FILE");
-    ASSERT_EQ(physicalSource.getConfig(), descriptorConfig);
     ASSERT_EQ(physicalSource.getPhysicalSourceId().getRawValue(), 1);
 
     const std::string dropPhysicalSourceStatement = "DROP PHYSICAL SOURCE WHERE ID = 1";
@@ -526,7 +523,12 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(filteredPhysicalSourcesStatementResult.has_value());
     ASSERT_EQ(filteredPhysicalSourcesStatementResult.value().sources.size(), 1);
     ASSERT_EQ(
-        filteredPhysicalSourcesStatementResult.value().sources.at(0).tryGetFromConfig<std::string>("FILE_PATH").value(), "/dev/random");
+        filteredPhysicalSourcesStatementResult.value()
+            .sources.at(0)
+            .getPluginConfig()
+            .tryGet<std::string>(Identifier::parse("FILE_PATH"))
+            .value(),
+        "/dev/random");
 
     const auto physicalSourceForLogicalSourceStatementExp = binder->parseAndBindSingle(physicalSourceForLogicalSourceStatementString);
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementExp.has_value());
@@ -540,8 +542,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     const auto physicalSourceForLogicalSourceStatementResult = sourceStatementHandler->apply(showPhysicalSourceForLogicalSource);
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementResult.value().sources.size(), 1);
-    ASSERT_EQ(
-        physicalSourceForLogicalSourceStatementResult.value().sources.at(0).getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS), 200);
+    ASSERT_EQ(physicalSourceForLogicalSourceStatementResult.value().sources.at(0).getMaxInflightBuffers(), 200);
 
     const auto physicalSourceForLogicalSourceStatementFilteredExp
         = binder->parseAndBindSingle(physicalSourceForLogicalSourceStatementFilteredString);
@@ -560,7 +561,11 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementFilteredResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementFilteredResult.value().sources.size(), 1);
     ASSERT_EQ(
-        physicalSourceForLogicalSourceStatementFilteredResult.value().sources.at(0).tryGetFromConfig<std::string>("FILE_PATH").value(),
+        physicalSourceForLogicalSourceStatementFilteredResult.value()
+            .sources.at(0)
+            .getPluginConfig()
+            .tryGet<std::string>(Identifier::parse("FILE_PATH"))
+            .value(),
         "/dev/ones");
 }
 

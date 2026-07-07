@@ -10,9 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(Generator Source generator_source_plugin_library GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
-add_plugin_as_library(Generator SourceValidation generator_validation_plugin_library GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
+add_library(generator_source_plugin_library STATIC
+        GeneratorSource.cpp Generator.cpp GeneratorFields.cpp)
+target_link_libraries(generator_source_plugin_library PRIVATE nes-sources)
 target_include_directories(generator_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 target_compile_definitions(generator_source_plugin_library PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
-target_compile_definitions(generator_validation_plugin_library PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
+link_plugin_library(nes-sources generator_source_plugin_library)
+
+add_registry_entry(Source Generator)
+add_registry_entry(SourceConfigSchema Generator)
+add_registry_entry(SourceConfig Generator)
