@@ -222,6 +222,21 @@ TEST_F(StatementBinderTest, BindQueryWithNotInPredicate)
     EXPECT_EQ(predicate, "NOT(B = 1 OR B = 5)");
 }
 
+TEST_F(StatementBinderTest, BindQueryWithLogicalNotPredicateInConjunction)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b = UINT32(1) AND NOT(c = UINT32(2)) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "B = 1 AND NOT(C = 2)");
+}
+
 TEST_F(StatementBinderTest, BindQueryWithIsNullPredicate)
 {
     const std::string queryString = "SELECT a FROM inputStream WHERE b is NULL INTO outputStream";
