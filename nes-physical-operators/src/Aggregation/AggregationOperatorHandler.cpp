@@ -118,6 +118,7 @@ void AggregationOperatorHandler::triggerSlices(
         tupleBuffer.setSequenceNumber(windowInfo.sequenceNumber);
         tupleBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
         tupleBuffer.setLastChunk(true);
+        tupleBuffer.setOriginEpoch(pipelineCtx->getCurrentEpoch());
         tupleBuffer.setWatermark(windowInfo.windowInfo.windowStart);
         tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
         tupleBuffer.setCreationTimestampInMS(Timestamp(

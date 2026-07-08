@@ -103,6 +103,8 @@ public:
 
     [[nodiscard]] PipelineId getPipelineId() const override { return pipelineId; }
 
+    [[nodiscard]] Epoch getCurrentEpoch() const override { return INITIAL_EPOCH; }; /// dummy implementation for  pure virtual function
+
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override { return operatorHandlers; };
 
     void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& operatorHandlers) override

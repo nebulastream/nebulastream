@@ -122,6 +122,7 @@ pub struct TupleBuffer {
     pub origin_id: u64,
     pub watermark: u64,
     pub chunk_number: u64,
+    pub origin_epoch : u64,
     pub number_of_tuples: u64,
     pub last_chunk: bool,
     pub data: Vec<u8>,

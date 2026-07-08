@@ -94,6 +94,8 @@ public:
     void setChunkNumber(ChunkNumber chunkNumber);
     [[nodiscard]] bool isLastChunk() const noexcept;
     void setLastChunk(bool lastChunk);
+    [[nodiscard]] Epoch getOriginEpoch() const noexcept;
+    void setOriginEpoch(Epoch epoch);
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Timestamp timestamp);
@@ -113,6 +115,7 @@ private:
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
     bool lastChunk = true;
+    Epoch originEpoch = INVALID_EPOCH;
     Timestamp creationTimestamp = Timestamp(Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
     std::vector<MemorySegment*> children;

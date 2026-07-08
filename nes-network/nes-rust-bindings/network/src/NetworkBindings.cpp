@@ -48,6 +48,7 @@ void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData
     buffer.setChunkNumber(NES::ChunkNumber(metaData.chunk_number));
     buffer.setOriginId(NES::OriginId(metaData.origin_id));
     buffer.setLastChunk(metaData.last_chunk);
+    buffer.setOriginEpoch(NES::Epoch(metaData.origin_epoch));
     buffer.setWatermark(NES::Timestamp(metaData.watermark));
     buffer.setNumberOfTuples(metaData.number_of_tuples);
 }
