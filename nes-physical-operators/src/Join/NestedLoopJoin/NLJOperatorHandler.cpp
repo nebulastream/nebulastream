@@ -111,6 +111,7 @@ void NLJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(windowInfo.windowStart);
     tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
+    tupleBuffer.setOriginEpoch(pipelineCtx->getCurrentEpoch());
     tupleBuffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
     new (tupleBuffer.getAvailableMemoryArea().data()) EmittedNLJWindowTrigger{windowInfo, leftSliceEnds, rightSliceEnds, probeTaskType};

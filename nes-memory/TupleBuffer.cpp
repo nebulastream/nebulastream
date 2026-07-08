@@ -164,6 +164,16 @@ bool TupleBuffer::isLastChunk() const noexcept
     return controlBlock->isLastChunk();
 }
 
+void TupleBuffer::setOriginEpoch(Epoch epoch) noexcept
+{
+    controlBlock->setOriginEpoch(epoch);
+}
+
+[[nodiscard]] Epoch TupleBuffer::getOriginEpoch() const noexcept
+{
+    return controlBlock->getOriginEpoch();
+}
+
 void TupleBuffer::setCreationTimestampInMS(const Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);

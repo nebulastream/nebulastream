@@ -35,6 +35,7 @@ pub mod ffi {
         sequence_number: u64,
         origin_id: u64,
         chunk_number: u64,
+        origin_epoch : u64,
         number_of_tuples: u64,
         watermark: u64,
         last_chunk: bool,
@@ -387,6 +388,7 @@ fn receive_buffer(
             origin_id: buffer.origin_id as u64,
             watermark: buffer.watermark as u64,
             chunk_number: buffer.chunk_number as u64,
+            origin_epoch : buffer.origin_epoch as u64,
             number_of_tuples: buffer.number_of_tuples as u64,
             last_chunk: buffer.last_chunk,
         });
@@ -466,6 +468,7 @@ fn send_buffer(
         sequence_number: metadata.sequence_number,
         origin_id: metadata.origin_id,
         chunk_number: metadata.chunk_number,
+        origin_epoch : metadata.origin_epoch,
         number_of_tuples: metadata.number_of_tuples,
         watermark: metadata.watermark,
         last_chunk: metadata.last_chunk,
