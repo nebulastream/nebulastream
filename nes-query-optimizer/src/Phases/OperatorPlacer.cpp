@@ -15,6 +15,7 @@
 #include <Phases/OperatorPlacer.hpp>
 
 #include <Placement/BottomUpPlacement.hpp>
+#include <Placement/FaultTolerancePlacement.hpp>
 #include <Placement/QueryDecomposition.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
@@ -25,8 +26,12 @@ namespace NES
 DistributedLogicalPlan OperatorPlacer::place(LogicalPlan plan) const
 {
     BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(plan);
-
-    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
-        .decompose(plan, defaultQueryOptimization.network);
+    auto decomposed = QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
+                          .decompose(plan, defaultQueryOptimization.network);
+    if (addFaultTolerance)
+    {
+        return FTPlacer(copyPtr(workerCatalog)).apply(decomposed);
+    }
+    return decomposed;
 }
 }

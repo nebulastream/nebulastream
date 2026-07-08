@@ -42,7 +42,7 @@ public:
         const std::shared_ptr<const WorkerCatalog>& workerCatalog,
         const std::shared_ptr<const ModelCatalog>& modelCatalog)
         : ruleBasedOptimization(defaultQueryOptimization, sourceCatalog, sinkCatalog, modelCatalog)
-        , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
+        , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog, true) { };
 
     [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;
 
