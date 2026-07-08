@@ -279,6 +279,16 @@ void BufferControlBlock::setLastChunk(const bool lastChunk)
     this->lastChunk = lastChunk;
 }
 
+[[nodiscard]] Epoch BufferControlBlock::getOriginEpoch() const noexcept
+{
+    return originEpoch;
+}
+
+void BufferControlBlock::setOriginEpoch(Epoch epoch)
+{
+    this->originEpoch = epoch;
+}
+
 void BufferControlBlock::setCreationTimestamp(const Timestamp timestamp)
 {
     this->creationTimestamp = timestamp;

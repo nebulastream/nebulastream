@@ -170,6 +170,9 @@ public:
     /// @brief retrieves if this is the last chunk
     [[nodiscard]] bool isLastChunk() const noexcept;
 
+    void setOriginEpoch(Epoch epoch) noexcept;
+    [[nodiscard]] Epoch getOriginEpoch() const noexcept;
+
     void setCreationTimestampInMS(Timestamp value) noexcept;
 
     [[nodiscard]] OriginId getOriginId() const noexcept;
