@@ -25,6 +25,7 @@ add_source_files(nes-logical-operators
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Windows)
+add_subdirectory(FaultTolerance)
 
 
 add_unreflection_entry(LogicalOperator Selection)
