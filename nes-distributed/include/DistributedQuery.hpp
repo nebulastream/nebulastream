@@ -28,6 +28,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <ErrorHandling.hpp>
+#include <LocalQuery.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <WorkerStatus.hpp>
@@ -90,6 +91,7 @@ struct DistributedQueryStatusSnapshot
     /// may include a failure encountered by the worker node during query processing (e.g., bad input format)
     std::unordered_map<Host, std::unordered_map<QueryId, std::expected<LocalQueryStatusSnapshot, Exception>>> localStatusSnapshots;
     DistributedQueryId queryId{DistributedQueryId::INVALID};
+    //TODO DistributedQueryStatus globalQueryStatus;
 
     /// Reports a distributed query state based on the individual query states. See @DistributedQueryStatus for more information.
     [[nodiscard]] DistributedQueryStatus getGlobalQueryStatus() const;
@@ -114,10 +116,22 @@ struct DistributedQueryStatusSnapshot
 
 class DistributedQuery
 {
-    std::unordered_map<Host, std::vector<QueryId>> localQueries;
+    DistributedQueryId id = DistributedQueryId(DistributedQueryId::INVALID);
+    // TODO DistributedQueryStatus globalStatus = DistributedQueryStatus::Registered;
+
+    std::unordered_map<Host, std::vector<LocalQuery>> localQueries;
+
+    std::unordered_map<Host, std::vector<LocalQuery*>> upstreamQueries;
+    std::vector<LocalQuery*> sinkQueries;
+
+    /// Query topology is lost after placement and may at some point change at query runtime
+    /// iterate over sinks of local queries to reconstruct the graph of local queries
+    void reconstructDistributedQueryGraph();
 
 public:
-    [[nodiscard]] auto iterate() const
+    bool checkQueryCompletion();
+
+    [[nodiscard]] auto iterate()
     {
         return localQueries
             | std::views::transform(
@@ -125,20 +139,23 @@ public:
                    {
                        return queriesPerWorker.second
                            | std::views::transform(
-                                  [&queriesPerWorker](auto& queryId) -> decltype(auto)
-                                  { return std::tie(queriesPerWorker.first, queryId); });
+                                  [&queriesPerWorker](auto& query) -> decltype(auto) { return std::tie(queriesPerWorker.first, query); });
                    })
             | std::views::join;
     }
 
-    const auto& getLocalQueries() { return localQueries; }
+    auto getDistributedQueryId() const { return id; }
 
-    bool operator==(const DistributedQuery& other) const = default;
+    auto& getLocalQueries() { return localQueries; }
+
+    auto& getUpstreamQueries() { return upstreamQueries; }
+
+    auto& getSinkQueries() { return sinkQueries; }
 
     friend std::ostream& operator<<(std::ostream& os, const DistributedQuery& query);
     DistributedQuery() = default;
 
-    explicit DistributedQuery(std::unordered_map<Host, std::vector<QueryId>> localQueries);
+    explicit DistributedQuery(DistributedQueryId id, std::unordered_map<Host, std::vector<LocalQuery>> localQueries);
 };
 
 std::ostream& operator<<(std::ostream& ostream, const DistributedQuery& query);

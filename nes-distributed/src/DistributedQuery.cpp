@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
@@ -185,18 +186,82 @@ NES::DistributedQueryMetrics NES::DistributedQueryStatusSnapshot::coalesceQueryM
     return metrics;
 }
 
-NES::DistributedQuery::DistributedQuery(std::unordered_map<Host, std::vector<QueryId>> localQueries) : localQueries(std::move(localQueries))
+bool NES::DistributedQuery::checkQueryCompletion()
 {
+    bool allSinksCompleted = true;
+    for (auto* query : getSinkQueries())
+    {
+        if (!query->isReadyForCompletion())
+        {
+            allSinksCompleted = false;
+        }
+    }
+
+    if (allSinksCompleted)
+    {
+        for (auto [host, query] : iterate())
+        {
+            query.setCompleted();
+        }
+        return true;
+    }
+
+    for (auto [host, query] : iterate())
+    {
+        if (query.checkFailed())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void NES::DistributedQuery::reconstructDistributedQueryGraph()
+{
+    upstreamQueries.clear();
+
+    for (auto& [grpc, workerQueries] : localQueries)
+    {
+        for (auto& localQuery : workerQueries)
+        {
+            for (auto& rootOp : localQuery.localPlan.getRootOperators())
+            {
+                if (auto sink = rootOp.tryGetAs<SinkLogicalOperator>())
+                {
+                    auto descriptor = sink->get().getSinkDescriptor();
+                    INVARIANT(descriptor.has_value(), "Sinks should have descriptors at this point");
+                    if (descriptor->getSinkType() == Identifier::parse("Network").asCanonicalString())
+                    {
+                        auto downstream
+                            = std::get<std::string>(descriptor->getConfig().at(Identifier::parse("data_endpoint").asCanonicalString()));
+                        Host host{downstream};
+                        upstreamQueries[host].push_back(&localQuery);
+                    }
+                    else
+                    {
+                        // TODO this assumes that network sinks are not used as external sinks
+                        sinkQueries.push_back(&localQuery);
+                    }
+                }
+            }
+        }
+    }
+}
+
+NES::DistributedQuery::DistributedQuery(DistributedQueryId id, std::unordered_map<Host, std::vector<LocalQuery>> localQueries)
+    : id(id), localQueries(std::move(localQueries))
+{
+    reconstructDistributedQueryGraph();
 }
 
 std::ostream& NES::operator<<(std::ostream& os, const DistributedQuery& query)
 {
     std::vector<std::string> entries;
-    for (const auto& [grpc, ids] : query.localQueries)
+    for (const auto& [grpc, workerQueries] : query.localQueries)
     {
-        for (const auto& id : ids)
+        for (const auto& localQuery : workerQueries)
         {
-            entries.push_back(fmt::format("{}@{}", id, grpc));
+            entries.push_back(fmt::format("{}@{}", localQuery.getCurrentQueryId(), grpc));
         }
     }
     fmt::print(os, "Query [{}]", fmt::join(entries, ", "));
