@@ -60,7 +60,7 @@ LogicalFunction IsFeverLogicalFunction::withInferredDataType(const Schema& schem
     if (childType.type != DataType::Type::STRUCT || childType.fields.size() != 1
         || childType.fields[0].first != "pixels"
         || childType.fields[0].second.type != DataType::Type::FIXEDSIZED
-        || childType.fields[0].second.elementType != DataType::Type::UINT16)
+        || childType.fields[0].second.elementType[0].type != DataType::Type::UINT16)
     {
         throw DifferentFieldTypeExpected(
             "is_fever expects a STRUCT with a single FIXEDSIZED<UINT16> 'pixels' field, got {}", childType);

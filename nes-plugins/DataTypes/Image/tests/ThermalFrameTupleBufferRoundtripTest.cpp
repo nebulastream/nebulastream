@@ -66,7 +66,7 @@ namespace
 /// keeps the test independent of the plugin's registration order.
 DataType thermalFrameDataType(uint32_t pixelCount)
 {
-    DataType pixels{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, pixelCount};
+    DataType pixels{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE}, pixelCount};
     std::vector<std::pair<std::string, DataType>> fields;
     fields.emplace_back("pixels", pixels);
     return DataType{DataType::Type::STRUCT, DataType::NULLABLE::NOT_NULLABLE, std::string{"ThermalFrame"}, std::move(fields)};
@@ -118,7 +118,7 @@ TEST_F(ThermalFrameTupleBufferRoundtripTest, RoundtripsThermalFrameThroughRowTup
 
     const auto pixelsView = readStruct.at("pixels").getRawValueAs<FixedSizedData>();
     ASSERT_EQ(pixelsView.getNumElements(), pixelCount);
-    EXPECT_EQ(pixelsView.getElementType(), DataType::Type::UINT16);
+    EXPECT_EQ(pixelsView.getElementType().type, DataType::Type::UINT16);
     for (uint64_t i = 0; i < srcPixels.size(); ++i)
     {
         EXPECT_EQ(pixelsView.at(nautilus::val<uint64_t>(i)).getRawValueAs<nautilus::val<uint16_t>>(), srcPixels[i])

@@ -62,7 +62,7 @@ TEST_F(ThermalFrameDataTest, AsStructDataMatchesRegisteredLayout)
     ASSERT_EQ(inner.getNumFields(), 1U);
     EXPECT_EQ(inner.getFields()[0].first, "pixels");
     EXPECT_EQ(inner.getFields()[0].second.type, DataType::Type::FIXEDSIZED);
-    EXPECT_EQ(inner.getFields()[0].second.elementType, DataType::Type::UINT16);
+    EXPECT_EQ(inner.getFields()[0].second.elementType[0].type, DataType::Type::UINT16);
     EXPECT_EQ(inner.getFields()[0].second.count, pixelCount);
     EXPECT_EQ(inner.getTotalSizeInBytes(), pixelCount * sizeof(uint16_t));
 }
@@ -78,7 +78,7 @@ TEST_F(ThermalFrameDataTest, GetPixelsReadsThroughFixedSizedView)
 
     const FixedSizedData view = frame.getPixels();
     ASSERT_EQ(view.getNumElements(), pixels.size());
-    EXPECT_EQ(view.getElementType(), DataType::Type::UINT16);
+    EXPECT_EQ(view.getElementType().type, DataType::Type::UINT16);
     EXPECT_EQ(view.getTotalSizeInBytes(), pixels.size() * sizeof(uint16_t));
 
     for (uint64_t i = 0; i < pixels.size(); ++i)

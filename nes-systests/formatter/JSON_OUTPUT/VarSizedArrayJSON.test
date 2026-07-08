@@ -12,3 +12,15 @@ SELECT * FROM polygons INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
 ----
 {"POLYGONS$timestamp":1714060800000,"POLYGONS$lon":[1,2,4,3,2],"POLYGONS$lat":[50,60,80,60,30]}
 {"POLYGONS$timestamp":1714060800040,"POLYGONS$lon":[1,2,3],"POLYGONS$lat":[30,40,90]}
+
+# Tests for fixedsized / structs with varsized fields
+CREATE LOGICAL SOURCE movingPolygons(`timedPolygon` MovingPolygon NOT NULL);
+CREATE PHYSICAL SOURCE FOR movingPolygons TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+ATTACH INLINE
+{"timedPolygon": {"ts": 100, "polygon": {"vertices": [{"x": 1, "y": 50}, {"x": 2, "y": 60}, {"x": 4, "y": 80}, {"x": 3, "y": 60}, {"x": 2, "y": 30}]}}}
+{"timedPolygon": {"ts": 110, "polygon": {"vertices": [{"x": 1, "y": 30}, {"x": 2, "y": 40}, {"x": 3, "y": 90}]}}}
+
+SELECT * FROM movingPolygons INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"MOVINGPOLYGONS$timedPolygon":{"ts":100,"polygon":{"vertices":[{"x":1.0,"y":50.0},{"x":2.0,"y":60.0},{"x":4.0,"y":80.0},{"x":3.0,"y":60.0},{"x":2.0,"y":30.0}]}}}
+{"MOVINGPOLYGONS$timedPolygon":{"ts":110,"polygon":{"vertices":[{"x":1.0,"y":30.0},{"x":2.0,"y":40.0},{"x":3.0,"y":90.0}]}}}

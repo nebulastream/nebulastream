@@ -110,7 +110,7 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
     schema.addField("camera_id", DataType{DataType::Type::UINT32, DataType::NULLABLE::NOT_NULLABLE});
     schema.addField(
         "image",
-        DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, imageElementCount});
+        DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE}, imageElementCount});
 
     /// Load JSONL through the file source. Buffer sized to comfortably hold the file.
     constexpr size_t sizeOfRawBuffers = 4096;
@@ -172,7 +172,7 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
         const auto imageVarVal = recordOpt->read("image");
         const auto imageArr = imageVarVal.getRawValueAs<FixedSizedData>();
         ASSERT_EQ(imageArr.getNumElements(), imageElementCount);
-        ASSERT_EQ(imageArr.getElementType(), DataType::Type::UINT16);
+        ASSERT_EQ(imageArr.getElementType().type, DataType::Type::UINT16);
 
         for (size_t i = 0; i < imageElementCount; ++i)
         {

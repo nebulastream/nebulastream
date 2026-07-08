@@ -34,7 +34,11 @@ std::vector<std::pair<std::string, DataType>> makeLayout(uint32_t pixelCount)
     /// Mirrors the registered ThermalFrame DataType: a single inline UINT16 array.
     /// Layout drift between this wrapper and the registered DataType would silently
     /// misread bytes, so keep the two in lockstep.
-    DataType pixels{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, pixelCount};
+    DataType pixels{
+        DataType::Type::FIXEDSIZED,
+        DataType::NULLABLE::NOT_NULLABLE,
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE},
+        pixelCount};
     std::vector<std::pair<std::string, DataType>> fields;
     fields.emplace_back("pixels", pixels);
     return fields;
