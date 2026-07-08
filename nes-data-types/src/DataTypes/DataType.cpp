@@ -127,8 +127,8 @@ DataType::DataType(const Type type, const NULLABLE nullable) : type(type), nulla
 {
 }
 
-DataType::DataType(const Type type, const NULLABLE nullable, const Type elementType)
-    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(elementType)
+DataType::DataType(const Type type, const NULLABLE nullable, const DataType& elementType)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType({elementType})
 {
     if (type != Type::VARARRAY)
     {
@@ -137,8 +137,8 @@ DataType::DataType(const Type type, const NULLABLE nullable, const Type elementT
     }
 }
 
-DataType::DataType(const Type type, const NULLABLE nullable, const Type elementType, const uint32_t count)
-    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType(elementType), count(count)
+DataType::DataType(const Type type, const NULLABLE nullable, const DataType& elementType, const uint32_t count)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), elementType({elementType}), count(count)
 {
     if (type != Type::FIXEDSIZED)
     {
@@ -163,6 +163,7 @@ DataType::DataType() : type(Type::UNDEFINED), nullable(true)
 
 namespace
 {
+
 /// Inline byte size of a single field for STRUCT layouts.
 ///
 /// STRUCT bytes are laid out in-place: a primitive uses its native size, a
@@ -172,13 +173,15 @@ namespace
 ///
 /// Mirrors `StructData::fieldSizeInBytes` in nes-nautilus; the two must agree
 /// or tuple-buffer reads will misinterpret bytes.
+///
+/// VARSIZED and VARARRAY are not inlined and instead represented via ptr into the child buffer
 uint32_t inlineFieldSizeInBytes(const NES::DataType& field)
 {
     using Type = NES::DataType::Type;
     using NULLABLE = NES::DataType::NULLABLE;
     if (field.type == Type::FIXEDSIZED)
     {
-        const auto elementSize = NES::DataType{field.elementType, NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+        const auto elementSize = field.elementType[0].getSizeInBytesWithoutNull();
         return field.count * elementSize;
     }
     if (field.type == Type::STRUCT)
@@ -216,10 +219,10 @@ uint32_t DataType::getSizeInBytesWithoutNull() const
             /// Returning '16' for VARSIZED / VARARRAY, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
             /// and 8 bytes for the size of the VARSIZED
             return 16;
-        case Type::FIXEDSIZED:
-            /// We store FIXEDSIZED like VARSZIED for now. After moving physical details, like sizes in bytes, into the memory layout, we
-            /// may store FIXEDSIZED in-place
-            return 16;
+        case Type::FIXEDSIZED: {
+            const auto elementSize = elementType[0].getSizeInBytesWithoutNull();
+            return count * elementSize;
+        }
         case Type::STRUCT: {
             /// Inline layout: same rules as `StructData` in nes-nautilus.
             /// Per-field nullability is intentionally ignored for the PoC.
@@ -250,6 +253,45 @@ uint32_t DataType::getSizeInBytesWithNull() const
 bool DataType::isType(const Type type) const
 {
     return this->type == type;
+}
+
+bool DataType::isFixedSized() const
+{
+    switch (type)
+    {
+        case Type::VARSIZED:
+        case Type::VARARRAY:
+            return false;
+        case Type::STRUCT: {
+            /// Is fixedsized if every field is fixedsized
+            for (const auto& [name, field] : fields)
+            {
+                if (!field.isFixedSized())
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        case Type::FIXEDSIZED: {
+            /// Is fixedsized if element is fixedsized
+            return elementType[0].isFixedSized();
+        }
+        case Type::BOOLEAN:
+        case Type::CHAR:
+        case Type::FLOAT32:
+        case Type::FLOAT64:
+        case Type::INT8:
+        case Type::UINT8:
+        case Type::INT16:
+        case Type::UINT16:
+        case Type::INT32:
+        case Type::UINT32:
+        case Type::INT64:
+        case Type::UINT64:
+        case Type::UNDEFINED:
+            return true;
+    }
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(const DataTypeRegistryArguments args)
@@ -371,7 +413,7 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     {
         if (otherDataType.type == Type::VARARRAY && otherDataType.elementType == this->elementType)
         {
-            return DataType{Type::VARARRAY, isNullableResult, this->elementType};
+            return DataType{Type::VARARRAY, isNullableResult, this->elementType[0]};
         }
         return std::nullopt;
     }
@@ -379,7 +421,7 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     {
         if (otherDataType.type == Type::FIXEDSIZED && otherDataType.elementType == this->elementType && otherDataType.count == this->count)
         {
-            return DataType{Type::FIXEDSIZED, isNullableResult, this->elementType, this->count};
+            return DataType{Type::FIXEDSIZED, isNullableResult, this->elementType[0], this->count};
         }
         return std::nullopt;
     }
@@ -451,17 +493,22 @@ DataType Unreflector<DataType>::operator()(const Reflected& rfl, const Reflectio
 {
     const auto reflected = context.unreflect<detail::ReflectedDataType>(rfl);
     const auto nullableEnum = reflected.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
-    if (reflected.type == DataType::Type::FIXEDSIZED)
-    {
-        return DataType{reflected.type, nullableEnum, reflected.elementType, reflected.count};
-    }
     if (reflected.type == DataType::Type::STRUCT)
     {
         return DataType{reflected.type, nullableEnum, reflected.structName, reflected.fields};
     }
-    if (reflected.type == DataType::Type::VARARRAY)
+    if (reflected.type == DataType::Type::VARARRAY || reflected.type == DataType::Type::FIXEDSIZED)
     {
-        return DataType{reflected.type, nullableEnum, reflected.elementType};
+        if (reflected.elementType.size() != 1)
+        {
+            throw CannotDeserialize(
+               "{} requires exactly one element type, but got {}", magic_enum::enum_name(reflected.type), reflected.elementType.size());
+        }
+        if (reflected.type == DataType::Type::VARARRAY)
+        {
+            return DataType{reflected.type, nullableEnum, reflected.elementType[0]};
+        }
+        return DataType{reflected.type, nullableEnum, reflected.elementType[0], reflected.count};
     }
     return DataTypeProvider::provideDataType(reflected.type, nullableEnum);
 }
@@ -472,7 +519,7 @@ std::ostream& operator<<(std::ostream& os, const DataType& dataType)
     {
         return os << fmt::format(
                    "DataType(type: FIXEDSIZED<{}, {}> nullable: {})",
-                   magic_enum::enum_name(dataType.elementType),
+                   dataType.elementType[0],
                    dataType.count,
                    dataType.nullable);
     }
@@ -480,7 +527,7 @@ std::ostream& operator<<(std::ostream& os, const DataType& dataType)
     {
         return os << fmt::format(
                    "DataType(type: VARARRAY<{}> nullable: {})",
-                   magic_enum::enum_name(dataType.elementType),
+                   dataType.elementType[0],
                    dataType.count,
                    dataType.nullable);
     }

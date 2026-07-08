@@ -29,14 +29,14 @@
 
 namespace NES
 {
-VarArrayData::VarArrayData(const nautilus::val<int8_t*>& reference, DataType::Type elementType, const nautilus::val<uint64_t>& size)
+VarArrayData::VarArrayData(const nautilus::val<int8_t*>& reference, const DataType& elementType, const nautilus::val<uint64_t>& size)
     : ptr(reference), size(size), elementType(elementType)
 {
     /// For now, we forbid nullable elements
-    numElements = nautilus::val<uint64_t>{size / DataType{elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull()};
+    numElements = nautilus::val<uint64_t>{size / elementType.getSizeInBytesWithoutNull()};
 }
 
-DataType::Type VarArrayData::getElementType() const
+DataType VarArrayData::getElementType() const
 {
     return elementType;
 }
@@ -56,7 +56,7 @@ nautilus::val<uint64_t> VarArrayData::getTotalSizeInBytes() const
     return size;
 }
 
-VarVal VarArrayData::at(const nautilus::val<uint64_t>& index)
+VarVal VarArrayData::at(const nautilus::val<uint64_t>& index) const
 {
 #ifndef NDEBUG
     if (index >= nautilus::val<uint64_t>(numElements))
@@ -65,9 +65,9 @@ VarVal VarArrayData::at(const nautilus::val<uint64_t>& index)
     }
 #endif
 
-    const auto elementSize = DataType{elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+    const auto elementSize = elementType.getSizeInBytesWithoutNull();
     const auto elementPtr = ptr + (index * nautilus::val<uint64_t>{elementSize});
-    return VarVal::readNonNullableVarValFromMemory(elementPtr, DataType{elementType, DataType::NULLABLE::NOT_NULLABLE});
+    return VarVal::readNonNullableVarValFromMemory(elementPtr, elementType);
 }
 
 void VarArrayData::writeAt(const nautilus::val<uint64_t>& index, const VarVal& value)
@@ -78,7 +78,7 @@ void VarArrayData::writeAt(const nautilus::val<uint64_t>& index, const VarVal& v
         nautilus::invoke(+[] { throw OutOfRangeAccess("VarArrayData::writeAt: index out of range"); });
     }
 #endif
-    const auto elementSize = DataType{elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+    const auto elementSize = elementType.getSizeInBytesWithoutNull();
     const auto elementPtr = ptr + (index * nautilus::val<uint64_t>{elementSize});
     value.writeToMemory(elementPtr);
 }

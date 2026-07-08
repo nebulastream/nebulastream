@@ -41,7 +41,7 @@ class VarVal;
 class FixedSizedData
 {
 public:
-    FixedSizedData(const nautilus::val<int8_t*>& reference, size_t numElements, DataType::Type elementType);
+    FixedSizedData(const nautilus::val<int8_t*>& reference, size_t numElements, const DataType& elementType);
     FixedSizedData(const FixedSizedData& other) = default;
     FixedSizedData(FixedSizedData&& other) noexcept = default;
     FixedSizedData& operator=(const FixedSizedData& other) = default;
@@ -62,7 +62,7 @@ public:
     void writeAt(const nautilus::val<uint64_t>& index, const VarVal& value) const;
 
     [[nodiscard]] size_t getNumElements() const;
-    [[nodiscard]] DataType::Type getElementType() const;
+    [[nodiscard]] DataType getElementType() const;
     [[nodiscard]] size_t getTotalSizeInBytes() const;
     [[nodiscard]] nautilus::val<int8_t*> getRawPtr() const;
 
@@ -77,7 +77,7 @@ public:
 private:
     nautilus::val<int8_t*> ptr;
     size_t numElements;
-    DataType::Type elementType;
+    DataType elementType;
 };
 
 }

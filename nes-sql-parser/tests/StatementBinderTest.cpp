@@ -433,10 +433,10 @@ TEST_F(StatementBinderTest, BindFixedSizeArrayType)
             DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
         UnqualifiedUnboundField{
             Identifier::parse("testSource$image"),
-            DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, /*count=*/16}},
+            DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE}, /*count=*/16}},
         UnqualifiedUnboundField{
             Identifier::parse("testSource$quad"),
-            DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::IS_NULLABLE, DataType::Type::FLOAT64, /*count=*/4}}};
+            DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::IS_NULLABLE, DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}, /*count=*/4}}};
 
     ASSERT_EQ(actualSource.getLogicalSourceName(), Identifier::parse("testSource"));
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);

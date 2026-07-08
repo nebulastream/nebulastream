@@ -43,6 +43,7 @@
 #include <nautilus/std/cstring.h>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
+#include <static.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -136,6 +137,86 @@ TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, cons
     return varSized.subspan(0, variableSizedAccess.getSize().getRawSize());
 }
 
+void TupleBufferRef::inlineVarsizedReferences(
+    const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+{
+    nautilus::val<int8_t*> varValRef = fieldReference;
+    /// Early opt out in case the data type is fixed sized, so all basic types and structs / fixedsized values without varsized elements
+    if (!physicalType.isFixedSized())
+    {
+        switch (physicalType.type)
+        {
+            case DataType::Type::FIXEDSIZED: {
+                /// Iterate over elements
+                for (nautilus::static_val<uint32_t> i = 0; i < physicalType.count; ++i)
+                {
+                    inlineVarsizedReferences(
+                        physicalType.elementType[0],
+                        recordBuffer,
+                        varValRef
+                            + nautilus::val<size_t>{
+                                i * physicalType.elementType[0].getSizeInBytesWithoutNull()});
+                }
+                return;
+            }
+            case DataType::Type::STRUCT: {
+                /// Iterate over fields. The counter must be a `static_val` so that the tracer tags the operations of
+                /// each unrolled iteration distinctly. With a plain host-side loop every iteration re-enters the
+                /// recursion from the same return-address chain, the tags repeat, and the tracer mistakes the
+                /// unrolling for a back-edge ("constant loop").
+                for (nautilus::static_val<size_t> i = 0; i < physicalType.fields.size(); ++i)
+                {
+                    const auto& [field, type] = physicalType.fields.at(i);
+                    inlineVarsizedReferences(type, recordBuffer, varValRef);
+                    varValRef += nautilus::val<size_t>{type.getSizeInBytesWithoutNull()};
+                }
+                return;
+            }
+            case DataType::Type::VARSIZED: {
+                /// Convert the child buffer reference into a ptr and size and inline them
+                auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
+                const auto varSizedPtr = invoke(
+                    {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+                    +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
+                    {
+                        INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+                        INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
+                        return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
+                    },
+                    recordBuffer.getReference(),
+                    variableSizedAccess);
+                const nautilus::val<uint64_t> size
+                    = *getMemberWithOffset<uint64_t>(variableSizedAccess, offsetof(VariableSizedAccess, size));
+                const VarVal variableSizedVal{VariableSizedData{varSizedPtr, size}, false, false};
+                variableSizedVal.writeToMemory(varValRef);
+                return;
+            }
+            case DataType::Type::VARARRAY: {
+                auto varArrayAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
+                const auto varArrayPtr = invoke(
+                    {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+                    +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
+                    {
+                        INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+                        INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
+                        return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
+                    },
+                    recordBuffer.getReference(),
+                    varArrayAccess);
+                const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(varArrayAccess, offsetof(VariableSizedAccess, size));
+                const VarVal varArrayVal{VarArrayData(varArrayPtr, physicalType.elementType[0], size), false, false};
+                varArrayVal.writeToMemory(varValRef);
+                return;
+            }
+            default: {
+                /// Santity check. The other datatypes should never be deemed as not fixed sized
+                INVARIANT(false, "Type {} was deemed as not fixed-sized", magic_enum::enum_name(physicalType.type));
+                return;
+            }
+        }
+    }
+}
+
 VarVal
 TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
@@ -165,20 +246,6 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
             const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(variableSizedAccess, offsetof(VariableSizedAccess, size));
             return VarVal{VariableSizedData(varSizedPtr, size), physicalType.nullable, null};
         }
-        case DataType::Type::FIXEDSIZED: {
-            auto fixedSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
-            const auto fixedSizedPtr = invoke(
-                {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-                +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
-                {
-                    INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
-                    INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
-                    return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
-                },
-                recordBuffer.getReference(),
-                fixedSizedAccess);
-            return VarVal{FixedSizedData(fixedSizedPtr, physicalType.count, physicalType.elementType), physicalType.nullable, null};
-        }
         case DataType::Type::VARARRAY: {
             /// VarArrays are stored identically to VARSIZED values
             auto varArrayAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
@@ -193,13 +260,20 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
                 recordBuffer.getReference(),
                 varArrayAccess);
             const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(varArrayAccess, offsetof(VariableSizedAccess, size));
-            return VarVal{VarArrayData(varArrayPtr, physicalType.elementType, size), physicalType.nullable, null};
+            return VarVal{VarArrayData(varArrayPtr, physicalType.elementType[0], size), physicalType.nullable, null};
         }
         case DataType::Type::STRUCT: {
             /// Inline storage: the struct's bytes live directly in the tuple at
             /// `varValRef`. Per-field offsets are determined by `StructData`'s
             /// inline-layout rules.
+            /// We need to inline the ptr and size of varsized values before through
+            inlineVarsizedReferences(physicalType, recordBuffer, varValRef);
             return VarVal{StructData{varValRef, physicalType.fields}, physicalType.nullable, null};
+        }
+        case DataType::Type::FIXEDSIZED: {
+            /// Like struct, we first inline the ptr and size of every varsized element and then store the array inline
+            inlineVarsizedReferences(physicalType, recordBuffer, varValRef);
+            return VarVal{FixedSizedData{varValRef, physicalType.count, physicalType.elementType[0]}, physicalType.nullable, null};
         }
         case DataType::Type::UINT8:
         case DataType::Type::UINT16:
@@ -235,16 +309,58 @@ VarVal TupleBufferRef::storeValue(
     }
     if (physicalType.type == DataType::Type::STRUCT)
     {
-        /// Inline storage: copy the struct's bytes straight into the tuple slot.
-        /// Width is derived from the schema, so it folds to a constant at trace time.
         const auto src = value.getRawValueAs<StructData>();
-        const auto bytes = nautilus::val<uint64_t>(physicalType.getSizeInBytesWithoutNull());
-        nautilus::memcpy(varValRef, src.getRawPtr(), bytes);
+        if (physicalType.isFixedSized())
+        {
+            /// Inline storage: copy the struct's bytes straight into the tuple slot.
+            /// Width is derived from the schema, so it folds to a constant at trace time.
+            const auto bytes = nautilus::val<uint64_t>(physicalType.getSizeInBytesWithoutNull());
+            nautilus::memcpy(varValRef, src.getRawPtr(), bytes);
+        }
+        else
+        {
+            /// For now write field by field. Later, we can optimize and still cover as many fixedsized fields as possible with one memcpy operation, and only write varsized elements via an extra call
+            for (nautilus::static_val<size_t> i = 0; i < src.getNumFields(); ++i)
+            {
+                const auto& [field, type] = src.getFields().at(i);
+                storeValue(type, recordBuffer, varValRef, src.at(i), bufferProvider);
+                varValRef += nautilus::val<size_t>{type.getSizeInBytesWithoutNull()};
+            }
+        }
+        return value;
+    }
+    if (physicalType.type == DataType::Type::FIXEDSIZED)
+    {
+        /// Fixedsized arrays are stored inline.
+        /// However, variable sized element types still need to be represented as child buffer access
+        const auto src = value.getRawValueAs<FixedSizedData>();
+        if (physicalType.isFixedSized())
+        {
+            /// Simply inline all the contents
+            nautilus::memcpy(varValRef, src.getRawPtr(), nautilus::val<uint64_t>(src.getTotalSizeInBytes()));
+        }
+        else
+        {
+            /// Write element per element
+            for (nautilus::static_val<size_t> i = 0; i < src.getNumElements(); ++i)
+            {
+                const nautilus::val<int8_t*> elementReference
+                    = varValRef
+                    + nautilus::val<size_t>(
+                          i * physicalType.elementType[0].getSizeInBytesWithoutNull());
+
+                storeValue(
+                    physicalType.elementType[0],
+                    recordBuffer,
+                    elementReference,
+                    src.at(nautilus::val<uint64_t>{i}),
+                    bufferProvider);
+            }
+        }
         return value;
     }
 
-    if (physicalType.type != DataType::Type::VARSIZED && physicalType.type != DataType::Type::FIXEDSIZED
-        && physicalType.type != DataType::Type::VARARRAY)
+    if (physicalType.type != DataType::Type::VARSIZED && physicalType.type != DataType::Type::VARARRAY)
     {
         /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
         /// We get the correct function to call via a unordered_map
@@ -262,14 +378,7 @@ VarVal TupleBufferRef::storeValue(
 
     nautilus::val<int8_t*> payloadPtr{nullptr};
     nautilus::val<uint64_t> payloadLength{0};
-    if (physicalType.type == DataType::Type::FIXEDSIZED)
-    {
-        const auto fixedValue = value.getRawValueAs<FixedSizedData>();
-        const auto totalBytes = static_cast<uint64_t>(fixedValue.getTotalSizeInBytes());
-        payloadPtr = fixedValue.getRawPtr();
-        payloadLength = nautilus::val<uint64_t>(totalBytes);
-    }
-    else if (physicalType.type == DataType::Type::VARARRAY)
+    if (physicalType.type == DataType::Type::VARARRAY)
     {
         const auto varsizedArray = value.getRawValueAs<VarArrayData>();
         payloadPtr = varsizedArray.getRawPtr();
