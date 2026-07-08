@@ -59,7 +59,7 @@ size_t StructData::fieldSizeInBytes(const DataType& fieldType)
     switch (fieldType.type)
     {
         case DataType::Type::FIXEDSIZED: {
-            const auto elementSize = DataType{fieldType.elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+            const auto elementSize = fieldType.elementType[0].getSizeInBytesWithoutNull();
             return static_cast<size_t>(fieldType.count) * elementSize;
         }
         case DataType::Type::STRUCT: {
@@ -98,15 +98,7 @@ VarVal StructData::at(const size_t fieldIndex) const
     }
     const auto& fieldType = fields[fieldIndex].second;
     const auto fieldPtr = ptr + nautilus::val<size_t>(offset);
-    if (fieldType.type == DataType::Type::FIXEDSIZED)
-    {
-        return VarVal{FixedSizedData{fieldPtr, static_cast<size_t>(fieldType.count), fieldType.elementType}};
-    }
-    if (fieldType.type == DataType::Type::STRUCT)
-    {
-        return VarVal{StructData{fieldPtr, fieldType.fields}};
-    }
-    return VarVal::readNonNullableVarValFromMemory(fieldPtr, DataType{fieldType.type, DataType::NULLABLE::NOT_NULLABLE});
+    return VarVal::readNonNullableVarValFromMemory(fieldPtr, fieldType);
 }
 
 VarVal StructData::at(const std::string_view fieldName) const
@@ -134,23 +126,6 @@ void StructData::writeAt(const size_t fieldIndex, const VarVal& value) const
     }
     const auto& fieldType = fields[fieldIndex].second;
     const auto fieldPtr = ptr + nautilus::val<size_t>(offset);
-
-    if (fieldType.type == DataType::Type::FIXEDSIZED)
-    {
-        /// VarVal::writeToMemory rejects FixedSizedData, so copy the inline
-        /// bytes directly. Width is host-side, so it folds at trace time.
-        const auto src = value.getRawValueAs<FixedSizedData>();
-        const auto bytes = nautilus::val<uint64_t>(fieldSizeInBytes(fieldType));
-        nautilus::memcpy(fieldPtr, src.getRawPtr(), bytes);
-        return;
-    }
-    if (fieldType.type == DataType::Type::STRUCT)
-    {
-        const auto src = value.getRawValueAs<StructData>();
-        const auto bytes = nautilus::val<uint64_t>(fieldSizeInBytes(fieldType));
-        nautilus::memcpy(fieldPtr, src.getRawPtr(), bytes);
-        return;
-    }
     value.writeToMemory(fieldPtr);
 }
 

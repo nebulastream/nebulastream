@@ -29,7 +29,7 @@
 namespace NES
 {
 
-FixedSizedData::FixedSizedData(const nautilus::val<int8_t*>& reference, const size_t numElements, const DataType::Type elementType)
+FixedSizedData::FixedSizedData(const nautilus::val<int8_t*>& reference, const size_t numElements, const DataType& elementType)
     : ptr(reference), numElements(numElements), elementType(elementType)
 {
 }
@@ -39,14 +39,14 @@ size_t FixedSizedData::getNumElements() const
     return numElements;
 }
 
-DataType::Type FixedSizedData::getElementType() const
+DataType FixedSizedData::getElementType() const
 {
     return elementType;
 }
 
 size_t FixedSizedData::getTotalSizeInBytes() const
 {
-    return numElements * DataType{elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+    return numElements * elementType.getSizeInBytesWithoutNull();
 }
 
 nautilus::val<int8_t*> FixedSizedData::getRawPtr() const
@@ -63,9 +63,9 @@ VarVal FixedSizedData::at(const nautilus::val<uint64_t>& index) const
     }
     #endif
 
-    const auto elementSize = DataType{elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+    const auto elementSize = elementType.getSizeInBytesWithoutNull();
     const auto elementPtr = ptr + (index * nautilus::val<uint64_t>(elementSize));
-    return VarVal::readNonNullableVarValFromMemory(elementPtr, DataType{elementType, DataType::NULLABLE::NOT_NULLABLE});
+    return VarVal::readNonNullableVarValFromMemory(elementPtr, elementType);
 }
 
 void FixedSizedData::writeAt(const nautilus::val<uint64_t>& index, const VarVal& value) const
@@ -77,7 +77,7 @@ void FixedSizedData::writeAt(const nautilus::val<uint64_t>& index, const VarVal&
     }
     #endif
 
-    const auto elementSize = DataType{elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+    const auto elementSize = elementType.getSizeInBytesWithoutNull();
     const auto elementPtr = ptr + (index * nautilus::val<uint64_t>(elementSize));
     value.writeToMemory(elementPtr);
 }
