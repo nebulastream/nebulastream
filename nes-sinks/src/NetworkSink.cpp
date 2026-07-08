@@ -138,12 +138,13 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         {
             case SendResult::Closed: {
                 /// Future buffers are voided.
+                // TODO dicuss what to do here
                 this->closed = true;
                 [[maybe_unused]] auto droppedBuffer = backpressureHandler.onFull(*currentBuffer, backpressureController);
                 /// Currently there is no way to propagate a query stop without a failure from a sink.
                 /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
                 /// from the downstream operator is unexpected, thus failing the query is reasonable.
-                throw CannotOpenSink("NetworkSink was closed by other side");
+                //throw CannotOpenSink("NetworkSink was closed by other side");
             }
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());
