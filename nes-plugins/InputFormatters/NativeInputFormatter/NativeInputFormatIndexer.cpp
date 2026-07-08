@@ -55,10 +55,13 @@ void NativeInputFormatIndexer::indexRawBuffer(
     }
 
     /// Buffer alignment: native sources do not embed delimiters, so the position of the first/last full tuple within
-    /// this buffer depends solely on the running global byte offset. Buffers are assumed to be always full (size ==
-    /// metaData.getBufferSize()), so the global offset is `(sequenceNumber - 1) * fullBufferSize`.
+    /// this buffer depends solely on the running global byte offset. Buffers are assumed to be always full, so the
+    /// global offset is `(sequenceNumber - 1) * fullBufferSize`. The full size MUST come from the raw buffer itself:
+    /// metaData.getBufferSize() is the compile-time TupleBufferRef size, which does not track the actual source
+    /// buffer size (observed 4096 vs real 131072) — using it shifts leading/trailing offsets on every buffer whose
+    /// global offset is not tuple-aligned, misreading whole buffers and fabricating undersized spanning tuples.
     const auto sequenceNumberValue = rawBuffer.getSequenceNumber().getRawValue();
-    const auto fullBufferSize = metaData.getBufferSize();
+    const auto fullBufferSize = rawBuffer.getBufferSize();
     const auto bytesBefore = (sequenceNumberValue - 1) * fullBufferSize;
 
     const auto leadingPartialBytes = (tupleSize - (bytesBefore % tupleSize)) % tupleSize;
