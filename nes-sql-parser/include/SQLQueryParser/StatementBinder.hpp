@@ -14,6 +14,7 @@
 
 
 #pragma once
+
 #include <cstddef>
 #include <cstdint>
 #include <expected>
@@ -24,6 +25,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
@@ -125,9 +127,25 @@ struct QueryStatement
     std::optional<DistributedQueryId> id;
 };
 
+enum class ExplainFormat : uint8_t
+{
+    Visual,
+    Text,
+    Verbose
+};
+
+enum class ExplainStage : uint8_t
+{
+    Logical,
+    Optimized,
+    Distributed
+};
+
 struct ExplainQueryStatement
 {
     LogicalPlan plan;
+    ExplainFormat explainFormat = ExplainFormat::Visual;
+    std::unordered_set<ExplainStage> explainStages = {ExplainStage::Logical, ExplainStage::Optimized, ExplainStage::Distributed};
 };
 
 struct ShowQueriesStatement

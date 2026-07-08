@@ -104,7 +104,13 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
 
     SourceDescriptor descriptor{
-        id, logicalSource, sourceType.asCanonicalString(), std::move(host), std::move(descriptorConfigOpt.value()), formatDescriptor};
+        id,
+        logicalSource,
+        sourceType.asCanonicalString(),
+        std::move(host),
+        std::move(descriptorConfigOpt.value()),
+        formatDescriptor,
+        false};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
     NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);
@@ -191,7 +197,7 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
 
     const auto logicalSource = LogicalSource{name, schema};
     SourceDescriptor sourceDescriptor{
-        physicalId, logicalSource, sourceType.asCanonicalString(), std::move(host), descriptorConfig.value(), formatDescriptor};
+        physicalId, logicalSource, sourceType.asCanonicalString(), std::move(host), descriptorConfig.value(), formatDescriptor, true};
     return sourceDescriptor;
 }
 
