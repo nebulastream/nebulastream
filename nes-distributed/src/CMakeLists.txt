@@ -15,4 +15,5 @@ add_source_files(nes-distributed
         DistributedQueryIdGenerator.cpp
         NetworkTopology.cpp
         WorkerCatalog.cpp
+        LocalQuery.cpp
 )
