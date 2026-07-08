@@ -1,0 +1,119 @@
+# name: explain/EXPLAIN.test
+# description: Validates the output of EXPLAIN statements.
+# groups: [explain]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1,1000
+2,3,2000
+
+CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+1,2,1000
+2,4,2000
+
+CREATE SINK sinkFilter(id UINT64 NOT NULL, value UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkJoin(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL) TYPE File;
+
+CREATE MODEL iris ('model/iris.onnx')
+INPUT (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32)
+OUTPUT (setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32);
+
+CREATE LOGICAL SOURCE stream_inference(p1 FLOAT32 NOT NULL, p2 FLOAT32 NOT NULL, p3 FLOAT32 NOT NULL, p4 FLOAT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream_inference TYPE File;
+ATTACH INLINE
+6.1,3.5,1.4,0.2
+4.9,3.0,1.4,0.2
+4.7,3.2,1.3,0.2
+
+
+
+EXPLAIN (LOGICAL) FORMAT TEXT SELECT id, value FROM stream WHERE value > UINT64(2) INTO sinkFilter;
+----
+== Initial Logical Plan ==
+SINK(SINKFILTER)
+  PROJECTION(fields: [ID, VALUE])
+    SELECTION(VALUE > 2)
+      SOURCE(STREAM)
+
+
+EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id, value FROM stream WHERE value > UINT64(2) INTO sinkFilter;
+----
+== Optimized Global Plan ==
+SINK(SINKFILTER)
+  PROJECTION(fields: [ID, VALUE])
+    SELECTION(VALUE > 2)
+      PROJECTION(fields: [ID, VALUE])
+        SOURCE(STREAM)
+
+
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT start, end, id, value, timestamp, id2, value2, timestamp2
+FROM (
+  SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id = id2) WINDOW TUMBLING (timestamp, timestamp2, size 1 sec)
+)
+INTO sinkJoin;
+----
+== Optimized Global Plan ==
+SINK(SINKJOIN)
+  Join(INNER_JOIN, ID = ID2)
+    WATERMARK_ASSIGNER(Event time)
+      SOURCE(STREAM)
+    WATERMARK_ASSIGNER(Event time)
+      SOURCE(STREAM2)
+# At least one EXPLAIN call for each logical operators
+
+# Covering: Projection Selection Union, Sink, Source
+
+EXPLAIN (LOGICAL) FORMAT TEXT
+SELECT *
+FROM (
+    SELECT id * UINT64(2) as id FROM stream WHERE id > UINT64(0)
+    UNION
+    SELECT id2 * UINT64(2) as id FROM stream2 WHERE id2 > UINT64(0))
+INTO File();
+----
+== Initial Logical Plan ==
+SINK(FILE)
+  PROJECTION(fields: [*])
+    UnionWith
+      PROJECTION(fields: [ID * 2 as ID])
+        SELECTION(ID > 0)
+          SOURCE(STREAM)
+      PROJECTION(fields: [ID2 * 2 as ID])
+        SELECTION(ID2 > 0)
+          SOURCE(STREAM2)
+
+
+# Covering: Join, EventTime, Window
+EXPLAIN (LOGICAL) FORMAT TEXT
+SELECT *
+FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
+ON (value = value2 AND id = id2)
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec)
+INTO File();
+----
+== Initial Logical Plan ==
+SINK(FILE)
+  PROJECTION(fields: [*])
+    Join(INNER_JOIN, VALUE = VALUE2 AND ID = ID2)
+      WATERMARK_ASSIGNER(Event time)
+        PROJECTION(fields: [*])
+          SOURCE(STREAM)
+      WATERMARK_ASSIGNER(Event time)
+        PROJECTION(fields: [*])
+          SOURCE(STREAM2)
+
+
+# Covering: Model Inference
+EXPLAIN (LOGICAL) FORMAT TEXT
+SELECT * FROM MODEL_INFERENCE(iris, stream_inference)
+INTO File();
+----
+== Initial Logical Plan ==
+SINK(FILE)
+  PROJECTION(fields: [*])
+    INFER_MODEL_NAME(model: IRIS)
+      SOURCE(STREAM_INFERENCE)

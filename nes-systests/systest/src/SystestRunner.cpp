@@ -244,6 +244,34 @@ std::vector<RunningQuery> runQueries(
                 nextQuery.testName,
                 nextQuery.queryIdInFile);
 
+            if (nextQuery.actualExplainOutput.has_value())
+            {
+                /// EXPLAIN statements are never submitted to the worker; their output was computed at bind time,
+                /// so compare it against the expected result lines and report immediately.
+                auto runningQuery = std::make_shared<RunningQuery>(nextQuery);
+                reportResult(
+                    runningQuery,
+                    progressTracker,
+                    failed,
+                    [&]
+                    {
+                        if (std::holds_alternative<ExpectedError>(nextQuery.expectedResultsOrExpectedError))
+                        {
+                            return fmt::format(
+                                "expected error {} but EXPLAIN succeeded",
+                                std::get<ExpectedError>(nextQuery.expectedResultsOrExpectedError).code);
+                        }
+                        if (auto err = checkExplainResult(*runningQuery))
+                        {
+                            return *err;
+                        }
+                        return std::string{};
+                    },
+                    queryPerformanceMessage);
+                moveDependentsToPending(nextQuery);
+                continue;
+            }
+
             if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value())
             {
                 /// Start both differential queries

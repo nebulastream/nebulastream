@@ -208,6 +208,7 @@ struct SystestQuery
     ConfigurationOverride configurationOverride;
     std::optional<DistributedLogicalPlan> differentialQueryPlan;
     std::optional<std::pair<TestName, SystestQueryId>> runAfter;
+    std::optional<std::string> actualExplainOutput;
 };
 
 struct RunningQuery

@@ -893,4 +893,57 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
     }
     std::unreachable();
 }
+
+std::optional<std::string> checkExplainResult(const Systest::RunningQuery& runningQuery)
+{
+    INVARIANT(runningQuery.systestQuery.actualExplainOutput.has_value(), "checkExplainResult requires a computed explain output");
+
+    const auto rightTrim = [](const std::string_view line) -> std::string
+    {
+        const auto end = line.find_last_not_of(" \t\r");
+        return std::string{line.substr(0, end == std::string_view::npos ? 0 : end + 1)};
+    };
+
+    /// Right-trim every line and drop empty lines on both sides: indentation is significant, but expected blocks in
+    /// test files cannot contain empty lines (an empty line terminates the block).
+    const auto normalize = [&rightTrim](auto&& inputLines) -> std::vector<std::string>
+    {
+        std::vector<std::string> normalized;
+        for (auto&& line : inputLines)
+        {
+            if (auto trimmed = rightTrim(line); not trimmed.empty())
+            {
+                normalized.push_back(std::move(trimmed));
+            }
+        }
+        return normalized;
+    };
+
+    const auto* expectedResultLines = std::get_if<std::vector<std::string>>(&runningQuery.systestQuery.expectedResultsOrExpectedError);
+    INVARIANT(expectedResultLines != nullptr, "EXPLAIN statements must have expected result lines");
+
+    const auto expected = normalize(*expectedResultLines);
+    const auto actual = normalize(
+        runningQuery.systestQuery.actualExplainOutput.value() | std::views::split('\n')
+        | std::views::transform([](auto&& split) { return std::string_view(split.begin(), split.end()); }));
+
+    if (expected == actual)
+    {
+        return std::nullopt;
+    }
+
+    auto firstDifferingLine = std::ranges::mismatch(expected, actual).in1 - expected.begin();
+    static constexpr std::string_view EndOfOutput = "<end of output>";
+    return fmt::format(
+        "\n\n"
+        "Explain Output Mismatch (first difference at line {}, expected \"{}\" but got \"{}\")\n"
+        "----------------------\n"
+        "Expected:\n{}\n\n"
+        "Actual:\n{}",
+        firstDifferingLine + 1,
+        std::cmp_less(firstDifferingLine, expected.size()) ? std::string_view{expected[firstDifferingLine]} : EndOfOutput,
+        std::cmp_less(firstDifferingLine, actual.size()) ? std::string_view{actual[firstDifferingLine]} : EndOfOutput,
+        fmt::join(expected, "\n"),
+        fmt::join(actual, "\n"));
+}
 }

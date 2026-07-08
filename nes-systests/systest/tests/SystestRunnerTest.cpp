@@ -104,7 +104,8 @@ NES::Systest::SystestQuery makeQuery(
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
         .configurationOverride = NES::Systest::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
-        .runAfter = std::move(runAfter)};
+        .runAfter = std::move(runAfter),
+        .actualExplainOutput = std::nullopt};
 }
 }
 
