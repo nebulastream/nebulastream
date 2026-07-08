@@ -44,6 +44,14 @@ void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
 
 void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData)
 {
+    /// #1704: if the sender's buffer is larger than the pre-allocated receive buffer (e.g. a larger size class),
+    /// reallocate a fitting buffer so the full payload round-trips. The common case (sender size <= the receive
+    /// buffer) keeps the pre-allocated buffer, so behaviour is unchanged. Reassigning the reference propagates the
+    /// right-sized buffer back to the NetworkSource that owns it.
+    if (metaData.buffer_size > buffer.getBufferSize())
+    {
+        buffer = bufferProvider.getBuffer(metaData.buffer_size);
+    }
     buffer.setSequenceNumber(NES::SequenceNumber(metaData.sequence_number));
     buffer.setChunkNumber(NES::ChunkNumber(metaData.chunk_number));
     buffer.setOriginId(NES::OriginId(metaData.origin_id));
