@@ -59,6 +59,12 @@ NodeEngine::NodeEngine(
 
 void NodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
+    std::lock_guard lock(nodeEngineMutex);
+    auto status = getQueryLog()->getQueryStatus(queryId);
+    if (status.has_value() && status.value().state != QueryStatus::Stopped && status.value().state != QueryStatus::Stopped)
+    {
+        throw std::unexpected{QueryAlreadyRegistered("{}", queryId)};
+    }
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
     systemEventListener->onEvent(StartQuerySystemEvent(std::move(queryId)));

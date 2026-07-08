@@ -14,6 +14,7 @@
 
 #pragma once
 #include <memory>
+#include <mutex>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
@@ -64,5 +65,6 @@ private:
     std::shared_ptr<SystemEventListener> systemEventListener;
     std::unique_ptr<QueryEngine> queryEngine;
     std::unique_ptr<SourceProvider> sourceProvider;
+    mutable std::mutex nodeEngineMutex;
 };
 }
