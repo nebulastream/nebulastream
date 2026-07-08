@@ -138,6 +138,13 @@ Record RowTupleBufferRef::readRecordWithOffset(
         const auto& [name, type, fieldOffset] = fields.at(i);
         if (not includesField(projections, name))
         {
+            /// maxStringLengths is indexed by the field's VARSIZED ordinal in SCHEMA order — it must
+            /// advance for skipped varsized fields too, else a projected later varsized field reads
+            /// the wrong (usually too small -> silent truncation) max length.
+            if (type.isType(DataType::Type::VARSIZED))
+            {
+                ++stringIndex;
+            }
             continue;
         }
         auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
