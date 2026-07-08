@@ -33,20 +33,20 @@ class VarVal;
 class VectorData
 {
 public:
-    VectorData(const nautilus::val<int8_t*>& reference, DataType::Type elementType, const nautilus::val<uint64_t>& size);
+    VectorData(const nautilus::val<int8_t*>& reference, const DataType& elementType, const nautilus::val<uint64_t>& size);
     VectorData(const VectorData& other) = default;
     VectorData(VectorData&& other) noexcept = default;
     VectorData& operator=(const VectorData& other) = default;
     VectorData& operator=(VectorData&& other) noexcept = default;
     ~VectorData() = default;
 
-    [[nodiscard]] VarVal at(const nautilus::val<uint64_t>& index);
+    [[nodiscard]] VarVal at(const nautilus::val<uint64_t>& index) const;
     void writeAt(const nautilus::val<uint64_t>& index, const VarVal& value);
 
     /// This has to be figured out after trace time, thus differs from its sibling in FixedSizedData
     [[nodiscard]] nautilus::val<uint64_t> getNumElements() const;
 
-    [[nodiscard]] DataType::Type getElementType() const;
+    [[nodiscard]] DataType getElementType() const;
     [[nodiscard]] nautilus::val<uint64_t> getTotalSizeInBytes() const;
     [[nodiscard]] nautilus::val<int8_t*> getRawPtr() const;
 
@@ -59,9 +59,9 @@ public:
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VectorData& varSizedData);
 
 private:
-    nautilus::val<uint8_t*> ptr;
+    nautilus::val<int8_t*> ptr;
     nautilus::val<uint64_t> size;
     nautilus::val<uint64_t> numElements;
-    DataType::Type elementType;
+    DataType elementType;
 };
 }

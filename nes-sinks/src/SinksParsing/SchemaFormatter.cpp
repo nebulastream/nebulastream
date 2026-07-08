@@ -36,11 +36,11 @@ std::string formatTypeForHeader(const DataType& dataType)
     {
         /// `;` (not `,`) inside the angle brackets so the comma-separated outer
         /// field split in `SystestResultCheck::parseFieldNames` doesn't tokenize it.
-        return fmt::format("FIXEDSIZED<{};{}>", magic_enum::enum_name(dataType.elementType), dataType.count);
+        return fmt::format("FIXEDSIZED<{};{}>", magic_enum::enum_name(dataType.elementType[0].type), dataType.count);
     }
     if (dataType.type == DataType::Type::VECTOR)
     {
-        return fmt::format("VECTOR<{}>", magic_enum::enum_name(dataType.elementType));
+        return fmt::format("VECTOR<{}>", magic_enum::enum_name(dataType.elementType[0].type));
     }
     if (dataType.type == DataType::Type::STRUCT)
     {

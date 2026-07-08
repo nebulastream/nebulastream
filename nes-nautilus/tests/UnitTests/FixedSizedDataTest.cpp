@@ -51,10 +51,10 @@ TEST_F(FixedSizedDataTest, GettersReflectConstructorArgs)
     constexpr size_t numElements = 16;
     std::array<uint16_t, numElements> data{};
     const nautilus::val<int8_t*> ptr(reinterpret_cast<int8_t*>(data.data()));
-    const FixedSizedData arr(ptr, numElements, DataType::Type::UINT16);
+    const FixedSizedData arr(ptr, numElements, DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
 
     EXPECT_EQ(arr.getNumElements(), numElements);
-    EXPECT_EQ(arr.getElementType(), DataType::Type::UINT16);
+    EXPECT_EQ(arr.getElementType().type, DataType::Type::UINT16);
     EXPECT_EQ(arr.getTotalSizeInBytes(), numElements * sizeof(uint16_t));
 }
 
@@ -64,7 +64,7 @@ TEST_F(FixedSizedDataTest, AtReadsTypedUint16Elements)
     std::array<uint16_t, 16> data
         = {30100, 30180, 30220, 30150, 30210, 41900, 52400, 30260, 30230, 53100, 65535, 30290, 30170, 30240, 30205, 30130};
     const nautilus::val<int8_t*> ptr(reinterpret_cast<int8_t*>(data.data()));
-    const FixedSizedData arr(ptr, data.size(), DataType::Type::UINT16);
+    const FixedSizedData arr(ptr, data.size(), DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
 
     for (uint64_t i = 0; i < data.size(); ++i)
     {
@@ -77,7 +77,7 @@ TEST_F(FixedSizedDataTest, AtReadsTypedInt32Elements)
 {
     std::array<int32_t, 4> data = {-1, 0, 1, 2147483647};
     const nautilus::val<int8_t*> ptr(reinterpret_cast<int8_t*>(data.data()));
-    const FixedSizedData arr(ptr, data.size(), DataType::Type::INT32);
+    const FixedSizedData arr(ptr, data.size(), DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE});
 
     for (uint64_t i = 0; i < data.size(); ++i)
     {
@@ -90,7 +90,7 @@ TEST_F(FixedSizedDataTest, AtReadsTypedDoubleElements)
 {
     std::array<double, 3> data = {-1.5, 0.0, 3.14159};
     const nautilus::val<int8_t*> ptr(reinterpret_cast<int8_t*>(data.data()));
-    const FixedSizedData arr(ptr, data.size(), DataType::Type::FLOAT64);
+    const FixedSizedData arr(ptr, data.size(), DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE});
 
     for (uint64_t i = 0; i < data.size(); ++i)
     {
@@ -103,7 +103,7 @@ TEST_F(FixedSizedDataTest, AtReadsTypedCharElements)
 {
     std::array<char, 5> data = {'h', 'e', 'l', 'l', 'o'};
     const nautilus::val<int8_t*> ptr(reinterpret_cast<int8_t*>(data.data()));
-    const FixedSizedData arr(ptr, data.size(), DataType::Type::CHAR);
+    const FixedSizedData arr(ptr, data.size(), DataType{DataType::Type::CHAR, DataType::NULLABLE::NOT_NULLABLE});
 
     for (uint64_t i = 0; i < data.size(); ++i)
     {
@@ -116,7 +116,7 @@ TEST_F(FixedSizedDataTest, AtThrowsOnOutOfBounds)
 {
     std::array<uint16_t, 4> data = {1, 2, 3, 4};
     const nautilus::val<int8_t*> ptr(reinterpret_cast<int8_t*>(data.data()));
-    const FixedSizedData arr(ptr, data.size(), DataType::Type::UINT16);
+    const FixedSizedData arr(ptr, data.size(), DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
 
     /// `EXCEPTION(name, ...)` generates a factory function, not a type, so we
     /// catch the common `Exception` and assert on the error code.
@@ -138,8 +138,14 @@ TEST_F(FixedSizedDataTest, EqualityIdenticalContent)
 {
     std::array<uint16_t, 4> a = {1, 2, 3, 4};
     std::array<uint16_t, 4> b = a;
-    const FixedSizedData lhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())), a.size(), DataType::Type::UINT16);
-    const FixedSizedData rhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())), b.size(), DataType::Type::UINT16);
+    const FixedSizedData lhs(
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())),
+        a.size(),
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
+    const FixedSizedData rhs(
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())),
+        b.size(),
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
     EXPECT_TRUE(lhs == rhs);
     EXPECT_FALSE(lhs != rhs);
 }
@@ -148,8 +154,14 @@ TEST_F(FixedSizedDataTest, EqualityDifferentContent)
 {
     std::array<uint16_t, 4> a = {1, 2, 3, 4};
     std::array<uint16_t, 4> b = {1, 2, 3, 5};
-    const FixedSizedData lhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())), a.size(), DataType::Type::UINT16);
-    const FixedSizedData rhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())), b.size(), DataType::Type::UINT16);
+    const FixedSizedData lhs(
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())),
+        a.size(),
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
+    const FixedSizedData rhs(
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())),
+        b.size(),
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
     EXPECT_FALSE(lhs == rhs);
     EXPECT_TRUE(lhs != rhs);
 }
@@ -158,8 +170,14 @@ TEST_F(FixedSizedDataTest, EqualityDifferentElementType)
 {
     std::array<uint16_t, 4> a = {1, 2, 3, 4};
     std::array<int16_t, 4> b = {1, 2, 3, 4};
-    const FixedSizedData lhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())), a.size(), DataType::Type::UINT16);
-    const FixedSizedData rhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())), b.size(), DataType::Type::INT16);
+    const FixedSizedData lhs(
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())),
+        a.size(),
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
+    const FixedSizedData rhs(
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())),
+        b.size(),
+        DataType{DataType::Type::INT16, DataType::NULLABLE::NOT_NULLABLE});
     EXPECT_FALSE(lhs == rhs);
 }
 
@@ -167,8 +185,14 @@ TEST_F(FixedSizedDataTest, EqualityDifferentNumElements)
 {
     std::array<uint16_t, 4> a = {1, 2, 3, 4};
     std::array<uint16_t, 5> b = {1, 2, 3, 4, 5};
-    const FixedSizedData lhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())), a.size(), DataType::Type::UINT16);
-    const FixedSizedData rhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())), b.size(), DataType::Type::UINT16);
+    const FixedSizedData lhs(
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())),
+        a.size(),
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
+    const FixedSizedData rhs(
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())),
+        b.size(),
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
     EXPECT_FALSE(lhs == rhs);
 }
 
@@ -176,12 +200,14 @@ TEST_F(FixedSizedDataTest, CopyAndAssign)
 {
     std::array<uint16_t, 4> data = {10, 20, 30, 40};
     const FixedSizedData original(
-        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(data.data())), data.size(), DataType::Type::UINT16);
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(data.data())),
+        data.size(),
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
 
     /// NOLINTNEXTLINE(performance-unnecessary-copy-initialization) - intentional
     const FixedSizedData copy = original;
     EXPECT_EQ(copy.getNumElements(), 4U);
-    EXPECT_EQ(copy.getElementType(), DataType::Type::UINT16);
+    EXPECT_EQ(copy.getElementType().type, DataType::Type::UINT16);
     EXPECT_EQ(copy.at(nautilus::val<uint64_t>(2)).getRawValueAs<nautilus::val<uint16_t>>(), 30);
 }
 
@@ -195,7 +221,10 @@ void compareStringProxy(const char* actual, const char* expected)
 TEST_F(FixedSizedDataTest, OstreamHexDumpsBytes)
 {
     std::array<uint16_t, 2> data = {0x0102, 0x0304};
-    const FixedSizedData arr(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(data.data())), data.size(), DataType::Type::UINT16);
+    const FixedSizedData arr(
+        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(data.data())),
+        data.size(),
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE});
 
     std::stringstream expectedOutput;
     expectedOutput << "FixedSizedData(elements=" << data.size() << ", bytes=" << (data.size() * sizeof(uint16_t)) << "): ";

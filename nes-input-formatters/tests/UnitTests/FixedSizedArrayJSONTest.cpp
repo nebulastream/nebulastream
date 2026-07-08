@@ -112,7 +112,7 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
     const std::vector<DataType> fieldTypes
         = {DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE},
            DataType{DataType::Type::UINT32, DataType::NULLABLE::NOT_NULLABLE},
-           DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, imageElementCount}};
+           DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType{DataType::Type::UINT16, DataType::NULLABLE::NOT_NULLABLE}, imageElementCount}};
 
     const std::vector<Identifier> fieldIdentifiers = fieldNames
         | std::views::transform([](const auto& name) { return Identifier::parse(fmt::format("\"{}\"", name)); })
@@ -125,7 +125,6 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
     }
 
     Schema<UnqualifiedUnboundField, Ordered> schema{fields};
-
 
     /// Load JSONL through the file source. Buffer sized to comfortably hold the file.
     constexpr size_t sizeOfRawBuffers = 4096;
@@ -199,7 +198,7 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
         const auto imageVarVal = recordOpt->read(schema.getFieldByName(Identifier::parse("image"))->getFullyQualifiedName());
         const auto imageArr = imageVarVal.getRawValueAs<FixedSizedData>();
         ASSERT_EQ(imageArr.getNumElements(), imageElementCount);
-        ASSERT_EQ(imageArr.getElementType(), DataType::Type::UINT16);
+        ASSERT_EQ(imageArr.getElementType().type, DataType::Type::UINT16);
 
         for (size_t i = 0; i < imageElementCount; ++i)
         {
