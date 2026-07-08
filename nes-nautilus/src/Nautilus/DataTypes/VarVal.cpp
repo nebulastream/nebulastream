@@ -28,6 +28,8 @@
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <std/cstring.h>
+
 #include <ErrorHandling.hpp>
 #include <nameof.hpp>
 #include <val_arith.hpp>
@@ -72,19 +74,25 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
         {
             if constexpr (std::is_same_v<ValType, VariableSizedData>)
             {
-                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for VariableSizedData"));
+                /// Write ptr and size byte aligned to memory
+                *static_cast<nautilus::val<int8_t**>>(memRef) = val.getContent();
+                *static_cast<nautilus::val<uint64_t*>>(memRef + nautilus::val<size_t>(sizeof(int8_t*))) = val.getSize();
             }
             else if constexpr (std::is_same_v<ValType, VarArrayData>)
             {
-                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for VarArrayData"));
+                /// Write ptr and size byte aligned to memory
+                *static_cast<nautilus::val<int8_t**>>(memRef) = val.getRawPtr();
+                *static_cast<nautilus::val<uint64_t*>>(memRef + nautilus::val<size_t>(sizeof(int8_t*))) = val.getTotalSizeInBytes();
             }
             else if constexpr (std::is_same_v<ValType, FixedSizedData>)
             {
-                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for FixedSizedData"));
+                /// All elements are written bytealigned into memory
+                nautilus::memcpy(memRef, val.getRawPtr(), nautilus::val<size_t>{val.getTotalSizeInBytes()});
             }
             else if constexpr (std::is_same_v<ValType, StructData>)
             {
-                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for StructData"));
+                /// All elements are written bytealigned into memory
+                nautilus::memcpy(memRef, val.getRawPtr(), nautilus::val<size_t>{val.getTotalSizeInBytes()});
             }
             else
             {
@@ -237,10 +245,27 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
         case DataType::Type::STRUCT: {
             return {StructData{memRef, type.fields}, type.nullable, null};
         }
-        case DataType::Type::VARSIZED:
-        case DataType::Type::FIXEDSIZED:
+        case DataType::Type::VARSIZED: {
+            /// Expects the ptr and size to be bytealigned at memref.
+            /// This is currently the assumption we take for the accessing varsized elements of a struct / fixedsized.
+            /// Please use with caution
+            const nautilus::val<int8_t*> ptr = readValueFromMemRef<int8_t*>(memRef);
+            const nautilus::val<uint64_t> size = readValueFromMemRef<uint64_t>(memRef + nautilus::val<size_t>(sizeof(int8_t*)));
+            return {VariableSizedData{ptr, size}, type.nullable, null};
+        }
+        case DataType::Type::FIXEDSIZED: {
+            /// Like struct, fixedsized is always stored inline
+            return {FixedSizedData{memRef, type.count, type.elementType[0]}, type.nullable, null};
+        }
+        case DataType::Type::VARARRAY: {
+            /// Expects the ptr and size to be bytealigned at memref.
+            /// This is currently the assumption we take for the accessing vararray elements of a struct / fixedsized.
+            /// Please use with caution.
+            const nautilus::val<int8_t*> ptr = readValueFromMemRef<int8_t*>(memRef);
+            const nautilus::val<uint64_t> size = readValueFromMemRef<uint64_t>(memRef + nautilus::val<size_t>(sizeof(int8_t*)));
+            return {VarArrayData{ptr, type.elementType[0], size}, type.nullable, null};
+        }
         case DataType::Type::UNDEFINED:
-        case DataType::Type::VARARRAY:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type.type));
     }
     std::unreachable();
@@ -279,9 +304,9 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
                     trueUnderlying.getElementType() == falseUnderlying.getElementType()
                         && trueUnderlying.getNumElements() == falseUnderlying.getNumElements(),
                     "FixedSizedData select with mismatched shape: ({}, {}) vs ({}, {})",
-                    magic_enum::enum_name(trueUnderlying.getElementType()),
+                    trueUnderlying.getElementType(),
                     trueUnderlying.getNumElements(),
-                    magic_enum::enum_name(falseUnderlying.getElementType()),
+                    falseUnderlying.getElementType(),
                     falseUnderlying.getNumElements());
                 return VarVal{
                     FixedSizedData{
@@ -297,8 +322,8 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
                 INVARIANT(
                     trueUnderlying.getElementType() == falseUnderlying.getElementType(),
                     "VarArrayData select with mismatched shape: ({}) vs ({})",
-                    magic_enum::enum_name(trueUnderlying.getElementType()),
-                    magic_enum::enum_name(falseUnderlying.getElementType()));
+                    trueUnderlying.getElementType(),
+                    falseUnderlying.getElementType());
                 return VarVal{
                     VarArrayData{
                         nautilus::select(condition, trueUnderlying.getRawPtr(), falseUnderlying.getRawPtr()),

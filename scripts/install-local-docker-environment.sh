@@ -32,7 +32,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined|--no-sanitizer] [--name] [--no-vcpkg-cache]"
+    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined|--no-sanitizer] [--name] [--meos] [--no-vcpkg-cache]"
     echo "Options:"
     echo "  -y, --yes            Non-interactive mode (requires --libstdcxx or --libcxx and a sanitizer option)"
     echo "  -l, --local          Build all Docker images locally"
@@ -44,6 +44,7 @@ usage() {
     echo "  --undefined          Enable Undefined Behavior Sanitizer"
     echo "  --no-sanitizer       Disable sanitizers (use no sanitizer)"
     echo "  --name               Add a name suffix to the tag (nes-development:local-<name>)"
+    echo "  --meos               Build the MEOS library into the image (required by the MEOS plugin)"
     echo "  --no-vcpkg-cache     Disable vcpkg binary caching (by default uses public read-only cache)"
     echo ""
     echo "Environment variables for S3-compatible vcpkg binary caching (local builds only):"
@@ -64,6 +65,7 @@ STDLIB=""
 SANITIZER=""
 NAME_SUFFIX=""
 DISABLE_VCPKG_CACHE=0
+BUILD_MEOS=0
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -111,6 +113,11 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --no-vcpkg-cache)
             DISABLE_VCPKG_CACHE=1
+            shift
+            ;;
+        --meos)
+            echo "Building MEOS library into the image"
+            BUILD_MEOS=1
             shift
             ;;
         --name)
@@ -302,13 +309,23 @@ if [ $BUILD_LOCAL -eq 1 ]; then
             --build-arg TAG=local \
             -t nebulastream/nes-development:default .
 
+  # Optionally layer MEOS on top of the standard development image.
+  DEV_TAG=default
+  if [ $BUILD_MEOS -eq 1 ]; then
+    echo "Building MEOS layer on top of nes-development:default..."
+    docker build -f docker/dependency/DevelopmentLocalMEOS.dockerfile \
+                 --build-arg TAG=default \
+                 -t nebulastream/nes-development:meos .
+    DEV_TAG=meos
+  fi
+
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
                -t ${FINAL_IMAGE_NAME} \
                --build-arg UID=${USE_UID} \
                --build-arg GID=${USE_GID} \
                --build-arg USERNAME=${USE_USERNAME} \
                --build-arg ROOTLESS=${USE_ROOTLESS} \
-               --build-arg TAG=default .
+               --build-arg TAG=${DEV_TAG} .
 else
   if ! docker manifest inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 ; then
    echo -e "${RED}Remote image development image for hash ${TAG} does not exist.
@@ -317,13 +334,24 @@ Either build locally with the -l option, or open a PR (draft) and let the CI bui
   fi
 
   echo "Basing local development image on remote on nebulastream/nes-development:${TAG}"
+
+  # Optionally layer MEOS on top of the remote development image.
+  DEV_TAG=${TAG}
+  if [ $BUILD_MEOS -eq 1 ]; then
+    echo "Building MEOS layer on top of nes-development:${TAG}..."
+    docker build -f docker/dependency/DevelopmentLocalMEOS.dockerfile \
+                 --build-arg TAG=${TAG} \
+                 -t nebulastream/nes-development:meos-${TAG} .
+    DEV_TAG=meos-${TAG}
+  fi
+
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
                -t ${FINAL_IMAGE_NAME} \
                --build-arg UID=${USE_UID} \
                --build-arg GID=${USE_GID} \
                --build-arg USERNAME=${USE_USERNAME} \
                --build-arg ROOTLESS=${USE_ROOTLESS} \
-               --build-arg TAG=${TAG} .
+               --build-arg TAG=${DEV_TAG} .
 fi
 
 # Detect the docker socket path (works for both rootful and rootless Docker)

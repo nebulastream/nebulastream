@@ -19,15 +19,15 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypeRegistry.hpp>
 
-/// DataType for two-dimensional points
+/// DataType for polygons defined by a vector of points representing the vertices of the polygon
 namespace NES::DataTypeGeneratedRegistrar
 {
 
-DataTypeRegistryReturnType RegisterPointDataType(DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterPolygonDataType(DataTypeRegistryArguments args)
 {
     std::vector<std::pair<std::string, DataType>> fields;
-    fields.emplace_back("x", DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE));
-    fields.emplace_back("y", DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE));
-    return DataType{DataType::Type::STRUCT, args.nullable, std::string{"Point"}, std::move(fields)};
+    const DataType pointVector{DataType::Type::VARARRAY, DataType::NULLABLE::NOT_NULLABLE, DataTypeProvider::provideDataType("Point")};
+    fields.emplace_back("vertices", pointVector);
+    return DataType{DataType::Type::STRUCT, args.nullable, std::string{"Polygon"}, std::move(fields)};
 }
 }

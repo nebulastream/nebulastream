@@ -22,6 +22,7 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
@@ -76,6 +77,12 @@ struct ParseResultVarSized
     bool isNull;
 };
 
+struct ParseResultVarArray
+{
+    const char* ptr;
+    uint64_t size;
+};
+
 inline bool isNullOrMissing(simdjson::simdjson_result<simdjson::ondemand::value>& jsonValue)
 {
     return not jsonValue.has_value() || jsonValue.is_null();
@@ -87,26 +94,34 @@ inline bool isNullOrMissing(simdjson::simdjson_result<simdjson::ondemand::value>
         "Required field '{}' is missing or null in the JSON document; declare the field as nullable or fix the input.", fieldName);
 }
 
+struct InlineFieldSize
+{
+    bool isFixedSized;
+    size_t size;
+};
+
 /// Inline byte size of a single field for STRUCT layouts. Mirrors the
 /// equivalent helpers in `DataType.cpp` and `StructData.cpp`; the three must
 /// stay in lockstep or the parser will write bytes the readers can't decode.
-inline size_t inlineFieldSizeInBytes(const DataType& field)
+inline uint32_t inlineFieldSizeInBytes(const DataType& field)
 {
-    if (field.type == DataType::Type::FIXEDSIZED)
+    using Type = NES::DataType::Type;
+    using NULLABLE = NES::DataType::NULLABLE;
+    if (field.type == Type::FIXEDSIZED)
     {
-        const auto elementSize = DataType{field.elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
-        return static_cast<size_t>(field.count) * elementSize;
+        const auto elementSize = field.elementType[0].getSizeInBytesWithoutNull();
+        return field.count * elementSize;
     }
-    if (field.type == DataType::Type::STRUCT)
+    if (field.type == Type::STRUCT)
     {
-        size_t total = 0;
+        uint32_t total = 0;
         for (const auto& [name, sub] : field.fields)
         {
             total += inlineFieldSizeInBytes(sub);
         }
         return total;
     }
-    return DataType{field.type, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+    return NES::DataType{field.type, NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
 }
 
 /// Single typed simdjson primitive accessor — used both for top-level fields
@@ -251,7 +266,8 @@ inline void parseValue(
     const DataType& dataType,
     simdjson::simdjson_result<simdjson::ondemand::value>& jsonValue,
     const std::string_view fieldName,
-    int8_t* output)
+    int8_t* output,
+    Arena* arena)
 {
     if (isNullOrMissing(jsonValue))
     {
@@ -322,8 +338,7 @@ inline void parseValue(
             return;
         }
         case DataType::Type::FIXEDSIZED: {
-            const DataType elementType{dataType.elementType, DataType::NULLABLE::NOT_NULLABLE};
-            const auto elementSize = elementType.getSizeInBytesWithoutNull();
+            const auto elementSize = dataType.elementType[0].getSizeInBytesWithoutNull();
             auto array = jsonValue.get_array();
             if (not array.has_value())
             {
@@ -338,7 +353,29 @@ inline void parseValue(
                     throw CannotFormatMalformedStringValue(
                         "Field '{}': JSON array has more than the schema-declared {} elements", fieldName, dataType.count);
                 }
-                parseValue(elementType, element, fieldName, output + i * elementSize);
+                switch (dataType.elementType[0].type)
+                {
+                    case DataType::Type::VARSIZED: {
+                        /// Store the ptr and size of the varsized value byte aligned -> uses 16 bytes, which were allocated for this purpose
+                        ParseResultVarSized parseResult{};
+                        parseValue(dataType.elementType[0], element, fieldName, reinterpret_cast<int8_t*>(&parseResult), arena);
+                        *reinterpret_cast<const int8_t**>(output + i * elementSize) = reinterpret_cast<const int8_t*>(parseResult.ptr);
+                        *reinterpret_cast<uint64_t*>(output + i * elementSize + sizeof(int8_t*)) = parseResult.size;
+                        break;
+                    }
+                    case DataType::Type::VARARRAY: {
+                        /// Store the ptr and size of the vararray byte aligned -> uses 16 bytes, which were allocated for this purpose
+                        ParseResultVarArray parseResult{};
+                        parseValue(dataType.elementType[0], element, fieldName, reinterpret_cast<int8_t*>(&parseResult), arena);
+                        *reinterpret_cast<const int8_t**>(output + i * elementSize) = reinterpret_cast<const int8_t*>(parseResult.ptr);
+                        *reinterpret_cast<uint64_t*>(output + i * elementSize + sizeof(int8_t*)) = parseResult.size;
+                        break;
+                    }
+                    default: {
+                        parseValue(dataType.elementType[0], element, fieldName, output + i * elementSize, arena);
+                        break;
+                    }
+                }
                 ++i;
             }
             if (i != dataType.count)
@@ -349,21 +386,27 @@ inline void parseValue(
             return;
         }
         case DataType::Type::VARARRAY: {
-            /// Treat like fixedsized, but do not check if the number of fields in the array are higfher than the count member of the datatype
-            const DataType elementType{dataType.elementType, DataType::NULLABLE::NOT_NULLABLE};
-            const auto elementSize = elementType.getSizeInBytesWithoutNull();
+            /// Treat like fixedsized, but do not check if the number of fields in the array are higher than the count member of the datatype
+            const auto elementSize = dataType.elementType[0].getSizeInBytesWithoutNull();
             auto array = jsonValue.get_array();
             if (not array.has_value())
             {
                 throw CannotFormatMalformedStringValue(
                     "Field '{}': expected JSON array, simdjson reported error '{}'", fieldName, magic_enum::enum_name(array.error()));
             }
+            /// Allocate memory for the vararray
+            const uint64_t varArraySize = elementSize * array.value().count_elements();
+            int8_t* varArrayBuffer = reinterpret_cast<int8_t*>(arena->allocateMemory(varArraySize).data());
+
+            /// Iterate over vararray elements and write them into the buffer
             uint64_t i = 0;
             for (auto element : array.value())
             {
-                parseValue(elementType, element, fieldName, output + i * elementSize);
+                parseValue(dataType.elementType[0], element, fieldName, varArrayBuffer + i * elementSize, arena);
                 ++i;
             }
+            /// Set the ptr to the buffer memory and the size to the VarArrayResult
+            *reinterpret_cast<ParseResultVarArray*>(output) = {.ptr = reinterpret_cast<char*>(varArrayBuffer), .size = varArraySize};
             return;
         }
         case DataType::Type::STRUCT: {
@@ -390,7 +433,31 @@ inline void parseValue(
                 {
                     throwFieldNotFound(name);
                 }
-                parseValue(nonNullableField, subValue, name, fieldOutput);
+                /// Depending on the datatype of the field, we need to initiate specific behaviour
+                switch (nonNullableField.type)
+                {
+                    case DataType::Type::VARARRAY: {
+                        /// Byte align the ptr to the vararray and the size of the vararray (16 bytes)
+                        ParseResultVarArray parseResult{};
+                        parseValue(nonNullableField, subValue, name, reinterpret_cast<int8_t*>(&parseResult), arena);
+                        *reinterpret_cast<const int8_t**>(fieldOutput) = reinterpret_cast<const int8_t*>(parseResult.ptr);
+                        *reinterpret_cast<uint64_t*>(fieldOutput + sizeof(int8_t*)) = parseResult.size;
+                        break;
+                    }
+                    case DataType::Type::VARSIZED: {
+                        /// Byte align the ptr to the varsized value and its size (16 bytes)
+                        ParseResultVarSized parseResult{};
+                        parseValue(nonNullableField, subValue, name, reinterpret_cast<int8_t*>(&parseResult), arena);
+                        *reinterpret_cast<const int8_t**>(fieldOutput) = reinterpret_cast<const int8_t*>(parseResult.ptr);
+                        *reinterpret_cast<uint64_t*>(fieldOutput + sizeof(int8_t*)) = parseResult.size;
+                        break;
+                    }
+                    default: {
+                        /// For the case of struct / fixedsized values
+                        parseValue(nonNullableField, subValue, name, fieldOutput, arena);
+                        break;
+                    }
+                }
                 fieldOutput += inlineFieldSizeInBytes(fieldType);
             }
             return;
@@ -409,8 +476,8 @@ struct JsonRecordParser
 {
     /// Navigates to the field with simdjson and dispatches `parseValue` into
     /// `output`. Shared by all three per-kind proxies below.
-    static void
-    navigateAndParse(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, int8_t* output)
+    static void navigateAndParse(
+        const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, int8_t* output, Arena* arena)
     {
         auto* concreteRbi = static_cast<typename Traits::BufferIndex*>(rawBufferIndex);
         const auto* concreteIndexer = static_cast<const typename Traits::Indexer*>(indexer);
@@ -419,17 +486,18 @@ struct JsonRecordParser
 
         auto currentDoc = *concreteRbi->getDocStreamIterator();
         auto navigated = Traits::navigate(currentDoc, fieldName);
-        parseValue(dataType, navigated, fieldName, output);
+        parseValue(dataType, navigated, fieldName, output, arena);
     }
 
     /// nautilus::invoke target for a top-level primitive field. Writes the
     /// parsed value into a typed thread-local `ParseResult<T>` and returns
     /// its address.
     template <typename T>
-    static ParseResult<T>* primitiveProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
+    static ParseResult<T>*
+    primitiveProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, Arena* arena)
     {
         thread_local ParseResult<T> slot{};
-        navigateAndParse(fieldIndex, rawBufferIndex, indexer, reinterpret_cast<int8_t*>(&slot));
+        navigateAndParse(fieldIndex, rawBufferIndex, indexer, reinterpret_cast<int8_t*>(&slot), arena);
         return &slot;
     }
 
@@ -437,59 +505,38 @@ struct JsonRecordParser
     /// string buffer outlives the per-record parse, so the returned pointer
     /// stays valid until the trace materializes the record.
     static ParseResultVarSized*
-    varSizedProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
+    varSizedProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, Arena* arena)
     {
         thread_local ParseResultVarSized slot{};
-        navigateAndParse(fieldIndex, rawBufferIndex, indexer, reinterpret_cast<int8_t*>(&slot));
+        navigateAndParse(fieldIndex, rawBufferIndex, indexer, reinterpret_cast<int8_t*>(&slot), arena);
         return &slot;
     }
 
     /// nautilus::invoke target for a FIXEDSIZED field. Writes elements
     /// straight into the arena-allocated buffer the trace handed in.
-    static void
-    fixedSizedProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, int8_t* output)
+    static void fixedSizedProxy(
+        const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, int8_t* output, Arena* arena)
     {
-        navigateAndParse(fieldIndex, rawBufferIndex, indexer, output);
+        navigateAndParse(fieldIndex, rawBufferIndex, indexer, output, arena);
     }
 
     /// nautilus::invoke target for a VARARRAY field. Allocates buffer via the arena based on the number of elements in the json array,
-    /// and writes the parsed elements into the allocated buffer. Returns it as a pointer to a ParseResultVarsized object containing the ptr
+    /// and writes the parsed elements into the allocated buffer. Returns it as a pointer to a ParseResultVarArray object containing the ptr
     /// to the buffer and the size of the buffer.
-    static ParseResultVarSized*
+    static ParseResultVarArray*
     varArrayProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, Arena* arena)
     {
-        thread_local ParseResultVarSized slot{};
-        /// Omitted for POC
-        slot.isNull = false;
-
-        /// Get the needed value out of the indexer early to allocate the memory for the vararray
-        auto* concreteRbi = static_cast<typename Traits::BufferIndex*>(rawBufferIndex);
-        const auto* concreteIndexer = static_cast<const typename Traits::Indexer*>(indexer);
-        const DataType type = concreteIndexer->getFieldDataTypeAt(fieldIndex);
-        const auto& fieldName = concreteIndexer->getFieldNameInJsonAt(fieldIndex);
-
-        /// Retrieve number of elements from array
-        auto currentDoc = *concreteRbi->getDocStreamIterator();
-        simdjson::simdjson_result<simdjson::ondemand::value> navigated = Traits::navigate(currentDoc, fieldName);
-        auto jsonArray = navigated.get_array();
-        const size_t numberOfElements = jsonArray.count_elements();
-
-        /// Calculate size of the buffer to allocate buffer
-        const size_t neededSpace = numberOfElements * DataType{type.elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
-        auto buffer = reinterpret_cast<int8_t*>(arena->allocateMemory(neededSpace).data());
-        /// We can skip navigateAndParse and go directly to parse, as we would just repeat the previous steps again anyway.
-        parseValue(type, navigated, fieldName, buffer);
-
-        slot.ptr = reinterpret_cast<char*>(buffer);
-        slot.size = neededSpace;
+        thread_local ParseResultVarArray slot{};
+        navigateAndParse(fieldIndex, rawBufferIndex, indexer, reinterpret_cast<int8_t*>(&slot), arena);
         return &slot;
     }
 
     /// Same shape as `fixedSizedProxy` — the trace pre-allocates a struct-sized
     /// arena buffer and the simdjson side parses field-by-field into it.
-    static void structProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, int8_t* output)
+    static void structProxy(
+        const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer, int8_t* output, Arena* arena)
     {
-        navigateAndParse(fieldIndex, rawBufferIndex, indexer, output);
+        navigateAndParse(fieldIndex, rawBufferIndex, indexer, output, arena);
     }
 
     /// Trace-side dispatch. The actual JSON parsing all lives in
@@ -505,31 +552,31 @@ struct JsonRecordParser
         switch (dataType.type)
         {
             case DataType::Type::BOOLEAN:
-                return wrapPrimitive<bool>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<bool>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::CHAR:
-                return wrapPrimitive<char>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<char>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::INT8:
-                return wrapPrimitive<int8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<int8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::INT16:
-                return wrapPrimitive<int16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<int16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::INT32:
-                return wrapPrimitive<int32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<int32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::INT64:
-                return wrapPrimitive<int64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<int64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::UINT8:
-                return wrapPrimitive<uint8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<uint8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::UINT16:
-                return wrapPrimitive<uint16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<uint16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::UINT32:
-                return wrapPrimitive<uint32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<uint32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::UINT64:
-                return wrapPrimitive<uint64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<uint64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::FLOAT32:
-                return wrapPrimitive<float>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<float>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::FLOAT64:
-                return wrapPrimitive<double>(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapPrimitive<double>(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::VARSIZED:
-                return wrapVarSized(dataType.nullable, fieldIndex, rawBufferIndex, indexer);
+                return wrapVarSized(dataType.nullable, fieldIndex, rawBufferIndex, indexer, arena);
             case DataType::Type::FIXEDSIZED:
                 if constexpr (Traits::supportsFixedSized)
                 {
@@ -569,9 +616,11 @@ struct JsonRecordParser
         const bool nullable,
         const nautilus::val<FieldIndex>& fieldIndex,
         const nautilus::val<RawBufferIndex*>& rawBufferIndex,
-        const nautilus::val<const InputFormatIndexer*>& indexer)
+        const nautilus::val<const InputFormatIndexer*>& indexer,
+        ArenaRef& arena)
     {
-        const auto buffer = nautilus::invoke({nautilus::ModRefInfo::Ref}, primitiveProxy<T>, fieldIndex, rawBufferIndex, indexer);
+        const auto buffer
+            = nautilus::invoke({nautilus::ModRefInfo::Ref}, primitiveProxy<T>, fieldIndex, rawBufferIndex, indexer, arena.getArena());
         const nautilus::val<T> value = *getMemberWithOffset<T>(buffer, offsetof(ParseResult<T>, value));
         if (nullable)
         {
@@ -585,9 +634,11 @@ struct JsonRecordParser
         const bool nullable,
         const nautilus::val<FieldIndex>& fieldIndex,
         const nautilus::val<RawBufferIndex*>& rawBufferIndex,
-        const nautilus::val<const InputFormatIndexer*>& indexer)
+        const nautilus::val<const InputFormatIndexer*>& indexer,
+        ArenaRef& arena)
     {
-        const auto buffer = nautilus::invoke({nautilus::ModRefInfo::Ref}, varSizedProxy, fieldIndex, rawBufferIndex, indexer);
+        const auto buffer
+            = nautilus::invoke({nautilus::ModRefInfo::Ref}, varSizedProxy, fieldIndex, rawBufferIndex, indexer, arena.getArena());
         const VariableSizedData varSized{
             *getMemberWithOffset<int8_t*>(buffer, offsetof(ParseResultVarSized, ptr)),
             *getMemberWithOffset<uint64_t>(buffer, offsetof(ParseResultVarSized, size))};
@@ -606,10 +657,10 @@ struct JsonRecordParser
         const nautilus::val<const InputFormatIndexer*>& indexer,
         ArenaRef& arena)
     {
-        const auto elementSize = DataType{dataType.elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
+        const auto elementSize = dataType.elementType[0].getSizeInBytesWithoutNull();
         const nautilus::val<int8_t*> buffer = arena.allocateMemory(static_cast<size_t>(dataType.count) * elementSize);
-        nautilus::invoke({nautilus::ModRefInfo::Ref}, fixedSizedProxy, fieldIndex, rawBufferIndex, indexer, buffer);
-        const FixedSizedData fixedArray{buffer, dataType.count, dataType.elementType};
+        nautilus::invoke({nautilus::ModRefInfo::Ref}, fixedSizedProxy, fieldIndex, rawBufferIndex, indexer, buffer, arena.getArena());
+        const FixedSizedData fixedArray{buffer, dataType.count, dataType.elementType[0]};
         return VarVal{fixedArray, dataType.nullable, nautilus::val<bool>{false}};
     }
 
@@ -622,12 +673,12 @@ struct JsonRecordParser
     {
         /// Pass arena into the proxy call: The number of elements and thus the space that should be allocated can only be retrieved from the simdjson value itself.
         /// We return the ptr to the allocated space together with the size as ParseResultVarSized object.
-        const nautilus::val<ParseResultVarSized*> parseResult
-            = nautilus::invoke({nautilus::ModRefInfo::Ref}, varArrayProxy, fieldIndex, rawBufferIndex, indexer, arena.getArena());
+        const nautilus::val<ParseResultVarArray*> parseResult
+            = nautilus::invoke(varArrayProxy, fieldIndex, rawBufferIndex, indexer, arena.getArena());
         const VarArrayData varArrayData{
-            *getMemberWithOffset<int8_t*>(parseResult, offsetof(ParseResultVarSized, ptr)),
-            dataType.elementType,
-            *getMemberWithOffset<uint64_t>(parseResult, offsetof(ParseResultVarSized, size))};
+            *getMemberWithOffset<int8_t*>(parseResult, offsetof(ParseResultVarArray, ptr)),
+            dataType.elementType[0],
+            *getMemberWithOffset<uint64_t>(parseResult, offsetof(ParseResultVarArray, size))};
 
         /// This is a POC, we omit the is null case for now
         return VarVal{varArrayData, dataType.nullable, nautilus::val<bool>{false}};
@@ -646,8 +697,9 @@ struct JsonRecordParser
         {
             totalBytes += inlineFieldSizeInBytes(fieldType);
         }
+        /// Allocate the neccessary memory and invoke the proxy to parse the struct values
         const nautilus::val<int8_t*> buffer = arena.allocateMemory(totalBytes);
-        nautilus::invoke({nautilus::ModRefInfo::Ref}, structProxy, fieldIndex, rawBufferIndex, indexer, buffer);
+        nautilus::invoke({nautilus::ModRefInfo::Ref}, structProxy, fieldIndex, rawBufferIndex, indexer, buffer, arena.getArena());
         const StructData structValue{buffer, dataType.fields};
         return VarVal{structValue, dataType.nullable, nautilus::val<bool>{false}};
     }
@@ -665,5 +717,4 @@ struct JsonRecordParser
         record.write(fieldName, parseField(dataType, fieldIndex, rawBufferIndex, indexer, arena));
     }
 };
-
 }

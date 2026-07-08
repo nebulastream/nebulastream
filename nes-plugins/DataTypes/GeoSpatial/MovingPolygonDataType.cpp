@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -19,15 +19,15 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypeRegistry.hpp>
 
-/// DataType for two-dimensional points
+/// DataType for moving polygons consisting of a timestamp and a polygon struct
 namespace NES::DataTypeGeneratedRegistrar
 {
 
-DataTypeRegistryReturnType RegisterPointDataType(DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterMovingPolygonDataType(DataTypeRegistryArguments args)
 {
     std::vector<std::pair<std::string, DataType>> fields;
-    fields.emplace_back("x", DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE));
-    fields.emplace_back("y", DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE));
-    return DataType{DataType::Type::STRUCT, args.nullable, std::string{"Point"}, std::move(fields)};
+    fields.emplace_back("ts", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE));
+    fields.emplace_back("polygon", DataTypeProvider::provideDataType("Polygon", DataType::NULLABLE::NOT_NULLABLE));
+    return DataType{DataType::Type::STRUCT, args.nullable, std::string{"MovingPolygon"}, std::move(fields)};
 }
 }

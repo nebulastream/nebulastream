@@ -96,6 +96,9 @@ public:
     [[nodiscard]] virtual std::vector<DataType> getAllDataTypes() const = 0;
 
 protected:
+    /// Helper method for load value, used by fixedsized and struct values. Iterates over elements and converts child buffer references of varsized elements
+    /// in their ptr and size inlined in fieldReference
+    static void inlineVarsizedReferences(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference);
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized

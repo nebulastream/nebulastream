@@ -360,7 +360,7 @@ DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const D
         {
             throw UnknownDataType("FIXEDSIZED array count must be greater than zero");
         }
-        return DataType{DataType::Type::FIXEDSIZED, isNullable, elementType->type, count};
+        return DataType{DataType::Type::FIXEDSIZED, isNullable, elementType.value(), count};
     }
 
     /// T VARARRAY -> Variablesized array with element type T -> map to VARARRAY type
@@ -374,7 +374,7 @@ DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const D
             throw UnknownDataType(
                 "{} is not a supported element type for `VARARRAY`; only primitive scalar types are allowed", dataTypeText);
         }
-        return DataType{DataType::Type::VARARRAY, isNullable, elementType->type};
+        return DataType{DataType::Type::VARARRAY, isNullable, elementType.value()};
     }
 
     const auto dataType = DataTypeProvider::tryProvideDataType(dataTypeText, isNullable);

@@ -1,18 +1,18 @@
 # syntax=docker/dockerfile:1
-# Development image that installs MEOS from a local tarball in the build context
+# Adds the MEOS library (and its geospatial dependencies) on top of the standard
+# nes-development image, so the MEOS plugin (nes-plugins/MEOS) can be built.
+#
+# This is an OPTIONAL layer inserted between Development.dockerfile (:default) and
+# DevelopmentLocal.dockerfile by `install-local-docker-environment.sh --meos`.
+# It intentionally builds FROM the full development image so it inherits the whole
+# toolchain (clang, rust, docker CLI, iree, ...) and only adds what MEOS needs.
 ARG TAG=latest
-FROM nebulastream/nes-development-dependency:${TAG}
+FROM nebulastream/nes-development:${TAG}
 
-ARG ANTLR4_VERSION=4.13.2
+USER root
 
+# MEOS build/runtime dependencies (matches nes-plugins/MEOS/CMakeLists.txt: GEOS, PROJ, GSL, json-c)
 RUN apt-get update -y && apt-get install -y \
-        clang-format-${LLVM_TOOLCHAIN_VERSION} \
-        clang-tidy-${LLVM_TOOLCHAIN_VERSION} \
-        lldb-${LLVM_TOOLCHAIN_VERSION} \
-        gdb \
-        python3-venv \
-        python3-bs4 \
-        openjdk-21-jre-headless \
         libgeos-dev \
         libproj-dev \
         libgsl-dev \
@@ -20,46 +20,20 @@ RUN apt-get update -y && apt-get install -y \
         autoconf \
         automake \
         libtool \
-        pkg-config
+        pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
-# The vcpkg port of antlr requires the jar to be available somewhere
-ADD --checksum=sha256:eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76 --chmod=744 \
-  https://www.antlr.org/download/antlr-${ANTLR4_VERSION}-complete.jar /opt/antlr-${ANTLR4_VERSION}-complete.jar
-
-RUN git clone https://github.com/aras-p/ClangBuildAnalyzer.git \
-    && cmake -B ClangBuildAnalyzer/build -S ClangBuildAnalyzer -DCMAKE_INSTALL_PREFIX=/usr \
-    && cmake --build ClangBuildAnalyzer/build -j\
-    && cmake --install ClangBuildAnalyzer/build \
-    && rm -rf ClangBuildAnalyzer \
-    && ClangBuildAnalyzer --version
-
-# Build and install MEOS from local tarball (required by MEOS plugin)
-# Place the tarball at docker/dependency/assets/meos.tar.gz before building.
-ADD docker/dependency/assets/meos.tar.gz /tmp/meos.tar.gz
+# Build and install MEOS from source into /usr/local, where cmake/Findmeos.cmake looks
+# (meos.h + libmeos.so). Pinned to the commit the plugin is developed against; override
+# MEOS_COMMIT to bump. Build flags mirror a local `cmake -B build -S .` Release install.
+ARG MEOS_REPO=https://github.com/MobilityDB/MEOS
+ARG MEOS_COMMIT=43ca4c6
 RUN set -eux; \
-    cd /tmp; \
-    tar -xzf meos.tar.gz; \
-    meos_src=$(find . -maxdepth 1 -type d -name 'MEOS-*' | head -n 1); \
-    cd "$meos_src"; \
-    if [ -f CMakeLists.txt ]; then \
-      cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local \
-      && cmake --build build -j \
-      && cmake --install build; \
-    else \
-      (./autogen.sh || true) \
-      && ./configure --prefix=/usr/local \
-      && make -j"$(nproc)" \
-      && make install; \
-    fi; \
-    rm -rf /tmp/meos.tar.gz "$meos_src"
-
-# Install GDB Libc++ Pretty Printer
-RUN wget -P /usr/share/libcxx/  https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-19.1.7/libcxx/utils/gdb/libcxx/printers.py && \
-    cat <<EOF > /etc/gdb/gdbinit
-    python
-    import sys
-    sys.path.insert(0, '/usr/share/libcxx')
-    import printers
-    printers.register_libcxx_printer_loader()
-    end
-EOF
+    git clone "${MEOS_REPO}" /tmp/meos-src; \
+    cd /tmp/meos-src; \
+    git checkout "${MEOS_COMMIT}"; \
+    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local; \
+    cmake --build build -j"$(nproc)"; \
+    cmake --install build; \
+    ldconfig; \
+    rm -rf /tmp/meos-src

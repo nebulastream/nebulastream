@@ -60,10 +60,10 @@ struct DataType final
 
     DataType(Type type, NULLABLE nullable);
     /// Constructor for vararrays -> no fixed size but an element type
-    DataType(Type type, NULLABLE nullable, Type elementType);
+    DataType(Type type, NULLABLE nullable, const DataType& elementType);
     /// FIXEDSIZED-only constructor: also carries element type and count.
     /// Todo: remove in a proper frontend datatype refactoring
-    DataType(Type type, NULLABLE nullable, Type elementType, uint32_t count);
+    DataType(Type type, NULLABLE nullable, const DataType& elementType, uint32_t count);
     /// STRUCT-only constructor: nominal name + ordered named field layout.
     /// Hacky PoC for extensible composite types — plugins register a creator that
     /// builds one of these for their named struct (e.g. "Image").
@@ -144,12 +144,15 @@ struct DataType final
     [[nodiscard]] bool isSignedInteger() const;
     [[nodiscard]] bool isFloat() const;
     [[nodiscard]] bool isNumeric() const;
+    /// Does the type have a fixed size? Used to determine whether the type requires child buffers to be stored in.
+    [[nodiscard]] bool isFixedSized() const;
 
     Type type;
     bool nullable;
-    /// Only meaningful when `type == FIXEDSIZED`; defaults make non-array DataTypes
+    /// Only meaningful when `type == FIXEDSIZED` or `type == VARARRAY`; defaults make non-array DataTypes
     /// compare and hash identically to before this struct grew these fields.
-    Type elementType = Type::UNDEFINED;
+    /// For poc, store as size 1 vector, as a workaround for DataType to store its element datatype
+    std::vector<DataType> elementType;
     uint32_t count = 0;
     /// Only meaningful when `type == STRUCT`. Identity is nominal: two STRUCTs
     /// are equal iff name and fields match.
@@ -177,7 +180,10 @@ struct std::hash<NES::DataType>
     size_t operator()(const NES::DataType& dataType) const noexcept
     {
         size_t h = (static_cast<uint16_t>(dataType.type) << 8) | static_cast<uint8_t>(dataType.nullable);
-        h ^= static_cast<size_t>(dataType.elementType) << 16;
+        for (const auto& element : dataType.elementType)
+        {
+            h ^= std::hash<NES::DataType>{}(element) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
         h ^= static_cast<size_t>(dataType.count) << 24;
         h ^= std::hash<std::string>{}(dataType.structName) << 1;
         for (const auto& [name, field] : dataType.fields)

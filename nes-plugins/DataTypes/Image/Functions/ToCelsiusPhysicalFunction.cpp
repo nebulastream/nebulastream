@@ -47,7 +47,7 @@ VarVal ToCelsiusPhysicalFunction::execute(const Record& record, ArenaRef& arena)
     const auto count = static_cast<size_t>(outputType.count);
     const auto outputBytes = count * sizeof(float);
     const nautilus::val<int8_t*> outputBuffer = arena.allocateMemory(outputBytes);
-    auto outFixedSized = FixedSizedData{outputBuffer, count, DataType::Type::FLOAT32};
+    auto outFixedSized = FixedSizedData{outputBuffer, count, DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}};
 
     /// Compute in double, cast once at the store. Single-precision arithmetic diverges
     /// between Nautilus interpreter (sequential rounding) and compiler (FMA contraction):

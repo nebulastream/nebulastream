@@ -323,8 +323,8 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         /// directly (the registry only handles scalar types).
         if (typeTrimmed.starts_with("FIXEDSIZED<") && typeTrimmed.ends_with('>'))
         {
-            const auto inner = typeTrimmed.substr(std::string_view("FIXEDSIZED<").size(),
-                typeTrimmed.size() - std::string_view("FIXEDSIZED<").size() - 1);
+            const auto inner = typeTrimmed.substr(
+                std::string_view("FIXEDSIZED<").size(), typeTrimmed.size() - std::string_view("FIXEDSIZED<").size() - 1);
             /// Inner separator is `;` (not `,`) to avoid colliding with the outer
             /// comma-separated field split. Format: `FIXEDSIZED<ELEMENT;COUNT>`.
             const auto sepPos = inner.find(';');
@@ -348,19 +348,24 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
             {
                 throw NES::SLTUnexpectedToken("Could not parse FIXEDSIZED count: {}", countStr);
             }
-            dataType = NES::DataType{NES::DataType::Type::FIXEDSIZED, isNullable, elementType.value(), count};
+            dataType = NES::DataType{
+                NES::DataType::Type::FIXEDSIZED,
+                isNullable,
+                NES::DataType{elementType.value(), NES::DataType::NULLABLE::NOT_NULLABLE},
+                count};
         }
         else if (typeTrimmed.starts_with("VARARRAY<") && typeTrimmed.ends_with('>'))
         {
-            const auto inner = typeTrimmed.substr(std::string_view("VARARRAY<").size(),
-                typeTrimmed.size() - std::string_view("VARARRAY<").size() - 1);
+            const auto inner
+                = typeTrimmed.substr(std::string_view("VARARRAY<").size(), typeTrimmed.size() - std::string_view("VARARRAY<").size() - 1);
             const auto elementTypeStr = NES::trimWhiteSpaces(inner);
             const auto elementType = magic_enum::enum_cast<NES::DataType::Type>(elementTypeStr);
             if (not elementType.has_value())
             {
                 throw NES::SLTUnexpectedToken("Unknown VARARRAY element type: {}", elementTypeStr);
             }
-            dataType = NES::DataType{NES::DataType::Type::VARARRAY, isNullable, elementType.value()};
+            dataType = NES::DataType{
+                NES::DataType::Type::VARARRAY, isNullable, NES::DataType{elementType.value(), NES::DataType::NULLABLE::NOT_NULLABLE}};
         }
         else if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed);
                  type.has_value() && type.value() != NES::DataType::Type::STRUCT)
@@ -374,8 +379,7 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         {
             dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED, isNullable);
         }
-        else if (auto plugin = NES::DataTypeProvider::tryProvideDataType(std::string{typeTrimmed}, isNullable);
-                 plugin.has_value())
+        else if (auto plugin = NES::DataTypeProvider::tryProvideDataType(std::string{typeTrimmed}, isNullable); plugin.has_value())
         {
             /// Plugin-registered named type (e.g. ThermalFrame). Matches the
             /// header form emitted by `SchemaFormatter::formatTypeForHeader`.
@@ -878,15 +882,17 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
 
         if (not result1)
         {
-            return annotateDifferentialError(fmt::format(
-                "Failed to load first result file for differential query comparison: {}", runningQuery.systestQuery.resultFile()));
+            return annotateDifferentialError(
+                fmt::format(
+                    "Failed to load first result file for differential query comparison: {}", runningQuery.systestQuery.resultFile()));
         }
 
         if (not result2)
         {
-            return annotateDifferentialError(fmt::format(
-                "Failed to load second result file for differential query comparison: {}",
-                runningQuery.systestQuery.resultFileForDifferentialQuery()));
+            return annotateDifferentialError(
+                fmt::format(
+                    "Failed to load second result file for differential query comparison: {}",
+                    runningQuery.systestQuery.resultFileForDifferentialQuery()));
         }
 
         if (result1->schema.getNumberOfFields() == 0)
@@ -897,8 +903,9 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
 
         if (result2->schema.getNumberOfFields() == 0)
         {
-            return annotateDifferentialError(fmt::format(
-                "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));
+            return annotateDifferentialError(
+                fmt::format(
+                    "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));
         }
 
         const QuerySchemasAndResults querySchemasAndResults = [&]()
@@ -939,12 +946,13 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
                 fmt::format("{}{}\n\nAll Results match", SchemaMismatchMessage, checkQueryResult.schemaErrorStream));
         }
         case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MISMATCH: {
-            return annotateDifferentialError(fmt::format(
-                "{}{}{}{}",
-                SchemaMismatchMessage,
-                checkQueryResult.schemaErrorStream,
-                ResultMismatchMessage,
-                checkQueryResult.resultErrorStream));
+            return annotateDifferentialError(
+                fmt::format(
+                    "{}{}{}{}",
+                    SchemaMismatchMessage,
+                    checkQueryResult.schemaErrorStream,
+                    ResultMismatchMessage,
+                    checkQueryResult.resultErrorStream));
         }
     }
     std::unreachable();
