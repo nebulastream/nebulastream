@@ -44,7 +44,7 @@ public:
         const std::shared_ptr<const ModelCatalog>& modelCatalog)
         : semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog)
         , ruleBasedOptimization(defaultQueryOptimization)
-        , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
+        , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog, true) { };
 
     [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;
 
