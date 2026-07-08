@@ -58,172 +58,157 @@ namespace NES
 namespace
 {
 
-/// All config fields of the TCP source, shared by getConfigSchema (declaration) and
-/// TCPSourceConfig::fromConfig (typed extraction). Constructed lazily on first use so no
-/// exception can escape static initialization.
-struct TCPConfigFields
-{
-    ConfigField<std::string> host;
-    ConfigField<uint32_t> port;
-    ConfigField<int32_t> domain;
-    ConfigField<int32_t> type;
-    ConfigField<char> separator;
-    ConfigField<float> flushIntervalMs;
-    ConfigField<uint32_t> socketBufferSize;
-    ConfigField<uint32_t> socketBufferTransferSize;
-    ConfigField<uint32_t> connectTimeout;
-};
+/// Config fields of the TCP source, shared by getConfigSchema (declaration) and
+/// TCPSourceConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+static const ConfigField<std::string> SOCKET_HOST{
+    "SOCKET_HOST", [](const ConfigLiteral& literal) { return NES::tryGetOr<std::string>(literal, expectedType<std::string>()); }};
 
-const TCPConfigFields& configFields()
-{
-    static const TCPConfigFields fields{
-        .host
-        = {"SOCKET_HOST", [](const ConfigLiteral& literal) { return NES::tryGetOr<std::string>(literal, expectedType<std::string>()); }},
-        .port
-        = {"SOCKET_PORT",
-           [](const ConfigLiteral& literal)
-           {
-               return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>())
-                   .and_then(downcastConfigValue<int64_t, uint32_t, 65535>);
-           }},
-        .domain
-        = {"SOCKET_DOMAIN",
-           [](const ConfigLiteral& literal)
-           {
-               return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-                   .and_then(
-                       [](const std::string& value) -> std::expected<int32_t, Exception>
-                       {
-                           if (strcasecmp(value.c_str(), "AF_INET") == 0)
-                           {
-                               return AF_INET;
-                           }
-                           if (strcasecmp(value.c_str(), "AF_INET6") == 0)
-                           {
-                               return AF_INET6;
-                           }
-                           return std::unexpected{InvalidConfigParameter(
-                               "TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", value)};
-                       });
-           },
-           [] { return AF_INET; }},
-        .type
-        = {"SOCKET_TYPE",
-           [](const ConfigLiteral& literal)
-           {
-               return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-                   .and_then(Identifier::tryParse)
-                   .and_then(
-                       [](const Identifier& socketType) -> std::expected<int32_t, Exception>
-                       {
-                           if (socketType == Identifier::parse("SOCK_STREAM"))
-                           {
-                               return SOCK_STREAM;
-                           }
-                           if (socketType == Identifier::parse("SOCK_DGRAM"))
-                           {
-                               return SOCK_DGRAM;
-                           }
-                           if (socketType == Identifier::parse("SOCK_SEQPACKET"))
-                           {
-                               return SOCK_SEQPACKET;
-                           }
-                           if (socketType == Identifier::parse("SOCK_RAW"))
-                           {
-                               return SOCK_RAW;
-                           }
-                           if (socketType == Identifier::parse("SOCK_RDM"))
-                           {
-                               return SOCK_RDM;
-                           }
-                           return std::unexpected{InvalidConfigParameter(
-                               "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, "
-                               "SOCK_RAW, or SOCK_RDM",
-                               socketType)};
-                       });
-           },
-           SOCK_STREAM},
-        .separator
-        = {"TUPLE_DELIMITER",
-           [](const ConfigLiteral& literal)
-           {
-               return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-                   .and_then(
-                       [](const std::string& value) -> std::expected<char, Exception>
-                       {
-                           if (value.size() == 1)
-                           {
-                               return value.front();
-                           }
-                           return std::unexpected{InvalidConfigParameter("Expected a single character, got {}", value)};
-                       });
-           },
-           '\n'},
-        .flushIntervalMs
-        = {"FLUSH_INTERVAL_MS",
-           [](const ConfigLiteral& literal)
-           {
-               /// Fractional literals arrive as double, integer ones as int64_t.
-               return NES::tryGetOr<double>(literal, expectedType<float>())
-                   .or_else(
-                       [&literal](const Exception&)
-                       {
-                           return NES::tryGetOr<int64_t>(literal, expectedType<float>())
-                               .transform([](const int64_t value) { return static_cast<double>(value); });
-                       })
-                   .and_then(downcastConfigValue<double, float>);
-           },
-           0.0F},
-        .socketBufferSize
-        = {"SOCKET_BUFFER_SIZE",
-           [](const ConfigLiteral& literal)
-           { return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>()).and_then(downcastConfigValue<int64_t, uint32_t>); },
-           1024},
-        .socketBufferTransferSize
-        = {"BYTES_SED_FOR_SOCKET_BUFFER_SIZE_TRANSFER",
-           [](const ConfigLiteral& literal)
-           { return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>()).and_then(downcastConfigValue<int64_t, uint32_t>); },
-           0},
-        .connectTimeout
-        = {"CONNECT_TIMEOUT_SECONDS",
-           [](const ConfigLiteral& literal)
-           { return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>()).and_then(downcastConfigValue<int64_t, uint32_t>); },
-           10},
-    };
-    return fields;
-}
+static const ConfigField<uint32_t> SOCKET_PORT{
+    "SOCKET_PORT",
+    [](const ConfigLiteral& literal)
+    { return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>()).and_then(downcastConfigValue<int64_t, uint32_t, 65535>); }};
+
+static const ConfigField<int32_t> SOCKET_DOMAIN{
+    "SOCKET_DOMAIN",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<int32_t, Exception>
+                {
+                    if (strcasecmp(value.c_str(), "AF_INET") == 0)
+                    {
+                        return AF_INET;
+                    }
+                    if (strcasecmp(value.c_str(), "AF_INET6") == 0)
+                    {
+                        return AF_INET6;
+                    }
+                    return std::unexpected{
+                        InvalidConfigParameter("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", value)};
+                });
+    },
+    [] { return AF_INET; }};
+
+static const ConfigField<int32_t> SOCKET_TYPE{
+    "SOCKET_TYPE",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(Identifier::tryParse)
+            .and_then(
+                [](const Identifier& socketType) -> std::expected<int32_t, Exception>
+                {
+                    if (socketType == Identifier::parse("SOCK_STREAM"))
+                    {
+                        return SOCK_STREAM;
+                    }
+                    if (socketType == Identifier::parse("SOCK_DGRAM"))
+                    {
+                        return SOCK_DGRAM;
+                    }
+                    if (socketType == Identifier::parse("SOCK_SEQPACKET"))
+                    {
+                        return SOCK_SEQPACKET;
+                    }
+                    if (socketType == Identifier::parse("SOCK_RAW"))
+                    {
+                        return SOCK_RAW;
+                    }
+                    if (socketType == Identifier::parse("SOCK_RDM"))
+                    {
+                        return SOCK_RDM;
+                    }
+                    return std::unexpected{InvalidConfigParameter(
+                        "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, "
+                        "SOCK_RAW, or SOCK_RDM",
+                        socketType)};
+                });
+    },
+    SOCK_STREAM};
+
+static const ConfigField<char> TUPLE_DELIMITER{
+    "TUPLE_DELIMITER",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<char, Exception>
+                {
+                    if (value.size() == 1)
+                    {
+                        return value.front();
+                    }
+                    return std::unexpected{InvalidConfigParameter("Expected a single character, got {}", value)};
+                });
+    },
+    '\n'};
+
+static const ConfigField<float> FLUSH_INTERVAL_MS{
+    "FLUSH_INTERVAL_MS",
+    [](const ConfigLiteral& literal)
+    {
+        /// Fractional literals arrive as double, integer ones as int64_t.
+        return NES::tryGetOr<double>(literal, expectedType<float>())
+            .or_else(
+                [&literal](const Exception&)
+                {
+                    return NES::tryGetOr<int64_t>(literal, expectedType<float>())
+                        .transform([](const int64_t value) { return static_cast<double>(value); });
+                })
+            .and_then(downcastConfigValue<double, float>);
+    },
+    0.0F};
+
+static const ConfigField<uint32_t> SOCKET_BUFFER_SIZE{
+    "SOCKET_BUFFER_SIZE",
+    [](const ConfigLiteral& literal)
+    { return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>()).and_then(downcastConfigValue<int64_t, uint32_t>); },
+    1024};
+
+static const ConfigField<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
+    "BYTES_SED_FOR_SOCKET_BUFFER_SIZE_TRANSFER",
+    [](const ConfigLiteral& literal)
+    { return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>()).and_then(downcastConfigValue<int64_t, uint32_t>); },
+    0};
+
+static const ConfigField<uint32_t> CONNECT_TIMEOUT_SECONDS{
+    "CONNECT_TIMEOUT_SECONDS",
+    [](const ConfigLiteral& literal)
+    { return NES::tryGetOr<int64_t>(literal, expectedType<int64_t>()).and_then(downcastConfigValue<int64_t, uint32_t>); },
+    10};
+/// NOLINTEND(cert-err58-cpp)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> TCPSource::getConfigSchema()
 {
-    const auto& fields = configFields();
     return createConfigSchema(
         Identifier::parse("TCP_SOURCE"),
-        fields.host,
-        fields.port,
-        fields.domain,
-        fields.type,
-        fields.separator,
-        fields.flushIntervalMs,
-        fields.socketBufferSize,
-        fields.socketBufferTransferSize,
-        fields.connectTimeout);
+        SOCKET_HOST,
+        SOCKET_PORT,
+        SOCKET_DOMAIN,
+        SOCKET_TYPE,
+        TUPLE_DELIMITER,
+        FLUSH_INTERVAL_MS,
+        SOCKET_BUFFER_SIZE,
+        SOCKET_BUFFER_TRANSFER_SIZE,
+        CONNECT_TIMEOUT_SECONDS);
 }
 
 TCPSourceConfig TCPSourceConfig::fromConfig(const InstantiatedConfig& config)
 {
-    const auto& fields = configFields();
     return TCPSourceConfig{
-        .socketHost = config.get(fields.host),
-        .socketPort = config.get(fields.port),
-        .socketDomain = config.get(fields.domain),
-        .socketType = config.get(fields.type),
-        .tupleDelimiter = config.get(fields.separator),
-        .socketBufferSize = config.get(fields.socketBufferSize),
-        .bytesUsedForSocketBufferSizeTransfer = config.get(fields.socketBufferTransferSize),
-        .flushIntervalInMs = config.get(fields.flushIntervalMs),
-        .connectTimeoutSeconds = config.get(fields.connectTimeout)};
+        .socketHost = config.get(SOCKET_HOST),
+        .socketPort = config.get(SOCKET_PORT),
+        .socketDomain = config.get(SOCKET_DOMAIN),
+        .socketType = config.get(SOCKET_TYPE),
+        .tupleDelimiter = config.get(TUPLE_DELIMITER),
+        .socketBufferSize = config.get(SOCKET_BUFFER_SIZE),
+        .bytesUsedForSocketBufferSizeTransfer = config.get(SOCKET_BUFFER_TRANSFER_SIZE),
+        .flushIntervalInMs = config.get(FLUSH_INTERVAL_MS),
+        .connectTimeoutSeconds = config.get(CONNECT_TIMEOUT_SECONDS)};
 }
 
 TCPSource::TCPSource(const TCPSourceConfig& config)
@@ -460,11 +445,11 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData
     std::unordered_map<Identifier, ConfigLiteral> defaultSourceConfig{{Identifier::parse("flush_interval_ms"), int64_t{100}}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
 
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(configFields().port.getName()))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SOCKET_PORT.getName()))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(configFields().host.getName()))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SOCKET_HOST.getName()))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
     }
@@ -472,8 +457,8 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData
     auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.tuples));
 
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
-        configFields().port.getName(), static_cast<int64_t>(mockTCPServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(configFields().host.getName(), "localhost");
+        SOCKET_PORT.getName(), static_cast<int64_t>(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(SOCKET_HOST.getName(), "localhost");
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
@@ -486,11 +471,11 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
     std::unordered_map<Identifier, ConfigLiteral> defaultSourceConfig{{Identifier::parse("flush_interval_ms"), int64_t{100}}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
 
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(configFields().port.getName()))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SOCKET_PORT.getName()))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(configFields().host.getName()))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SOCKET_HOST.getName()))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
     }
@@ -498,8 +483,8 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
     auto mockTCPServer = std::make_unique<TCPDataServer>(systestAdaptorArguments.testFilePath);
 
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
-        configFields().port.getName(), static_cast<int64_t>(mockTCPServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(configFields().host.getName(), "localhost");
+        SOCKET_PORT.getName(), static_cast<int64_t>(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(SOCKET_HOST.getName(), "localhost");
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));

@@ -10,12 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(JSON InputFormatIndexer json_input_format_indexer_plugin_library SIMDJSONInputFormatIndexer.cpp SIMDJSONRawBufferIndex.cpp)
-add_plugin(JSON InputFormatterValidation SIMDJSONInputFormatIndexer.cpp SIMDJSONRawBufferIndex.cpp)
-#add_plugin_as_library(JSON InputFormatterValidation json_input_format_validation_plugin_library SIMDJSONInputFormatIndexer.cpp SIMDJSONRawBufferIndex.cpp)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+
+add_library(json_input_format_indexer_plugin_library STATIC SIMDJSONInputFormatIndexer.cpp SIMDJSONRawBufferIndex.cpp)
+target_link_libraries(json_input_format_indexer_plugin_library PRIVATE nes-input-formatters)
 target_include_directories(json_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+link_plugin_library(nes-input-formatters json_input_format_indexer_plugin_library)
 
 find_package(simdjson CONFIG REQUIRED)
 target_link_libraries(json_input_format_indexer_plugin_library PRIVATE simdjson::simdjson)
-#target_link_libraries(json_input_format_validation_plugin_library PRIVATE simdjson::simdjson)
+
+# The plugin class is SIMDJSONInputFormatIndexer, registered under the key "JSON".
+add_registry_entry(InputFormatIndexer SIMDJSON KEY JSON)
+add_registry_entry(InputFormatterConfigSchema SIMDJSON KEY JSON)
+add_registry_entry(InputFormatterConfig SIMDJSON KEY JSON)

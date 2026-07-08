@@ -52,7 +52,7 @@ public:
         Identifier inlineSourceType,
         Schema<UnqualifiedUnboundField, Ordered> schema,
         Schema<LiteralConfigValue, Ordered> sourceConfig,
-        std::unordered_map<Identifier, std::string> parserConfig);
+        Schema<LiteralConfigValue, Ordered> parserConfig);
 
     /// @brief this call projects out the attributes in the parameter list
     /// @param functions list of attributes

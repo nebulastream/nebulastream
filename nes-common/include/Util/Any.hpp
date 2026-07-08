@@ -12,22 +12,19 @@
     limitations under the License.
 */
 
-#include <Sources/SourceValidationProvider.hpp>
+#pragma once
 
-#include <optional>
-#include <string>
-#include <string_view>
-
-#include <Configurations/ConfigField.hpp>
-#include <Schema/Schema.hpp>
-#include <SourceConfigSchemaRegistry.hpp>
-
-namespace NES::SourceValidationProvider
+namespace NES
 {
-
-std::optional<Schema<QualifiedErasedConfigField, Ordered>> provide(const std::string_view sourceType)
-{
-    return SourceConfigSchemaRegistry::instance().getSchema(std::string{sourceType});
-}
-
+    class NonEmptyAny
+    {
+        std::any value;
+        public:
+        explicit NonEmptyAny(std::any value) : value(std::move(value))
+        {
+            PRECONDITION(this->value.has_value(), "NonEmptyAny cannot be constructed from empty any");
+        }
+        operator const std::any& () const &{ return value; }
+        operator std::any&&() && { return std::move(value); }
+    };
 }

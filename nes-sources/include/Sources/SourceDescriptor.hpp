@@ -36,7 +36,6 @@
 #include <folly/hash/Hash.h>
 #include <InputFormatterDescriptor.hpp>
 #include "Configurations/ConfigField.hpp"
-#include "Configurations/ConfigValue.hpp"
 #include "Identifiers/Identifier.hpp"
 #include "Util/Variant.hpp"
 
@@ -44,6 +43,12 @@ namespace NES
 {
 class SourceCatalog;
 class OperatorSerializationUtil;
+
+class PluginSourceConfiguration
+{
+    Identifier type;
+    std::any pluginData;
+};
 
 class SourceDescriptor final
 {
@@ -60,7 +65,7 @@ public:
     /// equal if their identity and wiring match.
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
     {
-        return lhs.physicalSourceId == rhs.physicalSourceId && lhs.logicalSource == rhs.logicalSource
+        return lhs.physicalSourceId == rhs.physicalSourceId && lhs.schema == rhs.schema
             && lhs.sourceType == rhs.sourceType && lhs.host == rhs.host && lhs.maxInflightBuffers == rhs.maxInflightBuffers
             && lhs.inputFormatterDescriptor == rhs.inputFormatterDescriptor;
     }
@@ -68,15 +73,16 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor);
 
-    [[nodiscard]] LogicalSource getLogicalSource() const;
     [[nodiscard]] std::string getSourceType() const;
     [[nodiscard]] std::string getInputFormatType() const;
     [[nodiscard]] InputFormatterDescriptor getInputFormatterDescriptor() const;
 
     [[nodiscard]] Host getHost() const;
-    [[nodiscard]] size_t getMaxInflightBuffers() const;
+
+    [[nodiscard]] const Schema<UnqualifiedUnboundField, Ordered>& getSchema() const;
+    ///@returns either a number greater than zero, or a nullopt, indicating that the default value should be used
+    [[nodiscard]] std::optional<size_t> getMaxInflightBuffers() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
-    [[nodiscard]] const InstantiatedConfig& getPluginConfig() const;
     /// The source-defined config struct (e.g. GeneratorSourceConfig), type-erased. Produced by the
     /// source's SourceConfigRegistry entry, so the source factory can safely any_cast it back.
     [[nodiscard]] const std::any& getPluginData() const;
@@ -85,41 +91,51 @@ public:
 
 private:
     friend class SourceCatalog;
+    friend class PhysicalSourceBuilder;
     friend OperatorSerializationUtil;
     friend struct Unreflector<SourceDescriptor>;
     friend struct Reflector<SourceDescriptor>;
 
     PhysicalSourceId physicalSourceId;
-    LogicalSource logicalSource;
-    std::string sourceType;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
     Host host;
-    size_t maxInflightBuffers;
-    std::any pluginData;
-    InstantiatedConfig pluginConfig;
+    std::optional<size_t> maxInflightBuffers;
+    PluginSourceConfiguration pluginSourceConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
 
 
     /// Used by the SourceCatalog (and descriptor unreflection) to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         PhysicalSourceId physicalSourceId,
-        LogicalSource logicalSource,
         std::string_view sourceType,
+        Schema<UnqualifiedUnboundField, Ordered> schema,
         Host host,
-        size_t maxInflightBuffers,
-        InstantiatedConfig pluginConfig,
+        std::optional<size_t> maxInflightBuffers,
         std::any pluginData,
         const InputFormatterDescriptor& inputFormatterDescriptor);
 
 public:
-    /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
-    /// Given an invalid value, the NodeEngine takes its configured value. Otherwise, the source-specific configuration takes priority.
-    static constexpr size_t INVALID_MAX_INFLIGHT_BUFFERS = 0;
+
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const ConfigField<size_t> MAX_INFLIGHT_BUFFERS{
+    static inline const ConfigField<std::optional<Schema<UnqualifiedUnboundField, Ordered>>> SCHEMA{
+        "SCHEMA",
+            [](const ConfigLiteral& literal){ return tryGetOr<Schema<UnqualifiedUnboundField, Ordered>>(literal, expectedType<Schema<UnqualifiedUnboundField, Ordered>>()); },
+            std::nullopt
+        };
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const ConfigField<std::optional<size_t>> MAX_INFLIGHT_BUFFERS{
         Identifier::parse("MAX_INFLIGHT_BUFFERS"),
         [](const ConfigLiteral& literal)
-        { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(downcastConfigValue<int64_t, size_t>); },
-        INVALID_MAX_INFLIGHT_BUFFERS};
+        { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(downcastConfigValue<int64_t, size_t>).transform([](const size_t& value) -> std::optional<size_t>
+        {
+            if (value == 0)
+            {
+                return std::nullopt;
+            }
+            return value;
+        }); },
+        std::nullopt};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const ConfigField<Host> HOST{
@@ -132,9 +148,7 @@ public:
         /// Optional: attached workers pass the host out of band (e.g. as a catalog argument).
         Host{""}};
 
-
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST);
+    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST, SCHEMA);
 };
 
 template <>
@@ -156,7 +170,7 @@ struct std::hash<NES::SourceDescriptor>
 {
     size_t operator()(const NES::SourceDescriptor& sourceDescriptor) const noexcept
     {
-        return folly::hash::hash_combine(sourceDescriptor.getLogicalSource(), sourceDescriptor.getPhysicalSourceId());
+        return folly::hash::hash_combine(sourceDescriptor.getSchema(), sourceDescriptor.getPhysicalSourceId());
     }
 };
 
@@ -168,10 +182,9 @@ struct ReflectedSourceDescriptor
     LogicalSource logicalSource;
     std::string type;
     Host host;
-    uint64_t maxInflightBuffers;
+    std::optional<uint64_t> maxInflightBuffers;
     InputFormatterDescriptor inputFormatterDescriptor;
     /// The source-defined config struct, reflected by the source's SourceConfigRegistry entry.
-    /// The generic InstantiatedConfig does not travel; only the typed config does.
     Reflected config;
 };
 }

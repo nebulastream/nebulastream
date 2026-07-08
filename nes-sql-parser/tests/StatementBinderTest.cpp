@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <any>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -39,6 +40,7 @@
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Sources/FileSourceConfig.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -241,7 +243,7 @@ TEST_F(StatementBinderTest, InlineSourceQuery)
         {QualifiedIdentifier::create(Identifier::parse("file_path")), "input.csv"}};
     ASSERT_EQ(expectedSourceConfig, inlineSourceOperator->getSourceConfig());
 
-    const std::unordered_map<Identifier, std::string> expectedParserConfig = {{Identifier::parse("type"), "CSV"}};
+    const Schema<LiteralConfigValue, Ordered> expectedParserConfig{{QualifiedIdentifier::create(Identifier::parse("type")), "CSV"}};
     ASSERT_EQ(expectedParserConfig, inlineSourceOperator->getParserConfig());
 
     const Schema<UnqualifiedUnboundField, Ordered> schema{
@@ -299,7 +301,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_TRUE(physicalSourceResult.has_value());
     const auto [physicalSource] = physicalSourceResult.value();
     ASSERT_EQ(physicalSource.getLogicalSource(), actualSource);
-    ASSERT_EQ(physicalSource.getInputFormatterDescriptor().getConfig(), expectedParserConfig);
+    ASSERT_EQ(physicalSource.getInputFormatterDescriptor(), expectedParserConfig);
     ASSERT_EQ(physicalSource.getSourceType(), "FILE");
     ASSERT_EQ(physicalSource.getPhysicalSourceId().getRawValue(), 1);
 
@@ -524,11 +526,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(filteredPhysicalSourcesStatementResult.has_value());
     ASSERT_EQ(filteredPhysicalSourcesStatementResult.value().sources.size(), 1);
     ASSERT_EQ(
-        filteredPhysicalSourcesStatementResult.value()
-            .sources.at(0)
-            .getPluginConfig()
-            .tryGet<std::string>(Identifier::parse("FILE_PATH"))
-            .value(),
+        std::any_cast<const FileSourceConfig&>(filteredPhysicalSourcesStatementResult.value().sources.at(0).getPluginData()).filePath,
         "/dev/random");
 
     const auto physicalSourceForLogicalSourceStatementExp = binder->parseAndBindSingle(physicalSourceForLogicalSourceStatementString);
@@ -562,11 +560,8 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementFilteredResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementFilteredResult.value().sources.size(), 1);
     ASSERT_EQ(
-        physicalSourceForLogicalSourceStatementFilteredResult.value()
-            .sources.at(0)
-            .getPluginConfig()
-            .tryGet<std::string>(Identifier::parse("FILE_PATH"))
-            .value(),
+        std::any_cast<const FileSourceConfig&>(physicalSourceForLogicalSourceStatementFilteredResult.value().sources.at(0).getPluginData())
+            .filePath,
         "/dev/ones");
 }
 

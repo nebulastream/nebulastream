@@ -15,65 +15,33 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
-#include <DataTypes/DataType.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Interface/Record.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Strings.hpp>
-#include <ErrorHandling.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <InputFormatIndexer.hpp>
-#include <InputFormatterDescriptor.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
-#include <static.hpp>
 
 namespace NES
 {
 
-/// Resolves a single-byte delimiter parameter, unescaping textual escape sequences such as "\n" or "\t" first.
-inline std::optional<char>
-tryGetDelimiter(const std::unordered_map<std::string, std::string>& config, const std::string_view key, const char defaultValue)
+/// Formatter-defined config struct: instantiated from the generic config by the
+/// InputFormatterConfig registry entry, carried through the InputFormatterDescriptor as std::any,
+/// and serialized via reflection of exactly this struct (all members are reflectable).
+struct CSVInputFormatterConfig
 {
-    const auto it = config.find(std::string{key});
-    if (it == config.end())
-    {
-        return defaultValue;
-    }
-    const auto unescaped = unescapeSpecialCharacters(it->second);
-    return (unescaped.size() == 1) ? std::optional<char>{unescaped.front()} : std::nullopt;
-}
+    bool allowCommasInStrings;
+    char tupleDelimiter;
+    char fieldDelimiter;
 
-struct ConfigParametersCSVInputFormatIndexer
-{
-    static inline const DescriptorConfig::ConfigParameter<bool> ALLOW_COMMAS_IN_STRINGS{
-        "ALLOW_COMMAS_IN_STRINGS",
-        true,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(ALLOW_COMMAS_IN_STRINGS, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<char> TUPLE_DELIMITER{
-        "TUPLE_DELIMITER",
-        '\n',
-        [](const std::unordered_map<std::string, std::string>& config) { return tryGetDelimiter(config, "TUPLE_DELIMITER", '\n'); }};
-
-    static inline const DescriptorConfig::ConfigParameter<char> FIELD_DELIMITER{
-        "FIELD_DELIMITER",
-        ',',
-        [](const std::unordered_map<std::string, std::string>& config) { return tryGetDelimiter(config, "FIELD_DELIMITER", ','); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            InputFormatterDescriptor::parameterMap, ALLOW_COMMAS_IN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
+    static CSVInputFormatterConfig fromConfig(const InstantiatedConfig& config);
 };
 
 class CSVInputFormatIndexer : public InputFormatIndexer
@@ -100,14 +68,10 @@ public:
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
-    static std::unique_ptr<CSVInputFormatIndexer> create(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
+    static std::unique_ptr<CSVInputFormatIndexer> create(const CSVInputFormatterConfig& config, const TupleBufferRef& tupleBufferRef)
     {
         return std::make_unique<CSVInputFormatIndexer>(
-            Private{},
-            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER),
-            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER),
-            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS),
-            tupleBufferRef.getAllDataTypes().size());
+            Private{}, config.tupleDelimiter, config.fieldDelimiter, config.allowCommasInStrings, tupleBufferRef.getAllDataTypes().size());
     }
 
     ~CSVInputFormatIndexer() override = default;
@@ -122,7 +86,7 @@ public:
 
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;

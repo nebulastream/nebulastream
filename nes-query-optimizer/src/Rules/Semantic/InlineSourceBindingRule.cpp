@@ -13,6 +13,9 @@
 */
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 
+#include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <ranges>
 #include <set>
 #include <string>
@@ -94,11 +97,29 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
             throw InvalidConfigParameter("host must be a string literal");
         }
         auto host = Host(*hostString);
+
+        /// Max inflight buffers is a descriptor-level field, not part of the source's own config.
+        const auto maxInflightName = QualifiedIdentifier::create(Identifier::parse("MAX_INFLIGHT_BUFFERS"));
+        std::optional<size_t> maxInflightBuffers;
+        if (const auto maxInflightValue = sourceConfig.getFieldByName(maxInflightName))
+        {
+            const auto maxInflightLiteral = maxInflightValue->getValue();
+            const auto* maxInflight = std::get_if<int64_t>(&maxInflightLiteral);
+            if (maxInflight == nullptr || *maxInflight <= 0)
+            {
+                throw InvalidConfigParameter("MAX_INFLIGHT_BUFFERS must be a positive integer literal");
+            }
+            maxInflightBuffers = static_cast<size_t>(*maxInflight);
+        }
+
         sourceConfig = Schema<LiteralConfigValue, Ordered>{
-            sourceConfig | std::views::filter([&](const auto& value) { return value.getFullyQualifiedName() != hostName; })
+            sourceConfig
+            | std::views::filter(
+                [&](const auto& value)
+                { return value.getFullyQualifiedName() != hostName && value.getFullyQualifiedName() != maxInflightName; })
             | std::ranges::to<std::vector>()};
 
-        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, sourceConfig);
+        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, maxInflightBuffers, parserConfig, sourceConfig);
 
         if (!descriptorOpt.has_value())
         {

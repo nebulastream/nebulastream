@@ -52,16 +52,6 @@ public:
         return std::any_cast<T>(value);
     }
 
-    template <typename T>
-    [[nodiscard]] std::optional<T> tryGetValue() const
-    {
-        if (const auto* typed = std::any_cast<T>(&value))
-        {
-            return *typed;
-        }
-        return std::nullopt;
-    }
-
     friend std::ostream& operator<<(std::ostream& os, const ConfigValue& value) { return os << value.getFullyQualifiedName(); }
 };
 
@@ -80,19 +70,6 @@ public:
         auto valueOpt = values.getFieldByName(QualifiedIdentifier{std::vector{field.getName()}});
         PRECONDITION(valueOpt.has_value(), "Could not find config value for field {}", field.getName());
         return valueOpt.value().template getValue<T>();
-    }
-
-    /// Non-throwing lookup by name, for callers without the declaring ConfigField at hand
-    /// (e.g. tooling that inspects configs). Returns nullopt if the field is absent or the
-    /// stored type differs.
-    template <typename T>
-    [[nodiscard]] std::optional<T> tryGet(const Identifier& name) const
-    {
-        if (auto valueOpt = values.getFieldByName(QualifiedIdentifier{std::vector{name}}))
-        {
-            return valueOpt->template tryGetValue<T>();
-        }
-        return std::nullopt;
     }
 };
 }

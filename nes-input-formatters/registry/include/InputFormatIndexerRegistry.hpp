@@ -14,63 +14,46 @@
 
 #pragma once
 
-#include <cstddef>
+#include <any>
+#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Registry.hpp>
-#include <InputFormatIndexer.hpp>
+#include <Util/RuntimeRegistry.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
 
+/// Maps an input formatter type name to a factory that assembles an InputFormatter from a
+/// descriptor and the memory provider of the pipeline. Entries self-register at static
+/// initialization time via generated glue TUs
+/// (see create_runtime_registry(InputFormatIndexer ...) in nes-input-formatters/CMakeLists.txt).
+using InputFormatterFactoryFn
+    = std::function<std::unique_ptr<InputFormatter>(const InputFormatterDescriptor&, std::shared_ptr<TupleBufferRef>)>;
 
-using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatter>;
-
-/// Argument bundle handed to `InputFormatIndexerRegistry`-resolved factories. Owns the `ParserConfig` + memory provider and
-/// hands a `unique_ptr<InputFormatIndexer>` to `createInputFormatterWithIndexer()` to assemble a concrete `InputFormatter`.
-struct InputFormatIndexerRegistryArguments
-{
-    InputFormatIndexerRegistryArguments(const InputFormatterDescriptor& config, std::shared_ptr<TupleBufferRef> memoryProvider)
-        : inputFormatIndexerConfig(config), memoryProvider(std::move(memoryProvider))
-    {
-    }
-
-    [[nodiscard]] const InputFormatterDescriptor& getInputFormatterConfig() const { return inputFormatIndexerConfig; }
-
-    [[nodiscard]] const TupleBufferRef& getInputMemoryProvider() const { return *memoryProvider; }
-
-    /// Instantiates an InputFormatter with a specific input format indexer
-    InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(std::unique_ptr<InputFormatIndexer> inputFormatIndexer)
-    {
-        return std::make_unique<InputFormatter>(std::move(inputFormatIndexer), std::move(memoryProvider));
-    }
-
-private:
-    /// We discourage keeping state in an indexer implementation, since the InputFormatter uses its indexer concurrently
-    /// As a result, we don't hand the config and memory provider to the indexer in its registry-constructor
-    /// Instead, an indexer receives it as a const meta-data object in its main 'indexRawBuffer' function
-    /// While this does not prevent an indexer implementation from accessing the state of the meta-data object it helps to discourage it
-    InputFormatterDescriptor inputFormatIndexerConfig;
-    std::shared_ptr<TupleBufferRef> memoryProvider;
-};
-
-class InputFormatIndexerRegistry : public BaseRegistry<
-                                       InputFormatIndexerRegistry,
-                                       std::string,
-                                       InputFormatIndexerRegistryReturnType,
-                                       InputFormatIndexerRegistryArguments>
+class InputFormatIndexerRegistry
+    : public RuntimeRegistry<InputFormatIndexerRegistry, std::string, InputFormatterFactoryFn, /*CaseSensitive*/ false>
 {
 };
 
+/// Factory for the common case: the descriptor's type-erased config is the formatter's own config
+/// struct (put there by this formatter's InputFormatterConfigRegistry entry), so the any_cast is
+/// safe. We discourage keeping state in an indexer implementation, since the InputFormatter uses
+/// its indexer concurrently — the indexer only receives its config and the buffer layout at
+/// creation time, not the memory provider.
+template <typename IndexerImpl, typename ConfigStruct>
+InputFormatterFactoryFn makeInputFormatterFactory()
+{
+    return [](const InputFormatterDescriptor& descriptor, std::shared_ptr<TupleBufferRef> memoryProvider)
+    {
+        const auto& config = std::any_cast<const ConfigStruct&>(descriptor.getConfig());
+        auto indexer = IndexerImpl::create(config, *memoryProvider);
+        return std::make_unique<InputFormatter>(std::move(indexer), std::move(memoryProvider));
+    };
 }
 
-#define INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY
-#include <InputFormatIndexerGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY
+}

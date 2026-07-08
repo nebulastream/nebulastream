@@ -20,8 +20,10 @@ add_source_files(nes-input-formatters
         FieldOffsetRawBufferIndex.cpp
         InputFormatterDescriptor.cpp
         InputFormatterValidationProvider.cpp
+        CSVInputFormatIndexer.cpp
 )
 
-# Register plugins
-add_plugin(CSV InputFormatIndexer CSVInputFormatIndexer.cpp)
-add_plugin(CSV InputFormatterValidation CSVInputFormatIndexer.cpp)
+# Runtime registry entries (formatter factory, config schema, typed config)
+add_registry_entry(InputFormatIndexer CSV)
+add_registry_entry(InputFormatterConfigSchema CSV)
+add_registry_entry(InputFormatterConfig CSV)

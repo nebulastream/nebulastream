@@ -297,13 +297,15 @@ public:
 
             /// Create compiled pipeline stage containing InputFormatter and EmitOperator(emits formatted buffers into 'resultBuffers')
 
-            auto inputFormatterConfig = std::unordered_map<std::string, std::string>{{"TUPLE_DELIMITER", "\n"}};
+            auto inputFormatterConfig = std::vector<LiteralConfigValue>{{"TUPLE_DELIMITER", "\n"}};
             if (testConfig.formatterType == "CSV")
             {
-                inputFormatterConfig.emplace("FIELD_DELIMITER", "|");
+                inputFormatterConfig.emplace_back("FIELD_DELIMITER", "|");
             }
             const auto parserConfiguration
-                = InputFormatterValidationProvider::provide(testConfig.formatterType, std::move(inputFormatterConfig)).value();
+                = InputFormatterValidationProvider::provide(
+                      testConfig.formatterType, Schema<LiteralConfigValue, Ordered>{std::move(inputFormatterConfig)})
+                      .value();
             auto testStage = InputFormatterTestUtil::createInputFormatter(
                 parserConfiguration,
                 setupResult.schema,

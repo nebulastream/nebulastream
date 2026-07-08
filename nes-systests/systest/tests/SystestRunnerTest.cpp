@@ -196,12 +196,11 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    const Schema<LiteralConfigValue, Ordered> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource = sourceCatalog.addPhysicalSource(
         testLogicalSource.value(),
         Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
+        Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
         parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource.value());
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
@@ -236,12 +235,11 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    const Schema<LiteralConfigValue, Ordered> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource = sourceCatalog.addPhysicalSource(
         testLogicalSource.value(),
         Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
+        Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
         parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource.value());
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
@@ -271,12 +269,11 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
     auto [submitter, mockBackend] = createQuerySubmitter();
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    const Schema<LiteralConfigValue, Ordered> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource = sourceCatalog.addPhysicalSource(
         testLogicalSource.value(),
         Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
+        Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
         parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource.value());
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
@@ -331,12 +328,11 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
 
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    const Schema<LiteralConfigValue, Ordered> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource = sourceCatalog.addPhysicalSource(
         testLogicalSource.value(),
         Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
+        Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
         parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource.value());
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};

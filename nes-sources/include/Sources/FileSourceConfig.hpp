@@ -12,22 +12,22 @@
     limitations under the License.
 */
 
-#include <Sources/SourceValidationProvider.hpp>
+#pragma once
 
-#include <optional>
 #include <string>
-#include <string_view>
 
-#include <Configurations/ConfigField.hpp>
-#include <Schema/Schema.hpp>
-#include <SourceConfigSchemaRegistry.hpp>
-
-namespace NES::SourceValidationProvider
+namespace NES
 {
 
-std::optional<Schema<QualifiedErasedConfigField, Ordered>> provide(const std::string_view sourceType)
-{
-    return SourceConfigSchemaRegistry::instance().getSchema(std::string{sourceType});
-}
+class InstantiatedConfig;
 
+/// Source-defined config struct: instantiated from the generic config by the SourceConfig
+/// registry entry, carried through the SourceDescriptor as std::any, and serialized via
+/// reflection of exactly this struct (all members are reflectable).
+struct FileSourceConfig
+{
+    std::string filePath;
+
+    static FileSourceConfig fromConfig(const InstantiatedConfig& config);
+};
 }

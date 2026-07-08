@@ -80,15 +80,13 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
     const auto physical1Opt = sourceCatalog.addPhysicalSource(
         *sourceOpt,
         Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
+        Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
+        Schema<LiteralConfigValue, Ordered>{{"type", "CSV"}});
     const auto physical2Opt = sourceCatalog.addPhysicalSource(
         *sourceOpt,
         Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
+        Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
+        Schema<LiteralConfigValue, Ordered>{{"type", "CSV"}});
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -113,9 +111,8 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
     const auto physical3Opt = sourceCatalog.addPhysicalSource(
         *sourceOpt,
         Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
+        Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
+        Schema<LiteralConfigValue, Ordered>{{"type", "CSV"}});
     ASSERT_TRUE(physical2Opt.has_value());
     const auto& physical3 = physical3Opt.value();
 
@@ -139,7 +136,7 @@ TEST_F(SourceCatalogTest, AddInvalidPhysicalSource)
     const auto sourceOpt = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
     const auto physical1Opt
-        = sourceCatalog.addPhysicalSource(*sourceOpt, Identifier::parse("THIS_DOES_NOT_EXIST"), Host("localhost"), {}, {});
+        = sourceCatalog.addPhysicalSource(*sourceOpt, Identifier::parse("THIS_DOES_NOT_EXIST"), {}, {});
     ASSERT_FALSE(physical1Opt.has_value());
 }
 
@@ -156,15 +153,13 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
     const auto physical1Opt = sourceCatalog.addPhysicalSource(
         logicalSource,
         Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
+        Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
+        Schema<LiteralConfigValue, Ordered>{{"type", "CSV"}});
     const auto physical2Opt = sourceCatalog.addPhysicalSource(
         logicalSource,
         Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
+        Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
+        Schema<LiteralConfigValue, Ordered>{{"type", "CSV"}});
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -228,9 +223,8 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
                 auto physicalSourceOpt = sourceCatalog.addPhysicalSource(
                     *logicalSourceOpt,
                     Identifier::parse("File"),
-                    Host("localhost"),
-                    {{Identifier::parse("file_path"), "/dev/null"}},
-                    {{Identifier::parse("type"), "CSV"}});
+                    Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
+                    Schema<LiteralConfigValue, Ordered>{{"type", "CSV"}});
                 if (physicalSourceOpt.has_value())
                 {
                     successfulPhysicalAdds.fetch_add(1);

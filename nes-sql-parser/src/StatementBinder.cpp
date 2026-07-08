@@ -120,7 +120,7 @@ public:
             return ConfigMap{};
         }();
 
-        const auto parserConfig = parseInputFormatterConfig(configOptions);
+        const auto parserConfig = getInputFormatterConfigLiterals(configOptions);
         auto sourceConfig = getSourceConfigLiterals(configOptions);
 
         /// "host" determines worker placement, not source behavior — extract it from the config into a dedicated field.

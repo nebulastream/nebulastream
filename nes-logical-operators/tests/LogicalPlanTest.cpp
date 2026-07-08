@@ -68,16 +68,13 @@ public:
                         const auto dummySchema = Schema<UnqualifiedUnboundField, Ordered>{
                             UnqualifiedUnboundField{testFieldIdentifier, DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
                         auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("Source"), dummySchema).value(); /// NOLINT
-                        const std::unordered_map<Identifier, std::string> dummyParserConfig
-                            = {{Identifier::parse("type"), "CSV"},
-                               {Identifier::parse("tuple_delimiter"), "\n"},
-                               {Identifier::parse("field_delimiter"), ","}};
+                        const Schema<LiteralConfigValue, Ordered> dummyParserConfig{
+                            {"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}};
                         return sourceCatalog /// NOLINT
                             .addPhysicalSource(
                                 logicalSource,
                                 Identifier::parse("File"),
-                                Host("localhost"),
-                                {{Identifier::parse("file_path"), "/dev/null"}},
+                                Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
                                 dummyParserConfig)
                             .value();
                     }()}

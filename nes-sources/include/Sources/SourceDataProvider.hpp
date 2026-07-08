@@ -30,7 +30,7 @@ struct PhysicalSourceConfig
 {
     std::string logical;
     Identifier type;
-    std::unordered_map<Identifier, std::string> parserConfig;
+    std::unordered_map<Identifier, ConfigLiteral> parserConfig;
     std::unordered_map<Identifier, ConfigLiteral> sourceConfig;
 };
 

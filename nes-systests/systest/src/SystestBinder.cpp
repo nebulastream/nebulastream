@@ -57,6 +57,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/FileSourceConfig.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -259,16 +260,15 @@ public:
             getOperatorByType<SourceDescriptorLogicalOperator>(this->optimizedPlan->getGlobalPlan()),
             [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
-                if (const auto path
-                    = logicalSourceOperator->getSourceDescriptor().getPluginConfig().template tryGet<std::string>(
-                        Identifier::parse("file_path"));
-                    path.has_value())
+                if (logicalSourceOperator->getSourceDescriptor().getPluginData().has_value()
+                    && logicalSourceOperator->getSourceDescriptor().getPluginData().type() == typeid(FileSourceConfig))
                 {
                     if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());
                         entry.empty())
                     {
+                        const auto& path = std::any_cast<const FileSourceConfig&>(logicalSourceOperator->getSourceDescriptor().getPluginData()).filePath;
                         sourceNamesToFilepathAndCountForQuery.emplace(
-                            logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{*path}, 1));
+                            logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{path}, 1));
                     }
                     else
                     {
@@ -624,10 +624,10 @@ struct SystestBinder::Impl
         PhysicalSourceConfig physicalSourceConfig{
             .logical = statement.attachedTo.asCanonicalString(),
             .type = statement.sourceType,
-            .parserConfig = statement.parserConfig,
+            .parserConfig = toConfigMap(statement.parserConfig),
             .sourceConfig = toConfigMap(statement.sourceConfig)};
 
-        std::unordered_map<Identifier, std::string> defaultParserConfig{{Identifier::parse("type"), "CSV"}};
+        std::unordered_map<Identifier, ConfigLiteral> defaultParserConfig{{Identifier::parse("type"), "CSV"}};
         physicalSourceConfig.parserConfig.merge(defaultParserConfig);
 
         if (testData.has_value())
@@ -641,12 +641,13 @@ struct SystestBinder::Impl
             throw UnknownSourceName("{}", statement.attachedTo);
         }
 
+        /// The policy-resolved host enters the config as the HOST literal, resolved by the catalog.
+        physicalSourceConfig.sourceConfig.insert_or_assign(Identifier::parse("HOST"), host.getRawValue());
         if (const auto created = sourceCatalog->addPhysicalSource(
                 *logicalSource,
                 physicalSourceConfig.type,
-                host,
                 toLiteralConfigSchema(physicalSourceConfig.sourceConfig),
-                physicalSourceConfig.parserConfig);
+                toLiteralConfigSchema(physicalSourceConfig.parserConfig));
             not created.has_value())
         {
             throw Exception(created.error());
@@ -732,8 +733,9 @@ struct SystestBinder::Impl
         if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
         {
             const auto originalSourceConfig = toConfigMap(inlineSource.value()->getSourceConfig());
+            const auto originalParserConfig = toConfigMap(inlineSource.value()->getParserConfig());
             auto sourceConfig = originalSourceConfig;
-            auto parserConfig = inlineSource.value()->getParserConfig();
+            auto parserConfig = originalParserConfig;
 
             parserConfig.try_emplace(Identifier::parse("type"), "CSV");
 
@@ -752,13 +754,13 @@ struct SystestBinder::Impl
                 "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
             sourceConfig.try_emplace(Identifier::parse("host"), clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
-            if (sourceConfig != originalSourceConfig || parserConfig != inlineSource.value()->getParserConfig())
+            if (sourceConfig != originalSourceConfig || parserConfig != originalParserConfig)
             {
                 const auto newOperator = InlineSourceLogicalOperator::create(
                     inlineSource.value()->getSourceType(),
                     inlineSource.value()->getSourceSchema(),
                     toLiteralConfigSchema(sourceConfig),
-                    parserConfig);
+                    toLiteralConfigSchema(parserConfig));
 
                 return newOperator.withChildrenUnsafe(newChildren);
             }

@@ -13,14 +13,26 @@
 */
 #pragma once
 
-#include <optional>
-#include <string>
+#include <expected>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+
+#include <Configurations/ConfigResolution.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <ErrorHandling.hpp>
+#include <InputFormatterDescriptor.hpp>
 
 namespace NES::InputFormatterValidationProvider
 {
-/// Call the validation function for the set of config arguments and return a Config Object, if all required arguments are present.
-std::optional<DescriptorConfig::Config> provide(std::string_view inputFormat, std::unordered_map<std::string, std::string> stringConfig);
+
+/// Name of the format that requires no input formatting (and therefore carries no config).
+constexpr std::string_view NATIVE_FORMAT = "NATIVE";
+
+/// Resolves the passed literal config values against the config schema the input formatter
+/// declares (via the InputFormatterConfigSchema registry), instantiates the formatter-defined
+/// config struct (via the InputFormatterConfig registry), and wraps it in a descriptor.
+/// The NATIVE format accepts no config parameters and yields a descriptor with an empty config.
+[[nodiscard]] std::expected<InputFormatterDescriptor, Exception>
+provide(std::string_view inputFormatterType, const Schema<LiteralConfigValue, Ordered>& config);
+
 }

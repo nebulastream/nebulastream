@@ -60,7 +60,7 @@ Schema<LiteralConfigValue, Ordered> InlineSourceLogicalOperator::getSourceConfig
     return sourceConfig;
 }
 
-std::unordered_map<Identifier, std::string> InlineSourceLogicalOperator::getParserConfig() const
+Schema<LiteralConfigValue, Ordered> InlineSourceLogicalOperator::getParserConfig() const
 {
     return parserConfig;
 }
@@ -134,7 +134,7 @@ InlineSourceLogicalOperator::InlineSourceLogicalOperator(
     Identifier type,
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
     Schema<LiteralConfigValue, Ordered> sourceConfig,
-    std::unordered_map<Identifier, std::string> parserConfig)
+    Schema<LiteralConfigValue, Ordered> parserConfig)
     : ManagedByOperator(std::move(self))
     , sourceSchema(std::move(sourceSchema))
     , sourceType(std::move(type))
@@ -147,7 +147,7 @@ TypedLogicalOperator<InlineSourceLogicalOperator> InlineSourceLogicalOperator::c
     Identifier type,
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
     Schema<LiteralConfigValue, Ordered> sourceConfig,
-    std::unordered_map<Identifier, std::string> parserConfig)
+    Schema<LiteralConfigValue, Ordered> parserConfig)
 {
     return TypedLogicalOperator<InlineSourceLogicalOperator>{
         std::move(type), std::move(sourceSchema), std::move(sourceConfig), std::move(parserConfig)};

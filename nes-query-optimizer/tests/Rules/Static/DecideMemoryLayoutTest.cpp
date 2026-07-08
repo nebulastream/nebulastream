@@ -72,9 +72,9 @@ LogicalSource createLogicalTestSource(SourceCatalog& sourceCatalog, const std::s
 
 SourceDescriptor createTestSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
 {
-    const Schema<LiteralConfigValue, Ordered> sourceConfig{{QualifiedIdentifier::create(Identifier::parse("file_path")), "/dev/null"}};
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-    return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), Host("localhost"), sourceConfig, parserConfig).value();
+    const Schema<LiteralConfigValue, Ordered> sourceConfig{{"file_path", "/dev/null"}, {"host", "localhost"}};
+    const Schema<LiteralConfigValue, Ordered> parserConfig{{"type", "CSV"}};
+    return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), sourceConfig, parserConfig).value();
 }
 
 SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)

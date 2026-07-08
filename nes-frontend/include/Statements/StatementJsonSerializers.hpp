@@ -38,6 +38,7 @@
 #include <rfl/Generic.hpp>
 #include <rfl/Object.hpp>
 #include <rfl/to_generic.hpp>
+#include <InputFormatterConfigRegistry.hpp>
 #include <InputFormatterDescriptor.hpp>
 
 /// Local converters that translate frontend statement-result values into rfl::Generic for JSON output.
@@ -96,34 +97,27 @@ inline rfl::Generic toFrontendGeneric(const DescriptorConfig::Config& config)
     return entries;
 }
 
-/// reflectcpp's native handler would reflect the InputFormatterDescriptor's nested storage (a wrapper
-/// around DescriptorConfig::Config) into a doubly-nested, type-tagged object. The historical layout is a
-/// flat object: the formatter type under "type", then each remaining config parameter. char-typed
-/// delimiters become single-character strings, matching the previous nlohmann output.
+/// Flat object: the formatter type under "type", then each member of the formatter-defined config
+/// struct (serialized via the formatter's InputFormatterConfigRegistry entry — the only place that
+/// knows the concrete type behind the descriptor's std::any). Formats without a config (NATIVE)
+/// yield only the type.
 inline rfl::Generic toFrontendGeneric(const InputFormatterDescriptor& descriptor)
 {
     rfl::Object<rfl::Generic> obj;
     obj["type"] = reflect(descriptor.getInputFormatterType());
-    const auto ordered = descriptor.getConfig() | std::ranges::to<std::map<std::string, DescriptorConfig::ConfigType>>();
-    for (const auto& [key, val] : ordered)
+    if (descriptor.getConfig().has_value())
     {
-        if (key == InputFormatterDescriptor::getTypeString())
+        if (const auto* configEntry = InputFormatterConfigRegistry::instance().find(descriptor.getInputFormatterType()))
         {
-            continue;
-        }
-        obj[key] = std::visit(
-            [](auto&& arg) -> rfl::Generic
+            const rfl::Generic reflectedConfig = configEntry->reflect(descriptor.getConfig());
+            if (const auto configObject = reflectedConfig.to_object())
             {
-                if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, char>)
+                for (const auto& [key, value] : *configObject)
                 {
-                    return reflect(std::string(1, arg));
+                    obj[key] = value;
                 }
-                else
-                {
-                    return reflect(arg);
-                }
-            },
-            val);
+            }
+        }
     }
     return obj;
 }

@@ -643,7 +643,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             .sourceType = bindIdentifierName(type),
             .host = NES::Host(host),
             .sourceConfig = bindSourceConfig(sourceConfig),
-            .parserConfig = bindConfig(parserConfig)});
+            .parserConfig = bindSourceConfig(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
     {

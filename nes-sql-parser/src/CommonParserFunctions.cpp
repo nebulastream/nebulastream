@@ -188,30 +188,20 @@ collectConfigBlock(const ConfigMap& configOptions, const std::initializer_list<s
 }
 } /// namespace
 
-std::unordered_map<Identifier, std::string> parseInputFormatterConfig(const ConfigMap& configOptions)
-{
-    return collectConfigBlock(configOptions, {"INPUT_FORMATTER"});
-}
-
 std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
 {
     return collectConfigBlock(configOptions, {"OUTPUT_FORMATTER"});
 }
 
-std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions)
+namespace
 {
-    std::unordered_map<Identifier, std::string> sourceOptions{};
-    if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SOURCE")); sourceConfigIter != configOptions.end())
-    {
-        sourceOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
-            | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<Identifier, std::string>>();
-    }
 
-    return sourceOptions;
-}
-
-Schema<LiteralConfigValue, Ordered> getSourceConfigLiterals(const ConfigMap& configOptions)
+/// Collects all literal config options under the given top-level prefix, preserving the parsed
+/// literals instead of rendering them to strings, so config resolution sees exactly what the
+/// parser produced. Unsigned integer literals are lowered to int64_t (integers are always passed
+/// down signed); out-of-range values are rejected. Schema-typed options are handled separately
+/// (see getSourceSchema) and excluded here.
+Schema<LiteralConfigValue, Ordered> collectConfigLiterals(const ConfigMap& configOptions, const std::string_view prefix)
 {
     auto toConfigLiteral = [](const Literal& literal)
     {
@@ -236,19 +226,30 @@ Schema<LiteralConfigValue, Ordered> getSourceConfigLiterals(const ConfigMap& con
             literal);
     };
 
-    std::vector<LiteralConfigValue> sourceOptions{};
-    if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SOURCE")); sourceConfigIter != configOptions.end())
+    std::vector<LiteralConfigValue> options{};
+    if (const auto configIter = configOptions.find(Identifier::parse(std::string{prefix})); configIter != configOptions.end())
     {
-        for (const auto& [name, value] : sourceConfigIter->second)
+        for (const auto& [name, value] : configIter->second)
         {
-            /// Schema-typed options define the source schema and are extracted via getSourceSchema.
             if (const auto* literal = std::get_if<Literal>(&value))
             {
-                sourceOptions.emplace_back(QualifiedIdentifier::create(name), toConfigLiteral(*literal));
+                options.emplace_back(QualifiedIdentifier::create(name), toConfigLiteral(*literal));
             }
         }
     }
-    return Schema<LiteralConfigValue, Ordered>{std::move(sourceOptions)};
+    return Schema<LiteralConfigValue, Ordered>{std::move(options)};
+}
+
+}
+
+Schema<LiteralConfigValue, Ordered> getSourceConfigLiterals(const ConfigMap& configOptions)
+{
+    return collectConfigLiterals(configOptions, "SOURCE");
+}
+
+Schema<LiteralConfigValue, Ordered> getInputFormatterConfigLiterals(const ConfigMap& configOptions)
+{
+    return collectConfigLiterals(configOptions, "INPUT_FORMATTER");
 }
 
 std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions)

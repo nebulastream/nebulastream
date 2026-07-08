@@ -29,6 +29,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/FileSourceConfig.hpp>
 #include <Sources/Source.hpp>
 
 namespace NES
@@ -36,15 +37,6 @@ namespace NES
 
 static const auto SYSTEST_FILE_PATH_PARAMETER = Identifier::parse("FILE_PATH");
 
-/// Source-defined config struct: instantiated from the generic config by the SourceConfig
-/// registry entry, carried through the SourceDescriptor as std::any, and serialized via
-/// reflection of exactly this struct (all members are reflectable).
-struct FileSourceConfig
-{
-    std::string filePath;
-
-    static FileSourceConfig fromConfig(const InstantiatedConfig& config);
-};
 
 class FileSource final : public Source
 {

@@ -48,13 +48,13 @@ public:
         Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
         Schema<LiteralConfigValue, Ordered> sourceConfig,
-        std::unordered_map<Identifier, std::string> parserConfig);
+        Schema<LiteralConfigValue, Ordered> parserConfig);
 
     static TypedLogicalOperator<InlineSourceLogicalOperator> create(
         Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
         Schema<LiteralConfigValue, Ordered> sourceConfig,
-        std::unordered_map<Identifier, std::string> parserConfig);
+        Schema<LiteralConfigValue, Ordered> parserConfig);
 
     [[nodiscard]] bool operator==(const InlineSourceLogicalOperator& rhs) const;
 
@@ -76,7 +76,7 @@ public:
     /// The literals exactly as the parser produced them (see getSourceConfigLiterals); resolved
     /// against the source's declared config schema in the InlineSourceBindingRule.
     [[nodiscard]] Schema<LiteralConfigValue, Ordered> getSourceConfig() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getParserConfig() const;
+    [[nodiscard]] Schema<LiteralConfigValue, Ordered> getParserConfig() const;
     [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getSourceSchema() const;
 
 private:
@@ -85,7 +85,7 @@ private:
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema;
     Identifier sourceType;
     Schema<LiteralConfigValue, Ordered> sourceConfig;
-    std::unordered_map<Identifier, std::string> parserConfig;
+    Schema<LiteralConfigValue, Ordered> parserConfig;
 
     std::vector<LogicalOperator> children;
 

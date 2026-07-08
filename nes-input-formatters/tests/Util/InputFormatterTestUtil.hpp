@@ -28,8 +28,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <InputFormatterDescriptor.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -91,7 +91,7 @@ struct TestConfig
     size_t numRequiredBuffers{};
     uint64_t sizeOfRawBuffers{};
     uint64_t sizeOfFormattedBuffers{};
-    DescriptorConfig::Config parserConfig;
+    InputFormatterDescriptor parserConfig;
     std::vector<TestDataTypes> testSchema;
     const MemoryLayoutType memoryLayoutType;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
@@ -171,7 +171,7 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpe
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const DescriptorConfig::Config& parserConfiguration,
+    const InputFormatterDescriptor& parserConfiguration,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     MemoryLayoutType memoryLayoutType,
     size_t sizeOfFormattedBuffers,

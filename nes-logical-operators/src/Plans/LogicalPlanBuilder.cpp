@@ -82,7 +82,7 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(
     Identifier inlineSourceType,
     Schema<UnqualifiedUnboundField, Ordered> schema,
     Schema<LiteralConfigValue, Ordered> sourceConfig,
-    std::unordered_map<Identifier, std::string> parserConfig)
+    Schema<LiteralConfigValue, Ordered> parserConfig)
 {
     return LogicalPlan(
         INVALID_QUERY_ID,

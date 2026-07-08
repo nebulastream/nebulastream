@@ -152,27 +152,13 @@ uint64_t calcNumberOfTuplesForInterval(
     return numberOfTuples;
 }
 
-/// All config fields of the generator source, shared by getConfigSchema (declaration) and
-/// GeneratorSourceConfig::fromConfig (typed extraction). Constructed lazily on first use so no
-/// exception can escape static initialization.
-struct GeneratorConfigFields
-{
-    ConfigField<GeneratorStop> sequenceStopsGenerator;
-    ConfigField<int64_t> seed;
-    ConfigField<GeneratorRate::Type> generatorRateType;
-    ConfigField<GeneratorRateVariant> generatorRateConfig;
-    ConfigField<std::string> generatorSchema;
-    ConfigField<uint64_t> flushIntervalMs;
-    ConfigField<int64_t> maxRuntimeMs;
-};
-
-const GeneratorConfigFields& configFields()
-{
-    static const GeneratorConfigFields fields{
-        .sequenceStopsGenerator
-        = {"STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
-           [](const ConfigLiteral& literal)
-           {
+/// Config fields of the generator source, shared by getConfigSchema (declaration) and
+/// GeneratorSourceConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<GeneratorStop> SEQUENCE_STOPS_GENERATOR{
+    "STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
+    [](const ConfigLiteral& literal)
+    {
                return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
                    .and_then(
                        [](std::string&& value) -> std::expected<GeneratorStop, Exception>
@@ -185,15 +171,17 @@ const GeneratorConfigFields& configFields()
                            }
                            return optToken.value();
                        });
-           }},
-        .seed
-        = {"SEED",
-           [](const ConfigLiteral& config) { return NES::tryGetOr<int64_t>(config, expectedType<int64_t>()); },
-           [] { return std::chrono::high_resolution_clock::now().time_since_epoch().count(); }},
-        .generatorRateType
-        = {"GENERATOR_RATE_TYPE",
-           [](const ConfigLiteral& config)
-           {
+    }};
+
+const ConfigField<int64_t> SEED{
+    "SEED",
+    [](const ConfigLiteral& config) { return NES::tryGetOr<int64_t>(config, expectedType<int64_t>()); },
+    [] { return std::chrono::high_resolution_clock::now().time_since_epoch().count(); }};
+
+static const ConfigField<GeneratorRate::Type> GENERATOR_RATE_TYPE{
+    "GENERATOR_RATE_TYPE",
+    [](const ConfigLiteral& config)
+    {
                return NES::tryGetOr<std::string>(config, expectedType<std::string>())
                    .and_then(
                        [](std::string&& value) -> std::expected<GeneratorRate::Type, Exception>
@@ -205,12 +193,13 @@ const GeneratorConfigFields& configFields()
                            }
                            return enumOpt.value();
                        });
-           },
-           GeneratorRate::Type::FIXED},
-        .generatorRateConfig
-        = {"GENERATOR_RATE_CONFIG",
-           [](const ConfigLiteral& config)
-           {
+    },
+    GeneratorRate::Type::FIXED};
+
+static const ConfigField<GeneratorRateVariant> GENERATOR_RATE_CONFIG{
+    "GENERATOR_RATE_CONFIG",
+    [](const ConfigLiteral& config)
+    {
                return NES::tryGetOr<std::string>(config, expectedType<std::string>())
                    .and_then(
                        [](const std::string& value) -> std::expected<GeneratorRateVariant, Exception>
@@ -228,12 +217,13 @@ const GeneratorConfigFields& configFields()
                            return std::unexpected{
                                InvalidConfigParameter("Invalid value, must be a sinus or fixed generator rate, but was: {}!", value)};
                        });
-           },
-           GeneratorRateVariant{FixedGeneratorRateConfig{.emitRate = 1000}}},
-        .generatorSchema
-        = {"GENERATOR_SCHEMA",
-           [](const ConfigLiteral& config)
-           {
+    },
+    GeneratorRateVariant{FixedGeneratorRateConfig{.emitRate = 1000}}};
+
+static const ConfigField<std::string> GENERATOR_SCHEMA{
+    "GENERATOR_SCHEMA",
+    [](const ConfigLiteral& config)
+    {
                return NES::tryGetOr<std::string>(config, expectedType<std::string>())
                    .and_then(
                        [](const std::string& value) -> std::expected<std::string, Exception>
@@ -280,45 +270,43 @@ const GeneratorConfigFields& configFields()
                            }
                            return value;
                        });
-           }},
-        .flushIntervalMs
-        = {"FLUSH_INTERVAL_MS",
-           [](const ConfigLiteral& config)
-           { return NES::tryGetOr<int64_t>(config, expectedType<uint64_t>()).and_then(downcastConfigValue<int64_t, uint64_t>); },
-           10},
-        /// Max runtime in ms; if set to -1 the source runs until stopped by another thread.
-        .maxRuntimeMs
-        = {"MAX_RUNTIME_MS", [](const ConfigLiteral& config) { return NES::tryGetOr<int64_t>(config, expectedType<int64_t>()); }, -1},
-    };
-    return fields;
-}
+    }};
+
+static const ConfigField<uint64_t> FLUSH_INTERVAL_MS{
+    "FLUSH_INTERVAL_MS",
+    [](const ConfigLiteral& config)
+    { return NES::tryGetOr<int64_t>(config, expectedType<uint64_t>()).and_then(downcastConfigValue<int64_t, uint64_t>); },
+    10};
+
+/// Max runtime in ms; if set to -1 the source runs until stopped by another thread.
+static const ConfigField<int64_t> MAX_RUNTIME_MS{
+    "MAX_RUNTIME_MS", [](const ConfigLiteral& config) { return NES::tryGetOr<int64_t>(config, expectedType<int64_t>()); }, -1};
+/// NOLINTEND(cert-err58-cpp)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> GeneratorSource::getConfigSchema()
 {
-    const auto& fields = configFields();
     return createConfigSchema(
         Identifier::parse("GENERATOR_SOURCE"),
-        fields.seed,
-        fields.generatorSchema,
-        fields.maxRuntimeMs,
-        fields.sequenceStopsGenerator,
-        fields.generatorRateType,
-        fields.generatorRateConfig,
-        fields.flushIntervalMs);
+        SEED,
+        GENERATOR_SCHEMA,
+        MAX_RUNTIME_MS,
+        SEQUENCE_STOPS_GENERATOR,
+        GENERATOR_RATE_TYPE,
+        GENERATOR_RATE_CONFIG,
+        FLUSH_INTERVAL_MS);
 }
 
 GeneratorSourceConfig GeneratorSourceConfig::fromConfig(const InstantiatedConfig& config)
 {
-    const auto& fields = configFields();
     return GeneratorSourceConfig{
-        .seed = static_cast<uint32_t>(config.get(fields.seed)),
-        .maxRuntime = static_cast<int32_t>(config.get(fields.maxRuntimeMs)),
-        .generatorSchemaRaw = config.get(fields.generatorSchema),
-        .stopGeneratorWhenSequenceFinishes = config.get(fields.sequenceStopsGenerator),
-        .flushInterval = std::chrono::milliseconds{config.get(fields.flushIntervalMs)},
-        .generatorRateConfig = config.get(fields.generatorRateConfig)};
+        .seed = static_cast<uint32_t>(config.get(SEED)),
+        .maxRuntime = static_cast<int32_t>(config.get(MAX_RUNTIME_MS)),
+        .generatorSchemaRaw = config.get(GENERATOR_SCHEMA),
+        .stopGeneratorWhenSequenceFinishes = config.get(SEQUENCE_STOPS_GENERATOR),
+        .flushInterval = std::chrono::milliseconds{config.get(FLUSH_INTERVAL_MS)},
+        .generatorRateConfig = config.get(GENERATOR_RATE_CONFIG)};
 }
 
 GeneratorSource::GeneratorSource(const GeneratorSourceConfig& config)

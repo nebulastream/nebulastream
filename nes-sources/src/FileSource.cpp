@@ -44,35 +44,23 @@ namespace NES
 namespace
 {
 
-/// All config fields of the file source, shared by getConfigSchema (declaration) and
-/// FileSourceConfig::fromConfig (typed extraction). Constructed lazily on first use so no
-/// exception can escape static initialization.
-struct FileConfigFields
-{
-    ConfigField<std::string> filePath;
-};
-
-const FileConfigFields& configFields()
-{
-    static const FileConfigFields fields{
-        .filePath
-        = {"FILE_PATH", [](const ConfigLiteral& literal) { return NES::tryGetOr<std::string>(literal, expectedType<std::string>()); }},
-    };
-    return fields;
-}
+/// Config fields of the file source, shared by getConfigSchema (declaration) and
+/// FileSourceConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+static const ConfigField<std::string> FILE_PATH{
+    "FILE_PATH", [](const ConfigLiteral& literal) { return NES::tryGetOr<std::string>(literal, expectedType<std::string>()); }};
+/// NOLINTEND(cert-err58-cpp)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> FileSource::getConfigSchema()
 {
-    const auto& fields = configFields();
-    return createConfigSchema(Identifier::parse("FILE_SOURCE"), fields.filePath);
+    return createConfigSchema(Identifier::parse("FILE_SOURCE"), FILE_PATH);
 }
 
 FileSourceConfig FileSourceConfig::fromConfig(const InstantiatedConfig& config)
 {
-    const auto& fields = configFields();
-    return FileSourceConfig{.filePath = config.get(fields.filePath)};
+    return FileSourceConfig{.filePath = config.get(FILE_PATH)};
 }
 
 FileSource::FileSource(const FileSourceConfig& config) : filePath(config.filePath)

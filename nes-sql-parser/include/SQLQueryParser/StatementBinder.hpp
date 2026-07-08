@@ -67,10 +67,10 @@ struct CreatePhysicalSourceStatement
     LogicalSourceName attachedTo;
     Identifier sourceType;
     std::optional<Host> host;
-    /// The literals exactly as the parser produced them; resolved against the source's declared
-    /// config schema when the catalog creates the physical source.
+    /// The literals exactly as the parser produced them; resolved against the source's (and the
+    /// input formatter's) declared config schema when the catalog creates the physical source.
     Schema<LiteralConfigValue, Ordered> sourceConfig;
-    std::unordered_map<Identifier, std::string> parserConfig;
+    Schema<LiteralConfigValue, Ordered> parserConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 

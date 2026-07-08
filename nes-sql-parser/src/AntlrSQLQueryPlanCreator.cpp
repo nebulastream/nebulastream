@@ -493,7 +493,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
                 throw InvalidQuerySyntax("Neither named source or inline source specified");
             }
             const auto [type, configOptions] = inlineSourceConfig.value();
-            const auto parserConfig = parseInputFormatterConfig(configOptions);
+            const auto parserConfig = getInputFormatterConfigLiterals(configOptions);
             const auto sourceConfig = getSourceConfigLiterals(configOptions);
             const auto schema = getSourceSchema(configOptions);
             if (!schema.has_value())

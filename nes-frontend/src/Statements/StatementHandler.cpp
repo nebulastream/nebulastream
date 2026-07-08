@@ -25,7 +25,12 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configurations/ConfigResolution.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -88,8 +93,16 @@ SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statemen
             hostPolicy);
     }();
 
-    auto created
-        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, host, statement.sourceConfig, statement.parserConfig);
+    /// The binder extracted "host" from the source config into the statement's dedicated field;
+    /// feed the policy-resolved host back as the HOST literal so the catalog resolves it uniformly.
+    auto sourceConfigValues = statement.sourceConfig | std::ranges::to<std::vector>();
+    sourceConfigValues.emplace_back(QualifiedIdentifier::create(Identifier::parse("HOST")), host.getRawValue());
+
+    auto created = sourceCatalog->addPhysicalSource(
+        *logicalSource,
+        statement.sourceType,
+        Schema<LiteralConfigValue, Ordered>{std::move(sourceConfigValues)},
+        statement.parserConfig);
     if (created)
     {
         return CreatePhysicalSourceStatementResult{created.value()};

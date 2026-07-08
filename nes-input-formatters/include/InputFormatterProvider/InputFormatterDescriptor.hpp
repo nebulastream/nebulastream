@@ -14,48 +14,54 @@
 
 #pragma once
 
-#include <optional>
+#include <any>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+
 #include <Util/Logger/Formatter.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
+#include "Configurations/ConfigField.hpp"
+#include "Schema/Schema.hpp"
 
 namespace NES
 {
-/// Descriptor that stores the configuration parameters of a specific InputFormatter instance
-/// For a specific InputFormatter, config parameters may be added by creating a ConfigParameters<Type> struct in the respective header.
-class InputFormatterDescriptor final : public Descriptor
+
+/// Describes a configured input formatter instance: its type name plus the formatter-defined
+/// config struct (e.g. CSVInputFormatterConfig), type-erased. The config is produced by the
+/// formatter's InputFormatterConfigRegistry entry, so the formatter factory can safely any_cast
+/// it back; serialization also goes through that entry. The NATIVE format carries no config,
+/// represented by an empty std::any.
+class InputFormatterDescriptor final
 {
     static constexpr std::string_view TYPE_STRING{"TYPE"};
 
 public:
-    explicit InputFormatterDescriptor(std::string inputFormatterType, DescriptorConfig::Config config);
+    explicit InputFormatterDescriptor(std::string inputFormatterType, std::any config);
     ~InputFormatterDescriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatterDescriptor& inputFormatterDescriptor);
 
+    /// The type-erased config struct (std::any) is not comparable; two descriptors are considered
+    /// equal if they describe the same formatter type.
+    friend bool operator==(const InputFormatterDescriptor& lhs, const InputFormatterDescriptor& rhs)
+    {
+        return lhs.inputFormatterType == rhs.inputFormatterType;
+    }
+
     static std::string getTypeString() { return std::string{TYPE_STRING}; }
 
-    const std::string& getInputFormatterType() const;
+    [[nodiscard]] const std::string& getInputFormatterType() const;
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> TYPE{
-        std::string{TYPE_STRING},
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TYPE, config); }};
+    [[nodiscard]] const std::any& getConfig() const;
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(TYPE);
-
+    static inline Schema<QualifiedErasedConfigField, Ordered> =
 private:
-    friend class SourceCatalog;
     friend struct Unreflector<InputFormatterDescriptor>;
     friend struct Reflector<InputFormatterDescriptor>;
 
-    /// Add LowerSchemaProvider as friend, so that it can construct the descriptor
     std::string inputFormatterType;
+    std::any config;
 };
 
 template <>
@@ -70,15 +76,6 @@ struct Unreflector<InputFormatterDescriptor>
     InputFormatterDescriptor operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
-}
-
-namespace NES::detail
-{
-struct ReflectedInputFormatterDescriptor
-{
-    std::string inputFormatterType;
-    Reflected config;
-};
 }
 
 FMT_OSTREAM(NES::InputFormatterDescriptor);

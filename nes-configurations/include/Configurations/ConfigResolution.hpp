@@ -17,9 +17,11 @@
 #include <cstddef>
 #include <expected>
 #include <ostream>
+#include <string>
 #include <utility>
 #include <vector>
 
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -44,6 +46,11 @@ class LiteralConfigValue
 
 public:
     LiteralConfigValue(QualifiedIdentifier name, ConfigLiteral value) : name(std::move(name)), value(std::move(value)) { }
+
+    LiteralConfigValue(std::string name, ConfigLiteral value)
+        : name(QualifiedIdentifier::create(Identifier::parse(std::move(name)))), value(std::move(value))
+    {
+    }
 
     [[nodiscard]] QualifiedIdentifier getFullyQualifiedName() const { return name; }
     [[nodiscard]] ConfigLiteral getValue() const { return value; }

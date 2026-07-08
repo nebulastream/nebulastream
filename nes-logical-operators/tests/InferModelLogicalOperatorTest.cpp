@@ -84,10 +84,10 @@ TypedLogicalOperator<SourceDescriptorLogicalOperator>
 makeSourceWithSchema(SourceCatalog& catalog, std::string_view sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
     const auto logical = catalog.addLogicalSource(Identifier::parse(std::string{sourceName}), schema).value();
-    const Schema<LiteralConfigValue, Ordered> sourceConfig{{QualifiedIdentifier::create(Identifier::parse("file_path")), "/dev/null"}};
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    const Schema<LiteralConfigValue, Ordered> sourceConfig{{"file_path", "/dev/null"}, {"host", "localhost"}};
+    const Schema<LiteralConfigValue, Ordered> parserConfig{{"type", "CSV"}};
     const auto descriptor
-        = catalog.addPhysicalSource(logical, Identifier::parse("file"), Host("localhost"), sourceConfig, parserConfig).value();
+        = catalog.addPhysicalSource(logical, Identifier::parse("file"), sourceConfig, parserConfig).value();
     return SourceDescriptorLogicalOperator::create(descriptor);
 }
 
@@ -162,9 +162,9 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceMissingField)
 /// Model input field present but with the wrong type throws CannotInferSchema.
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceTypeMismatch)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
-        catalog,
+        *catalog,
         "src",
         Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("in_0"), DataType::Type::INT32}});
 

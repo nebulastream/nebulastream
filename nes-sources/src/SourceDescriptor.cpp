@@ -42,8 +42,7 @@ SourceDescriptor::SourceDescriptor(
     LogicalSource logicalSource,
     std::string_view sourceType,
     Host host,
-    const size_t maxInflightBuffers,
-    InstantiatedConfig pluginConfig,
+    const std::optional<size_t> maxInflightBuffers,
     std::any pluginData,
     const InputFormatterDescriptor& inputFormatterDescriptor)
     : physicalSourceId(physicalSourceId)
@@ -52,14 +51,13 @@ SourceDescriptor::SourceDescriptor(
     , host(std::move(host))
     , maxInflightBuffers(maxInflightBuffers)
     , pluginData(std::move(pluginData))
-    , pluginConfig(std::move(pluginConfig))
     , inputFormatterDescriptor(inputFormatterDescriptor)
 {
 }
 
-LogicalSource SourceDescriptor::getLogicalSource() const
+const Schema<UnqualifiedUnboundField, Ordered>& SourceDescriptor::getSchema() const
 {
-    return logicalSource;
+    return schema;
 }
 
 std::string SourceDescriptor::getSourceType() const
@@ -82,14 +80,9 @@ Host SourceDescriptor::getHost() const
     return host;
 }
 
-size_t SourceDescriptor::getMaxInflightBuffers() const
+std::optional<size_t> SourceDescriptor::getMaxInflightBuffers() const
 {
     return maxInflightBuffers;
-}
-
-const InstantiatedConfig& SourceDescriptor::getPluginConfig() const
-{
-    return pluginConfig;
 }
 
 const std::any& SourceDescriptor::getPluginData() const
@@ -134,9 +127,8 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 
 Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
 {
-    /// The generic InstantiatedConfig is a frontend artifact and does not travel. The wire format
-    /// carries the source-defined config struct, serialized by the source's SourceConfigRegistry
-    /// entry — the only place that knows the concrete type behind the std::any.
+    /// The wire format carries the source-defined config struct, serialized by the source's
+    /// SourceConfigRegistry entry — the only place that knows the concrete type behind the std::any.
     const auto* configEntry = SourceConfigRegistry::instance().find(sourceDescriptor.sourceType);
     INVARIANT(
         configEntry != nullptr,
@@ -172,7 +164,6 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl,
         reflectedSourceDescriptor.type,
         reflectedSourceDescriptor.host,
         reflectedSourceDescriptor.maxInflightBuffers,
-        InstantiatedConfig{Schema<ConfigValue, Ordered>{}},
         configEntry->unreflect(reflectedSourceDescriptor.config, context),
         reflectedSourceDescriptor.inputFormatterDescriptor};
 }

@@ -15,21 +15,21 @@
 #include <CSVInputFormatIndexer.hpp>
 
 #include <cstddef>
+#include <expected>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 
-#include <Configurations/Descriptor.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Util/Strings.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsetRawBufferIndex.hpp>
-#include <InputFormatIndexerRegistry.hpp>
-#include <InputFormatter.hpp>
-#include <InputFormatterValidationRegistry.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 
@@ -149,22 +149,50 @@ std::unique_ptr<RawBufferIndex> CSVInputFormatIndexer::indexRawBuffer(const std:
     return fieldOffsets;
 }
 
-DescriptorConfig::Config CSVInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+namespace
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersCSVInputFormatIndexer>(std::move(config), NAME);
+
+/// ConfigField factory for a single-byte delimiter parameter; unescapes textual escape sequences
+/// such as "\n" or "\t" first.
+std::expected<char, Exception> parseDelimiter(const ConfigLiteral& literal)
+{
+    return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+        .and_then(
+            [](const std::string& value) -> std::expected<char, Exception>
+            {
+                const auto unescaped = unescapeSpecialCharacters(value);
+                if (unescaped.size() != 1)
+                {
+                    return std::unexpected{InvalidConfigParameter("Expected a single (possibly escaped) character, got {}", value)};
+                }
+                return unescaped.front();
+            });
 }
 
-InputFormatterValidationRegistryReturnType
-InputFormatterValidationGeneratedRegistrar::RegisterCSVInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
-{
-    return CSVInputFormatIndexer::validateAndFormat(arguments.config);
+/// Config fields of the CSV input formatter, shared by getConfigSchema (declaration) and
+/// CSVInputFormatterConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<bool> ALLOW_COMMAS_IN_STRINGS{
+    "ALLOW_COMMAS_IN_STRINGS", [](const ConfigLiteral& literal) { return NES::tryGetOr<bool>(literal, expectedType<bool>()); }, true};
+
+const ConfigField<char> TUPLE_DELIMITER{"TUPLE_DELIMITER", parseDelimiter, '\n'};
+
+const ConfigField<char> FIELD_DELIMITER{"FIELD_DELIMITER", parseDelimiter, ','};
+/// NOLINTEND(cert-err58-cpp)
+
 }
 
-InputFormatIndexerRegistryReturnType
-RegisterCSVInputFormatIndexer(InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
+Schema<QualifiedErasedConfigField, Ordered> CSVInputFormatIndexer::getConfigSchema()
 {
-    return arguments.createInputFormatterWithIndexer(
-        CSVInputFormatIndexer::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
+    return createConfigSchema(Identifier::parse("CSV_INPUT_FORMATTER"), ALLOW_COMMAS_IN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
+}
+
+CSVInputFormatterConfig CSVInputFormatterConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return CSVInputFormatterConfig{
+        .allowCommasInStrings = config.get(ALLOW_COMMAS_IN_STRINGS),
+        .tupleDelimiter = config.get(TUPLE_DELIMITER),
+        .fieldDelimiter = config.get(FIELD_DELIMITER)};
 }
 
 std::ostream& CSVInputFormatIndexer::toString(std::ostream& str) const

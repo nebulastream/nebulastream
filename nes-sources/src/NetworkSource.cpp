@@ -46,92 +46,76 @@ namespace NES
 namespace
 {
 
-/// All config fields of the network source, shared by getConfigSchema (declaration) and
-/// NetworkSourceConfig::fromConfig (typed extraction). Constructed lazily on first use so no
-/// exception can escape static initialization.
-struct NetworkConfigFields
-{
-    ConfigField<std::string> channel;
-    ConfigField<std::string> bind;
-    ConfigField<size_t> receiverQueueSize;
-};
+/// Config fields of the network source, shared by getConfigSchema (declaration) and
+/// NetworkSourceConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+static const ConfigField<std::string> CHANNEL{
+    "CHANNEL",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<std::string, Exception>
+                {
+                    if (!stringToUUID(value))
+                    {
+                        return std::unexpected{InvalidConfigParameter("NetworkSource: channel must be a valid UUID, got: {}", value)};
+                    }
+                    return value;
+                });
+    }};
 
-const NetworkConfigFields& configFields()
-{
-    static const NetworkConfigFields fields{
-        .channel
-        = {"CHANNEL",
-           [](const ConfigLiteral& literal)
-           {
-               return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-                   .and_then(
-                       [](const std::string& value) -> std::expected<std::string, Exception>
-                       {
-                           if (!stringToUUID(value))
-                           {
-                               return std::unexpected{
-                                   InvalidConfigParameter("NetworkSource: channel must be a valid UUID, got: {}", value)};
-                           }
-                           return value;
-                       });
-           }},
-        .bind
-        = {"BIND",
-           [](const ConfigLiteral& literal)
-           {
-               return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
-                   .and_then(
-                       [](const std::string& value) -> std::expected<std::string, Exception>
-                       {
-                           if (!EndpointValidation{}.isValid(value))
-                           {
-                               return std::unexpected{
-                                   InvalidConfigParameter("NetworkSource: bind must be host:port format, got: {}", value)};
-                           }
-                           return value;
-                       });
-           }},
-        /// Per-channel receiver queue size override. 0 means use the worker-level default.
-        /// When a user explicitly sets receiver_queue_size=0, the lambda rejects it with an error.
-        /// The default value (0) is returned directly by the config system, bypassing the lambda.
-        .receiverQueueSize
-        = {"RECEIVER_QUEUE_SIZE",
-           [](const ConfigLiteral& literal)
-           {
-               /// Integer literals are always passed down signed; lower into size_t.
-               return NES::tryGetOr<int64_t>(literal, expectedType<size_t>())
-                   .and_then(downcastConfigValue<int64_t, size_t>)
-                   .and_then(
-                       [](const size_t value) -> std::expected<size_t, Exception>
-                       {
-                           if (value == 0)
-                           {
-                               return std::unexpected{
-                                   InvalidConfigParameter("NetworkSource: receiver_queue_size must be > 0 when explicitly set")};
-                           }
-                           return value;
-                       });
-           },
-           size_t{0}},
-    };
-    return fields;
-}
+static const ConfigField<std::string> BIND{
+    "BIND",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<std::string, Exception>
+                {
+                    if (!EndpointValidation{}.isValid(value))
+                    {
+                        return std::unexpected{InvalidConfigParameter("NetworkSource: bind must be host:port format, got: {}", value)};
+                    }
+                    return value;
+                });
+    }};
+
+/// Per-channel receiver queue size override. 0 means use the worker-level default.
+/// When a user explicitly sets receiver_queue_size=0, the lambda rejects it with an error.
+/// The default value (0) is returned directly by the config system, bypassing the lambda.
+static const ConfigField<size_t> RECEIVER_QUEUE_SIZE{
+    "RECEIVER_QUEUE_SIZE",
+    [](const ConfigLiteral& literal)
+    {
+        /// Integer literals are always passed down signed; lower into size_t.
+        return NES::tryGetOr<int64_t>(literal, expectedType<size_t>())
+            .and_then(downcastConfigValue<int64_t, size_t>)
+            .and_then(
+                [](const size_t value) -> std::expected<size_t, Exception>
+                {
+                    if (value == 0)
+                    {
+                        return std::unexpected{
+                            InvalidConfigParameter("NetworkSource: receiver_queue_size must be > 0 when explicitly set")};
+                    }
+                    return value;
+                });
+    },
+    size_t{0}};
+/// NOLINTEND(cert-err58-cpp)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> NetworkSource::getConfigSchema()
 {
-    const auto& fields = configFields();
-    return createConfigSchema(Identifier::parse("NETWORK_SOURCE"), fields.channel, fields.bind, fields.receiverQueueSize);
+    return createConfigSchema(Identifier::parse("NETWORK_SOURCE"), CHANNEL, BIND, RECEIVER_QUEUE_SIZE);
 }
 
 NetworkSourceConfig NetworkSourceConfig::fromConfig(const InstantiatedConfig& config)
 {
-    const auto& fields = configFields();
     return NetworkSourceConfig{
-        .channel = config.get(fields.channel),
-        .bind = config.get(fields.bind),
-        .receiverQueueSize = config.get(fields.receiverQueueSize)};
+        .channel = config.get(CHANNEL), .bind = config.get(BIND), .receiverQueueSize = config.get(RECEIVER_QUEUE_SIZE)};
 }
 
 NetworkSource::NetworkSource(const NetworkSourceConfig& config)
