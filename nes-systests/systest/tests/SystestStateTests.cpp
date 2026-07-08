@@ -136,4 +136,33 @@ TEST_F(SystestStateTest, DirectlySpecifiedTestFileOverridesDisabledTestFiles)
     ASSERT_EQ(testMap.size(), 1);
     EXPECT_TRUE(testMap.contains(std::filesystem::weakly_canonical(joinFile)));
 }
+
+TEST_F(SystestStateTest, DiscoveredTestNamesIncludeRelativeDirectory)
+{
+    const TemporaryDirectory tempDir;
+    const auto leftFile = tempDir.get() / "left" / "same.test";
+    const auto rightFile = tempDir.get() / "right" / "same.test";
+    writeTextFile(leftFile, "# groups:[Join]\n");
+    writeTextFile(rightFile, "# groups:[Join]\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.testFileExtension = ".test";
+
+    const auto testMap = loadTestFileMap(config);
+
+    ASSERT_EQ(testMap.size(), 2);
+    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(leftFile)).name(), "left/same");
+    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(rightFile)).name(), "right/same");
+}
+
+TEST_F(SystestStateTest, ResultFilesCreateDirectoriesForNestedTestNames)
+{
+    const TemporaryDirectory tempDir;
+
+    const auto resultFile = SystestQuery::resultFile(tempDir.get(), "left/same", SystestQueryId(1));
+
+    EXPECT_EQ(resultFile, tempDir.get() / "results" / "left" / "same_1.csv");
+    EXPECT_TRUE(std::filesystem::is_directory(resultFile.parent_path()));
+}
 }
