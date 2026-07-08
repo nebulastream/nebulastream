@@ -17,13 +17,14 @@
 #include <chrono>
 #include <cstdint>
 #include <expected>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryManager/QuerySupervisor.hpp>
 #include <Util/Pointers.hpp>
-#include <absl/functional/any_invocable.h>
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
@@ -52,7 +53,7 @@ using BackendProvider = absl::AnyInvocable<UniquePtr<QuerySubmissionBackend>(con
 
 struct QueryManagerState
 {
-    std::unordered_map<DistributedQueryId, DistributedQuery> queries;
+    std::unordered_map<DistributedQueryId, folly::Synchronized<DistributedQuery>> queries;
 };
 
 /// Manages the lifecycle of distributed queries in a NebulaStream cluster.
@@ -68,6 +69,7 @@ class QueryManager
         mutable BackendProvider backendProvider;
         mutable std::unordered_map<Host, UniquePtr<QuerySubmissionBackend>> backends;
         mutable uint64_t cachedWorkerCatalogVersion = 0;
+        mutable std::mutex mutex;
         static std::unordered_map<Host, UniquePtr<QuerySubmissionBackend>>
         createBackends(const std::vector<WorkerConfig>& workers, BackendProvider& provider);
         void rebuildBackendsIfNeeded() const;
@@ -77,33 +79,50 @@ class QueryManager
 
         auto begin() const
         {
+            std::lock_guard sl(mutex);
             rebuildBackendsIfNeeded();
             return backends.begin();
         }
 
-        auto end() const { return backends.end(); }
+        auto end() const
+        {
+            std::lock_guard sl(mutex);
+            return backends.end();
+        }
 
         bool contains(const Host& worker) const
         {
+            std::lock_guard sl(mutex);
             rebuildBackendsIfNeeded();
             return backends.contains(worker);
         }
 
         const QuerySubmissionBackend& at(const Host& worker) const
         {
+            std::lock_guard sl(mutex);
             rebuildBackendsIfNeeded();
             return *backends.at(worker);
         }
 
         QuerySubmissionBackend& at(const Host& worker)
         {
+            std::lock_guard sl(mutex);
             rebuildBackendsIfNeeded();
             return *backends.at(worker);
+        }
+
+        SharedPtr<WorkerCatalog> getWorkerCatalog()
+        {
+            std::lock_guard sl(mutex);
+            return copyPtr(workerCatalog); // TODO move elsewhere
         }
     };
 
     QueryManagerState state;
     QueryManagerBackends backends;
+    std::unordered_map<DistributedQueryId, QuerySupervisor> supervisors;
+
+    friend class QuerySupervisor;
 
 public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
@@ -111,11 +130,12 @@ public:
     /// Compiles and starts the distributed query on all assigned workers. Blocks until the query state has advanced past Registered.
     [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(const DistributedLogicalPlan& plan);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
-    [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> status(const DistributedQueryId& query) const;
-    [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
+    std::expected<void, std::vector<Exception>> superviseNonBlocking(DistributedQueryId distributedQueryId);
+    [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> status(const DistributedQueryId& query);
+    [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries();
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
-    [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
+    [[nodiscard]] std::expected<folly::Synchronized<DistributedQuery>*, Exception> getQuery(DistributedQueryId query);
 };
 
 }
