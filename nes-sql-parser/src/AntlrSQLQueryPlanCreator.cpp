@@ -68,7 +68,6 @@
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -173,6 +172,39 @@ static LogicalFunction createLogicalBinaryFunction(LogicalFunction leftFunction,
 
 namespace
 {
+
+bool isInsideDataTypeConstructorArgument(antlr4::ParserRuleContext* context)
+{
+    for (auto* parent = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parent != nullptr;
+         parent = dynamic_cast<antlr4::ParserRuleContext*>(parent->parent))
+    {
+        if (auto* const functionCall = dynamic_cast<AntlrSQLParser::FunctionCallContext*>(parent))
+        {
+            return functionCall->typeDefinition() != nullptr;
+        }
+    }
+    return false;
+}
+
+LogicalFunction createNumericLiteralFunction(AntlrSQLParser::NumericLiteralContext* numericLiteralContext)
+{
+    return ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), numericLiteralContext->getText());
+}
+
+LogicalFunction createNegatedNumericLiteralFunction(const ConstantValueLogicalFunction& constantFunction)
+{
+    auto constantValue = constantFunction.getConstantValue();
+    if (constantValue.starts_with('-'))
+    {
+        constantValue.erase(0, 1);
+    }
+    else
+    {
+        constantValue.insert(0, 1, '-');
+    }
+
+    return ConstantValueLogicalFunction(constantFunction.getDataType(), std::move(constantValue));
+}
 
 LogicalFunction createBetweenFunction(const LogicalFunction& valueFunction, LogicalFunction lowerFunction, LogicalFunction upperFunction)
 {
@@ -499,26 +531,35 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
         }
     }
 
-    if (helpers.top().functionBuilder.empty())
+    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+    if (functions.empty())
     {
         throw InvalidQuerySyntax("Expected unary operator, got nothing: {}", context->getText());
     }
     LogicalFunction function;
-    const auto innerFunction = helpers.top().functionBuilder.back();
-    helpers.top().functionBuilder.pop_back();
+    const auto innerFunction = functions.back();
+    functions.pop_back();
     switch (opTokenType)
     {
         case AntlrSQLLexer::PLUS:
             function = innerFunction;
             break;
         case AntlrSQLLexer::MINUS:
+            if (const auto constantFunction = innerFunction.tryGetAs<ConstantValueLogicalFunction>(); constantFunction.has_value()
+                and (constantFunction->get().getDataType().isNumeric()
+                     or constantFunction->get().getDataType().isType(DataType::Type::UNDEFINED))
+                and constantFunction->get().getConstantValue() == context->valueExpression()->getText())
+            {
+                function = createNegatedNumericLiteralFunction(constantFunction->get());
+                break;
+            }
             function = MulLogicalFunction(
                 ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::INT64), "-1"), innerFunction);
             break;
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
-    helpers.top().functionBuilder.push_back(function);
+    functions.push_back(function);
 }
 
 void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context)
@@ -1045,6 +1086,16 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     {
         throw InvalidQuerySyntax("When exiting a constant, there must be exactly one children in the context {}", context->getText());
     }
+
+    const auto insideDataTypeConstructorArgument = isInsideDataTypeConstructorArgument(context);
+    if (auto* const numericLiteralContext = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant());
+        numericLiteralContext != nullptr and !insideDataTypeConstructorArgument)
+    {
+        auto& functionBuilder = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+        functionBuilder.emplace_back(createNumericLiteralFunction(numericLiteralContext));
+        return;
+    }
+
     if (const auto stringLiteralContext = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->children.at(0)))
     {
         if (!(stringLiteralContext->getText().size() > 2))

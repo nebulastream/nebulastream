@@ -1,0 +1,30 @@
+# name: datatype/RawNumericLiterals.test
+# description: Raw numeric literals infer the smallest fitting data type
+# groups: [DataTypes, RawNumericLiterals]
+
+CREATE LOGICAL SOURCE stream(u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, i64 INT64 NOT NULL, f64 FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,256,41,1.5
+
+CREATE SINK sink(one UINT8 NOT NULL, two_fifty_six UINT16 NOT NULL, sixty_five_k UINT32 NOT NULL, four_g UINT64 NOT NULL, minus_one INT8 NOT NULL, minus_129 INT16 NOT NULL, minus_32769 INT32 NOT NULL, minus_2147483649 INT64 NOT NULL, float_literal FLOAT64 NOT NULL, negative_float FLOAT64 NOT NULL, explicit_uint8 UINT8 NOT NULL, explicit_uint16 UINT16 NOT NULL, comparison BOOLEAN NOT NULL, sum_value INT64 NOT NULL, float_sum FLOAT64 NOT NULL) TYPE File;
+
+SELECT
+    1 AS one,
+    256 AS two_fifty_six,
+    65536 AS sixty_five_k,
+    4294967296 AS four_g,
+    -1 AS minus_one,
+    -129 AS minus_129,
+    -32769 AS minus_32769,
+    -2147483649 AS minus_2147483649,
+    1.5 AS float_literal,
+    -0.5 AS negative_float,
+    UINT8(255) AS explicit_uint8,
+    UINT16(65535) AS explicit_uint16,
+    u16 == 256 AS comparison,
+    i64 + 1 AS sum_value,
+    f64 + 1.5 AS float_sum
+FROM stream WHERE u8 == 1 AND u16 == 256 INTO sink;
+----
+1 256 65536 4294967296 -1 -129 -32769 -2147483649 1.5 -0.5 255 65535 true 42 3.0

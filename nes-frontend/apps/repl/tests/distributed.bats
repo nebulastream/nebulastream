@@ -74,7 +74,7 @@ docker_nes_repl() {
 
 @test "launch bad query should fail" {
   setup_distributed tests/topologies/1-node.yaml
-  run docker_nes_repl tests/sql-file-tests/bad/integer_literal_in_query_without_type_distributed.sql
+  run docker_nes_repl tests/sql-file-tests/bad/invalid_projection_distributed.sql
   [ "$status" -ne 0 ]
 
   sync_workdir

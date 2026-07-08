@@ -14,6 +14,8 @@
 
 #include <Functions/ConstantValueLogicalFunction.hpp>
 
+#include <cstdint>
+#include <limits>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -21,6 +23,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -28,12 +31,77 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
+namespace
+{
+DataType inferUnsignedIntegerLiteralDataType(const uint64_t value)
+{
+    if (value <= std::numeric_limits<uint8_t>::max())
+    {
+        return DataTypeProvider::provideDataType(DataType::Type::UINT8);
+    }
+    if (value <= std::numeric_limits<uint16_t>::max())
+    {
+        return DataTypeProvider::provideDataType(DataType::Type::UINT16);
+    }
+    if (value <= std::numeric_limits<uint32_t>::max())
+    {
+        return DataTypeProvider::provideDataType(DataType::Type::UINT32);
+    }
+    return DataTypeProvider::provideDataType(DataType::Type::UINT64);
+}
+
+DataType inferSignedIntegerLiteralDataType(const int64_t value)
+{
+    if (value >= std::numeric_limits<int8_t>::min() and value <= std::numeric_limits<int8_t>::max())
+    {
+        return DataTypeProvider::provideDataType(DataType::Type::INT8);
+    }
+    if (value >= std::numeric_limits<int16_t>::min() and value <= std::numeric_limits<int16_t>::max())
+    {
+        return DataTypeProvider::provideDataType(DataType::Type::INT16);
+    }
+    if (value >= std::numeric_limits<int32_t>::min() and value <= std::numeric_limits<int32_t>::max())
+    {
+        return DataTypeProvider::provideDataType(DataType::Type::INT32);
+    }
+    return DataTypeProvider::provideDataType(DataType::Type::INT64);
+}
+
+DataType inferIntegerLiteralDataType(const std::string_view literal)
+{
+    if (!literal.empty() and literal.front() == '-')
+    {
+        const auto value = from_chars_with_exception<int64_t>(literal);
+        if (value < 0)
+        {
+            return inferSignedIntegerLiteralDataType(value);
+        }
+        return inferUnsignedIntegerLiteralDataType(static_cast<uint64_t>(value));
+    }
+    return inferUnsignedIntegerLiteralDataType(from_chars_with_exception<uint64_t>(literal));
+}
+
+DataType inferConstantValueDataType(const std::string_view literal)
+{
+    try
+    {
+        return inferIntegerLiteralDataType(literal);
+    }
+    catch (const Exception&)
+    {
+        from_chars_with_exception<double>(literal);
+        return DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    }
+}
+}
+
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(DataType dataType, std::string constantValueAsString)
     : constantValue(std::move(constantValueAsString)), dataType(std::move(dataType))
 {
@@ -87,9 +155,11 @@ std::string ConstantValueLogicalFunction::getConstantValue() const
 
 LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema<Field, Unordered>&) const
 {
-    /// the dataType of constant value functions is defined by the constant value type.
-    /// thus it is already assigned correctly when the function node is created.
-    return *this;
+    if (dataType.type != DataType::Type::UNDEFINED)
+    {
+        return *this;
+    }
+    return ConstantValueLogicalFunction(inferConstantValueDataType(constantValue), constantValue);
 }
 
 Reflected

@@ -51,7 +51,7 @@ setup()         { nes_offline_setup; }
 }
 
 @test "launch bad query should fail distributed" {
-  run $NES_REPL -f JSON <tests/sql-file-tests/bad/integer_literal_in_query_without_type_distributed.sql
+  run $NES_REPL -f JSON <tests/sql-file-tests/bad/invalid_projection_distributed.sql
   [ "$status" -ne 0 ]
   grep "invalid query syntax" nes-repl.log
 }
@@ -62,7 +62,7 @@ setup()         { nes_offline_setup; }
 }
 
 @test "launch bad query should fail" {
-  run $NES_REPL -f JSON <tests/sql-file-tests/bad/integer_literal_in_query_without_type.sql
+  run $NES_REPL -f JSON <tests/sql-file-tests/bad/invalid_projection.sql
   [ "$status" -ne 0 ]
   grep "invalid query syntax" nes-repl.log
 }

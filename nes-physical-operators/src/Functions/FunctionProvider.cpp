@@ -91,9 +91,9 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
     switch (constantFunction.getDataType().type)
     {
         case DataType::Type::UINT8:
-            return ConstantUInt8ValueFunction(parseConstantValue<int8_t>(stringValue));
+            return ConstantUInt8ValueFunction(parseConstantValue<uint8_t>(stringValue));
         case DataType::Type::UINT16:
-            return ConstantUInt16ValueFunction(parseConstantValue<int16_t>(stringValue));
+            return ConstantUInt16ValueFunction(parseConstantValue<uint16_t>(stringValue));
         case DataType::Type::UINT32:
             return ConstantUInt32ValueFunction(parseConstantValue<uint32_t>(stringValue));
         case DataType::Type::UINT64:
