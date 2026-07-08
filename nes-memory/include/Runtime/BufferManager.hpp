@@ -108,7 +108,6 @@ public:
     static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
     static constexpr auto DEFAULT_ALIGNMENT = 64;
 
-public:
     explicit BufferManager(
         Private,
         uint32_t bufferSize,
@@ -121,12 +120,13 @@ public:
     /// @param numOfBuffers the total number of default-class buffers in the pool
     /// @param memoryResource resource for allocating and deallocating memory
     /// @param sizeClasses optional configuration enabling additional power-of-two size classes for variable-sized pooled buffers
+    /// NOLINTBEGIN(fuchsia-default-arguments-declarations): defaults match the established BufferManager::create API on main.
     static std::shared_ptr<BufferManager> create(
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
         const std::shared_ptr<std::pmr::memory_resource>& memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
-        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         std::optional<SizeClassConfig> sizeClasses = std::nullopt);
+    /// NOLINTEND(fuchsia-default-arguments-declarations)
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
