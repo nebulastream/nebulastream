@@ -13,4 +13,5 @@
 add_source_files(nes-query-optimizer
         BottomUpPlacement.cpp
         QueryDecomposition.cpp
+        FaultTolerancePlacement.cpp
 )
