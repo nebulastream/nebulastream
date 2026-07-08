@@ -645,6 +645,7 @@
           mold
           rustc
           cargo
+          rustfmt
         ];
 
         # LLVM toolchain with versioned symlinks for vcpkg
