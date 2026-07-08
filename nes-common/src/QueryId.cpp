@@ -25,9 +25,19 @@ QueryId::QueryId(LocalQueryId localQueryId, DistributedQueryId distributedQueryI
 {
 }
 
+QueryId::QueryId(LocalQueryId localQueryId, DistributedQueryId distributedQueryId, Epoch epoch)
+    : localQueryId(std::move(localQueryId)), distributedQueryId(std::move(distributedQueryId)), epoch(std::move(epoch))
+{
+}
+
 QueryId QueryId::createLocal(LocalQueryId localQueryId)
 {
     return {std::move(localQueryId), DistributedQueryId(DistributedQueryId::INVALID)};
+}
+
+QueryId QueryId::createLocal(LocalQueryId localQueryId, Epoch epoch)
+{
+    return {std::move(localQueryId), DistributedQueryId(DistributedQueryId::INVALID), epoch};
 }
 
 QueryId QueryId::createDistributed(DistributedQueryId distributedQueryId)
@@ -35,9 +45,19 @@ QueryId QueryId::createDistributed(DistributedQueryId distributedQueryId)
     return {INVALID_LOCAL_QUERY_ID, std::move(distributedQueryId)};
 }
 
+QueryId QueryId::createDistributed(DistributedQueryId distributedQueryId, Epoch epoch)
+{
+    return {INVALID_LOCAL_QUERY_ID, std::move(distributedQueryId), epoch};
+}
+
 QueryId QueryId::create(LocalQueryId localQueryId, DistributedQueryId distributedQueryId)
 {
     return {std::move(localQueryId), std::move(distributedQueryId)};
+}
+
+QueryId QueryId::create(LocalQueryId localQueryId, DistributedQueryId distributedQueryId, Epoch epoch)
+{
+    return {std::move(localQueryId), std::move(distributedQueryId), epoch};
 }
 
 bool QueryId::isDistributed() const
@@ -45,24 +65,30 @@ bool QueryId::isDistributed() const
     return distributedQueryId != DistributedQueryId(DistributedQueryId::INVALID);
 }
 
+QueryId QueryId::nextEpoch() const
+{
+    return create(localQueryId, distributedQueryId, Epoch(epoch.getRawValue() + 1));
+}
+
 bool QueryId::operator==(const QueryId& other) const
 {
-    return localQueryId == other.localQueryId && distributedQueryId == other.distributedQueryId;
+    return localQueryId == other.localQueryId && distributedQueryId == other.distributedQueryId && epoch == other.epoch;
 }
 
 std::ostream& operator<<(std::ostream& os, const QueryId& queryId)
 {
     if (queryId.isValid() && queryId.isDistributed())
     {
-        os << "QueryId(local=" << queryId.localQueryId << ", distributed=" << queryId.distributedQueryId << ")";
+        os << "QueryId(local=" << queryId.localQueryId << ", distributed=" << queryId.distributedQueryId << ", epoch=" << queryId.epoch
+           << ")";
     }
     else if (queryId.isValid())
     {
-        os << "QueryId(local=" << queryId.localQueryId << ")";
+        os << "QueryId(local=" << queryId.localQueryId << ", epoch=" << queryId.epoch << ")";
     }
     else if (queryId.isDistributed())
     {
-        os << "QueryId(distributed=" << queryId.distributedQueryId << ")";
+        os << "QueryId(distributed=" << queryId.distributedQueryId << ", epoch=" << queryId.epoch << ")";
     }
     else
     {

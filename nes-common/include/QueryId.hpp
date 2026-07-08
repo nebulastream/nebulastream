@@ -48,7 +48,10 @@ public:
 
     static QueryId createLocal(LocalQueryId localQueryId);
     static QueryId createDistributed(DistributedQueryId distributedQueryId);
+    static QueryId createLocal(LocalQueryId localQueryId, Epoch epoch);
+    static QueryId createDistributed(DistributedQueryId distributedQueryId, Epoch epoch);
     static QueryId create(LocalQueryId localQueryId, DistributedQueryId distributedQueryId);
+    static QueryId create(LocalQueryId localQueryId, DistributedQueryId distributedQueryId, Epoch epoch);
 
     [[nodiscard]] bool isValid() const
     {
@@ -61,6 +64,10 @@ public:
 
     [[nodiscard]] const DistributedQueryId& getDistributedQueryId() const { return distributedQueryId; }
 
+    [[nodiscard]] const Epoch& getEpoch() const { return epoch; }
+
+    [[nodiscard]] QueryId nextEpoch() const;
+
     bool operator==(const QueryId& other) const;
 
     bool operator!=(const QueryId& other) const { return !(*this == other); }
@@ -69,8 +76,10 @@ public:
 
 private:
     QueryId(LocalQueryId localQueryId, DistributedQueryId distributedQueryId);
+    QueryId(LocalQueryId localQueryId, DistributedQueryId distributedQueryId, Epoch epoch);
     LocalQueryId localQueryId;
     DistributedQueryId distributedQueryId;
+    Epoch epoch = INITIAL_EPOCH; /// queries automatically start in first epoch
 };
 
 inline const QueryId INVALID_QUERY_ID = QueryId::invalid(); /// NOLINT(cert-err58-cpp)
@@ -86,7 +95,8 @@ struct hash<NES::QueryId>
     {
         const std::size_t localHash = std::hash<NES::LocalQueryId>{}(queryId.getLocalQueryId());
         const std::size_t distributedHash = std::hash<NES::DistributedQueryId>{}(queryId.getDistributedQueryId());
-        return localHash ^ (static_cast<std::size_t>(distributedHash) << 1U);
+        const std::size_t epochHash = std::hash<NES::Epoch>{}(queryId.getEpoch());
+        return localHash ^ (distributedHash << 1U) ^ (epochHash << 2U);
     }
 };
 }
