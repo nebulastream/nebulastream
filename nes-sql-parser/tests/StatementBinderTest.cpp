@@ -16,6 +16,7 @@
 #include <ranges>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -700,6 +701,67 @@ TEST_F(StatementBinderTest, ExplainStatement)
         const auto explainStatementResult = binder->parseAndBindSingle(explain);
         ASSERT_FALSE(explainStatementResult.has_value());
     }
+}
+
+TEST_F(StatementBinderTest, ExplainStatementStageOptions)
+{
+    const auto getExplainStatement = [&](std::string_view sql) -> ExplainQueryStatement
+    {
+        const auto result = binder->parseAndBindSingle(sql);
+        EXPECT_TRUE(result.has_value()) << "Failed to parse: " << sql;
+        return std::get<ExplainQueryStatement>(result.value());
+    };
+
+    EXPECT_EQ(
+        getExplainStatement("EXPLAIN SELECT * FROM testSource INTO testSink").explainStages,
+        (std::unordered_set<ExplainStage>{ExplainStage::Logical, ExplainStage::Optimized, ExplainStage::Distributed}));
+    EXPECT_EQ(
+        getExplainStatement("EXPLAIN (LOGICAL) SELECT * FROM testSource INTO testSink").explainStages,
+        std::unordered_set{ExplainStage::Logical});
+    EXPECT_EQ(
+        getExplainStatement("EXPLAIN (OPTIMIZED) SELECT * FROM testSource INTO testSink").explainStages,
+        std::unordered_set{ExplainStage::Optimized});
+    EXPECT_EQ(
+        getExplainStatement("EXPLAIN (DISTRIBUTED) SELECT * FROM testSource INTO testSink").explainStages,
+        std::unordered_set{ExplainStage::Distributed});
+    EXPECT_EQ(
+        getExplainStatement("EXPLAIN (LOGICAL, OPTIMIZED) SELECT * FROM testSource INTO testSink").explainStages,
+        (std::unordered_set{ExplainStage::Logical, ExplainStage::Optimized}));
+}
+
+TEST_F(StatementBinderTest, ExplainStatementFormatOptions)
+{
+    const auto getExplainStatement = [&](std::string_view sql) -> ExplainQueryStatement
+    {
+        const auto result = binder->parseAndBindSingle(sql);
+        EXPECT_TRUE(result.has_value()) << "Failed to parse: " << sql;
+        return std::get<ExplainQueryStatement>(result.value());
+    };
+
+    EXPECT_EQ(getExplainStatement("EXPLAIN SELECT * FROM testSource INTO testSink").explainFormat, ExplainFormat::Visual);
+    EXPECT_EQ(getExplainStatement("EXPLAIN FORMAT VISUAL SELECT * FROM testSource INTO testSink").explainFormat, ExplainFormat::Visual);
+    EXPECT_EQ(getExplainStatement("EXPLAIN FORMAT TEXT SELECT * FROM testSource INTO testSink").explainFormat, ExplainFormat::Text);
+    EXPECT_EQ(getExplainStatement("EXPLAIN FORMAT VERBOSE SELECT * FROM testSource INTO testSink").explainFormat, ExplainFormat::Verbose);
+
+    const auto duplicateFormat = binder->parseAndBindSingle("EXPLAIN FORMAT TEXT FORMAT VERBOSE SELECT * FROM testSource INTO testSink");
+    EXPECT_FALSE(duplicateFormat.has_value());
+}
+
+TEST_F(StatementBinderTest, ExplainStatementCombinedOptions)
+{
+    const auto result = binder->parseAndBindSingle("EXPLAIN (LOGICAL) FORMAT VERBOSE SELECT * FROM testSource INTO testSink");
+    ASSERT_TRUE(result.has_value());
+    const auto& stmt = std::get<ExplainQueryStatement>(result.value());
+    EXPECT_EQ(stmt.explainStages, std::unordered_set{ExplainStage::Logical});
+    EXPECT_EQ(stmt.explainFormat, ExplainFormat::Verbose);
+}
+
+TEST_F(StatementBinderTest, ExplainStatementCaseInsensitive)
+{
+    const auto bind = [&](std::string_view sql) { return binder->parseAndBindSingle(sql); };
+    EXPECT_TRUE(bind("EXPLAIN (logical) SELECT * FROM testSource INTO testSink").has_value());
+    EXPECT_TRUE(bind("EXPLAIN format text SELECT * FROM testSource INTO testSink").has_value());
+    EXPECT_TRUE(bind("EXPLAIN (logical) format verbose SELECT * FROM testSource INTO testSink").has_value());
 }
 
 TEST_F(StatementBinderTest, CreateWorkerStatementTest)

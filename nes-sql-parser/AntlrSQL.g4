@@ -60,7 +60,11 @@ terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
 statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
 
-explainStatement: EXPLAIN query;
+explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? query;
+explainStages: explainStage (',' explainStage)*;
+explainStage: identifier | LOGICAL;
+explainFormat: identifier | TEXT;
+
 createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
@@ -614,10 +618,10 @@ UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
 
 
 SHOW : 'SHOW';
-FORMAT : 'FORMAT';
+FORMAT : 'FORMAT' | 'format';
 CREATE : 'CREATE';
 SOURCE : 'SOURCE';
-LOGICAL: 'LOGICAL';
+LOGICAL: 'LOGICAL' | 'logical';
 PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
 SINK : 'SINK';
