@@ -18,4 +18,5 @@ package NES;
 message SerializableQueryId {
     string local_query_id = 1;
     string distributed_query_id = 2;
+    uint64 epoch = 3;
 }
