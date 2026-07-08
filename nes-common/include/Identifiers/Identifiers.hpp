@@ -36,6 +36,7 @@ using InlineSinkId = NESStrongType<uint64_t, struct InlineSinkId_, 0, 1>;
 using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
 using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
 using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, SequenceNumber::INVALID, SequenceNumber::INITIAL>;
+using Epoch = NESStrongType<uint64_t, struct Epoch_, 0, 1>;
 
 
 static constexpr LocalQueryId INVALID_LOCAL_QUERY_ID = LocalQueryId(LocalQueryId::INVALID);
@@ -60,6 +61,9 @@ static constexpr ChunkNumber INITIAL_CHUNK_NUMBER = INITIAL<ChunkNumber>;
 
 static constexpr SequenceNumber INVALID_SEQ_NUMBER = INVALID<SequenceNumber>;
 static constexpr SequenceNumber INITIAL_SEQ_NUMBER = INITIAL<SequenceNumber>;
+
+static constexpr Epoch INVALID_EPOCH = INVALID<Epoch>;
+static constexpr Epoch INITIAL_EPOCH = INITIAL<Epoch>;
 
 /// Special overloads for commonly occurring patterns
 /// overload modulo operator for WorkerThreadId as it is commonly use to index into buckets

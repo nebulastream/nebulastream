@@ -190,6 +190,7 @@ NES::SerializableQueryId QueryPlanSerializationUtil::serializeQueryId(const Quer
     NES::SerializableQueryId proto;
     proto.set_local_query_id(queryId.getLocalQueryId().getRawValue());
     proto.set_distributed_query_id(queryId.getDistributedQueryId().getRawValue());
+    proto.set_epoch(queryId.getEpoch().getRawValue());
     return proto;
 }
 
@@ -197,19 +198,20 @@ QueryId QueryPlanSerializationUtil::deserializeQueryId(const NES::SerializableQu
 {
     auto localId = LocalQueryId(proto.local_query_id());
     auto distributedId = DistributedQueryId(proto.distributed_query_id());
+    auto epoch = Epoch(proto.epoch());
     const bool hasLocal = localId != INVALID_LOCAL_QUERY_ID;
     const bool hasDistributed = distributedId != DistributedQueryId(DistributedQueryId::INVALID);
     if (hasLocal && hasDistributed)
     {
-        return QueryId::create(localId, distributedId);
+        return QueryId::create(localId, distributedId, epoch);
     }
     if (hasLocal)
     {
-        return QueryId::createLocal(localId);
+        return QueryId::createLocal(localId, epoch);
     }
     if (hasDistributed)
     {
-        return QueryId::createDistributed(distributedId);
+        return QueryId::createDistributed(distributedId, epoch);
     }
     return QueryId::invalid();
 }
