@@ -75,6 +75,7 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const Di
     }
 
     ids.emplace(*result);
+    queryManager->superviseNonBlocking(*result);
     return result.value();
 }
 
