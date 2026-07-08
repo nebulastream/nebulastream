@@ -13,6 +13,8 @@
 add_source_files(nes-query-manager-grpc
         GRPCQuerySubmissionBackend.cpp
         QueryManager.cpp
+        QuerySupervisor.cpp
+        QueryManagementUtils.cpp
 )
 
 add_source_files(nes-query-manager-embedded
