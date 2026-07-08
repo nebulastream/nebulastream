@@ -25,8 +25,6 @@
 #include <variant>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Reorderer.hpp>
@@ -38,6 +36,8 @@
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/Variant.hpp>
