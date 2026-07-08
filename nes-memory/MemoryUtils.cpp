@@ -58,6 +58,7 @@ TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& pr
     copiedBuffer.setLastChunk(buffer.isLastChunk());
     copiedBuffer.setOriginId(buffer.getOriginId());
     copiedBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+    copiedBuffer.setOriginEpoch(buffer.getOriginEpoch());
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
     {
