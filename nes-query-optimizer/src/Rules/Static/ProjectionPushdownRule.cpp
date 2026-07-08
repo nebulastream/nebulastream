@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <ranges>
 #include <set>
 #include <string_view>
 #include <typeindex>
@@ -69,6 +70,17 @@ std::unordered_set<Field> getAccessedFields(const LogicalFunction& logicalFuncti
     return result;
 }
 
+std::vector<Field> sortFields(const std::unordered_set<Field>& fields)
+{
+    auto sortedFields = std::ranges::to<std::vector>(fields);
+    std::ranges::sort(
+        sortedFields,
+        [](const Field& left, const Field& right)
+        { return left.getLastName().asCanonicalString() < right.getLastName().asCanonicalString(); });
+
+    return sortedFields;
+}
+
 LogicalOperator pushBeyondSink(const TypedLogicalOperator<SinkLogicalOperator>& op)
 {
     /// Use identifiers from output schema as starting point for required fields.
@@ -94,7 +106,9 @@ LogicalOperator pushBeyondSource(TypedLogicalOperator<SourceDescriptorLogicalOpe
     {
         std::vector<ProjectionLogicalOperator::UnboundProjection> projections;
         projections.reserve(required.size());
-        for (const auto& field : required)
+
+        /// Set a fix order in which the projections are applied to ensure deterministic behaviour of rule.
+        for (const auto& field : sortFields(required))
         {
             projections.emplace_back(field.getLastName(), UnboundFieldAccessLogicalFunction{field.getLastName()});
         }
@@ -134,8 +148,8 @@ LogicalOperator pushBeyondProjection(const TypedLogicalOperator<ProjectionLogica
     {
         projectionMap.emplace(field, function);
     }
-
-    for (const auto& field : required)
+    /// Set a fix order in which the projections are applied to ensure deterministic behaviour of rule.
+    for (const auto& field : sortFields(required))
     {
         if (auto iter = projectionMap.find(field); iter != projectionMap.end())
         {

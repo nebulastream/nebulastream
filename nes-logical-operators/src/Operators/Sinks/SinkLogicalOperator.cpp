@@ -115,6 +115,10 @@ std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
         }
         return fmt::format("SINK(opId: {}, sinkName: {})", id, sinkName);
     }
+    if (sinkDescriptor.has_value() && sinkDescriptor->isInline())
+    {
+        return fmt::format("SINK({})", sinkDescriptor->getSinkType());
+    }
     return fmt::format("SINK({})", sinkName);
 }
 
