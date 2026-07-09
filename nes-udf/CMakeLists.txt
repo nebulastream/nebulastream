@@ -10,13 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-query-optimizer
-        InlineSinkBindingRule.cpp
-        InlineSourceBindingRule.cpp
-        LogicalSourceExpansionRule.cpp
-        TypeInferenceRule.cpp
-        SinkBindingRule.cpp
-        InferModelResolutionRule.cpp
-        UDFResolutionRule.cpp
-        CalcTargetOrderRule.cpp
-)
+add_library(nes-udf
+        src/UdfCatalog.cpp
+        src/UdfDescriptor.cpp)
+target_include_directories(nes-udf PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(nes-udf PUBLIC nes-data-types PRIVATE nes-common)
+
+add_subdirectory(runtime)
+add_subdirectory(bridge)
+
+add_tests_if_enabled(tests)

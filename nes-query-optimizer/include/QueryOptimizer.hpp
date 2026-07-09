@@ -28,6 +28,7 @@
 namespace NES
 {
 class ModelCatalog;
+class UdfCatalog;
 }
 
 namespace NES
@@ -41,8 +42,9 @@ public:
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
         const std::shared_ptr<const SinkCatalog>& sinkCatalog,
         const std::shared_ptr<const WorkerCatalog>& workerCatalog,
-        const std::shared_ptr<const ModelCatalog>& modelCatalog)
-        : semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog)
+        const std::shared_ptr<const ModelCatalog>& modelCatalog,
+        const std::shared_ptr<const UdfCatalog>& udfCatalog)
+        : semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog, udfCatalog)
         , ruleBasedOptimization(defaultQueryOptimization)
         , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
 

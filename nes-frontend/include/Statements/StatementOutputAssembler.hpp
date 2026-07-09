@@ -486,6 +486,67 @@ struct StatementOutputAssembler<DropModelStatementResult>
     }
 };
 
+using UdfInfoOutputRowType = std::tuple<std::string, std::string, std::string, std::string>;
+constexpr std::array<std::string_view, 4> udfInfoOutputColumns{"udf_name", "path", "entrypoint", "signature"};
+
+using UdfNameOutputRowType = std::tuple<std::string>;
+constexpr std::array<std::string_view, 1> udfNameOutputColumns{"udf_name"};
+
+/// Render a UDF's declared signature as "(ARG0, ARG1) -> RETURN".
+inline std::string toUdfSignature(const UdfInfo& udf)
+{
+    std::string args;
+    for (size_t i = 0; i < udf.argTypes.size(); ++i)
+    {
+        if (i > 0)
+        {
+            args += ", ";
+        }
+        args += magic_enum::enum_name(udf.argTypes[i].type);
+    }
+    return "(" + args + ") -> " + std::string{magic_enum::enum_name(udf.returnType.type)};
+}
+
+template <>
+struct StatementOutputAssembler<CreateFunctionStatementResult>
+{
+    using OutputRowType = UdfInfoOutputRowType;
+
+    auto convert(const CreateFunctionStatementResult& result)
+    {
+        return std::make_pair(
+            udfInfoOutputColumns, std::vector{std::make_tuple(result.name, result.path, result.entrypoint, toUdfSignature(result))});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<ShowFunctionsStatementResult>
+{
+    using OutputRowType = UdfInfoOutputRowType;
+
+    auto convert(const ShowFunctionsStatementResult& result)
+    {
+        std::vector<OutputRowType> output;
+        output.reserve(result.functions.size());
+        for (const auto& udf : result.functions)
+        {
+            output.emplace_back(udf.name, udf.path, udf.entrypoint, toUdfSignature(udf));
+        }
+        return std::make_pair(udfInfoOutputColumns, output);
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropFunctionStatementResult>
+{
+    using OutputRowType = UdfNameOutputRowType;
+
+    auto convert(const DropFunctionStatementResult& result)
+    {
+        return std::make_pair(udfNameOutputColumns, std::vector{std::make_tuple(result.name)});
+    }
+};
+
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
 
@@ -505,5 +566,8 @@ static_assert(AssemblembleStatementResult<DropQueryStatementResult>);
 static_assert(AssemblembleStatementResult<CreateModelStatementResult>);
 static_assert(AssemblembleStatementResult<ShowModelsStatementResult>);
 static_assert(AssemblembleStatementResult<DropModelStatementResult>);
+static_assert(AssemblembleStatementResult<CreateFunctionStatementResult>);
+static_assert(AssemblembleStatementResult<ShowFunctionsStatementResult>);
+static_assert(AssemblembleStatementResult<DropFunctionStatementResult>);
 
 }

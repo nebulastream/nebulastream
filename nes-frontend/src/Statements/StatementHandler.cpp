@@ -44,6 +44,8 @@
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <UdfCatalog.hpp>
+#include <UdfDescriptor.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
@@ -298,6 +300,69 @@ std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operat
     }
     modelCatalog->removeModel(statement.name);
     return DropModelStatementResult{.name = statement.name};
+}
+
+UdfStatementHandler::UdfStatementHandler(std::shared_ptr<UdfCatalog> udfCatalog) : udfCatalog(std::move(udfCatalog))
+{
+}
+
+namespace
+{
+UdfInfo toUdfInfo(const UdfDescriptor& descriptor)
+{
+    return UdfInfo{
+        .name = descriptor.getName(),
+        .path = descriptor.getPath().string(),
+        .entrypoint = descriptor.getEntrypoint(),
+        .argTypes = descriptor.getArgTypes(),
+        .returnType = descriptor.getReturnType(),
+    };
+}
+}
+
+/// Translates a `CREATE FUNCTION` SQL statement into a registration in the UDF catalog.
+/// Reject duplicate names first; the catalog then validates the path and the declared
+/// argument/return types before storing the descriptor. Loading the `.so` is deferred to
+/// worker-side lowering.
+std::expected<CreateFunctionStatementResult, Exception> UdfStatementHandler::operator()(const CreateFunctionStatement& statement)
+{
+    if (udfCatalog->hasUdf(statement.name))
+    {
+        return std::unexpected{UdfAlreadyExists(statement.name)};
+    }
+
+    try
+    {
+        udfCatalog->registerUdf(statement.name, statement.path, statement.entrypoint, statement.argTypes, statement.returnType);
+    }
+    catch (const Exception& e)
+    {
+        return std::unexpected{e};
+    }
+
+    return toUdfInfo(udfCatalog->load(statement.name));
+}
+
+std::expected<ShowFunctionsStatementResult, Exception> UdfStatementHandler::operator()(const ShowFunctionsStatement&) const
+{
+    auto registeredUdfs = udfCatalog->getRegisteredUdfs();
+    std::vector<UdfInfo> functions;
+    functions.reserve(registeredUdfs.size());
+    for (const auto& descriptor : registeredUdfs)
+    {
+        functions.push_back(toUdfInfo(descriptor));
+    }
+    return ShowFunctionsStatementResult{.functions = std::move(functions)};
+}
+
+std::expected<DropFunctionStatementResult, Exception> UdfStatementHandler::operator()(const DropFunctionStatement& statement)
+{
+    if (!udfCatalog->hasUdf(statement.name))
+    {
+        return std::unexpected{UnknownUdf(statement.name)};
+    }
+    udfCatalog->removeUdf(statement.name);
+    return DropFunctionStatementResult{.name = statement.name};
 }
 
 QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer)

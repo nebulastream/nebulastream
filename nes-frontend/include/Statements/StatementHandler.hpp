@@ -38,6 +38,7 @@
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <UdfCatalog.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -144,6 +145,27 @@ struct DropModelStatementResult
     std::string name;
 };
 
+struct UdfInfo
+{
+    std::string name;
+    std::string path;
+    std::string entrypoint;
+    std::vector<DataType> argTypes;
+    DataType returnType;
+};
+
+using CreateFunctionStatementResult = UdfInfo;
+
+struct ShowFunctionsStatementResult
+{
+    std::vector<UdfInfo> functions;
+};
+
+struct DropFunctionStatementResult
+{
+    std::string name;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
@@ -152,14 +174,17 @@ using StatementResult = std::variant<
     CreateWorkerStatementResult,
     WorkerStatusStatementResult,
     CreateModelStatementResult,
+    CreateFunctionStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
     ShowModelsStatementResult,
+    ShowFunctionsStatementResult,
     DropLogicalSourceStatementResult,
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
     DropModelStatementResult,
+    DropFunctionStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
     ExplainQueryStatementResult,
@@ -251,6 +276,17 @@ public:
     std::expected<CreateModelStatementResult, Exception> operator()(const CreateModelStatement& statement);
     std::expected<ShowModelsStatementResult, Exception> operator()(const ShowModelsStatement& statement) const;
     std::expected<DropModelStatementResult, Exception> operator()(const DropModelStatement& statement);
+};
+
+class UdfStatementHandler final : public StatementHandler<UdfStatementHandler>
+{
+    std::shared_ptr<UdfCatalog> udfCatalog;
+
+public:
+    explicit UdfStatementHandler(std::shared_ptr<UdfCatalog> udfCatalog);
+    std::expected<CreateFunctionStatementResult, Exception> operator()(const CreateFunctionStatement& statement);
+    std::expected<ShowFunctionsStatementResult, Exception> operator()(const ShowFunctionsStatement& statement) const;
+    std::expected<DropFunctionStatementResult, Exception> operator()(const DropFunctionStatement& statement);
 };
 
 class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>

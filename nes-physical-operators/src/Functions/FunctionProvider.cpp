@@ -28,11 +28,15 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Functions/UDFCallLogicalFunction.hpp>
+#include <Functions/UDFPhysicalFunction.hpp>
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <UdfBackend.hpp>
+#include <UdfDescriptor.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -58,6 +62,16 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     if (const auto constantValueFunction = logicalFunction.tryGetAs<ConstantValueLogicalFunction>())
     {
         return lowerConstantFunction(constantValueFunction->get());
+    }
+    /// UDF calls also bypass the registry: they carry the resolved catalog descriptor (path, entry
+    /// point, signature) that the registry arguments cannot express, so we build the physical function
+    /// and load the backend directly here — the same treatment as FieldAccess/ConstantValue above.
+    if (const auto udfCallFunction = logicalFunction.tryGetAs<UDFCallLogicalFunction>())
+    {
+        const auto& descriptor = udfCallFunction.value()->getDescriptor();
+        INVARIANT(descriptor.has_value(), "UDF '{}' must be resolved before lowering", udfCallFunction.value()->getUdfName());
+        return UDFPhysicalFunction(
+            childFunctions, descriptor->getArgTypes(), logicalFunction.getDataType(), UdfBackend::create(*descriptor));
     }
 
     /// 3. Calling the registry to create an executable function.

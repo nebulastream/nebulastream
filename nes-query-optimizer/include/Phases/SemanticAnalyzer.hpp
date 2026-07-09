@@ -28,6 +28,7 @@ class SourceCatalog;
 namespace NES
 {
 class ModelCatalog;
+class UdfCatalog;
 }
 
 namespace NES
@@ -40,12 +41,14 @@ public:
     explicit SemanticAnalyzer(
         std::shared_ptr<const SourceCatalog> sourceCatalog,
         std::shared_ptr<const SinkCatalog> sinkCatalog,
-        std::shared_ptr<const ModelCatalog> modelCatalog);
+        std::shared_ptr<const ModelCatalog> modelCatalog,
+        std::shared_ptr<const UdfCatalog> udfCatalog);
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
     std::shared_ptr<const ModelCatalog> modelCatalog;
+    std::shared_ptr<const UdfCatalog> udfCatalog;
     std::vector<Rule<LogicalPlan>> ruleSequence;
 };
 }

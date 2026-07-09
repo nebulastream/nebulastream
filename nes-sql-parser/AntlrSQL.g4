@@ -62,7 +62,7 @@ statement: queryWithOptions | createStatement | dropStatement | showStatement | 
 
 explainStatement: EXPLAIN query;
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition | createFunctionDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -80,6 +80,10 @@ createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
 modelInputField: identifier typeDefinition;
 modelOutputField: identifier typeDefinition;
 
+createFunctionDefinition: FUNCTION udfName=identifier '(' (functionArgField (',' functionArgField)*)? ')'
+                          RETURNS returnType=typeDefinition FROM functionPath=STRING ENTRYPOINT entrypoint=STRING;
+functionArgField: identifier typeDefinition;
+
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
 
@@ -89,8 +93,9 @@ nullableDefinition: NOT NULLTOKEN;
 fromQuery: AS query;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
-dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
+dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel | dropFunction;
 dropModel: MODEL;
+dropFunction: FUNCTION;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
@@ -106,7 +111,8 @@ showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
     | SINKS #showSinksSubject
-    | MODELS #showModelsSubject;
+    | MODELS #showModelsSubject
+    | FUNCTIONS #showFunctionsSubject;
 
 showFilter: attr=strictIdentifier EQ value=constant;
 
@@ -530,6 +536,10 @@ MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';
 INPUT: 'INPUT';
 OUTPUT: 'OUTPUT';
+FUNCTION: 'FUNCTION';
+FUNCTIONS: 'FUNCTIONS';
+RETURNS: 'RETURNS';
+ENTRYPOINT: 'ENTRYPOINT';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

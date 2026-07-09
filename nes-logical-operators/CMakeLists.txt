@@ -40,7 +40,7 @@ target_sources(nes-logical-operators PRIVATE ${NES_LOGICAL_OPERATORS_SOURCE_FILE
 
 find_package(reflectcpp REQUIRED)
 
-target_link_libraries(nes-logical-operators PUBLIC nes-sources nes-sinks nes-query-optimizer nes-data-types nes-inference PRIVATE reflectcpp::reflectcpp)
+target_link_libraries(nes-logical-operators PUBLIC nes-sources nes-sinks nes-query-optimizer nes-data-types nes-inference nes-udf PRIVATE reflectcpp::reflectcpp)
 
 # Factory registries
 create_registries_for_component(LogicalOperator LogicalFunction AggregationLogicalFunction)

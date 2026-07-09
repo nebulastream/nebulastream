@@ -137,15 +137,21 @@ namespace NES
 namespace
 {
 const auto registered_${registry_key}_${registry} = [] {
-    const bool registered = ${registry}UnreflectionRegistry::instance().addUnreflectorEntry(
+    /// The plugin identity (its C++ unreflect type) lets the registry tell a benign re-registration of
+    /// this same plugin from a genuine key collision with a different plugin. The former is expected:
+    /// the whole-archive glue archive can land on a final link line more than once, so this initializer
+    /// may run repeatedly.
+    const auto outcome = ${registry}UnreflectionRegistry::instance().addUnreflectorEntry(
         \"${registry_key}\",
+        \"${unreflect_type}\",
         [](const Reflected& data, const ReflectionContext& context) {
             return context.unreflect<${unreflect_type}>(data);
         });
-    if (!registered)
+    if (outcome == UnreflectorRegistrationOutcome::ConflictingPlugin)
     {
         /// Static-init context: an uncaught throw aborts the program loudly, without main() being able to catch it.
-        throw std::runtime_error{std::string{\"Duplicate unreflection registration for \\\"${registry_key}\\\" in ${registry}\"}};
+        throw std::runtime_error{std::string{\"Conflicting unreflection registration for \\\"${registry_key}\\\" in ${registry}: \"
+                                             \"another plugin already claims this serialized name\"}};
     }
     return 0;
 }();

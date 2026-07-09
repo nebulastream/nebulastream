@@ -27,6 +27,7 @@
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -159,6 +160,25 @@ struct DropModelStatement
     std::string name;
 };
 
+struct CreateFunctionStatement
+{
+    std::string name;
+    std::string path;
+    std::string entrypoint;
+    std::vector<DataType> argTypes;
+    DataType returnType;
+};
+
+struct ShowFunctionsStatement
+{
+    std::optional<StatementOutputFormat> format;
+};
+
+struct DropFunctionStatement
+{
+    std::string name;
+};
+
 struct WorkerStatusStatement
 {
     std::vector<std::string> host;
@@ -186,17 +206,20 @@ using Statement = std::variant<
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
     CreateModelStatement,
+    CreateFunctionStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
     DropModelStatement,
+    DropFunctionStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
     ShowModelsStatement,
+    ShowFunctionsStatement,
     DropQueryStatement>;
 
 inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)

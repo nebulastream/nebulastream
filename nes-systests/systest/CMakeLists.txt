@@ -44,12 +44,25 @@ find_package(reflectcpp CONFIG REQUIRED)
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
 target_link_libraries(nes-systest-lib PUBLIC nes-frontend-embedded-lib nes-single-node-worker-lib nes-sql-parser nes-query-optimizer reflectcpp::reflectcpp PRIVATE nes-input-formatters)
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+
 target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
         SYSTEST_EXTERNAL_DATA_DIR="${EXPANDED_TEST_DATA_PATH}"
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
+
+# The Python UDF bridge (built by nes-udf/bridge only where Python's embed dev files exist) is
+# dlopen'd by the `PythonUdf` systest group. `.test` files reference it via the PY_BRIDGE_DIR
+# substitution keyword; the binder puts nes-systests/udf/pyudfs on NES_UDF_PATH so `import`s resolve.
+find_package(Python3 COMPONENTS Development.Embed QUIET)
+if (Python3_FOUND)
+    target_compile_definitions(nes-systest-lib PUBLIC
+            SYSTEST_PY_BRIDGE_DIR="$<TARGET_FILE_DIR:nes-python-udf-bridge>"
+            SYSTEST_PY_UDF_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../udf/pyudfs")
+else ()
+    target_compile_definitions(nes-systest-lib PUBLIC SYSTEST_PY_BRIDGE_DIR="" SYSTEST_PY_UDF_PATH="")
+endif ()
 
 # Find required packages
 find_package(argparse CONFIG REQUIRED)
@@ -75,6 +88,11 @@ set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive OuterJoin)
 if (NOT ENABLE_IREE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)
+endif ()
+# The PythonUdf group needs the Python bridge; skip it where Python's embed dev files are absent.
+if (NOT Python3_FOUND)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUdf)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUdf)
 endif ()
 
 # Add code coverage if enabled

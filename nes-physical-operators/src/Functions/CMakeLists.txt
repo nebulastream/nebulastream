@@ -15,6 +15,7 @@ add_source_files(nes-physical-operators
         FieldAccessPhysicalFunction.cpp
         ConstantValueVariableSizePhysicalFunction.cpp
         CastToPhysicalFunction.cpp
+        UDFPhysicalFunction.cpp
         )
 
 add_plugin(Concat PhysicalFunction ConcatPhysicalFunction.cpp)

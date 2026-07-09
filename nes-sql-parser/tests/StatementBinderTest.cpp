@@ -329,6 +329,40 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
     ASSERT_EQ(schema, inlineSinkOperator->getTargetSchema());
 }
 
+TEST_F(StatementBinderTest, BindCreateFunction)
+{
+    const std::string statementString = "CREATE FUNCTION to_euro (amount FLOAT64, ccy VARSIZED) RETURNS FLOAT64 "
+                                        "FROM '/opt/udfs/libcurrency.so' ENTRYPOINT 'currency.to_euro'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
+
+    const auto& create = std::get<CreateFunctionStatement>(*statement);
+    /// Unquoted identifiers are upper-folded by the parser (as is the call site), so the name is normalized.
+    EXPECT_EQ(create.name, "TO_EURO");
+    EXPECT_EQ(create.path, "/opt/udfs/libcurrency.so");
+    EXPECT_EQ(create.entrypoint, "currency.to_euro");
+    ASSERT_EQ(create.argTypes.size(), 2U);
+    EXPECT_EQ(create.argTypes.at(0).type, DataType::Type::FLOAT64);
+    EXPECT_EQ(create.argTypes.at(1).type, DataType::Type::VARSIZED);
+    EXPECT_EQ(create.returnType.type, DataType::Type::FLOAT64);
+}
+
+TEST_F(StatementBinderTest, BindDropFunction)
+{
+    const auto statement = binder->parseAndBindSingle("DROP FUNCTION WHERE name = 'to_euro'");
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<DropFunctionStatement>(*statement));
+    EXPECT_EQ(std::get<DropFunctionStatement>(*statement).name, "to_euro");
+}
+
+TEST_F(StatementBinderTest, BindShowFunctions)
+{
+    const auto statement = binder->parseAndBindSingle("SHOW FUNCTIONS");
+    ASSERT_TRUE(statement.has_value());
+    EXPECT_TRUE(std::holds_alternative<ShowFunctionsStatement>(*statement));
+}
+
 TEST_F(StatementBinderTest, InlineSourceQuery)
 {
     const std::string query = "SELECT id, text \n"

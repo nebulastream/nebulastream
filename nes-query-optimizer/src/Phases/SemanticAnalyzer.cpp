@@ -27,6 +27,7 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
+#include <Rules/Semantic/UDFResolutionRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 
@@ -36,8 +37,12 @@ namespace NES
 SemanticAnalyzer::SemanticAnalyzer(
     std::shared_ptr<const SourceCatalog> sourceCatalog,
     std::shared_ptr<const SinkCatalog> sinkCatalog,
-    std::shared_ptr<const ModelCatalog> modelCatalog)
-    : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), modelCatalog(std::move(modelCatalog))
+    std::shared_ptr<const ModelCatalog> modelCatalog,
+    std::shared_ptr<const UdfCatalog> udfCatalog)
+    : sourceCatalog(std::move(sourceCatalog))
+    , sinkCatalog(std::move(sinkCatalog))
+    , modelCatalog(std::move(modelCatalog))
+    , udfCatalog(std::move(udfCatalog))
 {
     RuleManager<LogicalPlan> ruleManager;
     ruleManager.addRule(InlineSinkBindingRule{this->sinkCatalog});
@@ -45,6 +50,7 @@ SemanticAnalyzer::SemanticAnalyzer(
     ruleManager.addRule(InlineSourceBindingRule{this->sourceCatalog});
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
     ruleManager.addRule(InferModelResolutionRule{this->modelCatalog});
+    ruleManager.addRule(UDFResolutionRule{this->udfCatalog});
     ruleManager.addRule(TypeInferenceRule{});
     ruleManager.addRule(CalcTargetOrderRule{});
 
