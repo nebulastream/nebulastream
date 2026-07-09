@@ -36,6 +36,12 @@ namespace NES
 /// Returns an error message or an empty optional if the query result is correct
 std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery);
 
+/// Compares the explain output of an EXPLAIN statement (computed at bind time) against the expected result lines.
+/// Unlike checkResult, the comparison is ordered and line-based: lines are right-trimmed (indentation is significant)
+/// and empty lines are dropped on both sides, because expected blocks in test files cannot contain empty lines.
+/// Returns an error message or an empty optional if the explain output matches.
+std::optional<std::string> checkExplainResult(const Systest::RunningQuery& runningQuery);
+
 template <typename T>
 bool compareStringAsTypeWithError(const std::string& left, const std::string& right)
 {

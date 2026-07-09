@@ -95,6 +95,31 @@ public:
         const Schema<UnqualifiedUnboundField, Ordered>& schema,
         const std::unordered_map<Identifier, std::string>& /*config*/)
     {
+        std::unordered_map<Identifier, std::string> config{};
+        std::unordered_map<Identifier, std::string> formatConfig{};
+        if (sinkType == Identifier::parse("File"))
+        {
+            config[Identifier::parse("file_path")] = "/tmp/none.txt";
+            config[Identifier::parse("output_format")] = "CSV";
+        }
+        else if (sinkType == Identifier::parse("CHECKSUM"))
+        {
+            config[Identifier::parse("file_path")] = "/tmp/none.txt";
+            formatConfig[Identifier::parse("quote_strings")] = "true";
+        }
+        std::string host = possibleSinkPlacements.at(0).getRawValue();
+        if (auto hostIt = config.find(Identifier::parse("host")); hostIt != config.end())
+        {
+            host = hostIt->second;
+        }
+
+        const auto sink = sinkCatalog->addSinkDescriptor(sinkNameInFile, schema, sinkType, Host(host), std::move(config), formatConfig);
+        if (not sink.has_value())
+        {
+            throw SinkAlreadyExists("Failed to create file sink with assigned name {}", sinkNameInFile);
+        }
+
+
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
             [this, schema, sinkType](
@@ -279,8 +304,24 @@ public:
 
     void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
 
+    void setExplainStatement(ExplainQueryStatement statement) { this->explainStatement = std::move(statement); }
+
     void optimizeQueries(const NES::QueryOptimizer& queryOptimizer)
     {
+        if (explainStatement.has_value())
+        {
+            /// EXPLAIN statements are never executed; compute the explain output now, as this is the only place with
+            /// access to the query optimizer (needed for the OPTIMIZED, DISTRIBUTED and ALL stages).
+            try
+            {
+                actualExplainOutput = computeExplainOutput(explainStatement.value(), queryOptimizer);
+            }
+            catch (Exception& e)
+            {
+                setException(e);
+            }
+            return;
+        }
         if (!boundPlan.has_value())
         {
             return;
@@ -326,6 +367,29 @@ public:
                 expectedResultsOrError.has_value() || differentialQueryPlan.has_value(),
                 "Differential query plan or error has not been set");
         }
+
+        if (explainStatement.has_value())
+        {
+            /// EXPLAIN statements have no executable plan and never touch the worker, so configuration overrides do not
+            /// apply and exactly one query is emitted. On success, the runner only reads actualExplainOutput.
+            return {
+                {.testName = testName.value(),
+                 .queryIdInFile = queryIdInFile,
+                 .testFilePath = testFilePath.value(),
+                 .workingDir = workingDir.value(),
+                 .queryDefinition = queryDefinition.value(),
+                 .planInfoOrException = std::
+                     unexpected{exception.has_value() ? exception.value() : Exception{TestException("EXPLAIN statements are not executed and have no plan info")}},
+                 .expectedResultsOrExpectedError = expectedResultsOrError.has_value()
+                     ? expectedResultsOrError.value()
+                     : std::variant<std::vector<std::string>, ExpectedError>{std::vector<std::string>{}},
+                 .additionalSourceThreads = additionalSourceThreads.value(),
+                 .configurationOverride = ConfigurationOverride{},
+                 .differentialQueryPlan = std::nullopt,
+                 .runAfter = runAfter,
+                 .actualExplainOutput = exception.has_value() ? std::nullopt : actualExplainOutput}};
+        }
+
         const auto createPlanInfoOrException = [this]() -> std::expected<SystestQuery::PlanInfo, Exception>
         {
             if (not exception.has_value())
@@ -359,7 +423,8 @@ public:
                  .additionalSourceThreads = additionalSourceThreads.value(),
                  .configurationOverride = std::move(configurationOverride),
                  .differentialQueryPlan = optimizedDifferentialQueryPlan,
-                 .runAfter = runAfter});
+                 .runAfter = runAfter,
+                 .actualExplainOutput = std::nullopt});
         }
         return queries;
     }
@@ -384,6 +449,8 @@ private:
     std::optional<LogicalPlan> differentialQueryPlan;
     std::optional<DistributedLogicalPlan> optimizedDifferentialQueryPlan;
     std::optional<std::pair<TestName, SystestQueryId>> runAfter;
+    std::optional<ExplainQueryStatement> explainStatement;
+    std::optional<std::string> actualExplainOutput;
     bool built = false;
 };
 
@@ -829,6 +896,29 @@ struct SystestBinder::Impl
         }
     }
 
+    void setInlineSinks(
+        LogicalPlan& plan,
+        const std::string_view& testFileName,
+        SLTSinkFactory& sltSinkProvider,
+        const SystestQueryId& currentQueryNumberInTest) const
+    {
+        std::vector<LogicalOperator> newRoots;
+
+
+        for (const auto& rootOperator : plan.getRootOperators())
+        {
+            if (auto inlineSink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); inlineSink.has_value())
+            {
+                newRoots.emplace_back(setInlineSink(testFileName, sltSinkProvider, currentQueryNumberInTest, inlineSink.value()));
+            }
+            else
+            {
+                newRoots.emplace_back(rootOperator);
+            }
+        }
+        plan = plan.withRootOperators(newRoots);
+    }
+
     void queryCallback(
         const std::string_view& testFileName,
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
@@ -852,6 +942,51 @@ struct SystestBinder::Impl
             plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
             setInlineSources(plan);
             currentBuilder.setBoundPlan(std::move(plan));
+        }
+        catch (Exception& e)
+        {
+            currentBuilder.setException(e);
+        }
+
+        plans.emplace(currentQueryNumberInTest, currentBuilder);
+    }
+
+    void explainCallback(
+        const StatementBinder& binder,
+        const std::string_view& testFileName,
+        std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
+        SLTSinkFactory& sltSinkProvider,
+        const std::string& statementString,
+        const SystestQueryId& currentQueryNumberInTest) const
+    {
+        SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
+        currentBuilder.setQueryDefinition(statementString);
+        try
+        {
+            const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(statementString);
+            const auto parseResult = managedParser->parseSingle();
+            if (not parseResult.has_value())
+            {
+                throw InvalidQuerySyntax("failed to parse the statement \"{}\"", replaceAll(statementString, "\n", " "));
+            }
+
+            auto binding = binder.bind(parseResult.value().get());
+            if (not binding.has_value())
+            {
+                throw InvalidQuerySyntax("failed to bind the statement \"{}\": {}", statementString, binding.error());
+            }
+
+            auto* explainStatement = std::get_if<ExplainQueryStatement>(&binding.value());
+            if (explainStatement == nullptr)
+            {
+                throw UnsupportedQuery("expected an EXPLAIN statement, but got: \"{}\"", replaceAll(statementString, "\n", " "));
+            }
+
+            /// The inner query plan needs the same rewrites as a regular systest query, so that its sinks and inline
+            /// sources resolve during optimization (the OPTIMIZED, DISTRIBUTED and ALL stages run the optimizer).
+            setInlineSinks(explainStatement->plan, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            setInlineSources(explainStatement->plan);
+            currentBuilder.setExplainStatement(std::move(*explainStatement));
         }
         catch (Exception& e)
         {
@@ -968,6 +1103,15 @@ struct SystestBinder::Impl
                 lastMergedConfigOverrides = mergedConfigOverrides;
                 queryCallback(
                     testFileName, plans, sltSinkProvider, query, currentQueryNumberInTest, mergedConfigOverrides, sequentialExecution);
+                configOverrides = {ConfigurationOverride{}};
+            });
+
+        parser.registerOnExplainQueryCallback(
+            [&](const std::string& statement, SystestQueryId currentQueryNumberInTest)
+            {
+                explainCallback(binder, testFileName, plans, sltSinkProvider, statement, currentQueryNumberInTest);
+                /// EXPLAIN statements are not executed, so configuration overrides do not apply; reset them so they
+                /// do not leak into the next query.
                 configOverrides = {ConfigurationOverride{}};
             });
 
