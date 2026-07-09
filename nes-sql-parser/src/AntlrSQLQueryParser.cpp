@@ -97,7 +97,7 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
         antlr4::CommonTokenStream tokens(&lexer);
         AntlrSQLParser parser(&tokens);
         [[maybe_unused]] auto listener = installErrorListenerAndHandler(queryString, lexer, parser);
-        AntlrSQLParser::QueryContext* tree = parser.query();
+        AntlrSQLParser::SingleStatementContext* tree = parser.singleStatement();
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
         auto queryPlan = queryPlanCreator.getQueryPlan();
