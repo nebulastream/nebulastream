@@ -1,0 +1,112 @@
+# name: udf/PythonUdf.test
+# description: scalar UDFs authored in Python (nes-systests/udf/pyudfs/currency.py), executed via the CPython bridge .so
+# groups: [PythonUdf]
+
+# --- Python UDF: integer add (currency.add) ---
+CREATE LOGICAL SOURCE nums(a INT64 NOT NULL, b INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR nums TYPE File;
+ATTACH INLINE
+1,2
+10,20
+100,200
+
+CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 FROM 'PY_BRIDGE_DIR/libnes-python-udf-bridge.so' ENTRYPOINT 'currency.add';
+
+SELECT a, b, add_py(a, b) AS c FROM nums INTO FILE();
+----
+1,2,3
+10,20,30
+100,200,300
+
+# --- Python UDF: currency conversion (currency.to_euro), VARSIZED argument arrives as Python bytes ---
+CREATE LOGICAL SOURCE bids(amount FLOAT64 NOT NULL, ccy VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bids TYPE File;
+ATTACH INLINE
+100.0,EUR
+100.0,USD
+50.0,GBP
+
+CREATE FUNCTION to_euro_py (amount FLOAT64, ccy VARSIZED) RETURNS FLOAT64 FROM 'PY_BRIDGE_DIR/libnes-python-udf-bridge.so' ENTRYPOINT 'currency.to_euro';
+
+SELECT to_euro_py(amount, ccy) AS eur FROM bids INTO FILE();
+----
+100
+80
+100
+
+# --- Python UDF: VARSIZED in and out (currency.shout) ---
+CREATE LOGICAL SOURCE words(w VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR words TYPE File;
+ATTACH INLINE
+hello
+World
+
+CREATE FUNCTION shout_py (w VARSIZED) RETURNS VARSIZED FROM 'PY_BRIDGE_DIR/libnes-python-udf-bridge.so' ENTRYPOINT 'currency.shout';
+
+SELECT shout_py(w) AS u FROM words INTO FILE();
+----
+HELLO
+WORLD
+
+# --- Python UDF that raises: the query fails with the UDF error code; the worker survives ---
+CREATE LOGICAL SOURCE ints(x INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR ints TYPE File;
+ATTACH INLINE
+1
+2
+
+CREATE FUNCTION boom_py (x INT64) RETURNS INT64 FROM 'PY_BRIDGE_DIR/libnes-python-udf-bridge.so' ENTRYPOINT 'currency.boom';
+
+SELECT boom_py(x) AS y FROM ints INTO FILE();
+----
+ERROR 3007
+
+# --- STRICT NULL input (scalar return): a NULL argument short-circuits to SQL NULL WITHOUT invoking
+# the UDF. currency.strict_probe ignores its argument and always returns 42, so a NULL row producing
+# NULL (rather than 42) proves the UDF was skipped. A nullable column with an empty CSV field is NULL;
+# the NOT NULL id column keeps rows from being empty lines.
+CREATE LOGICAL SOURCE probe(id INT64 NOT NULL, x INT64);
+CREATE PHYSICAL SOURCE FOR probe TYPE File;
+ATTACH INLINE
+1,10
+2,
+
+CREATE FUNCTION strict_probe_py (x INT64) RETURNS INT64 FROM 'PY_BRIDGE_DIR/libnes-python-udf-bridge.so' ENTRYPOINT 'currency.strict_probe';
+
+SELECT id, strict_probe_py(x) AS y FROM probe INTO FILE();
+----
+1,42
+2,NULL
+
+# --- STRICT NULL input (VARSIZED return): the same short-circuit for a VARSIZED-returning UDF. A NULL
+# VARSIZED argument yields NULL; currency.shout would raise on None (None has no .upper()), so NULL
+# rather than a query error confirms the UDF was not called.
+CREATE LOGICAL SOURCE greets(id INT64 NOT NULL, w VARSIZED);
+CREATE PHYSICAL SOURCE FOR greets TYPE File;
+ATTACH INLINE
+1,hi
+2,
+
+CREATE FUNCTION shout_nullable_py (w VARSIZED) RETURNS VARSIZED FROM 'PY_BRIDGE_DIR/libnes-python-udf-bridge.so' ENTRYPOINT 'currency.shout';
+
+SELECT id, shout_nullable_py(w) AS u FROM greets INTO FILE();
+----
+1,HI
+2,NULL
+
+# --- UDF-produced NULL: every input is non-NULL, but the UDF returns Python None for an odd number,
+# which maps to SQL NULL. This exercises the result-null path independently of any NULL input.
+CREATE LOGICAL SOURCE evens(n INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR evens TYPE File;
+ATTACH INLINE
+4
+5
+8
+
+CREATE FUNCTION half_even_py (n INT64) RETURNS INT64 FROM 'PY_BRIDGE_DIR/libnes-python-udf-bridge.so' ENTRYPOINT 'currency.half_if_even';
+
+SELECT half_even_py(n) AS h FROM evens INTO FILE();
+----
+2
+NULL
+4

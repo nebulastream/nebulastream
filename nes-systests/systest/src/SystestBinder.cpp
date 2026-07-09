@@ -75,6 +75,7 @@
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SystestState.hpp>
+#include <UdfCatalog.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES::Systest
@@ -478,6 +479,11 @@ struct SystestBinder::Impl
         {
             workerCatalog->addWorker(host, data, capacity, downstream, config);
         }
+        /// Make the Python UDF modules (nes-systests/udf/pyudfs) importable by the Python bridge.
+        if (std::string_view{SYSTEST_PY_UDF_PATH}.size() > 0)
+        {
+            setenv("NES_UDF_PATH", SYSTEST_PY_UDF_PATH, /*overwrite=*/1);
+        }
     }
 
     static std::vector<ConfigurationOverride>
@@ -562,11 +568,13 @@ struct SystestBinder::Impl
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog, clusterConfiguration.allowSinkPlacement};
         auto modelCatalog = std::make_shared<ModelCatalog>();
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, sinkProvider);
+        auto udfCatalog = std::make_shared<UdfCatalog>();
+        auto loadedSystests
+            = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, udfCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
         const QueryOptimizer queryOptimizer{
-            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog), modelCatalog};
+            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog), modelCatalog, udfCatalog};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -713,10 +721,30 @@ struct SystestBinder::Impl
         }
     }
 
+    void createFunction(const std::shared_ptr<UdfCatalog>& udfCatalog, const CreateFunctionStatement& statement) const
+    {
+        /// Resolve a relative `.so` path against testDataDir before routing through the handler.
+        auto resolvedStatement = statement;
+        auto path = std::filesystem::path(statement.path);
+        if (!path.is_absolute())
+        {
+            path = testDataDir / path;
+        }
+        resolvedStatement.path = path.string();
+
+        auto handler = UdfStatementHandler(udfCatalog);
+        auto result = handler(resolvedStatement);
+        if (!result)
+        {
+            throw std::move(result).error();
+        }
+    }
+
     void createCallback(
         const StatementBinder& binder,
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
         const std::shared_ptr<ModelCatalog>& modelCatalog,
+        const std::shared_ptr<UdfCatalog>& udfCatalog,
         SLTSinkFactory& sltSinkProvider,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
@@ -750,6 +778,10 @@ struct SystestBinder::Impl
         else if (std::holds_alternative<CreateModelStatement>(statement))
         {
             createModel(modelCatalog, std::get<CreateModelStatement>(statement));
+        }
+        else if (std::holds_alternative<CreateFunctionStatement>(statement))
+        {
+            createFunction(udfCatalog, std::get<CreateFunctionStatement>(statement));
         }
         else
         {
@@ -1068,6 +1100,7 @@ struct SystestBinder::Impl
         const std::string_view testFileName,
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
         const std::shared_ptr<ModelCatalog>& modelCatalog,
+        const std::shared_ptr<UdfCatalog>& udfCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
         uint64_t sourceIndex = 0;
@@ -1093,6 +1126,8 @@ struct SystestBinder::Impl
                      substitute.push_back('/');
                  }
              }});
+        parser.registerSubstitutionRule(
+            {.keyword = "PY_BRIDGE_DIR", .ruleFunction = [](std::string& substitute) { substitute = SYSTEST_PY_BRIDGE_DIR; }});
 
         if (!parser.loadString(NES::readTestFile(testFilePath)))
         {
@@ -1170,9 +1205,9 @@ struct SystestBinder::Impl
             });
 
         parser.registerOnCreateCallback(
-            [&, sourceCatalog, modelCatalog](
+            [&, sourceCatalog, modelCatalog, udfCatalog](
                 const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
-            { createCallback(binder, sourceCatalog, modelCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
+            { createCallback(binder, sourceCatalog, modelCatalog, udfCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
 
         try
         {

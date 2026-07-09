@@ -69,6 +69,9 @@ EXCEPTION(UnknownModelName, 2040, "unknown model name")
 EXCEPTION(ModelAlreadyExists, 2041, "model already exists")
 EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 EXCEPTION(CannotLoadPlugin, 2043, "cannot load plugin")
+EXCEPTION(UnknownUdf, 2046, "unknown udf name")
+EXCEPTION(CannotLoadUdf, 2047, "cannot load udf")
+EXCEPTION(UdfAlreadyExists, 2048, "udf already exists")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
@@ -84,6 +87,7 @@ EXCEPTION(CannotAllocateBuffer, 3003, "cannot allocate buffer")
 EXCEPTION(SkippingDelayedTaskDuringShutdown, 3004, "skipping delayed task during shutdown")
 EXCEPTION(TuplesTooLargeForPipelineBufferSize, 3005, "tuples too large for pipeline buffer size")
 EXCEPTION(InferenceRuntimeFailure, 3006, "inference runtime failure")
+EXCEPTION(UdfExecutionError, 3007, "udf execution error")
 EXCEPTION(ArithmeticalError, 3013, "arithmetical error")
 EXCEPTION(WindowingError, 3014, "windowing error")
 
