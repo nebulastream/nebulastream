@@ -99,8 +99,14 @@ LogicalOperator pushBeyondSource(TypedLogicalOperator<SourceDescriptorLogicalOpe
 {
     /// Recursion stop. Add projection if required is a strict subset of output schema.
 
+    const auto outputSchema = op.getOutputSchema();
+    if (required.empty() && outputSchema.begin() != outputSchema.end())
+    {
+        required.insert(*outputSchema.begin());
+    }
+
     const auto allFieldsAreRequired
-        = std::ranges::all_of(op.getOutputSchema(), [&required](const Field& field) { return required.contains(field); });
+        = std::ranges::all_of(outputSchema, [&required](const Field& field) { return required.contains(field); });
 
     if (!allFieldsAreRequired)
     {
