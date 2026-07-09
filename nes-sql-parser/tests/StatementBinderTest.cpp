@@ -826,6 +826,15 @@ TEST_F(StatementBinderTest, CreateWorkerStatementTest)
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).dataAddress, "localhost:9090");
 }
 
+TEST_F(StatementBinderTest, CreateLogicalQueryPlanConsumesInlineSinkAfterWhere)
+{
+    const std::string query = "SELECT pk FROM input WHERE col0 = INT64(1) INTO File();";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+
+    ASSERT_FALSE(plan.getRootOperators().empty());
+    EXPECT_TRUE(plan.getRootOperators().front().tryGetAs<InlineSinkLogicalOperator>().has_value());
+}
+
 TEST_F(StatementBinderTest, LeftOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT OUTER JOIN (SELECT * FROM s2) "
