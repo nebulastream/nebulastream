@@ -251,6 +251,126 @@ SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO strea
     ASSERT_TRUE(differentialQueryCallbackCalled) << "The differential query callback was never called.";
 }
 
+/// NOLINTBEGIN(bugprone-unchecked-optional-access)
+TEST_F(SystestParserTest, testExplainCallbackWithVerbatimResultBlock)
+{
+    SystestParser parser{};
+
+    const std::string explainIn = "EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > UINT64(4) INTO sink;";
+    const std::string queryIn = "SELECT id FROM stream INTO sink;";
+
+    /// The expected explain output contains lines that look like parser tokens: a line starting with `----`,
+    /// a section header, and an indented line starting with `SELECT`. All must be delivered verbatim.
+    static constexpr std::string_view TestContent
+        = R"(EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > UINT64(4) INTO sink;
+----
+== Global Optimized Plan ==
+SINK(SINK1)
+  SELECTION(predicate: value > 4)
+    SOURCE(stream)
+==END==
+
+SELECT id FROM stream INTO sink;
+----
+1
+)";
+
+    std::optional<SystestQueryId> explainQueryId;
+    std::optional<SystestQueryId> selectQueryId;
+    std::string receivedExplainStatement;
+    std::vector<std::vector<std::string>> receivedResultBlocks;
+
+    parser.registerOnExplainQueryCallback(
+        [&](const std::string& statement, SystestQueryId queryId)
+        {
+            receivedExplainStatement = statement;
+            explainQueryId = queryId;
+        });
+    parser.registerOnQueryCallback(
+        [&](const std::string& queryOut, SystestQueryId queryId, bool)
+        {
+            ASSERT_EQ(queryIn, queryOut);
+            selectQueryId = queryId;
+        });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, SystestQueryId)
+                                          { receivedResultBlocks.push_back(std::move(resultTuples)); });
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
+
+    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    EXPECT_NO_THROW(parser.parse());
+
+    ASSERT_EQ(receivedExplainStatement, explainIn);
+    ASSERT_TRUE(explainQueryId.has_value());
+    ASSERT_TRUE(selectQueryId.has_value());
+    EXPECT_EQ(explainQueryId->getRawValue() + 1, selectQueryId->getRawValue()) << "EXPLAIN must participate in query id accounting.";
+
+    ASSERT_EQ(receivedResultBlocks.size(), 2);
+    const std::vector<std::string> expectedExplainBlock{
+        "== Global Optimized Plan ==", "SINK(SINK1)", "  SELECTION(predicate: value > 4)", "    SOURCE(stream)"};
+    EXPECT_EQ(receivedResultBlocks.at(0), expectedExplainBlock);
+    EXPECT_EQ(receivedResultBlocks.at(1), std::vector<std::string>{"1"});
+}
+
+TEST_F(SystestParserTest, testExplainWithErrorExpectation)
+{
+    SystestParser parser{};
+
+    static constexpr std::string_view TestContent = R"(EXPLAIN (LOGICAL) SELECT id FROM unknownStream INTO sink;
+----
+ERROR 3000
+)";
+
+    bool explainCallbackCalled = false;
+    bool errorExpectationCallbackCalled = false;
+
+    parser.registerOnExplainQueryCallback([&](const std::string&, SystestQueryId) { explainCallbackCalled = true; });
+    parser.registerOnErrorExpectationCallback(
+        [&](const SystestParser::ErrorExpectation& expectation, SystestQueryId)
+        {
+            errorExpectationCallbackCalled = true;
+            EXPECT_EQ(expectation.code, 3000);
+        });
+    parser.registerOnResultTuplesCallback(
+        [](std::vector<std::string>&&, SystestQueryId) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+        { FAIL() << "Result tuple callback should not be called for an error expectation."; });
+
+    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    EXPECT_NO_THROW(parser.parse());
+
+    ASSERT_TRUE(explainCallbackCalled);
+    ASSERT_TRUE(errorExpectationCallbackCalled);
+}
+
+TEST_F(SystestParserTest, testMultiLineExplainStatement)
+{
+    SystestParser parser{};
+
+    static constexpr std::string_view TestContent = R"(EXPLAIN (ALL, FORMAT TEXT)
+SELECT id FROM stream
+INTO sink;
+----
+== Initial Logical Plan ==
+SINK(SINK1)
+)";
+
+    std::string receivedExplainStatement;
+    std::vector<std::string> receivedResultLines;
+
+    parser.registerOnExplainQueryCallback([&](const std::string& statement, SystestQueryId) { receivedExplainStatement = statement; });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, SystestQueryId)
+                                          { receivedResultLines = std::move(resultTuples); });
+
+    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    EXPECT_NO_THROW(parser.parse());
+
+    EXPECT_EQ(receivedExplainStatement, "EXPLAIN (ALL, FORMAT TEXT)\nSELECT id FROM stream\nINTO sink;");
+    const std::vector<std::string> expectedResultLines{"== Initial Logical Plan ==", "SINK(SINK1)"};
+    EXPECT_EQ(receivedResultLines, expectedResultLines);
+}
+
+/// NOLINTEND(bugprone-unchecked-optional-access)
+
 /// Regression test for issue #945: substitution rules must not replace substrings inside longer identifiers.
 /// For example, a substitution rule for keyword "we" must not modify "producedPower" to "producedPowe<replaced>r".
 TEST_F(SystestParserTest, testSubstitutionRuleRespectsWordBoundaries)
