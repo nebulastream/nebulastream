@@ -173,8 +173,7 @@ namespace NES::Systest
 std::filesystem::path
 SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const SystestQueryId queryIdInTestFile)
 {
-    auto resultPath = workingDir / "results"
-        / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
+    auto resultPath = workingDir / "results" / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
     const auto resultDir = resultPath.parent_path();
     if (not is_directory(resultDir))
     {
@@ -288,11 +287,7 @@ TestFile::TestFile(
     std::shared_ptr<SourceCatalog> sourceCatalog,
     std::shared_ptr<SinkCatalog> sinkCatalog)
     : TestFile(
-          file,
-          std::move(onlyEnableQueriesWithTestQueryNumber),
-          file.stem().string(),
-          std::move(sourceCatalog),
-          std::move(sinkCatalog))
+          file, std::move(onlyEnableQueriesWithTestQueryNumber), file.stem().string(), std::move(sourceCatalog), std::move(sinkCatalog))
 {
 }
 
