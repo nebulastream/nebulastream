@@ -31,26 +31,11 @@
 namespace NES
 {
 
-const std::type_info& SinkBindingRule::getType()
-{
-    return typeid(SinkBindingRule);
-}
-
-std::string_view SinkBindingRule::getName()
-{
-    return NAME;
-}
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> SinkBindingRule::dependsOn() const
+std::set<std::type_index> SinkBindingRule::needs() const
 {
     return {typeid(AnonymousSinkBindingRule)};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> SinkBindingRule::requiredBy() const
-{
-    return {};
 }
 
 bool SinkBindingRule::operator==(const SinkBindingRule& other) const

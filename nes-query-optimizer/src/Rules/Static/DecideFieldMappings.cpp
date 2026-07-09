@@ -216,30 +216,10 @@ LogicalPlan DecideFieldMappings::apply(const LogicalPlan& queryPlan) const
     return queryPlan.withRootOperators({newRootOperator});
 }
 
-const std::type_info& DecideFieldMappings::getType()
-{
-    return typeid(DecideFieldMappings);
-}
-
-std::string_view DecideFieldMappings::getName()
-{
-    return NAME;
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> DecideFieldMappings::dependsOn() const
+std::set<std::type_index> DecideFieldMappings::needs() const
 {
     return {typeid(FixedPlanStructureBarrier)};
 }
 
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> DecideFieldMappings::requiredBy() const
-{
-    return {};
-}
-
-bool DecideFieldMappings::operator==(const DecideFieldMappings&) const
-{
-    return true;
-}
 }

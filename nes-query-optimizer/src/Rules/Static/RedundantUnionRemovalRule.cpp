@@ -35,31 +35,11 @@
 namespace NES
 {
 
-const std::type_info& RedundantUnionRemovalRule::getType()
-{
-    return typeid(RedundantUnionRemovalRule);
-}
-
-std::string_view RedundantUnionRemovalRule::getName()
-{
-    return NAME;
-}
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> RedundantUnionRemovalRule::dependsOn() const
-{
-    return {};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> RedundantUnionRemovalRule::requiredBy() const
+std::set<std::type_index> RedundantUnionRemovalRule::neededBy() const
 {
     return {typeid(FixedPlanStructureBarrier)};
-}
-
-bool RedundantUnionRemovalRule::operator==(const RedundantUnionRemovalRule&) const
-{
-    return true;
 }
 
 namespace

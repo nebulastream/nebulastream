@@ -84,26 +84,10 @@ bool shallUseHashJoin(const LogicalFunction& joinFunction)
 }
 }
 
-const std::type_info& DecideJoinTypesRule::getType()
-{
-    return typeid(DecideJoinTypesRule);
-}
-
-std::string_view DecideJoinTypesRule::getName()
-{
-    return NAME;
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> DecideJoinTypesRule::dependsOn() const
+std::set<std::type_index> DecideJoinTypesRule::needs() const
 {
     return {typeid(FixedPlanStructureBarrier)};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> DecideJoinTypesRule::requiredBy() const
-{
-    return {};
 }
 
 LogicalPlan DecideJoinTypesRule::apply(const LogicalPlan& queryPlan) const
