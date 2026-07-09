@@ -98,31 +98,10 @@ Schema<Field, Ordered> applyRecursive(const LogicalOperator& visiting)
 
 }
 
-const std::type_info& CalcTargetOrderRule::getType()
-{
-    return typeid(CalcTargetOrderRule);
-}
-
-std::string_view CalcTargetOrderRule::getName()
-{
-    return NAME;
-};
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> CalcTargetOrderRule::dependsOn() const
+std::set<std::type_index> CalcTargetOrderRule::needs() const
 {
     return {typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule), typeid(LogicalSourceExpansionRule), typeid(TypeInferenceRule)};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> CalcTargetOrderRule::requiredBy() const
-{
-    return {};
-}
-
-bool CalcTargetOrderRule::operator==(const CalcTargetOrderRule&) const
-{
-    return true;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

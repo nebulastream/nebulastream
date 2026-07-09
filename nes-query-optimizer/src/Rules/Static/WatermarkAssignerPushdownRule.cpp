@@ -261,31 +261,17 @@ LogicalPlan WatermarkAssignerPushdownRule::apply(LogicalPlan queryPlan) const
     return queryPlan;
 }
 
-const std::type_info& WatermarkAssignerPushdownRule::getType()
-{
-    return typeid(WatermarkAssignerPushdownRule);
-}
-
-std::string_view WatermarkAssignerPushdownRule::getName()
-{
-    return NAME;
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> WatermarkAssignerPushdownRule::dependsOn() const
+std::set<std::type_index> WatermarkAssignerPushdownRule::wants() const
 {
     return {typeid(PredicatePushdownRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> WatermarkAssignerPushdownRule::requiredBy() const
+std::set<std::type_index> WatermarkAssignerPushdownRule::neededBy() const
 {
     return {typeid(FixedPlanStructureBarrier)};
 }
 
-bool WatermarkAssignerPushdownRule::operator==(const WatermarkAssignerPushdownRule&) const
-{
-    return true;
-}
 
 }

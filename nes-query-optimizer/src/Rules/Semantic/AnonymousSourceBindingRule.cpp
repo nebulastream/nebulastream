@@ -32,33 +32,6 @@
 namespace NES
 {
 
-const std::type_info& AnonymousSourceBindingRule::getType()
-{
-    return typeid(AnonymousSourceBindingRule);
-}
-
-std::string_view AnonymousSourceBindingRule::getName()
-{
-    return NAME;
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> AnonymousSourceBindingRule::dependsOn() const
-{
-    return {};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> AnonymousSourceBindingRule::requiredBy() const
-{
-    return {};
-};
-
-bool AnonymousSourceBindingRule::operator==(const AnonymousSourceBindingRule& other) const
-{
-    return sourceCatalog == other.sourceCatalog;
-}
-
 LogicalOperator AnonymousSourceBindingRule::bindAnonymousSourceLogicalOperators(const LogicalOperator& current) const
 {
     std::vector<LogicalOperator> newChildren;

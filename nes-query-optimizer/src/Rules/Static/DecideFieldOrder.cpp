@@ -127,31 +127,10 @@ LogicalOperator applyRecur(const LogicalOperator& visiting)
 
 }
 
-const std::type_info& DecideFieldOrder::getType()
-{
-    return typeid(DecideFieldOrder);
-}
-
-std::string_view DecideFieldOrder::getName()
-{
-    return NAME;
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> DecideFieldOrder::dependsOn() const
+std::set<std::type_index> DecideFieldOrder::needs() const
 {
     return {typeid(FixedPlanStructureBarrier)};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> DecideFieldOrder::requiredBy() const
-{
-    return {};
-}
-
-bool DecideFieldOrder::operator==(const DecideFieldOrder&) const
-{
-    return true;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

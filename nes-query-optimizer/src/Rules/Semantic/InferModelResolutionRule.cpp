@@ -68,31 +68,16 @@ LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
     return queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front(), *modelCatalog)});
 }
 
-const std::type_info& InferModelResolutionRule::getType()
-{
-    return typeid(InferModelResolutionRule);
-}
-
-std::string_view InferModelResolutionRule::getName()
-{
-    return NAME;
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> InferModelResolutionRule::dependsOn() const
+std::set<std::type_index> InferModelResolutionRule::needs() const
 {
     return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> InferModelResolutionRule::requiredBy() const
+std::set<std::type_index> InferModelResolutionRule::neededBy() const
 {
     return {typeid(TypeInferenceRule)};
-}
-
-bool InferModelResolutionRule::operator==(const InferModelResolutionRule& other) const
-{
-    return modelCatalog == other.modelCatalog;
 }
 
 }
