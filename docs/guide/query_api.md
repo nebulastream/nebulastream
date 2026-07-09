@@ -350,6 +350,26 @@ The numeric suffix denotes the bit width.
 `VARSIZED` supports arbitrary-length data like strings.
 For output types of arithmetical operations, we stick to the C++ standard, c.f.[Integer Promotions](https://en.cppreference.com/w/cpp/language/implicit_conversion.html#Integer_promotions) and [Conversion Ranks](https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions.html#Integer_conversion_rank).
 
+### Numeric literals
+
+Numeric constants can be written directly in query expressions:
+
+```sql
+SELECT speed * 3.6 AS speed_m_sec FROM s INTO sink
+SELECT * FROM s WHERE count >= 10 AND delta > -5 INTO sink
+```
+
+NebulaStream infers a raw numeric literal's data type from its value:
+- Integer literals without a leading minus sign use the smallest unsigned integer type that can represent the value: `UINT8`, `UINT16`, `UINT32`, or `UINT64`.
+- Negative integer literals use the smallest signed integer type that can represent the value: `INT8`, `INT16`, `INT32`, or `INT64`.
+- Floating-point literals, including fractional and exponent notation such as `0.1`, `42.0`, `.5`, and `1E3`, use `FLOAT64`.
+
+Use an explicit type constructor when a query depends on an exact literal type:
+
+```sql
+SELECT UINT64(1) AS id, FLOAT32(3.6) AS scale FROM s INTO sink
+```
+
 ---
 
 ## Operators
@@ -379,17 +399,17 @@ SELECT a, b, c FROM s INTO sink
 ```
 
 ```sql
-SELECT speed * FLOAT32(3.6) AS speed_m_sec FROM s INTO sink
+SELECT speed * 3.6 AS speed_m_sec FROM s INTO sink
 ```
 
 ```sql
 SELECT CONCAT(firstName, lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ```
 
-💡 Constants must be wrapped in an explicit cast to specify their type.
+💡 Use an explicit type constructor when a constant needs an exact type.
 
 ```sql
-SELECT FLOAT64(3.141) * r FROM stream INTO sink
+SELECT FLOAT32(3.141) * r FROM stream INTO sink
 ```
 
 #### Selection
