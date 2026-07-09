@@ -76,31 +76,10 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
 }
 }
 
-const std::type_info& OriginIdInferenceRule::getType()
-{
-    return typeid(OriginIdInferenceRule);
-}
-
-std::string_view OriginIdInferenceRule::getName()
-{
-    return NAME;
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> OriginIdInferenceRule::dependsOn() const
+std::set<std::type_index> OriginIdInferenceRule::needs() const
 {
     return {typeid(FixedPlanStructureBarrier)};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> OriginIdInferenceRule::requiredBy() const
-{
-    return {};
-}
-
-bool OriginIdInferenceRule::operator==(const OriginIdInferenceRule&) const
-{
-    return true;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

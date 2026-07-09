@@ -42,31 +42,10 @@ LogicalPlan TypeInferenceRule::apply(const LogicalPlan& queryPlan) const
     return queryPlan.withRootOperators(newRoots);
 }
 
-const std::type_info& TypeInferenceRule::getType()
-{
-    return typeid(TypeInferenceRule);
-}
-
-std::string_view TypeInferenceRule::getName()
-{
-    return NAME;
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> TypeInferenceRule::dependsOn() const
+std::set<std::type_index> TypeInferenceRule::needs() const
 {
     return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule)};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> TypeInferenceRule::requiredBy() const
-{
-    return {};
-}
-
-bool TypeInferenceRule::operator==(const TypeInferenceRule&) const
-{
-    return true;
 }
 
 

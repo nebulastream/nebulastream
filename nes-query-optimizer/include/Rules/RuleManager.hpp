@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <queue>
 #include <ranges>
@@ -35,9 +36,10 @@ namespace NES
  * @brief Collects optimizer rules and produces a dependency-ordered execution sequence.
  *
  * Rules are registered via addRule(). Each rule may declare dependencies on other rule
- * types through Rule::dependsOn() and Rule::requiredBy(). The RuleManager builds a directed
- * acyclic graph (DAG) from these declarations and performs a topological sort when
- * getSequence() is called. The order of rules that don't depend on each other is nondeterministic.
+ * types through `Rule::needs()`, `Rule::neededBy()`, `Rule::wants()`, and `Rule::wantedBy()`.
+ * The RuleManager builds a directed acyclic graph (DAG) from these declarations and performs
+ * a topological sort when getSequence() is called.
+ * The order of rules that don't depend on each other is nondeterministic.
  *
  * Constraints:
  * - At most one rule per concrete type may be registered.
@@ -54,15 +56,6 @@ public:
         {
             throw InvalidOptimizerRuleset("only supports one rule per type");
         }
-        for (const auto& deps : rule.dependsOn())
-        {
-            directedEdges[deps].insert(rule.getType());
-        }
-
-        for (const auto& requiredBy : rule.requiredBy())
-        {
-            directedEdges[rule.getType()].insert(requiredBy);
-        }
 
         rules.emplace(rule.getType(), rule);
     }
@@ -72,34 +65,14 @@ public:
     [[nodiscard]] std::vector<Rule<U>> getSequence() const
     {
         std::queue<Rule<U>> candidates;
-        std::unordered_map<std::type_index, size_t> indegree;
-
         std::vector<Rule<U>> sequence;
 
-        for (const auto& [type, _] : rules)
-        {
-            indegree[type] = 0;
-        }
+        const auto downstreamEdges = generateDownstreamEdges();
+        auto indegree = initiateIndegrees(downstreamEdges);
 
-        for (const auto& [dependency, requiredBy] : directedEdges)
+        for (const auto& [type, numberOfRulesItNeeds] : indegree)
         {
-            if (!rules.contains(dependency))
-            {
-                throw InvalidOptimizerRuleset("unregistered rule in dependency graph: {}", dependency.name());
-            }
-            for (auto dependent : requiredBy)
-            {
-                if (!rules.contains(dependent))
-                {
-                    throw InvalidOptimizerRuleset("unregistered rule in dependency graph: {}", dependent.name());
-                }
-                ++indegree[dependent];
-            }
-        }
-
-        for (const auto& [type, numberOfRulesItDependsOn] : indegree)
-        {
-            if (numberOfRulesItDependsOn == 0)
+            if (numberOfRulesItNeeds == 0)
             {
                 candidates.push(rules.at(type));
             }
@@ -110,7 +83,7 @@ public:
             auto next = candidates.front();
             candidates.pop();
             sequence.emplace_back(next);
-            if (auto dependents = directedEdges.find(next.getType()); dependents != directedEdges.end())
+            if (auto dependents = downstreamEdges.find(next.getType()); dependents != downstreamEdges.end())
             {
                 for (auto dependent : dependents->second)
                 {
@@ -146,22 +119,97 @@ public:
         {
             const auto& rule = seq[i];
             out += fmt::format(
-                "\t[{}] RULE({}) DEPENDS_ON({}) REQUIRED_BY({})\n",
+                "\t[{}] RULE({}) NEEDS({}) NEEDED_BY({}) WANTS({}) WANTED_BY({})\n",
                 i + 1,
                 rule.getName(),
-                fmt::join(
-                    rule.dependsOn() | std::views::transform([this](std::type_index ruleType) { return rules.at(ruleType).getName(); }),
-                    ", "),
-                fmt::join(
-                    rule.requiredBy() | std::views::transform([this](std::type_index ruleType) { return rules.at(ruleType).getName(); }),
-                    ", "));
+                formatEdges(rule.needs()),
+                formatEdges(rule.neededBy()),
+                formatEdges(rule.wants()),
+                formatEdges(rule.wantedBy()));
         }
         return out + ")";
     }
 
 private:
-    /// Directed edges between rules. key points to rules that depend on it.
-    std::unordered_map<std::type_index, std::set<std::type_index>> directedEdges;
     std::unordered_map<std::type_index, Rule<U>> rules;
+
+    [[nodiscard]] std::unordered_map<std::type_index, std::set<std::type_index>> generateDownstreamEdges() const
+    {
+        std::unordered_map<std::type_index, std::set<std::type_index>> downstreamEdges;
+
+        for (const auto& [_, rule] : rules)
+        {
+            for (const auto& needed : rule.needs())
+            {
+                downstreamEdges[needed].insert(rule.getType());
+            }
+            for (const auto& neededBy : rule.neededBy())
+            {
+                downstreamEdges[rule.getType()].insert(neededBy);
+            }
+            for (const auto& wanted : rule.wants())
+            {
+                if (rules.contains(wanted))
+                {
+                    downstreamEdges[wanted].insert(rule.getType());
+                }
+            }
+            for (const auto& wantedBy : rule.wantedBy())
+            {
+                if (rules.contains(wantedBy))
+                {
+                    downstreamEdges[rule.getType()].insert(wantedBy);
+                }
+            }
+        }
+
+        return downstreamEdges;
+    }
+
+    [[nodiscard]] std::unordered_map<std::type_index, size_t>
+    initiateIndegrees(const std::unordered_map<std::type_index, std::set<std::type_index>>& downstreamEdges) const
+    {
+        std::unordered_map<std::type_index, size_t> indegree;
+
+        for (const auto& [type, _] : rules)
+        {
+            indegree[type] = 0;
+        }
+
+        for (const auto& [dependency, neededBy] : downstreamEdges)
+        {
+            if (!rules.contains(dependency))
+            {
+                throw InvalidOptimizerRuleset("unregistered rule in dependency graph: {}", dependency.name());
+            }
+            for (auto dependent : neededBy)
+            {
+                if (!rules.contains(dependent))
+                {
+                    throw InvalidOptimizerRuleset("unregistered rule in dependency graph: {}", dependent.name());
+                }
+                ++indegree[dependent];
+            }
+        }
+
+        return indegree;
+    }
+
+    /// Formats a set of rule dependencies for explain(): comma-joined names of the registered rules,
+    /// followed by "N unregistered rule(s)" if the set references any type not registered in this manager.
+    [[nodiscard]] std::string formatEdges(const std::set<std::type_index>& types) const
+    {
+        std::string names = fmt::to_string(fmt::join(
+            types | std::views::filter([this](std::type_index type) { return rules.contains(type); })
+                | std::views::transform([this](std::type_index type) { return rules.at(type).getName(); }),
+            ", "));
+
+        const auto unregistered = std::ranges::count_if(types, [this](std::type_index type) { return !rules.contains(type); });
+        if (unregistered == 0)
+        {
+            return names;
+        }
+        return fmt::format("{}{}{} unregistered rule{}", names, names.empty() ? "" : ", ", unregistered, unregistered > 1 ? "s" : "");
+    }
 };
 }

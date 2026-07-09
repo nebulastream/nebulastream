@@ -44,10 +44,12 @@
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 #include <Schema/Field.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -478,32 +480,17 @@ LogicalPlan ProjectionPushdownRule::apply(LogicalPlan queryPlan) const
     return queryPlan;
 }
 
-const std::type_info& ProjectionPushdownRule::getType()
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> ProjectionPushdownRule::wants() const
 {
-    return typeid(ProjectionPushdownRule);
-}
-
-std::string_view ProjectionPushdownRule::getName()
-{
-    return NAME;
+    return {typeid(WatermarkAssignerPushdownRule), typeid(PredicatePushdownRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> ProjectionPushdownRule::dependsOn() const
-{
-    return {typeid(WatermarkAssignerPushdownRule)};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> ProjectionPushdownRule::requiredBy() const
+std::set<std::type_index> ProjectionPushdownRule::neededBy() const
 {
     /// Ensures
     return {typeid(FixedPlanStructureBarrier)};
-}
-
-bool ProjectionPushdownRule::operator==(const ProjectionPushdownRule&) const
-{
-    return true;
 }
 
 

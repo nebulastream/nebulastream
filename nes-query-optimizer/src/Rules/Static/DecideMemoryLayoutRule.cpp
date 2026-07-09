@@ -32,31 +32,10 @@
 namespace NES
 {
 
-const std::type_info& DecideMemoryLayoutRule::getType()
-{
-    return typeid(DecideMemoryLayoutRule);
-}
-
-std::string_view DecideMemoryLayoutRule::getName()
-{
-    return NAME;
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> DecideMemoryLayoutRule::dependsOn() const
+std::set<std::type_index> DecideMemoryLayoutRule::needs() const
 {
     return {typeid(FixedPlanStructureBarrier)};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> DecideMemoryLayoutRule::requiredBy() const
-{
-    return {};
-}
-
-bool DecideMemoryLayoutRule::operator==(const DecideMemoryLayoutRule&) const
-{
-    return true;
 }
 
 LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan) const

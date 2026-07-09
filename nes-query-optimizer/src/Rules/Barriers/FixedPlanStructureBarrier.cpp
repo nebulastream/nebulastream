@@ -24,36 +24,9 @@
 namespace NES
 {
 
-const std::type_info& FixedPlanStructureBarrier::getType()
-{
-    return typeid(FixedPlanStructureBarrier);
-}
-
-std::string_view FixedPlanStructureBarrier::getName()
-{
-    return NAME;
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> FixedPlanStructureBarrier::dependsOn() const
-{
-    return {};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> FixedPlanStructureBarrier::requiredBy() const
-{
-    return {};
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan FixedPlanStructureBarrier::apply(LogicalPlan queryPlan) const
 {
     return queryPlan;
-}
-
-bool FixedPlanStructureBarrier::operator==(const FixedPlanStructureBarrier&) const
-{
-    return true;
 }
 }

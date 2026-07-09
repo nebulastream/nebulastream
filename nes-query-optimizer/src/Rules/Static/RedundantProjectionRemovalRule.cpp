@@ -31,37 +31,23 @@
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Static/DecideFieldMappings.hpp>
 #include <Rules/Static/DecideFieldOrder.hpp>
+#include <Rules/Static/ProjectionPushdownRule.hpp>
 #include <Schema/Binder.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-const std::type_info& RedundantProjectionRemovalRule::getType()
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> RedundantProjectionRemovalRule::wants() const
 {
-    return typeid(RedundantProjectionRemovalRule);
-}
-
-std::string_view RedundantProjectionRemovalRule::getName()
-{
-    return NAME;
+    return {typeid(ProjectionPushdownRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> RedundantProjectionRemovalRule::dependsOn() const
-{
-    return {};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> RedundantProjectionRemovalRule::requiredBy() const
+std::set<std::type_index> RedundantProjectionRemovalRule::neededBy() const
 {
     return {typeid(FixedPlanStructureBarrier)};
-}
-
-bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemovalRule&) const
-{
-    return true;
 }
 
 namespace

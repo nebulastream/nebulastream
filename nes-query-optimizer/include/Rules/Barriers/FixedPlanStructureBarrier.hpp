@@ -29,12 +29,7 @@ class FixedPlanStructureBarrier
 public:
     static constexpr std::string_view NAME = "PlanStructureBarrier";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
     [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
-    bool operator==(const FixedPlanStructureBarrier& other) const;
 };
 
 static_assert(RuleConcept<FixedPlanStructureBarrier, LogicalPlan>);

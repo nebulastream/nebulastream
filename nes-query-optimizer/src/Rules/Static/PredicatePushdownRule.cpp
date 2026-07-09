@@ -399,30 +399,10 @@ LogicalPlan PredicatePushdownRule::apply(const LogicalPlan& queryPlan) const
     return queryPlan.withRootOperators({newRoot});
 }
 
-const std::type_info& PredicatePushdownRule::getType()
-{
-    return typeid(PredicatePushdownRule);
-}
-
-std::string_view PredicatePushdownRule::getName()
-{
-    return NAME;
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> PredicatePushdownRule::dependsOn() const
-{
-    return {};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> PredicatePushdownRule::requiredBy() const
+std::set<std::type_index> PredicatePushdownRule::neededBy() const
 {
     return {typeid(RedundantProjectionRemovalRule), typeid(FixedPlanStructureBarrier)};
 }
 
-bool PredicatePushdownRule::operator==(const PredicatePushdownRule& /*other*/) const
-{
-    return true;
-}
 }

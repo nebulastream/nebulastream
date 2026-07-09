@@ -36,12 +36,11 @@ public:
 
     static constexpr std::string_view NAME = "InferModelResolutionRule";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+
+    [[nodiscard]] std::set<std::type_index> needs() const;
+    [[nodiscard]] std::set<std::type_index> neededBy() const;
+
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    bool operator==(const InferModelResolutionRule& other) const;
 
 private:
     std::shared_ptr<const ModelCatalog> modelCatalog;
