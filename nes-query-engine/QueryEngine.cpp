@@ -41,6 +41,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/AtomicState.hpp>
+#include <Util/CcxTopology.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <DelayedTaskSubmitter.hpp>
@@ -54,6 +55,7 @@
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryStatus.hpp>
 #include <RunningQueryPlan.hpp>
+#include <ShardedTaskQueue.hpp>
 #include <Task.hpp>
 #include <TaskQueue.hpp>
 #include <Thread.hpp>
@@ -311,7 +313,7 @@ struct DefaultPEC final : PipelineExecutionContext
 class ThreadPool : public WorkEmitter, public QueryLifetimeController
 {
 public:
-    void addThread(const Host& host, bool pinThreads, size_t cpuThreadOffset);
+    void addThread(const Host& host, bool pinThreads, size_t cpuThreadOffset, size_t ownShard);
 
     bool emitWork(
         QueryId qid,
@@ -333,8 +335,9 @@ public:
         auto task = WorkTask(qid, node->id, node, std::move(buffer), std::move(wrappedCallback));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
-            /// Non-WorkerThread
-            taskQueue.addAdmissionTaskBlocking({}, std::move(task));
+            /// Non-WorkerThread (a source/io thread): enqueue into the shard of the emitter's
+            /// own CCX so its buffers are consumed by workers sharing its L3.
+            queueAdmissionBlocking(CcxAffinity::shardOrDefault(numShards), std::move(task));
             ENGINE_LOG_DEBUG("Task written to AdmissionQueue");
             return true;
         }
@@ -377,8 +380,8 @@ public:
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        taskQueue.addAdmissionTaskBlocking(
-            {},
+        queueAdmissionBlocking(
+            CcxAffinity::shardOrDefault(numShards),
             FailSourceTask{
                 id,
                 std::move(source),
@@ -391,8 +394,8 @@ public:
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        taskQueue.addAdmissionTaskBlocking(
-            {},
+        queueAdmissionBlocking(
+            CcxAffinity::shardOrDefault(numShards),
             StopSourceTask{
                 id,
                 std::move(source),
@@ -412,13 +415,26 @@ public:
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
-        const size_t admissionQueueSize)
+        const size_t admissionQueueSize,
+        const bool ccxQueues,
+        const size_t numShards)
         : listener(std::move(listener))
         , statistic(std::move(stats))
         , bufferProvider(std::move(bufferProvider))
-        , taskQueue(admissionQueueSize)
-        , delayedTaskSubmitter([this](Task&& task) noexcept { taskQueue.addInternalTaskNonBlocking(std::move(task)); })
+        , ccxQueues(ccxQueues)
+        , numShards(std::max<size_t>(1, numShards))
+        , delayedTaskSubmitter([this](Task&& task) noexcept { queueInternal(std::move(task)); })
     {
+        /// The queues are not movable (semaphore + folly queues), so exactly one optional is
+        /// engaged here instead of in the init list. Nothing can enqueue before the ctor returns.
+        if (ccxQueues)
+        {
+            shardedQueue.emplace(this->numShards, admissionQueueSize);
+        }
+        else
+        {
+            singleQueue.emplace(admissionQueueSize);
+        }
     }
 
     /// Reserves the initial WorkerThreadId for the terminator thread, which is the thread which is calling shutdown.
@@ -454,7 +470,50 @@ private:
     void addInternalTask(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        taskQueue.addInternalTaskNonBlocking(std::move(task)); /// NOLINT no move will happen if tryWriteUntil has failed
+        queueInternal(std::move(task)); /// NOLINT no move will happen if tryWriteUntil has failed
+    }
+
+    /// Kill-switch seam between the two queue implementations (worker.query_engine.
+    /// ccx_aware_task_queues): exactly one optional is engaged for the ThreadPool's lifetime, so
+    /// each wrapper is one perfectly-predicted branch. With the feature OFF the unmodified
+    /// TaskQueue runs -- semantics identical to before the sharding change.
+    bool queueAdmissionBlocking(const size_t shard, Task&& task)
+    {
+        if (ccxQueues)
+        {
+            return shardedQueue->addAdmissionTaskBlocking({}, shard, std::move(task));
+        }
+        return singleQueue->addAdmissionTaskBlocking({}, std::move(task));
+    }
+
+    void queueInternal(Task&& task)
+    {
+        if (ccxQueues)
+        {
+            shardedQueue->addInternalTaskNonBlocking(std::move(task));
+        }
+        else
+        {
+            singleQueue->addInternalTaskNonBlocking(std::move(task));
+        }
+    }
+
+    std::optional<Task> queueNextBlocking(const std::stop_token& stoken, const size_t ownShard)
+    {
+        if (ccxQueues)
+        {
+            return shardedQueue->getNextTaskBlocking(stoken, ownShard);
+        }
+        return singleQueue->getNextTaskBlocking(stoken);
+    }
+
+    std::optional<Task> queueNextNonBlocking(const size_t ownShard)
+    {
+        if (ccxQueues)
+        {
+            return shardedQueue->getNextTaskNonBlocking(ownShard);
+        }
+        return singleQueue->getNextTaskNonBlocking();
     }
 
     /// Order of destruction matters: TaskQueue has to outlive the pool
@@ -463,7 +522,10 @@ private:
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
 
-    TaskQueue<Task> taskQueue;
+    const bool ccxQueues;
+    const size_t numShards;
+    std::optional<TaskQueue<Task>> singleQueue;
+    std::optional<ShardedTaskQueue<Task>> shardedQueue;
     DelayedTaskSubmitter<> delayedTaskSubmitter;
 
     /// Class Invariant: numberOfThreads == pool.size().
@@ -750,12 +812,12 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     return false;
 }
 
-void ThreadPool::addThread(const Host& host, const bool pinThreads, const size_t cpuThreadOffset)
+void ThreadPool::addThread(const Host& host, const bool pinThreads, const size_t cpuThreadOffset, const size_t ownShard)
 {
     pool.emplace_back(
         fmt::format("WorkerThread-{}", numberOfThreads_),
         host,
-        [this, id = numberOfThreads_++, pinThreads, cpuThreadOffset](const std::stop_token& stopToken)
+        [this, id = numberOfThreads_++, pinThreads, cpuThreadOffset, ownShard](const std::stop_token& stopToken)
         {
             // Pin this thread to a specific CPU core
             if (pinThreads)
@@ -771,6 +833,7 @@ void ThreadPool::addThread(const Host& host, const bool pinThreads, const size_t
                 else
                 {
                     ENGINE_LOG_DEBUG("Pinned WorkerThread {} to CPU {}", id, host.cpuOffset + id);
+                    CcxAffinity::ccxId = static_cast<uint32_t>(ownShard);
                 }
             }
 
@@ -778,7 +841,7 @@ void ThreadPool::addThread(const Host& host, const bool pinThreads, const size_t
             const WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
             {
-                if (auto task = taskQueue.getNextTaskBlocking(stopToken))
+                if (auto task = queueNextBlocking(stopToken, ownShard))
                 {
                     handleTask(worker, std::move(*task));
                 }
@@ -787,7 +850,7 @@ void ThreadPool::addThread(const Host& host, const bool pinThreads, const size_t
             ENGINE_LOG_INFO("WorkerThread {} shutting down", id);
             /// Worker in termination mode will not emit further work and eventually clear the task queue and terminate.
             const WorkerThread terminatingWorker{*this, true};
-            while (auto task = taskQueue.getNextTaskNonBlocking())
+            while (auto task = queueNextNonBlocking(ownShard))
             {
                 handleTask(terminatingWorker, std::move(*task));
             }
@@ -804,7 +867,7 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize.getValue()))
+    , threadPool(makeThreadPool(config, statusListener, statisticListener, bufferManager))
     , host(host)
     , configuration(config)
 {
@@ -815,24 +878,63 @@ QueryEngine::QueryEngine(
     const char* const pinOffsetEnv = std::getenv("NES_PIN_CPU_OFFSET");
     const size_t pinCpuOffset = pinOffsetEnv ? std::strtoul(pinOffsetEnv, nullptr, 10) : 0;
     const size_t workerThreadCPUOffset = pinCpuOffset + config.numberOfIOThreads.getValue();
+    const bool pinThreads = config.pinThreads.getValue();
+    const bool ccxQueues = config.ccxAwareTaskQueues.getValue();
+    const size_t numIoThreads = config.numberOfIOThreads.getValue();
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {
-        threadPool->addThread(host, config.pinThreads.getValue(), workerThreadCPUOffset + i);
+        /// With CCX-aware queues, workers are STRIPED across the CCXs (each CCX cell: io feed ->
+        /// shard -> co-located owner workers; NES_CCX_PIN_LAYOUT=compact reverts to contiguous),
+        /// and a pinned worker serves the admission shard of the CCX its cpu belongs to;
+        /// unpinned (or feature off) everything degenerates to shard 0.
+        const bool striped = pinThreads && CcxAffinity::stripedLayout();
+        const size_t pinCpu = striped ? CcxTopology::instance().workerCpu(i, numIoThreads) : workerThreadCPUOffset + i;
+        const size_t ownShard = (ccxQueues && pinThreads) ? CcxTopology::instance().ccxOf(pinCpu) : 0;
+        threadPool->addThread(host, pinThreads, pinCpu, ownShard);
     }
+}
+
+std::unique_ptr<ThreadPool> QueryEngine::makeThreadPool(
+    const QueryEngineConfiguration& config,
+    std::shared_ptr<AbstractQueryStatusListener> listener,
+    std::shared_ptr<QueryEngineStatisticListener> stats,
+    std::shared_ptr<AbstractBufferProvider> bufferProvider)
+{
+    const bool ccxQueues = config.ccxAwareTaskQueues.getValue();
+    size_t numShards = 1;
+    if (ccxQueues)
+    {
+        CcxTopology::setOverride(config.ccxTopology.getValue());
+        numShards = CcxTopology::instance().numCcx();
+        if (!config.pinThreads.getValue())
+        {
+            ENGINE_LOG_WARNING(
+                "ccx_aware_task_queues is enabled without pin_threads: unpinned threads carry no CCX identity, so all traffic maps to "
+                "shard 0 (behavior degenerates to the single queue).");
+        }
+        ENGINE_LOG_INFO("CCX-aware task queues enabled: {} shard(s)", numShards);
+        CcxAffinity::shardingEnabled.store(true, std::memory_order_relaxed);
+    }
+    return std::make_unique<ThreadPool>(
+        std::move(listener), std::move(stats), std::move(bufferProvider), config.admissionQueueSize.getValue(), ccxQueues, numShards);
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
 void QueryEngine::stop(QueryId queryId)
 {
     ENGINE_LOG_INFO("Stopping Query: {}", queryId);
-    threadPool->taskQueue.addAdmissionTaskBlocking({}, StopQueryTask{queryId, queryCatalog, TaskCallback{}});
+    /// Control task from a client thread (untagged -> shard 0); any woken worker finds it since
+    /// every wake scans all shards.
+    threadPool->queueAdmissionBlocking(
+        CcxAffinity::shardOrDefault(threadPool->numShards), StopQueryTask{queryId, queryCatalog, TaskCallback{}});
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
 void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
 {
-    threadPool->taskQueue.addAdmissionTaskBlocking(
-        {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
+    threadPool->queueAdmissionBlocking(
+        CcxAffinity::shardOrDefault(threadPool->numShards),
+        StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
 }
 
 QueryEngine::~QueryEngine()

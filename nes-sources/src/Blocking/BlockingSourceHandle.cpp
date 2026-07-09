@@ -36,7 +36,9 @@ BlockingSourceHandle::BlockingSourceHandle(
     OriginId originId,
     SourceRuntimeConfiguration configuration,
     std::shared_ptr<AbstractBufferProvider> bufferPool,
-    std::unique_ptr<BlockingSource> sourceImplementation)
+    std::unique_ptr<BlockingSource> sourceImplementation,
+    const bool pinThread,
+    const size_t numberOfIOThreads)
     : SourceHandle(configuration, originId)
 {
     this->sourceThread = std::make_unique<BlockingSourceRunner>(
@@ -44,7 +46,9 @@ BlockingSourceHandle::BlockingSourceHandle(
         std::move(originId),
         std::move(bufferPool),
         std::move(sourceImplementation),
-        configuration.inputFormatterThreadingMode);
+        configuration.inputFormatterThreadingMode,
+        pinThread,
+        numberOfIOThreads);
 }
 
 bool BlockingSourceHandle::start(SourceReturnType::EmitFunction&& emitFn)

@@ -65,7 +65,9 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<BlockingSource> sourceImplementation,
-        InputFormatterThreadingMode inputFormatterThreadingMode);
+        InputFormatterThreadingMode inputFormatterThreadingMode,
+        bool pinThread,
+        size_t numberOfIOThreads);
 
     BlockingSourceRunner() = delete;
     BlockingSourceRunner(const BlockingSourceRunner& other) = delete;
@@ -98,6 +100,12 @@ protected:
     std::atomic_bool started;
     BackpressureListener backpressureListener;
     InputFormatterThreadingMode inputFormatterThreadingMode;
+    /// Blocking sources play the io-thread role, so with pin_threads they share the io threads'
+    /// cpu slots: source i pins to NES_PIN_CPU_OFFSET + (i % numberOfIOThreads), assigned at
+    /// start() via a process-wide counter. This also gives the thread a CCX identity for the
+    /// CCX-aware task queue sharding.
+    bool pinThread{false};
+    size_t numberOfIOThreads{1};
 
     /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
     /// uses the terminationFuture), then the terminationFuture.

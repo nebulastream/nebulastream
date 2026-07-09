@@ -31,6 +31,7 @@ class QueryEngineConfiguration final : public BaseConfiguration
     static std::shared_ptr<ConfigurationValidation> queueSizeValidator();
     static std::shared_ptr<ConfigurationValidation> pinThreadsValidator();
     static std::shared_ptr<ConfigurationValidation> invokeModeConfigurationValidator();
+    static std::shared_ptr<ConfigurationValidation> ccxTopologyValidator();
 
 public:
     QueryEngineConfiguration() = default;
@@ -49,11 +50,31 @@ public:
            "",
            "Path to YAML file configuring invoke modes (empty = all default)",
            {invokeModeConfigurationValidator()}};
+    BoolOption ccxAwareTaskQueues
+        = {"ccx_aware_task_queues",
+           "false",
+           "Shard the admission queue per L3/CCX: emitting threads enqueue into their own CCX's shard, workers prefer own-CCX tasks and "
+           "steal from other shards only when idle. Requires pin_threads for effect (unpinned threads all map to shard 0). Each shard has "
+           "the full admission_queue_size capacity.",
+           {pinThreadsValidator()}};
+    StringOption ccxTopology
+        = {"ccx_topology",
+           "",
+           "Override the CCX topology used by ccx_aware_task_queues, e.g. '0-5,24-29;6-11,30-35' (one group per ';'). Empty = sysfs "
+           "auto-detect. The NES_CCX_TOPOLOGY env var takes precedence over both.",
+           {ccxTopologyValidator()}};
 
 protected:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&pinThreads, &numberOfWorkerThreads, &numberOfIOThreads, &admissionQueueSize, &invokeModeConfigurationPath};
+        return {
+            &pinThreads,
+            &numberOfWorkerThreads,
+            &numberOfIOThreads,
+            &admissionQueueSize,
+            &invokeModeConfigurationPath,
+            &ccxAwareTaskQueues,
+            &ccxTopology};
     }
 };
 }

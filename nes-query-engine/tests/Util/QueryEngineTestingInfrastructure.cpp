@@ -19,6 +19,7 @@
 #include <cassert>
 #include <chrono>
 #include <cstddef>
+#include <cstdlib>
 #include <exception>
 #include <functional>
 #include <future>
@@ -372,6 +373,12 @@ void TestingHarness::start()
     }
     QueryEngineConfiguration configuration{};
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
+    /// Test hook: NES_TEST_CCX_QUEUES=1 runs the whole suite against the sharded task queue
+    /// (ccx_aware_task_queues) instead of the default single queue.
+    if (std::getenv("NES_TEST_CCX_QUEUES") != nullptr)
+    {
+        configuration.ccxAwareTaskQueues.setValue(true);
+    }
     qm = std::make_unique<QueryEngine>(configuration, this->statListener, this->status, this->bm, Host("test"));
 }
 

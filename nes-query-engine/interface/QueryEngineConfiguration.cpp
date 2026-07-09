@@ -19,8 +19,10 @@
 #include <string>
 #include <thread>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <Util/CcxTopology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <ErrorHandling.hpp>
 #include <InvokeConfiguration.hpp>
 
 namespace NES
@@ -99,6 +101,32 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::pinThreadsVal
                 return false;
             }
             return true;
+        }
+    };
+
+    return std::make_shared<Validator>();
+}
+
+std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::ccxTopologyValidator()
+{
+    struct Validator : ConfigurationValidation
+    {
+        [[nodiscard]] bool isValid(const std::string& stringValue) const override
+        {
+            if (stringValue.empty())
+            {
+                return true;
+            }
+            try
+            {
+                CcxTopology::fromString(stringValue);
+                return true;
+            }
+            catch (const Exception& e)
+            {
+                NES_ERROR("Invalid ccx_topology configuration '{}': {}", stringValue, e.what());
+                return false;
+            }
         }
     };
 

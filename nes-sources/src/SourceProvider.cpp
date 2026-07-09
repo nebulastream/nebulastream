@@ -85,7 +85,9 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
                         std::move(originId),
                         std::move(runtimeConfig),
                         std::move(sourcePool),
-                        std::move(sourceImpl));
+                        std::move(sourceImpl),
+                        pinThreads,
+                        numberOfIOThreads);
                 },
                 [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                 {

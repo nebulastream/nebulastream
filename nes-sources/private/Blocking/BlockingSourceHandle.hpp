@@ -39,7 +39,9 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,
-        std::unique_ptr<BlockingSource> sourceImplementation);
+        std::unique_ptr<BlockingSource> sourceImplementation,
+        bool pinThread = false,
+        size_t numberOfIOThreads = 1);
 
     BlockingSourceHandle() = delete;
     ~BlockingSourceHandle() override = default;

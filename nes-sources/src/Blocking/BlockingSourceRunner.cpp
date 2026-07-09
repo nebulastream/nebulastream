@@ -14,8 +14,11 @@
 
 #include <Blocking/BlockingSourceRunner.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <exception>
 #include <functional>
 #include <future>
@@ -24,6 +27,8 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <pthread.h>
+#include <sched.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -31,6 +36,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceUtility.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/CcxTopology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -46,12 +52,16 @@ BlockingSourceRunner::BlockingSourceRunner(
     const OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
     std::unique_ptr<BlockingSource> sourceImplementation,
-    const InputFormatterThreadingMode inputFormatterThreadingMode)
+    const InputFormatterThreadingMode inputFormatterThreadingMode,
+    const bool pinThread,
+    const size_t numberOfIOThreads)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , backpressureListener(std::move(backpressureListener))
     , inputFormatterThreadingMode(inputFormatterThreadingMode)
+    , pinThread(pinThread)
+    , numberOfIOThreads(std::max<size_t>(1, numberOfIOThreads))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -263,8 +273,26 @@ void dataBlockingSourceRunner(
     const OriginId originId,
     const InputFormatterThreadingMode threadingMode,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
-    std::shared_ptr<AbstractBufferProvider> bufferProvider)
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    const int64_t pinToCpu)
 {
+    if (pinToCpu >= 0)
+    {
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(static_cast<size_t>(pinToCpu), &cpuset);
+        if (const int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset); rc != 0)
+        {
+            NES_WARNING("BlockingSourceRunner: failed to pin source {} to CPU {}: error {}", originId, pinToCpu, rc);
+        }
+        else
+        {
+            NES_DEBUG("BlockingSourceRunner: pinned source {} to CPU {}", originId, pinToCpu);
+            /// Tag the thread's CCX so CCX-aware task queues route this source's emitted buffers
+            /// to workers sharing its L3 (no-op when sharding is off).
+            CcxAffinity::ccxId = CcxTopology::instance().ccxOf(static_cast<size_t>(pinToCpu));
+        }
+    }
     try
     {
         switch (threadingMode)
@@ -330,6 +358,26 @@ bool BlockingSourceRunner::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
+    /// Blocking sources play the io-thread role: with pin_threads they share the io threads' cpu
+    /// slots round-robin (NES_PIN_CPU_OFFSET + i % numberOfIOThreads, i = process-wide start order).
+    /// Gated on CCX-aware sharding: without it, blocking-source threads stay unpinned as before.
+    int64_t pinToCpu = -1;
+    if (pinThread && CcxAffinity::shardingEnabled.load(std::memory_order_relaxed))
+    {
+        static std::atomic<size_t> blockingSourceStartCounter{0};
+        const size_t slot = blockingSourceStartCounter.fetch_add(1) % numberOfIOThreads;
+        if (CcxAffinity::stripedLayout())
+        {
+            pinToCpu = static_cast<int64_t>(CcxTopology::instance().ioThreadCpu(slot));
+        }
+        else
+        {
+            const char* const pinOffsetEnv = std::getenv("NES_PIN_CPU_OFFSET");
+            const size_t pinOffset = pinOffsetEnv != nullptr ? std::strtoul(pinOffsetEnv, nullptr, 10) : 0;
+            pinToCpu = static_cast<int64_t>(pinOffset + slot);
+        }
+    }
+
     Thread BlockingSourceRunner(
         fmt::format("DataSrc-{}", originId),
         dataBlockingSourceRunner,
@@ -339,7 +387,8 @@ bool BlockingSourceRunner::start(SourceReturnType::EmitFunction&& emitFunction)
         std::move(emitFunction),
         originId,
         inputFormatterThreadingMode,
-        localBufferManager);
+        localBufferManager,
+        pinToCpu);
     thread = std::move(BlockingSourceRunner);
     return true;
 }

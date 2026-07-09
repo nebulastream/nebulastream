@@ -41,6 +41,16 @@ public:
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
     ~QueryEngine();
 
+private:
+    /// Builds the pool with either the single task queue or the per-CCX sharded one
+    /// (worker.query_engine.ccx_aware_task_queues), resolving the CCX topology when enabled.
+    static std::unique_ptr<ThreadPool> makeThreadPool(
+        const QueryEngineConfiguration& configuration,
+        std::shared_ptr<AbstractQueryStatusListener> listener,
+        std::shared_ptr<QueryEngineStatisticListener> stats,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider);
+
+public:
     /// Order of Member construction is top to bottom and order of destruction is reversed
     /// Starting the ThreadPool is the very **last** thing the query engine does and **stopping**
     /// the ThreadPool is the first thing that happens during destruction.
