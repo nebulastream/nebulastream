@@ -110,10 +110,11 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunc
 Reflected
 Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction& function, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedCastToTypeLogicalFunction{
-        .child = function.getChildren()[0],
-        .castToType = function.getDataType(),
-    });
+    return context.reflect(
+        detail::ReflectedCastToTypeLogicalFunction{
+            .child = function.getChildren()[0],
+            .castToType = function.getDataType(),
+        });
 }
 
 CastToTypeLogicalFunction

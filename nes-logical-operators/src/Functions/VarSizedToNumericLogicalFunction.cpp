@@ -126,10 +126,11 @@ std::string VarSizedToNumericLogicalFunction::explain(ExplainVerbosity verbosity
 Reflected Reflector<VarSizedToNumericLogicalFunction>::operator()(
     const VarSizedToNumericLogicalFunction& function, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedVarSizedToNumericLogicalFunction{
-        .child = function.getChildren()[0],
-        .targetType = function.getDataType(),
-    });
+    return context.reflect(
+        detail::ReflectedVarSizedToNumericLogicalFunction{
+            .child = function.getChildren()[0],
+            .targetType = function.getDataType(),
+        });
 }
 
 VarSizedToNumericLogicalFunction
