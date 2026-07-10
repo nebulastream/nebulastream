@@ -95,7 +95,10 @@ bool Identifier::isCaseSensitive() const
 
 bool operator==(const Identifier& lhs, const Identifier& rhs)
 {
-    return lhs.asCanonicalString() == rhs.asCanonicalString();
+    auto sensitive = [](char character) { return character; };
+    auto insensitive = [](char character) -> char { return toupper(character); };
+    return std::ranges::equal(
+        lhs.value, rhs.value, {}, lhs.isCaseSensitive() ? sensitive : insensitive, rhs.isCaseSensitive() ? sensitive : insensitive);
 }
 
 Identifier Identifier::parse(std::string value)
@@ -160,7 +163,21 @@ auto fmt::formatter<NES::Identifier>::format(const NES::Identifier& obj, format_
 
 std::size_t std::hash<NES::Identifier>::operator()(const NES::Identifier& arg) const noexcept
 {
-    return std::hash<std::string>{}(arg.asCanonicalString());
+    if (arg.isCaseSensitive())
+    {
+        return std::hash<std::string_view>{}(arg.getOriginalString());
+    }
+
+    /// Calculate a hash based on FNV-1 manually, because std::hash does not accept ranges, and we want to avoid the copy.
+    constexpr auto FNV_OFFSET_BASIS = 14695981039346656037ULL;
+    constexpr auto FNV_PRIME = 1099511628211ULL;
+    auto hash = FNV_OFFSET_BASIS;
+    for (const auto character : arg.getOriginalString())
+    {
+        hash ^= std::toupper(character);
+        hash *= FNV_PRIME;
+    }
+    return hash;
 }
 
 std::size_t folly::hasher<NES::Identifier>::operator()(const NES::Identifier& arg) const noexcept
