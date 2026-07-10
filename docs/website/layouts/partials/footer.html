@@ -1,0 +1,10 @@
+<footer class="site-footer">
+  <p>NebulaStream is a research project at BIFOLD, TU Berlin and DFKI. Docs source: <a href="{{ .Site.Params.repo }}/tree/main/docs/website">docs/website</a>.</p>
+</footer>
+{{ if findRE "(?s)<pre class=\"mermaid\"" .Content }}
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/+esm";
+  mermaid.initialize({ startOnLoad: false, theme: "default" });
+  mermaid.run({ querySelector: ".mermaid" });
+</script>
+{{ end }}
