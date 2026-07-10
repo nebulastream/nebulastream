@@ -268,8 +268,8 @@ TEST(ReflectionTest, Unsigned32BitAboveIntMax)
     /// a uint32_t above INT_MAX (a valid int64_t but out of `int` range) used to fail to unreflect.
     constexpr uint32_t unsignedInput = 0xFFFFFFFFU;
     static_assert(unsignedInput > static_cast<uint32_t>(std::numeric_limits<int>::max()));
-    const auto reflected = reflect(unsignedInput);
     const ReflectionContext context{};
+    const auto reflected = context.reflect(unsignedInput);
     const auto deserialized = context.unreflect<uint32_t>(reflected);
     EXPECT_EQ(deserialized, unsignedInput);
 }
@@ -279,8 +279,8 @@ TEST(ReflectionTest, VariantWithUnsigned32BitAboveIntMax)
     /// Mirrors SourceDescriptor's config type: a variant whose active alternative is a large uint32_t.
     using ConfigType = std::variant<int32_t, uint32_t, int64_t, uint64_t>;
     const ConfigType input = static_cast<uint32_t>(3000000000U);
-    const auto reflected = reflect(input);
     const ReflectionContext context{};
+    const auto reflected = context.reflect(input);
     const auto deserialized = context.unreflect<ConfigType>(reflected);
     ASSERT_TRUE(std::holds_alternative<uint32_t>(deserialized));
     EXPECT_EQ(std::get<uint32_t>(deserialized), 3000000000U);
