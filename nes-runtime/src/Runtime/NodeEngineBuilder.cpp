@@ -48,7 +48,11 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);
 
-    auto sourceProvider = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers.getValue(), bufferManager);
+    auto sourceProvider = std::make_unique<SourceProvider>(
+        workerConfiguration.defaultMaxInflightBuffers.getValue(),
+        bufferManager,
+        workerConfiguration.ccxSharedSourcePools.getValue(),
+        workerConfiguration.ccxSourcePoolBuffers.getValue());
 
     return std::make_unique<NodeEngine>(
         std::move(bufferManager), statisticsListener, std::move(queryLog), std::move(queryEngine), std::move(sourceProvider));

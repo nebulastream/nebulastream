@@ -68,6 +68,26 @@ public:
            "SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
+    /// Per-CCX SHARED source pools (requires query_engine.ccx_aware_task_queues + pin_threads,
+    /// i.e. the CCX-striped cell layout): all non-prefill sources whose io threads live on one
+    /// CCX draw raw buffers from ONE shared pool instead of a private pool each, capping the
+    /// recycled-ring working set at numCcx x ccx_source_pool_buffers regardless of source count
+    /// (per-source rings spill the L3 at >=16 sources and halve the aggregate supply rate).
+    /// Scope: prefill sources (io_uring variants, InMemory prefill) and sources with an explicit
+    /// MAX_INFLIGHT_BUFFERS override keep private pools. Fairness: the per-source inflight
+    /// semaphore is capped at half the cell pool; there is NO per-source reserved minimum, so a
+    /// heavily backlogged source can transiently starve cell peers (buffers return via worker
+    /// task completion, so this cannot deadlock).
+    BoolOption ccxSharedSourcePools
+        = {"ccx_shared_source_pools",
+           "false",
+           "Share one source buffer pool per CCX cell (needs ccx_aware_task_queues + pin_threads); see header comment."};
+    UIntOption ccxSourcePoolBuffers
+        = {"ccx_source_pool_buffers",
+           "128",
+           "Buffers per CCX-cell source pool when ccx_shared_source_pools is on (128 x 128 KiB = 16 MB ~ 0.5x per-CCX L3).",
+           {std::make_shared<NumberValidation>()}};
+
     EnumOption<DumpMode::Options> dumpQueryCompilationIR
         = {"dump_compilation_result",
            DumpMode::Options::NONE,
@@ -86,6 +106,8 @@ private:
             &numberOfBuffersInGlobalBufferManager,
             &globalBufferAlignment,
             &defaultMaxInflightBuffers,
+            &ccxSharedSourcePools,
+            &ccxSourcePoolBuffers,
             &dumpQueryCompilationIR,
             &dumpGraph};
     }

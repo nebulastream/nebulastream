@@ -41,7 +41,8 @@ public:
         std::shared_ptr<AbstractBufferProvider> bufferPool,
         std::unique_ptr<BlockingSource> sourceImplementation,
         bool pinThread = false,
-        size_t numberOfIOThreads = 1);
+        size_t numberOfIOThreads = 1,
+        size_t ioSlot = 0);
 
     BlockingSourceHandle() = delete;
     ~BlockingSourceHandle() override = default;

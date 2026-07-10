@@ -39,9 +39,10 @@ AsyncSourceHandle::AsyncSourceHandle(
     std::shared_ptr<AbstractBufferProvider> bufferPool,
     std::unique_ptr<AsyncSource> sourceImplementation,
     const bool pinThreads,
-    const size_t numberOfIOThreads)
+    const size_t numberOfIOThreads,
+    const size_t ioSlot)
     : SourceHandle(configuration, originId)
-    , state{AsyncSourceState{Initial{std::move(sourceImplementation), pinThreads, numberOfIOThreads}}}
+    , state{AsyncSourceState{Initial{std::move(sourceImplementation), pinThreads, numberOfIOThreads, ioSlot}}}
     , bufferPool(std::move(bufferPool))
 {
 }
@@ -58,7 +59,8 @@ bool AsyncSourceHandle::start(SourceReturnType::EmitFunction&& emitFn)
                 getSourceId(),
                 this->bufferPool,
                 initialState.pinThreads,
-                initialState.numberOfIOThreads};
+                initialState.numberOfIOThreads,
+                initialState.ioSlot};
         });
 }
 

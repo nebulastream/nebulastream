@@ -54,7 +54,8 @@ BlockingSourceRunner::BlockingSourceRunner(
     std::unique_ptr<BlockingSource> sourceImplementation,
     const InputFormatterThreadingMode inputFormatterThreadingMode,
     const bool pinThread,
-    const size_t numberOfIOThreads)
+    const size_t numberOfIOThreads,
+    const size_t ioSlot)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
@@ -62,6 +63,7 @@ BlockingSourceRunner::BlockingSourceRunner(
     , inputFormatterThreadingMode(inputFormatterThreadingMode)
     , pinThread(pinThread)
     , numberOfIOThreads(std::max<size_t>(1, numberOfIOThreads))
+    , ioSlot(ioSlot)
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -359,13 +361,13 @@ bool BlockingSourceRunner::start(SourceReturnType::EmitFunction&& emitFunction)
     this->terminationFuture = terminationPromise.get_future();
 
     /// Blocking sources play the io-thread role: with pin_threads they share the io threads' cpu
-    /// slots round-robin (NES_PIN_CPU_OFFSET + i % numberOfIOThreads, i = process-wide start order).
-    /// Gated on CCX-aware sharding: without it, blocking-source threads stay unpinned as before.
+    /// slots via the ioSlot assigned by SourceProvider (which also picks the CCX cell pool, so
+    /// pool and pin agree). Gated on CCX-aware sharding: without it, blocking-source threads
+    /// stay unpinned as before.
     int64_t pinToCpu = -1;
     if (pinThread && CcxAffinity::shardingEnabled.load(std::memory_order_relaxed))
     {
-        static std::atomic<size_t> blockingSourceStartCounter{0};
-        const size_t slot = blockingSourceStartCounter.fetch_add(1) % numberOfIOThreads;
+        const size_t slot = ioSlot % numberOfIOThreads;
         if (CcxAffinity::stripedLayout())
         {
             pinToCpu = static_cast<int64_t>(CcxTopology::instance().ioThreadCpu(slot));

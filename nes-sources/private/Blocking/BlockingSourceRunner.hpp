@@ -67,7 +67,8 @@ public:
         std::unique_ptr<BlockingSource> sourceImplementation,
         InputFormatterThreadingMode inputFormatterThreadingMode,
         bool pinThread,
-        size_t numberOfIOThreads);
+        size_t numberOfIOThreads,
+        size_t ioSlot = 0);
 
     BlockingSourceRunner() = delete;
     BlockingSourceRunner(const BlockingSourceRunner& other) = delete;
@@ -101,11 +102,12 @@ protected:
     BackpressureListener backpressureListener;
     InputFormatterThreadingMode inputFormatterThreadingMode;
     /// Blocking sources play the io-thread role, so with pin_threads they share the io threads'
-    /// cpu slots: source i pins to NES_PIN_CPU_OFFSET + (i % numberOfIOThreads), assigned at
-    /// start() via a process-wide counter. This also gives the thread a CCX identity for the
-    /// CCX-aware task queue sharding.
+    /// cpu slots: the ioSlot assigned by SourceProvider's slot counter picks the cpu (striped:
+    /// ioThreadCpu(slot); compact: NES_PIN_CPU_OFFSET + slot). The same slot determines the
+    /// source's CCX cell pool, so pool and pin agree by construction.
     bool pinThread{false};
     size_t numberOfIOThreads{1};
+    size_t ioSlot{0};
 
     /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
     /// uses the terminationFuture), then the terminationFuture.

@@ -46,7 +46,8 @@ public:
         std::shared_ptr<AbstractBufferProvider> bufferPool,
         std::unique_ptr<AsyncSource> sourceImplementation,
         bool pinThreads,
-        size_t numberOfIOThreads);
+        size_t numberOfIOThreads,
+        size_t ioSlot = 0);
     ~AsyncSourceHandle() override = default;
 
     AsyncSourceHandle(const AsyncSourceHandle&) = delete;
@@ -66,14 +67,17 @@ private:
     {
         Initial() = delete;
 
-        explicit Initial(std::unique_ptr<AsyncSource> source, const bool pinThreads, const size_t numberOfIOThreads)
-            : sourceContext(std::move(source)), pinThreads(pinThreads), numberOfIOThreads(numberOfIOThreads)
+        explicit Initial(std::unique_ptr<AsyncSource> source, const bool pinThreads, const size_t numberOfIOThreads, const size_t ioSlot)
+            : sourceContext(std::move(source)), pinThreads(pinThreads), numberOfIOThreads(numberOfIOThreads), ioSlot(ioSlot)
         {
         }
 
         std::unique_ptr<AsyncSource> sourceContext;
         bool pinThreads;
         size_t numberOfIOThreads;
+        /// io-context index assigned by SourceProvider's slot counter (also determines the
+        /// source's CCX cell / shared pool when ccx_shared_source_pools is on).
+        size_t ioSlot;
     };
 
     struct Running
@@ -86,12 +90,15 @@ private:
             OriginId sourceId,
             std::shared_ptr<AbstractBufferProvider> bufferProvider,
             const bool pinThreads,
-            const size_t numberOfIOThreads)
+            const size_t numberOfIOThreads,
+            const size_t ioSlot)
             : ioThread{LazySingleton<IOThread>::getOrCreate(pinThreads, numberOfIOThreads)}
             , runner{std::make_shared<AsyncSourceRunner>(std::move(source), std::move(emitFn))}
             , cancellationSignal{std::make_unique<asio::cancellation_signal>()}
             , terminationFuture{asio::co_spawn(
-                  ioThread->ioContext(),
+                  /// Deterministic context from SourceProvider's slot counter (not round-robin),
+                  /// so the io thread's CCX matches the source's cell pool by construction.
+                  ioThread->ioContext(ioSlot % ioThread->size()),
                   runner->runningRoutine(sourceId, std::move(bufferProvider)),
                   bind_cancellation_slot(cancellationSignal->slot(), asio::use_future))}
         {
