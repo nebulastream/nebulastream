@@ -87,6 +87,7 @@ endif ()
 # Custom CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 include(cmake/macros.cmake)
+include(cmake/ClangTidyDiff.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 # C++ Standard
@@ -269,6 +270,7 @@ endforeach ()
 
 # Other configurations
 project_enable_format()
+project_enable_tidy_diff()
 
 # Adding targets for code coverage if it is enabled
 if (CODE_COVERAGE)
