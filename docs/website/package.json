@@ -1,0 +1,16 @@
+{
+  "name": "nebulastream-docs-website",
+  "private": true,
+  "scripts": {
+    "postinstall": "hugo-installer --version otherDependencies.hugo --extended --destination node_modules/.bin/hugo",
+    "build": "exec-bin node_modules/.bin/hugo/hugo --minify",
+    "start": "exec-bin node_modules/.bin/hugo/hugo server --bind=0.0.0.0"
+  },
+  "otherDependencies": {
+    "hugo": "0.147.9"
+  },
+  "devDependencies": {
+    "exec-bin": "^1.0.0",
+    "hugo-installer": "^4.0.1"
+  }
+}
