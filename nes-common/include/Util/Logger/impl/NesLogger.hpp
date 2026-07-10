@@ -101,7 +101,6 @@ private:
     LogLevel currentLogLevel = LogLevel::LOG_INFO;
     bool consoleLoggingEnabled = true;
     std::atomic<bool> isShutdown{false};
-    std::unique_ptr<spdlog::details::periodic_worker> flusher{nullptr};
 };
 }
 
