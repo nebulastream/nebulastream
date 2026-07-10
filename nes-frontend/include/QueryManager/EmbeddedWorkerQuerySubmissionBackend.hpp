@@ -11,27 +11,35 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
 #include <QueryManager/QueryManager.hpp>
 
 #include <chrono>
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 #include <QueryStatus.hpp>
-#include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
 {
+
+namespace detail
+{
+/// Owns the worker thread and the request/reply channel that drives it.
+/// Defined in the .cpp so the header doesn't pull in the variant alternatives,
+/// folly queues, or the SingleNodeWorker.
+class Channel;
+}
+
 class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
+    ~EmbeddedWorkerQuerySubmissionBackend() override;
     EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration);
     [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
     std::expected<void, Exception> stop(QueryId) override;
@@ -39,7 +47,7 @@ public:
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 
 private:
-    SingleNodeWorker worker;
+    std::unique_ptr<detail::Channel> channel;
 };
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration);
