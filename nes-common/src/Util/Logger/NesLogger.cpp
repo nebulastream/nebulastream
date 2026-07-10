@@ -141,8 +141,6 @@ Logger::Logger(const std::string& logFileName, const LogLevel level, const bool 
 
     changeLogLevel(level);
 
-    flusher = std::make_unique<spdlog::details::periodic_worker>([this]() { impl->flush(); }, std::chrono::seconds(1));
-
     /// Enable rust logger
     initialize_logging(impl);
 }
@@ -175,7 +173,6 @@ void Logger::shutdown()
     bool expected = false;
     if (isShutdown.compare_exchange_strong(expected, true))
     {
-        flusher.reset();
         impl.reset();
     }
 }
