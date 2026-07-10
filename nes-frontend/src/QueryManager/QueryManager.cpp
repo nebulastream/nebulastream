@@ -194,11 +194,14 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
     auto waitForStatusChange = query.iterate()
         | std::views::transform([](const auto& pair) { return std::pair{std::get<0>(pair), std::get<1>(pair)}; })
         | std::ranges::to<std::vector>();
-    /// The query is expected to be moved into the started state pretty quickly after lowering, it is very unlikely to even observe
-    /// the status not changing immediatly, so a rapid polling interval is appropriate.
-    constexpr auto statusPollInterval = std::chrono::milliseconds(10);
-    constexpr size_t statusRetries = 17;
-    for (size_t i = 0; i < statusRetries; ++i)
+    /// The query is expected to be moved into the started state pretty quickly after lowering, so we start with a rapid polling
+    /// interval. If the system is overloaded the state change may take much longer, so we back off exponentially, but cap the
+    /// interval at 500ms: unbounded backoff would leave long periods where no one observes the query status.
+    constexpr auto initialStatusPollInterval = std::chrono::milliseconds(10);
+    constexpr auto maxStatusPollInterval = std::chrono::milliseconds(500);
+    constexpr auto statusPollTimeout = std::chrono::seconds(1000);
+    const auto statusPollDeadline = std::chrono::steady_clock::now() + statusPollTimeout;
+    for (auto pollInterval = initialStatusPollInterval;; pollInterval = std::min(pollInterval * 2, maxStatusPollInterval))
     {
         std::erase_if(
             waitForStatusChange,
@@ -217,18 +220,18 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
                 return result->state != QueryStatus::Registered;
             });
 
-        if (waitForStatusChange.empty())
+        if (waitForStatusChange.empty() or std::chrono::steady_clock::now() >= statusPollDeadline)
         {
             break;
         }
-        std::this_thread::sleep_for(statusPollInterval * std::pow(2, i));
+        std::this_thread::sleep_for(pollInterval);
     }
 
     if (!waitForStatusChange.empty())
     {
         exceptions.emplace_back(QueryStartFailed(
-            "Query state did not change for local queries after {} retries: {}",
-            statusRetries,
+            "Query state did not change for local queries within {}: {}",
+            statusPollTimeout,
             fmt::join(
                 waitForStatusChange
                     | std::views::transform([](const auto& pair) { return fmt::format("{}@{}", std::get<1>(pair), std::get<0>(pair)); }),
