@@ -39,8 +39,8 @@ public:
     template <TraitConcept... TraitType>
     explicit TraitSet(TraitType&&... traits)
     {
-        traitMap = std::unordered_map<std::type_index, Trait>{
-            ((std::make_pair<std::type_index, Trait>(typeid(TraitType), std::forward<TraitType>(traits))), ...)};
+        /// NOTE: must be a pack expansion, not a comma fold — a comma fold would discard all but the last trait.
+        (traitMap.emplace(std::type_index{typeid(TraitType)}, std::forward<TraitType>(traits)), ...);
     }
 
     template <std::ranges::input_range Range>
