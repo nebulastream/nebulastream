@@ -12,9 +12,12 @@ This document is a reference for adding new **functions**, **operators**, **sour
 Each section follows the same structure: concept → files to create → interface → CMake registration → skeleton code
 drawn from a real working example.
 
-All four extension points share the same underlying mechanism:
-a CMake `add_plugin(Name RegistryType file.cpp)` call causes the build system to auto-generate a `.inc` file that
-wires the new type into the appropriate registry. No hand-editing of registry files is needed.
+All four extension points share the same underlying CMake registry mechanism. **Functions and operators**
+are always generated as self-contained plugin directories under `nes-plugins/` using `add_plugin_as_library`.
+**Sources and sinks** may be built-in (added to the core component) or plugins depending on the `plugin` flag.
+In all cases the build system auto-generates a `.inc` file that wires the type into the registry — no hand-editing
+of registry files is needed. The only manual step after generation is adding one `activate_optional_plugin` line
+to `nes-plugins/CMakeLists.txt`.
 
 ---
 
@@ -33,12 +36,18 @@ case-insensitively, so `abs`, `ABS`, and `Abs` all resolve to the same entry.
 
 ### Files to create
 
-| File | Purpose |
-|------|---------|
-| `nes-logical-operators/include/Functions/<Category>/MyFuncLogicalFunction.hpp` | Logical function header |
-| `nes-logical-operators/src/Functions/<Category>/MyFuncLogicalFunction.cpp` | Logical function implementation + registry entry |
-| `nes-physical-operators/include/Functions/<Category>/MyFuncPhysicalFunction.hpp` | Physical function header |
-| `nes-physical-operators/src/Functions/<Category>/MyFuncPhysicalFunction.cpp` | Physical function implementation + registry entry |
+All function files live in a single self-contained plugin directory:
+
+```
+nes-plugins/Functions/<Name>/
+├── <Name>LogicalFunction.hpp
+├── <Name>LogicalFunction.cpp
+├── <Name>PhysicalFunction.hpp
+├── <Name>PhysicalFunction.cpp
+└── CMakeLists.txt
+```
+
+Headers use flat (no subdirectory) `#include` within the plugin: `#include <<Name>LogicalFunction.hpp>`.
 
 ### Interface to implement
 
@@ -88,20 +97,36 @@ static_assert(PhysicalFunctionConcept<MyFuncPhysicalFunction>);
 
 ### CMake registration
 
-```cmake
-# nes-logical-operators/src/Functions/<Category>/CMakeLists.txt
-add_plugin(MyFunc LogicalFunction MyFuncLogicalFunction.cpp)
-add_unreflection_plugin(LogicalFunction MyFunc)   # required for plan serialization
+The plugin's `CMakeLists.txt` is self-contained — no edits to core directories needed:
 
-# nes-physical-operators/src/Functions/<Category>/CMakeLists.txt
-add_plugin(MyFunc PhysicalFunction MyFuncPhysicalFunction.cpp)
+```cmake
+# nes-plugins/Functions/<Name>/CMakeLists.txt
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
+
+add_plugin_as_library(MyFunc LogicalFunction myfunc_logical_lib MyFuncLogicalFunction.cpp)
+target_include_directories(myfunc_logical_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_plugin_as_library(MyFunc PhysicalFunction myfunc_physical_lib MyFuncPhysicalFunction.cpp)
+target_include_directories(myfunc_physical_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# add_unreflection_plugin computes the include path relative to a src/ ancestor, which does
+# not exist under nes-plugins/. Expose the plugin directory to the glue library first.
+get_property(_unr_lib GLOBAL PROPERTY "LogicalFunction_UNREFLECTION_GLUE_LIB")
+target_include_directories(${_unr_lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_unreflection_plugin(LogicalFunction MyFunc)
+```
+
+Then activate by adding one line to `nes-plugins/CMakeLists.txt`:
+```cmake
+activate_optional_plugin("Functions/<Name>" ON)
 ```
 
 ### Skeleton (based on `Abs`)
 
 **`MyFuncLogicalFunction.cpp`** (key parts):
 ```cpp
-#include <Functions/<Category>/MyFuncLogicalFunction.hpp>
+#include <MyFuncLogicalFunction.hpp>   // flat include — header is in the same plugin directory
 #include <LogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
@@ -150,7 +175,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMyF
 
 **`MyFuncPhysicalFunction.cpp`** (key parts):
 ```cpp
-#include <Functions/<Category>/MyFuncPhysicalFunction.hpp>
+#include <MyFuncPhysicalFunction.hpp>   // flat include — header is in the same plugin directory
 #include <PhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
@@ -193,14 +218,20 @@ runtime state across records and pipeline invocations.
 
 ### Files to create
 
-| File | Purpose |
-|------|---------|
-| `nes-logical-operators/include/Operators/MyOpLogicalOperator.hpp` | Logical operator header |
-| `nes-logical-operators/src/Operators/MyOpLogicalOperator.cpp` | Implementation + registry entry |
-| `nes-physical-operators/include/MyOpPhysicalOperator.hpp` | Physical operator header |
-| `nes-physical-operators/src/MyOpPhysicalOperator.cpp` | Physical operator implementation |
-| `nes-query-compiler/private/LoweringRules/LowerToPhysical/LowerToPhysicalMyOp.hpp` | Lowering rule header |
-| `nes-query-compiler/src/LoweringRules/LowerToPhysical/LowerToPhysicalMyOp.cpp` | Lowering rule implementation + registry entry |
+All operator files live in a single self-contained plugin directory:
+
+```
+nes-plugins/Operators/<Name>/
+├── <Name>LogicalOperator.hpp
+├── <Name>LogicalOperator.cpp
+├── <Name>PhysicalOperator.hpp
+├── <Name>PhysicalOperator.cpp
+├── LowerToPhysical<Name>.hpp
+├── LowerToPhysical<Name>.cpp
+└── CMakeLists.txt
+```
+
+Headers use flat (no subdirectory) `#include` within the plugin.
 
 ### Interface to implement
 
@@ -272,16 +303,31 @@ public:
 
 ### CMake registration
 
+The plugin's `CMakeLists.txt` is self-contained — no edits to core directories needed:
+
 ```cmake
-# nes-logical-operators/src/Operators/CMakeLists.txt
-add_plugin(MyOp LogicalOperator MyOpLogicalOperator.cpp)
+# nes-plugins/Operators/<Name>/CMakeLists.txt
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
+
+# Logical operator + physical operator compiled together (physical has no separate registry)
+add_plugin_as_library(MyOp LogicalOperator myop_logical_lib
+    MyOpLogicalOperator.cpp MyOpPhysicalOperator.cpp)
+target_include_directories(myop_logical_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Lowering rule registered separately
+add_plugin_as_library(MyOp LoweringRule myop_lowering_lib LowerToPhysicalMyOp.cpp)
+target_include_directories(myop_lowering_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Unreflection for logical operator serialization
+get_property(_unr_lib GLOBAL PROPERTY "LogicalOperator_UNREFLECTION_GLUE_LIB")
+target_include_directories(${_unr_lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_unreflection_plugin(LogicalOperator MyOp)
+```
 
-# nes-query-compiler/src/LoweringRules/LowerToPhysical/CMakeLists.txt
-add_plugin(MyOp LoweringRule LowerToPhysicalMyOp.cpp)
-
-# nes-physical-operators/src/CMakeLists.txt  (or subdirectory)
-add_source_files(nes-physical-operators MyOpPhysicalOperator.cpp)
+Then activate by adding one line to `nes-plugins/CMakeLists.txt`:
+```cmake
+activate_optional_plugin("Operators/<Name>" ON)
 ```
 
 ### Skeleton (based on `Selection`)
@@ -605,14 +651,14 @@ SinkRegistryReturnType RegisterMySinkName(SinkRegistryArguments args) {
 
 ## Quick reference
 
-| Extension | Registry key set by | Registration macro | Real example |
-|-----------|--------------------|--------------------|-------------|
-| Logical function | `static constexpr NAME` | `add_plugin(Name LogicalFunction file.cpp)` | `AbsoluteLogicalFunction` |
-| Physical function | same `NAME` | `add_plugin(Name PhysicalFunction file.cpp)` | `AbsolutePhysicalFunction` |
-| Logical operator | `static constexpr NAME` | `add_plugin(Name LogicalOperator file.cpp)` | `SelectionLogicalOperator` |
-| Lowering rule | same `NAME` as operator | `add_plugin(Name LoweringRule file.cpp)` | `LowerToPhysicalSelection` |
-| Source | `static constexpr NAME` | `add_plugin(Name Source file.cpp)` + `add_plugin(Name SourceValidation file.cpp)` | `FileSource` |
-| Sink | `static constexpr NAME` | `add_plugin(Name Sink file.cpp)` + `add_plugin(Name SinkValidation file.cpp)` | `VoidSink` / `FileSink` |
+| Extension | Location | Registration macro | Real example |
+|-----------|----------|--------------------|-------------|
+| Logical function | `nes-plugins/Functions/<Name>/` | `add_plugin_as_library(Name LogicalFunction lib file.cpp)` | `AbsoluteLogicalFunction` |
+| Physical function | same plugin dir | `add_plugin_as_library(Name PhysicalFunction lib file.cpp)` | `AbsolutePhysicalFunction` |
+| Logical operator | `nes-plugins/Operators/<Name>/` | `add_plugin_as_library(Name LogicalOperator lib ...)` | `SelectionLogicalOperator` |
+| Lowering rule | same plugin dir | `add_plugin_as_library(Name LoweringRule lib file.cpp)` | `LowerToPhysicalSelection` |
+| Source (plugin) | `nes-plugins/Sources/<Name>/` | `add_plugin_as_library(Name Source lib file.cpp)` + Validation | `FileSource` |
+| Sink (plugin) | `nes-plugins/Sinks/<Name>/` | `add_plugin_as_library(Name Sink lib file.cpp)` + Validation | `VoidSink` / `FileSink` |
 
 ---
 

@@ -1,0 +1,18 @@
+# name: function/arithmetical/SquareFunction.test
+# description: Test Square function (x * x)
+# groups: [Function, FunctionSquare]
+
+CREATE LOGICAL SOURCE stream(x FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+0.0
+1.0
+-1.0
+
+CREATE SINK result(y FLOAT64 NOT NULL) TYPE File;
+
+SELECT SQUARE(x) AS y FROM stream INTO result;
+----
+0.0
+1.0
+1.0
