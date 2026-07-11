@@ -169,50 +169,6 @@ uint32_t DataType::getSizeInBytesWithNull() const
 
 /// NOLINTEND(readability-magic-numbers)
 
-std::string DataType::formattedBytesToString(const void* data) const
-{
-    PRECONDITION(data != nullptr, "Pointer to data is invalid.");
-    switch (type)
-    {
-        case Type::INT8:
-            return std::to_string(*static_cast<const int8_t*>(data));
-        case Type::UINT8:
-            return std::to_string(*static_cast<const uint8_t*>(data));
-        case Type::INT16:
-            return std::to_string(*static_cast<const int16_t*>(data));
-        case Type::UINT16:
-            return std::to_string(*static_cast<const uint16_t*>(data));
-        case Type::INT32:
-            return std::to_string(*static_cast<const int32_t*>(data));
-        case Type::UINT32:
-            return std::to_string(*static_cast<const uint32_t*>(data));
-        case Type::INT64:
-            return std::to_string(*static_cast<const int64_t*>(data));
-        case Type::UINT64:
-            return std::to_string(*static_cast<const uint64_t*>(data));
-        case Type::FLOAT32:
-            return formatFloat(*static_cast<const float*>(data));
-        case Type::FLOAT64:
-            return formatFloat(*static_cast<const double*>(data));
-        case Type::BOOLEAN:
-            return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
-        case Type::CHAR: {
-            if (getSizeInBytesWithoutNull() != 1)
-            {
-                return "invalid char type";
-            }
-            return std::string{*static_cast<const char*>(data)};
-        }
-        case Type::VARSIZED: {
-            const auto* textPointer = static_cast<const char*>(data);
-            return textPointer;
-        }
-        case Type::UNDEFINED:
-            return "invalid physical type";
-    }
-    std::unreachable();
-}
-
 bool DataType::isType(const Type type) const
 {
     return this->type == type;
