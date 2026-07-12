@@ -1,0 +1,45 @@
+# name: function/dspro/Benchmark.test
+# description: Benchmark tests for Pseudonymize and Depseudonymize using a real-world dataset.
+#              Uses the DEBS consumers dataset (2,716 records) with ChecksumSink to verify
+#              correctness and measure throughput without I/O bottleneck.
+# groups: [Function, Pseudonymize, Benchmark]
+#
+# IMPORTANT — before running these tests, set the environment variable:
+#   export PSEUDONYM_SECRET_KEY="my-secret-key"
+
+# ---------------------------------------------------------------------------
+# Benchmark 1: Pseudonymize — 2,716 INT32 consumer IDs
+#   Reads the DEBS consumers dataset and pseudonymizes the consumerId field.
+#   ChecksumSink counts all records and accumulates a checksum of the results,
+#   proving that every record was processed correctly.
+# ---------------------------------------------------------------------------
+CREATE LOGICAL SOURCE consumers(consumerId INT32, sectorId INT32, consumedPower FLOAT64, consumerType VARSIZED, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR consumers TYPE File;
+ATTACH FILE small/debs/CONSUMERS_TOPIC_100K.csv
+
+CREATE SINK pseudoChecksum(patient_id_pseudo INT32) TYPE Checksum;
+
+SELECT
+    Pseudonymize(consumerId) AS patient_id_pseudo
+FROM consumers INTO pseudoChecksum;
+----
+2716 1437387
+
+
+# ---------------------------------------------------------------------------
+# Benchmark 2: Round-trip — Depseudonymize(Pseudonymize(x)) at scale
+#   Applies both functions in sequence on the same 2,716 records.
+#   The checksum of the output must match the checksum of the original
+#   consumerId values — proving perfect bijectivity at scale.
+# ---------------------------------------------------------------------------
+CREATE LOGICAL SOURCE consumers2(consumerId INT32, sectorId INT32, consumedPower FLOAT64, consumerType VARSIZED, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR consumers2 TYPE File;
+ATTACH FILE small/debs/CONSUMERS_TOPIC_100K.csv
+
+CREATE SINK roundTripChecksum(restored_id INT32) TYPE Checksum;
+
+SELECT
+    Depseudonymize(Pseudonymize(consumerId)) AS restored_id
+FROM consumers2 INTO roundTripChecksum;
+----
+2716 1125890
