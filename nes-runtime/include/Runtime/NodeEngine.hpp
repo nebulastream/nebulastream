@@ -54,6 +54,17 @@ public:
     /// been called.
     void stopQuery(QueryId queryId);
 
+    /// Attaches the pipelines of `branch` as additional successors of the RUNNING pipeline `targetPipelineId`
+    /// of query `queryId` (runtime fan-out, e.g. a statistics tap). The branch's single source is a placeholder
+    /// that describes the tapped data (schema/layout must match the target pipeline's output) and is never
+    /// started. The branch should contain only stateless operators. Attachment happens asynchronously.
+    /// Returns the PipelineId of the branch's entry pipeline, to be used for detachFromQuery.
+    PipelineId attachToQuery(QueryId queryId, PipelineId targetPipelineId, std::unique_ptr<CompiledQueryPlan> branch);
+
+    /// Removes a previously attached pipeline from the running query; the detached branch terminates
+    /// gracefully. Happens asynchronously.
+    void detachFromQuery(QueryId queryId, PipelineId targetPipelineId, PipelineId attachedPipelineId);
+
     [[nodiscard]] std::shared_ptr<BufferManager> getBufferManager() { return bufferManager; }
 
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }

@@ -12,3 +12,6 @@
 
 add_nes_unit_test(MultiSinkE2ETest UnitTests/MultiSinkE2ETest.cpp)
 target_link_libraries(MultiSinkE2ETest nes-single-node-worker-lib nes-query-optimizer nes-test-util)
+
+add_nes_unit_test(AttachTapE2ETest UnitTests/AttachTapE2ETest.cpp)
+target_link_libraries(AttachTapE2ETest nes-single-node-worker-lib nes-query-optimizer nes-test-util)

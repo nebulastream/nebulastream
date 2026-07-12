@@ -1292,6 +1292,123 @@ TEST_F(QueryEngineTest, SingleQueryWithMultipleSinksDuringQueryStopOneIsRepeated
     }
 }
 
+TEST_F(QueryEngineTest, AttachAndDetachBranchOnRunningQuery)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+
+    /// The branch is built like a regular test plan; its source acts as a placeholder describing the tapped
+    /// data and is never started. Its successor (tapPipeline) becomes an additional successor of `pipeline`.
+    auto branchBuilder = test.buildNewQuery();
+    auto branchSource = branchBuilder.addSource();
+    auto tapPipeline = branchBuilder.addPipeline({branchSource});
+    auto tapSink = branchBuilder.addSink({tapPipeline});
+    auto branch = test.addNewQuery(std::move(branchBuilder));
+
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+    test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForStart());
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+
+        /// Buffers processed before the attachment only reach the main sink.
+        size_t injectedBuffers = 0;
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        ++injectedBuffers;
+        ASSERT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffersOrMore(1));
+        EXPECT_EQ(test.sinkControls[tapSink]->invocations.load(), 0);
+
+        /// Attach the branch to the running pipeline. The branch shares the query's id and lifecycle.
+        test.qm->attach(test.queryId(0), test.pipelineIds.at(pipeline), std::move(branch));
+        ASSERT_TRUE(test.pipelineControls[tapPipeline]->waitForStart());
+        ASSERT_TRUE(test.sinkControls[tapSink]->waitForStart());
+
+        /// The wiring happens asynchronously once all branch setups completed: inject until the tap sees data.
+        bool tapReceived = false;
+        for (int attempt = 0; attempt < 100 && !tapReceived; ++attempt)
+        {
+            test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+            ++injectedBuffers;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            tapReceived = test.sinkControls[tapSink]->invocations.load() > 0;
+        }
+        ASSERT_TRUE(tapReceived) << "The attached tap sink never received a buffer";
+
+        /// Detaching terminates the branch gracefully while the main query keeps running.
+        test.qm->detach(test.queryId(0), test.pipelineIds.at(pipeline), test.pipelineIds.at(tapPipeline));
+        ASSERT_TRUE(test.pipelineControls[tapPipeline]->waitForStop());
+        ASSERT_TRUE(test.sinkControls[tapSink]->waitForStop());
+        ASSERT_TRUE(test.pipelineControls[tapPipeline]->waitForDestruction());
+        ASSERT_TRUE(test.sinkControls[tapSink]->waitForDestruction());
+
+        /// The main query is unaffected by the detach.
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        ++injectedBuffers;
+        ASSERT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffersOrMore(injectedBuffers));
+
+        test.sourceControls[source]->injectEoS();
+        ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
+    }
+    test.stop();
+}
+
+TEST_F(QueryEngineTest, AttachedBranchTerminatesWithQuery)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+
+    auto branchBuilder = test.buildNewQuery();
+    auto branchSource = branchBuilder.addSource();
+    auto tapPipeline = branchBuilder.addPipeline({branchSource});
+    auto tapSink = branchBuilder.addSink({tapPipeline});
+    auto branch = test.addNewQuery(std::move(branchBuilder));
+
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+    test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForStart());
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+
+        test.qm->attach(test.queryId(0), test.pipelineIds.at(pipeline), std::move(branch));
+        ASSERT_TRUE(test.pipelineControls[tapPipeline]->waitForStart());
+        ASSERT_TRUE(test.sinkControls[tapSink]->waitForStart());
+
+        bool tapReceived = false;
+        for (int attempt = 0; attempt < 100 && !tapReceived; ++attempt)
+        {
+            test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            tapReceived = test.sinkControls[tapSink]->invocations.load() > 0;
+        }
+        ASSERT_TRUE(tapReceived) << "The attached tap sink never received a buffer";
+
+        /// Stopping the query must terminate the attached branch through the regular cascade: the query only
+        /// reports Stopped once ALL nodes - including the attached ones - have expired.
+        test.sourceControls[source]->injectEoS();
+        ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.pipelineControls[tapPipeline]->waitForDestruction());
+        ASSERT_TRUE(test.sinkControls[tapSink]->waitForDestruction());
+        EXPECT_TRUE(test.pipelineControls[tapPipeline]->wasStopped());
+        EXPECT_TRUE(test.sinkControls[tapSink]->wasStopped());
+    }
+    test.stop();
+}
+
 TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
 {
     constexpr size_t numberOfSources = 2;

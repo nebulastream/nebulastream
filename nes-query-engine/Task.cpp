@@ -161,6 +161,28 @@ PendingPipelineStopTask::PendingPipelineStopTask(
 {
 }
 
+AttachQueryTask::AttachQueryTask(
+    QueryId queryId,
+    PipelineId targetPipelineId,
+    std::unique_ptr<ExecutableQueryPlan> branch,
+    std::weak_ptr<QueryCatalog> catalog,
+    TaskCallback callback)
+    : BaseTask(std::move(queryId), std::move(callback))
+    , branch(std::move(branch))
+    , catalog(std::move(catalog))
+    , targetPipelineId(targetPipelineId)
+{
+}
+
+DetachQueryTask::DetachQueryTask(
+    QueryId queryId, PipelineId targetPipelineId, PipelineId attachedPipelineId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
+    : BaseTask(std::move(queryId), std::move(callback))
+    , catalog(std::move(catalog))
+    , targetPipelineId(targetPipelineId)
+    , attachedPipelineId(attachedPipelineId)
+{
+}
+
 void succeedTask(Task& task)
 {
     std::visit([](auto& specificTask) { return specificTask.succeed(); }, task);

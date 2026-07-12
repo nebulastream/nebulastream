@@ -39,6 +39,18 @@ public:
         const Host& host);
     void stop(QueryId queryId);
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
+
+    /// Attaches the pipelines of `branch` as additional successors of the RUNNING pipeline `targetPipelineId`
+    /// of query `queryId` (runtime fan-out, e.g. a statistics tap). The branch's single source is a placeholder
+    /// describing the tapped data and is never started; the branch must match the target pipeline's output
+    /// schema and should contain only stateless operators (windowed operators would never see the beginning of
+    /// the sequence-number range and thus never trigger). The attachment happens asynchronously.
+    void attach(QueryId queryId, PipelineId targetPipelineId, std::unique_ptr<ExecutableQueryPlan> branch);
+
+    /// Removes a previously attached pipeline from `targetPipelineId`'s successors. The detached branch is
+    /// terminated gracefully through the regular termination cascade. Happens asynchronously.
+    void detach(QueryId queryId, PipelineId targetPipelineId, PipelineId attachedPipelineId);
+
     ~QueryEngine();
 
     /// Order of Member construction is top to bottom and order of destruction is reversed

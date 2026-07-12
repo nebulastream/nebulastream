@@ -130,12 +130,129 @@ Precedent: the physical layer already works this way (`PhysicalOperatorWrapper` 
 - **R5 — `explain`/PlanRenderer** prints a shared subtree once per root. Cosmetic only.
 - **R6 — Untested interaction surface.** Fan-in (union/join) is well-tested; fan-out reuses the same mechanisms mirrored, but combinations (fan-out *into* a join branch, fan-out of a window pipeline) have zero existing coverage. The PoC tests cover the basic shapes; anything fancier should be treated as unvalidated.
 
+## Step 2 investigation: inserting operators into RUNNING queries (2026-07-12)
+
+> **UPDATE (2026-07-12, later): Option 1 (live splice) is IMPLEMENTED and passing.**
+> - `RunningQueryPlanNode::successors` is now `folly::Synchronized` (readers snapshot via `copy()` on the emit
+>   path); `AttachQueryTask`/`DetachQueryTask` engine tasks + `QueryEngine::attach/detach` +
+>   `NodeEngine::attachToQuery/detachFromQuery`. The branch is compiled as a normal plan whose single
+>   placeholder source is never started; its pipelines are set up asynchronously and wired into the target's
+>   successors only after ALL setups completed. Attached nodes share the query's id, participate in the
+>   termination cascade, and **detach = removing the successor edge** (the branch then terminates through the
+>   existing reference-counting cascade).
+> - Tests: `QueryEngineTest.AttachAndDetachBranchOnRunningQuery` + `AttachedBranchTerminatesWithQuery`
+>   (engine-level, deterministic), and `AttachTapE2ETest` (full stack: FIFO-driven compiled query; a tap
+>   attached mid-stream receives EXACTLY the stream suffix that flowed while it was attached, main sinks
+>   receive everything, detach severs cleanly).
+> - **New discovery — "tappability" depends on pipeline shape:** with a single non-native sink, the pipelining
+>   phase fuses the output-formatting emit INTO the last operator pipeline, so that pipeline emits formatted
+>   bytes — attaching a native-scan tap there reads garbage. At a **fan-out point** the shared pipeline is
+>   closed with a NATIVE emit by construction (the step-1 work), which is exactly what a tap needs. Rule of
+>   thumb: tap pipelines that end in a default (native) emit; multi-sink/fan-out plans provide those naturally.
+> - Not yet done: OperatorId→PipelineId provenance map (callers currently identify the target pipeline from
+>   the CompiledQueryPlan before registering it), gRPC/SingleNodeWorker exposure of attach/detach, and the
+>   Option 2 re-sequencing boundary for stateful taps.
+
+### The sequence-number question: stateless taps are SAFE (verified in code)
+
+A late-attached branch sees buffers starting mid-stream (first SequenceNumber ≫ 1). We traced **every**
+consumer of buffer sequence metadata:
+
+| Consumer | Behavior | Late-attach safe? |
+|----------|----------|--------------------|
+| `ScanPhysicalOperator` | copies seq/chunk/origin into the execution context, no validation (`ScanPhysicalOperator.cpp:68-70`) | ✅ |
+| `Selection`/`Map`/`Projection` | stateless per-record, metadata passes through | ✅ |
+| `EmitOperatorHandler` | chunk state keyed by *(SequenceNumber, OriginId)* pair — first-seen seq 1000 is just a new map key (`EmitOperatorHandler.cpp:29-83`) | ✅ |
+| `FileSink` / `NetworkSink` | write in arrival order, no reordering, no contiguity checks (`FileSink.cpp:99-119`) | ✅ |
+| InputFormatter / SequenceShredder | raw-source path only; a tap scans NATIVE buffers and bypasses it | ✅ (n/a) |
+| `MultiOriginWatermarkProcessor` → `NonBlockingMonotonicSeqQueue` | watermark advances only when EVERY seq from the start is present (`NonBlockingMonotonicSeqQueue.hpp:91-95`) | ❌ |
+| All `WindowBasedOperatorHandler`s (aggregation, hash/NL join), watermark assigners | built on the watermark processor | ❌ — windows never fire |
+
+**Verdict: a stateless-only tap (scan → selection/map/projection → emit → sink) sidesteps the
+sequence-number problem entirely.** No hidden contiguity assumptions were found in the buffer manager,
+sinks, or scan path. Two caveats:
+1. "Throughput counting" as a windowed `COUNT` **is stateful** — it cannot be late-attached directly. Escape
+   hatches: engine statistics events (Option 0 below), a custom stateless counting operator (no watermarks),
+   or the re-sequencing boundary (Option 2 below).
+2. The tap must scan the target pipeline's **native** emit (tap before formatting pipelines).
+
+### Engine facts that shape any attach design (verified)
+
+- `RunningQueryPlanNode::successors` is a plain vector read lock-free by all worker threads on the hot emit
+  path (`QueryEngine.cpp:496-507`) — effectively immutable after start. Runtime mutation needs
+  **copy-on-write** (atomic `shared_ptr<const vector>`) or equivalent; a mutex on the emit path is the wrong
+  trade for a read-heavy workload.
+- `RunningSource` freezes its successor list **by value inside the emit closure** (`RunningSource.cpp:53,62`)
+  → source-level attach needs closure rework; pipeline-level attach does not.
+- Lifecycle composes for free: an attached node is kept alive by its target (forward reference counting);
+  the existing termination cascade + `pendingTasks` accounting cover it; **detach = remove the edge** →
+  refcount drop → `PendingPipelineStop` cascade cleans the branch up gracefully.
+- **Attached nodes must carry the SAME QueryId** — stop/failure/statistics paths key on the task's queryId;
+  a cross-query successor corrupts both queries' lifecycles.
+- Pipeline setup is per-pipeline (`StartPipelineTask`) → a branch can be set up and started before wiring.
+- Buffer pool is engine-global → attached branches need no memory plumbing.
+- Provenance gap: the OperatorId→PipelineId mapping is lost at `ExecutableQueryPlan::instantiate` — a
+  "tap the output of operator X" API needs this map retained.
+- **No adaptive/hot-swap machinery exists** to reuse (no interpreter→compiled swap, no plan versioning);
+  the task-variant pattern (`Task.hpp:196-204`) is the extension point for an `AttachPipelineTask`.
+  gRPC has zero runtime-mutation RPCs.
+
+### Options for inserting operators into running queries
+
+**Option 0 — Don't insert: consume engine statistics events.** `TaskEmit` (from-pipeline, to-pipeline,
+tuple count) and `TaskExecutionStart` (tuple count) are already emitted per task
+(`QueryEngineStatisticListener.hpp`) — per-pipeline throughput is fully derivable today from a statistics
+listener, no plan modification at all.
+- *Pros:* zero engine risk, exists now, fits the Prometheus/statistics-listener work.
+- *Cons:* engine-level metrics only — no data-dependent statistics (per-key distributions, content-based
+  filters); listeners are fixed at engine construction; not expressible as queries.
+
+**Option 1 — Live splice of a stateless branch (recommended PoC).** Compile a tap branch against the target
+pipeline's output schema (native scan; the fan-out compiler work provides everything); make `successors`
+copy-on-write; add an `AttachPipelineTask` (setup branch stages, then swap the successor vector) and a
+`QueryEngine::attach/detach` API + provenance map; same queryId as the target.
+- *Pros:* true runtime insertion with the smallest new surface; detach falls out of the existing termination
+  cascade; directly demonstrates the statistic-tap principle; stateless safety is verified above.
+- *Cons:* stateless branches only; no backpressure for the branch (R1); tap is lifecycle-subordinate to the
+  main query (detach ≠ independent stop).
+
+**Option 2 — Live splice behind a re-sequencing boundary (the general fix).** Same as Option 1, but the
+attach point re-stamps buffers: fresh OriginId + sequence numbers counted from 1 per attachment, watermark
+timestamps preserved. To the branch this looks like a brand-new source — **watermark machinery works, so
+windowed/stateful operators (real statistic queries) become attachable**.
+- *Pros:* lifts the stateless restriction cleanly and locally; the sequence-number problem is solved at the
+  boundary instead of inside every operator.
+- *Cons:* the re-stamper is a new component (mini-source semantics: origin registration, watermark
+  progression, chunk handling); more design work than Option 1.
+
+**Option 3 — Independent tap query via a tap port/channel.** Give queries a (static, submit-time) internal
+tap sink/channel; statistic queries run as fully independent queries (own QueryId, own lifecycle) whose
+source reads the channel and assigns fresh sequence numbers — windows work naturally. Runtime "attachment"
+becomes channel subscription, no engine-graph mutation at all.
+- *Pros:* full lifecycle decoupling; tap queries are ordinary queries (whole operator library, own
+  backpressure); no concurrent-mutation problem; matches the prior FIFO-based StatisticCoordinator pattern.
+- *Cons:* channel source/sink pair is new infrastructure; the port must be planned at submit time (or added
+  via Option 1 once); extra buffer copy across the channel.
+
+**Option 4 — Stop, extend, restart (works TODAY).** Use the static fan-out: stop the query, splice a new
+sink root into the retained optimized plan (post-optimizer DAG edit), recompile, restart.
+- *Pros:* zero engine changes — functional on this branch right now; all operator types work (fresh
+  sequence numbers after restart).
+- *Cons:* downtime; loses operator state and stream position (file sources re-read; window state gone);
+  not "runtime" modification — a stopgap/demo only.
+
+### Recommended path
+1. Throughput metrics *now*: Option 0 (statistics listener).
+2. PoC for genuine runtime insertion: **Option 1** — COW successors + `AttachPipelineTask` +
+   `attach/detach` API + OperatorId→PipelineId provenance; e2e test: start query, attach a file-sink tap
+   mid-stream, assert the tap receives the stream suffix, detach, assert clean branch shutdown, main query
+   unaffected.
+3. Lift the stateless restriction with the Option 2 re-sequencing boundary when real windowed statistic
+   queries are needed; consider Option 3 if independent tap lifecycles become a requirement.
+
 ## Open ends (decisions & work beyond this branch)
 
-1. **Runtime plan modification (the actual goal, step 2).** Deferred, and the hard problems are mapped:
-   - *Sequence numbers:* windowed operators in a late-attached branch expect sequence numbers from stream start; a mid-stream attach violates the monotonic-sequence invariant (`NonBlockingMonotonicSeqQueue.hpp:91-95`) and the watermark processor's fixed origin set (`MultiOriginWatermarkProcessor.hpp:31`). Candidate approaches to discuss: per-attachment sequence translation (offset re-basing at the splice point), synthetic "catch-up" watermarks, or restricting attached branches to operators without sequence/window state (sufficient for plain throughput counters!).
-   - *Engine API:* `QueryEngine` exposes only `start`/`stop`; mutating a `RunningQueryPlan`'s successor vectors concurrently with execution needs a designed synchronization point (e.g. a task-queue-serialized "attach" task).
-   - *Lifecycle:* attached branches must join the termination cascade and reference-counting scheme correctly; detach is a whole further question.
+1. **Runtime plan modification (the actual goal, step 2) — now INVESTIGATED, see the "Step 2 investigation" section above.** Summary: stateless taps verified safe against the sequence-number problem; recommended PoC is the live splice (Option 1: COW successors + AttachPipelineTask); the re-sequencing boundary (Option 2) is the general fix for stateful branches; detach falls out of the existing termination cascade.
 2. **Multi-controller backpressure channel** (lifts R1).
 3. **~~Optimizer DAG-safety~~ — DONE (2026-07-12, Option A / `transformPlan`).** Remaining sub-items: DAG-aware operator *placement* (`BottomUpPlacement` is single-root, guarded), and optionally id-*stable* rebuilds (exposing the private id-preserving constructor) — no longer needed for correctness, but useful for correlating operators across plan versions when runtime attachment lands.
 4. **SQL multi-sink syntax `INTO a, b`** (TODO #421) — parser part is easy; the rule pipeline now supports it. Only blocked on multi-root placement (3) for the distributed path.

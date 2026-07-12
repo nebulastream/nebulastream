@@ -62,7 +62,7 @@ void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryP
                     {
                         ENGINE_LOG_DEBUG("Pipeline {}-{} was stopped", queryId, ptr->id);
                         ptr->requiresTermination = false;
-                        for (auto& successor : ptr->successors)
+                        for (auto& successor : *ptr->successors.wlock())
                         {
                             emitter.emitPendingPipelineStop(queryId, std::move(successor), TaskCallback{});
                         }
@@ -259,6 +259,89 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
         });
 
     return {std::move(runningPlan), pipelineSetupCallbackRef};
+}
+
+bool RunningQueryPlan::attach(
+    RunningQueryPlan& runningQueryPlan,
+    QueryId queryId,
+    PipelineId targetPipelineId,
+    std::unique_ptr<ExecutableQueryPlan> branch,
+    WorkEmitter& emitter)
+{
+    PRECONDITION(branch, "Cannot attach an empty branch");
+    PRECONDITION(branch->sources.size() == 1, "An attachable branch requires exactly one placeholder source");
+
+    auto lock = runningQueryPlan.internal.lock();
+    auto& internal = *lock;
+
+    std::shared_ptr<RunningQueryPlanNode> target;
+    for (const auto& weakNode : internal.pipelines)
+    {
+        if (auto node = weakNode.lock(); node && node->id == targetPipelineId)
+        {
+            target = std::move(node);
+            break;
+        }
+    }
+    if (!target)
+    {
+        ENGINE_LOG_WARNING("Cannot attach to query {}: pipeline {} is not part of the running plan", queryId, targetPipelineId);
+        return false;
+    }
+
+    /// Fires once ALL branch pipelines completed their setup; only then may buffers flow into the branch.
+    /// The local CallbackRef keeps the callback pending until setCallback below has run.
+    auto [attachedCallbackOwner, attachedCallbackRef] = Callback::create();
+
+    /// The branch nodes copy the target's planRef (the branch extends the query's pipeline graph and must keep
+    /// it alive until expired) and its failure handler (a failing tap fails the query, like any other pipeline).
+    auto [branchSources, branchPipelines]
+        = createRunningNodes(queryId, *branch, target->unregisterWithError, target->planRef, attachedCallbackRef, emitter);
+
+    for (const auto& pipeline : branchPipelines)
+    {
+        internal.pipelines.push_back(pipeline);
+    }
+
+    /// The placeholder SourceHandle is dropped without ever being started; its successor nodes become
+    /// additional successors of the target pipeline once the branch setup completed.
+    auto entryNodes = std::move(branchSources.front().second);
+
+    internal.attachments.push_back(std::move(attachedCallbackOwner));
+    internal.attachments.back().setCallback(
+        [ENGINE_IF_LOG_INFO(queryId, ) target = std::weak_ptr(target), entryNodes = std::move(entryNodes)]() mutable
+        {
+            if (const auto lockedTarget = target.lock())
+            {
+                ENGINE_LOG_INFO("Attaching {} branch pipeline(s) to pipeline {}-{}", entryNodes.size(), queryId, lockedTarget->id);
+                auto successors = lockedTarget->successors.wlock();
+                std::ranges::move(entryNodes, std::back_inserter(*successors));
+            }
+            /// If the target expired in the meantime, the entry nodes are dropped here, which gracefully
+            /// terminates the already set-up branch through the reference-counting cascade.
+        });
+
+    return true;
+}
+
+bool RunningQueryPlan::detach(RunningQueryPlan& runningQueryPlan, PipelineId targetPipelineId, PipelineId attachedPipelineId)
+{
+    auto lock = runningQueryPlan.internal.lock();
+    auto& internal = *lock;
+
+    for (const auto& weakNode : internal.pipelines)
+    {
+        auto node = weakNode.lock();
+        if (!node || node->id != targetPipelineId)
+        {
+            continue;
+        }
+        const auto erased = std::erase_if(
+            *node->successors.wlock(),
+            [attachedPipelineId](const std::shared_ptr<RunningQueryPlanNode>& successor) { return successor->id == attachedPipelineId; });
+        return erased > 0;
+    }
+    return false;
 }
 
 std::pair<std::unique_ptr<StoppingQueryPlan>, absl::AnyInvocable<void()>>

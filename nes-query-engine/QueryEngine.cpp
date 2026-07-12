@@ -183,6 +183,8 @@ public:
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
     void stopQuery(QueryId queryId);
+    void attach(QueryId queryId, PipelineId targetPipelineId, std::unique_ptr<ExecutableQueryPlan> branch, WorkEmitter& emitter);
+    void detach(QueryId queryId, PipelineId targetPipelineId, PipelineId attachedPipelineId);
 
     void clear()
     {
@@ -441,6 +443,8 @@ public:
         bool operator()(StopPipelineTask& stopPipelineTask) const;
         bool operator()(StopSourceTask& stopSource) const;
         bool operator()(FailSourceTask& failSource) const;
+        bool operator()(AttachQueryTask& attachQuery) const;
+        bool operator()(DetachQueryTask& detachQuery) const;
 
     private:
         ThreadPool& pool; ///NOLINT The ThreadPool will always outlive the worker and not move.
@@ -497,8 +501,9 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             {
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                /// Snapshot: successors may gain or lose attached branches concurrently
                 return std::ranges::all_of(
-                    pipeline->successors,
+                    pipeline->successors.copy(),
                     [&](const auto& successor)
                     {
                         pool.statistic->onEvent(
@@ -636,7 +641,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
                 return true;
             }
 
-            for (const auto& successor : stopPipelineTask.pipeline->successors)
+            for (const auto& successor : stopPipelineTask.pipeline->successors.copy())
             {
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
@@ -739,6 +744,39 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     return false;
 }
 
+bool ThreadPool::WorkerThread::operator()(AttachQueryTask& attachQuery) const
+{
+    LogContext logContext("Task", fmt::format("{}", attachQuery.queryId));
+    ENGINE_LOG_INFO("Attach Task for Query {} targeting Pipeline {}", attachQuery.queryId, attachQuery.targetPipelineId);
+    if (terminating)
+    {
+        ENGINE_LOG_WARNING("Attach for Query {} was skipped during termination", attachQuery.queryId);
+        return false;
+    }
+    if (const auto queryCatalog = attachQuery.catalog.lock())
+    {
+        queryCatalog->attach(attachQuery.queryId, attachQuery.targetPipelineId, std::move(attachQuery.branch), pool);
+        return true;
+    }
+    return false;
+}
+
+bool ThreadPool::WorkerThread::operator()(DetachQueryTask& detachQuery) const
+{
+    LogContext logContext("Task", fmt::format("{}", detachQuery.queryId));
+    ENGINE_LOG_INFO(
+        "Detach Task for Query {}: removing Pipeline {} from Pipeline {}",
+        detachQuery.queryId,
+        detachQuery.attachedPipelineId,
+        detachQuery.targetPipelineId);
+    if (const auto queryCatalog = detachQuery.catalog.lock())
+    {
+        queryCatalog->detach(detachQuery.queryId, detachQuery.targetPipelineId, detachQuery.attachedPipelineId);
+        return true;
+    }
+    return false;
+}
+
 void ThreadPool::addThread(const Host& host)
 {
     pool.emplace_back(
@@ -797,6 +835,22 @@ void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan
 {
     threadPool->taskQueue.addAdmissionTaskBlocking(
         {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
+}
+
+/// NOLINTNEXTLINE Intentionally non-const
+void QueryEngine::attach(QueryId queryId, PipelineId targetPipelineId, std::unique_ptr<ExecutableQueryPlan> branch)
+{
+    ENGINE_LOG_INFO("Attaching branch to Query {} at Pipeline {}", queryId, targetPipelineId);
+    threadPool->taskQueue.addAdmissionTaskBlocking(
+        {}, AttachQueryTask{queryId, targetPipelineId, std::move(branch), queryCatalog, TaskCallback{}});
+}
+
+/// NOLINTNEXTLINE Intentionally non-const
+void QueryEngine::detach(QueryId queryId, PipelineId targetPipelineId, PipelineId attachedPipelineId)
+{
+    ENGINE_LOG_INFO("Detaching Pipeline {} from Query {} Pipeline {}", attachedPipelineId, queryId, targetPipelineId);
+    threadPool->taskQueue.addAdmissionTaskBlocking(
+        {}, DetachQueryTask{queryId, targetPipelineId, attachedPipelineId, queryCatalog, TaskCallback{}});
 }
 
 QueryEngine::~QueryEngine()
@@ -955,6 +1009,48 @@ void QueryCatalog::start(
             "Bug: There is no other option for the state. The only transition from reserved to Starting happens here. Starting will "
             "not transition into running until the callback is dropped.");
         RunningQueryPlan::dispose(std::move(runningQueryPlan));
+    }
+}
+
+void QueryCatalog::attach(QueryId id, PipelineId targetPipelineId, std::unique_ptr<ExecutableQueryPlan> branch, WorkEmitter& emitter)
+{
+    const std::scoped_lock lock(mutex);
+    const auto it = queryStates.find(id);
+    if (it == queryStates.end())
+    {
+        ENGINE_LOG_WARNING("Attempting to attach to query {} failed. Query was not submitted to the engine.", id);
+        return;
+    }
+    const bool didAttach = it->second->transition(
+        [&](Running&& running)
+        {
+            RunningQueryPlan::attach(*running.plan, id, targetPipelineId, std::move(branch), emitter);
+            return Running{std::move(running.plan)};
+        });
+    if (!didAttach)
+    {
+        ENGINE_LOG_WARNING("Attempting to attach to query {} failed. Query is not in the Running state.", id);
+    }
+}
+
+void QueryCatalog::detach(QueryId id, PipelineId targetPipelineId, PipelineId attachedPipelineId)
+{
+    const std::scoped_lock lock(mutex);
+    const auto it = queryStates.find(id);
+    if (it == queryStates.end())
+    {
+        ENGINE_LOG_WARNING("Attempting to detach from query {} failed. Query was not submitted to the engine.", id);
+        return;
+    }
+    const bool didDetach = it->second->transition(
+        [&](Running&& running)
+        {
+            RunningQueryPlan::detach(*running.plan, targetPipelineId, attachedPipelineId);
+            return Running{std::move(running.plan)};
+        });
+    if (!didDetach)
+    {
+        ENGINE_LOG_WARNING("Attempting to detach from query {} failed. Query is not in the Running state.", id);
     }
 }
 

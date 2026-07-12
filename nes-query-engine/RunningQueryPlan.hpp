@@ -85,7 +85,9 @@ struct RunningQueryPlanNode
 
     std::atomic_bool requiresTermination = false;
     std::atomic<ssize_t> pendingTasks = 0;
-    std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
+    /// Read lock-free-ish on the hot emit path via copy(); writable at runtime to attach/detach branches
+    /// to a running pipeline (fan-out taps). Readers always take a snapshot copy under the shared lock.
+    folly::Synchronized<std::vector<std::shared_ptr<RunningQueryPlanNode>>> successors;
     std::unique_ptr<ExecutablePipelineStage> stage;
 
     std::function<void(Exception)> unregisterWithError;
@@ -135,6 +137,25 @@ struct RunningQueryPlan final
     /// 2. Pipelines are not terminated, just destroyed.
     static std::unique_ptr<ExecutableQueryPlan> dispose(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
 
+    /// Attaches the pipelines of `branch` as additional successors of the running pipeline `targetPipelineId`.
+    /// The branch's single source is a placeholder describing the tapped data; it is never started and its
+    /// successors become the branch's entry pipelines. The branch pipelines are set up asynchronously and only
+    /// start receiving buffers once ALL of them completed their setup. The attached branch shares the query's
+    /// lifecycle: it participates in the termination cascade and keeps the query alive until it expired.
+    /// Returns false if the target pipeline is not (or no longer) part of the running plan.
+    static bool attach(
+        RunningQueryPlan& runningQueryPlan,
+        QueryId queryId,
+        PipelineId targetPipelineId,
+        std::unique_ptr<ExecutableQueryPlan> branch,
+        WorkEmitter& emitter);
+
+    /// Removes the attached pipeline `attachedPipelineId` from the successors of `targetPipelineId`.
+    /// Dropping the successor reference gracefully terminates the detached branch through the existing
+    /// reference-counting cascade. Must run on a worker thread (the cascade emits internal tasks).
+    /// Returns false if the target pipeline or the attached pipeline could not be found.
+    static bool detach(RunningQueryPlan& runningQueryPlan, PipelineId targetPipelineId, PipelineId attachedPipelineId);
+
     /// Destroying a RunningQueryPlan will:
     /// 1. Will invoke listeners!
     /// 2. Pipelines are not terminated, just destroyed.
@@ -175,6 +196,10 @@ private:
         CallbackOwner allPipelinesExpired;
         /// All pipelines have been initialized
         CallbackOwner allPipelinesStarted;
+        /// One owner per runtime attachment; the callback wires the branch into the target pipeline once all
+        /// branch setups completed. LAST member: destroyed first, so pending attachments are cancelled before
+        /// any other member of the running plan goes away.
+        std::vector<CallbackOwner> attachments;
     };
 
     folly::Synchronized<Internal, std::recursive_mutex> internal;

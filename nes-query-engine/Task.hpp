@@ -193,6 +193,38 @@ struct PendingPipelineStopTask : BaseTask
     std::shared_ptr<RunningQueryPlanNode> pipeline;
 };
 
+/// Attaches the pipelines of `branch` as additional successors of the running pipeline `targetPipelineId`.
+/// The branch's single source is a placeholder that describes the tapped data and is never started.
+struct AttachQueryTask : BaseTask
+{
+    AttachQueryTask(
+        QueryId queryId,
+        PipelineId targetPipelineId,
+        std::unique_ptr<ExecutableQueryPlan> branch,
+        std::weak_ptr<QueryCatalog> catalog,
+        TaskCallback callback);
+
+    std::unique_ptr<ExecutableQueryPlan> branch;
+    std::weak_ptr<QueryCatalog> catalog;
+    PipelineId targetPipelineId = INVALID<PipelineId>;
+};
+
+/// Removes a previously attached pipeline from the successors of `targetPipelineId`, gracefully
+/// terminating the detached branch via the reference-counting cascade.
+struct DetachQueryTask : BaseTask
+{
+    DetachQueryTask(
+        QueryId queryId,
+        PipelineId targetPipelineId,
+        PipelineId attachedPipelineId,
+        std::weak_ptr<QueryCatalog> catalog,
+        TaskCallback callback);
+
+    std::weak_ptr<QueryCatalog> catalog;
+    PipelineId targetPipelineId = INVALID<PipelineId>;
+    PipelineId attachedPipelineId = INVALID<PipelineId>;
+};
+
 using Task = std::variant<
     WorkTask,
     StopQueryTask,
@@ -201,7 +233,9 @@ using Task = std::variant<
     StopSourceTask,
     PendingPipelineStopTask,
     StopPipelineTask,
-    StartPipelineTask>;
+    StartPipelineTask,
+    AttachQueryTask,
+    DetachQueryTask>;
 
 void succeedTask(Task& task);
 

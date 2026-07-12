@@ -132,4 +132,27 @@ void NodeEngine::stopQuery(QueryId queryId)
     queryEngine->stop(queryId);
 }
 
+PipelineId NodeEngine::attachToQuery(QueryId queryId, PipelineId targetPipelineId, std::unique_ptr<CompiledQueryPlan> branch)
+{
+    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+    PRECONDITION(branch != nullptr, "Branch must not be null");
+    PRECONDITION(branch->sources.size() == 1, "An attachable branch requires exactly one placeholder source");
+    PRECONDITION(branch->sources.front().successors.size() == 1, "An attachable branch requires exactly one entry pipeline");
+
+    const auto entryPipeline = branch->sources.front().successors.front().lock();
+    PRECONDITION(entryPipeline != nullptr, "Branch entry pipeline expired");
+    const auto entryPipelineId = entryPipeline->id;
+
+    NES_INFO("Attach branch (entry pipeline {}) to query {} at pipeline {}", entryPipelineId, queryId, targetPipelineId);
+    queryEngine->attach(queryId, targetPipelineId, ExecutableQueryPlan::instantiate(*branch, *sourceProvider));
+    return entryPipelineId;
+}
+
+void NodeEngine::detachFromQuery(QueryId queryId, PipelineId targetPipelineId, PipelineId attachedPipelineId)
+{
+    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+    NES_INFO("Detach pipeline {} from query {} pipeline {}", attachedPipelineId, queryId, targetPipelineId);
+    queryEngine->detach(queryId, targetPipelineId, attachedPipelineId);
+}
+
 }
