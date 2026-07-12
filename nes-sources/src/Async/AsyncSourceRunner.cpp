@@ -23,9 +23,11 @@
 #include <utility>
 #include <variant>
 
+#include <boost/asio/as_tuple.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/cancellation_type.hpp>
 #include <boost/asio/post.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
 
@@ -169,9 +171,21 @@ AsyncSourceRunner::runningRoutine(OriginId sourceId, std::shared_ptr<AbstractBuf
                 acquiredBuffer = bufferProvider->getBufferNoBlocking();
                 if (!acquiredBuffer.has_value())
                 {
-                    /// Drain the io context's pending handlers, then wait a bounded slice off-thread
+                    /// Drain the io context's pending handlers (siblings may be about to emit/recycle), retry,
+                    /// then SUSPEND on a timer instead of blocking the io thread: a timed pool wait
+                    /// (getBufferWithTimeout) holds the thread hostage for the whole slice, so sibling sources
+                    /// on this thread can neither read nor emit -- measured as the residual N=1024 throughput
+                    /// gap. The timer wait costs up to ~1 ms extra pickup latency per dry spell but keeps the
+                    /// io thread fully available. as_tuple: a cancelled wait must NOT throw through the
+                    /// coroutine (the loop-top cancellation check handles exit).
                     co_await asio::post(co_await asio::this_coro::executor, asio::use_awaitable_t<Executor>{});
-                    acquiredBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(5));
+                    acquiredBuffer = bufferProvider->getBufferNoBlocking();
+                    if (!acquiredBuffer.has_value())
+                    {
+                        asio::steady_timer retryTimer{co_await asio::this_coro::executor};
+                        retryTimer.expires_after(std::chrono::milliseconds(1));
+                        co_await retryTimer.async_wait(asio::as_tuple(asio::use_awaitable_t<Executor>{}));
+                    }
                 }
             }
             if (!acquiredBuffer.has_value())
