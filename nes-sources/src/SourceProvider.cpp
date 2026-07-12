@@ -19,7 +19,13 @@
 #include <utility>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <thread>
+
+#include <fmt/format.h>
 
 #include <Async/AsyncSourceHandle.hpp>
 #include <Blocking/BlockingSourceHandle.hpp>
@@ -73,6 +79,35 @@ SourceProvider::SourceProvider(
                 ccxSourcePoolBuffers,
                 this->bufferPool->getBufferSize(),
                 (ccxSourcePoolBuffers * this->bufferPool->getBufferSize()) >> 20);
+
+            /// TMP DIAGNOSTIC (NES_CELLPOOL_STATS=1): print each cell pool's available buffer
+            /// count every 2 s + once on shutdown, to catch pool depletion across query
+            /// lifecycles (N=1024 straggler-stall investigation). REVERT before merge.
+            if (std::getenv("NES_CELLPOOL_STATS") != nullptr)
+            {
+                cellPoolStatsThread = std::jthread(
+                    [pools = cellPools, total = ccxSourcePoolBuffers](const std::stop_token& stopToken)
+                    {
+                        const auto printLine = [&pools, total](const char* tag)
+                        {
+                            std::string counts;
+                            for (const auto& pool : pools)
+                            {
+                                counts += fmt::format(" {}", pool->getNumberOfAvailableBuffers());
+                            }
+                            std::fprintf(stderr, "DIAG_CELLPOOL%s avail%s /%zu\n", tag, counts.c_str(), total);
+                        };
+                        while (!stopToken.stop_requested())
+                        {
+                            printLine("");
+                            for (int i = 0; i < 20 && !stopToken.stop_requested(); ++i)
+                            {
+                                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                            }
+                        }
+                        printLine("_FINAL");
+                    });
+            }
         }
     }
 }

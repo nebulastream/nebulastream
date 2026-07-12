@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <format>
@@ -73,6 +74,8 @@ asio::awaitable<void, Executor> FileSource::open(std::shared_ptr<AbstractBufferP
     }
 
     fileStream.emplace(asio::posix::stream_descriptor{co_await asio::this_coro::executor, fileDescriptor.value()});
+    /// TMP DIAGNOSTIC (straggler-stall investigation). REVERT before merge.
+    std::fprintf(stderr, "DIAG_SRCLIFE opened fd=%d\n", fileDescriptor.value());
     NES_DEBUG("Opened file: {}", filePath);
 }
 
@@ -81,6 +84,8 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> FileSource::fillBuf
     PRECONDITION(fileStream.has_value() && fileStream->is_open(), "File is not open.");
     if ((co_await asio::this_coro::cancellation_state).cancelled() == asio::cancellation_type::terminal)
     {
+        /// TMP DIAGNOSTIC (straggler-stall investigation): tag every silent exit path. REVERT before merge.
+        std::fprintf(stderr, "DIAG_SRCEXIT fillBuffer-precheck-cancelled fd=%d file=%s\n", fileDescriptor.value_or(-1), filePath.c_str());
         co_return Cancelled{};
     }
 
@@ -107,9 +112,12 @@ asio::awaitable<AsyncSource::InternalSourceResult, Executor> FileSource::fillBuf
         }
         if (errorCode == asio::error::operation_aborted)
         {
+            /// TMP DIAGNOSTIC (straggler-stall investigation). REVERT before merge.
+            std::fprintf(stderr, "DIAG_SRCEXIT read-operation-aborted fd=%d file=%s\n", fileDescriptor.value_or(-1), filePath.c_str());
             co_return Cancelled{};
         }
         const auto message = std::format("Failed to read from file {} with errorCode: '{}'", filePath, errorCode.message());
+        std::fprintf(stderr, "DIAG_SRCEXIT read-error fd=%d ec=%s\n", fileDescriptor.value_or(-1), errorCode.message().c_str());
         co_return Error{.exception = RunningRoutineFailure(message)};
     }
     co_return Continue{.bytesRead = bytesRead};
@@ -119,6 +127,8 @@ void FileSource::close()
 {
     if (fileStream->is_open())
     {
+        /// TMP DIAGNOSTIC (straggler-stall investigation). REVERT before merge.
+        std::fprintf(stderr, "DIAG_SRCLIFE closed fd=%d\n", fileDescriptor.value_or(-1));
         fileStream->close();
         NES_DEBUG("Closed file stream.");
     }

@@ -16,6 +16,7 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
@@ -48,6 +49,12 @@ class SourceProvider
     /// choice, so a source's pool always matches the CCX its io thread runs on. mutable: lower()
     /// is const at every call site.
     mutable std::atomic<size_t> nextSourceSlot{0};
+
+    /// TMP DIAGNOSTIC (NES_CELLPOOL_STATS=1): periodically prints each cell pool's available
+    /// buffer count to stderr (DIAG_CELLPOOL), to catch pool depletion over query lifecycles
+    /// (N=1024 straggler-stall investigation). Declared after cellPools so it joins before the
+    /// pools are destroyed. REVERT before merge.
+    std::jthread cellPoolStatsThread;
 
 public:
     /// Constructor that can be configured with various options
