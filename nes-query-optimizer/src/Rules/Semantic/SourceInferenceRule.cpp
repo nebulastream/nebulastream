@@ -67,34 +67,39 @@ LogicalPlan SourceInferenceRule::apply(LogicalPlan queryPlan) const
     PRECONDITION(
         not(sourceOperators.empty() && sourceDescriptorOperators.empty()), "Query plan did not contain sources during type inference.");
 
-    for (auto& source : sourceOperators)
-    {
-        /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
-        /// source descriptor form the catalog.
-        auto schema = Schema();
-        auto logicalSourceOpt = sourceCatalog->getLogicalSource(source->getLogicalSourceName());
-        if (not logicalSourceOpt.has_value())
+    return transformPlan(
+        queryPlan,
+        [this](const LogicalOperator& op, std::vector<LogicalOperator> children) -> LogicalOperator
         {
-            throw UnknownSourceName("Logical source not registered. Source Name: {}", source->getLogicalSourceName());
-        }
-        const auto& logicalSource = logicalSourceOpt.value();
-        schema.appendFieldsFromOtherSchema(*logicalSource.getSchema());
-        auto qualifierName = source->getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-        /// perform attribute name resolution
-        std::ranges::for_each(
-            schema.getFields()
-                | std::views::filter([&qualifierName](const auto& field) { return not field.name.starts_with(qualifierName); }),
-            [&qualifierName, &schema](auto& field)
+            const auto source = op.tryGetAs<SourceNameLogicalOperator>();
+            if (not source.has_value())
             {
-                if (not schema.renameField(field.name, qualifierName + field.name))
+                return op.withChildren(std::move(children));
+            }
+
+            /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
+            /// source descriptor form the catalog.
+            auto schema = Schema();
+            auto logicalSourceOpt = sourceCatalog->getLogicalSource(source.value()->getLogicalSourceName());
+            if (not logicalSourceOpt.has_value())
+            {
+                throw UnknownSourceName("Logical source not registered. Source Name: {}", source.value()->getLogicalSourceName());
+            }
+            const auto& logicalSource = logicalSourceOpt.value();
+            schema.appendFieldsFromOtherSchema(*logicalSource.getSchema());
+            auto qualifierName = source.value()->getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+            /// perform attribute name resolution
+            std::ranges::for_each(
+                schema.getFields()
+                    | std::views::filter([&qualifierName](const auto& field) { return not field.name.starts_with(qualifierName); }),
+                [&qualifierName, &schema](auto& field)
                 {
-                    throw CannotInferSchema("Could not rename non-existing field: {}", field.name);
-                }
-            });
-        auto result = replaceOperator(queryPlan, source.getId(), source->withSchema(schema));
-        INVARIANT(result.has_value(), "replaceOperator failed");
-        queryPlan = std::move(*result);
-    }
-    return queryPlan;
+                    if (not schema.renameField(field.name, qualifierName + field.name))
+                    {
+                        throw CannotInferSchema("Could not rename non-existing field: {}", field.name);
+                    }
+                });
+            return source.value()->withSchema(schema);
+        });
 }
 }

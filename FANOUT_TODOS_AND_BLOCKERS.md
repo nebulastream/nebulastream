@@ -10,6 +10,15 @@
 > Bonus find: the variadic `TraitSet{A, B}` constructor silently dropped all traits but the last (comma-fold bug,
 > `nes-query-optimizer/include/Traits/TraitSet.hpp`) — fixed here; it was latent because no caller passed two traits before.
 
+> **UPDATE (2026-07-12): the optimizer now handles DAG plans (Option A implemented).** A memoizing DAG-rebuild
+> framework (`transformPlan`, `nes-logical-operators/include/Plans/LogicalPlan.hpp`) replaced the per-root recursion in
+> ALL rules of SemanticAnalyzer + RuleBasedOptimizer; shared subplans survive every rule, and `OriginIdInference`
+> assigns one origin set per shared source by construction. Proof: `CompileFanOutPlanTest.DagPlanSurvivesFullOptimizerPipeline`
+> pushes an *unbound* two-sink DAG (source by name) through the full rule pipeline and compiles it to 1 source / 2 sinks /
+> shared pipeline with 2 successors. S1 below is thereby resolved for the rule pipeline; only **operator placement**
+> (`OperatorPlacer` → `BottomUpPlacement`) remains single-root and now fails loudly on multi-root plans instead of
+> silently dropping sinks.
+
 ## TL;DR
 
 The engine was *designed toward* DAGs but never wired up for them end-to-end. The **runtime already executes multi-successor plans correctly** (successor vectors, emit fan-out, termination cascade — all in place and partially tested). Everything missing sits in the **compile path** (3 sites) plus **one runtime instantiation blocker**. The optimizer structurally cannot preserve DAGs, so the PoC constructs the fan-out plan *after* optimization.
@@ -73,17 +82,49 @@ Compile the main query and the tap branch as separate plans; before start, push 
 
 ## Structural findings (blockers we route around, not fix, in this PoC)
 
-- **S1 — The optimizer destroys DAGs — structurally.** Every `withChildren`/`withInferredSchema` rebuild assigns *fresh* `OperatorId`s (`LogicalOperator.hpp:158-161,326`), so any rewriting rule splits a shared subtree into independent per-root copies. Additionally `DecideMemoryLayoutRule` hard-fails on 2 roots (`DecideMemoryLayoutRule.cpp:63`) and `OriginIdInferenceRule` would assign diverging origin ids per root.
-  **Consequence:** the fan-out plan must be constructed **after** optimization. `SingleNodeWorker::registerQuery` runs no optimizer, so a hand-bound DAG plan can be submitted there — that is the PoC path. This is *not* a hack for the real use case: attaching a statistic query happens to an already-optimized plan anyway.
+- **S1 — ~~The optimizer destroys DAGs~~ — RESOLVED for the rule pipeline (2026-07-12, Option A).** Root cause was that every `withChildren`/`withInferredSchema` rebuild assigns *fresh* `OperatorId`s (`LogicalOperator.hpp:158-161,326`), so any per-root rewriting rule split a shared subtree into independent copies. All rules now run on the memoizing `transformPlan` framework, which preserves sharing by instance identity (ids may still regenerate — harmless). The single-root precondition in `DecideMemoryLayoutRule`/`DecideJoinTypesRule` is gone; `OriginIdInferenceRule` assigns one origin set per shared source.
+  **Remaining:** operator **placement** (`BottomUpPlacement`) is still single-root — `OperatorPlacer::place` now has a loud precondition. Post-optimizer DAG construction (the original PoC path) also still works and remains the natural fit for attaching statistic queries to already-optimized plans.
 
 - **S2 — SQL `INTO sinkA, sinkB` stays out of scope.** The parser keeps only the first sink (`AntlrSQLQueryPlanCreator.cpp:87-101`, upstream TODO #421). Making it work requires S1 to be solved properly (id-preserving rebuilds or DAG-aware rules) — recommend as a separate follow-up PR.
 
 - **S3 — Generic plan utilities are not DAG-safe.** `BFSIterator` has no visited set (shared nodes visited N times); `replaceOperator`/`replaceSubtree` break sharing. Not on the PoC's critical path (we construct, never rewrite, the DAG), but any future code touching DAG plans must use the DAG-safe utilities (`flatten`, `getLeafOperators`) or be audited.
 
+## Optimizer DAG support: implementation options
+
+The optimizer is the one layer that still cannot handle DAGs (see S1). Since every rule hand-rolls the same
+naive recursion (`getChildren() | transform(apply) | withChildren(...)`), the node-local rule logic is cleanly
+separable from the traversal that breaks sharing. Three ways to fix it:
+
+**Option A — DAG-aware transform framework _(chosen, implemented on this branch)_.**
+One central helper (`transformPlan`) does a memoized post-order rebuild: every *unique* operator is transformed
+exactly once (memo keyed on instance identity, not id — ids regenerate), and ALL parents re-link to the single
+transformed instance. Rules become node-local callbacks `(op, transformedChildren) → op'`.
+- *Pros:* sharing becomes a framework invariant instead of per-rule discipline; fresh ids per rebuild become
+  harmless (sharing rides on instance identity); rules get simpler; `OriginIdInference`'s DAG bug disappears by
+  construction (shared source visited once → one origin set for all branches — the correct fan-out semantic).
+- *Cons:* all rules must be ported; the callback API must support 1→1, bypass (1→0), and subtree (1→N,
+  `LogicalSourceExpansion`) rewrites.
+
+**Option B — Id-stable rebuilds + canonicalization.**
+Make `withChildren`/`withInferredSchema` preserve ids (explicit `clone()` for intentional copies), re-merge
+same-id instances after each rule.
+- *Pros:* rules keep their naive recursion.
+- *Cons:* sharing recovered heuristically, not preserved; a rule that legitimately rewrites one path produces
+  same-id-diverged nodes detectable only late; shared subtrees still rebuilt once per parent; transient duplicate
+  ids mid-pass; every caller wanting a fresh-id copy must be audited. Note: exposing id-*stable* rebuilds is still
+  independently useful for runtime attachment (correlating operators across plan versions) and composes with A.
+
+**Option C — Mutable graph IR for the optimizer.**
+Convert to a mutable node graph (parent + child edges) at optimizer entry, mutate in place, convert back.
+Precedent: the physical layer already works this way (`PhysicalOperatorWrapper` graph, in-place `flip`).
+- *Pros:* most natural for graph rewrites; parent pointers simplify rules; no rebuild cost.
+- *Cons:* second IR + conversions; abandons the logical layer's immutable-value design — an architecture-level
+  decision, not a branch decision.
+
 ## Risks / known PoC limitations
 
 - **R1 — Backpressure covers only sink #1.** `BackpressureController` is move-only and owned by exactly one sink by design (`BackpressureChannel.hpp:27`). In the PoC a slow second sink exhausts the buffer pool instead of throttling the source — fine for a statistics tap (which should be lightweight), dangerous for two full-weight sinks. Proper fix (multi-controller/counting backpressure channel) is follow-up work.
-- **R2 — Fan-out is invisible to the optimizer.** Because the DAG is built post-optimizer, no rule ever sees or costs the shared branch (no placement, no layout decisions across branches). Acceptable for statistics taps; a real multi-sink feature needs S1 solved first.
+- **R2 — ~~Fan-out is invisible to the optimizer~~ — mostly lifted (2026-07-12).** DAG plans now pass through the full rule pipeline (binding, inference, layout, join-type decisions see both branches). Still invisible to operator *placement* (single-root, guarded) — relevant only for the distributed path.
 - **R3 — Mixed sink formats need per-branch formatting pipelines** (part of B3). If missed, two sinks with different formats would share one emit — data corruption. Covered by dedicated unit tests.
 - **R4 — Non-NATIVE source formats parse once per branch** when fanning out directly at the source. Correct but wasteful; acceptable for the PoC.
 - **R5 — `explain`/PlanRenderer** prints a shared subtree once per root. Cosmetic only.
@@ -96,8 +137,8 @@ Compile the main query and the tap branch as separate plans; before start, push 
    - *Engine API:* `QueryEngine` exposes only `start`/`stop`; mutating a `RunningQueryPlan`'s successor vectors concurrently with execution needs a designed synchronization point (e.g. a task-queue-serialized "attach" task).
    - *Lifecycle:* attached branches must join the termination cascade and reference-counting scheme correctly; detach is a whole further question.
 2. **Multi-controller backpressure channel** (lifts R1).
-3. **Optimizer DAG-safety / id-preserving rewrites** (lifts R2, unblocks S2/TODO #421): either make `withChildren`-style rebuilds preserve ids, or make rules DAG-aware with visited-set traversals. Non-trivial, touches operator-model core.
-4. **SQL multi-sink syntax `INTO a, b`** (TODO #421) — parser part is easy, blocked on (3).
+3. **~~Optimizer DAG-safety~~ — DONE (2026-07-12, Option A / `transformPlan`).** Remaining sub-items: DAG-aware operator *placement* (`BottomUpPlacement` is single-root, guarded), and optionally id-*stable* rebuilds (exposing the private id-preserving constructor) — no longer needed for correctness, but useful for correlating operators across plan versions when runtime attachment lands.
+4. **SQL multi-sink syntax `INTO a, b`** (TODO #421) — parser part is easy; the rule pipeline now supports it. Only blocked on multi-root placement (3) for the distributed path.
 5. **Systest support for multi-sink queries** — result checking is one-file-per-query; needed if multi-sink becomes user-facing.
 6. **DAG-safe plan utilities audit** (S3) — `BFSIterator`, `replaceOperator`, `replaceSubtree` before any code rewrites DAG plans.
 

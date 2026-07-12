@@ -30,38 +30,25 @@
 namespace NES
 {
 
-static LogicalOperator propagateSchema(const LogicalOperator& op)
-{
-    const std::vector<LogicalOperator> children = op.getChildren();
-
-    if (children.empty())
-    {
-        return op;
-    }
-
-    std::vector<LogicalOperator> newChildren;
-    std::vector<Schema> childSchemas;
-    for (const auto& child : children)
-    {
-        const LogicalOperator childWithSchema = propagateSchema(child);
-        childSchemas.push_back(childWithSchema.getOutputSchema());
-        newChildren.push_back(childWithSchema);
-    }
-
-    const LogicalOperator updatedOperator = op.withChildren(newChildren);
-    return updatedOperator.withInferredSchema(childSchemas);
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan TypeInferenceRule::apply(const LogicalPlan& queryPlan) const
 {
-    std::vector<LogicalOperator> newRoots;
-    for (const auto& sink : queryPlan.getRootOperators())
-    {
-        const LogicalOperator inferredRoot = propagateSchema(sink);
-        newRoots.push_back(inferredRoot);
-    }
-    return queryPlan.withRootOperators(newRoots);
+    return transformPlan(
+        queryPlan,
+        [](const LogicalOperator& op, std::vector<LogicalOperator> children) -> LogicalOperator
+        {
+            if (children.empty())
+            {
+                return op;
+            }
+            std::vector<Schema> childSchemas;
+            childSchemas.reserve(children.size());
+            for (const auto& child : children)
+            {
+                childSchemas.push_back(child.getOutputSchema());
+            }
+            return op.withChildren(std::move(children)).withInferredSchema(std::move(childSchemas));
+        });
 }
 
 const std::type_info& TypeInferenceRule::getType()

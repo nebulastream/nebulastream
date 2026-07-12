@@ -33,35 +33,34 @@ namespace NES
 
 LogicalPlan InferModelResolutionRule::apply(LogicalPlan queryPlan) const
 {
-    for (const auto& inferModelNameOp : getOperatorByType<InferModelNameLogicalOperator>(queryPlan))
-    {
-        const auto& op = inferModelNameOp.get();
-        const auto& modelName = op.getModelName();
-
-        if (!modelCatalog->hasModel(modelName))
+    return transformPlan(
+        queryPlan,
+        [this](const LogicalOperator& op, std::vector<LogicalOperator> children) -> LogicalOperator
         {
-            throw UnknownModelName("Model '{}' is not registered", modelName);
-        }
-
-        auto loaded = modelCatalog->load(modelName);
-        auto inputFieldNames = op.getInputFieldNames();
-        if (inputFieldNames.empty())
-        {
-            for (const auto& field : loaded.getSchema().inputs.getFields())
+            const auto inferModelNameOp = op.tryGetAs<InferModelNameLogicalOperator>();
+            if (not inferModelNameOp.has_value())
             {
-                inputFieldNames.push_back(field.name);
+                return op.withChildren(std::move(children));
             }
-        }
-        auto inferModelOp = InferModelLogicalOperator(std::move(loaded), std::move(inputFieldNames));
-        /// Preserve children from the original operator
-        inferModelOp = inferModelOp.withChildren(op.getChildren());
-        auto replacement = LogicalOperator(inferModelOp);
 
-        auto replaceResult = replaceSubtree(queryPlan, inferModelNameOp.getId(), replacement);
-        INVARIANT(replaceResult.has_value(), "Failed to replace InferModelNameLogicalOperator with InferModelLogicalOperator");
-        queryPlan = std::move(replaceResult.value());
-    }
-    return queryPlan;
+            const auto& modelName = inferModelNameOp.value()->getModelName();
+            if (!modelCatalog->hasModel(modelName))
+            {
+                throw UnknownModelName("Model '{}' is not registered", modelName);
+            }
+
+            auto loaded = modelCatalog->load(modelName);
+            auto inputFieldNames = inferModelNameOp.value()->getInputFieldNames();
+            if (inputFieldNames.empty())
+            {
+                for (const auto& field : loaded.getSchema().inputs.getFields())
+                {
+                    inputFieldNames.push_back(field.name);
+                }
+            }
+            auto inferModelOp = InferModelLogicalOperator(std::move(loaded), std::move(inputFieldNames));
+            return inferModelOp.withChildren(std::move(children));
+        });
 }
 
 const std::type_info& InferModelResolutionRule::getType()

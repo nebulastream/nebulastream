@@ -19,11 +19,16 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 DistributedLogicalPlan OperatorPlacer::place(LogicalPlan plan) const
 {
+    /// The placement machinery only considers the first root; a multi-root (fan-out) plan would silently
+    /// lose its remaining sinks. The rule pipeline before placement handles DAGs, placement does not yet.
+    PRECONDITION(
+        plan.getRootOperators().size() == 1, "Operator placement only supports single-root plans (multi-sink placement is unsupported)");
     BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(plan);
 
     return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))

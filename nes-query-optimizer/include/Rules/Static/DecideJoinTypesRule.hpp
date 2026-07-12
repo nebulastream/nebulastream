@@ -42,7 +42,6 @@ public:
 
 
 private:
-    [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;
     StreamJoinStrategy joinStrategy;
 };
 

@@ -59,22 +59,22 @@ bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemoval
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    for (const auto& projectionOp :
-         getOperatorByType<ProjectionLogicalOperator>(queryPlan)
-             | std::views::filter(
-                 [](const auto& op)
-                 {
-                     INVARIANT(op.getChildren().size() == 1, "Projection operator must have exactly one child");
-                     INVARIANT(op.getInputSchemas().size() == 1, "Projection operator must have exactly one input schema");
-                     return op.getInputSchemas().front() == op.getOutputSchema();
-                 }))
-    {
-        auto child = projectionOp.getChildren().front();
-        auto replaceResult = replaceSubtree(queryPlan, projectionOp.getId(), child);
-        INVARIANT(replaceResult.has_value(), "Failed to replace projection with its child");
-        queryPlan = std::move(replaceResult.value());
-    }
-    return queryPlan;
+    return transformPlan(
+        queryPlan,
+        [](const LogicalOperator& op, std::vector<LogicalOperator> children)
+        {
+            if (op.tryGetAs<ProjectionLogicalOperator>().has_value())
+            {
+                INVARIANT(children.size() == 1, "Projection operator must have exactly one child");
+                INVARIANT(op.getInputSchemas().size() == 1, "Projection operator must have exactly one input schema");
+                /// A projection that neither renames nor drops fields forwards its data unchanged: bypass it.
+                if (op.getInputSchemas().front() == op.getOutputSchema())
+                {
+                    return children.front();
+                }
+            }
+            return op.withChildren(std::move(children));
+        });
 }
 
 }

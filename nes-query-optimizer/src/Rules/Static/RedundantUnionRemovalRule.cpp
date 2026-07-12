@@ -59,15 +59,17 @@ bool RedundantUnionRemovalRule::operator==(const RedundantUnionRemovalRule&) con
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan RedundantUnionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    for (const auto& unionOperator : getOperatorByType<UnionLogicalOperator>(queryPlan)
-             | std::views::filter([](const auto& op) { return op.getChildren().size() == 1; }))
-    {
-        auto child = unionOperator.getChildren().front();
-        auto replaceResult = replaceSubtree(queryPlan, unionOperator.getId(), child);
-        INVARIANT(replaceResult.has_value(), "Failed to replace union with its child");
-        queryPlan = std::move(replaceResult.value());
-    }
-    return queryPlan;
+    return transformPlan(
+        queryPlan,
+        [](const LogicalOperator& op, std::vector<LogicalOperator> children)
+        {
+            /// A union with a single input forwards its data unchanged: bypass it.
+            if (op.tryGetAs<UnionLogicalOperator>().has_value() and children.size() == 1)
+            {
+                return children.front();
+            }
+            return op.withChildren(std::move(children));
+        });
 }
 
 }

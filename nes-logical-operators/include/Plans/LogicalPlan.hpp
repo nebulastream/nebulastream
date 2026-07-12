@@ -15,6 +15,7 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
 #include <optional>
 #include <ostream>
@@ -104,6 +105,17 @@ template <LogicalOperatorConcept T>
 
 /// Returns a set of all operators
 [[nodiscard]] std::unordered_set<LogicalOperator> flatten(const LogicalPlan& plan);
+
+/// Rebuilds the plan bottom-up while preserving DAG structure (operators shared by multiple parents).
+/// Every unique operator instance is passed to `transform` exactly once, together with its already
+/// transformed children; all parents of a shared operator are re-linked to the single transformed result.
+/// The callback must return the replacement wired with the given children: typically
+/// `op.withChildren(std::move(children))` plus rule-specific changes, one of the children to remove the
+/// operator from the plan, or a new subtree to expand the operator into.
+/// Plan rewrites that traverse per-root without such memoization duplicate shared subplans (and, because
+/// rebuilding regenerates operator ids, the duplication is not recoverable afterwards).
+[[nodiscard]] LogicalPlan transformPlan(
+    const LogicalPlan& plan, const std::function<LogicalOperator(const LogicalOperator&, std::vector<LogicalOperator>)>& transform);
 
 }
 

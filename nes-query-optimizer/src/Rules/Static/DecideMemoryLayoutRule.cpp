@@ -60,18 +60,15 @@ bool DecideMemoryLayoutRule::operator==(const DecideMemoryLayoutRule&) const
 
 LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
-    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
-}
-
-LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOperator) const
-{
-    /// Iterating over all operators and setting the memory layout trait to row
-    const auto children = logicalOperator.getChildren()
-        | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
-    auto traitSet = logicalOperator.getTraitSet();
-    tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
-    return logicalOperator.withChildren(children).withTraitSet(traitSet);
+    /// Setting the memory layout trait to row on all operators
+    return transformPlan(
+        queryPlan,
+        [](const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children)
+        {
+            auto traitSet = logicalOperator.getTraitSet();
+            tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+            return logicalOperator.withChildren(std::move(children)).withTraitSet(traitSet);
+        });
 }
 }

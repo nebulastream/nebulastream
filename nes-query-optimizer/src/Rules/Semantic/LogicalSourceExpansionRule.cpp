@@ -63,47 +63,43 @@ bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& ot
 
 LogicalPlan LogicalSourceExpansionRule::apply(LogicalPlan queryPlan) const
 {
-    for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(queryPlan))
-    {
-        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp->getLogicalSourceName());
-        if (not logicalSourceOpt.has_value())
+    return transformPlan(
+        queryPlan,
+        [this](const LogicalOperator& op, std::vector<LogicalOperator> children) -> LogicalOperator
         {
-            throw UnknownSourceName("{}", sourceOp->getLogicalSourceName());
-        }
-        const auto& logicalSource = logicalSourceOpt.value();
-        const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
+            const auto sourceOp = op.tryGetAs<SourceNameLogicalOperator>();
+            if (not sourceOp.has_value())
+            {
+                return op.withChildren(std::move(children));
+            }
 
-        if (not entriesOpt.has_value())
-        {
-            throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceOp->getLogicalSourceName());
-        }
-        const auto& entries = entriesOpt.value();
-        if (entries.empty())
-        {
-            throw UnknownSourceName("No physical sources present for logical source \"{}\"", sourceOp->getLogicalSourceName());
-        }
+            const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp.value()->getLogicalSourceName());
+            if (not logicalSourceOpt.has_value())
+            {
+                throw UnknownSourceName("{}", sourceOp.value()->getLogicalSourceName());
+            }
+            const auto& logicalSource = logicalSourceOpt.value();
+            const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
 
-        auto expandedSourceOperators = entries
-            | std::views::transform([](const auto& entry) { return LogicalOperator{SourceDescriptorLogicalOperator{entry}}; })
-            | std::ranges::to<std::vector>();
+            if (not entriesOpt.has_value())
+            {
+                throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceOp.value()->getLogicalSourceName());
+            }
+            const auto& entries = entriesOpt.value();
+            if (entries.empty())
+            {
+                throw UnknownSourceName("No physical sources present for logical source \"{}\"", sourceOp.value()->getLogicalSourceName());
+            }
 
-        INVARIANT(getParents(queryPlan, sourceOp).size() == 1, "Source name operator must have exactly one parent");
-        auto parent = getParents(queryPlan, sourceOp).front();
-        INVARIANT(
-            parent.getChildren().size() == 1 && parent.getChildren().front() == sourceOp,
-            "Parent of source name operator must have exactly one child, the source itself");
+            auto expandedSourceOperators = entries
+                | std::views::transform([](const auto& entry) { return LogicalOperator{SourceDescriptorLogicalOperator{entry}}; })
+                | std::ranges::to<std::vector>();
 
-        auto newParent = parent.withChildren({UnionLogicalOperator{}.withChildren(std::move(expandedSourceOperators))});
-        auto replaceResult = replaceSubtree(queryPlan, parent.getId(), newParent);
-
-        INVARIANT(
-            replaceResult.has_value(),
-            "Failed to replace operator {} with {}",
-            parent.explain(ExplainVerbosity::Debug),
-            newParent.explain(ExplainVerbosity::Debug));
-        queryPlan = std::move(replaceResult.value());
-    }
-    return queryPlan;
+            /// The union merges all physical sources of the logical source; a single-source union is removed
+            /// later by the RedundantUnionRemovalRule. A source shared by multiple parents (fan-out) is
+            /// expanded exactly once, so all parents keep reading from the same physical source instances.
+            return UnionLogicalOperator{}.withChildren(std::move(expandedSourceOperators));
+        });
 }
 
 }

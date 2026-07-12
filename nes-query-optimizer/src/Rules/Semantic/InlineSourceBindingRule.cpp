@@ -56,53 +56,43 @@ bool InlineSourceBindingRule::operator==(const InlineSourceBindingRule& other) c
     return sourceCatalog == other.sourceCatalog;
 }
 
-LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const LogicalOperator& current) const
-{
-    std::vector<LogicalOperator> newChildren;
-    for (const auto& child : current.getChildren())
-    {
-        newChildren.emplace_back(bindInlineSourceLogicalOperators(child));
-    }
-
-    if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
-    {
-        const auto type = inlineSource.value()->getSourceType();
-        const auto schema = inlineSource.value()->getSchema();
-        const auto parserConfig = inlineSource.value()->getParserConfig();
-        auto sourceConfig = inlineSource.value()->getSourceConfig();
-
-        /// "host" is not part of the source config — it determines placement, not source behavior.
-        /// It is stored in the config map only because InlineSourceLogicalOperator lacks a dedicated host field.
-        auto hostIt = sourceConfig.find("host");
-        if (hostIt == sourceConfig.end())
-        {
-            throw InvalidConfigParameter("`host`");
-        }
-        auto host = Host(hostIt->second);
-        sourceConfig.erase(hostIt);
-
-        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, sourceConfig);
-
-        if (!descriptorOpt.has_value())
-        {
-            throw InvalidConfigParameter("Could not create an inline source descriptor because of invalid config parameters");
-        }
-        const auto& descriptor = descriptorOpt.value();
-        const SourceDescriptorLogicalOperator sourceDescriptorLogicalOperator{descriptor};
-        return sourceDescriptorLogicalOperator.withChildren(newChildren);
-    }
-
-    return current.withChildren(newChildren);
-}
-
 LogicalPlan InlineSourceBindingRule::apply(const LogicalPlan& queryPlan) const
 {
-    std::vector<LogicalOperator> newRoots;
-    for (const auto& root : queryPlan.getRootOperators())
-    {
-        newRoots.emplace_back(bindInlineSourceLogicalOperators(root));
-    }
-    return queryPlan.withRootOperators(newRoots);
+    return transformPlan(
+        queryPlan,
+        [this](const LogicalOperator& current, std::vector<LogicalOperator> newChildren) -> LogicalOperator
+        {
+            const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>();
+            if (not inlineSource.has_value())
+            {
+                return current.withChildren(std::move(newChildren));
+            }
+
+            const auto type = inlineSource.value()->getSourceType();
+            const auto schema = inlineSource.value()->getSchema();
+            const auto parserConfig = inlineSource.value()->getParserConfig();
+            auto sourceConfig = inlineSource.value()->getSourceConfig();
+
+            /// "host" is not part of the source config — it determines placement, not source behavior.
+            /// It is stored in the config map only because InlineSourceLogicalOperator lacks a dedicated host field.
+            auto hostIt = sourceConfig.find("host");
+            if (hostIt == sourceConfig.end())
+            {
+                throw InvalidConfigParameter("`host`");
+            }
+            auto host = Host(hostIt->second);
+            sourceConfig.erase(hostIt);
+
+            const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, sourceConfig);
+
+            if (!descriptorOpt.has_value())
+            {
+                throw InvalidConfigParameter("Could not create an inline source descriptor because of invalid config parameters");
+            }
+            const auto& descriptor = descriptorOpt.value();
+            const SourceDescriptorLogicalOperator sourceDescriptorLogicalOperator{descriptor};
+            return sourceDescriptorLogicalOperator.withChildren(std::move(newChildren));
+        });
 }
 
 }

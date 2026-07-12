@@ -34,6 +34,9 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Phases/RuleBasedOptimizer.hpp>
+#include <Phases/SemanticAnalyzer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -41,8 +44,10 @@
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <CompiledQueryPlan.hpp>
+#include <ModelCatalog.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryExecutionConfiguration.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
@@ -54,10 +59,9 @@ QueryId randomQueryId()
     return QueryId::createLocal(LocalQueryId(generateUUID()));
 }
 
-/// Compiles a hand-built, fully bound DAG LogicalPlan (two sinks sharing one selection) end-to-end
-/// through the QueryCompiler and verifies the fan-out shape of the CompiledQueryPlan.
-/// The plan is built WITHOUT the optimizer: optimizer rules rebuild operators and thereby regenerate
-/// operator ids, which would split the shared subplan into independent copies (see fan-out PoC notes).
+/// Compiles DAG LogicalPlans (two sinks sharing one selection) end-to-end through the QueryCompiler and
+/// verifies the fan-out shape of the CompiledQueryPlan — once from a hand-bound plan (compiler in
+/// isolation) and once through the full optimizer rule pipeline (transformPlan-based rules).
 class CompileFanOutPlanTest : public Testing::BaseUnitTest
 {
 public:
@@ -154,6 +158,66 @@ TEST_F(CompileFanOutPlanTest, TwoSinksSharingSelectionCompileToFanOutPipeline)
         sinkPredecessorIds.insert(predecessor->id);
     }
     EXPECT_EQ(sinkPredecessorIds, branchIds);
+}
+
+/// The decisive test for optimizer DAG support: an UNBOUND DAG plan (source referenced by name, shared
+/// selection, two sinks) goes through the FULL rule pipeline (SemanticAnalyzer + RuleBasedOptimizer).
+/// The memoizing transformPlan framework must preserve the shared subplan through every rule; without it,
+/// per-root rebuilds would duplicate the source (data read twice) instead of fanning out one pipeline.
+TEST_F(CompileFanOutPlanTest, DagPlanSurvivesFullOptimizerPipeline)
+{
+    const auto sourceCatalogShared = std::make_shared<SourceCatalog>();
+    const auto sinkCatalogShared = std::make_shared<SinkCatalog>();
+
+    /// Register logical source "test" with one physical source; SourceInference qualifies the field names.
+    Schema unqualifiedSchema;
+    unqualifiedSchema.addField("id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    unqualifiedSchema.addField("value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    const auto logicalSource = sourceCatalogShared->addLogicalSource("test", unqualifiedSchema);
+    ASSERT_TRUE(logicalSource.has_value());
+    const auto physicalSource = sourceCatalogShared->addPhysicalSource(
+        logicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, {{"type", "CSV"}});
+    ASSERT_TRUE(physicalSource.has_value());
+
+    /// Unbound DAG: two bound sinks sharing one selection over a source referenced only by name.
+    /// SourceInference qualifies fields with the Schema::ATTRIBUTE_NAME_SEPARATOR ("test$id").
+    Schema qualifiedSchema;
+    qualifiedSchema.addField(
+        "test" + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR) + "id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    qualifiedSchema.addField(
+        "test" + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR) + "value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    const auto sourceByName = LogicalOperator{SourceNameLogicalOperator{"test"}};
+    const auto selection
+        = LogicalOperator{SelectionLogicalOperator{GreaterEqualsLogicalFunction(
+                              FieldAccessLogicalFunction(qualifiedSchema.getFieldNames().front()),
+                              ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UINT64), "0"))}}
+              .withChildren({sourceByName});
+
+    auto makeSink = [&](const LogicalOperator& child)
+    {
+        auto descriptor = sinkCatalogShared->getInlineSink(qualifiedSchema, "Print", Host("localhost"), {{"output_format", "CSV"}}, {});
+        EXPECT_TRUE(descriptor.has_value());
+        return LogicalOperator{SinkLogicalOperator{descriptor.value()}} /// NOLINT(bugprone-unchecked-optional-access)
+            .withChildren({child});
+    };
+    auto plan = LogicalPlan(randomQueryId(), {makeSink(selection), makeSink(selection)});
+
+    /// The full optimizer rule pipeline (placement excluded: single-node path).
+    plan = SemanticAnalyzer{sourceCatalogShared, sinkCatalogShared, std::make_shared<ModelCatalog>()}.analyse(std::move(plan));
+    plan = RuleBasedOptimizer{QueryOptimizerConfiguration{}}.optimize(std::move(plan));
+
+    auto compiler = QueryCompilation::QueryCompiler{QueryExecutionConfiguration{}};
+    const auto compiled = compiler.compileQuery(std::make_unique<QueryCompilation::QueryCompilationRequest>(
+        QueryCompilation::QueryCompilationRequest{.queryPlan = std::move(plan)}));
+
+    ASSERT_TRUE(compiled);
+    /// Sharing preserved end-to-end: ONE source, two sinks, one shared pipeline fanning out to two branches.
+    ASSERT_EQ(compiled->sources.size(), 1U);
+    ASSERT_EQ(compiled->sinks.size(), 2U);
+    ASSERT_EQ(compiled->sources[0].successors.size(), 1U);
+    const auto sharedPipeline = compiled->sources[0].successors[0].lock();
+    ASSERT_TRUE(sharedPipeline);
+    EXPECT_EQ(sharedPipeline->successors.size(), 2U);
 }
 
 }

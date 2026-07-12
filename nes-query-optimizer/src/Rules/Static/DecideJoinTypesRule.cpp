@@ -106,47 +106,44 @@ std::set<std::type_index> DecideJoinTypesRule::requiredBy() const
 
 LogicalPlan DecideJoinTypesRule::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
-    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
+    return transformPlan(
+        queryPlan,
+        [this](const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children)
+        {
+            auto traitSet = logicalOperator.getTraitSet();
+            if (const auto joinOperator = logicalOperator.tryGetAs<JoinLogicalOperator>())
+            {
+                if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
+                {
+                    tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+                }
+                else if (shallUseHashJoin(joinOperator.value()->getJoinFunction()))
+                {
+                    tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+                }
+                else
+                {
+                    tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+                    if (this->joinStrategy == StreamJoinStrategy::HASH_JOIN)
+                    {
+                        NES_WARNING(
+                            "Operator {} has not the HashJoinTrait, as the hash join is not supported for the join condition. Therefore, "
+                            "we fall-back to the NLJ!",
+                            logicalOperator);
+                    }
+                }
+            }
+            else
+            {
+                tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
+            }
+            return logicalOperator.withChildren(std::move(children)).withTraitSet(traitSet);
+        });
 }
 
 bool DecideJoinTypesRule::operator==(const DecideJoinTypesRule& other) const
 {
     return this->joinStrategy == other.joinStrategy;
-}
-
-LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperator) const
-{
-    const auto children = logicalOperator.getChildren()
-        | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
-    auto traitSet = logicalOperator.getTraitSet();
-    if (const auto joinOperator = logicalOperator.tryGetAs<JoinLogicalOperator>())
-    {
-        if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
-        {
-            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
-        }
-        else if (shallUseHashJoin(joinOperator.value()->getJoinFunction()))
-        {
-            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
-        }
-        else
-        {
-            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
-            if (this->joinStrategy == StreamJoinStrategy::HASH_JOIN)
-            {
-                NES_WARNING(
-                    "Operator {} has not the HashJoinTrait, as the hash join is not supported for the join condition. Therefore, we "
-                    "fall-back to the NLJ!",
-                    logicalOperator);
-            }
-        }
-    }
-    else
-    {
-        tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
-    }
-    return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }
 }

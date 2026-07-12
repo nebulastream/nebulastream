@@ -46,7 +46,6 @@ public:
     bool operator==(const InlineSourceBindingRule& other) const;
 
 private:
-    [[nodiscard]] LogicalOperator bindInlineSourceLogicalOperators(const LogicalOperator& current) const;
     std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
 

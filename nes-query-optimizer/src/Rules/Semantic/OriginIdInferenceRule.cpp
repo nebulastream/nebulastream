@@ -40,41 +40,6 @@
 namespace NES
 {
 
-namespace
-{
-LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, OriginId& lastOriginId)
-{
-    std::vector<LogicalOperator> newChildren;
-    std::vector<OutputOriginIdsTrait> childOriginIds;
-    for (const auto& child : visitingOperator.getChildren())
-    {
-        auto newChild = propagateOriginIds(child, lastOriginId);
-        newChildren.push_back(newChild);
-        const auto childOriginIdsOpt = getTrait<OutputOriginIdsTrait>(newChild.getTraitSet());
-        INVARIANT(childOriginIdsOpt.has_value(), "Child operator must have origin ids trait");
-        childOriginIds.push_back(childOriginIdsOpt.value().get());
-    }
-
-    auto traitSet = visitingOperator.getTraitSet();
-
-    if (visitingOperator.tryGetAs<OriginIdAssigner>().has_value())
-    {
-        lastOriginId = OriginId{lastOriginId.getRawValue() + 1};
-        const auto success = tryInsert(traitSet, OutputOriginIdsTrait{{lastOriginId}});
-        INVARIANT(success, "Failed to insert origin id trait, did another phase already assign them?");
-    }
-    else
-    {
-        const auto success = tryInsert(
-            traitSet,
-            OutputOriginIdsTrait{
-                childOriginIds | std::views::join | std::ranges::to<std::unordered_set>() | std::ranges::to<std::vector>()});
-        INVARIANT(success, "Failed to insert origin id trait, did another phase already assign them?");
-    }
-
-    return visitingOperator.withTraitSet(traitSet).withChildren(newChildren);
-}
-}
 
 const std::type_info& OriginIdInferenceRule::getType()
 {
@@ -107,14 +72,37 @@ bool OriginIdInferenceRule::operator==(const OriginIdInferenceRule&) const
 LogicalPlan OriginIdInferenceRule::apply(const LogicalPlan& queryPlan) const
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
-    auto originIdCounter = OriginId{INITIAL_ORIGIN_ID.getRawValue()};
-    /// propagate origin ids through the complete query plan
-    std::vector<LogicalOperator> newSinks;
-    newSinks.reserve(queryPlan.getRootOperators().size());
-    for (auto& sinkOperator : queryPlan.getRootOperators())
-    {
-        newSinks.push_back(propagateOriginIds(sinkOperator, originIdCounter));
-    }
-    return queryPlan.withRootOperators(newSinks);
+    auto lastOriginId = OriginId{INITIAL_ORIGIN_ID.getRawValue()};
+    /// propagate origin ids through the complete query plan; an operator shared by multiple parents
+    /// (fan-out) is visited exactly once and therefore assigns/reports one origin set for all consumers
+    return transformPlan(
+        queryPlan,
+        [&lastOriginId](const LogicalOperator& visitingOperator, std::vector<LogicalOperator> children)
+        {
+            auto traitSet = visitingOperator.getTraitSet();
+            if (visitingOperator.tryGetAs<OriginIdAssigner>().has_value())
+            {
+                lastOriginId = OriginId{lastOriginId.getRawValue() + 1};
+                const auto success = tryInsert(traitSet, OutputOriginIdsTrait{{lastOriginId}});
+                INVARIANT(success, "Failed to insert origin id trait, did another phase already assign them?");
+            }
+            else
+            {
+                std::vector<OutputOriginIdsTrait> childOriginIds;
+                childOriginIds.reserve(children.size());
+                for (const auto& child : children)
+                {
+                    const auto childOriginIdsOpt = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
+                    INVARIANT(childOriginIdsOpt.has_value(), "Child operator must have origin ids trait");
+                    childOriginIds.push_back(childOriginIdsOpt.value().get());
+                }
+                const auto success = tryInsert(
+                    traitSet,
+                    OutputOriginIdsTrait{
+                        childOriginIds | std::views::join | std::ranges::to<std::unordered_set>() | std::ranges::to<std::vector>()});
+                INVARIANT(success, "Failed to insert origin id trait, did another phase already assign them?");
+            }
+            return visitingOperator.withTraitSet(traitSet).withChildren(std::move(children));
+        });
 }
 }

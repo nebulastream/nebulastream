@@ -16,12 +16,14 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <ostream>
 #include <set>
 #include <sstream>
 #include <stack>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -319,6 +321,50 @@ std::unordered_set<LogicalOperator> flatten(const LogicalPlan& plan)
         }
     }
     return visitedOperators;
+}
+
+namespace
+{
+LogicalOperator transformOperatorMemoized(
+    const LogicalOperator& op,
+    const std::function<LogicalOperator(const LogicalOperator&, std::vector<LogicalOperator>)>& transform,
+    std::unordered_map<const void*, LogicalOperator>& transformed)
+{
+    /// Keyed on instance identity: operators shared by multiple parents are transformed once, and all
+    /// parents receive the same transformed instance. Ids cannot serve as keys here because rebuilding
+    /// operators regenerates them.
+    const void* identity = &op.get();
+    if (const auto memoized = transformed.find(identity); memoized != transformed.end())
+    {
+        return memoized->second;
+    }
+
+    const auto children = op.getChildren();
+    std::vector<LogicalOperator> transformedChildren;
+    transformedChildren.reserve(children.size());
+    for (const auto& child : children)
+    {
+        transformedChildren.push_back(transformOperatorMemoized(child, transform, transformed));
+    }
+
+    auto result = transform(op, std::move(transformedChildren));
+    transformed.emplace(identity, result);
+    return result;
+}
+}
+
+LogicalPlan transformPlan(
+    const LogicalPlan& plan, const std::function<LogicalOperator(const LogicalOperator&, std::vector<LogicalOperator>)>& transform)
+{
+    std::unordered_map<const void*, LogicalOperator> transformed;
+    const auto roots = plan.getRootOperators();
+    std::vector<LogicalOperator> newRoots;
+    newRoots.reserve(roots.size());
+    for (const auto& root : roots)
+    {
+        newRoots.push_back(transformOperatorMemoized(root, transform, transformed));
+    }
+    return plan.withRootOperators(newRoots);
 }
 
 bool LogicalPlan::operator==(const LogicalPlan& other) const

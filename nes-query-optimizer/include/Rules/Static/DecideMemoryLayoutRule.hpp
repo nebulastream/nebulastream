@@ -36,9 +36,6 @@ public:
     [[nodiscard]] std::set<std::type_index> requiredBy() const;
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
     bool operator==(const DecideMemoryLayoutRule& other) const;
-
-private:
-    [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;
 };
 
 static_assert(RuleConcept<DecideMemoryLayoutRule, LogicalPlan>);
