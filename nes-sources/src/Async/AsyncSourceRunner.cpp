@@ -14,7 +14,9 @@
 
 #include <Async/AsyncSourceRunner.hpp>
 
+#include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -23,7 +25,9 @@
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/cancellation_type.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/this_coro.hpp>
+#include <boost/asio/use_awaitable.hpp>
 
 #include <Async/IOThread.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -54,6 +58,25 @@ AsyncSourceRunner::runningRoutine(OriginId sourceId, std::shared_ptr<AbstractBuf
         emitFn(sourceId, SourceReturnType::Data{std::move(buf)}, stopToken);
         // emitFn(sourceId, SourceReturnType::Data{std::move(buf)});
     };
+
+    /// TMP DIAGNOSTIC (straggler-stall investigation): trace the coroutine lifecycle. `completed`
+    /// stays false if the frame is DESTROYED while suspended (asio dropping the operation) -- the
+    /// destructor then tags the silent death. REVERT before merge.
+    struct RoutineProbe
+    {
+        uint64_t origin;
+        bool completed = false;
+
+        ~RoutineProbe()
+        {
+            if (!completed)
+            {
+                std::fprintf(stderr, "DIAG_SRCLIFE frame-destroyed-unresumed origin=%lu\n", origin);
+            }
+        }
+    } routineProbe{sourceId.getRawValue()};
+
+    std::fprintf(stderr, "DIAG_SRCLIFE spawned origin=%lu\n", sourceId.getRawValue());
 
     ///  RAII-wrapper around the source to ensure that close() is called on all code paths, even if an exception is thrown.
     const AsyncSourceWrapper sourceHandle{*source};
@@ -114,34 +137,78 @@ AsyncSourceRunner::runningRoutine(OriginId sourceId, std::shared_ptr<AbstractBuf
     AsyncSource::InternalSourceResult internalSourceResult = AsyncSource::Continue{};
     /// Opt-in ingest-copy meter (see SourceUtility.hpp). Free when NES_INGEST_COPY_STATS is unset.
     IngestCopyMeter copyMeter;
-    while (std::holds_alternative<AsyncSource::Continue>(internalSourceResult))
+    try
     {
-        /// If we see the cancellation request here, we can safely terminate, as no IO completion handlers can be queued
-        /// We know this because all IO operations' results are awaited within the source and new requests are only issued after the previous one completes.
-        if ((co_await asio::this_coro::cancellation_state).cancelled() == asio::cancellation_type::terminal)
+        while (std::holds_alternative<AsyncSource::Continue>(internalSourceResult))
         {
-            break;
+            /// If we see the cancellation request here, we can safely terminate, as no IO completion handlers can be queued
+            /// We know this because all IO operations' results are awaited within the source and new requests are only issued after the previous one completes.
+            if ((co_await asio::this_coro::cancellation_state).cancelled() == asio::cancellation_type::terminal)
+            {
+                /// TMP DIAGNOSTIC (straggler-stall investigation): tag every silent exit path. REVERT before merge.
+                std::fprintf(stderr, "DIAG_SRCEXIT looptop-cancelled origin=%lu\n", sourceId.getRawValue());
+                break;
+            }
+            /// 1. Acquire buffer. NEVER getBufferBlocking() here: it THROWS BufferAllocationFailure after
+            /// 1 s, and an exception unwinding this coroutine is captured into co_spawn's unobserved
+            /// future -- the source dies SILENTLY and the query zombie-Runs forever (the many-source
+            /// straggler stall, 2026-07-12: shared cell pools under fan-in pressure stay dry >1 s during
+            /// deployment/completion churn and killed ~20% of sources).
+            /// The retry loop must YIELD to the io context between attempts (asio::post): sibling
+            /// coroutines on this io thread may hold filled pool buffers in not-yet-run completion
+            /// handlers -- a non-yielding wait (the old getBufferBlocking, or a plain timed retry)
+            /// starves exactly the handlers whose completion would refill the pool (livelock; the old
+            /// 1 s throw was accidentally acting as the deadlock breaker by killing the source).
+            std::optional<TupleBuffer> acquiredBuffer;
+            while (!acquiredBuffer.has_value())
+            {
+                if ((co_await asio::this_coro::cancellation_state).cancelled() == asio::cancellation_type::terminal)
+                {
+                    break;
+                }
+                acquiredBuffer = bufferProvider->getBufferNoBlocking();
+                if (!acquiredBuffer.has_value())
+                {
+                    /// Drain the io context's pending handlers, then wait a bounded slice off-thread
+                    co_await asio::post(co_await asio::this_coro::executor, asio::use_awaitable_t<Executor>{});
+                    acquiredBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(5));
+                }
+            }
+            if (!acquiredBuffer.has_value())
+            {
+                /// TMP DIAGNOSTIC (straggler-stall investigation). REVERT before merge.
+                std::fprintf(stderr, "DIAG_SRCEXIT acquire-cancelled origin=%lu\n", sourceId.getRawValue());
+                break;
+            }
+            auto buffer = std::move(*acquiredBuffer);
+            /// 2. Let source ingest raw bytes into buffer. Stamp sourceCreationTimestamp at READ-START (us)
+            /// so the sink's e2e latency/throughput include the read/recv copy (not just in-engine time);
+            /// bracket fillBuffer to accumulate the per-buffer copy cost.
+            /// All IO-related errors are handled internally and returned via the result variant.
+            const auto readStartMicros = ingestNowMicros();
+            buffer.setSourceCreationTimestampInMS(Timestamp(readStartMicros));
+            internalSourceResult = co_await sourceHandle.source.fillBuffer(buffer);
+            if (copyMeter.enabled())
+            {
+                copyMeter.add(ingestNowMicros() - readStartMicros, buffer.getNumberOfTuples());
+            }
+            /// 3. Handle the result and communicate it to the query engine via the emitFn
+            /// The returned value decides whether we should continue to ingest data.
+            handleSourceResult(buffer, internalSourceResult, dataEmit, sourceId, stopToken);
         }
-        /// 1. Acquire buffer
-        /// TODO(yschroeder97): replace this with timeout-based approach
-        /// In the future, we might replace this with an async call: when the system is running at capacity, blocking here can slow down all other sources.
-        auto buffer = bufferProvider->getBufferBlocking();
-        /// 2. Let source ingest raw bytes into buffer. Stamp sourceCreationTimestamp at READ-START (us)
-        /// so the sink's e2e latency/throughput include the read/recv copy (not just in-engine time);
-        /// bracket fillBuffer to accumulate the per-buffer copy cost.
-        /// All IO-related errors are handled internally and returned via the result variant.
-        const auto readStartMicros = ingestNowMicros();
-        buffer.setSourceCreationTimestampInMS(Timestamp(readStartMicros));
-        internalSourceResult = co_await sourceHandle.source.fillBuffer(buffer);
-        if (copyMeter.enabled())
-        {
-            copyMeter.add(ingestNowMicros() - readStartMicros, buffer.getNumberOfTuples());
-        }
-        /// 3. Handle the result and communicate it to the query engine via the emitFn
-        /// The returned value decides whether we should continue to ingest data.
-        handleSourceResult(buffer, internalSourceResult, dataEmit, sourceId, stopToken);
+    }
+    catch (const Exception& exception)
+    {
+        /// An exception escaping this coroutine would be captured into co_spawn's future, which is
+        /// only wait()ed (never get()) -- the query would zombie-Run forever with a dead source.
+        /// Fail the query LOUDLY instead.
+        std::fprintf(stderr, "DIAG_SRCEXIT loop-exception origin=%lu what=%s\n", sourceId.getRawValue(), exception.what());
+        auto failure = RunningRoutineFailure(exception.what());
+        emitFn(sourceId, SourceReturnType::Error{std::move(failure)}, stopToken);
     }
     copyMeter.writeOnClose(sourceId);
+    routineProbe.completed = true;
+    std::fprintf(stderr, "DIAG_SRCLIFE routine-end origin=%lu\n", sourceId.getRawValue());
 }
 
 void AsyncSourceRunner::handleSourceResult(
@@ -179,12 +246,14 @@ void AsyncSourceRunner::handleSourceResult(
                 emitFn(sourceId, SourceReturnType::Error{std::move(backpressureListenerException)}, stopToken);
                 // emitFn(context.originId, Error{resultError.exception});
             },
-            [](const AsyncSource::Cancelled&)
+            [sourceId](const AsyncSource::Cancelled&)
             {
                 /// Cancellation was requested by the query engine.
                 /// At this point, we can be sure that there are no more internal handlers for asio I/O requests queued or running.
                 /// We can exit the coroutine gracefully.
                 /// We do not emit any event here, as the query engine will handle the termination of the pipeline.
+                /// TMP DIAGNOSTIC (straggler-stall investigation). REVERT before merge.
+                std::fprintf(stderr, "DIAG_SRCEXIT result-cancelled origin=%lu\n", sourceId.getRawValue());
             }},
         internalSourceResult);
 }
