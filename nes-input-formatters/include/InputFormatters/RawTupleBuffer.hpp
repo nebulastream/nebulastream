@@ -16,6 +16,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -113,16 +115,49 @@ public:
     {
     }
 
-    [[nodiscard]] std::string_view getBufferView() const { return rawBuffer.getBufferView(); }
+    /// Fragment-backed staged buffer (FragmentSequenceShredder): owns the exact spanning-tuple bytes for its
+    /// single role (front -> TAIL bytes, back -> HEAD bytes) instead of pinning the underlying TupleBuffer.
+    /// The delimiter offsets are carried through untouched; the byte accessors below all resolve to the
+    /// owned fragment, so consumers (processSpanningTuple/calculateSizeOfSpanningTuple) need no changes.
+    static StagedBuffer
+    fromOwnedFragment(std::string fragmentBytes, const uint32_t offsetOfFirstTupleDelimiter, const uint32_t offsetOfLastTupleDelimiter)
+    {
+        StagedBuffer stagedBuffer{};
+        stagedBuffer.sizeOfBufferInBytes = fragmentBytes.size();
+        stagedBuffer.offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter;
+        stagedBuffer.offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter;
+        stagedBuffer.ownedFragment = std::move(fragmentBytes);
+        return stagedBuffer;
+    }
+
+    [[nodiscard]] std::string_view getBufferView() const
+    {
+        if (ownedFragment.has_value())
+        {
+            return *ownedFragment;
+        }
+        return rawBuffer.getBufferView();
+    }
 
     /// Returns the _first_ bytes of a staged buffer that were not processed by another thread yet.
     /// Typically, these are the bytes of a spanning tuple that _ends_ in the staged buffer.
-    [[nodiscard]] std::string_view getLeadingBytes() const { return rawBuffer.getBufferView().substr(0, offsetOfFirstTupleDelimiter); }
+    [[nodiscard]] std::string_view getLeadingBytes() const
+    {
+        if (ownedFragment.has_value())
+        {
+            return *ownedFragment;
+        }
+        return rawBuffer.getBufferView().substr(0, offsetOfFirstTupleDelimiter);
+    }
 
     /// Returns the _last_ bytes of a staged buffer that were not processed by another thread yet.
     /// Typically, these are the bytes of spanning tuple that _starts_ in the staged buffer.
     [[nodiscard]] std::string_view getTrailingBytes(const size_t sizeOfTupleDelimiter) const
     {
+        if (ownedFragment.has_value())
+        {
+            return *ownedFragment;
+        }
         INVARIANT(
             sizeOfBufferInBytes >= offsetOfLastTupleDelimiter + sizeOfTupleDelimiter,
             "Invalid trailing bytes. Size of buffer: {} < {} (offsetOfLastTupleDelimiter: {} + sizeOfTupleDelimiter: {}",
@@ -151,6 +186,9 @@ protected:
     size_t sizeOfBufferInBytes{};
     FieldIndex offsetOfFirstTupleDelimiter{};
     FieldIndex offsetOfLastTupleDelimiter{};
+    /// Set only by fromOwnedFragment(); nullopt for raw-buffer-backed staged buffers (all pre-existing paths).
+    /// A set-but-empty fragment is meaningful (e.g. a buffer that starts/ends exactly at a delimiter).
+    std::optional<std::string> ownedFragment;
 };
 
 }

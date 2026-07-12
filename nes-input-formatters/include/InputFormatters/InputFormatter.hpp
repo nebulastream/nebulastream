@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -42,6 +43,7 @@
 #include <Concepts.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <FragmentSequenceShredder.hpp>
 #include <LockingSequenceShredder.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
@@ -114,7 +116,19 @@ public:
     {
         if constexpr (not isSequential())
         {
-            sequenceShredder = std::make_unique<SequenceShredder>(indexerMetaData.getTupleDelimitingBytes().size());
+            const auto sizeOfTupleDelimiter = indexerMetaData.getTupleDelimitingBytes().size();
+            switch (config.getSequenceShredderMode())
+            {
+                case SequenceShredderMode::LOCK_FREE:
+                    sequenceShredder = std::make_unique<SequenceShredder>(sizeOfTupleDelimiter);
+                    break;
+                case SequenceShredderMode::LOCKING:
+                    sequenceShredder = std::make_unique<LockingSequenceShredder>(sizeOfTupleDelimiter);
+                    break;
+                case SequenceShredderMode::LOCK_FREE_FRAGMENTS:
+                    sequenceShredder = std::make_unique<FragmentSequenceShredder>(sizeOfTupleDelimiter);
+                    break;
+            }
         }
         parserTypes[DataType::Type::BOOLEAN] = config.getFromConfig(InputFormatterDescriptor::BOOL_PARSER);
         parserTypes[DataType::Type::CHAR] = config.getFromConfig(InputFormatterDescriptor::CHAR_PARSER);
@@ -234,7 +248,7 @@ public:
         os << "InputFormatter(inputFormatIndexer: " << inputFormatIndexer;
         if constexpr (not isSequential())
         {
-            os << ", sequenceShredder: " << *sequenceShredder;
+            std::visit([&os](const auto& shredder) { os << ", sequenceShredder: " << *shredder; }, sequenceShredder);
         }
         os << ")\n";
         return os;
@@ -250,8 +264,12 @@ private:
     {
     };
 
-    /// Concurrent mode only: lock-free spanning tuple resolution across threads
-    [[no_unique_address]] std::conditional_t<not isSequential(), std::unique_ptr<SequenceShredder>, Empty> sequenceShredder;
+    /// Concurrent mode only: spanning tuple resolution across threads. The variant selects the shredder
+    /// implementation at construction time from SEQUENCE_SHREDDER_MODE (default LOCK_FREE = prior behavior);
+    /// the call sites use std::visit with a generic lambda, so all alternatives stay statically dispatched.
+    using ShredderVariant = std::
+        variant<std::unique_ptr<SequenceShredder>, std::unique_ptr<LockingSequenceShredder>, std::unique_ptr<FragmentSequenceShredder>>;
+    [[no_unique_address]] std::conditional_t<not isSequential(), ShredderVariant, Empty> sequenceShredder;
 
     /// Sequential mode only: the tail region of a buffer that is part of a spanning tuple straddling
     /// buffers, kept alive (TupleBuffer is ref-counted) with ZERO copy until the next buffer completes the
@@ -502,10 +520,14 @@ private:
         }
 
         /// if the offset to trailing SpanningTuple was not known after indexing we need to set it in the SequenceShredder, allowing threads to find it
-        auto stagedBuffers = (not tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple)
-            ? inputFormatter->sequenceShredder->findTrailingSpanningTupleWithDelimiter(
-                  tupleBuffer->getSequenceNumber(), offsetOfLastTupleDelimiter)
-            : inputFormatter->sequenceShredder->findTrailingSpanningTupleWithDelimiter(tupleBuffer->getSequenceNumber());
+        auto stagedBuffers = std::visit(
+            [&](const auto& shredder)
+            {
+                return (not tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple)
+                    ? shredder->findTrailingSpanningTupleWithDelimiter(tupleBuffer->getSequenceNumber(), offsetOfLastTupleDelimiter)
+                    : shredder->findTrailingSpanningTupleWithDelimiter(tupleBuffer->getSequenceNumber());
+            },
+            inputFormatter->sequenceShredder);
         /// a trailing spanning tuple must span at least 2 buffers
         if (stagedBuffers.getSize() < 2)
         {
@@ -533,8 +555,13 @@ private:
 
         if (hasTupleDelimiter)
         {
-            const auto [isInRange, stagedBuffers] = inputFormatter->sequenceShredder->findLeadingSpanningTupleWithDelimiter(
-                StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
+            const auto [isInRange, stagedBuffers] = std::visit(
+                [&](const auto& shredder)
+                {
+                    return shredder->findLeadingSpanningTupleWithDelimiter(
+                        StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
+                },
+                inputFormatter->sequenceShredder);
             if (not isInRange)
             {
                 IndexPhaseResultBuilder::setIsRepeat(true);
@@ -548,8 +575,13 @@ private:
         }
         else /* has no tuple delimiter */
         {
-            const auto [isInRange, stagedBuffers] = inputFormatter->sequenceShredder->findSpanningTupleWithoutDelimiter(
-                StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
+            const auto [isInRange, stagedBuffers] = std::visit(
+                [&](const auto& shredder)
+                {
+                    return shredder->findSpanningTupleWithoutDelimiter(
+                        StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
+                },
+                inputFormatter->sequenceShredder);
 
             if (not isInRange)
             {

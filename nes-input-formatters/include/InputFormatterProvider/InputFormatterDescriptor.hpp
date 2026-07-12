@@ -31,7 +31,10 @@ enum class InputFormatterThreadingMode : uint8_t
 enum class SequenceShredderMode : uint8_t
 {
     LOCK_FREE,
-    LOCKING
+    LOCKING,
+    /// Lock-free protocol, but ring entries copy the boundary bytes of each buffer instead of pinning the
+    /// buffer until neighbours arrive (FragmentSequenceShredder) -- decouples pool sizing from source fan-in
+    LOCK_FREE_FRAGMENTS
 };
 
 /// Descriptor that stores the configuration parameters of a specific InputFormatter instance
@@ -59,7 +62,16 @@ public:
         return InputFormatterThreadingMode::PARALLEL;
     }
 
-    [[nodiscard]] SequenceShredderMode getSequenceShredderMode() const { return this->getFromConfig(SEQUENCE_SHREDDER_MODE); }
+    [[nodiscard]] SequenceShredderMode getSequenceShredderMode() const
+    {
+        /// Mirrors getThreadingMode(): unit tests construct descriptors from raw config maps without running
+        /// validateAndFormat, so the key may be absent -- fall back to the default instead of throwing
+        if (const auto shredderMode = this->tryGetFromConfig<EnumWrapper>(SEQUENCE_SHREDDER_MODE))
+        {
+            return shredderMode.value().asEnum<SequenceShredderMode>().value();
+        }
+        return SequenceShredderMode::LOCK_FREE;
+    }
 
     static inline const DescriptorConfig::ConfigParameter<std::string> TYPE{
         std::string{TYPE_STRING},

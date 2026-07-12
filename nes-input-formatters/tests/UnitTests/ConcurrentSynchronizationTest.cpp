@@ -28,6 +28,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <FragmentSequenceShredder.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
 
@@ -38,16 +39,16 @@
 /// Uses multiple threads that call the SequenceShredder to determine spanning tuples. Each thread randomly (seeded) determines whether its current
 /// request has a tuple delimiter or not, calls the 'processSequenceNumber' function of the SequenceShredder and tracks the resulting spanning tuples.
 /// We check whether the range of all produces sequence numbers matches the expected range.
+/// The TestThreadPool is templated over the shredder type, so the same protocol test covers both the classic
+/// buffer-pinning SequenceShredder and the FragmentSequenceShredder (both befriend this fixture).
 class ConcurrentSynchronizationTest : public ::testing::Test
 {
-    using SequenceShredder = NES::SequenceShredder;
-
 public:
     void SetUp() override { NES_INFO("Setting up ConcurrentSynchronizationTest."); }
 
     void TearDown() override { NES_INFO("Tear down ConcurrentSynchronizationTest class."); }
 
-    template <size_t NUM_THREADS>
+    template <size_t NUM_THREADS, typename ShredderType>
     class TestThreadPool
     {
         static constexpr size_t INITIAL_NUM_BITMAPS = 16;
@@ -57,7 +58,7 @@ public:
             const NES::SequenceNumberType upperBound,
             const std::optional<NES::SequenceNumberType> fixedSeed,
             const NES::TupleBuffer& dummyBuffer)
-            : sequenceShredder(SequenceShredder{1}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
+            : sequenceShredder(ShredderType{1}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
         {
             for (size_t i = 0; i < NUM_THREADS; ++i)
             {
@@ -100,7 +101,7 @@ public:
         }
 
     private:
-        SequenceShredder sequenceShredder;
+        ShredderType sequenceShredder;
         std::atomic<size_t> currentSequenceNumber;
         std::atomic<NES::SequenceNumberType> indexOfLastDetectedTupleDelimiter;
         std::array<std::jthread, NUM_THREADS> threads;
@@ -181,7 +182,7 @@ public:
         }
     };
 
-    template <size_t NUM_THREADS>
+    template <size_t NUM_THREADS, typename ShredderType>
     static void executeTest(const uint32_t upperBound, const std::optional<NES::SequenceNumberType> fixedSeed)
     {
         PRECONDITION(upperBound <= std::numeric_limits<uint32_t>::max(), "Not supporting values larger than 4294967295");
@@ -189,7 +190,7 @@ public:
         /// All threads share the reference to that buffer throughout this test
         const auto testBufferManager = NES::BufferManager::create(1, 1);
         const auto dummyBuffer = testBufferManager->getBufferBlocking();
-        const TestThreadPool testThreadPool = TestThreadPool<NUM_THREADS>(upperBound, fixedSeed, dummyBuffer);
+        const TestThreadPool testThreadPool = TestThreadPool<NUM_THREADS, ShredderType>(upperBound, fixedSeed, dummyBuffer);
         testThreadPool.waitForCompletion();
         const auto checkSum = testThreadPool.getCheckSum();
         ASSERT_EQ(checkSum, upperBound);
@@ -204,6 +205,18 @@ TEST_F(ConcurrentSynchronizationTest, multiThreadedExhaustiveTest)
 
     for (size_t iteration = 0; iteration < numIterations; ++iteration)
     {
-        executeTest<numThreads>(largestSequenceNumber, std::nullopt);
+        executeTest<numThreads, NES::SequenceShredder>(largestSequenceNumber, std::nullopt);
+    }
+}
+
+TEST_F(ConcurrentSynchronizationTest, multiThreadedExhaustiveTestFragmentShredder)
+{
+    constexpr size_t numIterations = 1;
+    constexpr size_t numThreads = 16;
+    constexpr size_t largestSequenceNumber = 1000000;
+
+    for (size_t iteration = 0; iteration < numIterations; ++iteration)
+    {
+        executeTest<numThreads, NES::FragmentSequenceShredder>(largestSequenceNumber, std::nullopt);
     }
 }

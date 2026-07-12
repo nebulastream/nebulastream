@@ -13,14 +13,17 @@
 */
 
 #include <cstdint>
+#include <string>
 #include <tuple>
 
+#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <InputFormatterDescriptor.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <InputFormatterValidationProvider.hpp>
 
@@ -44,16 +47,30 @@ public:
     void TearDown() override { BaseUnitTest::TearDown(); }
 };
 
+/// Runs the identical scenario once per shredder implementation (classic buffer-pinning LOCK_FREE and the
+/// fragment-copy LOCK_FREE_FRAGMENTS), by overriding the descriptor key that the InputFormatter dispatches on.
+template <typename TestTuple>
+void runTestForAllShredderModes(InputFormatterTestUtil::TestConfig<TestTuple> testConfig)
+{
+    for (const auto shredderMode : {SequenceShredderMode::LOCK_FREE, SequenceShredderMode::LOCK_FREE_FRAGMENTS})
+    {
+        testConfig.parserConfig.insert_or_assign(
+            std::string{InputFormatterDescriptor::SEQUENCE_SHREDDER_MODE.name}, EnumWrapper{shredderMode});
+        InputFormatterTestUtil::runTest<TestTuple>(testConfig);
+    }
+}
+
 TEST_F(SpecificSequenceTest, oneTupleWithTupleDelimiters)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
+        .parserConfig
+        = InputFormatterValidationProvider::provide("CSV", {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
@@ -68,11 +85,12 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOutOfOrder)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffers for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
+        .parserConfig
+        = InputFormatterValidationProvider::provide("CSV", {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
@@ -87,11 +105,12 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20, /// 8 bytes metadata, 12 bytes per formatted tuple
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
+        .parserConfig
+        = InputFormatterValidationProvider::provide("CSV", {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
@@ -106,11 +125,12 @@ TEST_F(SpecificSequenceTest, DISABLED_testDelimiterThatIsMoreThanOneCharacter)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "--"}, {"fieldDelimiter", ","}}).value(),
+        .parserConfig
+        = InputFormatterValidationProvider::provide("CSV", {{"type", "CSV"}, {"tuple_delimiter", "--"}, {"field_delimiter", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
@@ -125,12 +145,13 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 18, /// 2 buffers for raw data, 4 buffers for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers
         = 16, /// size of formatted tuple: 4 bytes, size of indexes: 8 bytes <-- 8 bytes metadata: 1 tuple per index buffer, 4 formatted buffers, 12 index buffers
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
+        .parserConfig
+        = InputFormatterValidationProvider::provide("CSV", {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{
@@ -149,11 +170,12 @@ TEST_F(SpecificSequenceTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t, int32_t, int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 3 buffers for raw data, 1 buffer from results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 28,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
+        .parserConfig
+        = InputFormatterValidationProvider::provide("CSV", {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
         .testSchema = {INT32, INT32, INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
@@ -170,11 +192,12 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t, int32_t, int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 6, /// 4 buffers for raw data, 2 buffer from results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 28,
-        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
+        .parserConfig
+        = InputFormatterValidationProvider::provide("CSV", {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}}).value(),
         .testSchema = {INT32, INT32, INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
@@ -193,7 +216,7 @@ TEST_F(SpecificSequenceTest, simdJSONFirstObjectEndsAtBufferBoundary)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 16,
@@ -211,7 +234,7 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryLeading)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
@@ -233,7 +256,7 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryTrailing)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTestForAllShredderModes<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,

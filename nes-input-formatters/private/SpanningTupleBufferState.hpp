@@ -33,6 +33,7 @@ using SpanningTupleBufferIdx = NESStrongType<uint32_t, struct SpanningTupleBuffe
 using ABAItNo = NESStrongType<uint32_t, struct ABAItNo_, 0, 1>;
 
 class SpanningTupleBufferEntry;
+class FragmentSpanningTupleBufferEntry;
 
 /// (Implementation detail of the SpanningTupleBufferEntry)
 /// The AtomicState consists a 64-bit-wide atomic bitmap that allows the SpanningTupleBuffer to thread-safely determine whether a specific
@@ -51,6 +52,8 @@ class SpanningTupleBufferEntry;
 class AtomicState
 {
     friend SpanningTupleBufferEntry;
+    /// The fragment-copy fork (FragmentSpanningTupleBufferState.hpp) reuses the AtomicState verbatim
+    friend FragmentSpanningTupleBufferEntry;
 
     /// 33:   000000000000000000000000000000100000000000000000000000000000000
     static constexpr uint64_t hasTupleDelimiterBit = (1ULL << 32ULL); /// NOLINT(readability-magic-numbers)
