@@ -35,9 +35,6 @@
 namespace NES
 {
 
-namespace {
-    thread_local const std::string* tl_secretKey = nullptr;
-}
 
 DepseudonymizePhysicalFunction::DepseudonymizePhysicalFunction(PhysicalFunction childPhysicalFunction)
     : childPhysicalFunction(std::move(childPhysicalFunction))
