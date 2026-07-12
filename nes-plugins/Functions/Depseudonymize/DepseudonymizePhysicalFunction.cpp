@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include "PseudonymizePhysicalFunction.hpp"
-#include "FeistelCipher.hpp"
+#include "DepseudonymizePhysicalFunction.hpp"
+#include "../Pseudonymize/FeistelCipher.hpp"
 
 #include <cstdlib>
 #include <cstring>
@@ -35,7 +35,11 @@
 namespace NES
 {
 
-PseudonymizePhysicalFunction::PseudonymizePhysicalFunction(PhysicalFunction childPhysicalFunction)
+namespace {
+    thread_local const std::string* tl_secretKey = nullptr;
+}
+
+DepseudonymizePhysicalFunction::DepseudonymizePhysicalFunction(PhysicalFunction childPhysicalFunction)
     : childPhysicalFunction(std::move(childPhysicalFunction))
 {
     const char* key = std::getenv("PSEUDONYM_SECRET_KEY");
@@ -49,8 +53,7 @@ PseudonymizePhysicalFunction::PseudonymizePhysicalFunction(PhysicalFunction chil
     secretKey = std::string(key);
 }
 
-
-VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+VarVal DepseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     tl_secretKey = &secretKey;
     const auto inputValue = childPhysicalFunction.execute(record, arena);
@@ -62,22 +65,22 @@ VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& are
 
         if constexpr (std::is_same_v<ArgType, nautilus::val<int8_t>>)
         {
-            auto pseudoId = nautilus::invoke(feistelPseudonymization<int8_t>, arg);
+            auto pseudoId = nautilus::invoke(feistelDepseudonymization<int8_t>, arg);
             return VarVal(pseudoId);
         }
         else if constexpr (std::is_same_v<ArgType, nautilus::val<int16_t>>)
         {
-            auto pseudoId = nautilus::invoke(feistelPseudonymization<int16_t>, arg);
+            auto pseudoId = nautilus::invoke(feistelDepseudonymization<int16_t>, arg);
             return VarVal(pseudoId);
         }
         else if constexpr (std::is_same_v<ArgType, nautilus::val<int32_t>>)
         {
-            auto pseudoId = nautilus::invoke(feistelPseudonymization<int32_t>, arg);
+            auto pseudoId = nautilus::invoke(feistelDepseudonymization<int32_t>, arg);
             return VarVal(pseudoId);
         }
         else if constexpr (std::is_same_v<ArgType, nautilus::val<int64_t>>)
         {
-            auto pseudoId = nautilus::invoke(feistelPseudonymization<int64_t>, arg);
+            auto pseudoId = nautilus::invoke(feistelDepseudonymization<int64_t>, arg);
             return VarVal(pseudoId);
         }
         else if constexpr (std::is_same_v<ArgType, VariableSizedData>)
@@ -86,7 +89,7 @@ VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& are
             const auto outputSize = nautilus::val<uint64_t>(64);
             auto output = arena.allocateVariableSizedData(outputSize);
             auto actualSize = nautilus::invoke(
-                pseudonymizeString,
+                depseudonymizeString,
                 arg.getContent(),
                 inputSize,
                 output.getContent()
@@ -96,7 +99,7 @@ VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& are
         else
         {
             throw std::runtime_error(
-                "[PseudonymizePhysicalFunction] Unsupported input data type. "
+                "[DepseudonymizePhysicalFunction] Unsupported input data type. "
                 "Supported types: INT8, INT16, INT32, INT64, VARSIZED"
             );
         }
@@ -104,13 +107,13 @@ VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& are
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterPseudonymizePhysicalFunction(
+PhysicalFunctionGeneratedRegistrar::RegisterDepseudonymizePhysicalFunction(
     PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1,
-        "Pseudonymize function must have exactly one child function");
-    return PseudonymizePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+        "Depseudonymize function must have exactly one child function");
+    return DepseudonymizePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
 }
 
 } // namespace NES
