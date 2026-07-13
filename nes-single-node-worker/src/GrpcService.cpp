@@ -145,7 +145,7 @@ grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQuery
     return tryWithDefaultHandling(
         [&]
         {
-            getValueOrThrow(delegate.stopQuery(queryId));
+            getValueOrThrow(delegate.stopQuery(queryId, request->graceful()));
             return grpc::Status::OK;
         },
         context);

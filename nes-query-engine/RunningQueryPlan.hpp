@@ -83,6 +83,7 @@ struct RunningQueryPlanNode
 
     PipelineId id;
 
+    std::atomic_bool hardStopped = false;
     std::atomic_bool requiresTermination = false;
     std::atomic<ssize_t> pendingTasks = 0;
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
@@ -128,7 +129,7 @@ struct RunningQueryPlan final
     /// The callback to initialize the soft stop, by destroying sources. This callback must be called outside the AtomicState transition,
     /// otherwise destroying the sources (if stop fails) or their successor pipelines might try to acquire the AtomicState lock again, causing a deadlock.
     static std::pair<std::unique_ptr<StoppingQueryPlan>, absl::AnyInvocable<void()>>
-    stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan);
+    stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan, bool graceful);
 
     /// Disposing a RunningQueryPlan will:
     /// 1. Not notify any listeners. `onDestruction` will not be called.

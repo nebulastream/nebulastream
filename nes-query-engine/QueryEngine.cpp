@@ -182,7 +182,7 @@ public:
         const std::shared_ptr<QueryEngineStatisticListener>& statistic,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
-    void stopQuery(QueryId queryId);
+    void stopQuery(QueryId queryId, bool graceful);
 
     void clear()
     {
@@ -496,6 +496,10 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     const auto taskId = TaskId(pool.taskIdCounter++);
     if (auto pipeline = task.pipeline.lock())
     {
+        if (pipeline->hardStopped)
+        {
+            return false;
+        }
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
         DefaultPEC pec(
             pool.numberOfThreads(),
@@ -674,7 +678,10 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     auto pipelineId = stopPipelineTask.pipeline->id;
     auto queryId = stopPipelineTask.queryId;
-    stopPipelineTask.pipeline->stage->stop(pec);
+    if (!stopPipelineTask.pipeline->hardStopped)
+    {
+        stopPipelineTask.pipeline->stage->stop(pec);
+    }
     pool.statistic->onEvent(PipelineStop{WorkerThread::id, queryId, pipelineId});
     return true;
 }
@@ -685,7 +692,7 @@ bool ThreadPool::WorkerThread::operator()(StopQueryTask& stopQuery) const
     ENGINE_LOG_INFO("Terminate Query Task for Query {}", stopQuery.queryId);
     if (auto queryCatalog = stopQuery.catalog.lock())
     {
-        queryCatalog->stopQuery(stopQuery.queryId);
+        queryCatalog->stopQuery(stopQuery.queryId, stopQuery.graceful);
         pool.statistic->onEvent(QueryStopRequest{WorkerThread::id, stopQuery.queryId});
         return true;
     }
@@ -798,10 +805,10 @@ QueryEngine::QueryEngine(
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
-void QueryEngine::stop(QueryId queryId)
+void QueryEngine::stop(QueryId queryId, bool graceful)
 {
     ENGINE_LOG_INFO("Stopping Query: {}", queryId);
-    threadPool->taskQueue.addAdmissionTaskBlocking({}, StopQueryTask{queryId, queryCatalog, TaskCallback{}});
+    threadPool->taskQueue.addAdmissionTaskBlocking({}, StopQueryTask{queryId, graceful, queryCatalog, TaskCallback{}});
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
@@ -970,7 +977,7 @@ void QueryCatalog::start(
     }
 }
 
-void QueryCatalog::stopQuery(QueryId id)
+void QueryCatalog::stopQuery(QueryId id, bool graceful)
 {
     const std::unique_ptr<RunningQueryPlan> toBeDeleted;
     {
@@ -980,15 +987,15 @@ void QueryCatalog::stopQuery(QueryId id)
             auto& state = *it->second;
             absl::AnyInvocable<void()> cleanup;
             bool didTransition = state.transition(
-                [&cleanup](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+                [&cleanup, graceful](Starting&& starting) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
                 {
-                    auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(starting.plan));
+                    auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(starting.plan), graceful);
                     cleanup = std::move(cb);
                     return Stopping{std::move(stoppingQueryPlan)};
                 },
-                [&cleanup](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+                [&cleanup, graceful](Running&& running) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
                 {
-                    auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(running.plan));
+                    auto [stoppingQueryPlan, cb] = RunningQueryPlan::stop(std::move(running.plan), graceful);
                     cleanup = std::move(cb);
                     return Stopping{std::move(stoppingQueryPlan)};
                 });

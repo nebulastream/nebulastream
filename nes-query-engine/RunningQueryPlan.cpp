@@ -262,12 +262,23 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
 }
 
 std::pair<std::unique_ptr<StoppingQueryPlan>, absl::AnyInvocable<void()>>
-RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
+RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan, bool graceful)
 {
     ENGINE_LOG_DEBUG("Soft Stopping Query Plan");
 
     auto lock = runningQueryPlan->internal.lock();
     auto& internal = *lock;
+
+    if (!graceful)
+    {
+        for (auto pipelinePtr : internal.pipelines)
+        {
+            if (auto pipeline = pipelinePtr.lock())
+            {
+                pipeline.get()->hardStopped = true;
+            }
+        }
+    }
 
     return {
         std::make_unique<StoppingQueryPlan>(

@@ -42,6 +42,7 @@ public:
     virtual ~QuerySubmissionBackend() = default;
     [[nodiscard]] virtual std::expected<QueryId, Exception> start(LogicalPlan) = 0;
     virtual std::expected<void, Exception> stop(QueryId) = 0;
+    virtual std::expected<void, Exception> terminate(QueryId) = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
 };

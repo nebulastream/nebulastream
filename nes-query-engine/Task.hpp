@@ -171,8 +171,9 @@ struct FailSourceTask : BaseTask
 
 struct StopQueryTask : BaseTask
 {
-    StopQueryTask(QueryId queryId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback);
+    StopQueryTask(QueryId queryId, bool graceful, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback);
 
+    bool graceful;
     std::weak_ptr<QueryCatalog> catalog;
 };
 
