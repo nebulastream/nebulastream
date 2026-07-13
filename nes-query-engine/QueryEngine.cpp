@@ -468,6 +468,7 @@ private:
     std::shared_ptr<QueryEngineStatisticListener> statistic;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
+    folly::Synchronized<std::unordered_map<QueryId, std::atomic<bool>>> terminationFlags;
 
     TaskQueue<Task> taskQueue;
     DelayedTaskSubmitter<> delayedTaskSubmitter;
@@ -496,6 +497,10 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     const auto taskId = TaskId(pool.taskIdCounter++);
     if (auto pipeline = task.pipeline.lock())
     {
+        if (pool.terminationFlags.rlock()->at(task.queryId))
+        {
+            return false;
+        }
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
         DefaultPEC pec(
             pool.numberOfThreads(),
@@ -685,7 +690,10 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     auto pipelineId = stopPipelineTask.pipeline->id;
     auto queryId = stopPipelineTask.queryId;
-    stopPipelineTask.pipeline->stage->stop(pec);
+    if (!pool.terminationFlags.rlock()->at(stopPipelineTask.queryId))
+    {
+        stopPipelineTask.pipeline->stage->stop(pec);
+    }
     pool.statistic->onEvent(PipelineStop{WorkerThread::id, queryId, pipelineId});
     return true;
 }
@@ -709,6 +717,16 @@ bool ThreadPool::WorkerThread::operator()(StartQueryTask& startQuery) const
     ENGINE_LOG_INFO("Start Query Task for Query {}", startQuery.queryId);
     if (auto queryCatalog = startQuery.catalog.lock())
     {
+        auto flags = pool.terminationFlags.wlock();
+        auto it = flags->find(startQuery.queryId);
+        if (it == flags->end()) {
+            flags->emplace(startQuery.queryId, false);
+        } else
+        {
+            it->second.store(false);
+        }
+        flags.unlock();
+
         queryCatalog->start(startQuery.queryId, std::move(startQuery.queryPlan), pool.listener, pool.statistic, pool, pool);
         pool.statistic->onEvent(QueryStart{WorkerThread::id, startQuery.queryId});
         return true;
@@ -809,10 +827,17 @@ QueryEngine::QueryEngine(
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
-void QueryEngine::stop(QueryId queryId)
+void QueryEngine::stop(QueryId queryId, bool graceful)
 {
     ENGINE_LOG_INFO("Stopping Query: {}", queryId);
-    threadPool->taskQueue.addAdmissionTaskBlocking({}, StopQueryTask{queryId, queryCatalog, TaskCallback{}});
+    // TODO ok? I think we need this if the node is stalled due to backpressure
+    if (!graceful)
+    {
+        auto flags = threadPool->terminationFlags.wlock();
+        flags->at(queryId).store(true);
+        flags.unlock();
+    }
+    threadPool->taskQueue.addAdmissionTaskBlocking({}, StopQueryTask{queryId, graceful, queryCatalog, TaskCallback{}});
 }
 
 /// NOLINTNEXTLINE Intentionally non-const

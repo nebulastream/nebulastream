@@ -52,6 +52,7 @@ struct StartQuery
 struct StopQuery
 {
     QueryId id;
+    bool graceful;
 };
 
 struct QueryStatusQuery
@@ -109,7 +110,7 @@ public:
 
     std::expected<QueryId, Exception> start(LogicalPlan plan) { return submit<StartQueryReply>(StartQuery{.plan = std::move(plan)}); }
 
-    std::expected<void, Exception> stop(QueryId id) { return submit<StopQueryReply>(StopQuery{.id = std::move(id)}); }
+    std::expected<void, Exception> stop(QueryId id, bool graceful) { return submit<StopQueryReply>(StopQuery{.id = std::move(id), .graceful = graceful}); }
 
     std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId id) const
     {
@@ -155,7 +156,7 @@ private:
                 Overloaded{
                     [](Stop) -> Reply { std::unreachable(); },
                     [&](StartQuery& request) -> Reply { return StartQueryReply{.reply = worker.startQuery(std::move(request.plan))}; },
-                    [&](const StopQuery& request) -> Reply { return StopQueryReply{.reply = worker.stopQuery(request.id)}; },
+                    [&](const StopQuery& request) -> Reply { return StopQueryReply{.reply = worker.stopQuery(request.id, request.graceful)}; },
                     [&](const QueryStatusQuery& request) -> Reply { return QueryStatusReply{.reply = worker.getQueryStatus(request.id)}; },
                     [&](const WorkerStatusQuery& request) -> Reply
                     { return WorkerStatusReply{.reply = worker.getWorkerStatus(request.after)}; },
@@ -209,7 +210,12 @@ std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(Lo
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)
 {
-    return channel->stop(queryId);
+    return channel->stop(queryId, true);
+}
+
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::terminate(QueryId queryId)
+{
+    return channel->stop(queryId, false);
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const
