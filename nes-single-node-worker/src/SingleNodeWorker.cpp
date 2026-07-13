@@ -132,12 +132,12 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noexcept
+std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, bool graceful) noexcept
 {
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
-        nodeEngine->stopQuery(queryId);
+        nodeEngine->stopQuery(queryId, graceful);
         return {};
     }
     CPPTRACE_CATCH(...)
