@@ -399,7 +399,7 @@ primaryExpression
     | base=primaryExpression '.' fieldName=identifier                                          #dereference
     | '(' query ')'                                                                            #subqueryExpression
     | '(' namedExpression (',' namedExpression)+ ')'                                           #rowConstructor
-    | '(' expression ')'                                                                       #parenthesizedExpression
+    | '(' valueExpression ')'                                                                  #parenthesizedExpression
     | constant                                                                                 #constantDefault
     | identifier                                                                               #columnReference
     ;
