@@ -174,4 +174,24 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize) const override;
 };
+
+/// Booleans decide on the FIRST byte only: 't'/'T'/'1' -> true, 'f'/'F'/'0' -> false (matches the
+/// Default parser's accepted set {true,false,1,0} case-insensitively for well-formed fields; the
+/// token tail is not validated -- same best-effort contract as the traced integer parsers).
+class TracedBOOLInputParser final : public InputParser
+{
+public:
+    explicit TracedBOOLInputParser() noexcept = default;
+    [[nodiscard]] VarVal parseToVarVal(
+        bool nullable,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize,
+        const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
+};
 }

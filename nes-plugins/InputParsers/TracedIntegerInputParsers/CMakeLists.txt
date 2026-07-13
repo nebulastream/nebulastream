@@ -22,6 +22,9 @@ add_plugin(TracedUINT8  InputParser traced_integer_input_parser_plugin TracedInt
 add_plugin(TracedUINT16 InputParser traced_integer_input_parser_plugin TracedIntegerInputParser.cpp)
 add_plugin(TracedUINT32 InputParser traced_integer_input_parser_plugin TracedIntegerInputParser.cpp)
 add_plugin(TracedUINT64 InputParser traced_integer_input_parser_plugin TracedIntegerInputParser.cpp)
+# BOOL rides in the integer plugin: the first-byte decision is pure integer compares, and a separate
+# plugin library for one tiny parser isn't worth the registration boilerplate.
+add_plugin(TracedBOOL   InputParser traced_integer_input_parser_plugin TracedIntegerInputParser.cpp)
 nautilus_inline(traced_integer_input_parser_plugin)
 
 target_include_directories(traced_integer_input_parser_plugin PUBLIC include PRIVATE .)

@@ -99,6 +99,24 @@ VarVal tracedUnsigned(bool nullable, const nautilus::val<int8_t*>& addr, const n
     return finish<T>(nullable, nautilus::val<T>(mag), bad);
 }
 
+/// First byte decides: 't'/'T'/'1' -> true, 'f'/'F'/'0' -> false. Any other first byte (or an
+/// empty field) sets `bad`. Reading byte 0 is safe even for an empty field -- the address points
+/// at the field's delimiter inside the source buffer (same as tracedSigned's sign probe).
+VarVal tracedBool(bool nullable, const nautilus::val<int8_t*>& addr, const nautilus::val<uint64_t>& size)
+{
+    nautilus::val<uint64_t> bad{0};
+    bad = bad + nautilus::val<uint64_t>(size == nautilus::val<uint64_t>{0});
+    const nautilus::val<int8_t> first = *(addr + nautilus::val<uint64_t>{0});
+    const nautilus::val<uint64_t> isTrue = nautilus::val<uint64_t>(first == nautilus::val<int8_t>(static_cast<int8_t>('t')))
+        + nautilus::val<uint64_t>(first == nautilus::val<int8_t>(static_cast<int8_t>('T')))
+        + nautilus::val<uint64_t>(first == nautilus::val<int8_t>(static_cast<int8_t>('1')));
+    const nautilus::val<uint64_t> isFalse = nautilus::val<uint64_t>(first == nautilus::val<int8_t>(static_cast<int8_t>('f')))
+        + nautilus::val<uint64_t>(first == nautilus::val<int8_t>(static_cast<int8_t>('F')))
+        + nautilus::val<uint64_t>(first == nautilus::val<int8_t>(static_cast<int8_t>('0')));
+    bad = bad + nautilus::val<uint64_t>((isTrue + isFalse) == nautilus::val<uint64_t>{0});
+    return finish<bool>(nullable, isTrue != nautilus::val<uint64_t>{0}, bad);
+}
+
 template <typename T>
 VarVal tracedSigned(bool nullable, const nautilus::val<int8_t*>& addr, const nautilus::val<uint64_t>& size)
 {
@@ -185,6 +203,27 @@ VarVal TracedUINT64InputParser::parseToVarVal(
     const std::vector<std::string>&) const
 {
     return tracedUnsigned<uint64_t>(nullable, fieldAddress, fieldSize);
+}
+
+VarVal TracedBOOLInputParser::parseToVarVal(
+    bool nullable,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>&) const
+{
+    return tracedBool(nullable, fieldAddress, fieldSize);
+}
+
+VarVal TracedBOOLInputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    /// Traced parsing never throws, so we always parse the value and attach the
+    /// already-known null flag (configured null markers are not matched by traced parsers).
+    const nautilus::val<bool> result = tracedBool(false, fieldAddress, fieldSize).getRawValueAs<nautilus::val<bool>>();
+    return VarVal{result, nullable, isNull};
 }
 
 VarVal TracedINT8InputParser::parseLazyToVarVal(
@@ -324,5 +363,10 @@ InputParserRegistryReturnType InputParserGeneratedRegistrar::RegisterTracedUINT3
 InputParserRegistryReturnType InputParserGeneratedRegistrar::RegisterTracedUINT64InputParser(InputParserRegistryArguments)
 {
     return std::make_unique<TracedUINT64InputParser>();
+}
+
+InputParserRegistryReturnType InputParserGeneratedRegistrar::RegisterTracedBOOLInputParser(InputParserRegistryArguments)
+{
+    return std::make_unique<TracedBOOLInputParser>();
 }
 }
