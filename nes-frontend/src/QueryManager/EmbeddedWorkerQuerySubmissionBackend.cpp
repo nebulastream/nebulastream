@@ -59,7 +59,12 @@ std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(Lo
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)
 {
-    return worker.stopQuery(queryId);
+    return worker.stopQuery(queryId, true);
+}
+
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::terminate(QueryId queryId)
+{
+    return worker.stopQuery(queryId, false);
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const

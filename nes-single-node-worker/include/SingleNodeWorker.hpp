@@ -64,7 +64,7 @@ public:
 
     /// Stops the Query and moves it into the StoppedState.
     /// @param queryId identifies the registered query
-    std::expected<void, Exception> stopQuery(QueryId queryId) noexcept;
+    std::expected<void, Exception> stopQuery(QueryId queryId, bool graceful) noexcept;
 
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> getQueryStatus(QueryId queryId) const noexcept;
