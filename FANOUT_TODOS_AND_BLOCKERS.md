@@ -126,7 +126,7 @@ Precedent: the physical layer already works this way (`PhysicalOperatorWrapper` 
 - **R1 — Backpressure covers only sink #1.** `BackpressureController` is move-only and owned by exactly one sink by design (`BackpressureChannel.hpp:27`). In the PoC a slow second sink exhausts the buffer pool instead of throttling the source — fine for a statistics tap (which should be lightweight), dangerous for two full-weight sinks. Proper fix (multi-controller/counting backpressure channel) is follow-up work.
 - **R2 — ~~Fan-out is invisible to the optimizer~~ — mostly lifted (2026-07-12).** DAG plans now pass through the full rule pipeline (binding, inference, layout, join-type decisions see both branches). Still invisible to operator *placement* (single-root, guarded) — relevant only for the distributed path.
 - **R3 — Mixed sink formats need per-branch formatting pipelines** (part of B3). If missed, two sinks with different formats would share one emit — data corruption. Covered by dedicated unit tests.
-- **R4 — Non-NATIVE source formats parse once per branch** when fanning out directly at the source. Correct but wasteful; acceptable for the PoC.
+- **R4 — Non-NATIVE source formats parse once per branch** when fanning out directly at the source. Correct but wasteful; acceptable for the PoC. Fix proposed: parse-once pipelines (see "Where can a tap go?" section) — split the parsing scan into its own pipeline whenever a non-native source has ≥ 2 consumers.
 - **R5 — `explain`/PlanRenderer** prints a shared subtree once per root. Cosmetic only.
 - **R6 — Untested interaction surface.** Fan-in (union/join) is well-tested; fan-out reuses the same mechanisms mirrored, but combinations (fan-out *into* a join branch, fan-out of a window pipeline) have zero existing coverage. The PoC tests cover the basic shapes; anything fancier should be treated as unvalidated.
 
@@ -176,10 +176,65 @@ the signal), swap the node's `ExecutablePipelineStage`, and migrate any operator
 hot-swap machinery exists in the engine (verified — there is no interpreter→compiled swap either); this is a
 substantially larger project than the successor-edge splice and stays out of scope.
 
+**Eager vs lazy boundary creation — how `tappable_pipelines` relates to runtime recompilation.** The two
+are the same idea executed at different times: the flag creates boundaries EAGERLY at compile time; runtime
+pipeline splitting would create them LAZILY at attach time. A full recompilation capability strictly
+subsumes the flag (it could also split *between fused operators*, i.e. solve Case 2, and it works on any
+running query regardless of how it was compiled — no submission-time opt-in needed). But they pay very
+different bills:
+
+| | `tappable_pipelines` (eager) | runtime pipeline splitting (lazy) |
+|---|---|---|
+| steady-state cost | one extra pipeline hop per non-native sink, ALWAYS, tapped or not | zero until the first tap (optimal fused plan) |
+| attach cost | unchanged: swap a successor vector, no perturbation | recompile stage (Nautilus/MLIR, seconds), quiesce/drain the pipeline (latency spike in the main query), swap stage, migrate operator-handler state, rollback story |
+| after the first tap | (same hop as before) | the SAME extra hop the flag would have imposed, just deferred — un-splitting on detach = more machinery |
+| implementation | ~a policy branch in the pipelining phase (done) | the largest deferred item; nothing to build on (no swap precedent in the engine) |
+| covers Case 2 | no | yes |
+| retrofit running queries | no (submission-time decision) | yes |
+
+If runtime splitting is ever built (for Case 2, or for adaptive redeployment where stage hot-swap is wanted
+anyway), the flag becomes redundant for the sink-formatting case — or survives as a "low-latency-attach"
+mode: eager boundaries make attach instantaneous, lazy ones make the first attach expensive and briefly
+disruptive to the main query.
+
 **In-line insertion (middle ground).** The current attach adds a *parallel observer*; inserting an operator
 INTO the main data path at an existing boundary (new node takes over the target's successors) would be a
 small extension of the same edge mechanics, restricted to stateless, schema-preserving operators.
 Mid-pipeline in-line insertion collapses into Case 2.
+
+**What about the source boundary?** The source→pipeline edge is also a boundary, but with three caveats:
+1. *Runtime attach cannot reach it:* the source is not a `RunningQueryPlanNode` — `RunningSource` captures
+   its successor list BY VALUE inside the emit closure at query start (`RunningSource.cpp:53,62`). Making it
+   attachable needs the same COW treatment the node successors got (deferred: "source closure rework").
+2. *For non-native sources the data there is RAW bytes*, not native tuples (buffers may start/end
+   mid-tuple). A tap would need its own parsing scan, and a LATE-attached parser starts mid-stream with the
+   head of its first spanning tuple missing — the SequenceShredder's behavior in that case is unanalyzed.
+3. *Statically it works today* (source fan-out compiles fine), but every branch parses the raw stream
+   independently — that is risk R4.
+
+**Proposed: parse-once pipelines (fixes R4 + the best tap point; NOT yet implemented).** Split the parsing
+scan of a non-native source into its own pipeline instead of fusing it into the first consumer:
+
+```
+today (source fan-out):                      proposed (parse-once):
+[src] ─┬─> [scan(parse)|A…]                  [src] ─> [scan(parse)|nativeEmit] ─┬─> [scan|A…]
+       └─> [scan(parse)|B…]                                                     └─> [scan|B…]
+   raw bytes, parsed once PER BRANCH             parsed ONCE; boundary carries native tuples
+```
+
+- At a static source fan-out point this is essentially an unconditional win: N full parses become one parse
+  plus one buffer hop — so it should apply whenever a non-native source has ≥ 2 consumers, no flag needed.
+- For a SINGLE consumer it is the usual eager-boundary trade (extra hop for observability) → gate it behind
+  `tappable_pipelines`, mirroring the sink-side split.
+- The parse boundary is the most natural tap point in the plan: the COMPLETE input stream as native tuples,
+  on a regular pipeline node that runtime attach can target TODAY (unlike the source itself), with no
+  shredder mid-stream hazard (the tap consumes post-shredder buffers).
+- Native sources have no parse step — for them the full-input boundary remains the source edge, i.e. the
+  closure rework above; a parse-split does not apply.
+- Footnote: consumers then share ONE SequenceShredder / parsed-sequence domain instead of N independent
+  ones — identical results, simpler metadata flow; deserves its own shape test.
+- Note that parse-once already holds *incidentally* whenever sharing begins at an operator (the parse fuses
+  into the head of the shared pipeline); the proposal only changes plans whose sharing begins at the source.
 
 For statistics taps, boundaries are usually sufficient: sources, pipeline breakers (windows, joins) and
 fan-out points all materialize native buffers, and `tappable_pipelines` manufactures boundaries everywhere
