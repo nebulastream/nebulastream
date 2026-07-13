@@ -34,10 +34,6 @@ enum ChannelHandlerStatus {
     /// The local software closed the channel (via `SenderChannel::close()`),
     /// and the Close message was successfully sent to the receiver.
     ClosedBySoftware,
-    /// The local software closed the channel, but sending the Close message
-    /// to the receiver failed. This can happen if the network connection was
-    /// already broken when attempting to propagate the close signal.
-    ClosedBySoftwareButFailedToPropagate(Error),
     /// The channel was cancelled via the cancellation token.
     Cancelled,
 }
@@ -99,6 +95,8 @@ pub(super) enum ChannelCommand {
     /// The boolean sent through the oneshot indicates: true if both pending and
     /// in-flight queues are empty, false otherwise.
     Flush(oneshot::Sender<bool>),
+    /// Send a stop message to the `ReceiverChannel`
+    Stop(oneshot::Sender<()>),
 }
 pub(super) type ChannelCommandQueue = async_channel::Sender<ChannelCommand>;
 pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCommand>;
@@ -185,6 +183,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     .await?
                     .map_err(|e| ErrorOrStatus::Error(e.into()))?;
                 let _ = done.send(self.pending_writes.is_empty() && self.wait_for_ack.is_empty());
+            }
+            ChannelCommand::Stop(done) => {
+                Self::cancellable(&self.cancellation_token, self.writer.send(DataChannelRequest::Close), )
+                .await?
+                .map_err(|e| ErrorOrStatus::Error(e.into()))?;
+                let _ = done.send(());
             }
         }
         Ok(())
@@ -306,12 +310,9 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         s: &mut ChannelCommandQueueListener,
     ) -> InternalResult<ChannelCommand> {
         let Ok(r) = Self::cancellable(cancellation_token, s.recv()).await? else {
-            // we don't send the stop here because we don't have access to the writer.
-            // the `run` method will eventually fix up this error by sending the `Close`
+            // Channel was closed by software; tear down
             return Err(ErrorOrStatus::Status(
-                ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(
-                    "Did not try to propagate".into(),
-                ),
+                ChannelHandlerStatus::ClosedBySoftware,
             ));
         };
         Ok(r)
@@ -411,23 +412,6 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             ErrorOrStatus::Error(e) => return Err(e),
             ErrorOrStatus::Status(status) => status,
         };
-
-        // Fixup the ClosedBySoftwareButFailedToPropagate created in read_from_software
-        if let ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(_) = status {
-            let Some(result) = self
-                .cancellation_token
-                .run_until_cancelled(self.writer.send(DataChannelRequest::Close))
-                .await
-            else {
-                return Ok(ChannelHandlerStatus::Cancelled);
-            };
-            if let Err(e) = result {
-                return Ok(ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(
-                    e.into(),
-                ));
-            };
-            return Ok(ChannelHandlerStatus::ClosedBySoftware);
-        }
 
         Ok(status)
     }
@@ -544,10 +528,6 @@ pub(super) fn create_channel_handler(
                     }
                     ChannelHandlerStatus::ClosedBySoftware => {
                         info!("Channel Closed by software.");
-                    }
-                    ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(e) => {
-                        info!("Channel Closed by software.");
-                        warn!("Failed to propagate ChannelClose to other side due to: {e}");
                     }
                     ChannelHandlerStatus::Cancelled => {
                         info!("Channel Closed by cancellation.");
