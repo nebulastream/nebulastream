@@ -56,6 +56,13 @@ public:
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
     friend std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter& format);
+
+private:
+    /// Per-field pre-value glue, precomputed once at construction: field 0 gets `{"name":`, every
+    /// other field `,"name":` (names JSON-escaped). The strings live here so their c_str() pointers
+    /// can be embedded as compile-time constants into the JIT'd pipeline (same pattern as the CSV
+    /// formatter's delimiter members).
+    std::vector<std::string> fieldPrefixes;
 };
 
 }
