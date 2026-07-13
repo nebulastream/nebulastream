@@ -10,9 +10,8 @@
 enable:
   - lazy_overload
   - output_parse
-  - input_parse
 
 disable:
+  - input_parse
 #  - output_parse
-#  - input_parse
-#  - lazy_overload
+##  - lazy_overload
