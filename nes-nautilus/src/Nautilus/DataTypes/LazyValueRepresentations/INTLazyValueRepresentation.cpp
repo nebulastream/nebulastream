@@ -32,14 +32,39 @@
 namespace NES
 {
 
+/// Renders the constant's decimal digits into the tail of `buf` with plain arithmetic and
+/// returns the first digit's position; length via `end - returned`. std::to_string here was
+/// an opaque allocating call the JIT could neither inline nor hoist - it executed per row
+/// per comparison term and dominated the overloaded filter (33.6% to_string + 11.2% string
+/// memmove of all worker cycles on a 5-way OR, session 2026-07-13). A plain digit loop
+/// inlines into the JIT module, so for a query literal LLVM constant-folds the whole
+/// conversion to immediate byte stores.
+template <typename T>
+[[gnu::always_inline]] static inline char* renderConstantDigits(char (&buf)[24], const T rhs)
+{
+    char* rhsDigits = buf + sizeof(buf);
+    using U = std::make_unsigned_t<T>;
+    U mag = rhs < 0 ? static_cast<U>(U{0} - static_cast<U>(rhs)) : static_cast<U>(rhs);
+    do
+    {
+        *--rhsDigits = static_cast<char>('0' + (mag % 10));
+        mag /= 10;
+    } while (mag != 0);
+    if (rhs < 0)
+    {
+        *--rhsDigits = '-';
+    }
+    return rhsDigits;
+}
+
 template <typename T>
 NAUTILUS_TAGGED_INLINE(lazy_overload)
 static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
 {
-    const std::string_view lhsString{reinterpret_cast<const char*>(lazyPtr), lazySize};
-    /// Will be skipped by compiler by preparing the ascii chars of the constant in memory
-    const std::string rhsString = std::to_string(rhs);
-    return lhsString == rhsString;
+    char buf[24];
+    const char* rhsDigits = renderConstantDigits(buf, rhs);
+    const auto rhsLen = static_cast<uint64_t>(buf + sizeof(buf) - rhsDigits);
+    return lazySize == rhsLen && std::memcmp(lazyPtr, rhsDigits, rhsLen) == 0;
 }
 
 template <typename T>
@@ -61,15 +86,17 @@ static bool constantLt(const int8_t* lazyPtr, const uint64_t lazySize, const T r
     }
     else
     {
-        /// Will be skipped by compiler by preparing the ascii chars of the constant in memory
-        const std::string rhsString = std::to_string(rhs);
-        if (lazySize != rhsString.length())
+        char buf[24];
+        const char* rhsDigits = renderConstantDigits(buf, rhs);
+        const auto rhsLen = static_cast<uint64_t>(buf + sizeof(buf) - rhsDigits);
+        if (lazySize != rhsLen)
         {
-            result = rhsNegative ^ (lazySize < rhsString.length());
+            result = rhsNegative ^ (lazySize < rhsLen);
         }
         else
         {
-            result = rhsNegative ? lhsString > rhsString : lhsString < rhsString;
+            const int cmp = std::memcmp(lazyPtr, rhsDigits, lazySize);
+            result = rhsNegative ? cmp > 0 : cmp < 0;
         }
     }
     return result;

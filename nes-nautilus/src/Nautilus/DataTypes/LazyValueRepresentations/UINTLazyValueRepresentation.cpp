@@ -14,6 +14,7 @@
 
 #include <LazyValueRepresentations/UINTLazyValueRepresentation.hpp>
 
+#include <cstring>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Util/InlineTagMacro.hpp>
@@ -26,36 +27,41 @@
 namespace NES
 {
 
+/// Fold-friendly digit rendering - see the comment on the INTLazyValueRepresentation twin:
+/// std::to_string was an opaque per-row allocating call; a plain digit loop inlines into
+/// the JIT and constant-folds to immediate byte stores for query literals.
+template <typename T>
+[[gnu::always_inline]] static inline char* renderConstantDigits(char (&buf)[24], const T rhs)
+{
+    char* rhsDigits = buf + sizeof(buf);
+    T mag = rhs;
+    do
+    {
+        *--rhsDigits = static_cast<char>('0' + (mag % 10));
+        mag /= 10;
+    } while (mag != 0);
+    return rhsDigits;
+}
+
 template <typename T>
 NAUTILUS_TAGGED_INLINE(lazy_overload)
 static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
 {
-    const std::string_view lhsString{reinterpret_cast<const char*>(lazyPtr), lazySize};
-    /// Will be skipped by compiler by preparing the ascii chars of the constant in memory
-    const std::string rhsString = std::to_string(rhs);
-    return lhsString == rhsString;
+    char buf[24];
+    const char* rhsDigits = renderConstantDigits(buf, rhs);
+    const auto rhsLen = static_cast<uint64_t>(buf + sizeof(buf) - rhsDigits);
+    return lazySize == rhsLen && std::memcmp(lazyPtr, rhsDigits, rhsLen) == 0;
 }
 
 template <typename T>
 NAUTILUS_TAGGED_INLINE(lazy_overload)
 static bool constantLt(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
 {
-    const std::string_view lhsString{reinterpret_cast<const char*>(lazyPtr), lazySize};
-    /// UINTs can't be negative
-    const bool rhsNegative = rhs < 0;
-
-    bool result = false;
-    if (rhsNegative)
-    {
-        result = false;
-    }
-    else
-    {
-        /// Will be skipped by compiler by preparing the ascii chars of the constant in memory
-        const std::string rhsString = std::to_string(rhs);
-        result = lazySize != rhsString.length() ? rhsNegative ^ (lazySize < rhsString.length()) : lhsString < rhsString;
-    }
-    return result;
+    /// UINTs can't be negative, so the sign-asymmetry branches of the signed twin collapse.
+    char buf[24];
+    const char* rhsDigits = renderConstantDigits(buf, rhs);
+    const auto rhsLen = static_cast<uint64_t>(buf + sizeof(buf) - rhsDigits);
+    return lazySize != rhsLen ? (lazySize < rhsLen) : std::memcmp(lazyPtr, rhsDigits, lazySize) < 0;
 }
 
 nautilus::val<bool> UINTLazyValueRepresentation::eqImpl(const nautilus::val<bool>& rhs) const
