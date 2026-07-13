@@ -100,7 +100,7 @@ LogicalOperator pushBeyondSource(TypedLogicalOperator<SourceDescriptorLogicalOpe
     /// Recursion stop. Add projection if required is a strict subset of output schema.
 
     const auto outputSchema = op.getOutputSchema();
-    if (required.empty() && outputSchema.begin() != outputSchema.end())
+    if (required.empty() && not(outputSchema.empty()))
     {
         required.insert(*outputSchema.begin());
     }
