@@ -20,6 +20,9 @@
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
-/// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
-std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& queryPlan);
+/// During this step we create a PipelinedQueryPlan out of the QueryPlan obj.
+/// With `tappablePipelines` every operator pipeline is closed with a native emit and non-native sinks get
+/// their own formatting pipeline (as fan-out points do), keeping every pipeline boundary observable for
+/// branches attached to the running query.
+std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& queryPlan, bool tappablePipelines = false);
 }

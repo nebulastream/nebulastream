@@ -105,13 +105,12 @@ public:
         return schema;
     }
 
-    /// Main query: FIFO file source (CSV) -> shared selection -> TWO file sinks (static fan-out).
-    /// The two sinks matter for tappability: at the fan-out point the shared selection pipeline is closed
-    /// with a NATIVE emit and per-branch formatting pipelines. With a single CSV sink, the pipelining phase
-    /// would fuse the CSV formatting emit INTO the selection pipeline, and a tap attached there would read
-    /// formatted bytes instead of native tuples.
-    LogicalPlan
-    makeMainPlan(const std::filesystem::path& fifoPath, const std::filesystem::path& sinkAPath, const std::filesystem::path& sinkBPath)
+    /// Main query: FIFO file source (CSV) -> shared selection -> one file sink per given path.
+    /// The sink count matters for tappability: at a fan-out point (two sinks) the shared selection pipeline
+    /// is closed with a NATIVE emit and per-branch formatting pipelines. With a single CSV sink, the
+    /// pipelining phase fuses the CSV formatting emit INTO the selection pipeline (a tap attached there would
+    /// read formatted bytes) - unless the plan is compiled with tappable_pipelines.
+    LogicalPlan makeMainPlan(const std::filesystem::path& fifoPath, const std::vector<std::filesystem::path>& sinkPaths)
     {
         auto sourceDescriptor = sourceCatalog.getInlineSource(
             "File", createSchema(), Host("localhost"), {{"type", "CSV"}}, {{"file_path", fifoPath.string()}});
@@ -128,16 +127,17 @@ public:
         selection = selection.withInferredSchema({source.getOutputSchema()});
         selection = selection.withTraitSet(TraitSet{MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT}});
 
-        auto makeSink = [&](const std::filesystem::path& path)
+        std::vector<LogicalOperator> sinkRoots;
+        for (const auto& path : sinkPaths)
         {
             auto sinkDescriptor = sinkCatalog.getInlineSink(
                 createSchema(), "File", Host("localhost"), {{"output_format", "CSV"}, {"file_path", path.string()}}, {});
             EXPECT_TRUE(sinkDescriptor.has_value());
-            return LogicalOperator{SinkLogicalOperator{sinkDescriptor.value()}} /// NOLINT(bugprone-unchecked-optional-access)
-                .withChildren({selection})
-                .withTraitSet(TraitSet{MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT}});
-        };
-        return LogicalPlan(randomQueryId(), {makeSink(sinkAPath), makeSink(sinkBPath)});
+            sinkRoots.push_back(LogicalOperator{SinkLogicalOperator{sinkDescriptor.value()}} /// NOLINT(bugprone-unchecked-optional-access)
+                                    .withChildren({selection})
+                                    .withTraitSet(TraitSet{MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT}}));
+        }
+        return LogicalPlan(randomQueryId(), sinkRoots);
     }
 
     /// Tap branch: placeholder NATIVE file source (describes the tapped data, never started) -> file sink.
@@ -161,9 +161,11 @@ public:
         return LogicalPlan(randomQueryId(), {sink});
     }
 
-    static std::unique_ptr<CompiledQueryPlan> compile(LogicalPlan plan)
+    static std::unique_ptr<CompiledQueryPlan> compile(LogicalPlan plan, const bool tappablePipelines = false)
     {
-        auto compiler = QueryCompilation::QueryCompiler{QueryExecutionConfiguration{}};
+        QueryExecutionConfiguration configuration;
+        configuration.tappablePipelines.setValue(tappablePipelines);
+        auto compiler = QueryCompilation::QueryCompiler{configuration};
         return compiler.compileQuery(std::make_unique<QueryCompilation::QueryCompilationRequest>(
             QueryCompilation::QueryCompilationRequest{.queryPlan = std::move(plan)}));
     }
@@ -232,7 +234,7 @@ TEST_F(AttachTapE2ETest, TapAttachedToRunningQueryReceivesStreamSuffix)
     const int fifoFd = ::open(fifoPath.c_str(), O_RDWR);
     ASSERT_GE(fifoFd, 0);
 
-    auto mainPlan = makeMainPlan(fifoPath, sinkAPath, sinkBPath);
+    auto mainPlan = makeMainPlan(fifoPath, {sinkAPath, sinkBPath});
     const auto mainQueryId = mainPlan.getQueryId();
     auto compiledMain = compile(std::move(mainPlan));
     ASSERT_TRUE(compiledMain);
@@ -283,6 +285,64 @@ TEST_F(AttachTapE2ETest, TapAttachedToRunningQueryReceivesStreamSuffix)
     EXPECT_EQ(*sinkAIds.rbegin(), (3 * ROWS_PER_BUFFER) - 1);
 
     /// The tap received exactly the stream suffix that flowed while it was attached (phase 2).
+    std::set<uint64_t> expectedTapIds;
+    for (uint64_t id = ROWS_PER_BUFFER; id < 2 * ROWS_PER_BUFFER; ++id)
+    {
+        expectedTapIds.insert(id);
+    }
+    EXPECT_EQ(tapIds, expectedTapIds);
+}
+
+/// A SINGLE-sink query is normally not tappable (the CSV formatting emit is fused into the selection
+/// pipeline). Compiled with tappable_pipelines, the selection pipeline ends in a native emit and the tap
+/// attaches cleanly: phase1 -> attach -> phase2 -> EOS; the tap receives exactly phase 2.
+TEST_F(AttachTapE2ETest, TappableCompilationMakesSingleSinkQueryTappable)
+{
+    const auto fifoPath = testDir / "input.fifo";
+    const auto sinkAPath = testDir / "sinkA.csv";
+    const auto tapSinkPath = testDir / "tap.csv";
+    ASSERT_EQ(::mkfifo(fifoPath.c_str(), 0600), 0);
+    const int fifoFd = ::open(fifoPath.c_str(), O_RDWR);
+    ASSERT_GE(fifoFd, 0);
+
+    auto mainPlan = makeMainPlan(fifoPath, {sinkAPath});
+    const auto mainQueryId = mainPlan.getQueryId();
+    auto compiledMain = compile(std::move(mainPlan), /*tappablePipelines=*/true);
+    ASSERT_TRUE(compiledMain);
+    ASSERT_EQ(compiledMain->sources.size(), 1U);
+    ASSERT_EQ(compiledMain->sources.front().successors.size(), 1U);
+    const auto targetPipeline = compiledMain->sources.front().successors.front().lock();
+    ASSERT_TRUE(targetPipeline);
+    const auto targetPipelineId = targetPipeline->id;
+
+    auto compiledTap = compile(makeTapPlan(tapSinkPath));
+    ASSERT_TRUE(compiledTap);
+
+    const auto engine = NodeEngineBuilder(WorkerConfiguration{}, std::make_shared<NoopStatisticListener>()).build(Host("localhost"));
+    engine->registerCompiledQueryPlan(mainQueryId, std::move(compiledMain));
+    engine->startQuery(mainQueryId);
+    ASSERT_TRUE(waitForStatus(*engine, mainQueryId, QueryStatus::Running));
+
+    /// Phase 1: before the attachment.
+    writeRows(fifoFd, 0, ROWS_PER_BUFFER);
+    std::this_thread::sleep_for(ASYNC_MARGIN);
+
+    /// Attach the tap to the selection pipeline, which ends in a native emit thanks to tappable compilation.
+    engine->attachToQuery(mainQueryId, targetPipelineId, std::move(compiledTap));
+    std::this_thread::sleep_for(ASYNC_MARGIN);
+
+    /// Phase 2: while the tap is attached.
+    writeRows(fifoFd, ROWS_PER_BUFFER, ROWS_PER_BUFFER);
+    std::this_thread::sleep_for(ASYNC_MARGIN);
+
+    ASSERT_EQ(::close(fifoFd), 0);
+    ASSERT_TRUE(waitForStatus(*engine, mainQueryId, QueryStatus::Stopped));
+
+    const auto sinkAIds = readSinkIds(sinkAPath);
+    const auto tapIds = readSinkIds(tapSinkPath);
+
+    EXPECT_EQ(sinkAIds.size(), 2 * ROWS_PER_BUFFER);
+
     std::set<uint64_t> expectedTapIds;
     for (uint64_t id = ROWS_PER_BUFFER; id < 2 * ROWS_PER_BUFFER; ++id)
     {

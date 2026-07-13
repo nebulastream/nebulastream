@@ -111,7 +111,8 @@ public:
     }
 
     /// Builds the PhysicalPlan for the given sink-rooted wrappers and runs the pipelining phase.
-    static std::shared_ptr<PipelinedQueryPlan> pipeline(const std::vector<std::shared_ptr<PhysicalOperatorWrapper>>& sinkRoots)
+    static std::shared_ptr<PipelinedQueryPlan>
+    pipeline(const std::vector<std::shared_ptr<PhysicalOperatorWrapper>>& sinkRoots, const bool tappablePipelines = false)
     {
         auto builder = PhysicalPlanBuilder(randomQueryId());
         for (const auto& sinkRoot : sinkRoots)
@@ -119,7 +120,7 @@ public:
             builder.addSinkRoot(sinkRoot);
         }
         builder.setOperatorBufferSize(BUFFER_SIZE);
-        return QueryCompilation::PipeliningPhase::apply(std::move(builder).finalize());
+        return QueryCompilation::PipeliningPhase::apply(std::move(builder).finalize(), tappablePipelines);
     }
 
     /// Counts operators of type T in the pipeline's operator chain.
@@ -242,6 +243,74 @@ TEST_F(PipeliningPhaseFanOutTest, OperatorFanOutToOperatorBranches)
         EXPECT_EQ(countOperators<UnionPhysicalOperator>(*branch), 1U);
         EXPECT_EQ(countOperators<EmitPhysicalOperator>(*branch), 1U);
     }
+}
+
+/// Without tappable compilation, a single non-native sink fuses its formatting emit INTO the operator
+/// pipeline: the operator pipeline's boundary carries formatted bytes and is NOT a valid tap point.
+/// With tappable compilation, the operator pipeline is closed with a native emit and the sink formats in
+/// its own pipeline (exactly the shape fan-out points produce).
+TEST_F(PipeliningPhaseFanOutTest, TappableModeSplitsFormattingSinkFromOperatorPipeline)
+{
+    auto makeShape = [&](const bool tappable)
+    {
+        auto source = makeSourceWrapper();
+        auto op = makeIntermediateWrapper();
+        auto sink = makeSinkWrapper();
+        op->addChild(source);
+        sink->addChild(op);
+        return pipeline({sink}, tappable);
+    };
+
+    /// Default: source -> [scan|union|fmtEmit] -> [sink]: the operator pipeline's successor IS the sink.
+    const auto fusedPlan = makeShape(false);
+    ASSERT_EQ(fusedPlan->getPipelines().size(), 1U);
+    const auto fusedOperatorPipeline = fusedPlan->getPipelines()[0]->getSuccessors().at(0);
+    ASSERT_EQ(fusedOperatorPipeline->getSuccessors().size(), 1U);
+    EXPECT_TRUE(fusedOperatorPipeline->getSuccessors()[0]->isSinkPipeline());
+
+    /// Tappable: source -> [scan|union|nativeEmit] -> [scan|fmtEmit] -> [sink]: the operator pipeline's
+    /// successor is a formatting pipeline, so its boundary stays native (= tappable).
+    const auto tappablePlan = makeShape(true);
+    ASSERT_EQ(tappablePlan->getPipelines().size(), 1U);
+    const auto operatorPipeline = tappablePlan->getPipelines()[0]->getSuccessors().at(0);
+    EXPECT_EQ(countOperators<UnionPhysicalOperator>(*operatorPipeline), 1U);
+    EXPECT_EQ(countOperators<EmitPhysicalOperator>(*operatorPipeline), 1U);
+    ASSERT_EQ(operatorPipeline->getSuccessors().size(), 1U);
+    const auto formattingPipeline = operatorPipeline->getSuccessors()[0];
+    EXPECT_TRUE(formattingPipeline->isOperatorPipeline());
+    EXPECT_TRUE(formattingPipeline->getRootOperator().tryGet<ScanPhysicalOperator>());
+    EXPECT_EQ(countOperators<EmitPhysicalOperator>(*formattingPipeline), 1U);
+    ASSERT_EQ(formattingPipeline->getSuccessors().size(), 1U);
+    EXPECT_TRUE(formattingPipeline->getSuccessors()[0]->isSinkPipeline());
+}
+
+/// Tappable compilation also splits the parsing pipeline of a source->sink passthrough query, keeping the
+/// parsed (native) data observable between parsing and output formatting.
+TEST_F(PipeliningPhaseFanOutTest, TappableModeSplitsPassthroughFormatting)
+{
+    auto makeShape = [&](const bool tappable)
+    {
+        auto source = makeSourceWrapper();
+        auto sink = makeSinkWrapper();
+        sink->addChild(source);
+        return pipeline({sink}, tappable);
+    };
+
+    /// Default: source -> [scan(parse)|fmtEmit] -> [sink].
+    const auto fusedPlan = makeShape(false);
+    const auto fusedParsingPipeline = fusedPlan->getPipelines()[0]->getSuccessors().at(0);
+    ASSERT_EQ(fusedParsingPipeline->getSuccessors().size(), 1U);
+    EXPECT_TRUE(fusedParsingPipeline->getSuccessors()[0]->isSinkPipeline());
+
+    /// Tappable: source -> [scan(parse)|nativeEmit] -> [scan|fmtEmit] -> [sink].
+    const auto tappablePlan = makeShape(true);
+    const auto parsingPipeline = tappablePlan->getPipelines()[0]->getSuccessors().at(0);
+    EXPECT_EQ(countOperators<EmitPhysicalOperator>(*parsingPipeline), 1U);
+    ASSERT_EQ(parsingPipeline->getSuccessors().size(), 1U);
+    const auto formattingPipeline = parsingPipeline->getSuccessors()[0];
+    EXPECT_TRUE(formattingPipeline->isOperatorPipeline());
+    ASSERT_EQ(formattingPipeline->getSuccessors().size(), 1U);
+    EXPECT_TRUE(formattingPipeline->getSuccessors()[0]->isSinkPipeline());
 }
 
 /// Regression: fan-IN (two sources converging on one shared downstream operator) must still produce

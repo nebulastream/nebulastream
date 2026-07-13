@@ -32,7 +32,7 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
 {
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
     auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
-    auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);
+    auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan, defaultQueryExecution.tappablePipelines.getValue());
     return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
 }
 }

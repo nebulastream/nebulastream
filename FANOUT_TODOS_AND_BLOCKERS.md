@@ -153,6 +153,38 @@ Precedent: the physical layer already works this way (`PhysicalOperatorWrapper` 
 >   the CompiledQueryPlan before registering it), gRPC/SingleNodeWorker exposure of attach/detach, and the
 >   Option 2 re-sequencing boundary for stateful taps.
 
+### Where can a tap go? Granularity limits of the live splice
+
+Attach hooks into **existing pipeline boundaries** — the only places where buffers materialize. Inside a
+pipeline, fused operators pass values through registers in compiled code; there is no TupleBuffer between
+`filter` and `map` in `[scan|filter|map|emit]` that anyone could observe. Two distinct cases:
+
+**Case 1 — the boundary exists but carries the wrong representation (mild, SOLVED).** With a single
+non-native sink, the pipelining phase fuses the output-formatting emit into the last operator pipeline, so
+its boundary carries formatted bytes and a native tap reads garbage (this is how the e2e test failed first).
+Fixed by the **`tappable_pipelines` compilation flag** (`QueryExecutionConfiguration`, default off): every
+operator pipeline is closed with a native emit and each non-native sink formats in its own pipeline — the
+shape fan-out points produce anyway. Cost: one extra pipeline hop (scan + copy) per non-native sink.
+"Keep this query tappable" is a cheap submission-time decision; covered by
+`PipeliningPhaseFanOutTest.TappableMode*` and `AttachTapE2ETest.TappableCompilationMakesSingleSinkQueryTappable`
+(a single-sink query, normally untappable, accepts a tap when compiled with the flag).
+
+**Case 2 — the desired location is mid-pipeline (hard, OPEN).** Observing (or inserting) between two FUSED
+operators requires a boundary that does not exist. Creating one at runtime means breaking up a running
+pipeline: recompile the stage as two pipelines, drain its in-flight tasks (the `pendingTasks` counter gives
+the signal), swap the node's `ExecutablePipelineStage`, and migrate any operator state inside it. No such
+hot-swap machinery exists in the engine (verified — there is no interpreter→compiled swap either); this is a
+substantially larger project than the successor-edge splice and stays out of scope.
+
+**In-line insertion (middle ground).** The current attach adds a *parallel observer*; inserting an operator
+INTO the main data path at an existing boundary (new node takes over the target's successors) would be a
+small extension of the same edge mechanics, restricted to stateless, schema-preserving operators.
+Mid-pipeline in-line insertion collapses into Case 2.
+
+For statistics taps, boundaries are usually sufficient: sources, pipeline breakers (windows, joins) and
+fan-out points all materialize native buffers, and `tappable_pipelines` manufactures boundaries everywhere
+else at submission time.
+
 ### The sequence-number question: stateless taps are SAFE (verified in code)
 
 A late-attached branch sees buffers starting mid-stream (first SequenceNumber ≫ 1). We traced **every**

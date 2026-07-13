@@ -186,7 +186,8 @@ void buildPipelineRecursively(
     OperatorPipelineMap& pipelineMap,
     PipelinePolicy policy,
     uint64_t configuredBufferSize,
-    const MergePointSet& mergePoints);
+    const MergePointSet& mergePoints,
+    bool tappablePipelines);
 
 /// Recurses into the children of an operator that was just placed into pipeline. A single child continues with
 /// childPolicy as before. Multiple children form a fan-out point: every consumer must read the operator's full
@@ -197,14 +198,16 @@ void recurseIntoChildren(
     OperatorPipelineMap& pipelineMap,
     const PipelinePolicy childPolicy,
     const uint64_t configuredBufferSize,
-    const MergePointSet& mergePoints)
+    const MergePointSet& mergePoints,
+    const bool tappablePipelines)
 {
     const auto children = opWrapper->getChildren();
     if (children.size() <= 1)
     {
         for (const auto& child : children)
         {
-            buildPipelineRecursively(child, opWrapper, pipeline, pipelineMap, childPolicy, configuredBufferSize, mergePoints);
+            buildPipelineRecursively(
+                child, opWrapper, pipeline, pipelineMap, childPolicy, configuredBufferSize, mergePoints, tappablePipelines);
         }
         return;
     }
@@ -216,7 +219,7 @@ void recurseIntoChildren(
     for (const auto& child : children)
     {
         buildPipelineRecursively(
-            child, opWrapper, pipeline, pipelineMap, PipelinePolicy::ForceNewClosed, configuredBufferSize, mergePoints);
+            child, opWrapper, pipeline, pipelineMap, PipelinePolicy::ForceNewClosed, configuredBufferSize, mergePoints, tappablePipelines);
     }
 }
 
@@ -227,7 +230,8 @@ void buildPipelineRecursively(
     OperatorPipelineMap& pipelineMap,
     PipelinePolicy policy,
     uint64_t configuredBufferSize,
-    const MergePointSet& mergePoints)
+    const MergePointSet& mergePoints,
+    bool tappablePipelines)
 {
     /// Check if we've already seen this operator
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
@@ -242,6 +246,27 @@ void buildPipelineRecursively(
                 auto outputFormat = sink->getDescriptor().getFormatType();
                 if (toUpperCase(outputFormat) != "NATIVE")
                 {
+                    if (tappablePipelines)
+                    {
+                        /// Keep this predecessor pipeline observable: close it natively and format in a
+                        /// separate per-predecessor pipeline in front of the already-created sink pipeline.
+                        addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
+                        const auto formattingPipeline = std::make_shared<Pipeline>(createScanOperator(
+                            *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
+                        currentPipeline->addSuccessor(formattingPipeline, currentPipeline);
+                        addOutputFormattingEmit(
+                            formattingPipeline,
+                            *opWrapper,
+                            configuredBufferSize,
+                            std::string(outputFormat),
+                            sink->getDescriptor().getOutputFormatterConfig());
+                        INVARIANT(
+                            formattingPipeline->getRootOperator().getChild().has_value(),
+                            "Scan operator requires at least an emit as child.");
+                        pipelineMap[formattingPipeline->getRootOperator().getChild().value().getId()] = formattingPipeline;
+                        formattingPipeline->addSuccessor(it->second, formattingPipeline);
+                        return;
+                    }
                     addOutputFormattingEmit(
                         currentPipeline,
                         *prevOpWrapper,
@@ -279,7 +304,8 @@ void buildPipelineRecursively(
         pipelineMap.emplace(opId, newPipeline);
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
-        recurseIntoChildren(opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
+        recurseIntoChildren(
+            opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints, tappablePipelines);
         return;
     }
 
@@ -303,7 +329,14 @@ void buildPipelineRecursively(
             for (auto& child : opWrapper->getChildren())
             {
                 buildPipelineRecursively(
-                    child, opWrapper, newPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize, mergePoints);
+                    child,
+                    opWrapper,
+                    newPipeline,
+                    pipelineMap,
+                    PipelinePolicy::ForceNew,
+                    configuredBufferSize,
+                    mergePoints,
+                    tappablePipelines);
             }
         }
         else
@@ -316,7 +349,14 @@ void buildPipelineRecursively(
             for (auto& child : opWrapper->getChildren())
             {
                 buildPipelineRecursively(
-                    child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize, mergePoints);
+                    child,
+                    opWrapper,
+                    currentPipeline,
+                    pipelineMap,
+                    PipelinePolicy::ForceNew,
+                    configuredBufferSize,
+                    mergePoints,
+                    tappablePipelines);
             }
         }
 
@@ -342,8 +382,10 @@ void buildPipelineRecursively(
                     *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
                 currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
-                if (toUpperCase(sinkFormat) == "NATIVE")
+                if (toUpperCase(sinkFormat) == "NATIVE" or tappablePipelines)
                 {
+                    /// In tappable mode the parsing pipeline always ends in a native emit, so the parsed data
+                    /// remains observable; a non-native sink then formats in its own pipeline below.
                     addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);
                 }
                 else
@@ -362,12 +404,41 @@ void buildPipelineRecursively(
                 const auto emitOperatorId = sourcePipeline->getRootOperator().getChild().value().getId();
                 pipelineMap[emitOperatorId] = sourcePipeline;
 
+                auto sinkPredecessor = sourcePipeline;
+                if (tappablePipelines and toUpperCase(sinkFormat) != "NATIVE")
+                {
+                    const auto formattingPipeline = std::make_shared<Pipeline>(createScanOperator(
+                        *sourcePipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
+                    sourcePipeline->addSuccessor(formattingPipeline, sourcePipeline);
+                    addOutputFormattingEmit(
+                        formattingPipeline,
+                        *opWrapper,
+                        configuredBufferSize,
+                        std::string(sinkFormat),
+                        sink->getDescriptor().getOutputFormatterConfig());
+                    INVARIANT(
+                        formattingPipeline->getRootOperator().getChild().has_value(), "Scan operator requires at least an emit as child.");
+                    pipelineMap[formattingPipeline->getRootOperator().getChild().value().getId()] = formattingPipeline;
+                    sinkPredecessor = formattingPipeline;
+                }
+
                 const auto sinkPipeline = std::make_shared<Pipeline>(*sink);
-                sourcePipeline->addSuccessor(sinkPipeline, sourcePipeline);
-                auto sinkPipelinePtr = sourcePipeline->getSuccessors().back();
+                sinkPredecessor->addSuccessor(sinkPipeline, sinkPredecessor);
+                auto sinkPipelinePtr = sinkPredecessor->getSuccessors().back();
                 pipelineMap.emplace(opId, sinkPipelinePtr);
                 return;
             }
+        }
+        /// In tappable mode a non-native sink never fuses its formatting emit into the operator pipeline:
+        /// close the pipeline with a native emit here and let the ForceNewClosed path below create the
+        /// per-sink formatting pipeline, exactly as at fan-out points.
+        if (tappablePipelines and policy != PipelinePolicy::ForceNewClosed and toUpperCase(sinkFormat) != "NATIVE")
+        {
+            if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
+            {
+                addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
+            }
+            policy = PipelinePolicy::ForceNewClosed;
         }
         if (policy == PipelinePolicy::ForceNewClosed)
         {
@@ -420,7 +491,14 @@ void buildPipelineRecursively(
         for (auto& child : opWrapper->getChildren())
         {
             buildPipelineRecursively(
-                child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
+                child,
+                opWrapper,
+                newPipelinePtr,
+                pipelineMap,
+                PipelinePolicy::Continue,
+                configuredBufferSize,
+                mergePoints,
+                tappablePipelines);
         }
         return;
     }
@@ -452,7 +530,8 @@ void buildPipelineRecursively(
         PRECONDITION(newPipelinePtr->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
         newPipelinePtr->prependOperator(
             createScanOperator(*currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
-        recurseIntoChildren(opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
+        recurseIntoChildren(
+            opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints, tappablePipelines);
         return;
     }
 
@@ -478,13 +557,14 @@ void buildPipelineRecursively(
     }
     else
     {
-        recurseIntoChildren(opWrapper, currentPipeline, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
+        recurseIntoChildren(
+            opWrapper, currentPipeline, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints, tappablePipelines);
     }
 }
 
 }
 
-std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
+std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan, const bool tappablePipelines)
 {
     const uint64_t configuredBufferSize = physicalPlan.getOperatorBufferSize();
     auto pipelinedPlan = std::make_shared<PipelinedQueryPlan>(physicalPlan.getQueryId(), physicalPlan.getExecutionMode());
@@ -502,7 +582,7 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
         for (const auto& child : rootWrapper->getChildren())
         {
             buildPipelineRecursively(
-                child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize, mergePoints);
+                child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize, mergePoints, tappablePipelines);
         }
     }
 

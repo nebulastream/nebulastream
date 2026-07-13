@@ -72,6 +72,12 @@ public:
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of a operator e.g. during scan",
            {std::make_shared<NumberValidation>()}};
+    BoolOption tappablePipelines
+        = {"tappable_pipelines",
+           "false",
+           "Close every operator pipeline with a native emit and give non-native sinks their own formatting pipeline "
+           "(as fan-out points do). This keeps every pipeline boundary observable, so tap branches can be attached to "
+           "any pipeline of the running query, at the cost of one extra pipeline hop per non-native sink."};
 
     SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
 
@@ -85,6 +91,7 @@ private:
             &numberOfRecordsPerKey,
             &maxNumberOfBuckets,
             &operatorBufferSize,
+            &tappablePipelines,
             &sliceCacheConfiguration};
     }
 };
