@@ -110,6 +110,7 @@ pub mod ffi {
         ) -> Result<Box<SenderDataChannel>>;
 
         fn close_sender_channel(channel: Box<SenderDataChannel>);
+        fn propagate_stop(channel: &SenderDataChannel) -> bool;
         fn flush_sender_channel(channel: &SenderDataChannel) -> bool;
         fn send_buffer(
             channel: &SenderDataChannel,
@@ -486,6 +487,10 @@ fn send_buffer(
 fn flush_sender_channel(channel: &SenderDataChannel) -> bool {
     // If the channel has been closed, we pretend it has been flushed
     channel.chan.flush().unwrap_or(true)
+}
+
+fn propagate_stop(channel: &SenderDataChannel) -> bool {
+    channel.chan.propagate_stop().map(|_| true).unwrap_or(false)
 }
 
 // CXX requires the usage of Boxed types

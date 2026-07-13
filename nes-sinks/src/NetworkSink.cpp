@@ -84,7 +84,7 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
 
         /// Check if the sender network service has pending buffers to send
         /// If yes, keep the pipeline alive by emitting an empty buffer
-        if (!flush_sender_channel(*this->channel.value()))
+        if (!flush_sender_channel(*this->channel.value()) || !propagate_stop(*this->channel.value()))
         {
             pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
             return;

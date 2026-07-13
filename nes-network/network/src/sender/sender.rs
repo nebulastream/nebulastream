@@ -143,11 +143,29 @@ impl SenderChannel {
             .map_err(|_| "Network Service Closed".into())
     }
 
-    /// Closes this channel and propagates the close signal to the `ReceiverChannel`.
+
+    /// Propagates a query stop signal to the `ReceiverChannel`.
     ///
-    /// This method initiates graceful shutdown of the channel. The channel handler
-    /// will attempt to send a `Close` message to the receiver before terminating
-    /// the connection.
+    /// This method provides the functionality for graceful query shutdowns and allows downstream
+    /// queries to stop.
+    /// This method should not be called when the downstream query should keep running
+    ///
+    /// # Returns
+    ///
+    /// - `Ok()`: Stop has been successfully propagated
+    /// - `Err(_)`: The network service or channel was closed
+    pub fn propagate_stop(&self) -> Result<()> {
+        let (tx, rx) = oneshot::channel();
+        self.queue
+            .send_blocking(ChannelCommand::Stop(tx))
+            .map_err(|_| "Network Service Closed")?;
+        rx.blocking_recv()
+            .map_err(|_| "Network Service Closed".into())
+    }
+
+
+    /// Initiates a hard shutdown on this channel
+    /// Graceful shutdowns should call flush and propagate_stop beforehand
     ///
     /// # Returns
     ///
