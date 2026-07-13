@@ -936,7 +936,11 @@ TEST_F(StatementBinderTest, ParenthesizedPredicatesParse)
     const std::vector<std::string> queries{
         "SELECT pk FROM input WHERE (col1 BETWEEN FLOAT64(90.54) AND FLOAT64(27.89)) INTO File();",
         "SELECT pk FROM input WHERE (col0 IN (INT64(1), INT64(2))) INTO File();",
-        "SELECT pk FROM input WHERE (col1 IS NULL) INTO File();"};
+        "SELECT pk FROM input WHERE (col1 IS NULL) INTO File();",
+        "SELECT pk FROM input WHERE col3 > INT64(360) AND col0 >= INT64(837) OR (col1 BETWEEN FLOAT64(998.16) AND FLOAT64(106.9)) INTO "
+        "File();",
+        "SELECT pk FROM input WHERE col3 > INT64(360) AND col0 >= INT64(837) OR ((col1 >= FLOAT64(998.16) AND col1 <= FLOAT64(106.9))) "
+        "INTO File();"};
 
     for (const auto& query : queries)
     {
