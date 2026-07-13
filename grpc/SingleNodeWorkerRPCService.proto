@@ -35,6 +35,7 @@ message StartQueryReply {
 
 message StopQueryRequest {
     NES.SerializableQueryId queryId = 1;
+    bool graceful = 2;
 }
 
 enum QueryState {

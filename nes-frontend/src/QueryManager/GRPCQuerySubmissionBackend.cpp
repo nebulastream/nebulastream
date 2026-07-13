@@ -155,6 +155,26 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
 {
     grpc::ClientContext context;
     StopQueryRequest request;
+    request.set_graceful(true);
+    *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
+    google::protobuf::Empty response;
+
+    const auto status = stub->StopQuery(&context, request, &response);
+    if (status.ok())
+    {
+        NES_DEBUG("Stopping query {} on node {} was successful.", queryId, workerConfig.host);
+        return {};
+    }
+
+    return std::unexpected{NES::QueryStopFailed(
+        "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
+}
+
+std::expected<void, Exception> GRPCQuerySubmissionBackend::terminate(QueryId queryId)
+{
+    grpc::ClientContext context;
+    StopQueryRequest request;
+    request.set_graceful(false);
     *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
     google::protobuf::Empty response;
 

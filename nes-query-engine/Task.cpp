@@ -144,8 +144,8 @@ FailSourceTask::FailSourceTask(QueryId queryId, std::weak_ptr<RunningSource> tar
 {
 }
 
-StopQueryTask::StopQueryTask(QueryId queryId, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
-    : BaseTask(std::move(queryId), std::move(callback)), catalog(std::move(catalog))
+StopQueryTask::StopQueryTask(QueryId queryId, bool graceful, std::weak_ptr<QueryCatalog> catalog, TaskCallback callback)
+    : BaseTask(std::move(queryId), std::move(callback)), graceful(graceful), catalog(std::move(catalog))
 {
 }
 

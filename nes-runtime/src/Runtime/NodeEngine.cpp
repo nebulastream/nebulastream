@@ -65,12 +65,12 @@ void NodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> 
     queryEngine->start(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider));
 }
 
-void NodeEngine::stopQuery(QueryId queryId)
+void NodeEngine::stopQuery(QueryId queryId, bool graceful)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     NES_INFO("Stop {}", queryId);
     systemEventListener->onEvent(StopQuerySystemEvent(queryId));
-    queryEngine->stop(queryId);
+    queryEngine->stop(queryId, graceful);
 }
 
 }
