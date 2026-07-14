@@ -33,6 +33,7 @@
   "dependencies": [
     "antlr4",
     "argparse",
+    "aravis",
     "boost-asio",
     "boost-filesystem",
     "boost-graph",
@@ -52,6 +53,15 @@
     "magic-enum",
     "nameof",
     "nautilus",
+    {
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "calib3d",
+        "jpeg",
+        "png"
+      ]
+    },
     "reflectcpp",
     "replxx",
     "scope-guard",
