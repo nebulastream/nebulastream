@@ -20,53 +20,31 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 
 namespace NES
 {
 
-void InnerJoinTriggerStrategy::triggerWindow(
+void JoinTriggerStrategy::triggerWindow(
     const std::vector<std::shared_ptr<Slice>>& allSlices,
     const WindowInfoAndSequenceNumber& windowInfo,
     const EmitSlicesFn& emitFn,
-    PipelineExecutionContext* pipelineCtx)
-{
-    const auto totalChunks = allSlices.size() * allSlices.size();
-    ChunkNumber::Underlying chunkNumber = ChunkNumber::INITIAL;
-
-    for (const auto& sliceLeft : allSlices)
-    {
-        for (const auto& sliceRight : allSlices)
-        {
-            const bool isLastChunk = chunkNumber == totalChunks;
-            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
-            emitFn({sliceLeft}, {sliceRight}, ProbeTaskType::MATCH_PAIRS, windowInfo.windowInfo, sequenceData, pipelineCtx);
-            ++chunkNumber;
-        }
-    }
-}
-
-template <bool EmitLeftNullFill, bool EmitRightNullFill>
-void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindow(
-    const std::vector<std::shared_ptr<Slice>>& allSlices,
-    const WindowInfoAndSequenceNumber& windowInfo,
-    const EmitSlicesFn& emitFn,
-    PipelineExecutionContext* pipelineCtx)
+    PipelineExecutionContext* pipelineCtx) const
 {
     const auto numSlices = allSlices.size();
     auto totalChunks = numSlices * numSlices;
-    if constexpr (EmitLeftNullFill)
+    if (emitLeftNullFill)
     {
         totalChunks += numSlices;
     }
-    if constexpr (EmitRightNullFill)
+    if (emitRightNullFill)
     {
         totalChunks += numSlices;
     }
 
     ChunkNumber::Underlying chunkNumber = ChunkNumber::INITIAL;
 
-    /// 1) NxN MATCH_PAIRS — same as inner join
+    /// 1) NxN MATCH_PAIRS
     for (const auto& sliceLeft : allSlices)
     {
         for (const auto& sliceRight : allSlices)
@@ -79,7 +57,7 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
     }
 
     /// 2) LEFT_NULL_FILL: each left slice vs ALL right slices
-    if constexpr (EmitLeftNullFill)
+    if (emitLeftNullFill)
     {
         for (const auto& slice : allSlices)
         {
@@ -91,7 +69,7 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
     }
 
     /// 3) RIGHT_NULL_FILL: ALL left slices vs each right slice
-    if constexpr (EmitRightNullFill)
+    if (emitRightNullFill)
     {
         for (const auto& slice : allSlices)
         {
@@ -102,10 +80,5 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
         }
     }
 }
-
-/// Explicit instantiations for all used combinations
-template struct OuterJoinTriggerStrategy<true, false>;
-template struct OuterJoinTriggerStrategy<false, true>;
-template struct OuterJoinTriggerStrategy<true, true>;
 
 }

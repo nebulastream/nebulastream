@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <concepts>
 #include <functional>
 #include <memory>
 #include <utility>
@@ -26,7 +25,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 
 namespace NES
 {
@@ -57,14 +56,6 @@ using EmitSlicesFn = std::function<void(
     const WindowInfo& windowInfo,
     const SequenceData& sequenceData,
     PipelineExecutionContext* pipelineCtx)>;
-
-/// Concept: a hash join probe operator must declare which join types it supports via a static constexpr method.
-/// This enables compile-time verification in the lowering rules that the chosen probe operator is compatible with
-/// the requested join type.
-template <typename T>
-concept JoinProbeOperator = requires(JoinLogicalOperator::JoinType jt) {
-    { T::supportsJoinType(jt) } -> std::same_as<bool>;
-};
 
 /// This stores the left, right and output schema for a binary join
 struct JoinSchema
