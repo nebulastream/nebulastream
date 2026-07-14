@@ -27,6 +27,28 @@ NebulaStream provides three primary frontend interfaces:
 
 All interfaces support JSON output for programmatic access.
 
+### Version information
+
+Every non-test binary (`nes-single-node-worker`, `nes-cli`, `nes-repl`, `nes-repl-embedded`, `systest`, `checksum`)
+accepts a `--version` / `-v` flag that prints build metadata (git commit with a `+dirty` suffix when the working tree
+was dirty, generation timestamp, build type, sanitizer, compiler, effective compiler flags, standard library, log level and the
+vcpkg baseline) and exits. The compiler flags combine the global and active-configuration C++ flags with the options CMake
+resolves for the shared `nes-common` target, including inherited and transitive usage requirements:
+
+```
+nes-single-node-worker --version
+nes-single-node-worker TBA
+  commit:         53c13c62f0a...
+  built:          2026-07-14 10:42:00 +0200
+  build:          RelWithDebInfo
+  sanitizer:      none
+  compiler:       Clang 19.1.0
+  compiler flags: -Wall ... -O2 -g -DNDEBUG -stdlib=libc++ -fexperimental-library -pthread
+  stdlib:         libc++
+  log level:      WARN
+  vcpkg baseline: a1b2c3d4...
+```
+
 ---
 
 ## NES-REPL (Interactive REPL)

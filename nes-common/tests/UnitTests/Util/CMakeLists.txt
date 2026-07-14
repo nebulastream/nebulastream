@@ -23,6 +23,7 @@ add_nes_common_test(nes-common-tests
         "PlanRendererTest.cpp"
         "FilesTest.cpp"
         "ReflectionTest.cpp"
+        "VersionTest.cpp"
 )
 target_link_libraries(nes-common-tests nes_rust_bindings)
 
