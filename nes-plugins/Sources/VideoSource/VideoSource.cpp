@@ -107,6 +107,17 @@ void VideoSource::open(std::shared_ptr<AbstractBufferProvider> provider)
         throw CannotOpenSource("Could not create camera stream");
     }
 
+    if (ARV_IS_GV_STREAM(stream.get()))
+    {
+        g_object_set(
+            stream.get(),
+            "socket-buffer",
+            ARV_GV_STREAM_SOCKET_BUFFER_AUTO,
+            "socket-buffer-size",
+            0,
+            nullptr);
+    }
+
     const auto payloadSize = arv_camera_get_payload(camera.get(), &error);
     checkError("reading camera payload size", error);
     for (size_t index = 0; index < 5; ++index)
