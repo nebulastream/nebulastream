@@ -4,7 +4,7 @@
 #
 #    https://www.apache.org/licenses/LICENSE-2.0
 
-add_plugin_as_library(ImageManipDrawRectangle LogicalFunction image-manip-logical-functions NodeFunctionImageManip.cpp)
+add_plugin_as_library(ImageManipDrawRectangle LogicalFunction image-manip-logical-functions ImageManipLogicalFunction.cpp)
 add_plugin(ImageManipMono8ToJPG LogicalFunction)
 add_plugin(ImageManipMono16ToMono8 LogicalFunction)
 add_plugin(ImageManipToBase64 LogicalFunction)
@@ -23,7 +23,7 @@ add_plugin(ImageManipDeserialize LogicalFunction)
 add_plugin(ImageManipRectangle LogicalFunction)
 add_plugin(ImageManipFromBase64ToTensor LogicalFunction)
 
-add_plugin_as_library(ImageManipDrawRectangle PhysicalFunction image-manip-functions ExecutableFunctionImageManip.cpp)
+add_plugin_as_library(ImageManipDrawRectangle PhysicalFunction image-manip-functions ImageManipPhysicalFunction.cpp)
 add_plugin(ImageManipMono8ToJPG PhysicalFunction)
 add_plugin(ImageManipMono16ToMono8 PhysicalFunction)
 add_plugin(ImageManipToBase64 PhysicalFunction)
