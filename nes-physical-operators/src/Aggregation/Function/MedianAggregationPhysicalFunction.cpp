@@ -57,7 +57,8 @@ void MedianAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     nautilus::val<TupleBuffer*> parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const Record& record,
+    const nautilus::val<Timestamp>&)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (inputType.nullable)

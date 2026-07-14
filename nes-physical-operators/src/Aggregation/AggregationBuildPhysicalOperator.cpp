@@ -97,7 +97,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
-        aggFunction->lift(state, hashMapBuffer.asArg(), ctx.pipelineMemoryProvider, record);
+        aggFunction->lift(state, hashMapBuffer.asArg(), ctx.pipelineMemoryProvider, record, timestamp);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }

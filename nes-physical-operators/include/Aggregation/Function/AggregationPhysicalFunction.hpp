@@ -21,6 +21,7 @@
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -51,7 +52,8 @@ public:
         const nautilus::val<AggregationState*>& aggregationState,
         nautilus::val<TupleBuffer*> parentBuffer,
         PipelineMemoryProvider& bufferProvider,
-        const Record& record)
+        const Record& record,
+        const nautilus::val<Timestamp>& timestamp)
         = 0;
 
     /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state
