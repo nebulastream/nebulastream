@@ -11,5 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
+        IntervalJoinBuildPhysicalOperator.cpp
+        IntervalJoinOperatorHandler.cpp
+        IntervalJoinProbePhysicalOperator.cpp
         IntervalJoinSlice.cpp
 )
