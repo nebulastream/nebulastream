@@ -20,6 +20,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -45,8 +46,11 @@ public:
         DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /// Adds the incoming record to the existing aggregation state
-    virtual void
-    lift(const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& bufferProvider, const Record& record)
+    virtual void lift(
+        const nautilus::val<AggregationState*>& aggregationState,
+        PipelineMemoryProvider& bufferProvider,
+        const Record& record,
+        const nautilus::val<Timestamp>& timestamp)
         = 0;
 
     /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state
