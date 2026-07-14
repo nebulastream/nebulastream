@@ -569,3 +569,245 @@ FROM stringStream INTO sinkLongLiteral;
 prefix-prefix-prefix value=one suffix-suffix-suffix
 prefix-prefix-prefix value=two suffix-suffix-suffix
 prefix-prefix-prefix value=three suffix-suffix-suffix
+
+########################################
+# Comprehensive nullable type coverage
+########################################
+
+CREATE LOGICAL SOURCE comprehensiveNullableStream(
+    nullable_int INT32,
+    nullable_other INT32,
+    nullable_bool BOOLEAN,
+    nullable_char CHAR,
+    nullable_float FLOAT32,
+    non_null_int INT32 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR comprehensiveNullableStream TYPE File;
+
+ATTACH INLINE
+1,10,true,A,1.5,100
+NULL,20,false,B,2.5,200
+3,NULL,true,C,3.5,300
+4,40,NULL,D,4.5,400
+5,50,false,NULL,5.5,500
+6,60,true,F,NULL,600
+
+########################################
+# Nullable INT32 as only argument
+########################################
+
+CREATE SINK sinkNullableInt(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("value={}"), nullable_int) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullableInt;
+----
+value=1
+NULL
+value=3
+value=4
+value=5
+value=6
+
+########################################
+# NULL in second argument
+########################################
+
+CREATE SINK sinkNullableSecondArg(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("first={}, second={}"),
+        non_null_int,
+        nullable_other
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullableSecondArg;
+----
+first=100, second=10
+first=200, second=20
+NULL
+first=400, second=40
+first=500, second=50
+first=600, second=60
+
+########################################
+# Nullable BOOLEAN
+########################################
+
+CREATE SINK sinkNullableBool(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("flag={}"), nullable_bool) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullableBool;
+----
+flag=true
+flag=false
+flag=true
+NULL
+flag=false
+flag=true
+
+########################################
+# Nullable CHAR
+########################################
+
+CREATE SINK sinkNullableChar(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("char={}"), nullable_char) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullableChar;
+----
+char=A
+char=B
+char=C
+char=D
+NULL
+char=F
+
+########################################
+# Nullable FLOAT32
+########################################
+
+CREATE SINK sinkNullableFloat(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(VARSIZED("float={}"), nullable_float) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullableFloat;
+----
+float=1.5
+float=2.5
+float=3.5
+float=4.5
+float=5.5
+NULL
+
+########################################
+# Multiple nullable arguments
+########################################
+
+CREATE SINK sinkMultipleNullable(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("i={}, other={}, bool={}, char={}, float={}"),
+        nullable_int,
+        nullable_other,
+        nullable_bool,
+        nullable_char,
+        nullable_float
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkMultipleNullable;
+----
+i=1, other=10, bool=true, char=A, float=1.5
+NULL
+NULL
+NULL
+NULL
+NULL
+
+########################################
+# NULL argument between non-null arguments
+########################################
+
+CREATE SINK sinkNullMiddle(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("left={}, middle={}, right={}"),
+        non_null_int,
+        nullable_int,
+        non_null_int
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullMiddle;
+----
+left=100, middle=1, right=100
+NULL
+left=300, middle=3, right=300
+left=400, middle=4, right=400
+left=500, middle=5, right=500
+left=600, middle=6, right=600
+
+########################################
+# NULL with escaped braces
+########################################
+
+CREATE SINK sinkNullEscapedBraces(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("{{ value={} }}"),
+        nullable_int
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullEscapedBraces;
+----
+{ value=1 }
+NULL
+{ value=3 }
+{ value=4 }
+{ value=5 }
+{ value=6 }
+
+########################################
+# Nested Format produces nullable VARSIZED
+########################################
+
+CREATE SINK sinkNestedNullableString(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("outer=[{}]"),
+        Format(VARSIZED("inner={}"), nullable_int)
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkNestedNullableString;
+----
+outer=[inner=1]
+NULL
+outer=[inner=3]
+outer=[inner=4]
+outer=[inner=5]
+outer=[inner=6]
+
+########################################
+# Nullable nested result alongside non-null argument
+########################################
+
+CREATE SINK sinkNestedNullableMixed(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("nested={}, fixed={}"),
+        Format(VARSIZED("{}"), nullable_int),
+        non_null_int
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkNestedNullableMixed;
+----
+nested=1, fixed=100
+NULL
+nested=3, fixed=300
+nested=4, fixed=400
+nested=5, fixed=500
+nested=6, fixed=600
+
+########################################
+# Literal string "NULL" is not SQL NULL
+########################################
+
+CREATE LOGICAL SOURCE literalNullStringStream(
+    text VARSIZED NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR literalNullStringStream TYPE File;
+
+ATTACH INLINE
+NULL
+hello
+
+CREATE SINK sinkLiteralNullString(formatted VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    Format(VARSIZED("text={}"), text) AS formatted
+FROM literalNullStringStream INTO sinkLiteralNullString;
+----
+text=NULL
+text=hello
