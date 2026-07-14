@@ -34,7 +34,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -82,7 +82,7 @@ std::vector<TupleBuffer> getHashMapsFromSlices(const std::vector<std::shared_ptr
 HJOperatorHandler::HJOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
     const uint64_t maxNumberOfBuckets,
     JoinTriggerStrategy triggerStrategy)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
