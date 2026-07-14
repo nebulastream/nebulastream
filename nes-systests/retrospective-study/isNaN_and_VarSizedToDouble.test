@@ -13,7 +13,7 @@ ATTACH INLINE
 4,1002,1705310100,2,5,KREATININ,?.9,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
 5,1003,1705312800,1,5,Thrombozyten,K,10^9/L,150-400,S003,1705311000,1705313700,103
 
-# CREATE PHYSICAL SOURCE FOR odbc_source TYPE ODBC SET("Native" AS PARSER.`TYPE`, "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null" AS `SOURCE`.query, "sql_server" AS `SOURCE`.host, "1433" AS `SOURCE`.PORT, "master" AS `SOURCE`.database, "sa" AS `SOURCE`.username, "samplePassword1!" AS `SOURCE`.password, "ODBC Driver 18 for SQL Server" AS `SOURCE`.driver, "dbo.v_Labor_null" AS `SOURCE`.sync_table, "1000" AS `SOURCE`.poll_interval_ms, "true" AS `SOURCE`.trust_server_certificate);
+# CREATE PHYSICAL SOURCE FOR odbc_source TYPE ODBCLabVal SET("Native" AS PARSER.`TYPE`, "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null" AS `SOURCE`.query, "sql_server" AS `SOURCE`.host, "1433" AS `SOURCE`.PORT, "master" AS `SOURCE`.database, "sa" AS `SOURCE`.username, "samplePassword1!" AS `SOURCE`.password, "ODBC Driver 18 for SQL Server" AS `SOURCE`.driver, "dbo.v_Labor_null" AS `SOURCE`.sync_table, "1000" AS `SOURCE`.poll_interval_ms, "true" AS `SOURCE`.trust_server_certificate);
 
 SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM odbc_source INTO File();
 ----

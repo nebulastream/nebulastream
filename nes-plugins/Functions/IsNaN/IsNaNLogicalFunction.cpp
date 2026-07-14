@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "IsNaNLogicalFunction.hpp"
+#include <IsNaNLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -29,7 +29,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -104,7 +103,8 @@ IsNaNLogicalFunction Unreflector<IsNaNLogicalFunction>::operator()(const Reflect
     return IsNaNLogicalFunction(child.value());
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterIsNaNLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterIsNaNLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {

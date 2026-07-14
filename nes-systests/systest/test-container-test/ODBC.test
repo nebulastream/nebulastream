@@ -3,7 +3,7 @@
 # groups: [TestContainer]
 CREATE LOGICAL SOURCE odbc_source(LabVal_ID INT32, mlife_FallNr INT32, Zeitpunkt UINT64, GruppenNr INT32, Gruppe INT32, Bez VARSIZED, Wert VARSIZED, Einheit VARSIZED, Wertebereich VARSIZED, SampleNr VARSIZED, TSFail UINT64, TSLog UINT64, Lab_ID INT32);
 
-CREATE PHYSICAL SOURCE FOR odbc_source TYPE ODBC SET("Native" AS PARSER.`TYPE`, "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null" AS `SOURCE`.query, "sql_server" AS `SOURCE`.host, "1433" AS `SOURCE`.PORT, "master" AS `SOURCE`.database, "sa" AS `SOURCE`.username, "samplePassword1!" AS `SOURCE`.password, "ODBC Driver 18 for SQL Server" AS `SOURCE`.driver, "dbo.v_Labor_null" AS `SOURCE`.sync_table, "1000" AS `SOURCE`.poll_interval_ms, "true" AS `SOURCE`.trust_server_certificate);
+CREATE PHYSICAL SOURCE FOR odbc_source TYPE ODBCLabVal SET("Native" AS PARSER.`TYPE`, "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null" AS `SOURCE`.query, "sql_server" AS `SOURCE`.host, "1433" AS `SOURCE`.PORT, "master" AS `SOURCE`.database, "sa" AS `SOURCE`.username, "samplePassword1!" AS `SOURCE`.password, "ODBC Driver 18 for SQL Server" AS `SOURCE`.driver, "dbo.v_Labor_null" AS `SOURCE`.sync_table, "1000" AS `SOURCE`.poll_interval_ms, "true" AS `SOURCE`.trust_server_certificate);
 
 SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM odbc_source INTO File();
 ----

@@ -18,32 +18,27 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <sys/types.h>
 
 #include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <ODBCConnection.hpp>
 
 namespace NES
 {
 
+struct Context;
+
 class ODBCSource : public Source
 {
-    constexpr static std::chrono::microseconds ODBC_SOCKET_DEFAULT_TIMEOUT{100000};
-    constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
-    /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
-    constexpr static ssize_t EOF_RECEIVED_BUFFER_SIZE = 0;
-
 public:
     static constexpr std::string_view NAME = "ODBC";
 
@@ -55,7 +50,7 @@ public:
     ODBCSource(ODBCSource&&) = delete;
     ODBCSource& operator=(ODBCSource&&) = delete;
 
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stoken) override;
 
     /// Open ODBC connection.
     void open(std::shared_ptr<AbstractBufferProvider> bufferProviderPtr) override;
@@ -64,42 +59,39 @@ public:
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
+    [[nodiscard]] bool addsMetadata() const override { return false; }
+
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    std::string host;
-    std::string port;
-    std::string database;
-    std::string username;
-    std::string password;
-    std::string driver;
     size_t pollIntervalMs;
-    std::string syncTable;
     std::string query;
-    bool trustServerCertificate{};
-    size_t maxRetries;
-    bool readOnlyNewRows{};
-    bool useCheckpoint{true};
-    bool logTuples{false};
+    Schema schema;
+    std::chrono::hours timezoneOffset;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 
-    size_t fetchedSizeOfRow{0};
-    std::unique_ptr<ODBCConnection> connection;
-    uint64_t generatedTuples{0};
-    uint64_t generatedBuffers{0};
+    std::unique_ptr<Context> sourceContext;
 };
 
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all ODBC config parameters.
+/// NOLINTBEGIN(cert-err58-cpp): static-storage ConfigParameter initialization is the project-wide pattern for source plugins.
+/// The constructors can theoretically throw `std::bad_alloc`; in practice they are evaluated once at static-init time on a
+/// path the runtime cannot meaningfully recover from. Refactoring would require redesigning the ConfigParameter registry
+/// across every plugin — out of scope for any single PR.
 struct ConfigParametersODBC
 {
-    static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
-        "host",
+    /// Named "db_host"/"db_port" rather than "host"/"port" so that inline source
+    /// SQL can still use `SOURCE.HOST` for worker placement (the inline-source
+    /// binder unconditionally extracts the "host" config key as placement). Matches
+    /// ODBCSink's db_host/db_port.
+    static inline const DescriptorConfig::ConfigParameter<std::string> DB_HOST{
+        "db_host",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
-    static inline const DescriptorConfig::ConfigParameter<std::string> PORT{
-        "port",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DB_HOST, config); }};
+    static inline const DescriptorConfig::ConfigParameter<std::string> DB_PORT{
+        "db_port",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PORT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DB_PORT, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> DATABASE{
         "database",
@@ -128,65 +120,46 @@ struct ConfigParametersODBC
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
         { return DescriptorConfig::tryGet(POLL_INTERVAL_MS, config); }};
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> SYNC_TABLE{
-        "sync_table",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
-        { return DescriptorConfig::tryGet(SYNC_TABLE, config); }};
-
     static inline const DescriptorConfig::ConfigParameter<std::string> QUERY{
         "query",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
         { return DescriptorConfig::tryGet(QUERY, config); }};
 
+    /// Only consumed by the SQL Server dialect of the connection string (see ODBCSource.cpp):
+    /// Microsoft's ODBC Driver 18 defaults to Encrypt=Mandatory, so connecting to a SQL Server
+    /// with a self-signed certificate needs TrustServerCertificate=yes. Defaults to false so the
+    /// psqlodbc path (which has no such keyword) is unaffected.
     static inline const DescriptorConfig::ConfigParameter<bool> TRUST_SERVER_CERTIFICATE{
         "trust_server_certificate",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<bool>
-        { return DescriptorConfig::tryGet(TRUST_SERVER_CERTIFICATE, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_RETRIES{
-        "maxretries",
-        1000,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RETRIES, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<bool> READ_ONLY_NEW_ROWS{
-        "readonlynewrows",
-        true,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(READ_ONLY_NEW_ROWS, config); }};
-
-    /// When true (default), the ODBC source reads the persisted checkpoint from
-    /// dbo.nes_checkpoint on startup.  Set to false for queries (like alert
-    /// reminders) that should start from the current COUNT(*) instead.
-    static inline const DescriptorConfig::ConfigParameter<bool> USE_CHECKPOINT{
-        "use_checkpoint",
-        true,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(USE_CHECKPOINT, config); }};
-
-
-    static inline const DescriptorConfig::ConfigParameter<bool> LOG_TUPLES{
-        "log_tuples",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LOG_TUPLES, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TRUST_SERVER_CERTIFICATE, config); }};
+
+    /// The windowed poller binds `now()` into the query's (watermark, now] bounds. `now()` is UTC,
+    /// but a database that stores wall-clock local timestamps (e.g. the MLife tables in GMT+2) is
+    /// then ahead of the window, so fresh rows are only picked up hours late. This shifts the bound
+    /// timestamps by whole hours so they line up with the source column's timezone: set it to the
+    /// column's UTC offset (e.g. 2 for GMT+2). Intended range [-24, 24]; validateAndFormat enforces it.
+    static inline const DescriptorConfig::ConfigParameter<int32_t> TIMEZONE_OFFSET_HOURS{
+        "timezone_offset_hours",
+        0,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIMEZONE_OFFSET_HOURS, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SourceDescriptor::parameterMap,
-            HOST,
-            PORT,
+            DB_HOST,
+            DB_PORT,
             DRIVER,
             POLL_INTERVAL_MS,
-            SYNC_TABLE,
             QUERY,
             USERNAME,
             PASSWORD,
             DATABASE,
             TRUST_SERVER_CERTIFICATE,
-            MAX_RETRIES,
-            READ_ONLY_NEW_ROWS,
-            USE_CHECKPOINT,
-            LOG_TUPLES);
+            TIMEZONE_OFFSET_HOURS);
 };
+
+/// NOLINTEND(cert-err58-cpp)
 
 }

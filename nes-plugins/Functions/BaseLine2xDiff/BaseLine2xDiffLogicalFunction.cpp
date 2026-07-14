@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "BaseLine2xDiffLogicalFunction.hpp"
+#include <BaseLine2xDiffLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -29,12 +29,12 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
 
-BaseLine2xDiffLogicalFunction::BaseLine2xDiffLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::VARSIZED), child(child)
+BaseLine2xDiffLogicalFunction::BaseLine2xDiffLogicalFunction(const LogicalFunction& child)
+    : dataType(DataType::Type::VARSIZED), child(child)
 // BaseLine2xDiffLogicalFunction::BaseLine2xDiffLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::BOOLEAN), child(child)
 {
 }
@@ -105,7 +105,8 @@ BaseLine2xDiffLogicalFunction Unreflector<BaseLine2xDiffLogicalFunction>::operat
     return BaseLine2xDiffLogicalFunction(child.value());
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterBaseLine2xDiffLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterBaseLine2xDiffLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {

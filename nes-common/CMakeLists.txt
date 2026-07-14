@@ -57,7 +57,7 @@ get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
 add_library(nes-common ${NES_COMMON_SOURCE_FILES}
-        ../nes-plugins/Sources/ODBCSource/ODBCSource.hpp)
+        ../nes-plugins/Sources/ODBCLabValSource/ODBCLabValSource.hpp)
 
 find_package(cpptrace   CONFIG REQUIRED)
 find_package(fmt        CONFIG REQUIRED)

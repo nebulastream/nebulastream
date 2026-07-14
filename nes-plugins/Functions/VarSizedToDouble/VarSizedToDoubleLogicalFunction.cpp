@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "VarSizedToDoubleLogicalFunction.hpp"
+#include <VarSizedToDoubleLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -29,13 +29,13 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
 
 // VarSizedToDoubleLogicalFunction::VarSizedToDoubleLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child)
-VarSizedToDoubleLogicalFunction::VarSizedToDoubleLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::FLOAT64), child(child)
+VarSizedToDoubleLogicalFunction::VarSizedToDoubleLogicalFunction(const LogicalFunction& child)
+    : dataType(DataType::Type::FLOAT64), child(child)
 {
 }
 
@@ -104,7 +104,8 @@ VarSizedToDoubleLogicalFunction Unreflector<VarSizedToDoubleLogicalFunction>::op
     return VarSizedToDoubleLogicalFunction(child.value());
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterVarSizedToDoubleLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterVarSizedToDoubleLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {

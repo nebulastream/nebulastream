@@ -27,7 +27,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include "Util/Strings.hpp"
+#include <Util/Strings.hpp>
 
 struct TypeInfo
 {
@@ -70,10 +70,16 @@ public:
     /// Returns 0 if the table doesn't exist or has no data.
     uint64_t readCheckpointRowCount();
 
-    void connect(const std::string& connectionString, std::string_view syncTable, std::string_view query, bool readOnlyNewRows, bool useCheckpoint = true);
+    void connect(
+        const std::string& connectionString,
+        std::string_view syncTable,
+        std::string_view query,
+        bool readOnlyNewRows,
+        bool useCheckpoint = true);
 
     template <typename T>
-    SQLRETURN readVal(const size_t colIdx, NES::TupleBuffer& buffer, const TypeInfo& typeInfo, SQLLEN& indicator, std::string& currentTuple) const
+    SQLRETURN
+    readVal(const size_t colIdx, NES::TupleBuffer& buffer, const TypeInfo& typeInfo, SQLLEN& indicator, std::string& currentTuple) const
     {
         T* val = reinterpret_cast<T*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]);
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + typeInfo.nesTypeSize);
@@ -84,7 +90,12 @@ public:
 
     SQLRETURN
     readVarSized(
-        size_t colIdx, const TypeInfo& typeInfo, SQLLEN& indicator, TupleBuffer& buffer, AbstractBufferProvider& bufferProvider, std::string& currentTuple) const;
+        size_t colIdx,
+        const TypeInfo& typeInfo,
+        SQLLEN& indicator,
+        TupleBuffer& buffer,
+        AbstractBufferProvider& bufferProvider,
+        std::string& currentTuple) const;
 
     SQLRETURN readDataIntoBuffer(
         size_t colIdx,
@@ -97,8 +108,8 @@ public:
 
     std::vector<SQLCHAR> buildNewRowFetchSting(std::string_view userQuery, uint64_t numRowsToFetch);
 
-    ODBCPollStatus
-    executeQuery(std::string_view query, TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, size_t rowsPerBuffer, bool logTuples);
+    ODBCPollStatus executeQuery(
+        std::string_view query, TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, size_t rowsPerBuffer, bool logTuples);
 
 private:
     SQLHENV henv = SQL_NULL_HENV;
@@ -107,7 +118,7 @@ private:
     SQLHSTMT hstmtCount = SQL_NULL_HSTMT;
     FetchedSchema fetchedSchema;
     uint64_t rowCountTracker{0};
-    uint64_t batchStartRowCount{0};  ///< rowCountTracker before the current buffer's += update
+    uint64_t batchStartRowCount{0}; ///< rowCountTracker before the current buffer's += update
     uint64_t numberOfLeftoverTuples{0};
     std::string countQuery;
 };

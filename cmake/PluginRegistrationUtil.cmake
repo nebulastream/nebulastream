@@ -55,6 +55,13 @@ macro(add_plugin plugin_name plugin_registry plugin_registry_component)
         foreach (source ${sources})
             set_property(TARGET ${plugin_registry_component} APPEND PROPERTY SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${source})
         endforeach ()
+        # The plugin's sources are compiled *into* the component target, so the component needs the
+        # plugin directory on its include path for the plugin's own headers to resolve. Without this
+        # a source that angle-includes its sibling header (e.g. `#include <FooLogicalFunction.hpp>`,
+        # the project's include convention) fails with "file not found with <angled> include".
+        # add_plugin_as_library() plugins get this from their own target_include_directories; the
+        # in-component add_plugin() plugins had no equivalent until here.
+        target_include_directories(${plugin_registry_component} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     else ()
         add_source_files(${plugin_registry_component}
                 ${sources}

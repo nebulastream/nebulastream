@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "UnixTimestampToDatetimeTestingPhysicalFunction.hpp"
+#include <UnixTimestampToDatetimeTestingPhysicalFunction.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -35,16 +35,17 @@
 namespace NES
 {
 
-UnixTimestampToDatetimeTestingPhysicalFunction::UnixTimestampToDatetimeTestingPhysicalFunction(PhysicalFunction child) : child(std::move(child))
+UnixTimestampToDatetimeTestingPhysicalFunction::UnixTimestampToDatetimeTestingPhysicalFunction(PhysicalFunction child)
+    : child(std::move(child))
 {
 }
-
 
 PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterUnixTimestampToDatetimeTestingPhysicalFunction(
     PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
-        physicalFunctionRegistryArguments.childFunctions.size() == 1, "UnixTimestampToDatetimeTesting function must have exactly one child function");
+        physicalFunctionRegistryArguments.childFunctions.size() == 1,
+        "UnixTimestampToDatetimeTesting function must have exactly one child function");
     return UnixTimestampToDatetimeTestingPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
 }
 }

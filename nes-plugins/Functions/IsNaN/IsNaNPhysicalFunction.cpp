@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "IsNaNPhysicalFunction.hpp"
+#include <IsNaNPhysicalFunction.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -49,11 +49,10 @@ VarVal IsNaNPhysicalFunction::execute(const Record& record, ArenaRef& arena) con
     // return isNaN;
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterIsNaNPhysicalFunction(
-    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterIsNaNPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(
-        physicalFunctionRegistryArguments.childFunctions.size() == 1, "IsNaN function must have exactly one child function");
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "IsNaN function must have exactly one child function");
     return IsNaNPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
 }
 }

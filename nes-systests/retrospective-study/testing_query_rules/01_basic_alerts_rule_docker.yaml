@@ -41,7 +41,7 @@ logical:
         type: INT32
 physical:
   - logical: odbc_source_01
-    type: ODBC
+    type: ODBCLabVal
     parser_config:
       type: Native
     source_config:

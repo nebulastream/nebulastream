@@ -10,12 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(ODBC Source nes-sources-registry ODBC_source_plugin_library ODBCSource.cpp ODBCConnection.cpp)
-add_plugin_as_library(ODBC SourceValidation nes-sources-registry ODBC_source_validation_plugin_library ODBCSource.cpp ODBCConnection.cpp)
+add_plugin_as_library(ODBC Source nes-sources-registry odbc_source_plugin_library ODBCSource.cpp ODBCTypeMappings.cpp)
+add_plugin_as_library(ODBC SourceValidation nes-sources-registry odbc_source_validation_plugin_library ODBCSource.cpp ODBCTypeMappings.cpp)
 
-find_package(unixodbc CONFIG REQUIRED)
+# unixODBC is the ODBC driver manager. It is a system dependency (apt: unixodbc-dev,
+# nix: unixODBC) rather than a vcpkg port: the runtime driver it loads (psqlodbc /
+# "PostgreSQL Unicode") is itself a system component registered in /etc/odbcinst.ini,
+# so the whole ODBC stack lives consistently at the system level. CMake's builtin
+# FindODBC module provides the ODBC::ODBC imported target.
+find_package(ODBC REQUIRED)
 
-target_link_libraries(ODBC_source_plugin_library PRIVATE UNIX::odbc)
-target_link_libraries(ODBC_source_validation_plugin_library PRIVATE UNIX::odbc)
-
-target_include_directories(ODBC_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+foreach (_lib odbc_source_plugin_library odbc_source_validation_plugin_library)
+    target_include_directories(${_lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(${_lib} PRIVATE ODBC::ODBC)
+endforeach ()

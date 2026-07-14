@@ -13,10 +13,10 @@
 */
 
 #pragma once
+#include <chrono>
 #include <compare>
 #include <cstdint>
 #include <ostream>
-#include <chrono>
 
 namespace NES
 {
@@ -37,6 +37,7 @@ inline std::string unixTsToFormattedDatetimeAdjusted(const uint64_t unixTimestam
         localTm.tm_sec,
         unixTimestamp);
 }
+
 inline std::string unixTsToFormattedDatetime(const uint64_t unixTimestamp)
 {
     auto tp = std::chrono::sys_seconds{std::chrono::seconds(unixTimestamp)};
@@ -56,4 +57,3 @@ inline std::string unixTsToFormattedDatetime(const uint64_t unixTimestamp)
 }
 
 }
-

@@ -325,7 +325,11 @@ size_t ODBCConnection::syncRowCount()
 }
 
 void ODBCConnection::connect(
-    const std::string& connectionString, const std::string_view syncTable, const std::string_view query, const bool readOnlyNewRows, const bool useCheckpoint)
+    const std::string& connectionString,
+    const std::string_view syncTable,
+    const std::string_view query,
+    const bool readOnlyNewRows,
+    const bool useCheckpoint)
 {
     SQLCHAR outConnectionString[1024];
     SQLSMALLINT outConnectionStringLength;
@@ -540,16 +544,18 @@ std::vector<SQLCHAR> ODBCConnection::buildNewRowFetchSting(const std::string_vie
     /// Inner query: grab the N newest rows (DESC).  Outer query: re-sort ascending so
     /// SQLFetch returns rows in the same order they appear in the target-db.
     std::string selectTopNRows = fmt::format(
-        "SELECT * FROM (SELECT TOP {} {} ORDER BY LabVal_ID DESC) AS t ORDER BY t.LabVal_ID ASC",
-        numRowsToFetch,
-        selectSplit.at(0));
+        "SELECT * FROM (SELECT TOP {} {} ORDER BY LabVal_ID DESC) AS t ORDER BY t.LabVal_ID ASC", numRowsToFetch, selectSplit.at(0));
     std::vector<SQLCHAR> queryBuffer(selectTopNRows.begin(), selectTopNRows.end());
     queryBuffer.push_back('\0');
     return queryBuffer;
 }
 
 ODBCPollStatus ODBCConnection::executeQuery(
-    const std::string_view query, TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const size_t rowsPerBuffer, const bool logTuples)
+    const std::string_view query,
+    TupleBuffer& tupleBuffer,
+    AbstractBufferProvider& bufferProvider,
+    const size_t rowsPerBuffer,
+    const bool logTuples)
 {
     size_t nextRowsToFetch = 0;
     /// if there are still rows to read, fetch and read these first, otherwise try to get new rows
@@ -596,7 +602,8 @@ ODBCPollStatus ODBCConnection::executeQuery(
         {
             SQLLEN indicator{};
             /// ODBC column indexes start at >1<
-            readDataIntoBuffer(columnIdx + 1, columnType, fetchedSchema.columnNames.at(columnIdx), indicator, tupleBuffer, bufferProvider, currentTuple);
+            readDataIntoBuffer(
+                columnIdx + 1, columnType, fetchedSchema.columnNames.at(columnIdx), indicator, tupleBuffer, bufferProvider, currentTuple);
             if (fetchReturn != SQL_SUCCESS and fetchReturn != SQL_SUCCESS_WITH_INFO)
             {
                 throw UnknownDataType("Not supporting {} type in ODBC source", magic_enum::enum_name(columnType.nesType));

@@ -1,4 +1,4 @@
-type: ODBC
+type: ODBCLabVal
 parser_config:
   type: Native
 source_config:

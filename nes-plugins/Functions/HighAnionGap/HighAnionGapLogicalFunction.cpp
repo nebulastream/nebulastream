@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "HighAnionGapLogicalFunction.hpp"
+#include <HighAnionGapLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -29,7 +29,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -105,7 +104,8 @@ HighAnionGapLogicalFunction Unreflector<HighAnionGapLogicalFunction>::operator()
     return HighAnionGapLogicalFunction(child.value());
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterHighAnionGapLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterHighAnionGapLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {

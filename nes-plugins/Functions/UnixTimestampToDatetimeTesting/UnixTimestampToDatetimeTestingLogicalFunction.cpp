@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "UnixTimestampToDatetimeTestingLogicalFunction.hpp"
+#include <UnixTimestampToDatetimeTestingLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -29,12 +29,12 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
 
-UnixTimestampToDatetimeTestingLogicalFunction::UnixTimestampToDatetimeTestingLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::VARSIZED), child(child)
+UnixTimestampToDatetimeTestingLogicalFunction::UnixTimestampToDatetimeTestingLogicalFunction(const LogicalFunction& child)
+    : dataType(DataType::Type::VARSIZED), child(child)
 {
 }
 
@@ -62,9 +62,11 @@ std::vector<LogicalFunction> UnixTimestampToDatetimeTestingLogicalFunction::getC
     return {child};
 };
 
-UnixTimestampToDatetimeTestingLogicalFunction UnixTimestampToDatetimeTestingLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+UnixTimestampToDatetimeTestingLogicalFunction
+UnixTimestampToDatetimeTestingLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
-    PRECONDITION(children.size() == 1, "UnixTimestampToDatetimeTestingLogicalFunction requires exactly one child, but got {}", children.size());
+    PRECONDITION(
+        children.size() == 1, "UnixTimestampToDatetimeTestingLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
@@ -89,12 +91,14 @@ std::string UnixTimestampToDatetimeTestingLogicalFunction::explain(ExplainVerbos
     return fmt::format("UnixTimestampToDatetimeTesting({})", child.explain(verbosity));
 }
 
-Reflected Reflector<UnixTimestampToDatetimeTestingLogicalFunction>::operator()(const UnixTimestampToDatetimeTestingLogicalFunction& function) const
+Reflected
+Reflector<UnixTimestampToDatetimeTestingLogicalFunction>::operator()(const UnixTimestampToDatetimeTestingLogicalFunction& function) const
 {
     return reflect(detail::ReflectedUnixTimestampToDatetimeTestingLogicalFunction{.child = function.child});
 }
 
-UnixTimestampToDatetimeTestingLogicalFunction Unreflector<UnixTimestampToDatetimeTestingLogicalFunction>::operator()(const Reflected& reflected) const
+UnixTimestampToDatetimeTestingLogicalFunction
+Unreflector<UnixTimestampToDatetimeTestingLogicalFunction>::operator()(const Reflected& reflected) const
 {
     auto [child] = unreflect<detail::ReflectedUnixTimestampToDatetimeTestingLogicalFunction>(reflected);
     if (!child.has_value())
@@ -104,7 +108,8 @@ UnixTimestampToDatetimeTestingLogicalFunction Unreflector<UnixTimestampToDatetim
     return UnixTimestampToDatetimeTestingLogicalFunction(child.value());
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterUnixTimestampToDatetimeTestingLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterUnixTimestampToDatetimeTestingLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {
@@ -112,7 +117,8 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterUni
     }
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("UnixTimestampToDatetimeTestingLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+        throw CannotDeserialize(
+            "UnixTimestampToDatetimeTestingLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     return UnixTimestampToDatetimeTestingLogicalFunction(arguments.children.front());
 }

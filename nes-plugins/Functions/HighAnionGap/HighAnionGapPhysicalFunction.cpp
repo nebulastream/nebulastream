@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "HighAnionGapPhysicalFunction.hpp"
+#include <HighAnionGapPhysicalFunction.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -38,7 +38,6 @@ namespace NES
 HighAnionGapPhysicalFunction::HighAnionGapPhysicalFunction(PhysicalFunction child) : child(std::move(child))
 {
 }
-
 
 PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterHighAnionGapPhysicalFunction(
     PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)

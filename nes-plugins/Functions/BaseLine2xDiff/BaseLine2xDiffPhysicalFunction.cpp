@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "BaseLine2xDiffPhysicalFunction.hpp"
+#include <BaseLine2xDiffPhysicalFunction.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -38,7 +38,6 @@ namespace NES
 BaseLine2xDiffPhysicalFunction::BaseLine2xDiffPhysicalFunction(PhysicalFunction child) : child(std::move(child))
 {
 }
-
 
 PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterBaseLine2xDiffPhysicalFunction(
     PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)

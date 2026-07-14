@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "UnixTimestampToDatetimeLogicalFunction.hpp"
+#include <UnixTimestampToDatetimeLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -29,12 +29,12 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
 
-UnixTimestampToDatetimeLogicalFunction::UnixTimestampToDatetimeLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::VARSIZED), child(child)
+UnixTimestampToDatetimeLogicalFunction::UnixTimestampToDatetimeLogicalFunction(const LogicalFunction& child)
+    : dataType(DataType::Type::VARSIZED), child(child)
 {
 }
 
@@ -62,7 +62,8 @@ std::vector<LogicalFunction> UnixTimestampToDatetimeLogicalFunction::getChildren
     return {child};
 };
 
-UnixTimestampToDatetimeLogicalFunction UnixTimestampToDatetimeLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+UnixTimestampToDatetimeLogicalFunction
+UnixTimestampToDatetimeLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "UnixTimestampToDatetimeLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
@@ -104,7 +105,8 @@ UnixTimestampToDatetimeLogicalFunction Unreflector<UnixTimestampToDatetimeLogica
     return UnixTimestampToDatetimeLogicalFunction(child.value());
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterUnixTimestampToDatetimeLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterUnixTimestampToDatetimeLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {

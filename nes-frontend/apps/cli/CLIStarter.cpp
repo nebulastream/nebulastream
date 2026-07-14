@@ -456,7 +456,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
 
     const auto mapping = subcommand.get<std::vector<std::string>>("queryId")
         | std::views::transform(
-                             [&stateBackend,useTopology](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
+                             [&stateBackend, useTopology](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
                              {
                                  auto persistedId = NES::CLI::PersistedQueryId::fromString(persistentIdString);
                                  auto queryId = (useTopology) ? stateBackend.load(persistedId) : persistedId.queryId;

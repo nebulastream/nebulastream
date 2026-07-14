@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "UnixTimestampToDatetimePhysicalFunction.hpp"
+#include <UnixTimestampToDatetimePhysicalFunction.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -39,12 +39,12 @@ UnixTimestampToDatetimePhysicalFunction::UnixTimestampToDatetimePhysicalFunction
 {
 }
 
-
 PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterUnixTimestampToDatetimePhysicalFunction(
     PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
-        physicalFunctionRegistryArguments.childFunctions.size() == 1, "UnixTimestampToDatetime function must have exactly one child function");
+        physicalFunctionRegistryArguments.childFunctions.size() == 1,
+        "UnixTimestampToDatetime function must have exactly one child function");
     return UnixTimestampToDatetimePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
 }
 }
