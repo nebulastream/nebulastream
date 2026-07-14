@@ -461,26 +461,6 @@ png16ToMono16(const VariableSizedData& input, const nautilus::val<uint64>& width
     return mono16Varsized;
 }
 
-VariableSizedData
-fromBase64ToTensor(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
-{
-    auto imageTensor = arena.allocateVariableSizedData(width * height * 3);
-    nautilus::invoke(
-        +[](int8_t* inputData, uint32_t inputSize, int8_t* dest, const uint64_t width, const uint64_t height)
-        {
-            const cv::Mat input(1, inputSize, CV_8UC1, inputData);
-            cv::Mat output(height, width, CV_8UC1, dest);
-            cv::imdecode(input, cv::IMREAD_UNCHANGED, &output);
-        },
-        input.getContent(),
-        input.getSize(),
-        imageTensor.getContent(),
-        width,
-        height);
-
-    return imageTensor;
-}
-
 thread_local std::vector<uint8_t> pngBuffer;
 
 VariableSizedData
@@ -663,14 +643,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
 {
     const auto child = [&]<typename T>(size_t index) { return childFunctions[index].execute(record, arena).getRawValueAs<T>(); };
 
-    if (functionName == "FromBase64ToTensor")
-    {
-        auto image = child.template operator()<VariableSizedData>(0);
-        auto width = child.template operator()<nautilus::val<uint64_t>>(1);
-        auto height = child.template operator()<nautilus::val<uint64_t>>(2);
-        return fromBase64ToTensor(fromBase64(image, arena), width, height, arena);
-    }
-    else if (functionName == "Mono16ToMono8")
+    if (functionName == "Mono16ToMono8")
     {
         return mono16ToMono8(
             child.template operator()<VariableSizedData>(0),
@@ -834,7 +807,6 @@ PhysicalFunctionImageManip::PhysicalFunctionImageManip(std::string functionName,
         return PhysicalFunction(PhysicalFunctionImageManip(#name, std::move(arguments.childFunctions))); \
     }
 
-ImageManipFunction(FromBase64ToTensor);
 ImageManipFunction(FaceDetection);
 ImageManipFunction(Mono8ToJPG);
 ImageManipFunction(Mono16ToPNG16);
