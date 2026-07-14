@@ -186,9 +186,9 @@ bool isInsideDataTypeConstructorArgument(antlr4::ParserRuleContext* context)
     return false;
 }
 
-LogicalFunction createNumericLiteralFunction(AntlrSQLParser::NumericLiteralContext* numericLiteralContext)
+LogicalFunction createRawLiteralFunction(std::string literal)
 {
-    return ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), numericLiteralContext->getText());
+    return ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), std::move(literal));
 }
 
 LogicalFunction createNegatedNumericLiteralFunction(const ConstantValueLogicalFunction& constantFunction)
@@ -1088,11 +1088,10 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     }
 
     const auto insideDataTypeConstructorArgument = isInsideDataTypeConstructorArgument(context);
-    if (auto* const numericLiteralContext = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant());
-        numericLiteralContext != nullptr and !insideDataTypeConstructorArgument)
+    if (dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant()) != nullptr and !insideDataTypeConstructorArgument)
     {
         auto& functionBuilder = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
-        functionBuilder.emplace_back(createNumericLiteralFunction(numericLiteralContext));
+        functionBuilder.emplace_back(createRawLiteralFunction(context->getText()));
         return;
     }
 
@@ -1103,7 +1102,18 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
             throw InvalidQuerySyntax(
                 "A constant string literal must contain at least two quotes and must not be empty at {}", context->getText());
         }
+        if (!insideDataTypeConstructorArgument)
+        {
+            auto& functionBuilder = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+            functionBuilder.emplace_back(createRawLiteralFunction(context->getText()));
+            return;
+        }
         helpers.top().constantBuilder.push_back(context->getText().substr(1, stringLiteralContext->getText().size() - 2));
+    }
+    else if (dynamic_cast<AntlrSQLParser::BooleanLiteralContext*>(context->constant()) != nullptr and !insideDataTypeConstructorArgument)
+    {
+        auto& functionBuilder = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+        functionBuilder.emplace_back(createRawLiteralFunction(context->getText()));
     }
     else
     {

@@ -370,6 +370,21 @@ Use an explicit type constructor when a query depends on an exact literal type:
 SELECT UINT64(1) AS id, FLOAT32(3.6) AS scale FROM s INTO sink
 ```
 
+### String and boolean literals
+
+String and boolean constants can also be written directly in query expressions:
+
+```sql
+SELECT 'hello' AS message, TRUE AS enabled FROM s INTO sink
+SELECT * FROM s WHERE status == 'completed' AND enabled == false INTO sink
+```
+
+Raw string literals infer `VARSIZED`, including numeric-looking strings such as `'123'`. Raw `TRUE` and `FALSE` literals infer `BOOLEAN`; lowercase `true` and `false` are also supported. Explicit constructors remain available when desired:
+
+```sql
+SELECT VARSIZED('hello') AS message, BOOLEAN(TRUE) AS enabled FROM s INTO sink
+```
+
 ---
 
 ## Operators

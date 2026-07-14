@@ -148,6 +148,23 @@ TEST_F(StatementBinderTest, BindQueryWithRawNumericLiterals)
     EXPECT_EQ(predicate, "B < 256 AND C > -1 AND D < 1.5");
 }
 
+TEST_F(StatementBinderTest, BindQueryWithRawStringAndBooleanLiterals)
+{
+    const std::string queryString
+        = "SELECT 'hello' AS s, TRUE AS b, VARSIZED('world') AS explicit_s, BOOLEAN(FALSE) AS explicit_b FROM inputStream "
+          "WHERE text == '123' AND flag == false AND FALSE == FALSE INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "TEXT = '123' AND FLAG = false AND FALSE = FALSE");
+}
+
 TEST_F(StatementBinderTest, BindQueryWithDoubleNegativeTypedFloatLiteralInWherePredicate)
 {
     const std::string queryString = "SELECT a FROM inputStream WHERE b < FLOAT64(- -0.5) INTO outputStream";

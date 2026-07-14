@@ -425,7 +425,7 @@ constant
     ;
 
 booleanValue
-    : TRUE | FALSE
+    : TRUE | FALSE | BOOLEAN_VALUE
     ;
 
 ///****************************
