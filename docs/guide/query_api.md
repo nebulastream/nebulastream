@@ -325,6 +325,24 @@ CREATE SINK sink_name TYPE FILE SET(
        ...
 );
 ```
+
+---
+## Identifiers and Quotation Marks
+
+Identifiers are the names of SQL objects, including sources, sinks, fields, aliases, and configuration keys. Simple identifiers can be written without quotes. Double quotes allow identifiers to contain spaces or preserve their exact spelling:
+
+```sql
+SELECT "event type" AS "Event Type" FROM "input stream" INTO sink;
+```
+
+Double-quoted text refers to an identifier, while single-quoted text represents a string value:
+
+```sql
+SELECT "status" AS field_value, 'status' AS literal_value FROM stream INTO sink;
+```
+
+Here, `"status"` refers to a field named `status`, whereas `'status'` is the literal string `status`.
+
 ---
 ## Data Types
 In NebulaStream, each field is associated with exactly one data type.
