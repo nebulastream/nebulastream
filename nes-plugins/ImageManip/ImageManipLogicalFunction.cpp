@@ -69,7 +69,6 @@ const auto uint64 = DataTypeProvider::provideDataType(DataType::Type::UINT64);
 const auto float32 = DataTypeProvider::provideDataType(DataType::Type::FLOAT32);
 
 const std::unordered_map<std::string_view, ImageManipFunction> functions = {
-    {"ImageManipFromBase64ToTensor", {varSized, {varSized, uint64, uint64}}},
     {"ImageManipMono8ToJPG", {varSized, {varSized, uint64, uint64}}},
     {"ImageManipRectangle", {uint64, {uint64, uint64, uint64, uint64}}},
     {"ImageManipMono16ToMono8", {varSized, {varSized, uint64, uint64, uint16, uint16}}},
@@ -203,7 +202,6 @@ namespace LogicalFunctionGeneratedRegistrar
         return ImageManipLogicalFunction::create("ImageManip" #name, std::move(arguments.children)); \
     }
 
-ImageManipFunction(FromBase64ToTensor);
 ImageManipFunction(Mono8ToJPG);
 ImageManipFunction(Mono16ToMono8);
 ImageManipFunction(YUYVToJPG);
