@@ -12,17 +12,19 @@
     limitations under the License.
 */
 
-#include <SliceStore/DefaultTimeBasedSliceStoreRef.hpp>
+#pragma once
 
 #include <SliceStore/CachingSliceStoreRef.hpp>
-#include <SliceStore/DefaultTimeBasedSliceStore.hpp>
-#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
 
-/// Emit the time-based specialization here, where the store and handler types are complete. The
-/// factory lives in DefaultTimeBasedSliceStore.cpp.
-template class CachingSliceStoreRef<DefaultTimeBasedSliceStore, WindowBasedOperatorHandler>;
+/// Forward-declared to break the IntervalSliceStore <-> IntervalSliceStoreRef include cycle.
+class IntervalSliceStore;
+class IntervalJoinOperatorHandler;
+
+/// SliceStoreRef for the interval join: CachingSliceStoreRef specialized on the interval-join store
+/// and handler.
+using IntervalSliceStoreRef = CachingSliceStoreRef<IntervalSliceStore, IntervalJoinOperatorHandler>;
 
 }
