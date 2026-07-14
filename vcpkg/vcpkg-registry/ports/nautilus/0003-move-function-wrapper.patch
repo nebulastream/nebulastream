@@ -1,0 +1,9 @@
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+--- a/nautilus/include/nautilus/Engine.hpp
++++ b/nautilus/include/nautilus/Engine.hpp
+@@ -56,4 +56,4 @@
+ template <typename R, typename... FunctionArguments>
+ std::function<void()> createFunctionWrapper(std::function<R(FunctionArguments...)> func) {
+-	return createFunctionWrapper(std::make_index_sequence<sizeof...(FunctionArguments)> {}, func);
++	return createFunctionWrapper(std::make_index_sequence<sizeof...(FunctionArguments)> {}, std::move(func));
+ }

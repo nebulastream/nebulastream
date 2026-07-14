@@ -18,6 +18,7 @@ vcpkg_from_github(
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 		0002-fmt-fix.patch
+		0003-move-function-wrapper.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
