@@ -663,15 +663,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
 {
     const auto child = [&]<typename T>(size_t index) { return childFunctions[index].execute(record, arena).getRawValueAs<T>(); };
 
-    if (functionName == "ToBase64")
-    {
-        return toBase64(child.template operator()<VariableSizedData>(0), arena);
-    }
-    else if (functionName == "FromBase64")
-    {
-        return fromBase64(child.template operator()<VariableSizedData>(0), arena);
-    }
-    else if (functionName == "FromBase64ToTensor")
+    if (functionName == "FromBase64ToTensor")
     {
         auto image = child.template operator()<VariableSizedData>(0);
         auto width = child.template operator()<nautilus::val<uint64_t>>(1);
@@ -842,8 +834,6 @@ PhysicalFunctionImageManip::PhysicalFunctionImageManip(std::string functionName,
         return PhysicalFunction(PhysicalFunctionImageManip(#name, std::move(arguments.childFunctions))); \
     }
 
-ImageManipFunction(ToBase64);
-ImageManipFunction(FromBase64);
 ImageManipFunction(FromBase64ToTensor);
 ImageManipFunction(FaceDetection);
 ImageManipFunction(Mono8ToJPG);
