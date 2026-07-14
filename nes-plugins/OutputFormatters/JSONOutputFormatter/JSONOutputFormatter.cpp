@@ -241,17 +241,19 @@ void writeValue(
         case DataType::Type::BOOLEAN: {
             /// JSON enforces true/false literals, so lazy bools are parsed (never passed through raw:
             /// the CSV source text may be 1/0).
+            static const std::string trueLiteral = "true";
+            static const std::string falseLiteral = "false";
             const auto boolValue = value.getRawValueAs<nautilus::val<bool>>();
-            const auto literal = nautilus::select(boolValue, nautilus::val<const char*>{"true"}, nautilus::val<const char*>{"false"});
-            const auto literalLength = nautilus::select(boolValue, nautilus::val<uint64_t>{4}, nautilus::val<uint64_t>{5});
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeBytesToBuffer,
-                literal,
-                literalLength,
-                currentRemainingSize,
-                recordBuffer.getReference(),
-                bufferProvider,
-                fieldPointer + written);
+            nautilus::val<uint64_t> amountWritten{0};
+            if (boolValue)
+            {
+                amountWritten = writeConstantBytes(trueLiteral, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
+            }
+            else
+            {
+                amountWritten
+                    = writeConstantBytes(falseLiteral, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
+            }
             written += amountWritten;
             currentRemainingSize -= amountWritten;
             break;
@@ -364,30 +366,20 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     nautilus::val<uint64_t> currentRemainingSize = remainingSize;
 
     /// Pre-value glue (`{"name":` for the first field, `,"name":` otherwise): precomputed at
-    /// construction, so this is one constant-length byte copy -- no per-row string allocation.
+    /// construction and emitted as immediate stores -- the JIT sees the bytes, not a pointer
+    /// (see writeConstantBytes for why that is the better codegen).
     const std::string& prefix = fieldPrefixes.at(fieldIndex);
-    const nautilus::val<uint64_t> prefixWritten = nautilus::invoke(
-        writeBytesToBuffer,
-        nautilus::val<const char*>{prefix.c_str()},
-        nautilus::val<uint64_t>{prefix.size()},
-        currentRemainingSize,
-        recordBuffer.getReference(),
-        bufferProvider,
-        fieldPointer);
+    const nautilus::val<uint64_t> prefixWritten
+        = writeConstantBytes(prefix, fieldPointer, currentRemainingSize, recordBuffer, bufferProvider);
     written += prefixWritten;
     currentRemainingSize -= prefixWritten;
 
     /// Handle NULL values and write value
     if (value.isNullable() && value.isNull())
     {
-        const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-            writeBytesToBuffer,
-            nautilus::val<const char*>{"null"},
-            nautilus::val<uint64_t>{4},
-            currentRemainingSize,
-            recordBuffer.getReference(),
-            bufferProvider,
-            fieldPointer + written);
+        static const std::string nullLiteral = "null";
+        const nautilus::val<uint64_t> amountWritten
+            = writeConstantBytes(nullLiteral, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
         written += amountWritten;
         currentRemainingSize -= amountWritten;
     }
@@ -402,14 +394,8 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     /// control flow -- no runtime select.
     if (static_cast<uint64_t>(fieldIndex) == fieldNames.size() - 1)
     {
-        written += nautilus::invoke(
-            writeBytesToBuffer,
-            nautilus::val<const char*>{"}\n"},
-            nautilus::val<uint64_t>{2},
-            currentRemainingSize,
-            recordBuffer.getReference(),
-            bufferProvider,
-            fieldPointer + written);
+        static const std::string recordSuffix = "}\n";
+        written += writeConstantBytes(recordSuffix, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
     }
     return written;
 }
