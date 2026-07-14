@@ -22,7 +22,6 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -36,7 +35,6 @@
 #include <ErrorHandling.hpp>
 #include <OutputParserRegistry.hpp>
 #include <function.hpp>
-#include <static.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -130,18 +128,16 @@ inline uint64_t writeValueToBuffer(
     return writeBytesToBuffer(value, std::string_view{value}.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
-/// Emit a HOST-KNOWN constant byte sequence as immediate stores, folding the bytes themselves
-/// into the JIT IR (not just a pointer + length). Why: with an opaque pointer the backend must
-/// reload the source every row (it cannot prove no-alias with the destination); with visible
-/// bytes LLVM hoists the constants into registers outside the pipeline loop and merges adjacent
-/// stores (isolated microbench: 21-34% faster glue emission than the const-length memcpy shape;
-/// piparse-bench scripts/const_emit_microbench.cpp).
-/// Chunked 8/4/2/1 little-endian at trace time; the emit loop uses a static_val induction
-/// variable because operations are tagged by code location -- a plain host loop re-emitting the
-/// same store op trips the tracer's "constant loop" detection. Guarded by the same
-/// `size <= remainingSpace` invariant as writeBytesToBuffer's fast path; the buffer-boundary
-/// case falls back to the generic spilling writer, which needs a stable pointer -- so `constant`
-/// must OUTLIVE the compiled query (a formatter member or a static).
+/// Emit a HOST-KNOWN constant byte sequence, folding the bytes themselves into the JIT module
+/// (not just a pointer + length): nautilus::embedConstantBytes materializes the constant as a
+/// private constant global, so the fused writeBytesToBuffer's memcpy has a compile-time-visible
+/// source -- LLVM hoists the constants into registers outside the pipeline loop and merges
+/// stores. With an opaque host pointer the backend must instead reload the source every row (it
+/// cannot prove no-alias with the destination); isolated microbench: folded constants are
+/// 21-34% faster glue emission (piparse-bench scripts/const_emit_microbench.cpp).
+/// The buffer-boundary spill path inside writeBytesToBuffer works unchanged (the global's
+/// address is valid runtime memory). In INTERPRETED mode embedConstantBytes returns the host
+/// pointer, so `constant` must outlive execution there -- pass a formatter member or a static.
 inline nautilus::val<uint64_t> writeConstantBytes(
     const std::string& constant,
     const nautilus::val<int8_t*>& destination,
@@ -149,60 +145,15 @@ inline nautilus::val<uint64_t> writeConstantBytes(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    const uint64_t size = constant.size();
-
-    struct Chunk
-    {
-        uint64_t offset;
-        uint64_t width;
-        uint64_t bits;
-    };
-
-    std::vector<Chunk> chunks;
-    for (uint64_t offset = 0; offset < size;)
-    {
-        const uint64_t width = (size - offset >= 8) ? 8 : (size - offset >= 4) ? 4 : (size - offset >= 2) ? 2 : 1;
-        uint64_t bits = 0;
-        std::memcpy(&bits, constant.data() + offset, width);
-        chunks.push_back({.offset = offset, .width = width, .bits = bits});
-        offset += width;
-    }
-    nautilus::val<uint64_t> written{0};
-    if (remainingSpace >= nautilus::val<uint64_t>{size})
-    {
-        for (nautilus::static_val<uint64_t> chunkIndex = 0; chunkIndex < chunks.size(); ++chunkIndex)
-        {
-            const auto& [offset, width, bits] = chunks[static_cast<uint64_t>(chunkIndex)];
-            const auto chunkDestination = destination + nautilus::val<uint64_t>{offset};
-            switch (width)
-            {
-                case 8:
-                    *static_cast<nautilus::val<uint64_t*>>(chunkDestination) = nautilus::val<uint64_t>{bits};
-                    break;
-                case 4:
-                    *static_cast<nautilus::val<uint32_t*>>(chunkDestination) = nautilus::val<uint32_t>{static_cast<uint32_t>(bits)};
-                    break;
-                case 2:
-                    *static_cast<nautilus::val<uint16_t*>>(chunkDestination) = nautilus::val<uint16_t>{static_cast<uint16_t>(bits)};
-                    break;
-                default:
-                    *static_cast<nautilus::val<int8_t*>>(chunkDestination) = nautilus::val<int8_t>{static_cast<int8_t>(bits)};
-            }
-        }
-        written = nautilus::val<uint64_t>{size};
-    }
-    else
-    {
-        written = nautilus::invoke(
-            writeBytesToBuffer,
-            nautilus::val<const char*>{constant.c_str()},
-            nautilus::val<uint64_t>{size},
-            remainingSpace,
-            recordBuffer.getReference(),
-            bufferProvider,
-            destination);
-    }
-    return written;
+    const auto embedded = nautilus::embedConstantBytes(constant.data(), constant.size());
+    return nautilus::invoke(
+        writeBytesToBuffer,
+        static_cast<nautilus::val<const char*>>(embedded),
+        nautilus::val<uint64_t>{constant.size()},
+        remainingSpace,
+        recordBuffer.getReference(),
+        bufferProvider,
+        destination);
 }
 
 /// Parses the varval into a string.

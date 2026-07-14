@@ -1,0 +1,669 @@
+diff --git a/nautilus/include/nautilus/tracing/Operations.hpp b/nautilus/include/nautilus/tracing/Operations.hpp
+index e741b1e..0aa293a 100644
+--- a/nautilus/include/nautilus/tracing/Operations.hpp
++++ b/nautilus/include/nautilus/tracing/Operations.hpp
+@@ -12,6 +12,7 @@ enum Op : uint8_t {
+ 	RETURN,
+ 	ASSIGN,
+ 	CONST,
++	CONSTBYTES,
+ 	CAST,
+ 	FREE,
+ 	CALL,
+@@ -68,6 +69,8 @@ constexpr const char* toString(Op type) {
+ 		return "ASSIGN";
+ 	case CONST:
+ 		return "CONST";
++	case CONSTBYTES:
++		return "CONSTBYTES";
+ 	case EQ:
+ 		return "EQ";
+ 	case NEQ:
+diff --git a/nautilus/include/nautilus/tracing/TracingInterface.hpp b/nautilus/include/nautilus/tracing/TracingInterface.hpp
+index 6bf83c1..8d81dfa 100644
+--- a/nautilus/include/nautilus/tracing/TracingInterface.hpp
++++ b/nautilus/include/nautilus/tracing/TracingInterface.hpp
+@@ -31,6 +31,11 @@ public:
+ 	/// Trace a constant value of the given type.
+ 	virtual TypedValueRef& traceConstant(Type type, const ConstantLiteral& value) = 0;
+ 
++	/// Trace an embedded host-known immutable byte blob. The result is a Type::ptr value
++	/// pointing at the blob (a materialized constant global on backends that support it, or
++	/// the raw host pointer otherwise).
++	virtual TypedValueRef& traceConstantBytes(const ConstBytesLiteral& value) = 0;
++
+ 	/// Trace a copy of an existing traced value.
+ 	virtual TypedValueRef& traceAlloca(size_t allocSize) = 0;
+ 
+diff --git a/nautilus/include/nautilus/tracing/TracingUtil.hpp b/nautilus/include/nautilus/tracing/TracingUtil.hpp
+index 57992d9..b6a5302 100644
+--- a/nautilus/include/nautilus/tracing/TracingUtil.hpp
++++ b/nautilus/include/nautilus/tracing/TracingUtil.hpp
+@@ -42,6 +42,10 @@ TypedValueRef traceConstant(T&& value) {
+ 	return {0, TypeResolver<T>::to_type()};
+ }
+ 
++/// Trace an embedded host-known immutable byte blob, yielding a Type::ptr value.
++/// Only meaningful inside a trace; callers guard with inTracer().
++TypedValueRef traceConstantBytes(const ConstBytesLiteral& value);
++
+ void traceAssignment(const TypedValueRef& target, const TypedValueRef& source, Type resultType);
+ TypedValueRef traceCopy(const TypedValueRef& ref);
+ 
+diff --git a/nautilus/include/nautilus/tracing/Types.hpp b/nautilus/include/nautilus/tracing/Types.hpp
+index 89708dc..a44a812 100644
+--- a/nautilus/include/nautilus/tracing/Types.hpp
++++ b/nautilus/include/nautilus/tracing/Types.hpp
+@@ -5,8 +5,10 @@
+ #include <cstdlib>
+ #include <iosfwd>
+ #include <iostream>
++#include <memory>
+ #include <type_traits>
+ #include <variant>
++#include <vector>
+ 
+ namespace nautilus {
+ 
+@@ -15,6 +17,30 @@ enum class Type : uint8_t { v, b, i8, i16, i32, i64, ui8, ui16, ui32, ui64, f32,
+ using ConstantLiteral =
+     std::variant<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double, void*>;
+ 
++/**
++ * @brief Payload of an embedded host-known immutable byte blob.
++ *
++ * Unlike a ConstantLiteral (a fixed-width scalar that can be emitted as an immediate),
++ * an arbitrary-length byte string cannot cross the host->JIT boundary as an immediate.
++ * A plain `val<const char*>` degrades to an opaque `inttoptr` constant that LLVM cannot
++ * dereference at compile time (it has no immutability/validity guarantee for host memory),
++ * so constant-folding of `memcpy`/`memcmp` against it is impossible.
++ *
++ * This payload carries the bytes themselves so a backend that supports it (the MLIR/LLVM
++ * backend) can materialize them as a module-level `private unnamed_addr constant [N x i8]`
++ * global and return the global's address. Inlined code that memcpy's/memcmp's against that
++ * global then folds. Backends that do not support it, and the interpreter, fall back to the
++ * raw host pointer -- identical to a plain pointer constant.
++ *
++ * @c bytes owns a private copy of the blob so it outlives tracing and compilation regardless
++ * of the caller's storage lifetime. @c hostPointer is the caller's original address, used by
++ * the pointer-constant fallback and the interpreter.
++ */
++struct ConstBytesLiteral {
++	const void* hostPointer = nullptr;
++	std::shared_ptr<const std::vector<int8_t>> bytes;
++};
++
+ namespace tracing {
+ 
+ template <typename T>
+diff --git a/nautilus/include/nautilus/val_ptr.hpp b/nautilus/include/nautilus/val_ptr.hpp
+index 7685755..d632d75 100644
+--- a/nautilus/include/nautilus/val_ptr.hpp
++++ b/nautilus/include/nautilus/val_ptr.hpp
+@@ -580,4 +580,45 @@ private:
+ 	friend val<ptrType>;
+ };
+ 
++/**
++ * @brief Embeds a host-known immutable byte blob into the generated code and returns a
++ * pointer val to it.
++ *
++ * A plain @c val<const char*>{p} can only cross the host->JIT boundary as an opaque
++ * @c inttoptr constant that LLVM must treat as an unknown, possibly-mutating, possibly-aliasing
++ * address -- so operations on it (a @c memcpy that writes the bytes to an output buffer, a
++ * @c memcmp of a lazily-parsed field against a literal) cannot be constant-folded. This
++ * primitive instead records the bytes in the trace so the compilation backend can materialize
++ * them as a module-level @c "private unnamed_addr constant [N x i8]" global; inlined code that
++ * memcpy's / memcmp's against the returned address then folds to immediates.
++ *
++ * Semantics per execution mode:
++ *  - compiled (MLIR/LLVM backend, the one NebulaStream uses): a deduplicated constant global,
++ *    address returned via @c llvm.mlir.addressof;
++ *  - compiled (other backends): degrades to a plain pointer constant at @p data (no folding),
++ *    identical to @c val<const char*>{data} today;
++ *  - interpreter: returns @p data directly.
++ *
++ * The bytes are copied into trace-owned storage during tracing, so @p data need only stay valid
++ * for the duration of this call. (For the non-folding pointer-constant fallback on the minor
++ * backends, the usual @c val pointer-constant lifetime caveat applies: @p data must outlive the
++ * executable.)
++ *
++ * @param data pointer to @p size bytes to embed.
++ * @param size number of bytes.
++ * @return val<const int8_t*> pointing at the embedded blob.
++ */
++inline val<const int8_t*> embedConstantBytes(const void* data, size_t size) {
++	const auto* hostPtr = static_cast<const int8_t*>(data);
++#ifdef ENABLE_TRACING
++	if (tracing::inTracer()) {
++		auto owned = std::make_shared<std::vector<int8_t>>(hostPtr, hostPtr + size);
++		ConstBytesLiteral literal {data, owned};
++		auto ref = tracing::traceConstantBytes(literal);
++		return val<const int8_t*>(hostPtr, ref);
++	}
++#endif
++	return val<const int8_t*>(hostPtr);
++}
++
+ } // namespace nautilus
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+index a3df176..265d382 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+@@ -467,6 +467,14 @@ void MLIRLoweringProvider::generateMLIR(ir::ConstIntOperation* constIntOp, Value
+ }
+ 
+ void MLIRLoweringProvider::generateMLIR(ir::ConstPtrOperation* constPtr, ValueFrame& frame) {
++	// A ConstBytesOperation carries the blob's bytes, not just the host address. Materialize it
++	// as a module-level `private unnamed_addr constant [N x i8]` global so that LLVM can constant
++	// fold inlined memcpy/memcmp against it, instead of the opaque inttoptr of a plain pointer.
++	if (auto* constBytes = dynamic_cast<ir::ConstBytesOperation*>(constPtr)) {
++		frame.setValue(constBytes->getIdentifier(), getOrCreateConstantBytesAddress(constBytes->getBytes()));
++		return;
++	}
++
+ 	auto val = (int64_t) constPtr->getValue();
+ 	auto constInt = builder->create<mlir::arith::ConstantOp>(getNameLoc("location"), builder->getI64Type(),
+ 	                                                         builder->getIntegerAttr(builder->getI64Type(), val));
+@@ -476,6 +484,32 @@ void MLIRLoweringProvider::generateMLIR(ir::ConstPtrOperation* constPtr, ValueFr
+ 	frame.setValue(constPtr->getIdentifier(), elementAddress);
+ }
+ 
++mlir::Value MLIRLoweringProvider::getOrCreateConstantBytesAddress(const std::vector<int8_t>& bytes) {
++	// Content-address the blob so two equal blobs share a single global (dedup).
++	std::string key(reinterpret_cast<const char*>(bytes.data()), bytes.size());
++	std::string name;
++	auto it = constantByteGlobals.find(key);
++	if (it != constantByteGlobals.end()) {
++		name = it->second;
++	} else {
++		auto i8Type = builder->getI8Type();
++		auto arrayType = mlir::LLVM::LLVMArrayType::get(i8Type, bytes.size());
++		auto dataAttr = mlir::StringAttr::get(context, llvm::StringRef(key.data(), key.size()));
++		name = "nautilus_const_bytes_" + std::to_string(constantByteGlobalCounter++);
++
++		// Insert the global at module scope; the InsertionGuard restores the current IP afterwards.
++		mlir::PatternRewriter::InsertionGuard insertGuard(*builder);
++		builder->restoreInsertionPoint(*globalInsertPoint);
++		auto global =
++		    builder->create<mlir::LLVM::GlobalOp>(getNameLoc("constBytes"), arrayType, /*isConstant=*/true,
++		                                          mlir::LLVM::Linkage::Private, name, dataAttr, /*alignment=*/1);
++		global.setUnnamedAddr(mlir::LLVM::UnnamedAddr::Global);
++		constantByteGlobals.emplace(std::move(key), name);
++	}
++	return builder->create<mlir::LLVM::AddressOfOp>(getNameLoc("constBytesAddr"),
++	                                                mlir::LLVM::LLVMPointerType::get(context), name);
++}
++
+ void MLIRLoweringProvider::generateMLIR(ir::ConstFloatOperation* constFloatOp, ValueFrame& frame) {
+ 	if (isFloat(constFloatOp->getStamp())) {
+ 		auto floatType = (constFloatOp->getStamp() == Type::f32) ? builder->getF32Type() : builder->getF64Type();
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp
+index 82c18e3..56a693f 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp
+@@ -17,6 +17,7 @@
+ #include "nautilus/compiler/ir/operations/BranchOperation.hpp"
+ #include "nautilus/compiler/ir/operations/CastOperation.hpp"
+ #include "nautilus/compiler/ir/operations/ConstBooleanOperation.hpp"
++#include "nautilus/compiler/ir/operations/ConstBytesOperation.hpp"
+ #include "nautilus/compiler/ir/operations/ConstFloatOperation.hpp"
+ #include "nautilus/compiler/ir/operations/ConstIntOperation.hpp"
+ #include "nautilus/compiler/ir/operations/ConstPtrOperation.hpp"
+@@ -89,6 +90,10 @@ private:
+ 	::mlir::FlatSymbolRefAttr printfReference;
+ 	llvm::StringMap<::mlir::Value> printfStrings;
+ 	std::unordered_map<std::string, ::mlir::Block*> blockMapping; // Keeps track of already created basic blocks.
++	// Content-addressed cache of embedded byte-blob globals (blob bytes -> global symbol name),
++	// so identical blobs share a single materialized global.
++	std::unordered_map<std::string, std::string> constantByteGlobals;
++	uint64_t constantByteGlobalCounter = 0;
+ 	const engine::Options* options;
+ 
+ 	/**
+@@ -115,6 +120,12 @@ private:
+ 	void generateMLIR(ir::ConstBooleanOperation* constBooleanOp, ValueFrame& frame);
+ 	void generateMLIR(ir::ConstPtrOperation* constPtrOperation, ValueFrame& frame);
+ 
++	/**
++	 * @brief Materializes (or reuses) a module-level private unnamed_addr constant byte array and
++	 * returns an llvm.mlir.addressof pointer to it. Identical blobs are deduplicated.
++	 */
++	::mlir::Value getOrCreateConstantBytesAddress(const std::vector<int8_t>& bytes);
++
+ 	void generateMLIR(ir::AddOperation* addIntOp, ValueFrame& frame);
+ 	void generateMLIR(ir::SubOperation* subIntOp, ValueFrame& frame);
+ 	void generateMLIR(ir::MulOperation* mulIntOp, ValueFrame& frame);
+diff --git a/nautilus/src/nautilus/compiler/ir/operations/CMakeLists.txt b/nautilus/src/nautilus/compiler/ir/operations/CMakeLists.txt
+index 25737dd..3f062fb 100644
+--- a/nautilus/src/nautilus/compiler/ir/operations/CMakeLists.txt
++++ b/nautilus/src/nautilus/compiler/ir/operations/CMakeLists.txt
+@@ -18,5 +18,6 @@ add_source_files(nautilus
+         BranchOperation.cpp
+         ConstBooleanOperation.cpp
+         ConstPtrOperation.cpp
++        ConstBytesOperation.cpp
+         SelectOperation.cpp
+ )
+diff --git a/nautilus/src/nautilus/compiler/ir/operations/ConstBytesOperation.cpp b/nautilus/src/nautilus/compiler/ir/operations/ConstBytesOperation.cpp
+new file mode 100644
+index 0000000..55303f9
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/ir/operations/ConstBytesOperation.cpp
+@@ -0,0 +1,18 @@
++
++#include "nautilus/compiler/ir/operations/ConstBytesOperation.hpp"
++#include <utility>
++
++namespace nautilus::compiler::ir {
++
++ConstBytesOperation::ConstBytesOperation(OperationIdentifier identifier, const void* hostPointer,
++                                         std::shared_ptr<const std::vector<int8_t>> bytes)
++    // Pass the raw host pointer as the ConstPtr value so every backend that only knows
++    // ConstPtrOp still lowers a correct (non-folding) pointer constant.
++    : ConstPtrOperation(identifier, const_cast<void*>(hostPointer)), bytes(std::move(bytes)) {
++}
++
++const std::vector<int8_t>& ConstBytesOperation::getBytes() const {
++	return *bytes;
++}
++
++} // namespace nautilus::compiler::ir
+diff --git a/nautilus/src/nautilus/compiler/ir/operations/ConstBytesOperation.hpp b/nautilus/src/nautilus/compiler/ir/operations/ConstBytesOperation.hpp
+new file mode 100644
+index 0000000..a6e878b
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/ir/operations/ConstBytesOperation.hpp
+@@ -0,0 +1,38 @@
++
++#pragma once
++
++#include "nautilus/compiler/ir/operations/ConstPtrOperation.hpp"
++#include <cstdint>
++#include <memory>
++#include <vector>
++
++namespace nautilus::compiler::ir {
++
++/**
++ * @brief IR node for an embedded host-known immutable byte blob.
++ *
++ * Deliberately derived from ConstPtrOperation so that it reuses OperationType::ConstPtrOp.
++ * Every existing backend dispatch already handles ConstPtrOp and lowers it via getValue()
++ * (the raw host pointer), which yields the correct -- but non-foldable -- pointer-constant
++ * fallback for this node without any per-backend change.
++ *
++ * The MLIR/LLVM backend downcasts (dynamic_cast) to this type inside its ConstPtrOperation
++ * handler: when it succeeds it materializes the bytes as a `private unnamed_addr constant
++ * [N x i8]` module global and returns the global's address, enabling LLVM to constant-fold
++ * inlined memcpy/memcmp against the blob.
++ */
++class ConstBytesOperation : public ConstPtrOperation {
++public:
++	ConstBytesOperation(OperationIdentifier identifier, const void* hostPointer,
++	                    std::shared_ptr<const std::vector<int8_t>> bytes);
++
++	~ConstBytesOperation() override = default;
++
++	/// The immutable byte blob to be embedded.
++	const std::vector<int8_t>& getBytes() const;
++
++private:
++	std::shared_ptr<const std::vector<int8_t>> bytes;
++};
++
++} // namespace nautilus::compiler::ir
+diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+index f6616f2..dc6e688 100644
+--- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+@@ -84,6 +84,26 @@ TypedValueRef& ExceptionBasedTraceContext::traceConstant(Type type, const Consta
+ 	}
+ }
+ 
++TypedValueRef& ExceptionBasedTraceContext::traceConstantBytes(const ConstBytesLiteral& value) {
++	log::debug("Trace Constant Bytes");
++	auto op = Op::CONSTBYTES;
++	auto type = Type::ptr;
++	if (isFollowing()) {
++		return follow(op);
++	}
++	auto tag = recordSnapshot();
++	auto globalTabIter = state->executionTrace.globalTagMap.find(tag);
++	if (globalTabIter != state->executionTrace.globalTagMap.end()) {
++		auto& ref = globalTabIter->second;
++		auto& originalRef = state->executionTrace.getBlocks()[ref.blockIndex].operations[ref.operationIndex];
++		auto resultRef = state->executionTrace.addOperationWithResult(tag, op, type, {value});
++		state->executionTrace.addAssignmentOperation(tag, originalRef.resultRef, resultRef, resultRef.type);
++		return originalRef.resultRef;
++	} else {
++		return state->executionTrace.addOperationWithResult(tag, op, type, {value});
++	}
++}
++
+ template <typename OnCreation>
+ TypedValueRef& ExceptionBasedTraceContext::traceOperation(Op op, OnCreation&& onCreation) {
+ 	if (isFollowing()) {
+diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+index 34e21ce..d5566cd 100644
+--- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+@@ -166,6 +166,8 @@ public:
+ 
+ 	TypedValueRef& traceConstant(Type type, const ConstantLiteral& value) override;
+ 
++	TypedValueRef& traceConstantBytes(const ConstBytesLiteral& value) override;
++
+ 	TypedValueRef& traceCopy(const TypedValueRef& ref) override;
+ 
+ 	TypedValueRef& traceBinaryOp(Op op, Type resultType, const TypedValueRef& left,
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+index 0783b50..1e20dbd 100644
+--- a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+@@ -78,6 +78,29 @@ TypedValueRef& LazyTraceContext::traceConstant(Type type, const ConstantLiteral&
+ 	}
+ }
+ 
++TypedValueRef& LazyTraceContext::traceConstantBytes(const ConstBytesLiteral& value) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	log::debug("Trace Constant Bytes");
++	auto op = Op::CONSTBYTES;
++	auto type = Type::ptr;
++	if (isFollowing()) {
++		return follow(op);
++	}
++	auto tag = recordSnapshot();
++	auto globalTabIter = state->executionTrace.globalTagMap.find(tag);
++	if (globalTabIter != state->executionTrace.globalTagMap.end()) {
++		auto& ref = globalTabIter->second;
++		auto& originalRef = state->executionTrace.getBlocks()[ref.blockIndex].operations[ref.operationIndex];
++		auto resultRef = state->executionTrace.addOperationWithResult(tag, op, type, {value});
++		state->executionTrace.addAssignmentOperation(tag, originalRef.resultRef, resultRef, resultRef.type);
++		return originalRef.resultRef;
++	} else {
++		return state->executionTrace.addOperationWithResult(tag, op, type, {value});
++	}
++}
++
+ template <typename OnCreation>
+ TypedValueRef& LazyTraceContext::traceOperation(Op op, OnCreation&& onCreation) {
+ 	if (paused_) {
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+index 4691219..2bb899c 100644
+--- a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+@@ -34,6 +34,7 @@ public:
+ 
+ 	TypedValueRef& registerFunctionArgument(Type type, size_t index) override;
+ 	TypedValueRef& traceConstant(Type type, const ConstantLiteral& value) override;
++	TypedValueRef& traceConstantBytes(const ConstBytesLiteral& value) override;
+ 	TypedValueRef& traceAlloca(size_t allocSize) override;
+ 	TypedValueRef& traceCopy(const TypedValueRef& ref) override;
+ 	TypedValueRef& traceBinaryOp(Op op, Type resultType, const TypedValueRef& left,
+diff --git a/nautilus/src/nautilus/tracing/TraceOperation.hpp b/nautilus/src/nautilus/tracing/TraceOperation.hpp
+index 4a397fd..5a86386 100644
+--- a/nautilus/src/nautilus/tracing/TraceOperation.hpp
++++ b/nautilus/src/nautilus/tracing/TraceOperation.hpp
+@@ -45,8 +45,8 @@ struct BlockRef {
+ 	std::vector<TypedValueRef> arguments;
+ };
+ 
+-using InputVariant =
+-    std::variant<TypedValueRef, None, ConstantLiteral, BlockRef, FunctionCall, BranchProbability, AllocSize>;
++using InputVariant = std::variant<TypedValueRef, None, ConstantLiteral, ConstBytesLiteral, BlockRef, FunctionCall,
++                                  BranchProbability, AllocSize>;
+ 
+ /**
+  * @brief Represents an individual operation in a trace.
+diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+index e1446eb..2f4bd30 100644
+--- a/nautilus/src/nautilus/tracing/TracingUtil.cpp
++++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+@@ -82,6 +82,10 @@ TypedValueRef& traceConstant(Type type, const ConstantLiteral& value) {
+ 	return activeTracer->traceConstant(type, value);
+ }
+ 
++TypedValueRef traceConstantBytes(const ConstBytesLiteral& value) {
++	return activeTracer->traceConstantBytes(value);
++}
++
+ bool traceBool(const TypedValueRef& value, double probability) {
+ 	return activeTracer->traceBool(value, probability);
+ }
+diff --git a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
+index 6b386dc..5210916 100644
+--- a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
++++ b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
+@@ -9,6 +9,7 @@
+ #include "nautilus/compiler/ir/operations/BinaryOperations/NegateOperation.hpp"
+ #include "nautilus/compiler/ir/operations/CastOperation.hpp"
+ #include "nautilus/compiler/ir/operations/ConstBooleanOperation.hpp"
++#include "nautilus/compiler/ir/operations/ConstBytesOperation.hpp"
+ #include "nautilus/compiler/ir/operations/ConstPtrOperation.hpp"
+ #include "nautilus/compiler/ir/operations/LoadOperation.hpp"
+ #include "nautilus/compiler/ir/operations/LogicalOperations/AndOperation.hpp"
+@@ -152,6 +153,10 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(ValueFrame&
+ 		processConst(frame, currentIrBlock, operation);
+ 		return;
+ 	}
++	case Op::CONSTBYTES: {
++		processConstBytes(frame, currentIrBlock, operation);
++		return;
++	}
+ 	case Op::RETURN: {
+ 		if (operation.input.empty()) {
+ 			currentIrBlock->addOperation<ReturnOperation>();
+@@ -381,6 +386,15 @@ void TraceToIRConversionPhase::IRConversionContext::processConst(ValueFrame& fra
+ 	frame.setValue(resultIdentifier, constOperation);
+ }
+ 
++void TraceToIRConversionPhase::IRConversionContext::processConstBytes(ValueFrame& frame, BasicBlock* currentBlock,
++                                                                      TraceOperation& operation) {
++	auto& bytesLiteral = std::get<ConstBytesLiteral>(operation.input[0]);
++	auto resultIdentifier = createValueIdentifier(operation.resultRef);
++	auto* constOperation = currentBlock->addOperation<compiler::ir::ConstBytesOperation>(
++	    resultIdentifier, bytesLiteral.hostPointer, bytesLiteral.bytes);
++	frame.setValue(resultIdentifier, constOperation);
++}
++
+ void TraceToIRConversionPhase::IRConversionContext::processCast(ValueFrame& frame, BasicBlock* currentBlock,
+                                                                 TraceOperation& operation) {
+ 	auto resultIdentifier = createValueIdentifier(operation.resultRef);
+diff --git a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.hpp b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.hpp
+index da3eda3..a3268e3 100644
+--- a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.hpp
++++ b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.hpp
+@@ -82,6 +82,8 @@ private:
+ 
+ 		void processConst(ValueFrame& frame, compiler::ir::BasicBlock* currentBlock, TraceOperation& operation);
+ 
++		void processConstBytes(ValueFrame& frame, compiler::ir::BasicBlock* currentBlock, TraceOperation& operation);
++
+ 		void processCast(ValueFrame& frame, compiler::ir::BasicBlock* currentBlock, TraceOperation& operation);
+ 
+ 		void createBlockArguments(ValueFrame& frame, compiler::ir::BasicBlockInvocation& blockInvocation, BlockRef val);
+diff --git a/nautilus/test/execution-tests/CMakeLists.txt b/nautilus/test/execution-tests/CMakeLists.txt
+index 5337bf9..61312d2 100644
+--- a/nautilus/test/execution-tests/CMakeLists.txt
++++ b/nautilus/test/execution-tests/CMakeLists.txt
+@@ -9,6 +9,7 @@ add_executable(nautilus-execution-tests
+         SelectExecutionTest.cpp
+         BitIntrinsicExecutionTest.cpp
+         MemoryIntrinsicExecutionTest.cpp
++        ConstBytesExecutionTest.cpp
+ )
+ 
+ nautilus_inline(nautilus-execution-tests)
+diff --git a/nautilus/test/execution-tests/ConstBytesExecutionTest.cpp b/nautilus/test/execution-tests/ConstBytesExecutionTest.cpp
+new file mode 100644
+index 0000000..6b68543
+--- /dev/null
++++ b/nautilus/test/execution-tests/ConstBytesExecutionTest.cpp
+@@ -0,0 +1,164 @@
++
++#include "catch2/catch_test_macros.hpp"
++#include "nautilus/Engine.hpp"
++#include "nautilus/val_ptr.hpp"
++#include <catch2/catch_all.hpp>
++#include <cstdint>
++#include <filesystem>
++#include <fstream>
++#include <sstream>
++#include <string>
++
++// Tests for nautilus::embedConstantBytes: embedding a host-known immutable byte blob as a
++// module-level constant global so LLVM can constant-fold operations against it.
++//
++// Two things are validated:
++//  1. Correctness in BOTH interpreter mode (engine.Compilation=false, runs the traced C++
++//     directly on the host pointer) and compiled MLIR mode.
++//  2. That the MLIR/LLVM backend actually materializes the bytes as a constant global and
++//     folds reads of it -- inspected by dumping the generated (optimized) LLVM IR.
++
++namespace nautilus::engine {
++
++// The blob referenced by every test function. `static constexpr` so its address is stable
++// across the tracer's repeated executions of the function.
++static constexpr int8_t kBlob[4] = {10, 20, 30, 40};
++static constexpr int8_t kAZ[2] = {'a', 'z'};
++
++// Pure-constant computation over the embedded blob. After optimization every read of the
++// constant global folds, so `execute` should reduce to `ret i32 100`.
++val<int32_t> sumEmbeddedBytes() {
++	// Manually unrolled (distinct source locations) so the tracer records four separate reads
++	// rather than mistaking a host loop over one code location for a constant loop.
++	auto p = embedConstantBytes(kBlob, sizeof(kBlob));
++	val<int8_t> b0 = p[0];
++	val<int8_t> b1 = p[1];
++	val<int8_t> b2 = p[2];
++	val<int8_t> b3 = p[3];
++	val<int32_t> acc = static_cast<val<int32_t>>(b0);
++	acc = acc + static_cast<val<int32_t>>(b1);
++	acc = acc + static_cast<val<int32_t>>(b2);
++	acc = acc + static_cast<val<int32_t>>(b3);
++	return acc;
++}
++
++// Returns the embedded blob's address. Keeps the constant global live in the IR (it is
++// returned), so the dump is guaranteed to contain the materialized global.
++val<const int8_t*> embeddedAddress() {
++	return embedConstantBytes(kBlob, sizeof(kBlob));
++}
++
++// The `WHERE state = 'az'` shape: compare an input against an embedded literal. After
++// optimization the literal bytes become immediate operands of the icmps.
++val<bool> matchesAZ(val<const int8_t*> in) {
++	auto lit = embedConstantBytes(kAZ, sizeof(kAZ));
++	return in[0] == lit[0] && in[1] == lit[1];
++}
++
++static std::string readFile(const std::string& path) {
++	std::ifstream in(path);
++	std::stringstream ss;
++	ss << in.rdbuf();
++	return ss.str();
++}
++
++// Compiles `func` with the MLIR backend, dumps the generated (optimized) LLVM IR and returns it.
++template <typename Func>
++static std::string compileAndDumpIR(const std::string& name, Func func) {
++	std::string dumpPath = (std::filesystem::temp_directory_path() / ("nautilus-constbytes-" + name)).string();
++	std::filesystem::remove_all(dumpPath);
++	std::filesystem::create_directories(dumpPath);
++
++	engine::Options options;
++	options.setOption("engine.backend", "mlir");
++	options.setOption("engine.Compilation", true);
++	options.setOption("dump.after_llvm_generation", true);
++	options.setOption("dump.path", dumpPath);
++	options.setOption("engine.normalizeFunctionNames", true);
++
++	auto engine = engine::NautilusEngine(options);
++	auto function = engine.registerFunction(std::function {func});
++	auto file = function.getExecutable()->getGeneratedFile("after_llvm_generation");
++	REQUIRE(!file.empty());
++	std::string ir = readFile(std::string(file));
++	std::filesystem::remove_all(dumpPath);
++	return ir;
++}
++
++static void correctnessTests(engine::NautilusEngine& engine) {
++	SECTION("sumEmbeddedBytes") {
++		auto f = engine.registerFunction(sumEmbeddedBytes);
++		REQUIRE(f() == 100);
++	}
++	SECTION("embeddedAddress") {
++		auto f = engine.registerFunction(embeddedAddress);
++		const int8_t* p = f();
++		REQUIRE(p != nullptr);
++		REQUIRE(p[0] == 10);
++		REQUIRE(p[1] == 20);
++		REQUIRE(p[2] == 30);
++		REQUIRE(p[3] == 40);
++	}
++	SECTION("matchesAZ") {
++		auto f = engine.registerFunction(matchesAZ);
++		const int8_t az[2] = {'a', 'z'};
++		const int8_t ax[2] = {'a', 'x'};
++		REQUIRE(f(az) == true);
++		REQUIRE(f(ax) == false);
++	}
++}
++
++TEST_CASE("ConstBytes Interpreter Test") {
++	engine::Options options;
++	options.setOption("engine.Compilation", false);
++	auto engine = engine::NautilusEngine(options);
++	correctnessTests(engine);
++}
++
++#ifdef ENABLE_TRACING
++#ifdef ENABLE_MLIR_BACKEND
++TEST_CASE("ConstBytes Compiler Test") {
++	std::vector<std::string> traceModes = {"exceptionBasedTracing", "lazyTracing"};
++	for (auto& traceMode : traceModes) {
++		DYNAMIC_SECTION("mlir_" + traceMode) {
++			engine::Options options;
++			options.setOption("engine.backend", "mlir");
++			options.setOption("engine.traceMode", traceMode);
++			auto engine = engine::NautilusEngine(options);
++			correctnessTests(engine);
++		}
++	}
++}
++
++TEST_CASE("ConstBytes materializes a constant global") {
++	std::string ir = compileAndDumpIR("address", embeddedAddress);
++	INFO(ir);
++	// A private unnamed_addr constant byte array must appear (impossible with an opaque inttoptr).
++	REQUIRE(ir.find("nautilus_const_bytes_") != std::string::npos);
++	REQUIRE(ir.find("private unnamed_addr constant") != std::string::npos);
++	REQUIRE(ir.find("[4 x i8]") != std::string::npos);
++	// The blob bytes {10,20,30,40}: 10,20,30 render as hex escapes (40 is the printable '(').
++	// The exact byte values are additionally proven by the folded `ret i32 100` sum test below.
++	REQUIRE(ir.find("c\"\\0A\\14\\1E") != std::string::npos);
++}
++
++TEST_CASE("ConstBytes reads fold to immediates") {
++	std::string ir = compileAndDumpIR("sum", sumEmbeddedBytes);
++	INFO(ir);
++	// All four reads of the constant global fold: execute collapses to `ret i32 100`.
++	REQUIRE(ir.find("ret i32 100") != std::string::npos);
++}
++
++TEST_CASE("ConstBytes literal comparison folds to immediate icmps") {
++	std::string ir = compileAndDumpIR("cmp", std::function<val<bool>(val<const int8_t*>)> {matchesAZ});
++	INFO(ir);
++	// The embedded 'a'(97) and 'z'(122) become immediate operands of the comparisons, and the
++	// literal is NOT lowered as an opaque pointer constant.
++	REQUIRE(ir.find("inttoptr") == std::string::npos);
++	REQUIRE((ir.find(", 97") != std::string::npos || ir.find("97,") != std::string::npos));
++	REQUIRE((ir.find(", 122") != std::string::npos || ir.find("122,") != std::string::npos));
++}
++#endif
++#endif
++
++} // namespace nautilus::engine
