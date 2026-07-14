@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLLexer.h>
@@ -39,6 +40,7 @@
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/IsNullCheckLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
@@ -66,7 +68,6 @@
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -169,6 +170,95 @@ static LogicalFunction createLogicalBinaryFunction(LogicalFunction leftFunction,
     }
 }
 
+namespace
+{
+
+bool isInsideDataTypeConstructorArgument(antlr4::ParserRuleContext* context)
+{
+    for (auto* parent = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parent != nullptr;
+         parent = dynamic_cast<antlr4::ParserRuleContext*>(parent->parent))
+    {
+        if (auto* const functionCall = dynamic_cast<AntlrSQLParser::FunctionCallContext*>(parent))
+        {
+            return functionCall->typeDefinition() != nullptr;
+        }
+    }
+    return false;
+}
+
+LogicalFunction createNumericLiteralFunction(AntlrSQLParser::NumericLiteralContext* numericLiteralContext)
+{
+    return ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), numericLiteralContext->getText());
+}
+
+LogicalFunction createNegatedNumericLiteralFunction(const ConstantValueLogicalFunction& constantFunction)
+{
+    auto constantValue = constantFunction.getConstantValue();
+    if (constantValue.starts_with('-'))
+    {
+        constantValue.erase(0, 1);
+    }
+    else
+    {
+        constantValue.insert(0, 1, '-');
+    }
+
+    return ConstantValueLogicalFunction(constantFunction.getDataType(), std::move(constantValue));
+}
+
+LogicalFunction createBetweenFunction(const LogicalFunction& valueFunction, LogicalFunction lowerFunction, LogicalFunction upperFunction)
+{
+    return AndLogicalFunction(
+        GreaterEqualsLogicalFunction(valueFunction, std::move(lowerFunction)),
+        LessEqualsLogicalFunction(valueFunction, std::move(upperFunction)));
+}
+
+LogicalFunction createInFunction(const LogicalFunction& valueFunction, std::vector<LogicalFunction> candidateFunctions)
+{
+    if (candidateFunctions.empty())
+    {
+        throw InvalidQuerySyntax("IN predicate requires at least one candidate value");
+    }
+
+    LogicalFunction function = EqualsLogicalFunction(valueFunction, std::move(candidateFunctions.front()));
+    for (auto& candidateFunction : candidateFunctions | std::views::drop(1))
+    {
+        function = OrLogicalFunction(std::move(function), EqualsLogicalFunction(valueFunction, std::move(candidateFunction)));
+    }
+    return function;
+}
+
+void negateTopFunction(std::stack<AntlrSQLHelper>& helpers, const std::string& expressionText)
+{
+    if (helpers.empty())
+    {
+        throw InvalidQuerySyntax("Parser is confused at {}", expressionText);
+    }
+
+    if (helpers.top().isJoinRelation)
+    {
+        if (helpers.top().joinKeyRelationHelper.empty())
+        {
+            throw InvalidQuerySyntax("Negate requires child op at {}", expressionText);
+        }
+        auto innerFunction = std::move(helpers.top().joinKeyRelationHelper.back());
+        helpers.top().joinKeyRelationHelper.pop_back();
+        helpers.top().joinKeyRelationHelper.emplace_back(NegateLogicalFunction(std::move(innerFunction)));
+    }
+    else
+    {
+        if (helpers.top().functionBuilder.empty())
+        {
+            throw InvalidQuerySyntax("Negate requires child op at {}", expressionText);
+        }
+        auto innerFunction = std::move(helpers.top().functionBuilder.back());
+        helpers.top().functionBuilder.pop_back();
+        helpers.top().functionBuilder.emplace_back(NegateLogicalFunction(std::move(innerFunction)));
+    }
+}
+
+}
+
 void AntlrSQLQueryPlanCreator::enterSelectClause(AntlrSQLParser::SelectClauseContext* context)
 {
     helpers.top().isSelect = true;
@@ -242,6 +332,85 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
         const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
         helpers.top().functionBuilder.push_back(function);
     }
+}
+
+void AntlrSQLQueryPlanCreator::exitBoolComparison(AntlrSQLParser::BoolComparisonContext* context)
+{
+    auto* comparison = context->booleanComparison();
+    if (comparison == nullptr)
+    {
+        AntlrSQLBaseListener::exitBoolComparison(context);
+        return;
+    }
+
+    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+    const auto popFunction = [&functions, comparison]()
+    {
+        if (functions.empty())
+        {
+            throw InvalidQuerySyntax("Predicate {} is missing an operand", comparison->getText());
+        }
+        auto function = std::move(functions.back());
+        functions.pop_back();
+        return function;
+    };
+
+    LogicalFunction function;
+    if (comparison->BETWEEN() != nullptr)
+    {
+        if (functions.size() < 3)
+        {
+            throw InvalidQuerySyntax("BETWEEN predicate requires a value, lower bound, and upper bound: {}", comparison->getText());
+        }
+        auto upperFunction = popFunction();
+        auto lowerFunction = popFunction();
+        auto valueFunction = popFunction();
+        function = createBetweenFunction(valueFunction, std::move(lowerFunction), std::move(upperFunction));
+        if (comparison->NOT() != nullptr)
+        {
+            function = NegateLogicalFunction(std::move(function));
+        }
+    }
+    else if (comparison->IN() != nullptr)
+    {
+        if (comparison->query() != nullptr)
+        {
+            throw UnsupportedQuery("IN subqueries are currently not supported: {}", comparison->getText());
+        }
+        const auto candidateCount = comparison->expression().size();
+        if (candidateCount == 0)
+        {
+            throw InvalidQuerySyntax("IN predicate requires at least one candidate value: {}", comparison->getText());
+        }
+        if (functions.size() < candidateCount + 1)
+        {
+            throw InvalidQuerySyntax("IN predicate {} is missing operands", comparison->getText());
+        }
+        const auto candidatesBegin = functions.end() - static_cast<std::ptrdiff_t>(candidateCount);
+        std::vector<LogicalFunction> candidateFunctions(candidatesBegin, functions.end());
+        functions.erase(candidatesBegin, functions.end());
+        auto valueFunction = popFunction();
+        function = createInFunction(valueFunction, std::move(candidateFunctions));
+        if (comparison->NOT() != nullptr)
+        {
+            function = NegateLogicalFunction(std::move(function));
+        }
+    }
+    else if (comparison->IS() != nullptr && comparison->nullNotnull() != nullptr)
+    {
+        function = IsNullCheckLogicalFunction(popFunction());
+        if (comparison->nullNotnull()->NOT() != nullptr)
+        {
+            function = NegateLogicalFunction(std::move(function));
+        }
+    }
+    else
+    {
+        throw UnsupportedQuery("Predicate is currently not supported: {}", comparison->getText());
+    }
+
+    functions.push_back(std::move(function));
+    AntlrSQLBaseListener::exitBoolComparison(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseContext* context)
@@ -362,26 +531,35 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
         }
     }
 
-    if (helpers.top().functionBuilder.empty())
+    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+    if (functions.empty())
     {
         throw InvalidQuerySyntax("Expected unary operator, got nothing: {}", context->getText());
     }
     LogicalFunction function;
-    const auto innerFunction = helpers.top().functionBuilder.back();
-    helpers.top().functionBuilder.pop_back();
+    const auto innerFunction = functions.back();
+    functions.pop_back();
     switch (opTokenType)
     {
         case AntlrSQLLexer::PLUS:
             function = innerFunction;
             break;
         case AntlrSQLLexer::MINUS:
+            if (const auto constantFunction = innerFunction.tryGetAs<ConstantValueLogicalFunction>(); constantFunction.has_value()
+                and (constantFunction->get().getDataType().isNumeric()
+                     or constantFunction->get().getDataType().isType(DataType::Type::UNDEFINED))
+                and constantFunction->get().getConstantValue() == context->valueExpression()->getText())
+            {
+                function = createNegatedNumericLiteralFunction(constantFunction->get());
+                break;
+            }
             function = MulLogicalFunction(
                 ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::INT64), "-1"), innerFunction);
             break;
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
-    helpers.top().functionBuilder.push_back(function);
+    functions.push_back(function);
 }
 
 void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context)
@@ -892,33 +1070,14 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
 
 void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext* context)
 {
-    if (helpers.empty())
-    {
-        throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
-    }
-
-    if (helpers.top().isJoinRelation)
-    {
-        if (helpers.top().joinKeyRelationHelper.empty())
-        {
-            throw InvalidQuerySyntax("Negate requires child op at {}", context->getText());
-        }
-        const auto innerFunction = helpers.top().joinKeyRelationHelper.back();
-        helpers.top().joinKeyRelationHelper.pop_back();
-        auto negatedFunction = NegateLogicalFunction(innerFunction);
-        helpers.top().joinKeyRelationHelper.emplace_back(negatedFunction);
-    }
-    else
-    {
-        if (helpers.top().functionBuilder.empty())
-        {
-            throw InvalidQuerySyntax("Negate requires child op at {}", context->getText());
-        }
-        const auto innerFunction = helpers.top().functionBuilder.back();
-        helpers.top().functionBuilder.pop_back();
-        helpers.top().functionBuilder.emplace_back(NegateLogicalFunction(innerFunction));
-    }
+    negateTopFunction(helpers, context->getText());
     AntlrSQLBaseListener::exitLogicalNot(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitLogicalNotPredicate(AntlrSQLParser::LogicalNotPredicateContext* context)
+{
+    negateTopFunction(helpers, context->getText());
+    AntlrSQLBaseListener::exitLogicalNotPredicate(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)
@@ -927,6 +1086,16 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     {
         throw InvalidQuerySyntax("When exiting a constant, there must be exactly one children in the context {}", context->getText());
     }
+
+    const auto insideDataTypeConstructorArgument = isInsideDataTypeConstructorArgument(context);
+    if (auto* const numericLiteralContext = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant());
+        numericLiteralContext != nullptr and !insideDataTypeConstructorArgument)
+    {
+        auto& functionBuilder = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+        functionBuilder.emplace_back(createNumericLiteralFunction(numericLiteralContext));
+        return;
+    }
+
     if (const auto stringLiteralContext = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->children.at(0)))
     {
         if (!(stringLiteralContext->getText().size() > 2))

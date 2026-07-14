@@ -30,6 +30,7 @@
 #include <Util/Strings.hpp>
 
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -531,6 +532,95 @@ public:
         throw InvalidStatement("Unrecognized DROP statement");
     }
 
+    std::unordered_set<ExplainStage> bindExplainStages(AntlrSQLParser::ExplainStagesContext* stagesContext) const
+    {
+        std::unordered_set<ExplainStage> explainStages;
+
+        for (auto* const stageContext : stagesContext->explainStage())
+        {
+            if (stageContext->LOGICAL() != nullptr)
+            {
+                if (!explainStages.insert(ExplainStage::Logical).second)
+                {
+                    throw InvalidStatement("Duplicate EXPLAIN stage: LOGICAL");
+                }
+            }
+            else
+            {
+                const auto identifier = bindIdentifier(stageContext->identifier());
+
+                if (identifier == Identifier::parse("logical"))
+                {
+                    if (!explainStages.insert(ExplainStage::Logical).second)
+                    {
+                        throw InvalidStatement("Duplicate EXPLAIN stage: LOGICAL");
+                    }
+                }
+                else if (identifier == Identifier::parse("optimized"))
+                {
+                    if (!explainStages.insert(ExplainStage::Optimized).second)
+                    {
+                        throw InvalidStatement("Duplicate EXPLAIN stage: OPTIMIZED");
+                    }
+                }
+                else if (identifier == Identifier::parse("distributed"))
+                {
+                    if (!explainStages.insert(ExplainStage::Distributed).second)
+                    {
+                        throw InvalidStatement("Duplicate EXPLAIN stage: DISTRIBUTED");
+                    }
+                }
+                else
+                {
+                    throw InvalidStatement("Unrecognized EXPLAIN stage: {}", identifier);
+                }
+            }
+        }
+
+        return explainStages;
+    }
+
+    ExplainFormat bindExplainFormat(AntlrSQLParser::ExplainFormatContext* formatAST) const
+    {
+        if (formatAST->TEXT() != nullptr)
+        {
+            return ExplainFormat::Text;
+        }
+
+        auto parsedFormatIdentifier = bindIdentifier(formatAST->identifier());
+
+        if (parsedFormatIdentifier == Identifier::parse("text"))
+        {
+            return ExplainFormat::Text;
+        }
+        if (parsedFormatIdentifier == Identifier::parse("verbose"))
+        {
+            return ExplainFormat::Verbose;
+        }
+        if (parsedFormatIdentifier == Identifier::parse("visual"))
+        {
+            return ExplainFormat::Visual;
+        }
+        throw InvalidStatement("Unrecognized EXPLAIN format: {}", parsedFormatIdentifier);
+    }
+
+    Statement bindExplainStatement(AntlrSQLParser::ExplainStatementContext* explainAst) const
+    {
+        INVARIANT(explainAst->query() != nullptr, "Should be enforced by antlr");
+        ExplainFormat format = ExplainFormat::Visual;
+        std::unordered_set<ExplainStage> stages = {ExplainStage::Logical, ExplainStage::Optimized, ExplainStage::Distributed};
+        if (auto* const stagesAST = explainAst->explainStages())
+        {
+            stages = bindExplainStages(stagesAST);
+        }
+        if (auto* const formatAST = explainAst->explainFormat())
+        {
+            format = bindExplainFormat(formatAST);
+        }
+
+        return ExplainQueryStatement{.plan = queryBinder(explainAst->query()), .explainFormat = format, .explainStages = stages};
+    }
+
     std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const
     {
         try
@@ -549,8 +639,7 @@ public:
             }
             if (auto* const explainStatementAST = statementAST->explainStatement())
             {
-                INVARIANT(explainStatementAST->query() != nullptr, "Should be enforced by antlr");
-                return ExplainQueryStatement{queryBinder(explainStatementAST->query())};
+                return bindExplainStatement(explainStatementAST);
             }
             if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {

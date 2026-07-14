@@ -153,8 +153,8 @@ TypedLogicalOperator<InlineSourceLogicalOperator> InlineSourceLogicalOperator::c
         std::move(type), std::move(sourceSchema), std::move(sourceConfig), std::move(parserConfig)};
 }
 
-Reflected
-Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(const TypedLogicalOperator<InlineSourceLogicalOperator>&) const
+Reflected Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(
+    const TypedLogicalOperator<InlineSourceLogicalOperator>&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();

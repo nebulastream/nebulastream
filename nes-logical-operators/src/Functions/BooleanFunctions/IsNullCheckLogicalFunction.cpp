@@ -46,7 +46,7 @@ bool IsNullCheckLogicalFunction::operator==(const IsNullCheckLogicalFunction& rh
 
 std::string IsNullCheckLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return fmt::format("NOT({})", child.explain(verbosity));
+    return fmt::format("ISNULL({})", child.explain(verbosity));
 }
 
 LogicalFunction IsNullCheckLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
@@ -86,9 +86,10 @@ std::string_view IsNullCheckLogicalFunction::getType()
     return NAME;
 }
 
-Reflected Reflector<IsNullCheckLogicalFunction>::operator()(const IsNullCheckLogicalFunction& function) const
+Reflected
+Reflector<IsNullCheckLogicalFunction>::operator()(const IsNullCheckLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedIsNullCheckLogicalFunction{.child = std::make_optional<LogicalFunction>(function.child)});
+    return context.reflect(detail::ReflectedIsNullCheckLogicalFunction{.child = std::make_optional<LogicalFunction>(function.child)});
 }
 
 IsNullCheckLogicalFunction

@@ -39,6 +39,7 @@ using namespace std::literals;
 enum class TokenType : uint8_t
 {
     QUERY,
+    EXPLAIN,
     CREATE,
     RESULT_DELIMITER,
     ERROR_EXPECTATION,
@@ -52,6 +53,12 @@ enum class TestDataIngestionType : uint8_t
 {
     INLINE,
     FILE
+};
+
+enum class ResultType : uint8_t
+{
+    TUPLES,
+    VERBATIM
 };
 
 /// Assures that the number of parsed queries matches the number of parsed results
@@ -152,6 +159,7 @@ public:
     };
 
     using QueryCallback = std::function<void(std::string, SystestQueryId, bool)>;
+    using ExplainQueryCallback = std::function<void(std::string, SystestQueryId)>;
     using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
     using DifferentialQueryBlockCallback
@@ -162,6 +170,7 @@ public:
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
+    void registerOnExplainQueryCallback(ExplainQueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
     void registerOnCreateCallback(CreateCallback callback);
@@ -186,6 +195,7 @@ private:
     void applySubstitutionRules(std::string& line);
 
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
+    [[nodiscard]] std::vector<std::string> expectVerbatimResultLines();
     [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> expectCreateStatement();
@@ -197,6 +207,7 @@ private:
 
     std::vector<SubstitutionRule> substitutionRules;
     QueryCallback onQueryCallback;
+    ExplainQueryCallback onExplainQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
     CreateCallback onCreateCallback;
@@ -206,6 +217,7 @@ private:
 
     std::optional<std::string> lastParsedQuery;
     std::optional<SystestQueryId> lastParsedQueryId;
+    ResultType expectedResultType = ResultType::TUPLES;
     bool firstToken = true;
     bool shouldRevisitCurrentLine = false;
     size_t currentLine = 0;

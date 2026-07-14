@@ -244,16 +244,42 @@ std::vector<RunningQuery> runQueries(
                 nextQuery.testName,
                 nextQuery.queryIdInFile);
 
+            if (nextQuery.actualExplainOutput.has_value())
+            {
+                /// EXPLAIN statements are never submitted to the worker; their output was computed at bind time,
+                /// so compare it against the expected result lines and report immediately.
+                auto runningQuery = std::make_shared<RunningQuery>(nextQuery);
+                reportResult(
+                    runningQuery,
+                    progressTracker,
+                    failed,
+                    [&]
+                    {
+                        if (std::holds_alternative<ExpectedError>(nextQuery.expectedResultsOrExpectedError))
+                        {
+                            return fmt::format(
+                                "expected error {} but EXPLAIN succeeded",
+                                std::get<ExpectedError>(nextQuery.expectedResultsOrExpectedError).code);
+                        }
+                        if (auto err = checkExplainResult(*runningQuery))
+                        {
+                            return *err;
+                        }
+                        return std::string{};
+                    },
+                    queryPerformanceMessage);
+                moveDependentsToPending(nextQuery);
+                continue;
+            }
+
             if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value())
             {
                 /// Start both differential queries
-                auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan);
-                auto regDiff = querySubmitter.registerQuery(nextQuery.differentialQueryPlan.value());
+                auto reg = querySubmitter.startQuery(nextQuery.planInfoOrException.value().queryPlan);
+                auto regDiff = querySubmitter.startQuery(nextQuery.differentialQueryPlan.value());
                 if (reg and regDiff)
                 {
                     hasOneMoreQueryToStart = true;
-                    querySubmitter.startQuery(*reg);
-                    querySubmitter.startQuery(*regDiff);
                     active.emplace(*reg, std::make_shared<RunningQuery>(nextQuery, *reg, *regDiff));
                     active.emplace(*regDiff, std::make_shared<RunningQuery>(nextQuery, *regDiff, *reg));
                 }
@@ -269,11 +295,9 @@ std::vector<RunningQuery> runQueries(
             }
             else if (nextQuery.planInfoOrException.has_value())
             {
-                /// Registration
-                if (auto reg = querySubmitter.registerQuery(nextQuery.planInfoOrException.value().queryPlan))
+                if (auto reg = querySubmitter.startQuery(nextQuery.planInfoOrException.value().queryPlan))
                 {
                     hasOneMoreQueryToStart = true;
-                    querySubmitter.startQuery(*reg);
                     active.emplace(*reg, std::make_shared<RunningQuery>(nextQuery, *reg));
                 }
                 else
@@ -452,18 +476,17 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
             continue;
         }
 
-        const auto registrationResult = submitter.registerQuery(queryToRun.planInfoOrException.value().queryPlan);
-        if (not registrationResult.has_value())
+        const auto startResult = submitter.startQuery(queryToRun.planInfoOrException.value().queryPlan);
+        if (not startResult.has_value())
         {
             NES_ERROR("skip failing query: {}", queryToRun.testName);
             continue;
         }
-        auto queryId = registrationResult.value();
+        auto queryId = startResult.value();
 
         auto runningQueryPtr = std::make_shared<RunningQuery>(queryToRun, queryId);
         runningQueryPtr->passed = false;
         ranQueries.emplace_back(runningQueryPtr);
-        submitter.startQuery(queryId);
         const auto summary = submitter.finishedQueries().at(0);
 
         if (summary.getGlobalQueryStatus() == DistributedQueryStatus::Failed)

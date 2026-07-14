@@ -64,7 +64,7 @@ public:
     static std::expected<Identifier, Exception> tryParse(std::string value);
 
 private:
-    explicit Identifier(std::string value, bool caseSensitive);
+    explicit Identifier(std::string originalValue, std::string canonicalValue, bool caseSensitive);
 
     Identifier() = default;
 
@@ -72,7 +72,8 @@ private:
 
     static std::expected<bool, Exception> tryIsQuoted(std::string_view value);
 
-    std::string value;
+    std::string originalValue;
+    std::string canonicalValue;
     bool caseSensitive{};
 
     friend class IdentifierSerializationUtil;
@@ -82,12 +83,15 @@ private:
     friend class QualifiedIdentifierBase;
 
     friend struct Unreflector<Identifier>;
+    friend struct Reflector<Identifier>;
+    friend struct std::hash<Identifier>;
+    friend struct fmt::formatter<Identifier>;
 };
 
 template <>
 struct Reflector<Identifier>
 {
-    Reflected operator()(const Identifier& identifier) const;
+    Reflected operator()(const Identifier& identifier, const ReflectionContext& context) const;
 };
 
 template <>

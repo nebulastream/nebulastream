@@ -124,7 +124,6 @@ struct DataType final
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'
     [[nodiscard]] std::optional<DataType> join(const DataType& otherDataType) const;
     [[nodiscard]] DataType::NULLABLE joinNullable(const DataType& otherDataType) const;
-    [[nodiscard]] std::string formattedBytesToString(const void* data) const;
 
     [[nodiscard]] bool isType(Type type) const;
     [[nodiscard]] bool isInteger() const;
@@ -139,7 +138,7 @@ struct DataType final
 template <>
 struct Reflector<DataType>
 {
-    Reflected operator()(const DataType& field) const;
+    Reflected operator()(const DataType& field, const ReflectionContext& context) const;
 };
 
 template <>

@@ -83,7 +83,7 @@ private:
 template <>
 struct Reflector<TypedLogicalOperator<InferModelNameLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<InferModelNameLogicalOperator>& op) const;
+    Reflected operator()(const TypedLogicalOperator<InferModelNameLogicalOperator>& op, const ReflectionContext& context) const;
 };
 
 template <>

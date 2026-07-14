@@ -67,7 +67,7 @@ private:
 template <>
 struct Reflector<FieldAccessLogicalFunction>
 {
-    Reflected operator()(const FieldAccessLogicalFunction& function) const;
+    Reflected operator()(const FieldAccessLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

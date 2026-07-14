@@ -62,6 +62,7 @@ concept WindowAggregationFunctionConcept = requires(
     DataType dataType,
     AggregationFieldAccess fieldAccessLogicalFunction,
     ExplainVerbosity verbosity,
+    const ReflectionContext& context,
     const T& rhs) {
     { thisFunction.getAggregateType() } -> std::convertible_to<DataType>;
 
@@ -73,7 +74,7 @@ concept WindowAggregationFunctionConcept = requires(
 
     { thisFunction.shallIncludeNullValues() } noexcept -> std::convertible_to<bool>;
 
-    { thisFunction.reflect() } -> std::convertible_to<Reflected>;
+    { context.reflect(thisFunction) } -> std::convertible_to<Reflected>;
 
     { thisFunction.getName() } noexcept -> std::convertible_to<std::string_view>;
 
@@ -91,7 +92,7 @@ struct ErasedWindowAggregationFunction
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
-    [[nodiscard]] virtual Reflected reflect() const = 0;
+    [[nodiscard]] virtual Reflected reflect(const ReflectionContext& context) const = 0;
     [[nodiscard]] virtual size_t hash() const = 0;
     [[nodiscard]] virtual bool equals(const ErasedWindowAggregationFunction& other) const = 0;
     [[nodiscard]] virtual DataType getAggregateType() const = 0;
@@ -264,7 +265,7 @@ struct TypedWindowAggregationLogicalFunction
 
     [[nodiscard]] std::string explain(const ExplainVerbosity verbosity) const { return self->explain(verbosity); }
 
-    [[nodiscard]] Reflected reflect() const { return self->reflect(); }
+    [[nodiscard]] Reflected reflect(const ReflectionContext& context) const { return self->reflect(context); }
 
     [[nodiscard]] bool shallIncludeNullValues() const noexcept { return self->shallIncludeNullValues(); }
 
@@ -301,7 +302,7 @@ struct WindowAggregationFunctionModel : ErasedWindowAggregationFunction
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return impl.explain(verbosity); }
 
-    [[nodiscard]] Reflected reflect() const override { return impl.reflect(); }
+    [[nodiscard]] Reflected reflect(const ReflectionContext& context) const override { return context.reflect(impl); }
 
     [[nodiscard]] bool shallIncludeNullValues() const noexcept override { return impl.shallIncludeNullValues(); }
 

@@ -38,7 +38,6 @@ public:
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
     [[nodiscard]] AvgAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] static std::string_view getName() noexcept;
-    [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] DataType getAggregateType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] bool operator==(const AvgAggregationLogicalFunction& other) const;
@@ -54,7 +53,7 @@ private:
 template <>
 struct Reflector<AvgAggregationLogicalFunction>
 {
-    Reflected operator()(const AvgAggregationLogicalFunction& function) const;
+    Reflected operator()(const AvgAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

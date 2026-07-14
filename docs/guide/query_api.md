@@ -20,7 +20,7 @@ Let's start with key terminology.
 | **Tuple**            | A single record or event in a stream, composed of one or more fields.                       | Internal                                                                         |
 | **Schema**           | Logical structure of a tuple, defining its fields and their data types.                     | [See Sources](#data-sources-logical-and-physical)                                |
 | **Field**            | Atomic unit of data within a tuple, defined by a name and a data type.                      | Internal                                                                         |
-| **Data Type**        | Specifies how to interpret a field's data and which operations are valid.                   | `U8`, `I8`, `U16`, `I16`, `U32`, `I32`, `U64`, `I64`, `CHAR`, `BOOL`, `VARSIZED` |
+| **Data Type**        | Specifies how to interpret a field's data and which operations are valid.                   | `INT8`, `UINT8`, `INT16`, `UINT16`, `INT32`, `UINT32`, `INT64`, `UINT64`, `FLOAT32`, `FLOAT64`, `CHAR`, `BOOLEAN`, `VARSIZED` |
 | **Source**           | Connector that **ingests** external data, creating a stream.                                | `FROM`, [See Sources](#data-sources-logical-and-physical)                        |
 | **Input Formatter**  | Decodes raw data from a source into internal tuple format.                                  | [See Input Formatters](#input-formatters)                                        |
 | **Operator**         | Transforms a stream of tuples (e.g., filtering, aggregating).                               | `SELECT`, `WHERE`, `GROUP BY`, `JOIN`, [See Operators](#operators)               |
@@ -48,17 +48,17 @@ sinks:
   - name: csv_sink
     host: localhost:8080
     schema:
-      - name: lrb$start
+      - name: start
         type: UINT64
-      - name: lrb$end
+      - name: end
         type: UINT64
-      - name: lrb$highway
+      - name: highway
         type: INT16
-      - name: lrb$direction
+      - name: direction
         type: INT16
       - name: positionDiv5280
         type: INT32
-      - name: lrb$avgSpeed
+      - name: avgSpeed
         type: FLOAT64
     type: File
     config:
@@ -108,15 +108,15 @@ physical:
     source_config:
       file_path: lrb.json
 workers:
-  - data: localhost:9090
-    host: localhost:8080
+  - host: localhost:8080
+    data_address: localhost:9090
 ```
 This YAML can be sent to `nes-cli` to register or run the query.
 
 Here's the equivalent SQL syntax:
 
 ```sql
-CREATE WORKER 'localhost:9090' AT 'localhost:8080';
+CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS DATA);
 CREATE LOGICAL SOURCE lrb(
   creationTS UINT64,
   vehicle INT16,
@@ -128,7 +128,7 @@ CREATE LOGICAL SOURCE lrb(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
-  'localhost:9090' AS "SOURCE"."HOST", 
+  'localhost:8080' AS "SOURCE"."HOST",
   'localhost' as "SOURCE".SOCKET_HOST,
   50501 as "SOURCE".SOCKET_PORT,
   65536 as "SOURCE".SOCKET_BUFFER_SIZE,
@@ -140,20 +140,20 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
-  'localhost:9090' AS "SOURCE"."HOST",
+  'localhost:8080' AS "SOURCE"."HOST",
   'lrb.json' as "SOURCE".FILE_PATH,
   'JSON' as INPUT_FORMATTER."TYPE"
 );
 
 CREATE SINK csv_sink(
-  lrb.start UINT64,
-  lrb.end UINT64,
-  lrb.highway INT16,
-  lrb.direction INT16,
+  start UINT64 NOT NULL,
+  end UINT64 NOT NULL,
+  highway INT16,
+  direction INT16,
   positionDiv5280 INT32,
-  lrb.avgSpeed FLOAT64
+  avgSpeed FLOAT64
 ) TYPE File SET(
-  'localhost:9090' AS "SINK"."HOST", 
+  'localhost:8080' AS "SINK"."HOST",
   '<path>' as "SINK".FILE_PATH,
   'CSV' as "SINK".OUTPUT_FORMAT,
   FALSE as "SINK".APPEND,
@@ -215,7 +215,7 @@ Supported physical source types:
 In our example, we define two physical sources that both feed the `lrb` logical source:
 ```sql
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
-  'localhost:9090' AS "SOURCE"."HOST", 
+  'localhost:8080' AS "SOURCE"."HOST",
   'localhost' as "SOURCE".SOCKET_HOST,
   50501 as "SOURCE".SOCKET_PORT,
   65536 as "SOURCE".SOCKET_BUFFER_SIZE,
@@ -227,7 +227,7 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
-  'localhost:9090' AS "SOURCE"."HOST",
+  'localhost:8080' AS "SOURCE"."HOST",
   'lrb.json' as "SOURCE".FILE_PATH,
   'JSON' as INPUT_FORMATTER."TYPE"
 );
@@ -260,14 +260,14 @@ Currently, a query must have exactly one sink.
 
 ```sql
 CREATE SINK csv_sink(
-  lrb.start UINT64,
-  lrb.end UINT64,
-  lrb.highway INT16,
-  lrb.direction INT16,
+  start UINT64 NOT NULL,
+  end UINT64 NOT NULL,
+  highway INT16,
+  direction INT16,
   positionDiv5280 INT32,
-  lrb.avgSpeed FLOAT64
+  avgSpeed FLOAT64
 ) TYPE File SET(
-  'localhost:9090' AS "SINK"."HOST", 
+  'localhost:8080' AS "SINK"."HOST",
   '<path>' as "SINK".FILE_PATH,
   'CSV' as "SINK".OUTPUT_FORMAT,
   FALSE as "SINK".APPEND
@@ -282,7 +282,7 @@ Available sink types include:
 The `SET` clause specifies the output details.
 For a `File` sink, this includes the file path and the data format for the output.
 
-The `HOST` configuration parameter specifies the worker node which hosts the physical source/sink.
+The `HOST` configuration parameter specifies the worker node, identified by its gRPC address, which hosts the physical source/sink.
 
 - The sink itself can be configured via `SINK.*` parameters.
 - The output formatter can be configured via `OUTPUT_FORMATTER.*` parameters.
@@ -304,7 +304,7 @@ CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
 );
 ```
 
-Currently, we support the text-based CSV format, with JSON following in an upcoming release.
+Currently, NebulaStream supports CSV and JSON input formats.
 
 ---
 ## Output Formatters
@@ -342,13 +342,33 @@ Supported data types:
 - `FLOAT32`
 - `FLOAT64`
 - `CHAR`
-- `BOOL`
+- `BOOLEAN`
 - `VARSIZED`
 
 These types match primitive C++ data types.
 The numeric suffix denotes the bit width.
 `VARSIZED` supports arbitrary-length data like strings.
 For output types of arithmetical operations, we stick to the C++ standard, c.f.[Integer Promotions](https://en.cppreference.com/w/cpp/language/implicit_conversion.html#Integer_promotions) and [Conversion Ranks](https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions.html#Integer_conversion_rank).
+
+### Numeric literals
+
+Numeric constants can be written directly in query expressions:
+
+```sql
+SELECT speed * 3.6 AS speed_m_sec FROM s INTO sink
+SELECT * FROM s WHERE count >= 10 AND delta > -5 INTO sink
+```
+
+NebulaStream infers a raw numeric literal's data type from its value:
+- Integer literals without a leading minus sign use the smallest unsigned integer type that can represent the value: `UINT8`, `UINT16`, `UINT32`, or `UINT64`.
+- Negative integer literals use the smallest signed integer type that can represent the value: `INT8`, `INT16`, `INT32`, or `INT64`.
+- Floating-point literals, including fractional and exponent notation such as `0.1`, `42.0`, `.5`, and `1E3`, use `FLOAT64`.
+
+Use an explicit type constructor when a query depends on an exact literal type:
+
+```sql
+SELECT UINT64(1) AS id, FLOAT32(3.6) AS scale FROM s INTO sink
+```
 
 ---
 
@@ -379,17 +399,17 @@ SELECT a, b, c FROM s INTO sink
 ```
 
 ```sql
-SELECT speed * FLOAT32(3.6) AS speed_m_sec FROM s INTO sink
+SELECT speed * 3.6 AS speed_m_sec FROM s INTO sink
 ```
 
 ```sql
 SELECT CONCAT(firstName, lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ```
 
-💡 Constants must be wrapped in an explicit cast to specify their type.
+💡 Use an explicit type constructor when a constant needs an exact type.
 
 ```sql
-SELECT FLOAT64(3.141) * r FROM stream INTO sink
+SELECT FLOAT32(3.141) * r FROM stream INTO sink
 ```
 
 #### Selection
@@ -400,14 +420,44 @@ Selections use the `WHERE` keyword to filter the input stream.
 SELECT * FROM s WHERE t == VARSIZED("sometext") INTO sink
 ```
 
-Predicates can be arbitrary compositions of functions:
+Predicates can combine functions, comparisons, and SQL predicate syntax with `AND`, `OR`, and `NOT`:
 
 ```sql
-SELECT * FROM s WHERE CEIL(speed) != UINT64(0) OR altitude == 0 INTO sink
+SELECT * FROM s WHERE CEIL(speed) != UINT64(0) OR altitude == UINT64(0) INTO sink
 ```
 
 ```sql
 SELECT * FROM transactions WHERE amount > FLOAT64(1000.0) AND status == VARSIZED("completed") INTO sink
+```
+
+`BETWEEN` is inclusive and supports `NOT BETWEEN`:
+
+```sql
+SELECT * FROM transactions WHERE amount BETWEEN FLOAT64(100.0) AND FLOAT64(1000.0) INTO sink
+```
+
+```sql
+SELECT * FROM transactions WHERE amount NOT BETWEEN FLOAT64(100.0) AND FLOAT64(1000.0) INTO sink
+```
+
+`IN` supports explicit, non-empty value lists and also supports `NOT IN`; `IN` subqueries are not supported:
+
+```sql
+SELECT * FROM s WHERE status IN (VARSIZED("queued"), VARSIZED("running")) INTO sink
+```
+
+```sql
+SELECT * FROM s WHERE status NOT IN (VARSIZED("failed"), VARSIZED("cancelled")) INTO sink
+```
+
+`IS NULL` and `IS NOT NULL` test nullable values:
+
+```sql
+SELECT * FROM s WHERE optional_value IS NULL INTO sink
+```
+
+```sql
+SELECT * FROM s WHERE optional_value IS NOT NULL INTO sink
 ```
 
 #### Union
@@ -626,16 +676,22 @@ Functions are either unary (one input) or binary (two inputs).
 
 #### **Boolean/Comparison**
 
-| Function           | Example                                          |
-|--------------------|--------------------------------------------------|
-| Logical `AND`      | `SELECT * FROM s WHERE a AND b INTO sink`        |
-| Logical `OR`       | `SELECT * FROM s WHERE a OR b INTO sink`         |
-| Equal              | `SELECT * FROM s WHERE a == INT32(42) INTO sink` |
-| Not Equal          | `SELECT * FROM s WHERE a != INT32(42) INTO sink` |
-| Greater            | `SELECT * FROM s WHERE a > b INTO sink`          |
-| Greater or Equal   | `SELECT * FROM s WHERE a >= b INTO sink`         |
-| Less Than          | `SELECT * FROM s WHERE a < b INTO sink`          |
-| Less Than or Equal | `SELECT * FROM s WHERE a <= b INTO sink`         |
+| Function           | Example                                                        |
+|--------------------|----------------------------------------------------------------|
+| Logical `AND`      | `SELECT * FROM s WHERE a AND b INTO sink`                      |
+| Logical `OR`       | `SELECT * FROM s WHERE a OR b INTO sink`                       |
+| Equal              | `SELECT * FROM s WHERE a == INT32(42) INTO sink`               |
+| Not Equal          | `SELECT * FROM s WHERE a != INT32(42) INTO sink`               |
+| Greater            | `SELECT * FROM s WHERE a > b INTO sink`                        |
+| Greater or Equal   | `SELECT * FROM s WHERE a >= b INTO sink`                       |
+| Less Than          | `SELECT * FROM s WHERE a < b INTO sink`                        |
+| Less Than or Equal | `SELECT * FROM s WHERE a <= b INTO sink`                       |
+| Between            | `SELECT * FROM s WHERE a BETWEEN INT32(1) AND INT32(5) INTO sink` |
+| Not Between        | `SELECT * FROM s WHERE a NOT BETWEEN INT32(1) AND INT32(5) INTO sink` |
+| In value list      | `SELECT * FROM s WHERE a IN (INT32(1), INT32(5)) INTO sink`    |
+| Not In value list  | `SELECT * FROM s WHERE a NOT IN (INT32(1), INT32(5)) INTO sink` |
+| Is Null            | `SELECT * FROM s WHERE a IS NULL INTO sink`                    |
+| Is Not Null        | `SELECT * FROM s WHERE a IS NOT NULL INTO sink`                |
 
 #### **Other**
 

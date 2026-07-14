@@ -22,6 +22,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
@@ -47,7 +48,7 @@ PhysicalPlan::PhysicalPlan(
 std::string PhysicalPlan::toString() const
 {
     std::stringstream stringstream;
-    auto dumpHandler = QueryConsoleDumpHandler<PhysicalPlan, PhysicalOperatorWrapper>(stringstream, true);
+    auto dumpHandler = QueryConsoleDumpHandler<PhysicalPlan, PhysicalOperatorWrapper>(stringstream, true, ExplainVerbosity::Debug);
     for (const auto& rootOperator : rootOperators)
     {
         dumpHandler.dump(*rootOperator);

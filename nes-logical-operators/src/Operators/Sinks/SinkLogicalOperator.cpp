@@ -115,6 +115,10 @@ std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
         }
         return fmt::format("SINK(opId: {}, sinkName: {})", id, sinkName);
     }
+    if (sinkDescriptor.has_value() && sinkDescriptor->isInline())
+    {
+        return fmt::format("SINK({})", sinkDescriptor->getSinkType());
+    }
     return fmt::format("SINK({})", sinkName);
 }
 
@@ -258,9 +262,10 @@ SinkLogicalOperator SinkLogicalOperator::withSinkDescriptor(SinkDescriptor sinkD
     return newOperator;
 }
 
-Reflected Reflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const TypedLogicalOperator<SinkLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(
+    const TypedLogicalOperator<SinkLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedSinkLogicalOperator{
+    return context.reflect(detail::ReflectedSinkLogicalOperator{
         .operatorId = op.getId(), .sinkDescriptor = op->getSinkDescriptor(), .sinkName = op->getSinkName()});
 }
 

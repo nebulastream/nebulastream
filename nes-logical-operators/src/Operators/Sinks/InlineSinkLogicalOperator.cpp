@@ -153,8 +153,8 @@ std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected
-Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(const TypedLogicalOperator<InlineSinkLogicalOperator>&) const
+Reflected Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(
+    const TypedLogicalOperator<InlineSinkLogicalOperator>&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();

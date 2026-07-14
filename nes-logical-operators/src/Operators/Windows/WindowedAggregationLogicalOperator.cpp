@@ -421,9 +421,9 @@ WindowedAggregationLogicalOperator::getCharacteristic() const
 }
 
 Reflected Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
-    const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const
+    const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedWindowAggregationLogicalOperator{
+    return context.reflect(detail::ReflectedWindowAggregationLogicalOperator{
         .operatorId = op.getId(),
         .windowType = op->getWindowType(),
         .groupingKeys = op->getGroupingKeysWithName(),

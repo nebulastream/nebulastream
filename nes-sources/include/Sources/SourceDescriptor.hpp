@@ -65,6 +65,8 @@ public:
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
+    [[nodiscard]] bool isInlineSource() const;
+
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
@@ -78,6 +80,7 @@ private:
     std::string sourceType;
     Host host;
     InputFormatterDescriptor inputFormatterDescriptor;
+    bool isInline = false;
 
 
     /// Used by Sources to create a valid SourceDescriptor.
@@ -87,7 +90,8 @@ private:
         std::string_view sourceType,
         Host host,
         DescriptorConfig::Config config,
-        const InputFormatterDescriptor& inputFormatterDescriptor);
+        const InputFormatterDescriptor& inputFormatterDescriptor,
+        bool isInline);
 
 public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
@@ -108,7 +112,7 @@ public:
 template <>
 struct Reflector<SourceDescriptor>
 {
-    Reflected operator()(const SourceDescriptor& sourceDescriptor) const;
+    Reflected operator()(const SourceDescriptor& sourceDescriptor, const ReflectionContext& context) const;
 };
 
 template <>
@@ -137,6 +141,7 @@ struct ReflectedSourceDescriptor
     std::string type;
     Host host;
     InputFormatterDescriptor inputFormatterDescriptor;
+    bool isInline;
     Reflected config;
 };
 }

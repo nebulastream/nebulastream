@@ -64,6 +64,8 @@ private:
 template <typename T>
 struct Unreflector;
 
+template <typename T>
+struct Reflector;
 
 /// Type has an Unreflector that takes Reflected and ReflectionContext parameters
 template <typename T>
@@ -86,6 +88,24 @@ concept HasExplicitUnreflector = HasTwoParamUnreflector<T> || ContextfulUnreflec
 /// Type is a primitive type (arithmetic or string)
 template <typename T>
 concept Primitive = std::is_arithmetic_v<T> || std::is_same_v<T, std::string>;
+
+/// Type has a Reflector that takes Reflected and ReflectionContext parameters
+template <typename T>
+concept HasTwoParamReflector = requires(const T& data, const class ReflectionContext& ctx) {
+    { Reflector<T>{}(data, ctx) } -> std::same_as<Reflected>;
+};
+
+/// Type has a contextful Reflector (constructor-based context passing)
+template <typename T>
+concept ContextfulReflector = requires(const T& value, const class ReflectionContext& ctx) {
+    typename Reflector<T>::ContextType;
+    { Reflector<T>{std::declval<typename Reflector<T>::ContextType>()} };
+    { Reflector<T>{std::declval<typename Reflector<T>::ContextType>()}(value, ctx) } -> std::same_as<Reflected>;
+};
+
+/// Type has any explicit Reflector specialization
+template <typename T>
+concept HasExplicitReflector = HasTwoParamReflector<T> || ContextfulReflector<T>;
 
 /// Context object for deserialization that allows passing configuration or state down the call chain.
 ///
@@ -159,6 +179,45 @@ public:
         return unreflect_with_context_impl<T>(data);
     }
 
+    template <typename T>
+    [[nodiscard]] Reflected reflect(const T&) const
+    {
+        static_assert(
+            always_false_v<T>,
+            "No reflection overload available for this type. "
+            "Options: 1) Add a Reflector<T> specialization, "
+            "2) Make the type an aggregate, "
+            "3) For primitives/enums, ensure proper includes.");
+    }
+
+    template <typename T>
+    requires HasTwoParamReflector<T>
+    [[nodiscard]] Reflected reflect(const T& data) const
+    {
+        return Reflector<T>{}(data, *this);
+    }
+
+    /// Overload for types with contextful Reflector (constructor-based context passing)
+    template <typename T>
+    requires ContextfulReflector<T>
+    [[nodiscard]] Reflected reflect(const T& data) const
+    {
+        if (const auto it = context.find(std::type_index(typeid(typename Reflector<T>::ContextType))); it != context.end())
+        {
+            return Reflector<T>{std::any_cast<typename Reflector<T>::ContextType>(it->second)}(data, *this);
+        }
+        throw CannotSerialize(
+            "Serialization context of type {} for type {} not found", NAMEOF_TYPE(typename Reflector<T>::ContextType), NAMEOF_TYPE(T));
+    }
+
+    /// Overload for aggregate types without explicit Reflector (field-by-field deserialization)
+    template <typename T>
+    requires(!HasExplicitReflector<T>) && std::is_class_v<T> && std::is_aggregate_v<T>
+    Reflected reflect(const T& data) const
+    {
+        return reflect_with_context_impl<T>(data);
+    }
+
 private:
     template <typename T>
     T unreflect_with_context_impl(const Reflected& data) const
@@ -199,6 +258,18 @@ private:
                 }
             },
             generic.variant());
+    }
+
+    template <typename T>
+    Reflected reflect_with_context_impl(const T& data) const
+    {
+        using NamedTupleType = rfl::named_tuple_t<T>;
+        constexpr size_t numFields = NamedTupleType::size();
+        const auto namedTuple = rfl::to_named_tuple(data);
+        rfl::Generic::Object object;
+        [&]<size_t... Is>(std::index_sequence<Is...>)
+        { (reflect_field<T, Is>(namedTuple, object), ...); }(std::make_index_sequence<numFields>{});
+        return Reflected{rfl::Generic{std::move(object)}};
     }
 
     template <typename T>
@@ -298,6 +369,20 @@ private:
         return this->unreflect<FieldValueType>(Reflected{fieldResult.value()});
     }
 
+    template <typename T, size_t Index>
+    void reflect_field(const rfl::named_tuple_t<T>& namedTuple, rfl::Generic::Object& object) const
+    {
+        using NamedTupleType = rfl::named_tuple_t<T>;
+        using FieldType = rfl::tuple_element_t<Index, typename NamedTupleType::Fields>;
+        const auto fieldName = typename FieldType::Name().str();
+
+        const auto& fieldValue = rfl::get<Index>(namedTuple);
+
+        /// Recursively reflect through the context so nested contextful reflectors get the context
+        Reflected reflected = this->reflect(fieldValue);
+        object[fieldName] = *reflected;
+    }
+
     template <typename T, typename Tuple, size_t... Is>
     T construct_from_tuple_impl(Tuple&& values, std::index_sequence<Is...>) const
     {
@@ -324,114 +409,39 @@ private:
     }
 };
 
-template <typename T>
-[[nodiscard]] Reflected reflect(const T& data);
-
-template <typename T>
-struct Reflector;
-
-namespace detail
-{
-template <typename T>
-Reflected reflect_aggregate_impl(const T& data);
-}
-
-/// Overload for types with explicit Reflector specialization
-/// Checks if Reflector<T> can be default-constructed (i.e., has a specialization)
-/// This takes precedence over all other overloads
-template <typename T>
-requires requires { Reflector<T>{}; }
-Reflected reflect(const T& data)
-{
-    return Reflector<T>{}(data);
-}
-
-/// Overload for primitive types (arithmetic, string, enum) without custom Reflector
-template <typename T>
-requires(std::is_arithmetic_v<T> || std::is_same_v<T, std::string> || std::is_enum_v<T>) && (!requires { Reflector<T>{}; })
-Reflected reflect(const T& data)
-{
-    if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, std::string>)
-    {
-        return Reflected{rfl::Generic{data}};
-    }
-    else if constexpr (std::is_integral_v<T>)
-    {
-        return Reflected{rfl::Generic{static_cast<int64_t>(data)}};
-    }
-    else if constexpr (std::is_floating_point_v<T>)
-    {
-        return Reflected{rfl::Generic{static_cast<double>(data)}};
-    }
-    else if constexpr (std::is_enum_v<T>)
-    {
-        /// Serialize enums as their underlying integer value
-        return Reflected{rfl::Generic{static_cast<int64_t>(static_cast<std::underlying_type_t<T>>(data))}};
-    }
-    else
-    {
-        static_assert(always_false_v<T>, "Unsupported primitive type");
-    }
-}
-
-/// Overload for pointer types without custom Reflector
-template <typename T>
-requires std::is_pointer_v<T> && (!requires { Reflector<T>{}; })
-Reflected reflect(const T& data)
-{
-    if (data == nullptr)
-    {
-        return Reflected{std::nullopt};
-    }
-    /// Dereference and reflect the pointed-to value
-    return reflect(*data);
-}
-
-/// Overload for aggregate types without custom Reflector - use field-by-field reflection
-template <typename T>
-requires std::is_class_v<T> && std::is_aggregate_v<T> && (!requires { Reflector<T>{}; })
-Reflected reflect(const T& data)
-{
-    return detail::reflect_aggregate_impl(data);
-}
-
-/// Fallback overload for types that don't match any other overload
-/// This provides a clear compile-time error message
-template <typename T>
-Reflected reflect(const T&)
-{
-    static_assert(
-        always_false_v<T>,
-        "No reflection overload available for this type. "
-        "Options: 1) Add a Reflector<T> specialization, "
-        "2) Make the type an aggregate, "
-        "3) For primitives/enums, ensure proper includes.");
-}
-
-namespace detail
-{
-/// Helper to reflect a single field at compile-time
-/// Implementation in Reflection.hpp to ensure all reflect() overloads are visible
-template <typename T, size_t Index>
-auto reflect_field_at_index(const T& data);
-
-/// Reflect an aggregate type field-by-field to build a Generic::Object
-/// Implementation in Reflection.hpp to ensure all reflect() overloads are visible
-
-}
-
-/// Core Unreflector specializations
+/// Core Reflector / Unreflector specializations
 
 template <>
 struct Reflector<Reflected>
 {
-    Reflected operator()(const Reflected& field) const { return field; }
+    Reflected operator()(const Reflected& field, const ReflectionContext&) const { return field; }
 };
 
 template <>
 struct Unreflector<Reflected>
 {
     Reflected operator()(const Reflected& field, const ReflectionContext&) const { return field; }
+};
+
+/// Reflector for primitive types (arithmetic and string)
+template <Primitive T>
+struct Reflector<T>
+{
+    Reflected operator()(const T& data, const ReflectionContext&) const
+    {
+        if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, std::string>)
+        {
+            return Reflected{rfl::Generic{data}};
+        }
+        else if constexpr (std::is_integral_v<T>)
+        {
+            return Reflected{rfl::Generic{static_cast<int64_t>(data)}};
+        }
+        else if constexpr (std::is_floating_point_v<T>)
+        {
+            return Reflected{rfl::Generic{static_cast<double>(data)}};
+        }
+    }
 };
 
 /// Unreflector for primitive types (arithmetic and string)
@@ -446,6 +456,17 @@ struct Unreflector<T>
             throw CannotDeserialize("Failed to unreflect given data, rfl error: {}", optional.error().what());
         }
         return optional.value();
+    }
+};
+
+/// Reflector for enum types
+template <typename T>
+requires std::is_enum_v<T>
+struct Reflector<T>
+{
+    Reflected operator()(const T& data, const ReflectionContext&) const
+    {
+        return Reflected{rfl::Generic{static_cast<int64_t>(static_cast<std::underlying_type_t<T>>(data))}};
     }
 };
 
@@ -471,6 +492,24 @@ struct Unreflector<T>
                 throw CannotDeserialize("Expected integer for enum, got different type {}", NAMEOF_TYPE(ValueType));
             },
             data->variant());
+    }
+};
+
+/// Reflector for pointer types
+template <typename T>
+requires std::is_pointer_v<T>
+struct Reflector<T>
+{
+    Reflected operator()(const T& data, const ReflectionContext& ctx) const
+    {
+        static_assert(
+            !std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char>,
+            "Cannot reflect char*/const char* — use std::string instead");
+        if (data == nullptr)
+        {
+            return Reflected{std::nullopt};
+        }
+        return ctx.reflect(*data);
     }
 };
 

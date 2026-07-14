@@ -27,14 +27,30 @@
 #include <utility>
 
 #include <Util/Reflection.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
+namespace
+{
+std::string canonicalizeIdentifier(std::string_view identifierValue, bool quoted)
+{
+    if (quoted)
+    {
+        identifierValue.remove_prefix(1);
+        identifierValue.remove_suffix(1);
+        return std::string(identifierValue);
+    }
+    return toUpperCase(identifierValue);
+}
 
-Identifier::Identifier(std::string value, const bool caseSensitive) : value(std::move(value)), caseSensitive(caseSensitive)
+}
+
+Identifier::Identifier(std::string originalValue, std::string canonicalValue, const bool caseSensitive)
+    : originalValue(std::move(originalValue)), canonicalValue(std::move(canonicalValue)), caseSensitive(caseSensitive)
 {
 }
 
@@ -85,7 +101,7 @@ std::expected<bool, Exception> Identifier::tryIsQuoted(std::string_view value)
 
 std::string_view Identifier::getOriginalString() const
 {
-    return value;
+    return originalValue;
 }
 
 bool Identifier::isCaseSensitive() const
@@ -95,14 +111,15 @@ bool Identifier::isCaseSensitive() const
 
 bool operator==(const Identifier& lhs, const Identifier& rhs)
 {
-    return lhs.asCanonicalString() == rhs.asCanonicalString();
+    return lhs.canonicalValue == rhs.canonicalValue;
 }
 
 Identifier Identifier::parse(std::string value)
 {
     PRECONDITION(!value.empty(), "Invalid identifier, cannot be empty");
     const auto caseSensitive = isQuoted(value);
-    return Identifier{std::move(value), caseSensitive};
+    auto canonicalValue = canonicalizeIdentifier(value, caseSensitive);
+    return Identifier{std::move(value), std::move(canonicalValue), caseSensitive};
 }
 
 std::expected<Identifier, Exception> Identifier::tryParse(std::string value)
@@ -116,23 +133,25 @@ std::expected<Identifier, Exception> Identifier::tryParse(std::string value)
     {
         return std::unexpected{caseSensitive.error()};
     }
-    return Identifier{std::move(value), caseSensitive.value()};
+    auto canonicalValue = canonicalizeIdentifier(value, caseSensitive.value());
+    return Identifier{std::move(value), std::move(canonicalValue), caseSensitive.value()};
 }
 
-Reflected Reflector<Identifier>::operator()(const Identifier& identifier) const
+Reflected Reflector<Identifier>::operator()(const Identifier& identifier, const ReflectionContext& context) const
 {
-    return reflect(std::pair{identifier.getOriginalString(), identifier.isCaseSensitive()});
+    return context.reflect(std::pair{std::pair{identifier.originalValue, identifier.canonicalValue}, identifier.caseSensitive});
 }
 
 Identifier Unreflector<Identifier>::operator()(const Reflected& reflectable, const ReflectionContext& context) const
 {
-    const auto [val, caseSensitive] = context.unreflect<std::pair<std::string, bool>>(reflectable);
-    return Identifier{val, caseSensitive};
+    const auto [strings, caseSensitive] = context.unreflect<std::pair<std::pair<std::string, std::string>, bool>>(reflectable);
+    const auto [original, canonicalized] = strings;
+    return Identifier{original, canonicalized, caseSensitive};
 }
 
 std::string Identifier::asCanonicalString() const
 {
-    return fmt::format("{}", *this);
+    return canonicalValue;
 }
 
 std::ostream& operator<<(std::ostream& os, const Identifier& obj)
@@ -143,24 +162,12 @@ std::ostream& operator<<(std::ostream& os, const Identifier& obj)
 
 auto fmt::formatter<NES::Identifier>::format(const NES::Identifier& obj, format_context& ctx) -> decltype(ctx.out())
 {
-    const auto str = obj.getOriginalString();
-    if (!obj.isCaseSensitive())
-    {
-        std::string upper;
-        upper.reserve(str.size());
-        std::ranges::transform(
-            str,
-            std::back_inserter(upper),
-            [](char character) { return static_cast<char>(std::toupper(static_cast<unsigned char>(character))); });
-        return fmt::format_to(ctx.out(), "{}", upper);
-    }
-    PRECONDITION(str.size() >= 2, "Invalid identifier, cannot be empty");
-    return fmt::format_to(ctx.out(), "{}", str.substr(1, str.size() - 2));
+    return fmt::format_to(ctx.out(), "{}", obj.canonicalValue);
 }
 
 std::size_t std::hash<NES::Identifier>::operator()(const NES::Identifier& arg) const noexcept
 {
-    return std::hash<std::string>{}(arg.asCanonicalString());
+    return std::hash<std::string_view>{}(arg.canonicalValue);
 }
 
 std::size_t folly::hasher<NES::Identifier>::operator()(const NES::Identifier& arg) const noexcept

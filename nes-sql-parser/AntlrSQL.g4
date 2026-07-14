@@ -60,7 +60,11 @@ terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
 statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
 
-explainStatement: EXPLAIN query;
+explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? query;
+explainStages: explainStage (',' explainStage)*;
+explainStage: identifier | LOGICAL;
+explainFormat: identifier | TEXT;
+
 createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
@@ -253,11 +257,16 @@ expression
     ;
 
 booleanExpression
-    : NOT booleanExpression                                        #logicalNot
-    | EXISTS '(' query ')'                                         #exists
-    | valueExpression predicate?                                   #predicated
-    | left=booleanExpression op=AND right=booleanExpression  #logicalBinary
-    | left=booleanExpression op=OR right=booleanExpression   #logicalBinary
+    : NOT booleanExpression                                  #logicalNot
+    | EXISTS '(' query ')'                                   #exists
+    | predicate                                              #predicateExpression
+    ;
+
+predicate
+    : NOT predicate                                          #logicalNotPredicate
+    | valueExpression booleanComparison?                     #boolComparison
+    | left=predicate op=AND right=predicate                  #logicalBinary
+    | left=predicate op=OR right=predicate                   #logicalBinary
     ;
 
 /// Problem fixed that the querySpecification rule could match an empty string
@@ -344,7 +353,7 @@ sortItem
     : expression ordering=(ASC | DESC)? (NULLS nullOrder=(LAST | FIRST))?
     ;
 
-predicate
+booleanComparison
     : NOT? kind=BETWEEN lower=valueExpression AND upper=valueExpression
     | NOT? kind=IN '(' expression (',' expression)* ')'
     | NOT? kind=IN '(' query ')'
@@ -455,7 +464,7 @@ IN: 'IN' | 'in';
 INNER: 'INNER' | 'inner';
 INSERT: 'INSERT' | 'insert';
 INTO: 'INTO' | 'into';
-IS: 'IS'  'is';
+IS: 'IS' | 'is';
 JOIN: 'JOIN' | 'join';
 LAST: 'LAST';
 LEFT: 'LEFT' | 'left';
@@ -614,10 +623,10 @@ UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
 
 
 SHOW : 'SHOW';
-FORMAT : 'FORMAT';
+FORMAT : 'FORMAT' | 'format';
 CREATE : 'CREATE';
 SOURCE : 'SOURCE';
-LOGICAL: 'LOGICAL';
+LOGICAL: 'LOGICAL' | 'logical';
 PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
 SINK : 'SINK';

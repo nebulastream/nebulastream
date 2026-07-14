@@ -47,42 +47,4 @@ namespace NES
 /// For forward declarations only, use ReflectionFwd.hpp
 /// For core functionality without container specializations, use ReflectionCore.hpp
 
-namespace detail
-{
-/// Helper to reflect a single field at compile-time
-/// Must be defined after all reflect() overloads so they're visible during instantiation
-template <typename T, size_t Index>
-auto reflect_field_at_index(const T& data)
-{
-    using NamedTupleType = rfl::named_tuple_t<T>;
-    using FieldType = rfl::tuple_element_t<Index, typename NamedTupleType::Fields>;
-    const auto fieldName = typename FieldType::Name().str();
-
-    /// Get reference to the field using rfl's field introspection
-    auto view = rfl::to_view(data);
-    const auto& fieldValue = rfl::get<Index>(view);
-
-    return std::make_pair(fieldName, reflect(*fieldValue));
-}
-
-/// Reflect an aggregate type field-by-field to build a Generic::Object
-/// Must be defined after all reflect() overloads so they're visible during instantiation
-template <typename T>
-Reflected reflect_aggregate_impl(const T& data)
-{
-    using NamedTupleType = rfl::named_tuple_t<T>;
-    constexpr size_t numFields = NamedTupleType::size();
-
-    rfl::Generic::Object obj;
-
-    /// Reflect each field and add to the object
-    [&]<size_t... Is>(std::index_sequence<Is...>)
-    {
-        ((obj[reflect_field_at_index<T, Is>(data).first] = *reflect_field_at_index<T, Is>(data).second), ...);
-    }(std::make_index_sequence<numFields>{});
-
-    return Reflected{rfl::Generic::Object{std::move(obj)}};
-}
-}
-
 }

@@ -28,10 +28,10 @@ Each test file starts with three lines with the following pattern:
 # groups: [Sources, Example]
 ```
 All lines start with a hashtag indicating a [Comment](#comments).
-The first line (starting with `# name:`) defines the name of the test suit, usually the relative path to the file from within the `nes-systest` folder.
-The second line (staring with `#description:`) is a text that describes what the given test suit tests.
-The third line (starting with `# groups:`) lists in brackets groups to which the given test suite belongs, such as "Sources", "Aggregation", or "Union". 
-Groups are used to select all test cases from this group for testing, or exclude test cased from within this group when executing all other tests.   
+The first line (starting with `# name:`) defines the name of the test suite, usually the relative path to the file from within the `nes-systests` folder.
+The second line (starting with `# description:`) is a text that describes what the given test suite tests.
+The third line (starting with `# groups:`) lists in brackets groups to which the given test suite belongs, such as "Sources", "Aggregation", or "Union".
+Groups are used to select all test cases from this group for testing, or exclude test cases from within this group when executing all other tests.
 
 ### Sources
 Sources are created via SQL statements.
@@ -40,13 +40,13 @@ You need to define logical and physical sources.
 
 Logical sources define their schema, but no data input. A query to create a logical source can look like the following:
 
-`CREATE LOGICAL SOURCE input(id UTIN64, data FLOAT64);`.
+`CREATE LOGICAL SOURCE input(id UINT64, data FLOAT64);`.
 
 Physical sources define concrete data inputs for logical sources. 
 These can be of different types, such as file sources, TCP sources, or generator sources. 
 Identical to the NES repl parser, you can optionally define parameters for the physical source. 
-You can provide input data for the physical source inline (via the `ATTACH INLINE` statement directly following the physical source definition), or using a file that lies in `nes-systesst/testdata/` (via the `ATTACH FILE [path]` statement directly following the physical source definition). 
-For both methods, white spaces in the tuples are not trimmed.
+You can provide input data for the physical source inline (via the `ATTACH INLINE` statement directly following the physical source definition), or using a file that lies in `nes-systests/testdata/` (via the `ATTACH FILE [path]` statement directly following the physical source definition).
+For both methods, whitespace in the tuples is not trimmed.
 
 Examples:
 ```sql
@@ -87,7 +87,7 @@ The accepted options are mostly the same as when creating a source via a `CREATE
 The only difference is that a schema must be given via the options `SOURCE.SCHEMA` using the `SCHEMA` function.
 
 You cannot use the `ATTACH` statement to pipe a file or inline data into the source. 
-To use a file input, use the `SOURCE.FILE_PATH` option. If no absolut path is given, the sytests framework will assume 
+To use a file input, use the `SOURCE.FILE_PATH` option. If no absolute path is given, the systest framework assumes
 the test data directory of the systest as the root directory.
 
 Example:
@@ -106,9 +106,9 @@ When creating a sink, the exact expected schema and the type of the sink must be
 
 Examples:
 ```sql
-CREATE SINK output(input.id UINT64, input.data FLOAT64) TYPE File;
+CREATE SINK output(id UINT64, data FLOAT64) TYPE File;
 
-CREATE SINK output2(input.id UINT64) TYPE File;
+CREATE SINK output2(id UINT64) TYPE File;
 
 CREATE SINK output3(new_column UINT64) TYPE Checksum;
 ```
@@ -133,7 +133,7 @@ INTO File();
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source
-INTO File(SCHEMA(ID UINT64, VALUE VARSIZE, TIMESTAMP UINT64) AS "SINK"."SCHEMA", FALSE AS "OUTPUT_FORMATTER".QUOTE_STRINGS);
+INTO File(SCHEMA(ID UINT64, VALUE VARSIZED, TIMESTAMP UINT64) AS "SINK"."SCHEMA", FALSE AS "OUTPUT_FORMATTER".QUOTE_STRINGS);
 
 SELECT ID, VALUE, TIMESTAMP
 FROM input_source
@@ -190,7 +190,7 @@ The executable can run individual tests (`-t /path/to/test.test:1`), all tests i
 Tests can be run with specific configuration settings (`-- --worker.number_of_buffers_in_global_buffer_manager=10000`).
 Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/systest-disable.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. The disable config file understands `exclude_groups` and `disabled_test_files`.
 To measure the execution time of tests use the benchmark mode (`-b`).
-To send queries on a remote worker use the remote mode (`-s`).
+To send queries to remote workers, use remote mode (`-r` or `--remote`).
 The endless mode runs tests in an infinite loop i.e. for regression testing (`--endless`).
 
 
@@ -216,27 +216,29 @@ Topology files are YAML documents that define the worker network structure and s
 
 ```yaml
 workers:
-  - host: "sink-node:9090"      # gRPC control-plane address; used as worker identity (format: hostname:port)
-    max_operators: 10000         # Maximum concurrent operator slots on this worker; use Unlimited for no cap
-  - host: "source-node:9090"    # gRPC control-plane address of this source worker
-    max_operators: 100           # Smaller capacity for edge/source nodes with limited resources
+  - host: "sink-node:8080"
+    data_address: "sink-node:9090"
+    max_operators: 10000
+  - host: "source-node:8080"
+    data_address: "source-node:9090"
+    max_operators: 100
     downstream:
-      - "sink-node:9090"         # gRPC address of the downstream worker for data routing
+      - "sink-node:8080"
 
 allow_source_placement:
-  - "source-node:9090"           # Workers eligible for source operator placement (gRPC addresses)
+  - "source-node:8080"
 
 allow_sink_placement:
-  - "sink-node:9090"             # Workers eligible for sink operator placement
-  - "source-node:9090"
+  - "sink-node:8080"
+  - "source-node:8080"
 ```
 
 **Configuration Fields:**
 
 | Field | Description |
 |-------|-------------|
-| `workers[].host` | Worker data plane address (format: `hostname:port`) |
-| `workers[].grpc` | Worker control plane address (format: `hostname:port`) |
+| `workers[].host` | Worker gRPC control-plane address and worker identity (format: `hostname:port`) |
+| `workers[].data_address` | Worker data-plane address (format: `hostname:port`) |
 | `workers[].max_operators` | Maximum concurrent operator slots on this worker (integer or Unlimited) |
 | `workers[].downstream` | Optional list of downstream workers for data routing |
 | `allow_source_placement` | Workers eligible for source placement (defaults to all workers if omitted) |
@@ -254,7 +256,7 @@ This allows tests to be topology-agnostic and run on both single-node and distri
 
 #### Explicit Worker Assignment
 
-For tests that require specific worker placement, use the `SOURCE.HOST` and `SINK.HOST` options:
+Named physical sources and sinks support explicit placement via `SOURCE.HOST` and `SINK.HOST`. Inline sources support `SOURCE.HOST`; inline sinks use topology-based sink placement, so use a named sink when a sink must be pinned to a specific worker.
 
 **Named Sources and Sinks:**
 
@@ -263,14 +265,14 @@ CREATE LOGICAL SOURCE nameStream(firstName VARSIZED, lastName VARSIZED);
 
 CREATE PHYSICAL SOURCE FOR nameStream
 TYPE File
-SET("sink-node:9090" AS "SOURCE"."HOST");
+SET('source-node:8080' AS "SOURCE"."HOST");
 ATTACH INLINE
 Alice,Smith
 Bob,Jones
 
 CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED)
 TYPE File
-SET("sink-node:9090" AS "SINK"."HOST");
+SET('sink-node:8080' AS "SINK"."HOST");
 
 SELECT CONCAT(firstName, lastName) AS firstNameLastName
 FROM nameStream
@@ -280,22 +282,23 @@ AliceSmith
 BobJones
 ```
 
-**Inline Sources and Sinks:**
+**Inline Sources with Automatically Placed Inline Sinks:**
 
 ```sql
 SELECT id, value, timestamp
 FROM File(
     'small/stream8.csv' AS "SOURCE".FILE_PATH,
-    'source-node:9090' AS "SOURCE"."HOST",
+    'source-node:8080' AS "SOURCE"."HOST",
     'CSV' AS INPUT_FORMATTER."TYPE",
     SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS "SOURCE"."SCHEMA")
 INTO File(
-    'sink-node:9090' AS "SINK"."HOST",
-    'CSV' AS "SINK"."INPUT_FORMAT");
+    'CSV' AS "SINK".OUTPUT_FORMAT);
 ----
-1,100,1000
-2,200,2000
-3,300,3000
+1,1,12
+1,2,23
+1,3,34
+1,4,45
+1,5,56
 ```
 
 > [!NOTE]
@@ -313,10 +316,10 @@ To test against actual distributed workers, use the `--remote` flag. The systest
 
 ```bash
 # Terminal 1: Start a worker
-cmake-build-debug/nes-single-node-worker/nes-single-node-worker --grpc=localhost:8080
+cmake-build-debug/nes-single-node-worker/nes-single-node-worker --grpc=localhost:8080 --data_address=localhost:9090
 
 # Terminal 2: Run systest against the remote worker
-cmake-build-debug/nes-systest/nes-systest \
+cmake-build-debug/nes-systests/systest/systest \
     --clusterConfig nes-systests/configs/topologies/single-node.yaml \
     --remote
 ```
@@ -330,7 +333,7 @@ cmake-build-debug/nes-systest/nes-systest \
 
 #### Docker-Based Remote Testing
 
-For complex multi-worker topologies, use Docker Compose to orchestrate the cluster. The [systest-remote-test](../../nes-systests/systest/remote-test/systest_remote_test.bats) demonstrates this approach:
+For complex multi-worker topologies, use Docker Compose to orchestrate the cluster. The [distributed remote test](../../nes-systests/systest/remote-test/distributed.bats) demonstrates this approach:
 
 1. The test generates a `docker-compose.yaml` from the topology configuration
 2. Docker Compose starts all workers in containers

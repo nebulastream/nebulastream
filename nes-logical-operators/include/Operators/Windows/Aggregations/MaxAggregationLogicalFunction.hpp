@@ -40,7 +40,6 @@ public:
 
     [[nodiscard]] MaxAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] static std::string_view getName() noexcept;
-    [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] DataType getAggregateType() const;
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
@@ -56,7 +55,7 @@ private:
 template <>
 struct Reflector<MaxAggregationLogicalFunction>
 {
-    Reflected operator()(const MaxAggregationLogicalFunction& function) const;
+    Reflected operator()(const MaxAggregationLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

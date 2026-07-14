@@ -33,22 +33,28 @@ namespace NES
 template <>
 struct Reflector<detail::ErasedWindowAggregationFunction>
 {
-    Reflected operator()(const detail::ErasedWindowAggregationFunction& function) const { return function.reflect(); }
+    Reflected operator()(const detail::ErasedWindowAggregationFunction& function, const ReflectionContext& context) const
+    {
+        return function.reflect(context);
+    }
 };
 
 template <WindowAggregationFunctionConcept Checked>
 struct Reflector<TypedWindowAggregationLogicalFunction<Checked>>
 {
-    Reflected operator()(const TypedWindowAggregationLogicalFunction<Checked>& function) const
+    Reflected operator()(const TypedWindowAggregationLogicalFunction<Checked>& function, const ReflectionContext& context) const
     {
-        return reflect(detail::ReflectedWindowAggregationLogicalFunction{std::string{function.getName()}, Reflector<Checked>{}(*function)});
+        return context.reflect(
+            detail::ReflectedWindowAggregationLogicalFunction{std::string{function.getName()}, Reflector<Checked>{}(*function)});
     }
 };
 
 template <>
 struct Reflector<TypedWindowAggregationLogicalFunction<detail::ErasedWindowAggregationFunction>>
 {
-    Reflected operator()(const TypedWindowAggregationLogicalFunction<detail::ErasedWindowAggregationFunction>& function) const;
+    Reflected operator()(
+        const TypedWindowAggregationLogicalFunction<detail::ErasedWindowAggregationFunction>& function,
+        const ReflectionContext& context) const;
 };
 
 template <>

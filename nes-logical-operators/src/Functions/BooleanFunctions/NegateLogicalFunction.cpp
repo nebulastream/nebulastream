@@ -84,9 +84,9 @@ std::string_view NegateLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<NegateLogicalFunction>::operator()(const NegateLogicalFunction& function) const
+Reflected Reflector<NegateLogicalFunction>::operator()(const NegateLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedNegateLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedNegateLogicalFunction{.child = function.child});
 }
 
 NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const

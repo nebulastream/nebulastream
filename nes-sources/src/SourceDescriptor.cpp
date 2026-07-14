@@ -41,13 +41,15 @@ SourceDescriptor::SourceDescriptor(
     std::string_view sourceType,
     Host host,
     DescriptorConfig::Config config,
-    const InputFormatterDescriptor& inputFormatterDescriptor)
+    const InputFormatterDescriptor& inputFormatterDescriptor,
+    bool isInline)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
     , sourceType(std::move(sourceType))
     , host(std::move(host))
     , inputFormatterDescriptor(inputFormatterDescriptor)
+    , isInline(isInline)
 {
 }
 
@@ -81,6 +83,11 @@ PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
     return physicalSourceId;
 }
 
+bool SourceDescriptor::isInlineSource() const
+{
+    return isInline;
+}
+
 std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {
     return lhs.physicalSourceId <=> rhs.physicalSourceId;
@@ -95,7 +102,14 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
     }
     else if (verbosity == ExplainVerbosity::Short)
     {
-        stringstream << fmt::format("{}", logicalSource.getLogicalSourceName());
+        if (isInlineSource())
+        {
+            stringstream << sourceType;
+        }
+        else
+        {
+            stringstream << fmt::format("{}", logicalSource.getLogicalSourceName());
+        }
     }
     return stringstream.str();
 }
@@ -111,7 +125,7 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
                descriptor.getInputFormatterDescriptor());
 }
 
-Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
+Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor, const ReflectionContext& context) const
 {
     const detail::ReflectedSourceDescriptor descriptor{
         .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
@@ -119,9 +133,10 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .type = sourceDescriptor.sourceType,
         .host = sourceDescriptor.host,
         .inputFormatterDescriptor = sourceDescriptor.inputFormatterDescriptor,
-        .config = sourceDescriptor.getReflectedConfig()};
+        .isInline = sourceDescriptor.isInline,
+        .config = sourceDescriptor.getReflectedConfig(context)};
 
-    return reflect(descriptor);
+    return context.reflect(descriptor);
 }
 
 SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const
@@ -134,6 +149,7 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl,
         reflectedSourceDescriptor.type,
         reflectedSourceDescriptor.host,
         Descriptor::unreflectConfig(reflectedSourceDescriptor.config, context),
-        reflectedSourceDescriptor.inputFormatterDescriptor};
+        reflectedSourceDescriptor.inputFormatterDescriptor,
+        reflectedSourceDescriptor.isInline};
 }
 }

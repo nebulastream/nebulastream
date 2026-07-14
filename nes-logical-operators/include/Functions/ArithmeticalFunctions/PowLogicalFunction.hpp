@@ -57,7 +57,7 @@ private:
 template <>
 struct Reflector<PowLogicalFunction>
 {
-    Reflected operator()(const PowLogicalFunction& function) const;
+    Reflected operator()(const PowLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>

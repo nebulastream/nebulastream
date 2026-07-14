@@ -68,7 +68,7 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
     {
         return fmt::format("FieldAccessLogicalFunction({})", field);
     }
-    return fmt::format("{}", field);
+    return fmt::format("{}", field.getLastName());
 }
 
 LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
@@ -104,9 +104,10 @@ std::string_view FieldAccessLogicalFunction::getType() const
     return NAME;
 }
 
-Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function) const
+Reflected
+Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(function.getField());
+    return context.reflect(function.getField());
 }
 
 FieldAccessLogicalFunction

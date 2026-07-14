@@ -104,7 +104,8 @@ NES::Systest::SystestQuery makeQuery(
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
         .configurationOverride = NES::Systest::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
-        .runAfter = std::move(runAfter)};
+        .runAfter = std::move(runAfter),
+        .actualExplainOutput = std::nullopt};
 }
 }
 
@@ -137,8 +138,7 @@ public:
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (LogicalPlan), (override));
-    MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (override));
+    MOCK_METHOD((std::expected<QueryId, Exception>), start, (LogicalPlan), (override));
     MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (override));
     MOCK_METHOD((std::expected<LocalQueryStatusSnapshot, Exception>), status, (QueryId), (const, override));
     MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
@@ -186,10 +186,8 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const auto id = randomQueryId();
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
     auto [submitter, mockBackend] = createQuerySubmitter();
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(*mockBackend, start(id));
+    EXPECT_CALL(*mockBackend, start(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, status(id))
-        .WillOnce(testing::Return(makeSummary(id, QueryStatus::Registered, nullptr)))
         .WillOnce(testing::Return(makeSummary(id, QueryStatus::Started, nullptr)))
         .WillRepeatedly(testing::Return(makeSummary(id, QueryStatus::Failed, runtimeErr)));
     SystestProgressTracker progressTracker;
@@ -226,10 +224,8 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const auto id = randomQueryId();
 
     auto [submitter, mockBackend] = createQuerySubmitter();
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
-    EXPECT_CALL(*mockBackend, start(id));
+    EXPECT_CALL(*mockBackend, start(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, status(id))
-        .WillOnce(testing::Return(makeSummary(id, QueryStatus::Registered, nullptr)))
         .WillOnce(testing::Return(makeSummary(id, QueryStatus::Running, nullptr)))
         .WillRepeatedly(testing::Return(makeSummary(id, QueryStatus::Stopped, nullptr)));
     SystestProgressTracker progressTracker;
@@ -306,22 +302,19 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
 
 
     auto [submitter, mockBackend] = createQuerySubmitter();
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId1}));
-    EXPECT_CALL(*mockBackend, start(queryId1));
+    EXPECT_CALL(*mockBackend, start(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId1}));
 
     EXPECT_CALL(*mockBackend, status(queryId1))
         .WillOnce(testing::Return(makeSummary(queryId1, QueryStatus::Stopped, nullptr)))
         .WillRepeatedly(testing::Return(makeSummary(queryId1, QueryStatus::Stopped, nullptr)));
 
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId2}));
-    EXPECT_CALL(*mockBackend, start(queryId2));
+    EXPECT_CALL(*mockBackend, start(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId2}));
 
     EXPECT_CALL(*mockBackend, status(queryId2))
         .WillOnce(testing::Return(makeSummary(queryId2, QueryStatus::Stopped, nullptr)))
         .WillRepeatedly(testing::Return(makeSummary(queryId2, QueryStatus::Stopped, nullptr)));
 
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId3}));
-    EXPECT_CALL(*mockBackend, start(queryId3));
+    EXPECT_CALL(*mockBackend, start(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId3}));
 
     EXPECT_CALL(*mockBackend, status(queryId3))
         .WillOnce(testing::Return(makeSummary(queryId3, QueryStatus::Stopped, nullptr)))

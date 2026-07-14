@@ -130,6 +130,7 @@ using namespace std::string_view_literals;
 
 static constexpr std::string_view CreateToken = "CREATE"sv;
 static constexpr std::string_view QueryToken = "SELECT"sv;
+static constexpr std::string_view ExplainToken = "EXPLAIN"sv;
 static constexpr std::string_view ResultDelimiter = "----"sv;
 static constexpr std::string_view ErrorToken = "ERROR"sv;
 static constexpr std::string_view DifferentialToken = "===="sv;
@@ -140,6 +141,7 @@ static constexpr std::string_view SequentialExecutionToken = "SEQUENTIAL_EXECUTI
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{CreateToken, TokenType::CREATE},
      {QueryToken, TokenType::QUERY},
+     {ExplainToken, TokenType::EXPLAIN},
      {ResultDelimiter, TokenType::RESULT_DELIMITER},
      {ErrorToken, TokenType::ERROR_EXPECTATION},
      {ConfigurationToken, TokenType::CONFIGURATION},
@@ -202,6 +204,11 @@ void SystestParser::registerOnQueryCallback(QueryCallback callback)
     this->onQueryCallback = std::move(callback);
 }
 
+void SystestParser::registerOnExplainQueryCallback(ExplainQueryCallback callback)
+{
+    this->onExplainQueryCallback = std::move(callback);
+}
+
 void SystestParser::registerOnResultTuplesCallback(ResultTuplesCallback callback)
 {
     this->onResultTuplesCallback = std::move(callback);
@@ -235,6 +242,8 @@ void SystestParser::registerOnDifferentialQueryBlockCallback(DifferentialQueryBl
 /// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse()
 {
+    static const std::unordered_set<TokenType> DefaultQueryStopTokens{TokenType::RESULT_DELIMITER, TokenType::DIFFERENTIAL};
+
     SystestQueryIdAssigner queryIdAssigner{};
     bool sequentialExecution = false;
     while (auto token = getNextToken())
@@ -247,9 +256,8 @@ void SystestParser::parse()
                 break;
             }
             case TokenType::QUERY: {
-                static const std::unordered_set<TokenType> DefaultQueryStopTokens{TokenType::RESULT_DELIMITER, TokenType::DIFFERENTIAL};
-
                 auto query = expectQuery(DefaultQueryStopTokens);
+                expectedResultType = ResultType::TUPLES;
                 lastParsedQuery = query;
                 auto queryId = queryIdAssigner.getNextQueryNumber();
                 lastParsedQueryId = queryId;
@@ -259,15 +267,39 @@ void SystestParser::parse()
                 }
                 break;
             }
+            case TokenType::EXPLAIN: {
+                auto statement = expectQuery(DefaultQueryStopTokens);
+                expectedResultType = ResultType::VERBATIM;
+                /// EXPLAIN statements cannot be part of a differential block
+                lastParsedQuery.reset();
+                lastParsedQueryId.reset();
+                auto queryId = queryIdAssigner.getNextQueryNumber();
+                if (onExplainQueryCallback)
+                {
+                    onExplainQueryCallback(statement, queryId);
+                }
+                break;
+            }
             case TokenType::RESULT_DELIMITER: {
                 const auto optionalToken = peekToken();
                 if (optionalToken == TokenType::ERROR_EXPECTATION)
                 {
+                    expectedResultType = ResultType::TUPLES;
                     ++currentLine;
                     auto expectation = expectError();
                     if (onErrorExpectationCallback)
                     {
                         onErrorExpectationCallback(expectation, queryIdAssigner.getNextQueryResultNumber());
+                    }
+                }
+                else if (expectedResultType == ResultType::VERBATIM)
+                {
+                    expectedResultType = ResultType::TUPLES;
+                    /// EXPLAIN output is free-form plan text, so it is read verbatim instead of as result tuples
+                    auto verbatimResultLines = expectVerbatimResultLines();
+                    if (onResultTuplesCallback)
+                    {
+                        onResultTuplesCallback(std::move(verbatimResultLines), queryIdAssigner.getNextQueryResultNumber());
                     }
                 }
                 else
@@ -296,6 +328,9 @@ void SystestParser::parse()
                 break;
             }
             case TokenType::DIFFERENTIAL: {
+                INVARIANT(
+                    expectedResultType == ResultType::TUPLES,
+                    "DIFFERENTIAL block cannot follow an EXPLAIN statement (verbatim result expected)");
                 INVARIANT(lastParsedQuery.has_value() && lastParsedQueryId.has_value(), "Differential block without preceding query");
 
                 auto [leftQuery, rightQuery] = expectDifferentialBlock();
@@ -470,6 +505,23 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
         currentLine++;
     }
     return tuples;
+}
+
+std::vector<std::string> SystestParser::expectVerbatimResultLines()
+{
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist: {}", currentLine);
+    std::vector<std::string> resultLines;
+    /// skip the result line `----`
+    if (toLowerCase(lines[currentLine]) == toLowerCase(ResultDelimiter))
+    {
+        currentLine++;
+    }
+    while (currentLine < lines.size() && !lines[currentLine].starts_with("==END=="))
+    {
+        resultLines.push_back(lines[currentLine]);
+        currentLine++;
+    }
+    return resultLines;
 }
 
 std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> SystestParser::expectCreateStatement()

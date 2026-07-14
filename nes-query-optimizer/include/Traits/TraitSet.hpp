@@ -136,7 +136,7 @@ bool tryInsert(TraitSet& traitset, TraitType trait)
 template <>
 struct Reflector<TraitSet>
 {
-    Reflected operator()(const TraitSet& traitSet) const;
+    Reflected operator()(const TraitSet& traitSet, const ReflectionContext& context) const;
 };
 
 template <>

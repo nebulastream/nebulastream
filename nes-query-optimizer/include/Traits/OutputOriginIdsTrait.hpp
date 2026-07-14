@@ -57,7 +57,7 @@ private:
 template <>
 struct Reflector<OutputOriginIdsTrait>
 {
-    Reflected operator()(const OutputOriginIdsTrait& trait) const;
+    Reflected operator()(const OutputOriginIdsTrait& trait, const ReflectionContext& context) const;
 };
 
 template <>

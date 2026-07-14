@@ -340,9 +340,10 @@ JoinTimeCharacteristic JoinLogicalOperator::getJoinTimeCharacteristics() const
     return timestampFields;
 }
 
-Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const TypedLogicalOperator<JoinLogicalOperator>& op) const
+Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(
+    const TypedLogicalOperator<JoinLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedJoinLogicalOperator{
+    return context.reflect(detail::ReflectedJoinLogicalOperator{
         .operatorId = op.getId(),
         .joinFunction = op->getJoinFunction(),
         .windowType = op->getWindowType(),
