@@ -91,8 +91,6 @@ void AggregationOperatorHandler::triggerSlices(
                 {
                     const auto asChained = dynamic_cast<ChainedHashMap*>(hashMap);
                     inferredSourceInsertionTimestamp = std::max(inferredSourceInsertionTimestamp, asChained->getTimestamp());
-                    /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
-                    rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
 
                     /// We store here the raw pointer, as we need the raw pointers to operate over them in the AggregationProbe
                     allHashMaps.emplace_back(hashMap);
@@ -105,6 +103,16 @@ void AggregationOperatorHandler::triggerSlices(
             }
         }
 
+        /// Feed the hashmap-sizing statistic ONCE per window with the window's average keys per
+        /// populated hashmap (one value per key). The previous per-hashmap wlock()->add() inside
+        /// the slice loop acquired an exclusive lock per populated hashmap PER SLICE PER WINDOW —
+        /// for a 1h/1s sliding window that is thousands of acquisitions per trigger and, with
+        /// concurrent triggering workers, a folly::SharedMutex convoy that anti-scaled the whole
+        /// operator (sg1: W16 slower than W1; ~20K ctx-switches/s; 15% kernel spinlock).
+        if (not allHashMaps.empty())
+        {
+            rollingAverageNumberOfKeys.wlock()->add(totalNumberOfTuples / allHashMaps.size());
+        }
 
         /// We need a buffer that is large enough to store:
         /// - all pointers to all hashmaps of the window to be triggered
