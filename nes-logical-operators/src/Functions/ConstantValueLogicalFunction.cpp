@@ -90,6 +90,14 @@ DataType inferIntegerLiteralDataType(const std::string_view literal)
 
 DataType inferConstantValueDataType(const std::string_view literal)
 {
+    if (literal.size() >= 2 and literal.front() == '\'' and literal.back() == '\'')
+    {
+        return DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+    }
+    if (literal == "TRUE" or literal == "FALSE" or literal == "true" or literal == "false")
+    {
+        return DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    }
     try
     {
         return inferIntegerLiteralDataType(literal);
@@ -159,7 +167,12 @@ LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema<
     {
         return *this;
     }
-    return ConstantValueLogicalFunction(inferConstantValueDataType(constantValue), constantValue);
+    auto inferredDataType = inferConstantValueDataType(constantValue);
+    if (inferredDataType.isType(DataType::Type::VARSIZED))
+    {
+        return ConstantValueLogicalFunction(std::move(inferredDataType), constantValue.substr(1, constantValue.size() - 2));
+    }
+    return ConstantValueLogicalFunction(std::move(inferredDataType), constantValue);
 }
 
 Reflected
