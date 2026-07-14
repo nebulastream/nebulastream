@@ -15,11 +15,13 @@
 #include <LazyValueRepresentations/UINTLazyValueRepresentation.hpp>
 
 #include <cstring>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Util/InlineTagMacro.hpp>
 #include <std/cstring.h>
 #include <LazyValueRepresentationRegistry.hpp>
+#include <function.hpp>
 #include <inline.hpp>
 #include <select.hpp>
 #include <val_bool.hpp>
@@ -91,7 +93,7 @@ nautilus::val<bool> UINTLazyValueRepresentation::eqImpl(const VariableSizedData&
     {
         const auto lazyData = getContent();
         const auto rhsVarSizedData = rhs.getContent();
-        result = (nautilus::memcmp(lazyData, rhsVarSizedData, size) == 0);
+        result = nautilus::invoke(bytesEqual, lazyData, rhsVarSizedData, size);
     }
     return result;
 }
@@ -112,7 +114,7 @@ nautilus::val<bool> UINTLazyValueRepresentation::eqImpl(const std::shared_ptr<La
             /// All unsigned integer types land here
             /// It suffices to compare the contents byte per byte
             result = nautilus::select(
-                size != rhs->getSize(), nautilus::val<bool>{false}, (nautilus::memcmp(lhsContent, rhsContent, size) == 0));
+                size != rhs->getSize(), nautilus::val<bool>{false}, nautilus::invoke(bytesEqual, lhsContent, rhsContent, size));
         }
     }
     return result;

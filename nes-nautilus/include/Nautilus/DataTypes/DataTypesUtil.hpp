@@ -16,10 +16,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <unordered_map>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <nautilus/inline.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
@@ -28,6 +30,38 @@
 
 namespace NES
 {
+
+/// Byte equality with an ALWAYS-INLINED, call-free body: fused into the JIT module it is pure
+/// IR, so for a constant-global RHS (an embedConstantBytes'd query literal) with compile-time
+/// size LLVM unrolls and folds it to immediate compares (WHERE state = 'az' becomes two icmps).
+/// The loads go through std::memcpy, which lowers to the @llvm.memcpy INTRINSIC (name preserved
+/// through bitcode extraction) -- do NOT use std::memcmp here: it has no intrinsic, and the
+/// inlining pass's symbol resolution renames external callees to their runtime addresses, which
+/// destroys the libcall identity LLVM's memcmp expansion keys on (nautilus::memcmp has the same
+/// problem, plus worst-case memory(readwrite) attributes that block reordering entirely).
+NAUTILUS_INLINE inline bool bytesEqual(const int8_t* lhs, const int8_t* rhs, const uint64_t size)
+{
+    uint64_t index = 0;
+    for (; index + 8 <= size; index += 8)
+    {
+        uint64_t lhsWord = 0;
+        uint64_t rhsWord = 0;
+        std::memcpy(&lhsWord, lhs + index, 8);
+        std::memcpy(&rhsWord, rhs + index, 8);
+        if (lhsWord != rhsWord)
+        {
+            return false;
+        }
+    }
+    for (; index < size; ++index)
+    {
+        if (lhs[index] != rhs[index])
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 /// Get member returns the MemRef to a specific class member as an offset to a objectReference.
 /// This is taken from https://stackoverflow.com/a/20141143 and modified to work with a nautilus::val<int8_t*>

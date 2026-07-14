@@ -16,10 +16,12 @@
 
 #include <cstring>
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <nautilus/std/cstring.h>
 #include <LazyValueRepresentationRegistry.hpp>
+#include <function.hpp>
 #include <select.hpp>
 #include <val_bool.hpp>
 
@@ -39,7 +41,7 @@ nautilus::val<bool> VARSIZEDLazyValueRepresentation::eqImpl(const VariableSizedD
     }
     const auto varSizedData = getContent();
     const auto rhsVarSizedData = rhs.getContent();
-    const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
+    const auto compareResult = nautilus::invoke(bytesEqual, varSizedData, rhsVarSizedData, size);
     return compareResult;
 }
 
@@ -58,7 +60,7 @@ nautilus::val<bool> VARSIZEDLazyValueRepresentation::eqImpl(const std::shared_pt
     {
         const auto varSizedData = getContent();
         const auto rhsVarSizedData = rhs->getContent();
-        result = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
+        result = nautilus::invoke(bytesEqual, varSizedData, rhsVarSizedData, size);
     }
     return result;
 }
