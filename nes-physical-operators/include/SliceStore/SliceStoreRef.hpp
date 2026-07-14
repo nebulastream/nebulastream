@@ -28,7 +28,7 @@ namespace NES
 class WindowBasedOperatorHandler;
 
 /// Abstract interface for accessing operator-specific data structures from a SliceStore.
-/// Each WindowSlicesStoreInterface implementation provides its own concrete SliceStoreRef.
+/// Each SlicedWindowStoreInterface implementation provides its own concrete SliceStoreRef.
 /// The SliceStoreRef owns the SliceCache and encapsulates the cache + store interaction.
 class SliceStoreRef
 {
