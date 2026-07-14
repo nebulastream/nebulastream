@@ -16,26 +16,17 @@
 
 #include <map>
 #include <memory>
-#include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/JoinTriggerStrategy.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/TimeBasedWindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
-
-/// All possible trigger strategies, selected at lowering time based on the join type.
-/// std::variant avoids virtual dispatch and heap allocation — the strategy is stored inline.
-using JoinTriggerStrategy = std::variant<
-    InnerJoinTriggerStrategy,
-    OuterJoinTriggerStrategy<true, false>,
-    OuterJoinTriggerStrategy<false, true>,
-    OuterJoinTriggerStrategy<true, true>>;
 
 /// This operator is the general join operator handler. It is expected that all StreamJoinOperatorHandlers inherit from this class.
 /// It delegates window triggering to a JoinTriggerStrategy configured at lowering time and delegates the actual probe
@@ -46,7 +37,7 @@ public:
     StreamJoinOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<TimeBasedWindowSlicesStoreInterface> sliceAndWindowStore,
+        std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore,
         JoinTriggerStrategy triggerStrategy);
 
 protected:
