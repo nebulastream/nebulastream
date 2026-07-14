@@ -16,7 +16,6 @@
 
 #include <map>
 #include <memory>
-#include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/JoinTriggerStrategy.hpp>
@@ -28,14 +27,6 @@
 
 namespace NES
 {
-
-/// All possible trigger strategies, selected at lowering time based on the join type.
-/// std::variant avoids virtual dispatch and heap allocation — the strategy is stored inline.
-using JoinTriggerStrategy = std::variant<
-    InnerJoinTriggerStrategy,
-    OuterJoinTriggerStrategy<true, false>,
-    OuterJoinTriggerStrategy<false, true>,
-    OuterJoinTriggerStrategy<true, true>>;
 
 /// This operator is the general join operator handler. It is expected that all StreamJoinOperatorHandlers inherit from this class.
 /// It delegates window triggering to a JoinTriggerStrategy configured at lowering time and delegates the actual probe
