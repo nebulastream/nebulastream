@@ -14,6 +14,8 @@ add_source_files(nes-physical-operators
         Slice.cpp
         DefaultTimeBasedSliceStore.cpp
         DefaultTimeBasedSliceStoreRef.cpp
+        IntervalSliceStore.cpp
+        IntervalSliceStoreRef.cpp
 )
 
 add_subdirectory(SliceCache)
