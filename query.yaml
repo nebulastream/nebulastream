@@ -6,7 +6,27 @@ query: |
     PIXEL_FORMAT,
     TO_BASE64(IMAGE) AS IMAGE
   FROM video
-  INTO File("video-frames.csv" AS `SINK`.`FILE_PATH`, "CSV" AS `SINK`.`INPUT_FORMAT`);
+  INTO video_frames;
+
+sinks:
+  - name: video_frames
+    host: localhost:8080
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+      - name: WIDTH
+        type: UINT64
+      - name: HEIGHT
+        type: UINT64
+      - name: PIXEL_FORMAT
+        type: UINT64
+      - name: IMAGE
+        type: VARSIZED
+    type: File
+    config:
+      output_format: CSV
+      file_path: video-frames.csv
+      append: false
 
 logical:
   - name: video
@@ -24,10 +44,13 @@ logical:
 
 physical:
   - logical: video
+    host: localhost:8080
     type: Video
     parser_config:
       type: Native
     source_config:
       sourceSelector: 2
 
-sinks: []
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
