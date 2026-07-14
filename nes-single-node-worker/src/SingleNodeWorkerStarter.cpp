@@ -28,6 +28,7 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Thread.hpp>
+#include <Version.hpp>
 
 namespace
 {
@@ -58,6 +59,11 @@ NES::Thread shutdownHook(grpc::Server& server)
 
 int main(const int argc, const char* argv[])
 {
+    if (NES::hasVersionFlag(argc, argv))
+    {
+        NES::printVersion("nes-single-node-worker");
+        return 0;
+    }
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();

@@ -53,10 +53,16 @@ target_include_directories(nes-grpc PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/grpc_generated_src>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+# BuildInfo.hpp contains build metadata used by the --version flag.
+include(BuildInfo)
+set(NES_BUILD_INFO_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
 get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
 add_library(nes-common ${NES_COMMON_SOURCE_FILES})
+# Version.cpp includes <BuildInfo.hpp> from the active configuration's generated directory.
+target_include_directories(nes-common PRIVATE "${NES_BUILD_INFO_DIR}/$<CONFIG>")
 
 find_package(cpptrace   CONFIG REQUIRED)
 find_package(fmt        CONFIG REQUIRED)
@@ -79,5 +85,8 @@ target_include_directories(nes-common PUBLIC
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")
 endif ()
+
+# Generate BuildInfo.hpp after nes-common is fully configured so its target properties can be evaluated.
+generate_build_info(nes-common "${NES_BUILD_INFO_DIR}")
 
 add_tests_if_enabled(tests)

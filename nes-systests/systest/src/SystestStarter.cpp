@@ -42,6 +42,7 @@
 #include <SystestExecutor.hpp>
 #include <SystestState.hpp>
 #include <Thread.hpp>
+#include <Version.hpp>
 #include <WorkerConfig.hpp>
 
 namespace
@@ -499,6 +500,11 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 
 int main(int argc, const char** argv)
 {
+    if (NES::hasVersionFlag(argc, argv))
+    {
+        NES::printVersion("systest");
+        return 0;
+    }
     NES::setupSignalHandlers();
     const auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::Host("systest"), "main");
