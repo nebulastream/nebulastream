@@ -155,15 +155,7 @@ impl MemCom {
             Retry::spawn(retry, || async { try_connect(self, connection).await }).await?;
         match handshake_channel.send(server_channel).await {
             Ok(_) => Ok(client_channel),
-            Err(SendError(_)) => {
-                // The handshake channel receiver was dropped, which means the registry
-                // entry should have been removed by the listening side already
-                debug_assert!(
-                    !self.listening.read().await.contains_key(connection),
-                    "Entry should have been removed when handshake receiver was dropped"
-                );
-                Err("could not connect".into())
-            }
+            Err(SendError(_)) => Err("could not connect".into()),
         }
     }
 }
