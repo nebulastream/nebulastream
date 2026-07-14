@@ -12,6 +12,7 @@
 
 add_plugin(Avg AggregationPhysicalFunction AvgAggregationPhysicalFunction.cpp)
 add_plugin(Count AggregationPhysicalFunction CountAggregationPhysicalFunction.cpp)
+add_plugin(Last AggregationPhysicalFunction LastAggregationPhysicalFunction.cpp)
 add_plugin(Max AggregationPhysicalFunction MaxAggregationPhysicalFunction.cpp)
 add_plugin(Min AggregationPhysicalFunction MinAggregationPhysicalFunction.cpp)
 add_plugin(Median AggregationPhysicalFunction MedianAggregationPhysicalFunction.cpp)

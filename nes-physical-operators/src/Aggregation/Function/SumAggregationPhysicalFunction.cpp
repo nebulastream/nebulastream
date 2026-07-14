@@ -41,7 +41,10 @@ SumAggregationPhysicalFunction::SumAggregationPhysicalFunction(
 }
 
 void SumAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    const Record& record,
+    const nautilus::val<Timestamp>&)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (inputType.nullable)

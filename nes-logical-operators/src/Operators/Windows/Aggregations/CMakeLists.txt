@@ -16,6 +16,7 @@ add_source_files(nes-logical-operators
 
 add_plugin(Avg AggregationLogicalFunction AvgAggregationLogicalFunction.cpp)
 add_plugin(Count AggregationLogicalFunction CountAggregationLogicalFunction.cpp)
+add_plugin(Last AggregationLogicalFunction LastAggregationLogicalFunction.cpp)
 add_plugin(Max AggregationLogicalFunction MaxAggregationLogicalFunction.cpp)
 add_plugin(Median AggregationLogicalFunction MedianAggregationLogicalFunction.cpp)
 add_plugin(Min AggregationLogicalFunction MinAggregationLogicalFunction.cpp)
@@ -23,6 +24,7 @@ add_plugin(Sum AggregationLogicalFunction SumAggregationLogicalFunction.cpp)
 
 add_unreflection_plugin(AggregationLogicalFunction Avg)
 add_unreflection_plugin(AggregationLogicalFunction Count)
+add_unreflection_plugin(AggregationLogicalFunction Last)
 add_unreflection_plugin(AggregationLogicalFunction Max)
 add_unreflection_plugin(AggregationLogicalFunction Median)
 add_unreflection_plugin(AggregationLogicalFunction Min)
