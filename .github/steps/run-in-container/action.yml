@@ -32,6 +32,7 @@ runs:
         export DOCKER_HUB_USER="${{ inputs.docker_username }}"
         export DOCKER_HUB_PASS="${{ inputs.docker_password }}"
         docker run \
+             --pull=never \
              -v /var/run/docker.sock:/var/run/docker.sock \
              --group-add $(stat -c '%g' /var/run/docker.sock) \
              $DOCKER_LOGIN_ARGS \

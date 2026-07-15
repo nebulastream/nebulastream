@@ -104,7 +104,7 @@ nes_build_runtime_image() {
   local image_tag="${prefix}-${suffix}"
   local ctx=$(mktemp -d)
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
-  docker build --load -t "$image_tag" -f - "$ctx" <<EOF
+  docker build --pull=false --network=none --load -t "$image_tag" -f - "$ctx" <<EOF
     FROM $NES_RUNTIME_BASE_IMAGE
     COPY $container_bin /usr/bin
     ENTRYPOINT ["$container_bin"]
@@ -125,7 +125,7 @@ nes_build_app_image() {
   local image_tag="${prefix}-${suffix}"
   local ctx=$(mktemp -d)
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
-  docker build --load -t "$image_tag" -f - "$ctx" <<EOF
+  docker build --pull=false --network=none --load -t "$image_tag" -f - "$ctx" <<EOF
     FROM $NES_RUNTIME_BASE_IMAGE
     COPY $container_bin /usr/bin
 EOF

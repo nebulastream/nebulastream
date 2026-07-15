@@ -1,11 +1,15 @@
 name: Prepare GitHub CI Server Instance
 description: |
-  Prepares a github ci server instance by removing unnecessary pre-installed software and pulling the docker image.
+  Prepares a github ci server instance by removing unnecessary pre-installed software and pulling Docker images.
 
 inputs:
-  image_name:
-    description: 'name of the docker image to prepare'
+  images:
+    description: 'newline-separated Docker images to preload'
     required: true
+  pull_timeout_minutes:
+    description: 'maximum minutes to retry each Docker image pull'
+    required: false
+    default: '10'
   docker_username:
     description: 'Docker Hub username for authenticated pulls'
     required: false
@@ -25,7 +29,47 @@ runs:
     - name: Maximize build space
       shell: bash
       run: |
-        docker pull ${{inputs.image_name}} &
+        pull_timeout_minutes="${{ inputs.pull_timeout_minutes }}"
+        if ! [[ "$pull_timeout_minutes" =~ ^[1-9][0-9]*$ ]]; then
+          echo "pull_timeout_minutes must be a positive integer, got: $pull_timeout_minutes" >&2
+          exit 1
+        fi
+        deadline=$((SECONDS + pull_timeout_minutes * 60))
+
+        pull_image() {
+          local image="$1" delay=1 remaining
+          until docker pull "$image"; do
+            remaining=$((deadline - SECONDS))
+            if ((remaining <= 0)); then
+              echo "Timed out pulling $image after ${pull_timeout_minutes} minutes" >&2
+              return 1
+            fi
+            if ((delay > remaining)); then
+              delay=$remaining
+            fi
+            echo "Retrying $image in ${delay}s" >&2
+            sleep "$delay"
+            if ((delay < 60)); then
+              delay=$((delay * 2))
+            fi
+            if ((delay > 60)); then
+              delay=60
+            fi
+          done
+        }
+
+        images=()
+        while IFS= read -r image; do
+          [ -n "$image" ] && images+=("$image")
+        done <<'EOF'
+        ${{ inputs.images }}
+        EOF
+
+        pids=()
+        for image in "${images[@]}"; do
+          pull_image "$image" &
+          pids+=("$!")
+        done
 
         df -h
         sudo rm -rf /usr/share/dotnet
@@ -33,4 +77,6 @@ runs:
         sudo rm -rf /opt/ghc
         sudo rm -rf /opt/hostedtoolcache/CodeQL
         df -h
-        wait
+        for pid in "${pids[@]}"; do
+          wait "$pid"
+        done
