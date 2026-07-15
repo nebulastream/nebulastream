@@ -228,6 +228,28 @@ LogicalFunction createInFunction(const LogicalFunction& valueFunction, std::vect
     return function;
 }
 
+void combineLogicalFunctions(
+    std::vector<LogicalFunction>& functions, const size_t operandCount, const uint64_t tokenType, const std::string& expressionText)
+{
+    if (operandCount < 2)
+    {
+        return;
+    }
+    if (functions.size() < operandCount)
+    {
+        throw InvalidQuerySyntax("Expected {} operands for logical expression, got {}: {}", operandCount, functions.size(), expressionText);
+    }
+
+    const auto firstOperandIndex = functions.size() - operandCount;
+    auto function = std::move(functions[firstOperandIndex]);
+    for (auto operandIndex = firstOperandIndex + 1; operandIndex < functions.size(); ++operandIndex)
+    {
+        function = createLogicalBinaryFunction(std::move(function), std::move(functions[operandIndex]), tokenType);
+    }
+    functions.resize(firstOperandIndex);
+    functions.emplace_back(std::move(function));
+}
+
 void negateTopFunction(std::stack<AntlrSQLHelper>& helpers, const std::string& expressionText)
 {
     if (helpers.empty())
@@ -296,42 +318,18 @@ void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext
     }
 }
 
-void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context)
+void AntlrSQLQueryPlanCreator::exitOrPredicate(AntlrSQLParser::OrPredicateContext* context)
 {
-    /// If we are exiting a logical binary operator in a join relation, we need to build the binary function for the joinKey and
-    /// not for the general function
-    if (helpers.top().isJoinRelation)
-    {
-        if (helpers.top().joinKeyRelationHelper.size() < 2)
-        {
-            throw InvalidQuerySyntax(
-                "Expected two operands for binary op, got {}: {}", helpers.top().joinKeyRelationHelper.size(), context->getText());
-        }
-        const auto rightFunction = helpers.top().joinKeyRelationHelper.back();
-        helpers.top().joinKeyRelationHelper.pop_back();
-        const auto leftFunction = helpers.top().joinKeyRelationHelper.back();
-        helpers.top().joinKeyRelationHelper.pop_back();
+    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+    combineLogicalFunctions(functions, context->andPredicate().size(), AntlrSQLLexer::OR, context->getText());
+    AntlrSQLBaseListener::exitOrPredicate(context);
+}
 
-        const auto opTokenType = context->op->getType();
-        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
-        helpers.top().joinKeyRelationHelper.push_back(function);
-    }
-    else
-    {
-        if (helpers.top().functionBuilder.size() < 2)
-        {
-            throw InvalidQuerySyntax(
-                "Expected two operands for binary op, got {}: {}", helpers.top().joinKeyRelationHelper.size(), context->getText());
-        }
-        const auto rightFunction = helpers.top().functionBuilder.back();
-        helpers.top().functionBuilder.pop_back();
-        const auto leftFunction = helpers.top().functionBuilder.back();
-        helpers.top().functionBuilder.pop_back();
-
-        const auto opTokenType = context->op->getType();
-        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
-        helpers.top().functionBuilder.push_back(function);
-    }
+void AntlrSQLQueryPlanCreator::exitAndPredicate(AntlrSQLParser::AndPredicateContext* context)
+{
+    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+    combineLogicalFunctions(functions, context->notPredicate().size(), AntlrSQLLexer::AND, context->getText());
+    AntlrSQLBaseListener::exitAndPredicate(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitBoolComparison(AntlrSQLParser::BoolComparisonContext* context)

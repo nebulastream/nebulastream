@@ -263,11 +263,25 @@ booleanExpression
     ;
 
 predicate
-    : NOT predicate                                          #logicalNotPredicate
-    | '(' predicate ')'                                      #parenthesizedPredicate
+    : orPredicate
+    ;
+
+orPredicate
+    : andPredicate (OR andPredicate)*
+    ;
+
+andPredicate
+    : notPredicate (AND notPredicate)*
+    ;
+
+notPredicate
+    : NOT notPredicate                                       #logicalNotPredicate
+    | predicatePrimary                                      #predicatePrimaryExpression
+    ;
+
+predicatePrimary
+    : '(' predicate ')'                                      #parenthesizedPredicate
     | valueExpression booleanComparison?                     #boolComparison
-    | left=predicate op=AND right=predicate                  #logicalBinary
-    | left=predicate op=OR right=predicate                   #logicalBinary
     ;
 
 /// Problem fixed that the querySpecification rule could match an empty string
