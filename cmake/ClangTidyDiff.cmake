@@ -63,7 +63,7 @@ function(project_enable_tidy_diff)
     message(STATUS "Enabling tidy-diff targets using ${CLANG_TIDY_DIFF_EXECUTABLE} (binary: ${CLANG_TIDY_EXECUTABLE})")
 
     # tidy-diff: check mode. The driver discovers the diff base from the
-    # NES_TIDY_DIFF_BASE env var (default 'git diff --cached'), prints a summary,
+    # NES_TIDY_DIFF_BASE env var (default 'git diff HEAD'), prints a summary,
     # then runs clang-tidy-diff, teeing colored output to stdout and a de-colored
     # copy to the report file. USES_TERMINAL preserves the colored stdout.
     add_custom_target(tidy-diff
@@ -88,6 +88,35 @@ function(project_enable_tidy_diff)
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             USES_TERMINAL
             COMMENT "Running clang-tidy on the local diff (fix)")
+
+    # tidy-diff-to-main / -fix: same targets, but pin the base to origin/main so
+    # the check covers the whole branch instead of just uncommitted changes.
+    # We pin via `cmake -E env`, which sets NES_TIDY_DIFF_BASE in the child
+    # process regardless of whether the outer (Docker) toolchain forwards the
+    # variable -- so these work as one-click targets from CLion with no env setup.
+    add_custom_target(tidy-diff-to-main
+            COMMAND ${CMAKE_COMMAND} -E env NES_TIDY_DIFF_BASE=origin/main
+                ${TIDY_DIFF_DRIVER}
+                ${CLANG_TIDY_DIFF_EXECUTABLE}
+                ${CLANG_TIDY_EXECUTABLE}
+                ${CMAKE_BINARY_DIR}
+                ${TIDY_DIFF_REPORT}
+                check
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            USES_TERMINAL
+            COMMENT "Running clang-tidy on the diff vs origin/main (check)")
+
+    add_custom_target(tidy-diff-to-main-fix
+            COMMAND ${CMAKE_COMMAND} -E env NES_TIDY_DIFF_BASE=origin/main
+                ${TIDY_DIFF_DRIVER}
+                ${CLANG_TIDY_DIFF_EXECUTABLE}
+                ${CLANG_TIDY_EXECUTABLE}
+                ${CMAKE_BINARY_DIR}
+                ${TIDY_DIFF_REPORT}
+                fix
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            USES_TERMINAL
+            COMMENT "Running clang-tidy on the diff vs origin/main (fix)")
 
     # TODO #1609: migrate the handwritten bash in
     # .github/workflows/clang_tidy_diff.yml to invoke `cmake --build --target
