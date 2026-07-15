@@ -23,7 +23,7 @@
 #include <utility>
 #include <variant>
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/MemoryUtil.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -82,7 +82,7 @@ Source::FillTupleBufferResult PipeSource::fillTupleBuffer(TupleBuffer& tupleBuff
                     {
                         const TupleBuffer& srcBuffer = msg;
                         /// Deep-copy the buffer including child buffers (for variable-sized data).
-                        tupleBuffer = copyBuffer(srcBuffer, *bufferProvider);
+                        tupleBuffer = deepCopyBuffer(srcBuffer, *bufferProvider);
 
                         lastDeliveredWasLastChunk = srcBuffer.isLastChunk();
 
