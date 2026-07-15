@@ -59,7 +59,10 @@ jobs:
       - uses: ./.github/steps/prepare-github
         name: Preparing Github Runners
         with:
-          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+          images: |
+            nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+            nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+            nebulastream/nes-runtime-base:${{ inputs.dev_image_tag }}
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
           docker_password: ${{ secrets.DOCKER_SECRET }}
 
@@ -151,7 +154,8 @@ jobs:
           secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       - uses: ./.github/steps/prepare-github
         with:
-          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
+          images: |
+            nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
           docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
@@ -193,7 +197,9 @@ jobs:
       - uses: ./.github/steps/prepare-github
         name: Preparing Github Runners
         with:
-          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+          images: |
+            nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+            nebulastream/nes-runtime-base:${{ inputs.dev_image_tag }}
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
           docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
@@ -266,4 +272,3 @@ jobs:
             echo "clean-build-and-test-linux result: ${{ needs.clean-build-and-test-linux.result }}"
             exit 1
           fi
-
