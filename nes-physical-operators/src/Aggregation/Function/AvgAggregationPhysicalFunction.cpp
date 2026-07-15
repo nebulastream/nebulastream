@@ -37,13 +37,8 @@ namespace NES
 {
 
 AvgAggregationPhysicalFunction::AvgAggregationPhysicalFunction(
-    DataType inputType,
-    DataType resultType,
-    PhysicalFunction inputFunction,
-    Record::RecordFieldIdentifier resultFieldIdentifier,
-    const bool includeNullValues)
+    DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
-    , includeNullValues(includeNullValues)
 {
 }
 
@@ -213,11 +208,7 @@ AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGenerat
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<AvgAggregationPhysicalFunction>(
-        std::move(arguments.inputType),
-        std::move(arguments.resultType),
-        arguments.inputFunction,
-        arguments.resultFieldIdentifier,
-        arguments.includeNullValues);
+        std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
 }

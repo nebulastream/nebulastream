@@ -1,8 +1,7 @@
-{ pkgs }:
+{ pkgs, llvmPackages }:
 let
   lib = pkgs.lib;
   antlr4Version = "4.13.2";
-  llvmPackages = pkgs.llvmPackages_19;
 
   stdenvFor = useLibcxx: if useLibcxx then llvmPackages.libcxxStdenv else llvmPackages.stdenv;
 

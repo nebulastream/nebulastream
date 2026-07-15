@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.24.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(LLVM_TOOLCHAIN_VERSION 19)
+set(LLVM_TOOLCHAIN_VERSION 21)
 
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support (might improve performance significantly)" OFF)

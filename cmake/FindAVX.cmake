@@ -12,7 +12,7 @@
 
 # Picks a standard c++ library. By default we opt into libc++ for its hardening mode. However if libc++ is not available
 # we fallback to libstdc++. The user can manually opt out of libc++ by disabling the USE_LIBCXX_IF_AVAILABLE option.
-# Currently NebulaStream requires Libc++-19 or Libstdc++-14 or above.
+# Currently NebulaStream requires Libc++-21 or Libstdc++-15 or above.
 
 # Check if SSE/AVX instructions are available on the machine where
 # the project is compiled.

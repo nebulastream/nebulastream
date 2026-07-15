@@ -52,11 +52,12 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const Di
             const auto deserialized = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
             if (deserialized != localPlan)
             {
-                serializationErrorsPerWorker[grpc].emplace_back(fmt::format(
-                    "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and "
-                    "deserialize(serialize(plan)):\n{}",
-                    explain(localPlan, ExplainVerbosity::Debug),
-                    explain(deserialized, ExplainVerbosity::Debug)));
+                serializationErrorsPerWorker[grpc].emplace_back(
+                    fmt::format(
+                        "Query plan serialization is wrong: plan != deserialize(serialize(plan)), with plan:\n{} and "
+                        "deserialize(serialize(plan)):\n{}",
+                        explain(localPlan, ExplainVerbosity::Debug),
+                        explain(deserialized, ExplainVerbosity::Debug)));
             }
         }
     }

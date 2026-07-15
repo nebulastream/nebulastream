@@ -82,6 +82,7 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
                         const ChainedHashMapRef::ChainedEntryRef entryRefReset{
                             entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
                         const auto state = entryRefReset.getValueMemArea();
+
                         nautilus::invoke(
                             +[](TupleBuffer* pagedVectorMemArea) -> void
                             {

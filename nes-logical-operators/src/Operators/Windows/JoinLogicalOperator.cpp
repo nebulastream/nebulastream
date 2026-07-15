@@ -343,12 +343,13 @@ JoinTimeCharacteristic JoinLogicalOperator::getJoinTimeCharacteristics() const
 Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(
     const TypedLogicalOperator<JoinLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedJoinLogicalOperator{
-        .operatorId = op.getId(),
-        .joinFunction = op->getJoinFunction(),
-        .windowType = op->getWindowType(),
-        .timestampFields = op->getJoinTimeCharacteristics(),
-        .joinType = op->getJoinType()});
+    return context.reflect(
+        detail::ReflectedJoinLogicalOperator{
+            .operatorId = op.getId(),
+            .joinFunction = op->getJoinFunction(),
+            .windowType = op->getWindowType(),
+            .timestampFields = op->getJoinTimeCharacteristics(),
+            .joinType = op->getJoinType()});
 }
 
 Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))

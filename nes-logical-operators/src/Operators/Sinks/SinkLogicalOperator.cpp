@@ -265,8 +265,9 @@ SinkLogicalOperator SinkLogicalOperator::withSinkDescriptor(SinkDescriptor sinkD
 Reflected Reflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(
     const TypedLogicalOperator<SinkLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedSinkLogicalOperator{
-        .operatorId = op.getId(), .sinkDescriptor = op->getSinkDescriptor(), .sinkName = op->getSinkName()});
+    return context.reflect(
+        detail::ReflectedSinkLogicalOperator{
+            .operatorId = op.getId(), .sinkDescriptor = op->getSinkDescriptor(), .sinkName = op->getSinkName()});
 }
 
 Unreflector<TypedLogicalOperator<SinkLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))

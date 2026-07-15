@@ -1,7 +1,7 @@
-{ pkgs }:
+{ pkgs, llvmPackages }:
 let
   lib = pkgs.lib;
-  llvm = pkgs.llvmPackages_19;
+  llvm = llvmPackages;
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
 

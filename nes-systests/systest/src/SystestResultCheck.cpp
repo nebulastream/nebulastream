@@ -822,15 +822,17 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
 
         if (not result1)
         {
-            return annotateDifferentialError(fmt::format(
-                "Failed to load first result file for differential query comparison: {}", runningQuery.systestQuery.resultFile()));
+            return annotateDifferentialError(
+                fmt::format(
+                    "Failed to load first result file for differential query comparison: {}", runningQuery.systestQuery.resultFile()));
         }
 
         if (not result2)
         {
-            return annotateDifferentialError(fmt::format(
-                "Failed to load second result file for differential query comparison: {}",
-                runningQuery.systestQuery.resultFileForDifferentialQuery()));
+            return annotateDifferentialError(
+                fmt::format(
+                    "Failed to load second result file for differential query comparison: {}",
+                    runningQuery.systestQuery.resultFileForDifferentialQuery()));
         }
 
         if (std::ranges::size(result1->schema) == 0)
@@ -841,8 +843,9 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
 
         if (std::ranges::size(result2->schema) == 0)
         {
-            return annotateDifferentialError(fmt::format(
-                "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));
+            return annotateDifferentialError(
+                fmt::format(
+                    "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));
         }
 
         const QuerySchemasAndResults querySchemasAndResults = [&]()
@@ -883,12 +886,13 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
                 fmt::format("{}{}\n\nAll Results match", SchemaMismatchMessage, checkQueryResult.schemaErrorStream));
         }
         case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MISMATCH: {
-            return annotateDifferentialError(fmt::format(
-                "{}{}{}{}",
-                SchemaMismatchMessage,
-                checkQueryResult.schemaErrorStream,
-                ResultMismatchMessage,
-                checkQueryResult.resultErrorStream));
+            return annotateDifferentialError(
+                fmt::format(
+                    "{}{}{}{}",
+                    SchemaMismatchMessage,
+                    checkQueryResult.schemaErrorStream,
+                    ResultMismatchMessage,
+                    checkQueryResult.resultErrorStream));
         }
     }
     std::unreachable();

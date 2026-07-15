@@ -456,8 +456,9 @@ std::vector<std::vector<TupleBuffer>> createExpectedResults(const TestHandle<Tup
         /// expectedBuffersVector: vector<TupleSchemaTemplate>
         for (const auto& expectedBuffersVector : workerThreadResultVector.expectedResultsForThread)
         {
-            expectedTupleBuffers.at(0).emplace_back(createTupleBufferFromTuples<TupleSchemaTemplate, PrintDebug>(
-                testHandle.schema, *testHandle.formattedBufferManager, expectedBuffersVector));
+            expectedTupleBuffers.at(0).emplace_back(
+                createTupleBufferFromTuples<TupleSchemaTemplate, PrintDebug>(
+                    testHandle.schema, *testHandle.formattedBufferManager, expectedBuffersVector));
         }
     }
     return expectedTupleBuffers;

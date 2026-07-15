@@ -49,30 +49,12 @@ concept TestRuleConcept = RuleConcept<T, std::nullptr_t>;
     class Name \
     { \
     public: \
-        [[nodiscard]] static const std::type_info& getType() \
-        { \
-            return typeid(Name); \
-        } \
-        [[nodiscard]] static std::string_view getName() \
-        { \
-            return #Name; \
-        } \
-        [[nodiscard]] std::set<std::type_index> dependsOn() const \
-        { \
-            return DependsOn; \
-        } \
-        [[nodiscard]] std::set<std::type_index> requiredBy() const \
-        { \
-            return RequiredBy; \
-        } \
-        [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const \
-        { \
-            return nullptr; \
-        } \
-        bool operator==(const Name&) const \
-        { \
-            return false; \
-        } \
+        [[nodiscard]] static const std::type_info& getType() { return typeid(Name); } \
+        [[nodiscard]] static std::string_view getName() { return #Name; } \
+        [[nodiscard]] std::set<std::type_index> dependsOn() const { return DependsOn; } \
+        [[nodiscard]] std::set<std::type_index> requiredBy() const { return RequiredBy; } \
+        [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; } \
+        bool operator==(const Name&) const { return false; } \
     }; \
     static_assert(TestRuleConcept<Name>)
 /// NOLINTEND(bugprone-macro-parentheses)
