@@ -462,6 +462,7 @@ png16ToMono16(const VariableSizedData& input, const nautilus::val<uint64>& width
 }
 
 thread_local std::vector<uint8_t> pngBuffer;
+thread_local std::vector<uint8_t> mono16ToJpegBuffer;
 
 VariableSizedData
 mono16ToPNG16(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
@@ -487,6 +488,35 @@ mono16ToPNG16(const VariableSizedData& input, const nautilus::val<uint64>& width
         pngVarsizedBuffer.getSize());
 
     return pngVarsizedBuffer;
+}
+
+VariableSizedData
+mono16ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
+{
+    auto imageSize = nautilus::invoke(
+        +[](int8_t* data, USED_IN_DEBUG size_t inputSize, uint64_t width, uint64_t height)
+        {
+            INVARIANT(inputSize == width * height * 2, "Image size is not correct");
+            const cv::Mat input(height, width, CV_16UC1, data);
+            cv::Mat mono8;
+            cv::normalize(input, mono8, 0, 255, cv::NORM_MINMAX, CV_8U);
+            cv::Mat color;
+            cv::applyColorMap(mono8, color, cv::COLORMAP_INFERNO);
+            mono16ToJpegBuffer.clear();
+            cv::imencode(".jpg", color, mono16ToJpegBuffer, JPEG_COMPRESSION_PARAMETER);
+            return mono16ToJpegBuffer.size();
+        },
+        input.getContent(),
+        input.getSize(),
+        width,
+        height);
+
+    auto jpgVarsizedBuffer = arena.allocateVariableSizedData(imageSize);
+    nautilus::invoke(
+        +[](uint8_t* data, size_t size) { std::ranges::copy_n(mono16ToJpegBuffer.begin(), size, data); },
+        jpgVarsizedBuffer.getContent(),
+        jpgVarsizedBuffer.getSize());
+    return jpgVarsizedBuffer;
 }
 
 VariableSizedData mono16ToMono8(
@@ -677,6 +707,14 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(2),
             arena);
     }
+    else if (functionName == "Mono16ToJPG")
+    {
+        return mono16ToJPG(
+            child.template operator()<VariableSizedData>(0),
+            child.template operator()<nautilus::val<uint64_t>>(1),
+            child.template operator()<nautilus::val<uint64_t>>(2),
+            arena);
+    }
     else if (functionName == "Serialize")
     {
         auto image = child.template operator()<VariableSizedData>(0);
@@ -807,19 +845,20 @@ PhysicalFunctionImageManip::PhysicalFunctionImageManip(std::string functionName,
         return PhysicalFunction(PhysicalFunctionImageManip(operation, std::move(arguments.childFunctions))); \
     }
 
-ImageManipFunction(image_manip_face_detection, "FaceDetection");
-ImageManipFunction(image_manip_mono8_to_jpg, "Mono8ToJPG");
-ImageManipFunction(image_manip_mono16_to_png16, "Mono16ToPNG16");
-ImageManipFunction(image_manip_serialize, "Serialize");
-ImageManipFunction(image_manip_deserialize, "Deserialize");
-ImageManipFunction(image_manip_mono16_to_mono8, "Mono16ToMono8");
-ImageManipFunction(image_manip_draw_rectangle, "DrawRectangle");
-ImageManipFunction(image_manip_yuyv_to_jpg, "YUYVToJPG");
-ImageManipFunction(image_manip_mono16_roi, "Mono16ROI");
-ImageManipFunction(image_manip_mono16_avg, "Mono16AVG");
-ImageManipFunction(image_manip_mono16_max, "Mono16MAX");
-ImageManipFunction(image_manip_mono8_to_yuyv, "Mono8ToYUYV");
-ImageManipFunction(image_manip_mono16_min, "Mono16MIN");
-ImageManipFunction(image_manip_mono16_to_celsius, "Mono16ToCelsius");
-ImageManipFunction(image_manip_rectangle, "Rectangle");
+ImageManipFunction(IMAGE_MANIP_FACE_DETECTION, "FaceDetection");
+ImageManipFunction(IMAGE_MANIP_MONO8_TO_JPG, "Mono8ToJPG");
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_PNG16, "Mono16ToPNG16");
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_JPG, "Mono16ToJPG");
+ImageManipFunction(IMAGE_MANIP_SERIALIZE, "Serialize");
+ImageManipFunction(IMAGE_MANIP_DESERIALIZE, "Deserialize");
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_MONO8, "Mono16ToMono8");
+ImageManipFunction(IMAGE_MANIP_DRAW_RECTANGLE, "DrawRectangle");
+ImageManipFunction(IMAGE_MANIP_YUYV_TO_JPG, "YUYVToJPG");
+ImageManipFunction(IMAGE_MANIP_MONO16_ROI, "Mono16ROI");
+ImageManipFunction(IMAGE_MANIP_MONO16_AVG, "Mono16AVG");
+ImageManipFunction(IMAGE_MANIP_MONO16_MAX, "Mono16MAX");
+ImageManipFunction(IMAGE_MANIP_MONO8_TO_YUYV, "Mono8ToYUYV");
+ImageManipFunction(IMAGE_MANIP_MONO16_MIN, "Mono16MIN");
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_CELSIUS, "Mono16ToCelsius");
+ImageManipFunction(IMAGE_MANIP_RECTANGLE, "Rectangle");
 }
