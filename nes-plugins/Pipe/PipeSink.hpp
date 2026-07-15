@@ -56,7 +56,7 @@ protected:
 
 private:
     std::string pipeName;
-    std::shared_ptr<const Schema> schema;
+    std::shared_ptr<const PipeSchema> schema;
     std::shared_ptr<PipeService::SinkHandle> sinkHandle;
     /// Highest sequence number seen in any delivered buffer.
     /// New sources are only activated when a truly new sequence arrives (seqNum > maxSeqStarted),
