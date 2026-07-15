@@ -20,6 +20,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/Variant.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <ErrorHandling.hpp>
@@ -34,7 +35,7 @@ namespace NES
 PipeSink::PipeSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
     , pipeName(sinkDescriptor.getFromConfig(ConfigParametersPipeSink::PIPE_NAME))
-    , schema(sinkDescriptor.getSchema())
+    , schema(NES::get<std::shared_ptr<const PipeSchema>>(sinkDescriptor.getSchema()))
 {
 }
 

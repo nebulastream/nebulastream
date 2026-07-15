@@ -21,6 +21,7 @@
 #include <variant>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <folly/MPMCQueue.h>
@@ -30,6 +31,8 @@ class BackpressureController;
 
 namespace NES
 {
+
+using PipeSchema = Schema<UnqualifiedUnboundField, Ordered>;
 
 struct PipeEoS
 {
@@ -89,7 +92,7 @@ public:
     /// based on consumer presence.
     /// Throws CannotOpenSink if a sink is already registered for this name.
     std::shared_ptr<SinkHandle>
-    registerSink(const std::string& pipeName, const std::shared_ptr<const Schema>& schema, BackpressureController* bpController);
+    registerSink(const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, BackpressureController* bpController);
 
     /// Unregister a sink. Removes the pipe entry.
     void unregisterSink(const std::string& pipeName);
@@ -98,7 +101,7 @@ public:
     /// The queue goes into pending and is activated at the next sequence boundary by the sink.
     /// Throws CannotOpenSource if no sink is registered for this name.
     /// Throws CannotOpenSource if the schema does not match the existing pipe schema.
-    std::shared_ptr<PipeQueue> registerSource(const std::string& pipeName, const std::shared_ptr<const Schema>& schema);
+    std::shared_ptr<PipeQueue> registerSource(const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema);
 
     /// Unregister a source. Removes the queue from the SinkHandle (active or pending).
     void unregisterSource(const std::string& pipeName, const std::shared_ptr<PipeQueue>& queue);
@@ -110,7 +113,7 @@ private:
 
     struct PipeEntry
     {
-        std::shared_ptr<const Schema> schema;
+        std::shared_ptr<const PipeSchema> schema;
         std::shared_ptr<SinkHandle> sinkHandle; /// always non-null (sink must be registered first)
     };
 

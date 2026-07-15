@@ -22,15 +22,6 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 
-namespace
-{
-/// Normalize a schema by stripping source qualifiers so that e.g. "GEN_SOURCE$id" and "id" compare equal.
-std::shared_ptr<const NES::Schema> normalizeSchema(const std::shared_ptr<const NES::Schema>& schema)
-{
-    return std::make_shared<const NES::Schema>(NES::withoutSourceQualifier(*schema));
-}
-}
-
 namespace NES
 {
 
@@ -77,9 +68,8 @@ PipeService& PipeService::instance()
 }
 
 std::shared_ptr<PipeService::SinkHandle>
-PipeService::registerSink(const std::string& pipeName, const std::shared_ptr<const Schema>& schema, BackpressureController* bpController)
+PipeService::registerSink(const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, BackpressureController* bpController)
 {
-    auto normalizedSchema = normalizeSchema(schema);
     return pipes.withWLock(
         [&](auto& map) -> std::shared_ptr<SinkHandle>
         {
@@ -89,7 +79,7 @@ PipeService::registerSink(const std::string& pipeName, const std::shared_ptr<con
                 throw CannotOpenSink("Pipe sink already registered for name '{}'", pipeName);
             }
             auto sinkHandle = std::make_shared<SinkHandle>(bpController);
-            map.emplace(pipeName, PipeEntry{.schema = std::move(normalizedSchema), .sinkHandle = sinkHandle});
+            map.emplace(pipeName, PipeEntry{.schema = schema, .sinkHandle = sinkHandle});
             NES_INFO("PipeService: registered sink for pipe '{}'", pipeName);
             return sinkHandle;
         });
@@ -109,9 +99,8 @@ void PipeService::unregisterSink(const std::string& pipeName)
         });
 }
 
-std::shared_ptr<PipeQueue> PipeService::registerSource(const std::string& pipeName, const std::shared_ptr<const Schema>& schema)
+std::shared_ptr<PipeQueue> PipeService::registerSource(const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema)
 {
-    auto normalizedSchema = normalizeSchema(schema);
     return pipes.withWLock(
         [&](auto& map) -> std::shared_ptr<PipeQueue>
         {
@@ -121,7 +110,7 @@ std::shared_ptr<PipeQueue> PipeService::registerSource(const std::string& pipeNa
             {
                 auto& entry = it->second;
                 /// Verify schema match
-                if (*entry.schema != *normalizedSchema)
+                if (*entry.schema != *schema)
                 {
                     throw CannotOpenSource("Schema mismatch for pipe '{}': source schema does not match existing pipe schema", pipeName);
                 }
