@@ -43,6 +43,8 @@ class AntlrSQLHelper
     std::vector<LogicalFunction> whereClauses; ///where and having clauses need to be accessed in reverse
     std::vector<LogicalFunction> havingClauses;
     std::optional<Identifier> source;
+    std::optional<Identifier> sourceAlias;
+    std::vector<Identifier> sourceQualifiers;
     std::optional<std::pair<Identifier, ConfigMap>> anonymousSourceConfig;
     std::vector<Projection> projectionBuilder;
 
@@ -85,7 +87,6 @@ public:
     /// Utility variables to keep state between enter/exit parser function calls.
     size_t opBoolean{}; ///anonymous token enum in AntlrSQLLexer.h
     std::string opValue;
-    std::optional<Identifier> newSourceName;
     std::optional<std::variant<Windowing::UnboundTimeCharacteristic, std::array<Windowing::UnboundTimeCharacteristic, 2>>> windowTimestamp;
 
     /// Utility variables used to keep track of the parsing state.
@@ -112,6 +113,10 @@ public:
     void addHavingClause(LogicalFunction expressionNode);
     void setSource(Identifier sourceName);
     [[nodiscard]] std::optional<Identifier> getSource() const;
+    void setSourceAlias(Identifier alias);
+    [[nodiscard]] std::optional<Identifier> getSourceAlias() const;
+    void addSourceQualifier(Identifier qualifier);
+    [[nodiscard]] const std::vector<Identifier>& getSourceQualifiers() const;
     void setAnonymousSource(const Identifier& type, const ConfigMap& parameters);
     [[nodiscard]] std::optional<std::pair<Identifier, ConfigMap>> getAnonymousSourceConfig();
     void addProjection(std::optional<Identifier>, LogicalFunction);

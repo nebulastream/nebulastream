@@ -228,6 +228,52 @@ LogicalFunction createInFunction(const LogicalFunction& valueFunction, std::vect
     return function;
 }
 
+Identifier collapseQualifiedField(std::vector<LogicalFunction>& functions, const std::string& expressionText)
+{
+    if (functions.size() < 2)
+    {
+        throw InvalidQuerySyntax("Qualified field reference is missing an identifier at {}", expressionText);
+    }
+
+    const auto qualifierFunction = functions.at(functions.size() - 2).tryGetAs<UnboundFieldAccessLogicalFunction>();
+    const auto fieldFunction = functions.back().tryGetAs<UnboundFieldAccessLogicalFunction>();
+    if (!qualifierFunction.has_value() || !fieldFunction.has_value())
+    {
+        throw InvalidQuerySyntax("Only source-qualified field references are supported at {}", expressionText);
+    }
+
+    auto qualifier = qualifierFunction->get().getFieldName();
+    functions.erase(functions.end() - 2);
+    return qualifier;
+}
+
+void validateSourceQualifiers(const AntlrSQLHelper& helper)
+{
+    const auto& qualifiers = helper.getSourceQualifiers();
+    if (qualifiers.empty())
+    {
+        return;
+    }
+
+    auto expectedQualifier = helper.getSourceAlias();
+    if (!expectedQualifier.has_value())
+    {
+        expectedQualifier = helper.getSource();
+    }
+    if (!expectedQualifier.has_value())
+    {
+        throw InvalidQuerySyntax("Qualified field references require a named source");
+    }
+
+    for (const auto& qualifier : qualifiers)
+    {
+        if (qualifier != expectedQualifier.value())
+        {
+            throw InvalidQuerySyntax("Unknown source qualifier {}, expected {}", qualifier, expectedQualifier.value());
+        }
+    }
+}
+
 void combineLogicalFunctions(
     std::vector<LogicalFunction>& functions, const size_t operandCount, const uint64_t tokenType, const std::string& expressionText)
 {
@@ -424,6 +470,15 @@ void AntlrSQLQueryPlanCreator::exitFromClause(AntlrSQLParser::FromClauseContext*
     AntlrSQLBaseListener::exitFromClause(context);
 }
 
+void AntlrSQLQueryPlanCreator::exitNamedSource(AntlrSQLParser::NamedSourceContext* context)
+{
+    if (context->alias != nullptr && !helpers.top().isJoinRelation)
+    {
+        helpers.top().setSourceAlias(bindIdentifier(context->alias));
+    }
+    AntlrSQLBaseListener::exitNamedSource(context);
+}
+
 void AntlrSQLQueryPlanCreator::enterWhereClause(AntlrSQLParser::WhereClauseContext* context)
 {
     helpers.top().isWhereOrHaving = true;
@@ -560,14 +615,57 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     functions.push_back(function);
 }
 
-void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context)
+void AntlrSQLQueryPlanCreator::exitDereference(AntlrSQLParser::DereferenceContext* context)
 {
-    /// Get Index of Parent Rule to check type of parent rule in conditions
-    if (helpers.top().isFrom && !helpers.top().isJoinRelation)
+    if (helpers.empty())
     {
-        helpers.top().newSourceName = bindIdentifier(context);
+        throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
     }
-    AntlrSQLBaseListener::enterUnquotedIdentifier(context);
+
+    auto& helper = helpers.top();
+    if (helper.isJoinRelation || (!helper.isSelect && !helper.isWhereOrHaving && !helper.isWindow && !helper.isGroupBy))
+    {
+        AntlrSQLBaseListener::exitDereference(context);
+        return;
+    }
+
+    auto qualifier = [&]() -> Identifier
+    {
+        if (!helper.isGroupBy)
+        {
+            return collapseQualifiedField(helper.functionBuilder, context->getText());
+        }
+        if (helper.groupByFields.size() < 2)
+        {
+            throw InvalidQuerySyntax("Qualified field reference is missing an identifier at {}", context->getText());
+        }
+        auto groupByQualifier = helper.groupByFields.at(helper.groupByFields.size() - 2).getFieldName();
+        helper.groupByFields.erase(helper.groupByFields.end() - 2);
+        return groupByQualifier;
+    }();
+    helper.addSourceQualifier(std::move(qualifier));
+    AntlrSQLBaseListener::exitDereference(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitStar(AntlrSQLParser::StarContext* context)
+{
+    if (!helpers.top().isSelect)
+    {
+        AntlrSQLBaseListener::exitStar(context);
+        return;
+    }
+
+    if (auto* const qualifiedName = context->qualifiedName(); qualifiedName != nullptr)
+    {
+        const auto identifiers = qualifiedName->identifier();
+        if (identifiers.size() != 1)
+        {
+            throw InvalidQuerySyntax("Source-qualified asterisk requires exactly one qualifier at {}", context->getText());
+        }
+        helpers.top().addSourceQualifier(bindIdentifier(identifiers.front()));
+    }
+    helpers.top().asterisk = true;
+    AntlrSQLBaseListener::exitStar(context);
 }
 
 void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext* context)
@@ -655,6 +753,7 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
 
 void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
+    validateSourceQualifiers(helpers.top());
     LogicalPlan queryPlan = [&]
     {
         if (not helpers.top().queryPlans.empty())
@@ -883,10 +982,6 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         /// Project onto the specified field and remove the field access from the active functions.
         helpers.top().addProjection(std::make_optional(fieldName), std::move(helpers.top().functionBuilder.back()));
         helpers.top().functionBuilder.pop_back();
-    }
-    else if (helper.isSelect && context->getText() == "*" && helper.functionBuilder.empty())
-    {
-        helper.asterisk = true;
     }
     /// The user did not specify a new name (... AS THE_NAME) for the aggregation function.
     /// The aggregation's asField is already set in exitFunctionCall. Project the expression directly,
