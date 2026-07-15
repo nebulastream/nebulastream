@@ -93,6 +93,28 @@ docker run \
      ctest --test-dir build-docker -j
 ```
 
+### Code style & static analysis
+
+Code style and static analysis are available as CMake targets, so you do not need to invoke `clang-format` or
+`clang-tidy` by hand:
+
+- `format` / `check-format` — run clang-format (apply in place / check only).
+- `tidy-diff` / `tidy-diff-fix` — run clang-tidy over your diff (base `NES_TIDY_DIFF_BASE`, default `HEAD`).
+- `tidy-diff-to-main` / `tidy-diff-to-main-fix` — run clang-tidy over your whole branch relative to `origin/main`.
+
+For example, to fix clang-tidy findings on your branch inside the container:
+
+```shell
+docker run \
+    --workdir $(pwd) \
+    -v $(pwd):$(pwd) \
+    nebulastream/nes-development:local \
+    cmake --build build-docker --target tidy-diff-to-main-fix
+```
+
+In CLion these show up in the target dropdown and run like any other build target, so there is no need to edit the
+Docker toolchain environment. See [fixing clang-tidy warnings](fix_clang_tidy_warnings.md) for details.
+
 ### Modifying dependencies
 
 When using the docker images, it is not straightforward to edit the dependencies, as a new docker image would need to be

@@ -6,6 +6,42 @@ For building it locally with vcpkg, the commands should be quite similar.
 This document provides a good starting point for fixing clang-tidy warnings.
 As every setup is different, it might be necessary to adjust the commands to your setup.
 
+# Running clang-tidy via CMake targets (recommended)
+Just like `clang-format` is available as the `format` / `check-format` CMake targets, clang-tidy on your diff is
+available as CMake targets. These wrap `clang-tidy-diff.py` so you no longer need the hand-written `git diff | clang-tidy-diff-19.py ...`
+command below. There are four targets:
+
+| Target | Diff base | Mode |
+| --- | --- | --- |
+| `tidy-diff` | `NES_TIDY_DIFF_BASE` (default `HEAD`, i.e. all uncommitted changes) | check |
+| `tidy-diff-fix` | same as above | applies `-fix` |
+| `tidy-diff-to-main` | `origin/main` (whole branch) | check |
+| `tidy-diff-to-main-fix` | `origin/main` (whole branch) | applies `-fix` |
+
+For reviewing a PR, the usual command is to fix everything on your branch relative to `origin/main`:
+```bash
+cmake --build build --target tidy-diff-to-main-fix
+```
+Or, wrapped in the development container (the `-to-main` targets pin the base internally, so no `-e NES_TIDY_DIFF_BASE=...`
+plumbing is needed):
+```bash
+docker run \
+    --workdir $(pwd) \
+    -v $(pwd):$(pwd) \
+    nebulastream/nes-development:local \
+    cmake --build build-docker --target tidy-diff-to-main-fix
+```
+In CLion these appear in the target dropdown, so you can run them like any other build target — no need to edit the
+Docker toolchain environment.
+
+Notes:
+- **Build first.** Some headers (gRPC/protobuf stubs, config headers) are generated during the build; without them
+  clang-tidy reports spurious `file not found` errors. The targets print a hint when this happens.
+- The targets are only registered when `CMAKE_EXPORT_COMPILE_COMMANDS=ON` (on by default) — clang-tidy-diff needs the
+  `compile_commands.json`.
+- To compare against an arbitrary base (a branch or commit other than `origin/main`), set `NES_TIDY_DIFF_BASE` and use
+  the plain `tidy-diff` / `tidy-diff-fix` targets, e.g. `NES_TIDY_DIFF_BASE=origin/some-branch cmake --build build --target tidy-diff-fix`.
+
 # Running the clang-tidy diff workflow with Nix
 If you want to reproduce the current clang-tidy diff workflow locally with the Nix toolchain, run the following command
 from the repository root.
@@ -17,7 +53,9 @@ To use another branch or commit, pass it after `--`, for example `nix run .#clan
 The command uses the official `clang-tidy-diff.py` workflow, applies fixes in place, and configures and builds
 `build/`.
 
-# Fixing clang-tidy warnings for a PR / compared to a branch
+# Manual invocation (fallback / custom setups)
+The CMake targets above are preferred. Use the manual commands below only for custom bases or non-CMake setups.
+
 As a pre-requisite, you need to have the docker image built and your git repository updated.
 Before running clang-tidy, we must create a running container from the image.
 If possible, you should run the Docker container in rootless mode. 
