@@ -70,7 +70,8 @@ public:
 
     /// enter or exit functions (no pairs)
     void enterSinkClause(AntlrSQLParser::SinkClauseContext* context) override;
-    void exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context) override;
+    void exitOrPredicate(AntlrSQLParser::OrPredicateContext* context) override;
+    void exitAndPredicate(AntlrSQLParser::AndPredicateContext* context) override;
     void exitLogicalNotPredicate(AntlrSQLParser::LogicalNotPredicateContext* context) override;
     void exitBoolComparison(AntlrSQLParser::BoolComparisonContext* context) override;
     void enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context) override;
