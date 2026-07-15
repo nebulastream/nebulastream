@@ -854,6 +854,24 @@ TEST_F(StatementBinderTest, ParenthesizedPredicatesParse)
     }
 }
 
+TEST_F(StatementBinderTest, NestedPredicateExpressionsParse)
+{
+    const std::vector<std::string> queries{
+        "SELECT pk FROM input WHERE col3 BETWEEN INT64(34) AND INT64(61) INTO File();",
+        "SELECT pk FROM input WHERE ((col3 > INT64(761))) AND (((col3 BETWEEN INT64(97) AND INT64(22)))) INTO File();",
+        "SELECT pk FROM input WHERE col4 <= FLOAT64(563.88) AND (col3 >= INT64(922) OR (col0 BETWEEN INT64(559) AND INT64(162))) "
+        "INTO File();",
+        "SELECT pk FROM input WHERE (col3 >= INT64(34) AND col3 <= INT64(61)) INTO File();",
+        "SELECT pk FROM input WHERE col0 IN (INT64(1), INT64(2)) AND (col1 IS NULL OR col2 IS NOT NULL) INTO File();"};
+
+    for (const auto& query : queries)
+    {
+        const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+        ASSERT_FALSE(plan.getRootOperators().empty());
+        EXPECT_TRUE(plan.getRootOperators().front().tryGetAs<InlineSinkLogicalOperator>().has_value());
+    }
+}
+
 TEST_F(StatementBinderTest, LeftOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT OUTER JOIN (SELECT * FROM s2) "
