@@ -99,7 +99,7 @@ jobs:
   systest-remote-test:
     name: "Run systest remote test on ${{matrix.arch}} with ${{matrix.stdlib}}"
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
         - ccache:/ccache
         - test-file-cache:/test-file-cache
