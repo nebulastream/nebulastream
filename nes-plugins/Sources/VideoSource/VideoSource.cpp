@@ -193,7 +193,21 @@ Source::FillTupleBufferResult VideoSource::fillTupleBuffer(TupleBuffer& tupleBuf
         }
         if (image.status() != ARV_BUFFER_STATUS_SUCCESS)
         {
-            NES_WARNING("Video source discarded Aravis buffer with status {}", static_cast<int>(image.status()));
+            if (ARV_IS_GV_STREAM(stream.get()))
+            {
+                guint64 resentPackets = 0;
+                guint64 missingPackets = 0;
+                arv_gv_stream_get_statistics(ARV_GV_STREAM(stream.get()), &resentPackets, &missingPackets);
+                NES_WARNING(
+                    "Video source discarded Aravis buffer with status {} (resent packets: {}, missing packets: {})",
+                    static_cast<int>(image.status()),
+                    resentPackets,
+                    missingPackets);
+            }
+            else
+            {
+                NES_WARNING("Video source discarded Aravis buffer with status {}", static_cast<int>(image.status()));
+            }
             continue;
         }
 
