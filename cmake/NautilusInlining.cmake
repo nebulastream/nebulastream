@@ -65,12 +65,11 @@ find_package(MLIR REQUIRED CONFIG)
 is_inlining_supported(NAUTILUS_INLINE_SUPPORTED TRUE)
 
 function(nautilus_inline target)
-    # nautilus needs to be linked either way to build targets that use the inline header
-    target_link_libraries(${target} PUBLIC nautilus::nautilus)
+    # Targets using the inline header need the inlining runtime even when the pass is disabled.
+    target_link_libraries(${target} PUBLIC nautilus::nautilus-inlining)
 
     is_inlining_supported(NAUTILUS_INLINE_SUPPORTED FALSE)
     if (NAUTILUS_INLINE_SUPPORTED)
-        target_link_libraries(${target} PUBLIC nautilus::nautilus-inlining)
         target_compile_options(${target} PRIVATE "-fpass-plugin=$<TARGET_FILE:nautilus::InliningPass>")
 
         message(STATUS "Applying nautilus inlining pass to target ${target}")
