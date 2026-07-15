@@ -37,6 +37,8 @@
 
 namespace NES
 {
+void registerImageManipLogicalFunctionUnreflectors();
+
 namespace
 {
 struct __attribute__((packed)) CalRangeDescriptor
@@ -842,6 +844,7 @@ PhysicalFunctionImageManip::PhysicalFunctionImageManip(std::string functionName,
     PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::Register##name##PhysicalFunction( \
         PhysicalFunctionRegistryArguments arguments) \
     { \
+        registerImageManipLogicalFunctionUnreflectors(); \
         return PhysicalFunction(PhysicalFunctionImageManip(operation, std::move(arguments.childFunctions))); \
     }
 
