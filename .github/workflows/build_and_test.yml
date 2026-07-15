@@ -61,7 +61,6 @@ jobs:
         with:
           images: |
             nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
-            nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
             nebulastream/nes-runtime-base:${{ inputs.dev_image_tag }}
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
           docker_password: ${{ secrets.DOCKER_SECRET }}
@@ -98,7 +97,7 @@ jobs:
         name: Run System Tests
         if: ${{ matrix.run_systest }}
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
             ctest --test-dir build -j -L Systest --output-on-failure --output-junit build/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
@@ -107,7 +106,7 @@ jobs:
         name: Run Docker Tests
         if: ${{ matrix.run_docker }}
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
             ctest --test-dir build -j 1 -L DockerCompose --output-on-failure --output-junit build/junit-docker.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
