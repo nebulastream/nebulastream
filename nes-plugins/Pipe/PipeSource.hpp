@@ -65,7 +65,7 @@ public:
 
 private:
     std::string pipeName;
-    std::shared_ptr<const Schema> schema;
+    std::shared_ptr<const PipeSchema> schema;
     std::shared_ptr<PipeQueue> queue;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     /// Tracks whether the last delivered buffer completed a sequence (lastChunk=true).
