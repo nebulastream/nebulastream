@@ -486,7 +486,7 @@ fn send_buffer(
 }
 fn flush_sender_channel(channel: &SenderDataChannel) -> bool {
     // If the channel has been closed, we pretend it has been flushed
-    channel.chan.flush().unwrap_or(true)
+    channel.chan.flush().unwrap_or(false)
 }
 
 fn propagate_stop(channel: &SenderDataChannel) -> bool {
