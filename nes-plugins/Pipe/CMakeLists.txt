@@ -18,16 +18,16 @@ target_link_libraries(pipe-service PUBLIC nes-memory folly::folly PRIVATE nes-ex
 
 # --- Pipe Source plugin ---
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(Pipe Source nes-sources-registry pipe_source_plugin_library PipeSource.cpp)
-add_plugin_as_library(Pipe SourceValidation nes-sources-registry pipe_source_validation_plugin_library PipeSource.cpp)
+add_plugin_as_library(Pipe Source pipe_source_plugin_library PipeSource.cpp)
+add_plugin_as_library(Pipe SourceValidation pipe_source_validation_plugin_library PipeSource.cpp)
 target_include_directories(pipe_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 target_include_directories(pipe_source_validation_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 target_link_libraries(pipe_source_plugin_library PRIVATE pipe-service)
 target_link_libraries(pipe_source_validation_plugin_library PRIVATE pipe-service)
 
 # --- Pipe Sink plugin ---
-add_plugin_as_library(Pipe Sink nes-sinks-registry pipe_sink_plugin PipeSink.cpp)
-add_plugin_as_library(Pipe SinkValidation nes-sinks-registry pipe_sink_validation_plugin PipeSink.cpp)
+add_plugin_as_library(Pipe Sink pipe_sink_plugin PipeSink.cpp)
+add_plugin_as_library(Pipe SinkValidation pipe_sink_validation_plugin PipeSink.cpp)
 target_include_directories(pipe_sink_plugin PRIVATE .)
 target_include_directories(pipe_sink_validation_plugin PRIVATE .)
 target_link_libraries(pipe_sink_plugin PRIVATE pipe-service)
