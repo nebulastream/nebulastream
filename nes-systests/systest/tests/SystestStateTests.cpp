@@ -156,6 +156,50 @@ TEST_F(SystestStateTest, DiscoveredTestNamesIncludeRelativeDirectory)
     EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(rightFile)).name(), "right/same");
 }
 
+TEST_F(SystestStateTest, DirectlySpecifiedTestNamesMatchDiscoveredTestNames)
+{
+    const TemporaryDirectory tempDir;
+    const auto testFile = tempDir.get() / "left" / "same.test";
+    writeTextFile(testFile, "# groups:[Join]\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.testFileExtension = ".test";
+
+    const auto discoveredTestMap = loadTestFileMap(config);
+    config.directlySpecifiedTestFiles = testFile.string();
+    const auto directlySpecifiedTestMap = loadTestFileMap(config);
+    config.testQueryNumbers.add(1);
+    const auto queryFilteredTestMap = loadTestFileMap(config);
+
+    const auto canonicalTestFile = std::filesystem::weakly_canonical(testFile);
+    ASSERT_EQ(discoveredTestMap.size(), 1);
+    ASSERT_EQ(directlySpecifiedTestMap.size(), 1);
+    ASSERT_EQ(queryFilteredTestMap.size(), 1);
+    const auto discoveredTestName = discoveredTestMap.at(canonicalTestFile).name();
+    ASSERT_EQ(discoveredTestName, "left/same");
+    EXPECT_EQ(directlySpecifiedTestMap.at(canonicalTestFile).name(), discoveredTestName);
+    EXPECT_EQ(queryFilteredTestMap.at(canonicalTestFile).name(), discoveredTestName);
+}
+
+TEST_F(SystestStateTest, DirectlySpecifiedTestOutsideDiscoveryDirectoryUsesStem)
+{
+    const TemporaryDirectory tempDir;
+    const auto discoveryDirectory = tempDir.get() / "discovery";
+    const auto testFile = tempDir.get() / "outside" / "same.test";
+    std::filesystem::create_directories(discoveryDirectory);
+    writeTextFile(testFile, "# groups:[Join]\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = discoveryDirectory.string();
+    config.directlySpecifiedTestFiles = testFile.string();
+
+    const auto testMap = loadTestFileMap(config);
+
+    ASSERT_EQ(testMap.size(), 1);
+    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(testFile)).name(), "same");
+}
+
 TEST_F(SystestStateTest, ResultFilesCreateDirectoriesForNestedTestNames)
 {
     const TemporaryDirectory tempDir;
