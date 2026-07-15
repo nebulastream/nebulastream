@@ -195,6 +195,11 @@ const auto imageManipUnreflectionRegistration = []
     return true;
 }();
 
+void registerImageManipLogicalFunctionUnreflectors()
+{
+    static_cast<void>(imageManipUnreflectionRegistration);
+}
+
 namespace LogicalFunctionGeneratedRegistrar
 {
 #define ImageManipFunction(name) \
