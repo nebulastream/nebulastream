@@ -69,21 +69,22 @@ const auto uint64 = DataTypeProvider::provideDataType(DataType::Type::UINT64);
 const auto float32 = DataTypeProvider::provideDataType(DataType::Type::FLOAT32);
 
 const std::unordered_map<std::string_view, ImageManipFunction> functions = {
-    {"image_manip_mono8_to_jpg", {varSized, {varSized, uint64, uint64}}},
-    {"image_manip_rectangle", {uint64, {uint64, uint64, uint64, uint64}}},
-    {"image_manip_mono16_to_mono8", {varSized, {varSized, uint64, uint64, uint16, uint16}}},
-    {"image_manip_mono8_to_yuyv", {varSized, {varSized, uint64, uint64}}},
-    {"image_manip_mono16_to_png16", {varSized, {varSized, uint64, uint64}}},
-    {"image_manip_yuyv_to_jpg", {varSized, {varSized, uint64, uint64}}},
-    {"image_manip_face_detection", {uint64, {varSized, uint64, uint64}}},
-    {"image_manip_mono16_min", {uint16, {varSized}}},
-    {"image_manip_mono16_max", {uint16, {varSized}}},
-    {"image_manip_mono16_avg", {uint16, {varSized}}},
-    {"image_manip_mono16_to_celsius", {float32, {uint16}}},
-    {"image_manip_mono16_roi", {varSized, {varSized, uint64, uint64, uint64}}},
-    {"image_manip_deserialize", {varSized, {varSized, uint64, uint64, uint64}}},
-    {"image_manip_serialize", {varSized, {varSized, uint64, uint64, uint64}}},
-    {"image_manip_draw_rectangle", {varSized, {varSized, uint64}}},
+    {"IMAGE_MANIP_MONO8_TO_JPG", {varSized, {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_RECTANGLE", {uint64, {uint64, uint64, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_TO_MONO8", {varSized, {varSized, uint64, uint64, uint16, uint16}}},
+    {"IMAGE_MANIP_MONO8_TO_YUYV", {varSized, {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_TO_PNG16", {varSized, {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_TO_JPG", {varSized, {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_YUYV_TO_JPG", {varSized, {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_FACE_DETECTION", {uint64, {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_MIN", {uint16, {varSized}}},
+    {"IMAGE_MANIP_MONO16_MAX", {uint16, {varSized}}},
+    {"IMAGE_MANIP_MONO16_AVG", {uint16, {varSized}}},
+    {"IMAGE_MANIP_MONO16_TO_CELSIUS", {float32, {uint16}}},
+    {"IMAGE_MANIP_MONO16_ROI", {varSized, {varSized, uint64, uint64, uint64}}},
+    {"IMAGE_MANIP_DESERIALIZE", {varSized, {varSized, uint64, uint64, uint64}}},
+    {"IMAGE_MANIP_SERIALIZE", {varSized, {varSized, uint64, uint64, uint64}}},
+    {"IMAGE_MANIP_DRAW_RECTANGLE", {varSized, {varSized, uint64}}},
 };
 }
 
@@ -202,20 +203,21 @@ namespace LogicalFunctionGeneratedRegistrar
         return ImageManipLogicalFunction::create(#name, std::move(arguments.children)); \
     }
 
-ImageManipFunction(image_manip_mono8_to_jpg);
-ImageManipFunction(image_manip_mono16_to_mono8);
-ImageManipFunction(image_manip_yuyv_to_jpg);
-ImageManipFunction(image_manip_mono16_to_png16);
-ImageManipFunction(image_manip_mono8_to_yuyv);
-ImageManipFunction(image_manip_face_detection);
-ImageManipFunction(image_manip_serialize);
-ImageManipFunction(image_manip_deserialize);
-ImageManipFunction(image_manip_draw_rectangle);
-ImageManipFunction(image_manip_mono16_roi);
-ImageManipFunction(image_manip_mono16_avg);
-ImageManipFunction(image_manip_mono16_to_celsius);
-ImageManipFunction(image_manip_mono16_max);
-ImageManipFunction(image_manip_mono16_min);
-ImageManipFunction(image_manip_rectangle);
+ImageManipFunction(IMAGE_MANIP_MONO8_TO_JPG);
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_MONO8);
+ImageManipFunction(IMAGE_MANIP_YUYV_TO_JPG);
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_PNG16);
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_JPG);
+ImageManipFunction(IMAGE_MANIP_MONO8_TO_YUYV);
+ImageManipFunction(IMAGE_MANIP_FACE_DETECTION);
+ImageManipFunction(IMAGE_MANIP_SERIALIZE);
+ImageManipFunction(IMAGE_MANIP_DESERIALIZE);
+ImageManipFunction(IMAGE_MANIP_DRAW_RECTANGLE);
+ImageManipFunction(IMAGE_MANIP_MONO16_ROI);
+ImageManipFunction(IMAGE_MANIP_MONO16_AVG);
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_CELSIUS);
+ImageManipFunction(IMAGE_MANIP_MONO16_MAX);
+ImageManipFunction(IMAGE_MANIP_MONO16_MIN);
+ImageManipFunction(IMAGE_MANIP_RECTANGLE);
 }
 }
