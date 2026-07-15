@@ -93,7 +93,8 @@ jobs:
             build/nes-systests/systest/systest \
               -t "${corpus_root}" \
               --workingDir "${result_root}" \
-              --skip-query-plan-serialization-validation \
+              --clusterConfig nes-systests/configs/topologies/single-node.yaml \
+              -n 100 \
               -- \
               --worker.default_query_execution.execution_mode=COMPILER
 
