@@ -135,11 +135,14 @@ impl SenderChannel {
     ///
     /// This method blocks the calling thread. Do not call from async contexts without proper handling.
     pub fn flush(&self) -> Result<bool> {
-        let (tx, rx) = oneshot::channel();
+        let (tx, mut rx) = oneshot::channel();
         self.queue
-            .send_blocking(ChannelCommand::Flush(tx))
+            .try_send(ChannelCommand::Flush(tx))
             .map_err(|_| "Network Service Closed")?;
-        rx.blocking_recv()
+
+        std::thread::sleep(Duration::from_millis(100));
+
+        rx.try_recv()
             .map_err(|_| "Network Service Closed".into())
     }
 
