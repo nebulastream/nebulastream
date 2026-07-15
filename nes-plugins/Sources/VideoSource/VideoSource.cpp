@@ -5,14 +5,20 @@
 
 #include <VideoSource.hpp>
 
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <ranges>
 #include <span>
+#include <string>
+#include <string_view>
 #include <utility>
 
+#include <DataTypes/DataType.hpp>
 #include <ErrorHandling.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -29,6 +35,48 @@ struct VideoTuple
     uint64_t pixelFormat;
     VariableSizedAccess image;
 };
+
+struct VideoField
+{
+    std::string_view name;
+    DataType::Type type;
+    std::string_view typeName;
+};
+
+constexpr std::array videoFields{
+    VideoField{"TIMESTAMP", DataType::Type::UINT64, "UINT64"},
+    VideoField{"WIDTH", DataType::Type::UINT64, "UINT64"},
+    VideoField{"HEIGHT", DataType::Type::UINT64, "UINT64"},
+    VideoField{"PIXEL_FORMAT", DataType::Type::UINT64, "UINT64"},
+    VideoField{"IMAGE", DataType::Type::VARSIZED, "VARSIZED"},
+};
+
+void validateSchema(const SourceDescriptor& sourceDescriptor)
+{
+    const auto schema = sourceDescriptor.getLogicalSource().getSchema();
+    if (schema->size() != videoFields.size())
+    {
+        throw CannotOpenSource("Video source expects {} non-nullable fields, but got {}", videoFields.size(), schema->size());
+    }
+
+    for (const auto [index, expected] : std::views::enumerate(videoFields))
+    {
+        const auto actual = (*schema)[index];
+        INVARIANT(actual.has_value(), "Video source schema field {} is missing", index);
+        const auto& actualName = static_cast<const Identifier&>(actual->getFullyQualifiedName());
+        if (actualName != Identifier::parse(std::string{expected.name})
+            || actual->getDataType().type != expected.type
+            || actual->getDataType().nullable)
+        {
+            throw CannotOpenSource(
+                "Video source field {} must be non-nullable {} in tuple position {}, but got {}",
+                expected.name,
+                expected.typeName,
+                index,
+                actual->getFullyQualifiedName());
+        }
+    }
+}
 
 class StreamBuffer
 {
@@ -77,6 +125,7 @@ void checkError(std::string_view operation, GError* error)
 VideoSource::VideoSource(const SourceDescriptor& sourceDescriptor)
     : sourceSelector(sourceDescriptor.getFromConfig(ConfigParametersVideo::SOURCE_SELECTOR))
 {
+    validateSchema(sourceDescriptor);
 }
 
 VideoSource::~VideoSource()
