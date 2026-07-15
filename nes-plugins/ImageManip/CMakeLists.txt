@@ -46,4 +46,6 @@ find_package(OpenCV CONFIG REQUIRED)
 configure_file(Cascade.xml Cascade.xml COPYONLY)
 configure_file(calibration.bin calibration.bin COPYONLY)
 target_compile_definitions(image-manip-functions PRIVATE IMAGE_MANIP_RESOURCE_DIR="${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(image-manip-functions PRIVATE opencv_core opencv_imgproc opencv_objdetect opencv_imgcodecs OpenSSL::Crypto PkgConfig::aravis)
+target_link_libraries(image-manip-functions
+        PUBLIC image-manip-logical-functions
+        PRIVATE opencv_core opencv_imgproc opencv_objdetect opencv_imgcodecs OpenSSL::Crypto PkgConfig::aravis)
