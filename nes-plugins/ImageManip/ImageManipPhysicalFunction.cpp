@@ -800,26 +800,26 @@ PhysicalFunctionImageManip::PhysicalFunctionImageManip(std::string functionName,
 {
 }
 
-#define ImageManipFunction(name) \
-    PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterImageManip##name##PhysicalFunction( \
+#define ImageManipFunction(name, operation) \
+    PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::Register##name##PhysicalFunction( \
         PhysicalFunctionRegistryArguments arguments) \
     { \
-        return PhysicalFunction(PhysicalFunctionImageManip(#name, std::move(arguments.childFunctions))); \
+        return PhysicalFunction(PhysicalFunctionImageManip(operation, std::move(arguments.childFunctions))); \
     }
 
-ImageManipFunction(FaceDetection);
-ImageManipFunction(Mono8ToJPG);
-ImageManipFunction(Mono16ToPNG16);
-ImageManipFunction(Serialize);
-ImageManipFunction(Deserialize);
-ImageManipFunction(Mono16ToMono8);
-ImageManipFunction(DrawRectangle);
-ImageManipFunction(YUYVToJPG);
-ImageManipFunction(Mono16ROI);
-ImageManipFunction(Mono16AVG);
-ImageManipFunction(Mono16MAX);
-ImageManipFunction(Mono8ToYUYV);
-ImageManipFunction(Mono16MIN);
-ImageManipFunction(Mono16ToCelsius);
-ImageManipFunction(Rectangle);
+ImageManipFunction(image_manip_face_detection, "FaceDetection");
+ImageManipFunction(image_manip_mono8_to_jpg, "Mono8ToJPG");
+ImageManipFunction(image_manip_mono16_to_png16, "Mono16ToPNG16");
+ImageManipFunction(image_manip_serialize, "Serialize");
+ImageManipFunction(image_manip_deserialize, "Deserialize");
+ImageManipFunction(image_manip_mono16_to_mono8, "Mono16ToMono8");
+ImageManipFunction(image_manip_draw_rectangle, "DrawRectangle");
+ImageManipFunction(image_manip_yuyv_to_jpg, "YUYVToJPG");
+ImageManipFunction(image_manip_mono16_roi, "Mono16ROI");
+ImageManipFunction(image_manip_mono16_avg, "Mono16AVG");
+ImageManipFunction(image_manip_mono16_max, "Mono16MAX");
+ImageManipFunction(image_manip_mono8_to_yuyv, "Mono8ToYUYV");
+ImageManipFunction(image_manip_mono16_min, "Mono16MIN");
+ImageManipFunction(image_manip_mono16_to_celsius, "Mono16ToCelsius");
+ImageManipFunction(image_manip_rectangle, "Rectangle");
 }
