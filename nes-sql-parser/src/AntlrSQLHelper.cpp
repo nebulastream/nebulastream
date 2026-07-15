@@ -30,6 +30,16 @@ std::optional<Identifier> AntlrSQLHelper::getSource() const
     return this->source;
 }
 
+std::optional<Identifier> AntlrSQLHelper::getSourceAlias() const
+{
+    return sourceAlias;
+}
+
+const std::vector<Identifier>& AntlrSQLHelper::getSourceQualifiers() const
+{
+    return sourceQualifiers;
+}
+
 std::vector<LogicalFunction>& AntlrSQLHelper::getWhereClauses()
 {
     return whereClauses;
@@ -44,6 +54,16 @@ std::vector<LogicalFunction>& AntlrSQLHelper::getHavingClauses()
 void AntlrSQLHelper::setSource(Identifier sourceName)
 {
     this->source = std::move(sourceName);
+}
+
+void AntlrSQLHelper::setSourceAlias(Identifier alias)
+{
+    sourceAlias = std::move(alias);
+}
+
+void AntlrSQLHelper::addSourceQualifier(Identifier qualifier)
+{
+    sourceQualifiers.emplace_back(std::move(qualifier));
 }
 
 void AntlrSQLHelper::setAnonymousSource(const Identifier& type, const ConfigMap& parameters)

@@ -161,7 +161,7 @@ joinCriteria
     ;
 
 relationPrimary
-    : multipartIdentifier                     #tableName
+    : multipartIdentifier (AS alias=identifier)? #namedSource
     | '(' query ')'                           #aliasedQuery
     | '(' relation ')'                        #aliasedRelation
     | inlineTable                             #inlineTableDefault2
@@ -414,6 +414,7 @@ primaryExpression
     | '(' query ')'                                                                            #subqueryExpression
     | '(' namedExpression (',' namedExpression)+ ')'                                           #rowConstructor
     | '(' valueExpression ')'                                                                  #parenthesizedExpression
+    | '(' predicate ')'                                                                        #parenthesizedPredicateExpression
     | constant                                                                                 #constantDefault
     | identifier                                                                               #columnReference
     ;
