@@ -133,7 +133,8 @@ struct ConfigParametersODBC
     static inline const DescriptorConfig::ConfigParameter<bool> TRUST_SERVER_CERTIFICATE{
         "trust_server_certificate",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TRUST_SERVER_CERTIFICATE, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(TRUST_SERVER_CERTIFICATE, config); }};
 
     /// The windowed poller binds `now()` into the query's (watermark, now] bounds. `now()` is UTC,
     /// but a database that stores wall-clock local timestamps (e.g. the MLife tables in GMT+2) is

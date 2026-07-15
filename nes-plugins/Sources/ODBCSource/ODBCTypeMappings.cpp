@@ -60,7 +60,7 @@ SQL_TIMESTAMP_STRUCT convertToTimestamp(const std::chrono::system_clock::time_po
     using std::chrono::duration_cast;
     using std::chrono::floor;
     using std::chrono::hh_mm_ss;
-    using std::chrono::nanoseconds;
+    using std::chrono::microseconds;
     using std::chrono::year_month_day;
     /// NOLINTNEXTLINE(misc-include-cleaner): std::chrono::days is provided by <chrono> (already included); the symbol mapping misses C++20 calendar additions.
     const auto days = floor<std::chrono::days>(now);
@@ -74,10 +74,12 @@ SQL_TIMESTAMP_STRUCT convertToTimestamp(const std::chrono::system_clock::time_po
     out.hour = static_cast<SQLUSMALLINT>(tod.hours().count());
     out.minute = static_cast<SQLUSMALLINT>(tod.minutes().count());
     out.second = static_cast<SQLUSMALLINT>(tod.seconds().count());
-    /// fraction is in nanoseconds per the ODBC spec; carry the sub-second
-    /// part of the wall clock so windowing queries don't lose precision
-    /// against DBs that store microsecond/nanosecond timestamps (e.g. postgres).
-    out.fraction = static_cast<SQLUINTEGER>(duration_cast<nanoseconds>(tod.subseconds()).count());
+    /// fraction is in nanoseconds per the ODBC spec, but the watermark parameter is bound at
+    /// microsecond scale (TIMESTAMP_DECIMAL_DIGITS = 6) and SQL Server DATETIME2 rejects a
+    /// fraction that isn't a whole number of microseconds ("Datetime field overflow ... exceeds
+    /// the scale specified in the parameter binding", SQLSTATE 22008). Round the sub-second part
+    /// down to microseconds, then express it back in nanoseconds so it fits the bound scale.
+    out.fraction = static_cast<SQLUINTEGER>(duration_cast<microseconds>(tod.subseconds()).count() * 1000);
     return out;
 }
 
