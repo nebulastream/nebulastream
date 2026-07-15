@@ -157,7 +157,7 @@ joinCriteria
     ;
 
 relationPrimary
-    : multipartIdentifier                     #tableName
+    : multipartIdentifier (AS alias=identifier)? #tableName
     | '(' query ')'                           #aliasedQuery
     | '(' relation ')'                        #aliasedRelation
     | inlineTable                             #inlineTableDefault2
