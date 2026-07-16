@@ -23,6 +23,7 @@ namespace NES
 /// Builds the multi-line build-info report for the given binary name. The first line is
 /// `<binaryName> <version>`, followed by indented fields (commit, build, sanitizer, compiler,
 /// compiler flags, stdlib, log level, vcpkg baseline). The build metadata is embedded at CMake generation time (see BuildInfo.hpp).
+/// The report ends with the plugins linked into the binary, one line per registry kind (see Util/VersionPluginList.hpp).
 [[nodiscard]] std::string formatVersion(std::string_view binaryName);
 
 /// Prints the build-info report produced by formatVersion to stdout.

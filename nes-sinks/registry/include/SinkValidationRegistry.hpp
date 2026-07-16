@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
 #include <Util/Registry.hpp>
+#include <Util/VersionPluginList.hpp>
 
 namespace NES
 {
@@ -39,3 +40,10 @@ class SinkValidationRegistry final
 #define INCLUDED_FROM_SINK_VALIDATION_REGISTRY
 #include <SinkValidationGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SINK_VALIDATION_REGISTRY
+
+namespace NES
+{
+/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
+inline const VersionPluginListEntry sinkValidationRegistryVersionPlugins{
+    "Sinks", [] { return SinkValidationRegistry::instance().getRegisteredNames(); }};
+}

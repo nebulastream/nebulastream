@@ -23,6 +23,7 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Util/Registry.hpp>
+#include <Util/VersionPluginList.hpp>
 
 namespace NES
 {
@@ -45,3 +46,10 @@ class OutputFormatterRegistry
 #define INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY
 #include <OutputFormatterGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY
+
+namespace NES
+{
+/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
+inline const VersionPluginListEntry outputFormatterRegistryVersionPlugins{
+    "OutputFormatters", [] { return OutputFormatterRegistry::instance().getRegisteredNames(); }};
+}

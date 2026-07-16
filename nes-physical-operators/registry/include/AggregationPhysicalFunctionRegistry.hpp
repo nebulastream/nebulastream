@@ -24,6 +24,7 @@
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Util/Registry.hpp>
+#include <Util/VersionPluginList.hpp>
 
 namespace NES
 {
@@ -52,3 +53,10 @@ class AggregationPhysicalFunctionRegistry : public BaseRegistry<
 #define INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION
 #include <AggregationPhysicalFunctionGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION
+
+namespace NES
+{
+/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
+inline const VersionPluginListEntry aggregationPhysicalFunctionRegistryVersionPlugins{
+    "Functions", [] { return AggregationPhysicalFunctionRegistry::instance().getRegisteredNames(); }};
+}

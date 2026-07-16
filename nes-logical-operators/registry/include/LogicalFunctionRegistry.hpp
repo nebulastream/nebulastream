@@ -21,6 +21,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Registry.hpp>
+#include <Util/VersionPluginList.hpp>
 
 namespace NES
 {
@@ -41,3 +42,10 @@ class LogicalFunctionRegistry
 #define INCLUDED_FROM_REGISTRY_LOGICAL_FUNCTION
 #include <LogicalFunctionGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_LOGICAL_FUNCTION
+
+namespace NES
+{
+/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
+inline const VersionPluginListEntry logicalFunctionRegistryVersionPlugins{
+    "Functions", [] { return LogicalFunctionRegistry::instance().getRegisteredNames(); }};
+}

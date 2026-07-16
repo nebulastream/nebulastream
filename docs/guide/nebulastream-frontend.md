@@ -32,8 +32,9 @@ All interfaces support JSON output for programmatic access.
 Every non-test binary (`nes-single-node-worker`, `nes-cli`, `nes-repl`, `nes-repl-embedded`, `systest`, `checksum`)
 accepts a `--version` / `-v` flag that prints build metadata (git commit with a `+dirty` suffix when the working tree
 was dirty, generation timestamp, build type, sanitizer, compiler, effective compiler flags, standard library, log level and the
-vcpkg baseline) and exits. The compiler flags combine the global and active-configuration C++ flags with the options CMake
-resolves for the shared `nes-common` target, including inherited and transitive usage requirements:
+vcpkg baseline), followed by the plugins linked into the binary (one line per registry kind), and exits. The compiler flags
+combine the global and active-configuration C++ flags with the options CMake resolves for the shared `nes-common` target,
+including inherited and transitive usage requirements:
 
 ```
 nes-single-node-worker --version
@@ -47,7 +48,19 @@ nes-single-node-worker TBA
   stdlib:         libc++
   log level:      WARN
   vcpkg baseline: a1b2c3d4...
+  plugins:
+    Functions:        ABS, ADD, AND, ...
+    InputFormatters:  CSV, JSON
+    Operators:        INFERENCE, JOIN, MAP, ...
+    OutputFormatters: CSV, JSON
+    RewriteRules:     AGGREGATION, FILTER, ...
+    Sinks:            CHECKSUM, FILE, PRINT, VOID
+    Sources:          FILE, GENERATOR, TCP
 ```
+
+The names are shown in their canonical upper-case form, as the registries match them case-insensitively. Since each
+binary links only the registries it uses, the listing differs per binary; binaries without any registries (e.g.,
+`checksum`) print `plugins:        (none)`.
 
 ---
 
