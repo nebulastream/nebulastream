@@ -18,6 +18,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Registry.hpp>
+#include <Util/VersionPluginList.hpp>
 #include <BackpressureChannel.hpp>
 
 namespace NES
@@ -40,3 +41,9 @@ class SinkRegistry : public BaseRegistry<SinkRegistry, std::string, SinkRegistry
 #define INCLUDED_FROM_SINK_REGISTRY
 #include <SinkGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SINK_REGISTRY
+
+namespace NES
+{
+/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
+inline const VersionPluginListEntry sinkRegistryVersionPlugins{"Sinks", [] { return SinkRegistry::instance().getRegisteredNames(); }};
+}

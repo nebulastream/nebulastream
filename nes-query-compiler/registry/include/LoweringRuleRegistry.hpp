@@ -18,6 +18,7 @@
 #include <string>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Util/Registry.hpp>
+#include <Util/VersionPluginList.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
@@ -39,3 +40,10 @@ class LoweringRuleRegistry
 #define INCLUDED_FROM_REGISTRY_LOWERING_RULE
 #include <LoweringRuleGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_LOWERING_RULE
+
+namespace NES
+{
+/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
+inline const VersionPluginListEntry loweringRuleRegistryVersionPlugins{
+    "RewriteRules", [] { return LoweringRuleRegistry::instance().getRegisteredNames(); }};
+}
