@@ -1,0 +1,66 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Topology:
+#
+#   ┌──────────────┐         ┌─────────────────────────┐
+#   │ mqtt-broker  │  ──▶    │  worker-1  (cap: 10000) │
+#   │ topic:       │ subscribe  S: MQTT_SOURCE         │
+#   │ mqtt-source- │ qos=2   │  K: CHECKSUM_SINK       │
+#   │ test         │         │  → results.csv          │
+#   └──────────────┘         └─────────────────────────┘
+#
+#   Single worker subscribes to the external MQTT broker, parses CSV,
+#   and writes a checksum of the FLOAT64 column to results.csv.
+
+query: |
+  SELECT 
+    *
+  FROM 
+    MQTT
+  INTO 
+    CHECKSUM
+sinks:
+  - name: CHECKSUM
+    host: worker-1:8080
+    schema:
+      - name: DOUBLE
+        type: FLOAT64
+    type: Checksum
+    config:
+      output_format: CSV
+      file_path: results.csv
+
+logical:
+  - name: MQTT
+    schema:
+      - name: DOUBLE
+        type: FLOAT64
+
+physical:
+  - logical: MQTT
+    host: worker-1:8080
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    type: MQTT
+    source_config:
+      server_uri: mqtt-broker
+      topic: mqtt-source-test
+      flush_interval_ms: 100
+      client_id: nes-test-client
+      qos: 2
+
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000
