@@ -65,6 +65,25 @@ nes_require_executable() {
   fi
 }
 
+assert_file_line_count() {
+  local file="$1"
+  local expected="$2"
+  local flag="${3:-}"
+  assert_file_exists "$file"
+  if [ -n "$flag" ] && [ "$flag" != "--ignore-empty-lines" ]; then
+    fail "unknown assert_file_line_count flag: $flag"
+  fi
+  local actual
+  if [ "$flag" = "--ignore-empty-lines" ]; then
+    actual=$(grep -c . "$file" || true)
+  else
+    actual=$(wc -l < "$file")
+  fi
+  if [ "$actual" -ne "$expected" ]; then
+    fail "expected file $file to have $expected lines but has $actual"
+  fi
+}
+
 # Clean up containers, networks and images leaked by previous (potentially
 # crashed) test runs. Networks are matched by `nes-test=<label>`; images are
 # matched against the reference patterns passed as remaining args.
