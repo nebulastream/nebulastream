@@ -10,12 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function(add_nes_compiler_test)
-    add_nes_unit_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-query-compiler nes-logical-operators nes-test-util)
-    target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private)
-endfunction()
-
-add_nes_compiler_test(PhysicalPlanBuilderFlipTest UnitTests/PhysicalPlanBuilderFlipTest.cpp)
-add_nes_compiler_test(PipeliningPhaseFanOutTest UnitTests/PipeliningPhaseFanOutTest.cpp)
+add_nes_unit_test(SharedOperatorPlanExecutionTest UnitTests/SharedOperatorPlanExecutionTest.cpp)
+target_link_libraries(SharedOperatorPlanExecutionTest
+        nes-single-node-worker-lib
+        nes-query-optimizer
+        nes-logical-operators
+        nes-test-util)
