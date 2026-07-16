@@ -1,0 +1,53 @@
+# name: operator/aggregation/SumIntegerPromotion.test
+# description: SUM promotes integer inputs to 64-bit result types (INT64 for signed, UINT64 for unsigned) to avoid
+#              overflows of the input type, while float inputs keep their type (#1694).
+# groups: [Aggregation, WindowOperators]
+
+
+CREATE LOGICAL SOURCE stream(i8 INT8 NOT NULL, i16 INT16 NOT NULL, i32 INT32 NOT NULL, i64 INT64 NOT NULL, u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, u32 UINT32 NOT NULL, u64 UINT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+100,30000,2000000000,1000000000000000000,200,60000,4000000000,6000000000000000000,1.5,2.5,100
+100,30000,2000000000,1000000000000000000,200,60000,4000000000,6000000000000000000,1.5,2.5,110
+100,30000,2000000000,1000000000000000000,200,60000,4000000000,6000000000000000000,1.5,2.5,120
+-100,-30000,-2000000000,-1000000000000000000,100,30000,2000000000,3000000000000000000,0.5,0.5,200
+-100,-30000,-2000000000,-1000000000000000000,100,30000,2000000000,3000000000000000000,0.5,0.5,210
+-100,-30000,-2000000000,-1000000000000000000,100,30000,2000000000,3000000000000000000,0.5,0.5,220
+
+# Each SUM result is widened: signed integers to INT64, unsigned integers to UINT64; floats keep their input type.
+# Every integer sum exceeds the range of its input type, so the values are only correct with the widened accumulator.
+CREATE SINK sinkSum(start UINT64 NOT NULL, end UINT64 NOT NULL, i8_sum INT64 NOT NULL, i16_sum INT64 NOT NULL, i32_sum INT64 NOT NULL, i64_sum INT64 NOT NULL, u8_sum UINT64 NOT NULL, u16_sum UINT64 NOT NULL, u32_sum UINT64 NOT NULL, u64_sum UINT64 NOT NULL, f32_sum FLOAT32 NOT NULL, f64_sum FLOAT64 NOT NULL) TYPE File;
+SELECT start, end, SUM(i8) AS i8_sum, SUM(i16) AS i16_sum, SUM(i32) AS i32_sum, SUM(i64) AS i64_sum,
+       SUM(u8) AS u8_sum, SUM(u16) AS u16_sum, SUM(u32) AS u32_sum, SUM(u64) AS u64_sum,
+       SUM(f32) AS f32_sum, SUM(f64) AS f64_sum
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkSum;
+----
+100,200,300,90000,6000000000,3000000000000000000,600,180000,12000000000,18000000000000000000,4.5,7.5
+200,300,-300,-90000,-6000000000,-3000000000000000000,300,90000,6000000000,9000000000000000000,1.5,1.5
+
+
+# Promotion also applies to sliding windows, whose slices are combined pairwise in the widened type.
+SELECT start, end, SUM(i32) AS i32_sum, SUM(u32) AS u32_sum
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO File();
+----
+50,150,6000000000,12000000000
+100,200,6000000000,12000000000
+150,250,-6000000000,6000000000
+200,300,-6000000000,6000000000
+
+
+# SUM over a nullable integer keeps nullability: NULL inputs are skipped and an all-NULL window yields NULL,
+# while the non-null inputs still overflow INT32 and require the INT64 accumulator.
+CREATE LOGICAL SOURCE streamNullable(v INT32, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR streamNullable TYPE File;
+ATTACH INLINE
+2000000000,100
+2000000000,110
+,120
+,200
+
+CREATE SINK sinkNullableSum(start UINT64 NOT NULL, end UINT64 NOT NULL, v_sum INT64) TYPE File;
+SELECT start, end, SUM(v) AS v_sum FROM streamNullable WINDOW TUMBLING(ts, size 100 ms) INTO sinkNullableSum;
+----
+100,200,4000000000
+200,300,NULL
