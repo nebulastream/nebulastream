@@ -1,0 +1,43 @@
+# name: datatype/TypeConstructorMultipleArguments.test
+# description: Type constructors with multiple arguments should be rejected
+# groups: [DataTypes, Parser]
+
+CREATE LOGICAL SOURCE single(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR single TYPE File;
+ATTACH INLINE
+42
+
+# Positive control: a type constructor with exactly one argument works
+SELECT UINT32(1) AS v FROM single INTO File();
+----
+1
+
+# Multiple string args to VARSIZED must be rejected
+SELECT VARSIZED('hello', 'world') AS v FROM single INTO File();
+----
+ERROR 2000
+
+# Multiple numeric args to UINT32 must be rejected
+SELECT UINT32(1, 2) AS v FROM single INTO File();
+----
+ERROR 2000
+
+# Multiple numeric args to UINT64 must be rejected
+SELECT UINT64(1, 2, 3) AS v FROM single INTO File();
+----
+ERROR 2000
+
+# Multiple numeric args to INT32 must be rejected
+SELECT INT32(1, 2) AS v FROM single INTO File();
+----
+ERROR 2000
+
+# Multiple numeric args to FLOAT64 must be rejected
+SELECT FLOAT64(1.0, 2.0) AS v FROM single INTO File();
+----
+ERROR 2000
+
+# A type constructor with zero arguments must be rejected as well
+SELECT UINT32() AS v FROM single INTO File();
+----
+ERROR 2000
