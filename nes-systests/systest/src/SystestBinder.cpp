@@ -149,7 +149,19 @@ public:
                     host = hostIt->second;
                 }
 
-                return sinkCatalog->addSinkDescriptor(assignedSinkName, schema, sinkType, Host(host), std::move(config), formatConfig);
+                const auto sink
+                    = sinkCatalog->addSinkDescriptor(assignedSinkName, schema, sinkType, Host(host), std::move(config), formatConfig);
+                if (not sink.has_value() and sink.error().code() == ErrorCode::SinkAlreadyExists)
+                {
+                    /// A differential block binds its left query twice: once via the query callback and once as part
+                    /// of the block. The assigned sink name determines the descriptor, so the re-request is identical
+                    /// and can reuse the existing registration.
+                    if (auto existing = sinkCatalog->getSinkDescriptor(assignedSinkName))
+                    {
+                        return existing.value();
+                    }
+                }
+                return sink;
             });
         return success;
     }
