@@ -28,7 +28,9 @@ jobs:
                     "keyseven123": "@**Nils**",
                     "zeuchste": "@**Steffen Zeuch**",
                     "yschroeder97": "@**Yannik Schröder**",
-                    "Artraxon": "@**Leonhard Rose**"
+                    "Artraxon": "@**Leonhard Rose**",
+                    "greenBene": "@**Bene**",
+                    "ThanGeo": "@**Thanasis Georgiadis**"
                   }
                 bot-api-key: ${{ secrets.PRBOT_API_KEY }}
                 bot-email: "pr-reminder-bot@nebulastream.zulipchat.com"
