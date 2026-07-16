@@ -14,6 +14,7 @@
 #pragma once
 
 #include <ostream>
+#include <Configurations/ByteAmount.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -78,6 +79,16 @@ private:
         else if constexpr (std::same_as<Type, NES::URI>)
         {
             return URI(strValue);
+        }
+        else if constexpr (std::is_same_v<Type, Byte>)
+        {
+            /// Accepts human-readable byte amounts like "4KiB" or "1.5Gi" in addition to plain byte counts.
+            auto parsed = parseByteAmount(strValue);
+            if (!parsed.has_value())
+            {
+                throw parsed.error();
+            }
+            return Byte(parsed.value());
         }
         else if constexpr (std::is_same_v<Type, bool>)
         {
@@ -184,6 +195,8 @@ using StringOption = ScalarOption<std::string>;
 using FloatOption = ScalarOption<float>;
 using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
+/// Byte-quantity option that accepts human-readable size strings, e.g. "4096", "4KiB", or "1.5Gi" (see ByteAmount.hpp).
+using ByteOption = ScalarOption<Byte>;
 
 }
 
