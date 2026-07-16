@@ -34,7 +34,7 @@
 #include <SliceStore/SliceCache/SliceCacheNone.hpp>
 #include <SliceStore/SliceCache/SliceCacheSecondChance.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -194,7 +194,7 @@ public:
     static constexpr uint64_t minNumberOfOperations = 10'000;
     static constexpr uint64_t maxNumberOfOperations = 100'000;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
-    ExecutionMode backend = ExecutionMode::INTERPRETER;
+    ExecutionConfiguration::ExecutionMode backend = ExecutionConfiguration::ExecutionMode::INTERPRETER;
     std::unique_ptr<SliceCache> sliceCache;
     uint64_t numberOfEntries = 1;
     uint64_t sliceSize = 1;
@@ -211,7 +211,7 @@ public:
     void initEngine()
     {
         nautilus::engine::Options options;
-        const bool compilation = (backend == ExecutionMode::COMPILER);
+        const bool compilation = (backend == ExecutionConfiguration::ExecutionMode::COMPILER);
         NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
         options.setOption("engine.Compilation", compilation);
         options.setOption("engine.backend", std::string("mlir"));
@@ -264,8 +264,8 @@ public:
     static void TearDownTestSuite() { NES_INFO("Tear down SliceCacheTest class."); }
 };
 
-/// Fixture for SliceCacheNone tests, parameterized only by ExecutionMode.
-class SliceCacheNoneTest : public SliceCacheTestBase, public testing::WithParamInterface<ExecutionMode>
+/// Fixture for SliceCacheNone tests, parameterized only by ExecutionConfiguration::ExecutionMode.
+class SliceCacheNoneTest : public SliceCacheTestBase, public testing::WithParamInterface<ExecutionConfiguration::ExecutionMode>
 {
 public:
     void SetUp() override
@@ -276,9 +276,9 @@ public:
     }
 };
 
-/// Fixture for SliceCacheSecondChance tests, parameterized by (ExecutionMode, numberOfEntries, sliceSize).
+/// Fixture for SliceCacheSecondChance tests, parameterized by (ExecutionConfiguration::ExecutionMode, numberOfEntries, sliceSize).
 class SliceCacheSecondChanceTest : public SliceCacheTestBase,
-                                   public testing::WithParamInterface<std::tuple<ExecutionMode, uint64_t, uint64_t>>
+                                   public testing::WithParamInterface<std::tuple<ExecutionConfiguration::ExecutionMode, uint64_t, uint64_t>>
 {
 public:
     void SetUp() override
@@ -429,14 +429,16 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
 INSTANTIATE_TEST_CASE_P(
     SliceCacheNoneTest,
     SliceCacheNoneTest,
-    ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER),
+    ::testing::Values(ExecutionConfiguration::ExecutionMode::INTERPRETER, ExecutionConfiguration::ExecutionMode::COMPILER),
     [](const testing::TestParamInfo<SliceCacheNoneTest::ParamType>& info) { return std::string{magic_enum::enum_name(info.param)}; });
 
 INSTANTIATE_TEST_CASE_P(
     SliceCacheSecondChanceTest,
     SliceCacheSecondChanceTest,
     ::testing::Combine(
-        ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER), /// Nautilus execution backend
+        ::testing::Values(
+            ExecutionConfiguration::ExecutionMode::INTERPRETER,
+            ExecutionConfiguration::ExecutionMode::COMPILER), /// Nautilus execution backend
         ::testing::Values(1, 5, 10, 15, 50, 100), /// Number of cache entries
         ::testing::Values(1, 10, 100, 1000, 100'000) /// Size of slice
         ),

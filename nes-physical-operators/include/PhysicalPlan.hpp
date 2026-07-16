@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <PhysicalOperator.hpp>
 #include <QueryId.hpp>
@@ -39,19 +39,19 @@ public:
 
     [[nodiscard]] QueryId getQueryId() const;
     [[nodiscard]] const Roots& getRootOperators() const;
-    [[nodiscard]] ExecutionMode getExecutionMode() const;
+    [[nodiscard]] ExecutionConfiguration getExecutionConfiguration() const;
     [[nodiscard]] uint64_t getOperatorBufferSize() const;
 
 private:
     QueryId queryId;
     Roots rootOperators;
-    ExecutionMode executionMode;
+    ExecutionConfiguration executionConfiguration;
     uint64_t operatorBufferSize;
 
     [[nodiscard]] std::string toString() const;
 
     friend class PhysicalPlanBuilder;
-    PhysicalPlan(QueryId id, Roots rootOperators, ExecutionMode executionMode, uint64_t operatorBufferSize);
+    PhysicalPlan(QueryId id, Roots rootOperators, ExecutionConfiguration executionConfiguration, uint64_t operatorBufferSize);
 };
 }
 

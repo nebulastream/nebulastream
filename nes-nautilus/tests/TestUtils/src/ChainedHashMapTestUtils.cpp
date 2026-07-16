@@ -41,7 +41,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
@@ -73,11 +73,13 @@ TestParams::TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue
 }
 
 void ChainedHashMapTestUtils::setUpChainedHashMapTest(
-    const std::vector<DataType::Type>& keyTypes, const std::vector<DataType::Type>& valueTypes, const ExecutionMode backend)
+    const std::vector<DataType::Type>& keyTypes,
+    const std::vector<DataType::Type>& valueTypes,
+    const ExecutionConfiguration::ExecutionMode backend)
 {
     /// Setting the correct options for the engine, depending on the enum value from the backend
     nautilus::engine::Options options;
-    const bool compilation = (backend == ExecutionMode::COMPILER);
+    const bool compilation = (backend == ExecutionConfiguration::ExecutionMode::COMPILER);
     NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
     options.setOption("engine.Compilation", compilation);
     options.setOption("engine.backend", std::string("mlir"));

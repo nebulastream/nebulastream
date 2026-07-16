@@ -106,6 +106,10 @@ if (NOT CODE_COVERAGE)
                 COMMAND systest -n 20 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_sliceCache_${enableSliceCache} --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
         set_tests_properties(systest_compiler_sliceCache_${enableSliceCache} PROPERTIES LABELS "Systest" PROCESSORS 4)
     endforeach ()
+    ExternalData_Add_Test(test-data
+            NAME systest_compiler_without_inlining
+            COMMAND systest --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_without_inlining --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=1 --worker.default_query_execution.execution_mode=COMPILER --worker.default_query_execution.nautilus_inlining=FALSE)
+    set_tests_properties(systest_compiler_without_inlining PROPERTIES LABELS "Systest" PROCESSORS 1)
 endif (NOT CODE_COVERAGE)
 
 
