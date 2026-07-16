@@ -25,7 +25,8 @@
 #     nes_distributed_setup_file, nes_distributed_teardown_file
 #     nes_distributed_setup, nes_distributed_teardown
 #     sync_workdir, setup_distributed
-#     docker_nes_cli, wait_until_status   (used by cli/MQTT* suites)
+#     docker_nes_cli, wait_until_status [--require-healthy <regex>]
+#                                            (used by cli/MQTT* suites)
 #
 #   Layer-2 callers pass the client binary path to nes_distributed_setup_file
 #   (e.g. "$NES_CLI"); the lib derives the test label / image-name prefixes /
@@ -318,13 +319,45 @@ wait_until_status() {
   local topology_file=$1
   local desired_status=$2
   local query_id=$3
+  local healthy_service_regex=
   local query_status=
+
+  if [ "$#" -eq 5 ]; then
+    if [ "$4" != "--require-healthy" ]; then
+      fail "unknown wait_until_status flag: $4"
+      return 1
+    fi
+    healthy_service_regex=$5
+  elif [ "$#" -ne 3 ]; then
+    fail "usage: wait_until_status <topology> <status> <query_id> [--require-healthy <regex>]"
+    return 1
+  fi
 
   for i in $(seq 1 80); do
     sleep 1
     run docker_nes_cli -t "$topology_file" status "$query_id"
     [ "$status" -eq 0 ]
     query_status=$(echo "$output" | jq -r --arg query_id "$query_id" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+    if [ -n "$healthy_service_regex" ]; then
+      local compose_status service health matching_services=0 unhealthy_services=
+      if ! compose_status=$(docker compose ps --all --format '{{.Service}} {{.Health}}'); then
+        echo "# Could not inspect Docker Compose service health" >&3
+        return 1
+      fi
+      while read -r service health; do
+        if [[ "$service" =~ $healthy_service_regex ]]; then
+          matching_services=$((matching_services + 1))
+          if [ "$health" != "healthy" ]; then
+            unhealthy_services+=" $service(${health:-no healthcheck})"
+          fi
+        fi
+      done <<< "$compose_status"
+      if [ "$matching_services" -eq 0 ] || [ -n "$unhealthy_services" ]; then
+        echo "# Services matching $healthy_service_regex are not healthy:${unhealthy_services:- none found}" >&3
+        docker compose ps --all >&3
+        return 1
+      fi
+    fi
     if [ "$query_status" = "$desired_status" ]; then
       break
     fi
