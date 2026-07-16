@@ -86,9 +86,18 @@ SourceImplementationTermination dataSourceThreadRoutine(
     const EmitFn& emit)
 {
     source.open(bufferProvider);
-    SCOPE_EXIT
+    SCOPE_SUCCESS
     {
         source.close();
+    };
+
+    /// If a source fails during fillTupleBuffer we still want to call close. However This will be handled during stack unwinding.
+    /// If the close method throws again the system would terminate, we have to resort to swalling and logging the exception.
+    /// The actual fillTupleBuffer failure is handled in the parent exception handler.
+    SCOPE_FAIL
+    {
+        cpptrace::try_catch(
+            [&]() { source.close(); }, []() { NES_ERROR("Source threw during failure shutdown: ", wrapExternalException().what()); });
     };
 
     const bool requiresMetadata = !source.addsMetadata();
@@ -155,21 +164,29 @@ void dataSourceThread(
         emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
 
-    try
-    {
-        result.set_value_at_thread_exit(
-            dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
-        if (!stopToken.stop_requested())
+
+    cpptrace::try_catch(
+        [&]()
         {
-            emit(originId, SourceReturnType::EoS{}, stopToken);
-        }
-    }
-    catch (const std::exception& e)
-    {
-        auto backpressureListenerException = RunningRoutineFailure(e.what());
-        result.set_exception_at_thread_exit(std::make_exception_ptr(backpressureListenerException));
-        emit(originId, SourceReturnType::Error{std::move(backpressureListenerException)}, stopToken);
-    }
+            result.set_value_at_thread_exit(
+                dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
+            if (!stopToken.stop_requested())
+            {
+                emit(originId, SourceReturnType::EoS{}, stopToken);
+            }
+        },
+        [&](NES::Exception& e)
+        {
+            result.set_exception_at_thread_exit(std::make_exception_ptr(e));
+            emit(originId, SourceReturnType::Error{std::move(e)}, stopToken);
+        },
+        [&]()
+        {
+            auto exception = NES::wrapExternalException();
+            auto backpressureListenerException = RunningRoutineFailure(exception.what());
+            result.set_exception_at_thread_exit(std::make_exception_ptr(backpressureListenerException));
+            emit(originId, SourceReturnType::Error{std::move(backpressureListenerException)}, stopToken);
+        });
 }
 }
 
@@ -262,5 +279,4 @@ std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread)
     out << ")\n";
     return out;
 }
-
 }
