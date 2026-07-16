@@ -27,7 +27,7 @@
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -96,14 +96,15 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// strategy and the backend explicitly rather than relying on the "non-empty backend implies legacy" shortcut.
     options.setOption("engine.compilationStrategy", std::string("legacy"));
     options.setOption("engine.backend", std::string("mlir"));
-    switch (pipelineQueryPlan->getExecutionMode())
+    const auto executionConfiguration = pipelineQueryPlan->getExecutionConfiguration();
+    switch (executionConfiguration.getExecutionMode())
     {
-        case ExecutionMode::COMPILER: {
+        case ExecutionConfiguration::ExecutionMode::COMPILER: {
             options.setOption("engine.Compilation", true);
-            options.setOption("mlir.inline_invoke_calls", true);
+            options.setOption("mlir.inline_invoke_calls", executionConfiguration.isNautilusInliningEnabled());
             break;
         }
-        case ExecutionMode::INTERPRETER: {
+        case ExecutionConfiguration::ExecutionMode::INTERPRETER: {
             options.setOption("engine.Compilation", false);
             break;
         }

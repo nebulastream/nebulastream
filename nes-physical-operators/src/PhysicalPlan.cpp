@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <ErrorHandling.hpp>
@@ -33,9 +33,12 @@ namespace NES
 PhysicalPlan::PhysicalPlan(
     QueryId id,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators,
-    ExecutionMode executionMode,
+    ExecutionConfiguration executionConfiguration,
     uint64_t operatorBufferSize)
-    : queryId(id), rootOperators(std::move(rootOperators)), executionMode(executionMode), operatorBufferSize(operatorBufferSize)
+    : queryId(std::move(id))
+    , rootOperators(std::move(rootOperators))
+    , executionConfiguration(executionConfiguration)
+    , operatorBufferSize(operatorBufferSize)
 {
     for (const auto& rootOperator : this->rootOperators)
     {
@@ -66,9 +69,9 @@ const PhysicalPlan::Roots& PhysicalPlan::getRootOperators() const
     return rootOperators;
 }
 
-ExecutionMode PhysicalPlan::getExecutionMode() const
+ExecutionConfiguration PhysicalPlan::getExecutionConfiguration() const
 {
-    return executionMode;
+    return executionConfiguration;
 }
 
 uint64_t PhysicalPlan::getOperatorBufferSize() const
