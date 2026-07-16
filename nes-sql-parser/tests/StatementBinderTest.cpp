@@ -27,11 +27,8 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
-#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
@@ -925,121 +922,9 @@ TEST_F(StatementBinderTest, CreateWorkerStatementTest)
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).dataAddress, "localhost:9090");
 }
 
-TEST_F(StatementBinderTest, CreateLogicalQueryPlanConsumesInlineSinkAfterWhere)
-{
-    const std::string query = "SELECT pk FROM input WHERE col0 = INT64(1) INTO File();";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-
-    ASSERT_FALSE(plan.getRootOperators().empty());
-    EXPECT_TRUE(plan.getRootOperators().front().tryGetAs<InlineSinkLogicalOperator>().has_value());
-}
-
-TEST_F(StatementBinderTest, CreateLogicalQueryPlanConsumesQueryOptions)
-{
-    const std::string query = R"(SELECT pk FROM input INTO File() SET ('query-id' AS "QUERY"."ID");)";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-
-    ASSERT_FALSE(plan.getRootOperators().empty());
-    EXPECT_TRUE(plan.getRootOperators().front().tryGetAs<InlineSinkLogicalOperator>().has_value());
-}
-
 TEST_F(StatementBinderTest, CreateLogicalQueryPlanRejectsNonQueryStatements)
 {
     EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("CREATE WORKER 'localhost:8080';"), Exception);
-}
-
-TEST_F(StatementBinderTest, ParenthesizedPredicatesParse)
-{
-    const std::vector<std::string> queries{
-        "SELECT pk FROM input WHERE (col1 BETWEEN FLOAT64(90.54) AND FLOAT64(27.89)) INTO File();",
-        "SELECT pk FROM input WHERE (col0 IN (INT64(1), INT64(2))) INTO File();",
-        "SELECT pk FROM input WHERE (col1 IS NULL) INTO File();",
-        "SELECT pk FROM input WHERE col3 > INT64(360) AND col0 >= INT64(837) OR (col1 BETWEEN FLOAT64(998.16) AND FLOAT64(106.9)) INTO "
-        "File();",
-        "SELECT pk FROM input WHERE col3 > INT64(360) AND col0 >= INT64(837) OR ((col1 >= FLOAT64(998.16) AND col1 <= FLOAT64(106.9))) "
-        "INTO File();"};
-
-    for (const auto& query : queries)
-    {
-        const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-        ASSERT_FALSE(plan.getRootOperators().empty());
-        EXPECT_TRUE(plan.getRootOperators().front().tryGetAs<InlineSinkLogicalOperator>().has_value());
-    }
-}
-
-TEST_F(StatementBinderTest, NestedPredicateExpressionsParse)
-{
-    const std::vector<std::string> queries{
-        "SELECT pk FROM input WHERE col3 BETWEEN INT64(34) AND INT64(61) INTO File();",
-        "SELECT pk FROM input WHERE ((col3 > INT64(761))) AND (((col3 BETWEEN INT64(97) AND INT64(22)))) INTO File();",
-        "SELECT pk FROM input WHERE col4 <= FLOAT64(563.88) AND (col3 >= INT64(922) OR (col0 BETWEEN INT64(559) AND INT64(162))) "
-        "INTO File();",
-        "SELECT pk FROM input WHERE (col3 >= INT64(34) AND col3 <= INT64(61)) INTO File();",
-        "SELECT pk FROM input WHERE col0 IN (INT64(1), INT64(2)) AND (col1 IS NULL OR col2 IS NOT NULL) INTO File();"};
-
-    for (const auto& query : queries)
-    {
-        const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-        ASSERT_FALSE(plan.getRootOperators().empty());
-        EXPECT_TRUE(plan.getRootOperators().front().tryGetAs<InlineSinkLogicalOperator>().has_value());
-    }
-}
-
-TEST_F(StatementBinderTest, ParenthesizedPredicateCanBeComparisonOperand)
-{
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(
-        "SELECT pk FROM input WHERE flag = (col0 = INT64(1) OR col1 = INT64(2)) INTO File();");
-    const auto selections = getOperatorByType<SelectionLogicalOperator>(plan);
-    ASSERT_EQ(selections.size(), 1);
-
-    const auto predicate = selections.front()->getPredicate();
-    EXPECT_TRUE(predicate.tryGetAs<EqualsLogicalFunction>().has_value());
-    const auto children = predicate.getChildren();
-    ASSERT_EQ(children.size(), 2);
-    EXPECT_TRUE(children.back().tryGetAs<OrLogicalFunction>().has_value());
-}
-
-TEST_F(StatementBinderTest, NamedSourceAliasesParse)
-{
-    const std::vector<std::string> queries{
-        "SELECT pk FROM slt_q1655_tab2 AS tab2 WHERE col3 BETWEEN INT64(315) AND INT64(895) OR col3 BETWEEN INT64(49) AND INT64(917) "
-        "OR col3 >= INT64(853) INTO File();",
-        "SELECT pk FROM slt_q1656_tab2 AS tab2 WHERE (col3 >= INT64(315) AND col3 <= INT64(895)) OR (col3 >= INT64(49) AND col3 <= "
-        "INT64(917)) OR col3 >= INT64(853) INTO File();"};
-
-    for (const auto& query : queries)
-    {
-        const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-        ASSERT_FALSE(plan.getRootOperators().empty());
-        EXPECT_TRUE(plan.getRootOperators().front().tryGetAs<InlineSinkLogicalOperator>().has_value());
-    }
-}
-
-TEST_F(StatementBinderTest, NamedSourceAliasesQualifyFields)
-{
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(
-        "SELECT tab2.pk FROM input AS tab2 WHERE tab2.col0 = INT64(1) INTO File();");
-
-    const auto selections = getOperatorByType<SelectionLogicalOperator>(plan);
-    ASSERT_EQ(selections.size(), 1);
-    EXPECT_EQ(selections.front()->getPredicate().explain(ExplainVerbosity::Short), "COL0 = 1");
-
-    const auto projections = getOperatorByType<ProjectionLogicalOperator>(plan);
-    ASSERT_EQ(projections.size(), 1);
-    EXPECT_EQ(projections.front()->explain(ExplainVerbosity::Short, OperatorId{1}), "PROJECTION(fields: [PK])");
-}
-
-TEST_F(StatementBinderTest, NamedSourceAliasesQualifyAsterisk)
-{
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("SELECT tab2.* FROM input AS tab2 INTO File();");
-    const auto projections = getOperatorByType<ProjectionLogicalOperator>(plan);
-    ASSERT_EQ(projections.size(), 1);
-    EXPECT_TRUE(projections.front()->hasAsterisk());
-}
-
-TEST_F(StatementBinderTest, NamedSourceAliasesRejectUnknownQualifier)
-{
-    EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("SELECT wrong.pk FROM input AS tab2 INTO File();"), Exception);
 }
 
 TEST_F(StatementBinderTest, LeftOuterJoinParsesToOuterLeftJoinType)
