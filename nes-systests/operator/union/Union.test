@@ -179,7 +179,6 @@ ATTACH INLINE
 3,1002
 2,2003
 
-CREATE SINK sink5(max_value UINT64 NOT NULL)  TYPE File;
 SELECT MAX(value) as max_value
 FROM (
     SELECT * FROM stream6 UNION SELECT * FROM stream7

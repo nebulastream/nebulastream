@@ -116,7 +116,7 @@ public:
         const auto sink = sinkCatalog->addSinkDescriptor(sinkNameInFile, schema, sinkType, Host(host), std::move(config), formatConfig);
         if (not sink.has_value())
         {
-            throw SinkAlreadyExists("Failed to create file sink with assigned name {}", sinkNameInFile);
+            throw sink.error();
         }
 
 
@@ -149,13 +149,7 @@ public:
                     host = hostIt->second;
                 }
 
-                const auto sink
-                    = sinkCatalog->addSinkDescriptor(assignedSinkName, schema, sinkType, Host(host), std::move(config), formatConfig);
-                if (not sink.has_value())
-                {
-                    return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
-                }
-                return sink.value();
+                return sinkCatalog->addSinkDescriptor(assignedSinkName, schema, sinkType, Host(host), std::move(config), formatConfig);
             });
         return success;
     }
@@ -686,7 +680,10 @@ struct SystestBinder::Impl
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
-        sltSinkProvider.registerSink(statement.sinkType, statement.name, statement.schema, statement.sinkConfig);
+        if (not sltSinkProvider.registerSink(statement.sinkType, statement.name, statement.schema, statement.sinkConfig))
+        {
+            throw SinkAlreadyExists("{}", statement.name);
+        }
     }
 
     void createModel(const std::shared_ptr<ModelCatalog>& modelCatalog, const CreateModelStatement& statement) const
@@ -841,17 +838,17 @@ struct SystestBinder::Impl
     }
 
     LogicalOperator setNamedSink(
-        SystestQueryBuilder& currentBuilder,
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
         const SystestQueryId& currentQueryNumberInTest,
+        const std::string& assignedSinkNameSuffix,
         const TypedLogicalOperator<SinkLogicalOperator>& sinkOperator) const
     {
         const auto sinkNameInFile = sinkOperator->getSinkName();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery
-            = Identifier::parse(toUpperCase(sinkNameInFile.asCanonicalString() + std::to_string(currentQueryNumberInTest.getRawValue())));
+        const auto sinkForQuery = Identifier::parse(toUpperCase(
+            sinkNameInFile.asCanonicalString() + std::to_string(currentQueryNumberInTest.getRawValue()) + assignedSinkNameSuffix));
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
@@ -859,7 +856,8 @@ struct SystestBinder::Impl
         auto sinkExpected = sltSinkProvider.createActualSink(sinkNameInFile, sinkForQuery, resultFile);
         if (not sinkExpected.has_value())
         {
-            currentBuilder.setException(sinkExpected.error());
+            /// The callers catch the exception and record it on the query builder.
+            throw std::move(sinkExpected).error();
         }
 
         const auto newOperator = SinkLogicalOperator::create(sinkExpected.value());
@@ -869,10 +867,10 @@ struct SystestBinder::Impl
 
     void setSinks(
         LogicalPlan& plan,
-        SystestQueryBuilder& currentBuilder,
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
-        const SystestQueryId& currentQueryNumberInTest) const
+        const SystestQueryId& currentQueryNumberInTest,
+        const std::string& assignedSinkNameSuffix = "") const
     {
         std::vector<LogicalOperator> newRoots;
         for (const auto& rootOperator : plan.getRootOperators())
@@ -884,7 +882,7 @@ struct SystestBinder::Impl
             else if (auto namedSink = rootOperator.tryGetAs<SinkLogicalOperator>(); namedSink.has_value())
             {
                 newRoots.emplace_back(
-                    setNamedSink(currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest, namedSink.value()));
+                    setNamedSink(testFileName, sltSinkProvider, currentQueryNumberInTest, assignedSinkNameSuffix, namedSink.value()));
             }
             else
             {
@@ -938,7 +936,7 @@ struct SystestBinder::Impl
         try
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-            setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            setSinks(plan, testFileName, sltSinkProvider, currentQueryNumberInTest);
             plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
             setAnonymousSources(plan);
             currentBuilder.setBoundPlan(std::move(plan));
@@ -1037,8 +1035,9 @@ struct SystestBinder::Impl
             auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(leftQuery);
             auto rightPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rightQuery);
 
-            setSinks(leftPlan, currentTest, testFileName, sltSinkProvider, currentQueryNumberInTest);
-            setSinks(rightPlan, currentTest, differentialTestResultFileName, sltSinkProvider, currentQueryNumberInTest);
+            setSinks(leftPlan, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            /// The differential plan reuses the named sinks of the left plan, so its registrations need distinct names.
+            setSinks(rightPlan, differentialTestResultFileName, sltSinkProvider, currentQueryNumberInTest, "differential");
 
             setAnonymousSources(leftPlan);
             setAnonymousSources(rightPlan);
