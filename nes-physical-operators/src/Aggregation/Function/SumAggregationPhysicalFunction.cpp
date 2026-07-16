@@ -49,8 +49,8 @@ void SumAggregationPhysicalFunction::lift(
         /// SQL-standard: skip NULL inputs
         const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
         const auto isNull = readNull(aggregationState);
-        const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, nautilus::val<bool>(false));
-        const auto sumPlusValue = (sum + value).castToType(inputType.type);
+        const auto sum = VarVal::readVarValFromMemory(memAreaSum, resultType, nautilus::val<bool>(false));
+        const auto sumPlusValue = (sum + value).castToType(resultType.type);
         const auto newSum = VarVal::select(value.isNull(), sum, sumPlusValue);
         newSum.writeToMemory(memAreaSum);
 
@@ -61,10 +61,11 @@ void SumAggregationPhysicalFunction::lift(
     {
         /// Reading old sum from the aggregation state
         const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-        const auto sum = VarVal::readNonNullableVarValFromMemory(memAreaSum, inputType);
+        const auto sum = VarVal::readNonNullableVarValFromMemory(memAreaSum, resultType);
 
-        /// Updating the sum and write it back to the aggregation state
-        const auto newSum = (sum + value).castToType(inputType.type);
+        /// Updating the sum and write it back to the aggregation state. The sum is accumulated in the widened result type
+        /// (e.g. INT64 for INT8/16/32 inputs) to avoid overflowing the input type (#1694).
+        const auto newSum = (sum + value).castToType(resultType.type);
         newSum.writeToMemory(memAreaSum);
     }
 }
@@ -79,15 +80,15 @@ void SumAggregationPhysicalFunction::combine(
         /// Reading the sum from the first aggregation state
         const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1 + nautilus::val<uint64_t>{1});
         const auto isNull1 = readNull(aggregationState1);
-        const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, inputType, nautilus::val<bool>(false));
+        const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, resultType, nautilus::val<bool>(false));
 
         /// Reading the sum from the second aggregation state
         const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2 + nautilus::val<uint64_t>{1});
         const auto isNull2 = readNull(aggregationState2);
-        const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType, nautilus::val<bool>(false));
+        const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, resultType, nautilus::val<bool>(false));
 
         /// Combining the sum and writing it back to the first aggregation state
-        const auto newSum = (sum1 + sum2).castToType(inputType.type);
+        const auto newSum = (sum1 + sum2).castToType(resultType.type);
         newSum.writeToMemory(memAreaSum1);
 
         /// SQL-standard: only stay null when both partitions are still empty
@@ -97,14 +98,14 @@ void SumAggregationPhysicalFunction::combine(
     {
         /// Reading the sum from the first aggregation state
         const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-        const auto sum1 = VarVal::readNonNullableVarValFromMemory(memAreaSum1, inputType);
+        const auto sum1 = VarVal::readNonNullableVarValFromMemory(memAreaSum1, resultType);
 
         /// Reading the sum from the second aggregation state
         const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-        const auto sum2 = VarVal::readNonNullableVarValFromMemory(memAreaSum2, inputType);
+        const auto sum2 = VarVal::readNonNullableVarValFromMemory(memAreaSum2, resultType);
 
         /// Combining the sum and writing it back to the first aggregation state
-        const auto newSum = (sum1 + sum2).castToType(inputType.type);
+        const auto newSum = (sum1 + sum2).castToType(resultType.type);
         newSum.writeToMemory(memAreaSum1);
     }
 }
@@ -116,7 +117,7 @@ Record SumAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
         /// Reading the sum from the aggregation state
         const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
         const auto isNull = readNull(aggregationState);
-        const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, isNull);
+        const auto sum = VarVal::readVarValFromMemory(memAreaSum, resultType, isNull);
 
         /// Creating a record with the sum
         Record record;
@@ -126,8 +127,7 @@ Record SumAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
 
     /// Reading the sum from the aggregation state
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto memAreaCount = memAreaSum + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
-    const auto sum = VarVal::readNonNullableVarValFromMemory(memAreaSum, inputType);
+    const auto sum = VarVal::readNonNullableVarValFromMemory(memAreaSum, resultType);
 
     /// Creating a record with the sum
     Record record;
@@ -155,7 +155,8 @@ void SumAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t SumAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    return inputType.getSizeInBytesWithNull();
+    /// Size of isNull + size of the sum value, which is accumulated in the widened result type
+    return (inputType.nullable ? sizeof(bool) : 0) + resultType.getSizeInBytesWithoutNull();
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterSumAggregationPhysicalFunction(

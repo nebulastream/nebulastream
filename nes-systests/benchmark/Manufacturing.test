@@ -7,7 +7,7 @@ CREATE LOGICAL SOURCE manufacturing(creationTS UINT64 NOT NULL, messageIndex UIN
 CREATE PHYSICAL SOURCE FOR manufacturing TYPE File;
 ATTACH FILE large/manufacturing/manufacturing_1G.csv
 
-CREATE SINK manufacturingChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, avg_mf01 FLOAT64 NOT NULL, sum_mf02 INT16 NOT NULL, min_mf03 INT16 NOT NULL, count_mf01 UINT64 NOT NULL, sum_mf01 INT16 NOT NULL)  TYPE Checksum;
+CREATE SINK manufacturingChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, avg_mf01 FLOAT64 NOT NULL, sum_mf02 INT64 NOT NULL, min_mf03 INT16 NOT NULL, count_mf01 UINT64 NOT NULL, sum_mf01 INT64 NOT NULL)  TYPE Checksum;
 
 
 # Query 1 Windowed Aggregation with three different aggregation functions
@@ -16,5 +16,5 @@ FROM manufacturing
 WINDOW SLIDING(creationTS, SIZE 1 MINUTE, ADVANCE BY 1 SEC)
 INTO manufacturingChecksum;
 ----
-221338 698355948
+221338 768775320
 

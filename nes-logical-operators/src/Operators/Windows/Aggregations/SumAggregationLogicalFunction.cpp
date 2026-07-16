@@ -41,7 +41,8 @@
 namespace NES
 {
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(AggregationFieldAccess inputFunction)
-    : inputFunction(inputFunction), aggregateType(std::visit([](const auto& input) { return input->getDataType(); }, inputFunction))
+    : inputFunction(inputFunction)
+    , aggregateType(inferFromInput(std::visit([](const auto& input) { return input->getDataType(); }, inputFunction)))
 {
 }
 
@@ -60,7 +61,11 @@ std::string_view SumAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
-/// TODO #1694: Currently dead code, either integrate it or remove it after consulting the SQL standard.
+/// Widens the result type to avoid overflows when summing many narrow values (#1694). The SQL standard (ISO/IEC 9075-2, <sum>)
+/// requires a numeric result with implementation-defined precision at least that of the argument. Lacking NUMERIC/INT128, we follow
+/// PostgreSQL: integers are promoted to the widest available integer type (sum(int2/int4) -> int8), while floats keep their type
+/// (sum(real) -> real) since they saturate to infinity instead of wrapping around. Sums exceeding the 64-bit integer range still
+/// wrap around silently.
 DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType)
 {
     if (inputType.type == DataType::Type::UNDEFINED)
@@ -80,8 +85,7 @@ DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType)
     }
     if (inputType.isFloat())
     {
-        return DataTypeProvider::provideDataType(
-            DataType::Type::FLOAT64, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+        return inputType;
     }
     throw CannotInferStamp("aggregations on non numeric fields is not supported (got {})", inputType);
 }
@@ -89,7 +93,7 @@ DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType)
 SumAggregationLogicalFunction SumAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
 {
     const auto newInputFunction = inferFieldAccess(inputFunction, schema);
-    const DataType outputType = newInputFunction->getDataType();
+    const DataType outputType = inferFromInput(newInputFunction->getDataType());
     return SumAggregationLogicalFunction{newInputFunction, outputType};
 }
 
