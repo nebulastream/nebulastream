@@ -57,19 +57,19 @@ std::optional<uint64_t> multiplierForSuffix(const std::string_view suffix)
     };
 
     static constexpr std::array<SuffixMultiplier, 13> SUFFIXES{
-        {{"", 1},
-         {"k", pow(DECIMAL_BASE, 1)},
-         {"m", pow(DECIMAL_BASE, 2)},
-         {"g", pow(DECIMAL_BASE, 3)},
-         {"t", pow(DECIMAL_BASE, 4)},
-         {"p", pow(DECIMAL_BASE, 5)},
-         {"e", pow(DECIMAL_BASE, 6)},
-         {"ki", pow(BINARY_BASE, 1)},
-         {"mi", pow(BINARY_BASE, 2)},
-         {"gi", pow(BINARY_BASE, 3)},
-         {"ti", pow(BINARY_BASE, 4)},
-         {"pi", pow(BINARY_BASE, 5)},
-         {"ei", pow(BINARY_BASE, 6)}}};
+        {{.suffix = "", .multiplier = 1},
+         {.suffix = "k", .multiplier = pow(DECIMAL_BASE, 1)},
+         {.suffix = "m", .multiplier = pow(DECIMAL_BASE, 2)},
+         {.suffix = "g", .multiplier = pow(DECIMAL_BASE, 3)},
+         {.suffix = "t", .multiplier = pow(DECIMAL_BASE, 4)},
+         {.suffix = "p", .multiplier = pow(DECIMAL_BASE, 5)},
+         {.suffix = "e", .multiplier = pow(DECIMAL_BASE, 6)},
+         {.suffix = "ki", .multiplier = pow(BINARY_BASE, 1)},
+         {.suffix = "mi", .multiplier = pow(BINARY_BASE, 2)},
+         {.suffix = "gi", .multiplier = pow(BINARY_BASE, 3)},
+         {.suffix = "ti", .multiplier = pow(BINARY_BASE, 4)},
+         {.suffix = "pi", .multiplier = pow(BINARY_BASE, 5)},
+         {.suffix = "ei", .multiplier = pow(BINARY_BASE, 6)}}};
     static_assert(pow(BINARY_BASE, 6) == UInt128{1} << 60);
     static_assert(pow(DECIMAL_BASE, 6) < UInt128{1} << 60);
 
