@@ -119,8 +119,14 @@ namespace NES::Sources::SourceGeneratedRegistrar
 
 namespace NES
 {
+/// registerAll is only defined in the CMake-generated registrar translation unit of this registry's component
 template <>
-inline void
+void
+Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll(Registry<Registrar>& registry);
+
+#ifdef NES_DEFINE_SOURCE_REGISTER_ALL
+template <>
+void
 Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
 
@@ -128,6 +134,7 @@ Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnTyp
     /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
     @REGISTER_ALL_FUNCTION_CALLS@
 }
+#endif
 }
 ```
 CMake uses this template to generate the actual declarations and calls for the registration functions.
@@ -144,8 +151,14 @@ SourceRegistryReturnType RegisterFileSource(SourceRegistryArguments);
 
 namespace NES
 {
+/// registerAll is only defined in the CMake-generated registrar translation unit of this registry's component
 template <>
-inline void
+void
+Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll(Registry<Registrar>& registry);
+
+#ifdef NES_DEFINE_SOURCE_REGISTER_ALL
+template <>
+void
 Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
 
@@ -154,10 +167,16 @@ Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnTyp
     registry.addEntry("TCP", RegisterTCPSource);
     registry.addEntry("File", RegisterFileSource);
 }
+#endif
 }
 ```
 This header is directly generated into CMake’s build folder.
 Its content depends on which plugins are active in the current build.
+Note that `registerAll` is only declared here: its definition is compiled into a dedicated, CMake-generated translation
+unit of the registry's component (see `generate_plugin_registrar` in `cmake/PluginRegistrationUtil.cmake`, which defines
+the `NES_DEFINE_*_REGISTER_ALL` macro). This keeps the plugin registration symbols out of binaries that merely include
+the registry header, and it registers the registry's plugin names for the `--version` listing exactly when the registry
+is linked into a binary.
 The final piece of the puzzle is the definition of the register functions.
 These are implemented in the plugin’s source file, such as `TCPSource.cpp`, since only the plugin has the logic to construct an instance of its type.
 Typically, the register function simply constructs the object, forwarding the necessary arguments, and wraps it in a smart pointer:
