@@ -35,14 +35,15 @@ CeilPhysicalFunction::CeilPhysicalFunction(PhysicalFunction childFunction, DataT
 VarVal CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    /// If the input type is a float, we need to ceil the value and returned the ceiled value.
-    /// If the input type is an integer, we do not need to do anything.
+    /// Floats are ceiled in double precision and cast back to the input's float type.
     if (inputType.isFloat())
     {
         const auto ceiledValue = nautilus::ceil(value.getRawValueAs<nautilus::val<double>>());
-        return VarVal{ceiledValue}.castToType(outputType.type);
+        /// Reattach the null state, as getRawValueAs() strips it.
+        return VarVal{ceiledValue, value.isNullable(), value.isNull()}.castToType(outputType.type);
     }
-    return value.castToType(outputType.type);
+    /// Integers are already integral and type inference guarantees outputType == inputType, so CEIL is the identity.
+    return value;
 }
 
 PhysicalFunctionRegistryReturnType

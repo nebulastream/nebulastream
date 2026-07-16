@@ -35,14 +35,15 @@ FloorPhysicalFunction::FloorPhysicalFunction(PhysicalFunction childFunction, Dat
 VarVal FloorPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    /// If the input type is a float, we need to floor the value and return the floored value.
-    /// If the input type is an integer, we only need to cast to the output type.
+    /// Floats are floored in double precision and cast back to the input's float type.
     if (inputType.isFloat())
     {
         const auto flooredValue = nautilus::floor(value.getRawValueAs<nautilus::val<double>>());
-        return VarVal{flooredValue}.castToType(outputType.type);
+        /// Reattach the null state, as getRawValueAs() strips it.
+        return VarVal{flooredValue, value.isNullable(), value.isNull()}.castToType(outputType.type);
     }
-    return value.castToType(outputType.type);
+    /// Integers are already integral and type inference guarantees outputType == inputType, so FLOOR is the identity.
+    return value;
 }
 
 PhysicalFunctionRegistryReturnType

@@ -53,6 +53,9 @@ LogicalFunction FloorLogicalFunction::withInferredDataType(const Schema<Field, U
     {
         throw CannotInferStamp("Cannot apply floor function on non-numeric input function {}", copy.child);
     }
+    /// ISO/IEC 9075-2 (<numeric value function>): FLOOR of an exact numeric type is exact numeric, FLOOR of an approximate numeric
+    /// type is approximate numeric. PostgreSQL, MySQL, and SQLite implement this by preserving the input type: floats stay floats and
+    /// integers pass through unchanged (FLOOR of an integer is the identity), so we do the same and never cast to INT64.
     copy.dataType = copy.child.getDataType();
     return copy;
 };
