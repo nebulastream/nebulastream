@@ -20,7 +20,6 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
-#include <Util/VersionPluginList.hpp>
 
 namespace NES
 {
@@ -41,9 +40,3 @@ class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, SourceRe
 #define INCLUDED_FROM_SOURCE_REGISTRY
 #include <SourceGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SOURCE_REGISTRY
-
-namespace NES
-{
-/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
-inline const VersionPluginListEntry sourceRegistryVersionPlugins{"Sources", [] { return SourceRegistry::instance().getRegisteredNames(); }};
-}

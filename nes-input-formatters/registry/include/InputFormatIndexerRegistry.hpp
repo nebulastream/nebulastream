@@ -23,7 +23,6 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
-#include <Util/VersionPluginList.hpp>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterDescriptor.hpp>
@@ -75,10 +74,3 @@ class InputFormatIndexerRegistry : public BaseRegistry<
 #define INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY
 #include <InputFormatIndexerGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY
-
-namespace NES
-{
-/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
-inline const VersionPluginListEntry inputFormatIndexerRegistryVersionPlugins{
-    "InputFormatters", [] { return InputFormatIndexerRegistry::instance().getRegisteredNames(); }};
-}

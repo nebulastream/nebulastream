@@ -21,7 +21,6 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/Registry.hpp>
-#include <Util/VersionPluginList.hpp>
 
 namespace NES
 {
@@ -46,10 +45,3 @@ class AggregationLogicalFunctionRegistry : public BaseRegistry<
 #define INCLUDED_FROM_REGISTRY_WINDOW_AGGREGATION_FUNCTION
 #include <AggregationLogicalFunctionGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_WINDOW_AGGREGATION_FUNCTION
-
-namespace NES
-{
-/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
-inline const VersionPluginListEntry aggregationLogicalFunctionRegistryVersionPlugins{
-    "Functions", [] { return AggregationLogicalFunctionRegistry::instance().getRegisteredNames(); }};
-}

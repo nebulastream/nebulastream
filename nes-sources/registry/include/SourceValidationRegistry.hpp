@@ -18,7 +18,6 @@
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
 #include <Util/Registry.hpp>
-#include <Util/VersionPluginList.hpp>
 
 namespace NES
 {
@@ -40,10 +39,3 @@ class SourceValidationRegistry final
 #define INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY
 #include <SourceValidationGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY
-
-namespace NES
-{
-/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
-inline const VersionPluginListEntry sourceValidationRegistryVersionPlugins{
-    "Sources", [] { return SourceValidationRegistry::instance().getRegisteredNames(); }};
-}
