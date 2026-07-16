@@ -25,7 +25,7 @@ namespace NES
 struct ConfigParametersVideo
 {
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOURCE_SELECTOR{
-        "sourceSelector",
+        "SOURCE_SELECTOR",
         0,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
         {
@@ -40,7 +40,7 @@ struct ConfigParametersVideo
 class VideoSource final : public Source
 {
 public:
-    static constexpr std::string_view NAME = "Video";
+    static constexpr std::string_view NAME = "VIDEO";
 
     explicit VideoSource(const SourceDescriptor& sourceDescriptor);
     ~VideoSource() override;
