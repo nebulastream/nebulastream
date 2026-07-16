@@ -17,7 +17,6 @@
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Util/Registry.hpp>
-#include <Util/VersionPluginList.hpp>
 
 namespace NES
 {
@@ -40,10 +39,3 @@ class PhysicalFunctionRegistry
 #define INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION
 #include <PhysicalFunctionGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION
-
-namespace NES
-{
-/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
-inline const VersionPluginListEntry physicalFunctionRegistryVersionPlugins{
-    "Functions", [] { return PhysicalFunctionRegistry::instance().getRegisteredNames(); }};
-}

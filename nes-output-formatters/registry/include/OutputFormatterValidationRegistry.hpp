@@ -19,7 +19,6 @@
 #include <Configurations/Descriptor.hpp>
 
 #include <Util/Registry.hpp>
-#include <Util/VersionPluginList.hpp>
 
 namespace NES
 {
@@ -43,10 +42,3 @@ class OutputFormatterValidationRegistry final : public BaseRegistry<
 #define INCLUDED_FROM_OUTPUT_FORMATTER_VALIDATION_REGISTRY
 #include <OutputFormatterValidationGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_OUTPUT_FORMATTER_VALIDATION_REGISTRY
-
-namespace NES
-{
-/// Lists this registry's plugins under `--version` (see Util/VersionPluginList.hpp).
-inline const VersionPluginListEntry outputFormatterValidationRegistryVersionPlugins{
-    "OutputFormatters", [] { return OutputFormatterValidationRegistry::instance().getRegisteredNames(); }};
-}
