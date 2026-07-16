@@ -7,8 +7,9 @@ CREATE PHYSICAL SOURCE FOR single TYPE File;
 ATTACH INLINE
 42
 
-# Positive control: a type constructor with exactly one argument works
-SELECT UINT32(1) AS v FROM single INTO File();
+# Positive control: a type constructor with exactly one argument works.
+# The WHERE clause ensures the query accesses a source field: constant-only projections are not supported by the query compiler.
+SELECT UINT32(1) AS v FROM single WHERE id == 42 INTO File();
 ----
 1
 
