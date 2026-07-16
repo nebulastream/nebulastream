@@ -25,12 +25,14 @@
 #include <type_traits>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/TypeTraits.hpp>
@@ -107,19 +109,23 @@ class FieldView;
 
 using TestSchema = Schema<UnqualifiedUnboundField, Ordered>;
 
-/// Entry point. Holds schema config.
+/// Entry point. Holds the physical buffer layout (a lowered TupleBufferRef) — no logical schema.
 class TestTupleBuffer
 {
 public:
-    explicit TestTupleBuffer(TestSchema schema);
+    /// Constructs from a physical buffer layout, e.g., produced by LowerSchemaProvider::lowerSchema.
+    explicit TestTupleBuffer(std::shared_ptr<TupleBufferRef> bufferRef);
 
-    /// Wraps an existing TupleBuffer for schema-aware access.
+    /// Convenience factory: lowers the schema to a row-layout TupleBufferRef for buffers of `bufferSize` bytes.
+    static TestTupleBuffer fromSchema(const TestSchema& schema, uint64_t bufferSize);
+
+    /// Wraps an existing TupleBuffer for layout-aware access.
     /// bufferProvider required for VARSIZED (string) field support.
     /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations) convenience default for non-VARSIZED use
     TestTupleBufferView open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider = nullptr);
 
 private:
-    TestSchema schema;
+    std::shared_ptr<TupleBufferRef> bufferRef;
 };
 
 /// View over a TupleBuffer. Supports append and indexed record access.
@@ -129,9 +135,9 @@ public:
     /// Access record at index. Throws if index >= getNumberOfTuples().
     TestTupleBufferRecordView operator[](size_t index);
 
-    /// Append a record with values matching schema fields left-to-right.
+    /// Append a record with values matching layout fields left-to-right.
     /// Supports implicit numeric casting: append(10, 200) works when the
-    /// schema declares INT64 and UINT32 fields.
+    /// layout declares INT64 and UINT32 fields.
     template <typename... Args>
     void append(Args&&... values);
 
@@ -144,7 +150,8 @@ private:
 
     struct Impl
     {
-        TestSchema schema;
+        std::vector<Record::RecordFieldIdentifier> fieldNames;
+        std::vector<DataType> fieldTypes;
         TupleBuffer&
             buffer; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) intentional reference: Impl always outlived by the TupleBuffer it wraps
         AbstractBufferProvider* bufferProvider;
@@ -156,7 +163,7 @@ private:
     /// Append helper — writes each (possibly null) FieldValue as a full Record via bufRef->writeRecord.
     void appendImpl(std::span<const std::optional<FieldValue>> values);
 
-    /// Converts an argument to a (possibly null) FieldValue, casting to the schema's expected type.
+    /// Converts an argument to a (possibly null) FieldValue, casting to the layout's expected type.
     /// Accepts plain values (T), `std::nullopt` for null, and `std::optional<T>` for either.
     template <typename T>
     static std::optional<FieldValue> toFieldValue(T&& arg, DataType::Type targetType);
@@ -166,7 +173,7 @@ private:
 class TestTupleBufferRecordView
 {
 public:
-    /// Access field by name. Throws if field not in schema.
+    /// Access field by name. Throws if field not in the layout.
     FieldView operator[](const std::string& fieldName);
 
 private:
@@ -180,17 +187,17 @@ private:
 class FieldView
 {
 public:
-    /// Write a non-null value — type-checked against the schema DataType. Works for
+    /// Write a non-null value — type-checked against the layout DataType. Works for
     /// both nullable and non-nullable fields.
     FieldView& operator=(const FieldValue& value);
 
-    /// Write null — only valid for fields declared nullable in the schema.
+    /// Write null — only valid for fields declared nullable in the layout.
     FieldView& operator=(std::nullopt_t);
 
     /// Read a typed value. T must match the field's `DataType::Type`.
     /// - `as<T>()` reads a non-nullable field.
     /// - `as<std::optional<T>>()` reads a nullable field, returning `nullopt` when null.
-    /// Throws if T does not match the schema type or the schema's nullability.
+    /// Throws if T does not match the layout type or the layout's nullability.
     template <typename T>
     T as() const;
 
@@ -249,7 +256,7 @@ std::optional<FieldValue> TestTupleBufferView::toFieldValue(T&& arg, DataType::T
         }
         return FieldValue(arg);
     }
-    /// Arithmetic types — cast to the schema's expected type.
+    /// Arithmetic types — cast to the layout's expected type.
     else if constexpr (std::is_arithmetic_v<Raw>)
     {
         switch (targetType)
@@ -290,13 +297,12 @@ template <typename... Args>
 void TestTupleBufferView::append(Args&&... values)
 {
     static_assert(sizeof...(Args) > 0, "append requires at least one argument");
-    if (sizeof...(Args) != impl->schema.size())
+    if (sizeof...(Args) != impl->fieldTypes.size())
     {
-        throw TestException("append requires exactly {} arguments, got {}", impl->schema.size(), sizeof...(Args));
+        throw TestException("append requires exactly {} arguments, got {}", impl->fieldTypes.size(), sizeof...(Args));
     }
-    auto fieldIt = impl->schema.begin();
-    const std::array<std::optional<FieldValue>, sizeof...(Args)> fieldValues{
-        toFieldValue(std::forward<Args>(values), (fieldIt++)->getDataType().type)...};
+    auto typeIt = impl->fieldTypes.begin();
+    const std::array<std::optional<FieldValue>, sizeof...(Args)> fieldValues{toFieldValue(std::forward<Args>(values), (typeIt++)->type)...};
     appendImpl(fieldValues);
 }
 
@@ -312,7 +318,7 @@ T FieldView::as() const
         }
         if (dataType.type != detail::expectedType<Inner>())
         {
-            throw TestException("FieldView::as<std::optional<T>>(): T does not match the schema type of field '{}'", fieldName);
+            throw TestException("FieldView::as<std::optional<T>>(): T does not match the layout type of field '{}'", fieldName);
         }
         auto value = readFieldValue();
         if (!value.has_value())
@@ -329,7 +335,7 @@ T FieldView::as() const
         }
         if (dataType.type != detail::expectedType<T>())
         {
-            throw TestException("FieldView::as<T>(): T does not match the schema type of field '{}'", fieldName);
+            throw TestException("FieldView::as<T>(): T does not match the layout type of field '{}'", fieldName);
         }
         auto value = readFieldValue();
         return std::get<T>(*value);

@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -34,6 +35,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -223,17 +225,36 @@ std::optional<FieldValue> varValToFieldValue(const VarVal& value, const DataType
 
 /// ---- TestTupleBuffer ----
 
-TestTupleBuffer::TestTupleBuffer(TestSchema schema) : schema(std::move(schema))
+TestTupleBuffer::TestTupleBuffer(std::shared_ptr<TupleBufferRef> bufferRef) : bufferRef(std::move(bufferRef))
 {
+    if (this->bufferRef == nullptr)
+    {
+        throw TestException("TestTupleBuffer requires a non-null TupleBufferRef");
+    }
+}
+
+TestTupleBuffer TestTupleBuffer::fromSchema(const TestSchema& schema, const uint64_t bufferSize)
+{
+    return TestTupleBuffer{LowerSchemaProvider::lowerSchema(bufferSize, schema, MemoryLayoutType::ROW_LAYOUT)};
 }
 
 TestTupleBufferView TestTupleBuffer::open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider)
 {
-    auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
+    if (buffer.getBufferSize() != bufferRef->getBufferSize())
+    {
+        throw TestException(
+            "TestTupleBuffer: layout was lowered for buffers of {} bytes, but got a buffer of {} bytes",
+            bufferRef->getBufferSize(),
+            buffer.getBufferSize());
+    }
 
     TestTupleBufferView view;
-    view.impl = std::make_shared<TestTupleBufferView::Impl>(
-        TestTupleBufferView::Impl{.schema = schema, .buffer = buffer, .bufferProvider = bufferProvider, .bufRef = std::move(bufRef)});
+    view.impl = std::make_shared<TestTupleBufferView::Impl>(TestTupleBufferView::Impl{
+        .fieldNames = bufferRef->getAllFieldNames(),
+        .fieldTypes = bufferRef->getAllDataTypes(),
+        .buffer = buffer,
+        .bufferProvider = bufferProvider,
+        .bufRef = bufferRef});
     return view;
 }
 
@@ -258,9 +279,9 @@ uint64_t TestTupleBufferView::getNumberOfTuples() const
 
 void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> values)
 {
-    if (values.size() != impl->schema.size())
+    if (values.size() != impl->fieldNames.size())
     {
-        throw TestException("TestTupleBufferView: expected {} fields, got {}", impl->schema.size(), values.size());
+        throw TestException("TestTupleBufferView: expected {} fields, got {}", impl->fieldNames.size(), values.size());
     }
 
     auto tupleIndex = nautilus::val<uint64_t>(impl->buffer.getNumberOfTuples());
@@ -269,9 +290,9 @@ void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> 
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(impl->bufferProvider);
 
     Record record;
-    for (const auto [value, field] : std::views::zip(values, impl->schema))
+    for (const auto& [value, name, type] : std::views::zip(values, impl->fieldNames, impl->fieldTypes))
     {
-        record.write(field.getFullyQualifiedName(), fieldValueToVarVal(value, field.getDataType()));
+        record.write(name, fieldValueToVarVal(value, type));
     }
 
     impl->bufRef->writeRecord(tupleIndex, recordBuffer, record, bufProviderVal);
@@ -282,17 +303,18 @@ void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> 
 
 FieldView TestTupleBufferRecordView::operator[](const std::string& fieldName)
 {
-    const auto field = impl->schema[static_cast<QualifiedIdentifierBase<1>>(Identifier::parse(fieldName))];
-    if (!field.has_value())
+    const auto fieldId = QualifiedIdentifierBase<1>{Identifier::parse(fieldName)};
+    const auto fieldIt = std::ranges::find_if(impl->fieldNames, [&fieldId](const auto& name) { return name == fieldId; });
+    if (fieldIt == impl->fieldNames.end())
     {
-        throw FieldNotFound("TestTupleBufferRecordView: field '{}' not found in schema", fieldName);
+        throw FieldNotFound("TestTupleBufferRecordView: field '{}' not found in the buffer layout", fieldName);
     }
 
     FieldView fieldView;
     fieldView.implWeak = impl;
     fieldView.recordIndex = recordIndex;
     fieldView.fieldName = fieldName;
-    fieldView.dataType = field->getDataType();
+    fieldView.dataType = impl->fieldTypes[static_cast<size_t>(std::distance(impl->fieldNames.begin(), fieldIt))];
     return fieldView;
 }
 
