@@ -200,7 +200,7 @@ std::expected<void, Exception> GeneratorSource::validateGeneratorRateConfig(cons
         return {};
     }
     return std::unexpected(InvalidConfigParameter(
-        "Cannot validate {}: \"{}\"! Expected \"emit_rate <rate>\" or \"amplitude <amplitude>, frequency <frequency>\"",
+        R"(Cannot validate {}: "{}"! Expected "emit_rate <rate>" or "amplitude <amplitude>, frequency <frequency>")",
         ConfigParametersGenerator::GENERATOR_RATE_CONFIG.name,
         configString));
 }
