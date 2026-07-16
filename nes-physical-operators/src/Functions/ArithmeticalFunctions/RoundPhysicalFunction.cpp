@@ -34,7 +34,7 @@ RoundPhysicalFunction::RoundPhysicalFunction(PhysicalFunction childFunction, Dat
 
 VarVal RoundPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto value = childFunction.execute(record, arena);
+    auto value = childFunction.execute(record, arena);
     /// Floats are rounded in double precision and cast back to the input's float type. nautilus::round follows std::round, so ties
     /// round half away from zero (ROUND(2.5) = 3, ROUND(-2.5) = -3), matching PostgreSQL (numeric), DuckDB, MySQL, and SQLite.
     if (inputType.isFloat())

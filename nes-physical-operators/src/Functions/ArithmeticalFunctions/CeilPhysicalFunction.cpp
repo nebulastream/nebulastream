@@ -34,7 +34,7 @@ CeilPhysicalFunction::CeilPhysicalFunction(PhysicalFunction childFunction, DataT
 
 VarVal CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto value = childFunction.execute(record, arena);
+    auto value = childFunction.execute(record, arena);
     /// Floats are ceiled in double precision and cast back to the input's float type.
     if (inputType.isFloat())
     {
