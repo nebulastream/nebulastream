@@ -34,7 +34,7 @@ FloorPhysicalFunction::FloorPhysicalFunction(PhysicalFunction childFunction, Dat
 
 VarVal FloorPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto value = childFunction.execute(record, arena);
+    auto value = childFunction.execute(record, arena);
     /// Floats are floored in double precision and cast back to the input's float type.
     if (inputType.isFloat())
     {
