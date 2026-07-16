@@ -17,6 +17,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <ostream>
 #include <random>
@@ -27,6 +28,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::GeneratorFields
 {
@@ -68,7 +70,7 @@ public:
 
     std::ostream& generate(std::ostream& os, std::mt19937& randEng) override;
 
-    static void validate(std::string_view rawSchemaLine);
+    [[nodiscard]] static std::expected<void, Exception> validate(std::string_view rawSchemaLine);
 
     FieldType sequencePosition;
     FieldType sequenceStart;
@@ -107,7 +109,7 @@ public:
 
     explicit NormalDistributionField(std::string_view rawSchemaLine);
     std::ostream& generate(std::ostream& os, std::mt19937& randEng) override;
-    static void validate(std::string_view rawSchemaLine);
+    [[nodiscard]] static std::expected<void, Exception> validate(std::string_view rawSchemaLine);
 
 private:
     DistributionVariant distribution;
@@ -122,7 +124,7 @@ class WordListField final : public BaseGeneratorField
 public:
     explicit WordListField(std::string_view rawSchemaLine);
     std::ostream& generate(std::ostream& os, std::mt19937& randEng) override;
-    static void validate(std::string_view rawSchemaLine);
+    [[nodiscard]] static std::expected<void, Exception> validate(std::string_view rawSchemaLine);
 
 private:
     std::vector<std::string> wordList;
@@ -136,7 +138,7 @@ class RandomStrField final : public BaseGeneratorField
 public:
     explicit RandomStrField(std::string_view rawSchemaLine);
     std::ostream& generate(std::ostream& os, std::mt19937& randEng) override;
-    static void validate(std::string_view rawSchemaLine);
+    [[nodiscard]] static std::expected<void, Exception> validate(std::string_view rawSchemaLine);
 
 private:
     std::size_t minLength;
@@ -153,7 +155,8 @@ using GeneratorFieldType = std::variant<SequenceField, NormalDistributionField, 
 struct FieldValidator
 {
     FieldIdentifier identifier;
-    std::function<void(std::string_view)> validator; /// Validator function throws an Exception if field is invalid
+    /// Returns an Exception describing the problem if the field is invalid
+    std::function<std::expected<void, Exception>(std::string_view)> validator;
 };
 
 /// @brief Array containing functions paired with the fields identifier used to validate the fields syntax
@@ -165,6 +168,12 @@ static const std::array<FieldValidator, 4> Validators = {
      {.identifier = FieldIdentifier::RANDOMSTR, .validator = RandomStrField::validate}},
 };
 /// NOLINTEND(cert-err58-cpp)
+
+/// Validates a single, trimmed schema line by dispatching to the field validator registered for its identifier.
+[[nodiscard]] std::expected<void, Exception> validateSchemaLine(std::string_view line);
+
+/// Validates a complete generator schema. Returns the first validation error encountered.
+[[nodiscard]] std::expected<void, Exception> validateSchema(std::string_view rawSchema);
 
 /// @brief Multimap containing key-value pairs of the existing generator fields and which types they accept
 /// NOLINTBEGIN(cert-err58-cpp): do not warn about static storage duration
