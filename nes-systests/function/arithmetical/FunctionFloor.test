@@ -14,11 +14,27 @@ ATTACH INLINE
 2.25,2.5
 9.98,1.23
 
+CREATE LOGICAL SOURCE streamNegative(f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR streamNegative TYPE File;
+ATTACH INLINE
+-2.5,-2.5
+-0.5,-9.98
+
+CREATE LOGICAL SOURCE streamNull(i64 INT64, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR streamNull TYPE File;
+ATTACH INLINE
+-5,-2.5
+,
+
 CREATE SINK sinkStream(i8 INT8 NOT NULL, i16 INT16 NOT NULL, i32 INT32 NOT NULL, i64 INT64 NOT NULL, u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, u32 UINT32 NOT NULL, u64 UINT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL) TYPE File;
 CREATE SINK sinkStream2(f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkNegative(f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkNull(i64 INT64, f64 FLOAT64) TYPE File;
 
 
-# Use FLOOR across different data types
+# Use FLOOR across different data types.
+# FLOOR preserves the input type (SQL standard: exact numeric stays exact numeric, approximate stays approximate):
+# integers pass through unchanged, floats stay FLOAT32/FLOAT64, as the sink schema asserts.
 SELECT
     FLOOR(i8) AS i8,
     FLOOR(i16) AS i16,
@@ -45,3 +61,21 @@ FROM stream2 INTO sinkStream2;
 23,42
 2,2
 9,1
+
+# FLOOR rounds negative floats toward negative infinity
+SELECT
+    FLOOR(f32) AS f32,
+    FLOOR(f64) AS f64
+FROM streamNegative INTO sinkNegative;
+----
+-3,-3
+-1,-10
+
+# FLOOR propagates NULL and is the identity on integers
+SELECT
+    FLOOR(i64) AS i64,
+    FLOOR(f64) AS f64
+FROM streamNull INTO sinkNull;
+----
+-5,-3
+NULL,NULL

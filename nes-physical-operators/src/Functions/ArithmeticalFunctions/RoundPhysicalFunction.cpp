@@ -35,14 +35,16 @@ RoundPhysicalFunction::RoundPhysicalFunction(PhysicalFunction childFunction, Dat
 VarVal RoundPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    /// If the input type is a float, we need to round the value and return the rounded value.
-    /// If the input type is an integer, we only need to cast to the output type.
+    /// Floats are rounded in double precision and cast back to the input's float type. nautilus::round follows std::round, so ties
+    /// round half away from zero (ROUND(2.5) = 3, ROUND(-2.5) = -3), matching PostgreSQL (numeric), DuckDB, MySQL, and SQLite.
     if (inputType.isFloat())
     {
         const auto roundedValue = nautilus::round(value.getRawValueAs<nautilus::val<double>>());
-        return VarVal{roundedValue}.castToType(outputType.type);
+        /// Reattach the null state, as getRawValueAs() strips it.
+        return VarVal{roundedValue, value.isNullable(), value.isNull()}.castToType(outputType.type);
     }
-    return value.castToType(outputType.type);
+    /// Integers are already integral and type inference guarantees outputType == inputType, so ROUND is the identity.
+    return value;
 }
 
 PhysicalFunctionRegistryReturnType

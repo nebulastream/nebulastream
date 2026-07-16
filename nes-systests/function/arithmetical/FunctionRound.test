@@ -14,10 +14,26 @@ ATTACH INLINE
 2.25,2.5
 9.98,1.23
 
+CREATE LOGICAL SOURCE streamNegative(f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR streamNegative TYPE File;
+ATTACH INLINE
+-2.5,-2.5
+-1.5,-9.98
+
+CREATE LOGICAL SOURCE streamNull(i64 INT64, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR streamNull TYPE File;
+ATTACH INLINE
+-5,-2.5
+,
+
 CREATE SINK sinkStream(i8 INT8 NOT NULL, i16 INT16 NOT NULL, i32 INT32 NOT NULL, i64 INT64 NOT NULL, u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, u32 UINT32 NOT NULL, u64 UINT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL) TYPE File;
 CREATE SINK sinkStream2(f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkNegative(f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkNull(i64 INT64, f64 FLOAT64) TYPE File;
 
-# Use ROUND across different data types
+# Use ROUND across different data types.
+# ROUND preserves the input type (consensus of PostgreSQL, DuckDB, MySQL, and SQLite):
+# integers pass through unchanged, floats stay FLOAT32/FLOAT64, as the sink schema asserts.
 SELECT
     ROUND(i8) AS i8,
     ROUND(i16) AS i16,
@@ -35,7 +51,7 @@ FROM stream INTO sinkStream;
 ----
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23,43
 
-# Use ROUND for different floats
+# Use ROUND for different floats (ties round half away from zero: ROUND(2.5) = 3)
 SELECT
     ROUND(f32) AS f32,
     ROUND(f64) AS f64
@@ -44,3 +60,21 @@ FROM stream2 INTO sinkStream2;
 24,42
 2,3
 10,1
+
+# ROUND rounds negative ties half away from zero: ROUND(-2.5) = -3
+SELECT
+    ROUND(f32) AS f32,
+    ROUND(f64) AS f64
+FROM streamNegative INTO sinkNegative;
+----
+-3,-3
+-2,-10
+
+# ROUND propagates NULL and is the identity on integers
+SELECT
+    ROUND(i64) AS i64,
+    ROUND(f64) AS f64
+FROM streamNull INTO sinkNull;
+----
+-5,-3
+NULL,NULL
