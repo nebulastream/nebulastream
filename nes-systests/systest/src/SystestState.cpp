@@ -166,16 +166,27 @@ NES::Systest::TestName testNameFromRelativePath(std::filesystem::path relativePa
     return relativePath.generic_string();
 }
 
-NES::Systest::TestName testNameRelativeTo(const std::filesystem::path& file, const std::filesystem::path& discoveryRoot)
+NES::Systest::TestName testNameStem(const NES::Systest::TestFile& testFile)
 {
-    const auto canonicalFile = std::filesystem::weakly_canonical(file);
-    const auto canonicalRoot = std::filesystem::weakly_canonical(discoveryRoot);
-    const auto relativePath = canonicalFile.lexically_relative(canonicalRoot);
-    if (relativePath.empty() || relativePath == std::filesystem::path{"."} || *relativePath.begin() == std::filesystem::path{".."})
+    return std::filesystem::path(testFile.name()).filename().string();
+}
+
+void shortenUniqueTestNames(NES::Systest::TestFileMap& testFiles)
+{
+    std::unordered_map<NES::Systest::TestName, size_t> testNameCounts;
+    for (const auto& testFile : testFiles | std::views::values)
     {
-        return file.stem().string();
+        ++testNameCounts[testNameStem(testFile)];
     }
-    return testNameFromRelativePath(relativePath);
+
+    for (auto& testFile : testFiles | std::views::values)
+    {
+        auto stem = testNameStem(testFile);
+        if (testNameCounts.at(stem) == 1)
+        {
+            testFile.testName = std::move(stem);
+        }
+    }
 }
 }
 
@@ -350,12 +361,10 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
     if (not config.directlySpecifiedTestFiles.getValue().empty())
     {
         const auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValue();
-        const auto testName = testNameRelativeTo(directlySpecifiedTestFiles, config.testsDiscoverDir.getValue());
 
         if (config.testQueryNumbers.empty())
         {
-            const auto testfile
-                = TestFile(directlySpecifiedTestFiles, testName, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
             if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
             {
                 std::cout << fmt::format(
@@ -368,8 +377,8 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
             config.testQueryNumbers.getValues()
             | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
-        const auto testfile = TestFile(
-            directlySpecifiedTestFiles, testNumbers, testName, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+        const auto testfile
+            = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(
@@ -392,6 +401,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             }
             return false;
         });
+    shortenUniqueTestNames(testMap);
 
     return testMap;
 }
