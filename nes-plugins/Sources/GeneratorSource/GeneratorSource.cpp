@@ -18,21 +18,28 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <expected>
 #include <iostream>
 #include <memory>
 #include <stop_token>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
+#include <ErrorHandling.hpp>
 #include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
+#include <GeneratorFields.hpp>
 #include <GeneratorRate.hpp>
 #include <SinusGeneratorRate.hpp>
 #include <SourceRegistry.hpp>
@@ -185,16 +192,80 @@ std::ostream& GeneratorSource::toString(std::ostream& str) const
     return str;
 }
 
-DescriptorConfig::Config GeneratorSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+std::expected<void, Exception> GeneratorSource::validateGeneratorRateConfig(const std::string_view configString)
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersGenerator>(std::move(config), NAME);
+    if (SinusGeneratorRate::parseAndValidateConfigString(configString).has_value()
+        or FixedGeneratorRate::parseAndValidateConfigString(configString).has_value())
+    {
+        return {};
+    }
+    return std::unexpected(InvalidConfigParameter(
+        "Cannot validate {}: \"{}\"! Expected \"emit_rate <rate>\" or \"amplitude <amplitude>, frequency <frequency>\"",
+        ConfigParametersGenerator::GENERATOR_RATE_CONFIG.name,
+        configString));
+}
+
+namespace
+{
+/// Produces informative errors for the generator-specific parameters upfront; the generic
+/// DescriptorConfig::tryValidateAndFormat afterwards only reports which parameter failed.
+std::expected<void, Exception> validateGeneratorSpecificConfig(const std::unordered_map<std::string, std::string>& config)
+{
+    const auto schema = config.find(ConfigParametersGenerator::GENERATOR_SCHEMA);
+    if (auto validSchema = GeneratorFields::validateSchema(schema != config.end() ? std::string_view{schema->second} : std::string_view{});
+        not validSchema.has_value())
+    {
+        return validSchema;
+    }
+    if (const auto stop = config.find(ConfigParametersGenerator::SEQUENCE_STOPS_GENERATOR);
+        stop != config.end() and not EnumWrapper{stop->second}.asEnum<GeneratorStop>().has_value())
+    {
+        constexpr auto stopBehaviors = magic_enum::enum_names<GeneratorStop>();
+        return std::unexpected(InvalidConfigParameter(
+            "Cannot validate {}: \"{}\"! Expected one of: {}",
+            ConfigParametersGenerator::SEQUENCE_STOPS_GENERATOR.name,
+            stop->second,
+            fmt::join(stopBehaviors, ", ")));
+    }
+    if (const auto rateType = config.find(ConfigParametersGenerator::GENERATOR_RATE_TYPE);
+        rateType != config.end() and not EnumWrapper{rateType->second}.asEnum<GeneratorRate::Type>().has_value())
+    {
+        constexpr auto rateTypes = magic_enum::enum_names<GeneratorRate::Type>();
+        return std::unexpected(InvalidConfigParameter(
+            "Cannot validate {}: \"{}\"! Expected one of: {}",
+            ConfigParametersGenerator::GENERATOR_RATE_TYPE.name,
+            rateType->second,
+            fmt::join(rateTypes, ", ")));
+    }
+    if (const auto rateConfig = config.find(ConfigParametersGenerator::GENERATOR_RATE_CONFIG); rateConfig != config.end())
+    {
+        if (auto validRate = GeneratorSource::validateGeneratorRateConfig(rateConfig->second); not validRate.has_value())
+        {
+            return validRate;
+        }
+    }
+    return {};
+}
+}
+
+std::expected<DescriptorConfig::Config, Exception> GeneratorSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return validateGeneratorSpecificConfig(config).and_then(
+        [&config] { return DescriptorConfig::tryValidateAndFormat<ConfigParametersGenerator>(std::move(config), NAME); });
 }
 
 SourceValidationRegistryReturnType
 ///NOLINTNEXTLINE (performance-unnecessary-value-param)
 RegisterGeneratorSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
-    return GeneratorSource::validateAndFormat(sourceConfig.config);
+    /// The validation itself is non-throwing; the registry interface reports validation errors via
+    /// exceptions, so the returned error is thrown at this single, visible boundary.
+    auto validatedConfig = GeneratorSource::validateAndFormat(std::move(sourceConfig.config));
+    if (not validatedConfig.has_value())
+    {
+        throw std::move(validatedConfig).error();
+    }
+    return std::move(validatedConfig).value();
 }
 
 ///NOLINTNEXTLINE (performance-unnecessary-value-param)
