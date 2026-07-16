@@ -150,6 +150,19 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
     return newPipeline;
 }
 
+/// True iff the pipeline's operator chain already ends in an EmitPhysicalOperator. Used only by invariants
+/// that cross-check the carried intent (pipeline closed / not) against reality. A pipeline closed by a
+/// CUSTOM emit does not end in one — that case is covered by the prevOpWrapper location checks.
+[[maybe_unused]] bool endsInEmit(const Pipeline& pipeline)
+{
+    std::optional<PhysicalOperator> current = pipeline.getRootOperator();
+    while (current->getChild().has_value())
+    {
+        current = current->getChild();
+    }
+    return current->tryGet<EmitPhysicalOperator>().has_value();
+}
+
 /// Helper function to add a default emit operator
 /// This is used only when the wrapped operator does not already provide an emit
 /// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
@@ -158,6 +171,7 @@ void addDefaultEmit(
     const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, const uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
+    INVARIANT(!endsInEmit(*pipeline), "Pipeline is already closed with an emit; adding a second one would duplicate its output");
     const auto& schema = wrappedOp.getOutputSchema();
     const auto memoryLayoutType = wrappedOp.getOutputMemoryLayoutType();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
@@ -180,6 +194,7 @@ void addOutputFormattingEmit(
     const std::unordered_map<Identifier, std::string>& config)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
+    INVARIANT(!endsInEmit(*pipeline), "Pipeline is already closed with an emit; adding a second one would duplicate its output");
     const auto& schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
@@ -191,11 +206,90 @@ void addOutputFormattingEmit(
     pipeline->appendOperator(EmitPhysicalOperator(operatorHandlerIndex, bufferRef));
 }
 
+/// Returns the pipeline a sink must hang off when it is reached from a fan-out point whose pipeline is already
+/// closed with a native emit. That shared emit must stay native for the sibling consumers, so a native sink
+/// consumes those buffers directly while any other format gets its own formatting pipeline in between.
+std::shared_ptr<Pipeline> makeSinkPredecessorAfterFanOut(
+    const std::shared_ptr<Pipeline>& currentPipeline,
+    const PhysicalOperatorWrapper& sinkWrapper,
+    const SinkPhysicalOperator& sink,
+    OperatorPipelineMap& pipelineMap,
+    const uint64_t configuredBufferSize)
+{
+    const auto sinkFormat = sink.getDescriptor().getFormatType();
+    if (toUpperCase(sinkFormat) == "NATIVE")
+    {
+        return currentPipeline;
+    }
+    const auto formattingPipeline = std::make_shared<Pipeline>(
+        createScanOperator(*currentPipeline, sinkWrapper.getInputSchema(), sinkWrapper.getInputMemoryLayoutType(), configuredBufferSize));
+    currentPipeline->addSuccessor(formattingPipeline, currentPipeline);
+    /// The output format is treated in a case sensitive manner, since it serves as a key to the output formatter registry.
+    /// That's why we cannot pass the upper case sinkFormat.
+    addOutputFormattingEmit(
+        formattingPipeline, sinkWrapper, configuredBufferSize, std::string(sinkFormat), sink.getDescriptor().getOutputFormatterConfig());
+    const auto emitOperator = formattingPipeline->getRootOperator().getChild();
+    INVARIANT(
+        emitOperator.has_value() and emitOperator->tryGet<EmitPhysicalOperator>().has_value(), "Scan operator requires an emit as child");
+    pipelineMap[emitOperator.value().getId()] = formattingPipeline;
+    return formattingPipeline;
+}
+
 enum class PipelinePolicy : uint8_t
 {
     Continue, /// Uses the current pipeline for the next operator
-    ForceNew /// Enforces a new pipeline for the next operator
+    ForceNew, /// Enforces a new pipeline for the next operator
+    ForceNewClosed /// Enforces a new pipeline; the predecessor pipeline already ends in an emit, so none may be added
 };
+
+void buildPipelineRecursively(
+    const std::shared_ptr<PhysicalOperatorWrapper>& opWrapper,
+    const std::shared_ptr<PhysicalOperatorWrapper>& prevOpWrapper,
+    const std::shared_ptr<Pipeline>& currentPipeline,
+    OperatorPipelineMap& pipelineMap,
+    PipelinePolicy policy,
+    uint64_t configuredBufferSize,
+    const MergePointSet& mergePoints);
+
+/// Recurses into the children of an operator that was just placed into pipeline. No children ends the recursion,
+/// a single child continues with childPolicy as before. Multiple children form a fan-out point: every consumer
+/// must read the operator's full output, so the pipeline is closed with a single emit and each consumer starts
+/// its own successor pipeline.
+void recurseIntoChildren(
+    const std::shared_ptr<PhysicalOperatorWrapper>& opWrapper,
+    const std::shared_ptr<Pipeline>& pipeline,
+    OperatorPipelineMap& pipelineMap,
+    const PipelinePolicy childPolicy,
+    const uint64_t configuredBufferSize,
+    const MergePointSet& mergePoints)
+{
+    const auto children = opWrapper->getChildren();
+    if (children.empty())
+    {
+        return;
+    }
+    if (children.size() == 1)
+    {
+        buildPipelineRecursively(children.front(), opWrapper, pipeline, pipelineMap, childPolicy, configuredBufferSize, mergePoints);
+        return;
+    }
+
+    if (opWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
+    {
+        addDefaultEmit(pipeline, *opWrapper, configuredBufferSize);
+    }
+    for (const auto& child : children)
+    {
+        buildPipelineRecursively( /// NOLINT(readability-suspicious-call-argument)
+            child,
+            opWrapper,
+            pipeline,
+            pipelineMap,
+            PipelinePolicy::ForceNewClosed,
+            configuredBufferSize,
+            mergePoints);
+    }
+}
 
 void buildPipelineRecursively(
     const std::shared_ptr<PhysicalOperatorWrapper>& opWrapper,
@@ -206,10 +300,29 @@ void buildPipelineRecursively(
     uint64_t configuredBufferSize,
     const MergePointSet& mergePoints)
 {
+    /// Cross-check intent against state: ForceNewClosed promises the predecessor pipeline is already closed —
+    /// by the fan-out point's default emit, or by the fan-out operator itself being a custom emit.
+    INVARIANT(
+        policy != PipelinePolicy::ForceNewClosed || endsInEmit(*currentPipeline)
+            || (prevOpWrapper && prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT),
+        "ForceNewClosed policy, but the predecessor pipeline does not end in an emit");
+
     /// Check if we've already seen this operator
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
     if (const auto it = pipelineMap.find(opId); it != pipelineMap.end())
     {
+        if (policy == PipelinePolicy::ForceNewClosed)
+        {
+            /// The fan-out pipeline is already closed with a native emit, so no emit may be added. A non-native
+            /// sink still needs its own formatting pipeline in between; anything else is wired up directly.
+            auto sinkPredecessor = currentPipeline;
+            if (const auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+            {
+                sinkPredecessor = makeSinkPredecessorAfterFanOut(currentPipeline, *opWrapper, *sink, pipelineMap, configuredBufferSize);
+            }
+            sinkPredecessor->addSuccessor(it->second, sinkPredecessor);
+            return;
+        }
         if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             /// If the operator is a sink we might have to create an output formatter
@@ -242,7 +355,8 @@ void buildPipelineRecursively(
     /// Case 1: Custom Scan
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::SCAN)
     {
-        if (prevOpWrapper && prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
+        if (policy != PipelinePolicy::ForceNewClosed && prevOpWrapper
+            && prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
@@ -254,11 +368,7 @@ void buildPipelineRecursively(
         pipelineMap.emplace(opId, newPipeline);
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
-        for (auto& child : opWrapper->getChildren())
-        {
-            buildPipelineRecursively(
-                child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
-        }
+        recurseIntoChildren(opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
         return;
     }
 
@@ -266,7 +376,8 @@ void buildPipelineRecursively(
     /// it should close the pipeline without adding a default emit
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
     {
-        if (not prevOpWrapper || prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
+        if (not prevOpWrapper || prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT
+            || policy == PipelinePolicy::ForceNewClosed)
         {
             /// If the current operator is an emit operator and the prev operator was also an emit operator, we need to add a scan before the
             /// current operator to create a new pipeline
@@ -346,9 +457,11 @@ void buildPipelineRecursively(
                         sink->getDescriptor().getOutputFormatterConfig());
                 }
 
-                INVARIANT(sourcePipeline->getRootOperator().getChild().has_value(), "Scan operator requires at least an emit as child.");
-                const auto emitOperatorId = sourcePipeline->getRootOperator().getChild().value().getId();
-                pipelineMap[emitOperatorId] = sourcePipeline;
+                const auto emitOperator = sourcePipeline->getRootOperator().getChild();
+                INVARIANT(
+                    emitOperator.has_value() and emitOperator->tryGet<EmitPhysicalOperator>().has_value(),
+                    "Scan operator requires an emit as child");
+                pipelineMap[emitOperator.value().getId()] = sourcePipeline;
 
                 const auto sinkPipeline = std::make_shared<Pipeline>(*sink);
                 sourcePipeline->addSuccessor(sinkPipeline, sourcePipeline);
@@ -356,6 +469,15 @@ void buildPipelineRecursively(
                 pipelineMap.emplace(opId, sinkPipelinePtr);
                 return;
             }
+        }
+        if (policy == PipelinePolicy::ForceNewClosed)
+        {
+            const auto sinkPredecessor
+                = makeSinkPredecessorAfterFanOut(currentPipeline, *opWrapper, *sink, pipelineMap, configuredBufferSize);
+            const auto sinkPipeline = std::make_shared<Pipeline>(*sink);
+            sinkPredecessor->addSuccessor(sinkPipeline, sinkPredecessor);
+            pipelineMap.emplace(opId, sinkPredecessor->getSuccessors().back());
+            return;
         }
         /// Add emit first if there is one needed
         if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
@@ -389,15 +511,16 @@ void buildPipelineRecursively(
     /// Force a pipeline break for DAG merge points (operators with multiple parents).
     /// Without this, the operator would be fused into the first parent's pipeline, and the second
     /// parent's data would incorrectly flow through the first parent's operators.
-    if (policy != PipelinePolicy::ForceNew && mergePoints.contains(opId))
+    if (policy == PipelinePolicy::Continue && mergePoints.contains(opId))
     {
         policy = PipelinePolicy::ForceNew;
     }
 
     /// Case 4: Forced new pipeline (pipeline breaker) for fusible operators
-    if (policy == PipelinePolicy::ForceNew)
+    if (policy == PipelinePolicy::ForceNew || policy == PipelinePolicy::ForceNewClosed)
     {
-        if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
+        if (policy != PipelinePolicy::ForceNewClosed and prevOpWrapper
+            and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *opWrapper, configuredBufferSize);
         }
@@ -412,20 +535,19 @@ void buildPipelineRecursively(
         PRECONDITION(newPipelinePtr->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
         newPipelinePtr->prependOperator(
             createScanOperator(*currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
-        for (auto& child : opWrapper->getChildren())
-        {
-            buildPipelineRecursively(
-                child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
-        }
+        recurseIntoChildren(opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
         return;
     }
 
     /// Case 5: Fusible operator – add it to the current pipeline
+    auto targetPipeline = currentPipeline;
     if (prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
     {
         /// If the current operator is a fusible operator and the prev operator was an emit operator, we need to add a scan before the
-        /// current operator to create a new pipeline.
-        createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
+        /// current operator to create a new pipeline. Everything below must then target that new pipeline, not the closed one.
+        /// @note No dispatch path currently gets here: Case 2 returns for every EMIT-located operator, so the Continue policy is
+        /// only ever passed together with a SCAN- or INTERMEDIATE-located prevOpWrapper. Kept correct in case that changes.
+        targetPipeline = createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
     }
     else
     {
@@ -434,19 +556,15 @@ void buildPipelineRecursively(
 
     if (opWrapper->getHandler() && opWrapper->getHandlerId())
     {
-        currentPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
+        targetPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
     }
     if (opWrapper->getChildren().empty())
     {
-        addDefaultEmit(currentPipeline, *opWrapper, configuredBufferSize);
+        addDefaultEmit(targetPipeline, *opWrapper, configuredBufferSize);
     }
     else
     {
-        for (auto& child : opWrapper->getChildren())
-        {
-            buildPipelineRecursively(
-                child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
-        }
+        recurseIntoChildren(opWrapper, targetPipeline, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
     }
 }
 
