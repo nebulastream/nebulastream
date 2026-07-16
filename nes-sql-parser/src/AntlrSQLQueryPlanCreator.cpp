@@ -1208,6 +1208,11 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
+                if (const auto numArgs = context->argument.size(); numArgs != 1)
+                {
+                    throw InvalidQuerySyntax(
+                        "Type constructor {} expects exactly 1 argument, got {} at {}", funcName, numArgs, context->getText());
+                }
                 if (helpers.top().constantBuilder.empty())
                 {
                     throw InvalidQuerySyntax("Expected constant, got nothing at {}", context->getText());
