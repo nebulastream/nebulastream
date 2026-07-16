@@ -11,3 +11,6 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(ARAVIS REQUIRED IMPORTED_TARGET aravis-0.8)
 target_link_libraries(video_source_plugin_library PRIVATE PkgConfig::ARAVIS)
 target_link_libraries(video_source_validation_plugin_library PRIVATE PkgConfig::ARAVIS)
+
+add_executable(video_source_smoke_test VideoSourceSmokeTest.c)
+target_link_libraries(video_source_smoke_test PRIVATE PkgConfig::ARAVIS)

@@ -1,27 +1,63 @@
-query: |
-  SELECT
-    TIMESTAMP,
-    WIDTH,
-    HEIGHT,
-    PIXEL_FORMAT,
-    TO_BASE64(IMAGE) AS IMAGE
-  FROM video
-  INTO video_frames;
-
+query:
+  - |
+    SELECT
+      TIMESTAMP / UINT64(1000000) as TIMESTAMP,
+      WIDTH,
+      HEIGHT,
+      PIXEL_FORMAT,
+      IMAGE
+    FROM video
+    INTO video_pipe_sink;
+  - |
+    SELECT to_base64(image_manip_yuyv_to_jpg(IMAGE, WIDTH, HEIGHT)) as IMAGE
+    FROM video_pipe 
+    WHERE PIXEL_FORMAT = 34603058
+    INTO File('localhost:8080' as "SINK"."HOST", 'CSV' AS "SINK"."OUTPUT_FORMAT", 'rgb.csv' as "SINK"."FILE_PATH");
+  - |
+    SELECT to_base64(image_manip_mono16_to_jpg(IMAGE, WIDTH, HEIGHT)) as IMAGE
+    FROM video_pipe 
+    WHERE PIXEL_FORMAT = 17825799
+    INTO File('localhost:8080' as "SINK"."HOST", 'CSV' AS "SINK"."OUTPUT_FORMAT", 'thermal.csv' as "SINK"."FILE_PATH");
 sinks:
+  - name: video_pipe_sink
+    host: localhost:8080
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+        nullable: false
+      - name: WIDTH
+        type: UINT64
+        nullable: false
+      - name: HEIGHT
+        type: UINT64
+        nullable: false
+      - name: PIXEL_FORMAT
+        type: UINT64
+        nullable: false
+      - name: IMAGE
+        type: VARSIZED
+        nullable: false
+    type: Pipe
+    config:
+      pipe_name: video_frames
   - name: video_frames
     host: localhost:8080
     schema:
       - name: TIMESTAMP
         type: UINT64
+        nullable: false
       - name: WIDTH
         type: UINT64
+        nullable: false
       - name: HEIGHT
         type: UINT64
+        nullable: false
       - name: PIXEL_FORMAT
         type: UINT64
+        nullable: false
       - name: IMAGE
         type: VARSIZED
+        nullable: false
     type: File
     config:
       output_format: CSV
@@ -33,23 +69,52 @@ logical:
     schema:
       - name: TIMESTAMP
         type: UINT64
+        nullable: false
       - name: WIDTH
         type: UINT64
+        nullable: false
       - name: HEIGHT
         type: UINT64
+        nullable: false
       - name: PIXEL_FORMAT
         type: UINT64
+        nullable: false
       - name: IMAGE
         type: VARSIZED
+        nullable: false
+  - name: video_pipe
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+        nullable: false
+      - name: WIDTH
+        type: UINT64
+        nullable: false
+      - name: HEIGHT
+        type: UINT64
+        nullable: false
+      - name: PIXEL_FORMAT
+        type: UINT64
+        nullable: false
+      - name: IMAGE
+        type: VARSIZED
+        nullable: false
 
 physical:
   - logical: video
     host: localhost:8080
     type: Video
     parser_config:
-      type: Native
+      type: NATIVE
     source_config:
-      sourceSelector: 2
+      SOURCE_SELECTOR: 2
+  - logical: video_pipe
+    host: localhost:8080
+    type: Pipe
+    parser_config:
+      type: NATIVE
+    source_config:
+      pipe_name: video_frames
 
 workers:
   - host: localhost:8080

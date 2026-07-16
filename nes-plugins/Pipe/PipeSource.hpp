@@ -76,7 +76,7 @@ private:
 struct ConfigParametersPipeSource
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> PIPE_NAME{
-        "pipe_name",
+        "PIPE_NAME",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PIPE_NAME, config); }};
 

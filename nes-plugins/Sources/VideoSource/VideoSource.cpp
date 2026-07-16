@@ -81,7 +81,7 @@ void validateSchema(const SourceDescriptor& sourceDescriptor)
 class StreamBuffer
 {
 public:
-    explicit StreamBuffer(ArvStream* stream) : stream(stream), buffer(arv_stream_timeout_pop_buffer(stream, 100'000)) { }
+    explicit StreamBuffer(ArvStream* stream) : stream(stream), buffer(arv_stream_timeout_pop_buffer(stream, 1'000'000)) { }
     StreamBuffer(const StreamBuffer&) = delete;
     StreamBuffer& operator=(const StreamBuffer&) = delete;
 
@@ -146,6 +146,11 @@ void VideoSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 
     arv_camera_set_integer(camera.get(), "FLK_TI_StreamDataSourceSelector", sourceSelector, &error);
     checkError("selecting camera stream", error);
+    if (arv_camera_is_gv_device(camera.get()))
+    {
+        arv_camera_gv_set_packet_size(camera.get(), 1444, &error);
+        checkError("setting GigE packet size", error);
+    }
     arv_camera_set_acquisition_mode(camera.get(), ARV_ACQUISITION_MODE_CONTINUOUS, &error);
     checkError("setting continuous acquisition", error);
 
@@ -154,17 +159,6 @@ void VideoSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     if (!stream)
     {
         throw CannotOpenSource("Could not create camera stream");
-    }
-
-    if (ARV_IS_GV_STREAM(stream.get()))
-    {
-        g_object_set(
-            stream.get(),
-            "socket-buffer",
-            ARV_GV_STREAM_SOCKET_BUFFER_AUTO,
-            "socket-buffer-size",
-            0,
-            nullptr);
     }
 
     const auto payloadSize = arv_camera_get_payload(camera.get(), &error);
@@ -222,7 +216,7 @@ Source::FillTupleBufferResult VideoSource::fillTupleBuffer(TupleBuffer& tupleBuf
             .pixelFormat = image.pixelFormat(),
             .image = VariableSizedAccess{tupleBuffer.storeChildBuffer(childBuffer), VariableSizedAccess::Size{bytes.size()}}};
         std::memcpy(tupleBuffer.getAvailableMemoryArea().data(), &tuple, sizeof(tuple));
-        return FillTupleBufferResult::withBytes(sizeof(tuple));
+        return FillTupleBufferResult::withBytes(1);
     }
     return FillTupleBufferResult::eos();
 }
