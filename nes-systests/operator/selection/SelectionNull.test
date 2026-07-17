@@ -72,7 +72,7 @@ SELECT * FROM stream WHERE value1 == 1 INTO sink0;
 5,1,one
 
 # Filter equal on VARSIZED with null
-SELECT ts, value1 FROM stream WHERE value2 == VARSIZED('one') INTO sink1;
+SELECT ts, value1 FROM stream WHERE value2 == 'one' INTO sink1;
 ----
 3,1
 4,1
@@ -116,7 +116,7 @@ INTO sinkMapped;
 8,7,-4
 
 SELECT id,
-       CONCAT(text, VARSIZED('_x')) AS text_suffix
+       CONCAT(text, '_x') AS text_suffix
 FROM stream2
 INTO sinkTextSuffix;
 ----
@@ -171,9 +171,9 @@ INTO sinkBoolOps;
 10,false,NULL,true,false
 
 SELECT id,
-       text == VARSIZED('beta') AS is_beta,
+       text == 'beta' AS is_beta,
        text == text AS text_self_eq,
-       ISNULL(CONCAT(text, VARSIZED('_x'))) AS concat_isnull
+       ISNULL(CONCAT(text, '_x')) AS concat_isnull
 FROM stream2
 INTO sinkTextCmp;
 ----

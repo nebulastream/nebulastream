@@ -23,7 +23,7 @@ SELECT
     campaign_id,
     COUNT(user_id) AS count_user_id
 FROM ysb1k
-WHERE event_type == VARSIZED('view')
+WHERE event_type == 'view'
 GROUP BY campaign_id
 WINDOW TUMBLING(event_time, SIZE 30 SEC)
 INTO ysb1kChecksum;
@@ -38,7 +38,7 @@ SELECT
     campaign_id,
     COUNT(user_id) AS count_user_id
 FROM ysb10k
-WHERE event_type == VARSIZED('view')
+WHERE event_type == 'view'
 GROUP BY campaign_id
 WINDOW TUMBLING(event_time, SIZE 30 SEC)
 INTO ysb10kChecksum;
