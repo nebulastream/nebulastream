@@ -27,6 +27,7 @@
 #include <optional>
 #include <ostream>
 #include <random>
+#include <semaphore>
 #include <stop_token>
 #include <thread>
 #include <tuple>
@@ -213,21 +214,32 @@ public:
     std::atomic<std::chrono::milliseconds> stopDuration = std::chrono::milliseconds(0);
     std::atomic_bool failOnStart = false;
     std::atomic_bool failOnStop = false;
+    std::atomic_bool blockOnStart = false;
     std::atomic<size_t> throwOnNthInvocation = -1;
     std::atomic<size_t> repeatCount = 0;
     std::atomic<size_t> repeatCountDuringStop = 0;
 
     std::promise<void> start;
+    std::promise<void> startEntered;
     std::promise<void> stop;
     std::promise<void> destruction;
     std::shared_future<void> startFuture = start.get_future().share();
+    std::shared_future<void> startEnteredFuture = startEntered.get_future().share();
     std::shared_future<void> stopFuture = stop.get_future().share();
     std::shared_future<void> destructionFuture = destruction.get_future().share();
+    std::binary_semaphore startGate{0};
 
     /// Back reference this is set during construction of a TestPipeline
     ExecutablePipelineStage* stage = nullptr;
 
     [[nodiscard]] testing::AssertionResult waitForStart() const { return waitForFuture(startFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
+
+    [[nodiscard]] testing::AssertionResult waitUntilStartEntered() const
+    {
+        return waitForFuture(startEnteredFuture, DEFAULT_LONG_AWAIT_TIMEOUT);
+    }
+
+    void unblockStart() { startGate.release(); }
 
     [[nodiscard]] testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
 
@@ -263,6 +275,11 @@ struct TestPipeline final : ExecutablePipelineStage
 
     void start(PipelineExecutionContext&) override
     {
+        if (controller->blockOnStart)
+        {
+            controller->startEntered.set_value();
+            controller->startGate.acquire();
+        }
         std::this_thread::sleep_for(controller->startDuration.load());
         controller->start.set_value();
         if (controller->failOnStart)
