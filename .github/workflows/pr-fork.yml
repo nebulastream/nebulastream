@@ -1,15 +1,48 @@
 name: NES PR CI (Fork)
 description: |
-  This workflow is triggered for every pull request, however it is intended to be run from forks only, to give them 
-  additional permissions. Currently this includes only the clang-tidy-diff workflow which requires write permissions 
+  This workflow is triggered for every pull request, however it is intended to be run from forks only, to give them
+  additional permissions. Currently this includes only the clang-tidy-diff workflow which requires write permissions
   to add comments to the PR.
 on:
   pull_request_target:
     types: [ synchronize, opened, reopened ]
 
 jobs:
-  get-dev-images:
+  # Mirror of pr.yml's docs-only detection for fork PRs, so a docs-only fork PR skips the clang-tidy
+  # build and its "Clang-Tidy Done" gate passes without a build.
+  detect-changes:
     if: github.event.pull_request.head.repo.fork == true
+    runs-on: ubuntu-24.04
+    outputs:
+      docs_only: ${{ steps.decide.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history so tj-actions can diff base_sha..sha; a shallow clone yields an empty diff.
+          fetch-depth: 0
+      - uses: tj-actions/changed-files@v44
+        id: filter
+        with:
+          base_sha: ${{ github.event.pull_request.base.sha }}
+          sha: ${{ github.event.pull_request.head.sha }}
+          files_from_source_file: .github/ci/full-ci-skip-paths.txt
+      - id: decide
+        shell: bash
+        run: |
+          # Fail-safe: docs_only only when a doc positively changed AND nothing non-doc changed.
+          # Empty/failed diff -> any_changed=false -> docs_only=false -> run the full pipeline.
+          only='${{ steps.filter.outputs.only_changed }}'
+          any='${{ steps.filter.outputs.any_changed }}'
+          echo "only_changed=$only any_changed=$any"
+          if [ "$only" = "true" ] && [ "$any" = "true" ]; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  get-dev-images:
+    needs: [ detect-changes ]
+    if: ${{ github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
@@ -17,8 +50,8 @@ jobs:
       head_sha: ${{ github.event.pull_request.head.sha }}
 
   clang-tidy-diff:
-    if: github.event.pull_request.head.repo.fork == true
-    needs: [ get-dev-images ]
+    needs: [ detect-changes, get-dev-images ]
+    if: ${{ github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/clang_tidy_diff.yml
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
@@ -26,3 +59,20 @@ jobs:
       base_sha: ${{ github.event.pull_request.base.sha }}
       number_of_commits: ${{ github.event.pull_request.commits || -1 }}
     secrets: inherit
+
+  # Fork-side "Clang-Tidy Done" gate — the required context for fork PRs. Non-fork PRs get it from
+  # pr.yml instead, so exactly one workflow reports it per PR. Same docs-only-first logic.
+  clang-tidy-done:
+    name: "Clang-Tidy Done"
+    needs: [ detect-changes, clang-tidy-diff ]
+    if: ${{ always() && github.event.pull_request.head.repo.fork == true }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Gate
+        run: |
+          if [ "${{ needs.detect-changes.outputs.docs_only }}" = "true" ]; then
+            echo "docs-only PR — skipped run expected; passing."; exit 0
+          fi
+          if [ "${{ needs.clang-tidy-diff.result }}" = "success" ]; then exit 0; fi
+          echo "::error::clang-tidy-diff did not succeed: ${{ needs.clang-tidy-diff.result }}"
+          exit 1
