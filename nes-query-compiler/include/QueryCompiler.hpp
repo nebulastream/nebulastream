@@ -32,6 +32,10 @@ struct QueryCompilationRequest
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;
     DumpMode dumpCompilationResult = DumpMode{DumpMode::Options::NONE, false};
+    /// Whether to splice proxy invoke call sites with the callee's bitcode (nautilus `mlir.inline_invoke_calls`).
+    /// NOTE: unlike the options above this DOES influence the generated code -- it is a performance knob, not a debug
+    /// one (an ablation lever: it suppresses BOTH the accessor-proxy and the tagged parse-wrapper inlining at once).
+    bool inlineInvokeCalls = true;
 };
 
 /// The query compiler behaves as a pure function: QueryPlan -> CompiledQueryPlan

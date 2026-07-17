@@ -50,6 +50,14 @@ public:
            "",
            "Path to YAML file configuring invoke modes (empty = all default)",
            {invokeModeConfigurationValidator()}};
+    /// Master switch for nautilus' `mlir.inline_invoke_calls`: whether proxy `invoke` call sites are spliced with the
+    /// callee's LLVM bitcode instead of emitting a call. GLOBAL and all-or-nothing -- it covers BOTH the accessor
+    /// proxies (getMemArea, getBandDataProxy, the output write proxies) and the NAUTILUS_TAGGED_INLINE parse wrappers.
+    /// It can only SUPPRESS inlining of functions whose bitcode was already emitted at BUILD time (NAUTILUS_INLINE +
+    /// nautilus_inline(<target>) in CMake); it can never make a new function inlinable, and it cannot select per
+    /// function -- that selection stays in testing/configurations/InlineTagConfig.yaml (build time). Default true =
+    /// the previous hardcoded behavior.
+    BoolOption inlineInvokeCalls = {"inline_invoke_calls", "true", "Inline nautilus proxy invoke calls into the JIT'd module (MLIR level)"};
     BoolOption ccxAwareTaskQueues
         = {"ccx_aware_task_queues",
            "false",
@@ -73,6 +81,7 @@ protected:
             &numberOfIOThreads,
             &admissionQueueSize,
             &invokeModeConfigurationPath,
+            &inlineInvokeCalls,
             &ccxAwareTaskQueues,
             &ccxTopology};
     }

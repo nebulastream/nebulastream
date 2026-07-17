@@ -29,8 +29,8 @@ namespace NES
 class LowerToCompiledQueryPlanPhase
 {
 public:
-    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations)
-        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations)
+    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations, const bool inlineInvokeCalls = true)
+        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations), inlineInvokeCalls(inlineInvokeCalls)
     {
     }
 
@@ -56,5 +56,6 @@ private:
 
     /// Config parameter
     DumpMode dumpQueryCompilationIR;
+    bool inlineInvokeCalls;
 };
 }
