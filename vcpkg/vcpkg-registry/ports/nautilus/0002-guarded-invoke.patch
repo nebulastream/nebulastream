@@ -1,0 +1,248 @@
+diff --git a/nautilus/include/nautilus/exception.hpp b/nautilus/include/nautilus/exception.hpp
+new file mode 100644
+--- /dev/null
++++ b/nautilus/include/nautilus/exception.hpp
+@@ -0,0 +1,199 @@
++/*
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++        https://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++*/
++
++#pragma once
++#include <concepts>
++#include <exception>
++#include <type_traits>
++#include <utility>
++#include "nautilus/function.hpp"
++#include "nautilus/val.hpp"
++
++/**
++ * @file invoke() replacements for proxy functions that may throw.
++ *
++ * Compiled nautilus code carries no exception-handling machinery: the generated IR has no
++ * personality function, no landing pads and no invoke instructions. An exception thrown inside a
++ * proxy called via invoke() therefore unwinds straight through the compiled frame, and every
++ * destructor the tracer emitted into that frame is skipped. Any resource those destructors would
++ * have released is leaked.
++ *
++ * As an interim measure until the IR gains real exception handling, the guarded invokes below park
++ * a thrown exception in a thread-local instead of letting it unwind. The traced function then runs
++ * to its natural end, where the emitted destructors already sit, and the exception is rethrown at
++ * the outermost C++ caller of the compiled function -- ModuleFunction::operator() drains it
++ * automatically, so callers need do nothing.
++ *
++ * Rule: a proxy that can throw must be called through invokeGuarded / invokeGuardedSlot, never
++ * through a plain invoke(). Using plain invoke() on a throwing proxy reintroduces the leak.
++ */
++namespace nautilus {
++
++namespace details {
++
++// Parked outside the compiled frame: a val<T> would be an alloca inside the very frame we cannot
++// unwind cleanly, so it would die along with the resources we are trying to save. A compiled
++// function invocation is confined to one thread, so a thread-local gives each in-flight invocation
++// its own slot.
++inline thread_local std::exception_ptr currentException;
++
++// Depth of nested compiled-function invocations on this thread. Only the outermost invocation may
++// rethrow: draining inside a nested one would throw through the enclosing compiled frame, which is
++// exactly the unwinding we are avoiding.
++inline thread_local int invocationDepth = 0;
++
++struct InvocationScope {
++	InvocationScope() {
++		++invocationDepth;
++	}
++	~InvocationScope() {
++		--invocationDepth;
++	}
++	InvocationScope(const InvocationScope&) = delete;
++	InvocationScope& operator=(const InvocationScope&) = delete;
++
++	[[nodiscard]] bool isOutermost() const {
++		return invocationDepth == 1;
++	}
++};
++
++// Guards a scalar/void-returning proxy: parks a thrown exception and hands back a sentinel
++// ResultType{}. Once a failure is parked the traced code still runs to the end of the function, so
++// short-circuit to stop doing real work.
++template <auto FN, typename... Args>
++std::invoke_result_t<decltype(FN), Args...> guardedProxy(Args... args) {
++	using ResultType = std::invoke_result_t<decltype(FN), Args...>;
++	if (not currentException) {
++		try {
++			return FN(args...);
++		} catch (...) {
++			currentException = std::current_exception();
++		}
++	}
++	if constexpr (not std::same_as<ResultType, void>) {
++		return ResultType{};
++	}
++}
++
++// Guards a proxy that returns an aggregate by value. Tracing has no aggregate type, so a proxy
++// cannot return a struct across the boundary; the result is handed back as a pointer into a
++// thread-local slot instead and the traced code reads the fields off that pointer. This wrapper
++// owns the slot, parks a thrown exception and always returns a valid pointer, so the proxy author
++// writes a plain by-value function that simply throws.
++template <auto FN, typename... Args>
++auto* guardedSlotProxy(Args... args) {
++	using RetVal = std::invoke_result_t<decltype(FN), Args...>;
++	thread_local RetVal slot {};
++	if (not currentException) {
++		try {
++			slot = FN(args...);
++		} catch (...) {
++			currentException = std::current_exception();
++			slot = RetVal {};
++		}
++	} else {
++		slot = RetVal {};
++	}
++	return &slot;
++}
++
++// Guards a captureless lambda passed by value: reconstructed at compile time via Fn{}, so the
++// callee is a concrete instantiation and a direct call is emitted.
++template <typename Fn, typename R, typename... Args>
++R guardedStatelessProxy(Args... args) {
++	if (not currentException) {
++		try {
++			return Fn {}(args...);
++		} catch (...) {
++			currentException = std::current_exception();
++		}
++	}
++	if constexpr (not std::same_as<R, void>) {
++		return R{};
++	}
++}
++
++// Guards a named function passed by value: the function pointer is threaded in as a void* and
++// reinterpreted here, so the call is indirect. traceCall() already round-trips function pointers
++// through void*, so this reuses an established pattern.
++template <typename R, typename... Args>
++R guardedRuntimeProxy(void* fnRaw, Args... args) {
++	auto* fn = reinterpret_cast<R (*)(Args...)>(fnRaw);
++	if (not currentException) {
++		try {
++			return fn(args...);
++		} catch (...) {
++			currentException = std::current_exception();
++		}
++	}
++	if constexpr (not std::same_as<R, void>) {
++		return R{};
++	}
++}
++
++} // namespace details
++
++/// True if a guarded proxy parked an exception during the current compiled call on this thread.
++[[nodiscard]] inline bool hasParkedException() {
++	return static_cast<bool>(details::currentException);
++}
++
++/// Rethrows and clears a parked exception, if any. ModuleFunction::operator() calls this once the
++/// outermost compiled call has returned, so the exception propagates as if it had unwound out of
++/// the compiled function.
++inline void rethrowIfParked() {
++	if (details::currentException) {
++		std::rethrow_exception(std::exchange(details::currentException, nullptr));
++	}
++}
++
++/// invoke() for a scalar/void-returning proxy identified by a non-type template parameter. The NTTP
++/// form guarantees a direct call and is what hot paths should use.
++template <auto FN, typename... Args>
++auto invokeGuarded(val<Args>... argument) {
++	return invoke(details::guardedProxy<FN, Args...>, argument...);
++}
++
++/// invoke() for a proxy that returns an aggregate by value; yields a val<RetVal*> pointing at the
++/// thread-local slot, whose fields the caller reads via getMemberWithOffset() or equivalent.
++///
++/// The default ModRef attribute is deliberate. A `Ref` (reads-only) hint is wrong here and
++/// miscompiles the pattern: the proxy stores to the thread-local slot that the caller then reads
++/// through the returned pointer, so under `Ref` the backend is entitled to merge the per-field
++/// loads and every field collapses to a single value.
++template <auto FN, typename... Args>
++auto invokeGuardedSlot(val<Args>... argument) {
++	return invoke(details::guardedSlotProxy<FN, Args...>, argument...);
++}
++
++/// invoke() for a scalar/void-returning proxy passed by value. Accepts both a captureless lambda
++/// (reconstructed via Fn{}, direct call) and a plain function (threaded as void*, indirect call).
++/// Pass a lambda WITHOUT the leading `+`, otherwise it decays to a function pointer and takes the
++/// indirect path. Capturing lambdas fail to compile, which is correct: a closure cannot cross the
++/// boundary into compiled code.
++template <typename Fn, typename... Args>
++requires std::is_invocable_v<Fn, Args...>
++auto invokeGuarded(Fn fn, val<Args>... argument) {
++	using R = std::invoke_result_t<Fn, Args...>;
++	if constexpr (std::is_empty_v<Fn>) {
++		return invoke(details::guardedStatelessProxy<Fn, R, Args...>, argument...);
++	} else {
++		static_assert(std::is_convertible_v<Fn, R (*)(Args...)>,
++		              "invokeGuarded needs a captureless lambda or a plain function (capturing lambdas cannot cross the boundary)");
++		R (*fnptr)(Args...) = fn;
++		return invoke(details::guardedRuntimeProxy<R, Args...>, val<void*> {reinterpret_cast<void*>(fnptr)}, argument...);
++	}
++}
++
++} // namespace nautilus
+diff --git a/nautilus/include/nautilus/Module.hpp b/nautilus/include/nautilus/Module.hpp
+--- a/nautilus/include/nautilus/Module.hpp
++++ b/nautilus/include/nautilus/Module.hpp
+@@ -5,6 +5,7 @@
+ #include "nautilus/Executable.hpp"
+ #include "nautilus/JITCompiler.hpp"
+ #include "nautilus/config.hpp"
+ #include "nautilus/core.hpp"
++#include "nautilus/exception.hpp"
+ #include "nautilus/options.hpp"
+ #include <any>
+@@ -137,10 +137,26 @@ public:
+ 	}
+ 	ModuleFunction& operator=(ModuleFunction&&) noexcept = default;
+
+-	R operator()(Args... args) const {
+-		if (cache_->version.load(std::memory_order_acquire) != state_->version.load(std::memory_order_acquire)) {
+-			resolve();
+-		}
+-		return cache_->impl(std::forward<Args>(args)...);
+-	}
++	R operator()(Args... args) const {
++		if (cache_->version.load(std::memory_order_acquire) != state_->version.load(std::memory_order_acquire)) {
++			resolve();
++		}
++		// Compiled code has no landing pads, so a guarded proxy parks its exception instead of unwinding
++		// through the compiled frame. Drain it here, at the outermost boundary back into C++, where every
++		// destructor the tracer emitted has already run. Nested invocations must not drain: rethrowing there
++		// would unwind through the enclosing compiled frame, which is the very thing being avoided.
++		const nautilus::details::InvocationScope scope;
++		if constexpr (std::is_void_v<R>) {
++			cache_->impl(std::forward<Args>(args)...);
++			if (scope.isOutermost()) {
++				nautilus::rethrowIfParked();
++			}
++		} else {
++			R result = cache_->impl(std::forward<Args>(args)...);
++			if (scope.isOutermost()) {
++				nautilus::rethrowIfParked();
++			}
++			return result;
++		}
++	}
+ };
