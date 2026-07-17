@@ -58,10 +58,10 @@ A filter predicate that evaluates to NULL is treated as **FALSE** — the row is
 -- ts=3, value=NULL
 -- ts=4, value=2
 
-SELECT * FROM stream WHERE value == INT32(1);
+SELECT * FROM stream WHERE value == 1;
 -- Result: only ts=2 (NULL == 1 evaluates to NULL, treated as false)
 
-SELECT * FROM stream WHERE value < INT32(1);
+SELECT * FROM stream WHERE value < 1;
 -- Result: empty (NULL < 1 evaluates to NULL, treated as false)
 ```
 
@@ -95,7 +95,7 @@ Arithmetic and string expressions propagate NULL: if **any operand is NULL**, th
 ```sql
 -- Source: id=0 value1=0 value2=4 | id=4 value1=NULL value2=NULL | id=5 value1=7 value2=NULL
 
-SELECT id, value1 + INT32(1) AS result FROM stream;
+SELECT id, value1 + 1 AS result FROM stream;
 -- id=0: 1
 -- id=4: NULL     (NULL + 1 = NULL)
 -- id=5: 8
@@ -109,7 +109,7 @@ SELECT id, value1 + value2 AS result FROM stream;
 String concatenation follows the same rule:
 
 ```sql
-SELECT id, CONCAT(text, VARSIZED("_x")) AS result FROM stream;
+SELECT id, CONCAT(text, '_x') AS result FROM stream;
 -- id=1: "alpha_x"
 -- id=3: NULL      (NULL concat "_x" = NULL)
 ```
@@ -122,7 +122,7 @@ All comparisons involving NULL yield **NULL** — including equality of a value 
 -- Source: id=1 value1=1 value2=2 | id=2 value1=NULL value2=3 | id=5 value1=NULL value2=NULL
 
 SELECT id,
-       value1 == INT32(1) AS v1_eq_1,
+       value1 == 1 AS v1_eq_1,
        value1 == value2   AS v1_eq_v2,
        value1 == value1   AS v1_self_eq,
        value2 == value2   AS v2_self_eq
@@ -142,7 +142,7 @@ The same applies to `<`, `>`, `<=`, `>=`, and `!=`:
 ```sql
 -- Source: id=1 a=1 b=2 | id=2 a=NULL b=2 | id=3 a=3 b=NULL
 
-SELECT id, a < INT32(3) AS a_lt_3, b > INT32(0) AS b_gt_0, a < b AS a_lt_b FROM stream;
+SELECT id, a < 3 AS a_lt_3, b > 0 AS b_gt_0, a < b AS a_lt_b FROM stream;
 ```
 
 | id | a_lt_3 | b_gt_0 | a_lt_b |
@@ -316,7 +316,7 @@ The `id=3` group has values `{NULL, NULL}` — `SUM` returns `NULL` because ever
 ```sql
 SELECT ISNULL(value) FROM stream;              -- true if value is NULL
 SELECT NOT ISNULL(value) FROM stream;          -- true if value is NOT NULL
-SELECT ISNULL(value1 == INT32(1)) FROM stream; -- true if the comparison result is NULL
+SELECT ISNULL(value1 == 1) FROM stream;        -- true if the comparison result is NULL
 SELECT ISNULL(CONCAT(a, b)) FROM stream;       -- true if the concat result is NULL
 ```
 
