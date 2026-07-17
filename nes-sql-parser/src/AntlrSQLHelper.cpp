@@ -46,14 +46,14 @@ void AntlrSQLHelper::setSource(Identifier sourceName)
     this->source = std::move(sourceName);
 }
 
-void AntlrSQLHelper::setInlineSource(const Identifier& type, const ConfigMap& parameters)
+void AntlrSQLHelper::setAnonymousSource(const Identifier& type, const ConfigMap& parameters)
 {
-    this->inlineSourceConfig = std::make_pair(type, parameters);
+    this->anonymousSourceConfig = std::make_pair(type, parameters);
 }
 
-std::optional<std::pair<Identifier, ConfigMap>> AntlrSQLHelper::getInlineSourceConfig()
+std::optional<std::pair<Identifier, ConfigMap>> AntlrSQLHelper::getAnonymousSourceConfig()
 {
-    return this->inlineSourceConfig;
+    return this->anonymousSourceConfig;
 }
 
 void AntlrSQLHelper::addWhereClause(LogicalFunction expressionNode)

@@ -48,7 +48,7 @@ public:
     static LogicalPlan createLogicalPlan(Identifier logicalSourceName);
 
     static LogicalPlan createLogicalPlan(
-        Identifier inlineSourceType,
+        Identifier anonymousSourceType,
         Schema<UnqualifiedUnboundField, Ordered> schema,
         std::unordered_map<Identifier, std::string> sourceConfig,
         std::unordered_map<Identifier, std::string> parserConfig);
@@ -98,7 +98,7 @@ public:
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
-    static LogicalPlan addInlineSink(
+    static LogicalPlan addAnonymousSink(
         Identifier type,
         std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
         std::unordered_map<Identifier, std::string> sinkConfig,

@@ -36,32 +36,32 @@
 namespace NES
 {
 
-/// InlineSinkLogicalOperator objects represent sinks in the logical query plan that are defined within a query as opposed to
-/// sinks defined in separate create statements. The InlineSinkLogicalOperator objects contain all necessary configurations to
-/// build a SinkLogicalOperator within the InlineSinkBindingPhase of the optimizer.
-class InlineSinkLogicalOperator : public ManagedByOperator
+/// AnonymousSinkLogicalOperator objects represent sinks in the logical query plan that are defined within a query as opposed to
+/// sinks defined in separate create statements. The AnonymousSinkLogicalOperator objects contain all necessary configurations to
+/// build a SinkLogicalOperator within the AnonymousSinkBindingPhase of the optimizer.
+class AnonymousSinkLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit InlineSinkLogicalOperator(
+    explicit AnonymousSinkLogicalOperator(
         WeakLogicalOperator self,
         Identifier sinkType,
         std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
         std::unordered_map<Identifier, std::string> config,
         std::unordered_map<Identifier, std::string> formatConfig);
 
-    static TypedLogicalOperator<InlineSinkLogicalOperator> create(
+    static TypedLogicalOperator<AnonymousSinkLogicalOperator> create(
         Identifier sinkType,
         std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
         std::unordered_map<Identifier, std::string> config,
         std::unordered_map<Identifier, std::string> formatConfig);
 
-    [[nodiscard]] bool operator==(const InlineSinkLogicalOperator& rhs) const;
+    [[nodiscard]] bool operator==(const AnonymousSinkLogicalOperator& rhs) const;
 
-    [[nodiscard]] InlineSinkLogicalOperator withTraitSet(TraitSet traitSet) const;
+    [[nodiscard]] AnonymousSinkLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
 
-    [[nodiscard]] InlineSinkLogicalOperator withChildrenUnsafe(std::vector<LogicalOperator> children) const;
-    [[nodiscard]] InlineSinkLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    [[nodiscard]] AnonymousSinkLogicalOperator withChildrenUnsafe(std::vector<LogicalOperator> children) const;
+    [[nodiscard]] AnonymousSinkLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
     [[nodiscard]] static Schema<Field, Unordered> getOutputSchema();
@@ -69,7 +69,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] static std::string_view getName() noexcept;
 
-    [[nodiscard]] static InlineSinkLogicalOperator withInferredSchema();
+    [[nodiscard]] static AnonymousSinkLogicalOperator withInferredSchema();
 
     [[nodiscard]] Identifier getSinkType() const;
     [[nodiscard]] std::unordered_map<Identifier, std::string> getSinkConfig() const;
@@ -77,7 +77,7 @@ public:
     [[nodiscard]] std::unordered_map<Identifier, std::string> getFormatConfig() const;
 
 private:
-    static constexpr std::string_view NAME = "InlineSink";
+    static constexpr std::string_view NAME = "AnonymousSink";
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
@@ -87,26 +87,26 @@ private:
     std::unordered_map<Identifier, std::string> sinkConfig;
     std::unordered_map<Identifier, std::string> formatConfig;
 
-    friend Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>;
+    friend Reflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>;
 };
 
 template <>
-struct Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>
+struct Reflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<InlineSinkLogicalOperator>& op, const ReflectionContext& context) const;
+    Reflected operator()(const TypedLogicalOperator<AnonymousSinkLogicalOperator>& op, const ReflectionContext& context) const;
 };
 
 template <>
-struct Unreflector<TypedLogicalOperator<InlineSinkLogicalOperator>>
+struct Unreflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>
 {
-    TypedLogicalOperator<InlineSinkLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    TypedLogicalOperator<AnonymousSinkLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
-static_assert(LogicalOperatorConcept<InlineSinkLogicalOperator>);
+static_assert(LogicalOperatorConcept<AnonymousSinkLogicalOperator>);
 }
 
 template <>
-struct std::hash<NES::InlineSinkLogicalOperator>
+struct std::hash<NES::AnonymousSinkLogicalOperator>
 {
-    uint64_t operator()(const NES::InlineSinkLogicalOperator& op) const noexcept;
+    uint64_t operator()(const NES::AnonymousSinkLogicalOperator& op) const noexcept;
 };

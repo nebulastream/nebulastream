@@ -42,14 +42,14 @@ SourceDescriptor::SourceDescriptor(
     Host host,
     DescriptorConfig::Config config,
     const InputFormatterDescriptor& inputFormatterDescriptor,
-    bool isInline)
+    bool isAnonymous)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
     , sourceType(std::move(sourceType))
     , host(std::move(host))
     , inputFormatterDescriptor(inputFormatterDescriptor)
-    , isInline(isInline)
+    , isAnonymous(isAnonymous)
 {
 }
 
@@ -83,9 +83,9 @@ PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
     return physicalSourceId;
 }
 
-bool SourceDescriptor::isInlineSource() const
+bool SourceDescriptor::isAnonymousSource() const
 {
-    return isInline;
+    return isAnonymous;
 }
 
 std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
@@ -102,7 +102,7 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
     }
     else if (verbosity == ExplainVerbosity::Short)
     {
-        if (isInlineSource())
+        if (isAnonymousSource())
         {
             stringstream << sourceType;
         }
@@ -133,7 +133,7 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .type = sourceDescriptor.sourceType,
         .host = sourceDescriptor.host,
         .inputFormatterDescriptor = sourceDescriptor.inputFormatterDescriptor,
-        .isInline = sourceDescriptor.isInline,
+        .isAnonymous = sourceDescriptor.isAnonymous,
         .config = sourceDescriptor.getReflectedConfig(context)};
 
     return context.reflect(descriptor);
@@ -150,6 +150,6 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl,
         reflectedSourceDescriptor.host,
         Descriptor::unreflectConfig(reflectedSourceDescriptor.config, context),
         reflectedSourceDescriptor.inputFormatterDescriptor,
-        reflectedSourceDescriptor.isInline};
+        reflectedSourceDescriptor.isAnonymous};
 }
 }

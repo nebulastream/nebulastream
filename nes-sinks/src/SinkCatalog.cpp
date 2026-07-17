@@ -77,7 +77,7 @@ std::optional<SinkDescriptor> SinkCatalog::getSinkDescriptor(const Identifier& s
     return sinkDescriptorOpt->second;
 }
 
-std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
+std::optional<SinkDescriptor> SinkCatalog::getAnonymousSink(
     const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
     const Identifier& sinkType,
     Host host,
@@ -86,7 +86,7 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
 {
     auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType.asCanonicalString(), std::move(config));
 
-    const auto inlineSinkId = InlineSinkId{nextInlineSinkId.fetch_add(1)};
+    const auto anonymousSinkId = AnonymousSinkId{nextAnonymousSinkId.fetch_add(1)};
 
     if (not descriptorConfigOpt.has_value())
     {
@@ -98,8 +98,8 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
         ? std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>>{schema.value()}
         : std::monostate{};
 
-    auto sinkDescriptor = SinkDescriptor{InlineSinkDescriptor{
-        inlineSinkId.getRawValue(),
+    auto sinkDescriptor = SinkDescriptor{AnonymousSinkDescriptor{
+        anonymousSinkId.getRawValue(),
         schemaVar,
         sinkType.asCanonicalString(),
         std::move(host),

@@ -32,7 +32,7 @@
 #include <Operators/Reorderer.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Semantic/InlineSinkBindingRule.hpp>
+#include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
@@ -111,7 +111,7 @@ std::string_view CalcTargetOrderRule::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> CalcTargetOrderRule::dependsOn() const
 {
-    return {typeid(SinkBindingRule), typeid(InlineSinkBindingRule), typeid(LogicalSourceExpansionRule), typeid(TypeInferenceRule)};
+    return {typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule), typeid(LogicalSourceExpansionRule), typeid(TypeInferenceRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -157,9 +157,9 @@ LogicalPlan CalcTargetOrderRule::apply(NES::LogicalPlan plan) const
         = outputOrder | std::views::transform(Unbinder<Field>{}) | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>();
     auto sinkDescriptorOpt = root->getSinkDescriptor();
     PRECONDITION(sinkDescriptorOpt.has_value(), "Sink operator must have a descriptor to infer target schema order");
-    const auto oldDescriptor = NES::get<InlineSinkDescriptor>(sinkDescriptorOpt->getUnderlying());
-    auto newInlineSinkDescriptor = SinkDescriptor{oldDescriptor.withSchemaOrder(newTargetSchema)};
-    auto newSinkRoot = root->withSinkDescriptor(newInlineSinkDescriptor);
+    const auto oldDescriptor = NES::get<AnonymousSinkDescriptor>(sinkDescriptorOpt->getUnderlying());
+    auto newAnonymousSinkDescriptor = SinkDescriptor{oldDescriptor.withSchemaOrder(newTargetSchema)};
+    auto newSinkRoot = root->withSinkDescriptor(newAnonymousSinkDescriptor);
     return plan.withRootOperators({newSinkRoot});
 }
 };

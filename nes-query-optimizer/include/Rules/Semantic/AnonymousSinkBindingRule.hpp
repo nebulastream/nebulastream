@@ -27,26 +27,25 @@
 namespace NES
 {
 
-/// The InlineSinkBindingPhase replaces all sink that are defined within the query itself (InlineSinkLogicalOperators), as opposed to
-/// sinks that are created in separate CREATE statements, with SinkLogicalOperators based on the given inline sink configuration.
+/// The AnonymousSinkBindingPhase creates SinkLogicalOperators for all AnonymousSinkOperators based on the given configuration.
 
-class InlineSinkBindingRule
+class AnonymousSinkBindingRule
 {
 public:
-    explicit InlineSinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit AnonymousSinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    static constexpr std::string_view NAME = "InlineSinkBindingRule";
+    static constexpr std::string_view NAME = "AnonymousSinkBindingRule";
 
     [[nodiscard]] static const std::type_info& getType();
     [[nodiscard]] static std::string_view getName();
     [[nodiscard]] std::set<std::type_index> dependsOn() const;
     [[nodiscard]] std::set<std::type_index> requiredBy() const;
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    bool operator==(const InlineSinkBindingRule& other) const;
+    bool operator==(const AnonymousSinkBindingRule& other) const;
 
 private:
     std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
 
-static_assert(RuleConcept<InlineSinkBindingRule, LogicalPlan>);
+static_assert(RuleConcept<AnonymousSinkBindingRule, LogicalPlan>);
 }

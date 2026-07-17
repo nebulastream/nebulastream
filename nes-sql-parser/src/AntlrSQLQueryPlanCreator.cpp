@@ -96,13 +96,13 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
     return std::visit(
         Overloaded{
             [&](const Identifier& sinkName) { return LogicalPlanBuilder::addSink(sinkName, queryPlans.top()); },
-            [&](const std::pair<Identifier, ConfigMap>& inlineSink)
+            [&](const std::pair<Identifier, ConfigMap>& anonymousSink)
             {
-                const auto& [type, configOptions] = inlineSink;
+                const auto& [type, configOptions] = anonymousSink;
                 const auto sinkConfig = getSinkConfig(configOptions);
                 const auto formatConfig = parseOutputFormatterConfig(configOptions);
                 const auto schemaOpt = getSinkSchema(configOptions);
-                return LogicalPlanBuilder::addInlineSink(type, schemaOpt, sinkConfig, formatConfig, queryPlans.top());
+                return LogicalPlanBuilder::addAnonymousSink(type, schemaOpt, sinkConfig, formatConfig, queryPlans.top());
             }},
         sinks.front());
 }
@@ -284,12 +284,12 @@ void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext
         {
             sinks.emplace_back(bindIdentifier(sink->identifier()));
         }
-        else if (sink->inlineSink() != nullptr)
+        else if (sink->anonymousSink() != nullptr)
         {
-            const auto& sinkInlineSink = sink->inlineSink();
+            const auto& anonymousSink = sink->anonymousSink();
 
-            const auto type = bindIdentifier(sinkInlineSink->type);
-            const auto configOptions = bindConfigOptions(sinkInlineSink->parameters->namedConfigExpression());
+            const auto type = bindIdentifier(anonymousSink->type);
+            const auto configOptions = bindConfigOptions(anonymousSink->parameters->namedConfigExpression());
 
             sinks.emplace_back(std::make_pair(type, configOptions));
         }
@@ -665,18 +665,18 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         }
         if (!helpers.top().getSource().has_value())
         {
-            const auto inlineSourceConfig = helpers.top().getInlineSourceConfig();
-            if (!inlineSourceConfig.has_value())
+            const auto anonymousSourceConfig = helpers.top().getAnonymousSourceConfig();
+            if (!anonymousSourceConfig.has_value())
             {
-                throw InvalidQuerySyntax("Neither named source or inline source specified");
+                throw InvalidQuerySyntax("Neither named source or anonymous source specified");
             }
-            const auto [type, configOptions] = inlineSourceConfig.value();
+            const auto [type, configOptions] = anonymousSourceConfig.value();
             const auto parserConfig = parseInputFormatterConfig(configOptions);
             const auto sourceConfig = getSourceConfig(configOptions);
             const auto schema = getSourceSchema(configOptions);
             if (!schema.has_value())
             {
-                throw InvalidConfigParameter("Inline Source is missing schema definition");
+                throw InvalidConfigParameter("Anonymous Source is missing schema definition");
             }
 
             return LogicalPlanBuilder::createLogicalPlan(type, schema.value(), sourceConfig, parserConfig);
@@ -1265,13 +1265,13 @@ void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::Thr
     helpers.top().minimumCount = std::stoi(context->getText());
 }
 
-void AntlrSQLQueryPlanCreator::enterInlineSource(AntlrSQLParser::InlineSourceContext* context)
+void AntlrSQLQueryPlanCreator::enterAnonymousSource(AntlrSQLParser::AnonymousSourceContext* context)
 {
     const auto type = bindIdentifier(context->type);
 
     const auto parameters = bindConfigOptions(context->parameters->namedConfigExpression());
 
-    helpers.top().setInlineSource(type, parameters);
+    helpers.top().setAnonymousSource(type, parameters);
 }
 
 void AntlrSQLQueryPlanCreator::enterSetOperation(AntlrSQLParser::SetOperationContext*)

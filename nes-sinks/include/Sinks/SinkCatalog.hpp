@@ -44,7 +44,7 @@ public:
 
     std::optional<SinkDescriptor> getSinkDescriptor(const Identifier& sinkName) const;
 
-    [[nodiscard]] std::optional<SinkDescriptor> getInlineSink(
+    [[nodiscard]] std::optional<SinkDescriptor> getAnonymousSink(
         const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
         const Identifier& sinkType,
         Host host,
@@ -60,7 +60,7 @@ public:
     std::vector<SinkDescriptor> getAllSinkDescriptors() const;
 
 private:
-    mutable std::atomic<InlineSinkId::Underlying> nextInlineSinkId{INITIAL_INLINE_SINK_ID.getRawValue()};
+    mutable std::atomic<AnonymousSinkId::Underlying> nextAnonymousSinkId{INITIAL_ANONYMOUS_SINK_ID.getRawValue()};
     folly::Synchronized<std::unordered_map<Identifier, SinkDescriptor>> sinks;
 };
 }

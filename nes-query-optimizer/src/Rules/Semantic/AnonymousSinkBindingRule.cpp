@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Rules/Semantic/InlineSinkBindingRule.hpp>
+#include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 
 #include <set>
 #include <string_view>
@@ -22,7 +22,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
+#include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -30,39 +30,39 @@
 namespace NES
 {
 
-const std::type_info& InlineSinkBindingRule::getType()
+const std::type_info& AnonymousSinkBindingRule::getType()
 {
-    return typeid(InlineSinkBindingRule);
+    return typeid(AnonymousSinkBindingRule);
 }
 
-std::string_view InlineSinkBindingRule::getName()
+std::string_view AnonymousSinkBindingRule::getName()
 {
     return NAME;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> InlineSinkBindingRule::dependsOn() const
+std::set<std::type_index> AnonymousSinkBindingRule::dependsOn() const
 {
     return {};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> InlineSinkBindingRule::requiredBy() const
+std::set<std::type_index> AnonymousSinkBindingRule::requiredBy() const
 {
     return {};
 }
 
-bool InlineSinkBindingRule::operator==(const InlineSinkBindingRule& other) const
+bool AnonymousSinkBindingRule::operator==(const AnonymousSinkBindingRule& other) const
 {
     return sinkCatalog == other.sinkCatalog;
 }
 
-LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
+LogicalPlan AnonymousSinkBindingRule::apply(const LogicalPlan& queryPlan) const
 {
     std::vector<LogicalOperator> newRootOperators;
     for (const auto& rootOperator : queryPlan.getRootOperators())
     {
-        if (auto sink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); sink.has_value())
+        if (auto sink = rootOperator.tryGetAs<AnonymousSinkLogicalOperator>(); sink.has_value())
         {
             const auto schema = sink.value()->getTargetSchema();
             const auto type = sink.value()->getSinkType();
@@ -70,7 +70,7 @@ LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
             const auto formatConfig = sink.value()->getFormatConfig();
 
             /// "host" is not part of the sink config — it determines placement, not sink behavior.
-            /// It is stored in the config map only because InlineSinkLogicalOperator lacks a dedicated host field.
+            /// It is stored in the config map only because AnonymousSinkLogicalOperator lacks a dedicated host field.
             auto hostIt = config.find(Identifier::parse("host"));
             if (hostIt == config.end())
             {
@@ -79,11 +79,11 @@ LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
             auto host = Host(hostIt->second);
             config.erase(hostIt);
 
-            const auto sinkDescriptor = sinkCatalog->getInlineSink(schema, type, host, config, formatConfig);
+            const auto sinkDescriptor = sinkCatalog->getAnonymousSink(schema, type, host, config, formatConfig);
 
             if (!sinkDescriptor.has_value())
             {
-                throw InvalidConfigParameter("Failed to create inline sink descriptor");
+                throw InvalidConfigParameter("Failed to create anonymous sink descriptor");
             }
 
             TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor.value());

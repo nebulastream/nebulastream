@@ -73,7 +73,7 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = sourceCatalog.getInlineSource(
+        auto descriptor = sourceCatalog.getAnonymousSource(
             Identifier::parse("File"),
             schema,
             Host("localhost"),
@@ -91,7 +91,7 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
         auto schema = createSchema();
-        auto descriptor = sinkCatalog.getInlineSink(
+        auto descriptor = sinkCatalog.getAnonymousSink(
             schema, Identifier::parse("Print"), Host("localhost"), {{Identifier::parse("output_format"), "CSV"}}, {});
         EXPECT_TRUE(descriptor.has_value());
         auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
