@@ -27,6 +27,7 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/Record.hpp>
 #include <Util/Strings.hpp>
+#include <nautilus/exception.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <val.hpp>
@@ -67,23 +68,16 @@ template <typename T, bool Nullable>
 requires(
     not(std::is_same_v<T, int8_t*> || std::is_same_v<T, uint8_t*> || std::is_same_v<T, std::byte*> || std::is_same_v<T, char*>
         || std::is_same_v<T, unsigned char*> || std::is_same_v<T, signed char*>))
-ParseResult<T>* parseIntoVarValProxy(int8_t* fieldAddress, const uint64_t fieldSize, const std::vector<std::string>* nullValues)
+ParseResult<T> parseIntoVarValProxy(int8_t* fieldAddress, const uint64_t fieldSize, const std::vector<std::string>* nullValues)
 {
     PRECONDITION(nullValues != nullptr, "NullValues is expected to be not null!");
-
-    /// We use the thread local to return multiple values.
-    /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
-    thread_local static ParseResult<T> result;
-    result.isNull = false;
 
     /// Checking if the field is null but only if the field is nullable
     if constexpr (Nullable)
     {
         if (checkIsNullProxy(fieldAddress, fieldSize, nullValues))
         {
-            result.isNull = true;
-            result.value = T{0};
-            return &result;
+            return ParseResult<T>{.value = T{0}, .isNull = true};
         }
     }
 
@@ -91,19 +85,18 @@ ParseResult<T>* parseIntoVarValProxy(int8_t* fieldAddress, const uint64_t fieldS
     {
         const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
         const auto trimmedFieldAsString = trimWhiteSpaces(fieldAsString);
-        result.value = NES::from_chars_with_exception<T>(trimmedFieldAsString);
+        return ParseResult<T>{.value = NES::from_chars_with_exception<T>(trimmedFieldAsString), .isNull = false};
     }
-    catch (const Exception& ex)
+    catch (const Exception&)
     {
-        /// If the field is nullable, we return a null value, otherwise we throw an exception
+        /// A non-nullable field cannot absorb the failure. invokeGuardedSlot parks the exception and rethrows it
+        /// once the compiled function has returned, so we must not swallow it here.
         if constexpr (not Nullable)
         {
             throw;
         }
-        result.isNull = true;
-        result.value = T{0};
+        return ParseResult<T>{.value = T{0}, .isNull = true};
     }
-    return &result;
 }
 
 template <typename T>
@@ -116,14 +109,16 @@ VarVal parseFixedSizeIntoVarVal(
     /// As this is a C++ variable, this branch does not impact our tracing or the execution.
     if (nullable)
     {
-        const auto parseResult = nautilus::invoke(
-            parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+        const auto parseResult
+            = nautilus::invokeGuardedSlot<&parseIntoVarValProxy<T, true>, int8_t*, uint64_t, const std::vector<std::string>*>(
+                fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
         const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = nautilus::invoke(
-        parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+    const auto parseResult
+        = nautilus::invokeGuardedSlot<&parseIntoVarValProxy<T, false>, int8_t*, uint64_t, const std::vector<std::string>*>(
+            fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
     const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
     return VarVal{nautilusValue, nullable, false};
 }
