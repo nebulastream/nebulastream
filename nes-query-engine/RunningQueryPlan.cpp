@@ -101,8 +101,12 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
             {
                 if (const auto nodeLocked = weakRef.lock())
                 {
-                    ENGINE_LOG_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
-                    nodeLocked->requiresTermination = true;
+                    setupCallback.invokeUnlessCancelled(
+                        [&]
+                        {
+                            ENGINE_LOG_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
+                            nodeLocked->requiresTermination = true;
+                        });
                 }
             })});
 

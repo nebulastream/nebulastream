@@ -72,6 +72,23 @@ struct CallbackRef
     CallbackRef& operator=(const CallbackRef& other);
     CallbackRef& operator=(CallbackRef&& other) noexcept;
 
+    /// Invokes the function while synchronized with CallbackOwner cancellation.
+    /// The function must not destroy or replace the corresponding CallbackOwner.
+    template <typename Function>
+    void invokeUnlessCancelled(Function&& function) const
+    {
+        if (!ref)
+        {
+            return;
+        }
+
+        const std::scoped_lock lock(ref->mutex);
+        if (!ref->cancelled)
+        {
+            std::forward<Function>(function)();
+        }
+    }
+
 private:
     void decrementAndMaybeTrigger();
 
