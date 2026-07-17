@@ -262,6 +262,10 @@ void MedianAggregationPhysicalFunction::reset(
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
     const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
+    /// The allocation-failure throw unwinds through the compiled frame and leaks this pipeline's traced buffers.
+    /// Guarding it is not enough: the returned child index is stored and dereferenced later, so a parked failure
+    /// would hand out a sentinel index. A proper conversion needs a traced failure branch at the call sites.
+    /// NOLINTNEXTLINE(no-throw-in-plain-invoke)
     const nautilus::val<uint32_t> childBufferIndexVal = nautilus::invoke(
         +[](TupleBuffer* parentBuffer, AbstractBufferProvider* bufferProvider, uint64_t tupleSize)
         {

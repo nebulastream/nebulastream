@@ -35,7 +35,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
-#include <magic_enum/magic_enum.hpp>
+#include <nautilus/exception.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
@@ -167,8 +167,9 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
     const nautilus::val<uint64_t>& rightOffset = leftNumberOfHashMaps;
 
     /// Read the probe task type to determine what work this task should perform
-    const nautilus::val<ProbeTaskType> probeTaskType
+    const nautilus::val<uint64_t> probeTaskTypeRaw
         = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::probeTaskType));
+    const nautilus::val<ProbeTaskType> probeTaskType = probeTaskTypeRaw;
     if (probeTaskType == ProbeTaskType::LEFT_NULL_FILL)
     {
         if (leftNumberOfHashMaps > 0)
@@ -213,10 +214,13 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
     }
     else
     {
-        nautilus::invoke(
-            +[](const ProbeTaskType unknownProbeTaskType)
-            { throw NotImplemented("Using unknown probeTaskType {}", magic_enum::enum_name(unknownProbeTaskType)); },
-            probeTaskType);
+        /// invokeGuarded parks the throw so it cannot unwind through the compiled frame (no landing pads there);
+        /// nothing follows in this branch, so the pipeline runs to its end and nautilus rethrows at the boundary.
+        /// The raw underlying value is passed because a val<enum> cannot cross the invokeGuarded boundary by value,
+        /// and an unknown task type may not map onto a ProbeTaskType enumerator anyway.
+        nautilus::invokeGuarded(
+            [](const uint64_t unknownProbeTaskType) { throw NotImplemented("Using unknown probeTaskType {}", unknownProbeTaskType); },
+            probeTaskTypeRaw);
     }
 }
 }

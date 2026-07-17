@@ -25,6 +25,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Util/Strings.hpp>
+#include <nautilus/exception.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -54,24 +55,24 @@ std::string normalizeVarSizedNumericInput(const std::string& varSized)
 }
 
 template <typename NumericType>
+NumericType convertVarSizedToNumericProxy(const uint64_t stringSize, const char* stringPtr)
+{
+    const std::string varSizedSV{stringPtr, stringSize};
+    const auto normalizedInput = normalizeVarSizedNumericInput(varSizedSV);
+    try
+    {
+        return from_chars_with_exception<NumericType>(normalizedInput);
+    }
+    catch (const Exception&)
+    {
+        throw FormattingError("VarSizedToNumeric: cannot convert '{}' to target numeric type", normalizedInput);
+    }
+}
+
+template <typename NumericType>
 VarVal invokeConvertAndWrap(const nautilus::val<uint64_t>& size, const nautilus::val<const char*>& ptr, bool nullable)
 {
-    const auto parsedValue = nautilus::invoke(
-        +[](const uint64_t stringSize, const char* stringPtr) -> NumericType
-        {
-            const std::string varSizedSV{stringPtr, stringSize};
-            const auto normalizedInput = normalizeVarSizedNumericInput(varSizedSV);
-            try
-            {
-                return from_chars_with_exception<NumericType>(normalizedInput);
-            }
-            catch (const Exception&)
-            {
-                throw FormattingError("VarSizedToNumeric: cannot convert '{}' to target numeric type", normalizedInput);
-            };
-        },
-        size,
-        ptr);
+    const auto parsedValue = nautilus::invokeGuarded<&convertVarSizedToNumericProxy<NumericType>, uint64_t, const char*>(size, ptr);
     return VarVal{parsedValue, nullable, false};
 }
 

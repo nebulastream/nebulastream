@@ -31,6 +31,7 @@
 #include <Interface/Record.hpp>
 #include <Util/Strings.hpp>
 #include <date/date.h>
+#include <nautilus/exception.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -117,6 +118,12 @@ uint64_t parseISO8601TimestampToUnixMilliSeconds(std::string_view iso8601Timesta
     throw FormattingError("CastToUnixTs: unsupported timestamp format: '{}'", iso8601Timestamp);
 }
 
+uint64_t parseISO8601Proxy(const uint32_t size, const char* iso8601String)
+{
+    const std::string_view iso8601StringView{iso8601String, size};
+    return parseISO8601TimestampToUnixMilliSeconds(iso8601StringView);
+}
+
 }
 
 CastToUnixTimestampPhysicalFunction::CastToUnixTimestampPhysicalFunction(PhysicalFunction childFunction, DataType outputType)
@@ -139,14 +146,9 @@ VarVal CastToUnixTimestampPhysicalFunction::execute(const Record& record, ArenaR
     const auto size = var.getSize();
     const auto ptr = var.getContent();
 
-    const auto parsedMilliSeconds = nautilus::invoke(
-        +[](const uint32_t size, const char* iso8601String) -> uint64_t
-        {
-            const std::string_view iso8601StringView{iso8601String, size};
-            return parseISO8601TimestampToUnixMilliSeconds(iso8601StringView);
-        },
-        size,
-        ptr);
+    /// parseISO8601Proxy is a named function, so the NTTP form gives it a guaranteed direct call. A captureless lambda
+    /// could instead be passed by value to the invokeGuarded(callable, ...) overload.
+    const auto parsedMilliSeconds = nautilus::invokeGuarded<&parseISO8601Proxy, uint32_t, const char*>(size, ptr);
 
     return VarVal{parsedMilliSeconds, value.isNullable(), false}.castToType(outputType.type);
 }
