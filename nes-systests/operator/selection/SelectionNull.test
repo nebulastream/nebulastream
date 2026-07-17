@@ -194,9 +194,9 @@ SELECT id,
        flag AND flag2 AS flag_and,
        flag OR flag2 AS flag_or,
        NOT flag AS not_flag,
-       flag == BOOLEAN(TRUE) AS flag_eq_true,
-       flag == BOOLEAN(FALSE) AS flag_eq_false,
-       flag2 == BOOLEAN(TRUE) AS flag2_eq_true,
+       flag == TRUE AS flag_eq_true,
+       flag == FALSE AS flag_eq_false,
+       flag2 == TRUE AS flag2_eq_true,
        ISNULL(flag) AS flag_isnull,
        ISNULL(flag2) AS flag2_isnull
 FROM bool_stream
