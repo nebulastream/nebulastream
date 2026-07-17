@@ -13,6 +13,8 @@
 */
 #include <Util/Common.hpp>
 
+/// Trivial change to exercise the full CI pipeline on a non-docs PR (verifies that the
+/// docs-only skip in .github/workflows/pr.yml does NOT skip real code changes).
 namespace NES
 {
 }
