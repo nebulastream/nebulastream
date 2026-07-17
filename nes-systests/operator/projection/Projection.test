@@ -251,12 +251,12 @@ SELECT id AS new_field_1, id, value AS new_field_2, value, timestamp AS new_fiel
 
 
 # 6: filter -> map ->  project [id, id * 2 -> new_id, value, timestamp]
-SELECT id, id * UINT64(2) AS new_id, value, timestamp FROM stream WHERE id == UINT64(1) INTO sinkIdNewIdValueTimeStamp;
+SELECT id, id * 2 AS new_id, value, timestamp FROM stream WHERE id == 1 INTO sinkIdNewIdValueTimeStamp;
 ----
 1 2 1 1000
 
 # 7: filter -> map -> project -> map -> map [new_id -> id, value, timestamp]
-SELECT id * UINT64(2) AS new_id, id, id AS value, id * UINT64(1000) AS timestamp FROM stream WHERE id == UINT64(1) INTO sinkNewIdIdValueTimestamp;
+SELECT id * 2 AS new_id, id, id AS value, id * 1000 AS timestamp FROM stream WHERE id == 1 INTO sinkNewIdIdValueTimestamp;
 ----
 2 1 1 1000
 

@@ -19,7 +19,7 @@ CREATE SINK streamSink3(id INT64 NOT NULL, value INT64 NOT NULL, timestamp INT64
 
 
 # Map with mul function touches one field
-SELECT id * UINT32(3) AS id, value, timestamp FROM stream INTO streamSink;
+SELECT id * 3 AS id, value, timestamp FROM stream INTO streamSink;
 ----
 3,1,1000
 6,1,1001
@@ -52,7 +52,7 @@ SELECT id, value, timestamp, id * value AS new FROM stream INTO streamSinkWithNe
 7,21,21000,147
 
 # Two maps after each other that both touch the same fields without nesting
-SELECT id * UINT32(3) AS id, id * value AS value, timestamp FROM stream INTO streamSink3;
+SELECT id * 3 AS id, id * value AS value, timestamp FROM stream INTO streamSink3;
 ----
 3,1,1000
 6,2,1001
@@ -63,7 +63,7 @@ SELECT id * UINT32(3) AS id, id * value AS value, timestamp FROM stream INTO str
 21,147,21000
 
 # Two maps after each other that both touch the same fields
-SELECT id, id * value AS value, timestamp FROM (SELECT id * UINT32(3) AS id, value, timestamp FROM stream) INTO streamSink3;
+SELECT id, id * value AS value, timestamp FROM (SELECT id * 3 AS id, value, timestamp FROM stream) INTO streamSink3;
 ----
 3,3,1000
 6,6,1001

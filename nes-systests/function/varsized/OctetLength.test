@@ -47,7 +47,7 @@ SELECT id AS id, OCTET_LENGTH(data) AS len FROM textStream INTO lengthSink;
 9 6
 
 # Combined projection of original value and its length
-SELECT id AS id, OCTET_LENGTH(data) AS len FROM textStream WHERE OCTET_LENGTH(data) > UINT64(0) INTO lengthSink;
+SELECT id AS id, OCTET_LENGTH(data) AS len FROM textStream WHERE OCTET_LENGTH(data) > 0 INTO lengthSink;
 ----
 2 5
 3 12

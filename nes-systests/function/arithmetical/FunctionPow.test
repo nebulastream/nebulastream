@@ -12,18 +12,18 @@ CREATE SINK sinkStream(i8 FLOAT64 NOT NULL, i16 FLOAT64 NOT NULL, i32 FLOAT64 NO
 
 # Use pow across different data types
 SELECT
-    POW(i8, INT32(2)) AS i8,
-    POW(i16, INT32(3)) AS i16,
-    POW(i32, INT32(4)) AS i32,
-    POW(i64, INT32(1)) AS i64,
+    POW(i8, 2) AS i8,
+    POW(i16, 3) AS i16,
+    POW(i32, 4) AS i32,
+    POW(i64, 1) AS i64,
 
-    POW(u8, INT32(2)) AS u8,
-    POW(u16, INT32(3)) AS u16,
-    POW(u32, INT32(4)) AS u32,
-    POW(u64, INT32(1)) AS u64,
+    POW(u8, 2) AS u8,
+    POW(u16, 3) AS u16,
+    POW(u32, 4) AS u32,
+    POW(u64, 1) AS u64,
 
-    POW(f32, INT32(2)) AS f32,
-    POW(f64, INT32(3)) AS f64
+    POW(f32, 2) AS f32,
+    POW(f64, 3) AS f64
 FROM stream INTO sinkStream;
 ----
 25.0,1000.0,100000000.0,1000.0,64.0,8000.0,62500000000.0,2000.0,16.0,729.0

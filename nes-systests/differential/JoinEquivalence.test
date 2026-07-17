@@ -81,11 +81,11 @@ CREATE SINK sinkStreamStream2(start UINT64 NOT NULL, end UINT64 NOT NULL, id UIN
 
 SELECT *
 FROM (SELECT * FROM streamCSV) INNER JOIN (SELECT * FROM streamCSV2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestampCSV, timestampCSV2, size 1 sec)
-WHERE value < UINT64(15)
+WHERE value < 15
 INTO sinkStreamStream2;
 ====
 SELECT *
 FROM
     (SELECT * FROM (SELECT * FROM streamCSV) INNER JOIN (SELECT * FROM streamCSV2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestampCSV, timestampCSV2, size 1 sec))
-WHERE value < UINT64(15)
+WHERE value < 15
 INTO sinkStreamStream2;

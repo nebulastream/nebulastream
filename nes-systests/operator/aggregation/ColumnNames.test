@@ -55,25 +55,25 @@ SELECT MEDIAN(i) AS i_median FROM input WINDOW TUMBLING(timestamp, size 100 ms) 
 1.5
 1.5
 
-# Expression inside aggregation: MEDIAN(i + UINT64(1)).
+# Expression inside aggregation: MEDIAN(i + 1).
 # i + 1 yields {2, 3} per window, MEDIAN = 2.5.
-SELECT start, end, MEDIAN(i + UINT64(1)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprAgg;
+SELECT start, end, MEDIAN(i + 1) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprAgg;
 ----
 100, 200, 2.5
 200, 300, 2.5
 300, 400, 2.5
 
-# Expression inside aggregation: AVG(i + UINT64(1)).
+# Expression inside aggregation: AVG(i + 1).
 # i + 1 yields {2, 3} per window, AVG = 2.5.
-SELECT AVG(i + UINT64(1)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprAggFloat;
+SELECT AVG(i + 1) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprAggFloat;
 ----
 2.5
 2.5
 2.5
 
-# Expression inside aggregation: SUM(i * UINT64(2)).
+# Expression inside aggregation: SUM(i * 2).
 # i * 2 yields {2, 4} per window, SUM = 6.
-SELECT SUM(i * UINT64(2)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprAggUint;
+SELECT SUM(i * 2) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprAggUint;
 ----
 6
 6
@@ -84,7 +84,7 @@ SELECT i AS ID, timestamp AS ID FROM input INTO sinkDupAlias;
 ----
 ERROR 2003
 
-# Duplicate explicit aliases with arithmetic (SELECT i + UINT64(1) AS ID, timestamp AS ID) must give a clear error.
-SELECT i + UINT64(1) AS ID, timestamp AS ID FROM input INTO sinkDupAlias;
+# Duplicate explicit aliases with arithmetic (SELECT i + 1 AS ID, timestamp AS ID) must give a clear error.
+SELECT i + 1 AS ID, timestamp AS ID FROM input INTO sinkDupAlias;
 ----
 ERROR 2003
