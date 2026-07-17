@@ -65,7 +65,7 @@ public:
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
-    [[nodiscard]] bool isInlineSource() const;
+    [[nodiscard]] bool isAnonymousSource() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
@@ -80,7 +80,7 @@ private:
     std::string sourceType;
     Host host;
     InputFormatterDescriptor inputFormatterDescriptor;
-    bool isInline = false;
+    bool isAnonymous = false;
 
 
     /// Used by Sources to create a valid SourceDescriptor.
@@ -91,7 +91,7 @@ private:
         Host host,
         DescriptorConfig::Config config,
         const InputFormatterDescriptor& inputFormatterDescriptor,
-        bool isInline);
+        bool isAnonymous);
 
 public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
@@ -141,7 +141,7 @@ struct ReflectedSourceDescriptor
     std::string type;
     Host host;
     InputFormatterDescriptor inputFormatterDescriptor;
-    bool isInline;
+    bool isAnonymous;
     Reflected config;
 };
 }

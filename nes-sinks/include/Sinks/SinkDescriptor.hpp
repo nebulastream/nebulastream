@@ -80,7 +80,7 @@ private:
     friend Unreflector<NamedSinkDescriptor>;
 };
 
-class InlineSinkDescriptor final : public Descriptor
+class AnonymousSinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;
     friend OperatorSerializationUtil;
@@ -88,11 +88,11 @@ class InlineSinkDescriptor final : public Descriptor
     friend class CalcTargetOrderRule;
 
 public:
-    ~InlineSinkDescriptor() = default;
+    ~AnonymousSinkDescriptor() = default;
 
 
-    friend std::ostream& operator<<(std::ostream& out, const InlineSinkDescriptor& sinkDescriptor);
-    friend bool operator==(const InlineSinkDescriptor& lhs, const InlineSinkDescriptor& rhs);
+    friend std::ostream& operator<<(std::ostream& out, const AnonymousSinkDescriptor& sinkDescriptor);
+    friend bool operator==(const AnonymousSinkDescriptor& lhs, const AnonymousSinkDescriptor& rhs);
 
     [[nodiscard]] std::string getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
@@ -106,7 +106,7 @@ public:
     [[nodiscard]] std::unordered_map<Identifier, std::string> getOutputFormatterConfig() const;
 
 private:
-    explicit InlineSinkDescriptor(
+    explicit AnonymousSinkDescriptor(
         uint64_t sinkId,
         std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema,
         std::string_view sinkType,
@@ -114,7 +114,7 @@ private:
         std::unordered_map<Identifier, std::string> formatConfig,
         DescriptorConfig::Config config);
 
-    [[nodiscard]] InlineSinkDescriptor withSchemaOrder(const Schema<UnqualifiedUnboundField, Ordered>& newSchema) const;
+    [[nodiscard]] AnonymousSinkDescriptor withSchemaOrder(const Schema<UnqualifiedUnboundField, Ordered>& newSchema) const;
 
     uint64_t sinkId;
     std::variant<
@@ -126,7 +126,7 @@ private:
     Host host;
     std::unordered_map<Identifier, std::string> formatConfig;
 
-    friend Unreflector<InlineSinkDescriptor>;
+    friend Unreflector<AnonymousSinkDescriptor>;
 };
 
 class SinkDescriptor final : public Descriptor
@@ -151,14 +151,14 @@ public:
         std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
         std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>> getSchema() const;
     [[nodiscard]] Identifier getSinkName() const;
-    [[nodiscard]] bool isInline() const;
+    [[nodiscard]] bool isAnonymous() const;
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] std::unordered_map<Identifier, std::string> getOutputFormatterConfig() const;
-    [[nodiscard]] const std::variant<NamedSinkDescriptor, InlineSinkDescriptor>& getUnderlying() const;
+    [[nodiscard]] const std::variant<NamedSinkDescriptor, AnonymousSinkDescriptor>& getUnderlying() const;
 
 private:
-    explicit SinkDescriptor(std::variant<NamedSinkDescriptor, InlineSinkDescriptor> underlying);
-    std::variant<NamedSinkDescriptor, InlineSinkDescriptor> underlying;
+    explicit SinkDescriptor(std::variant<NamedSinkDescriptor, AnonymousSinkDescriptor> underlying);
+    std::variant<NamedSinkDescriptor, AnonymousSinkDescriptor> underlying;
 
     friend Reflector<SinkDescriptor>;
 
@@ -215,7 +215,7 @@ struct Unreflector<SinkDescriptor>
 
 namespace detail
 {
-struct ReflectedInlineSinkDescriptor
+struct ReflectedAnonymousSinkDescriptor
 {
     uint64_t sinkId;
     std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema;
@@ -249,15 +249,15 @@ struct Unreflector<NamedSinkDescriptor>
 };
 
 template <>
-struct Reflector<InlineSinkDescriptor>
+struct Reflector<AnonymousSinkDescriptor>
 {
-    Reflected operator()(const InlineSinkDescriptor& descriptor, const ReflectionContext& context) const;
+    Reflected operator()(const AnonymousSinkDescriptor& descriptor, const ReflectionContext& context) const;
 };
 
 template <>
-struct Unreflector<InlineSinkDescriptor>
+struct Unreflector<AnonymousSinkDescriptor>
 {
-    InlineSinkDescriptor operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    AnonymousSinkDescriptor operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 }

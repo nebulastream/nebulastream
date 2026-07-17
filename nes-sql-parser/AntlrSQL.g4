@@ -165,7 +165,7 @@ relationPrimary
     | '(' query ')'                           #aliasedQuery
     | '(' relation ')'                        #aliasedRelation
     | inlineTable                             #inlineTableDefault2
-    | inlineSource                            #inlineDefinedSource
+    | anonymousSource                         #anonymousDefinedSource
     | modelInferenceSource                    #modelInferenceRelation
     ;
 
@@ -179,7 +179,7 @@ modelInferenceInput
     | modelInferenceSource                    #modelInferenceNested
     ;
 
-inlineSource
+anonymousSource
     : type=identifier '(' parameters=namedConfigExpressionSeq ')'
     ;
 
@@ -335,9 +335,9 @@ functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
 
 sinkClause: INTO sink (',' sink)*;
 
-sink: identifier | inlineSink;
+sink: identifier | anonymousSink;
 
-inlineSink
+anonymousSink
     : type=identifier '(' parameters=namedConfigExpressionSeq ')'
     ;
 

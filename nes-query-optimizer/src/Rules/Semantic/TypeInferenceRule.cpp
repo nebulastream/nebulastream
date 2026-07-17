@@ -22,7 +22,7 @@
 
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Semantic/InlineSinkBindingRule.hpp>
+#include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 
@@ -55,7 +55,7 @@ std::string_view TypeInferenceRule::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> TypeInferenceRule::dependsOn() const
 {
-    return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(InlineSinkBindingRule)};
+    return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

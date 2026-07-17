@@ -30,8 +30,8 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
-#include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
-#include <Operators/Sources/InlineSourceLogicalOperator.hpp>
+#include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
+#include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -329,7 +329,7 @@ TEST_F(StatementBinderTest, Nullable)
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
 
-TEST_F(StatementBinderTest, InlineSinkQuery)
+TEST_F(StatementBinderTest, AnonymousSinkQuery)
 {
     const std::string query = "SELECT id, text \n"
                               "FROM input\n"
@@ -343,26 +343,26 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
 
     const auto plan = std::get<QueryStatement>(*statement).plan;
 
-    const auto inlineSinkOperatorList = getOperatorByType<InlineSinkLogicalOperator>(plan);
-    ASSERT_EQ(1, inlineSinkOperatorList.size());
+    const auto anonymousSinkOperatorList = getOperatorByType<AnonymousSinkLogicalOperator>(plan);
+    ASSERT_EQ(1, anonymousSinkOperatorList.size());
 
-    const auto& inlineSinkOperator = inlineSinkOperatorList.at(0);
+    const auto& anonymousSinkOperator = anonymousSinkOperatorList.at(0);
 
-    ASSERT_EQ(Identifier::parse("FILE"), inlineSinkOperator->getSinkType());
+    ASSERT_EQ(Identifier::parse("FILE"), anonymousSinkOperator->getSinkType());
 
     const std::unordered_map<Identifier, std::string> expectedSinkConfig
         = {{Identifier::parse("file_path"), "out.csv"}, {Identifier::parse("output_format"), "CSV"}};
-    ASSERT_EQ(expectedSinkConfig, inlineSinkOperator->getSinkConfig());
+    ASSERT_EQ(expectedSinkConfig, anonymousSinkOperator->getSinkConfig());
 
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{
             Identifier::parse("ID"), DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
         UnqualifiedUnboundField{
             Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
-    ASSERT_EQ(schema, inlineSinkOperator->getTargetSchema());
+    ASSERT_EQ(schema, anonymousSinkOperator->getTargetSchema());
 }
 
-TEST_F(StatementBinderTest, InlineSourceQuery)
+TEST_F(StatementBinderTest, AnonymousSourceQuery)
 {
     const std::string query = "SELECT id, text \n"
                               "FROM File(\n"
@@ -376,25 +376,25 @@ TEST_F(StatementBinderTest, InlineSourceQuery)
 
     const auto plan = std::get<QueryStatement>(*statement).plan;
 
-    const auto inlineSourceOperatorList = getOperatorByType<InlineSourceLogicalOperator>(plan);
-    ASSERT_EQ(1, inlineSourceOperatorList.size());
+    const auto anonymousSourceOperatorList = getOperatorByType<AnonymousSourceLogicalOperator>(plan);
+    ASSERT_EQ(1, anonymousSourceOperatorList.size());
 
-    const auto& inlineSourceOperator = inlineSourceOperatorList.at(0);
+    const auto& anonymousSourceOperator = anonymousSourceOperatorList.at(0);
 
-    ASSERT_EQ(Identifier::parse("FILE"), inlineSourceOperator->getSourceType());
+    ASSERT_EQ(Identifier::parse("FILE"), anonymousSourceOperator->getSourceType());
 
     const std::unordered_map<Identifier, std::string> expectedSourceConfig = {{Identifier::parse("file_path"), "input.csv"}};
-    ASSERT_EQ(expectedSourceConfig, inlineSourceOperator->getSourceConfig());
+    ASSERT_EQ(expectedSourceConfig, anonymousSourceOperator->getSourceConfig());
 
     const std::unordered_map<Identifier, std::string> expectedParserConfig = {{Identifier::parse("type"), "CSV"}};
-    ASSERT_EQ(expectedParserConfig, inlineSourceOperator->getParserConfig());
+    ASSERT_EQ(expectedParserConfig, anonymousSourceOperator->getParserConfig());
 
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{
             Identifier::parse("ID"), DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
         UnqualifiedUnboundField{
             Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
-    ASSERT_EQ(schema, inlineSourceOperator->getSourceSchema());
+    ASSERT_EQ(schema, anonymousSourceOperator->getSourceSchema());
 }
 
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)

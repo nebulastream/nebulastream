@@ -24,7 +24,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Semantic/InlineSinkBindingRule.hpp>
+#include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 
 #include <ErrorHandling.hpp>
 
@@ -44,7 +44,7 @@ std::string_view SinkBindingRule::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> SinkBindingRule::dependsOn() const
 {
-    return {typeid(InlineSinkBindingRule)};
+    return {typeid(AnonymousSinkBindingRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

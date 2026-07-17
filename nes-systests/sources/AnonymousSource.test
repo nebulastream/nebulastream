@@ -1,5 +1,5 @@
-# name: sources/InlineSource.test
-# description: Creating sources inline
+# name: sources/AnonymousSource.test
+# description: Creating anonymous sources within queries
 # groups: [Sources]
 
 

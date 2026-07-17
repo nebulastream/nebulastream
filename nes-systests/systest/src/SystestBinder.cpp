@@ -46,9 +46,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
+#include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/InlineSourceLogicalOperator.hpp>
+#include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -160,7 +160,7 @@ public:
         return success;
     }
 
-    std::optional<SinkDescriptor> getInlineSink(
+    std::optional<SinkDescriptor> getAnonymousSink(
         const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
         const Identifier& sinkType,
         std::unordered_map<Identifier, std::string> config,
@@ -168,8 +168,8 @@ public:
     {
         PRECONDITION(
             not possibleSinkPlacements.empty(),
-            "Topology must list at least one worker in allow_sink_placement to assign a default inline sink host");
-        return sinkCatalog->getInlineSink(
+            "Topology must list at least one worker in allow_sink_placement to assign a default anonymous sink host");
+        return sinkCatalog->getAnonymousSink(
             schema, std::move(sinkType), Host(possibleSinkPlacements.at(0).getRawValue()), std::move(config), formatConfig);
     }
 
@@ -752,25 +752,25 @@ struct SystestBinder::Impl
         }
     }
 
-    [[nodiscard]] LogicalOperator updateInlineSource(const LogicalOperator& current) const
+    [[nodiscard]] LogicalOperator updateAnonymousSource(const LogicalOperator& current) const
     {
         std::vector<LogicalOperator> newChildren;
         for (const auto& child : current.getChildren())
         {
-            newChildren.emplace_back(updateInlineSource(child));
+            newChildren.emplace_back(updateAnonymousSource(child));
         }
 
-        if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
+        if (const auto anonymousSource = current.tryGetAs<AnonymousSourceLogicalOperator>())
         {
-            auto sourceConfig = inlineSource.value()->getSourceConfig();
-            auto parserConfig = inlineSource.value()->getParserConfig();
+            auto sourceConfig = anonymousSource.value()->getSourceConfig();
+            auto parserConfig = anonymousSource.value()->getParserConfig();
 
             parserConfig.try_emplace(Identifier::parse("type"), "CSV");
 
             /// By default, all relative paths are relative to the testDataDir.
             if (sourceConfig.contains(Identifier::parse("file_path")) && !sourceConfig.at(Identifier::parse("file_path")).starts_with("/"))
             {
-                auto filePath = inlineSource.value()->getSourceConfig().at(Identifier::parse("file_path"));
+                auto filePath = anonymousSource.value()->getSourceConfig().at(Identifier::parse("file_path"));
                 filePath = testDataDir / filePath;
                 sourceConfig.erase(Identifier::parse("file_path"));
                 sourceConfig.emplace(Identifier::parse("file_path"), filePath);
@@ -778,13 +778,13 @@ struct SystestBinder::Impl
 
             PRECONDITION(
                 not clusterConfiguration.allowSourcePlacement.empty(),
-                "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
+                "Topology must list at least one worker in allow_source_placement to assign a default anonymous source host");
             sourceConfig.try_emplace(Identifier::parse("host"), clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
-            if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
+            if (sourceConfig != anonymousSource.value()->getSourceConfig() || parserConfig != anonymousSource.value()->getParserConfig())
             {
-                const auto newOperator = InlineSourceLogicalOperator::create(
-                    inlineSource.value()->getSourceType(), inlineSource.value()->getSourceSchema(), sourceConfig, parserConfig);
+                const auto newOperator = AnonymousSourceLogicalOperator::create(
+                    anonymousSource.value()->getSourceType(), anonymousSource.value()->getSourceSchema(), sourceConfig, parserConfig);
 
                 return newOperator.withChildrenUnsafe(newChildren);
             }
@@ -793,21 +793,21 @@ struct SystestBinder::Impl
         return current.withChildrenUnsafe(std::move(newChildren));
     }
 
-    void setInlineSources(LogicalPlan& plan) const
+    void setAnonymousSources(LogicalPlan& plan) const
     {
         std::vector<LogicalOperator> newRoots;
         for (const auto& root : plan.getRootOperators())
         {
-            newRoots.emplace_back(updateInlineSource(root));
+            newRoots.emplace_back(updateAnonymousSource(root));
         }
         plan = plan.withRootOperators(newRoots);
     }
 
-    LogicalOperator setInlineSink(
+    LogicalOperator setAnonymousSink(
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
         const SystestQueryId& currentQueryNumberInTest,
-        const TypedLogicalOperator<InlineSinkLogicalOperator>& sinkOperator) const
+        const TypedLogicalOperator<AnonymousSinkLogicalOperator>& sinkOperator) const
     {
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
@@ -830,10 +830,10 @@ struct SystestBinder::Impl
             formatConfig[Identifier::parse("quote_strings")] = "true";
         }
 
-        auto sinkDescriptor = sltSinkProvider.getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig, formatConfig);
+        auto sinkDescriptor = sltSinkProvider.getAnonymousSink(schema, sinkOperator->getSinkType(), sinkConfig, formatConfig);
         if (not sinkDescriptor.has_value())
         {
-            throw InvalidConfigParameter("Failed to create inline sink of type {}", sinkOperator->getSinkType());
+            throw InvalidConfigParameter("Failed to create anonymous sink of type {}", sinkOperator->getSinkType());
         }
         const auto newOperator = SinkLogicalOperator::create(sinkDescriptor.value());
 
@@ -877,9 +877,9 @@ struct SystestBinder::Impl
         std::vector<LogicalOperator> newRoots;
         for (const auto& rootOperator : plan.getRootOperators())
         {
-            if (auto inlineSink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); inlineSink.has_value())
+            if (auto anonymousSink = rootOperator.tryGetAs<AnonymousSinkLogicalOperator>(); anonymousSink.has_value())
             {
-                newRoots.emplace_back(setInlineSink(testFileName, sltSinkProvider, currentQueryNumberInTest, inlineSink.value()));
+                newRoots.emplace_back(setAnonymousSink(testFileName, sltSinkProvider, currentQueryNumberInTest, anonymousSink.value()));
             }
             else if (auto namedSink = rootOperator.tryGetAs<SinkLogicalOperator>(); namedSink.has_value())
             {
@@ -889,14 +889,14 @@ struct SystestBinder::Impl
             else
             {
                 throw UnsupportedQuery(
-                    "Invalid root operator \"{}\". Root operators must be SinkLogicalOperators or InlineSinksLogicalOperators.",
+                    "Invalid root operator \"{}\". Root operators must be SinkLogicalOperators or AnonymousSinkLogicalOperators.",
                     rootOperator.getName());
             }
             plan = plan.withRootOperators(newRoots);
         }
     }
 
-    void setInlineSinks(
+    void setAnonymousSinks(
         LogicalPlan& plan,
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
@@ -907,9 +907,9 @@ struct SystestBinder::Impl
 
         for (const auto& rootOperator : plan.getRootOperators())
         {
-            if (auto inlineSink = rootOperator.tryGetAs<InlineSinkLogicalOperator>(); inlineSink.has_value())
+            if (auto anonymousSink = rootOperator.tryGetAs<AnonymousSinkLogicalOperator>(); anonymousSink.has_value())
             {
-                newRoots.emplace_back(setInlineSink(testFileName, sltSinkProvider, currentQueryNumberInTest, inlineSink.value()));
+                newRoots.emplace_back(setAnonymousSink(testFileName, sltSinkProvider, currentQueryNumberInTest, anonymousSink.value()));
             }
             else
             {
@@ -940,7 +940,7 @@ struct SystestBinder::Impl
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
             setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
             plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
-            setInlineSources(plan);
+            setAnonymousSources(plan);
             currentBuilder.setBoundPlan(std::move(plan));
         }
         catch (Exception& e)
@@ -982,10 +982,10 @@ struct SystestBinder::Impl
                 throw UnsupportedQuery("expected an EXPLAIN statement, but got: \"{}\"", replaceAll(statementString, "\n", " "));
             }
 
-            /// The inner query plan needs the same rewrites as a regular systest query, so that its sinks and inline
+            /// The inner query plan needs the same rewrites as a regular systest query, so that its anonymous sinks and
             /// sources resolve during optimization (the OPTIMIZED, DISTRIBUTED and ALL stages run the optimizer).
-            setInlineSinks(explainStatement->plan, testFileName, sltSinkProvider, currentQueryNumberInTest);
-            setInlineSources(explainStatement->plan);
+            setAnonymousSinks(explainStatement->plan, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            setAnonymousSources(explainStatement->plan);
             currentBuilder.setExplainStatement(std::move(*explainStatement));
         }
         catch (Exception& e)
@@ -1040,8 +1040,8 @@ struct SystestBinder::Impl
             setSinks(leftPlan, currentTest, testFileName, sltSinkProvider, currentQueryNumberInTest);
             setSinks(rightPlan, currentTest, differentialTestResultFileName, sltSinkProvider, currentQueryNumberInTest);
 
-            setInlineSources(leftPlan);
-            setInlineSources(rightPlan);
+            setAnonymousSources(leftPlan);
+            setAnonymousSources(rightPlan);
 
             leftPlan.setQueryId(
                 QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));

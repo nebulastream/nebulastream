@@ -30,7 +30,7 @@ using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
 using LocalQueryId = NESStrongUUIDType<struct LocalQueryId_>;
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 using PhysicalSourceId = NESStrongType<uint64_t, struct PhysicalSourceId_, 0, 1>;
-using InlineSinkId = NESStrongType<uint64_t, struct InlineSinkId_, 0, 1>;
+using AnonymousSinkId = NESStrongType<uint64_t, struct AnonymousSinkId_, 0, 1>;
 
 /// Local Identifiers: These Identifiers are unique in a local scope. E.g. the PipelineId is unique in regard to a single query plan.
 using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
@@ -49,8 +49,8 @@ static constexpr OriginId INITIAL_ORIGIN_ID = INITIAL<OriginId>;
 static constexpr PhysicalSourceId INVALID_PHYSICAL_SOURCE_ID = INVALID<PhysicalSourceId>;
 static constexpr PhysicalSourceId INITIAL_PHYSICAL_SOURCE_ID = INITIAL<PhysicalSourceId>;
 
-static constexpr InlineSinkId INVALID_INLINE_SINK_ID = INVALID<InlineSinkId>;
-static constexpr InlineSinkId INITIAL_INLINE_SINK_ID = INITIAL<InlineSinkId>;
+static constexpr AnonymousSinkId INVALID_ANONYMOUS_SINK_ID = INVALID<AnonymousSinkId>;
+static constexpr AnonymousSinkId INITIAL_ANONYMOUS_SINK_ID = INITIAL<AnonymousSinkId>;
 
 static constexpr PipelineId INVALID_PIPELINE_ID = INVALID<PipelineId>;
 static constexpr PipelineId INITIAL_PIPELINE_ID = INITIAL<PipelineId>;

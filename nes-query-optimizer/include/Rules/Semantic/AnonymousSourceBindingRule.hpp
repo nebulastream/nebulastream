@@ -28,27 +28,26 @@
 namespace NES
 {
 
-/// The InlineSourceBindingPhase replaces all sources that are defined within the query itself (InlineSourceLogicalOperators), as opposed to
-/// sources that are created in separate CREATE statements, with physical sources based on the given inline source configuration.
+/// The AnonymousSourceBindingPhase replaces all anonymously defined sources with physical sources based on the given source configuration.
 
-class InlineSourceBindingRule
+class AnonymousSourceBindingRule
 {
 public:
-    explicit InlineSourceBindingRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit AnonymousSourceBindingRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
-    static constexpr std::string_view NAME = "InlineSourceBindingRule";
+    static constexpr std::string_view NAME = "AnonymousSourceBindingRule";
 
     [[nodiscard]] static const std::type_info& getType();
     [[nodiscard]] static std::string_view getName();
     [[nodiscard]] std::set<std::type_index> dependsOn() const;
     [[nodiscard]] std::set<std::type_index> requiredBy() const;
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    bool operator==(const InlineSourceBindingRule& other) const;
+    bool operator==(const AnonymousSourceBindingRule& other) const;
 
 private:
-    [[nodiscard]] LogicalOperator bindInlineSourceLogicalOperators(const LogicalOperator& current) const;
+    [[nodiscard]] LogicalOperator bindAnonymousSourceLogicalOperators(const LogicalOperator& current) const;
     std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
 
-static_assert(RuleConcept<InlineSourceBindingRule, LogicalPlan>);
+static_assert(RuleConcept<AnonymousSourceBindingRule, LogicalPlan>);
 }
