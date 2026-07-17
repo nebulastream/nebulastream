@@ -19,7 +19,7 @@ sometext
 CREATE SINK string_sink(t VARSIZED NOT NULL) TYPE File;
 
 SELECT * FROM s
-WHERE t == VARSIZED('sometext')
+WHERE t == 'sometext'
 INTO string_sink;
 ----
 sometext
