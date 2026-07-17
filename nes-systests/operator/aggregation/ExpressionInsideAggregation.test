@@ -14,11 +14,11 @@ ATTACH INLINE
 6,60,325
 
 
-# Nested arithmetic: SUM(a * b + UINT64(1)).
+# Nested arithmetic: SUM(a * b + 1).
 # Window [100,200): a*b+1 = {11, 41}, SUM = 52.
 # Window [200,300): a*b+1 = {91, 161}, SUM = 252.
 # Window [300,400): a*b+1 = {251, 361}, SUM = 612.
-SELECT SUM(a * b + UINT64(1)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+SELECT SUM(a * b + 1) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
 ----
 52
 252

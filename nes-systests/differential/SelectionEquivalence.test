@@ -11,108 +11,108 @@ CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
 
 CREATE SINK selectionSink(out_id UINT64 NOT NULL, out_value UINT64 NOT NULL, out_timestamp UINT64 NOT NULL) TYPE File;
 
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE value >= UINT64(10) INTO selectionSink;
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE value >= 10 INTO selectionSink;
 ====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE NOT (value < UINT64(10)) INTO selectionSink;
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE NOT (value < 10) INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value >= UINT64(10) AND value <= UINT64(100)
-INTO selectionSink;
-====
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE NOT (value < UINT64(10) OR value > UINT64(100))
-INTO selectionSink;
-
-SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
-FROM stream
-WHERE value <= UINT64(20) OR value >= UINT64(80)
+WHERE value >= 10 AND value <= 100
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE NOT (value > UINT64(20) AND value < UINT64(80))
+WHERE NOT (value < 10 OR value > 100)
 INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value != UINT64(42)
+WHERE value <= 20 OR value >= 80
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value < UINT64(42) OR value > UINT64(42)
+WHERE NOT (value > 20 AND value < 80)
 INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value >= UINT64(10) AND (id >= UINT64(1000) OR timestamp >= UINT64(1000000000))
+WHERE value != 42
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE (value >= UINT64(10) AND id >= UINT64(1000))
-   OR (value >= UINT64(10) AND timestamp >= UINT64(1000000000))
+WHERE value < 42 OR value > 42
 INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE (value >= UINT64(10) AND value <= UINT64(50))
-  AND (id >= UINT64(100) OR timestamp >= UINT64(1000000))
+WHERE value >= 10 AND (id >= 1000 OR timestamp >= 1000000000)
+INTO selectionSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE (value >= 10 AND id >= 1000)
+   OR (value >= 10 AND timestamp >= 1000000000)
+INTO selectionSink;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
+FROM stream
+WHERE (value >= 10 AND value <= 50)
+  AND (id >= 100 OR timestamp >= 1000000)
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
 WHERE NOT (
-    (value < UINT64(10) OR value > UINT64(50))
-    OR (id < UINT64(100) AND timestamp < UINT64(1000000))
+    (value < 10 OR value > 50)
+    OR (id < 100 AND timestamp < 1000000)
 )
 INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value >= UINT64(90) OR (id >= UINT64(5) AND timestamp >= UINT64(100))
+WHERE value >= 90 OR (id >= 5 AND timestamp >= 100)
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE (value >= UINT64(90) OR id >= UINT64(5))
-  AND (value >= UINT64(90) OR timestamp >= UINT64(100))
+WHERE (value >= 90 OR id >= 5)
+  AND (value >= 90 OR timestamp >= 100)
 INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value >= UINT64(10)
+WHERE value >= 10
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE (value >= UINT64(10) AND id >= UINT64(100))
-   OR (value >= UINT64(10) AND NOT (id >= UINT64(100)))
+WHERE (value >= 10 AND id >= 100)
+   OR (value >= 10 AND NOT (id >= 100))
 INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value <= UINT64(50)
+WHERE value <= 50
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value <= UINT64(50) OR (value <= UINT64(50) AND id >= UINT64(1))
+WHERE value <= 50 OR (value <= 50 AND id >= 1)
 INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE (value >= UINT64(10) AND id >= UINT64(100))
-   OR (value < UINT64(10) AND timestamp >= UINT64(1000))
+WHERE (value >= 10 AND id >= 100)
+   OR (value < 10 AND timestamp >= 1000)
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE (value >= UINT64(10) AND id >= UINT64(100))
-   OR (value < UINT64(10) AND timestamp >= UINT64(1000))
-   OR (id >= UINT64(100) AND timestamp >= UINT64(1000))
+WHERE (value >= 10 AND id >= 100)
+   OR (value < 10 AND timestamp >= 1000)
+   OR (id >= 100 AND timestamp >= 1000)
 INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
@@ -138,23 +138,23 @@ INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE (value >= UINT64(100) AND value <= UINT64(200))
-   OR (id >= UINT64(1000) AND id <= UINT64(2000))
-   OR (timestamp >= UINT64(10000) AND timestamp <= UINT64(20000))
+WHERE (value >= 100 AND value <= 200)
+   OR (id >= 1000 AND id <= 2000)
+   OR (timestamp >= 10000 AND timestamp <= 20000)
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
 WHERE NOT (
-    (value < UINT64(100) OR value > UINT64(200)) AND
-    (id < UINT64(1000) OR id > UINT64(2000)) AND
-    (timestamp < UINT64(10000) OR timestamp > UINT64(20000))
+    (value < 100 OR value > 200) AND
+    (id < 1000 OR id > 2000) AND
+    (timestamp < 10000 OR timestamp > 20000)
 )
 INTO selectionSink;
 
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value < UINT64(10) AND value >= UINT64(10)
+WHERE value < 10 AND value >= 10
 INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
@@ -169,5 +169,5 @@ INTO selectionSink;
 ====
 SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp
 FROM stream
-WHERE value >= UINT64(0)
+WHERE value >= 0
 INTO selectionSink;

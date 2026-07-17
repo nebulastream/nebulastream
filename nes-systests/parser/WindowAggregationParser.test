@@ -40,7 +40,7 @@ CREATE SINK sinkStream(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT
 # Test aggregation syntax with window definition before group by
 SELECT start, end, id, SUM(value) as sumValue
 FROM stream
-WHERE id > UINT32(15)
+WHERE id > 15
 WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
 GROUP BY id
 INTO sinkStream;
@@ -51,7 +51,7 @@ INTO sinkStream;
 # Test aggregation syntax with group by before window definition
 SELECT start, end, id, SUM(value) as sumValue
 FROM stream
-WHERE id > UINT32(15)
+WHERE id > 15
 GROUP BY id
 WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
 INTO sinkStream;
@@ -63,7 +63,7 @@ INTO sinkStream;
 SELECT SUM(value) as sumValue
 FROM stream
 GROUP BY id
-WHERE id > UINT32(15)
+WHERE id > 15
 WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
 INTO sinkStream;
 ----
@@ -72,7 +72,7 @@ ERROR 2000 # invalid query syntax
 # Negative test: Missing WINDOW definition
 SELECT SUM(value) as sumValue
 FROM stream
-WHERE id > UINT32(15)
+WHERE id > 15
 GROUP BY id
 INTO sinkStream;
 ----

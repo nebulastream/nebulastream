@@ -62,7 +62,7 @@ SELECT id, timestamp FROM stream UNION SELECT id2 as id, timestamp FROM stream3 
 
 CREATE SINK sink2(timestamp UINT64 NOT NULL, origin UINT8 NOT NULL)  TYPE File;
 # Union with selection to fixup the schema and projection of constant into the schema
-SELECT timestamp, UINT8(1) as origin FROM stream UNION SELECT timestamp, UINT8(2) as origin FROM stream WHERE timestamp < UINT64(1002) INTO sink2;
+SELECT timestamp, 1 as origin FROM stream UNION SELECT timestamp, 2 as origin FROM stream WHERE timestamp < 1002 INTO sink2;
 ----
 1000,1
 1001,1

@@ -19,7 +19,7 @@ ATTACH INLINE
 
 SELECT * FROM
 # Commenting parts of the query
-e123 WHERE id >= UINT32(10) INTO sink;
+e123 WHERE id >= 10 INTO sink;
 ----
 1,1,1
 1,1,1

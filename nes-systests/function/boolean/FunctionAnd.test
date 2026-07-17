@@ -15,10 +15,10 @@ CREATE SINK sink8Booleans(a BOOLEAN NOT NULL, b BOOLEAN NOT NULL, c BOOLEAN NOT 
 
 # Check if the and operator works for no nested functions
 SELECT
-    (i8 == INT32(2)) and (i16 == INT32(2)) AS a,
-    (i32 == INT32(2)) and (i64 == INT32(1)) AS b,
-    (u8 == INT32(2)) and (i64 == INT32(2)) AS c,
-    (u8 == INT32(2)) and (u16 == INT32(2)) AS d
+    (i8 == 2) and (i16 == 2) AS a,
+    (i32 == 2) and (i64 == 1) AS b,
+    (u8 == 2) and (i64 == 2) AS c,
+    (u8 == 2) and (u16 == 2) AS d
 FROM stream INTO sink4Booleans;
 ----
 false,false,false,true
@@ -26,28 +26,28 @@ false,false,false,true
 
 # Check if the and operator works for simple nested functions
 SELECT
-    (i8 == INT32(1)) and ((i16 == INT32(1)) and (i32 == INT32(1))) AS a,
-    (i32 == INT32(1)) and ((i64 == INT32(1)) and (u8 == INT32(2))) AS b,
-    (u8 == INT32(2)) and ((u16 == INT32(1)) and (u32 == INT32(2))) AS c,
-    (u8 == INT32(2)) and ((u16 == INT32(1)) and (u32 == INT32(2))) AS d,
-    (i8 == INT32(1)) and not ((i16 == INT32(1)) and (i32 == INT32(1))) AS e,
-    (i32 == INT32(1)) and not ((i64 == INT32(1)) and (u8 == INT32(2))) AS f,
-    (u8 == INT32(2)) and not ((u16 == INT32(1)) and (u32 == INT32(2))) AS g,
-    (u8 == INT32(2)) and not ((u16 == INT32(1)) and (i32 == INT32(2))) AS h
+    (i8 == 1) and ((i16 == 1) and (i32 == 1)) AS a,
+    (i32 == 1) and ((i64 == 1) and (u8 == 2)) AS b,
+    (u8 == 2) and ((u16 == 1) and (u32 == 2)) AS c,
+    (u8 == 2) and ((u16 == 1) and (u32 == 2)) AS d,
+    (i8 == 1) and not ((i16 == 1) and (i32 == 1)) AS e,
+    (i32 == 1) and not ((i64 == 1) and (u8 == 2)) AS f,
+    (u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS g,
+    (u8 == 2) and not ((u16 == 1) and (i32 == 2)) AS h
 FROM stream INTO sink8Booleans;
 ----
 true,true,false,false,false,false,true,true
 
 # Check if the and operator works together with comparison functions
 SELECT
-    (i8 == INT32(1)) and (i16 < INT32(2)) AS a,
-    (i32 == INT32(1)) and (i64 > INT32(0)) AS b,
-    (u8 == INT32(2)) and (u16 <= INT32(2)) AS c,
-    (u8 == INT32(2)) and (u16 >= INT32(2)) AS d,
-    (i8 == INT32(1)) and not (i16 == INT32(1)) AS e,
-    (i32 == INT32(1)) and not (i64 == INT32(1)) AS f,
-    (u8 == INT32(2)) and not (u16 == INT32(1)) AS g,
-    (u8 == INT32(2)) and not (u16 == INT32(2)) AS h
+    (i8 == 1) and (i16 < 2) AS a,
+    (i32 == 1) and (i64 > 0) AS b,
+    (u8 == 2) and (u16 <= 2) AS c,
+    (u8 == 2) and (u16 >= 2) AS d,
+    (i8 == 1) and not (i16 == 1) AS e,
+    (i32 == 1) and not (i64 == 1) AS f,
+    (u8 == 2) and not (u16 == 1) AS g,
+    (u8 == 2) and not (u16 == 2) AS h
 FROM stream INTO sink8Booleans;
 ----
 true,true,true,true,false,false,true,false
@@ -55,14 +55,14 @@ true,true,true,true,false,false,true,false
 
 # Check if the and operator works together with comparison functions and nested functions
 SELECT
-    (i8 == INT32(1)) and ((i16 < INT32(2)) and (i32 == INT32(1))) AS a,
-    (i32 == INT32(1)) and ((i64 > INT32(0)) and (u8 == INT32(2))) AS b,
-    (u8 == INT32(2)) and ((u16 <= INT32(2)) and (u32 == INT32(2))) AS c,
-    (u8 == INT32(2)) and ((u16 >= INT32(2)) and (u32 == INT32(2))) AS d,
-    (i8 == INT32(1)) and not ((i16 == INT32(1)) and (i32 == INT32(1))) AS e,
-    (i32 == INT32(1)) and not ((i64 == INT32(1)) and (u8 == INT32(2))) AS f,
-    (u8 == INT32(2)) and not ((u16 == INT32(1)) and (u32 == INT32(2))) AS g,
-    (u8 == INT32(2)) and not ((u16 == INT32(1)) and (i32 == INT32(2))) AS h
+    (i8 == 1) and ((i16 < 2) and (i32 == 1)) AS a,
+    (i32 == 1) and ((i64 > 0) and (u8 == 2)) AS b,
+    (u8 == 2) and ((u16 <= 2) and (u32 == 2)) AS c,
+    (u8 == 2) and ((u16 >= 2) and (u32 == 2)) AS d,
+    (i8 == 1) and not ((i16 == 1) and (i32 == 1)) AS e,
+    (i32 == 1) and not ((i64 == 1) and (u8 == 2)) AS f,
+    (u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS g,
+    (u8 == 2) and not ((u16 == 1) and (i32 == 2)) AS h
 FROM stream INTO sink8Booleans;
 ----
 true,true,true,true,false,false,true,true
@@ -80,8 +80,8 @@ CREATE SINK sinkBoolAnd(a BOOLEAN NOT NULL, b BOOLEAN NOT NULL, c BOOLEAN NOT NU
 
 SELECT
     flag1 AND flag2 AS a,
-    flag1 AND (value == INT32(1)) AS b,
-    (value > INT32(2)) AND flag2 AS c
+    flag1 AND (value == 1) AS b,
+    (value > 2) AND flag2 AS c
 FROM boolStream INTO sinkBoolAnd;
 ----
 true,true,false
