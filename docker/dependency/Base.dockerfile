@@ -26,6 +26,13 @@ RUN apt update -y && apt install \
     openssl \
     ccache \
     ninja-build \
+    bison \
+    autoconf \
+    autoconf-archive \
+    automake \
+    libtool \
+    libglib2.0-dev-bin \
+    libudev-dev \
     pkg-config \
     -y
 

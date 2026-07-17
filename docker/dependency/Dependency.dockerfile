@@ -55,7 +55,7 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     --mount=type=secret,id=VCPKG_CACHE_BUCKET \
     --mount=type=secret,id=VCPKG_CACHE_REGION \
     bash -c ' \
-    set -e; \
+    set -eo pipefail; \
     if [ -f /run/secrets/VCPKG_CACHE_ACCESS_KEY ] && [ -s /run/secrets/VCPKG_CACHE_ACCESS_KEY ] && [ -f /run/secrets/VCPKG_CACHE_BUCKET ] && [ -s /run/secrets/VCPKG_CACHE_BUCKET ]; then \
         echo "S3 credentials found. Using authenticated readwrite cache..."; \
         export AWS_ACCESS_KEY_ID=$(cat /run/secrets/VCPKG_CACHE_ACCESS_KEY); \
@@ -77,11 +77,20 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     cd /vcpkg_input; \
     git clone https://github.com/microsoft/vcpkg.git vcpkg_repository; \
     ./vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics; \
-    ./vcpkg_repository/vcpkg install \
+    if ! ./vcpkg_repository/vcpkg install \
         --overlay-triplets=custom-triplets \
         --overlay-ports=vcpkg-registry/ports \
         --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" \
-        --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}"'
+        --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}" 2>&1 | tee /tmp/vcpkg-install.log; then \
+        failed_port=$(sed -nE "s/.*error: building ([^:]+):.*/\\1/p" /tmp/vcpkg-install.log | tail -n 1); \
+        echo "vcpkg failed; printing logs for ${failed_port:-the failed port}:"; \
+        if [ -n "$failed_port" ]; then \
+            find "vcpkg_repository/buildtrees/$failed_port" -type f \
+                \( -name "*.log" -o -name "config.log" \) \
+                -print0 | xargs -0 -r cat || true; \
+        fi; \
+        exit 1; \
+    fi'
 
 RUN bash -c ' \
     set -e; \
