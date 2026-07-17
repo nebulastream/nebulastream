@@ -23,15 +23,16 @@
 #include <Configurations/ConfigField.hpp>
 #include <Identifiers/Identifier.hpp>
 
+#include "SourceCatalog.hpp"
+
 namespace NES
 {
 
 struct PhysicalSourceConfig
 {
-    std::string logical;
-    Identifier type;
-    std::unordered_map<Identifier, ConfigLiteral> parserConfig;
-    std::unordered_map<Identifier, ConfigLiteral> sourceConfig;
+    GeneralSourceConfig generalSourceConfig;
+    PluginSourceConfiguration pluginSourceConfig;
+    InputFormatterDescriptor pluginInputFormatterConfig;
 };
 
 class SourceDataProvider
@@ -44,8 +45,7 @@ public:
     static PhysicalSourceConfig provideInlineDataSource(
         PhysicalSourceConfig initialPhysicalSourceConfig,
         std::vector<std::string> tuples,
-        std::shared_ptr<std::vector<std::jthread>> serverThreads,
-        std::filesystem::path testFilePath);
+        std::shared_ptr<std::vector<std::jthread>> serverThreads);
 };
 
 }

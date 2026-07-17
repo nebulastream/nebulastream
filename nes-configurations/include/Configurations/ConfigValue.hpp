@@ -52,7 +52,10 @@ public:
         return std::any_cast<T>(value);
     }
 
+    [[nodiscard]] const std::any& getRawValue() const { return value; }
+
     friend std::ostream& operator<<(std::ostream& os, const ConfigValue& value) { return os << value.getFullyQualifiedName(); }
+
 };
 
 class InstantiatedConfig

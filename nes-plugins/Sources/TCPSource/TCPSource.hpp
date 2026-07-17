@@ -50,8 +50,9 @@ struct TCPSourceConfig
     uint32_t bytesUsedForSocketBufferSizeTransfer;
     float flushIntervalInMs;
     uint32_t connectTimeoutSeconds;
+    bool overwriteableHostAndPort;
 
-    static TCPSourceConfig fromConfig(const InstantiatedConfig& config);
+    static std::expected<TCPSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 class TCPSource : public Source

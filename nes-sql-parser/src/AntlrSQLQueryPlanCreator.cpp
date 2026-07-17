@@ -79,6 +79,11 @@
 
 namespace NES::Parsers
 {
+AntlrSQLQueryPlanCreator::AntlrSQLQueryPlanCreator(
+    Schema<ConfigFieldDefault, Ordered> defaultConfigOptions, Schema<ConfigFieldTransformation, Unordered> configTransformations)
+    : defaultConfigValues(std::move(defaultConfigOptions)), configTransformations(std::move(configTransformations))
+{
+}
 
 LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
@@ -492,16 +497,9 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             {
                 throw InvalidQuerySyntax("Neither named source or inline source specified");
             }
-            const auto [type, configOptions] = inlineSourceConfig.value();
-            const auto parserConfig = getInputFormatterConfigLiterals(configOptions);
-            const auto sourceConfig = getSourceConfigLiterals(configOptions);
-            const auto schema = getSourceSchema(configOptions);
-            if (!schema.has_value())
-            {
-                throw InvalidConfigParameter("Inline Source is missing schema definition");
-            }
-
-            return LogicalPlanBuilder::createLogicalPlan(type, schema.value(), sourceConfig, parserConfig);
+            auto& [generalConfig, pluginSourceConfig, pluginInputFormatterConfig, schema] = inlineSourceConfig.value();
+            return LogicalPlanBuilder::createLogicalPlan(
+                std::move(generalConfig), std::move(pluginSourceConfig), std::move(pluginInputFormatterConfig), std::move(schema));
         }
         return LogicalPlanBuilder::createLogicalPlan(helpers.top().getSource().value());
     }();
@@ -1090,9 +1088,15 @@ void AntlrSQLQueryPlanCreator::enterInlineSource(AntlrSQLParser::InlineSourceCon
 {
     const auto type = bindIdentifier(context->type);
 
-    const auto parameters = bindConfigOptions(context->parameters->namedConfigExpression());
+    auto [generalConfig, pluginSourceConfig, pluginInputFormatterConfig, schemaOpt]
+        = bindSourceConfig(type, context->parameters->namedConfigExpression(), defaultConfigValues, configTransformations);
+    if (!schemaOpt.has_value())
+    {
+        throw InvalidQuerySyntax("No schema set for inline source of type: {}", type);
+    }
 
-    helpers.top().setInlineSource(type, parameters);
+    helpers.top().setInlineSource(
+        {std::move(generalConfig), std::move(pluginSourceConfig), std::move(pluginInputFormatterConfig), std::move(schemaOpt).value()});
 }
 
 void AntlrSQLQueryPlanCreator::enterSetOperation(AntlrSQLParser::SetOperationContext*)

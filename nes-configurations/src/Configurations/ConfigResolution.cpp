@@ -52,7 +52,35 @@ std::ostream& operator<<(std::ostream& os, const InvalidConfigSpecification& err
     return os;
 }
 
-std::expected<Schema<ConfigValue, Ordered>, InvalidConfigSpecification>
+bool InvalidConfigSpecification::empty() const
+{
+    return unresolvableFields.empty() && failedInstantiations.empty() && missingFields.empty();
+}
+
+InvalidConfigSpecification InvalidConfigSpecification::combine(InvalidConfigSpecification lhs, InvalidConfigSpecification rhs)
+{
+    return InvalidConfigSpecification{
+        .unresolvableFields = std::array{std::move(lhs.unresolvableFields), std::move(rhs.unresolvableFields)} | std::views::join | std::ranges::to<std::vector>(),
+        .failedInstantiations = std::array{std::move(lhs.failedInstantiations), std::move(rhs.failedInstantiations)} | std::views::join | std::ranges::to<std::vector>(),
+        .missingFields = std::array{std::move(lhs.missingFields), std::move(rhs.missingFields)} | std::views::join | std::ranges::to<std::vector>()
+    };
+}
+
+Schema<LiteralConfigValue, Ordered>
+addDefaultConfigValues(const Schema<LiteralConfigValue, Ordered>& config, const Schema<ConfigFieldDefault, Ordered>& configDefaults)
+{
+    std::vector<LiteralConfigValue> toAdd = config | std::ranges::to<std::vector>();
+    for (const auto& configDefault : configDefaults)
+    {
+        if (not config.getFieldByName(configDefault.getFullyQualifiedName()).has_value())
+        {
+            toAdd.emplace_back(configDefault.getFullyQualifiedName(), configDefault.get());
+        }
+    }
+    return toAdd | std::ranges::to<Schema<LiteralConfigValue, Ordered>>();
+}
+
+std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification>
 resolveConfig(const Schema<LiteralConfigValue, Ordered>& passedConfig, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig)
 {
     InvalidConfigSpecification errors;
@@ -83,7 +111,8 @@ resolveConfig(const Schema<LiteralConfigValue, Ordered>& passedConfig, const Sch
     {
         const auto alreadyResolved = std::ranges::any_of(
             resolvedConfig,
-            [&declaredField](const ConfigValue& exists) { return exists.getFullyQualifiedName() == declaredField.getFullyQualifiedName(); });
+            [&declaredField](const ConfigValue& exists)
+            { return exists.getFullyQualifiedName() == declaredField.getFullyQualifiedName(); });
         if (alreadyResolved)
         {
             continue;
@@ -98,11 +127,50 @@ resolveConfig(const Schema<LiteralConfigValue, Ordered>& passedConfig, const Sch
         }
     }
 
-    if (not errors.unresolvableFields.empty() or not errors.failedInstantiations.empty() or not errors.missingFields.empty())
-    {
-        return std::unexpected{std::move(errors)};
-    }
-    return Schema<ConfigValue, Ordered>{std::move(resolvedConfig)};
+    return {Schema<ConfigValue, Ordered>{std::move(resolvedConfig)}, std::move(errors)};
 }
 
+std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification>
+applyConfigTransformations(Schema<ConfigValue, Ordered> config, const Schema<ConfigFieldTransformation, Unordered>& configTransformations)
+{
+    std::vector<ConfigValue> transformedConfig;
+    std::vector<std::pair<QualifiedIdentifier, Exception>> failedTransformations;
+    auto transformedValues
+        = config
+        | std::views::transform(
+              [&](const auto& validatedValue) -> std::expected<ConfigValue, std::pair<QualifiedIdentifier, Exception>>
+              {
+                  if (auto transformation = configTransformations.getFieldByName(validatedValue.getFullyQualifiedName()))
+                  {
+                      return transformation->transformation(validatedValue.getRawValue())
+                          .transform_error([&](const auto& error) { return std::pair{validatedValue.getFullyQualifiedName(), error}; })
+                          .transform([&](const auto& value) { return ConfigValue{validatedValue.getFullyQualifiedName(), value}; });
+                  }
+                  return validatedValue;
+              });
+
+    for (auto transformedValue : transformedValues)
+    {
+        if (transformedValue.has_value())
+        {
+            transformedConfig.emplace_back(std::move(transformedValue).value());
+        }
+        else
+        {
+            failedTransformations.emplace_back(std::move(transformedValue).error());
+        }
+    }
+    return {
+        Schema<ConfigValue, Ordered>{std::move(transformedConfig)},
+        InvalidConfigSpecification{.failedInstantiations = std::move(failedTransformations)}};
+}
+
+std::expected<Schema<ConfigValue, Ordered>, InvalidConfigSpecification>
+toExpected(std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> result)
+{
+    if (std::get<InvalidConfigSpecification>(result).empty()) {
+        return std::get<Schema<ConfigValue, Ordered>>(std::move(result));
+    }
+    return std::unexpected(std::get<InvalidConfigSpecification>(std::move(result)));
+}
 }

@@ -20,9 +20,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include <Configurations/ConfigResolution.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Configurations/ConfigResolution.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -36,6 +36,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include "Sources/SourceCatalog.hpp"
 
 namespace NES
 {
@@ -49,10 +50,10 @@ public:
     static LogicalPlan createLogicalPlan(Identifier logicalSourceName);
 
     static LogicalPlan createLogicalPlan(
-        Identifier inlineSourceType,
-        Schema<UnqualifiedUnboundField, Ordered> schema,
-        Schema<LiteralConfigValue, Ordered> sourceConfig,
-        Schema<LiteralConfigValue, Ordered> parserConfig);
+        GeneralSourceConfig generalSourceConfig,
+        PluginSourceConfiguration pluginSourceConfig,
+        InputFormatterDescriptor pluginInputFormatterConfig,
+        Schema<UnqualifiedUnboundField, Ordered> schema);
 
     /// @brief this call projects out the attributes in the parameter list
     /// @param functions list of attributes

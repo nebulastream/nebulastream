@@ -88,27 +88,27 @@ namespace
 /// The systest data adaptors (PhysicalSourceConfig, InlineData/FileData registries) mutate the
 /// source config as a map; the catalog and the inline source operator carry it as an ordered
 /// schema of literal config values. These two helpers convert at that boundary.
-std::unordered_map<Identifier, ConfigLiteral> toConfigMap(const Schema<LiteralConfigValue, Ordered>& config)
-{
-    std::unordered_map<Identifier, ConfigLiteral> configMap;
-    for (const auto& value : config)
-    {
-        configMap.insert_or_assign(*value.getFullyQualifiedName().begin(), value.getValue());
-    }
-    return configMap;
-}
-
-Schema<LiteralConfigValue, Ordered> toLiteralConfigSchema(const std::unordered_map<Identifier, ConfigLiteral>& config)
-{
-    std::vector<LiteralConfigValue> values;
-    values.reserve(config.size());
-    for (const auto& [name, value] : config)
-    {
-        values.emplace_back(QualifiedIdentifier::create(name), value);
-    }
-    return Schema<LiteralConfigValue, Ordered>{std::move(values)};
-}
-
+// std::unordered_map<Identifier, ConfigLiteral> toConfigMap(const Schema<LiteralConfigValue, Ordered>& config)
+// {
+//     std::unordered_map<Identifier, ConfigLiteral> configMap;
+//     for (const auto& value : config)
+//     {
+//         configMap.insert_or_assign(*value.getFullyQualifiedName().begin(), value.getValue());
+//     }
+//     return configMap;
+// }
+//
+// Schema<LiteralConfigValue, Ordered> toLiteralConfigSchema(const std::unordered_map<Identifier, ConfigLiteral>& config)
+// {
+//     std::vector<LiteralConfigValue> values;
+//     values.reserve(config.size());
+//     for (const auto& [name, value] : config)
+//     {
+//         values.emplace_back(QualifiedIdentifier::create(name), value);
+//     }
+//     return Schema<LiteralConfigValue, Ordered>{std::move(values)};
+// }
+//
 }
 
 /// Helper class to model the two-step process of creating sinks in systest. We cannot create sink descriptors directly from sink definitions, because
@@ -266,7 +266,8 @@ public:
                     if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());
                         entry.empty())
                     {
-                        const auto& path = std::any_cast<const FileSourceConfig&>(logicalSourceOperator->getSourceDescriptor().getPluginData()).filePath;
+                        const auto& path
+                            = std::any_cast<const FileSourceConfig&>(logicalSourceOperator->getSourceDescriptor().getPluginData()).filePath;
                         sourceNamesToFilepathAndCountForQuery.emplace(
                             logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{path}, 1));
                     }
@@ -281,7 +282,7 @@ public:
                     NES_INFO(
                         "No file found for physical source {} for logical source {}",
                         logicalSourceOperator->getSourceDescriptor().getPhysicalSourceId(),
-                        logicalSourceOperator->getSourceDescriptor().getLogicalSource().getLogicalSourceName());
+                        logicalSourceOperator->getSourceDescriptor().getLogicalSourceName());
                 }
             });
         this->sourcesToFilePathsAndCounts.emplace(std::move(sourceNamesToFilepathAndCountForQuery));
@@ -426,12 +427,16 @@ struct SystestBinder::Impl
         std::filesystem::path testDataDir,
         std::filesystem::path configDir,
         QueryOptimizerConfiguration queryOptimizerConfiguration,
-        SystestClusterConfiguration clusterConfiguration)
+        SystestClusterConfiguration clusterConfiguration,
+        std::function<AntlrSQLQueryParser::QueryBinder()> queryBinderFactory,
+        std::function<StatementBinder(const std::shared_ptr<NES::SourceCatalog>&, AntlrSQLQueryParser::QueryBinder)> binderFactory)
         : workingDir(std::move(workingDir))
         , testDataDir(std::move(testDataDir))
         , configDir(std::move(configDir))
         , queryOptimizerConfiguration(std::move(queryOptimizerConfiguration))
         , clusterConfiguration(std::move(clusterConfiguration))
+        , queryBinderFactory(std::move(queryBinderFactory))
+        , statementBinderFactory(std::move(binderFactory))
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
         for (const auto& [host, data, capacity, downstream, config] : this->clusterConfiguration.workers)
@@ -570,18 +575,6 @@ struct SystestBinder::Impl
         }
     }
 
-    [[nodiscard]] std::filesystem::path generateSourceFilePath() const
-    {
-        auto sourceDir = workingDir / "sources";
-        if (not is_directory(sourceDir))
-        {
-            create_directory(sourceDir);
-            std::cout << "Created sources directory: file://" << sourceDir.string() << "\n";
-        }
-
-        return createUniqueFile(fmt::format("{}/input", sourceDir), ".csv").second;
-    }
-
     [[nodiscard]] std::filesystem::path generateSourceFilePath(const std::string& testData) const { return testDataDir / testData; }
 
     [[nodiscard]] PhysicalSourceConfig setUpSourceWithTestData(
@@ -592,9 +585,8 @@ struct SystestBinder::Impl
         switch (testData.first)
         {
             case TestDataIngestionType::INLINE: {
-                const auto testFile = generateSourceFilePath();
                 return SourceDataProvider::provideInlineDataSource(
-                    std::move(physicalSourceConfig), std::move(testData.second), std::move(sourceThreads), testFile);
+                    std::move(physicalSourceConfig), std::move(testData.second), std::move(sourceThreads));
             }
             case TestDataIngestionType::FILE: {
                 if (testData.second.size() != 1)
@@ -619,35 +611,24 @@ struct SystestBinder::Impl
         PRECONDITION(
             not clusterConfiguration.allowSourcePlacement.empty(),
             "Topology must list at least one worker in allow_source_placement to assign a default source host");
-        const auto host = statement.host ? *statement.host : Host(clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
         PhysicalSourceConfig physicalSourceConfig{
-            .logical = statement.attachedTo.asCanonicalString(),
-            .type = statement.sourceType,
-            .parserConfig = toConfigMap(statement.parserConfig),
-            .sourceConfig = toConfigMap(statement.sourceConfig)};
-
-        std::unordered_map<Identifier, ConfigLiteral> defaultParserConfig{{Identifier::parse("type"), "CSV"}};
-        physicalSourceConfig.parserConfig.merge(defaultParserConfig);
+            .generalSourceConfig = statement.generalSourceConfig,
+            .pluginSourceConfig = statement.pluginSourceConfig,
+            .pluginInputFormatterConfig = statement.pluginInputFormatterConfig};
 
         if (testData.has_value())
         {
             physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, std::move(testData.value()));
         }
-
-        const auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo);
-        if (not logicalSource.has_value())
-        {
-            throw UnknownSourceName("{}", statement.attachedTo);
-        }
+        PhysicalSourceBuilder sourceBuilder{
+            physicalSourceConfig.generalSourceConfig,
+            physicalSourceConfig.pluginSourceConfig,
+            physicalSourceConfig.pluginInputFormatterConfig,
+            sourceCatalog};
 
         /// The policy-resolved host enters the config as the HOST literal, resolved by the catalog.
-        physicalSourceConfig.sourceConfig.insert_or_assign(Identifier::parse("HOST"), host.getRawValue());
-        if (const auto created = sourceCatalog->addPhysicalSource(
-                *logicalSource,
-                physicalSourceConfig.type,
-                toLiteralConfigSchema(physicalSourceConfig.sourceConfig),
-                toLiteralConfigSchema(physicalSourceConfig.parserConfig));
+        if (const auto created = sourceCatalog->registerWithLogicalSource(std::move(sourceBuilder), statement.logicalSourceName);
             not created.has_value())
         {
             throw Exception(created.error());
@@ -691,13 +672,13 @@ struct SystestBinder::Impl
         const auto parseResult = managedParser->parseSingle();
         if (not parseResult.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", replaceAll(query, "\n", " "));
+            throw InvalidQuerySyntax("failed to to parse the query \"{}\" with error", replaceAll(query, "\n", " "), parseResult.error().what());
         }
 
         const auto binding = binder.bind(parseResult.value().get());
         if (not binding.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", replaceAll(query, "\n", " "));
+            throw InvalidQuerySyntax("failed to to parse the query \"{}\" with error {}", replaceAll(query, "\n", " "), binding.error().what());
         }
 
         if (const auto& statement = binding.value(); std::holds_alternative<CreateLogicalSourceStatement>(statement))
@@ -720,63 +701,6 @@ struct SystestBinder::Impl
         {
             throw UnsupportedQuery();
         }
-    }
-
-    [[nodiscard]] LogicalOperator updateInlineSource(const LogicalOperator& current) const
-    {
-        std::vector<LogicalOperator> newChildren;
-        for (const auto& child : current.getChildren())
-        {
-            newChildren.emplace_back(updateInlineSource(child));
-        }
-
-        if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
-        {
-            const auto originalSourceConfig = toConfigMap(inlineSource.value()->getSourceConfig());
-            const auto originalParserConfig = toConfigMap(inlineSource.value()->getParserConfig());
-            auto sourceConfig = originalSourceConfig;
-            auto parserConfig = originalParserConfig;
-
-            parserConfig.try_emplace(Identifier::parse("type"), "CSV");
-
-            /// By default, all relative paths are relative to the testDataDir.
-            if (const auto filePathIt = sourceConfig.find(Identifier::parse("file_path")); filePathIt != sourceConfig.end())
-            {
-                if (const auto* filePath = std::get_if<std::string>(&filePathIt->second);
-                    filePath != nullptr && !filePath->starts_with("/"))
-                {
-                    filePathIt->second = (testDataDir / *filePath).string();
-                }
-            }
-
-            PRECONDITION(
-                not clusterConfiguration.allowSourcePlacement.empty(),
-                "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
-            sourceConfig.try_emplace(Identifier::parse("host"), clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
-
-            if (sourceConfig != originalSourceConfig || parserConfig != originalParserConfig)
-            {
-                const auto newOperator = InlineSourceLogicalOperator::create(
-                    inlineSource.value()->getSourceType(),
-                    inlineSource.value()->getSourceSchema(),
-                    toLiteralConfigSchema(sourceConfig),
-                    toLiteralConfigSchema(parserConfig));
-
-                return newOperator.withChildrenUnsafe(newChildren);
-            }
-        }
-
-        return current.withChildrenUnsafe(std::move(newChildren));
-    }
-
-    void setInlineSources(LogicalPlan& plan) const
-    {
-        std::vector<LogicalOperator> newRoots;
-        for (const auto& root : plan.getRootOperators())
-        {
-            newRoots.emplace_back(updateInlineSource(root));
-        }
-        plan = plan.withRootOperators(newRoots);
     }
 
     LogicalOperator setInlineSink(
@@ -877,6 +801,7 @@ struct SystestBinder::Impl
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
         SLTSinkFactory& sltSinkProvider,
         const std::string& query,
+        const AntlrSQLQueryParser::QueryBinder& queryBinder,
         const SystestQueryId& currentQueryNumberInTest,
         const std::vector<ConfigurationOverride>& configOverrides,
         const bool sequentialExecution) const
@@ -890,10 +815,9 @@ struct SystestBinder::Impl
         }
         try
         {
-            auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+            auto plan = queryBinder.createLogicalQueryPlanFromSQLString(query);
             setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
             plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
-            setInlineSources(plan);
             currentBuilder.setBoundPlan(std::move(plan));
         }
         catch (Exception& e)
@@ -930,6 +854,7 @@ struct SystestBinder::Impl
         SLTSinkFactory& sltSinkProvider,
         std::string leftQuery,
         std::string rightQuery,
+        const AntlrSQLQueryParser::QueryBinder& queryBinder,
         const SystestQueryId currentQueryNumberInTest,
         const std::vector<ConfigurationOverride>& configOverrides) const
     {
@@ -942,14 +867,11 @@ struct SystestBinder::Impl
 
         try
         {
-            auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(leftQuery);
-            auto rightPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rightQuery);
+            auto leftPlan = queryBinder.createLogicalQueryPlanFromSQLString(leftQuery);
+            auto rightPlan = queryBinder.createLogicalQueryPlanFromSQLString(rightQuery);
 
             setSinks(leftPlan, currentTest, testFileName, sltSinkProvider, currentQueryNumberInTest);
             setSinks(rightPlan, currentTest, differentialTestResultFileName, sltSinkProvider, currentQueryNumberInTest);
-
-            setInlineSources(leftPlan);
-            setInlineSources(rightPlan);
 
             leftPlan.setQueryId(
                 QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
@@ -981,8 +903,8 @@ struct SystestBinder::Impl
         std::vector globalConfigOverrides{ConfigurationOverride{}};
         std::vector lastMergedConfigOverrides{ConfigurationOverride{}};
         SystestParser parser{};
-        const auto binder = NES::StatementBinder{
-            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+        const AntlrSQLQueryParser::QueryBinder queryBinder = queryBinderFactory();
+        const auto binder = statementBinderFactory(sourceCatalog, queryBinder);
 
         parser.registerSubstitutionRule(
             {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
@@ -1010,7 +932,14 @@ struct SystestBinder::Impl
                 auto mergedConfigOverrides = mergeConfigurations(configOverrides, globalConfigOverrides);
                 lastMergedConfigOverrides = mergedConfigOverrides;
                 queryCallback(
-                    testFileName, plans, sltSinkProvider, query, currentQueryNumberInTest, mergedConfigOverrides, sequentialExecution);
+                    testFileName,
+                    plans,
+                    sltSinkProvider,
+                    query,
+                    queryBinder,
+                    currentQueryNumberInTest,
+                    mergedConfigOverrides,
+                    sequentialExecution);
                 configOverrides = {ConfigurationOverride{}};
             });
 
@@ -1059,6 +988,7 @@ struct SystestBinder::Impl
                     sltSinkProvider,
                     std::move(leftQuery),
                     std::move(rightQuery),
+                    queryBinder,
                     std::move(currentQueryNumberInTest),
                     lastMergedConfigOverrides);
             });
@@ -1097,6 +1027,11 @@ private:
     QueryOptimizerConfiguration queryOptimizerConfiguration;
     SystestClusterConfiguration clusterConfiguration;
 
+    /// Add file-specific dependencies here
+    std::function<AntlrSQLQueryParser::QueryBinder()> queryBinderFactory;
+    std::function<StatementBinder(const std::shared_ptr<NES::SourceCatalog>&, AntlrSQLQueryParser::QueryBinder)> statementBinderFactory;
+
+
     SharedPtr<WorkerCatalog> workerCatalog;
 };
 
@@ -1105,8 +1040,18 @@ SystestBinder::SystestBinder(
     const std::filesystem::path& testDataDir,
     const std::filesystem::path& configDir,
     const QueryOptimizerConfiguration& queryOptimizerConfiguration,
-    SystestClusterConfiguration clusterConfiguration)
-    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, queryOptimizerConfiguration, std::move(clusterConfiguration)))
+    SystestClusterConfiguration clusterConfiguration,
+    std::function<AntlrSQLQueryParser::QueryBinder()> queryBinderFactory,
+    std::function<StatementBinder(const std::shared_ptr<NES::SourceCatalog>&, AntlrSQLQueryParser::QueryBinder)> statementBinderFactory)
+    : impl(
+          std::make_unique<Impl>(
+              workingDir,
+              testDataDir,
+              configDir,
+              queryOptimizerConfiguration,
+              std::move(clusterConfiguration),
+              std::move(queryBinderFactory),
+              std::move(statementBinderFactory)))
 {
 }
 

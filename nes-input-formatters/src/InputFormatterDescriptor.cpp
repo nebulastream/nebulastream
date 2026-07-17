@@ -32,14 +32,14 @@ namespace detail
 {
 struct ReflectedInputFormatterDescriptor
 {
-    std::string inputFormatterType;
+    Identifier inputFormatterType;
     /// The formatter-defined config struct, reflected by the formatter's InputFormatterConfigRegistry
     /// entry; empty for formats without a config (NATIVE).
     Reflected config;
 };
 }
 
-const std::string& InputFormatterDescriptor::getInputFormatterType() const
+const Identifier& InputFormatterDescriptor::getInputFormatterType() const
 {
     return inputFormatterType;
 }
@@ -49,7 +49,7 @@ const std::any& InputFormatterDescriptor::getConfig() const
     return config;
 }
 
-InputFormatterDescriptor::InputFormatterDescriptor(std::string inputFormatterType, std::any config)
+InputFormatterDescriptor::InputFormatterDescriptor(Identifier inputFormatterType, std::any config)
     : inputFormatterType(std::move(inputFormatterType)), config(std::move(config))
 {
 }
@@ -69,7 +69,7 @@ Reflected Reflector<InputFormatterDescriptor>::operator()(const InputFormatterDe
                 .inputFormatterType = inputFormatterDescriptor.inputFormatterType, .config = Reflected{}});
     }
 
-    const auto* configEntry = InputFormatterConfigRegistry::instance().find(inputFormatterDescriptor.inputFormatterType);
+    const auto* configEntry = InputFormatterConfigRegistry::instance().find(inputFormatterDescriptor.inputFormatterType.asCanonicalString());
     INVARIANT(
         configEntry != nullptr,
         "Input formatter type {} has a descriptor but no InputFormatterConfigRegistry entry",
@@ -90,7 +90,7 @@ InputFormatterDescriptor Unreflector<InputFormatterDescriptor>::operator()(const
         return InputFormatterDescriptor{std::move(reflectedInputFormatterDescriptor.inputFormatterType), std::any{}};
     }
 
-    const auto* configEntry = InputFormatterConfigRegistry::instance().find(reflectedInputFormatterDescriptor.inputFormatterType);
+    const auto* configEntry = InputFormatterConfigRegistry::instance().find(reflectedInputFormatterDescriptor.inputFormatterType.asCanonicalString());
     if (configEntry == nullptr)
     {
         throw UnknownInputFormatterType(

@@ -35,6 +35,7 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
+
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
@@ -57,6 +58,7 @@
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include "Util/Files.hpp"
 
 /// Rust FFI function that enables in-memory communication channels for embedded multi-worker mode.
 /// Configures the network layer to use shared memory instead of real network sockets
@@ -158,9 +160,65 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
         }
     }
 }
+
+Schema<ConfigFieldDefault, Ordered> makeDefaultConfigFields(const SystestConfiguration& config)
+{
+    return Schema<ConfigFieldDefault, Ordered>{
+        [&]
+        {
+            PRECONDITION(
+                !config.clusterConfig.allowSourcePlacement.empty(),
+                "Topology must list at least one worker in allow_source_placement to assign a default source host");
+            return ConfigFieldDefault{
+                "SOURCE.HOST", [=] { return ConfigLiteral{config.clusterConfig.allowSourcePlacement.at(0).getRawValue()}; }};
+        }(),
+        {"INPUT_FORMATTER.TYPE", [] { return "CSV"; }},
+        [&]
+        {
+            auto sourceDir = std::filesystem::path{config.workingDir.getValue()} / "sources";
+            if (not is_directory(sourceDir))
+            {
+                create_directory(sourceDir);
+                std::cout << "Created sources directory: file://" << sourceDir.string() << "\n";
+            }
+
+            return ConfigFieldDefault{
+                "FILE_SOURCE.PATH", [=] { return createUniqueFile(fmt::format("{}/input", sourceDir), ".systest.csv").second; }};
+        }(),
+        ConfigFieldDefault{"TCP_SOURCE.SOCKET_HOST", [] { return std::monostate{}; }},
+        ConfigFieldDefault{"TCP_SOURCE.SOCKET_PORT", [] { return std::monostate{}; }},
+        ConfigFieldDefault{"TCP_SOURCE.OVERWRITEABLE_HOST_AND_PORT", [] { return true; }},
+    };
 }
 
-SystestExecutor::SystestExecutor(SystestConfiguration config) : config(std::move(config))
+Schema<ConfigFieldTransformation, Unordered> makeConfigTransformations(const SystestConfiguration& config)
+{
+    return Schema<ConfigFieldTransformation, Unordered>{ConfigFieldTransformation::create<std::string>(
+        QualifiedIdentifier::parse("FILE_SOURCE.PATH"),
+        [testDataDir = config.testDataDir](const std::string& filePath)
+        {
+            if (!filePath.starts_with("/"))
+            {
+                return (std::filesystem::path{testDataDir.getValue()} / filePath).string();
+            }
+            return filePath;
+        })};
+}
+}
+
+SystestExecutor::SystestExecutor(SystestConfiguration config)
+    : config(std::move(config))
+    , queryBinderFactory([config = this->config]
+                         { return AntlrSQLQueryParser::QueryBinder{makeDefaultConfigFields(config), makeConfigTransformations(config)}; })
+    , statementBinderFactory(
+          [config = this->config](const std::shared_ptr<SourceCatalog>& sourceCatalog, AntlrSQLQueryParser::QueryBinder queryBinder)
+          {
+              return StatementBinder{
+                  makeDefaultConfigFields(config),
+                  makeConfigTransformations(config),
+                  sourceCatalog,
+                  [queryBinder = std::move(queryBinder)](const auto& plan) { return queryBinder.bindLogicalQueryPlan(plan); }};
+          })
 {
 }
 
@@ -282,7 +340,9 @@ SystestExecutorResult SystestExecutor::executeSystests()
             config.testDataDir.getValue(),
             config.configDir.getValue(),
             config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
-            config.clusterConfig};
+            config.clusterConfig,
+            queryBinderFactory,
+            statementBinderFactory};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {

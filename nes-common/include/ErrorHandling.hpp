@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <expected>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -182,6 +183,35 @@ Exception wrapExternalException(std::string contextMsg);
 
 [[nodiscard]] std::optional<ErrorCode> errorCodeExists(uint64_t code) noexcept;
 [[nodiscard]] std::optional<ErrorCode> errorTypeExists(std::string_view name) noexcept;
+
+template <typename T>
+T unwrapOrThrow(std::expected<T, Exception> expected)
+{
+    if (expected.has_value())
+    {
+        return std::move(expected.value());
+    }
+    throw expected.error();
+}
+
+template <typename T>
+T unwrapOrAbort(std::expected<T, Exception> expected)
+{
+    PRECONDITION(expected.has_value(), "{}", expected.error().what());
+    if (expected.has_value())
+    {
+        return std::move(expected).value();
+    }
+}
+
+template <typename T, typename E>
+T unwrapOrAbort(std::expected<T, E> expected)
+{
+    PRECONDITION(expected.has_value(), "{}", expected.error());
+    return std::move(expected).value();
+}
+
+
 }
 
 namespace fmt

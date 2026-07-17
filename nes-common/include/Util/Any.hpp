@@ -16,15 +16,23 @@
 
 namespace NES
 {
-    class NonEmptyAny
+
+/// Wraps std::any for use as the value type of std::expected. std::expected<std::any, E> itself is ill-formed with
+/// clang + libstdc++: std::any is constructible from anything, including the expected itself, so the constraints on
+/// expected's converting constructors (__cons_from_expected) recursively depend on themselves. Restricting the
+/// constructor to exactly std::any makes this type not constructible from the surrounding expected, breaking the cycle.
+/// Without the same_as constraint, any parameter would be accepted the expected via std::any's
+/// implicit converting constructor, and checking that conversion re-enters the same constraint recursion.
+class ExplicitAny
+{
+    std::any value;
+
+public:
+    template <std::same_as<std::any> A>
+    explicit ExplicitAny(A value) : value(std::move(value))
     {
-        std::any value;
-        public:
-        explicit NonEmptyAny(std::any value) : value(std::move(value))
-        {
-            PRECONDITION(this->value.has_value(), "NonEmptyAny cannot be constructed from empty any");
-        }
-        operator const std::any& () const &{ return value; }
-        operator std::any&&() && { return std::move(value); }
-    };
+    }
+
+    [[nodiscard]] const std::any& getValue() const { return value; }
+};
 }

@@ -37,29 +37,27 @@ PhysicalSourceConfig SourceDataProvider::provideFileDataSource(
         .serverThreads = std::move(serverThreads),
         .testFilePath = std::move(testFilePath)};
     if (auto physicalSourceConfig
-        = FileDataRegistry::instance().create(fileDataArgs.physicalSourceConfig.type.asCanonicalString(), fileDataArgs))
+        = FileDataRegistry::instance().create(fileDataArgs.physicalSourceConfig.pluginSourceConfig.getType().asCanonicalString(), fileDataArgs))
     {
         return physicalSourceConfig.value();
     }
-    throw UnknownSourceType("Source type {} not found.", fileDataArgs.physicalSourceConfig.type);
+    throw UnknownSourceType("Source type {} not found.", fileDataArgs.physicalSourceConfig.pluginSourceConfig.getType());
 }
 
 PhysicalSourceConfig SourceDataProvider::provideInlineDataSource(
     PhysicalSourceConfig initialPhysicalSourceConfig,
     std::vector<std::string> tuples,
-    std::shared_ptr<std::vector<std::jthread>> serverThreads,
-    std::filesystem::path testFilePath)
+    std::shared_ptr<std::vector<std::jthread>> serverThreads)
 {
     const auto inlineDataArgs = InlineDataRegistryArguments{
         .physicalSourceConfig = std::move(initialPhysicalSourceConfig),
         .tuples = std::move(tuples),
-        .serverThreads = std::move(serverThreads),
-        .testFilePath = std::move(testFilePath)};
+        .serverThreads = std::move(serverThreads)};
     if (auto physicalSourceConfig
-        = InlineDataRegistry::instance().create(inlineDataArgs.physicalSourceConfig.type.asCanonicalString(), inlineDataArgs))
+        = InlineDataRegistry::instance().create(inlineDataArgs.physicalSourceConfig.pluginSourceConfig.getType().asCanonicalString(), inlineDataArgs))
     {
         return physicalSourceConfig.value();
     }
-    throw UnknownSourceType("Source type {} not found.", inlineDataArgs.physicalSourceConfig.type);
+    throw UnknownSourceType("Source type {} not found.", inlineDataArgs.physicalSourceConfig.pluginSourceConfig.getType());
 }
 }

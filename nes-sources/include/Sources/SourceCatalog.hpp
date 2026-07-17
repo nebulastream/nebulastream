@@ -40,38 +40,55 @@
 namespace NES
 {
 
+struct GeneralSourceConfig
+{
+    Host host;
+    std::optional<size_t> maxInflightBuffers;
+    bool operator==(const GeneralSourceConfig&) const = default;
+
+    friend std::ostream& operator<<(std::ostream& os, const GeneralSourceConfig& config);
+};
+
+class SourceCatalog;
 
 class PhysicalSourceBuilder
 {
 public:
+    PhysicalSourceBuilder(
+        GeneralSourceConfig generalSourceConfig,
+        PluginSourceConfiguration sourcePluginConfig,
+        InputFormatterDescriptor inputFormatterPluginConfig,
+        std::shared_ptr<const SourceCatalog> catalog);
     std::expected<SourceDescriptor, Exception> build(Schema<UnqualifiedUnboundField, Ordered> schema) &&;
-
     PhysicalSourceBuilder(const PhysicalSourceBuilder& other) = delete;
     PhysicalSourceBuilder(PhysicalSourceBuilder&& other) noexcept = default;
     PhysicalSourceBuilder& operator=(const PhysicalSourceBuilder& other) = delete;
     PhysicalSourceBuilder& operator=(PhysicalSourceBuilder&& other) noexcept = default;
 
 private:
-    std::function<std::expected<SourceDescriptor, Exception>(Schema<UnqualifiedUnboundField, Ordered>)> builder;
-    explicit PhysicalSourceBuilder(std::function<std::expected<SourceDescriptor, Exception>(Schema<UnqualifiedUnboundField, Ordered>)> builder) : builder(std::move(builder)) {};
-    friend class SourceCatalog;
-};
-
-struct GeneralSourceConfig
-{
-    Schema<UnqualifiedUnboundField, Ordered> schema;
-    Host host;
-    std::optional<size_t> maxInflightBuffers;
+    GeneralSourceConfig generalSourceConfig;
+    PluginSourceConfiguration sourcePluginConfig;
+    InputFormatterDescriptor inputFormatterPluginConfig;
+    std::shared_ptr<const SourceCatalog> catalog;
+    bool wasCalled = false;
 };
 
 class SourceConfigSchema
 {
+public:
+    std::expected<std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, std::optional<Schema<UnqualifiedUnboundField, Ordered>>>, Exception>
+    resolveConfigs(const Schema<LiteralConfigValue, Ordered>& values) const;
+    SourceConfigSchema withConfigDefaults(Schema<ConfigFieldDefault, Ordered> configDefaults) const;
+    SourceConfigSchema withConfigTransformations(Schema<ConfigFieldTransformation, Unordered> configTransformations) const;
+
+private:
+    SourceConfigSchema(Identifier sourceType, Identifier inputFormatterType, Schema<QualifiedErasedConfigField, Ordered> configSchema);
     Identifier sourceType;
     Identifier inputFormatterType;
     Schema<QualifiedErasedConfigField, Ordered> configSchema;
-
-public:
-    std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor> resolveConfigs(Schema<LiteralConfigValue, Ordered> values) const;
+    Schema<ConfigFieldDefault, Ordered> configDefaults;
+    Schema<ConfigFieldTransformation, Unordered> configTransformations;
+    friend class SourceCatalog;
 };
 
 /// @brief The source catalog handles the mapping of logical to physical sources.
@@ -104,14 +121,10 @@ public:
     /// @return bool indicating if this logical source was registered by name and removed
     [[nodiscard]] bool removeLogicalSource(const LogicalSource& logicalSource);
 
-    [[nodiscard]] std::expected<SourceConfigSchema, Exception> getConfigSchema(const Identifier& sourceType, const Identifier& inputFormatterType) const;
+    [[nodiscard]] static std::expected<SourceConfigSchema, Exception>
+    getConfigSchema(const Identifier& sourceType, const Identifier& inputFormatterType);
 
-    [[nodiscard]] PhysicalSourceBuilder buildPhysicalSource(
-        GeneralSourceConfig generalSourceConfig,
-        PluginSourceConfiguration sourcePluginConfig,
-        InputFormatterDescriptor inputFormatterPluginConfig);
-
-    SourceDescriptor registerWithLogicalSource(PhysicalSourceBuilder builder, const Identifier& logicalSourceName);
+    std::expected<SourceDescriptor, Exception> registerWithLogicalSource(PhysicalSourceBuilder builder, const Identifier& logicalSourceName);
 
     /// @brief removes a physical source
     /// @return true if there is a source descriptor with that id registered and it was removed
@@ -138,5 +151,9 @@ private:
     std::unordered_map<Identifier, LogicalSource> namesToLogicalSourceMapping;
     std::unordered_map<PhysicalSourceId, SourceDescriptor> idsToPhysicalSources;
     std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> logicalToPhysicalSourceMapping;
+
+    friend PhysicalSourceBuilder;
 };
 }
+
+FMT_OSTREAM(NES::GeneralSourceConfig);

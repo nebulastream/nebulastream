@@ -62,7 +62,7 @@ struct GeneratorSourceConfig
     std::chrono::milliseconds flushInterval;
     GeneratorRateVariant generatorRateConfig;
 
-    static GeneratorSourceConfig fromConfig(const InstantiatedConfig& config);
+    static std::expected<GeneratorSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 class GeneratorSource : public Source

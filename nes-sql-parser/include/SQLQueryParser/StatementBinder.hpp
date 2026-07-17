@@ -64,13 +64,10 @@ struct CreateLogicalSourceStatement
 
 struct CreatePhysicalSourceStatement
 {
-    LogicalSourceName attachedTo;
-    Identifier sourceType;
-    std::optional<Host> host;
-    /// The literals exactly as the parser produced them; resolved against the source's (and the
-    /// input formatter's) declared config schema when the catalog creates the physical source.
-    Schema<LiteralConfigValue, Ordered> sourceConfig;
-    Schema<LiteralConfigValue, Ordered> parserConfig;
+    Identifier logicalSourceName;
+    GeneralSourceConfig generalSourceConfig;
+    PluginSourceConfiguration pluginSourceConfig;
+    InputFormatterDescriptor pluginInputFormatterConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
@@ -219,6 +216,17 @@ inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& sta
     return std::visit(visitor, statement);
 }
 
+struct DefaultHost
+{
+    std::string hostName;
+};
+
+struct RequireHostConfig
+{
+};
+
+using HostPolicy = std::variant<RequireHostConfig, DefaultHost>;
+
 class StatementBinder
 {
     /// PIMPL pattern to hide all the internally used binder member functions
@@ -227,6 +235,8 @@ class StatementBinder
 
 public:
     explicit StatementBinder(
+        Schema<ConfigFieldDefault, Ordered> defaultConfigValues,
+        Schema<ConfigFieldTransformation, Unordered> configTransformations,
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
         const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
 

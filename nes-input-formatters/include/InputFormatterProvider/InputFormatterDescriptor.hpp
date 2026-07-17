@@ -23,6 +23,7 @@
 #include <Util/ReflectionFwd.hpp>
 #include "Configurations/ConfigField.hpp"
 #include "Schema/Schema.hpp"
+#include "Util/Variant.hpp"
 
 namespace NES
 {
@@ -37,7 +38,7 @@ class InputFormatterDescriptor final
     static constexpr std::string_view TYPE_STRING{"TYPE"};
 
 public:
-    explicit InputFormatterDescriptor(std::string inputFormatterType, std::any config);
+    explicit InputFormatterDescriptor(Identifier inputFormatterType, std::any config);
     ~InputFormatterDescriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatterDescriptor& inputFormatterDescriptor);
@@ -51,16 +52,24 @@ public:
 
     static std::string getTypeString() { return std::string{TYPE_STRING}; }
 
-    [[nodiscard]] const std::string& getInputFormatterType() const;
+    [[nodiscard]] const Identifier& getInputFormatterType() const;
 
     [[nodiscard]] const std::any& getConfig() const;
 
-    static inline Schema<QualifiedErasedConfigField, Ordered> =
+    static inline auto TYPE_FIELD = ConfigField<Identifier>{
+        std::string{TYPE_STRING},
+        [](const ConfigLiteral& literal)
+        { return tryGetOr<std::string>(literal, expectedType<std::string>()).and_then(Identifier::tryParse); }};
+
+    static inline Schema<QualifiedErasedConfigField, Ordered> configSchema
+        = createConfigSchema(Identifier::parse("INPUT_FORMATTER"), TYPE_FIELD);
+
+
 private:
     friend struct Unreflector<InputFormatterDescriptor>;
     friend struct Reflector<InputFormatterDescriptor>;
 
-    std::string inputFormatterType;
+    Identifier inputFormatterType;
     std::any config;
 };
 

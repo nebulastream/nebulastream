@@ -47,7 +47,7 @@ struct NetworkSourceConfig
     /// Per-channel receiver queue size override. 0 means use the worker-level default.
     size_t receiverQueueSize;
 
-    static NetworkSourceConfig fromConfig(const InstantiatedConfig& config);
+    static std::expected<NetworkSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 class NetworkSource final : public Source

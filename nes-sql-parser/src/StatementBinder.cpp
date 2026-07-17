@@ -42,6 +42,7 @@
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <fmt/std.h>
+#include "Util/Optional.hpp"
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
@@ -70,14 +71,21 @@ namespace NES
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 class StatementBinder::Impl
 {
+    Schema<ConfigFieldDefault, Ordered> defaultConfigValues;
+    Schema<ConfigFieldTransformation, Unordered> configTransformations;
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::function<LogicalPlan(AntlrSQLParser::QueryContext*)> queryBinder;
 
 public:
     Impl(
+        Schema<ConfigFieldDefault, Ordered> defaultConfigValues,
+        Schema<ConfigFieldTransformation, Unordered> configTransformations,
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
         const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryBinder)
-        : sourceCatalog(sourceCatalog), queryBinder(queryBinder)
+        : defaultConfigValues(std::move(defaultConfigValues))
+        , configTransformations(std::move(configTransformations))
+        , sourceCatalog(sourceCatalog)
+        , queryBinder(queryBinder)
     {
     }
 
@@ -108,40 +116,29 @@ public:
     CreatePhysicalSourceStatement
     bindCreatePhysicalSourceStatement(AntlrSQLParser::CreatePhysicalSourceDefinitionContext* physicalSourceDefAST) const
     {
-        const auto logicalSourceName = LogicalSourceName(bindIdentifier(physicalSourceDefAST->logicalSource->strictIdentifier()));
+        auto logicalSourceName = LogicalSourceName(bindIdentifier(physicalSourceDefAST->logicalSource->strictIdentifier()));
         /// TODO #764 use normal identifiers for types
-        const Identifier type = bindIdentifier(physicalSourceDefAST->type);
-        const auto configOptions = [&]()
+        const Identifier sourceType = bindIdentifier(physicalSourceDefAST->type);
+        const auto validatedConfig = [&]()
         {
             if (physicalSourceDefAST->optionsClause() != nullptr)
             {
-                return bindConfigOptions(physicalSourceDefAST->optionsClause()->options->namedConfigExpression());
+                return bindSourceConfig(
+                    sourceType,
+                    physicalSourceDefAST->optionsClause()->options->namedConfigExpression(),
+                    defaultConfigValues,
+                    configTransformations);
             }
-            return ConfigMap{};
+            throw InvalidStatement("Physical source creation must set options");
         }();
 
-        const auto parserConfig = getInputFormatterConfigLiterals(configOptions);
-        auto sourceConfig = getSourceConfigLiterals(configOptions);
-
-        /// "host" determines worker placement, not source behavior — extract it from the config into a dedicated field.
-        std::optional<Host> host;
-        const auto hostName = QualifiedIdentifier::create(Identifier::parse("host"));
-        if (const auto hostValue = sourceConfig.getFieldByName(hostName))
+        auto& [generalConfig, pluginConfig, inputFormatter, schemaOpt] = validatedConfig;
+        if (schemaOpt.has_value())
         {
-            const auto hostLiteral = hostValue->getValue();
-            const auto* hostString = std::get_if<std::string>(&hostLiteral);
-            if (hostString == nullptr)
-            {
-                throw InvalidQuerySyntax("host must be a string literal");
-            }
-            host = Host(*hostString);
-            sourceConfig = Schema<LiteralConfigValue, Ordered>{
-                sourceConfig | std::views::filter([&](const auto& value) { return value.getFullyQualifiedName() != hostName; })
-                | std::ranges::to<std::vector>()};
+            throw InvalidQuerySyntax("Schema cannot be specified for physical source attached to logical source");
         }
-
         return CreatePhysicalSourceStatement{
-            .attachedTo = logicalSourceName, .sourceType = type, .host = host, .sourceConfig = sourceConfig, .parserConfig = parserConfig};
+            std::move(logicalSourceName), std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatter)};
     }
 
     CreateWorkerStatement bindCreateWorkerStatement(AntlrSQLParser::CreateWorkerDefinitionContext* workerDefAST) const
@@ -600,9 +597,11 @@ public:
 };
 
 StatementBinder::StatementBinder(
+    Schema<ConfigFieldDefault, Ordered> defaultConfigValues,
+    Schema<ConfigFieldTransformation, Unordered> configTransformations,
     const std::shared_ptr<const SourceCatalog>& sourceCatalog,
     const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder)
-    : impl(std::make_unique<Impl>(sourceCatalog, queryPlanBinder))
+    : impl(std::make_unique<Impl>(std::move(defaultConfigValues), std::move(configTransformations), sourceCatalog, queryPlanBinder))
 {
 }
 
@@ -678,12 +677,11 @@ std::expected<Statement, Exception> StatementBinder::parseAndBindSingle(std::str
 std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj)
 {
     return os << fmt::format(
-               "CreatePhysicalSourceStatement: attachedTo: {} sourceType: {} host: {} sourceConfig: {} parserConfig: {}",
-               obj.attachedTo,
-               obj.sourceType,
-               obj.host ? obj.host->getRawValue() : "<none>",
-               obj.sourceConfig,
-               obj.parserConfig);
+               "CreatePhysicalSourceStatement({}, sourceType: {}, inputFormatterType: {}, logicalSource: {})",
+               obj.generalSourceConfig,
+               obj.pluginSourceConfig.getType(),
+               obj.pluginInputFormatterConfig.getInputFormatterType(),
+               obj.logicalSourceName);
 }
 
 /// NOLINTEND(readability-convert-member-functions-to-static)

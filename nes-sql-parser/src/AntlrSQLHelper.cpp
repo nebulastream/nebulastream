@@ -46,12 +46,12 @@ void AntlrSQLHelper::setSource(Identifier sourceName)
     this->source = std::move(sourceName);
 }
 
-void AntlrSQLHelper::setInlineSource(const Identifier& type, const ConfigMap& parameters)
+void AntlrSQLHelper::setInlineSource(std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>> sourceBuilder)
 {
-    this->inlineSourceConfig = std::make_pair(type, parameters);
+    this->inlineSourceConfig = std::move(sourceBuilder);
 }
 
-std::optional<std::pair<Identifier, ConfigMap>> AntlrSQLHelper::getInlineSourceConfig()
+const std::optional<std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>>& AntlrSQLHelper::getInlineSourceConfig()
 {
     return this->inlineSourceConfig;
 }

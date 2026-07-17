@@ -20,6 +20,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/ConfigResolution.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -32,6 +33,10 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include "InputFormatterDescriptor.hpp"
+#include "Sources/SourceCatalog.hpp"
+#include "Sources/SourceDescriptor.hpp"
+
 
 namespace NES
 {
@@ -45,16 +50,16 @@ class InlineSourceLogicalOperator : public ManagedByOperator
 public:
     explicit InlineSourceLogicalOperator(
         WeakLogicalOperator self,
-        Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-        Schema<LiteralConfigValue, Ordered> sourceConfig,
-        Schema<LiteralConfigValue, Ordered> parserConfig);
+        GeneralSourceConfig generalSourceConfig,
+        PluginSourceConfiguration pluginSourceConfig,
+        InputFormatterDescriptor inputFormatterDescriptor);
 
     static TypedLogicalOperator<InlineSourceLogicalOperator> create(
-        Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-        Schema<LiteralConfigValue, Ordered> sourceConfig,
-        Schema<LiteralConfigValue, Ordered> parserConfig);
+        GeneralSourceConfig generalSourceConfig,
+        PluginSourceConfiguration pluginSourceConfig,
+        InputFormatterDescriptor inputFormatterDescriptor);
 
     [[nodiscard]] bool operator==(const InlineSourceLogicalOperator& rhs) const;
 
@@ -72,20 +77,21 @@ public:
 
     [[nodiscard]] static InlineSourceLogicalOperator withInferredSchema();
 
-    [[nodiscard]] Identifier getSourceType() const;
     /// The literals exactly as the parser produced them (see getSourceConfigLiterals); resolved
     /// against the source's declared config schema in the InlineSourceBindingRule.
-    [[nodiscard]] Schema<LiteralConfigValue, Ordered> getSourceConfig() const;
-    [[nodiscard]] Schema<LiteralConfigValue, Ordered> getParserConfig() const;
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getSourceSchema() const;
+    [[nodiscard]] const Schema<UnqualifiedUnboundField, Ordered>& getSourceSchema() const;
+
+    [[nodiscard]] const GeneralSourceConfig& getGeneralSourceConfig() const;
+    [[nodiscard]] const PluginSourceConfiguration& getPluginSourceConfig() const;
+    [[nodiscard]] const InputFormatterDescriptor& getInputFormatterDescriptor() const;
 
 private:
     static constexpr std::string_view NAME = "InlineSource";
 
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema;
-    Identifier sourceType;
-    Schema<LiteralConfigValue, Ordered> sourceConfig;
-    Schema<LiteralConfigValue, Ordered> parserConfig;
+    GeneralSourceConfig generalSourceConfig;
+    PluginSourceConfiguration pluginSourceConfig;
+    InputFormatterDescriptor inputFormatterDescriptor;
 
     std::vector<LogicalOperator> children;
 

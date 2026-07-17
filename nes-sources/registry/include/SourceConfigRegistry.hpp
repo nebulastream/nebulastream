@@ -34,7 +34,7 @@ namespace NES
 struct SourceConfigEntry
 {
     /// Build the source-defined config struct from a resolved generic config.
-    std::function<std::any(const InstantiatedConfig&)> instantiate;
+    std::function<std::expected<ExplicitAny, Exception>(const InstantiatedConfig&)> instantiate;
     /// Serialize the type-erased config struct (safe to any_cast: only instantiate/unreflect produce it).
     std::function<Reflected(const std::any&)> reflect;
     /// Deserialize back into the type-erased config struct.
@@ -52,9 +52,11 @@ template <typename ConfigStruct>
 SourceConfigEntry makeSourceConfigEntry()
 {
     return SourceConfigEntry{
-        .instantiate = [](const InstantiatedConfig& config) { return std::any{ConfigStruct::fromConfig(config)}; },
+        .instantiate = [](const InstantiatedConfig& config)
+        { return ConfigStruct::fromConfig(config).transform([](const ConfigStruct& instance) { return ExplicitAny{std::any{instance}}; }); },
         .reflect = [](const std::any& config) { return reflect(std::any_cast<const ConfigStruct&>(config)); },
-        .unreflect = [](const Reflected& data, const ReflectionContext& context) { return std::any{context.unreflect<ConfigStruct>(data)}; },
+        .unreflect
+        = [](const Reflected& data, const ReflectionContext& context) { return std::any{context.unreflect<ConfigStruct>(data)}; },
     };
 }
 

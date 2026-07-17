@@ -27,6 +27,7 @@
 #include "Schema/Schema.hpp"
 #include "Schema/SchemaFwd.hpp"
 #include "Util/Logger/Formatter.hpp"
+#include <Util/Any.hpp>
 
 #include "ConfigField.hpp"
 
@@ -34,7 +35,7 @@ namespace NES
 {
 /// Integer literals are always signed: frontends never produce an unsigned literal, and a field
 /// that needs an unsigned type lowers the int64_t with a range check (see downcastConfigValue).
-using ConfigLiteral = std::variant<std::string, int64_t, double, bool, Schema<UnqualifiedUnboundField, Ordered>>;
+using ConfigLiteral = std::variant<std::string, int64_t, double, bool, std::monostate, Schema<UnqualifiedUnboundField, Ordered>>;
 
 /// Declares a single typed config parameter: its name, how to instantiate it from a literal the
 /// frontend passed, and (optionally) its default. The field type T is arbitrary — it does not
@@ -102,38 +103,19 @@ public:
     [[nodiscard]] std::optional<std::function<T()>> getDefaultSupplier() const { return defaultSupplier; }
 };
 
-/// Wraps std::any for use as the value type of std::expected. std::expected<std::any, E> itself is ill-formed with
-/// clang + libstdc++: std::any is constructible from anything, including the expected itself, so the constraints on
-/// expected's converting constructors (__cons_from_expected) recursively depend on themselves. Restricting the
-/// constructor to exactly std::any makes this type not constructible from the surrounding expected, breaking the cycle.
-/// The same_as constraint is load-bearing: a plain std::any parameter would accept the expected via std::any's
-/// implicit converting constructor, and checking that conversion re-enters the same constraint recursion.
-class ErasedConfigValue
-{
-    std::any value;
-
-public:
-    template <std::same_as<std::any> A>
-    explicit ErasedConfigValue(A value) : value(std::move(value))
-    {
-    }
-
-    [[nodiscard]] const std::any& getValue() const { return value; }
-};
-
 /// Type-erased view of a ConfigField, addressable by its fully qualified name. Erasure keeps the
 /// schema container homogeneous; the typed value is recovered by the source's config struct (see
 /// InstantiatedConfig::get), so the field itself carries no serialization machinery.
 class QualifiedErasedConfigField
 {
     QualifiedIdentifier name;
-    std::function<std::expected<ErasedConfigValue, Exception>(const ConfigLiteral&)> factory;
+    std::function<std::expected<ExplicitAny, Exception>(const ConfigLiteral&)> factory;
     std::optional<std::function<std::any()>> defaultSupplier;
 
 public:
     QualifiedErasedConfigField(
         QualifiedIdentifier name,
-        std::function<std::expected<ErasedConfigValue, Exception>(const ConfigLiteral&)> factory,
+        std::function<std::expected<ExplicitAny, Exception>(const ConfigLiteral&)> factory,
         std::optional<std::function<std::any()>> defaultFactory)
         : name(std::move(name)), factory(std::move(factory)), defaultSupplier(std::move(defaultFactory))
     {
@@ -141,7 +123,7 @@ public:
 
     [[nodiscard]] QualifiedIdentifier getFullyQualifiedName() const { return name; }
 
-    [[nodiscard]] std::expected<ErasedConfigValue, Exception> apply(const ConfigLiteral& literal) const { return factory(literal); }
+    [[nodiscard]] std::expected<ExplicitAny, Exception> apply(const ConfigLiteral& literal) const { return factory(literal); }
 
     [[nodiscard]] bool hasDefault() const { return defaultSupplier.has_value(); }
 
@@ -159,7 +141,7 @@ Schema<QualifiedErasedConfigField, Ordered> createConfigSchema(Identifier prefix
         return QualifiedErasedConfigField{
             QualifiedIdentifier::create(prefix, field.getName()),
             [factory = field.getFactory()](const ConfigLiteral& value)
-            { return std::move(factory(value)).transform([](auto val) { return ErasedConfigValue{std::any(std::move(val))}; }); },
+            { return std::move(factory(value)).transform([](auto val) { return ExplicitAny{std::any(std::move(val))}; }); },
             defaultSupplier.has_value()
                 ? std::optional<std::function<std::any()>>{[supplier = std::move(*defaultSupplier)] { return std::any{supplier()}; }}
                 : std::nullopt};
@@ -202,7 +184,88 @@ std::expected<To, Exception> downcastConfigValue(From from)
     }
 }
 
+class ConfigFieldDefault
+{
+public:
+    ConfigFieldDefault(QualifiedIdentifier name, std::function<ConfigLiteral()> supplier)
+        : name(std::move(name)), supplier(std::move(supplier))
+    {
+    }
 
+    ConfigFieldDefault(const std::string_view name, std::function<ConfigLiteral()> supplier)
+        : name(QualifiedIdentifier::parse(name)), supplier(std::move(supplier))
+    {
+    }
+
+    friend bool operator==(const ConfigFieldDefault& lhs, const ConfigFieldDefault& rhs) { return lhs.name == rhs.name; }
+
+    friend std::ostream& operator<<(std::ostream& os, const ConfigFieldDefault& obj)
+    {
+        return os << fmt::format("ConfigFieldDefault({})", obj.name);
+    }
+
+    ConfigLiteral get() const { return supplier(); }
+    const QualifiedIdentifier& getFullyQualifiedName() const { return name; }
+
+private:
+    QualifiedIdentifier name;
+    std::function<ConfigLiteral()> supplier;
+};
+
+struct ConfigFieldTransformation
+{
+    QualifiedIdentifier name;
+    std::function<std::expected<ExplicitAny, Exception>(const std::any&)> transformation;
+
+    template <typename T>
+    static ConfigFieldTransformation create(QualifiedIdentifier name, std::function<T(const T&)> transformation)
+    {
+        return ConfigFieldTransformation{.name = std::move(name) , .transformation = ( [transformation = std::move(transformation)](const std::any& value)
+             {
+                 PRECONDITION(value.type() == typeid(T), "Transformation function expects a value of type {}", NAMEOF_TYPE(T));
+                 return std::expected<ExplicitAny, Exception>{ExplicitAny{std::any{transformation(std::any_cast<T>(value))}}};
+             })
+
+   };
+    }
+
+    template <typename T>
+    static ConfigFieldTransformation
+    createWithFail(QualifiedIdentifier name, std::function<std::expected<T, Exception>(const T&)> transformation)
+    {
+        return ConfigFieldTransformation{.name = std::move(name) , .transformation = ( [transformation = std::move(transformation)](const std::any& value)
+             {
+                 PRECONDITION(value.type() == typeid(T), "Transformation function expects a value of type {}", NAMEOF_TYPE(T));
+                 return transformation(std::any_cast<T>(value)).and_then([](const auto& result){ return ExplicitAny{std::any{result}};});
+             })
+
+   };
+    }
+
+    friend bool operator==(const ConfigFieldTransformation& lhs, const ConfigFieldTransformation& rhs) { return lhs.name == rhs.name; }
+
+    friend std::ostream& operator<<(std::ostream& os, const ConfigFieldTransformation& obj)
+
+    {
+        return os << fmt::format("ConfigFieldTransformation({})", obj.name);
+    }
+
+    const QualifiedIdentifier& getFullyQualifiedName() const { return name; }
+};
 }
 
+template <>
+struct std::hash<NES::ConfigFieldDefault>
+{
+    size_t operator()(const NES::ConfigFieldDefault& obj) const noexcept { return folly::hash::hash_combine(obj.getFullyQualifiedName()); }
+};
+
+template <>
+struct std::hash<NES::ConfigFieldTransformation>
+{
+    size_t operator()(const NES::ConfigFieldTransformation& obj) const noexcept { return std::hash<NES::QualifiedIdentifier>{}(obj.name); }
+};
+
+FMT_OSTREAM(NES::ConfigFieldDefault);
+FMT_OSTREAM(NES::ConfigFieldTransformation);
 FMT_OSTREAM(NES::QualifiedErasedConfigField);

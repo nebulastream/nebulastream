@@ -13,20 +13,17 @@
 */
 
 #pragma once
-#include <fmt/format.h>
-#include <fmt/ostream.h>
 
-/// Macro to derive a fmt formatter if the underlying class implements the ostream operator
-#define FMT_OSTREAM(TypeName) \
-    template <> \
-    struct fmt::formatter<typename TypeName> : fmt::ostream_formatter \
-    { \
-    }
+namespace NES {
 
-namespace NES
-{
-std::string fmtToString(const auto& val)
-{
-    return fmt::format("{}", val);
-}
+template <>
+struct Reflector<std::filesystem::path> {
+    Reflected operator()(const std::filesystem::path& data) const { return reflect(data.string()); }
+};
+
+template <>
+struct Unreflector<std::filesystem::path> {
+    std::filesystem::path operator()(const Reflected& data, const ReflectionContext& context) const { return context.unreflect<std::string>(data); }
+};
+
 }

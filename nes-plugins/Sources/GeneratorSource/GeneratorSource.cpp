@@ -298,7 +298,7 @@ Schema<QualifiedErasedConfigField, Ordered> GeneratorSource::getConfigSchema()
         FLUSH_INTERVAL_MS);
 }
 
-GeneratorSourceConfig GeneratorSourceConfig::fromConfig(const InstantiatedConfig& config)
+std::expected<GeneratorSourceConfig, Exception> GeneratorSourceConfig::fromConfig(const InstantiatedConfig& config)
 {
     return GeneratorSourceConfig{
         .seed = static_cast<uint32_t>(config.get(SEED)),

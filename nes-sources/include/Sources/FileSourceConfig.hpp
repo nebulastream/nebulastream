@@ -26,8 +26,8 @@ class InstantiatedConfig;
 /// reflection of exactly this struct (all members are reflectable).
 struct FileSourceConfig
 {
-    std::string filePath;
+    std::filesystem::path filePath;
 
-    static FileSourceConfig fromConfig(const InstantiatedConfig& config);
+    static std::expected<FileSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 }

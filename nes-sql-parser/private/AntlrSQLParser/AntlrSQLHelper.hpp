@@ -34,6 +34,8 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <CommonParserFunctions.hpp>
 
+#include "GeneratorSource.hpp"
+
 namespace NES::Parsers
 {
 
@@ -43,7 +45,7 @@ class AntlrSQLHelper
     std::vector<LogicalFunction> whereClauses; ///where and having clauses need to be accessed in reverse
     std::vector<LogicalFunction> havingClauses;
     std::optional<Identifier> source;
-    std::optional<std::pair<Identifier, ConfigMap>> inlineSourceConfig;
+    std::optional<std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>> inlineSourceConfig;
     std::vector<Projection> projectionBuilder;
 
 public:
@@ -112,8 +114,8 @@ public:
     void addHavingClause(LogicalFunction expressionNode);
     void setSource(Identifier sourceName);
     [[nodiscard]] std::optional<Identifier> getSource() const;
-    void setInlineSource(const Identifier& type, const ConfigMap& parameters);
-    [[nodiscard]] std::optional<std::pair<Identifier, ConfigMap>> getInlineSourceConfig();
+    void setInlineSource(std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>> sourceBuilder);
+    [[nodiscard]] const std::optional<std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>>& getInlineSourceConfig();
     void addProjection(std::optional<Identifier>, LogicalFunction);
 };
 }

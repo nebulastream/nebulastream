@@ -112,7 +112,7 @@ Schema<QualifiedErasedConfigField, Ordered> NetworkSource::getConfigSchema()
     return createConfigSchema(Identifier::parse("NETWORK_SOURCE"), CHANNEL, BIND, RECEIVER_QUEUE_SIZE);
 }
 
-NetworkSourceConfig NetworkSourceConfig::fromConfig(const InstantiatedConfig& config)
+std::expected<NetworkSourceConfig, Exception> NetworkSourceConfig::fromConfig(const InstantiatedConfig& config)
 {
     return NetworkSourceConfig{
         .channel = config.get(CHANNEL), .bind = config.get(BIND), .receiverQueueSize = config.get(RECEIVER_QUEUE_SIZE)};

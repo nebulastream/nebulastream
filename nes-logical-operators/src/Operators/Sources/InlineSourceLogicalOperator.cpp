@@ -50,39 +50,25 @@ InlineSourceLogicalOperator InlineSourceLogicalOperator::withInferredSchema()
     std::unreachable();
 }
 
-Identifier InlineSourceLogicalOperator::getSourceType() const
-{
-    return sourceType;
-}
-
-Schema<LiteralConfigValue, Ordered> InlineSourceLogicalOperator::getSourceConfig() const
-{
-    return sourceConfig;
-}
-
-Schema<LiteralConfigValue, Ordered> InlineSourceLogicalOperator::getParserConfig() const
-{
-    return parserConfig;
-}
-
-Schema<UnqualifiedUnboundField, Ordered> InlineSourceLogicalOperator::getSourceSchema() const
+const Schema<UnqualifiedUnboundField, Ordered>& InlineSourceLogicalOperator::getSourceSchema() const
 {
     return sourceSchema;
 }
 
 bool InlineSourceLogicalOperator::operator==(const InlineSourceLogicalOperator& rhs) const
 {
-    return this->sourceType == rhs.sourceType && this->sourceSchema == rhs.sourceSchema && this->parserConfig == rhs.parserConfig
-        && this->sourceConfig == rhs.sourceConfig;
+    /// Pointer equality because we don't know if two InlineSources with the exact same configuration are the same or not,
+    /// this is only determined by the physical source id which is not assigned yet.
+    return this == &rhs;
 }
 
 std::string InlineSourceLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("INLINE_SOURCE(opId: {}, type: {} traitSet: {})", id, getSourceType(), traitSet.explain(verbosity));
+        return fmt::format("INLINE_SOURCE(opId: {}, type: {} traitSet: {})", id, pluginSourceConfig.getType(), traitSet.explain(verbosity));
     }
-    return fmt::format("INLINE_SOURCE({})", getSourceType());
+    return fmt::format("INLINE_SOURCE({})", pluginSourceConfig.getType());
 }
 
 std::string_view InlineSourceLogicalOperator::getName() noexcept
@@ -131,26 +117,41 @@ std::vector<LogicalOperator> InlineSourceLogicalOperator::getChildren() const
 
 InlineSourceLogicalOperator::InlineSourceLogicalOperator(
     WeakLogicalOperator self,
-    Identifier type,
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-    Schema<LiteralConfigValue, Ordered> sourceConfig,
-    Schema<LiteralConfigValue, Ordered> parserConfig)
+    GeneralSourceConfig generalSourceConfig,
+    PluginSourceConfiguration pluginSourceConfig,
+    InputFormatterDescriptor inputFormatterDescriptor)
     : ManagedByOperator(std::move(self))
     , sourceSchema(std::move(sourceSchema))
-    , sourceType(std::move(type))
-    , sourceConfig(std::move(sourceConfig))
-    , parserConfig(std::move(parserConfig))
+    , generalSourceConfig(std::move(generalSourceConfig))
+    , pluginSourceConfig(std::move(pluginSourceConfig))
+    , inputFormatterDescriptor(std::move(inputFormatterDescriptor))
 {
 }
 
 TypedLogicalOperator<InlineSourceLogicalOperator> InlineSourceLogicalOperator::create(
-    Identifier type,
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-    Schema<LiteralConfigValue, Ordered> sourceConfig,
-    Schema<LiteralConfigValue, Ordered> parserConfig)
+    GeneralSourceConfig generalSourceConfig,
+    PluginSourceConfiguration pluginSourceConfig,
+    InputFormatterDescriptor inputFormatterDescriptor)
 {
     return TypedLogicalOperator<InlineSourceLogicalOperator>{
-        std::move(type), std::move(sourceSchema), std::move(sourceConfig), std::move(parserConfig)};
+        std::move(sourceSchema), std::move(generalSourceConfig), std::move(pluginSourceConfig), std::move(inputFormatterDescriptor)};
+}
+
+const GeneralSourceConfig& InlineSourceLogicalOperator::getGeneralSourceConfig() const
+{
+    return generalSourceConfig;
+}
+
+const PluginSourceConfiguration& InlineSourceLogicalOperator::getPluginSourceConfig() const
+{
+    return pluginSourceConfig;
+}
+
+const InputFormatterDescriptor& InlineSourceLogicalOperator::getInputFormatterDescriptor() const
+{
+    return inputFormatterDescriptor;
 }
 
 Reflected
@@ -171,6 +172,5 @@ Unreflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(const
 
 uint64_t std::hash<NES::InlineSourceLogicalOperator>::operator()(const NES::InlineSourceLogicalOperator& op) const noexcept
 {
-    return folly::hash::hash_combine_generic(
-        NES::Hash{}, op.getSourceType(), op.getSourceSchema(), op.getSourceConfig(), op.getParserConfig());
+    return std::hash<const NES::InlineSourceLogicalOperator*>{}(&op);
 }

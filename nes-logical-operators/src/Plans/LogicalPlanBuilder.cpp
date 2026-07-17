@@ -79,15 +79,15 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 }
 
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
-    Identifier inlineSourceType,
-    Schema<UnqualifiedUnboundField, Ordered> schema,
-    Schema<LiteralConfigValue, Ordered> sourceConfig,
-    Schema<LiteralConfigValue, Ordered> parserConfig)
+    GeneralSourceConfig generalSourceConfig,
+    PluginSourceConfiguration pluginSourceConfig,
+    InputFormatterDescriptor pluginInputFormatterConfig,
+    Schema<UnqualifiedUnboundField, Ordered> schema)
 {
     return LogicalPlan(
         INVALID_QUERY_ID,
         {InlineSourceLogicalOperator::create(
-            std::move(inlineSourceType), std::move(schema), std::move(sourceConfig), std::move(parserConfig))});
+            std::move(schema), std::move(generalSourceConfig), std::move(pluginSourceConfig), std::move(pluginInputFormatterConfig))});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(

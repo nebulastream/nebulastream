@@ -74,59 +74,19 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
         newChildren.emplace_back(bindInlineSourceLogicalOperators(child));
     }
 
-    if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
+    if (const auto inlineSourceOpt = current.tryGetAs<InlineSourceLogicalOperator>())
     {
+        const auto& inlineSource = inlineSourceOpt.value();
         PRECONDITION(std::ranges::empty(inlineSource->getChildren()), "Inline source operator must have no children");
-        const auto type = inlineSource.value()->getSourceType();
-        const auto schema = inlineSource.value()->getSourceSchema();
-        const auto parserConfig = inlineSource.value()->getParserConfig();
-        auto sourceConfig = inlineSource.value()->getSourceConfig();
+        auto descriptorExp
+            = PhysicalSourceBuilder{inlineSource->getGeneralSourceConfig(), inlineSource->getPluginSourceConfig(), inlineSource->getInputFormatterDescriptor(), this->sourceCatalog}
+                  .build(inlineSource->getSourceSchema());
 
-        /// "host" is not part of the source config — it determines placement, not source behavior.
-        /// It is stored in the config only because InlineSourceLogicalOperator lacks a dedicated host field.
-        const auto hostName = QualifiedIdentifier::create(Identifier::parse("host"));
-        const auto hostValue = sourceConfig.getFieldByName(hostName);
-        if (not hostValue.has_value())
-        {
-            throw InvalidConfigParameter("`host`");
-        }
-        const auto hostLiteral = hostValue->getValue();
-        const auto* hostString = std::get_if<std::string>(&hostLiteral);
-        if (hostString == nullptr)
-        {
-            throw InvalidConfigParameter("host must be a string literal");
-        }
-        auto host = Host(*hostString);
-
-        /// Max inflight buffers is a descriptor-level field, not part of the source's own config.
-        const auto maxInflightName = QualifiedIdentifier::create(Identifier::parse("MAX_INFLIGHT_BUFFERS"));
-        std::optional<size_t> maxInflightBuffers;
-        if (const auto maxInflightValue = sourceConfig.getFieldByName(maxInflightName))
-        {
-            const auto maxInflightLiteral = maxInflightValue->getValue();
-            const auto* maxInflight = std::get_if<int64_t>(&maxInflightLiteral);
-            if (maxInflight == nullptr || *maxInflight <= 0)
-            {
-                throw InvalidConfigParameter("MAX_INFLIGHT_BUFFERS must be a positive integer literal");
-            }
-            maxInflightBuffers = static_cast<size_t>(*maxInflight);
-        }
-
-        sourceConfig = Schema<LiteralConfigValue, Ordered>{
-            sourceConfig
-            | std::views::filter(
-                [&](const auto& value)
-                { return value.getFullyQualifiedName() != hostName && value.getFullyQualifiedName() != maxInflightName; })
-            | std::ranges::to<std::vector>()};
-
-        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, maxInflightBuffers, parserConfig, sourceConfig);
-
-        if (!descriptorOpt.has_value())
+        if (!descriptorExp.has_value())
         {
             throw InvalidConfigParameter("Could not create an inline source descriptor because of invalid config parameters");
         }
-        const auto& descriptor = descriptorOpt.value();
-        return SourceDescriptorLogicalOperator::create(descriptor);
+        return SourceDescriptorLogicalOperator::create(std::move(descriptorExp).value());
     }
 
     return current.withChildrenUnsafe(newChildren);

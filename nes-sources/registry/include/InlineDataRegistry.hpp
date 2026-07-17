@@ -33,7 +33,6 @@ struct InlineDataRegistryArguments
     PhysicalSourceConfig physicalSourceConfig;
     std::vector<std::string> tuples;
     std::shared_ptr<std::vector<std::jthread>> serverThreads;
-    std::filesystem::path testFilePath;
 };
 
 class InlineDataRegistry : public BaseRegistry<InlineDataRegistry, std::string, PhysicalSourceConfig, InlineDataRegistryArguments>

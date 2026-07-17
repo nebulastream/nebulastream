@@ -21,6 +21,10 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include "SQLQueryParser/StatementBinder.hpp"
+#include "Sources/SourceCatalog.hpp"
+
 #include <AntlrSQLParser.h>
 #include <Configurations/ConfigResolution.hpp>
 #include <DataTypes/DataType.hpp>
@@ -32,16 +36,25 @@
 
 namespace NES
 {
-using Literal = std::variant<std::string, int64_t, uint64_t, double, bool>;
+using Literal = std::variant<std::string, int64_t, uint64_t, double, bool, std::monostate>;
 using ConfigMap
     = std::unordered_map<Identifier, std::unordered_map<Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>>;
 using ConfigMultiMap = std::vector<std::pair<QualifiedIdentifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>>;
+
 
 Identifier bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier);
 Identifier bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);
 Identifier bindIdentifier(std::string identifier);
 QualifiedIdentifier bindQualifiedIdentifier(AntlrSQLParser::IdentifierChainContext* identifierList);
 
+Schema<LiteralConfigValue, Ordered> bindConfigValues(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
+std::
+    tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, std::optional<Schema<UnqualifiedUnboundField, Ordered>>>
+    bindSourceConfig(
+        const Identifier& sourceType,
+        const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions,
+        const Schema<ConfigFieldDefault, Ordered>& defaultValues,
+        const Schema<ConfigFieldTransformation, Unordered>& transformations);
 ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions);

@@ -46,6 +46,11 @@ class OperatorSerializationUtil;
 
 class PluginSourceConfiguration
 {
+public:
+    PluginSourceConfiguration(Identifier type, std::any pluginData) : type(type), pluginData(std::move(pluginData)) {}
+    [[nodiscard]] const Identifier& getType() const { return type; }
+    [[nodiscard]] const std::any& getPluginData() const { return pluginData; }
+private:
     Identifier type;
     std::any pluginData;
 };
@@ -65,16 +70,14 @@ public:
     /// equal if their identity and wiring match.
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
     {
-        return lhs.physicalSourceId == rhs.physicalSourceId && lhs.schema == rhs.schema
-            && lhs.sourceType == rhs.sourceType && lhs.host == rhs.host && lhs.maxInflightBuffers == rhs.maxInflightBuffers
-            && lhs.inputFormatterDescriptor == rhs.inputFormatterDescriptor;
+        return lhs.physicalSourceId == rhs.physicalSourceId;
     }
 
 
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor);
 
-    [[nodiscard]] std::string getSourceType() const;
-    [[nodiscard]] std::string getInputFormatType() const;
+    [[nodiscard]] const Identifier& getSourceType() const;
+    [[nodiscard]] const Identifier& getInputFormatType() const;
     [[nodiscard]] InputFormatterDescriptor getInputFormatterDescriptor() const;
 
     [[nodiscard]] Host getHost() const;
@@ -86,6 +89,8 @@ public:
     /// The source-defined config struct (e.g. GeneratorSourceConfig), type-erased. Produced by the
     /// source's SourceConfigRegistry entry, so the source factory can safely any_cast it back.
     [[nodiscard]] const std::any& getPluginData() const;
+
+    [[nodiscard]] const std::optional<Identifier>& getLogicalSourceName() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
@@ -103,16 +108,17 @@ private:
     PluginSourceConfiguration pluginSourceConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
 
+    std::optional<Identifier> logicalSourceName;
 
     /// Used by the SourceCatalog (and descriptor unreflection) to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         PhysicalSourceId physicalSourceId,
-        std::string_view sourceType,
         Schema<UnqualifiedUnboundField, Ordered> schema,
         Host host,
         std::optional<size_t> maxInflightBuffers,
-        std::any pluginData,
-        const InputFormatterDescriptor& inputFormatterDescriptor);
+        PluginSourceConfiguration pluginData,
+        InputFormatterDescriptor inputFormatterDescriptor,
+        std::optional<Identifier> logicalSourceName);
 
 public:
 
@@ -138,7 +144,7 @@ public:
         std::nullopt};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const ConfigField<Host> HOST{
+    static inline const ConfigField<std::optional<Host>> HOST{
         "HOST",
         [](const ConfigLiteral& literal) -> std::expected<Host, Exception>
         {
@@ -146,7 +152,7 @@ public:
                 .transform([](std::string&& value) { return Host{std::move(value)}; });
         },
         /// Optional: attached workers pass the host out of band (e.g. as a catalog argument).
-        Host{""}};
+        std::nullopt};
 
     static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST, SCHEMA);
 };
@@ -163,6 +169,16 @@ struct Unreflector<SourceDescriptor>
     SourceDescriptor operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
+template <>
+struct Reflector<PluginSourceConfiguration> {
+    Reflected operator()(const PluginSourceConfiguration& config) const;
+};
+
+template <>
+struct Unreflector<PluginSourceConfiguration> {
+    PluginSourceConfiguration operator()(const Reflected& rfl, const ReflectionContext& context) const;
+};
+
 }
 
 template <>
@@ -176,16 +192,22 @@ struct std::hash<NES::SourceDescriptor>
 
 namespace NES::detail
 {
+struct ReflectedPluginSourceConfiguration
+{
+    Identifier type;
+    Reflected pluginData;
+};
+
 struct ReflectedSourceDescriptor
 {
-    uint64_t physicalSourceId;
-    LogicalSource logicalSource;
-    std::string type;
+    PhysicalSourceId physicalSourceId;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
     Host host;
-    std::optional<uint64_t> maxInflightBuffers;
+    std::optional<size_t> maxInflightBuffers;
+    PluginSourceConfiguration pluginSourceConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
-    /// The source-defined config struct, reflected by the source's SourceConfigRegistry entry.
-    Reflected config;
+
+    std::optional<Identifier> logicalSourceName;
 };
 }
 

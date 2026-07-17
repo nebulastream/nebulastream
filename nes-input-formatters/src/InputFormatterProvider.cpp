@@ -30,7 +30,7 @@ namespace NES
 std::shared_ptr<TupleBufferRef>
 provideInputFormatter(const InputFormatterDescriptor& formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider)
 {
-    if (const auto* inputFormatterFactory = InputFormatIndexerRegistry::instance().find(formatScanConfig.getInputFormatterType()))
+    if (const auto* inputFormatterFactory = InputFormatIndexerRegistry::instance().find(formatScanConfig.getInputFormatterType().asCanonicalString()))
     {
         return (*inputFormatterFactory)(formatScanConfig, std::move(memoryProvider));
     }

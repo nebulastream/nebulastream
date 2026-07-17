@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <Configurations/ConfigResolution.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -49,6 +50,10 @@
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
+#include "Configurations/ConfigValue.hpp"
+#include "Sources/NetworkSource.hpp"
+
+#include "GeneratorSource.hpp"
 
 namespace NES
 {
@@ -60,9 +65,9 @@ struct DecompositionContext
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
-    SharedPtr<const SourceCatalog> sourceCatalog;
-    SharedPtr<const SinkCatalog> sinkCatalog;
-    SharedPtr<const WorkerCatalog> workerCatalog;
+    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::shared_ptr<const WorkerCatalog> workerCatalog;
 
     void addPlanToNode(LogicalOperator op, const NetworkTopology::NodeId& nodeId)
     {
@@ -103,12 +108,16 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
             static_cast<int64_t>(context.config.receiverQueueSize.getValue()));
     }
     const auto sourceConfig = Schema<LiteralConfigValue, Ordered>{std::move(sourceConfigValues)};
+    auto networkSourceConfig = NetworkSourceConfig::fromConfig(
+        InstantiatedConfig{unwrapOrAbort(toExpected(resolveConfig(sourceConfig, NetworkSource::getConfigSchema())))});
+    auto inputFormatterConfig = InputFormatterDescriptor{Identifier::parse("NATIVE"), std::monostate{}};
 
     auto sinkConfig = std::unordered_map<Identifier, std::string>{
         {Identifier::parse("channel"), channel.id.getRawValue()},
         {Identifier::parse("bind"), upstreamData},
         {Identifier::parse("data_endpoint"), downstreamData},
         {Identifier::parse("output_format"), "NATIVE"}};
+
 
     if (context.config.maxPendingAcks.isExplicitlySet())
     {
@@ -130,16 +139,14 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     }
 
     auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
-    const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
-        Identifier::parse("Network"),
-        orderedUpstreamSchema,
-        Host(channel.downstreamNode.getRawValue()),
-        std::nullopt,
-        Schema<LiteralConfigValue, Ordered>{
-            {QualifiedIdentifier::create(Identifier::parse(InputFormatterDescriptor::getTypeString())), "NATIVE"}},
-        sourceConfig);
-    INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
-    const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
+    const auto networkSourceDescriptorExp = PhysicalSourceBuilder{
+        GeneralSourceConfig{.host = Host(channel.downstreamNode.getRawValue()), .maxInflightBuffers = std::nullopt},
+        PluginSourceConfiguration{Identifier::parse("Network"), std::move(networkSourceConfig)},
+        std::move(inputFormatterConfig),
+        context.sourceCatalog}.build(orderedUpstreamSchema);
+
+    INVARIANT(networkSourceDescriptorExp.has_value(), "Failed to add physical source for network channel");
+    const auto& networkSourceDescriptor = networkSourceDescriptorExp.value();
 
     auto networkSinkDescriptor = context.sinkCatalog->getInlineSink(
         orderedUpstreamSchema, Identifier::parse("Network"), Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
