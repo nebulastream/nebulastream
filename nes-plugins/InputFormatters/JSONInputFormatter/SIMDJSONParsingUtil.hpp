@@ -31,6 +31,7 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/Record.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/exception.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
 #include <RawBufferIndex.hpp>
@@ -67,7 +68,7 @@ template <typename T, bool Nullable>
 requires(
     not(std::is_same_v<T, int8_t*> || std::is_same_v<T, uint8_t*> || std::is_same_v<T, std::byte*> || std::is_same_v<T, char*>
         || std::is_same_v<T, unsigned char*> || std::is_same_v<T, signed char*>))
-ParseResultFixed<T>*
+ParseResultFixed<T>
 parseJsonFixedSizeIntoVarValProxy(FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer);
 
 inline simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
@@ -152,14 +153,16 @@ template <typename T>
 {
     if (nullable)
     {
-        const auto parseResult = nautilus::invoke(
-            {nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, true>, fieldIndex, rawBufferIndex, indexer);
+        const auto parseResult = nautilus::
+            invokeGuardedSlot<&parseJsonFixedSizeIntoVarValProxy<T, true>, FieldIndex, RawBufferIndex*, const InputFormatIndexer*>(
+                fieldIndex, rawBufferIndex, indexer);
         const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResultFixed<T>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
     const auto parseResult
-        = nautilus::invoke({nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, false>, fieldIndex, rawBufferIndex, indexer);
+        = nautilus::invokeGuardedSlot<&parseJsonFixedSizeIntoVarValProxy<T, false>, FieldIndex, RawBufferIndex*, const InputFormatIndexer*>(
+            fieldIndex, rawBufferIndex, indexer);
     const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
     return VarVal{nautilusValue, nullable, false};
 }
@@ -169,7 +172,7 @@ template <typename T, bool Nullable>
 requires(
     not(std::is_same_v<T, int8_t*> || std::is_same_v<T, uint8_t*> || std::is_same_v<T, std::byte*> || std::is_same_v<T, char*>
         || std::is_same_v<T, unsigned char*> || std::is_same_v<T, signed char*>))
-ParseResultFixed<T>*
+ParseResultFixed<T>
 parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
 {
     PRECONDITION(dynamic_cast<SIMDJSONRawBufferIndex*>(rawBufferIndex) != nullptr, "rawBufferIndex must be a SIMDJSONRawBufferIndex");
@@ -184,31 +187,25 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, RawBufferIndex* r
         fieldIndex,
         simdIndexer->getNumberOfFields());
 
-    auto returnNullValueOrParsed = [](std::optional<T> parsedValue, ParseResultFixed<T>& result) -> ParseResultFixed<T>*
+    auto returnNullValueOrParsed = [](std::optional<T> parsedValue) -> ParseResultFixed<T>
     {
         if (not parsedValue.has_value())
         {
-            result.isNull = true;
-            result.value = T{0};
-            return &result;
+            return ParseResultFixed<T>{.value = T{0}, .isNull = true};
         }
-        result.value = static_cast<T>(parsedValue.value());
-        return &result;
+        return ParseResultFixed<T>{.value = static_cast<T>(parsedValue.value()), .isNull = false};
     };
 
-    /// We use the thread local to return multiple values.
-    /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
-    thread_local static ParseResultFixed<T> result;
-    result.isNull = false;
+    /// A non-nullable field that cannot be parsed throws. Rather than unwinding through the compiled frame (which has no
+    /// landing pads and would skip the traced `destruct` of the result buffer), invokeGuardedSlot catches the throw,
+    /// parks it, and hands back a valid sentinel slot. nautilus rethrows it once the compiled function has returned.
 
     /// Checking if the field is null but only if the field is nullable
     if constexpr (Nullable)
     {
         if (checkIsNullJsonProxy(fieldIndex, simdJsonRawBufferIndex, simdIndexer))
         {
-            result.isNull = true;
-            result.value = T{0};
-            return &result;
+            return ParseResultFixed<T>{.value = T{0}, .isNull = true};
         }
     }
 
@@ -220,7 +217,7 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, RawBufferIndex* r
     if constexpr (std::same_as<T, bool>)
     {
         const auto parsedValue = parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_bool(), simdJsonResult, "bool", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
+        return returnNullValueOrParsed(parsedValue);
     }
     else if constexpr (std::same_as<T, char>)
     {
@@ -228,36 +225,33 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, RawBufferIndex* r
             = parseSIMDJsonValueOrThrow<std::string_view, Nullable>(simdJsonResult.get_string(), simdJsonResult, "char", fieldName);
         if (not parsedValue.has_value())
         {
-            result.isNull = true;
-            result.value = T{0};
-            return &result;
+            return ParseResultFixed<T>{.value = T{0}, .isNull = true};
         }
         PRECONDITION(parsedValue.value().size() == 1, "Cannot take {} as character, because size is not 1", parsedValue.value());
-        result.value = static_cast<T>(parsedValue.value()[0]);
-        return &result;
+        return ParseResultFixed<T>{.value = static_cast<T>(parsedValue.value()[0]), .isNull = false};
     }
     else if constexpr (std::signed_integral<T>)
     {
         const auto parsedValue
             = parseSIMDJsonValueOrThrow<int64_t, Nullable>(simdJsonResult.get_int64(), simdJsonResult, "integer", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
+        return returnNullValueOrParsed(parsedValue);
     }
     else if constexpr (std::unsigned_integral<T>)
     {
         const auto parsedValue
             = parseSIMDJsonValueOrThrow<uint64_t, Nullable>(simdJsonResult.get_uint64(), simdJsonResult, "unsigned", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
+        return returnNullValueOrParsed(parsedValue);
     }
     else if constexpr (std::is_same_v<T, double>)
     {
         const auto parsedValue = parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_double(), simdJsonResult, "double", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
+        return returnNullValueOrParsed(parsedValue);
     }
     else if constexpr (std::is_same_v<T, float>)
     {
         const auto parsedValue
             = parseSIMDJsonValueOrThrow<double, Nullable>(simdJsonResult.get_double(), simdJsonResult, "float", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
+        return returnNullValueOrParsed(parsedValue);
     }
     else
     {
@@ -266,7 +260,7 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, RawBufferIndex* r
 }
 
 template <bool Nullable>
-ParsedResultVariableSized* parseJsonVarSizedProxy(FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
+ParsedResultVariableSized parseJsonVarSizedProxy(FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer)
 {
     PRECONDITION(dynamic_cast<SIMDJSONRawBufferIndex*>(rawBufferIndex) != nullptr, "rawBufferIndex must be a SIMDJSONRawBufferIndex");
     PRECONDITION(dynamic_cast<const SIMDJSONInputFormatIndexer*>(indexer) != nullptr, "indexer must be a SIMDJSONInputFormatIndexer");
@@ -280,10 +274,9 @@ ParsedResultVariableSized* parseJsonVarSizedProxy(FieldIndex fieldIndex, RawBuff
         fieldIndex,
         simdIndexer->getNumberOfFields());
 
-    /// We use thread_local to ensure that result exists as long as the thread exists.
-    /// We require this, as we return a pointer to the storage, due to us not being able to return two values in nautilus, i.e.,
-    /// the size of the var sized and the pointer to it
-    thread_local ParsedResultVariableSized result{};
+    /// A non-nullable missing field throws. Rather than unwinding through the compiled frame (which has no landing pads
+    /// and would skip the traced `destruct` of the result buffer), invokeGuardedSlot catches the throw, parks it, and
+    /// hands back a valid sentinel slot. nautilus rethrows it once the compiled function has returned.
 
     /// Checking if the field is null but only if the field is nullable
     if constexpr (Nullable)
@@ -291,8 +284,7 @@ ParsedResultVariableSized* parseJsonVarSizedProxy(FieldIndex fieldIndex, RawBuff
         if (checkIsNullJsonProxy(fieldIndex, simdJsonRawBufferIndex, simdIndexer))
         {
             constexpr auto sizeOfValue = 0;
-            result = ParsedResultVariableSized{.varSizedPointer = nullptr, .size = sizeOfValue, .isNull = true};
-            return &result;
+            return ParsedResultVariableSized{.varSizedPointer = nullptr, .size = sizeOfValue, .isNull = true};
         }
     }
     auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
@@ -302,8 +294,7 @@ ParsedResultVariableSized* parseJsonVarSizedProxy(FieldIndex fieldIndex, RawBuff
     /// Get the value from the document and convert it to a span of bytes
     const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
 
-    result = ParsedResultVariableSized{.varSizedPointer = value.data(), .size = value.size(), .isNull = false};
-    return &result;
+    return ParsedResultVariableSized{.varSizedPointer = value.data(), .size = value.size(), .isNull = false};
 }
 
 inline VarVal parseJsonVarSized(
@@ -314,8 +305,9 @@ inline VarVal parseJsonVarSized(
 {
     if (nullable)
     {
-        const auto varSizedResult = nautilus::invoke(
-            {.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<true>, fieldIndex, rawBufferIndex, indexer);
+        const auto varSizedResult
+            = nautilus::invokeGuardedSlot<&parseJsonVarSizedProxy<true>, FieldIndex, RawBufferIndex*, const InputFormatIndexer*>(
+                fieldIndex, rawBufferIndex, indexer);
         const VariableSizedData varSizedString{
             *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
             *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};
@@ -324,7 +316,8 @@ inline VarVal parseJsonVarSized(
     }
 
     const auto varSizedResult
-        = nautilus::invoke({.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<false>, fieldIndex, rawBufferIndex, indexer);
+        = nautilus::invokeGuardedSlot<&parseJsonVarSizedProxy<false>, FieldIndex, RawBufferIndex*, const InputFormatIndexer*>(
+            fieldIndex, rawBufferIndex, indexer);
     const VariableSizedData varSizedString{
         *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
         *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};
