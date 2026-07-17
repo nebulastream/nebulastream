@@ -73,6 +73,17 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestResultCheckTest test class."); }
 };
 
+TEST_F(SystestResultCheckTest, ExplainExactResultLinesKeepVanillaMatching)
+{
+    auto matchingQuery = makeExplainRunningQuery({"== Optimized Plan ==", "SINK(FILE)"}, "== Optimized Plan ==\nSINK(FILE)\n");
+    EXPECT_EQ(checkExplainResult(matchingQuery), std::nullopt);
+
+    auto mismatchingQuery = makeExplainRunningQuery({"== Optimized Plan ==", "SINK(FILE)"}, "== Optimized Plan ==\nSINK(OTHER)\n");
+    const auto error = checkExplainResult(mismatchingQuery);
+    ASSERT_TRUE(error.has_value());
+    EXPECT_TRUE(error->contains("first difference at line 2"));
+}
+
 TEST_F(SystestResultCheckTest, ExplainRegexAssertionsFromDummyMatchActualOutput)
 {
     SystestParser parser{};
@@ -91,7 +102,13 @@ TEST_F(SystestResultCheckTest, ExplainRegexAssertionsFromDummyMatchActualOutput)
     ASSERT_TRUE(explainCallbackCalled);
     ASSERT_EQ(
         expectedResultLines,
-        (std::vector<std::string>{R"(<REGEX>:SINK\(SINK[0-9]+\))", R"(<REGEX>:SOURCE\(stream_[0-9]+\))", "<!REGEX>:SELECTION"}));
+        (std::vector<std::string>{
+            "<REGEX>== Optimized Plan ==</REGEX>",
+            "<REGEX>",
+            R"(SINK\(SINK[0-9]+\))",
+            R"(  SOURCE\(stream_[0-9]+\))",
+            "</REGEX>",
+            "<!REGEX>SELECTION</!REGEX>"}));
 
     auto runningQuery
         = makeExplainRunningQuery(std::move(expectedResultLines), "== Optimized Plan ==\nSINK(SINK42)\n  SOURCE(stream_17)\n");
@@ -100,8 +117,8 @@ TEST_F(SystestResultCheckTest, ExplainRegexAssertionsFromDummyMatchActualOutput)
 
 TEST_F(SystestResultCheckTest, ExplainRegexAssertionsReportMissingPositiveMatch)
 {
-    auto runningQuery
-        = makeExplainRunningQuery({R"(<REGEX>:SELECTION\(VALUE > 2\))"}, "== Optimized Plan ==\nSINK(SINK42)\n  SOURCE(stream_17)\n");
+    auto runningQuery = makeExplainRunningQuery(
+        {R"(<REGEX>SELECTION\(VALUE > 2\)</REGEX>)"}, "== Optimized Plan ==\nSINK(SINK42)\n  SOURCE(stream_17)\n");
 
     const auto error = checkExplainResult(runningQuery);
     ASSERT_TRUE(error.has_value());
@@ -111,10 +128,37 @@ TEST_F(SystestResultCheckTest, ExplainRegexAssertionsReportMissingPositiveMatch)
 TEST_F(SystestResultCheckTest, ExplainRegexAssertionsReportUnexpectedNegativeMatch)
 {
     auto runningQuery = makeExplainRunningQuery(
-        {"<!REGEX>:SELECTION"}, "== Optimized Plan ==\nSINK(SINK42)\n  SELECTION(VALUE > 2)\n    SOURCE(stream_17)\n");
+        {"<!REGEX>SELECTION</!REGEX>"}, "== Optimized Plan ==\nSINK(SINK42)\n  SELECTION(VALUE > 2)\n    SOURCE(stream_17)\n");
 
     const auto error = checkExplainResult(runningQuery);
     ASSERT_TRUE(error.has_value());
     EXPECT_TRUE(error->contains("expected pattern \"SELECTION\" not to match"));
+}
+
+TEST_F(SystestResultCheckTest, ExplainRegexAssertionsRejectMixedMatchingModes)
+{
+    auto runningQuery = makeExplainRunningQuery({"<REGEX>SINK</REGEX>", "SOURCE(stream)"}, "SINK\nSOURCE(stream)");
+
+    const auto error = checkExplainResult(runningQuery);
+    ASSERT_TRUE(error.has_value());
+    EXPECT_TRUE(error->contains("tagged and untagged expected output must not be mixed"));
+}
+
+TEST_F(SystestResultCheckTest, ExplainRegexAssertionsRejectMalformedTags)
+{
+    const std::vector<std::vector<std::string>> invalidExpectedResults{
+        {"<REGEX>", "SINK"},
+        {"<REGEX>", "SINK", "</!REGEX>"},
+        {"<REGEX><!REGEX>SINK</!REGEX></REGEX>"},
+        {"<REGEX></REGEX>"},
+        {"<!REGEX>", "</!REGEX>"}};
+
+    for (const auto& expected : invalidExpectedResults)
+    {
+        auto runningQuery = makeExplainRunningQuery(expected, "SINK");
+        const auto error = checkExplainResult(runningQuery);
+        ASSERT_TRUE(error.has_value());
+        EXPECT_TRUE(error->contains("Invalid Explain Regex Assertion"));
+    }
 }
 }

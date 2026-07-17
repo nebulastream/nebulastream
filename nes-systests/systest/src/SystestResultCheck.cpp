@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -768,6 +769,153 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
 
     return QueryCheckResult{querySchemasAndResults.getSchemaErrorStream(), resultComparisonErrorStream};
 }
+
+static constexpr std::string_view RegexOpen = "<REGEX>";
+static constexpr std::string_view RegexClose = "</REGEX>";
+static constexpr std::string_view NegativeRegexOpen = "<!REGEX>";
+static constexpr std::string_view NegativeRegexClose = "</!REGEX>";
+
+struct ExplainRegexTags
+{
+    std::string_view opening;
+    std::string_view closing;
+    bool shouldMatch;
+};
+
+struct ExplainRegexAssertion
+{
+    std::string pattern{};
+    bool shouldMatch = false;
+    size_t line = 0;
+};
+
+bool containsExplainRegexTag(const std::string_view line)
+{
+    return line.contains(RegexOpen) || line.contains(RegexClose) || line.contains(NegativeRegexOpen) || line.contains(NegativeRegexClose);
+}
+
+std::optional<ExplainRegexTags> explainRegexTags(const std::string_view line)
+{
+    if (line.starts_with(RegexOpen))
+    {
+        return ExplainRegexTags{.opening = RegexOpen, .closing = RegexClose, .shouldMatch = true};
+    }
+    if (line.starts_with(NegativeRegexOpen))
+    {
+        return ExplainRegexTags{.opening = NegativeRegexOpen, .closing = NegativeRegexClose, .shouldMatch = false};
+    }
+    return std::nullopt;
+}
+
+std::string explainRegexSyntaxError(const size_t line, const std::string_view message)
+{
+    return fmt::format("\n\nInvalid Explain Regex Assertion (line {}): {}", line + 1, message);
+}
+
+std::expected<ExplainRegexAssertion, std::string>
+parseInlineExplainRegex(const std::string_view line, const ExplainRegexTags tags, const size_t assertionLine)
+{
+    if (!line.ends_with(tags.closing))
+    {
+        return std::unexpected(explainRegexSyntaxError(assertionLine, fmt::format("inline assertion must end with {}", tags.closing)));
+    }
+
+    const auto pattern = line.substr(tags.opening.size(), line.size() - tags.opening.size() - tags.closing.size());
+    if (containsExplainRegexTag(pattern))
+    {
+        return std::unexpected(explainRegexSyntaxError(assertionLine, "nested or mismatched regex tag"));
+    }
+    if (pattern.empty())
+    {
+        return std::unexpected(explainRegexSyntaxError(assertionLine, "regex must not be empty"));
+    }
+    return ExplainRegexAssertion{.pattern = std::string{pattern}, .shouldMatch = tags.shouldMatch, .line = assertionLine};
+}
+
+std::expected<ExplainRegexAssertion, std::string>
+parseMultilineExplainRegex(const std::vector<std::string>& expected, size_t& expectedLineIndex, const ExplainRegexTags tags)
+{
+    const auto assertionLine = expectedLineIndex++;
+    std::string pattern;
+    while (expectedLineIndex < expected.size() && expected[expectedLineIndex] != tags.closing)
+    {
+        if (containsExplainRegexTag(expected[expectedLineIndex]))
+        {
+            return std::unexpected(explainRegexSyntaxError(expectedLineIndex, "nested or mismatched regex tag"));
+        }
+        if (!pattern.empty())
+        {
+            pattern += '\n';
+        }
+        pattern += expected[expectedLineIndex++];
+    }
+
+    if (expectedLineIndex == expected.size())
+    {
+        return std::unexpected(explainRegexSyntaxError(assertionLine, fmt::format("missing closing tag {}", tags.closing)));
+    }
+    ++expectedLineIndex;
+    if (pattern.empty())
+    {
+        return std::unexpected(explainRegexSyntaxError(assertionLine, "regex must not be empty"));
+    }
+    return ExplainRegexAssertion{.pattern = std::move(pattern), .shouldMatch = tags.shouldMatch, .line = assertionLine};
+}
+
+std::expected<std::vector<ExplainRegexAssertion>, std::string> parseExplainRegexAssertions(const std::vector<std::string>& expected)
+{
+    std::vector<ExplainRegexAssertion> assertions;
+    size_t expectedLineIndex = 0;
+    while (expectedLineIndex < expected.size())
+    {
+        const auto line = std::string_view{expected[expectedLineIndex]};
+        const auto tags = explainRegexTags(line);
+        if (!tags)
+        {
+            return std::unexpected(explainRegexSyntaxError(expectedLineIndex, "tagged and untagged expected output must not be mixed"));
+        }
+
+        std::expected<ExplainRegexAssertion, std::string> assertion = line == tags->opening
+            ? parseMultilineExplainRegex(expected, expectedLineIndex, *tags)
+            : parseInlineExplainRegex(line, *tags, expectedLineIndex++);
+        if (!assertion)
+        {
+            return std::unexpected(std::move(assertion).error());
+        }
+        assertions.emplace_back(std::move(assertion).value());
+    }
+    return assertions;
+}
+
+std::optional<std::string>
+checkExplainRegexAssertions(const std::vector<ExplainRegexAssertion>& assertions, const std::string& actualOutput)
+{
+    for (const auto& assertion : assertions)
+    {
+        try
+        {
+            const auto matches = std::regex_search(actualOutput, std::regex(assertion.pattern));
+            if (matches != assertion.shouldMatch)
+            {
+                return fmt::format(
+                    "\n\n"
+                    "Explain Output Regex Assertion Failed (line {}, expected pattern \"{}\" {} match)\n"
+                    "----------------------\n"
+                    "Actual:\n{}",
+                    assertion.line + 1,
+                    assertion.pattern,
+                    assertion.shouldMatch ? "to" : "not to",
+                    actualOutput);
+            }
+        }
+        catch (const std::regex_error& exception)
+        {
+            return fmt::format(
+                "\n\nInvalid Explain Output Regex (line {}, pattern \"{}\"): {}", assertion.line + 1, assertion.pattern, exception.what());
+        }
+    }
+    return std::nullopt;
+}
 }
 
 namespace NES
@@ -928,70 +1076,14 @@ std::optional<std::string> checkExplainResult(const Systest::RunningQuery& runni
         runningQuery.systestQuery.actualExplainOutput.value() | std::views::split('\n')
         | std::views::transform([](auto&& split) { return std::string_view(split.begin(), split.end()); }));
 
-    static constexpr std::string_view RegexPrefix = "<REGEX>:";
-    static constexpr std::string_view NegativeRegexPrefix = "<!REGEX>:";
-    const auto regexAssertion = [](const std::string& expectedLine) -> std::optional<std::pair<std::string_view, bool>>
+    if (std::ranges::any_of(expected, [](const auto& line) { return containsExplainRegexTag(line); }))
     {
-        const std::string_view line{expectedLine};
-        if (line.starts_with(RegexPrefix))
+        auto assertions = parseExplainRegexAssertions(expected);
+        if (!assertions)
         {
-            return std::pair{line.substr(RegexPrefix.size()), true};
+            return std::move(assertions).error();
         }
-        if (line.starts_with(NegativeRegexPrefix))
-        {
-            return std::pair{line.substr(NegativeRegexPrefix.size()), false};
-        }
-        return std::nullopt;
-    };
-
-    if (std::ranges::any_of(expected, [&regexAssertion](const auto& line) { return regexAssertion(line).has_value(); }))
-    {
-        const auto actualOutput = fmt::format("{}", fmt::join(actual, "\n"));
-        for (size_t assertionIndex = 0; assertionIndex < expected.size(); ++assertionIndex)
-        {
-            const auto& expectedLine = expected[assertionIndex];
-            if (const auto assertion = regexAssertion(expectedLine))
-            {
-                const auto [pattern, shouldMatch] = assertion.value();
-                try
-                {
-                    const auto matches = std::regex_search(actualOutput, std::regex(std::string{pattern}));
-                    if (matches != shouldMatch)
-                    {
-                        return fmt::format(
-                            "\n\n"
-                            "Explain Output Regex Assertion Failed (line {}, expected pattern \"{}\" {} match)\n"
-                            "----------------------\n"
-                            "Actual:\n{}",
-                            assertionIndex + 1,
-                            pattern,
-                            shouldMatch ? "to" : "not to",
-                            actualOutput);
-                    }
-                }
-                catch (const std::regex_error& exception)
-                {
-                    return fmt::format(
-                        "\n\n"
-                        "Invalid Explain Output Regex (line {}, pattern \"{}\"): {}",
-                        assertionIndex + 1,
-                        pattern,
-                        exception.what());
-                }
-            }
-            else if (!std::ranges::contains(actual, expectedLine))
-            {
-                return fmt::format(
-                    "\n\n"
-                    "Explain Output Mismatch (line {}, expected line \"{}\" was not found)\n"
-                    "----------------------\n"
-                    "Actual:\n{}",
-                    assertionIndex + 1,
-                    expectedLine,
-                    actualOutput);
-            }
-        }
-        return std::nullopt;
+        return checkExplainRegexAssertions(assertions.value(), fmt::format("{}", fmt::join(actual, "\n")));
     }
 
     if (expected == actual)
