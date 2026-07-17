@@ -35,7 +35,7 @@ SELECT timestamp_bid, auctionId, bidder, price * FLOAT64(908) / FLOAT64(1000) AS
 183991721 370730288260
 
 # Query 2
-SELECT auctionId, price FROM bid WHERE auctionId % INT32(123) = INT32(0) INTO q2CheckSum;
+SELECT auctionId, price FROM bid WHERE auctionId % 123 = 0 INTO q2CheckSum;
 ----
 1511777 1211558031
 

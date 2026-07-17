@@ -42,6 +42,6 @@ SELECT value FROM stream INTO ID_VALUE_SINK;
 1 2
 
 # Correct
-SELECT id, value FROM stream WHERE id > UINT64(3) INTO ID_VALUE_SINK;
+SELECT id, value FROM stream WHERE id > 3 INTO ID_VALUE_SINK;
 ----
 

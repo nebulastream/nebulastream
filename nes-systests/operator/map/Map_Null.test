@@ -17,7 +17,7 @@ ATTACH INLINE
 CREATE SINK sink(id UINT64 NOT NULL, result INT32) TYPE File;
 
 # Adds a constant to a field
-SELECT id, value1 + INT32(1) AS result FROM stream INTO sink;
+SELECT id, value1 + 1 AS result FROM stream INTO sink;
 ----
 0,1
 1,2

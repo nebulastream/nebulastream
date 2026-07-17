@@ -21,7 +21,7 @@ SELECT
     campaign_id, 
     SUM(user_id) AS sum_user_id
 FROM ysb1k
-WHERE event_type < UINT64(1)
+WHERE event_type < 1
 GROUP BY campaign_id
 WINDOW TUMBLING(current_ms, SIZE 30 SEC)
 INTO ysb1kChecksum;
@@ -36,7 +36,7 @@ SELECT
     campaign_id,
     SUM(user_id) AS sum_user_id
 FROM ysb10k
-WHERE event_type < UINT64(1)
+WHERE event_type < 1
 GROUP BY campaign_id
 WINDOW TUMBLING(current_ms, SIZE 30 SEC)
 INTO ysb10kChecksum;

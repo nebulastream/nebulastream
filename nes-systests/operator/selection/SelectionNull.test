@@ -65,7 +65,7 @@ CREATE SINK bool_sinkIds(id UINT64 NOT NULL) TYPE File;
 CREATE SINK cmp_sinkCmp(id UINT64 NOT NULL, a_lt_3 BOOLEAN, b_gt_0 BOOLEAN, a_lt_b BOOLEAN) TYPE File;
 
 # Filter equal on INT32 with null
-SELECT * FROM stream WHERE value1 == INT32(1) INTO sink0;
+SELECT * FROM stream WHERE value1 == 1 INTO sink0;
 ----
 3,1,one
 4,1,one
@@ -79,7 +79,7 @@ SELECT ts, value1 FROM stream WHERE value2 == VARSIZED('one') INTO sink1;
 5,1
 
 # Filter < 1, keep all values
-SELECT * FROM stream WHERE value1 < INT32(1) INTO sink0;
+SELECT * FROM stream WHERE value1 < 1 INTO sink0;
 ----
 8,0,zero
 9,-1,NULL
@@ -103,8 +103,8 @@ SELECT * FROM stream WHERE ISNULL(value2) INTO sink0;
 10,NULL,NULL
 
 SELECT id,
-       value1 + INT32(5) AS v1_plus,
-       value2 - INT32(1) AS v2_minus
+       value1 + 5 AS v1_plus,
+       value2 - 1 AS v2_minus
 FROM (SELECT id, value1, value2, NOT ISNULL(value1) AS value1NotNull, NOT ISNULL(value2) AS value2NotNull FROM stream2)
 WHERE value1NotNull AND value2NotNull
 INTO sinkMapped;
@@ -132,8 +132,8 @@ INTO sinkTextSuffix;
 10,omega_x
 
 SELECT id,
-       value1 == INT32(1) AS v1_eq_1,
-       value2 == INT32(2) AS v2_eq_2,
+       value1 == 1 AS v1_eq_1,
+       value2 == 2 AS v2_eq_2,
        value1 == value2 AS v1_eq_v2,
        value1 == value1 AS v1_self_eq,
        value2 == value2 AS v2_self_eq
@@ -152,10 +152,10 @@ INTO sinkBoolCmp;
 10,false,NULL,NULL,true,NULL
 
 SELECT id,
-       (value1 == INT32(1)) AND (value2 == INT32(2)) AS v1_and_v2,
-       (value1 == INT32(1)) OR (value2 == INT32(2)) AS v1_or_v2,
-       NOT (value1 == INT32(1)) AS not_v1_eq_1,
-       ISNULL(value1 == INT32(1)) AS v1_eq_1_isnull
+       (value1 == 1) AND (value2 == 2) AS v1_and_v2,
+       (value1 == 1) OR (value2 == 2) AS v1_or_v2,
+       NOT (value1 == 1) AS not_v1_eq_1,
+       ISNULL(value1 == 1) AS v1_eq_1_isnull
 FROM stream2
 INTO sinkBoolOps;
 ----
@@ -220,8 +220,8 @@ INTO bool_sinkIds;
 1
 
 SELECT id,
-       a < INT32(3) AS a_lt_3,
-       b > INT32(0) AS b_gt_0,
+       a < 3 AS a_lt_3,
+       b > 0 AS b_gt_0,
        a < b AS a_lt_b
 FROM cmp_stream
 INTO cmp_sinkCmp;

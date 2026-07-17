@@ -146,8 +146,8 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
 {
     SystestParser parser{};
 
-    const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink;";
-    const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink;";
+    const std::string expectedMainQuery = "SELECT id * 10 AS id, value, timestamp FROM stream INTO streamSink;";
+    const std::string expectedDifferentialQuery = "SELECT id * 2 * 5 AS id, value, timestamp FROM stream INTO streamSink;";
 
     bool mainQueryCallbackCalled = false;
     bool differentialQueryCallbackCalled = false;
@@ -194,8 +194,8 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackInlineSyntax)
 {
     SystestParser parser{};
 
-    const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink;";
-    const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink;";
+    const std::string expectedMainQuery = "SELECT id * 10 AS id, value, timestamp FROM stream INTO streamSink;";
+    const std::string expectedDifferentialQuery = "SELECT id * 2 * 5 AS id, value, timestamp FROM stream INTO streamSink;";
 
     bool mainQueryCallbackCalled = false;
     bool differentialQueryCallbackCalled = false;
@@ -238,9 +238,9 @@ ATTACH INLINE
 
 CREATE SINK streamSink(id INT64, stream.value INT64, stream.timestamp INT64) TYPE File;
 
-SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink;
+SELECT id * 10 AS id, value, timestamp FROM stream INTO streamSink;
 ====
-SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink;
+SELECT id * 2 * 5 AS id, value, timestamp FROM stream INTO streamSink;
 )";
 
     ASSERT_TRUE(parser.loadString(std::string(TestContent)));
@@ -256,13 +256,12 @@ TEST_F(SystestParserTest, testExplainCallbackWithVerbatimResultBlock)
 {
     SystestParser parser{};
 
-    const std::string explainIn = "EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > UINT64(4) INTO sink;";
+    const std::string explainIn = "EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > 4 INTO sink;";
     const std::string queryIn = "SELECT id FROM stream INTO sink;";
 
     /// The expected explain output contains lines that look like parser tokens: a line starting with `----`,
     /// a section header, and an indented line starting with `SELECT`. All must be delivered verbatim.
-    static constexpr std::string_view TestContent
-        = R"(EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > UINT64(4) INTO sink;
+    static constexpr std::string_view TestContent = R"(EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > 4 INTO sink;
 ----
 == Global Optimized Plan ==
 SINK(SINK1)

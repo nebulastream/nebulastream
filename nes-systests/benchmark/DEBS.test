@@ -38,7 +38,7 @@ SELECT * FROM consumers WHERE consumedPower >= FLOAT64(400) INTO consumersChecks
 14236360, 36138915427
 
 # Query 2 - Filter with multiple attributes
-SELECT * FROM consumers WHERE consumedPower >= FLOAT64(400) AND sectorId = INT32(1) INTO consumersChecksum;
+SELECT * FROM consumers WHERE consumedPower >= FLOAT64(400) AND sectorId = 1 INTO consumersChecksum;
 ----
 3556803, 9027432231
 

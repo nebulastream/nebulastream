@@ -26,7 +26,7 @@ SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bid INTO q1CheckSum;
 4445 1336553
 
 # Query 2
-SELECT * FROM bid WHERE auctionId % INT32(123) = INT32(0) INTO q2CheckSum;
+SELECT * FROM bid WHERE auctionId % 123 = 0 INTO q2CheckSum;
 ----
 47 47464
 
