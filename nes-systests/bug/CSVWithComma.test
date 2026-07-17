@@ -19,11 +19,11 @@ SELECT * FROM stream INTO file_sink;
 "f","20,21,22,23,24"
 "g","27,,28,29"
 
-SELECT * FROM stream WHERE text2 == VARSIZED('","') INTO file_sink;
+SELECT * FROM stream WHERE text2 == '","' INTO file_sink;
 ----
 "d",","
 
-SELECT * FROM stream WHERE text2 != VARSIZED('","') INTO file_sink;
+SELECT * FROM stream WHERE text2 != '","' INTO file_sink;
 ----
 "a","1,2,3"
 ",","4,5,6"
