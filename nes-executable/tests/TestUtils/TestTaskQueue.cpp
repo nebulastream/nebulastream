@@ -50,12 +50,6 @@ bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, c
     return true;
 }
 
-TupleBuffer& TestPipelineExecutionContext::pinBuffer(TupleBuffer&& tupleBuffer)
-{
-    pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
-    return *pinnedBuffers.back();
-}
-
 TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
 {
     if (auto buffer = bufferManager->getBufferNoBlocking())
