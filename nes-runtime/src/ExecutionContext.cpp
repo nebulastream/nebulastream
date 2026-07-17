@@ -73,18 +73,16 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 
 NautilusBuffer ExecutionContext::allocateBuffer() const
 {
-    /// The buffer is pinned in the PipelineExecutionContext, which owns it for the duration of the pipeline invocation and releases it
-    /// during ordinary C++ unwinding. We therefore hand out a borrowed handle: an owned one would tie the buffer's lifetime to the
-    /// compiled function, whose traced destructor is skipped when a proxy throws, leaking the buffer.
-    const auto bufferPtr = nautilus::invoke(
-        +[](PipelineExecutionContext* pec)
+    OwnedNautilusBuffer buffer;
+    nautilus::invoke(
+        +[](PipelineExecutionContext* pec, TupleBuffer* buffer)
         {
             PRECONDITION(pec, "pipeline execution context should not be null");
-            auto newTupleBuffer = pec->allocateTupleBuffer();
-            return std::addressof(pec->pinBuffer(std::move(newTupleBuffer)));
+            *buffer = pec->allocateTupleBuffer();
         },
-        pipelineContext);
-    return BorrowedNautilusBuffer::from(bufferPtr);
+        pipelineContext,
+        buffer.asArg());
+    return buffer;
 }
 
 nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size_t>& sizeInBytes)

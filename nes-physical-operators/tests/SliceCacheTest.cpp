@@ -147,13 +147,6 @@ public:
 
         TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
 
-        /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): unreachable stub; parameter matches the overridden signature.
-        TupleBuffer& pinBuffer(TupleBuffer&&) override
-        {
-            INVARIANT(false, "This function should not be called");
-            std::unreachable();
-        }
-
         [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return INITIAL<WorkerThreadId>; }
 
         [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1; }
