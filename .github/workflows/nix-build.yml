@@ -73,7 +73,7 @@ jobs:
 
       - name: Configure via devShell
         run: |
-          ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -DUSE_BUILD_CACHE=OFF -DCMAKE_C_COMPILER_LAUNCHER="$SCCACHE_BIN" -DCMAKE_CXX_COMPILER_LAUNCHER="$SCCACHE_BIN" -G Ninja -S . -B cmake-build-nix
+          ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -DUSE_BUILD_CACHE=OFF -DNES_SPLIT_TEST_BINARIES=OFF -DCMAKE_C_COMPILER_LAUNCHER="$SCCACHE_BIN" -DCMAKE_CXX_COMPILER_LAUNCHER="$SCCACHE_BIN" -G Ninja -S . -B cmake-build-nix
 
       - name: Build via devShell
         run: |
