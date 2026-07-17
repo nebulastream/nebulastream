@@ -25,6 +25,23 @@ teardown()      { nes_distributed_teardown; }
   [ "$status" -eq 0 ]
 }
 
+@test "launch query with quoted lowercase sink field" {
+  setup_distributed tests/good/quoted-lowercase-sink-field.yaml
+  run docker_nes_cli -t tests/good/quoted-lowercase-sink-field.yaml start
+  [ "$status" -eq 0 ]
+}
+#bats test_tags=bats:focus
+@test "multi named query" {
+  setup_distributed tests/good/multi-named-query.yaml
+  run docker_nes_cli -t tests/good/multi-named-query.yaml start
+  assert_success
+  sleep 3
+  run docker_nes_cli -t tests/good/multi-named-query.yaml status
+  assert_success
+
+  run docker_nes_cli -t tests/good/multi-named-query.yaml stop
+  assert_success
+}
 @test "launch multiple query from topology" {
   setup_distributed tests/good/multiple-select-gen-into-void.yaml
 
