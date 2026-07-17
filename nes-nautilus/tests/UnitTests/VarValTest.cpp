@@ -28,6 +28,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
+#include <nautilus/exception.hpp>
 #include <nautilus/std/sstream.h>
 #include <BaseUnitTest.hpp>
 #include <function.hpp>
@@ -35,6 +36,9 @@
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+
+#include <Engine.hpp>
+#include <options.hpp>
 
 namespace NES
 {
@@ -557,5 +561,56 @@ TEST_F(VarValTest, booleanComparisonOperators)
     EXPECT_TRUE(static_cast<bool>(eqResult3));
 }
 
+inline void testProxy(int)
+{
+    throw std::runtime_error("test");
+}
+
+namespace
+{
+nautilus::engine::NautilusEngine makeCompiledEngine()
+{
+    nautilus::engine::EngineOptions options;
+    options.setOption("engine.Compilation", true);
+    options.setOption("engine.backend", std::string("mlir"));
+    options.setOption("engine.compilationStrategy", std::string("legacy"));
+    options.setOption("engine.traceMode", std::string("legacy"));
+    options.setOption("mlir.enableMultithreading", false);
+    return nautilus::engine::NautilusEngine{options};
+}
+}
+
+/// The value form of invokeGuarded accepts a captureless lambda by value. The throw is parked instead of unwinding
+/// through the compiled frame, and nautilus drains it at the boundary, so the call itself observably throws. The slot
+/// must be empty afterwards, otherwise the failure would leak into the next invocation on this thread.
+TEST(InvokeGuardedTest, rethrowsThrowFromCapturelessLambda)
+{
+    auto engine = makeCompiledEngine();
+    auto fn = engine.registerFunction(std::function<void()>(
+        []()
+        {
+            nautilus::val<int> x = 1;
+            nautilus::invokeGuarded([](int) { throw std::runtime_error("lambda"); }, x);
+        }));
+
+    EXPECT_THROW(fn(), std::runtime_error);
+    EXPECT_FALSE(nautilus::hasParkedException());
+}
+
+/// The same value form accepts a named function passed by value: it decays to a function pointer, which is threaded
+/// through nautilus as a void* and reinterpreted inside the guarding proxy.
+TEST(InvokeGuardedTest, rethrowsThrowFromNamedFunction)
+{
+    auto engine = makeCompiledEngine();
+    auto fn = engine.registerFunction(std::function<void()>(
+        []()
+        {
+            nautilus::val<int> x = 1;
+            nautilus::invokeGuarded(testProxy, x);
+        }));
+
+    EXPECT_THROW(fn(), std::runtime_error);
+    EXPECT_FALSE(nautilus::hasParkedException());
+}
 
 }
