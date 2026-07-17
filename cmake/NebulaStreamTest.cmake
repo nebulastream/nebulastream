@@ -22,15 +22,14 @@ else ()
     set(RAPIDCHECK_MAX_SUCCESS 20)
 endif ()
 
+option(NES_SPLIT_TEST_BINARIES "Build each unit-test suite as a separate executable" ON)
+
 # Target to build all integration tests
 add_custom_target(integration_tests)
 # Target to build all e2e tests
 add_custom_target(e2e_tests)
 
-# This function registers a test with gtest_discover_tests
-function(add_nes_test)
-    add_executable(${ARGN})
-    set(TARGET_NAME ${ARGV0})
+function(configure_nes_test_target TARGET_NAME)
     target_link_libraries(${TARGET_NAME} nes-test-util rapidcheck rapidcheck_gtest)
     if (NES_ENABLE_PRECOMPILED_HEADERS)
         target_precompile_headers(${TARGET_NAME} REUSE_FROM nes-common)
@@ -41,12 +40,47 @@ function(add_nes_test)
         target_code_coverage(${TARGET_NAME} PUBLIC AUTO ALL EXTERNAL OBJECTS nes nes-common)
         message(STATUS "Added cc test ${TARGET_NAME}")
     endif ()
+endfunction()
+
+function(discover_nes_test TARGET_NAME TEST_WORKING_DIRECTORY)
     gtest_discover_tests(${TARGET_NAME}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${TEST_WORKING_DIRECTORY}
         DISCOVERY_MODE PRE_TEST
         DISCOVERY_TIMEOUT 30
         PROPERTIES ENVIRONMENT "RC_PARAMS=max_success=${RAPIDCHECK_MAX_SUCCESS}")
     message(STATUS "Added ut ${TARGET_NAME}")
+endfunction()
+
+function(finalize_nes_combined_test TARGET_NAME)
+    get_target_property(TEST_OBJECT_TARGETS ${TARGET_NAME} NES_TEST_OBJECT_TARGETS)
+    foreach (TEST_OBJECT_TARGET ${TEST_OBJECT_TARGETS})
+        target_link_libraries(${TARGET_NAME} PRIVATE ${TEST_OBJECT_TARGET})
+    endforeach ()
+    if (CODE_COVERAGE)
+        target_code_coverage(${TARGET_NAME} PUBLIC AUTO ALL EXTERNAL OBJECTS nes nes-common)
+    endif ()
+    discover_nes_test(${TARGET_NAME} ${CMAKE_BINARY_DIR})
+endfunction()
+
+# This function registers a test with gtest_discover_tests. The combined layout compiles each suite as an object library
+# so that suite-specific compile settings remain isolated while the static NES libraries are linked only once.
+function(add_nes_test TARGET_NAME)
+    if (NES_SPLIT_TEST_BINARIES)
+        add_executable(${TARGET_NAME} ${ARGN})
+        configure_nes_test_target(${TARGET_NAME})
+        discover_nes_test(${TARGET_NAME} ${CMAKE_CURRENT_BINARY_DIR})
+        return()
+    endif ()
+
+    add_library(${TARGET_NAME} OBJECT ${ARGN})
+    configure_nes_test_target(${TARGET_NAME})
+
+    if (NOT TARGET nes-unit-tests)
+        add_executable(nes-unit-tests)
+        cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL finalize_nes_combined_test nes-unit-tests)
+    endif ()
+    set_property(TARGET nes-unit-tests APPEND PROPERTY NES_TEST_OBJECT_TARGETS ${TARGET_NAME})
+    message(STATUS "Added ut ${TARGET_NAME} to nes-unit-tests")
 endfunction()
 
 function(add_nes_common_test)
