@@ -8,6 +8,7 @@ default_cmake_flags:
   ALL_HASHMAP_TESTS: "1"
   NES_LOG_LEVEL: DEBUG
   ALL_SLICE_CACHE_TESTS: "ON"
+  NES_SPLIT_TEST_BINARIES: "OFF"
 
 runners:
   github-x64: ubuntu-24.04

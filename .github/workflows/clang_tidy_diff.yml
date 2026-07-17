@@ -68,7 +68,8 @@ jobs:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
-            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+            # TODO #1788: Replace the full build with a code-generation-only target for static analysis.
+            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG -DNES_SPLIT_TEST_BINARIES=OFF
             # We need to build the project, as some headers are only created during the build.
             cmake --build build -j  -- -k 0
       - name: Create results directory
