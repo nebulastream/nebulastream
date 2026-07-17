@@ -17,7 +17,7 @@ use crate::source::physical::{Column, Entity, Model};
 use crate::worker::endpoint::NetworkAddr;
 use crate::{ConnectorKind, Execute, IntoCondition};
 use anyhow::Result;
-use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -66,6 +66,6 @@ impl IntoCondition for GetPhysicalSource {
 impl Execute for GetPhysicalSource {
     type Response = Vec<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<Model>> {
-        Ok(Entity::find().filter(self.to_condition()).all(conn).await?)
+        Ok(crate::find_all::<Entity>(self.to_condition(), conn).await?)
     }
 }

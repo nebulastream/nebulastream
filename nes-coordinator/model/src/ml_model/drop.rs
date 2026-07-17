@@ -15,7 +15,7 @@
 use crate::ml_model::{Column, Entity, Model};
 use crate::{Execute, IntoCondition};
 use anyhow::{Context, Result};
-use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -43,17 +43,8 @@ impl IntoCondition for DropMlModel {
 impl Execute for DropMlModel {
     type Response = Vec<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<Model>> {
-        let condition = self.to_condition();
-        let models = Entity::find()
-            .filter(condition.clone())
-            .all(conn)
+        crate::delete_returning::<Entity>(self.to_condition(), conn)
             .await
-            .context("failed to fetch ml_model(s)")?;
-        Entity::delete_many()
-            .filter(condition)
-            .exec(conn)
-            .await
-            .context("failed to delete ml_model(s)")?;
-        Ok(models)
+            .context("failed to drop ml_model(s)")
     }
 }

@@ -15,7 +15,7 @@
 use crate::source::logical::{Column, Entity, Model};
 use crate::{Execute, IntoCondition};
 use anyhow::{Context, Result};
-use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -43,10 +43,8 @@ impl IntoCondition for GetLogicalSource {
 impl Execute for GetLogicalSource {
     type Response = Vec<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<Model>> {
-        Ok(Entity::find()
-            .filter(self.to_condition())
-            .all(conn)
+        crate::find_all::<Entity>(self.to_condition(), conn)
             .await
-            .context("failed to fetch logical source(s)")?)
+            .context("failed to fetch logical source(s)")
     }
 }

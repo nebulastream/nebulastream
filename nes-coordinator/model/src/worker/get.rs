@@ -16,7 +16,7 @@ use crate::worker::endpoint::NetworkAddr;
 use crate::worker::{Column, DesiredWorkerState, Model, WorkerState};
 use crate::{Execute, IntoCondition, worker};
 use anyhow::{Context, Result};
-use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -54,10 +54,8 @@ impl IntoCondition for GetWorker {
 impl Execute for GetWorker {
     type Response = Vec<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<Model>> {
-        Ok(worker::Entity::find()
-            .filter(self.to_condition())
-            .all(conn)
+        crate::find_all::<worker::Entity>(self.to_condition(), conn)
             .await
-            .context("failed to fetch worker(s)")?)
+            .context("failed to fetch worker(s)")
     }
 }

@@ -25,7 +25,7 @@ pub mod worker;
 
 use anyhow::Result;
 use sea_orm::entity::prelude::*;
-use sea_orm::{Condition, ConnectionTrait};
+use sea_orm::{Condition, ConnectionTrait, QueryFilter};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
@@ -46,6 +46,26 @@ pub trait IntoCondition {
 pub trait Execute {
     type Response;
     fn execute(&self, conn: &impl ConnectionTrait) -> impl Future<Output = Result<Self::Response>>;
+}
+
+/// Fetch every row matching `cond`. Backs the read requests whose only
+/// job is to filter and return.
+pub(crate) async fn find_all<E: EntityTrait>(
+    cond: Condition,
+    conn: &impl ConnectionTrait,
+) -> Result<Vec<E::Model>, DbErr> {
+    E::find().filter(cond).all(conn).await
+}
+
+/// Delete every row matching `cond`, returning the rows as they existed
+/// before deletion. Backs the drop requests.
+pub(crate) async fn delete_returning<E: EntityTrait>(
+    cond: Condition,
+    conn: &impl ConnectionTrait,
+) -> Result<Vec<E::Model>, DbErr> {
+    let rows = E::find().filter(cond.clone()).all(conn).await?;
+    E::delete_many().filter(cond).exec(conn).await?;
+    Ok(rows)
 }
 
 /// Ownership model for a source or sink. Shared connectors are

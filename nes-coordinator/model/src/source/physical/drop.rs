@@ -16,7 +16,7 @@ use super::{Column, Entity, Model};
 use crate::identifier::SourceId;
 use crate::{ConnectorKind, Execute, IntoCondition};
 use anyhow::Result;
-use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -60,9 +60,6 @@ impl IntoCondition for DropPhysicalSource {
 impl Execute for DropPhysicalSource {
     type Response = Vec<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<Model>> {
-        let condition = self.to_condition();
-        let sources = Entity::find().filter(condition.clone()).all(conn).await?;
-        Entity::delete_many().filter(condition).exec(conn).await?;
-        Ok(sources)
+        Ok(crate::delete_returning::<Entity>(self.to_condition(), conn).await?)
     }
 }
