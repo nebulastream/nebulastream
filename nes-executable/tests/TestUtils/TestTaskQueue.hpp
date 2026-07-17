@@ -176,7 +176,7 @@ struct TestPipelineTask
     std::shared_ptr<ExecutablePipelineStage> eps;
 };
 
-struct WorkTask
+struct TestTaskQueueEntry
 {
     TestPipelineTask task;
     std::shared_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
@@ -197,7 +197,7 @@ public:
     void processTasks(std::vector<TestPipelineTask> pipelineTasks);
 
 private:
-    std::queue<WorkTask> tasks;
+    std::queue<TestTaskQueueEntry> tasks;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
 
