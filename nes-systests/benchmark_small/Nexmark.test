@@ -21,7 +21,7 @@ SELECT * FROM bid INTO q2CheckSum;
 4445 4706576
 
 # Query 1
-SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bid INTO q1CheckSum;
+SELECT price * 89 / 100 AS price FROM bid INTO q1CheckSum;
 ----
 4445 1336553
 

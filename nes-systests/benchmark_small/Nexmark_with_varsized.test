@@ -34,7 +34,7 @@ SELECT * FROM bid100K INTO bidCheckSum;
 3357 5379403
 
 # Query 1
-SELECT timestamp, auctionId, bidder, price * FLOAT64(908) / FLOAT64(1000) AS price FROM bid100K INTO q1CheckSum;
+SELECT timestamp, auctionId, bidder, price * 908 / 1000 AS price FROM bid100K INTO q1CheckSum;
 ----
 3357 5698622
 

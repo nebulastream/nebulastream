@@ -15,7 +15,7 @@ SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
 FROM (SELECT creationTS, highway, direction, position / 5280 AS positionDiv5280, speed FROM lrb)
 GROUP BY (highway, direction, positionDiv5280)
 WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
-HAVING avgSpeed < FLOAT32(40)
+HAVING avgSpeed < 40
 INTO q1Checksum;
 ----
 70916, 151995926

@@ -27,7 +27,7 @@ INTO result;
 # setosa with probability > 0.9. Of the three input records only the first
 # clears the threshold (0.946717).
 SELECT * FROM MODEL_INFERENCE(iris, stream)
-WHERE setosa > FLOAT32(0.9)
+WHERE setosa > 0.9
 INTO confidentSetosa;
 ----
 6.1,3.5,1.4,0.2,0.946717,0.051443,0.00184

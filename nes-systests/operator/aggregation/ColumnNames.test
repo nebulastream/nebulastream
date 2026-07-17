@@ -31,17 +31,17 @@ INTO out;
 200, 300, 2,1,2,3,1.5,1.5
 300, 400, 2,1,2,3,1.5,1.5
 
-# Post-aggregation arithmetic: MEDIAN(i) + FLOAT64(1).
+# Post-aggregation arithmetic: MEDIAN(i) + 1.
 # MEDIAN({1,2}) = 1.5, plus 1 = 2.5.
-SELECT MEDIAN(i) + FLOAT64(1) AS result FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggResult;
+SELECT MEDIAN(i) + 1 AS result FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggResult;
 ----
 2.5
 2.5
 2.5
 
-# Post-aggregation arithmetic: SUM(i) + FLOAT64(10).
+# Post-aggregation arithmetic: SUM(i) + 10.0.
 # SUM({1,2}) = 3, plus 10 = 13.
-SELECT SUM(i) + FLOAT64(10) AS result FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggResult;
+SELECT SUM(i) + 10.0 AS result FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggResult;
 ----
 13
 13

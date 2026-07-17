@@ -24,8 +24,8 @@ SELECT
     u32 == 42 AS bool7,
     u64 == 42 AS bool8,
 
-    f32 == FLOAT32(42.42) AS bool9,
-    f64 == FLOAT64(42.42) AS bool10
+    f32 == 42.42 AS bool9,
+    f64 == 42.42 AS bool10
 FROM stream INTO sink10Booleans;
 ----
 false,false,false,false,true,false,false,false,false,true
@@ -52,9 +52,9 @@ SELECT
     i8 == u64 + 1 AS bool16,
     # float
     i8 == f32 AS bool17,
-    i8 == f32 + FLOAT32(1) AS bool18,
+    i8 == f32 + 1 AS bool18,
     i8 == f64 AS bool19,
-    i8 == f64 + FLOAT64(1) AS bool20
+    i8 == f64 + 1 AS bool20
 FROM stream INTO sink20Booleans;
 ----
 true,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
@@ -81,9 +81,9 @@ SELECT
     i16 == u64 + 1 AS bool16,
     # float
     i16 == f32 AS bool17,
-    i16 == f32 + FLOAT32(1) AS bool18,
+    i16 == f32 + 1 AS bool18,
     i16 == f64 AS bool19,
-    i16 == f64 + FLOAT64(1) AS bool20
+    i16 == f64 + 1 AS bool20
 FROM stream INTO sink20Booleans;
 ----
 false,false,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
@@ -110,9 +110,9 @@ SELECT
     i32 == u64 + 1 AS bool16,
     # float
     i32 == f32 AS bool17,
-    i32 == f32 + FLOAT32(1) AS bool18,
+    i32 == f32 + 1 AS bool18,
     i32 == f64 AS bool19,
-    i32 == f64 + FLOAT64(1) AS bool20
+    i32 == f64 + 1 AS bool20
 FROM stream INTO sink20Booleans;
 ----
 false,false,false,false,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
@@ -139,9 +139,9 @@ SELECT
     i64 == u64 + 1 AS bool16,
     # float
     i64 == f32 AS bool17,
-    i64 == f32 + FLOAT32(1) AS bool18,
+    i64 == f32 + 1 AS bool18,
     i64 == f64 AS bool19,
-    i64 == f64 + FLOAT64(1) AS bool20
+    i64 == f64 + 1 AS bool20
 FROM stream INTO sink20Booleans;
 ----
 false,false,false,false,false,false,true,false,false,false,false,false,false,false,false,false,false,false,false,false

@@ -16,7 +16,7 @@ ATTACH INLINE
 
 CREATE SINK sink(amount FLOAT64 NOT NULL, status VARSIZED NOT NULL) TYPE File;
 SELECT * FROM transactions
-WHERE amount > FLOAT64(1000.0) AND status == VARSIZED('completed')
+WHERE amount > 1000.0 AND status == VARSIZED('completed')
 INTO sink;
 ----
 1500.0,completed
