@@ -41,6 +41,11 @@ query:
       )
       WHERE face IS NOT NULL
       INTO rgb_face_mqtt
+  - name: audio_mqtt
+    query: |
+      SELECT sample as "sample"
+      FROM microphone
+      INTO audio_mqtt
 sinks:
   - name: thermal_mqtt
     host: localhost:8080
@@ -68,6 +73,17 @@ sinks:
       server_uri: localhost:1883
       topic: rgb-image
       qos: 2
+  - name: audio_mqtt
+    host: localhost:8080
+    schema:
+      - name: '"sample"'
+        type: FLOAT64
+    type: MQTT
+    config:
+      output_format: CSV
+      server_uri: localhost:1883
+      topic: audio
+      qos: 0
   - name: rgb_face_mqtt
     host: localhost:8080
     schema:
@@ -220,6 +236,14 @@ logical:
       - name: IMAGE
         type: VARSIZED
         nullable: false
+  - name: microphone
+    schema:
+      - name: SAMPLE
+        type: FLOAT64
+        nullable: false
+      - name: TIMESTAMP
+        type: UINT64
+        nullable: false
   - name: rgb_video_pipe
     schema:
       - name: TIMESTAMP
@@ -267,6 +291,11 @@ physical:
       type: NATIVE
     source_config:
       pipe_name: video_frames
+  - logical: microphone
+    host: localhost:8080
+    type: Audio
+    parser_config:
+      type: NATIVE
 
 workers:
   - host: localhost:8080

@@ -1,0 +1,36 @@
+query: |
+  SELECT DOUBLE AS "value" FROM GENERATOR_SOURCE INTO LOWERCASE_SINK
+
+sinks:
+  - name: LOWERCASE_SINK
+    host: worker-1:8080
+    schema:
+      - name: '"value"'
+        type: FLOAT64
+    type: Void
+
+logical:
+  - name: GENERATOR_SOURCE
+    schema:
+      - name: DOUBLE
+        type: FLOAT64
+
+physical:
+  - logical: GENERATOR_SOURCE
+    host: worker-1:8080
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_schema: |
+        NORMAL_DISTRIBUTION FLOAT64 0 1
+
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000
