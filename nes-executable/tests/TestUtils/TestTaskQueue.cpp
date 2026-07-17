@@ -123,10 +123,10 @@ void SingleThreadedTestTaskQueue::enqueueTasks(std::vector<TestPipelineTask> pip
         {
             const auto pecFromWeakCapturedPtr = weakPipelineExecutionContext.lock();
             PRECONDITION(pecFromWeakCapturedPtr != nullptr, "The pipelineExecutionContext must be valid in the repeat callback function");
-            tasks.emplace(WorkTask{.task = testTask, .pipelineExecutionContext = pecFromWeakCapturedPtr});
+            tasks.emplace(TestTaskQueueEntry{.task = testTask, .pipelineExecutionContext = pecFromWeakCapturedPtr});
         };
         pipelineExecutionContext->setRepeatTaskCallback(std::move(repeatTaskCallback));
-        tasks.emplace(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
+        tasks.emplace(TestTaskQueueEntry{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
     }
 }
 
