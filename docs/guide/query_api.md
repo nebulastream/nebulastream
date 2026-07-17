@@ -38,10 +38,10 @@ Queries can be submitted as YAML specifications or SQL statements. Below is a co
 ```yaml
 query: |
   SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
-  FROM (SELECT creationTS, highway, direction, position / INT32(5280) AS positionDiv5280, speed FROM lrb)
+  FROM (SELECT creationTS, highway, direction, position / 5280 AS positionDiv5280, speed FROM lrb)
   GROUP BY (highway, direction, positionDiv5280)
   WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
-  HAVING avgSpeed < FLOAT32(40)
+  HAVING avgSpeed < 40
   INTO csv_sink;
 
 sinks:
@@ -161,10 +161,10 @@ CREATE SINK csv_sink(
 );
 
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
-FROM (SELECT creationTS, highway, direction, position / INT32(5280) AS positionDiv5280, speed FROM lrb)
+FROM (SELECT creationTS, highway, direction, position / 5280 AS positionDiv5280, speed FROM lrb)
 GROUP BY (highway, direction, positionDiv5280)
 WINDOW SLIDING(creationTS, SIZE 5 MINUTES, ADVANCE BY 1 SEC)
-HAVING avgSpeed < FLOAT32(40)
+HAVING avgSpeed < 40
 INTO csv_sink;
 ```
 ---
@@ -450,37 +450,37 @@ SELECT FLOAT32(3.141) * r FROM stream INTO sink
 Selections use the `WHERE` keyword to filter the input stream.
 
 ```sql
-SELECT * FROM s WHERE t == VARSIZED("sometext") INTO sink
+SELECT * FROM s WHERE t == 'sometext' INTO sink
 ```
 
 Predicates can combine functions, comparisons, and SQL predicate syntax with `AND`, `OR`, and `NOT`:
 
 ```sql
-SELECT * FROM s WHERE CEIL(speed) != UINT64(0) OR altitude == UINT64(0) INTO sink
+SELECT * FROM s WHERE CEIL(speed) != 0 OR altitude == 0 INTO sink
 ```
 
 ```sql
-SELECT * FROM transactions WHERE amount > FLOAT64(1000.0) AND status == VARSIZED("completed") INTO sink
+SELECT * FROM transactions WHERE amount > 1000.0 AND status == 'completed' INTO sink
 ```
 
 `BETWEEN` is inclusive and supports `NOT BETWEEN`:
 
 ```sql
-SELECT * FROM transactions WHERE amount BETWEEN FLOAT64(100.0) AND FLOAT64(1000.0) INTO sink
+SELECT * FROM transactions WHERE amount BETWEEN 100.0 AND 1000.0 INTO sink
 ```
 
 ```sql
-SELECT * FROM transactions WHERE amount NOT BETWEEN FLOAT64(100.0) AND FLOAT64(1000.0) INTO sink
+SELECT * FROM transactions WHERE amount NOT BETWEEN 100.0 AND 1000.0 INTO sink
 ```
 
 `IN` supports explicit, non-empty value lists and also supports `NOT IN`; `IN` subqueries are not supported:
 
 ```sql
-SELECT * FROM s WHERE status IN (VARSIZED("queued"), VARSIZED("running")) INTO sink
+SELECT * FROM s WHERE status IN ('queued', 'running') INTO sink
 ```
 
 ```sql
-SELECT * FROM s WHERE status NOT IN (VARSIZED("failed"), VARSIZED("cancelled")) INTO sink
+SELECT * FROM s WHERE status NOT IN ('failed', 'cancelled') INTO sink
 ```
 
 `IS NULL` and `IS NOT NULL` test nullable values:
@@ -593,7 +593,7 @@ SELECT ticker, MAX(price) AS max_price, MIN(price) AS min_price
 FROM stock_quotes 
 GROUP BY ticker 
 WINDOW TUMBLING(ts, SIZE 1 MIN)
-HAVING MAX(price) > FLOAT64(100.0) AND COUNT(*) >= UINT64(10) INTO sink
+HAVING MAX(price) > 100.0 AND COUNT(*) >= 10 INTO sink
 ```
 
 #### Join
@@ -685,7 +685,7 @@ Functions are either unary (one input) or binary (two inputs).
 | Function                 | Example                                      |
 |-------------------------------|-------------------------------------------------------|
 | Access a field           | `SELECT x FROM s INTO sink`                  |
-| Define a constant        | `SELECT INT32(42) FROM s INTO sink`          |
+| Define a constant        | `SELECT 42 FROM s INTO sink`                 |
 | Rename an input function | `SELECT x AS x1 FROM s INTO sink`            |
 | Cast an input function   | `SELECT CAST(x AS FLOAT64) FROM s INTO sink` || Cast string to unix timestamp | `SELECT CASTTOUNIXTS(ts) FROM s INTO sink`   |
 | Cast unix timestamp to string | `SELECT CASTFROMUNIXTS(ts) FROM s INTO sink` |
@@ -694,7 +694,7 @@ Functions are either unary (one input) or binary (two inputs).
 
 | Function                                        | Example                                 |
 |-------------------------------------------------|-----------------------------------------|
-| Addition                                        | `SELECT x + INT32(10) FROM s INTO sink` |
+| Addition                                        | `SELECT x + 10 FROM s INTO sink`        |
 | Subtraction                                     | `SELECT x - y FROM s INTO sink`         |
 | Division                                        | `SELECT x / y FROM s INTO sink`         |
 | Multiplication                                  | `SELECT x * y FROM s INTO sink`         |
@@ -713,16 +713,16 @@ Functions are either unary (one input) or binary (two inputs).
 |--------------------|----------------------------------------------------------------|
 | Logical `AND`      | `SELECT * FROM s WHERE a AND b INTO sink`                      |
 | Logical `OR`       | `SELECT * FROM s WHERE a OR b INTO sink`                       |
-| Equal              | `SELECT * FROM s WHERE a == INT32(42) INTO sink`               |
-| Not Equal          | `SELECT * FROM s WHERE a != INT32(42) INTO sink`               |
+| Equal              | `SELECT * FROM s WHERE a == 42 INTO sink`                      |
+| Not Equal          | `SELECT * FROM s WHERE a != 42 INTO sink`                      |
 | Greater            | `SELECT * FROM s WHERE a > b INTO sink`                        |
 | Greater or Equal   | `SELECT * FROM s WHERE a >= b INTO sink`                       |
 | Less Than          | `SELECT * FROM s WHERE a < b INTO sink`                        |
 | Less Than or Equal | `SELECT * FROM s WHERE a <= b INTO sink`                       |
-| Between            | `SELECT * FROM s WHERE a BETWEEN INT32(1) AND INT32(5) INTO sink` |
-| Not Between        | `SELECT * FROM s WHERE a NOT BETWEEN INT32(1) AND INT32(5) INTO sink` |
-| In value list      | `SELECT * FROM s WHERE a IN (INT32(1), INT32(5)) INTO sink`    |
-| Not In value list  | `SELECT * FROM s WHERE a NOT IN (INT32(1), INT32(5)) INTO sink` |
+| Between            | `SELECT * FROM s WHERE a BETWEEN 1 AND 5 INTO sink`            |
+| Not Between        | `SELECT * FROM s WHERE a NOT BETWEEN 1 AND 5 INTO sink`        |
+| In value list      | `SELECT * FROM s WHERE a IN (1, 5) INTO sink`                  |
+| Not In value list  | `SELECT * FROM s WHERE a NOT IN (1, 5) INTO sink`              |
 | Is Null            | `SELECT * FROM s WHERE a IS NULL INTO sink`                    |
 | Is Not Null        | `SELECT * FROM s WHERE a IS NOT NULL INTO sink`                |
 
