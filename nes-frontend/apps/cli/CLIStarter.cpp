@@ -152,9 +152,15 @@ struct Model
     std::vector<SchemaField> output;
 };
 
+struct NamedQuery
+{
+    std::optional<std::string> name;
+    std::string query;
+};
+
 struct QueryConfig
 {
-    std::vector<std::string> query;
+    std::vector<NamedQuery> query;
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
@@ -407,6 +413,28 @@ struct convert<NES::CLI::Model>
 };
 
 template <>
+struct convert<NES::CLI::NamedQuery>
+{
+    static bool decode(const Node& node, NES::CLI::NamedQuery& rhs)
+    {
+        if (node.IsScalar())
+        {
+            rhs.name = std::nullopt;
+            rhs.query = node.as<std::string>();
+            return true;
+        }
+        else if (node.IsMap())
+        {
+            acceptKeys({"query", "name"}, node);
+            rhs.name = getOptional<std::string>(node, "name");
+            rhs.query = node["query"].as<std::string>();
+            return true;
+        }
+        return false;
+    }
+};
+
+template <>
 struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
@@ -430,11 +458,11 @@ struct convert<NES::CLI::QueryConfig>
         {
             if (node["query"].IsSequence())
             {
-                rhs.query = node["query"].as<std::vector<std::string>>();
+                rhs.query = node["query"].as<std::vector<NES::CLI::NamedQuery>>();
             }
             else
             {
-                rhs.query.emplace_back(node["query"].as<std::string>());
+                rhs.query.emplace_back(node["query"].as<NES::CLI::NamedQuery>());
             }
         }
         rhs.workers = getList<NES::CLI::WorkerConfig>(node, "workers");
@@ -525,15 +553,15 @@ NES::CLI::QueryConfig getTopologyPath(const argparse::ArgumentParser& parser)
     throw NES::InvalidConfigParameter("Could not find topology file");
 }
 
-std::vector<std::string> loadQueries(
+std::vector<NES::CLI::NamedQuery> loadQueries(
     const argparse::ArgumentParser& /*parser*/, const argparse::ArgumentParser& subcommand, const NES::CLI::QueryConfig& topologyConfig)
 {
-    std::vector<std::string> queries;
+    std::vector<NES::CLI::NamedQuery> queries;
     if (subcommand.is_used("queries"))
     {
         for (const auto& query : subcommand.get<std::vector<std::string>>("queries"))
         {
-            queries.emplace_back(query);
+            queries.emplace_back(std::nullopt, query);
         }
         NES_DEBUG("loaded {} queries from commandline", queries.size());
     }
@@ -581,8 +609,9 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     statements.reserve(workers.size());
     for (const auto& [host, dataAddress, maxOperators, downstream, config] : workers)
     {
-        statements.emplace_back(NES::CreateWorkerStatement{
-            .host = host, .dataAddress = dataAddress, .capacity = maxOperators, .downstream = downstream, .config = config});
+        statements.emplace_back(
+            NES::CreateWorkerStatement{
+                .host = host, .dataAddress = dataAddress, .capacity = maxOperators, .downstream = downstream, .config = config});
     }
     for (const auto& [name, schemaFields] : logical)
     {
@@ -591,22 +620,24 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 
     for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
-        statements.emplace_back(NES::CreatePhysicalSourceStatement{
-            .attachedTo = bindIdentifierName(logical),
-            .sourceType = bindIdentifierName(type),
-            .host = NES::Host(host),
-            .sourceConfig = bindConfig(sourceConfig),
-            .parserConfig = bindConfig(parserConfig)});
+        statements.emplace_back(
+            NES::CreatePhysicalSourceStatement{
+                .attachedTo = bindIdentifierName(logical),
+                .sourceType = bindIdentifierName(type),
+                .host = NES::Host(host),
+                .sourceConfig = bindConfig(sourceConfig),
+                .parserConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
     {
-        statements.emplace_back(NES::CreateSinkStatement{
-            .name = bindIdentifierName(name),
-            .sinkType = bindIdentifierName(type),
-            .schema = bindSchema(schemaFields),
-            .host = NES::Host(host),
-            .sinkConfig = bindConfig(config),
-            .formatConfig = bindConfig(parserConfig)});
+        statements.emplace_back(
+            NES::CreateSinkStatement{
+                .name = bindIdentifierName(name),
+                .sinkType = bindIdentifierName(type),
+                .schema = bindSchema(schemaFields),
+                .host = NES::Host(host),
+                .sinkConfig = bindConfig(config),
+                .formatConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, path, input, output] : models)
     {
@@ -704,15 +735,38 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     auto queryOptimizationConfiguration = loadQueryOptimizerConfiguration(topologyConfig);
     NES::CLI::QueryStateBackend stateBackend;
 
-    const auto state = subcommand.get<std::vector<std::string>>("queryId")
-        | std::views::transform(
-                           [&stateBackend](const std::string& queryId) -> std::pair<NES::DistributedQueryId, NES::DistributedQuery>
-                           {
-                               auto persistedId = NES::CLI::PersistedQueryId::fromString(queryId);
-                               auto distributedQuery = stateBackend.load(persistedId);
-                               return {persistedId.queryId, distributedQuery};
-                           })
-        | std::ranges::to<std::unordered_map>();
+    std::unordered_map<NES::DistributedQueryId, NES::DistributedQuery> state;
+    if (subcommand.is_used("queryId"))
+    {
+        state = subcommand.get<std::vector<std::string>>("queryId")
+            | std::views::transform(
+                    [&stateBackend](const std::string& queryId) -> std::pair<NES::DistributedQueryId, NES::DistributedQuery>
+                    {
+                        auto persistedId = NES::CLI::PersistedQueryId::fromString(queryId);
+                        auto distributedQuery = stateBackend.load(persistedId);
+                        return {persistedId.queryId, distributedQuery};
+                    })
+            | std::ranges::to<std::unordered_map>();
+    }
+    else
+    {
+        state = topologyConfig.query | std::views::filter([](const auto& namedQuery) { return namedQuery.name.has_value(); })
+            | std::views::transform([](const auto& namedQuery) { return namedQuery.name.value(); })
+            | std::views::transform(
+                    [&stateBackend](const std::string& queryId) -> std::pair<NES::DistributedQueryId, NES::DistributedQuery>
+                    {
+                        auto persistedId = NES::CLI::PersistedQueryId::fromString(queryId);
+                        auto distributedQuery = stateBackend.load(persistedId);
+                        return {persistedId.queryId, distributedQuery};
+                    })
+            | std::ranges::to<std::unordered_map>();
+    }
+
+    if (state.empty())
+    {
+        throw NES::InvalidConfigParameter(
+            "QueryManagement subcommand requires at least one queryId passed as CLI argument or a named query in the topology file");
+    }
 
     const auto queries = state | std::views::keys | std::ranges::to<std::vector>();
 
@@ -775,9 +829,11 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     {
         NES::CLI::QueryStateBackend stateBackend;
         NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
-        for (const auto& query : queries)
+        for (const auto& [name, query] : queries)
         {
-            auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+            auto id = name.transform([](const auto& name) { return NES::DistributedQueryId(name); });
+            auto result = queryStatementHandler(NES::QueryStatement{.plan = plan, .id = id});
             if (result)
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
@@ -794,12 +850,16 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     else
     {
         NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
-        for (const auto& query : queries)
+        for (const auto& [name, query] : queries)
         {
             auto result
                 = queryStatementHandler(NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
             if (result)
             {
+                if (name.has_value())
+                {
+                    std::cout << name.value() << ": ";
+                }
                 std::cout << result->explainString << "\n";
             }
             else
@@ -827,7 +887,7 @@ int main(int argc, char** argv)
         startQuery.add_argument("queries").nargs(argparse::nargs_pattern::any);
 
         ArgumentParser stopQuery("stop");
-        stopQuery.add_argument("queryId").nargs(argparse::nargs_pattern::at_least_one);
+        stopQuery.add_argument("queryId").nargs(argparse::nargs_pattern::any);
 
         ArgumentParser statusQuery("status");
         statusQuery.add_argument("queryId").nargs(argparse::nargs_pattern::any);

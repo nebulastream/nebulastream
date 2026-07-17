@@ -600,10 +600,9 @@ mono8ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, c
     return jpgVarsizedBuffer;
 }
 
-nautilus::val<uint64>
-faceDetection(const VariableSizedData& input, const nautilus::val<uint64_t>& width, const nautilus::val<uint64_t>& height, ArenaRef&)
+VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_t>& width, const nautilus::val<uint64_t>& height, ArenaRef&)
 {
-    return nautilus::invoke(
+    auto result = nautilus::invoke(
         +[](uint8_t* data, USED_IN_DEBUG uint32_t size, uint64_t width, uint64_t height)
         {
             Rectangle r(0);
@@ -635,6 +634,13 @@ faceDetection(const VariableSizedData& input, const nautilus::val<uint64_t>& wid
         input.getSize(),
         width,
         height);
+
+    if (result == nautilus::val<uint64_t>(0))
+    {
+        return VarVal(nautilus::val<uint64_t>(0), true, nautilus::val<bool>(true));
+    }
+
+    return VarVal(result, true, nautilus::val<bool>(false));
 }
 
 thread_local std::vector<uint8_t> monoToBGR;
