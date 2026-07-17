@@ -813,7 +813,7 @@ std::string explainRegexSyntaxError(const size_t line, const std::string_view me
 }
 
 std::expected<ExplainRegexAssertion, std::string>
-parseInlineExplainRegex(const std::string_view line, const ExplainRegexTags tags, const size_t assertionLine)
+parseSingleLineExplainRegex(const std::string_view line, const ExplainRegexTags tags, const size_t assertionLine)
 {
     if (!line.ends_with(tags.closing))
     {
@@ -877,7 +877,7 @@ std::expected<std::vector<ExplainRegexAssertion>, std::string> parseExplainRegex
 
         std::expected<ExplainRegexAssertion, std::string> assertion = line == tags->opening
             ? parseMultilineExplainRegex(expected, expectedLineIndex, *tags)
-            : parseInlineExplainRegex(line, *tags, expectedLineIndex++);
+            : parseSingleLineExplainRegex(line, *tags, expectedLineIndex++);
         if (!assertion)
         {
             return std::unexpected(std::move(assertion).error());

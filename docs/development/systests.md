@@ -171,6 +171,46 @@ FROM input
 INTO output1; 
 ```
 
+#### EXPLAIN Result Matching
+
+An `EXPLAIN` test can compare the complete normalized plan verbatim:
+
+```sql
+EXPLAIN (LOGICAL) FORMAT TEXT
+SELECT id FROM input INTO File();
+----
+== Initial Logical Plan ==
+SINK(FILE)
+  PROJECTION(fields: [ID])
+    SOURCE(INPUT)
+==END==
+```
+
+Without regex tags, expected and actual output must have the same lines in the same order. Trailing whitespace and empty lines are ignored.
+
+Alternatively, the expected block can contain positive and negative regex assertions. Each assertion uses `std::regex_search` against the complete normalized EXPLAIN output:
+
+```sql
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id FROM input INTO File();
+----
+<REGEX>PROJECTION\(fields: \[ID\]\)</REGEX>
+<!REGEX>TIMESTAMP</!REGEX>
+```
+
+`<REGEX>...</REGEX>` requires a match, while `<!REGEX>...</!REGEX>` requires that no match exists. Multiple assertions are evaluated independently.
+
+Assertions can also span multiple lines. The opening and closing tags must then be on separate lines, and the complete body is interpreted as one newline-preserving regex:
+
+```text
+<REGEX>
+SINK\(FILE\)
+[\s\S]*SOURCE\(INPUT\)
+</REGEX>
+```
+
+Inline assertions must occupy one complete line. A single expected-result block must use either verbatim matching or tagged regex assertions; the two modes cannot be mixed. Empty, nested, mismatched, or unclosed regex tags are rejected.
+
 ## Run tests
 
 ### Via Plugin
