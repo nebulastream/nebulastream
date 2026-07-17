@@ -1,5 +1,8 @@
 EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream INTO sink;
 ----
-<REGEX>:SINK\(SINK[0-9]+\)
-<REGEX>:SOURCE\(stream_[0-9]+\)
-<!REGEX>:SELECTION
+<REGEX>== Optimized Plan ==</REGEX>
+<REGEX>
+SINK\(SINK[0-9]+\)
+  SOURCE\(stream_[0-9]+\)
+</REGEX>
+<!REGEX>SELECTION</!REGEX>
