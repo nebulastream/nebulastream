@@ -31,6 +31,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <LogicalFunctionUnreflectionRegistry.hpp>
+#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -66,6 +67,7 @@ struct ImageManipFunction
 const auto varSized = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
 const auto uint16 = DataTypeProvider::provideDataType(DataType::Type::UINT16);
 const auto uint64 = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+const auto nullableUint64 = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE);
 const auto float32 = DataTypeProvider::provideDataType(DataType::Type::FLOAT32);
 
 const std::unordered_map<std::string_view, ImageManipFunction> functions = {
@@ -76,7 +78,7 @@ const std::unordered_map<std::string_view, ImageManipFunction> functions = {
     {"IMAGE_MANIP_MONO16_TO_PNG16", {varSized, {varSized, uint64, uint64}}},
     {"IMAGE_MANIP_MONO16_TO_JPG", {varSized, {varSized, uint64, uint64}}},
     {"IMAGE_MANIP_YUYV_TO_JPG", {varSized, {varSized, uint64, uint64}}},
-    {"IMAGE_MANIP_FACE_DETECTION", {uint64, {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_FACE_DETECTION", {nullableUint64, {varSized, uint64, uint64}}},
     {"IMAGE_MANIP_MONO16_MIN", {uint16, {varSized}}},
     {"IMAGE_MANIP_MONO16_MAX", {uint16, {varSized}}},
     {"IMAGE_MANIP_MONO16_AVG", {uint16, {varSized}}},
