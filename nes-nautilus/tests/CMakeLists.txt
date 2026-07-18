@@ -14,7 +14,7 @@
 add_subdirectory(TestUtils)
 
 add_nes_unit_test(paged-vector-unit-tests "UnitTests/PagedVectorTest.cpp")
-target_link_libraries(paged-vector-unit-tests nes-nautilus-test-util)
+target_link_libraries(paged-vector-unit-tests nes-nautilus-test-util nes-runtime)
 
 add_nes_unit_test(nautilus-buffer-unit-tests "UnitTests/NautilusBufferTest.cpp")
 target_link_libraries(nautilus-buffer-unit-tests nes-nautilus-test-util)

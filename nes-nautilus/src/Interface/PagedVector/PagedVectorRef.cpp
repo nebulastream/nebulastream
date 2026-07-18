@@ -13,6 +13,7 @@
 */
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 
+#include <algorithm>
 #include <bit>
 #include <cstddef>
 #include <cstring>
@@ -37,6 +38,7 @@
 #include <Runtime/VariableSizedAccess.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
+#include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <static.hpp>
 #include <val_arith.hpp>
@@ -71,7 +73,7 @@ uint64_t loadPageForEntryProxy(const TupleBuffer* pagedVectorBuffer, const uint6
 }
 
 /// Factory method that returns the lambda function to read a record from a given page. The pageBuffer argument is the capture variable of the page to read from.
-/// When the labda is invoked, its argument should be the memory address pointing at the beginning of a record in that page.
+/// When the lambda is invoked, its argument should be the memory address pointing at the beginning of a record in that page.
 auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
 {
     /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,bugprone-exception-escape)
@@ -105,6 +107,17 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
     };
 }
 
+}
+
+Record PagedVectorRef::readRecord(
+    const PagedVectorTupleLayout& tupleLayout, const nautilus::val<TupleBuffer*>& pageBuffer, const nautilus::val<int8_t*>& tupleAddress)
+{
+    const NautilusBuffer page = BorrowedNautilusBuffer::from(pageBuffer);
+    return tupleLayout.readRecord(tupleAddress, makeVarSizedLoadFunction(page));
+}
+
+namespace
+{
 /// Factory method that returns the lambda function to write a record at a specific memory address in a paged vector page.
 /// The lastPageBuffer argument is the capture variable pointing to the last page of the paged vector.
 /// When the lambda is invoked, its arguments should be the memory pointing to the start where the record will be written to and the record's size.
@@ -352,6 +365,25 @@ PagedVectorRefIterSentinel PagedVectorRef::end() const
 {
     const auto numberOfTuplesInPagedVector = nautilus::invoke(getTotalNumberOfRecordsProxy, pagedVectorBuffer.asArg());
     return PagedVectorRefIterSentinel(numberOfTuplesInPagedVector);
+}
+
+void PagedVectorRef::sort(const std::shared_ptr<PagedVectorComparator>& comparator, const ArenaRef& arena)
+{
+    PRECONDITION(comparator != nullptr, "PagedVector comparator must not be null");
+    PRECONDITION(
+        std::ranges::none_of(
+            tupleLayout->getSchema(), [](const auto& field) { return field.getDataType().type == DataType::Type::VARSIZED; }),
+        "Sorting a PagedVector containing variable-sized fields is unsupported because tuple relocation would invalidate page-relative "
+        "data");
+    nautilus::invoke(sortProxy, pagedVectorBuffer.asArg(), nautilus::val<PagedVectorComparator*>{comparator.get()}, arena.getArena());
+}
+
+void PagedVectorRef::sortProxy(TupleBuffer* pagedVectorBuffer, PagedVectorComparator* comparator, Arena* arena)
+{
+    PRECONDITION(pagedVectorBuffer != nullptr, "PagedVector buffer must not be null");
+    PRECONDITION(comparator != nullptr, "PagedVector comparator must not be null");
+    PRECONDITION(arena != nullptr, "PagedVector sort arena must not be null");
+    PagedVector::load(*pagedVectorBuffer).stableSortRecords(*comparator, *arena);
 }
 
 PagedVectorRefIter::PagedVectorRefIter(
