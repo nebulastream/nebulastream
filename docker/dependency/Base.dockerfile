@@ -32,6 +32,7 @@ RUN apt update -y && apt install \
     automake \
     libtool \
     libglib2.0-dev-bin \
+    libasound2-dev \
     libudev-dev \
     pkg-config \
     -y
