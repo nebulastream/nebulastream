@@ -22,6 +22,7 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 
 namespace NES
 {
@@ -59,7 +60,7 @@ void validateSchema(const SourceDescriptor& sourceDescriptor)
         throw CannotOpenSource("Video source expects {} non-nullable fields, but got {}", videoFields.size(), schema->size());
     }
 
-    for (const auto [index, expected] : std::views::enumerate(videoFields))
+    for (const auto [index, expected] : videoFields | views::enumerate)
     {
         const auto actual = (*schema)[index];
         INVARIANT(actual.has_value(), "Video source schema field {} is missing", index);

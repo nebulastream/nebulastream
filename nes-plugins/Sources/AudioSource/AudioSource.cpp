@@ -22,6 +22,7 @@
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+#include <Util/Ranges.hpp>
 
 namespace NES
 {
@@ -58,7 +59,7 @@ void validateSchema(const SourceDescriptor& sourceDescriptor)
         throw CannotOpenSource("Audio source expects {} non-nullable fields, but got {}", audioFields.size(), schema->size());
     }
 
-    for (const auto [index, expected] : std::views::enumerate(audioFields))
+    for (const auto [index, expected] : audioFields | views::enumerate)
     {
         const auto actual = (*schema)[index];
         INVARIANT(actual.has_value(), "Audio source schema field {} is missing", index);
