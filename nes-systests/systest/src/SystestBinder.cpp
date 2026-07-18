@@ -116,7 +116,7 @@ public:
         const auto sink = sinkCatalog->addSinkDescriptor(sinkNameInFile, schema, sinkType, Host(host), std::move(config), formatConfig);
         if (not sink.has_value())
         {
-            throw sink.error();
+            throw Exception(sink.error());
         }
 
 
@@ -884,7 +884,7 @@ struct SystestBinder::Impl
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
         const SystestQueryId& currentQueryNumberInTest,
-        const std::string& assignedSinkNameSuffix = "") const
+        const std::string& assignedSinkNameSuffix) const
     {
         std::vector<LogicalOperator> newRoots;
         for (const auto& rootOperator : plan.getRootOperators())
@@ -950,7 +950,7 @@ struct SystestBinder::Impl
         try
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-            setSinks(plan, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            setSinks(plan, testFileName, sltSinkProvider, currentQueryNumberInTest, "");
             plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
             setAnonymousSources(plan);
             currentBuilder.setBoundPlan(std::move(plan));
@@ -1049,7 +1049,7 @@ struct SystestBinder::Impl
             auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(leftQuery);
             auto rightPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rightQuery);
 
-            setSinks(leftPlan, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            setSinks(leftPlan, testFileName, sltSinkProvider, currentQueryNumberInTest, "");
             /// The differential plan reuses the named sinks of the left plan, so its registrations need distinct names.
             setSinks(rightPlan, differentialTestResultFileName, sltSinkProvider, currentQueryNumberInTest, "differential");
 
