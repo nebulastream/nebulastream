@@ -30,7 +30,7 @@ namespace
 /// Registration happens lazily inside the tests (instead of at static initialization time) to satisfy cert-err58-cpp.
 void registerTestPluginProviders()
 {
-    [[maybe_unused]] static const bool registered = []
+    [[maybe_unused]] static const bool Registered = []
     {
         auto& pluginList = VersionPluginList::instance();
         pluginList.addProvider("TestSources", [] { return std::vector<std::string>{"TCP", "FILE"}; });
