@@ -16,6 +16,8 @@
 
 #include <cstddef>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
@@ -36,6 +38,7 @@ public:
         PhysicalFunction inputFunction,
         Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout);
+    void setup(CompilationContext& compilationContext) override;
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -52,6 +55,10 @@ public:
 
 private:
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
+    Record::RecordFieldIdentifier inputFieldIdentifier;
+    std::string comparatorIdentifier;
+    /// Every compiled pipeline embeds a non-owning comparator pointer, so all registered handles remain owned here.
+    std::vector<std::shared_ptr<PagedVectorComparator>> comparatorOwners;
 };
 
 }

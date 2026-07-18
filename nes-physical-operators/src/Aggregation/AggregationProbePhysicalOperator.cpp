@@ -40,6 +40,15 @@
 namespace NES
 {
 
+void AggregationProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    for (const auto& aggregationFunction : aggregationPhysicalFunctions)
+    {
+        aggregationFunction->setup(compilationContext);
+    }
+    WindowProbePhysicalOperator::setup(executionCtx, compilationContext);
+}
+
 HashMap* getHashMapPtrProxy(const EmittedAggregationWindow* emittedAggregationWindow, const uint64_t currentHashMapVal)
 {
     PRECONDITION(emittedAggregationWindow != nullptr, "EmittedAggregationWindow must not be nullptr");

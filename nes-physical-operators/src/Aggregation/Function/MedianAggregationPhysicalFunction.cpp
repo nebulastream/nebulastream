@@ -14,6 +14,7 @@
 
 #include <Aggregation/Function/MedianAggregationPhysicalFunction.hpp>
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -30,8 +31,10 @@
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <fmt/format.h>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>
@@ -41,6 +44,17 @@
 
 namespace NES
 {
+namespace
+{
+std::atomic_uint64_t nextMedianComparatorIdentifier{0};
+
+Record::RecordFieldIdentifier getMedianInputFieldIdentifier(const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout)
+{
+    INVARIANT(tupleLayout != nullptr, "Median PagedVector tuple layout must not be null");
+    INVARIANT(tupleLayout->getSchema().size() == 1, "Median PagedVector layout must contain exactly one input field");
+    return tupleLayout->getSchema()[0]->getFullyQualifiedName();
+}
+}
 
 MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
     DataType inputType,
@@ -50,7 +64,19 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , tupleLayout(std::move(tupleLayout))
+    , inputFieldIdentifier(getMedianInputFieldIdentifier(this->tupleLayout))
+    , comparatorIdentifier(fmt::format("median_{}", nextMedianComparatorIdentifier.fetch_add(1, std::memory_order_relaxed)))
 {
+}
+
+void MedianAggregationPhysicalFunction::setup(CompilationContext& compilationContext)
+{
+    comparatorOwners.emplace_back(PagedVectorRef::registerComparator(
+        compilationContext,
+        comparatorIdentifier,
+        tupleLayout,
+        [inputFieldIdentifier = inputFieldIdentifier](const Record& lhs, const Record& rhs) -> nautilus::val<bool>
+        { return (lhs.read(inputFieldIdentifier) < rhs.read(inputFieldIdentifier)).getRawValueAs<nautilus::val<bool>>(); }));
 }
 
 void MedianAggregationPhysicalFunction::lift(
@@ -73,7 +99,7 @@ void MedianAggregationPhysicalFunction::lift(
     }
     else
     {
-        /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
+        /// The median-specific tuple layout writes only the aggregation's input field.
         const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
         PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(memArea), tupleLayout);
         pagedVectorRef.pushBack(record, pipelineMemoryProvider.bufferProvider);
@@ -143,72 +169,22 @@ Record MedianAggregationPhysicalFunction::lower(
             },
             pagedVectorBufferPtr);
 
-        /// Iterating in two nested loops over all the records in the paged vector to get the median.
-        /// We pick a candidate and then count for each item, if the candidate is smaller and also if the candidate is less than the item.
-        const nautilus::val<int64_t> medianPos1 = (numberOfEntries - 1) / 2;
-        const nautilus::val<int64_t> medianPos2 = numberOfEntries / 2;
-        nautilus::val<uint64_t> medianItemPos1 = 0;
-        nautilus::val<uint64_t> medianItemPos2 = 0;
-        nautilus::val<bool> medianFound1(false);
-        nautilus::val<bool> medianFound2(false);
+        INVARIANT(not comparatorOwners.empty(), "Median comparator must be registered before lowering");
+        PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVectorBufferPtr), tupleLayout);
+        pagedVectorRef.sort(comparatorOwners.back(), pipelineMemoryProvider.arena);
 
+        const auto medianPos1 = (numberOfEntries - 1) / 2;
+        const auto medianPos2 = numberOfEntries / 2;
+        const auto medianRecord1 = pagedVectorRef.at(medianPos1);
+        const auto medianRecord2 = pagedVectorRef.at(medianPos2);
 
-        /// Picking a candidate and counting how many items are smaller or equal to the candidate.
-        /// Iterator-based scan: the page lookup is amortized per page-crossing instead of paid per access,
-        /// which matters here because the outer/inner pair is O(N^2) over the paged vector.
-        const PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVectorBufferPtr), tupleLayout);
-        const auto pagedVectorEnd = pagedVectorRef.end();
-        nautilus::val<uint64_t> candidatePos = 0;
-        for (auto candidateIt = pagedVectorRef.begin(); candidateIt != pagedVectorEnd; ++candidateIt)
-        {
-            nautilus::val<int64_t> countLessThan = 0;
-            nautilus::val<int64_t> countEqual = 0;
-            const auto candidateRecord = *candidateIt;
-            const auto candidateValue = inputFunction.execute(candidateRecord, pipelineMemoryProvider.arena);
-
-            /// Counting how many items are smaller or equal for the current candidate
-            for (const auto& itemRecord : pagedVectorRef)
-            {
-                const auto itemValue = inputFunction.execute(itemRecord, pipelineMemoryProvider.arena);
-                if (itemValue < candidateValue)
-                {
-                    countLessThan = countLessThan + 1;
-                }
-                if (itemValue == candidateValue)
-                {
-                    countEqual = countEqual + 1;
-                }
-            }
-
-            /// Checking if the current candidate is the median, and if so, storing the position of the median
-            /// The current candidate is the median if the number of items that are smaller or equal to the candidate is larger than the median position
-            if (not medianFound1 && countLessThan <= medianPos1 && medianPos1 < countLessThan + countEqual)
-            {
-                medianItemPos1 = candidatePos;
-                medianFound1 = true;
-            }
-            if (not medianFound2 && countLessThan <= medianPos2 && medianPos2 < countLessThan + countEqual)
-            {
-                medianItemPos2 = candidatePos;
-                medianFound2 = true;
-            }
-            candidatePos = candidatePos + 1;
-        }
-
-        if (medianFound1 and medianFound2)
-        {
-            /// Calculating the median value. Regardless if the number of entries is odd or even, we calculate the median as the average of the two middle values.
-            /// For even numbers of entries, this is its natural definition.
-            /// For odd numbers of entries, both positions are pointing to the same item and thus, we are calculating the average of the same item, which is the item itself.
-            const auto medianRecord1 = pagedVectorRef.at(medianItemPos1);
-            const auto medianRecord2 = pagedVectorRef.at(medianItemPos2);
-
-            const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
-            const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
-            const VarVal two = nautilus::val<uint64_t>(2);
-            medianValue
-                = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
-        }
+        /// Regardless of cardinality, median is the average of the two middle positions. For odd cardinalities,
+        /// both positions refer to the same record.
+        const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
+        const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
+        const VarVal two = nautilus::val<uint64_t>(2);
+        medianValue
+            = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
     }
 
 
