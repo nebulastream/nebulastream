@@ -324,14 +324,15 @@ void buildPipelineRecursively(
         return;
     }
 
-    /// Case 2: Custom Emit – if the operator is explicitly an emit,
-    /// it should close the pipeline without adding a default emit
+    /// Case 2: Custom Emit – the operator brings its own emit, so the pipeline it ends up in is closed
+    /// by it and no default emit is added
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
     {
         if (not prevOpWrapper || predecessorClosed)
         {
-            /// If the current operator is an emit operator and the prev operator was also an emit operator, we need to add a scan before the
-            /// current operator to create a new pipeline
+            /// The current pipeline is already closed (custom-emit predecessor or the default emit of a
+            /// fan-out point) or there is no predecessor to append to, so we need to add a scan before
+            /// the current operator to create a new pipeline
             auto newPipeline = createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
             if (opWrapper->getHandler().has_value())
             {
