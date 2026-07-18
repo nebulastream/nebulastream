@@ -78,6 +78,7 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     git clone https://github.com/microsoft/vcpkg.git vcpkg_repository; \
     ./vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics; \
     if ! ./vcpkg_repository/vcpkg install \
+        --keep-going \
         --overlay-triplets=custom-triplets \
         --overlay-ports=vcpkg-registry/ports \
         --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" \
