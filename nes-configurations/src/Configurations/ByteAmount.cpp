@@ -212,7 +212,7 @@ std::expected<uint64_t, Exception> parseByteAmount(const std::string_view amount
     }
 
     /// integerPart <= 2^64 - 1 and multiplier <= 2^60, so the sum stays well within 128 bits.
-    const UInt128 result = integerPart.value() * static_cast<UInt128>(multiplier.value()) + fractionBytes.value();
+    const UInt128 result = (integerPart.value() * static_cast<UInt128>(multiplier.value())) + fractionBytes.value();
     if (result > UINT64_MAX)
     {
         return invalid("value exceeds the maximum of 2^64 - 1 bytes");
