@@ -28,6 +28,8 @@ public:
     explicit FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
+    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldIdentifier() const { return field; }
+
 private:
     const Record::RecordFieldIdentifier field;
 };
