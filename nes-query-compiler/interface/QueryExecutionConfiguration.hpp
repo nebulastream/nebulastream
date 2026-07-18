@@ -56,7 +56,7 @@ public:
     ByteOption pageSize
         = {"page_size",
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
-           "Page size of any other paged data structure. Accepts human-readable byte amounts, e.g., \"4KiB\" or \"1Mi\"",
+           R"(Page size of any other paged data structure. Accepts human-readable byte amounts, e.g., "4KiB" or "1Mi")",
            {std::make_shared<ByteAmountValidation>()}};
     UIntOption numberOfRecordsPerKey
         = {"number_of_records_per_key",
@@ -71,7 +71,7 @@ public:
     ByteOption operatorBufferSize
         = {"operator_buffer_size",
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
-           "Buffer size of a operator e.g. during scan. Accepts human-readable byte amounts, e.g., \"4KiB\" or \"1Mi\"",
+           R"(Buffer size of a operator e.g. during scan. Accepts human-readable byte amounts, e.g., "4KiB" or "1Mi")",
            {std::make_shared<ByteAmountValidation>()}};
 
     SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};

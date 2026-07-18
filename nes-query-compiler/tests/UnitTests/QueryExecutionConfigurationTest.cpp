@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <gtest/gtest.h>
-#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/node/node.h>
 #include <QueryExecutionConfiguration.hpp>
 
 /// NOLINTBEGIN(readability-magic-numbers) -- configuration tests compare against literal byte counts throughout
@@ -37,7 +36,7 @@ TEST(QueryExecutionConfigurationTest, ByteSizesAcceptHumanReadableAmounts)
     node["operator_buffer_size"] = "1Mi";
     config.overwriteConfigWithYAMLNode(node);
     EXPECT_EQ(config.pageSize.getValue(), 4096);
-    EXPECT_EQ(config.operatorBufferSize.getValue(), 1ULL << 20);
+    EXPECT_EQ(config.operatorBufferSize.getValue(), 1ULL << 20U);
 }
 
 TEST(QueryExecutionConfigurationTest, ByteSizesAcceptPlainByteCounts)

@@ -17,8 +17,10 @@
 #include <expected>
 #include <ostream>
 #include <string_view>
+#include <fmt/base.h>
 #include <fmt/ostream.h>
-#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/node/convert.h>
+#include <yaml-cpp/node/node.h>
 #include <ErrorHandling.hpp>
 
 namespace NES

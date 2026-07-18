@@ -23,7 +23,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/ByteAmountValidation.hpp>
 #include <gtest/gtest.h>
-#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/node/node.h>
 #include <ErrorHandling.hpp>
 
 /// NOLINTBEGIN(readability-magic-numbers) -- byte-amount tests compare against literal byte counts throughout
@@ -59,12 +59,12 @@ TEST(ByteAmountTest, ParsesPlainByteCounts)
 TEST(ByteAmountTest, ParsesBinarySuffixes)
 {
     expectParses("4Ki", 4096);
-    expectParses("1Mi", 1ULL << 20);
-    expectParses("1Gi", 1ULL << 30);
-    expectParses("1Ti", 1ULL << 40);
-    expectParses("1Pi", 1ULL << 50);
-    expectParses("1Ei", 1ULL << 60);
-    expectParses("15Ei", 15ULL << 60);
+    expectParses("1Mi", 1ULL << 20U);
+    expectParses("1Gi", 1ULL << 30U);
+    expectParses("1Ti", 1ULL << 40U);
+    expectParses("1Pi", 1ULL << 50U);
+    expectParses("1Ei", 1ULL << 60U);
+    expectParses("15Ei", 15ULL << 60U);
 }
 
 TEST(ByteAmountTest, ParsesDecimalSuffixes)
@@ -88,7 +88,7 @@ TEST(ByteAmountTest, SuffixMatchingIsCaseInsensitiveWithOptionalTrailingB)
     expectParses("4kb", 4000);
     expectParses("4KB", 4000);
     expectParses("4GB", 4'000'000'000);
-    expectParses("4gib", 4ULL << 30);
+    expectParses("4gib", 4ULL << 30U);
 }
 
 TEST(ByteAmountTest, ParsesFractionalValues)
@@ -175,7 +175,7 @@ TEST(ByteOptionTest, DefaultValueSupportsHumanReadableAmounts)
 TEST(ByteOptionTest, ParsesHumanReadableAmountFromCommandLineInput)
 {
     ByteOptionTestConfig config;
-    std::unordered_map<std::string, std::string> inputParams{{"buffer_size", "8KiB"}};
+    const std::unordered_map<std::string, std::string> inputParams{{"buffer_size", "8KiB"}};
     config.overwriteConfigWithCommandLineInput(inputParams);
     EXPECT_EQ(config.bufferSize.getValue(), 8192);
 }
@@ -201,7 +201,7 @@ TEST(ByteOptionTest, PlainByteCountsKeepWorking)
 TEST(ByteOptionTest, RejectsInvalidAmount)
 {
     ByteOptionTestConfig config;
-    std::unordered_map<std::string, std::string> inputParams{{"buffer_size", "4Foo"}};
+    const std::unordered_map<std::string, std::string> inputParams{{"buffer_size", "4Foo"}};
     EXPECT_THROW(config.overwriteConfigWithCommandLineInput(inputParams), Exception);
 }
 

@@ -86,7 +86,7 @@ private:
             auto parsed = parseByteAmount(strValue);
             if (!parsed.has_value())
             {
-                throw parsed.error();
+                throw Exception(parsed.error());
             }
             return Byte(parsed.value());
         }
