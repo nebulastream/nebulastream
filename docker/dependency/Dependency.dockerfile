@@ -83,11 +83,14 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
         --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" \
         --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}" 2>&1 | tee /tmp/vcpkg-install.log; then \
         failed_port=$(sed -nE "s/.*error: building ([^:]+):.*/\\1/p" /tmp/vcpkg-install.log | tail -n 1); \
-        echo "vcpkg failed; printing logs for ${failed_port:-the failed port}:"; \
+        echo "vcpkg failed; printing build logs for ${failed_port:-the failed port}:"; \
         if [ -n "$failed_port" ]; then \
-            find "vcpkg_repository/buildtrees/$failed_port" -type f \
-                \( -name "*.log" -o -name "config.log" \) \
-                -print0 | xargs -0 -r cat || true; \
+            find "vcpkg_repository/buildtrees/$failed_port" -maxdepth 1 -type f \
+                \( -name "install-*-out.log" -o -name "install-*-err.log" \) \
+                -print0 | sort -z | while IFS= read -r -d "" log; do \
+                    echo "===== $log ====="; \
+                    cat "$log"; \
+                done || true; \
         fi; \
         exit 1; \
     fi'
