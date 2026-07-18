@@ -25,6 +25,6 @@ namespace NES
 class ByteAmountValidation : public ConfigurationValidation
 {
 public:
-    bool isValid(const std::string& byteAmount) const override;
+    [[nodiscard]] bool isValid(const std::string& byteAmount) const override;
 };
 }
