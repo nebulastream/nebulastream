@@ -189,7 +189,7 @@ TEST(ByteOptionTest, ParsesHumanReadableAmountFromYAML)
     EXPECT_EQ(config.bufferSize.getValue(), 1'610'612'736);
 }
 
-TEST(ByteOptionTest, PlainByteCountsKeepWorking)
+TEST(ByteOptionTest, ParsesPlainByteCountFromYAML)
 {
     ByteOptionTestConfig config;
     YAML::Node node;

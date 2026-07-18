@@ -26,27 +26,25 @@
 namespace NES
 {
 
-/// Parses a human-readable byte amount following the Kubernetes resource.Quantity suffix grammar
+/// Parses a byte amount following the Kubernetes resource.Quantity suffix grammar
 /// (https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/quantity/):
 /// - binary suffixes Ki, Mi, Gi, Ti, Pi, Ei scale by powers of 1024
 /// - decimal suffixes k, M, G, T, P, E scale by powers of 1000
-/// - no suffix means bytes, so plain numbers ("4096") keep working
-/// - suffix matching is case-insensitive and an optional trailing 'B' is ignored: "4KiB" == "4Ki" == "4kib", "4kb" == "4k"
-/// - fractional values are allowed ("1.5Gi" == 1610612736 bytes) but must scale to a whole number of bytes ("1.5" alone is rejected)
-/// Rejects signed values, results that are not a whole number of bytes, results exceeding UINT64_MAX, and anything else
-/// not matching the grammar (empty input, bare suffixes, unknown suffixes, more than 20 significant fractional digits).
+/// - no suffix means bytes
+/// - suffix matching is case-insensitive, an optional trailing 'B' is ignored: "4KiB" == "4Ki" == "4kib", "4kb" == "4k"
+/// - fractional values must scale to a whole number of bytes: "1.5Gi" == 1610612736, "1.5" is rejected
+/// Rejects signed values, non-integral results, results exceeding UINT64_MAX, empty input, bare or unknown suffixes,
+/// and more than 20 significant fractional digits.
 std::expected<uint64_t, Exception> parseByteAmount(std::string_view amount);
 
-/// Strong typedef around uint64_t that marks a configuration value as a byte quantity, so that ScalarOption<Byte>
-/// accepts human-readable size strings ("4KiB", "1.5Gi") in addition to plain byte counts (see parseByteAmount).
+/// A number of bytes. As the value type of ScalarOption<Byte>, it is parsed with parseByteAmount.
 struct Byte
 {
     constexpr Byte() = default;
 
     constexpr explicit Byte(const uint64_t bytes) : bytes(bytes) { }
 
-    /// Implicit on purpose: options migrated from UIntOption to ByteOption keep treating the value as a plain number of bytes,
-    /// so existing call sites (`uint64_t size = option.getValue();`, arithmetic, function arguments) stay unchanged.
+    /// Intentionally implicit: a Byte is used like a plain uint64_t byte count.
     constexpr operator uint64_t() const { return bytes; } /// NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
 
     friend std::ostream& operator<<(std::ostream& os, const Byte& byte) { return os << byte.bytes; }
@@ -66,7 +64,7 @@ struct formatter<NES::Byte> : ostream_formatter
 
 namespace YAML
 {
-/// Allows YAML-based option parsing (`node.as<NES::Byte>()`) to accept human-readable byte amounts.
+/// Parses YAML scalars (`node.as<NES::Byte>()`) with parseByteAmount.
 template <>
 struct convert<NES::Byte>
 {

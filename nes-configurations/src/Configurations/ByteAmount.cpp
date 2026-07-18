@@ -28,7 +28,7 @@ namespace NES
 {
 namespace
 {
-/// 128-bit intermediates make the overflow checks trivial: no legal input can overflow them (see the comments below).
+/// Intermediates use 128 bits so overflow checks reduce to comparisons (see the bounds in the comments below).
 using UInt128 = unsigned __int128;
 
 constexpr uint64_t DECIMAL_RADIX = 10;
@@ -37,8 +37,7 @@ constexpr uint64_t BINARY_BASE = 1024;
 /// The largest suffixes are E (1000^6) and Ei (1024^6 == 2^60).
 constexpr uint64_t LARGEST_SUFFIX_EXPONENT = 6;
 constexpr uint64_t LARGEST_MULTIPLIER_LOG2 = 60;
-/// Bounding the fraction keeps `fractionDigits * multiplier` within 128 bits (10^20 * 2^60 < 2^127) and loses nothing in practice:
-/// with the largest multiplier below 10^19, more than 20 significant fractional digits (almost) never scale to whole bytes.
+/// Bounding the fraction keeps `fraction * multiplier` within 128 bits (10^20 * 2^60 < 2^127).
 constexpr size_t MAX_FRACTIONAL_DIGITS = 20;
 
 constexpr uint64_t pow(const uint64_t base, const uint64_t exponent)
@@ -134,7 +133,7 @@ std::optional<UInt128> parseIntegerDigits(const std::string_view integerDigits)
 /// Scales the fractional digits by the multiplier; fails (with a reason) when the fraction does not resolve to whole bytes.
 std::expected<UInt128, std::string_view> scaledFractionBytes(std::string_view fractionalDigits, const uint64_t multiplier)
 {
-    /// Trailing zeros carry no value, dropping them widens the accepted range of (pointless but valid) high-precision fractions.
+    /// Trailing zeros do not change the value and would otherwise count against MAX_FRACTIONAL_DIGITS.
     while (!fractionalDigits.empty() && fractionalDigits.back() == '0')
     {
         fractionalDigits.remove_suffix(1);

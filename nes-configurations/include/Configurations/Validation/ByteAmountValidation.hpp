@@ -20,7 +20,7 @@
 namespace NES
 {
 
-/// Validates that a parameter is a byte amount, either a plain byte count ("4096") or human-readable ("4KiB", "1.5Gi").
+/// Validates that a parameter is a byte amount ("4096", "4KiB", "1.5Gi", ...).
 /// See parseByteAmount in <Configurations/ByteAmount.hpp> for the accepted grammar.
 class ByteAmountValidation : public ConfigurationValidation
 {

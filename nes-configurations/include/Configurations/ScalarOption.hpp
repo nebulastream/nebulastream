@@ -82,7 +82,6 @@ private:
         }
         else if constexpr (std::is_same_v<Type, Byte>)
         {
-            /// Accepts human-readable byte amounts like "4KiB" or "1.5Gi" in addition to plain byte counts.
             auto parsed = parseByteAmount(strValue);
             if (!parsed.has_value())
             {
@@ -195,7 +194,7 @@ using StringOption = ScalarOption<std::string>;
 using FloatOption = ScalarOption<float>;
 using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
-/// Byte-quantity option that accepts human-readable size strings, e.g. "4096", "4KiB", or "1.5Gi" (see ByteAmount.hpp).
+/// Option holding a number of bytes, parsed with parseByteAmount ("4096", "4KiB", "1.5Gi", ...).
 using ByteOption = ScalarOption<Byte>;
 
 }
