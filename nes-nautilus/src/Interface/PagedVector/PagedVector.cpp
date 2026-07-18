@@ -12,24 +12,27 @@
     limitations under the License.
 */
 #include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/PagedVector/PagedVectorComparator.hpp>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
+#include <cstring>
 #include <iterator>
+#include <limits>
 #include <memory>
-#include <optional>
+#include <numeric>
 #include <ranges>
+#include <span>
 #include <tuple>
 #include <utility>
-#include <vector>
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Arena.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -145,6 +148,175 @@ void PagedVector::movePagesFrom(PagedVector& other)
     }
     updateCumulativeSumAllPages();
     other.header().status = INVALID_PV;
+}
+
+void PagedVector::stableSortRecords(const PagedVectorComparator& comparator, Arena& arena)
+{
+    PRECONDITION(getStatus() == VALID_PV, "Paged Vector must be valid for sorting.");
+
+    const auto numberOfRecords = getTotalNumberOfRecords();
+    if (numberOfRecords < 2)
+    {
+        return;
+    }
+
+    const auto tupleSize = getTupleSize();
+    const auto numberOfPages = getNumberOfPages();
+    PRECONDITION(tupleSize <= std::numeric_limits<size_t>::max() / numberOfRecords, "PagedVector sort allocation size overflow");
+
+    const auto allocateAligned = [&arena](const size_t size, const size_t alignment) -> std::byte*
+    {
+        PRECONDITION(alignment > 0, "PagedVector sort allocation alignment must be positive");
+        PRECONDITION(size <= std::numeric_limits<size_t>::max() - (alignment - 1), "PagedVector sort allocation size overflow");
+        auto allocation = arena.allocateMemory(size + alignment - 1);
+        void* allocationPointer = allocation.data();
+        auto availableSize = allocation.size();
+        auto* alignedPointer = std::align(alignment, size, allocationPointer, availableSize);
+        INVARIANT(alignedPointer != nullptr, "Could not align PagedVector sort allocation");
+        return static_cast<std::byte*>(alignedPointer);
+    };
+
+    /// Keep the page handles alive while sorting and merging. The handle array itself is arena-backed.
+    auto* pages = reinterpret_cast<TupleBuffer*>( /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        allocateAligned(sizeof(TupleBuffer) * numberOfPages, alignof(TupleBuffer)));
+    for (size_t pageIndex = 0; pageIndex < numberOfPages; ++pageIndex)
+    {
+        std::construct_at(pages + pageIndex, buffer.loadChildBuffer(VariableSizedAccess::Index{pageIndex}));
+    }
+    const auto pageDeleter = [numberOfPages](TupleBuffer* pageArray) { std::destroy_n(pageArray, numberOfPages); };
+    const auto destroyPages = std::unique_ptr<TupleBuffer, decltype(pageDeleter)>{pages, pageDeleter};
+
+    const auto recordAddress = [tupleSize](TupleBuffer& page, const uint64_t tupleIndex) -> int8_t*
+    {
+        auto* tuple = page.getAvailableMemoryArea<>().data() + Page::getHeaderSize() + (tupleIndex * tupleSize);
+        return reinterpret_cast<int8_t*>(tuple); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    };
+    const auto recordLess
+        = [&comparator, &recordAddress](TupleBuffer& lhsPage, const uint64_t lhsIndex, TupleBuffer& rhsPage, const uint64_t rhsIndex)
+    { return comparator.compare(&lhsPage, recordAddress(lhsPage, lhsIndex), &rhsPage, recordAddress(rhsPage, rhsIndex)); };
+
+    /// Stable-sort every page independently. Bottom-up merge sort needs two index arrays and one reusable page-sized tuple scratch area.
+    const auto pageCapacity = getPageCapacity();
+    PRECONDITION(pageCapacity <= std::numeric_limits<size_t>::max() / sizeof(uint64_t), "PagedVector page sort allocation size overflow");
+    auto* firstIndexes = reinterpret_cast<uint64_t*>( /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        allocateAligned(sizeof(uint64_t) * pageCapacity, alignof(uint64_t)));
+    auto* secondIndexes = reinterpret_cast<uint64_t*>( /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        allocateAligned(sizeof(uint64_t) * pageCapacity, alignof(uint64_t)));
+    auto* pageScratch = allocateAligned(tupleSize * pageCapacity, alignof(std::max_align_t));
+
+    for (uint64_t pageIndex = 0; pageIndex < numberOfPages; ++pageIndex)
+    {
+        auto& page = pages[pageIndex];
+        const auto numberOfPageRecords = page.getNumberOfTuples();
+        if (numberOfPageRecords < 2)
+        {
+            continue;
+        }
+        std::iota(firstIndexes, firstIndexes + numberOfPageRecords, uint64_t{0});
+        auto* sourceIndexes = firstIndexes;
+        auto* destinationIndexes = secondIndexes;
+        for (uint64_t runSize = 1; runSize < numberOfPageRecords; runSize *= 2)
+        {
+            for (uint64_t runBegin = 0; runBegin < numberOfPageRecords; runBegin += 2 * runSize)
+            {
+                auto left = runBegin;
+                const auto leftEnd = std::min(runBegin + runSize, numberOfPageRecords);
+                auto right = leftEnd;
+                const auto rightEnd = std::min(runBegin + (2 * runSize), numberOfPageRecords);
+                auto output = runBegin;
+                while (left < leftEnd or right < rightEnd)
+                {
+                    if (left == leftEnd)
+                    {
+                        destinationIndexes[output++] = sourceIndexes[right++];
+                    }
+                    else if (right == rightEnd or not recordLess(page, sourceIndexes[right], page, sourceIndexes[left]))
+                    {
+                        /// Choosing the left run for equivalent records makes the page sort stable.
+                        destinationIndexes[output++] = sourceIndexes[left++];
+                    }
+                    else
+                    {
+                        destinationIndexes[output++] = sourceIndexes[right++];
+                    }
+                }
+            }
+            std::swap(sourceIndexes, destinationIndexes);
+        }
+
+        for (uint64_t tupleIndex = 0; tupleIndex < numberOfPageRecords; ++tupleIndex)
+        {
+            std::memcpy(pageScratch + (tupleIndex * tupleSize), recordAddress(page, sourceIndexes[tupleIndex]), tupleSize);
+        }
+        std::memcpy(recordAddress(page, 0), pageScratch, numberOfPageRecords * tupleSize);
+    }
+
+    if (numberOfPages == 1)
+    {
+        return;
+    }
+
+    struct RunCursor
+    {
+        uint64_t pageIndex;
+        uint64_t tupleIndex;
+    };
+
+    auto* heap = reinterpret_cast<RunCursor*>( /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        allocateAligned(sizeof(RunCursor) * numberOfPages, alignof(RunCursor)));
+    size_t heapSize = 0;
+    for (uint64_t pageIndex = 0; pageIndex < numberOfPages; ++pageIndex)
+    {
+        if (pages[pageIndex].getNumberOfTuples() > 0)
+        {
+            heap[heapSize++] = RunCursor{pageIndex, 0};
+        }
+    }
+
+    /// std heap algorithms place the element for which this predicate is false against all others at the front. Returning true when lhs
+    /// belongs after rhs therefore creates a min-heap. Page order breaks ties and preserves the PagedVector's original stable order.
+    const auto belongsAfter = [&pages, &recordLess](const RunCursor& lhs, const RunCursor& rhs)
+    {
+        auto& lhsPage = pages[lhs.pageIndex];
+        auto& rhsPage = pages[rhs.pageIndex];
+        if (recordLess(rhsPage, rhs.tupleIndex, lhsPage, lhs.tupleIndex))
+        {
+            return true;
+        }
+        if (recordLess(lhsPage, lhs.tupleIndex, rhsPage, rhs.tupleIndex))
+        {
+            return false;
+        }
+        return lhs.pageIndex > rhs.pageIndex;
+    };
+    std::make_heap(heap, heap + heapSize, belongsAfter);
+
+    auto* mergedRecords = allocateAligned(numberOfRecords * tupleSize, alignof(std::max_align_t));
+    uint64_t outputIndex = 0;
+    while (heapSize > 0)
+    {
+        std::pop_heap(heap, heap + heapSize, belongsAfter);
+        auto cursor = heap[--heapSize];
+        auto& sourcePage = pages[cursor.pageIndex];
+        std::memcpy(mergedRecords + (outputIndex++ * tupleSize), recordAddress(sourcePage, cursor.tupleIndex), tupleSize);
+
+        ++cursor.tupleIndex;
+        if (cursor.tupleIndex < sourcePage.getNumberOfTuples())
+        {
+            heap[heapSize++] = cursor;
+            std::push_heap(heap, heap + heapSize, belongsAfter);
+        }
+    }
+    INVARIANT(outputIndex == numberOfRecords, "PagedVector merge produced {} records instead of {}", outputIndex, numberOfRecords);
+
+    uint64_t mergedOffset = 0;
+    for (uint64_t pageIndex = 0; pageIndex < numberOfPages; ++pageIndex)
+    {
+        auto& page = pages[pageIndex];
+        const auto pageRecordsSize = page.getNumberOfTuples() * tupleSize;
+        std::memcpy(recordAddress(page, 0), mergedRecords + mergedOffset, pageRecordsSize);
+        mergedOffset += pageRecordsSize;
+    }
 }
 
 uint64_t PagedVector::getMainBufferSize()
