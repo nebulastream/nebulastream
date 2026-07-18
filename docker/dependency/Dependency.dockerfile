@@ -83,15 +83,20 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
         --overlay-ports=vcpkg-registry/ports \
         --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" \
         --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}" 2>&1 | tee /tmp/vcpkg-install.log; then \
-        failed_port=$(sed -nE "s/.*error: building ([^:]+):.*/\\1/p" /tmp/vcpkg-install.log | tail -n 1); \
-        echo "vcpkg failed; printing build logs for ${failed_port:-the failed port}:"; \
-        if [ -n "$failed_port" ]; then \
-            find "vcpkg_repository/buildtrees/$failed_port" -maxdepth 1 -type f \
-                \( -name "install-*-out.log" -o -name "install-*-err.log" \) \
-                -print0 | sort -z | while IFS= read -r -d "" log; do \
-                    echo "===== $log ====="; \
-                    cat "$log"; \
-                done || true; \
+        failed_ports=$(sed -nE "s/^[[:space:]]*([[:alnum:]_.+-]+):[^:]*: BUILD_FAILED:.*/\\1/p" /tmp/vcpkg-install.log); \
+        if [ -n "$failed_ports" ]; then \
+            printf "%s\\n" "$failed_ports" | while IFS= read -r failed_port; do \
+                echo "vcpkg failed; printing build logs for $failed_port:"; \
+                find "vcpkg_repository/buildtrees/$failed_port" -maxdepth 1 -type f \
+                    \( -name "install-*-out.log" -o -name "install-*-err.log" -o \
+                       -name "package-*-out.log" -o -name "package-*-err.log" \) \
+                    -print0 | sort -z | while IFS= read -r -d "" log; do \
+                        echo "===== $log ====="; \
+                        cat "$log"; \
+                    done || true; \
+            done; \
+        else \
+            echo "vcpkg failed, but no BUILD_FAILED ports were found in its results."; \
         fi; \
         exit 1; \
     fi'
