@@ -858,9 +858,11 @@ struct SystestBinder::Impl
     {
         const auto sinkNameInFile = sinkOperator->getSinkName();
 
-        /// Replacing the sinkName with the created unique sink name
+        /// Replacing the sinkName with the created unique sink name. The '#' separator cannot appear in an unquoted
+        /// SQL identifier, so the assigned name cannot collide with a sink declared in the test file (e.g. a query
+        /// writing INTO sink with query number 4 must not clash with a user-declared sink4).
         const auto sinkForQuery = Identifier::parse(toUpperCase(
-            sinkNameInFile.asCanonicalString() + std::to_string(currentQueryNumberInTest.getRawValue()) + assignedSinkNameSuffix));
+            fmt::format("{}#{}{}", sinkNameInFile.asCanonicalString(), currentQueryNumberInTest.getRawValue(), assignedSinkNameSuffix)));
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
