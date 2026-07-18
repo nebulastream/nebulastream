@@ -17,6 +17,7 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <LoweringRules/AbstractLoweringRule.hpp>
@@ -72,11 +73,19 @@ resolveLoweringRule(const LogicalOperator& logicalOperator, const LoweringRuleRe
     }
     throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
 }
-}
 
-LoweringRuleResultSubgraph::SubGraphRoot
-lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringRuleRegistryArguments& registryArgument)
+/// Maps an already-lowered operator to its wrapper so an operator shared by multiple parents (fan-out to
+/// multiple sinks) lowers to one wrapper, keeping the DAG instead of duplicating the shared subplan per root.
+using LoweredOperatorMemo = std::unordered_map<LogicalOperator, LoweringRuleResultSubgraph::SubGraphRoot>;
+
+LoweringRuleResultSubgraph::SubGraphRoot lowerOperatorRecursively(
+    const LogicalOperator& logicalOperator, const LoweringRuleRegistryArguments& registryArgument, LoweredOperatorMemo& memo)
 {
+    if (const auto memoized = memo.find(logicalOperator); memoized != memo.end())
+    {
+        return memoized->second;
+    }
+
     /// Try to resolve lowering rule for the current logical operator
     const auto rule = resolveLoweringRule(logicalOperator, registryArgument);
 
@@ -95,12 +104,15 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
         {
             INVARIANT(
                 logicalOperator.getChildren().size() == 1,
-                "Empty lowering results of operators with multiple keys are not supported for {}",
+                "Empty lowering result of operators with multiple children are not supported {}",
                 logicalOperator);
-            return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument);
+            auto loweredChild = lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument, memo);
+            memo.emplace(logicalOperator, loweredChild);
+            return loweredChild;
         }
         return {};
     }
+    memo.emplace(logicalOperator, root);
     /// We embed the subgraph into the resulting plan of physical operator wrappers
     auto children = logicalOperator.getChildren();
     INVARIANT(
@@ -112,28 +124,33 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
 
     std::ranges::for_each(
         std::views::zip(children, leaves),
-        [&registryArgument](const auto& zippedPair)
+        [&registryArgument, &memo](const auto& zippedPair)
         {
             const auto& [child, leaf] = zippedPair;
-            auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument);
+            auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument, memo);
             leaf->addChild(rootNodeOfLoweredChild);
         });
     return root;
+}
 }
 
 PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
 {
     const auto registryArgument = LoweringRuleRegistryArguments{conf};
+    LoweredOperatorMemo memo;
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     newRootOperators.reserve(queryPlan.getRootOperators().size());
     for (const auto& logicalRoot : queryPlan.getRootOperators())
     {
-        newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
+        newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument, memo));
     }
 
     INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");
     auto physicalPlanBuilder = PhysicalPlanBuilder(queryPlan.getQueryId());
-    physicalPlanBuilder.addSinkRoot(newRootOperators[0]);
+    for (const auto& root : newRootOperators)
+    {
+        physicalPlanBuilder.addSinkRoot(root);
+    }
     physicalPlanBuilder.setExecutionMode(conf.executionMode.getValue());
     physicalPlanBuilder.setOperatorBufferSize(conf.operatorBufferSize.getValue());
     return std::move(physicalPlanBuilder).finalize();
