@@ -121,15 +121,15 @@ public:
         const Identifier sourceType = bindIdentifier(physicalSourceDefAST->type);
         const auto validatedConfig = [&]()
         {
-            if (physicalSourceDefAST->optionsClause() != nullptr)
+            const auto configAST = [&]
             {
-                return bindSourceConfig(
-                    sourceType,
-                    physicalSourceDefAST->optionsClause()->options->namedConfigExpression(),
-                    defaultConfigValues,
-                    configTransformations);
-            }
-            throw InvalidStatement("Physical source creation must set options");
+                if (physicalSourceDefAST->optionsClause() != nullptr)
+                {
+                    return physicalSourceDefAST->optionsClause()->options->namedConfigExpression();
+                }
+                return std::vector<AntlrSQLParser::NamedConfigExpressionContext*>{};
+            }();
+            return bindSourceConfig(sourceType, configAST, defaultConfigValues, configTransformations);
         }();
 
         auto& [generalConfig, pluginConfig, inputFormatter, schemaOpt] = validatedConfig;

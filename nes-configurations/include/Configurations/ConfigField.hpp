@@ -30,12 +30,37 @@
 #include <Util/Any.hpp>
 
 #include "ConfigField.hpp"
+#include "ConfigResolution.hpp"
 
 namespace NES
 {
 /// Integer literals are always signed: frontends never produce an unsigned literal, and a field
 /// that needs an unsigned type lowers the int64_t with a range check (see downcastConfigValue).
 using ConfigLiteral = std::variant<std::string, int64_t, double, bool, std::monostate, Schema<UnqualifiedUnboundField, Ordered>>;
+
+/// A single (possibly qualified) config assignment as a frontend produced it, e.g.
+/// `'ALL' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES`. The literal is typed by the
+/// frontend (integers are always signed, see ConfigLiteral).
+class LiteralConfigValue
+{
+    QualifiedIdentifier name;
+    ConfigLiteral value;
+
+public:
+    LiteralConfigValue(QualifiedIdentifier name, ConfigLiteral value) : name(std::move(name)), value(std::move(value)) { }
+
+    LiteralConfigValue(std::string name, ConfigLiteral value)
+        : name(QualifiedIdentifier::create(Identifier::parse(std::move(name)))), value(std::move(value))
+    {
+    }
+
+    [[nodiscard]] QualifiedIdentifier getFullyQualifiedName() const { return name; }
+    [[nodiscard]] ConfigLiteral getValue() const { return value; }
+
+    friend bool operator==(const LiteralConfigValue& lhs, const LiteralConfigValue& rhs) = default;
+
+    friend std::ostream& operator<<(std::ostream& os, const LiteralConfigValue& value) { return os << value.name; }
+};
 
 /// Declares a single typed config parameter: its name, how to instantiate it from a literal the
 /// frontend passed, and (optionally) its default. The field type T is arbitrary — it does not
@@ -206,6 +231,8 @@ public:
 
     ConfigLiteral get() const { return supplier(); }
     const QualifiedIdentifier& getFullyQualifiedName() const { return name; }
+
+    LiteralConfigValue toLiteralConfigValue() const { return LiteralConfigValue{name, get()}; }
 
 private:
     QualifiedIdentifier name;

@@ -93,7 +93,14 @@ std::
     {
         auto expected
             = optionalToExpected<LiteralConfigValue, Exception>(
-                  configOptions.getFieldByName(QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE")),
+                  configOptions.getFieldByName(QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE"))
+                      .or_else(
+                          [&]
+                          {
+                              return configDefaults.getFieldByName(QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE"))
+                                  .transform([](const ConfigFieldDefault& defaultInputFormatter)
+                                             { return defaultInputFormatter.toLiteralConfigValue(); });
+                          }),
                   [] { return InvalidQuerySyntax("INPUT_FORMATTER.TYPE must be specified"); })
                   .and_then(
                       [](const LiteralConfigValue& value)
