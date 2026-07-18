@@ -89,7 +89,8 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
                 echo "vcpkg failed; printing build logs for $failed_port:"; \
                 find "vcpkg_repository/buildtrees/$failed_port" -maxdepth 1 -type f \
                     \( -name "install-*-out.log" -o -name "install-*-err.log" -o \
-                       -name "package-*-out.log" -o -name "package-*-err.log" \) \
+                       -name "package-*-out.log" -o -name "package-*-err.log" -o \
+                       -name "config-*.log" \) \
                     -print0 | sort -z | while IFS= read -r -d "" log; do \
                         echo "===== $log ====="; \
                         cat "$log"; \
