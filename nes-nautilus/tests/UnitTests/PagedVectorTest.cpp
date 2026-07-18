@@ -16,6 +16,7 @@
 #include <any>
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -42,6 +43,10 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h> /// NOLINT(misc-include-cleaner): consumed via macros expanded from rapidcheck/gtest.h
 #include <nautilus/Engine.hpp>
+#include <nautilus/function.hpp>
+#include <nautilus/select.hpp>
+#include <Arena.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <options.hpp>
@@ -216,6 +221,22 @@ constexpr std::array ALL_VALUE_TYPES = {
     DataType::Type::VARSIZED,
 };
 
+/// Types that are safe to move between PagedVector pages as self-contained tuple bytes.
+constexpr std::array FIXED_WIDTH_VALUE_TYPES = {
+    DataType::Type::UINT8,
+    DataType::Type::UINT16,
+    DataType::Type::UINT32,
+    DataType::Type::UINT64,
+    DataType::Type::INT8,
+    DataType::Type::INT16,
+    DataType::Type::INT32,
+    DataType::Type::INT64,
+    DataType::Type::FLOAT32,
+    DataType::Type::FLOAT64,
+    DataType::Type::BOOLEAN,
+    DataType::Type::CHAR,
+};
+
 /// Builds a Schema with sequentially named fields ("field0", "field1", ...) from the given DataType vector.
 Schema<QualifiedUnboundField, Ordered> createSchemaFromDataTypes(const std::vector<DataType>& dataTypes)
 {
@@ -307,6 +328,12 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
                     case DataType::Type::FLOAT64:
                         result.push_back(genScalarAny<double>(dataType.nullable));
                         break;
+                    case DataType::Type::BOOLEAN:
+                        result.push_back(genScalarAny<bool>(dataType.nullable));
+                        break;
+                    case DataType::Type::CHAR:
+                        result.push_back(genScalarAny<char>(dataType.nullable));
+                        break;
                     case DataType::Type::VARSIZED: {
                         if (dataType.nullable)
                         {
@@ -332,8 +359,6 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
                         result.emplace_back(std::move(str));
                         break;
                     }
-                    case DataType::Type::BOOLEAN:
-                    case DataType::Type::CHAR:
                     case DataType::Type::UNDEFINED:
                         throw TestException("Unsupported type for genAnyVec");
                 }
@@ -348,35 +373,50 @@ uint64_t estimateSchemaSize(const std::vector<DataType>& types)
 }
 
 template <typename T>
+int compareScalar(const T lhs, const T rhs)
+{
+    if constexpr (std::is_floating_point_v<T>)
+    {
+        const bool lhsIsNan = std::isnan(lhs);
+        const bool rhsIsNan = std::isnan(rhs);
+        if (lhsIsNan or rhsIsNan)
+        {
+            if (lhsIsNan == rhsIsNan)
+            {
+                return 0;
+            }
+            return lhsIsNan ? 1 : -1;
+        }
+    }
+    if (lhs < rhs)
+    {
+        return -1;
+    }
+    if (lhs > rhs)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+template <typename T>
 int compareTyped(const std::any& lhs, const std::any& rhs, const bool nullable)
 {
     if (nullable)
     {
-        const auto left = std::any_cast<std::optional<T>>(lhs);
-        const auto right = std::any_cast<std::optional<T>>(rhs);
-        if (left < right)
+        const auto& left = std::any_cast<const std::optional<T>&>(lhs);
+        const auto& right = std::any_cast<const std::optional<T>&>(rhs);
+        if (not left.has_value() or not right.has_value())
         {
-            return -1;
+            if (left.has_value() == right.has_value())
+            {
+                return 0;
+            }
+            return left.has_value() ? 1 : -1;
         }
-        if (left > right)
-        {
-            return 1;
-        }
+        return compareScalar(*left, *right);
     }
-    else
-    {
-        const auto left = std::any_cast<T>(lhs);
-        const auto right = std::any_cast<T>(rhs);
-        if (left < right)
-        {
-            return -1;
-        }
-        if (left > right)
-        {
-            return 1;
-        }
-    }
-    return 0;
+    return compareScalar(std::any_cast<T>(lhs), std::any_cast<T>(rhs));
 }
 
 int compareAnyField(const std::any& lhs, const std::any& rhs, DataType type)
@@ -403,6 +443,10 @@ int compareAnyField(const std::any& lhs, const std::any& rhs, DataType type)
             return compareTyped<float>(lhs, rhs, type.nullable);
         case DataType::Type::FLOAT64:
             return compareTyped<double>(lhs, rhs, type.nullable);
+        case DataType::Type::BOOLEAN:
+            return compareTyped<bool>(lhs, rhs, type.nullable);
+        case DataType::Type::CHAR:
+            return compareTyped<char>(lhs, rhs, type.nullable);
         case DataType::Type::VARSIZED:
             if (type.nullable)
             {
@@ -419,8 +463,6 @@ int compareAnyField(const std::any& lhs, const std::any& rhs, DataType type)
                 return 0;
             }
             return std::any_cast<const std::string&>(lhs).compare(std::any_cast<const std::string&>(rhs));
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             throw TestException("Unsupported type for compareAnyField");
     }
@@ -436,6 +478,28 @@ bool anyVecsEqual(const AnyVec& lhs, const AnyVec& rhs, const std::vector<DataTy
             const auto& [left, right, dataType] = entry;
             return compareAnyField(left, right, dataType) == 0;
         });
+}
+
+struct SortKey
+{
+    size_t fieldIndex;
+    bool ascending;
+};
+
+std::function<bool(const AnyVec&, const AnyVec&)> makeAnyVecComparator(std::vector<DataType> fieldTypes, std::vector<SortKey> sortKeys)
+{
+    return [fieldTypes = std::move(fieldTypes), sortKeys = std::move(sortKeys)](const AnyVec& lhs, const AnyVec& rhs)
+    {
+        for (const auto& [fieldIndex, ascending] : sortKeys)
+        {
+            const auto comparison = compareAnyField(lhs[fieldIndex], rhs[fieldIndex], fieldTypes[fieldIndex]);
+            if (comparison != 0)
+            {
+                return ascending ? comparison < 0 : comparison > 0;
+            }
+        }
+        return false;
+    };
 }
 
 /// Trace-time helpers: each template instantiation produces a distinct function pointer,
@@ -511,6 +575,12 @@ void storeVarValToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t pos, const 
         case DataType::Type::FLOAT64:
             storeScalarToAnyVec<double>(out, pos, value.getRawValueAs<nautilus::val<double>>(), dataType.nullable, value.isNull());
             break;
+        case DataType::Type::BOOLEAN:
+            storeScalarToAnyVec<bool>(out, pos, value.getRawValueAs<nautilus::val<bool>>(), dataType.nullable, value.isNull());
+            break;
+        case DataType::Type::CHAR:
+            storeScalarToAnyVec<char>(out, pos, value.getRawValueAs<nautilus::val<char>>(), dataType.nullable, value.isNull());
+            break;
         case DataType::Type::VARSIZED: {
             const auto vsd = value.getRawValueAs<VariableSizedData>();
             if (dataType.nullable)
@@ -549,8 +619,6 @@ void storeVarValToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t pos, const 
                 vsd.getSize());
             break;
         }
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             throw TestException("Unsupported type for TestablePagedVector");
     }
@@ -584,6 +652,10 @@ nautilus::val<bool> checkIfNullInAnyVec(const nautilus::val<AnyVec*>& rec, uint6
                     return !std::any_cast<std::optional<float>>(entry).has_value();
                 case DataType::Type::FLOAT64:
                     return !std::any_cast<std::optional<double>>(entry).has_value();
+                case DataType::Type::BOOLEAN:
+                    return !std::any_cast<std::optional<bool>>(entry).has_value();
+                case DataType::Type::CHAR:
+                    return !std::any_cast<std::optional<char>>(entry).has_value();
                 case DataType::Type::VARSIZED:
                     return !std::any_cast<std::optional<std::string>>(entry).has_value();
                 default:
@@ -632,6 +704,10 @@ VarVal buildVarVal(const nautilus::val<AnyVec*>& rec, uint64_t fieldIdx, DataTyp
             return {fetchScalarFromAnyVec<float>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::FLOAT64:
             return {fetchScalarFromAnyVec<double>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
+        case DataType::Type::BOOLEAN:
+            return {fetchScalarFromAnyVec<bool>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
+        case DataType::Type::CHAR:
+            return {fetchScalarFromAnyVec<char>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::VARSIZED: {
             auto ptr = nautilus::invoke(
                 +[](AnyVec* anyVec, uint64_t pos, bool nullable) -> int8_t*
@@ -671,8 +747,6 @@ VarVal buildVarVal(const nautilus::val<AnyVec*>& rec, uint64_t fieldIdx, DataTyp
                 nautilus::val<bool>{dataType.nullable});
             return {VariableSizedData(ptr, len), dataType.nullable, isNull};
         }
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             break;
     }
@@ -786,6 +860,8 @@ public:
 
     PagedVector raw() { return PagedVector::load(pagedVector); }
 
+    TupleBuffer* rawBuffer() { return &pagedVector; }
+
 private:
     std::vector<DataType> dataTypes;
     TupleBuffer pagedVector;
@@ -797,6 +873,104 @@ private:
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, uint64_t, AnyVec*)>> readAtFn;
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, std::vector<AnyVec>*)>> readAll;
 };
+
+std::pair<nautilus::val<bool>, nautilus::val<bool>>
+compareNonNullRecordValues(const VarVal& lhs, const VarVal& rhs, const DataType::Type type)
+{
+    auto less = (lhs < rhs).getRawValueAs<nautilus::val<bool>>();
+    auto equal = (lhs == rhs).getRawValueAs<nautilus::val<bool>>();
+    if (type == DataType::Type::BOOLEAN)
+    {
+        const auto lhsValue = lhs.getRawValueAs<nautilus::val<bool>>();
+        const auto rhsValue = rhs.getRawValueAs<nautilus::val<bool>>();
+        less = not lhsValue and rhsValue;
+        equal = lhsValue == rhsValue;
+    }
+    else if (type == DataType::Type::FLOAT32)
+    {
+        const auto lhsIsNan = nautilus::invoke(+[](float value) { return std::isnan(value); }, lhs.getRawValueAs<nautilus::val<float>>());
+        const auto rhsIsNan = nautilus::invoke(+[](float value) { return std::isnan(value); }, rhs.getRawValueAs<nautilus::val<float>>());
+        less = nautilus::select(lhsIsNan, nautilus::val<bool>{false}, nautilus::select(rhsIsNan, nautilus::val<bool>{true}, less));
+        equal = (lhsIsNan and rhsIsNan) or (not lhsIsNan and not rhsIsNan and equal);
+    }
+    else if (type == DataType::Type::FLOAT64)
+    {
+        const auto lhsIsNan = nautilus::invoke(+[](double value) { return std::isnan(value); }, lhs.getRawValueAs<nautilus::val<double>>());
+        const auto rhsIsNan = nautilus::invoke(+[](double value) { return std::isnan(value); }, rhs.getRawValueAs<nautilus::val<double>>());
+        less = nautilus::select(lhsIsNan, nautilus::val<bool>{false}, nautilus::select(rhsIsNan, nautilus::val<bool>{true}, less));
+        equal = (lhsIsNan and rhsIsNan) or (not lhsIsNan and not rhsIsNan and equal);
+    }
+    return {less, equal};
+}
+
+std::pair<nautilus::val<bool>, nautilus::val<bool>> compareRecordValues(const VarVal& lhs, const VarVal& rhs, const DataType::Type type)
+{
+    const auto lhsIsNull = lhs.isNull();
+    const auto rhsIsNull = rhs.isNull();
+    const auto bothNonNull = not lhsIsNull and not rhsIsNull;
+    const auto [valueLess, valueEqual] = compareNonNullRecordValues(lhs, rhs, type);
+    return {
+        nautilus::select(bothNonNull, valueLess, lhsIsNull and not rhsIsNull), (lhsIsNull and rhsIsNull) or (bothNonNull and valueEqual)};
+}
+
+void sortWithRecordComparator(
+    TestablePagedVector& pagedVector,
+    const std::vector<DataType>& fieldTypes,
+    const std::vector<SortKey>& sortKeys,
+    const EngineMode mode,
+    Arena& arena)
+{
+    const auto schema = createSchemaFromDataTypes(fieldTypes);
+    auto layout = std::make_shared<DefaultPagedVectorTupleLayout>(schema);
+    std::vector<std::tuple<Record::RecordFieldIdentifier, DataType, bool>> recordSortKeys;
+    recordSortKeys.reserve(sortKeys.size());
+    for (const auto& [fieldIndex, ascending] : sortKeys)
+    {
+        recordSortKeys.emplace_back(schema[fieldIndex]->getFullyQualifiedName(), fieldTypes[fieldIndex], ascending);
+    }
+
+    auto engine = makeEngine(mode);
+    auto module = engine.createModule();
+    CompilationContext compilationContext{module};
+    auto comparator = PagedVectorRef::registerComparator(
+        compilationContext,
+        "record-aware-test-comparator",
+        layout,
+        [recordSortKeys](const Record& lhs, const Record& rhs) -> nautilus::val<bool>
+        {
+            nautilus::val<bool> result = false;
+            nautilus::val<bool> equalSoFar = true;
+            for (const auto& [field, type, ascending] : nautilus::static_iterable(recordSortKeys))
+            {
+                const auto& lhsValue = lhs.read(field);
+                const auto& rhsValue = rhs.read(field);
+                const auto [fieldLess, fieldEqual]
+                    = ascending ? compareRecordValues(lhsValue, rhsValue, type.type) : compareRecordValues(rhsValue, lhsValue, type.type);
+                result = nautilus::select(equalSoFar, fieldLess, result);
+                equalSoFar = equalSoFar and fieldEqual;
+            }
+            return result;
+        });
+    /// Registering the same identifier must return the first comparator. Using this handle for the sort makes every property case cover
+    /// comparator caching as well as sorting; the replacement comparator would violate strict weak ordering if it were used.
+    auto cachedComparator = PagedVectorRef::registerComparator(
+        compilationContext,
+        "record-aware-test-comparator",
+        layout,
+        [](const Record&, const Record&) -> nautilus::val<bool> { return true; });
+
+    module.registerFunction(
+        "sortPagedVectorRecords",
+        std::function(
+            [layout, cachedComparator](nautilus::val<TupleBuffer*> pagedVectorBuffer, nautilus::val<Arena*> arena)
+            {
+                PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVectorBuffer), layout);
+                pagedVectorRef.sort(cachedComparator, ArenaRef{arena});
+            }));
+    auto compiledModule = module.compile();
+    compilationContext.resolveAfterCompilation(compiledModule);
+    compiledModule.getFunction<void(TupleBuffer*, Arena*)>("sortPagedVectorRecords")(pagedVector.rawBuffer(), &arena);
+}
 
 /// Reads pagedVector.at(idx) for a rapidcheck-drawn set of indices and asserts each record equals the reference.
 void verifyRandomAccess(TestablePagedVector& pagedVector, const std::vector<AnyVec>& reference, const std::vector<DataType>& fieldTypes)
@@ -1004,8 +1178,65 @@ void concatCopyProperty(EngineMode mode)
     }
 }
 
+void sortByRandomKeysProperty(EngineMode mode)
+{
+    const auto fieldTypes = *genDataTypeSchema(FIXED_WIDTH_VALUE_TYPES, 1, MAX_SCHEMA_FIELDS);
+    const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
+    RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
+
+    const auto numberOfRandomKeys = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
+    std::vector<SortKey> sortKeys;
+    sortKeys.reserve(numberOfRandomKeys);
+    while (sortKeys.size() < numberOfRandomKeys)
+    {
+        const auto fieldIndex = *rc::gen::inRange<size_t>(0, fieldTypes.size());
+        if (std::ranges::none_of(sortKeys, [fieldIndex](const auto& key) { return key.fieldIndex == fieldIndex; }))
+        {
+            sortKeys.emplace_back(fieldIndex, *rc::gen::arbitrary<bool>());
+        }
+    }
+
+    auto expected = *rc::gen::container<std::vector<AnyVec>>(genAnyVec(fieldTypes));
+
+    NES_INFO(
+        "Property sortByRandomKeys: fields={}, keys={}, N={}, bufferSize={}",
+        fieldTypes.size(),
+        sortKeys.size(),
+        expected.size(),
+        bufferSize);
+
+    auto bufferManager = DirtyBufferProvider::create(bufferSize, pooledBufferCountFor(bufferSize));
+    TestablePagedVector pagedVector(fieldTypes, *bufferManager, mode);
+    for (const auto& record : expected)
+    {
+        pagedVector.pushBack(record);
+    }
+
+    std::stable_sort(expected.begin(), expected.end(), makeAnyVecComparator(fieldTypes, sortKeys));
+    Arena arena{bufferManager};
+    sortWithRecordComparator(pagedVector, fieldTypes, sortKeys, mode, arena);
+
+    const auto actual = pagedVector.toVector();
+    RC_ASSERT(actual.size() == expected.size());
+    for (size_t index = 0; index < actual.size(); ++index)
+    {
+        RC_ASSERT(anyVecsEqual(actual[index], expected[index], fieldTypes));
+    }
+}
 
 } /// anonymous namespace
+
+RC_GTEST_PROP(PagedVectorPropertyTest, sortByRandomKeysCompiler, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    sortByRandomKeysProperty(EngineMode::Compiler);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, sortByRandomKeysInterpreter, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    sortByRandomKeysProperty(EngineMode::Interpreter);
+}
 
 /// One RC_GTEST_PROP per (property, backend) combination so that a failure on one backend doesn't mask the other and
 /// rapidcheck's shrinking chases each backend's failing input independently.
