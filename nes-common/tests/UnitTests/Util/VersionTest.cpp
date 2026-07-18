@@ -25,12 +25,21 @@ namespace NES
 
 namespace
 {
-/// Registered at static initialization time, mirroring how the registry headers announce their plugins.
+/// Registers fake providers once, mirroring how the generated registrar translation units announce their plugins.
 /// The two "TestSources" providers overlap to cover merging and deduplication across registries of the same kind.
-const VersionPluginListEntry testSourcesPlugins{"TestSources", [] { return std::vector<std::string>{"TCP", "FILE"}; }};
-const VersionPluginListEntry testSourceValidationPlugins{"TestSources", [] { return std::vector<std::string>{"FILE", "GENERATOR"}; }};
-const VersionPluginListEntry testFunctionsPlugins{"TestFunctions", [] { return std::vector<std::string>{"ADD"}; }};
-const VersionPluginListEntry testEmptyKindPlugins{"TestEmptyKind", [] { return std::vector<std::string>{}; }};
+/// Registration happens lazily inside the tests (instead of at static initialization time) to satisfy cert-err58-cpp.
+void registerTestPluginProviders()
+{
+    [[maybe_unused]] static const bool registered = []
+    {
+        auto& pluginList = VersionPluginList::instance();
+        pluginList.addProvider("TestSources", [] { return std::vector<std::string>{"TCP", "FILE"}; });
+        pluginList.addProvider("TestSources", [] { return std::vector<std::string>{"FILE", "GENERATOR"}; });
+        pluginList.addProvider("TestFunctions", [] { return std::vector<std::string>{"ADD"}; });
+        pluginList.addProvider("TestEmptyKind", [] { return std::vector<std::string>{}; });
+        return true;
+    }();
+}
 }
 
 TEST(VersionTest, formatVersionContainsBinaryName)
@@ -41,6 +50,7 @@ TEST(VersionTest, formatVersionContainsBinaryName)
 
 TEST(VersionTest, formatVersionContainsAllFields)
 {
+    registerTestPluginProviders();
     const auto output = formatVersion("nes-single-node-worker");
     /// The labels for every embedded build-info field must be present.
     EXPECT_THAT(output, testing::HasSubstr("commit:"));
@@ -57,6 +67,7 @@ TEST(VersionTest, formatVersionContainsAllFields)
 
 TEST(VersionTest, formatVersionListsPluginsGroupedByKind)
 {
+    registerTestPluginProviders();
     const auto output = formatVersion("nes-single-node-worker");
     /// Names of the same kind are merged across providers, deduplicated, and sorted.
     /// The kind labels are padded to the longest kind, hence no fixed spacing between label and names.
