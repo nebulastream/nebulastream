@@ -19,3 +19,6 @@ endfunction()
 
 add_nes_compiler_test(PhysicalPlanBuilderFlipTest UnitTests/PhysicalPlanBuilderFlipTest.cpp)
 add_nes_compiler_test(PipeliningPhaseFanOutTest UnitTests/PipeliningPhaseFanOutTest.cpp)
+
+add_nes_compiler_test(MultiRootLoweringTest UnitTests/MultiRootLoweringTest.cpp)
+target_link_libraries(MultiRootLoweringTest nes-query-optimizer)
