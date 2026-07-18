@@ -149,6 +149,22 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
     return newPipeline;
 }
 
+/// True iff the pipeline's operator chain already ends in an EmitPhysicalOperator.
+/// Only used to cross-check traversal decisions against the actually built pipeline state: the policy
+/// (resp. the emit-adding sites) carry the INTENT that a pipeline is (not yet) closed; this helper lets
+/// invariants verify that intent against reality, so that a divergence fails loudly at the guilty site
+/// instead of producing a silently wrong plan. Note that a pipeline closed by a CUSTOM emit operator does
+/// not end in an EmitPhysicalOperator; that case is covered by the prevOpWrapper location checks.
+[[maybe_unused]] bool endsInEmit(const Pipeline& pipeline)
+{
+    std::optional<PhysicalOperator> current = pipeline.getRootOperator();
+    while (current->getChild().has_value())
+    {
+        current = current->getChild();
+    }
+    return current->tryGet<EmitPhysicalOperator>().has_value();
+}
+
 /// Helper function to add a default emit operator
 /// This is used only when the wrapped operator does not already provide an emit
 /// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
@@ -157,6 +173,7 @@ void addDefaultEmit(
     const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, const uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
+    INVARIANT(!endsInEmit(*pipeline), "Pipeline is already closed with an emit; adding a second one would duplicate its output");
     const auto& schema = wrappedOp.getOutputSchema();
     const auto memoryLayoutType = wrappedOp.getOutputMemoryLayoutType();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
@@ -179,6 +196,7 @@ void addOutputFormattingEmit(
     const std::unordered_map<Identifier, std::string>& config)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
+    INVARIANT(!endsInEmit(*pipeline), "Pipeline is already closed with an emit; adding a second one would duplicate its output");
     const auto& schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
@@ -247,6 +265,14 @@ void buildPipelineRecursively(
     uint64_t configuredBufferSize,
     const MergePointSet& mergePoints)
 {
+    /// Cross-check carried intent against built state: ForceNewClosed promises that the predecessor
+    /// pipeline is already closed — either by the default emit added at a fan-out point, or by the fan-out
+    /// operator itself being a custom emit (which closes its pipeline by its own nature).
+    INVARIANT(
+        policy != PipelinePolicy::ForceNewClosed || endsInEmit(*currentPipeline)
+            || (prevOpWrapper && prevOpWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT),
+        "ForceNewClosed policy, but the predecessor pipeline does not end in an emit");
+
     /// Check if we've already seen this operator
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
     if (const auto it = pipelineMap.find(opId); it != pipelineMap.end())
