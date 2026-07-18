@@ -27,6 +27,10 @@
 namespace NES
 {
 
+struct Arena;
+class PagedVectorComparator;
+class PagedVectorRef;
+
 /// This class provides a dynamically growing stack/list data structure of entries. All data is stored in a list of pages.
 /// Entries consume a fixed size, which has to be smaller than the page size. Each page can contain page_size/entry_size entries.
 /// Additionally to the fixed data types, this PagedVector also supports variable sized data by attaching child buffers to the pages.
@@ -99,6 +103,8 @@ public:
     [[nodiscard]] size_t getPageIndex(uint64_t recordIndex) const;
 
 private:
+    friend class PagedVectorRef;
+
     struct Header
     {
         uint64_t status;
@@ -127,6 +133,7 @@ private:
     void updateCumulativeSumLastItem() const;
     void updateCumulativeSumAllPages() const;
     void addNewPage(AbstractBufferProvider* bufferProvider, uint64_t bufferSize);
+    void stableSortRecords(const PagedVectorComparator& comparator, Arena& arena);
 
     TupleBuffer buffer;
 };

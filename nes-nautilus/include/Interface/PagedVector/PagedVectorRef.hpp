@@ -17,6 +17,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include <functional>
@@ -26,8 +28,10 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/PagedVector/PagedVectorComparator.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <ErrorHandling.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -36,6 +40,8 @@
 
 namespace NES
 {
+struct Arena;
+struct ArenaRef;
 /// @brief Forward declaration of PagedVectorRefIter so that we can use it in PagedVectorRef
 class PagedVectorRefIter;
 class PagedVectorRefIterSentinel;
@@ -100,7 +106,56 @@ public:
     /// @brief Returns the total number of records in the Paged Vector
     [[nodiscard]] nautilus::val<uint64_t> getNumberOfRecords() const;
 
+    /// @brief Stably sorts the PagedVector using a runtime comparator registered during pipeline setup.
+    /// The shared comparator handle must be retained by the operator or an operator handler for every runtime invocation
+    /// of the compiled pipeline; generated code embeds a non-owning pointer to it. Temporary page-sort and merge storage
+    /// is allocated from the pipeline invocation's arena.
+    /// @precondition The tuple layout must not contain variable-sized fields because their accesses are relative to the owning page.
+    void sort(const std::shared_ptr<PagedVectorComparator>& comparator, const ArenaRef& arena);
+
+    /// Registers a Record comparator as a Nautilus function. Reusing an identifier in the same
+    /// registration context returns a handle to the first registered function. The caller must retain the
+    /// returned comparator for every runtime invocation of the compiled pipeline.
+    template <typename RegistrationContext, typename Comparator>
+    static std::shared_ptr<PagedVectorComparator> registerComparator(
+        RegistrationContext& context,
+        const std::string_view identifier,
+        std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
+        Comparator comparator)
+    {
+        PRECONDITION(tupleLayout != nullptr, "PagedVector comparator tuple layout must not be null");
+
+        using RecordComparator = std::function<nautilus::val<bool>(const Record&, const Record&)>;
+        RecordComparator recordComparator{std::move(comparator)};
+        auto compiledComparator = context.registerFunctionOnce(
+            std::function(
+                [tupleLayout = std::move(tupleLayout), recordComparator = std::move(recordComparator)](
+                    nautilus::val<TupleBuffer*> lhsPage,
+                    nautilus::val<int8_t*> lhsTuple,
+                    nautilus::val<TupleBuffer*> rhsPage,
+                    nautilus::val<int8_t*> rhsTuple) -> nautilus::val<bool>
+                {
+                    const auto lhsRecord = readRecord(*tupleLayout, lhsPage, lhsTuple);
+                    const auto rhsRecord = readRecord(*tupleLayout, rhsPage, rhsTuple);
+                    return recordComparator(lhsRecord, rhsRecord);
+                }),
+            std::string{"pagedVectorComparator_"}.append(identifier));
+
+        auto compiledComparatorOwner = std::make_shared<decltype(compiledComparator)>(std::move(compiledComparator));
+        return PagedVectorComparator::create(
+            [compiledComparatorOwner](TupleBuffer* lhsPage, int8_t* lhsTuple, TupleBuffer* rhsPage, int8_t* rhsTuple)
+            { return (*compiledComparatorOwner)(lhsPage, lhsTuple, rhsPage, rhsTuple); });
+    }
+
 private:
+    static void sortProxy(TupleBuffer* pagedVectorBuffer, PagedVectorComparator* comparator, Arena* arena);
+
+    /// Converts a raw tuple address and its owning PagedVector page into a Record during Nautilus tracing.
+    static Record readRecord(
+        const PagedVectorTupleLayout& tupleLayout,
+        const nautilus::val<TupleBuffer*>& pageBuffer,
+        const nautilus::val<int8_t*>& tupleAddress);
+
     /// @brief Holds a reference to the main paged vector buffer
     NautilusBuffer pagedVectorBuffer;
     /// @brief specifies how tuples are stored in the paged vector's pages

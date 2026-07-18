@@ -135,4 +135,9 @@ PagedVector TestablePagedVector::raw()
     return PagedVector::load(pagedVector);
 }
 
+TupleBuffer* TestablePagedVector::rawBuffer()
+{
+    return &pagedVector;
+}
+
 }

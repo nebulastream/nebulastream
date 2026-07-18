@@ -13,12 +13,14 @@
 */
 #pragma once
 
+#include <any>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <fmt/format.h>
@@ -74,6 +76,7 @@ class CompilationContext
     /// We assume that a compilation context never outlives the module; both live in CompiledExecutablePipelineStage::start()
     nautilus::engine::NautilusModule& module; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     std::vector<std::function<void(nautilus::engine::CompiledModule&)>> pendingResolvers;
+    std::unordered_map<std::string, std::any> registeredFunctions;
     uint64_t functionNameCounter = 0;
     /// Set once resolveAfterCompilation() has run; registering further functions afterwards would append a resolver
     /// that never runs, leaving its handle permanently unresolved, so it is a precondition violation.
@@ -115,6 +118,30 @@ public:
     auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...))
     {
         return registerFunction(std::function<R(nautilus::val<FunctionArguments>...)>(fnptr), "operatorFunction");
+    }
+
+    /// Registers a function once per identifier in this pipeline module. Reusing an identifier returns the
+    /// first handle, so an identifier must always denote the same function signature and semantics.
+    template <typename R, typename... FunctionArguments>
+    auto registerFunctionOnce(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view identifier)
+    {
+        PRECONDITION(!compiled, "registerFunctionOnce() must not be called after the module has been compiled");
+        PRECONDITION(!identifier.empty(), "Registered function identifier must not be empty");
+
+        using RawR = nautilus::engine::details::raw_return_type_t<R>;
+        using Handle = PipelineFunction<RawR(FunctionArguments...)>;
+
+        const auto identifierString = std::string{identifier};
+        if (const auto existing = registeredFunctions.find(identifierString); existing != registeredFunctions.end())
+        {
+            const auto handle = std::any_cast<Handle>(&existing->second);
+            PRECONDITION(handle != nullptr, "Registered function identifier '{}' was reused with a different signature", identifier);
+            return *handle;
+        }
+
+        auto handle = registerFunction(std::move(func), identifier);
+        registeredFunctions.emplace(identifierString, handle);
+        return handle;
     }
 
     /// Called by CompiledExecutablePipelineStage once, directly after compiling the pipeline's module.

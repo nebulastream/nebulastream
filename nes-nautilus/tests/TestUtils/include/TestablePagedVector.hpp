@@ -56,6 +56,8 @@ public:
 
     PagedVector raw();
 
+    TupleBuffer* rawBuffer();
+
 private:
     std::vector<DataType> dataTypes;
     TupleBuffer pagedVector;
