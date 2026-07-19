@@ -1,0 +1,101 @@
+# name: operator/aggregation/ArrayAgg.test
+# description: ARRAY_AGG materializes fixed-size values as timestamp-ordered raw bytes
+# groups: [Aggregation, WindowOperators]
+
+CREATE LOGICAL SOURCE readings(value FLOAT32, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR readings TYPE File;
+ATTACH INLINE
+3.25,300
+1.5,100
+,150
+-2.0,200
+,250
+
+CREATE SINK tensorSink(tensor VARSIZED NOT NULL) TYPE File;
+CREATE SINK sizeSink(bytes UINT64 NOT NULL) TYPE File;
+
+CREATE LOGICAL SOURCE generatedReadings(
+    u64 UINT64 NOT NULL,
+    u32 UINT32 NOT NULL,
+    u16 UINT16 NOT NULL,
+    u8 UINT8 NOT NULL,
+    i64 INT64 NOT NULL,
+    i32 INT32 NOT NULL,
+    i16 INT16 NOT NULL,
+    i8 INT8 NOT NULL,
+    f64 FLOAT64 NOT NULL,
+    f32 FLOAT32 NOT NULL,
+    ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR generatedReadings TYPE Generator SET(
+       'ALL' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'FIXED' AS "SOURCE".GENERATOR_RATE_TYPE,
+       'emit_rate 100000000' AS "SOURCE".GENERATOR_RATE_CONFIG,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT32 0 10000 1, SEQUENCE UINT16 0 10000 1, SEQUENCE UINT8 0 255 1,
+        SEQUENCE INT64 0 10000 1, SEQUENCE INT32 0 10000 1, SEQUENCE INT16 0 10000 1, SEQUENCE INT8 0 127 1,
+        SEQUENCE FLOAT64 0 10000 1, SEQUENCE FLOAT32 0 10000 1, SEQUENCE UINT64 0 10000 1' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE SINK multiTypeSizeSink(
+    u64Bytes UINT64 NOT NULL,
+    u32Bytes UINT64 NOT NULL,
+    u16Bytes UINT64 NOT NULL,
+    u8Bytes UINT64 NOT NULL,
+    i64Bytes UINT64 NOT NULL,
+    i32Bytes UINT64 NOT NULL,
+    i16Bytes UINT64 NOT NULL,
+    i8Bytes UINT64 NOT NULL,
+    f64Bytes UINT64 NOT NULL,
+    f32Bytes UINT64 NOT NULL
+) TYPE File;
+
+CREATE LOGICAL SOURCE allNullReadings(value FLOAT32, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR allNullReadings TYPE File;
+ATTACH INLINE
+,100
+,200
+
+CREATE SINK emptySizeSink(bytes UINT64 NOT NULL) TYPE File;
+
+# FLOAT32 values ordered by ts are [1.5, -2.0, 3.25]. ARRAY_AGG exposes their three native little-endian values as 12 raw bytes.
+SELECT TO_BASE64(ARRAY_AGG(value)) AS tensor
+FROM readings
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO tensorSink;
+----
+AADAPwAAAMAAAFBA
+
+# The raw payload contains no array header or element metadata.
+SELECT OCTET_LENGTH(ARRAY_AGG(value)) AS bytes
+FROM readings
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO sizeSink;
+----
+12
+
+# Ten simultaneous aggregations over 10,000 tuples span many PagedVector pages and preserve each input type's element width.
+SELECT
+    OCTET_LENGTH(ARRAY_AGG(u64)) AS u64Bytes,
+    OCTET_LENGTH(ARRAY_AGG(u32)) AS u32Bytes,
+    OCTET_LENGTH(ARRAY_AGG(u16)) AS u16Bytes,
+    OCTET_LENGTH(ARRAY_AGG(u8)) AS u8Bytes,
+    OCTET_LENGTH(ARRAY_AGG(i64)) AS i64Bytes,
+    OCTET_LENGTH(ARRAY_AGG(i32)) AS i32Bytes,
+    OCTET_LENGTH(ARRAY_AGG(i16)) AS i16Bytes,
+    OCTET_LENGTH(ARRAY_AGG(i8)) AS i8Bytes,
+    OCTET_LENGTH(ARRAY_AGG(f64)) AS f64Bytes,
+    OCTET_LENGTH(ARRAY_AGG(f32)) AS f32Bytes
+FROM generatedReadings
+WINDOW TUMBLING(ts, SIZE 10000 MS)
+INTO multiTypeSizeSink;
+----
+80000 40000 20000 10000 80000 40000 20000 10000 80000 40000
+
+# An all-NULL window becomes an empty, non-null byte payload.
+SELECT OCTET_LENGTH(ARRAY_AGG(value)) AS bytes
+FROM allNullReadings
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO emptySizeSink;
+----
+0
