@@ -30,6 +30,7 @@ add_source_files(nes-physical-operators
 add_subdirectory(Aggregation)
 add_subdirectory(Watermark)
 add_subdirectory(Join)
+add_subdirectory(StreamTableJoin)
 add_subdirectory(SliceStore)
 add_subdirectory(Functions)
 add_subdirectory(Inference)

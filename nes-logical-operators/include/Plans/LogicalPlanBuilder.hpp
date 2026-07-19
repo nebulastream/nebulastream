@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <array>
 #include <memory>
 #include <optional>
 #include <string>
@@ -29,6 +30,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
@@ -94,6 +96,15 @@ public:
         JoinLogicalOperator::JoinType joinType,
         Windowing::TimeCharacteristic leftCharacteristic,
         Windowing::TimeCharacteristic rightCharacteristic);
+
+    /// Adds an asymmetric growing-table inner join. The left input is the
+    /// stream and the right input is the table. Without time characteristics,
+    /// stream tuples are held until the table reaches EOS.
+    static LogicalPlan addStreamTableJoin(
+        LogicalPlan streamPlan,
+        LogicalPlan tablePlan,
+        const LogicalFunction& joinFunction,
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt);
 
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 
