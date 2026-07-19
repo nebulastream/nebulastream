@@ -955,6 +955,29 @@ TEST_F(StatementBinderTest, InnerJoinParsesToInnerJoinType)
     EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
 }
 
+TEST_F(StatementBinderTest, JoinPredicateParsesExpressionOperands)
+{
+    const std::vector<std::string> predicates{
+        "s1key + UINT64(1) < s2key",
+        "s1key < s2key + 1",
+        "ABS(s1key) = s2key",
+        "CASTTOTYPE(s1key AS UINT64) = s2key",
+        "s1key <> s2key",
+    };
+
+    for (const auto& predicate : predicates)
+    {
+        SCOPED_TRACE(predicate);
+        const auto query = fmt::format(
+            "SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2) "
+            "ON {} WINDOW TUMBLING(SIZE 1000 MS) INTO sink",
+            predicate);
+        const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+        const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+        ASSERT_EQ(1, joins.size());
+    }
+}
+
 TEST_F(StatementBinderTest, LowercaseOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT outer JOIN (SELECT * FROM s2) "
