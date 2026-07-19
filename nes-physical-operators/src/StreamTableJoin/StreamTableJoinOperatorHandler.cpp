@@ -3,7 +3,7 @@
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,8 +28,7 @@
 namespace NES
 {
 
-StreamTableJoinOperatorHandler::StreamTableJoinOperatorHandler(
-    std::vector<OriginId> tableOrigins, std::vector<OriginId> inputOrigins)
+StreamTableJoinOperatorHandler::StreamTableJoinOperatorHandler(std::vector<OriginId> tableOrigins, std::vector<OriginId> inputOrigins)
     : tableOrigins(tableOrigins), tableWatermarks(std::move(tableOrigins)), outputWatermarks(std::move(inputOrigins))
 {
     PRECONDITION(!this->tableOrigins.empty(), "Stream-table join requires at least one table origin");
@@ -69,8 +68,7 @@ TupleBuffer createPagedVectorBuffer(AbstractBufferProvider& bufferProvider, cons
 }
 }
 
-TupleBuffer* StreamTableJoinOperatorHandler::getOrCreateTableBuffer(
-    AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
+TupleBuffer* StreamTableJoinOperatorHandler::getOrCreateTableBuffer(AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
 {
     PRECONDITION(bufferProvider != nullptr, "Buffer provider must not be null");
     if (!tableBuffer.has_value())
@@ -80,8 +78,7 @@ TupleBuffer* StreamTableJoinOperatorHandler::getOrCreateTableBuffer(
     return &tableBuffer.value();
 }
 
-TupleBuffer* StreamTableJoinOperatorHandler::getOrCreatePendingBuffer(
-    AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
+TupleBuffer* StreamTableJoinOperatorHandler::getOrCreatePendingBuffer(AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
 {
     PRECONDITION(bufferProvider != nullptr, "Buffer provider must not be null");
     if (!pendingBuffer.has_value())
@@ -91,10 +88,32 @@ TupleBuffer* StreamTableJoinOperatorHandler::getOrCreatePendingBuffer(
     return &pendingBuffer.value();
 }
 
+TupleBuffer* StreamTableJoinOperatorHandler::beginPendingCompaction(AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
+{
+    PRECONDITION(bufferProvider != nullptr, "Buffer provider must not be null");
+    PRECONDITION(!compactedPendingBuffer.has_value(), "Pending compaction already in progress");
+    compactedPendingBuffer.emplace(createPagedVectorBuffer(*bufferProvider, tupleSize));
+    compactedPendingTimestamps.clear();
+    return &compactedPendingBuffer.value();
+}
+
 void StreamTableJoinOperatorHandler::appendPendingTimestamp(const uint64_t timestamp)
 {
     pendingTimestamps.push_back(timestamp);
-    releasedPendingRows.push_back(false);
+}
+
+void StreamTableJoinOperatorHandler::appendCompactedPendingTimestamp(const uint64_t timestamp)
+{
+    compactedPendingTimestamps.push_back(timestamp);
+}
+
+void StreamTableJoinOperatorHandler::finishPendingCompaction()
+{
+    PRECONDITION(compactedPendingBuffer.has_value(), "No pending compaction in progress");
+    pendingBuffer.swap(compactedPendingBuffer);
+    compactedPendingBuffer.reset();
+    pendingTimestamps.swap(compactedPendingTimestamps);
+    compactedPendingTimestamps.clear();
 }
 
 uint64_t StreamTableJoinOperatorHandler::getPendingTimestamp(const uint64_t index) const
@@ -102,35 +121,13 @@ uint64_t StreamTableJoinOperatorHandler::getPendingTimestamp(const uint64_t inde
     return pendingTimestamps.at(index);
 }
 
-bool StreamTableJoinOperatorHandler::pendingWasReleased(const uint64_t index) const
-{
-    return releasedPendingRows.at(index);
-}
-
-void StreamTableJoinOperatorHandler::markPendingReleased(const uint64_t index)
-{
-    PRECONDITION(!releasedPendingRows.at(index), "Pending stream row must only be released once");
-    releasedPendingRows.at(index) = true;
-    releasedPendingRowIndexes.push_back(index);
-}
-
 uint64_t StreamTableJoinOperatorHandler::getNumberOfPendingRows() const
 {
     return pendingTimestamps.size();
 }
 
-uint64_t StreamTableJoinOperatorHandler::getNumberOfReleasedPendingRows() const
-{
-    return releasedPendingRowIndexes.size();
-}
-
-uint64_t StreamTableJoinOperatorHandler::getReleasedPendingRowIndex(const uint64_t index) const
-{
-    return releasedPendingRowIndexes.at(index);
-}
-
-Timestamp StreamTableJoinOperatorHandler::updateTableWatermark(
-    const Timestamp watermark, const SequenceData sequenceData, const OriginId originId)
+Timestamp
+StreamTableJoinOperatorHandler::updateTableWatermark(const Timestamp watermark, const SequenceData sequenceData, const OriginId originId)
 {
     currentTableWatermark = tableWatermarks.updateWatermark(watermark, sequenceData, originId);
     tableComplete = currentTableWatermark == Timestamp{Timestamp::INVALID_VALUE};
@@ -142,8 +139,8 @@ Timestamp StreamTableJoinOperatorHandler::getTableWatermark() const
     return currentTableWatermark;
 }
 
-Timestamp StreamTableJoinOperatorHandler::updateOutputWatermark(
-    const Timestamp watermark, const SequenceData sequenceData, const OriginId originId)
+Timestamp
+StreamTableJoinOperatorHandler::updateOutputWatermark(const Timestamp watermark, const SequenceData sequenceData, const OriginId originId)
 {
     return outputWatermarks.updateWatermark(watermark, sequenceData, originId);
 }

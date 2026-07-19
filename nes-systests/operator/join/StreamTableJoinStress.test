@@ -277,3 +277,23 @@ TIME(timed_event_ts, timed_third_ts)
 INTO stress_checksum;
 ----
 164988 167651532
+
+# Focused pending-state reclamation regression. This is small enough to loop in
+# interpreter mode while still using multiple stream/table origins and repeated
+# table-watermark releases. The checksum oracle is the equivalent DuckDB join.
+SELECT timed_event_ts * UINT64(1000003) + timed_auction * UINT64(1009)
+       + timed_event_bidder * UINT64(101) + timed_event_price * UINT64(17)
+       + timed_lookup_ts + timed_lookup_bidder * UINT64(13) + timed_lookup_price AS signature
+FROM (
+    SELECT * FROM timed_events
+    WHERE timed_auction >= UINT64(1001) AND timed_auction < UINT64(1010)
+)
+INNER JOIN TABLE (
+    SELECT * FROM timed_lookup
+    WHERE timed_lookup_auction >= UINT64(1001) AND timed_lookup_auction < UINT64(1010)
+)
+ON timed_auction = timed_lookup_auction
+TIME(timed_event_ts, timed_lookup_ts)
+INTO stress_checksum;
+----
+18228 18418776

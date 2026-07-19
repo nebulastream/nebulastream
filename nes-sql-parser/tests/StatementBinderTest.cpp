@@ -32,6 +32,7 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
+#include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -975,6 +976,20 @@ TEST_F(StatementBinderTest, JoinPredicateParsesExpressionOperands)
         const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
         const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
         ASSERT_EQ(1, joins.size());
+    }
+}
+
+TEST_F(StatementBinderTest, StreamTableSemiJoinSyntaxSelectsLeftSemiJoinType)
+{
+    for (const std::string_view joinType : {"SEMI", "LEFT SEMI"})
+    {
+        SCOPED_TRACE(joinType);
+        const auto query = fmt::format(
+            "SELECT * FROM (SELECT * FROM s1) {} JOIN TABLE (SELECT * FROM s2) ON s1key = s2key INTO sink", joinType);
+        const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+        const auto joins = getOperatorByType<StreamTableJoinLogicalOperator>(plan);
+        ASSERT_EQ(1, joins.size());
+        EXPECT_EQ(StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN, joins.front()->getJoinType());
     }
 }
 

@@ -25,6 +25,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -86,6 +87,7 @@ public:
     std::vector<Identifier> joinSources;
     std::vector<LogicalFunction> joinKeyRelationHelper;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
+    StreamTableJoinLogicalOperator::JoinType streamTableJoinType = StreamTableJoinLogicalOperator::JoinType::INNER_JOIN;
 
     /// Utility variables to keep state between enter/exit parser function calls.
     size_t opBoolean{}; ///anonymous token enum in AntlrSQLLexer.h

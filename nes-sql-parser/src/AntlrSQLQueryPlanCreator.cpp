@@ -1017,6 +1017,7 @@ void AntlrSQLQueryPlanCreator::enterJoinRelation(AntlrSQLParser::JoinRelationCon
     helpers.top().joinKeyRelationHelper.clear();
     helpers.top().windowTimestamp.reset();
     helpers.top().windowType.reset();
+    helpers.top().streamTableJoinType = StreamTableJoinLogicalOperator::JoinType::INNER_JOIN;
     helpers.top().isJoinRelation = true;
     AntlrSQLBaseListener::enterJoinRelation(context);
 }
@@ -1057,6 +1058,13 @@ void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* con
     AntlrSQLBaseListener::exitJoinType(context);
 }
 
+void AntlrSQLQueryPlanCreator::exitStreamTableJoinType(AntlrSQLParser::StreamTableJoinTypeContext* context)
+{
+    helpers.top().streamTableJoinType = context->SEMI() == nullptr ? StreamTableJoinLogicalOperator::JoinType::INNER_JOIN
+                                                                  : StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN;
+    AntlrSQLBaseListener::exitStreamTableJoinType(context);
+}
+
 void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
     helpers.top().isJoinRelation = false;
@@ -1079,11 +1087,6 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
     if (context->TABLE() != nullptr)
     {
-        if (helpers.top().joinType != JoinLogicalOperator::JoinType::INNER_JOIN)
-        {
-            throw InvalidQuerySyntax("Stream-table join currently supports only INNER JOIN");
-        }
-
         std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics;
         if (currentWindowTimestampOpt.has_value())
         {
@@ -1096,7 +1099,11 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
         }
 
         const auto queryPlan = LogicalPlanBuilder::addStreamTableJoin(
-            leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), std::move(timeCharacteristics));
+            leftQueryPlan,
+            rightQueryPlan,
+            helpers.top().joinKeyRelationHelper.at(0),
+            std::move(timeCharacteristics),
+            helpers.top().streamTableJoinType);
         helpers.top().queryPlans.push_back(queryPlan);
         AntlrSQLBaseListener::exitJoinRelation(context);
         return;
