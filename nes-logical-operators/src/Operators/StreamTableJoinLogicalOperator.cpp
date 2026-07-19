@@ -3,7 +3,7 @@
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,10 +41,12 @@ namespace NES
 StreamTableJoinLogicalOperator::StreamTableJoinLogicalOperator(
     WeakLogicalOperator self,
     LogicalFunction joinFunction,
-    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics)
+    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+    const JoinType joinType)
     : ManagedByOperator(std::move(self))
     , joinFunction(std::move(joinFunction))
     , timeCharacteristics(std::move(timeCharacteristics))
+    , joinType(joinType)
 {
 }
 
@@ -52,42 +54,47 @@ StreamTableJoinLogicalOperator::StreamTableJoinLogicalOperator(
     WeakLogicalOperator self,
     std::array<LogicalOperator, 2> children,
     LogicalFunction joinFunction,
-    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics)
+    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+    const JoinType joinType)
     : ManagedByOperator(std::move(self))
     , children(std::move(children))
     , joinFunction(std::move(joinFunction))
     , timeCharacteristics(std::move(timeCharacteristics))
+    , joinType(joinType)
 {
     inferLocalSchema();
 }
 
-TypedLogicalOperator<StreamTableJoinLogicalOperator> StreamTableJoinLogicalOperator::create(
-    LogicalFunction joinFunction, std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics)
+TypedLogicalOperator<StreamTableJoinLogicalOperator>
+StreamTableJoinLogicalOperator::create(
+    LogicalFunction joinFunction,
+    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+    const JoinType joinType)
 {
-    return TypedLogicalOperator<StreamTableJoinLogicalOperator>{std::move(joinFunction), std::move(timeCharacteristics)};
+    return TypedLogicalOperator<StreamTableJoinLogicalOperator>{std::move(joinFunction), std::move(timeCharacteristics), joinType};
 }
 
 TypedLogicalOperator<StreamTableJoinLogicalOperator> StreamTableJoinLogicalOperator::create(
     std::array<LogicalOperator, 2> children,
     LogicalFunction joinFunction,
-    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics)
+    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+    const JoinType joinType)
 {
     return TypedLogicalOperator<StreamTableJoinLogicalOperator>{
-        std::move(children), std::move(joinFunction), std::move(timeCharacteristics)};
+        std::move(children), std::move(joinFunction), std::move(timeCharacteristics), joinType};
 }
 
 void StreamTableJoinLogicalOperator::inferLocalSchema()
 {
     PRECONDITION(children.has_value(), "Children not set when inferring stream-table join schema");
 
-    const auto inputFields = *children | std::views::transform([](const auto& child) { return child.getOutputSchema(); })
-        | std::views::join | std::ranges::to<std::vector>();
+    const auto inputFields = *children | std::views::transform([](const auto& child) { return child.getOutputSchema(); }) | std::views::join
+        | std::ranges::to<std::vector>();
     auto inputSchema = Schema<Field, Unordered>::tryCreateCollisionFree(inputFields);
     if (!inputSchema.has_value())
     {
         throw CannotInferSchema(
-            "Found collisions in stream-table join input schemas: "
-            + Schema<Field, Unordered>::createCollisionString(inputSchema.error()));
+            "Found collisions in stream-table join input schemas: " + Schema<Field, Unordered>::createCollisionString(inputSchema.error()));
     }
 
     joinFunction = joinFunction.withInferredDataType(inputSchema.value());
@@ -104,8 +111,12 @@ void StreamTableJoinLogicalOperator::inferLocalSchema()
             timeCharacteristics.value());
     }
 
-    const auto outputFields = inputFields | std::views::transform([](const Field& field) { return field.unbound(); })
+    const auto semiJoinOutputFields
+        = children.value()[0].getOutputSchema() | std::views::transform([](const Field& field) { return field.unbound(); })
         | std::ranges::to<std::vector>();
+    const auto innerJoinOutputFields
+        = inputFields | std::views::transform([](const Field& field) { return field.unbound(); }) | std::ranges::to<std::vector>();
+    const auto& outputFields = joinType == JoinType::LEFT_SEMI_JOIN ? semiJoinOutputFields : innerJoinOutputFields;
     auto inferredOutputSchema = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(outputFields);
     INVARIANT(inferredOutputSchema.has_value(), "Input schema was collision free but unbound output schema was not");
     outputSchema = std::move(inferredOutputSchema.value());
@@ -114,6 +125,11 @@ void StreamTableJoinLogicalOperator::inferLocalSchema()
 LogicalFunction StreamTableJoinLogicalOperator::getJoinFunction() const
 {
     return joinFunction;
+}
+
+StreamTableJoinLogicalOperator::JoinType StreamTableJoinLogicalOperator::getJoinType() const
+{
+    return joinType;
 }
 
 std::optional<StreamTableJoinTimeCharacteristics> StreamTableJoinLogicalOperator::getTimeCharacteristics() const
@@ -129,8 +145,8 @@ std::array<LogicalOperator, 2> StreamTableJoinLogicalOperator::getBothChildren()
 
 bool StreamTableJoinLogicalOperator::operator==(const StreamTableJoinLogicalOperator& rhs) const
 {
-    return joinFunction == rhs.joinFunction && timeCharacteristics == rhs.timeCharacteristics && outputSchema == rhs.outputSchema
-        && traitSet == rhs.traitSet;
+    return joinFunction == rhs.joinFunction && timeCharacteristics == rhs.timeCharacteristics && joinType == rhs.joinType
+        && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 }
 
 StreamTableJoinLogicalOperator StreamTableJoinLogicalOperator::withTraitSet(TraitSet newTraitSet) const
@@ -180,13 +196,15 @@ std::string StreamTableJoinLogicalOperator::explain(const ExplainVerbosity verbo
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "StreamTableJoin(opId: {}, joinFunction: {}, timed: {}, traitSet: {})",
+            "StreamTableJoin(opId: {}, type: {}, joinFunction: {}, timed: {}, traitSet: {})",
             id,
+            joinType == JoinType::LEFT_SEMI_JOIN ? "LEFT_SEMI" : "INNER",
             joinFunction.explain(verbosity),
             timeCharacteristics.has_value(),
             traitSet.explain(verbosity));
     }
-    return fmt::format("StreamTableJoin({})", joinFunction.explain(verbosity));
+    return fmt::format(
+        "StreamTableJoin({}, {})", joinType == JoinType::LEFT_SEMI_JOIN ? "LEFT_SEMI" : "INNER", joinFunction.explain(verbosity));
 }
 
 std::string_view StreamTableJoinLogicalOperator::getName() const noexcept
@@ -207,7 +225,10 @@ Reflected Reflector<TypedLogicalOperator<StreamTableJoinLogicalOperator>>::opera
     const TypedLogicalOperator<StreamTableJoinLogicalOperator>& op, const ReflectionContext& context) const
 {
     return context.reflect(detail::ReflectedStreamTableJoinLogicalOperator{
-        .operatorId = op.getId(), .joinFunction = op->getJoinFunction(), .timeCharacteristics = op->getTimeCharacteristics()});
+        .operatorId = op.getId(),
+        .joinFunction = op->getJoinFunction(),
+        .timeCharacteristics = op->getTimeCharacteristics(),
+        .joinType = op->getJoinType()});
 }
 
 Unreflector<TypedLogicalOperator<StreamTableJoinLogicalOperator>>::Unreflector(ContextType operatorMapping)
@@ -215,20 +236,19 @@ Unreflector<TypedLogicalOperator<StreamTableJoinLogicalOperator>>::Unreflector(C
 {
 }
 
-TypedLogicalOperator<StreamTableJoinLogicalOperator>
-Unreflector<TypedLogicalOperator<StreamTableJoinLogicalOperator>>::operator()(
+TypedLogicalOperator<StreamTableJoinLogicalOperator> Unreflector<TypedLogicalOperator<StreamTableJoinLogicalOperator>>::operator()(
     const Reflected& reflected, const ReflectionContext& context) const
 {
     const auto data = context.unreflect<detail::ReflectedStreamTableJoinLogicalOperator>(reflected);
     const auto children = plan->getChildrenFor(data.operatorId, context);
     PRECONDITION(children.size() == 2, "Reflected stream-table join requires exactly two children");
     return StreamTableJoinLogicalOperator::create(
-        std::array{children[0], children[1]}, data.joinFunction, data.timeCharacteristics);
+        std::array{children[0], children[1]}, data.joinFunction, data.timeCharacteristics, data.joinType);
 }
 
 }
 
 std::size_t std::hash<NES::StreamTableJoinLogicalOperator>::operator()(const NES::StreamTableJoinLogicalOperator& op) const noexcept
 {
-    return folly::hash::hash_combine_generic(NES::Hash{}, op.joinFunction, op.timeCharacteristics.has_value());
+    return folly::hash::hash_combine_generic(NES::Hash{}, op.joinFunction, op.timeCharacteristics.has_value(), op.joinType);
 }

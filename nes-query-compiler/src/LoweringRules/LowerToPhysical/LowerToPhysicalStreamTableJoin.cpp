@@ -3,7 +3,7 @@
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -65,8 +65,8 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
         | std::views::transform([](const auto& child)
                                 { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
-    auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(
-        join->getJoinFunction(), FieldMappingTrait{std::move(combinedMappings)});
+    auto physicalJoinFunction
+        = QueryCompilation::FunctionProvider::lowerFunction(join->getJoinFunction(), FieldMappingTrait{std::move(combinedMappings)});
 
     std::unique_ptr<TimeFunction> streamTimeFunction;
     std::unique_ptr<TimeFunction> tableTimeFunction;
@@ -74,8 +74,7 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
     {
         using BoundCharacteristics = std::array<Windowing::BoundTimeCharacteristic, 2>;
         PRECONDITION(
-            std::holds_alternative<BoundCharacteristics>(characteristics.value()),
-            "Expected bound stream-table join time characteristics");
+            std::holds_alternative<BoundCharacteristics>(characteristics.value()), "Expected bound stream-table join time characteristics");
         const auto& bound = std::get<BoundCharacteristics>(characteristics.value());
         streamTimeFunction = TimeFunction::create(bound[0]);
         tableTimeFunction = TimeFunction::create(bound[1]);
@@ -113,6 +112,7 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
     auto joinWrapper = std::make_shared<PhysicalOperatorWrapper>(
         StreamTableJoinPhysicalOperator{
             handlerId,
+            join->getJoinType(),
             std::move(physicalJoinFunction),
             std::move(streamInputBufferRef),
             std::move(tableInputBufferRef),

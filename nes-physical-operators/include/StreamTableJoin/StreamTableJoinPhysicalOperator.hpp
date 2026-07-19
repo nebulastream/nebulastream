@@ -3,7 +3,7 @@
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,15 +24,15 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
-#include <PhysicalOperator.hpp>
+#include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
 
-/// Pipeline adapter used only to preserve the per-input pipeline boundary. The
-/// adapter turns pipeline termination into empty origin-tagged buffers because
-/// EOS is not passed to successor pipelines as a data event by the runtime.
+/// Preserves the typed pipeline boundary for one join input and turns that
+/// input pipeline's termination into an origin-tagged infinity watermark.
 class StreamTableJoinInputPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
@@ -60,8 +60,11 @@ private:
 class StreamTableJoinPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
+    using JoinType = StreamTableJoinLogicalOperator::JoinType;
+
     StreamTableJoinPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
+        JoinType joinType,
         PhysicalFunction joinFunction,
         std::shared_ptr<TupleBufferRef> streamInputBufferRef,
         std::shared_ptr<TupleBufferRef> tableInputBufferRef,
@@ -82,19 +85,18 @@ public:
 private:
     void processStreamRecord(ExecutionContext& executionCtx, Record& record) const;
     void processTableRecord(ExecutionContext& executionCtx, Record& record) const;
-    void probeStreamRecord(
-        ExecutionContext& executionCtx,
-        const Record& streamRecord,
-        const nautilus::val<Timestamp>& streamTimestamp) const;
+    void
+    probeStreamRecord(ExecutionContext& executionCtx, const Record& streamRecord, const nautilus::val<Timestamp>& streamTimestamp) const;
     void emitJoinedRecord(
         ExecutionContext& executionCtx,
         const Record& streamRecord,
         Record& tableRecord,
-        const nautilus::val<Timestamp>& streamTimestamp) const;
-    void releasePending(
-        ExecutionContext& executionCtx, const nautilus::val<Timestamp>& tableWatermark, bool releaseAll) const;
+        const nautilus::val<Timestamp>& streamTimestamp,
+        nautilus::val<bool>& emittedSemiJoinRecord) const;
+    void releasePending(ExecutionContext& executionCtx, const nautilus::val<Timestamp>& tableWatermark, bool releaseAll) const;
 
     OperatorHandlerId operatorHandlerId;
+    JoinType joinType;
     PhysicalFunction joinFunction;
     std::shared_ptr<TupleBufferRef> streamInputBufferRef;
     std::shared_ptr<TupleBufferRef> tableInputBufferRef;
