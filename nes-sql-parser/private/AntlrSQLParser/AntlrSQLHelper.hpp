@@ -72,6 +72,11 @@ public:
 
     [[nodiscard]] bool isInAggFunction() const { return not windowAggs.empty(); }
 
+    [[nodiscard]] std::vector<LogicalFunction>& getActiveFunctionBuilder()
+    {
+        return isJoinRelation ? joinKeyRelationHelper : functionBuilder;
+    }
+
     std::optional<Windowing::TimeBasedWindowType> windowType;
     std::vector<std::pair<WindowAggregationLogicalFunction, std::optional<Identifier>>> windowAggs;
     std::vector<SinkDescriptor> sinkDescriptor;

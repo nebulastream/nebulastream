@@ -134,6 +134,7 @@ static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction,
     {
         case AntlrSQLLexer::EQ:
             return EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+        case AntlrSQLLexer::NEQ:
         case AntlrSQLLexer::NEQJ:
             return NegateLogicalFunction(EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction)));
         case AntlrSQLLexer::LT:
@@ -457,11 +458,12 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     {
         throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
     }
+    auto& functions = helpers.top().getActiveFunctionBuilder();
     LogicalFunction function;
 
-    if (helpers.top().functionBuilder.size() < 2)
+    if (functions.size() < 2)
     {
-        if (helpers.top().functionBuilder.size() + helpers.top().constantBuilder.size() == 2)
+        if (functions.size() + helpers.top().constantBuilder.size() == 2)
         {
             throw InvalidQuerySyntax(
                 "Attempted to use a raw constant in a binary expression. {} in `{}`.",
@@ -471,10 +473,10 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
         throw InvalidQuerySyntax(
             "There were less than 2 functions in the functionBuilder in exitArithmeticBinary. `{}`.", context->getText());
     }
-    const auto rightFunction = helpers.top().functionBuilder.back();
-    helpers.top().functionBuilder.pop_back();
-    const auto leftFunction = helpers.top().functionBuilder.back();
-    helpers.top().functionBuilder.pop_back();
+    const auto rightFunction = functions.back();
+    functions.pop_back();
+    const auto leftFunction = functions.back();
+    functions.pop_back();
     auto opTokenType = context->op->getType();
     switch (opTokenType)
     {
@@ -496,7 +498,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
-    helpers.top().functionBuilder.push_back(function);
+    functions.push_back(function);
 }
 
 void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context)
@@ -911,13 +913,14 @@ void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallCon
 void AntlrSQLQueryPlanCreator::exitCastExpression(AntlrSQLParser::CastExpressionContext* context)
 {
     const auto targetDataType = bindDataType(context->targetType, DataType::NULLABLE::NOT_NULLABLE);
-    if (helpers.top().functionBuilder.empty())
+    auto& functions = helpers.top().getActiveFunctionBuilder();
+    if (functions.empty())
     {
         throw InvalidQuerySyntax("CAST requires exactly one child expression at {}", context->getText());
     }
-    auto child = std::move(helpers.top().functionBuilder.back());
-    helpers.top().functionBuilder.pop_back();
-    helpers.top().functionBuilder.emplace_back(CastToTypeLogicalFunction{targetDataType, child});
+    auto child = std::move(functions.back());
+    functions.pop_back();
+    functions.emplace_back(CastToTypeLogicalFunction{targetDataType, child});
 }
 
 void AntlrSQLQueryPlanCreator::enterHavingClause(AntlrSQLParser::HavingClauseContext* context)
@@ -1232,6 +1235,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             break;
         default:
             helpers.top().hasUnnamedAggregation = false;
+            auto& functions = helpers.top().getActiveFunctionBuilder();
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
@@ -1243,25 +1247,25 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 auto value = std::move(helpers.top().constantBuilder.back());
                 helpers.top().constantBuilder.pop_back();
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
-                helpers.top().functionBuilder.emplace_back(constFunctionItem);
+                functions.emplace_back(constFunctionItem);
             }
             else
             {
                 const auto numArgs = context->argument.size();
-                if (numArgs > helpers.top().functionBuilder.size())
+                if (numArgs > functions.size())
                 {
                     throw InvalidQuerySyntax(
                         "Function '{}' expects {} arguments but only {} are available",
                         funcName,
                         numArgs,
-                        helpers.top().functionBuilder.size());
+                        functions.size());
                 }
-                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
+                auto argsBegin = functions.end() - static_cast<std::ptrdiff_t>(numArgs);
+                std::vector<LogicalFunction> funcArgs(argsBegin, functions.end());
                 if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
                 {
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.push_back(*logicalFunction);
+                    functions.resize(functions.size() - numArgs);
+                    functions.push_back(*logicalFunction);
                 }
                 else
                 {
