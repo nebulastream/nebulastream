@@ -40,7 +40,6 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
             throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size " + std::to_string(sizeInBytes));
         }
         unpooledBuffers.emplace_back(unpooledBufferOpt.value());
-        lastAllocationSize = sizeInBytes;
         return unpooledBuffers.back().getAvailableMemoryArea().subspan(0, sizeInBytes);
     }
 
