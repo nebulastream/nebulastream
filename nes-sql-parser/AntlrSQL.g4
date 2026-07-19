@@ -347,7 +347,7 @@ timeUnit: MS
         ;
 
 
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
+functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | ARRAY_AGG;
 
 sinkClause: INTO sink (',' sink)*;
 
@@ -538,6 +538,7 @@ AVG: 'AVG' | 'avg';
 SUM: 'SUM' | 'sum';
 COUNT: 'COUNT' | 'count';
 MEDIAN: 'MEDIAN' | 'median';
+ARRAY_AGG: 'ARRAY_AGG' | 'array_agg';
 WATERMARK: 'WATERMARK' | 'watermark';
 OFFSET: 'OFFSET' | 'offset';
 CSV_FORMAT : 'CSV_FORMAT';
