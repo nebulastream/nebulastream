@@ -1,0 +1,105 @@
+# name: join/StreamTableJoin.test
+# description: Growing multimap stream-table inner join with watermark and EOS release
+# groups: [Join, StreamTableJoin]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR events TYPE File;
+ATTACH INLINE
+1,7
+2,8
+
+CREATE LOGICAL SOURCE lookup(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lookup TYPE File;
+ATTACH INLINE
+7,100
+7,101
+8,200
+
+CREATE SINK eos_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL
+) TYPE File;
+
+# Without TIME, the table watermark remains zero and table EOS releases all retained stream rows.
+SELECT *
+FROM (SELECT * FROM events)
+INNER JOIN TABLE (SELECT * FROM lookup) ON event_key = lookup_key
+INTO eos_result;
+----
+1 7 7 100
+1 7 7 101
+2 8 8 200
+
+
+CREATE LOGICAL SOURCE timed_events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR timed_events TYPE File;
+ATTACH INLINE
+10,7,15
+11,7,25
+
+CREATE LOGICAL SOURCE timed_lookup(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL, lookup_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH INLINE
+7,100,10
+7,200,20
+99,999,30
+
+CREATE SINK timed_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    event_ts UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL,
+    lookup_ts UINT64 NOT NULL
+) TYPE File;
+
+# The table watermark at 30 releases both stream rows. The multimap includes all table rows up to each stream timestamp.
+SELECT *
+FROM (SELECT * FROM timed_events)
+INNER JOIN TABLE (SELECT * FROM timed_lookup) ON event_key = lookup_key
+TIME(event_ts, lookup_ts)
+INTO timed_result;
+----
+10 7 15 7 100 10
+11 7 25 7 100 10
+11 7 25 7 200 20
+
+
+CREATE LOGICAL SOURCE composite_events(event_id UINT64 NOT NULL, tenant_id UINT64 NOT NULL, event_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR composite_events TYPE File;
+ATTACH INLINE
+20,1,7
+21,2,7
+22,1,8
+
+CREATE LOGICAL SOURCE composite_lookup(lookup_tenant UINT64 NOT NULL, lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR composite_lookup TYPE File;
+ATTACH INLINE
+1,7,100
+2,7,200
+1,8,300
+2,8,400
+
+CREATE SINK composite_result(
+    event_id UINT64 NOT NULL,
+    tenant_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    lookup_tenant UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL
+) TYPE File;
+
+# Join predicates can contain multiple equality keys; state remains a growing multimap semantically.
+SELECT *
+FROM (SELECT * FROM composite_events)
+INNER JOIN TABLE (SELECT * FROM composite_lookup)
+    ON tenant_id = lookup_tenant AND event_key = lookup_key
+INTO composite_result;
+----
+20 1 7 1 7 100
+21 2 7 2 7 200
+22 1 8 1 8 300

@@ -12,6 +12,7 @@
 
 add_plugin(NLJoin LoweringRule LowerToPhysicalNLJoin.cpp)
 add_plugin(HashJoin LoweringRule LowerToPhysicalHashJoin.cpp)
+add_plugin(StreamTableJoin LoweringRule LowerToPhysicalStreamTableJoin.cpp)
 add_plugin(Selection LoweringRule LowerToPhysicalSelection.cpp)
 add_plugin(Projection LoweringRule LowerToPhysicalProjection.cpp)
 add_plugin(WindowedAggregation LoweringRule LowerToPhysicalWindowedAggregation.cpp)

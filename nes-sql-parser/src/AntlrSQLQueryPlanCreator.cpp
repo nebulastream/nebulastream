@@ -1012,6 +1012,8 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
 void AntlrSQLQueryPlanCreator::enterJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
     helpers.top().joinKeyRelationHelper.clear();
+    helpers.top().windowTimestamp.reset();
+    helpers.top().windowType.reset();
     helpers.top().isJoinRelation = true;
     AntlrSQLBaseListener::enterJoinRelation(context);
 }
@@ -1071,12 +1073,37 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
     auto windowTypeOpt = helpers.top().windowType;
+    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+    if (context->TABLE() != nullptr)
+    {
+        if (helpers.top().joinType != JoinLogicalOperator::JoinType::INNER_JOIN)
+        {
+            throw InvalidQuerySyntax("Stream-table join currently supports only INNER JOIN");
+        }
+
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics;
+        if (currentWindowTimestampOpt.has_value())
+        {
+            if (!std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+            {
+                throw InvalidQuerySyntax("stream-table TIME requires stream and table timestamp fields");
+            }
+            const auto characteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
+            timeCharacteristics.emplace(characteristics);
+        }
+
+        const auto queryPlan = LogicalPlanBuilder::addStreamTableJoin(
+            leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), std::move(timeCharacteristics));
+        helpers.top().queryPlans.push_back(queryPlan);
+        AntlrSQLBaseListener::exitJoinRelation(context);
+        return;
+    }
+
     if (!windowTypeOpt)
     {
         throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
     }
 
-    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
     if (!currentWindowTimestampOpt.has_value()
         || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
     {
