@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <utility>
@@ -93,10 +94,35 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(
             fieldAccessFunction, *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>());
         const auto inputFieldIdentifier = aggregationInputFunction.getAs<FieldAccessPhysicalFunction>()->getFieldIdentifier();
-        auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(
-            Schema<QualifiedUnboundField, Ordered>{QualifiedUnboundField{inputFieldIdentifier, physicalInputType}});
         const auto resultFieldIdentifier = descriptor.name;
         auto name = descriptor.function->getName();
+        auto pagedVectorInputType = physicalInputType;
+        if (name == "ArrayAgg")
+        {
+            /// NULL inputs are skipped before insertion, so ARRAY_AGG stores only densely packed element bytes.
+            pagedVectorInputType.nullable = false;
+        }
+        auto tupleFields = std::vector{QualifiedUnboundField{inputFieldIdentifier, pagedVectorInputType}};
+        std::optional<Record::RecordFieldIdentifier> orderingFieldIdentifier;
+        if (name == "ArrayAgg")
+        {
+            const auto characteristic = logicalOperator.getCharacteristic();
+            const auto& timeCharacteristic = std::get<Windowing::BoundTimeCharacteristic>(characteristic);
+            PRECONDITION(
+                std::holds_alternative<Windowing::BoundEventTimeCharacteristic>(timeCharacteristic),
+                "ARRAY_AGG currently requires an event-time window");
+            const auto& eventTime = std::get<Windowing::BoundEventTimeCharacteristic>(timeCharacteristic);
+            auto orderingFunction = QueryCompilation::FunctionProvider::lowerFunction(
+                eventTime.field, *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>());
+            orderingFieldIdentifier = orderingFunction.getAs<FieldAccessPhysicalFunction>()->getFieldIdentifier();
+            const auto orderingType = eventTime.field->getDataType();
+            PRECONDITION(not orderingType.nullable, "ARRAY_AGG does not support nullable event-time fields");
+            if (orderingFieldIdentifier.value() != inputFieldIdentifier)
+            {
+                tupleFields.emplace_back(orderingFieldIdentifier.value(), orderingType);
+            }
+        }
+        auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(Schema<QualifiedUnboundField, Ordered>{std::move(tupleFields)});
 
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
             std::move(physicalInputType),
@@ -104,6 +130,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
             std::move(aggregationInputFunction),
             resultFieldIdentifier,
             tupleLayout,
+            std::move(orderingFieldIdentifier),
             descriptor.function.shallIncludeNullValues());
         if (auto aggregationPhysicalFunction
             = AggregationPhysicalFunctionRegistry::instance().create(std::string{name}, std::move(aggregationArguments)))
