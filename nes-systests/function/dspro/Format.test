@@ -71,7 +71,7 @@ No placeholders
 No placeholders
 
 ########################################
-# Test 1 placeholder (VARSIZED)
+# one placeholder (VARSIZED)
 ########################################
 
 CREATE SINK sinkOne(formatted VARSIZED NOT NULL) TYPE File;
@@ -85,7 +85,7 @@ Value is: two
 Value is: three
 
 ########################################
-# Test 2 placeholders (VARSIZED)
+# two placeholders (VARSIZED)
 ########################################
 
 CREATE SINK sinkTwo(formatted VARSIZED NOT NULL) TYPE File;
@@ -103,7 +103,7 @@ Value is: two, which is larger than: twenty
 Value is: three, which is larger than: thirty
 
 ########################################
-# Test 2 placeholders (INT32)
+# two placeholders (INT32)
 ########################################
 
 CREATE SINK sinkInt(formatted VARSIZED NOT NULL) TYPE File;
@@ -165,7 +165,7 @@ char=b
 char=c
 
 ########################################
-# FLOAT source
+# FLOAT32 source
 ########################################
 
 CREATE LOGICAL SOURCE floatStream(temp FLOAT32 NOT NULL);
@@ -225,6 +225,10 @@ FROM quadStream INTO sinkQuad;
 1 2 3 4
 5 6 7 8
 9 10 11 12
+
+########################################
+# Five placeholders
+########################################
 
 CREATE LOGICAL SOURCE manyStream(
     a INT32 NOT NULL,
@@ -611,7 +615,7 @@ value=5
 value=6
 
 ########################################
-# NULL in second argument
+# NULL in second argument and last argument
 ########################################
 
 CREATE SINK sinkNullableSecondArg(formatted VARSIZED) TYPE File;
@@ -729,6 +733,92 @@ left=500, middle=5, right=500
 left=600, middle=6, right=600
 
 ########################################
+# All nullable arguments are NULL
+########################################
+
+CREATE SINK sinkAllNullableArguments(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("{}-{}-{}-{}-{}"),
+        nullable_int,
+        nullable_other,
+        nullable_bool,
+        nullable_char,
+        nullable_float
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkAllNullableArguments;
+----
+1-10-true-A-1.5
+NULL
+NULL
+NULL
+NULL
+NULL
+
+########################################
+# Nullable arithmetic expression
+########################################
+
+CREATE SINK sinkNullableExpression(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("sum={}"),
+        nullable_int + non_null_int
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullableExpression;
+----
+sum=101
+NULL
+sum=303
+sum=404
+sum=505
+sum=606
+
+########################################
+# Nullable function result
+########################################
+
+CREATE SINK sinkNullableFunction(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("abs={}"),
+        ABS(nullable_int)
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullableFunction;
+----
+abs=1
+NULL
+abs=3
+abs=4
+abs=5
+abs=6
+
+########################################
+# Adjacent placeholders with a nullable argument
+########################################
+
+CREATE SINK sinkAdjacentNullable(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("{}{}{}"),
+        non_null_int,
+        nullable_int,
+        non_null_int
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkAdjacentNullable;
+----
+1001100
+NULL
+3003300
+4004400
+5005500
+6006600
+
+########################################
 # NULL with escaped braces
 ########################################
 
@@ -747,6 +837,26 @@ NULL
 { value=4 }
 { value=5 }
 { value=6 }
+
+########################################
+# Nullable argument surrounded directly by braces
+########################################
+
+CREATE SINK sinkNullDirectEscapedBraces(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("{{{}}}"),
+        nullable_int
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullDirectEscapedBraces;
+----
+{1}
+NULL
+{3}
+{4}
+{5}
+{6}
 
 ########################################
 # Nested Format produces nullable VARSIZED
@@ -788,6 +898,28 @@ nested=3, fixed=300
 nested=4, fixed=400
 nested=5, fixed=500
 nested=6, fixed=600
+
+########################################
+# Nullable expression among non-null arguments
+########################################
+
+CREATE SINK sinkNullableExpressionMiddle(formatted VARSIZED) TYPE File;
+
+SELECT
+    Format(
+        VARSIZED("left={}, expression={}, right={}"),
+        non_null_int,
+        nullable_int + non_null_int,
+        non_null_int
+    ) AS formatted
+FROM comprehensiveNullableStream INTO sinkNullableExpressionMiddle;
+----
+left=100, expression=101, right=100
+NULL
+left=300, expression=303, right=300
+left=400, expression=404, right=400
+left=500, expression=505, right=500
+left=600, expression=606, right=600
 
 ########################################
 # Literal string "NULL" is not SQL NULL
