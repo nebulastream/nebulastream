@@ -60,7 +60,12 @@ private:
     std::optional<nautilus::engine::CompiledModule> compiledModule;
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
-    std::shared_ptr<Pipeline> pipeline;
+    /// The executable stage must not retain the compiler's Pipeline DAG. Running pipeline nodes are stopped and
+    /// destroyed independently on query-engine workers; retaining the DAG here would make those workers concurrently
+    /// tear down Pipeline successor/predecessor ownership. Only these immutable execution properties are needed after
+    /// lowering.
+    PhysicalOperator rootOperator;
+    PipelineId pipelineId;
 };
 
 }

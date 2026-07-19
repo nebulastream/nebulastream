@@ -1,0 +1,279 @@
+# name: join/StreamTableJoinStress.test
+# description: Multi-origin and nested stream-table join concurrency stress tests
+# groups: [Join, StreamTableJoin, Concurrency, LongRunning]
+# Oracle: DuckDB joins over the attached CSV files, with UNION ALL copies matching physical-source expansion.
+# Timed joins add table_timestamp <= stream_timestamp. Oracle CSVs are reduced with the repository checksum tool.
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [4, 8]
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1024]
+
+CREATE LOGICAL SOURCE stress_events(event_id UINT64 NOT NULL, event_value UINT64 NOT NULL, event_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stress_events TYPE File;
+ATTACH FILE small/outer_join_left.csv
+CREATE PHYSICAL SOURCE FOR stress_events TYPE File;
+ATTACH FILE small/outer_join_left.csv
+CREATE PHYSICAL SOURCE FOR stress_events TYPE File;
+ATTACH FILE small/outer_join_left.csv
+
+CREATE LOGICAL SOURCE stress_lookup(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL, lookup_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stress_lookup TYPE File;
+ATTACH FILE small/outer_join_right.csv
+CREATE PHYSICAL SOURCE FOR stress_lookup TYPE File;
+ATTACH FILE small/outer_join_right.csv
+CREATE PHYSICAL SOURCE FOR stress_lookup TYPE File;
+ATTACH FILE small/outer_join_right.csv
+CREATE PHYSICAL SOURCE FOR stress_lookup TYPE File;
+ATTACH FILE small/outer_join_right.csv
+
+CREATE LOGICAL SOURCE stress_third(third_key UINT64 NOT NULL, third_value UINT64 NOT NULL, third_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stress_third TYPE File;
+ATTACH FILE small/outer_join_left.csv
+
+# Nexmark bids are ordered by their first (event-time) column. Unlike the
+# deliberately unordered outer-join fixtures above, they therefore provide
+# valid maximum-seen watermarks for the timed stress cases.
+CREATE LOGICAL SOURCE timed_events(
+    timed_event_ts UINT64 NOT NULL,
+    timed_auction UINT64 NOT NULL,
+    timed_event_bidder UINT64 NOT NULL,
+    timed_event_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR timed_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+
+CREATE LOGICAL SOURCE timed_lookup(
+    timed_lookup_ts UINT64 NOT NULL,
+    timed_lookup_auction UINT64 NOT NULL,
+    timed_lookup_bidder UINT64 NOT NULL,
+    timed_lookup_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+
+CREATE LOGICAL SOURCE timed_third(
+    timed_third_ts UINT64 NOT NULL,
+    timed_third_auction UINT64 NOT NULL,
+    timed_third_bidder UINT64 NOT NULL,
+    timed_third_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR timed_third TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_third TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_third TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+
+CREATE LOGICAL SOURCE asymmetric_events(
+    asymmetric_event_ts UINT64 NOT NULL,
+    asymmetric_auction UINT64 NOT NULL,
+    asymmetric_event_bidder UINT64 NOT NULL,
+    asymmetric_event_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR asymmetric_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_events TYPE File;
+ATTACH FILE small/nexmark/bid_5K.csv
+
+CREATE LOGICAL SOURCE asymmetric_lookup(
+    asymmetric_lookup_ts UINT64 NOT NULL,
+    asymmetric_lookup_auction UINT64 NOT NULL,
+    asymmetric_lookup_bidder UINT64 NOT NULL,
+    asymmetric_lookup_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR asymmetric_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_5K.csv
+
+CREATE LOGICAL SOURCE early_lookup(
+    early_ts UINT64 NOT NULL,
+    early_auction UINT64 NOT NULL,
+    early_bidder UINT64 NOT NULL,
+    early_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR early_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_5K.csv
+
+CREATE SINK stress_checksum(signature UINT64 NOT NULL) TYPE Checksum;
+
+# Multi-origin EOS-only release: 3 stream origins, 4 table origins, and 277K output rows.
+SELECT event_id * UINT64(1000000007) + event_value * UINT64(1000003) + event_ts * UINT64(101)
+       + lookup_value * UINT64(17) + lookup_ts AS signature
+FROM (
+    SELECT * FROM stress_events
+    WHERE event_id >= UINT64(151) AND event_id < UINT64(170)
+)
+INNER JOIN TABLE (
+    SELECT * FROM stress_lookup
+    WHERE lookup_key >= UINT64(151) AND lookup_key < UINT64(170)
+)
+ON event_id = lookup_key
+INTO stress_checksum;
+----
+277344 176968656
+
+# A single 165-row table origin reaches EOS while three 10K-row stream origins are
+# still active. Later stream buffers must probe immediately after table completion.
+SELECT event_id * UINT64(1000000007) + event_value * UINT64(1000003) + event_ts * UINT64(101)
+       + early_ts + early_bidder * UINT64(17) + early_price AS signature
+FROM (
+    SELECT *, event_id + UINT64(849) AS event_auction FROM stress_events
+    WHERE event_id >= UINT64(151) AND event_id < UINT64(170)
+)
+INNER JOIN TABLE (
+    SELECT * FROM early_lookup
+    WHERE early_auction >= UINT64(1000) AND early_auction < UINT64(1019)
+)
+ON event_auction = early_auction
+INTO stress_checksum;
+----
+9651 6670881
+
+# A multi-origin join over time-ordered inputs with repeated table-watermark releases.
+SELECT timed_event_ts * UINT64(1000003) + timed_auction * UINT64(1009)
+       + timed_event_bidder * UINT64(101) + timed_event_price * UINT64(17)
+       + timed_lookup_ts + timed_lookup_bidder * UINT64(13) + timed_lookup_price AS signature
+FROM (
+    SELECT * FROM timed_events
+    WHERE timed_auction >= UINT64(1001) AND timed_auction < UINT64(1100)
+)
+INNER JOIN TABLE (
+    SELECT * FROM timed_lookup
+    WHERE timed_lookup_auction >= UINT64(1001) AND timed_lookup_auction < UINT64(1100)
+)
+ON timed_auction = timed_lookup_auction
+TIME(timed_event_ts, timed_lookup_ts)
+INTO stress_checksum;
+----
+95316 96407316
+
+# Asymmetric origins exercise the minimum table watermark: the 5K origin reaches EOS
+# while the longer table origins continue releasing pending stream rows.
+SELECT asymmetric_event_ts * UINT64(1000003) + asymmetric_auction * UINT64(1009)
+       + asymmetric_event_bidder * UINT64(101) + asymmetric_event_price * UINT64(17)
+       + asymmetric_lookup_ts + asymmetric_lookup_bidder * UINT64(13)
+       + asymmetric_lookup_price AS signature
+FROM (
+    SELECT * FROM asymmetric_events
+    WHERE asymmetric_auction >= UINT64(1001) AND asymmetric_auction < UINT64(1100)
+)
+INNER JOIN TABLE (
+    SELECT * FROM asymmetric_lookup
+    WHERE asymmetric_lookup_auction >= UINT64(1001) AND asymmetric_lookup_auction < UINT64(1100)
+)
+ON asymmetric_auction = asymmetric_lookup_auction
+TIME(asymmetric_event_ts, asymmetric_lookup_ts)
+INTO stress_checksum;
+----
+50034 50605784
+
+# Composite predicate with many probes but very few matches.
+SELECT event_id * UINT64(1000000007) + event_value * UINT64(1000003) + event_ts * UINT64(101)
+       + lookup_value * UINT64(17) + lookup_ts AS signature
+FROM (
+    SELECT * FROM stress_events
+    WHERE event_id >= UINT64(151) AND event_id < UINT64(220)
+)
+INNER JOIN TABLE (
+    SELECT * FROM stress_lookup
+    WHERE lookup_key >= UINT64(151) AND lookup_key < UINT64(220)
+)
+ON event_id = lookup_key AND event_value = lookup_value
+INTO stress_checksum;
+----
+96 61236
+
+# Nested EOS-only joins exercise EOS propagation from the inner join into the outer stream side.
+SELECT event_id * UINT64(1000000007) + event_value * UINT64(1000003) + event_ts * UINT64(101)
+       + lookup_value * UINT64(1009) + lookup_ts * UINT64(101)
+       + third_value * UINT64(17) + third_ts AS signature
+FROM (
+    SELECT *
+    FROM (
+        SELECT * FROM stress_events
+        WHERE event_id = UINT64(222)
+    )
+    INNER JOIN TABLE (
+        SELECT * FROM stress_lookup
+        WHERE lookup_key = UINT64(222)
+    )
+    ON event_id = lookup_key
+)
+INNER JOIN TABLE (
+    SELECT * FROM stress_third
+    WHERE third_key = UINT64(222)
+)
+ON event_id = third_key
+INTO stress_checksum;
+----
+124800 79306224
+
+# Nested table-side joins exercise completion and synthetic EOS propagation from an inner join
+# into the table input of an outer join.
+SELECT event_id * UINT64(1000000007) + event_value * UINT64(1000003) + event_ts * UINT64(101)
+       + lookup_value * UINT64(1009) + lookup_ts * UINT64(101)
+       + third_value * UINT64(17) + third_ts AS signature
+FROM (
+    SELECT * FROM stress_events
+    WHERE event_id = UINT64(222)
+)
+INNER JOIN TABLE (
+    SELECT *
+    FROM (
+        SELECT * FROM stress_lookup
+        WHERE lookup_key = UINT64(222)
+    )
+    INNER JOIN TABLE (
+        SELECT * FROM stress_third
+        WHERE third_key = UINT64(222)
+    )
+    ON lookup_key = third_key
+)
+ON event_id = lookup_key
+INTO stress_checksum;
+----
+124800 79306224
+
+# Nested timed joins validate propagated origins/watermarks and two levels of pending-state release.
+SELECT timed_event_ts * UINT64(1000003) + timed_auction * UINT64(1009)
+       + timed_event_bidder * UINT64(101) + timed_event_price * UINT64(17)
+       + timed_lookup_ts + timed_lookup_bidder * UINT64(13) + timed_lookup_price
+       + timed_third_ts + timed_third_bidder * UINT64(7) + timed_third_price AS signature
+FROM (
+    SELECT *
+    FROM (
+        SELECT * FROM timed_events
+        WHERE timed_auction >= UINT64(1050) AND timed_auction < UINT64(1061)
+    )
+    INNER JOIN TABLE (
+        SELECT * FROM timed_lookup
+        WHERE timed_lookup_auction >= UINT64(1050) AND timed_lookup_auction < UINT64(1061)
+    )
+    ON timed_auction = timed_lookup_auction
+    TIME(timed_event_ts, timed_lookup_ts)
+)
+INNER JOIN TABLE (
+    SELECT * FROM timed_third
+    WHERE timed_third_auction >= UINT64(1050) AND timed_third_auction < UINT64(1061)
+)
+ON timed_auction = timed_third_auction
+TIME(timed_event_ts, timed_third_ts)
+INTO stress_checksum;
+----
+164988 167651532

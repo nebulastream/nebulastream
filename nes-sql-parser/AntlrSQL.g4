@@ -147,7 +147,12 @@ relation
 
 joinRelation
     : (joinType) JOIN right=relationPrimary joinCriteria? windowClause
+    | (joinType) JOIN TABLE right=relationPrimary joinCriteria streamTableTimeClause?
     | NATURAL joinType JOIN right=relationPrimary windowClause
+    ;
+
+streamTableTimeClause
+    : TIME '(' timestampParameter ')'
     ;
 
 joinType
@@ -520,6 +525,7 @@ SOME: 'SOME';
 START: 'START';
 TABLE: 'TABLE';
 THEN: 'THEN' | 'then';
+TIME: 'TIME' | 'time';
 TO: 'TO';
 TRUE: 'TRUE';
 TYPE: 'TYPE';
