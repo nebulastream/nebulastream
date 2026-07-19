@@ -3,7 +3,7 @@
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,19 +54,16 @@ public:
 
     TupleBuffer* getOrCreateTableBuffer(AbstractBufferProvider* bufferProvider, uint64_t tupleSize);
     TupleBuffer* getOrCreatePendingBuffer(AbstractBufferProvider* bufferProvider, uint64_t tupleSize);
+    TupleBuffer* beginPendingCompaction(AbstractBufferProvider* bufferProvider, uint64_t tupleSize);
 
     void appendPendingTimestamp(uint64_t timestamp);
+    void appendCompactedPendingTimestamp(uint64_t timestamp);
+    void finishPendingCompaction();
     [[nodiscard]] uint64_t getPendingTimestamp(uint64_t index) const;
-    [[nodiscard]] bool pendingWasReleased(uint64_t index) const;
-    void markPendingReleased(uint64_t index);
     [[nodiscard]] uint64_t getNumberOfPendingRows() const;
-    [[nodiscard]] uint64_t getNumberOfReleasedPendingRows() const;
-    [[nodiscard]] uint64_t getReleasedPendingRowIndex(uint64_t index) const;
 
-    [[nodiscard]] Timestamp updateTableWatermark(
-        Timestamp watermark, SequenceData sequenceData, OriginId originId);
-    [[nodiscard]] Timestamp updateOutputWatermark(
-        Timestamp watermark, SequenceData sequenceData, OriginId originId);
+    [[nodiscard]] Timestamp updateTableWatermark(Timestamp watermark, SequenceData sequenceData, OriginId originId);
+    [[nodiscard]] Timestamp updateOutputWatermark(Timestamp watermark, SequenceData sequenceData, OriginId originId);
     [[nodiscard]] Timestamp getTableWatermark() const;
     [[nodiscard]] bool isTableComplete() const;
     [[nodiscard]] bool isTableOrigin(OriginId originId) const;
@@ -78,12 +75,11 @@ private:
     std::recursive_mutex stateMutex;
     std::optional<TupleBuffer> tableBuffer;
     std::optional<TupleBuffer> pendingBuffer;
-    /// Stream rows remain retained after release. A later table insert probes
-    /// released rows, so every pair is produced exactly once regardless of
-    /// which side becomes visible first around a watermark transition.
+    std::optional<TupleBuffer> compactedPendingBuffer;
+    /// Only stream rows still waiting for the table watermark are retained.
+    /// A release pass compacts these timestamps together with pendingBuffer.
     std::vector<uint64_t> pendingTimestamps;
-    std::vector<bool> releasedPendingRows;
-    std::vector<uint64_t> releasedPendingRowIndexes;
+    std::vector<uint64_t> compactedPendingTimestamps;
     std::vector<OriginId> tableOrigins;
     std::vector<std::pair<OriginId, SequenceNumber>> lastInputSequences;
     MultiOriginWatermarkProcessor tableWatermarks;

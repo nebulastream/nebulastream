@@ -3,7 +3,7 @@
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <functional>
 #include <optional>
 #include <string>
@@ -43,37 +44,50 @@ template <typename T>
 using StreamTableArrayOfTwo = std::array<T, 2>;
 }
 
-using StreamTableJoinTimeCharacteristics
-    = NES::VariantContainerFrom<NES::detail::StreamTableArrayOfTwo, Windowing::TimeCharacteristic>;
+using StreamTableJoinTimeCharacteristics = NES::VariantContainerFrom<NES::detail::StreamTableArrayOfTwo, Windowing::TimeCharacteristic>;
 
 /// An asymmetric join between a stream (left child) and a growing table (right child).
 ///
 /// The table retains every tuple for the lifetime of the query. Stream tuples are
 /// evaluated once the table watermark has passed their timestamp. If no time
 /// characteristics are configured, stream tuples are retained until table EOS.
+/// An inner join emits every matching pair; a left semi join emits the stream
+/// tuple once when at least one eligible table tuple matches.
 class StreamTableJoinLogicalOperator final : public OriginIdAssigner, public ManagedByOperator
 {
 public:
+    enum class JoinType : uint8_t
+    {
+        INNER_JOIN,
+        LEFT_SEMI_JOIN
+    };
+
     explicit StreamTableJoinLogicalOperator(
         WeakLogicalOperator self,
         LogicalFunction joinFunction,
-        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics);
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+        JoinType joinType);
 
     explicit StreamTableJoinLogicalOperator(
         WeakLogicalOperator self,
         std::array<LogicalOperator, 2> children,
         LogicalFunction joinFunction,
-        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics);
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+        JoinType joinType);
 
     static TypedLogicalOperator<StreamTableJoinLogicalOperator> create(
-        LogicalFunction joinFunction, std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt);
+        LogicalFunction joinFunction,
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt,
+        JoinType joinType = JoinType::INNER_JOIN);
 
     static TypedLogicalOperator<StreamTableJoinLogicalOperator> create(
         std::array<LogicalOperator, 2> children,
         LogicalFunction joinFunction,
-        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt);
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt,
+        JoinType joinType = JoinType::INNER_JOIN);
 
     [[nodiscard]] LogicalFunction getJoinFunction() const;
+    [[nodiscard]] JoinType getJoinType() const;
     [[nodiscard]] std::optional<StreamTableJoinTimeCharacteristics> getTimeCharacteristics() const;
     [[nodiscard]] std::array<LogicalOperator, 2> getBothChildren() const;
 
@@ -96,6 +110,7 @@ private:
     std::optional<std::array<LogicalOperator, 2>> children;
     LogicalFunction joinFunction;
     std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics;
+    JoinType joinType;
     std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
     TraitSet traitSet;
 
@@ -129,6 +144,7 @@ struct ReflectedStreamTableJoinLogicalOperator
     OperatorId operatorId{OperatorId::INVALID};
     LogicalFunction joinFunction;
     std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics;
+    StreamTableJoinLogicalOperator::JoinType joinType = StreamTableJoinLogicalOperator::JoinType::INNER_JOIN;
 };
 }
 

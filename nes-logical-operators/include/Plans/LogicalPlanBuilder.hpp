@@ -104,7 +104,8 @@ public:
         LogicalPlan streamPlan,
         LogicalPlan tablePlan,
         const LogicalFunction& joinFunction,
-        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt);
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt,
+        StreamTableJoinLogicalOperator::JoinType joinType = StreamTableJoinLogicalOperator::JoinType::INNER_JOIN);
 
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 

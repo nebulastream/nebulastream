@@ -3,7 +3,7 @@
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -55,6 +55,11 @@ TupleBuffer* getTableBuffer(OperatorHandler* handler, AbstractBufferProvider* bu
 TupleBuffer* getPendingBuffer(OperatorHandler* handler, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
 {
     return dynamic_cast<StreamTableJoinOperatorHandler&>(*handler).getOrCreatePendingBuffer(bufferProvider, tupleSize);
+}
+
+TupleBuffer* beginPendingCompaction(OperatorHandler* handler, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
+{
+    return dynamic_cast<StreamTableJoinOperatorHandler&>(*handler).beginPendingCompaction(bufferProvider, tupleSize);
 }
 }
 
@@ -121,6 +126,7 @@ void StreamTableJoinInputPhysicalOperator::setChild(PhysicalOperator newChild)
 
 StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
+    const JoinType joinType,
     PhysicalFunction joinFunction,
     std::shared_ptr<TupleBufferRef> streamInputBufferRef,
     std::shared_ptr<TupleBufferRef> tableInputBufferRef,
@@ -130,6 +136,7 @@ StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(
     std::unique_ptr<TimeFunction> streamTimeFunction,
     std::unique_ptr<TimeFunction> tableTimeFunction)
     : operatorHandlerId(operatorHandlerId)
+    , joinType(joinType)
     , joinFunction(std::move(joinFunction))
     , streamInputBufferRef(std::move(streamInputBufferRef))
     , tableInputBufferRef(std::move(tableInputBufferRef))
@@ -148,6 +155,7 @@ StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(
 StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(const StreamTableJoinPhysicalOperator& other)
     : PhysicalOperatorConcept(other.id)
     , operatorHandlerId(other.operatorHandlerId)
+    , joinType(other.joinType)
     , joinFunction(other.joinFunction)
     , streamInputBufferRef(other.streamInputBufferRef)
     , tableInputBufferRef(other.tableInputBufferRef)
@@ -188,9 +196,7 @@ void StreamTableJoinPhysicalOperator::open(ExecutionContext& executionCtx, Recor
         }
         executionCtx.originId = outputOriginId;
         executionCtx.sequenceNumber = invoke(
-            +[](OperatorHandler* ptr)
-            { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNextOutputSequence(); },
-            handler);
+            +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNextOutputSequence(); }, handler);
         executionCtx.chunkNumber = nautilus::val<ChunkNumber>{INITIAL_CHUNK_NUMBER};
         executionCtx.lastChunk = true;
         openChild(executionCtx, recordBuffer);
@@ -209,9 +215,7 @@ void StreamTableJoinPhysicalOperator::open(ExecutionContext& executionCtx, Recor
         }
         executionCtx.originId = outputOriginId;
         executionCtx.sequenceNumber = invoke(
-            +[](OperatorHandler* ptr)
-            { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNextOutputSequence(); },
-            handler);
+            +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNextOutputSequence(); }, handler);
         executionCtx.chunkNumber = nautilus::val<ChunkNumber>{INITIAL_CHUNK_NUMBER};
         executionCtx.lastChunk = true;
         openChild(executionCtx, recordBuffer);
@@ -235,32 +239,6 @@ void StreamTableJoinPhysicalOperator::processTableRecord(ExecutionContext& execu
         nautilus::val<uint64_t>{tableTupleLayout->getSchema().getSizeInBytes()});
     PagedVectorRef tableState{BorrowedNautilusBuffer::from(buffer), tableTupleLayout};
     tableState.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
-
-    const auto pendingBuffer = invoke(
-        getPendingBuffer,
-        handler,
-        executionCtx.pipelineMemoryProvider.bufferProvider,
-        nautilus::val<uint64_t>{streamTupleLayout->getSchema().getSizeInBytes()});
-    const PagedVectorRef pendingState{BorrowedNautilusBuffer::from(pendingBuffer), streamTupleLayout};
-    const auto numberOfReleasedRows = invoke(
-        +[](OperatorHandler* ptr)
-        { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNumberOfReleasedPendingRows(); },
-        handler);
-    for (nautilus::val<uint64_t> releasedIndex = 0; releasedIndex < numberOfReleasedRows; releasedIndex = releasedIndex + 1_u64)
-    {
-        const auto pendingIndex = invoke(
-            +[](OperatorHandler* ptr, const uint64_t index)
-            { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getReleasedPendingRowIndex(index); },
-            handler,
-            releasedIndex);
-        const auto timestampRaw = invoke(
-            +[](OperatorHandler* ptr, const uint64_t index)
-            { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getPendingTimestamp(index); },
-            handler,
-            pendingIndex);
-        const auto streamRecord = pendingState.at(pendingIndex);
-        emitJoinedRecord(executionCtx, streamRecord, record, nautilus::val<Timestamp>{timestampRaw});
-    }
     invoke(unlockHandler, handler);
 }
 
@@ -269,47 +247,37 @@ void StreamTableJoinPhysicalOperator::processStreamRecord(ExecutionContext& exec
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(lockHandler, handler);
 
-    const nautilus::val<Timestamp> streamTimestamp = streamTimeFunction
-        ? streamTimeFunction->getTs(executionCtx, record)
-        : nautilus::val<Timestamp>{Timestamp{Timestamp::INVALID_VALUE}};
-    const auto tableComplete = invoke(
-        +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableComplete(); }, handler);
-    const auto tableWatermark = invoke(
-        +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableWatermark(); }, handler);
-
-    const auto buffer = invoke(
-        getPendingBuffer,
-        handler,
-        executionCtx.pipelineMemoryProvider.bufferProvider,
-        nautilus::val<uint64_t>{streamTupleLayout->getSchema().getSizeInBytes()});
-    PagedVectorRef pendingState{BorrowedNautilusBuffer::from(buffer), streamTupleLayout};
-    pendingState.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
-    invoke(
-        +[](OperatorHandler* ptr, const uint64_t timestamp)
-        { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).appendPendingTimestamp(timestamp); },
-        handler,
-        streamTimestamp.convertToValue());
+    const nautilus::val<Timestamp> streamTimestamp = streamTimeFunction ? streamTimeFunction->getTs(executionCtx, record)
+                                                                        : nautilus::val<Timestamp>{Timestamp{Timestamp::INVALID_VALUE}};
+    const auto tableComplete
+        = invoke(+[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableComplete(); }, handler);
+    const auto tableWatermark
+        = invoke(+[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableWatermark(); }, handler);
 
     if (tableComplete || (streamTimeFunction && tableWatermark > streamTimestamp))
     {
-        const auto pendingIndex = invoke(
-            +[](OperatorHandler* ptr)
-            { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNumberOfPendingRows() - 1; },
-            handler);
-        invoke(
-            +[](OperatorHandler* ptr, const uint64_t index)
-            { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).markPendingReleased(index); },
-            handler,
-            pendingIndex);
         probeStreamRecord(executionCtx, record, streamTimestamp);
+    }
+    else
+    {
+        const auto buffer = invoke(
+            getPendingBuffer,
+            handler,
+            executionCtx.pipelineMemoryProvider.bufferProvider,
+            nautilus::val<uint64_t>{streamTupleLayout->getSchema().getSizeInBytes()});
+        PagedVectorRef pendingState{BorrowedNautilusBuffer::from(buffer), streamTupleLayout};
+        pendingState.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+        invoke(
+            +[](OperatorHandler* ptr, const uint64_t timestamp)
+            { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).appendPendingTimestamp(timestamp); },
+            handler,
+            streamTimestamp.convertToValue());
     }
     invoke(unlockHandler, handler);
 }
 
 void StreamTableJoinPhysicalOperator::probeStreamRecord(
-    ExecutionContext& executionCtx,
-    const Record& streamRecord,
-    const nautilus::val<Timestamp>& streamTimestamp) const
+    ExecutionContext& executionCtx, const Record& streamRecord, const nautilus::val<Timestamp>& streamTimestamp) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     const auto buffer = invoke(
@@ -320,10 +288,18 @@ void StreamTableJoinPhysicalOperator::probeStreamRecord(
     const PagedVectorRef tableState{BorrowedNautilusBuffer::from(buffer), tableTupleLayout};
 
     const auto numberOfTableRows = tableState.getNumberOfRecords();
+    nautilus::val<bool> emittedSemiJoinRecord = false;
     for (nautilus::val<uint64_t> tableIndex = 0; tableIndex < numberOfTableRows; tableIndex = tableIndex + 1_u64)
     {
         auto tableRecord = tableState.at(tableIndex);
-        emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp);
+        if (joinType == JoinType::INNER_JOIN)
+        {
+            emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, emittedSemiJoinRecord);
+        }
+        else if (!emittedSemiJoinRecord)
+        {
+            emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, emittedSemiJoinRecord);
+        }
     }
 }
 
@@ -331,7 +307,8 @@ void StreamTableJoinPhysicalOperator::emitJoinedRecord(
     ExecutionContext& executionCtx,
     const Record& streamRecord,
     Record& tableRecord,
-    const nautilus::val<Timestamp>& streamTimestamp) const
+    const nautilus::val<Timestamp>& streamTimestamp,
+    nautilus::val<bool>& emittedSemiJoinRecord) const
 {
     if (tableTimeFunction && tableTimeFunction->getTs(executionCtx, tableRecord) > streamTimestamp)
     {
@@ -350,14 +327,25 @@ void StreamTableJoinPhysicalOperator::emitJoinedRecord(
 
     if (joinFunction.execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena))
     {
-        executeChild(executionCtx, joinedRecord);
+        if (joinType == JoinType::LEFT_SEMI_JOIN)
+        {
+            Record streamOutputRecord;
+            for (const auto& field : nautilus::static_iterable(streamFields))
+            {
+                streamOutputRecord.write(field, streamRecord.read(field));
+            }
+            executeChild(executionCtx, streamOutputRecord);
+            emittedSemiJoinRecord = true;
+        }
+        else
+        {
+            executeChild(executionCtx, joinedRecord);
+        }
     }
 }
 
 void StreamTableJoinPhysicalOperator::releasePending(
-    ExecutionContext& executionCtx,
-    const nautilus::val<Timestamp>& tableWatermark,
-    const bool releaseAll) const
+    ExecutionContext& executionCtx, const nautilus::val<Timestamp>& tableWatermark, const bool releaseAll) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     const auto buffer = invoke(
@@ -367,33 +355,38 @@ void StreamTableJoinPhysicalOperator::releasePending(
         nautilus::val<uint64_t>{streamTupleLayout->getSchema().getSizeInBytes()});
     const PagedVectorRef pendingState{BorrowedNautilusBuffer::from(buffer), streamTupleLayout};
     const auto numberOfPending = invoke(
-        +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNumberOfPendingRows(); },
-        handler);
+        +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNumberOfPendingRows(); }, handler);
+    const auto compactedBuffer = invoke(
+        beginPendingCompaction,
+        handler,
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<uint64_t>{streamTupleLayout->getSchema().getSizeInBytes()});
+    PagedVectorRef compactedPendingState{BorrowedNautilusBuffer::from(compactedBuffer), streamTupleLayout};
 
     for (nautilus::val<uint64_t> index = 0; index < numberOfPending; ++index)
     {
-        const auto released = invoke(
-            +[](OperatorHandler* ptr, const uint64_t pos)
-            { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).pendingWasReleased(pos); },
-            handler,
-            index);
         const auto timestampRaw = invoke(
             +[](OperatorHandler* ptr, const uint64_t pos)
             { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getPendingTimestamp(pos); },
             handler,
             index);
         const nautilus::val<Timestamp> timestamp{timestampRaw};
-        if (!released && (releaseAll || tableWatermark > timestamp))
+        const auto streamRecord = pendingState.at(index);
+        if (releaseAll || tableWatermark > timestamp)
         {
-            const auto streamRecord = pendingState.at(index);
             probeStreamRecord(executionCtx, streamRecord, timestamp);
+        }
+        else
+        {
+            compactedPendingState.pushBack(streamRecord, executionCtx.pipelineMemoryProvider.bufferProvider);
             invoke(
-                +[](OperatorHandler* ptr, const uint64_t pos)
-                { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).markPendingReleased(pos); },
+                +[](OperatorHandler* ptr, const uint64_t pendingTimestamp)
+                { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).appendCompactedPendingTimestamp(pendingTimestamp); },
                 handler,
-                index);
+                timestampRaw);
         }
     }
+    invoke(+[](OperatorHandler* ptr) { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).finishPendingCompaction(); }, handler);
 }
 
 void StreamTableJoinPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -425,9 +418,8 @@ void StreamTableJoinPhysicalOperator::close(ExecutionContext& executionCtx, Reco
             recordBuffer.getChunkNumber(),
             recordBuffer.isLastChunk(),
             recordBuffer.getOriginId());
-        const auto tableComplete = invoke(
-            +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableComplete(); },
-            handler);
+        const auto tableComplete
+            = invoke(+[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableComplete(); }, handler);
         if (tableComplete || tableTimeFunction)
         {
             releasePending(executionCtx, tableWatermark, tableComplete);
