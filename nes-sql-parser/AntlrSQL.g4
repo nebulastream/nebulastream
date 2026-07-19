@@ -146,7 +146,7 @@ relation
 
 joinRelation
     : (joinType) JOIN right=relationPrimary joinCriteria? windowClause
-    | (joinType) JOIN TABLE right=relationPrimary joinCriteria streamTableTimeClause?
+    | (streamTableJoinType) JOIN TABLE right=relationPrimary joinCriteria streamTableTimeClause?
     | NATURAL joinType JOIN right=relationPrimary windowClause
     ;
 
@@ -159,6 +159,11 @@ joinType
     | LEFT OUTER?
     | RIGHT OUTER?
     | FULL OUTER?
+    ;
+
+streamTableJoinType
+    : INNER?
+    | LEFT? SEMI
     ;
 
 joinCriteria
@@ -493,6 +498,7 @@ RLIKE: 'RLIKE' | 'REGEXP';
 ROLLUP: 'ROLLUP';
 SCHEMA: 'SCHEMA';
 SELECT: 'SELECT' | 'select';
+SEMI: 'SEMI' | 'semi';
 SETS: 'SETS';
 SOME: 'SOME';
 START: 'START';

@@ -201,7 +201,8 @@ LogicalPlan LogicalPlanBuilder::addStreamTableJoin(
     LogicalPlan streamPlan,
     LogicalPlan tablePlan,
     const LogicalFunction& joinFunction,
-    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics)
+    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+    const StreamTableJoinLogicalOperator::JoinType joinType)
 {
     if (timeCharacteristics.has_value())
     {
@@ -215,7 +216,7 @@ LogicalPlan LogicalPlanBuilder::addStreamTableJoin(
     }
 
     return addBinaryOperatorAndUpdateSource(
-        StreamTableJoinLogicalOperator::create(joinFunction, std::move(timeCharacteristics)), streamPlan, tablePlan);
+        StreamTableJoinLogicalOperator::create(joinFunction, std::move(timeCharacteristics), joinType), streamPlan, tablePlan);
 }
 
 LogicalPlan LogicalPlanBuilder::addInferModel(Identifier modelName, const LogicalPlan& childPlan)

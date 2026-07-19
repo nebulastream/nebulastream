@@ -1,0 +1,134 @@
+# name: join/StreamTableJoinNonEquality.test
+# description: Non-equality and expression predicates for the nested-loop stream-table join
+# groups: [Join, StreamTableJoin]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR events TYPE File;
+ATTACH INLINE
+1,7
+2,8
+
+CREATE LOGICAL SOURCE lookup(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lookup TYPE File;
+ATTACH INLINE
+7,100
+7,101
+8,200
+
+CREATE SINK lt_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL
+) TYPE File;
+
+SELECT *
+FROM (SELECT * FROM events)
+INNER JOIN TABLE (SELECT * FROM lookup) ON event_key < lookup_key
+INTO lt_result;
+----
+1 7 8 200
+
+
+CREATE SINK neq_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL
+) TYPE File;
+
+SELECT *
+FROM (SELECT * FROM events)
+INNER JOIN TABLE (SELECT * FROM lookup) ON event_key <> lookup_key
+INTO neq_result;
+----
+1 7 8 200
+2 8 7 100
+2 8 7 101
+
+
+CREATE SINK range_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL
+) TYPE File;
+
+SELECT *
+FROM (SELECT * FROM events)
+INNER JOIN TABLE (SELECT * FROM lookup)
+    ON lookup_key >= event_key AND lookup_key < lookup_value
+INTO range_result;
+----
+1 7 7 100
+1 7 7 101
+1 7 8 200
+2 8 8 200
+
+
+CREATE SINK or_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL
+) TYPE File;
+
+SELECT *
+FROM (SELECT * FROM events)
+INNER JOIN TABLE (SELECT * FROM lookup)
+    ON event_key < lookup_key OR event_key = lookup_key
+INTO or_result;
+----
+1 7 7 100
+1 7 7 101
+1 7 8 200
+2 8 8 200
+
+
+CREATE SINK expression_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL
+) TYPE File;
+
+SELECT *
+FROM (SELECT * FROM events)
+INNER JOIN TABLE (SELECT * FROM lookup)
+    ON ABS(event_key + UINT64(1)) <= CASTTOTYPE(lookup_key AS UINT64)
+INTO expression_result;
+----
+1 7 8 200
+
+
+CREATE LOGICAL SOURCE timed_events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR timed_events TYPE File;
+ATTACH INLINE
+10,7,15
+11,7,25
+
+CREATE LOGICAL SOURCE timed_lookup(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL, lookup_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH INLINE
+7,100,10
+8,200,20
+10,300,30
+
+CREATE SINK timed_lt_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    event_ts UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL,
+    lookup_ts UINT64 NOT NULL
+) TYPE File;
+
+SELECT *
+FROM (SELECT * FROM timed_events)
+INNER JOIN TABLE (SELECT * FROM timed_lookup) ON event_key < lookup_key
+TIME(event_ts, lookup_ts)
+INTO timed_lt_result;
+----
+11 7 25 8 200 20

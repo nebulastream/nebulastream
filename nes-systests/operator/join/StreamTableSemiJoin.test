@@ -1,0 +1,108 @@
+# name: join/StreamTableSemiJoin.test
+# description: Left semi join against a growing watermark-gated table
+# groups: [Join, StreamTableJoin]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR events TYPE File;
+ATTACH INLINE
+1,7
+2,8
+3,9
+
+CREATE LOGICAL SOURCE lookup(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lookup TYPE File;
+ATTACH INLINE
+7,100
+7,101
+8,200
+
+CREATE SINK semi_result(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL) TYPE File;
+
+# Duplicate matches on the table side still emit the stream tuple only once.
+SELECT *
+FROM (SELECT * FROM events)
+LEFT SEMI JOIN TABLE (SELECT * FROM lookup) ON event_key = lookup_key
+INTO semi_result;
+----
+1 7
+2 8
+
+
+CREATE SINK expression_semi_result(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL) TYPE File;
+
+# SEMI without LEFT is accepted as the same left-semi operation.
+SELECT *
+FROM (SELECT * FROM events)
+SEMI JOIN TABLE (SELECT * FROM lookup)
+    ON ABS(event_key + 1) <= CASTTOTYPE(lookup_key AS UINT64)
+INTO expression_semi_result;
+----
+1 7
+
+
+CREATE LOGICAL SOURCE timed_events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR timed_events TYPE File;
+ATTACH INLINE
+10,7,15
+11,8,15
+12,8,25
+
+CREATE LOGICAL SOURCE timed_lookup(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL, lookup_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH INLINE
+7,100,10
+7,101,12
+8,200,20
+99,999,30
+
+CREATE SINK timed_semi_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    event_ts UINT64 NOT NULL
+) TYPE File;
+
+# Only table rows at or before the stream timestamp participate in existence testing.
+SELECT *
+FROM (SELECT * FROM timed_events)
+LEFT SEMI JOIN TABLE (SELECT * FROM timed_lookup) ON event_key = lookup_key
+TIME(event_ts, lookup_ts)
+INTO timed_semi_result;
+----
+10 7 15
+12 8 25
+
+
+CREATE LOGICAL SOURCE nested_events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR nested_events TYPE File;
+ATTACH INLINE
+20,7
+21,8
+22,9
+
+CREATE LOGICAL SOURCE first_lookup(first_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR first_lookup TYPE File;
+ATTACH INLINE
+7
+7
+8
+
+CREATE LOGICAL SOURCE second_lookup(second_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR second_lookup TYPE File;
+ATTACH INLINE
+8
+
+CREATE SINK nested_semi_result(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL) TYPE File;
+
+# A semi join preserves the stream schema, so its result can feed another semi join directly.
+SELECT *
+FROM (
+    SELECT *
+    FROM (SELECT * FROM nested_events)
+    LEFT SEMI JOIN TABLE (SELECT * FROM first_lookup) ON event_key = first_key
+)
+LEFT SEMI JOIN TABLE (SELECT * FROM second_lookup) ON event_key = second_key
+INTO nested_semi_result;
+----
+21 8

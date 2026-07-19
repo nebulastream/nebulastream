@@ -62,6 +62,7 @@ public:
     void enterJoinCriteria(AntlrSQLParser::JoinCriteriaContext* context) override;
     void enterJoinType(AntlrSQLParser::JoinTypeContext* context) override;
     void exitJoinType(AntlrSQLParser::JoinTypeContext* context) override;
+    void exitStreamTableJoinType(AntlrSQLParser::StreamTableJoinTypeContext* context) override;
     void enterSetOperation(AntlrSQLParser::SetOperationContext* context) override;
     void exitSetOperation(AntlrSQLParser::SetOperationContext* context) override;
 
