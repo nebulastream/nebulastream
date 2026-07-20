@@ -30,6 +30,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <ittnotify.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
@@ -60,6 +61,8 @@ namespace NES
 
 namespace
 {
+__itt_domain* taskExecutionDomain = __itt_domain_create("engine.task");
+__itt_string_handle* executeTask = __itt_string_handle_create("Execute task");
 
 /// Graceful pipeline shutdown can only happen if no task depends on the pipeline anymore.
 /// It could happen that tasks are waiting within the admission queue and do not get a chance to execute as long as the
@@ -522,7 +525,9 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
+        __itt_task_begin(taskExecutionDomain, __itt_null, __itt_null, executeTask);
         pipeline->stage->execute(task.buf, pec);
+        __itt_task_end(taskExecutionDomain);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
         return true;
     }
