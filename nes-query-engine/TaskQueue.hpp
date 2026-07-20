@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <optional>
@@ -29,9 +30,23 @@ namespace NES
 
 namespace detail
 {
-inline __itt_domain* taskQueueDomain = __itt_domain_create("engine.task-queue");
-inline __itt_string_handle* admissionQueueWrite = __itt_string_handle_create("Admission queue write");
-inline __itt_string_handle* taskQueueRead = __itt_string_handle_create("Task queue read");
+inline __itt_domain* taskQueueDomain = __itt_domain_create("engine.taskqueue");
+inline __itt_string_handle* admissionQueueWrite = __itt_string_handle_create("Blocking write");
+inline __itt_string_handle* taskQueueRead = __itt_string_handle_create("Blocking read");
+inline __itt_counter taskQueueDepth = __itt_counter_create("Depth", "engine.taskqueue");
+inline std::atomic<size_t> taskQueueDepthValue{0};
+
+inline void increaseTaskQueueDepth()
+{
+    auto depth = taskQueueDepthValue.fetch_add(1, std::memory_order_relaxed) + 1;
+    __itt_counter_set_value(taskQueueDepth, &depth);
+}
+
+inline void decreaseTaskQueueDepth()
+{
+    auto depth = taskQueueDepthValue.fetch_sub(1, std::memory_order_relaxed) - 1;
+    __itt_counter_set_value(taskQueueDepth, &depth);
+}
 }
 
 /// The TaskQueue is a central component within the QueryEngine. External components like sources or users of the system can add new tasks
@@ -54,6 +69,7 @@ class TaskQueue
 
     TaskType readElementAssumingItExists()
     {
+        detail::decreaseTaskQueueDepth();
         TaskType task;
         /// The semaphore guarantees that there is at least one element in either one of the queues.
         if (internal.try_dequeue(task))
@@ -84,6 +100,7 @@ public:
         }
         if (admission.write(std::forward<T>(task)))
         {
+            detail::increaseTaskQueueDepth();
             tasksAvailable.release();
             return true;
         }
@@ -97,6 +114,7 @@ public:
             {
                 __itt_task_end(detail::taskQueueDomain);
                 /// tasksAvailable is only increased if write to admission queue was successful.
+                detail::increaseTaskQueueDepth();
                 tasksAvailable.release();
                 return true;
             }
@@ -111,6 +129,7 @@ public:
     {
         /// The order of operation upholds the invariant. internal is unbounded which makes this write always succeed (unless oom)
         internal.enqueue(std::forward<T>(task));
+        detail::increaseTaskQueueDepth();
         tasksAvailable.release();
     }
 
