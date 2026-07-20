@@ -19,6 +19,7 @@
 #include <optional>
 #include <utility>
 
+#include <DataTypes/VarVal.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -133,6 +134,7 @@ StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(
     std::shared_ptr<PagedVectorTupleLayout> streamTupleLayout,
     std::shared_ptr<PagedVectorTupleLayout> tableTupleLayout,
     const OriginId outputOriginId,
+    std::optional<Record::RecordFieldIdentifier> markField,
     std::unique_ptr<TimeFunction> streamTimeFunction,
     std::unique_ptr<TimeFunction> tableTimeFunction)
     : operatorHandlerId(operatorHandlerId)
@@ -147,9 +149,11 @@ StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(
     , streamFields(getOrderedFieldNames(this->streamTupleLayout->getSchema()))
     , tableFields(getOrderedFieldNames(this->tableTupleLayout->getSchema()))
     , outputOriginId(outputOriginId)
+    , markField(std::move(markField))
     , streamTimeFunction(std::move(streamTimeFunction))
     , tableTimeFunction(std::move(tableTimeFunction))
 {
+    PRECONDITION(this->markField.has_value() == (joinType == JoinType::MARK_APPLY), "Only mark apply requires a mark field");
 }
 
 StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(const StreamTableJoinPhysicalOperator& other)
@@ -166,6 +170,7 @@ StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(const StreamTab
     , streamFields(other.streamFields)
     , tableFields(other.tableFields)
     , outputOriginId(other.outputOriginId)
+    , markField(other.markField)
     , streamTimeFunction(other.streamTimeFunction ? other.streamTimeFunction->clone() : nullptr)
     , tableTimeFunction(other.tableTimeFunction ? other.tableTimeFunction->clone() : nullptr)
     , child(other.child)
@@ -288,18 +293,31 @@ void StreamTableJoinPhysicalOperator::probeStreamRecord(
     const PagedVectorRef tableState{BorrowedNautilusBuffer::from(buffer), tableTupleLayout};
 
     const auto numberOfTableRows = tableState.getNumberOfRecords();
-    nautilus::val<bool> emittedSemiJoinRecord = false;
+    nautilus::val<bool> matched = false;
+    nautilus::val<bool> sawNull = false;
     for (nautilus::val<uint64_t> tableIndex = 0; tableIndex < numberOfTableRows; tableIndex = tableIndex + 1_u64)
     {
         auto tableRecord = tableState.at(tableIndex);
         if (joinType == JoinType::INNER_JOIN)
         {
-            emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, emittedSemiJoinRecord);
+            emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, matched, sawNull);
         }
-        else if (!emittedSemiJoinRecord)
+        else if (!matched)
         {
-            emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, emittedSemiJoinRecord);
+            emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, matched, sawNull);
         }
+    }
+
+    if (joinType == JoinType::MARK_APPLY)
+    {
+        PRECONDITION(markField.has_value(), "Mark join is missing its output field");
+        Record outputRecord;
+        for (const auto& field : nautilus::static_iterable(streamFields))
+        {
+            outputRecord.write(field, streamRecord.read(field));
+        }
+        outputRecord.write(markField.value(), VarVal{matched, true, !matched && sawNull});
+        executeChild(executionCtx, outputRecord);
     }
 }
 
@@ -308,7 +326,8 @@ void StreamTableJoinPhysicalOperator::emitJoinedRecord(
     const Record& streamRecord,
     Record& tableRecord,
     const nautilus::val<Timestamp>& streamTimestamp,
-    nautilus::val<bool>& emittedSemiJoinRecord) const
+    nautilus::val<bool>& matched,
+    nautilus::val<bool>& sawNull) const
 {
     if (tableTimeFunction && tableTimeFunction->getTs(executionCtx, tableRecord) > streamTimestamp)
     {
@@ -325,7 +344,13 @@ void StreamTableJoinPhysicalOperator::emitJoinedRecord(
         joinedRecord.write(field, tableRecord.read(field));
     }
 
-    if (joinFunction.execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena))
+    const auto joinResult = joinFunction.execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena);
+    if (joinType == JoinType::MARK_APPLY)
+    {
+        sawNull = sawNull || joinResult.isNull();
+        matched = matched || (!joinResult.isNull() && joinResult.getRawValueAs<nautilus::val<bool>>());
+    }
+    else if (joinResult)
     {
         if (joinType == JoinType::LEFT_SEMI_JOIN)
         {
@@ -335,7 +360,7 @@ void StreamTableJoinPhysicalOperator::emitJoinedRecord(
                 streamOutputRecord.write(field, streamRecord.read(field));
             }
             executeChild(executionCtx, streamOutputRecord);
-            emittedSemiJoinRecord = true;
+            matched = true;
         }
         else
         {

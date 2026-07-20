@@ -74,6 +74,7 @@ public:
     create(LogicalOperator child, std::vector<UnboundProjection> projections, Asterisk asterisk);
 
     [[nodiscard]] std::vector<Projection> getProjections() const;
+    [[nodiscard]] const std::vector<UnboundProjection>& getUnboundProjections() const;
     [[nodiscard]] std::unordered_map<Field, std::unordered_set<Field>> getAccessedFieldsForOutput() const override;
     [[nodiscard]] bool hasAsterisk() const;
 

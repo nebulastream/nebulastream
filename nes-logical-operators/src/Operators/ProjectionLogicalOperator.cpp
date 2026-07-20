@@ -120,6 +120,11 @@ std::vector<ProjectionLogicalOperator::Projection> ProjectionLogicalOperator::ge
     return projections | RangeBinder{self.lock()} | std::ranges::to<std::vector>();
 }
 
+const std::vector<ProjectionLogicalOperator::UnboundProjection>& ProjectionLogicalOperator::getUnboundProjections() const
+{
+    return projections;
+}
+
 std::unordered_map<Field, std::unordered_set<Field>> ProjectionLogicalOperator::getAccessedFieldsForOutput() const
 {
     auto pairs = getProjections()

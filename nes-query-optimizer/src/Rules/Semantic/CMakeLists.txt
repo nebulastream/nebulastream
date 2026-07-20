@@ -18,6 +18,7 @@ add_source_files(nes-query-optimizer
         SinkBindingRule.cpp
         InferModelResolutionRule.cpp
         CalcTargetOrderRule.cpp
+        ExtractMarkApplyRule.cpp
 )
 
 add_plugin(AnonymousSinkBinding PlanRule AnonymousSinkBindingRule.cpp)

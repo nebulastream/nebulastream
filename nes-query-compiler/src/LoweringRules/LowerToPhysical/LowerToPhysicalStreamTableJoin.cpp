@@ -112,13 +112,16 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
     auto joinWrapper = std::make_shared<PhysicalOperatorWrapper>(
         StreamTableJoinPhysicalOperator{
             handlerId,
-            join->getJoinType(),
+            join->getJoinType() == StreamTableJoinLogicalOperator::JoinType::INNER_JOIN
+                ? StreamTableJoinPhysicalOperator::JoinType::INNER_JOIN
+                : StreamTableJoinPhysicalOperator::JoinType::LEFT_SEMI_JOIN,
             std::move(physicalJoinFunction),
             std::move(streamInputBufferRef),
             std::move(tableInputBufferRef),
             std::move(streamTupleLayout),
             std::move(tableTupleLayout),
             outputOrigin,
+            std::nullopt,
             std::move(streamTimeFunction),
             std::move(tableTimeFunction)},
         outputSchema,
