@@ -20,11 +20,19 @@
 #include <semaphore>
 #include <stop_token>
 #include <utility>
+#include <ittnotify.h>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
 namespace NES
 {
+
+namespace detail
+{
+inline __itt_domain* taskQueueDomain = __itt_domain_create("engine.task-queue");
+inline __itt_string_handle* admissionQueueWrite = __itt_string_handle_create("Admission queue write");
+inline __itt_string_handle* taskQueueRead = __itt_string_handle_create("Task queue read");
+}
 
 /// The TaskQueue is a central component within the QueryEngine. External components like sources or users of the system can add new tasks
 /// to an admission queue which is bounded and will backpressure sources if necessary. Internally, WorkerThreads communicate via a shared
@@ -70,17 +78,30 @@ public:
     template <typename T = TaskType>
     bool addAdmissionTaskBlocking(const std::stop_token& stoken, T&& task)
     {
+        if (stoken.stop_requested())
+        {
+            return false;
+        }
+        if (admission.write(std::forward<T>(task)))
+        {
+            tasksAvailable.release();
+            return true;
+        }
+
+        __itt_task_begin(detail::taskQueueDomain, __itt_null, __itt_null, detail::admissionQueueWrite);
         while (!stoken.stop_requested())
         {
             /// The order of operation upholds the invariant
             /// NOLINTNEXTLINE(bugprone-use-after-move) no move happens if the write does not succeed. If a move happens, we return.
             if (admission.tryWriteUntil(std::chrono::steady_clock::now() + StopTokenCheckInterval, std::forward<T>(task)))
             {
+                __itt_task_end(detail::taskQueueDomain);
                 /// tasksAvailable is only increased if write to admission queue was successful.
                 tasksAvailable.release();
                 return true;
             }
         }
+        __itt_task_end(detail::taskQueueDomain);
         return false;
     }
 
@@ -99,13 +120,21 @@ public:
     /// the stop token.
     std::optional<TaskType> getNextTaskBlocking(const std::stop_token& stoken)
     {
+        if (tasksAvailable.try_acquire())
+        {
+            return readElementAssumingItExists();
+        }
+
+        __itt_task_begin(detail::taskQueueDomain, __itt_null, __itt_null, detail::taskQueueRead);
         while (!tasksAvailable.try_acquire_for(StopTokenCheckInterval))
         {
             if (stoken.stop_requested())
             {
+                __itt_task_end(detail::taskQueueDomain);
                 return std::nullopt;
             }
         }
+        __itt_task_end(detail::taskQueueDomain);
 
         return readElementAssumingItExists();
     }

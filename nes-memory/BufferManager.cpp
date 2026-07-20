@@ -27,6 +27,7 @@
 #include <mutex>
 #include <optional>
 #include <utility>
+#include <ittnotify.h>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
@@ -201,10 +202,18 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
 std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
 {
     detail::MemorySegment* memSegment = nullptr;
-    const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
-    if (!availableBuffers.tryReadUntil(deadline, memSegment))
+    if (!availableBuffers.read(memSegment))
     {
-        return std::nullopt;
+        static __itt_domain* bufferManagerDomain = __itt_domain_create("buffer-manager");
+        static __itt_string_handle* waitForBuffer = __itt_string_handle_create("Wait for buffer");
+        __itt_task_begin(bufferManagerDomain, __itt_null, __itt_null, waitForBuffer);
+        const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
+        if (!availableBuffers.tryReadUntil(deadline, memSegment))
+        {
+            __itt_task_end(bufferManagerDomain);
+            return std::nullopt;
+        }
+        __itt_task_end(bufferManagerDomain);
     }
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
