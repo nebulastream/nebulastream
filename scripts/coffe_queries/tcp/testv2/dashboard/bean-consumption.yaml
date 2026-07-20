@@ -1,0 +1,223 @@
+# Bean consumption per hopper — REAL-PI schema, NEW dashboard
+#
+# Feeds BeanConsumption.jsx (topic: bean-consumption).
+# Passthrough (no WINDOW) — see README.md for why (idle machine + the Pi's
+# epoch-SECONDS timestamp vs NES's ms assumption).
+#
+# Values are CUMULATIVE grams dispensed per hopper (lifetime-since-reset), NOT
+# per-window deltas. The dashboard turns them into "grams consumed since the
+# page opened" by subtracting the first reading per hopper — a raw cumulative
+# (~12 kg/hopper) can't show a single ~8 g brew (0.07% change). Deltas live in
+# the UI, not here: a NES MAX-MIN window would need the epoch-seconds timestamp
+# fix and would read 0 while idle. See BeanConsumption.jsx.
+#
+# GROUND TRUTH — 85 real rows captured off the Pi across 5 drinks (one of them a
+# decaf espresso). Per-drink bean deltas, and which hopper each came from:
+#
+#   +12 g right_front   |  +8 g left_rear  |  +7 g right_front
+#   +8 g left_rear      |  +8 g left_rear  (<- the decaf espresso)
+#
+# So: 7-12 g per drink, avg ~8.6 g, and one drink always pulls from exactly ONE
+# hopper. Against a cumulative ~11.7 kg counter that is a 0.07% change, which is
+# why the delta lives in the UI (see the paragraph above and BeanConsumption.jsx).
+#
+# Note the espresso's counters landed in TWO different log samples 265 s apart —
+# water_prod +36 first, then beans +8 / brewcycles_left +1. The Pi's log is
+# sampled sparsely, so a single drink can straddle rows. Harmless for a
+# passthrough; a trap for anything that tries to correlate fields within one row.
+#
+# ALL FOUR hoppers are published unconditionally, including ones currently
+# reading 0. Do not "optimise" one away — that mistake was made once already:
+#
+# A single capture is NOT enough to tell an unused hopper from an idle one.
+# beans_3 was flat for all 657 rows of a 2.5 h sample (2026-06-26) AND all 85
+# rows of the 2026-07-17 capture — indistinguishable from beans_4 — yet between
+# the two it went 1564 -> 2004 (+440 g). Hopper 3 is in real use at ~20 g/day;
+# both windows were simply too short to see it.
+#
+#   field         2026-06-26   2026-07-17   delta
+#   left_rear           8400        11761   +3361
+#   right_front        10649        12877   +2228
+#   beans_3             1564         2004    +440   <- "static" only in-capture
+#   beans_4                0            0      +0   <- hopper physically unloaded
+#   grinder_adjust       331          435    +104
+#
+# beans_4 == 0 means the 4th hopper currently has NO BEANS IN IT. That is a state
+# of the machine, not a defect in the field, and it is not the query's business:
+# load that hopper and the counter starts moving on its own. Which bars to DRAW
+# is a presentation decision and lives in the UI, which hides a hopper only while
+# its LIFETIME total is still 0. See BeanConsumption.jsx.
+#
+# The mock (scripts/coffe-server-pi-schema.py:192) picks a hopper at random from
+# all four, so with the mock every bar is live — which is exactly the regression
+# test for this: if a hopper is ever dropped from the query again, the mock demo
+# visibly loses a bar.
+#
+# The trailing \r on beans_4 (last CSV field) is SAFE for these INT32 columns:
+# RawValueParser -> from_chars_with_exception (nes-common/include/Util/
+# Strings.hpp:85) calls std::from_chars, which parses the leading digits, returns
+# ec == std::errc(), and reports the unconsumed \r only via ptr — explicitly
+# discarded as `auto [_, ec]`. So "0\r" -> 0 is guaranteed by the standard, not
+# luck. This does NOT hold for FLOAT/BOOL/CHAR columns: those have custom
+# specializations. Keep the last field integral.
+#
+# total_coffee_bean_quantity_g is the PARENT and stays out — same trap as water.
+# Verified on the live rows: left_rear + right_front + beans_3 + grinder_adjust
+#   = 11761 + 12877 + 2004 + 435 = 27077 = total_coffee_bean_quantity_g, exactly.
+# The deltas agree too (+24 + 19 = +43).
+
+query: |
+  SELECT
+    total_coffee_beans_left_rear_g   AS `leftRear`,
+    total_coffee_beans_right_front_g AS `rightFront`,
+    total_coffee_beans_3_g           AS `hopper3`,
+    total_coffee_beans_4_g           AS `hopper4`
+  FROM COFFEE_MACHINE
+  INTO MQTT_SINK
+
+sinks:
+  - name: MQTT_SINK
+    host: 127.0.0.1:9090
+    type: MQTT
+    config:
+      serverURI: mqtt://host.docker.internal:1883
+      clientId: mqtt_sink_bean_consumption
+      topic: bean-consumption
+      qos: 1
+      output_format: JSON
+    parser_config: {}
+    schema:
+      # Backticks REQUIRED (CLIStarter.cpp:76-96 uppercases unquoted names);
+      # YAML quotes REQUIRED (` is a reserved YAML indicator).
+      - name: "`leftRear`"
+        type: INT32
+      - name: "`rightFront`"
+        type: INT32
+      - name: "`hopper3`"
+        type: INT32
+      - name: "`hopper4`"
+        type: INT32
+
+# 43 fields — matches the REAL Pi exactly (verified against raw rows read through
+# the tunnel). Do NOT add machine_id: the real Pi does not send it, and any extra
+# field shifts every subsequent column by one.
+logical:
+  - name: COFFEE_MACHINE
+    schema:
+      - name: ts_ms
+        type: UINT64
+      - name: total_water_quantity_ticks
+        type: INT32
+      - name: total_water_products_ticks
+        type: INT32
+      - name: total_water_rinse_ticks
+        type: INT32
+      - name: total_water_cleaning_ticks
+        type: INT32
+      - name: rfu
+        type: INT32
+      - name: total_coffee_bean_quantity_g
+        type: INT32
+      - name: total_coffee_beans_left_rear_g
+        type: INT32
+      - name: total_coffee_beans_right_front_g
+        type: INT32
+      - name: total_coffee_powder_chute_g
+        type: INT32
+      - name: cleaning_counter
+        type: INT32
+      - name: brewcycles_left
+        type: INT32
+      - name: brewcycles_right
+        type: INT32
+      - name: cycles_rinse_clean_left
+        type: INT32
+      - name: cycles_rinse_clean_right
+        type: INT32
+      - name: time_milk_cs
+        type: INT32
+      - name: heating_time_boiler_left_cs
+        type: INT32
+      - name: heating_time_boiler_right_cs
+        type: INT32
+      - name: time_hot_water_cs
+        type: INT32
+      - name: time_steam_left_cs
+        type: INT32
+      - name: time_steam_right_cs
+        type: INT32
+      - name: heat_time_steam_boiler_1_cs
+        type: INT32
+      - name: heat_time_steam_boiler_2_cs
+        type: INT32
+      - name: time_air_pump_cs
+        type: INT32
+      - name: milk_cycles_left
+        type: INT32
+      - name: milk_cycles_right
+        type: INT32
+      - name: reset_date_day
+        type: INT32
+      - name: reset_date_month
+        type: INT32
+      - name: reset_date_year
+        type: INT32
+      - name: rfu2
+        type: INT32
+      - name: reset_time_second
+        type: INT32
+      - name: reset_time_minute
+        type: INT32
+      - name: reset_time_hour
+        type: INT32
+      - name: rfu3
+        type: INT32
+      - name: time_milk_steam_left_cs
+        type: INT32
+      - name: time_milk_steam_right_cs
+        type: INT32
+      - name: total_coffee_beans_grinder_adjustment_g
+        type: INT32
+      - name: absolute_counter
+        type: INT32
+      - name: time_powder_cs
+        type: INT32
+      - name: total_powder_quantity_left_g
+        type: INT32
+      - name: total_powder_quantity_right_g
+        type: INT32
+      - name: total_coffee_beans_3_g
+        type: INT32
+      - name: total_coffee_beans_4_g
+        type: INT32
+
+# NES TCP source = TCP CLIENT. The worker DIALS OUT to socket_host:socket_port.
+# All config keys are snake_case (verified in nes-plugins/Sources/TCPSource/
+# TCPSource.hpp). socket_domain (AF_INET) and socket_type (SOCK_STREAM) are the
+# defaults, so they can be omitted.
+#
+# tuple_delimiter is typed `char` (TCPSource.hpp:121-123), so "\r\n" is NOT
+# expressible even though the Pi terminates rows with CRLF. With "\n" the
+# trailing \r lands on the LAST field only (total_coffee_beans_4_g). This query
+# DOES select it, and that is fine — see the from_chars note in the header: the
+# \r is safely ignored for integer columns.
+physical:
+  # Real Pi, reached via the SSH tunnel on the Mac (see ../PI-TUNNEL-SETUP.md)
+  - logical: COFFEE_MACHINE
+    host: 127.0.0.1:9090
+    type: TCP
+    parser_config:
+      type: CSV
+      tuple_delimiter: "\n"
+      field_delimiter: ","
+    source_config:
+      socket_host: host.docker.internal
+      socket_port: 2222
+      socket_buffer_size: 65536   # read buffer in BYTES
+      flush_interval_ms: 100
+      connect_timeout_seconds: 86400 # the Pi can be slow/closed; wait rather than fail fast
+
+workers:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 10000

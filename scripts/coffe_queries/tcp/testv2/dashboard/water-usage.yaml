@@ -1,0 +1,226 @@
+# Water usage query — REAL Pi TCP source, MachineCounters schema, NEW dashboard
+#
+# Feeds WaterUsage.jsx (topic: water-usage). That component reads a flat message
+# {productsQuantity, rinseQuantity, cleaningQuantity} and DROPS the message
+# unless all three fields are present, so all three must come from one row.
+#
+# The chart is a DOUGHNUT: the slices are parts of a whole and the centre label
+# is their SUM. That makes the field choice below load-bearing, not cosmetic.
+#
+# PASSTHROUGH — no WINDOW, no aggregation. Publishes the raw cumulative counters
+# straight from each incoming row (same proven shape as beans-ricardo-water.yaml).
+# Two consequences, both deliberate:
+#   * The tiles always show real non-zero values, even while the machine is idle
+#     (windowed MAX-MIN deltas would read 0 on an idle machine).
+#   * Nothing reads ts_ms, which sidesteps a real trap: the Pi's first field is
+#     epoch SECONDS, but NES always interprets a window timestamp as MILLISECONDS
+#     (TimeCharacteristic.cpp:41 defaults to TimeUnit(1); the SQL grammar's
+#     `timestampParameter` accepts no unit). A windowed query here would need
+#     ~2.8h of data per "10 SEC" window.
+#
+# Field mapping (real counters -> dashboard field names):
+#   total_water_products_ticks  -> productsQuantity  (direct match)
+#   total_water_rinse_ticks     -> rinseQuantity     (direct match)
+#   total_water_cleaning_ticks  -> cleaningQuantity  (direct match)
+#
+# total_water_quantity_ticks is DELIBERATELY NOT SELECTED. It is the PARENT
+# total, not a fourth sibling:
+#
+#   total_water_quantity_ticks (584918)
+#     = products (209065) + rinse (137436) + cleaning (236916)   [= 583417]
+#     + an unattributed remainder of 1501
+#
+# It previously fed the dashboard's `purgeQuantity`. In a bar chart that was one
+# oversized bar; in a doughnut it counts the total once as itself and once inside
+# its own children, so the centre read exactly 2.00x the real water and the
+# "Purge" slice was pinned at 50% of the ring by construction.
+#
+# There is no purge counter on this machine. All 43 fields were checked: exactly
+# four measure water, and three of them are the named children above. The
+# dashboard has expected a `purgeQuantity` since its first commit, but no
+# producer has ever supplied one.
+#
+# RESOLVED (was: "the remainder COULD be purge, one sample cannot tell").
+# 24 days of real counters settle it — the remainder does NOT accumulate. It sat
+# at exactly 1220 ticks for the first twelve days, stepped once to 1501 on
+# 2026-07-08, and stayed flat after. A purge counter would grow with use; a
+# fixed offset that jumps once is a recalibration artifact. So there is no purge
+# counter on this machine and nothing to add back here.
+#
+# Units: TICKS — flowmeter pulses, not litres. Published raw and converted in the
+# dashboard, deliberately: NES would do INTEGER division on these INT32 fields,
+# so a tick->litre divide here would truncate (small values floor to 0). The
+# factor is not on the wire. See ML_PER_TICK in WaterUsage.jsx — the single
+# conversion point — currently a PROVISIONAL 1.0 ml/tick. It replaced an earlier
+# 0.36 that the real data contradicts: at 0.36 a brew (30-55 ticks) works out to
+# 11-20 ml, which is not a physically possible espresso. Needs confirming by
+# dispensing a known volume against total_water_quantity_ticks.
+#
+# Counters are cumulative SINCE THE LAST RESET, not lifetime. The row carries the
+# reset stamp: reset_date_day/month/year + reset_time_hour/minute/second
+# (12/6/25 15:36:23 on the real machine). A reset zeroes every counter — harmless
+# for this passthrough (the doughnut just restarts), but it would make any
+# windowed MAX-MIN delta go negative.
+#
+# NOTE: SELECT aliases MUST be backtick-quoted to preserve camelCase — unquoted
+# identifiers are uppercased by the parser (nes-sql-parser/src/
+# CommonParserFunctions.cpp:45-51), and the dashboard reads exact camelCase.
+
+query: |
+  SELECT
+    total_water_products_ticks AS `productsQuantity`,
+    total_water_rinse_ticks    AS `rinseQuantity`,
+    total_water_cleaning_ticks AS `cleaningQuantity`
+  FROM COFFEE_MACHINE
+  INTO MQTT_SINK
+
+sinks:
+  - name: MQTT_SINK
+    host: 127.0.0.1:9090
+    type: MQTT
+    config:
+      # Worker runs in the devcontainer; mosquitto runs native on the Mac host.
+      # host.docker.internal = the Mac host, as seen from inside the container.
+      serverURI: mqtt://host.docker.internal:1883
+      clientId: mqtt_sink_water_usage
+      topic: water-usage
+      qos: 1
+      output_format: JSON
+    parser_config: {}
+    schema:
+      # Backticks are REQUIRED here too, not just on the SQL aliases:
+      # bindIdentifierName (nes-frontend/apps/cli/CLIStarter.cpp:76-96) strips
+      # backticks and keeps case, but UPPERCASES anything unquoted. Without them
+      # the sink declares PRODUCTSQUANTITY while the backticked query alias
+      # produces productsQuantity -> "cannot infer schema" (error 2003).
+      # The YAML quotes are also required: ` is a reserved YAML indicator and
+      # cannot start a plain scalar.
+      - name: "`productsQuantity`"
+        type: INT32
+      - name: "`rinseQuantity`"
+        type: INT32
+      - name: "`cleaningQuantity`"
+        type: INT32
+
+# 43 fields — matches the REAL Pi exactly (verified against raw rows read through
+# the tunnel). Do NOT add machine_id: the real Pi does not send it, and any extra
+# field shifts every subsequent column by one.
+logical:
+  - name: COFFEE_MACHINE
+    schema:
+      - name: ts_ms
+        type: UINT64
+      - name: total_water_quantity_ticks
+        type: INT32
+      - name: total_water_products_ticks
+        type: INT32
+      - name: total_water_rinse_ticks
+        type: INT32
+      - name: total_water_cleaning_ticks
+        type: INT32
+      - name: rfu
+        type: INT32
+      - name: total_coffee_bean_quantity_g
+        type: INT32
+      - name: total_coffee_beans_left_rear_g
+        type: INT32
+      - name: total_coffee_beans_right_front_g
+        type: INT32
+      - name: total_coffee_powder_chute_g
+        type: INT32
+      - name: cleaning_counter
+        type: INT32
+      - name: brewcycles_left
+        type: INT32
+      - name: brewcycles_right
+        type: INT32
+      - name: cycles_rinse_clean_left
+        type: INT32
+      - name: cycles_rinse_clean_right
+        type: INT32
+      - name: time_milk_cs
+        type: INT32
+      - name: heating_time_boiler_left_cs
+        type: INT32
+      - name: heating_time_boiler_right_cs
+        type: INT32
+      - name: time_hot_water_cs
+        type: INT32
+      - name: time_steam_left_cs
+        type: INT32
+      - name: time_steam_right_cs
+        type: INT32
+      - name: heat_time_steam_boiler_1_cs
+        type: INT32
+      - name: heat_time_steam_boiler_2_cs
+        type: INT32
+      - name: time_air_pump_cs
+        type: INT32
+      - name: milk_cycles_left
+        type: INT32
+      - name: milk_cycles_right
+        type: INT32
+      - name: reset_date_day
+        type: INT32
+      - name: reset_date_month
+        type: INT32
+      - name: reset_date_year
+        type: INT32
+      - name: rfu2
+        type: INT32
+      - name: reset_time_second
+        type: INT32
+      - name: reset_time_minute
+        type: INT32
+      - name: reset_time_hour
+        type: INT32
+      - name: rfu3
+        type: INT32
+      - name: time_milk_steam_left_cs
+        type: INT32
+      - name: time_milk_steam_right_cs
+        type: INT32
+      - name: total_coffee_beans_grinder_adjustment_g
+        type: INT32
+      - name: absolute_counter
+        type: INT32
+      - name: time_powder_cs
+        type: INT32
+      - name: total_powder_quantity_left_g
+        type: INT32
+      - name: total_powder_quantity_right_g
+        type: INT32
+      - name: total_coffee_beans_3_g
+        type: INT32
+      - name: total_coffee_beans_4_g
+        type: INT32
+
+# NES TCP source = TCP CLIENT. The worker DIALS OUT to socket_host:socket_port.
+# All config keys are snake_case (verified in nes-plugins/Sources/TCPSource/
+# TCPSource.hpp). socket_domain (AF_INET) and socket_type (SOCK_STREAM) are the
+# defaults, so they can be omitted.
+#
+# tuple_delimiter is typed `char` (TCPSource.hpp:121-123), so "\r\n" is NOT
+# expressible even though the Pi terminates rows with CRLF. With "\n" the
+# trailing \r lands on the LAST field only (total_coffee_beans_4_g), which this
+# query does not select — harmless here, but a trap for any query that does.
+physical:
+  # Real Pi, reached via the SSH tunnel on the Mac (see ../PI-TUNNEL-SETUP.md)
+  - logical: COFFEE_MACHINE
+    host: 127.0.0.1:9090
+    type: TCP
+    parser_config:
+      type: CSV
+      tuple_delimiter: "\n"
+      field_delimiter: ","
+    source_config:
+      socket_host: host.docker.internal
+      socket_port: 2222
+      socket_buffer_size: 65536   # read buffer in BYTES
+      flush_interval_ms: 100
+      connect_timeout_seconds: 86400 # the Pi can be slow/closed; wait rather than fail fast
+
+workers:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 10000

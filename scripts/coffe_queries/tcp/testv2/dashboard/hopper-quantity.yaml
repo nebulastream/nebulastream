@@ -1,0 +1,163 @@
+# Hopper quantity — REAL-PI schema, NEW dashboard
+#
+# Feeds HopperQuantity.jsx (topic: hopper-quantity).
+#
+# RELABEL: the real schema has NO hopper *level* sensor — only cumulative grams
+# dispensed per hopper. So this publishes the same cumulative counters as
+# bean-consumption; the chart plots their movement over time. Real numbers,
+# relabeled meaning (see README.md).
+
+query: |
+  SELECT
+    total_coffee_beans_left_rear_g   AS `leftRear`,
+    total_coffee_beans_right_front_g AS `rightFront`,
+    total_coffee_beans_3_g           AS `hopper3`,
+    total_coffee_beans_4_g           AS `hopper4`
+  FROM COFFEE_MACHINE
+  INTO MQTT_SINK
+
+sinks:
+  - name: MQTT_SINK
+    host: 127.0.0.1:9090
+    type: MQTT
+    config:
+      serverURI: mqtt://host.docker.internal:1883
+      clientId: mqtt_sink_hopper_quantity
+      topic: hopper-quantity
+      qos: 1
+      output_format: JSON
+    parser_config: {}
+    schema:
+      # Backticks REQUIRED (CLIStarter.cpp:76-96 uppercases unquoted names);
+      # YAML quotes REQUIRED (` is a reserved YAML indicator).
+      - name: "`leftRear`"
+        type: INT32
+      - name: "`rightFront`"
+        type: INT32
+      - name: "`hopper3`"
+        type: INT32
+      - name: "`hopper4`"
+        type: INT32
+
+# 43 fields — matches the REAL Pi exactly (verified against raw rows read through
+# the tunnel). Do NOT add machine_id: the real Pi does not send it, and any extra
+# field shifts every subsequent column by one.
+logical:
+  - name: COFFEE_MACHINE
+    schema:
+      - name: ts_ms
+        type: UINT64
+      - name: total_water_quantity_ticks
+        type: INT32
+      - name: total_water_products_ticks
+        type: INT32
+      - name: total_water_rinse_ticks
+        type: INT32
+      - name: total_water_cleaning_ticks
+        type: INT32
+      - name: rfu
+        type: INT32
+      - name: total_coffee_bean_quantity_g
+        type: INT32
+      - name: total_coffee_beans_left_rear_g
+        type: INT32
+      - name: total_coffee_beans_right_front_g
+        type: INT32
+      - name: total_coffee_powder_chute_g
+        type: INT32
+      - name: cleaning_counter
+        type: INT32
+      - name: brewcycles_left
+        type: INT32
+      - name: brewcycles_right
+        type: INT32
+      - name: cycles_rinse_clean_left
+        type: INT32
+      - name: cycles_rinse_clean_right
+        type: INT32
+      - name: time_milk_cs
+        type: INT32
+      - name: heating_time_boiler_left_cs
+        type: INT32
+      - name: heating_time_boiler_right_cs
+        type: INT32
+      - name: time_hot_water_cs
+        type: INT32
+      - name: time_steam_left_cs
+        type: INT32
+      - name: time_steam_right_cs
+        type: INT32
+      - name: heat_time_steam_boiler_1_cs
+        type: INT32
+      - name: heat_time_steam_boiler_2_cs
+        type: INT32
+      - name: time_air_pump_cs
+        type: INT32
+      - name: milk_cycles_left
+        type: INT32
+      - name: milk_cycles_right
+        type: INT32
+      - name: reset_date_day
+        type: INT32
+      - name: reset_date_month
+        type: INT32
+      - name: reset_date_year
+        type: INT32
+      - name: rfu2
+        type: INT32
+      - name: reset_time_second
+        type: INT32
+      - name: reset_time_minute
+        type: INT32
+      - name: reset_time_hour
+        type: INT32
+      - name: rfu3
+        type: INT32
+      - name: time_milk_steam_left_cs
+        type: INT32
+      - name: time_milk_steam_right_cs
+        type: INT32
+      - name: total_coffee_beans_grinder_adjustment_g
+        type: INT32
+      - name: absolute_counter
+        type: INT32
+      - name: time_powder_cs
+        type: INT32
+      - name: total_powder_quantity_left_g
+        type: INT32
+      - name: total_powder_quantity_right_g
+        type: INT32
+      - name: total_coffee_beans_3_g
+        type: INT32
+      - name: total_coffee_beans_4_g
+        type: INT32
+
+# NES TCP source = TCP CLIENT. The worker DIALS OUT to socket_host:socket_port.
+# All config keys are snake_case (verified in nes-plugins/Sources/TCPSource/
+# TCPSource.hpp). socket_domain (AF_INET) and socket_type (SOCK_STREAM) are the
+# defaults, so they can be omitted.
+#
+# tuple_delimiter is typed `char` (TCPSource.hpp:121-123), so "\r\n" is NOT
+# expressible even though the Pi terminates rows with CRLF. With "\n" the
+# trailing \r lands on the LAST field only (total_coffee_beans_4_g), which this
+# query does not select — harmless here, but a trap for any query that does.
+physical:
+  # Real Pi, reached via the SSH tunnel on the Mac (see ../PI-TUNNEL-SETUP.md)
+  - logical: COFFEE_MACHINE
+    host: 127.0.0.1:9090
+    type: TCP
+    parser_config:
+      type: CSV
+      tuple_delimiter: "\n"
+      field_delimiter: ","
+    source_config:
+      socket_host: host.docker.internal
+      socket_port: 2222
+      socket_buffer_size: 65536   # read buffer in BYTES
+      flush_interval_ms: 100
+      connect_timeout_seconds: 86400 # the Pi can be slow/closed; wait rather than fail fast
+
+workers:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 10000
