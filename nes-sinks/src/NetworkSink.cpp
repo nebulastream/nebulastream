@@ -28,7 +28,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -124,7 +123,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         children.reserve(currentBuffer->getNumberOfChildBuffers());
         for (size_t childIdx = 0; childIdx < currentBuffer->getNumberOfChildBuffers(); ++childIdx)
         {
-            auto childBuffer = currentBuffer->loadChildBuffer(VariableSizedAccess::Index(childIdx));
+            auto childBuffer = currentBuffer->loadChildBuffer(ChildBufferIndex(childIdx));
             auto childMemory = childBuffer.getAvailableMemoryArea<const uint8_t>();
             children.emplace_back(childMemory);
         }

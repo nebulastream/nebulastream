@@ -27,7 +27,6 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 
@@ -86,9 +85,9 @@ uint64_t HashMapSlice::getNumHashMapsPerInputStream() const
     return numHashmapsPerInputStream;
 }
 
-const TupleBuffer* HashMapSlice::getHashMapBufferRef(const VariableSizedAccess::Index childBufferIndex) const
+const TupleBuffer* HashMapSlice::getHashMapBufferRef(const ChildBufferIndex childBufferIndex) const
 {
-    PRECONDITION(childBufferIndex.getRawIndex() < numHashMaps, "Hash Map index out of range in hash map slice loadHashMapBuffer!");
-    return &hashMapBuffers[childBufferIndex.getRawIndex()];
+    PRECONDITION(childBufferIndex.getRawValue() < numHashMaps, "Hash Map index out of range in hash map slice loadHashMapBuffer!");
+    return &hashMapBuffers[childBufferIndex.getRawValue()];
 }
 }

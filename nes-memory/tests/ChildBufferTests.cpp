@@ -38,7 +38,7 @@ TEST(ChildBufferTests, StoreAndLoadChildBufferOddSizes)
 
         const auto bufferSizeBeforeStore = buffer.value().getBufferSize();
         const auto bufferIndex = baseBuffer.storeChildBuffer(buffer.value());
-        EXPECT_EQ(bufferIndex.getRawIndex(), i);
+        EXPECT_EQ(bufferIndex.getRawValue(), i);
         EXPECT_EQ(baseBuffer.getNumberOfChildBuffers(), i + 1);
 
         auto loadedBuffer = baseBuffer.loadChildBuffer(bufferIndex);
@@ -61,7 +61,7 @@ TEST(ChildBufferTests, StoreAndLoadChildBufferPowerOfTwoSizes)
 
         const auto bufferSizeBeforeStore = buffer.value().getBufferSize();
         const auto bufferIndex = baseBuffer.storeChildBuffer(buffer.value());
-        EXPECT_EQ(bufferIndex.getRawIndex(), i);
+        EXPECT_EQ(bufferIndex.getRawValue(), i);
         EXPECT_EQ(baseBuffer.getNumberOfChildBuffers(), i + 1);
 
         auto loadedBuffer = baseBuffer.loadChildBuffer(bufferIndex);
@@ -96,7 +96,7 @@ TEST(ChildBufferTests, StoreAndLoadChildBufferRandomSizes)
 
         const auto bufferSizeBeforeStore = buffer.value().getBufferSize();
         const auto bufferIndex = baseBuffer.storeChildBuffer(buffer.value());
-        EXPECT_EQ(bufferIndex.getRawIndex(), i);
+        EXPECT_EQ(bufferIndex.getRawValue(), i);
         EXPECT_EQ(baseBuffer.getNumberOfChildBuffers(), i + 1);
 
         auto loadedBuffer = baseBuffer.loadChildBuffer(bufferIndex);

@@ -17,15 +17,12 @@
 #include <compare>
 #include <cstdint>
 #include <ostream>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
-namespace detail
-{
-class BufferControlBlock;
-}
 
 /// @brief This class is a helper class for accessing variable sized data in a tuple buffer.
 /// We store variable sized data as child buffer. To reference one variable sized data object, we require an index to the child buffer and
@@ -36,36 +33,9 @@ class BufferControlBlock;
 /// This allows us to have 4 billion child buffer (unless we have only one var sized object per child)
 struct VariableSizedAccess
 {
-    class Index
-    {
-    public:
-        /// Required for allowing VariableSizedAccess to access offset in VariableSizedAccess::getCombinedIdxOffset()
-        friend struct VariableSizedAccess;
-
-        /// Required for allowing BufferControlBlock to access offset in BufferControlBlock::loadChildBuffer()
-        friend class detail::BufferControlBlock;
-
-        using Underlying = uint32_t;
-        static constexpr auto UnderlyingBits = sizeof(Underlying) * 8;
-
-        explicit Index(uint64_t index) noexcept;
-
-        [[nodiscard]] Underlying getRawIndex() const;
-        friend std::ostream& operator<<(std::ostream& os, const Index& index);
-        friend std::strong_ordering operator<=>(const Index& lhs, const Index& rhs) = default;
-
-        friend Underlying operator/(const Index& index, Underlying other);
-        friend Underlying operator%(const Index& index, Underlying other);
-
-    private:
-        Underlying index;
-    };
-
     class Offset
     {
     public:
-        /// Required for allowing VariableSizedAccess to access offset in VariableSizedAccess::getCombinedIdxOffset()
-        friend struct VariableSizedAccess;
         using Underlying = uint32_t;
         static constexpr auto UnderlyingBits = sizeof(Underlying) * 8;
 
@@ -101,21 +71,24 @@ struct VariableSizedAccess
     /// By calling the C++-runtime (via nautilus::invoke()), we do not call any conversion but rather "bit_cast" the CombinedIndex.
     /// Thus, we initialize the values of the offset and index indirectly and not via the constructor call.
     Offset offset;
-    Index index;
+    ChildBufferIndex index;
     Size size;
 
 public:
     VariableSizedAccess() : offset(0), index(0), size(0) { }
 
-    explicit VariableSizedAccess(const Index index, const Size size) : offset(0), index(index), size(size) { }
+    explicit VariableSizedAccess(const ChildBufferIndex index, const Size size) : offset(0), index(index), size(size) { }
 
-    explicit VariableSizedAccess(const Index index, const Offset offset, const Size size) : offset(offset), index(index), size(size) { }
+    explicit VariableSizedAccess(const ChildBufferIndex index, const Offset offset, const Size size)
+        : offset(offset), index(index), size(size)
+    {
+    }
 
     explicit VariableSizedAccess(const Offset offset, const Size size) : offset(offset), index(0), size(size) { }
 
     ~VariableSizedAccess() = default;
 
-    [[nodiscard]] Index getIndex() const { return index; }
+    [[nodiscard]] ChildBufferIndex getIndex() const { return index; }
 
     [[nodiscard]] Offset getOffset() const { return offset; };
 
@@ -130,10 +103,8 @@ public:
 static_assert(sizeof(VariableSizedAccess) == 16, "VariableSizedAccess must be 16 bytes");
 static_assert(sizeof(VariableSizedAccess::Size) == 8, "VariableSizedAccess::Size must be 8 bytes");
 static_assert(sizeof(VariableSizedAccess::Offset) == 4, "VariableSizedAccess::Offset must be 4 bytes");
-static_assert(sizeof(VariableSizedAccess::Index) == 4, "VariableSizedAccess::Index must be 4 bytes");
 }
 
-FMT_OSTREAM(NES::VariableSizedAccess::Index);
 FMT_OSTREAM(NES::VariableSizedAccess::Offset);
 FMT_OSTREAM(NES::VariableSizedAccess::Size);
 FMT_OSTREAM(NES::VariableSizedAccess);

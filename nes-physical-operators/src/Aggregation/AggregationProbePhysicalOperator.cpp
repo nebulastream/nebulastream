@@ -31,7 +31,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -72,7 +71,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         {
             INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
             /// load the first hash map
-            const VariableSizedAccess::Index bufferIndex{0};
+            const ChildBufferIndex bufferIndex{0};
             auto buffer = parent->loadChildBuffer(bufferIndex);
             const auto chm = ChainedHashMap::load(buffer);
             /// get a buffer and for the final hash map with the same config
@@ -108,7 +107,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             +[](TupleBuffer* parent, uint32_t curHashMapIdx, TupleBuffer* hashMapBuffer)
             {
                 INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
-                const VariableSizedAccess::Index bufferIndex{curHashMapIdx};
+                const ChildBufferIndex bufferIndex{curHashMapIdx};
                 *hashMapBuffer = parent->loadChildBuffer(bufferIndex);
             },
             recordBuffer.getReference(),

@@ -20,7 +20,6 @@
 #include <span>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -62,7 +61,7 @@ TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& pr
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
     {
-        const VariableSizedAccess::Index varSizedIndex{childIdx};
+        const ChildBufferIndex varSizedIndex{static_cast<uint32_t>(childIdx)};
         auto childBuffer = buffer.loadChildBuffer(varSizedIndex);
         auto copiedChildBuffer = deepCopyBuffer(childBuffer, provider);
         auto ret = copiedBuffer.storeChildBuffer(copiedChildBuffer);

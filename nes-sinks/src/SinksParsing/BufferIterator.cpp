@@ -13,10 +13,10 @@
 */
 
 #include <SinksParsing/BufferIterator.hpp>
+#include "Runtime/TupleBuffer.hpp"
 
 #include <cstdint>
 #include <optional>
-#include <Runtime/VariableSizedAccess.hpp>
 
 namespace NES
 {
@@ -39,7 +39,7 @@ std::optional<BufferIterator::BufferElement> BufferIterator::getNextElement()
 
     /// Iterate through the children
     /// Child buffers store the number of written bytes in them as the number of tuples
-    const TupleBuffer childBuffer = tupleBuffer.loadChildBuffer(VariableSizedAccess::Index(bufferIndex - 1));
+    const TupleBuffer childBuffer = tupleBuffer.loadChildBuffer(ChildBufferIndex(bufferIndex - 1));
     ++bufferIndex;
     return std::optional<BufferElement>({.buffer = childBuffer, .contentLength = childBuffer.getNumberOfTuples()});
 }

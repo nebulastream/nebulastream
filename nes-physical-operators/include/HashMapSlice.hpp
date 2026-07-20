@@ -25,7 +25,6 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/Slice.hpp>
 #include <CompilationContext.hpp>
 
@@ -93,7 +92,7 @@ protected:
     static_assert(std::is_trivially_copyable_v<HashMapSliceParams>);
 
     /// @brief Loads a specific hash map from the slice based on the index
-    [[nodiscard]] const TupleBuffer* getHashMapBufferRef(VariableSizedAccess::Index childBufferIndex) const;
+    [[nodiscard]] const TupleBuffer* getHashMapBufferRef(ChildBufferIndex childBufferIndex) const;
 
     /// metadata
     uint64_t numHashMaps;
