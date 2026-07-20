@@ -1,7 +1,8 @@
-name: NES PR CI
+name: NES PR Code CI
 description: |
-  The following pipeline is meant to run for every PR.
+  The following pipeline is meant to run for every PR that touches non-documentation files.
   It will also apply the format check. If these steps are successful, it will try to build the PR and run the tests.
+  Documentation-only PRs are handled by pr-docs.yml.
   If this pr is called with act, it has to be used with a custom event.json and called via `act -e event.json`.
   Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
 on:
@@ -22,45 +23,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Decide whether this PR only touches docs (see .github/ci/full-ci-skip-paths.txt). If so, every
-  # heavy caller below is skipped, and the per-area "<area> Done" gate jobs (which always run) report
-  # success so branch protection is satisfied without dispatching a single build.
-  detect-changes:
+  # Decide whether this PR touches any non-documentation file (see .github/ci/full-ci-skip-paths.txt).
+  # If it does not, every heavy caller below is skipped and the single "Code CI Done" gate (which
+  # always runs) reports success so branch protection is satisfied without dispatching a build.
+  classify:
     runs-on: ubuntu-24.04
     outputs:
-      docs_only: ${{ steps.decide.outputs.docs_only }}
+      hasCodeChanges: ${{ steps.classify.outputs.hasCodeChanges }}
+      hasDocChanges: ${{ steps.classify.outputs.hasDocChanges }}
     steps:
       - uses: actions/checkout@v5
         with:
           # Full history so tj-actions can diff base_sha..sha; a shallow clone yields an empty diff.
           fetch-depth: 0
-      - uses: tj-actions/changed-files@v44
-        id: filter
+      - id: classify
+        uses: ./.github/actions/classify-pr-changes
         with:
-          base_sha: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
-          sha: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
-          files_from_source_file: .github/ci/full-ci-skip-paths.txt
-      - id: decide
-        shell: bash
-        run: |
-          # docs_only requires POSITIVE evidence: at least one skip-listed (doc) file changed
-          # (any_changed) AND every changed file is skip-listed (only_changed). An empty or failed
-          # diff yields any_changed=false, so we fall through to docs_only=false and run the full
-          # pipeline. Fail-safe: a real code change is never skipped.
-          only='${{ steps.filter.outputs.only_changed }}'
-          any='${{ steps.filter.outputs.any_changed }}'
-          echo "only_changed=$only any_changed=$any"
-          if [ "$only" = "true" ] && [ "$any" = "true" ]; then
-            echo "docs_only=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "docs_only=false" >> "$GITHUB_OUTPUT"
-          fi
+          base-sha: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          head-sha: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
 
   get-dev-images:
-    needs: [ detect-changes ]
+    needs: [ classify ]
     # 'edited' fires on title/body/base changes; only rerun the pipeline when the base branch changed.
-    # Also skipped on docs-only PRs so nothing heavy is dispatched.
-    if: ${{ (github.event.action != 'edited' || github.event.changes.base != null) && needs.detect-changes.outputs.docs_only != 'true' }}
+    # Also skipped when nothing but documentation changed so nothing heavy is dispatched.
+    if: ${{ (github.event.action != 'edited' || github.event.changes.base != null) && needs.classify.outputs.hasCodeChanges == 'true' }}
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
@@ -68,8 +54,8 @@ jobs:
       head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   smoke-tests:
-    needs: [ detect-changes, get-dev-images ]
-    if: ${{ needs.detect-changes.outputs.docs_only != 'true' }}
+    needs: [ classify, get-dev-images ]
+    if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     uses: ./.github/workflows/smoke-tests.yml
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
@@ -78,8 +64,8 @@ jobs:
     secrets: inherit
 
   build-and-test:
-    needs: [ detect-changes, get-dev-images, smoke-tests ]
-    if: ${{ needs.detect-changes.outputs.docs_only != 'true' }}
+    needs: [ classify, get-dev-images, smoke-tests ]
+    if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     name: "Run build and test"
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
@@ -89,8 +75,8 @@ jobs:
       matrix_config: pr_matrix.yaml
 
   large-tests:
-    needs: [ detect-changes, get-dev-images, smoke-tests ]
-    if: ${{ needs.detect-changes.outputs.docs_only != 'true' }}
+    needs: [ classify, get-dev-images, smoke-tests ]
+    if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     name: "Run large scale tests"
     uses: ./.github/workflows/large_test.yml
     secrets: inherit
@@ -99,8 +85,8 @@ jobs:
       head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   run_code_coverage:
-    needs: [ detect-changes, get-dev-images, smoke-tests ]
-    if: ${{ needs.detect-changes.outputs.docs_only != 'true' }}
+    needs: [ classify, get-dev-images, smoke-tests ]
+    if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     name: "Run Code Coverage"
     uses: ./.github/workflows/code_coverage.yml
     with:
@@ -109,8 +95,8 @@ jobs:
     secrets: inherit
 
   run_endless_mode:
-    needs: [ detect-changes, get-dev-images, smoke-tests ]
-    if: ${{ needs.detect-changes.outputs.docs_only != 'true' }}
+    needs: [ classify, get-dev-images, smoke-tests ]
+    if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     name: "Run Endless Mode"
     uses: ./.github/workflows/endless-mode.yml
     secrets: inherit
@@ -119,8 +105,8 @@ jobs:
       head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   test-nebuli-and-single-node-worker:
-    needs: [ detect-changes, get-dev-images, smoke-tests ]
-    if: ${{ needs.detect-changes.outputs.docs_only != 'true' }}
+    needs: [ classify, get-dev-images, smoke-tests ]
+    if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     name: "E2E Test using Nebuli and SingleNodeWorker"
     strategy:
       matrix:
@@ -134,8 +120,10 @@ jobs:
       arch: ${{ matrix.arch }}
 
   clang-tidy-diff:
-    needs: [ detect-changes, get-dev-images, smoke-tests ]
-    if: ${{ (github.event_name == 'merge_group' || github.event.pull_request.head.repo.fork == false) && needs.detect-changes.outputs.docs_only != 'true' }}
+    needs: [ classify, get-dev-images, smoke-tests ]
+    # Runs for every PR, forks included. clang-tidy findings are hard errors and no longer posted as
+    # PR comments, so no elevated permissions are needed and no pull_request_target mirror exists.
+    if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     uses: ./.github/workflows/clang_tidy_diff.yml
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
@@ -145,138 +133,45 @@ jobs:
     secrets: inherit
 
   nix-build:
-    needs: [ detect-changes, smoke-tests ]
-    if: ${{ needs.detect-changes.outputs.docs_only != 'true' }}
+    needs: [ classify, smoke-tests ]
+    if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     name: "Run Nix Build"
     uses: ./.github/workflows/nix-build.yml
     secrets: inherit
     with:
       head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
-  # --- Required-check gates --------------------------------------------------------------------
-  # One "<area> Done" job per pipeline area. Each always runs (if: always()) so its check is always
-  # created under a stable, top-level name — set THESE as the required status checks. A gate passes
-  # when the PR is docs-only (the run is legitimately skipped) or when the run succeeded.
-  # docs_only is checked FIRST on purpose: a non-docs skip (e.g. a real smoke-tests failure cascading
-  # downstream) must FAIL the gate, not pass it.
-  smoke-tests-done:
-    name: "Smoke Tests Done"
-    needs: [ detect-changes, smoke-tests ]
+  # --- Required-check gate ----------------------------------------------------------------------
+  # The single required status check for code changes. It always runs (if: always()) so the context
+  # is always created under a stable, top-level name — set THIS as the required status check.
+  # It passes when the run was legitimately skipped (no code changes, or a no-op PR edit) and
+  # otherwise requires every dispatched job to have succeeded.
+  code-ci-done:
+    name: "Code CI Done"
+    needs: [ classify, get-dev-images, smoke-tests, build-and-test, large-tests,
+             run_code_coverage, run_endless_mode, test-nebuli-and-single-node-worker,
+             clang-tidy-diff, nix-build ]
     if: ${{ always() }}
     runs-on: ubuntu-24.04
     steps:
       - name: Gate
+        env:
+          HAS_CODE: ${{ needs.classify.outputs.hasCodeChanges }}
+          # A title/body 'edited' event legitimately dispatches nothing; see the get-dev-images gate.
+          NOOP_EDIT: ${{ github.event.action == 'edited' && github.event.changes.base == null }}
+          RESULTS: ${{ toJSON(needs) }}
         run: |
-          if [ "${{ needs.detect-changes.outputs.docs_only }}" = "true" ]; then
-            echo "docs-only PR — skipped run expected; passing."; exit 0
+          # The legitimate-skip cases are checked FIRST on purpose: a real cascade failure (e.g. a
+          # smoke-tests failure skipping everything downstream) must FAIL the gate, not pass it.
+          if [ "$HAS_CODE" != "true" ]; then
+            echo "No code changes — code CI legitimately skipped; passing."; exit 0
           fi
-          if [ "${{ needs.smoke-tests.result }}" = "success" ]; then exit 0; fi
-          echo "::error::smoke-tests did not succeed: ${{ needs.smoke-tests.result }}"
-          exit 1
-
-  build-and-test-done:
-    name: "Build and Test Done"
-    needs: [ detect-changes, build-and-test ]
-    if: ${{ always() }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Gate
-        run: |
-          if [ "${{ needs.detect-changes.outputs.docs_only }}" = "true" ]; then
-            echo "docs-only PR — skipped run expected; passing."; exit 0
+          if [ "$NOOP_EDIT" = "true" ]; then
+            echo "No-op PR edit — nothing dispatched; passing."; exit 0
           fi
-          if [ "${{ needs.build-and-test.result }}" = "success" ]; then exit 0; fi
-          echo "::error::build-and-test did not succeed: ${{ needs.build-and-test.result }}"
-          exit 1
-
-  large-tests-done:
-    name: "Large Tests Done"
-    needs: [ detect-changes, large-tests ]
-    if: ${{ always() }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Gate
-        run: |
-          if [ "${{ needs.detect-changes.outputs.docs_only }}" = "true" ]; then
-            echo "docs-only PR — skipped run expected; passing."; exit 0
+          if echo "$RESULTS" | jq -e 'all(.[]; .result == "success")' > /dev/null; then
+            echo "All code CI jobs succeeded."; exit 0
           fi
-          if [ "${{ needs.large-tests.result }}" = "success" ]; then exit 0; fi
-          echo "::error::large-tests did not succeed: ${{ needs.large-tests.result }}"
-          exit 1
-
-  code-coverage-done:
-    name: "Code Coverage Done"
-    needs: [ detect-changes, run_code_coverage ]
-    if: ${{ always() }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Gate
-        run: |
-          if [ "${{ needs.detect-changes.outputs.docs_only }}" = "true" ]; then
-            echo "docs-only PR — skipped run expected; passing."; exit 0
-          fi
-          if [ "${{ needs.run_code_coverage.result }}" = "success" ]; then exit 0; fi
-          echo "::error::run_code_coverage did not succeed: ${{ needs.run_code_coverage.result }}"
-          exit 1
-
-  endless-mode-done:
-    name: "Endless Mode Done"
-    needs: [ detect-changes, run_endless_mode ]
-    if: ${{ always() }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Gate
-        run: |
-          if [ "${{ needs.detect-changes.outputs.docs_only }}" = "true" ]; then
-            echo "docs-only PR — skipped run expected; passing."; exit 0
-          fi
-          if [ "${{ needs.run_endless_mode.result }}" = "success" ]; then exit 0; fi
-          echo "::error::run_endless_mode did not succeed: ${{ needs.run_endless_mode.result }}"
-          exit 1
-
-  e2e-done:
-    name: "E2E Done"
-    needs: [ detect-changes, test-nebuli-and-single-node-worker ]
-    if: ${{ always() }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Gate
-        run: |
-          if [ "${{ needs.detect-changes.outputs.docs_only }}" = "true" ]; then
-            echo "docs-only PR — skipped run expected; passing."; exit 0
-          fi
-          if [ "${{ needs.test-nebuli-and-single-node-worker.result }}" = "success" ]; then exit 0; fi
-          echo "::error::test-nebuli-and-single-node-worker did not succeed: ${{ needs.test-nebuli-and-single-node-worker.result }}"
-          exit 1
-
-  nix-build-done:
-    name: "Nix Build Done"
-    needs: [ detect-changes, nix-build ]
-    if: ${{ always() }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Gate
-        run: |
-          if [ "${{ needs.detect-changes.outputs.docs_only }}" = "true" ]; then
-            echo "docs-only PR — skipped run expected; passing."; exit 0
-          fi
-          if [ "${{ needs.nix-build.result }}" = "success" ]; then exit 0; fi
-          echo "::error::nix-build did not succeed: ${{ needs.nix-build.result }}"
-          exit 1
-
-  clang-tidy-done:
-    name: "Clang-Tidy Done"
-    needs: [ detect-changes, clang-tidy-diff ]
-    # Non-fork PRs and merge_group are gated here; fork PRs get their "Clang-Tidy Done" from pr-fork.yml,
-    # so exactly one workflow reports this context per PR.
-    if: ${{ always() && (github.event_name == 'merge_group' || github.event.pull_request.head.repo.fork == false) }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Gate
-        run: |
-          if [ "${{ needs.detect-changes.outputs.docs_only }}" = "true" ]; then
-            echo "docs-only PR — skipped run expected; passing."; exit 0
-          fi
-          if [ "${{ needs.clang-tidy-diff.result }}" = "success" ]; then exit 0; fi
-          echo "::error::clang-tidy-diff did not succeed: ${{ needs.clang-tidy-diff.result }}"
+          echo "::error::Some code CI jobs did not succeed:"
+          echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | "  \(.key): \(.value.result)"'
           exit 1

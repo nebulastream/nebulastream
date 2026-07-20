@@ -1,0 +1,47 @@
+name: Classify PR Changes
+description: Classifies a PR diff as code and/or documentation changes.
+
+# Requires the repository to already be checked out with `fetch-depth: 0` — a local `uses: ./...`
+# action only resolves once the workspace exists, and tj-actions needs full history to diff
+# base_sha..sha (a shallow clone yields an empty diff).
+
+inputs:
+  base-sha:
+    required: true
+    description: "commit sha of the diff base"
+  head-sha:
+    required: true
+    description: "commit sha of the diff head"
+
+outputs:
+  hasCodeChanges:
+    description: "true if at least one non-documentation file changed"
+    value: ${{ steps.classify.outputs.hasCodeChanges }}
+  hasDocChanges:
+    description: "true if at least one documentation file changed"
+    value: ${{ steps.classify.outputs.hasDocChanges }}
+
+runs:
+  using: composite
+  steps:
+    - id: changed-files
+      uses: tj-actions/changed-files@v44
+      with:
+        base_sha: ${{ inputs.base-sha }}
+        sha: ${{ inputs.head-sha }}
+        files_from_source_file: .github/ci/full-ci-skip-paths.txt
+
+    - id: classify
+      shell: bash
+      env:
+        DOCS_CHANGED: ${{ steps.changed-files.outputs.any_changed }}
+        ONLY_DOCS_CHANGED: ${{ steps.changed-files.outputs.only_changed }}
+      run: |
+        # Fail-safe: code CI is skipped only on POSITIVE evidence — at least one doc file changed
+        # AND nothing else. An empty or failed diff yields any_changed=false, so we fall through to
+        # hasCodeChanges=true and run the full pipeline. A real code change is never skipped.
+        echo "any_changed=$DOCS_CHANGED only_changed=$ONLY_DOCS_CHANGED"
+        if [ "$DOCS_CHANGED" = true ]; then docs=true; else docs=false; fi
+        if [ "$ONLY_DOCS_CHANGED" = true ] && [ "$DOCS_CHANGED" = true ]; then code=false; else code=true; fi
+        echo "hasCodeChanges=$code" >> "$GITHUB_OUTPUT"
+        echo "hasDocChanges=$docs" >> "$GITHUB_OUTPUT"

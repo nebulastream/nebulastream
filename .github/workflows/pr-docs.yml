@@ -1,0 +1,56 @@
+name: NES PR Docs CI
+description: |
+  Companion to pr.yml for documentation changes (see .github/ci/full-ci-skip-paths.txt).
+  It currently runs no checks and exists to own a stable "Docs CI Done" required status check, so
+  real documentation checks (markdown lint, link check, ...) can be added later without touching
+  branch protection.
+on:
+  pull_request:
+    types: [ synchronize, opened, reopened, edited ]
+  merge_group:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  classify:
+    runs-on: ubuntu-24.04
+    outputs:
+      hasCodeChanges: ${{ steps.classify.outputs.hasCodeChanges }}
+      hasDocChanges: ${{ steps.classify.outputs.hasDocChanges }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history so tj-actions can diff base_sha..sha; a shallow clone yields an empty diff.
+          fetch-depth: 0
+      - id: classify
+        uses: ./.github/actions/classify-pr-changes
+        with:
+          base-sha: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          head-sha: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+
+  # --- Required-check gate ----------------------------------------------------------------------
+  # The single required status check for documentation changes. Always runs so the context is always
+  # reported under a stable name — set THIS as the required status check.
+  docs-ci-done:
+    name: "Docs CI Done"
+    needs: [ classify ]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Gate
+        env:
+          HAS_DOCS: ${{ needs.classify.outputs.hasDocChanges }}
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+        run: |
+          if [ "$CLASSIFY_RESULT" != "success" ]; then
+            echo "::error::classify did not succeed: $CLASSIFY_RESULT"; exit 1
+          fi
+          if [ "$HAS_DOCS" != "true" ]; then
+            echo "No doc changes; passing."; exit 0
+          fi
+          # No docs checks configured yet. When adding one, add the job above, list it in `needs`
+          # and require its result here.
+          echo "Doc changes detected; no docs checks configured yet."
