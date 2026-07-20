@@ -73,7 +73,9 @@ TEST(VersionTest, formatVersionListsPluginsGroupedByKind)
     /// The kind labels are padded to the longest kind, hence no fixed spacing between label and names.
     EXPECT_THAT(output, testing::HasSubstr("TestSources:"));
     EXPECT_THAT(output, testing::HasSubstr("FILE, GENERATOR, TCP"));
-    EXPECT_THAT(output, testing::HasSubstr("TestFunctions: ADD"));
+    /// Padding-agnostic: the label-to-names spacing depends on the longest kind linked into THIS
+    /// binary, which varies by build configuration (some axes link the real registries into the test).
+    EXPECT_THAT(output, testing::ContainsRegex("TestFunctions: +ADD"));
     /// Kinds without any plugins are omitted entirely.
     EXPECT_THAT(output, testing::Not(testing::HasSubstr("TestEmptyKind")));
 }
