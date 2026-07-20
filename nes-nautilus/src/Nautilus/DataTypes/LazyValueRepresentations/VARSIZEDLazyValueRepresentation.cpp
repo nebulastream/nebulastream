@@ -41,7 +41,7 @@ nautilus::val<bool> VARSIZEDLazyValueRepresentation::eqImpl(const VariableSizedD
     }
     const auto varSizedData = getContent();
     const auto rhsVarSizedData = rhs.getContent();
-    const auto compareResult = nautilus::invoke(bytesEqual, varSizedData, rhsVarSizedData, size);
+    const auto compareResult = emitBytesEqual(varSizedData, rhsVarSizedData, size);
     return compareResult;
 }
 
@@ -60,7 +60,7 @@ nautilus::val<bool> VARSIZEDLazyValueRepresentation::eqImpl(const std::shared_pt
     {
         const auto varSizedData = getContent();
         const auto rhsVarSizedData = rhs->getContent();
-        result = nautilus::invoke(bytesEqual, varSizedData, rhsVarSizedData, size);
+        result = emitBytesEqual(varSizedData, rhsVarSizedData, size);
     }
     return result;
 }

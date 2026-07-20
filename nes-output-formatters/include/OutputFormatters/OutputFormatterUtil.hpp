@@ -25,6 +25,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/TraceConstantBytesConfig.hpp>
 #include <OutputFormatters/OutputParser.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -145,10 +146,16 @@ inline nautilus::val<uint64_t> writeConstantBytes(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    const auto embedded = nautilus::embedConstantBytes(constant.data(), constant.size());
+    /// trace_constant_bytes=false restores the pre-4dddb90d2b shape: the glue reaches the JIT as an
+    /// opaque host pointer, so the backend reloads the source every row instead of hoisting the
+    /// bytes into registers outside the pipeline loop. Same fused writeBytesToBuffer call either
+    /// way -- only the SOURCE's visibility differs, which is exactly the lever being ablated.
+    const auto source = traceConstantBytesEnabled()
+        ? static_cast<nautilus::val<const char*>>(nautilus::embedConstantBytes(constant.data(), constant.size()))
+        : nautilus::val<const char*>{constant.data()};
     return nautilus::invoke(
         writeBytesToBuffer,
-        static_cast<nautilus::val<const char*>>(embedded),
+        source,
         nautilus::val<uint64_t>{constant.size()},
         remainingSpace,
         recordBuffer.getReference(),

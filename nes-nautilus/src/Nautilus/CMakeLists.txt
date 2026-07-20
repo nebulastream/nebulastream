@@ -13,6 +13,7 @@
 add_source_files(nes-nautilus
         Util.cpp
         Arena.cpp
+        TraceConstantBytesConfig.cpp
 )
 
 add_subdirectory(DataTypes)

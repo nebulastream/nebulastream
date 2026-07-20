@@ -93,7 +93,7 @@ nautilus::val<bool> UINTLazyValueRepresentation::eqImpl(const VariableSizedData&
     {
         const auto lazyData = getContent();
         const auto rhsVarSizedData = rhs.getContent();
-        result = nautilus::invoke(bytesEqual, lazyData, rhsVarSizedData, size);
+        result = emitBytesEqual(lazyData, rhsVarSizedData, size);
     }
     return result;
 }
@@ -113,8 +113,7 @@ nautilus::val<bool> UINTLazyValueRepresentation::eqImpl(const std::shared_ptr<La
         default: {
             /// All unsigned integer types land here
             /// It suffices to compare the contents byte per byte
-            result = nautilus::select(
-                size != rhs->getSize(), nautilus::val<bool>{false}, nautilus::invoke(bytesEqual, lhsContent, rhsContent, size));
+            result = nautilus::select(size != rhs->getSize(), nautilus::val<bool>{false}, emitBytesEqual(lhsContent, rhsContent, size));
         }
     }
     return result;

@@ -28,6 +28,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Nautilus/TraceConstantBytesConfig.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -118,6 +119,10 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(plan);
         request->dumpCompilationResult = dumpMode;
         request->inlineInvokeCalls = configuration.workerConfiguration.queryEngine.inlineInvokeCalls.getValue();
+        /// Trace-time knob (unlike inlineInvokeCalls, which is an MLIR-lowering option carried on the request):
+        /// the embedConstantBytes/bytesEqual call sites are plain C++ that runs during tracing inside
+        /// compileQuery, so the switch has to be visible to them as a global before we hand the request over.
+        setTraceConstantBytes(configuration.workerConfiguration.queryEngine.traceConstantBytes.getValue());
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
         nodeEngine->registerCompiledQueryPlan(plan.getQueryId(), std::move(result));

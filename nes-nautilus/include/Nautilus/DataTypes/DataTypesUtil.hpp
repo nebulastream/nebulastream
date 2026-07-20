@@ -21,8 +21,11 @@
 #include <unordered_map>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/TraceConstantBytesConfig.hpp>
 #include <nautilus/inline.hpp>
+#include <nautilus/std/cstring.h>
 #include <nautilus/val_ptr.hpp>
+#include <function.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -61,6 +64,23 @@ NAUTILUS_INLINE inline bool bytesEqual(const int8_t* lhs, const int8_t* rhs, con
         }
     }
     return true;
+}
+
+/// The single dispatch point for byte equality, honoring `worker.query_engine.trace_constant_bytes`.
+/// ON  -> the call-free bytesEqual above, which folds against an embedConstantBytes'd literal.
+/// OFF -> the pre-376053dc63 nautilus::memcmp shape (an opaque address-named proxy call whose
+///        worst-case memory(readwrite) attributes also block CSE/LICM around it).
+/// Deliberately NOT NAUTILUS_INLINE: this must stay trace-time C++ so it can read the global flag.
+/// Marking it would extract it to bitcode, and the flag read would then resolve to `__emutls_v.*`
+/// in the JIT module -- the DefaultBOOL crash. It only picks the SHAPE; bytesEqual is the body.
+inline nautilus::val<bool>
+emitBytesEqual(const nautilus::val<int8_t*>& lhs, const nautilus::val<int8_t*>& rhs, const nautilus::val<uint64_t>& size)
+{
+    if (traceConstantBytesEnabled())
+    {
+        return nautilus::invoke(bytesEqual, lhs, rhs, size);
+    }
+    return nautilus::memcmp(lhs, rhs, size) == 0;
 }
 
 /// Get member returns the MemRef to a specific class member as an offset to a objectReference.

@@ -58,6 +58,14 @@ public:
     /// function -- that selection stays in testing/configurations/InlineTagConfig.yaml (build time). Default true =
     /// the previous hardcoded behavior.
     BoolOption inlineInvokeCalls = {"inline_invoke_calls", "true", "Inline nautilus proxy invoke calls into the JIT'd module (MLIR level)"};
+    /// Master switch for making host-known constant bytes visible to the JIT: `embedConstantBytes` on the literal
+    /// side (query string literals, CSV/JSON output glue) plus the call-free `bytesEqual` on the compare side.
+    /// Both halves move together because neither pays off alone -- see Nautilus/TraceConstantBytesConfig.hpp.
+    /// Default true = the previous hardcoded behavior; false restores the opaque-pointer + nautilus::memcmp shape.
+    /// NOTE it interacts with inline_invoke_calls: bytesEqual is NAUTILUS_INLINE, so with inline_invoke_calls=false
+    /// it stays a call and the compare side cannot fold regardless of this switch.
+    BoolOption traceConstantBytes
+        = {"trace_constant_bytes", "true", "Embed host-known constant bytes as JIT module constants and fold compares against them"};
     BoolOption ccxAwareTaskQueues
         = {"ccx_aware_task_queues",
            "false",
@@ -82,6 +90,7 @@ protected:
             &admissionQueueSize,
             &invokeModeConfigurationPath,
             &inlineInvokeCalls,
+            &traceConstantBytes,
             &ccxAwareTaskQueues,
             &ccxTopology};
     }

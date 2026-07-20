@@ -84,7 +84,7 @@ nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) 
     }
     const auto varSizedData = getContent();
     const auto rhsVarSizedData = rhs.getContent();
-    const auto compareResult = nautilus::invoke(bytesEqual, varSizedData, rhsVarSizedData, size);
+    const auto compareResult = emitBytesEqual(varSizedData, rhsVarSizedData, size);
     return {compareResult};
 }
 

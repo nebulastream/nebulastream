@@ -21,6 +21,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/TraceConstantBytesConfig.hpp>
 #include <ExecutionContext.hpp>
 #include <val_ptr.hpp>
 
@@ -38,13 +39,21 @@ VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRe
 {
     /// Embed the literal's bytes as a private constant global in the JIT module instead of an
     /// opaque host pointer: downstream operations on the literal (a lazy string equality's
-    /// memcmp, a copy into the output buffer) then have a compile-time-visible source and can
+    /// compare, a copy into the output buffer) then have a compile-time-visible source and can
     /// fold. In interpreted mode this degrades to the host pointer into `data` (owned by this
     /// function, which outlives execution). VariableSizedData requires a non-const pointer but
     /// the constant is never written through.
-    const auto embedded = nautilus::embedConstantBytes(data.data(), data.size());
-    VariableSizedData result(static_cast<nautilus::val<int8_t*>>(embedded), data.size());
-    return result;
+    if (traceConstantBytesEnabled())
+    {
+        const auto embedded = nautilus::embedConstantBytes(data.data(), data.size());
+        return VariableSizedData(static_cast<nautilus::val<int8_t*>>(embedded), data.size());
+    }
+    /// trace_constant_bytes=false: the pre-4dddb90d2b shape -- the literal reaches the JIT as an
+    /// opaque host pointer, so the backend must reload it every row (it cannot prove no-alias with
+    /// the destination) and a compare against it cannot fold.
+    /// NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast) - VariableSizedData requires non-const pointer but data is not modified
+    return VariableSizedData(const_cast<int8_t*>(data.data()), data.size());
+    /// NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
 }
