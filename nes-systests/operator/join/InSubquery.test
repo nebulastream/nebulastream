@@ -1,0 +1,313 @@
+# name: join/InSubquery.test
+# description: Lower non-correlated SQL IN subqueries through relational mark apply
+# groups: [Join, StreamTableJoin, Subquery]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR events TYPE File;
+ATTACH INLINE
+1,7,10
+2,8,20
+3,9,30
+
+CREATE LOGICAL SOURCE lookup_keys(lookup_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lookup_keys TYPE File;
+ATTACH INLINE
+7
+7
+9
+
+CREATE SINK star_result(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_value UINT64 NOT NULL) TYPE File;
+
+# Duplicate subquery values match by existence and SELECT * is valid for a one-column subquery.
+SELECT *
+FROM events
+WHERE event_key IN (SELECT * FROM lookup_keys)
+INTO star_result;
+----
+1 7 10
+3 9 30
+
+
+CREATE LOGICAL SOURCE same_name_lookup(event_key UINT64 NOT NULL, enabled UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR same_name_lookup TYPE File;
+ATTACH INLINE
+7,1
+8,0
+9,1
+
+CREATE SINK projected_result(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_value UINT64 NOT NULL) TYPE File;
+
+# The subquery projection may use the same field name as the outer stream.
+SELECT *
+FROM events
+WHERE event_key IN (
+    SELECT event_key
+    FROM same_name_lookup
+    WHERE enabled = 1
+)
+INTO projected_result;
+----
+1 7 10
+3 9 30
+
+
+CREATE SINK conjunctive_result(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_value UINT64 NOT NULL) TYPE File;
+
+# Residual conjuncts stay in the ordinary nullable-Boolean selection.
+SELECT *
+FROM events
+WHERE event_value > 10 AND event_key IN (SELECT * FROM lookup_keys)
+INTO conjunctive_result;
+----
+3 9 30
+
+
+CREATE LOGICAL SOURCE candidates(candidate_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR candidates TYPE File;
+ATTACH INLINE
+7
+8
+9
+
+CREATE LOGICAL SOURCE allowed_keys(allowed_key UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR allowed_keys TYPE File;
+ATTACH INLINE
+8
+9
+
+CREATE SINK nested_result(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_value UINT64 NOT NULL) TYPE File;
+
+# Quantified comparisons are extracted recursively inside subqueries.
+SELECT *
+FROM events
+WHERE event_key IN (
+    SELECT candidate_key
+    FROM candidates
+    WHERE candidate_key IN (SELECT * FROM allowed_keys)
+)
+INTO nested_result;
+----
+2 8 20
+3 9 30
+
+
+# Multiple quantified comparisons become a chain of mark applies.
+SELECT *
+FROM events
+WHERE event_key IN (SELECT * FROM lookup_keys)
+  AND event_key IN (SELECT * FROM allowed_keys)
+INTO star_result;
+----
+3 9 30
+
+
+# SELECT * is rejected when the subquery produces more than one column.
+SELECT *
+FROM events
+WHERE event_key IN (SELECT * FROM same_name_lookup)
+INTO star_result;
+----
+ERROR 2003
+
+
+# A mark join preserves rows accepted by the other side of an OR.
+SELECT *
+FROM events
+WHERE event_value = 20 OR event_key IN (SELECT * FROM lookup_keys)
+INTO star_result;
+----
+1 7 10
+2 8 20
+3 9 30
+
+
+# NOT IN negates the three-valued mark instead of using a filtering semi join.
+SELECT *
+FROM events
+WHERE event_key NOT IN (SELECT * FROM lookup_keys)
+INTO star_result;
+----
+2 8 20
+
+
+CREATE LOGICAL SOURCE nullable_events(id UINT64 NOT NULL, value UINT64);
+CREATE PHYSICAL SOURCE FOR nullable_events TYPE File;
+ATTACH INLINE
+1,1
+2,2
+3,
+
+CREATE LOGICAL SOURCE nullable_lookup(value UINT64, payload UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR nullable_lookup TYPE File;
+ATTACH INLINE
+1,10
+,20
+
+CREATE SINK nullable_result(id UINT64 NOT NULL) TYPE File;
+
+# A right-side NULL makes a non-match UNKNOWN, which WHERE filters out.
+SELECT id
+FROM nullable_events
+WHERE value IN (SELECT value FROM nullable_lookup)
+INTO nullable_result;
+----
+1
+
+
+# NOT IN remains UNKNOWN for both a nullable probe and a non-matching value
+# when the table contains NULL.
+SELECT id
+FROM nullable_events
+WHERE value NOT IN (SELECT value FROM nullable_lookup)
+INTO nullable_result;
+----
+
+
+# An empty right side makes IN FALSE and NOT IN TRUE, even for a NULL probe.
+SELECT id
+FROM nullable_events
+WHERE value NOT IN (SELECT value FROM nullable_lookup WHERE payload = 999)
+INTO nullable_result;
+----
+1
+2
+3
+
+
+# Projection exposes the mark join's nullable Boolean directly.
+SELECT id, value IN (SELECT value FROM nullable_lookup) AS is_present
+FROM nullable_events
+INTO File();
+----
+1 true
+2 NULL
+3 NULL
+
+
+# TRUE OR UNKNOWN is TRUE, while FALSE OR UNKNOWN remains UNKNOWN.
+SELECT id
+FROM nullable_events
+WHERE id = 2 OR value IN (SELECT value FROM nullable_lookup)
+INTO nullable_result;
+----
+1
+2
+
+
+# Query-form IN also works with an inline sink.
+SELECT event_id
+FROM events
+WHERE event_key IN (SELECT * FROM lookup_keys)
+INTO File();
+----
+1
+3
+
+
+CREATE LOGICAL SOURCE nullable_pairs(id UINT64 NOT NULL, value UINT64);
+CREATE PHYSICAL SOURCE FOR nullable_pairs TYPE File;
+ATTACH INLINE
+1,1
+2,
+
+# Row comparisons preserve UNKNOWN if all known components match and one is NULL.
+SELECT id
+FROM nullable_events
+WHERE (id, value) IN (SELECT id, value FROM nullable_pairs)
+INTO nullable_result;
+----
+1
+
+
+# A known unequal component makes the whole row comparison FALSE despite NULLs.
+SELECT id
+FROM nullable_events
+WHERE (id, value) NOT IN (SELECT id, value FROM nullable_pairs)
+INTO nullable_result;
+----
+3
+
+
+# HAVING is represented as a selection and uses the same mark-join rewrite.
+SELECT event_key, COUNT(event_id) AS cnt
+FROM events
+GROUP BY event_key
+WINDOW TUMBLING(event_id, SIZE 10 SEC)
+HAVING event_key IN (SELECT * FROM lookup_keys)
+INTO File();
+----
+7 1
+9 1
+
+
+# IN can produce a nullable Boolean value instead of filtering rows.
+SELECT event_id, event_key IN (SELECT * FROM lookup_keys) AS is_present
+FROM events
+INTO File();
+----
+1 true
+2 false
+3 true
+
+
+CREATE LOGICAL SOURCE lookup_pairs(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lookup_pairs TYPE File;
+ATTACH INLINE
+7,10
+8,99
+9,30
+
+# Row membership compares corresponding subquery columns as one predicate.
+SELECT event_id
+FROM events
+WHERE (event_key, event_value) IN (SELECT lookup_key, lookup_value FROM lookup_pairs)
+INTO File();
+----
+1
+3
+
+
+CREATE LOGICAL SOURCE join_right(right_id UINT64 NOT NULL, right_key UINT64 NOT NULL, right_value UINT64 NOT NULL, right_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR join_right TYPE File;
+ATTACH INLINE
+10,7,8,1
+11,8,7,2
+12,9,9,3
+
+# An IN subquery in an inner-join predicate is evaluated over the windowed
+# Cartesian candidate pairs, so arbitrary Boolean placement remains correct.
+SELECT event_id, right_id
+FROM (SELECT * FROM events) INNER JOIN (SELECT * FROM join_right)
+ON event_key = right_key AND right_value IN (SELECT * FROM allowed_keys)
+WINDOW TUMBLING(event_id, right_ts, SIZE 10 SEC)
+INTO File();
+----
+1 10
+3 12
+
+
+# OR requires retaining every windowed candidate pair before applying the mark.
+SELECT event_id, right_id
+FROM (SELECT * FROM events) INNER JOIN (SELECT * FROM join_right)
+ON event_key = right_key OR right_value IN (SELECT * FROM allowed_keys)
+WINDOW TUMBLING(event_id, right_ts, SIZE 10 SEC)
+INTO File();
+----
+1 10
+1 12
+2 10
+2 11
+2 12
+3 10
+3 12
+
+
+SELECT event_id, right_id
+FROM (SELECT * FROM events) INNER JOIN (SELECT * FROM join_right)
+ON event_key = right_key AND right_value NOT IN (SELECT * FROM allowed_keys)
+WINDOW TUMBLING(event_id, right_ts, SIZE 10 SEC)
+INTO File();
+----
+2 11

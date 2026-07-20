@@ -74,6 +74,7 @@ public:
     void exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context) override;
     void exitLogicalNotPredicate(AntlrSQLParser::LogicalNotPredicateContext* context) override;
     void exitBoolComparison(AntlrSQLParser::BoolComparisonContext* context) override;
+    void exitRowConstructor(AntlrSQLParser::RowConstructorContext* context) override;
     void enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context) override;
     void enterIdentifier(AntlrSQLParser::IdentifierContext* context) override;
     void enterTimeUnit(AntlrSQLParser::TimeUnitContext* context) override;
