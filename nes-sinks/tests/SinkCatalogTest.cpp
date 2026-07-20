@@ -78,7 +78,8 @@ TEST_F(SinkCatalogTest, AddDuplicateSinkDescriptorReportsSinkAlreadyExists)
     /// The original registration must remain untouched.
     const auto retained = sinkCatalog.getSinkDescriptor(Identifier::parse("testSink"));
     ASSERT_TRUE(retained.has_value());
-    EXPECT_EQ(*retained, first.value());
+    ASSERT_TRUE(first.has_value());
+    EXPECT_EQ(*retained, *first);
     EXPECT_EQ(sinkCatalog.getAllSinkDescriptors().size(), size_t{1});
 }
 
