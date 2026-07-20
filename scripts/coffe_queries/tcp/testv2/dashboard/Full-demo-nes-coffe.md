@@ -102,6 +102,16 @@ mosquitto -c mosquitto.conf -v
 
 ### 3. NES worker and queries
 
+First time only — set up the dev container and build NES. See
+`docs/development/development.md`; the entry point is:
+
+```bash
+cd nebulastream
+./scripts/install-local-docker-environment.sh
+```
+
+Everything below assumes a completed build in `cmake-build-debug-docker/`.
+
 ```bash
 docker start nes-dev
 docker exec -it nes-dev bash
