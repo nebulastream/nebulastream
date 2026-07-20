@@ -87,6 +87,12 @@ public:
     /// Typically, these are the bytes of spanning tuple that _starts_ in the staged buffer.
     [[nodiscard]] std::string_view getTrailingBytes(const size_t sizeOfTupleDelimiter) const
     {
+        /// The start-of-stream sentinel that anchors the first leading spanning tuple owns no buffer (empty view).
+        /// It contributes no trailing bytes, so return early before the (delimiter-size-based) bounds check below.
+        if (rawBuffer.getBufferView().empty())
+        {
+            return {};
+        }
         INVARIANT(
             sizeOfBufferInBytes >= offsetOfLastTupleDelimiter + sizeOfTupleDelimiter,
             "Invalid trailing bytes. Size of buffer: {} < {} (offsetOfLastTupleDelimiter: {} + sizeOfTupleDelimiter: {}",
