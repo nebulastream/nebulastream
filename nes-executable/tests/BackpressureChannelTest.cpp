@@ -333,4 +333,66 @@ TEST_F(BackpressureChannelTest, StopTokenFunctionality)
     EXPECT_TRUE(backpressureController.releasePressure());
 }
 
+/// Multi-controller channel (one controller per sink): apply/release report the CHANNEL state
+/// transitions, applying is idempotent per controller, and only the last release opens the channel.
+TEST_F(BackpressureChannelTest, MultiControllerApplyReleaseSemantics)
+{
+    auto [controllers, backpressureListener] = createBackpressureChannel(2);
+    ASSERT_EQ(controllers.size(), 2U);
+
+    /// First apply pressures the channel, the second controller's apply does not change the channel state
+    EXPECT_TRUE(controllers[0].applyPressure());
+    EXPECT_FALSE(controllers[1].applyPressure());
+    /// Applying twice on the same controller is a no-op
+    EXPECT_FALSE(controllers[0].applyPressure());
+
+    /// Releasing while the other controller still applies pressure keeps the channel pressured
+    EXPECT_FALSE(controllers[0].releasePressure());
+    /// The last pressuring controller opens the channel
+    EXPECT_TRUE(controllers[1].releasePressure());
+    /// Releasing without applied pressure is a no-op
+    EXPECT_FALSE(controllers[1].releasePressure());
+}
+
+/// The listener must block while ANY controller applies pressure: releasing one of two pressuring
+/// controllers must NOT unblock it; only the release of the last one does.
+TEST_F(BackpressureChannelTest, ListenerBlocksWhileAnyControllerAppliesPressure)
+{
+    std::barrier syncBeforeWait{2};
+    std::barrier syncAfterWait{2};
+    std::chrono::milliseconds duration{};
+
+    auto [controllers, backpressureListener] = createBackpressureChannel(2);
+    controllers[0].applyPressure();
+    controllers[1].applyPressure();
+
+    std::jthread listenerThread(
+        [&](const std::stop_token& stopToken)
+        {
+            syncBeforeWait.arrive_and_wait();
+            const auto start = std::chrono::steady_clock::now();
+            /// This should block until BOTH controllers released their pressure
+            backpressureListener.wait(stopToken);
+            const auto end = std::chrono::steady_clock::now();
+            syncAfterWait.arrive_and_wait();
+            duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        });
+
+    syncBeforeWait.arrive_and_wait();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    /// Releasing ONE of the two pressuring controllers must keep the listener blocked
+    EXPECT_FALSE(controllers[0].releasePressure());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    /// Releasing the last one unblocks the listener
+    EXPECT_TRUE(controllers[1].releasePressure());
+    syncAfterWait.arrive_and_wait();
+    listenerThread.join();
+
+    /// The listener must have waited through BOTH sleeps (single-release did not unblock it).
+    /// The bound is a guess below the 200ms of combined sleeping; we cannot assert exact durations.
+    EXPECT_GT(duration, std::chrono::milliseconds(150));
+}
+
 }

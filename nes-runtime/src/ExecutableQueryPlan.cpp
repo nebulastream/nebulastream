@@ -20,6 +20,7 @@
 #include <iterator>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -69,27 +70,26 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
 
     std::unordered_map<OperatorId, std::vector<std::shared_ptr<ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
 
-    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    INVARIANT(not compiledQueryPlan.sinks.empty(), "Query plan requires at least one sink");
 
-    if (compiledQueryPlan.sinks.size() != 1)
+    /// One backpressure channel per query plan: every sink owns one of its controllers, and the sources'
+    /// shared listener blocks while ANY sink applies pressure.
+    auto [backpressureControllers, backpressureListener] = createBackpressureChannel(compiledQueryPlan.sinks.size());
+
+    for (auto&& [sinkEntry, backpressureController] : std::views::zip(compiledQueryPlan.sinks, backpressureControllers))
     {
-        throw NotImplemented("Currently our execution model expects exactly one sink per query plan");
+        auto sink = ExecutablePipeline::create(sinkEntry.id, lower(std::move(backpressureController), sinkEntry.descriptor), {});
+        compiledQueryPlan.pipelines.push_back(sink);
+        for (const auto& predecessor : sinkEntry.predecessor)
+        {
+            std::visit(
+                Overloaded{
+                    [&](const OperatorId& source) { instantiatedSinksWithSourcePredecessor[source].push_back(sink); },
+                    [&](const std::weak_ptr<ExecutablePipeline>& pipeline) { pipeline.lock()->successors.push_back(sink); },
+                },
+                predecessor);
+        }
     }
-
-    auto& [pipelineId, descriptor, predecessors] = compiledQueryPlan.sinks.front();
-
-    auto sink = ExecutablePipeline::create(pipelineId, lower(std::move(backpressureController), descriptor), {});
-    compiledQueryPlan.pipelines.push_back(sink);
-    for (const auto& predecessor : predecessors)
-    {
-        std::visit(
-            Overloaded{
-                [&](const OperatorId& source) { instantiatedSinksWithSourcePredecessor[source].push_back(sink); },
-                [&](const std::weak_ptr<ExecutablePipeline>& pipeline) { pipeline.lock()->successors.push_back(sink); },
-            },
-            predecessor);
-    }
-
 
     for (auto [originId, operatorId, descriptor, successors] : compiledQueryPlan.sources)
     {

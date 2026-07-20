@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <stop_token>
 #include <utility>
+#include <vector>
 
 struct Channel;
 class BackpressureListener;
@@ -29,19 +31,29 @@ class BackpressureController;
 /// connected BackpressureListeners that are still alive and in use will report an assertion failure.
 std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
 
-/// A Backpressure Controller is the exclusive controller of a backpressure channel. It allows the user to apply and release backpressure, which blocks
-/// or unblocks all connected Ingestions.
+/// Multi-controller variant for query plans with multiple sinks: every sink owns one of the returned
+/// controllers, and the listener blocks while ANY controller applies pressure (it unblocks only once
+/// every pressuring controller has released again). With controllerCount == 1 this behaves exactly like
+/// the single-controller channel. The sinks-outlive-sources invariant extends to ALL controllers: the
+/// destruction of any controller invalidates the channel for still-waiting listeners.
+std::pair<std::vector<BackpressureController>, BackpressureListener> createBackpressureChannel(size_t controllerCount);
+
+/// A Backpressure Controller is one of the controlling ends of a backpressure channel. It allows the user to apply and release backpressure;
+/// connected Ingestions are blocked while at least one controller of the channel applies pressure.
 class BackpressureController
 {
     explicit BackpressureController(std::shared_ptr<Channel> channel);
 
     std::shared_ptr<Channel> channel;
+    /// Whether THIS controller currently applies pressure; the channel counts the pressuring controllers.
+    bool applied = false;
     friend std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
+    friend std::pair<std::vector<BackpressureController>, BackpressureListener> createBackpressureChannel(size_t controllerCount);
 
 public:
     ~BackpressureController();
 
-    /// Currently, a Backpressure Controller represents unique ownership over the backpressure channel, thus copying is not enabled.
+    /// A Backpressure Controller represents unique ownership over its controlling end of the channel, thus copying is not enabled.
     BackpressureController(const BackpressureController& other) = delete;
     BackpressureController& operator=(const BackpressureController& other) = delete;
 
@@ -49,7 +61,11 @@ public:
     BackpressureController(BackpressureController&& other) noexcept = default;
     BackpressureController& operator=(BackpressureController&& other) noexcept = default;
 
+    /// Returns true iff this call transitioned the CHANNEL into the pressured state (i.e. no other
+    /// controller was applying pressure before). Applying pressure twice on the same controller is a no-op.
     bool applyPressure();
+    /// Returns true iff this call transitioned the CHANNEL out of the pressured state (i.e. this was the
+    /// last controller applying pressure). Releasing without applied pressure is a no-op.
     bool releasePressure();
 };
 
@@ -62,6 +78,7 @@ class BackpressureListener
     explicit BackpressureListener(std::shared_ptr<Channel> channel) : channel(std::move(channel)) { }
 
     friend std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
+    friend std::pair<std::vector<BackpressureController>, BackpressureListener> createBackpressureChannel(size_t controllerCount);
     std::shared_ptr<Channel> channel;
 
 public:
