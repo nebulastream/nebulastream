@@ -23,6 +23,7 @@
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/AnonymousSourceBindingRule.hpp>
 #include <Rules/Semantic/CalcTargetOrderRule.hpp>
+#include <Rules/Semantic/ExtractMarkApplyRule.hpp>
 #include <Rules/Semantic/InferModelResolutionRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
@@ -42,6 +43,7 @@ SemanticAnalyzer::SemanticAnalyzer(
     RuleManager<LogicalPlan> ruleManager;
     ruleManager.addRule(AnonymousSinkBindingRule{this->sinkCatalog});
     ruleManager.addRule(SinkBindingRule{this->sinkCatalog});
+    ruleManager.addRule(ExtractMarkApplyRule{});
     ruleManager.addRule(AnonymousSourceBindingRule{this->sourceCatalog});
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
     ruleManager.addRule(InferModelResolutionRule{this->modelCatalog});
