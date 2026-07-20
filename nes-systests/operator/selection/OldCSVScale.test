@@ -1,0 +1,14 @@
+# name: selection/OldCSVScale.test
+# description: OldCSV parsing the full real bid_1GB.csv at the 128KB worker-cli buffer (scale repro)
+# groups: [Selection]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [131072]
+
+CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE BlockingFile SET( "SequentialUncompiledOldCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH FILE large/nexmark/bid_1GB.csv
+
+# No-match filter: parses every one of the ~30M rows but yields no output. An ERROR here = a
+# scale bug in OldCSV; an empty PASS = OldCSV handles the full file (worker-cli failure is elsewhere).
+SELECT auctionId FROM bid WHERE auctionId == INT32(2000000000) INTO File();
+----

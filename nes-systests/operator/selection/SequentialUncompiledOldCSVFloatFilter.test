@@ -1,0 +1,19 @@
+# name: selection/SequentialUncompiledOldCSVFloatFilter.test
+# description: OldCSV on q14's shape -- 4-field bid schema with FLOAT64 + computed-float range filter (repro for the worker-cli failure)
+# groups: [Selection]
+
+CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE BlockingFile SET( "SequentialUncompiledOldCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+1746560847787,1000,1001,73134520
+1746560847788,1000,1001,1940
+1746560847788,1000,1001,2419091
+1746560847788,1000,1001,43672280
+1746560847788,1000,1001,499920
+
+# q14's exact predicate/projection on OldCSV
+SELECT auctionId, bidder, price * FLOAT64(908) / FLOAT64(1000) AS price FROM bid WHERE price * FLOAT64(908) / FLOAT64(1000) > FLOAT64(1000000) AND price * FLOAT64(908) / FLOAT64(1000) < FLOAT64(50000000) INTO File();
+----
+1000,1001,66406195.16
+1000,1001,2196534.28
+1000,1001,39654350.24
