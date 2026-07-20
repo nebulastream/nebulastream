@@ -38,20 +38,13 @@ namespace NES
 /// is large enough to store all slices of the window to be triggered.
 struct EmittedAggregationWindow
 {
-    EmittedAggregationWindow(const WindowInfo windowInfo, std::unique_ptr<HashMap> finalHashMap, const std::vector<HashMap*>& allHashMaps)
-        : windowInfo(windowInfo), finalHashMap(std::move(finalHashMap)), numberOfHashMaps(allHashMaps.size())
+    EmittedAggregationWindow(const WindowInfo windowInfo, uint64_t numberOfHashMaps)
+        : windowInfo(windowInfo), numberOfHashMaps(numberOfHashMaps)
     {
-        finalHashMapPtr = this->finalHashMap.get();
-        /// Copying the hashmap pointers after this object, hence this + 1
-        hashMaps = std::bit_cast<HashMap**>(this + 1);
-        std::ranges::copy(allHashMaps, std::bit_cast<HashMap**>(hashMaps));
     }
 
     WindowInfo windowInfo;
-    HashMap* finalHashMapPtr;
-    std::unique_ptr<HashMap> finalHashMap; /// Pointer to the final hash map that the probe should use to combine all hash maps
     uint64_t numberOfHashMaps;
-    HashMap** hashMaps; /// Pointer to the stored pointers of all hash maps that the probe should combine
 };
 
 class AggregationOperatorHandler final : public WindowBasedOperatorHandler
@@ -68,8 +61,6 @@ public:
 
     /// Is required to not perform the setup again and resolving a race condition to the cleanup state function
     std::atomic<bool> setupAlreadyCalled;
-    /// shared_ptr as multiple slices need access to it
-    std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
 
 protected:
     void triggerSlices(

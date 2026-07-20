@@ -27,9 +27,13 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <Time/Timestamp.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
+#include <function.hpp>
 #include <val_arith.hpp>
 #include <val_ptr.hpp>
 
@@ -53,17 +57,52 @@ HJProbePhysicalOperatorBase::HJProbePhysicalOperatorBase(
 {
 }
 
-ChainedHashMapRef
-HJProbePhysicalOperatorBase::makeChainedHashMapRef(const nautilus::val<HashMap*>& hashMapPtr, const HashMapOptions& options)
+OwnedNautilusBuffer
+HJProbePhysicalOperatorBase::pinHashMapBuffer(const nautilus::val<TupleBuffer*>& recordBufferRef, const nautilus::val<uint64_t>& index)
 {
-    return ChainedHashMapRef{hashMapPtr, options.fieldKeys, options.fieldValues, options.entriesPerPage, options.entrySize};
+    OwnedNautilusBuffer hashMapBuffer;
+    nautilus::invoke(
+        +[](TupleBuffer* parent, uint32_t idx, TupleBuffer* out)
+        {
+            INVARIANT(parent != nullptr, "Parent TupleBuffer must not be null when pinning a hash map child buffer");
+            *out = parent->loadChildBuffer(VariableSizedAccess::Index{idx});
+        },
+        recordBufferRef,
+        index,
+        hashMapBuffer.asArg());
+    return hashMapBuffer;
+}
+
+ChainedHashMapRef
+HJProbePhysicalOperatorBase::makeChainedHashMapRef(const nautilus::val<TupleBuffer*>& hashMapBufferRef, const HashMapOptions& options)
+{
+    return ChainedHashMapRef{hashMapBufferRef, options.fieldKeys, options.fieldValues, options.entriesPerPage, options.entrySize};
+}
+
+namespace
+{
+/// Loads the PagedVector child buffer referenced by a chained hash map entry's value area (which stores a child-buffer index).
+PagedVectorRef
+loadEntryPagedVector(const ChainedHashMapRef::ChainedEntryRef& entryRef, const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout)
+{
+    auto valueMemArea = entryRef.getValueMemArea();
+    OwnedNautilusBuffer pagedVectorBuffer;
+    nautilus::invoke(
+        +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
+        { *out = hashMapBuf->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
+        entryRef.hashMapBuffer,
+        pagedVectorBuffer.asArg(),
+        static_cast<nautilus::val<uint32_t*>>(valueMemArea));
+    /// Must move the owned buffer into the PagedVectorRef rather than wrap a BorrowedNautilusBuffer around it: a
+    /// borrowed view only stores a pointer back to `pagedVectorBuffer`, which would dangle once this function returns.
+    return PagedVectorRef{std::move(pagedVectorBuffer), tupleLayout};
+}
 }
 
 /// NOLINTNEXTLINE(readability-function-cognitive-complexity) inner join's N x N hash-map iteration is inherently deeply nested
 void HJProbePhysicalOperatorBase::performMatchPairsProbe(
-    nautilus::val<HashMap**> leftHashMapRefs,
+    const nautilus::val<TupleBuffer*>& recordBufferRef,
     nautilus::val<uint64_t> leftNumberOfHashMaps,
-    nautilus::val<HashMap**> rightHashMapRefs,
     nautilus::val<uint64_t> rightNumberOfHashMaps,
     ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& windowStart,
@@ -79,18 +118,18 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
 
     for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
     {
-        const nautilus::val<HashMap*> leftHashMapPtr = leftHashMapRefs[leftHashMapIndex];
-        ChainedHashMapRef leftHashMap = makeChainedHashMapRef(leftHashMapPtr, leftHashMapOptions);
+        auto leftHashMapBuffer = pinHashMapBuffer(recordBufferRef, leftHashMapIndex);
+        ChainedHashMapRef leftHashMap = makeChainedHashMapRef(leftHashMapBuffer.asArg(), leftHashMapOptions);
         for (nautilus::val<uint64_t> rightHashMapIndex = 0; rightHashMapIndex < rightNumberOfHashMaps; ++rightHashMapIndex)
         {
-            const nautilus::val<HashMap*> rightHashMapPtr = rightHashMapRefs[rightHashMapIndex];
-            const ChainedHashMapRef rightHashMap = makeChainedHashMapRef(rightHashMapPtr, rightHashMapOptions);
+            /// Right hash map buffers are stored as child buffers right after all of the left ones
+            auto rightHashMapBuffer = pinHashMapBuffer(recordBufferRef, leftNumberOfHashMaps + rightHashMapIndex);
+            const ChainedHashMapRef rightHashMap = makeChainedHashMapRef(rightHashMapBuffer.asArg(), rightHashMapOptions);
             for (const auto rightEntry : rightHashMap)
             {
                 const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
-                    rightEntry, rightHashMapPtr, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
-                auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
-                const PagedVectorRef rightPagedVector{BorrowedNautilusBuffer::from(rightPagedVectorMem), rightTupleLayout};
+                    rightEntry, rightHashMapBuffer.asArg(), rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
+                const PagedVectorRef rightPagedVector = loadEntryPagedVector(rightEntryRef, rightTupleLayout);
                 auto rightItStart = rightPagedVector.begin();
                 auto rightItEnd = rightPagedVector.end();
 
@@ -98,11 +137,10 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
                 {
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
                         static_cast<nautilus::val<ChainedHashMapEntry*>>(leftEntry),
-                        leftHashMapPtr,
+                        leftHashMapBuffer.asArg(),
                         leftHashMapOptions.fieldKeys,
                         leftHashMapOptions.fieldValues};
-                    auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
-                    const PagedVectorRef leftPagedVector{BorrowedNautilusBuffer::from(leftPagedVectorMem), leftTupleLayout};
+                    const PagedVectorRef leftPagedVector = loadEntryPagedVector(leftEntryRef, leftTupleLayout);
 
                     for (auto leftIt = leftPagedVector.begin(); leftIt != leftPagedVector.end(); ++leftIt)
                     {

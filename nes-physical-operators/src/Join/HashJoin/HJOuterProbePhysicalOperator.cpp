@@ -32,6 +32,8 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -46,6 +48,27 @@
 
 namespace NES
 {
+
+namespace
+{
+/// Loads the PagedVector child buffer referenced by a chained hash map entry's value area (which stores a child-buffer index
+/// into the hash map's own buffer).
+PagedVectorRef
+loadEntryPagedVector(const ChainedHashMapRef::ChainedEntryRef& entryRef, const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout)
+{
+    auto valueMemArea = entryRef.getValueMemArea();
+    OwnedNautilusBuffer pagedVectorBuffer;
+    nautilus::invoke(
+        +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
+        { *out = hashMapBuf->loadChildBuffer(VariableSizedAccess::Index{*indexPtr}); },
+        entryRef.hashMapBuffer,
+        pagedVectorBuffer.asArg(),
+        static_cast<nautilus::val<uint32_t*>>(valueMemArea));
+    /// Must move the owned buffer into the PagedVectorRef rather than wrap a BorrowedNautilusBuffer around it: a
+    /// borrowed view only stores a pointer back to `pagedVectorBuffer`, which would dangle once this function returns.
+    return PagedVectorRef{std::move(pagedVectorBuffer), tupleLayout};
+}
+}
 
 HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
@@ -69,9 +92,10 @@ HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
 }
 
 void HJOuterProbePhysicalOperator::performNullFillProbe(
-    nautilus::val<HashMap**> outerHashMapRefs,
+    const nautilus::val<TupleBuffer*>& recordBufferRef,
+    nautilus::val<uint64_t> outerOffset,
     nautilus::val<uint64_t> outerNumberOfHashMaps,
-    nautilus::val<HashMap**> innerHashMapRefs,
+    nautilus::val<uint64_t> innerOffset,
     nautilus::val<uint64_t> innerNumberOfHashMaps,
     const HashMapOptions& outerHashMapOptions,
     const HashMapOptions& innerHashMapOptions,
@@ -86,22 +110,21 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
     /// Iterate all outer (preserved-side) hash maps
     for (nautilus::val<uint64_t> outerIdx = 0; outerIdx < outerNumberOfHashMaps; ++outerIdx)
     {
-        const nautilus::val<HashMap*> outerHashMapPtr = outerHashMapRefs[outerIdx];
-        const ChainedHashMapRef outerHashMap = makeChainedHashMapRef(outerHashMapPtr, outerHashMapOptions);
+        auto outerHashMapBuffer = pinHashMapBuffer(recordBufferRef, outerOffset + outerIdx);
+        const ChainedHashMapRef outerHashMap = makeChainedHashMapRef(outerHashMapBuffer.asArg(), outerHashMapOptions);
 
         for (const auto outerEntry : outerHashMap)
         {
             const ChainedHashMapRef::ChainedEntryRef outerEntryRef{
-                outerEntry, outerHashMapPtr, outerHashMapOptions.fieldKeys, outerHashMapOptions.fieldValues};
-            auto outerPagedVectorMem = outerEntryRef.getValueMemArea();
-            const PagedVectorRef outerPagedVector{BorrowedNautilusBuffer::from(outerPagedVectorMem), outerTupleLayout};
+                outerEntry, outerHashMapBuffer.asArg(), outerHashMapOptions.fieldKeys, outerHashMapOptions.fieldValues};
+            const PagedVectorRef outerPagedVector = loadEntryPagedVector(outerEntryRef, outerTupleLayout);
 
             /// Check all inner hash maps for a matching key
             nautilus::val<bool> matched(false);
             for (nautilus::val<uint64_t> innerIdx = 0; innerIdx < innerNumberOfHashMaps; ++innerIdx)
             {
-                const nautilus::val<HashMap*> innerHashMapPtr = innerHashMapRefs[innerIdx];
-                ChainedHashMapRef innerHashMap = makeChainedHashMapRef(innerHashMapPtr, innerHashMapOptions);
+                auto innerHashMapBuffer = pinHashMapBuffer(recordBufferRef, innerOffset + innerIdx);
+                ChainedHashMapRef innerHashMap = makeChainedHashMapRef(innerHashMapBuffer.asArg(), innerHashMapOptions);
 
                 if (innerHashMap.findEntry(outerEntryRef.entryRef) != nullptr)
                 {
@@ -138,8 +161,12 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
     const auto windowInfoRef = getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
     const nautilus::val<Timestamp> windowStart{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
-    const auto leftHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
-    const auto rightHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
+
+    /// The hash map buffers themselves are stored as child buffers of the record buffer: left ones first, right ones after
+    const auto& recordBufferRef = recordBuffer.getReference();
+    const nautilus::val<uint64_t> leftOffset{0ULL};
+    /// Right-side hash maps are stored immediately after the left ones
+    const nautilus::val<uint64_t>& rightOffset = leftNumberOfHashMaps;
 
     /// Read the probe task type to determine what work this task should perform
     const nautilus::val<ProbeTaskType> probeTaskType
@@ -149,9 +176,10 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
         if (leftNumberOfHashMaps > 0)
         {
             performNullFillProbe(
-                leftHashMapRefs,
+                recordBufferRef,
+                leftOffset,
                 leftNumberOfHashMaps,
-                rightHashMapRefs,
+                rightOffset,
                 rightNumberOfHashMaps,
                 leftHashMapOptions,
                 rightHashMapOptions,
@@ -167,9 +195,10 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
         if (rightNumberOfHashMaps > 0)
         {
             performNullFillProbe(
-                rightHashMapRefs,
+                recordBufferRef,
+                rightOffset,
                 rightNumberOfHashMaps,
-                leftHashMapRefs,
+                leftOffset,
                 leftNumberOfHashMaps,
                 rightHashMapOptions,
                 leftHashMapOptions,
@@ -182,8 +211,7 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
     }
     else if (probeTaskType == ProbeTaskType::MATCH_PAIRS)
     {
-        performMatchPairsProbe(
-            leftHashMapRefs, leftNumberOfHashMaps, rightHashMapRefs, rightNumberOfHashMaps, executionCtx, windowStart, windowEnd);
+        performMatchPairsProbe(recordBufferRef, leftNumberOfHashMaps, rightNumberOfHashMaps, executionCtx, windowStart, windowEnd);
     }
     else
     {

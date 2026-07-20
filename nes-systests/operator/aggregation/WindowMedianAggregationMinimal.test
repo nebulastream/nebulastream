@@ -1,0 +1,30 @@
+# name: window/WindowAggregationDifferentDataTypes.test
+# description: Test window aggregations over different data types
+# groups: [Aggregation, WindowOperators, CompilationIntensive] TODO #1272
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
+
+CREATE LOGICAL SOURCE stream1(i8 INT8 NOT NULL,  ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream1 TYPE File;
+ATTACH INLINE
+1,100
+2,150
+0,250
+
+CREATE LOGICAL SOURCE stream2(i8 INT8,  ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+,100
+2,150
+0,250
+
+SELECT start, end, MEDIAN(i8) as i8_out
+FROM stream1 WINDOW SLIDING(ts, size 100 ms, advance by 100 ms) INTO FILE ();
+----
+100,200,1.5
+200,300,0
+
+SELECT start, end, MEDIAN(i8) as i8_med_out, COUNT(i8) as i8_out, COUNT(*) as i8_star_out
+FROM stream2 WINDOW SLIDING(ts, size 100 ms, advance by 100 ms) INTO FILE ();
+----
+100,200,2,1,2
+200,300,0,1,1

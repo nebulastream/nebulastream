@@ -23,6 +23,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <Util.hpp>
@@ -40,7 +41,10 @@ MinAggregationPhysicalFunction::MinAggregationPhysicalFunction(
 }
 
 void MinAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    nautilus::val<TupleBuffer*>,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    const Record& record)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 
@@ -75,7 +79,9 @@ void MinAggregationPhysicalFunction::lift(
 
 void MinAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
+    nautilus::val<TupleBuffer*>,
     const nautilus::val<AggregationState*> aggregationState2,
+    nautilus::val<TupleBuffer*>,
     PipelineMemoryProvider&)
 {
     if (not inputType.nullable)
@@ -111,7 +117,8 @@ void MinAggregationPhysicalFunction::combine(
     }
 }
 
-Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record MinAggregationPhysicalFunction::lower(
+    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     if (not inputType.nullable)
     {
@@ -136,7 +143,8 @@ Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
     return record;
 }
 
-void MinAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void MinAggregationPhysicalFunction::reset(
+    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     /// Initialize the null flag to "no value seen yet" so the first non-null input becomes the running min
     if (inputType.nullable)

@@ -21,7 +21,10 @@
 #include <type_traits>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <SliceCacheConfiguration.hpp>
 #include <val_concepts.hpp>
@@ -33,7 +36,7 @@ namespace NES
 /// Represents the C++ struct that is stored in the SliceCache
 struct SliceCacheEntry
 {
-    using DataStructure = void*;
+    using DataStructure = const TupleBuffer*;
 
     /// As we are doing everything in Nautilus, we do not care about the initialization of these values
     SliceCacheEntry() : sliceStart(0), sliceEnd(0), dataStructure(nullptr) { }
@@ -63,10 +66,11 @@ public:
     [[nodiscard]] virtual std::unique_ptr<SliceCache> clone() const = 0;
     static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
     using SliceCacheReplaceEntry = std::function<void(const nautilus::val<SliceCacheEntry*>&)>;
-    virtual nautilus::val<SliceCacheEntry::DataStructure> getDataStructureRef(
+    virtual NautilusBuffer getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
-        const SliceCacheReplaceEntry& replaceEntry)
+        const SliceCacheReplaceEntry& replaceEntry,
+        nautilus::val<AbstractBufferProvider*> bufferProvider)
         = 0;
     /// Memory layout: [Thread0 entries][Thread1 entries]...[ThreadN entries]
     [[nodiscard]] virtual uint64_t getCacheMemorySize() const;
