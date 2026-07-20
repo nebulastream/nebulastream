@@ -39,6 +39,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/AtomicState.hpp>
+#include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <DelayedTaskSubmitter.hpp>
@@ -62,7 +63,6 @@ namespace NES
 namespace
 {
 __itt_domain* taskExecutionDomain = __itt_domain_create("engine.task");
-__itt_string_handle* executeTask = __itt_string_handle_create("Execute task");
 
 /// Graceful pipeline shutdown can only happen if no task depends on the pipeline anymore.
 /// It could happen that tasks are waiting within the admission queue and do not get a chance to execute as long as the
@@ -525,9 +525,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
-        __itt_task_begin(taskExecutionDomain, __itt_null, __itt_null, executeTask);
         pipeline->stage->execute(task.buf, pec);
-        __itt_task_end(taskExecutionDomain);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
         return true;
     }
@@ -744,6 +742,81 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     return false;
 }
 
+namespace
+{
+__itt_string_handle* taskLabel(const Task& task)
+{
+    return std::visit(
+        Overloaded{
+            [](const WorkTask&)
+            {
+                static __itt_string_handle* const label = __itt_string_handle_create("Work");
+                return label;
+            },
+            [](const StopQueryTask&)
+            {
+                static __itt_string_handle* const label = __itt_string_handle_create("Stop query");
+                return label;
+            },
+            [](const StartQueryTask&)
+            {
+                static __itt_string_handle* const label = __itt_string_handle_create("Start query");
+                return label;
+            },
+            [](const FailSourceTask&)
+            {
+                static __itt_string_handle* const label = __itt_string_handle_create("Fail source");
+                return label;
+            },
+            [](const StopSourceTask&)
+            {
+                static __itt_string_handle* const label = __itt_string_handle_create("Stop source");
+                return label;
+            },
+            [](const PendingPipelineStopTask&)
+            {
+                static __itt_string_handle* const label = __itt_string_handle_create("Pending pipeline stop");
+                return label;
+            },
+            [](const StopPipelineTask&)
+            {
+                static __itt_string_handle* const label = __itt_string_handle_create("Stop pipeline");
+                return label;
+            },
+            [](const StartPipelineTask&)
+            {
+                static __itt_string_handle* const label = __itt_string_handle_create("Start pipeline");
+                return label;
+            },
+        },
+        task);
+}
+
+void addTaskMetadata(const QueryId& queryId, const uint64_t pipelineId = PipelineId::INVALID)
+{
+    static __itt_string_handle* const taskMetadata = __itt_string_handle_create("Local query:%s, Distributed query:%s, Pipeline:%llu");
+    const auto localQueryId = queryId.getLocalQueryId().getRawValue();
+    const auto distributedQueryId = queryId.getDistributedQueryId().getRawValue();
+    __itt_formatted_metadata_add(taskExecutionDomain, taskMetadata, localQueryId.c_str(), distributedQueryId.c_str(), pipelineId);
+}
+
+void addTaskMetadata(const Task& task)
+{
+    std::visit(
+        Overloaded{
+            [](const WorkTask& workTask) { addTaskMetadata(workTask.queryId, workTask.pipelineId.getRawValue()); },
+            [](const StopQueryTask& stopQueryTask) { addTaskMetadata(stopQueryTask.queryId); },
+            [](const StartQueryTask& startQueryTask) { addTaskMetadata(startQueryTask.queryId); },
+            [](const FailSourceTask& failSourceTask) { addTaskMetadata(failSourceTask.queryId); },
+            [](const StopSourceTask& stopSourceTask) { addTaskMetadata(stopSourceTask.queryId); },
+            [](const PendingPipelineStopTask& stopTask) { addTaskMetadata(stopTask.queryId, stopTask.pipeline->id.getRawValue()); },
+            [](const StopPipelineTask& stopTask) { addTaskMetadata(stopTask.queryId, stopTask.pipeline->id.getRawValue()); },
+            [](const StartPipelineTask& startTask) { addTaskMetadata(startTask.queryId, startTask.pipelineId.getRawValue()); },
+        },
+        task);
+}
+}
+
 void ThreadPool::addThread(const Host& host)
 {
     pool.emplace_back(
@@ -753,11 +826,18 @@ void ThreadPool::addThread(const Host& host)
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
             const WorkerThread worker{*this, false};
+            const auto handleProfiledTask = [](const WorkerThread& worker, Task task)
+            {
+                __itt_task_begin(taskExecutionDomain, __itt_null, __itt_null, taskLabel(task));
+                addTaskMetadata(task);
+                handleTask(worker, std::move(task));
+                __itt_task_end(taskExecutionDomain);
+            };
             while (!stopToken.stop_requested())
             {
                 if (auto task = taskQueue.getNextTaskBlocking(stopToken))
                 {
-                    handleTask(worker, std::move(*task));
+                    handleProfiledTask(worker, std::move(*task));
                 }
             }
 
@@ -766,7 +846,7 @@ void ThreadPool::addThread(const Host& host)
             const WorkerThread terminatingWorker{*this, true};
             while (auto task = taskQueue.getNextTaskNonBlocking())
             {
-                handleTask(terminatingWorker, std::move(*task));
+                handleProfiledTask(terminatingWorker, std::move(*task));
             }
         });
 }
