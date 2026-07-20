@@ -37,9 +37,15 @@ namespace NES
 
 struct ConfigParametersCSVInputFormatIndexer
 {
+    /// Defaults FALSE: quoted CSV is the exception, and the quote scan is pure overhead on data that has
+    /// none -- the no-quote SIMD kernel skips the quote compare entirely (~-27% index CPU / +13.5% e2e,
+    /// c489135d05), and the scalar indexer's quote variant cannot use `find` at all. Sources whose CSV
+    /// really does quote its field delimiters must now opt IN with `allow_commas_in_strings: true`.
+    /// Keep this in lockstep with the uncompiled and OldCSV indexers' defaults: an ablation that compares
+    /// indexers across those modules is only fair if they do the same SEMANTIC work per row.
     static inline const DescriptorConfig::ConfigParameter<bool> ALLOW_COMMAS_IN_STRINGS{
         "allow_commas_in_strings",
-        true,
+        false,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(ALLOW_COMMAS_IN_STRINGS, config); }};
 

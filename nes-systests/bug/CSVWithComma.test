@@ -2,8 +2,11 @@
 # description: successful handling should ignore delimiters in double quotes
 # groups: [Formatter]
 
+# allow_commas_in_strings must be requested EXPLICITLY: it defaults to false, because the quote scan is
+# pure overhead on the (far more common) CSV that does not quote its field delimiters. This test is the
+# opt-in case -- comma.csv quotes every field and puts commas inside them.
 CREATE LOGICAL SOURCE stream(text VARSIZED NOT NULL, text2 VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE FILE;
+CREATE PHYSICAL SOURCE FOR stream TYPE FILE SET( "true" AS INPUT_FORMATTER.`ALLOW_COMMAS_IN_STRINGS`);
 ATTACH FILE small/comma.csv
 
 CREATE SINK file_sink(stream.text VARSIZED NOT NULL, stream.text2 VARSIZED NOT NULL) TYPE File;

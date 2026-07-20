@@ -2,6 +2,17 @@
 # description: testing malformed strings, e.g., 3_14 instead of 3.14
 # groups: [Formatter]
 
+# KNOWN-FAILING ON THIS BRANCH (benchmark-piparse-lazyparse-fast-csv), queries :01-:04.
+# Cause: the branch's default fast numeric codecs (FastFloat / FastInteger / Eisel) THROW on
+# malformed input ("'3_14' is not a supported double value") instead of null-coercing it. Queries
+# :01-:04 feed malformed values into NULLABLE columns and expect NULL, so they fail; :05-:06 use
+# NOT NULL columns and expect an error, so the throw is what they want and they pass.
+# This is a codec-layer gap, NOT related to the ablation work (traceConstantBytes / OldCSV /
+# allow_commas_in_strings): it reproduces identically with allow_commas_in_strings true or false,
+# the parse path was not touched, and the failure predates the session. Do not re-investigate as a
+# regression -- fixing it means teaching the fast codecs to null-coerce malformed input (out of
+# scope here). See auto-memory [[ablation-study]].
+
 CREATE LOGICAL SOURCE csvStreamFloating(id UINT64 NOT NULL, value FLOAT64, isMalformedString BOOLEAN, metadata VARSIZED);
 CREATE PHYSICAL SOURCE FOR csvStreamFloating TYPE File;
 ATTACH INLINE

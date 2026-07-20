@@ -33,9 +33,13 @@ constexpr auto UNCOMPILED_CSV_NUM_OFFSETS_PER_FIELD = UncompiledNumRequiredOffse
 
 struct ConfigParametersUncompiledCSVInputFormatIndexer
 {
+    /// Defaults FALSE, in lockstep with the compiled ConfigParametersCSVInputFormatIndexer and the
+    /// OldCSV indexer -- see the comment there. The ablation compares indexers ACROSS these modules
+    /// (rung 1 OldCSV -> rung 2 SequentialUncompiledCSV -> rung 3 SequentialCSV), so a default that
+    /// differed between them would silently bundle the quote lever into the indexer bar.
     static inline const DescriptorConfig::ConfigParameter<bool> ALLOW_COMMAS_IN_STRINGS{
         "allow_commas_in_strings",
-        true,
+        false,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(ALLOW_COMMAS_IN_STRINGS, config); }};
 
