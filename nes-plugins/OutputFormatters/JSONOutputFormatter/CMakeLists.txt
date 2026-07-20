@@ -23,3 +23,12 @@ target_include_directories(json_output_formatter_validation_plugin
         PUBLIC include
         PRIVATE .
 )
+
+# Compile the runtime formatter with the nautilus inlining pass so its own NAUTILUS_INLINE helper
+# writeRawBytes (the lazy value passthrough write) gets its bitcode registered and can be spliced
+# into the JIT'd output pipeline. Without this, add_plugin_as_library builds the plugin TU WITHOUT
+# -fpass-plugin, so writeRawBytes is never registered and inline_invoke_calls cannot reach it -- it
+# stays an opaque per-row proxy call. The shared core helpers (writeBytesToBuffer, getMemArea, ...)
+# already splice because nes-output-formatters is pass-compiled; this closes the plugin-local gap.
+# Only the runtime plugin runs the JIT; the validation plugin never compiles a pipeline.
+nautilus_inline(json_output_formatter_plugin)
