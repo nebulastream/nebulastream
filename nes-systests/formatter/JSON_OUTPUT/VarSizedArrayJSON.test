@@ -24,3 +24,24 @@ SELECT * FROM movingPolygons INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
 ----
 {"MOVINGPOLYGONS$timedPolygon":{"ts":100,"polygon":{"vertices":[{"x":1.0,"y":50.0},{"x":2.0,"y":60.0},{"x":4.0,"y":80.0},{"x":3.0,"y":60.0},{"x":2.0,"y":30.0}]}}}
 {"MOVINGPOLYGONS$timedPolygon":{"ts":110,"polygon":{"vertices":[{"x":1.0,"y":30.0},{"x":2.0,"y":40.0},{"x":3.0,"y":90.0}]}}}
+
+CREATE LOGICAL SOURCE polygonTrajectory(`trajectory` MovingPolygonTrajectory NOT NULL);
+CREATE PHYSICAL SOURCE FOR polygonTrajectory TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+ATTACH INLINE
+{"trajectory": {"polygons":[{"ts": 100, "polygon": {"vertices": [{"x": 1, "y": 50}, {"x": 2, "y": 60}, {"x": 4, "y": 80}, {"x": 3, "y": 60}, {"x": 2, "y": 30}]}}, {"ts":110,"polygon":{"vertices":[{"x":1.0,"y":30.0},{"x":2.0,"y":40.0},{"x":3.0,"y":90.0}]}}, {"ts":120,"polygon":{"vertices":[{"x":2.0,"y":30.0},{"x":3.0,"y":40.0},{"x":4.0,"y":90.0}]}}]}}
+
+SELECT * FROM polygonTrajectory INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"POLYGONTRAJECTORY$trajectory":{"polygons":[{"ts":100,"polygon":{"vertices":[{"x":1.0,"y":50.0},{"x":2.0,"y":60.0},{"x":4.0,"y":80.0},{"x":3.0,"y":60.0},{"x":2.0,"y":30.0}]}},{"ts":110,"polygon":{"vertices":[{"x":1.0,"y":30.0},{"x":2.0,"y":40.0},{"x":3.0,"y":90.0}]}},{"ts":120,"polygon":{"vertices":[{"x":2.0,"y":30.0},{"x":3.0,"y":40.0},{"x":4.0,"y":90.0}]}}]}}
+
+# Test nested fixedsized
+CREATE LOGICAL SOURCE MatrixSource(`matrixStruct` Matrix NOT NULL);
+CREATE PHYSICAL SOURCE FOR MatrixSource TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+ATTACH INLINE
+{"matrixStruct": {"matrix": [[1.0, 2.0, 3.0],[4.0,5.0,6.0],[7.0,8.0,9.0]]}}
+{"matrixStruct": {"matrix": [[10.0, 20.0, 30.0],[40.0,50.0,60.0],[70.0,80.0,90.0]]}}
+
+SELECT * FROM MatrixSource INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"MATRIXSOURCE$matrixStruct":{"matrix":[[1.0,2.0,3.0],[4.0,5.0,6.0],[7.0,8.0,9.0]]}}
+{"MATRIXSOURCE$matrixStruct":{"matrix":[[10.0,20.0,30.0],[40.0,50.0,60.0],[70.0,80.0,90.0]]}}

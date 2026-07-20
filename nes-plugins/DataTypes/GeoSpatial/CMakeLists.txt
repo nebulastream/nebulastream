@@ -16,7 +16,9 @@ add_plugin_as_library(Point DataType nes-data-types-registry point_data_type_plu
 add_plugin_as_library(Line DataType nes-data-types-registry line_data_type_plugin LineDataType.cpp)
 add_plugin_as_library(Circle DataType nes-data-types-registry circle_data_type_plugin CircleDataType.cpp)
 add_plugin_as_library(Polygon DataType nes-data-types-registry polygon_data_type_plugin PolygonDataType.cpp)
-add_plugin_as_library(MovingPolygon DataType nes-data-types-registry moving-polygon_data_type_plugin MovingPolygonDataType.cpp)
+add_plugin_as_library(MovingPolygon DataType nes-data-types-registry moving_polygon_data_type_plugin MovingPolygonDataType.cpp)
+add_plugin_as_library(MovingPolygonTrajectory DataType nes-data-types-registry moving_polygon_trajectory_data_type_plugin MovingPolygonTrajectoryDataType.cpp)
+
 
 target_include_directories(point_data_type_plugin
         PUBLIC include
@@ -38,7 +40,12 @@ target_include_directories(polygon_data_type_plugin
         PRIVATE .
 )
 
-target_include_directories(moving-polygon_data_type_plugin
+target_include_directories(moving_polygon_data_type_plugin
+        PUBLIC include
+        PRIVATE .
+)
+
+target_include_directories(moving_polygon_trajectory_data_type_plugin
         PUBLIC include
         PRIVATE .
 )
