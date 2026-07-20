@@ -52,6 +52,7 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/QuantifiedComparisonLogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
@@ -184,6 +185,37 @@ bool isInsideDataTypeConstructorArgument(antlr4::ParserRuleContext* context)
         if (auto* const functionCall = dynamic_cast<AntlrSQLParser::FunctionCallContext*>(parent))
         {
             return functionCall->typeDefinition() != nullptr;
+        }
+    }
+    return false;
+}
+
+bool isQuantifiedPredicateSubquery(antlr4::ParserRuleContext* context)
+{
+    for (auto* parent = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parent != nullptr;
+         parent = dynamic_cast<antlr4::ParserRuleContext*>(parent->parent))
+    {
+        if (dynamic_cast<AntlrSQLParser::QueryContext*>(parent) != nullptr)
+        {
+            const auto* queryParent = dynamic_cast<antlr4::ParserRuleContext*>(parent->parent);
+            return dynamic_cast<const AntlrSQLParser::BooleanComparisonContext*>(queryParent) != nullptr;
+        }
+    }
+    return false;
+}
+
+bool isInsideRowConstructor(antlr4::ParserRuleContext* context)
+{
+    for (auto* parent = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parent != nullptr;
+         parent = dynamic_cast<antlr4::ParserRuleContext*>(parent->parent))
+    {
+        if (dynamic_cast<AntlrSQLParser::RowConstructorContext*>(parent) != nullptr)
+        {
+            return true;
+        }
+        if (dynamic_cast<AntlrSQLParser::NamedExpressionSeqContext*>(parent) != nullptr)
+        {
+            return false;
         }
     }
     return false;
@@ -378,22 +410,41 @@ void AntlrSQLQueryPlanCreator::exitBoolComparison(AntlrSQLParser::BoolComparison
     {
         if (comparison->query() != nullptr)
         {
-            throw UnsupportedQuery("IN subqueries are currently not supported: {}", comparison->getText());
+            if (helpers.top().quantifiedSubqueryRoots.empty())
+            {
+                throw InvalidQuerySyntax("IN predicate is missing its subquery: {}", comparison->getText());
+            }
+            auto subqueryRoot = std::move(helpers.top().quantifiedSubqueryRoots.back());
+            helpers.top().quantifiedSubqueryRoots.pop_back();
+            std::vector<LogicalFunction> probeValues;
+            if (!helpers.top().quantifiedRowValues.empty())
+            {
+                probeValues = std::move(helpers.top().quantifiedRowValues.back());
+                helpers.top().quantifiedRowValues.pop_back();
+            }
+            else
+            {
+                probeValues.push_back(popFunction());
+            }
+            function = QuantifiedComparisonLogicalFunction{std::move(probeValues), std::move(subqueryRoot)};
         }
-        const auto candidateCount = comparison->expression().size();
-        if (candidateCount == 0)
+        else
         {
-            throw InvalidQuerySyntax("IN predicate requires at least one candidate value: {}", comparison->getText());
+            const auto candidateCount = comparison->expression().size();
+            if (candidateCount == 0)
+            {
+                throw InvalidQuerySyntax("IN predicate requires at least one candidate value: {}", comparison->getText());
+            }
+            if (functions.size() < candidateCount + 1)
+            {
+                throw InvalidQuerySyntax("IN predicate {} is missing operands", comparison->getText());
+            }
+            const auto candidatesBegin = functions.end() - static_cast<std::ptrdiff_t>(candidateCount);
+            std::vector<LogicalFunction> candidateFunctions(candidatesBegin, functions.end());
+            functions.erase(candidatesBegin, functions.end());
+            auto valueFunction = popFunction();
+            function = createInFunction(valueFunction, std::move(candidateFunctions));
         }
-        if (functions.size() < candidateCount + 1)
-        {
-            throw InvalidQuerySyntax("IN predicate {} is missing operands", comparison->getText());
-        }
-        const auto candidatesBegin = functions.end() - static_cast<std::ptrdiff_t>(candidateCount);
-        std::vector<LogicalFunction> candidateFunctions(candidatesBegin, functions.end());
-        functions.erase(candidatesBegin, functions.end());
-        auto valueFunction = popFunction();
-        function = createInFunction(valueFunction, std::move(candidateFunctions));
         if (comparison->NOT() != nullptr)
         {
             function = NegateLogicalFunction(std::move(function));
@@ -685,7 +736,8 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
 
 void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
-    if (not helpers.empty() and not helpers.top().isFrom and not helpers.top().isSetOperation)
+    if (not helpers.empty() and not helpers.top().isFrom and not helpers.top().isSetOperation
+        and not isQuantifiedPredicateSubquery(context))
     {
         throw InvalidQuerySyntax("Subqueries are only supported in FROM clauses, but got {}", context->getText());
     }
@@ -697,6 +749,7 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
 
 void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
+    const auto quantifiedPredicateSubquery = isQuantifiedPredicateSubquery(context);
     LogicalPlan queryPlan = [&]
     {
         if (not helpers.top().queryPlans.empty())
@@ -804,7 +857,16 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     else
     {
         auto& subQueryHelper = helpers.top();
-        subQueryHelper.queryPlans.push_back(queryPlan);
+        if (quantifiedPredicateSubquery)
+        {
+            const auto roots = queryPlan.getRootOperators();
+            INVARIANT(roots.size() == 1, "A quantified subquery must have exactly one root operator");
+            subQueryHelper.quantifiedSubqueryRoots.push_back(roots.front());
+        }
+        else
+        {
+            subQueryHelper.queryPlans.push_back(queryPlan);
+        }
     }
     AntlrSQLBaseListener::exitPrimaryQuery(context);
 }
@@ -918,7 +980,7 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
 void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
     AntlrSQLHelper& helper = helpers.top();
-    if (context->name == nullptr and helper.functionBuilder.size() == 1
+    if (helper.isSelect && !isInsideRowConstructor(context) && context->name == nullptr and helper.functionBuilder.size() == 1
         and helper.functionBuilder.back().tryGetAs<UnboundFieldAccessLogicalFunction>() and not helpers.top().hasUnnamedAggregation)
     {
         auto fieldName = helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()->getFieldName();
@@ -941,6 +1003,32 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         helpers.top().hasUnnamedAggregation = false;
     }
     AntlrSQLBaseListener::exitNamedExpression(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitRowConstructor(AntlrSQLParser::RowConstructorContext* context)
+{
+    auto* parent = dynamic_cast<antlr4::ParserRuleContext*>(context->parent);
+    while (parent != nullptr && dynamic_cast<AntlrSQLParser::BoolComparisonContext*>(parent) == nullptr)
+    {
+        parent = dynamic_cast<antlr4::ParserRuleContext*>(parent->parent);
+    }
+    auto* boolComparison = dynamic_cast<AntlrSQLParser::BoolComparisonContext*>(parent);
+    if (boolComparison == nullptr || boolComparison->booleanComparison() == nullptr
+        || boolComparison->booleanComparison()->query() == nullptr)
+    {
+        throw UnsupportedQuery("Row constructors are currently only supported on the left side of an IN subquery: {}", context->getText());
+    }
+
+    auto& functions = helpers.top().getActiveFunctionBuilder();
+    const auto arity = context->namedExpression().size();
+    if (functions.size() < arity)
+    {
+        throw InvalidQuerySyntax("Row constructor {} is missing values", context->getText());
+    }
+    const auto begin = functions.end() - static_cast<std::ptrdiff_t>(arity);
+    helpers.top().quantifiedRowValues.emplace_back(begin, functions.end());
+    functions.erase(begin, functions.end());
+    AntlrSQLBaseListener::exitRowConstructor(context);
 }
 
 void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallContext* context)
@@ -1061,7 +1149,7 @@ void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* con
 void AntlrSQLQueryPlanCreator::exitStreamTableJoinType(AntlrSQLParser::StreamTableJoinTypeContext* context)
 {
     helpers.top().streamTableJoinType = context->SEMI() == nullptr ? StreamTableJoinLogicalOperator::JoinType::INNER_JOIN
-                                                                  : StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN;
+                                                                   : StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN;
     AntlrSQLBaseListener::exitStreamTableJoinType(context);
 }
 
@@ -1304,10 +1392,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 if (numArgs > functions.size())
                 {
                     throw InvalidQuerySyntax(
-                        "Function '{}' expects {} arguments but only {} are available",
-                        funcName,
-                        numArgs,
-                        functions.size());
+                        "Function '{}' expects {} arguments but only {} are available", funcName, numArgs, functions.size());
                 }
                 auto argsBegin = functions.end() - static_cast<std::ptrdiff_t>(numArgs);
                 std::vector<LogicalFunction> funcArgs(argsBegin, functions.end());

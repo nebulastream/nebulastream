@@ -24,7 +24,6 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
-#include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -60,7 +59,12 @@ private:
 class StreamTableJoinPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    using JoinType = StreamTableJoinLogicalOperator::JoinType;
+    enum class JoinType : uint8_t
+    {
+        INNER_JOIN,
+        LEFT_SEMI_JOIN,
+        MARK_APPLY
+    };
 
     StreamTableJoinPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
@@ -71,6 +75,7 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> streamTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> tableTupleLayout,
         OriginId outputOriginId,
+        std::optional<Record::RecordFieldIdentifier> markField,
         std::unique_ptr<TimeFunction> streamTimeFunction = nullptr,
         std::unique_ptr<TimeFunction> tableTimeFunction = nullptr);
 
@@ -92,7 +97,8 @@ private:
         const Record& streamRecord,
         Record& tableRecord,
         const nautilus::val<Timestamp>& streamTimestamp,
-        nautilus::val<bool>& emittedSemiJoinRecord) const;
+        nautilus::val<bool>& matched,
+        nautilus::val<bool>& sawNull) const;
     void releasePending(ExecutionContext& executionCtx, const nautilus::val<Timestamp>& tableWatermark, bool releaseAll) const;
 
     OperatorHandlerId operatorHandlerId;
@@ -107,6 +113,7 @@ private:
     std::vector<Record::RecordFieldIdentifier> streamFields;
     std::vector<Record::RecordFieldIdentifier> tableFields;
     OriginId outputOriginId;
+    std::optional<Record::RecordFieldIdentifier> markField;
     std::unique_ptr<TimeFunction> streamTimeFunction;
     std::unique_ptr<TimeFunction> tableTimeFunction;
     std::optional<PhysicalOperator> child;
