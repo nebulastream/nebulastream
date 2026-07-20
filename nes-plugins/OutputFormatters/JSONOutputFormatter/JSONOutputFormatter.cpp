@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -212,6 +213,83 @@ uint64_t writeJsonChar(
     return writeBytesToBuffer(escaped.data(), escaped.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+/// Unchecked copy: the whole record has been verified to fit the main buffer, so this write is
+/// guaranteed in-bounds -- no per-write fit guard, no child-buffer spill path (contrast
+/// writeBytesToBuffer). Reads no static/thread_local state, so it is safe to splice via NAUTILUS_INLINE.
+NAUTILUS_INLINE uint64_t copyBytesUnchecked(int8_t* destination, const int8_t* source, const uint64_t size)
+{
+    std::memcpy(destination, source, size);
+    return size;
+}
+
+/// Emit host-known constant glue bytes on the already-fits-verified path: same folded-constant source as
+/// writeConstantBytes (embedConstantBytes materialises the bytes into the JIT module when trace_constant_bytes
+/// is on), but copied unchecked -- no fit guard, no spill. Returns the number of bytes written.
+nautilus::val<uint64_t> writeConstantBytesUnchecked(const std::string& constant, const nautilus::val<int8_t*>& destination)
+{
+    const auto source = traceConstantBytesEnabled() ? nautilus::embedConstantBytes(constant.data(), constant.size())
+                                                    : nautilus::val<const int8_t*>{reinterpret_cast<const int8_t*>(constant.data())};
+    return nautilus::invoke(copyBytesUnchecked, destination, source, nautilus::val<uint64_t>{constant.size()});
+}
+
+/// The largest decimal text a NUMERIC type can occupy, rounded UP to a wide-store width (16 or 32),
+/// both within the SIMDCSV indexer's 64-byte input over-read slack. Used as the fixed copy width for
+/// the bounded value store below: int32 "-2147483648"=11, int64/uint64 ...=20, double shortest ~24.
+/// Non-numeric types never reach here (declined host-side).
+constexpr uint64_t maxTextWidth(const DataType::Type type)
+{
+    switch (type)
+    {
+        case DataType::Type::INT8:
+        case DataType::Type::INT16:
+        case DataType::Type::INT32:
+        case DataType::Type::UINT8:
+        case DataType::Type::UINT16:
+        case DataType::Type::UINT32:
+            return 16;
+        case DataType::Type::INT64:
+        case DataType::Type::UINT64:
+        case DataType::Type::FLOAT32:
+        case DataType::Type::FLOAT64:
+            return 32;
+        default:
+            return 0;
+    }
+}
+
+/// Bounded value store: copy a COMPILE-TIME-CONSTANT width via __builtin_memcpy_inline (lowers to fixed
+/// wide stores -- NO `call memcpy`, the whole point) and advance the write cursor by the ACTUAL length.
+/// The caller has proven (host + one runtime check) that every value is <= its width (no truncation),
+/// that the destination has the width reserved (over-write of the slop is overwritten by the next field
+/// / harmless past the record end), and that the source over-read <= the width stays inside the input
+/// buffer's over-read slack. Two widths cover all numerics; the caller picks host-side (no runtime branch).
+NAUTILUS_INLINE uint64_t copyBounded16(int8_t* destination, const int8_t* source, const uint64_t size)
+{
+    __builtin_memcpy_inline(destination, source, 16);
+    return size;
+}
+
+NAUTILUS_INLINE uint64_t copyBounded32(int8_t* destination, const int8_t* source, const uint64_t size)
+{
+    __builtin_memcpy_inline(destination, source, 32);
+    return size;
+}
+
+/// Host dispatch to the right bounded-store width for a NUMERIC type; `width` is host-known so this
+/// selects the instantiation at trace time (no runtime branch). Returns the ACTUAL bytes written.
+nautilus::val<uint64_t> emitBoundedValue(
+    const uint64_t width,
+    const nautilus::val<int8_t*>& destination,
+    const nautilus::val<int8_t*>& content,
+    const nautilus::val<uint64_t>& size)
+{
+    if (width <= 16)
+    {
+        return nautilus::invoke(copyBounded16, destination, content, size);
+    }
+    return nautilus::invoke(copyBounded32, destination, content, size);
+}
+
 /// Write raw pass-through bytes (lazy numeric/bool values: the source text is already a valid
 /// JSON number/literal, so copy it verbatim).
 NAUTILUS_INLINE uint64_t writeRawBytes(
@@ -396,6 +474,93 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     {
         static const std::string recordSuffix = "}\n";
         written += writeConstantBytes(recordSuffix, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
+    }
+    return written;
+}
+
+std::optional<nautilus::val<uint64_t>> JSONOutputFormatter::tryWriteRecordAllPassthrough(
+    const Record& record,
+    const std::vector<DataType>& fieldTypes,
+    const nautilus::val<int8_t*>& recordAddress,
+    const nautilus::val<uint64_t>& remainingMainBytes,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+{
+    const std::size_t numberOfFields = fieldNames.size();
+
+    /// Host-time decline: JSON only passes a lazy value through verbatim when it is NUMERIC (the source
+    /// text is already a valid JSON number). Lazy bools become true/false literals and lazy char/varsized
+    /// are quoted+escaped, so any non-numeric field must take the per-field writeFormattedValue() path.
+    for (const auto& fieldType : fieldTypes)
+    {
+        if (not fieldType.isNumeric())
+        {
+            return std::nullopt;
+        }
+    }
+
+    /// Single host-side pass: read every field's raw passthrough bytes and accumulate (a) the record's
+    /// EXACT output size -- host-constant glue (the precomputed field prefixes + the `}\n` suffix) plus
+    /// the runtime lazy field lengths -- and (b) whether every value fits its bounded copy width. The
+    /// caller guarantees every field is a non-nullable lazy value.
+    static const std::string recordSuffix = "}\n";
+    std::vector<nautilus::val<int8_t*>> contents;
+    std::vector<nautilus::val<uint64_t>> sizes;
+    contents.reserve(numberOfFields);
+    sizes.reserve(numberOfFields);
+    uint64_t glueTotal = recordSuffix.size();
+    nautilus::val<uint64_t> valuesTotal{0};
+    nautilus::val<bool> allWithinBound{true};
+    for (std::size_t fieldIndex = 0; fieldIndex < numberOfFields; ++fieldIndex)
+    {
+        const auto lazyValue = record.read(fieldNames.at(fieldIndex)).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+        const auto size = lazyValue->getSize();
+        contents.push_back(lazyValue->getContent());
+        sizes.push_back(size);
+        glueTotal += fieldPrefixes.at(fieldIndex).size();
+        valuesTotal += size;
+        allWithinBound = allWithinBound and (size <= nautilus::val<uint64_t>{maxTextWidth(fieldTypes.at(fieldIndex).type)});
+    }
+    const nautilus::val<uint64_t> exactSize = nautilus::val<uint64_t>{glueTotal} + valuesTotal;
+
+    /// FAST PATH (bounded fixed-width store): every value fits its width AND the record plus an
+    /// over-write slack of kOverWriteSlack (the max copy width) fits the main buffer. Then each value is
+    /// a __builtin_memcpy_inline of a compile-time-constant width -- fixed wide stores, NO `call memcpy`
+    /// -- advancing by the actual length; the fixed store's slop is overwritten by the next field (or is
+    /// past the record end, harmless within the reserved slack). No per-field guard on this path: the
+    /// two conditions were hoisted to a single record-level check.
+    constexpr uint64_t kOverWriteSlack = 32;
+    nautilus::val<uint64_t> written{0};
+    if (allWithinBound and (exactSize + nautilus::val<uint64_t>{kOverWriteSlack} <= remainingMainBytes))
+    {
+        for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
+        {
+            const std::size_t fieldIndex = i;
+            written += writeConstantBytesUnchecked(fieldPrefixes.at(fieldIndex), recordAddress + written);
+            written += emitBoundedValue(
+                maxTextWidth(fieldTypes.at(fieldIndex).type), recordAddress + written, contents.at(fieldIndex), sizes.at(fieldIndex));
+        }
+        written += writeConstantBytesUnchecked(recordSuffix, recordAddress + written);
+        return written;
+    }
+
+    /// FALLBACK: a value exceeded its bounded width (pathologically long field), or the record is near
+    /// the main-buffer boundary. Delegate per-field to the canonical writeFormattedValue(), which emits
+    /// exact copies and spills into child buffers correctly -- no duplicated emit logic here.
+    nautilus::val<uint64_t> currentRemaining = remainingMainBytes;
+    for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
+    {
+        const std::size_t fieldIndex = i;
+        const auto amountWritten = writeFormattedValue(
+            record.read(fieldNames.at(fieldIndex)),
+            fieldTypes.at(fieldIndex),
+            i,
+            recordAddress + written,
+            currentRemaining,
+            recordBuffer,
+            bufferProvider);
+        written += amountWritten;
+        currentRemaining -= amountWritten;
     }
     return written;
 }

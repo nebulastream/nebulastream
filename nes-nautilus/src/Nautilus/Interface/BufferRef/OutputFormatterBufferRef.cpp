@@ -85,13 +85,43 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
             isLazyPassthrough[i] = value.isLazyValue() and not value.isNullable();
         }
 
+        /// Whole-record fast path: when EVERY field is a non-nullable lazy passthrough value, offer the
+        /// record to the formatter's tryWriteRecordAllPassthrough(). It hoists a SINGLE per-record fit-check
+        /// (exact glue + runtime field lengths) and, on the common fits case, emits the record with unchecked
+        /// copies -- no per-field guard, no child-buffer spill. The formatter may still decline host-side
+        /// (e.g. JSON only raw-passes NUMERIC lazy values); it returns nullopt then and we drop to per-field.
+        bool recordEmitted = false;
+        if (bool allPassthrough = numberOfFields > 0; allPassthrough)
+        {
+            for (std::size_t i = 0; i < numberOfFields; ++i)
+            {
+                allPassthrough = allPassthrough and isLazyPassthrough[i];
+            }
+            if (allPassthrough)
+            {
+                std::vector<DataType> fieldTypes;
+                fieldTypes.reserve(numberOfFields);
+                for (const auto& field : fields)
+                {
+                    fieldTypes.push_back(field.type);
+                }
+                const nautilus::val<uint64_t> remainingMainBytes{bufferSize - bytesWritten};
+                if (const auto recordWritten = formatter->tryWriteRecordAllPassthrough(
+                        rec, fieldTypes, recordAddress, remainingMainBytes, recordBuffer, bufferProvider))
+                {
+                    writtenForThisRecord += *recordWritten;
+                    recordEmitted = true;
+                }
+            }
+        }
+
         /// Host: length of the coalesceable run STARTING at each field (>= 2 => coalesce), and whether a field
         /// is interior to a run started earlier (=> skip, already emitted by that run's start). Only formed
         /// when the formatter guarantees it accepts such runs (supportsRunCoalescing); otherwise every field
         /// stays per-field so a declined run can never drop its interior fields.
         std::vector<std::size_t> runLengthAt(numberOfFields, 0);
         std::vector<bool> interiorToRun(numberOfFields, false);
-        for (std::size_t i = 0; formatter->supportsRunCoalescing() and i < numberOfFields;)
+        for (std::size_t i = 0; not recordEmitted and formatter->supportsRunCoalescing() and i < numberOfFields;)
         {
             if (not isLazyPassthrough[i])
             {
@@ -114,7 +144,7 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
             i = runEnd;
         }
 
-        for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
+        for (nautilus::static_val<uint64_t> i = 0; not recordEmitted and i < numberOfFields; ++i)
         {
             const std::size_t fieldIndex = i;
             if (interiorToRun.at(fieldIndex))

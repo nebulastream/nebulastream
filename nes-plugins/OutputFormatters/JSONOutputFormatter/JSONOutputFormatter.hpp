@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -48,6 +49,14 @@ public:
         const nautilus::static_val<uint64_t>& fieldIndex,
         const nautilus::val<int8_t*>& fieldPointer,
         const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+
+    [[nodiscard]] std::optional<nautilus::val<uint64_t>> tryWriteRecordAllPassthrough(
+        const Record& record,
+        const std::vector<DataType>& fieldTypes,
+        const nautilus::val<int8_t*>& recordAddress,
+        const nautilus::val<uint64_t>& remainingMainBytes,
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 

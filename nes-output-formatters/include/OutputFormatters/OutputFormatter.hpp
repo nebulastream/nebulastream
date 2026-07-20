@@ -107,6 +107,29 @@ public:
         return std::nullopt;
     }
 
+    /// Optional whole-record fast path for records whose fields are ALL non-nullable lazy passthrough
+    /// values (raw input bytes). The caller (OutputFormatterBufferRef) verifies that precondition host-side
+    /// and passes the matching `fieldTypes` plus the bytes remaining in the MAIN buffer at `recordAddress`.
+    /// A formatter may still DECLINE host-side (return nullopt) if raw passthrough is not valid for some
+    /// field type under its format -- e.g. JSON only passes NUMERIC lazy values through verbatim (it parses
+    /// lazy bools to true/false and quotes lazy char/varsized). When it accepts, it computes the record's
+    /// EXACT output size in one pass (host-constant glue plus the runtime lazy field lengths) and emits the
+    /// whole record behind a SINGLE hoisted fit-check: if it fits the main buffer, unchecked copies (no
+    /// per-field guard, no child-buffer spill); otherwise it falls back internally to guarded writes that
+    /// spill correctly. Returns the bytes written into the main buffer. This is the record-level analogue of
+    /// tryWriteCoalescedRun for formatters that cannot coalesce (e.g. JSON, whose per-field glue prevents a
+    /// single contiguous copy). Default: decline.
+    [[nodiscard]] virtual std::optional<nautilus::val<uint64_t>> tryWriteRecordAllPassthrough(
+        const Record&,
+        const std::vector<DataType>& /*fieldTypes*/,
+        const nautilus::val<int8_t*>& /*recordAddress*/,
+        const nautilus::val<uint64_t>& /*remainingMainBytes*/,
+        const RecordBuffer&,
+        const nautilus::val<AbstractBufferProvider*>&) const
+    {
+        return std::nullopt;
+    }
+
     virtual std::ostream& toString(std::ostream&) const = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj);

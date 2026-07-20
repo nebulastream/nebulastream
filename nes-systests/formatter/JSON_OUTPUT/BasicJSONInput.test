@@ -53,3 +53,18 @@ SELECT * FROM streamWithNull INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
 {"STREAMWITHNULL$ID":5,"STREAMWITHNULL$VALUE":null,"STREAMWITHNULL$TIMESTAMP":19000}
 {"STREAMWITHNULL$ID":6,"STREAMWITHNULL$VALUE":20,"STREAMWITHNULL$TIMESTAMP":20000}
 {"STREAMWITHNULL$ID":7,"STREAMWITHNULL$VALUE":21,"STREAMWITHNULL$TIMESTAMP":21000}
+
+# Multi-field, all-numeric, non-nullable passthrough: exercises the whole-record all-passthrough
+# fast path (JSONOutputFormatter::tryWriteRecordAllPassthrough) with more than one field -- the
+# record-level fit-check hoist emits every field's glue + raw value with a single bound check. A
+# SELECT * would end in the BOOLEAN flag, which the JSON path declines (bools are parsed to
+# true/false, not passed through raw), so project the three UINT64 columns explicitly.
+SELECT id, value, timestamp FROM stream INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"STREAM$ID":1,"STREAM$VALUE":1,"STREAM$TIMESTAMP":1000}
+{"STREAM$ID":2,"STREAM$VALUE":1,"STREAM$TIMESTAMP":1001}
+{"STREAM$ID":3,"STREAM$VALUE":1,"STREAM$TIMESTAMP":1002}
+{"STREAM$ID":4,"STREAM$VALUE":2,"STREAM$TIMESTAMP":2000}
+{"STREAM$ID":5,"STREAM$VALUE":19,"STREAM$TIMESTAMP":19000}
+{"STREAM$ID":6,"STREAM$VALUE":20,"STREAM$TIMESTAMP":20000}
+{"STREAM$ID":7,"STREAM$VALUE":21,"STREAM$TIMESTAMP":21000}
