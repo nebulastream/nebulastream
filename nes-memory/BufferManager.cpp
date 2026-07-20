@@ -68,6 +68,10 @@ void BufferManager::destroy()
     NES_DEBUG("Calling BufferManager::destroy()");
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
+        /// All buffers should be idle now, so their control blocks (and data regions) are poisoned. Clear all
+        /// poison up front: the availability checks and the MemorySegment destructors in allBuffers.clear()
+        /// below read the control blocks, and the arena is about to be returned to the allocator anyway.
+        ASAN_UNPOISON_MEMORY_REGION(basePointer, allocatedAreaSize);
         bool success = true;
         if (allBuffers.size() != getNumberOfAvailableBuffers())
         {
@@ -133,12 +137,20 @@ void BufferManager::initialize()
         alignof(detail::BufferControlBlock));
 
     allBuffers.reserve(numOfBuffers);
-    auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), withAlignment);
-    auto alignedBufferSize = alignBufferSize(bufferSize, withAlignment);
-    allocatedAreaSize = alignBufferSize(controlBlockSize + alignedBufferSize, withAlignment);
-    const size_t offsetBetweenBuffers = allocatedAreaSize;
-    allocatedAreaSize *= numOfBuffers;
+    const auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), withAlignment);
+    const auto alignedBufferSize = alignBufferSize(bufferSize, withAlignment);
+
+    /// Each buffer slot is laid out as:
+    ///   [ redzone | control block | redzone | data region ]
+    /// Under ASan the two redzones are permanently poisoned to trap any over-/underflow that would
+    /// corrupt the control block. CONTROL_BLOCK_REDZONE_SIZE is 0 without ASan, so the slot size
+    /// below collapses to the previous (controlBlockSize + alignedBufferSize) layout exactly.
+    const auto redzoneSize = detail::CONTROL_BLOCK_REDZONE_SIZE;
+    const size_t offsetBetweenBuffers = redzoneSize + controlBlockSize + redzoneSize + alignedBufferSize;
+    /// One extra trailing redzone guards the data region of the very last slot.
+    allocatedAreaSize = (offsetBetweenBuffers * numOfBuffers) + redzoneSize;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
+    INVARIANT(basePointer, "memory allocation failed, because 'basePointer' was a nullptr");
 
 #ifndef NDEBUG
     constexpr std::array marker{'N', 'E', 'B', 'U', 'S', 'T', 'R', 'M'};
@@ -155,12 +167,12 @@ void BufferManager::initialize()
         controlBlockSize,
         alignof(detail::BufferControlBlock));
 
-    INVARIANT(basePointer, "memory allocation failed, because 'basePointer' was a nullptr");
     uint8_t* ptr = basePointer;
     for (size_t i = 0; i < numOfBuffers; ++i)
     {
-        uint8_t* controlBlock = ptr;
-        uint8_t* payload = ptr + controlBlockSize;
+        /// Slot layout: [ redzone | control block | redzone | data region ]. redzoneSize is 0 without ASan.
+        uint8_t* const controlBlock = ptr + redzoneSize;
+        uint8_t* const payload = controlBlock + controlBlockSize + redzoneSize;
         allBuffers.emplace_back(
             payload,
             bufferSize,
@@ -170,6 +182,13 @@ void BufferManager::initialize()
         availableBuffers.write(&allBuffers.back());
         ptr += offsetBetweenBuffers;
     }
+
+    /// All buffers start idle, so poison the whole arena in one shot: redzones, control blocks and data
+    /// regions alike. The redzones stay poisoned for the arena's lifetime; prepare() unpoisons a control
+    /// block on hand-out and recyclePooledBuffer() re-poisons it, and the data region is likewise unpoisoned
+    /// on hand-out and re-poisoned on recycle. This must run after the construction loop so that the
+    /// placement-new of each control block (and the debug marker fill above) writes to unpoisoned memory.
+    ASAN_POISON_MEMORY_REGION(basePointer, allocatedAreaSize);
     NES_DEBUG("BufferManager configuration bufferSize={} numOfBuffers={}", this->bufferSize, this->numOfBuffers);
 }
 
@@ -193,6 +212,8 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     }
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
+        /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
+        ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
@@ -208,6 +229,8 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     }
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
+        /// The buffer is now exclusively owned by the caller: unpoison its data region so it can be used.
+        ASAN_UNPOISON_MEMORY_REGION(memSegment->ptr, memSegment->size);
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
@@ -223,6 +246,12 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
     INVARIANT(
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
+    /// The buffer is back in the pool and must not be touched until handed out again: re-poison its data
+    /// region and its control block. This is the control block's last read on the recycle path (the INVARIANTs
+    /// above), and prepare() unpoisons it again on the next hand-out. Poisoning before the enqueue
+    /// happens-before that unpoison via the availableBuffers queue, so there is no shadow-memory race.
+    ASAN_POISON_MEMORY_REGION(segment->ptr, segment->size);
+    ASAN_POISON_MEMORY_REGION(segment->controlBlock.get(), sizeof(detail::BufferControlBlock));
     USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
     INVARIANT(couldRecycleBuffer, "should always succeed");
 }

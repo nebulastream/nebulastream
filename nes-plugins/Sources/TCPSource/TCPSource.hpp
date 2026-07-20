@@ -21,6 +21,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <span>
 #include <stop_token>
 #include <string>
 #include <string_view>
@@ -30,6 +31,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -154,7 +156,7 @@ struct ConfigParametersTCP
             CONNECT_TIMEOUT);
 };
 
-class TCPSource : public Source
+class TCPSource : public RawSource
 {
     constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
     /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
@@ -179,8 +181,6 @@ public:
     TCPSource(TCPSource&&) = delete;
     TCPSource& operator=(TCPSource&&) = delete;
 
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
-
     /// Open TCP connection.
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     /// Close TCP connection.
@@ -190,9 +190,12 @@ public:
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
+protected:
+    FillTupleBufferResult fillRaw(std::span<std::byte> out, const std::stop_token& stopToken) override;
+
 private:
     bool tryToConnect(const addrinfo* result, int flags);
-    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    bool fillBuffer(std::span<std::byte> out, size_t& numReceivedBytes);
 
     int connection = -1;
     int sockfd = -1;

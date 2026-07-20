@@ -26,6 +26,7 @@
 
 #include <ranges>
 
+#include <simdjson.h>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -83,7 +84,8 @@ public:
         std::vector<Identifier> fieldNamesInJson,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
         std::vector<DataType> fieldDataTypes)
-        : tupleDelimiter(tupleDelimiter)
+        : InputFormatIndexer(simdjson::SIMDJSON_PADDING)
+        , tupleDelimiter(tupleDelimiter)
         , fieldNamesInJson(std::move(fieldNamesInJson))
         , fieldNamesOutput(std::move(fieldNamesOutput))
         , fieldDataTypes(std::move(fieldDataTypes))

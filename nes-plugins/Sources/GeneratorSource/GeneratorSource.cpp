@@ -20,6 +20,7 @@
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <span>
 #include <stop_token>
 #include <string>
 #include <thread>
@@ -28,6 +29,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/RawSource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -42,7 +44,8 @@ namespace NES
 {
 
 GeneratorSource::GeneratorSource(const SourceDescriptor& sourceDescriptor)
-    : seed(sourceDescriptor.getFromConfig(ConfigParametersGenerator::SEED))
+    : RawSource(RawSource::requiredTailPaddingFor(sourceDescriptor.getInputFormatterDescriptor().getInputFormatterType()))
+    , seed(sourceDescriptor.getFromConfig(ConfigParametersGenerator::SEED))
     , maxRuntime(sourceDescriptor.getFromConfig(ConfigParametersGenerator::MAX_RUNTIME_MS))
     , generatorSchemaRaw(sourceDescriptor.getFromConfig(ConfigParametersGenerator::GENERATOR_SCHEMA))
     , generator(
@@ -89,7 +92,7 @@ void GeneratorSource::close()
     }
 }
 
-Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult GeneratorSource::fillRaw(std::span<std::byte> out, const std::stop_token&)
 {
     /// the generator indicated that it will not produce anymore data and the tupleStream is empty.
     if (this->generator.shouldStop() && tuplesStream.tellp() == 0)
@@ -123,7 +126,7 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupl
             }
         }
 
-        auto currentBuffer = tupleBuffer.getAvailableMemoryArea<std::ostream::char_type>();
+        std::span<std::ostream::char_type> currentBuffer{reinterpret_cast<std::ostream::char_type*>(out.data()), out.size()};
         /// Generating the required number of tuples. Any tuples that do not fit into the tuple buffer, the content is persisted in the tupleStream.
         uint64_t curTupleCount = 0;
         size_t writtenBytes = 0;
