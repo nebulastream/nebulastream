@@ -285,3 +285,6 @@ if (CODE_COVERAGE)
     target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO ALL)
     target_code_coverage(nes-frontend-lib PUBLIC AUTO ALL)
 endif ()
+
+add_executable(bm bm.cpp)
+add_executable(qm qm.cpp)

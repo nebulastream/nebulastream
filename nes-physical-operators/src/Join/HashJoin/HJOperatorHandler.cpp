@@ -201,13 +201,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     }
 
     const auto neededBufferSize = sizeof(EmittedHJWindowTrigger) + ((leftHashMaps.size() + rightHashMaps.size()) * sizeof(HashMap*));
-    const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
-    if (not tupleBufferVal.has_value())
-    {
-        throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededBufferSize);
-    }
-
-    auto tupleBuffer = tupleBufferVal.value();
+    auto tupleBuffer = pipelineCtx->getBufferManager()->getBuffer(neededBufferSize);
     tupleBuffer.setOriginId(outputOriginId);
     tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));

@@ -70,6 +70,8 @@ public:
 
     ~RecordBuffer() = default;
 
+    nautilus::val<size_t> getBufferSize() const;
+
 private:
     nautilus::val<TupleBuffer*> tupleBufferRef;
 };

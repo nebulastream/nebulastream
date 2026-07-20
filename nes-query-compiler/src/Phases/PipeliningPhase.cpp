@@ -174,7 +174,6 @@ void addDefaultEmit(
 void addOutputFormattingEmit(
     const std::shared_ptr<Pipeline>& pipeline,
     const PhysicalOperatorWrapper& wrappedOp,
-    const uint64_t configuredBufferSize,
     const std::string& outputFormat,
     const std::unordered_map<Identifier, std::string>& config)
 {
@@ -182,7 +181,7 @@ void addOutputFormattingEmit(
     const auto& schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
-    const auto bufferRef = LowerSchemaProvider::lowerSchemaWithOutputFormat(configuredBufferSize, schema.value(), outputFormat, config);
+    const auto bufferRef = LowerSchemaProvider::lowerSchemaWithOutputFormat(schema.value(), outputFormat, config);
 
     /// Create an operator handler for the emit
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
@@ -220,7 +219,6 @@ void buildPipelineRecursively(
                     addOutputFormattingEmit(
                         currentPipeline,
                         *prevOpWrapper,
-                        configuredBufferSize,
                         std::string(outputFormat),
                         sink->getDescriptor().getOutputFormatterConfig());
                 }
@@ -340,7 +338,6 @@ void buildPipelineRecursively(
                     addOutputFormattingEmit(
                         sourcePipeline,
                         *opWrapper,
-                        configuredBufferSize,
                         std::string(sinkFormat),
                         sink->getDescriptor().getOutputFormatterConfig());
                 }
@@ -368,7 +365,6 @@ void buildPipelineRecursively(
                 addOutputFormattingEmit(
                     currentPipeline,
                     *prevOpWrapper,
-                    configuredBufferSize,
                     std::string(sinkFormat),
                     sink->getDescriptor().getOutputFormatterConfig());
             }

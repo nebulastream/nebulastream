@@ -114,6 +114,7 @@ struct ExecutionContext final
     nautilus::val<SequenceNumber> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<ChunkNumber> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
     nautilus::val<bool> lastChunk;
+    nautilus::val<size_t> inputBufferSize;
 
 private:
     std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;

@@ -139,15 +139,11 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                 nautilus::invoke(
                     +[](TupleBuffer* pagedVectorBufferMemArea, AbstractBufferProvider* bufferProvider, uint64_t tupleSize) -> void
                     {
-                        if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
-                        {
-                            /// initialize paged vector buffer
-                            PagedVector::init(pagedVectorBuffer.value(), bufferProvider->getMaxBufferSize(), tupleSize);
-                            /// @warning: this will be refactored again during the ChainedHashMap refactor
-                            new (pagedVectorBufferMemArea) TupleBuffer(pagedVectorBuffer.value());
-                            return;
-                        }
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
+                        auto pagedVectorBuffer = bufferProvider->getBuffer(PagedVector::getMainBufferSize());
+                        /// initialize paged vector buffer
+                        PagedVector::init(pagedVectorBuffer, bufferProvider->getMaxBufferSize(), tupleSize);
+                        /// @warning: this will be refactored again during the ChainedHashMap refactor
+                        new (pagedVectorBufferMemArea) TupleBuffer(pagedVectorBuffer);
                     },
                     state,
                     ctx.pipelineMemoryProvider.bufferProvider,

@@ -86,6 +86,11 @@ nautilus::val<bool> RecordBuffer::isLastChunk()
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_isLastChunk, tupleBufferRef)};
 }
 
+nautilus::val<size_t> RecordBuffer::getBufferSize() const
+{
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getMemAreaSize, tupleBufferRef);
+}
+
 nautilus::val<Timestamp> RecordBuffer::getWatermarkTs()
 {
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getWatermark, tupleBufferRef)};

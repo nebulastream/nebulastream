@@ -33,8 +33,8 @@
 namespace NES
 {
 
-RowTupleBufferRef::RowTupleBufferRef(std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize)
-    : TupleBufferRef(bufferSize / tupleSize, bufferSize, tupleSize), fields(std::move(fields))
+RowTupleBufferRef::RowTupleBufferRef(std::vector<Field> fields, const uint64_t tupleSize)
+    : TupleBufferRef(tupleSize), fields(std::move(fields))
 {
 }
 
@@ -78,7 +78,7 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     nautilus::val<bool> successful{false};
     nautilus::val<uint64_t> writtenRecords{0};
     /// Check if index is in-bounds
-    if (recordIndex < capacity)
+    if (recordIndex * tupleSize < recordBuffer.getBufferSize())
     {
         const auto bufferAddress = recordBuffer.getMemArea();
         const auto recordOffset = bufferAddress + (tupleSize * recordIndex);

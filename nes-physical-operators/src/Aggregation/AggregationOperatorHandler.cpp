@@ -105,12 +105,7 @@ void AggregationOperatorHandler::triggerSlices(
         /// - a new hashmap for the probe operator, so that we are not overwriting the thread local hashmaps
         /// - size of EmittedAggregationWindow
         const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(HashMap*));
-        const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
-        if (not tupleBufferVal.has_value())
-        {
-            throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededBufferSize);
-        }
-        auto tupleBuffer = tupleBufferVal.value();
+        auto tupleBuffer = pipelineCtx->getBufferManager()->getBuffer(neededBufferSize);
 
         /// It might be that the buffer is not zeroed out.
         std::ranges::fill(tupleBuffer.getAvailableMemoryArea(), std::byte{0});

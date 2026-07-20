@@ -100,6 +100,7 @@ void StreamJoinProbePhysicalOperator::open(ExecutionContext& executionCtx, Recor
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
+    executionCtx.inputBufferSize = recordBuffer.getBufferSize();
     openChild(executionCtx, recordBuffer);
 }
 

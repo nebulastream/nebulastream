@@ -134,14 +134,8 @@ std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProv
     if (varSizedSpace.empty() or varSizedSpace.back().getNumberOfTuples() + neededSize >= varSizedSpace.back().getBufferSize())
     {
         /// We allocate more space than currently necessary for the variable sized data to reduce the allocation overhead
-        auto varSizedBuffer = bufferProvider->getUnpooledBuffer(neededSize * NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS);
-        if (not varSizedBuffer)
-        {
-            throw CannotAllocateBuffer(
-                "Could not allocate memory for ChainedHashMap of size {}",
-                std::to_string(neededSize * NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS));
-        }
-        varSizedSpace.emplace_back(varSizedBuffer.value());
+        auto varSizedBuffer = bufferProvider->getBuffer(neededSize * NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS);
+        varSizedSpace.emplace_back(varSizedBuffer);
     }
 
     varSizedSpace.back().setNumberOfTuples(varSizedSpace.back().getNumberOfTuples() + neededSize);
@@ -161,14 +155,10 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
         /// We add one more entry to the capacity, as we need to have a valid entry for the last entry in the entries array
         /// We will be using this entry for checking, if we are at the end of our hash map in our EntryIterator
         const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
-        const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
-        if (not entryBuffer)
-        {
-            throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
-        }
-        entrySpace = entryBuffer.value();
+        const auto entryBuffer = bufferProvider->getBuffer(totalSpace);
+        entrySpace = entryBuffer;
         entries = reinterpret_cast<ChainedHashMapEntry**>(entrySpace.getAvailableMemoryArea().data());
-        std::memset(static_cast<void*>(entries), 0, entryBuffer->getBufferSize());
+        std::memset(static_cast<void*>(entries), 0, entryBuffer.getBufferSize());
 
         /// Pointing the end of the entries to itself
         entries[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&entries[numberOfChains]);
@@ -177,13 +167,9 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     /// 1. Check if we need to allocate a new page
     if (numberOfTuples % entriesPerPage == 0)
     {
-        auto newPage = bufferProvider->getUnpooledBuffer(pageSize);
-        if (not newPage)
-        {
-            throw CannotAllocateBuffer("Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(pageSize));
-        }
-        std::ranges::fill(newPage.value().getAvailableMemoryArea(), std::byte{0});
-        storageSpace.emplace_back(newPage.value());
+        auto newPage = bufferProvider->getBuffer(pageSize);
+        std::ranges::fill(newPage.getAvailableMemoryArea(), std::byte{0});
+        storageSpace.emplace_back(newPage);
     }
 
     /// 2. Finding the new entry

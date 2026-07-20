@@ -14,6 +14,7 @@
 #include <Runtime/BufferManager.hpp>
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <bit>
 #include <chrono>
@@ -23,6 +24,7 @@
 #include <memory>
 #include <memory_resource>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 #include <unistd.h>
@@ -154,8 +156,6 @@ void BufferManager::initialize(const std::optional<SizeClassConfig>& sizeClasses
     /// std::map keeps the size classes sorted ascending and deduplicates a configured class that
     /// coincides with the default buffer size (the default class' provisioning wins for that size).
     std::map<size_t, PoolSpec> specs;
-    specs[bufferSize] = PoolSpec{.initialCount = numOfBuffers, .capacity = numOfBuffers, .elastic = false, .growthChunkBuffers = 0};
-
     if (sizeClasses.has_value())
     {
         const auto& classSpec = sizeClasses.value();
@@ -178,17 +178,28 @@ void BufferManager::initialize(const std::optional<SizeClassConfig>& sizeClasses
         const size_t numClasses = classSizes.size();
         const size_t budget = (classSpec.totalBudgetBytes != 0) ? classSpec.totalBudgetBytes : (bufferSize * numOfBuffers);
 
-        for (const size_t classSize : classSizes)
+        for (size_t classIndex = 0; classIndex < numClasses; ++classIndex)
         {
-            if (specs.contains(classSize))
-            {
-                continue; /// already provided by the default class
-            }
+            const size_t classSize = classSizes[classIndex];
             PoolSpec spec{};
             switch (classSpec.policy)
             {
                 case BufferProvisioningPolicy::TotalBudgetSplit: {
-                    const size_t perClassBytes = budget / numClasses;
+                    /// Bias the split so smaller classes get more buffers and larger classes fewer, while
+                    /// keeping the total to `budget`. The weight runs linearly from 2.0 (smallest class) down
+                    /// to 0.5 (largest) and is renormalized by its mean (1.25) so the shares still sum to
+                    /// budget. Because buffers = bytes / classSize, this gives the smallest class 4x the
+                    /// buffers of the largest at unchanged total memory. A single class takes the full budget.
+                    constexpr double smallestWeight = 2.0;
+                    constexpr double largestWeight = 0.5;
+                    double share = 1.0;
+                    if (numClasses > 1)
+                    {
+                        const double weight = smallestWeight
+                            - ((smallestWeight - largestWeight) * static_cast<double>(classIndex) / static_cast<double>(numClasses - 1));
+                        share = weight / ((smallestWeight + largestWeight) / 2.0); /// averages to 1 -> budget preserved
+                    }
+                    const auto perClassBytes = static_cast<size_t>((static_cast<double>(budget) / static_cast<double>(numClasses)) * share);
                     spec.initialCount = std::max<size_t>(1, perClassBytes / classSize);
                     spec.capacity = spec.initialCount;
                     spec.elastic = false;
@@ -254,7 +265,47 @@ void BufferManager::initialize(const std::optional<SizeClassConfig>& sizeClasses
         pools.push_back(std::move(pool));
         ++index;
     }
-    NES_DEBUG("BufferManager configured with {} size class(es), default class bufferSize={}", pools.size(), bufferSize);
+    logPoolConfiguration();
+}
+
+void BufferManager::logPoolConfiguration() const
+{
+    /// Human-readable byte size, e.g. 4096 -> "4.0 KiB".
+    const auto humanBytes = [](const size_t bytes)
+    {
+        static constexpr std::array<const char*, 4> units{"B", "KiB", "MiB", "GiB"};
+        auto value = static_cast<double>(bytes);
+        size_t unit = 0;
+        while (value >= 1024.0 && unit + 1 < units.size())
+        {
+            value /= 1024.0;
+            ++unit;
+        }
+        return fmt::format("{:.1f} {}", value, units[unit]);
+    };
+
+    std::string table = fmt::format("BufferManager pool configuration ({} size class(es)):\n", pools.size());
+    table += "  +------------+----------+-----------+------------+\n";
+    table += "  | size class |  buffers | available |   reserved |\n";
+    table += "  +------------+----------+-----------+------------+\n";
+    size_t totalReserved = 0;
+    for (const auto& pool : pools)
+    {
+        const size_t classSize = pool->getBufferSize();
+        const size_t total = pool->numTotal();
+        const size_t reserved = classSize * total;
+        totalReserved += reserved;
+        table += fmt::format(
+            "  | {:>10} | {:>8} | {:>9} | {:>10} |{}\n",
+            humanBytes(classSize),
+            total,
+            pool->numAvailable(),
+            humanBytes(reserved),
+            classSize == bufferSize ? " <- default" : "");
+    }
+    table += "  +------------+----------+-----------+------------+\n";
+    table += fmt::format("  total reserved: {}", humanBytes(totalReserved));
+    NES_INFO("{}", table);
 }
 
 size_t BufferManager::classIndexForSize(const size_t size) const noexcept
@@ -302,6 +353,7 @@ TupleBuffer BufferManager::getBuffer(const size_t size)
     const size_t index = classIndexForSize(size);
     if (index >= pools.size())
     {
+        NES_DEBUG("Fallback to UnpooledBuffer of size {} due to small maximum buffer size at \n{}", bufferSize, cpptrace::generate_trace(1).to_string());
         if (auto unpooled = getUnpooledBuffer(size))
         {
             return std::move(unpooled.value());
@@ -316,11 +368,12 @@ TupleBuffer BufferManager::getBuffer(const size_t size)
     }
 
     /// Slow path: block on the best-fit class until the timeout elapses.
-    if (auto* segment = pools[index]->popUntil(std::chrono::steady_clock::now() + GET_BUFFER_TIMEOUT))
+    if (auto* segment = pools[index]->tryPop())
     {
         return wrapSegment(segment);
     }
 
+    // NES_DEBUG("Fallback to UnpooledBuffer of size {} due to running out of buffers at \n{}", bufferSize, cpptrace::generate_trace(1).to_string());
     /// Last resort: fall back to the unpooled path rather than failing.
     if (auto unpooled = getUnpooledBuffer(size))
     {

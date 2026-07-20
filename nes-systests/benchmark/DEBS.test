@@ -2,6 +2,10 @@
 # description: Queries from our DEBS tutorial
 # groups: [milestone, benchmark, large]
 
+GlobalConfiguration worker.buffer_size_class_max_bytes: [2097152]
+GlobalConfiguration worker.buffer_size_class_budget_bytes: [23622320128]
+GlobalConfiguration worker.enable_buffer_size_classes: [true]
+
 # Source definitions
 CREATE LOGICAL SOURCE solarPanels(producerId INT32 NOT NULL, groupId INT32 NOT NULL, producedPower FLOAT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR solarPanels TYPE File;

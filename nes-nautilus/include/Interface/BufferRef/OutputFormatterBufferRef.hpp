@@ -45,7 +45,7 @@ class OutputFormatterBufferRef final : public TupleBufferRef
     std::vector<Field> fields;
     std::shared_ptr<OutputFormatter> formatter;
 
-    explicit OutputFormatterBufferRef(std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, uint64_t bufferSize);
+    explicit OutputFormatterBufferRef(std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter);
 
     friend class NES::LowerSchemaProvider;
 

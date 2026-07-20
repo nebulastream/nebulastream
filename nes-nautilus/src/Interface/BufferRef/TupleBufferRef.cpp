@@ -52,21 +52,8 @@ namespace
 {
 TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
 {
-    /// If the fixed size buffers are not large enough, we get an unpooled buffer
-    if (tupleBufferProvider.getMaxBufferSize() > newBufferSize)
-    {
-        if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(newBufferSize); newBuffer.has_value())
-        {
-            return newBuffer.value();
-        }
-    }
-    const auto unpooledBuffer = tupleBufferProvider.getUnpooledBuffer(newBufferSize);
-    if (not unpooledBuffer.has_value())
-    {
-        throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size {}", newBufferSize);
-    }
-
-    return unpooledBuffer.value();
+    /// getBuffer serves the best-fitting size class, falling back to an unpooled buffer for oversized requests.
+    return tupleBufferProvider.getBuffer(newBufferSize);
 }
 
 /// @brief Copies the varSizedValue to the specified location and then increments the number of tuples
@@ -223,23 +210,13 @@ bool TupleBufferRef::includesField(
     return std::ranges::find(projections, fieldIndex) != projections.end();
 }
 
-uint64_t TupleBufferRef::getCapacity() const
-{
-    return capacity;
-}
-
-uint64_t TupleBufferRef::getBufferSize() const
-{
-    return bufferSize;
-}
-
 uint64_t TupleBufferRef::getTupleSize() const
 {
     return tupleSize;
 }
 
-TupleBufferRef::TupleBufferRef(const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
-    : capacity(capacity), bufferSize(bufferSize), tupleSize(tupleSize)
+TupleBufferRef::TupleBufferRef(const uint64_t tupleSize)
+    : tupleSize(tupleSize)
 {
 }
 

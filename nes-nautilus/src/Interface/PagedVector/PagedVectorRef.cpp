@@ -33,6 +33,7 @@
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/DefaultBufferSizes.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <nautilus/function.hpp>
@@ -143,7 +144,7 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                                                              .data());
                     }
                 }
-                TupleBuffer newVarSizedBuffer = bufferProvider->getBuffer(DEFAULT_PAGE_SIZE);
+                TupleBuffer newVarSizedBuffer = bufferProvider->getBuffer(getDefaultBufferSize(BufferComponent::PAGED_VECTOR_VAR_SIZED));
                 auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
                 newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
                 /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.

@@ -37,8 +37,8 @@ namespace NES
 {
 /// There is no predetermined tuple size for output-formatted tuples, we pass 0 as placeholder
 OutputFormatterBufferRef::OutputFormatterBufferRef(
-    std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, const uint64_t bufferSize)
-    : TupleBufferRef(bufferSize, bufferSize, 0), fields(std::move(fields)), formatter(std::move(formatter))
+    std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter)
+    : TupleBufferRef(0), fields(std::move(fields)), formatter(std::move(formatter))
 {
 }
 
@@ -58,7 +58,7 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
     nautilus::val<bool> successful{true};
     /// This will be incremented by the amount of bytes written for each field to calculate the field address
     nautilus::val<uint64_t> writtenForThisRecord{0};
-    if (bytesWritten >= bufferSize)
+    if (bytesWritten >= recordBuffer.getBufferSize())
     {
         successful = false;
     }
@@ -72,7 +72,7 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
         {
             const auto& [name, type] = fields.at(i);
             const auto fieldAddress = recordAddress + writtenForThisRecord;
-            const nautilus::val remainingBytes{bufferSize - bytesWritten - writtenForThisRecord};
+            const nautilus::val remainingBytes{recordBuffer.getBufferSize() - bytesWritten - writtenForThisRecord};
             const auto& value = rec.read(name);
             const auto amountWritten
                 = formatter->writeFormattedValue(value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);

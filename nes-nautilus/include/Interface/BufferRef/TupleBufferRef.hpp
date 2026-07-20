@@ -41,12 +41,10 @@ namespace NES
 class TupleBufferRef
 {
 protected:
-    uint64_t capacity;
-    uint64_t bufferSize;
     uint64_t tupleSize;
 
 public:
-    TupleBufferRef(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
+    TupleBufferRef(uint64_t tupleSize);
     virtual ~TupleBufferRef();
 
     /// @brief Writes the variable sized data to the buffer
@@ -88,8 +86,6 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
 
-    [[nodiscard]] uint64_t getCapacity() const;
-    [[nodiscard]] uint64_t getBufferSize() const;
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] virtual std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const = 0;
     [[nodiscard]] virtual std::vector<DataType> getAllDataTypes() const = 0;

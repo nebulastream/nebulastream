@@ -228,15 +228,11 @@ void MedianAggregationPhysicalFunction::reset(
         {
             /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): aggregation state stores a TupleBuffer at this slot.
             auto* pagedVectorBufferMemArea = reinterpret_cast<TupleBuffer*>(pagedVectorMemArea);
-            if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
-            {
-                /// initialize paged vector buffer
-                PagedVector::init(pagedVectorBuffer.value(), bufferProvider->getMaxBufferSize(), tupleSize);
-                /// @warning: this will be refactored again during the ChainedHashMap refactor
-                new (pagedVectorBufferMemArea) TupleBuffer(pagedVectorBuffer.value());
-                return;
-            }
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for median aggregation paged vector!");
+            auto pagedVectorBuffer = bufferProvider->getBuffer(PagedVector::getMainBufferSize());
+            /// initialize paged vector buffer
+            PagedVector::init(pagedVectorBuffer, bufferProvider->getMaxBufferSize(), tupleSize);
+            /// @warning: this will be refactored again during the ChainedHashMap refactor
+            new (pagedVectorBufferMemArea) TupleBuffer(pagedVectorBuffer);
         },
         aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)},
         pipelineMemoryProvider.bufferProvider,

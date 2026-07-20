@@ -41,7 +41,6 @@ namespace NES
 {
 
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat(
-    const uint64_t bufferSize,
     const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::string& outputFormatterType,
     const std::unordered_map<Identifier, std::string>& config)
@@ -65,7 +64,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
     const std::shared_ptr<OutputFormatter> outputFormatter
         = OutputFormatterProvider::provideOutputFormatter(outputFormatterType, fieldNames, descriptor);
 
-    return std::make_shared<OutputFormatterBufferRef>(OutputFormatterBufferRef{std::move(fields), outputFormatter, bufferSize});
+    return std::make_shared<OutputFormatterBufferRef>(OutputFormatterBufferRef{std::move(fields), outputFormatter});
 }
 
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
@@ -92,7 +91,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
                 0UL,
                 [](auto size, const RowTupleBufferRef::Field& field) { return size + field.type.getSizeInBytesWithNull(); });
             INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
-            return std::make_shared<RowTupleBufferRef>(RowTupleBufferRef{std::move(fields), tupleSize, bufferSize});
+            return std::make_shared<RowTupleBufferRef>(RowTupleBufferRef{std::move(fields), tupleSize});
         }
 
         case MemoryLayoutType::COLUMNAR_LAYOUT: {
@@ -114,7 +113,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
                 columnOffset += (field.getDataType().getSizeInBytesWithNull() * capacity);
             }
 
-            return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});
+            return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize});
         }
     }
     std::unreachable();

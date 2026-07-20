@@ -146,6 +146,7 @@ public:
         executionContext.chunkNumber = buffer.getChunkNumber();
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();
+        executionContext.inputBufferSize = buffer.getBufferSize();
 
         RecordBuffer recordBuffer(std::addressof(buffer));
         test(executionContext, recordBuffer);

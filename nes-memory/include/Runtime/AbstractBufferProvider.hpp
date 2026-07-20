@@ -44,9 +44,6 @@ public:
     virtual size_t getNumOfPooledBuffers() const = 0;
     virtual size_t getNumOfUnpooledBuffers() const = 0;
 
-    /// Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
-    virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
-
     /// Returns a pooled buffer whose capacity is at least `size` bytes, blocking until one is available.
     /// Providers that support multiple size classes serve this from the smallest fitting class; otherwise
     /// it falls back to the default pooled buffer (for `size <= getBufferSize()`) or an unpooled buffer.

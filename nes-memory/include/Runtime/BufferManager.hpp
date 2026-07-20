@@ -144,8 +144,15 @@ private:
     /// Index of the smallest size class whose buffers are >= size, or pools.size() if none fits (too large).
     [[nodiscard]] size_t classIndexForSize(size_t size) const noexcept;
 
+    /// Logs a human-readable table of the per-size-class pools (buffer size, counts, reserved bytes).
+    void logPoolConfiguration() const;
+
     /// Prepares the segment's control block (reference count 0 -> 1) and wraps it in a TupleBuffer.
     TupleBuffer wrapSegment(NES::detail::MemorySegment* segment);
+
+    /// Serves a variable-sized buffer of at least `bufferSize` bytes from the unpooled path. Internal
+    /// fallback for getBuffer()/getBufferNoBlocking() when a request exceeds the largest size class.
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize);
 
 public:
     /// Blocks until a pooled buffer of at least `size` bytes is available, served from the smallest
@@ -154,8 +161,6 @@ public:
 
     /// Non-blocking variant of getBuffer(size).
     std::optional<TupleBuffer> getBufferNoBlocking(size_t size) override;
-
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
 
     size_t getMaxBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;

@@ -26,6 +26,11 @@ inline int8_t* NES_Memory_TupleBuffer_getMemArea(TupleBuffer* tupleBuffer)
     return reinterpret_cast<int8_t*>(tupleBuffer->getAvailableMemoryArea().data());
 };
 
+inline size_t NES_Memory_TupleBuffer_getMemAreaSize(TupleBuffer* tupleBuffer)
+{
+    return tupleBuffer->getBufferSize();
+};
+
 inline uint64_t NES_Memory_TupleBuffer_getBufferSize(const TupleBuffer* tupleBuffer)
 {
     return tupleBuffer->getBufferSize();

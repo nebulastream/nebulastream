@@ -46,7 +46,7 @@ class RowTupleBufferRef final : public TupleBufferRef
     std::vector<Field> fields;
 
     /// Private constructor to prevent direct instantiation
-    explicit RowTupleBufferRef(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
+    explicit RowTupleBufferRef(std::vector<Field> fields, uint64_t tupleSize);
 
     /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
     friend class NES::LowerSchemaProvider;

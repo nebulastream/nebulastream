@@ -16,6 +16,7 @@
 
 #include <DataTypes/VariableSizedData.hpp>
 #include <ErrorHandling.hpp>
+#include <Runtime/DefaultBufferSizes.hpp>
 #include <function.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
@@ -29,22 +30,17 @@
 namespace NES
 {
 
-static constexpr size_t DEFAULT_ARENA_PAGE_SIZE = 4096;
-
 std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
 {
     /// Case 1: the request does not fit into a default-size buffer. Serve it from the smallest
     /// fitting pooled size class (falling back to an unpooled buffer for very large requests).
-    if (DEFAULT_ARENA_PAGE_SIZE < sizeInBytes)
+    if (getDefaultBufferSize(BufferComponent::ARENA_PAGE) < sizeInBytes)
     {
         if (bufferProvider->getMaxBufferSize() < sizeInBytes)
         {
-            auto oversizedBuffer = bufferProvider->getUnpooledBuffer(sizeInBytes);
-            if (!oversizedBuffer)
-            {
-                throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size {}", sizeInBytes);
-            }
-            unpooledBuffers.emplace_back(std::move(*oversizedBuffer));
+            /// Too large for any pooled size class; getBuffer falls back to an unpooled buffer internally.
+            auto oversizedBuffer = bufferProvider->getBuffer(sizeInBytes);
+            unpooledBuffers.emplace_back(std::move(oversizedBuffer));
             lastAllocationSize = sizeInBytes;
             return unpooledBuffers.back().getAvailableMemoryArea().subspan(0, sizeInBytes);
         }
@@ -57,8 +53,8 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
 
     if (fixedSizeBuffers.empty())
     {
-        fixedSizeBuffers.emplace_back(bufferProvider->getBuffer(DEFAULT_ARENA_PAGE_SIZE));
-        lastAllocationSize = DEFAULT_ARENA_PAGE_SIZE;
+        fixedSizeBuffers.emplace_back(bufferProvider->getBuffer(getDefaultBufferSize(BufferComponent::ARENA_PAGE)));
+        lastAllocationSize = fixedSizeBuffers.back().getBufferSize();
         currentOffset += sizeInBytes;
         return fixedSizeBuffers.back().getAvailableMemoryArea().subspan(0, sizeInBytes);
     }
@@ -66,7 +62,7 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
     /// Case 2
     if (lastAllocationSize < currentOffset + sizeInBytes)
     {
-        fixedSizeBuffers.emplace_back(bufferProvider->getBuffer(DEFAULT_ARENA_PAGE_SIZE));
+        fixedSizeBuffers.emplace_back(bufferProvider->getBuffer(getDefaultBufferSize(BufferComponent::ARENA_PAGE)));
         this->currentOffset = 0;
     }
 

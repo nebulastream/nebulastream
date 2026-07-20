@@ -294,15 +294,11 @@ std::span<std::byte> DefaultTimeBasedSliceStore::allocateSpaceForSliceCache(
 {
     INVARIANT(not pipelineIdToSliceCacheStarts.rlock()->contains(pipelineId), "We expect this method to be called once per pipelineId!");
 
-    auto buffer = bufferProvider.getUnpooledBuffer(sliceCacheMemorySize);
-    if (not buffer.has_value())
-    {
-        throw BufferAllocationFailure("Can not allocate buffer for slice cache of size {}", sliceCacheMemorySize);
-    }
+    auto buffer = bufferProvider.getBuffer(sliceCacheMemorySize);
 
     /// We set everything to 0, as there might be old data in the tuple buffer
-    std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
-    auto sliceCacheStartBuffer = std::make_unique<TupleBuffer>(buffer.value());
+    std::ranges::fill(buffer.getAvailableMemoryArea(), std::byte{0});
+    auto sliceCacheStartBuffer = std::make_unique<TupleBuffer>(buffer);
     const auto& memArea = sliceCacheStartBuffer->getAvailableMemoryArea();
     pipelineIdToSliceCacheStarts.wlock()->emplace(pipelineId, std::move(sliceCacheStartBuffer));
     return memArea;

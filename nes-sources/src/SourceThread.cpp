@@ -26,6 +26,7 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/DefaultBufferSizes.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -39,8 +40,6 @@
 
 namespace NES
 {
-
-static constexpr size_t DEFAULT_OUTPUT_BUFFER_SIZE = 4096;
 
 SourceThread::SourceThread(
     BackpressureListener backpressureListener,
@@ -105,7 +104,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
 
-        TupleBuffer emptyBuffer = bufferProvider->getBuffer(DEFAULT_OUTPUT_BUFFER_SIZE);
+        TupleBuffer emptyBuffer = bufferProvider->getBuffer(getDefaultBufferSize(BufferComponent::SOURCE_OUTPUT));
         if (stopToken.stop_requested())
         {
             return {SourceImplementationTermination::StopRequested};

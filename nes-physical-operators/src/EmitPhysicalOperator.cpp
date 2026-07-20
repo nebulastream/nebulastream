@@ -37,7 +37,6 @@
 
 namespace NES
 {
-static constexpr size_t DEFAULT_OUTPUT_BUFFER_SIZE = 4096;
 
 class EmitState : public OperatorState
 {
@@ -52,7 +51,7 @@ public:
 void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// initialize state variable and create new buffer
-    const auto resultBufferRef = ctx.allocateBuffer(nautilus::val<size_t>{DEFAULT_OUTPUT_BUFFER_SIZE});
+    const auto resultBufferRef = ctx.allocateBuffer(ctx.inputBufferSize);
     const auto resultBuffer = RecordBuffer(resultBufferRef);
     auto emitState = std::make_unique<EmitState>(resultBuffer);
     ctx.setLocalOperatorState(id, std::move(emitState));
@@ -72,7 +71,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     if (!writeResult.successful)
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
-        const auto resultBufferRef = ctx.allocateBuffer(nautilus::val<size_t>{DEFAULT_OUTPUT_BUFFER_SIZE});
+        const auto resultBufferRef = ctx.allocateBuffer(ctx.inputBufferSize);
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = 0_u64;
@@ -143,11 +142,6 @@ void EmitPhysicalOperator::emitRecordBuffer(
 EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> memoryProvider)
     : bufferRef(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
 {
-}
-
-[[nodiscard]] uint64_t EmitPhysicalOperator::getMaxRecordsPerBuffer() const
-{
-    return bufferRef->getCapacity();
 }
 
 std::optional<PhysicalOperator> EmitPhysicalOperator::getChild() const

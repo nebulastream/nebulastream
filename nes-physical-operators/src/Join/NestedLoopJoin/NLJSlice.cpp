@@ -42,30 +42,18 @@ NLJSlice::NLJSlice(
     const uint64_t pvPageBufferSize = bufferProvider.getMaxBufferSize();
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
-        {
-            /// initialize the paged vector tuple buffer
-            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeLeft);
-            leftPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for NLJ left paged vector main buffer");
-        }
+        auto pagedVectorBuffer = bufferProvider.getBuffer(pvMainBufferSize);
+        /// initialize the paged vector tuple buffer
+        PagedVector::init(pagedVectorBuffer, pvPageBufferSize, tupleSizeLeft);
+        leftPagedVectorBuffers.emplace_back(pagedVectorBuffer);
     }
 
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
-        {
-            /// initialize the paged vector tuple buffer
-            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeRight);
-            rightPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for NLJ right paged vector main buffer");
-        }
+        auto pagedVectorBuffer = bufferProvider.getBuffer(pvMainBufferSize);
+        /// initialize the paged vector tuple buffer
+        PagedVector::init(pagedVectorBuffer, pvPageBufferSize, tupleSizeRight);
+        rightPagedVectorBuffers.emplace_back(pagedVectorBuffer);
     }
 }
 

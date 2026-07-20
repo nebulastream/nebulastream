@@ -27,6 +27,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/DefaultBufferSizes.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <Util/Strings.hpp>
@@ -39,8 +40,6 @@
 
 namespace NES
 {
-
-static constexpr size_t DEFAULT_FORMATTED_BUFFER_SIZE = 4096;
 
 /// Write the string completely into the tuple buffer.
 /// Child buffers may be allocated if it does not fit completely into the main memory of the tuple buffer.
@@ -68,7 +67,7 @@ inline uint64_t writeValueToBuffer(
         /// Create the first child buffer, if necessary
         if (remainingBytes > 0)
         {
-            auto newChildBuffer = bufferProvider->getBuffer(DEFAULT_FORMATTED_BUFFER_SIZE);
+            auto newChildBuffer = bufferProvider->getBuffer(getDefaultBufferSize(BufferComponent::OUTPUT_FORMATTER_CHILD));
             (void)tupleBuffer->storeChildBuffer(newChildBuffer);
             ++numOfChildBuffers;
         }
@@ -86,7 +85,7 @@ inline uint64_t writeValueToBuffer(
         lastChildBuffer.setNumberOfTuples(bufferOffset + writable);
         if (remainingBytes > 0)
         {
-            auto newChildBuffer = bufferProvider->getBuffer(DEFAULT_FORMATTED_BUFFER_SIZE);
+            auto newChildBuffer = bufferProvider->getBuffer(getDefaultBufferSize(BufferComponent::OUTPUT_FORMATTER_CHILD));
             (void)tupleBuffer->storeChildBuffer(newChildBuffer);
             ++numOfChildBuffers;
         }
