@@ -17,6 +17,7 @@ add_plugin_as_library(Line DataType line_data_type_plugin LineDataType.cpp)
 add_plugin_as_library(Circle DataType circle_data_type_plugin CircleDataType.cpp)
 add_plugin_as_library(Polygon DataType polygon_data_type_plugin PolygonDataType.cpp)
 add_plugin_as_library(MovingPolygon DataType moving-polygon_data_type_plugin MovingPolygonDataType.cpp)
+add_plugin_as_library(MovingPolygonTrajectory DataType moving_polygon_trajectory_data_type_plugin MovingPolygonTrajectoryDataType.cpp)
 
 target_include_directories(point_data_type_plugin PRIVATE .)
 
@@ -27,3 +28,5 @@ target_include_directories(circle_data_type_plugin PRIVATE .)
 target_include_directories(polygon_data_type_plugin PRIVATE .)
 
 target_include_directories(moving-polygon_data_type_plugin PRIVATE .)
+
+target_include_directories(moving_polygon_trajectory_data_type_plugin PRIVATE .)
