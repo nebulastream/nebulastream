@@ -77,27 +77,27 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
         /// formatter declines, e.g. non-CSV or a multi-byte delimiter) go through per-field writeFormattedValue().
         const std::size_t numberOfFields = fields.size();
 
-        /// Host pre-pass: is each field a non-nullable lazy passthrough value (raw input bytes)?
+        /// Host pre-pass: is each field a non-nullable lazy passthrough value (raw input bytes)? Also track
+        /// whether EVERY field is non-nullable (lazy or computed) -- the broader gate for the whole-record
+        /// fast path, which now handles computed numeric values too.
         std::vector<bool> isLazyPassthrough(numberOfFields);
+        bool allNonNullable = numberOfFields > 0;
         for (std::size_t i = 0; i < numberOfFields; ++i)
         {
             const auto& value = rec.read(fields.at(i).name);
             isLazyPassthrough[i] = value.isLazyValue() and not value.isNullable();
+            allNonNullable = allNonNullable and not value.isNullable();
         }
 
-        /// Whole-record fast path: when EVERY field is a non-nullable lazy passthrough value, offer the
-        /// record to the formatter's tryWriteRecordAllPassthrough(). It hoists a SINGLE per-record fit-check
-        /// (exact glue + runtime field lengths) and, on the common fits case, emits the record with unchecked
-        /// copies -- no per-field guard, no child-buffer spill. The formatter may still decline host-side
-        /// (e.g. JSON only raw-passes NUMERIC lazy values); it returns nullopt then and we drop to per-field.
+        /// Whole-record fast path: when EVERY field is non-nullable, offer the record to the formatter's
+        /// tryWriteRecordAllPassthrough(). It hoists a SINGLE per-record fit-check (a worst-case reservation)
+        /// and, on the common fits case, emits the record with no per-field guard -- lazy values via a
+        /// bounded fixed-width store, computed values via a direct serialize with the parser's fit-check
+        /// folded away. The formatter may still decline host-side (e.g. JSON only handles NUMERIC fields);
+        /// it returns nullopt then and we drop to per-field.
         bool recordEmitted = false;
-        if (bool allPassthrough = numberOfFields > 0; allPassthrough)
+        if (allNonNullable)
         {
-            for (std::size_t i = 0; i < numberOfFields; ++i)
-            {
-                allPassthrough = allPassthrough and isLazyPassthrough[i];
-            }
-            if (allPassthrough)
             {
                 std::vector<DataType> fieldTypes;
                 fieldTypes.reserve(numberOfFields);

@@ -1,0 +1,18 @@
+# name: formatter/JSON_OUTPUT/ComputedJSON.test
+# description: Computed (non-passthrough) numeric values -> JSON. Exercises the all-numeric whole-record
+# fast path's SERIALIZE branch (values are materialized, not lazy passthrough): the record is reserved
+# worst-case and each value is serialized directly with the output parser's per-value fit-check folded.
+# groups: [Projection,JSON]
+
+CREATE LOGICAL SOURCE fsrc(a UINT64 NOT NULL, b FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR fsrc TYPE File;
+ATTACH INLINE
+1,1.5
+2,2.25
+3,4.0
+
+SELECT a + UINT64(10) AS a, b * FLOAT64(2) AS b FROM fsrc INTO File('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"A":11,"B":3.0}
+{"A":12,"B":4.5}
+{"A":13,"B":8.0}

@@ -60,6 +60,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// fixed-6 worst case (3.4e38).
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 48; }
 };
 
 class DefaultF64OutputParser final : public OutputParser
@@ -72,6 +75,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// fixed-6 worst case (1.7e308).
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 344; }
 };
 
 class DefaultINT8OutputParser final : public OutputParser
@@ -84,6 +90,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// widest decimal text (incl. sign).
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 4; }
 };
 
 class DefaultINT16OutputParser final : public OutputParser
@@ -96,6 +105,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// widest decimal text (incl. sign).
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 6; }
 };
 
 class DefaultINT32OutputParser final : public OutputParser
@@ -108,6 +120,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// widest decimal text (incl. sign).
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 11; }
 };
 
 class DefaultINT64OutputParser final : public OutputParser
@@ -120,6 +135,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// widest decimal text (incl. sign).
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 20; }
 };
 
 class DefaultUINT8OutputParser final : public OutputParser
@@ -132,6 +150,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// widest decimal text.
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 3; }
 };
 
 class DefaultUINT16OutputParser final : public OutputParser
@@ -144,6 +165,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// widest decimal text.
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 5; }
 };
 
 class DefaultUINT32OutputParser final : public OutputParser
@@ -156,6 +180,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// widest decimal text.
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 10; }
 };
 
 class DefaultUINT64OutputParser final : public OutputParser
@@ -168,5 +195,8 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// widest decimal text.
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 20; }
 };
 }

@@ -36,5 +36,14 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const
         = 0;
+
+    /// A true UPPER BOUND (in bytes) on what parseAndWrite can emit for a value of this parser's type.
+    /// An output formatter that serialises a computed value directly into a pre-reserved main-buffer slot
+    /// (its whole-record fast path) uses this to size the reservation; reserving less than the parser can
+    /// emit risks an over-write, so the value MUST bound every output the parser produces. The default is a
+    /// conservative bound covering the widest numeric text -- a fixed-notation double is ~317 chars, 344
+    /// bounds it. Parsers with a tighter guarantee override this (e.g. ZMIJ's shortest round-trip float is
+    /// <= 25) so float-heavy schemas still fit small buffers.
+    [[nodiscard]] virtual uint64_t maxOutputWidth() const { return 344; }
 };
 }

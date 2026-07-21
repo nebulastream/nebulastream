@@ -41,6 +41,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
+#include <OutputParserRegistry.hpp>
 #include <function.hpp>
 #include <select.hpp>
 #include <static.hpp>
@@ -256,6 +257,28 @@ constexpr uint64_t maxTextWidth(const DataType::Type type)
             return 0;
     }
 }
+
+/// Room to reserve for a COMPUTED value (not lazy passthrough -- it must be serialized). We can't know the
+/// digit count without serializing, so reserve the CONFIGURED parser's own worst case, obtained from its
+/// maxOutputWidth() (ZMIJ double = 25, fixed-6 double = 344, int64 = 20, ...). Using the parser's real
+/// bound rather than a universal ceiling keeps float-heavy schemas viable in small buffers while staying
+/// safe against over-write. Host-time only (one registry lookup per computed field per query compile).
+uint64_t reservedWidthFor(const std::string& parserType)
+{
+    constexpr OutputParserRegistryArguments arguments{};
+    if (const auto parser = OutputParserRegistry::instance().create(parserType, arguments))
+    {
+        return parser.value()->maxOutputWidth();
+    }
+    return 344;
+}
+
+/// A large compile-time-constant `remainingSpace` passed to the output parser on the reserved fast path.
+/// Each serializer's fast path is `if (remainingSpace >= maxWidth) direct-write`, so a constant that
+/// dominates every maxWidth folds that guard to constant-true -- the per-value fit-check and its spill
+/// branch drop out, leaving only the direct serialize. Safe ONLY because the caller has already reserved
+/// maxSerializedWidth for the field (the real bound); this sentinel just removes the redundant runtime check.
+constexpr uint64_t kReservedRemainingSentinel = 1U << 20;
 
 /// Bounded value store: copy a COMPILE-TIME-CONSTANT width via __builtin_memcpy_inline (lowers to fixed
 /// wide stores -- NO `call memcpy`, the whole point) and advance the write cursor by the ACTUAL length.
@@ -499,46 +522,80 @@ std::optional<nautilus::val<uint64_t>> JSONOutputFormatter::tryWriteRecordAllPas
         }
     }
 
-    /// Single host-side pass: read every field's raw passthrough bytes and accumulate (a) the record's
-    /// EXACT output size -- host-constant glue (the precomputed field prefixes + the `}\n` suffix) plus
-    /// the runtime lazy field lengths -- and (b) whether every value fits its bounded copy width. The
-    /// caller guarantees every field is a non-nullable lazy value.
+    /// Single host-side pass: read each field's value ONCE (re-reading a lazy value in the emit loop
+    /// re-traces getContent/getSize and trips a nautilus "constant loop" trace error), storing what the
+    /// emit needs, and accumulate the RESERVATION size + whether every LAZY value fits its bounded-copy
+    /// width. A field is either a lazy passthrough value (reserve its exact runtime length; emit via the
+    /// bounded fixed-width store) or a COMPUTED value that must be serialized (reserve the configured
+    /// parser's maxOutputWidth, its worst case; emit via the parser's direct-write). Whether a value is
+    /// lazy is a host/trace-time property, so the per-field branch is compile-time control flow. `contents`/`sizes`
+    /// are optional so computed fields store nothing there (no dummy-constant emission in this host loop).
     static const std::string recordSuffix = "}\n";
-    std::vector<nautilus::val<int8_t*>> contents;
-    std::vector<nautilus::val<uint64_t>> sizes;
-    contents.reserve(numberOfFields);
-    sizes.reserve(numberOfFields);
+    std::vector<VarVal> values;
+    values.reserve(numberOfFields);
+    std::vector<std::optional<nautilus::val<int8_t*>>> contents(numberOfFields);
+    std::vector<std::optional<nautilus::val<uint64_t>>> sizes(numberOfFields);
+    std::vector<bool> isLazy(numberOfFields);
     uint64_t glueTotal = recordSuffix.size();
-    nautilus::val<uint64_t> valuesTotal{0};
+    nautilus::val<uint64_t> reserveTotal{0};
     nautilus::val<bool> allWithinBound{true};
     for (std::size_t fieldIndex = 0; fieldIndex < numberOfFields; ++fieldIndex)
     {
-        const auto lazyValue = record.read(fieldNames.at(fieldIndex)).getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
-        const auto size = lazyValue->getSize();
-        contents.push_back(lazyValue->getContent());
-        sizes.push_back(size);
         glueTotal += fieldPrefixes.at(fieldIndex).size();
-        valuesTotal += size;
-        allWithinBound = allWithinBound and (size <= nautilus::val<uint64_t>{maxTextWidth(fieldTypes.at(fieldIndex).type)});
+        auto value = record.read(fieldNames.at(fieldIndex));
+        isLazy[fieldIndex] = value.isLazyValue();
+        if (isLazy[fieldIndex])
+        {
+            const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+            contents[fieldIndex] = lazyValue->getContent();
+            sizes[fieldIndex] = lazyValue->getSize();
+            reserveTotal += *sizes[fieldIndex];
+            allWithinBound
+                = allWithinBound and (*sizes[fieldIndex] <= nautilus::val<uint64_t>{maxTextWidth(fieldTypes.at(fieldIndex).type)});
+        }
+        else
+        {
+            reserveTotal += nautilus::val<uint64_t>{reservedWidthFor(parserTypes.at(fieldTypes.at(fieldIndex).type))};
+        }
+        values.push_back(value);
     }
-    const nautilus::val<uint64_t> exactSize = nautilus::val<uint64_t>{glueTotal} + valuesTotal;
 
-    /// FAST PATH (bounded fixed-width store): every value fits its width AND the record plus an
-    /// over-write slack of kOverWriteSlack (the max copy width) fits the main buffer. Then each value is
-    /// a __builtin_memcpy_inline of a compile-time-constant width -- fixed wide stores, NO `call memcpy`
-    /// -- advancing by the actual length; the fixed store's slop is overwritten by the next field (or is
-    /// past the record end, harmless within the reserved slack). No per-field guard on this path: the
-    /// two conditions were hoisted to a single record-level check.
+    /// FAST PATH: every lazy value fits its bounded width AND the reservation (exact lazy lengths +
+    /// worst-case computed widths + glue) plus over-write slack fits the main buffer. Then a single
+    /// record-level check replaces every per-field fit-guard: lazy values are emitted with a fixed-width
+    /// __builtin_memcpy_inline (no call memcpy), and computed values are serialized directly with the
+    /// serializer's own fit-check folded away (kReservedRemainingSentinel). The serializer writes the
+    /// actual digits and the cursor advances by that; the bounded copy's slop stays within the reserved
+    /// slack (overwritten by the next field or harmless past the record end).
     constexpr uint64_t kOverWriteSlack = 32;
     nautilus::val<uint64_t> written{0};
-    if (allWithinBound and (exactSize + nautilus::val<uint64_t>{kOverWriteSlack} <= remainingMainBytes))
+    /// The reservation MUST include glueTotal (the field prefixes + the "}\n" suffix that the emit loop
+    /// writes via writeConstantBytesUnchecked), not just the field values. Omitting it under-reserves by the
+    /// glue size, so a record landing within glueTotal bytes of the main-buffer end passes this check and then
+    /// the unchecked writes run past bufferEnd, corrupting the adjacent buffer's control block (observed as a
+    /// garbage refcount from the BufferManager). glueTotal + reserveTotal + kOverWriteSlack is the true
+    /// worst-case physical footprint; records that don't fit it fall to the boundary-safe per-field fallback.
+    if (allWithinBound and (reserveTotal + nautilus::val<uint64_t>{glueTotal + kOverWriteSlack} <= remainingMainBytes))
     {
         for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
         {
             const std::size_t fieldIndex = i;
             written += writeConstantBytesUnchecked(fieldPrefixes.at(fieldIndex), recordAddress + written);
-            written += emitBoundedValue(
-                maxTextWidth(fieldTypes.at(fieldIndex).type), recordAddress + written, contents.at(fieldIndex), sizes.at(fieldIndex));
+            if (isLazy[fieldIndex])
+            {
+                written += emitBoundedValue(
+                    maxTextWidth(fieldTypes.at(fieldIndex).type), recordAddress + written, *contents[fieldIndex], *sizes[fieldIndex]);
+            }
+            else
+            {
+                written += formatAndWriteVal(
+                    values[fieldIndex],
+                    recordAddress + written,
+                    nautilus::val<uint64_t>{kReservedRemainingSentinel},
+                    recordBuffer,
+                    bufferProvider,
+                    parserTypes.at(fieldTypes.at(fieldIndex).type));
+            }
         }
         written += writeConstantBytesUnchecked(recordSuffix, recordAddress + written);
         return written;

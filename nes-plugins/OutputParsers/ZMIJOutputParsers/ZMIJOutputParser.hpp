@@ -35,6 +35,9 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// zmij::float_buffer_size -- shortest round-trip float never exceeds 16 bytes.
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 16; }
 };
 
 class ZMIJF64OutputParser final : public OutputParser
@@ -47,5 +50,8 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress) const override;
+
+    /// zmij::double_buffer_size -- shortest round-trip double never exceeds 25 bytes.
+    [[nodiscard]] uint64_t maxOutputWidth() const override { return 25; }
 };
 }
