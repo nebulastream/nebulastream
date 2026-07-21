@@ -1,0 +1,27 @@
+# name: function/CaseWhenIsNull.test
+# description: Tests IS NULL as a CASE WHEN predicate
+# groups: [Function, FunctionCaseWhen, NullHandling]
+
+CREATE LOGICAL SOURCE readings(id UINT64 NOT NULL, value INT32);
+CREATE PHYSICAL SOURCE FOR readings TYPE File;
+ATTACH INLINE
+1,
+2,10
+3,
+4,-1
+
+CREATE SINK result(id UINT64 NOT NULL, value_state VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    id,
+    CASE
+        WHEN value IS NULL THEN VARSIZED('missing')
+        ELSE VARSIZED('present')
+    END AS value_state
+FROM readings
+INTO result;
+----
+1,missing
+2,present
+3,missing
+4,present
