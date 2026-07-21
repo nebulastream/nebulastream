@@ -24,8 +24,8 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
-
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -71,6 +71,12 @@ LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
                 return sinkOperator.value()->withSinkDescriptor(sinkDescriptor.value());
             })
         | std::ranges::to<std::vector<LogicalOperator>>());
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> SinkBindingRule::neededBy() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
 }
 
 }

@@ -14,9 +14,14 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
+
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <ModelCatalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
@@ -24,13 +29,20 @@ namespace NES
 class RuleBasedOptimizer
 {
 public:
-    explicit RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryOptimization);
+    explicit RuleBasedOptimizer(
+        QueryOptimizerConfiguration defaultQueryOptimization,
+        std::shared_ptr<const SourceCatalog> sourceCatalog,
+        std::shared_ptr<const SinkCatalog> sinkCatalog,
+        std::shared_ptr<const ModelCatalog> modelCatalog);
 
     [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
 
 private:
     QueryOptimizerConfiguration defaultQueryOptimization;
     std::vector<Rule<LogicalPlan>> ruleSequence;
+    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::shared_ptr<const ModelCatalog> modelCatalog;
 };
 
 }

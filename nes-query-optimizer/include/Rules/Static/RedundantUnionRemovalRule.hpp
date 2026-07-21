@@ -32,8 +32,9 @@ class RedundantUnionRemovalRule
 public:
     static constexpr std::string_view NAME = "RedundantUnionRemovalRule";
 
-    [[nodiscard]] std::set<std::type_index> neededBy() const;
     [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    [[nodiscard]] std::set<std::type_index> needs() const;
+    [[nodiscard]] std::set<std::type_index> neededBy() const;
 };
 
 static_assert(RuleConcept<RedundantUnionRemovalRule, LogicalPlan>);

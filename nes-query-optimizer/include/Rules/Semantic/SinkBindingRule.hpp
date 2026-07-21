@@ -32,8 +32,10 @@ public:
 
     static constexpr std::string_view NAME = "SinkBindingRule";
 
-    [[nodiscard]] std::set<std::type_index> needs() const;
+
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    [[nodiscard]] std::set<std::type_index> needs() const;
+    [[nodiscard]] std::set<std::type_index> neededBy() const;
     bool operator==(const SinkBindingRule& other) const;
 
 private:

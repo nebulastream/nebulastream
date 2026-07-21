@@ -19,12 +19,14 @@
 #include <typeindex>
 #include <typeinfo>
 #include <vector>
+
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -70,5 +72,11 @@ LogicalPlan AnonymousSinkBindingRule::apply(const LogicalPlan& queryPlan) const
     }
 
     return queryPlan.withRootOperators(newRootOperators);
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> AnonymousSinkBindingRule::neededBy() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
 }
 }

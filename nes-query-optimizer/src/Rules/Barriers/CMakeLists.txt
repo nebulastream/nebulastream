@@ -12,4 +12,5 @@
 
 add_source_files(nes-query-optimizer
         FixedPlanStructureBarrier.cpp
+        SemanticAnalysisBarrier.cpp
 )
