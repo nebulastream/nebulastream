@@ -47,9 +47,10 @@ public:
 
     static constexpr std::string_view NAME = "ProjectionPushdownRule";
 
-    [[nodiscard]] std::set<std::type_index> wants() const;
-    [[nodiscard]] std::set<std::type_index> neededBy() const;
     [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    [[nodiscard]] std::set<std::type_index> needs() const;
+    [[nodiscard]] std::set<std::type_index> neededBy() const;
+    [[nodiscard]] std::set<std::type_index> wants() const;
 };
 
 static_assert(RuleConcept<ProjectionPushdownRule, LogicalPlan>);

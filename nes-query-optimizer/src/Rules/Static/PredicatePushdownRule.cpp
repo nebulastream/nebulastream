@@ -41,6 +41,7 @@
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <Schema/Field.hpp>
 #include <ErrorHandling.hpp>
@@ -400,9 +401,15 @@ LogicalPlan PredicatePushdownRule::apply(const LogicalPlan& queryPlan) const
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> PredicatePushdownRule::needs() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> PredicatePushdownRule::neededBy() const
 {
-    return {typeid(RedundantProjectionRemovalRule), typeid(FixedPlanStructureBarrier)};
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 }

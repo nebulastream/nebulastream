@@ -13,39 +13,21 @@
 */
 
 #pragma once
-#include <memory>
-#include <vector>
+
+#include <string_view>
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
 
 namespace NES
 {
-class SinkCatalog;
-class SourceCatalog;
-}
-
-namespace NES
-{
-class ModelCatalog;
-}
-
-namespace NES
-{
-class SemanticAnalyzer
+class SemanticAnalysisBarrier
 {
 public:
-    [[nodiscard]] LogicalPlan analyse(LogicalPlan plan) const;
+    static constexpr std::string_view NAME = "SemanticAnalysisBarrier";
 
-    explicit SemanticAnalyzer(
-        std::shared_ptr<const SourceCatalog> sourceCatalog,
-        std::shared_ptr<const SinkCatalog> sinkCatalog,
-        std::shared_ptr<const ModelCatalog> modelCatalog);
-
-private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
-    std::shared_ptr<const ModelCatalog> modelCatalog;
-    std::vector<Rule<LogicalPlan>> ruleSequence;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
 };
+
+static_assert(RuleConcept<SemanticAnalysisBarrier, LogicalPlan>);
 }

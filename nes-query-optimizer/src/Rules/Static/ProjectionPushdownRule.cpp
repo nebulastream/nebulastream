@@ -44,12 +44,12 @@
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 #include <Schema/Field.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
-
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -478,6 +478,12 @@ LogicalPlan ProjectionPushdownRule::apply(LogicalPlan queryPlan) const
     auto newRoot = projectionPushdown(originalRoots.at(0), {});
     queryPlan = queryPlan.withRootOperators({newRoot});
     return queryPlan;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> ProjectionPushdownRule::needs() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

@@ -12,23 +12,17 @@
     limitations under the License.
 */
 
-#pragma once
-#include <set>
-#include <string_view>
-#include <typeindex>
-#include <typeinfo>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+
+
 #include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
 
-/// @brief Calculates the physical order of fields to be used by the operators and memory layouts.
-class DecideFieldOrder
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+LogicalPlan SemanticAnalysisBarrier::apply(LogicalPlan queryPlan) const
 {
-public:
-    static constexpr std::string_view NAME = "DecideFieldOrder";
-
-    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    [[nodiscard]] std::set<std::type_index> needs() const;
-};
+    return queryPlan;
+}
 }

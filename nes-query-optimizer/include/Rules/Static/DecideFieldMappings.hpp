@@ -41,8 +41,8 @@ public:
 
     static constexpr std::string_view NAME = "DecideFieldMappings";
 
-    [[nodiscard]] std::set<std::type_index> needs() const;
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    [[nodiscard]] std::set<std::type_index> needs() const;
 
 private:
     [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;
