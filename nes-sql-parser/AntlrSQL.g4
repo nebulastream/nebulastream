@@ -225,7 +225,7 @@ namedExpression
 identifier: strictIdentifier;
 
 strictIdentifier
-    : IDENTIFIER #unquotedIdentifier
+    : (IDENTIFIER | END) #unquotedIdentifier
     | quotedIdentifier #quotedIdentifierAlternative;
 
 quotedIdentifier
