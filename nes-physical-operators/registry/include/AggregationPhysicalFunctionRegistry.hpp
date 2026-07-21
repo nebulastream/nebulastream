@@ -37,7 +37,6 @@ struct AggregationPhysicalFunctionRegistryArguments
     PhysicalFunction inputFunction;
     Record::RecordFieldIdentifier resultFieldIdentifier;
     std::optional<std::shared_ptr<PagedVectorTupleLayout>> tupleLayout;
-    std::optional<Record::RecordFieldIdentifier> orderingFieldIdentifier;
     bool includeNullValues;
 };
 
