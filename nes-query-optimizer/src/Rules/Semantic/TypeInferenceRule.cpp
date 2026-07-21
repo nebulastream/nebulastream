@@ -27,6 +27,8 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 
+#include <PlanRuleRegistry.hpp>
+
 namespace NES
 {
 
@@ -55,5 +57,10 @@ std::set<std::type_index> TypeInferenceRule::neededBy() const
     return {typeid(SemanticAnalysisBarrier)};
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterTypeInferencePlanRule(PlanRuleRegistryArguments)
+{
+    return TypeInferenceRule{};
+}
 
 }

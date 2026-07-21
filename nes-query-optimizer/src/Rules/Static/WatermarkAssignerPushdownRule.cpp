@@ -39,6 +39,7 @@
 #include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Schema/Field.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -280,5 +281,10 @@ std::set<std::type_index> WatermarkAssignerPushdownRule::neededBy() const
     return {typeid(FixedPlanStructureBarrier)};
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterWatermarkAssignerPushdownPlanRule(PlanRuleRegistryArguments)
+{
+    return WatermarkAssignerPushdownRule{};
+}
 
 }

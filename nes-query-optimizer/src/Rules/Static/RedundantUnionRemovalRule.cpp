@@ -30,6 +30,7 @@
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -67,6 +68,12 @@ LogicalPlan RedundantUnionRemovalRule::apply(LogicalPlan queryPlan) const
 std::set<std::type_index> RedundantUnionRemovalRule::needs() const
 {
     return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterRedundantUnionRemovalPlanRule(PlanRuleRegistryArguments)
+{
+    return RedundantUnionRemovalRule{};
 }
 
 }

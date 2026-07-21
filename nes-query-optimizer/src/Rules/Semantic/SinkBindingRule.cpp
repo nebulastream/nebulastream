@@ -27,6 +27,7 @@
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -77,6 +78,12 @@ LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
 std::set<std::type_index> SinkBindingRule::neededBy() const
 {
     return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterSinkBindingPlanRule(PlanRuleRegistryArguments arguments)
+{
+    return SinkBindingRule{arguments.sinkCatalog};
 }
 
 }

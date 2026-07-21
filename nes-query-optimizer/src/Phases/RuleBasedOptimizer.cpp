@@ -19,32 +19,15 @@
 #include <utility>
 
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
-#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/RuleManager.hpp>
-#include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
-#include <Rules/Semantic/AnonymousSourceBindingRule.hpp>
-#include <Rules/Semantic/CalcTargetOrderRule.hpp>
-#include <Rules/Semantic/InferModelResolutionRule.hpp>
-#include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
-#include <Rules/Semantic/SinkBindingRule.hpp>
-#include <Rules/Semantic/TypeInferenceRule.hpp>
-#include <Rules/Static/DecideFieldMappings.hpp>
-#include <Rules/Static/DecideFieldOrder.hpp>
-#include <Rules/Static/DecideJoinTypesRule.hpp>
-#include <Rules/Static/DecideMemoryLayoutRule.hpp>
-#include <Rules/Static/OriginIdInferenceRule.hpp>
-#include <Rules/Static/PredicatePushdownRule.hpp>
-#include <Rules/Static/ProjectionPushdownRule.hpp>
-#include <Rules/Static/RedundantProjectionRemovalRule.hpp>
-#include <Rules/Static/RedundantUnionRemovalRule.hpp>
-#include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ModelCatalog.hpp>
+#include <PlanRuleRegistry.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include "ErrorHandling.hpp"
 
 namespace NES
 {
@@ -61,29 +44,23 @@ RuleBasedOptimizer::RuleBasedOptimizer(
 {
     RuleManager<LogicalPlan> ruleManager;
 
-    ruleManager.addRule(AnonymousSinkBindingRule{this->sinkCatalog});
-    ruleManager.addRule(SinkBindingRule{this->sinkCatalog});
-    ruleManager.addRule(AnonymousSourceBindingRule{this->sourceCatalog});
-    ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
-    ruleManager.addRule(InferModelResolutionRule{this->modelCatalog});
-    ruleManager.addRule(TypeInferenceRule{});
-    ruleManager.addRule(CalcTargetOrderRule{});
 
-    ruleManager.addRule(SemanticAnalysisBarrier{});
+    const PlanRuleRegistryArguments arguments{
+        .defaultQueryOptimization = this->defaultQueryOptimization,
+        .sourceCatalog = this->sourceCatalog,
+        .sinkCatalog = this->sinkCatalog,
+        .modelCatalog = this->modelCatalog,
+    };
 
-    ruleManager.addRule(PredicatePushdownRule{});
-    ruleManager.addRule(WatermarkAssignerPushdownRule{});
-    ruleManager.addRule(ProjectionPushdownRule{});
-    ruleManager.addRule(RedundantUnionRemovalRule{});
-    ruleManager.addRule(RedundantProjectionRemovalRule{});
-
-    ruleManager.addRule(FixedPlanStructureBarrier{});
-
-    ruleManager.addRule(DecideJoinTypesRule{this->defaultQueryOptimization.joinStrategy});
-    ruleManager.addRule(DecideMemoryLayoutRule{});
-    ruleManager.addRule(DecideFieldMappings{});
-    ruleManager.addRule(DecideFieldOrder{});
-    ruleManager.addRule(OriginIdInferenceRule{});
+    for (auto ruleName : PlanRuleRegistry::instance().getRegisteredNames())
+    {
+        auto rule = PlanRuleRegistry::instance().create(ruleName, arguments);
+        if (!rule.has_value())
+        {
+            throw UnknownOptimizerRule("Did not find the rule {} in PlanRuleRegistry", ruleName);
+        }
+        ruleManager.addRule(rule.value());
+    }
 
     NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
     ruleSequence = ruleManager.getSequence();
