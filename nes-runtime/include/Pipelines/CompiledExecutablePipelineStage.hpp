@@ -23,6 +23,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <nautilus/Module.hpp>
+#include <nautilus/options.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
@@ -40,7 +41,8 @@ public:
     CompiledExecutablePipelineStage(
         std::shared_ptr<Pipeline> pipeline,
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
-        nautilus::engine::Options options);
+        std::shared_ptr<const nautilus::engine::NautilusEngine> engine,
+        nautilus::engine::ModuleOptions moduleOptions);
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
@@ -55,7 +57,11 @@ private:
     /// Registers the pipeline's main traced function in the pipeline's module.
     void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
 
-    nautilus::engine::NautilusEngine engine;
+    /// A single Nautilus engine is shared across all pipeline stages of the worker; this stage only keeps it alive
+    /// and creates its module from it. The per-pipeline module-scope options (dump configuration) are applied when
+    /// the module is created in start().
+    std::shared_ptr<const nautilus::engine::NautilusEngine> engine;
+    nautilus::engine::ModuleOptions moduleOptions;
     /// Both are created lazily in start(); neither type is default-constructible.
     std::optional<nautilus::engine::CompiledModule> compiledModule;
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;

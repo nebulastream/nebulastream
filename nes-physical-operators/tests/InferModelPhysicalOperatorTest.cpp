@@ -202,6 +202,17 @@ public:
         return names;
     }
 
+    /// Builds a standalone Nautilus engine for a single pipeline stage. In production a single engine is shared across
+    /// all pipelines of a worker; these tests construct stages directly, so each builds its own engine here.
+    static std::shared_ptr<const nautilus::engine::NautilusEngine> makeEngine(bool compiled)
+    {
+        nautilus::engine::Options options;
+        options.setOption("engine.Compilation", compiled);
+        options.setOption("engine.backend", std::string("mlir"));
+        options.setOption("engine.compilationStrategy", std::string("legacy"));
+        return std::make_shared<const nautilus::engine::NautilusEngine>(options);
+    }
+
     using TestSchema = Schema<UnqualifiedUnboundField, Ordered>;
 
     static UnqualifiedUnboundField makeField(std::string_view name, DataType::Type type)
@@ -305,17 +316,7 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
     {
         auto [pipeline, handlers]
             = createInferencePipeline(*identityModel, inputSchema, outputSchema, {"input_blob"}, outputFieldNames, true, false);
-        CompiledExecutablePipelineStage stage(
-            pipeline,
-            handlers,
-            [&]
-            {
-                nautilus::engine::Options opt;
-                opt.setOption("engine.Compilation", compiled);
-                opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
-                return opt;
-            }());
+        CompiledExecutablePipelineStage stage(pipeline, handlers, makeEngine(compiled), nautilus::engine::ModuleOptions{});
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
@@ -360,17 +361,7 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
     {
         auto [pipeline, handlers]
             = createInferencePipeline(*reductionModel, inputSchema, outputSchema, {"input_blob"}, outputFieldNames, true, false);
-        CompiledExecutablePipelineStage stage(
-            pipeline,
-            handlers,
-            [&]
-            {
-                nautilus::engine::Options opt;
-                opt.setOption("engine.Compilation", compiled);
-                opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
-                return opt;
-            }());
+        CompiledExecutablePipelineStage stage(pipeline, handlers, makeEngine(compiled), nautilus::engine::ModuleOptions{});
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
@@ -415,17 +406,7 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
     {
         auto [pipeline, handlers]
             = createInferencePipeline(*expansionModel, inputSchema, outputSchema, {"input_blob"}, outputFieldNames, true, false);
-        CompiledExecutablePipelineStage stage(
-            pipeline,
-            handlers,
-            [&]
-            {
-                nautilus::engine::Options opt;
-                opt.setOption("engine.Compilation", compiled);
-                opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
-                return opt;
-            }());
+        CompiledExecutablePipelineStage stage(pipeline, handlers, makeEngine(compiled), nautilus::engine::ModuleOptions{});
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
@@ -478,17 +459,7 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
     {
         auto [pipeline, handlers]
             = createInferencePipeline(*identityModel, inputSchema, outputSchema, {"input_blob"}, outputFieldNames, true, false);
-        CompiledExecutablePipelineStage stage(
-            pipeline,
-            handlers,
-            [&]
-            {
-                nautilus::engine::Options opt;
-                opt.setOption("engine.Compilation", compiled);
-                opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
-                return opt;
-            }());
+        CompiledExecutablePipelineStage stage(pipeline, handlers, makeEngine(compiled), nautilus::engine::ModuleOptions{});
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
@@ -534,17 +505,7 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
     {
         auto [pipeline, handlers]
             = createInferencePipeline(*identityModel, inputSchema, outputSchema, {"input_blob"}, outputFieldNames, true, false);
-        CompiledExecutablePipelineStage stage(
-            pipeline,
-            handlers,
-            [&]
-            {
-                nautilus::engine::Options opt;
-                opt.setOption("engine.Compilation", compiled);
-                opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
-                return opt;
-            }());
+        CompiledExecutablePipelineStage stage(pipeline, handlers, makeEngine(compiled), nautilus::engine::ModuleOptions{});
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
@@ -582,11 +543,7 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     auto [pipeline, handlers]
         = createInferencePipeline(*identityModel, inputSchema, outputSchema, {"input_blob"}, outputFieldNames, true, false);
 
-    nautilus::engine::Options options;
-    options.setOption("engine.Compilation", true);
-    options.setOption("engine.backend", std::string("mlir"));
-    options.setOption("engine.compilationStrategy", std::string("legacy"));
-    CompiledExecutablePipelineStage stage(pipeline, handlers, options);
+    CompiledExecutablePipelineStage stage(pipeline, handlers, makeEngine(true), nautilus::engine::ModuleOptions{});
 
     folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
     emittedBuffers.wlock()->reserve(numThreads * buffersPerThread * 2);
@@ -697,17 +654,7 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
     {
         auto [pipeline, handlers] = createInferencePipeline(
             *identityModel, inputSchema, outputSchema, {"input_blob"}, {"output_blob"}, /*varsizedInput=*/true, /*varsizedOutput=*/true);
-        CompiledExecutablePipelineStage stage(
-            pipeline,
-            handlers,
-            [&]
-            {
-                nautilus::engine::Options opt;
-                opt.setOption("engine.Compilation", compiled);
-                opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
-                return opt;
-            }());
+        CompiledExecutablePipelineStage stage(pipeline, handlers, makeEngine(compiled), nautilus::engine::ModuleOptions{});
 
         folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
