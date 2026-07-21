@@ -11,6 +11,8 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
 
 add_plugin(Conditional LogicalFunction nes-logical-operators ConditionalLogicalFunction.cpp)
 add_plugin(Conditional PhysicalFunction nes-physical-operators ConditionalPhysicalFunction.cpp)
+add_unreflection_plugin(LogicalFunction Conditional)
