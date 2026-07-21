@@ -75,10 +75,13 @@ TEST_F(SinkCatalogTest, AddDuplicateSinkDescriptorReportsSinkAlreadyExists)
     ASSERT_FALSE(duplicate.has_value());
     EXPECT_EQ(duplicate.error().code(), ErrorCode::SinkAlreadyExists);
 
-    /// The original registration must remain untouched.
+    /// The original registration must remain untouched. Plain if-guard instead of ASSERT_TRUE:
+    /// bugprone-unchecked-optional-access does not track has_value() through gtest's assertion macros.
     const auto retained = sinkCatalog.getSinkDescriptor(Identifier::parse("testSink"));
-    ASSERT_TRUE(retained.has_value());
-    ASSERT_TRUE(first.has_value());
+    if (not(retained.has_value() and first.has_value()))
+    {
+        FAIL() << "original registration or its lookup is missing";
+    }
     EXPECT_EQ(*retained, *first);
     EXPECT_EQ(sinkCatalog.getAllSinkDescriptors().size(), size_t{1});
 }
