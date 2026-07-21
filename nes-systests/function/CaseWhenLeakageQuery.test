@@ -13,8 +13,8 @@ ATTACH INLINE
 0,0.0,6000
 
 CREATE SINK split_sink(
-    waterMeterReadings.node_type UINT8 NOT NULL,
-    waterMeterReadings.demand_value FLOAT32 NOT NULL,
+    node_type UINT8 NOT NULL,
+    demand_value FLOAT32 NOT NULL,
     injected_part FLOAT32 NOT NULL,
     absorbed_part FLOAT32 NOT NULL
 ) TYPE File;

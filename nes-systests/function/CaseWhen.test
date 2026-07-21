@@ -16,7 +16,7 @@ ATTACH INLINE
 9,0.3,false,true
 10,0.95,true,false
 
-CREATE SINK traffic_light(intersection.intersection_id INT32, signal_command VARSIZED NOT NULL) TYPE File;
+CREATE SINK traffic_light(intersection_id INT32, signal_command VARSIZED NOT NULL) TYPE File;
 
 SELECT intersection_id,
        CASE
