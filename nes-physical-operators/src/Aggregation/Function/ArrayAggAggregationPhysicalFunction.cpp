@@ -21,8 +21,6 @@
 #include <utility>
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
-#include <Arena.hpp>
-#include <CompilationContext.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/VariableSizedData.hpp>
@@ -36,6 +34,8 @@
 #include <fmt/format.h>
 #include <nautilus/function.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
+#include <Arena.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>
@@ -49,11 +49,12 @@ namespace
 {
 std::atomic_uint64_t nextArrayAggComparatorIdentifier{0};
 
-Record::RecordFieldIdentifier getArrayAggInputFieldIdentifier(const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout)
+Record::RecordFieldIdentifier getArrayAggFieldIdentifier(
+    const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout, const size_t fieldIndex)
 {
     INVARIANT(tupleLayout != nullptr, "ARRAY_AGG PagedVector tuple layout must not be null");
-    INVARIANT(tupleLayout->getSchema().size() > 0, "ARRAY_AGG PagedVector layout must contain an input field");
-    return tupleLayout->getSchema()[0]->getFullyQualifiedName();
+    INVARIANT(tupleLayout->getSchema().size() == 2, "ARRAY_AGG PagedVector layout must contain a timestamp and input field");
+    return tupleLayout->getSchema()[fieldIndex]->getFullyQualifiedName();
 }
 }
 
@@ -63,11 +64,12 @@ ArrayAggAggregationPhysicalFunction::ArrayAggAggregationPhysicalFunction(
     PhysicalFunction inputFunction,
     Record::RecordFieldIdentifier resultFieldIdentifier,
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
-    Record::RecordFieldIdentifier orderingFieldIdentifier)
+    const bool sortByTimestamp)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , tupleLayout(std::move(tupleLayout))
-    , inputFieldIdentifier(getArrayAggInputFieldIdentifier(this->tupleLayout))
-    , orderingFieldIdentifier(std::move(orderingFieldIdentifier))
+    , timestampFieldIdentifier(getArrayAggFieldIdentifier(this->tupleLayout, 0))
+    , inputFieldIdentifier(getArrayAggFieldIdentifier(this->tupleLayout, 1))
+    , sortByTimestamp(sortByTimestamp)
     , comparatorIdentifier(fmt::format("array_agg_{}", nextArrayAggComparatorIdentifier.fetch_add(1, std::memory_order_relaxed)))
 {
     PRECONDITION(this->tupleLayout != nullptr, "ARRAY_AGG PagedVector tuple layout must not be null");
@@ -76,32 +78,34 @@ ArrayAggAggregationPhysicalFunction::ArrayAggAggregationPhysicalFunction(
 
 void ArrayAggAggregationPhysicalFunction::setup(CompilationContext& compilationContext)
 {
-    comparatorOwners.emplace_back(PagedVectorRef::registerComparator(
-        compilationContext,
-        comparatorIdentifier,
-        tupleLayout,
-        [orderingFieldIdentifier = orderingFieldIdentifier](const Record& lhs, const Record& rhs) -> nautilus::val<bool>
-        { return (lhs.read(orderingFieldIdentifier) < rhs.read(orderingFieldIdentifier)).getRawValueAs<nautilus::val<bool>>(); }));
+    if (not sortByTimestamp)
+    {
+        return;
+    }
+    comparatorOwners.emplace_back(
+        PagedVectorRef::registerComparator(
+            compilationContext,
+            comparatorIdentifier,
+            tupleLayout,
+            [timestampFieldIdentifier = timestampFieldIdentifier](const Record& lhs, const Record& rhs) -> nautilus::val<bool>
+            { return (lhs.read(timestampFieldIdentifier) < rhs.read(timestampFieldIdentifier)).getRawValueAs<nautilus::val<bool>>(); }));
 }
 
 void ArrayAggAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const Record& record,
+    const nautilus::val<Timestamp>& timestamp)
 {
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     PagedVectorRef pagedVector(BorrowedNautilusBuffer::from(memArea), tupleLayout);
-    if (inputType.nullable)
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
+    if (not inputType.nullable or not value.isNull())
     {
-        const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
-        if (not value.isNull())
-        {
-            pagedVector.pushBack(record, pipelineMemoryProvider.bufferProvider);
-        }
-    }
-    else
-    {
-        pagedVector.pushBack(record, pipelineMemoryProvider.bufferProvider);
+        Record arrayAggRecord;
+        arrayAggRecord.write(timestampFieldIdentifier, timestamp.convertToValue());
+        arrayAggRecord.write(inputFieldIdentifier, value);
+        pagedVector.pushBack(arrayAggRecord, pipelineMemoryProvider.bufferProvider);
     }
 }
 
@@ -125,14 +129,16 @@ void ArrayAggAggregationPhysicalFunction::combine(
 Record ArrayAggAggregationPhysicalFunction::lower(
     const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    INVARIANT(not comparatorOwners.empty(), "ARRAY_AGG comparator must be registered before lowering");
     const auto pagedVectorBuffer = static_cast<nautilus::val<TupleBuffer*>>(aggregationState);
     PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVectorBuffer), tupleLayout);
-    pagedVectorRef.sort(comparatorOwners.back(), pipelineMemoryProvider.arena);
+    if (sortByTimestamp)
+    {
+        INVARIANT(not comparatorOwners.empty(), "ARRAY_AGG comparator must be registered before lowering");
+        pagedVectorRef.sort(comparatorOwners.back(), pipelineMemoryProvider.arena);
+    }
 
     const auto numberOfRecords = pagedVectorRef.getNumberOfRecords();
-    const auto fieldSize
-        = nautilus::val<uint64_t>{DataTypeProvider::provideDataType(inputType.type).getSizeInBytesWithNull()};
+    const auto fieldSize = nautilus::val<uint64_t>{DataTypeProvider::provideDataType(inputType.type).getSizeInBytesWithNull()};
     const auto payloadSize = numberOfRecords * fieldSize;
     auto payload = pipelineMemoryProvider.arena.allocateVariableSizedData(payloadSize);
     nautilus::val<uint64_t> index = 0;
@@ -191,13 +197,11 @@ AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGenerat
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
     INVARIANT(arguments.tupleLayout.has_value(), "ARRAY_AGG tuple layout not set");
-    INVARIANT(arguments.orderingFieldIdentifier.has_value(), "ARRAY_AGG ordering field not set");
     return std::make_shared<ArrayAggAggregationPhysicalFunction>(
         std::move(arguments.inputType),
         std::move(arguments.resultType),
         std::move(arguments.inputFunction),
         std::move(arguments.resultFieldIdentifier),
-        std::move(arguments.tupleLayout.value()),
-        std::move(arguments.orderingFieldIdentifier.value()));
+        std::move(arguments.tupleLayout.value()));
 }
 }

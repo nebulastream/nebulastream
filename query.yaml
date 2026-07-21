@@ -12,13 +12,13 @@ query:
   - name: rgb_jpg_stream
     query: |
       SELECT timestamp, width, height, pixel_format, to_base64(image_manip_yuyv_to_jpg(IMAGE, WIDTH, HEIGHT)) as image
-      FROM video_pipe 
+      FROM video_pipe
       WHERE PIXEL_FORMAT = 34603058
       INTO rgb_video_pipe_sink;
   - name: thermal_jpg_stream
     query: |
       SELECT timestamp, width, height, pixel_format, to_base64(image_manip_mono16_to_jpg(IMAGE, WIDTH, HEIGHT)) as image
-      FROM video_pipe 
+      FROM video_pipe
       WHERE PIXEL_FORMAT = 17825799
       INTO thermal_video_pipe_sink;
   - name: rgb_jpg_stream_mqtt
@@ -41,11 +41,21 @@ query:
       )
       WHERE face IS NOT NULL
       INTO rgb_face_mqtt
+  - name: audio_pipe
+    query: |
+      SELECT timestamp / 1000000 as timestamp, sample
+      FROM microphone
+      INTO audio_pipe_sink;
+  - name: audio_mqtt_unsorted
+    query: |
+      SELECT start as "timestamp_start", end as "timestamp_end", TO_BASE64(ARRAY_AGG_UNSORTED(sample)) AS "chunk"
+      FROM audio_pipe WINDOW SLIDING (timestamp, size 200ms, advance by 200ms)
+      INTO audio_unsorted_mqtt;
   - name: audio_mqtt
     query: |
-      SELECT sample as "sample"
-      FROM microphone
-      INTO audio_mqtt
+      SELECT start as "timestamp_start", end as "timestamp_end", TO_BASE64(ARRAY_AGG(sample)) AS "chunk"
+      FROM audio_pipe WINDOW SLIDING (timestamp, size 200ms, advance by 200ms)
+      INTO audio_mqtt;
 sinks:
   - name: thermal_mqtt
     host: localhost:8080
@@ -73,14 +83,33 @@ sinks:
       server_uri: localhost:1883
       topic: rgb-image
       qos: 2
+  - name: audio_unsorted_mqtt
+    host: localhost:8080
+    schema:
+      - name: '"timestamp_start"'
+        type: UINT64
+      - name: '"timestamp_end"'
+        type: UINT64
+      - name: '"chunk"'
+        type: VARSIZED
+    type: MQTT
+    config:
+      output_format: JSON
+      server_uri: localhost:1883
+      topic: audio_unsorted
+      qos: 0
   - name: audio_mqtt
     host: localhost:8080
     schema:
-      - name: '"sample"'
-        type: FLOAT64
+      - name: '"timestamp_start"'
+        type: UINT64
+      - name: '"timestamp_end"'
+        type: UINT64
+      - name: '"chunk"'
+        type: VARSIZED
     type: MQTT
     config:
-      output_format: CSV
+      output_format: JSON
       server_uri: localhost:1883
       topic: audio
       qos: 0
@@ -97,6 +126,18 @@ sinks:
       server_uri: localhost:1883
       topic: rgb-face-image
       qos: 2
+  - name: audio_pipe_sink
+    host: localhost:8080
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+        nullable: false
+      - name: SAMPLE
+        type: FLOAT64
+        nullable: false
+    type: Pipe
+    config:
+      pipe_name: audio_pipe
   - name: thermal_video_pipe_sink
     host: localhost:8080
     schema:
@@ -160,29 +201,6 @@ sinks:
     type: Pipe
     config:
       pipe_name: video_frames
-  - name: video_frames
-    host: localhost:8080
-    schema:
-      - name: TIMESTAMP
-        type: UINT64
-        nullable: false
-      - name: WIDTH
-        type: UINT64
-        nullable: false
-      - name: HEIGHT
-        type: UINT64
-        nullable: false
-      - name: PIXEL_FORMAT
-        type: UINT64
-        nullable: false
-      - name: IMAGE
-        type: VARSIZED
-        nullable: false
-    type: File
-    config:
-      output_format: CSV
-      file_path: video-frames.csv
-      append: false
 
 logical:
   - name: video
@@ -236,6 +254,14 @@ logical:
       - name: IMAGE
         type: VARSIZED
         nullable: false
+  - name: audio_pipe
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+        nullable: false
+      - name: SAMPLE
+        type: FLOAT64
+        nullable: false
   - name: microphone
     schema:
       - name: SAMPLE
@@ -277,6 +303,13 @@ physical:
       type: NATIVE
     source_config:
       pipe_name: rgb_video_frames
+  - logical: audio_pipe
+    host: localhost:8080
+    type: Pipe
+    parser_config:
+      type: NATIVE
+    source_config:
+      pipe_name: audio_pipe
   - logical: thermal_video_pipe
     host: localhost:8080
     type: Pipe

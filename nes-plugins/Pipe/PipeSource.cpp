@@ -45,6 +45,7 @@ void PipeSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     NES_INFO("PipeSource: opening for pipe '{}'", pipeName);
     bufferProvider = std::move(provider);
     queue = PipeService::instance().registerSource(pipeName, schema);
+    sequenceNumberOffset.reset();
 }
 
 void PipeSource::close()
@@ -83,8 +84,13 @@ Source::FillTupleBufferResult PipeSource::fillTupleBuffer(TupleBuffer& tupleBuff
                         const TupleBuffer& srcBuffer = msg;
                         /// Deep-copy the buffer including child buffers (for variable-sized data).
                         tupleBuffer = deepCopyBuffer(srcBuffer, *bufferProvider);
+                        if (!sequenceNumberOffset)
+                        {
+                            sequenceNumberOffset = srcBuffer.getSequenceNumber().getRawValue() - SequenceNumber::INITIAL;
+                        }
 
                         lastDeliveredWasLastChunk = srcBuffer.isLastChunk();
+                        tupleBuffer.setSequenceNumber(SequenceNumber(srcBuffer.getSequenceNumber().getRawValue() - sequenceNumberOffset.value()));
 
                         /// Return numberOfTuples as the "byte count". The SourceThread always calls
                         /// setNumberOfTuples(getNumberOfBytes()), overwriting whatever we set.

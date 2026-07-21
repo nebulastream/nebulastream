@@ -37,13 +37,14 @@ public:
         PhysicalFunction inputFunction,
         Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
-        Record::RecordFieldIdentifier orderingFieldIdentifier);
+        bool sortByTimestamp = true);
 
     void setup(CompilationContext& compilationContext) override;
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
-        const Record& record) override;
+        const Record& record,
+        const nautilus::val<Timestamp>& timestamp) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
@@ -55,8 +56,9 @@ public:
 
 private:
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
+    Record::RecordFieldIdentifier timestampFieldIdentifier;
     Record::RecordFieldIdentifier inputFieldIdentifier;
-    Record::RecordFieldIdentifier orderingFieldIdentifier;
+    bool sortByTimestamp;
     std::string comparatorIdentifier;
     std::vector<std::shared_ptr<PagedVectorComparator>> comparatorOwners;
 };

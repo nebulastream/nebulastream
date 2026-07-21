@@ -35,6 +35,12 @@
 #include <openssl/evp.h>
 #include <PhysicalFunctionRegistry.hpp>
 
+struct OpenCVConfig
+{
+    OpenCVConfig() { cv::setNumThreads(0); }
+};
+static OpenCVConfig opencvConfig;
+
 namespace NES
 {
 void registerImageManipLogicalFunctionUnreflectors();
