@@ -112,7 +112,8 @@ std::shared_ptr<PipeQueue> PipeService::registerSource(const std::string& pipeNa
                 /// Verify schema match
                 if (*entry.schema != *schema)
                 {
-                    throw CannotOpenSource("Schema mismatch for pipe '{}': source schema does not match existing pipe schema", pipeName);
+                    throw CannotOpenSource(
+                        "Schema mismatch for pipe '{}': expected sink schema {}, but source provides {}", pipeName, *entry.schema, *schema);
                 }
                 INVARIANT(entry.sinkHandle, "PipeEntry exists but sinkHandle is null for pipe '{}'", pipeName);
                 entry.sinkHandle->addConsumer(queue);

@@ -19,7 +19,6 @@
     .viewer header { padding: .75rem; background: #f4f6f8; }
     .time, .count { display: block; margin-top: .25rem; color: #536071; font-size: .9rem; }
     img { display: block; width: 100%; min-height: 200px; object-fit: contain; background: #171a20; }
-    .audio { grid-column: 1 / -1; }
     canvas { display: block; width: 100%; height: 320px; background: #171a20; }
     @media (max-width: 700px) { .viewers { grid-template-columns: 1fr; } }
   </style>
@@ -54,27 +53,41 @@
     </section>
     <section class="viewer audio">
       <header>
-        <label>Audio topic <select id="audio-topic"><option value="audio">audio</option></select></label>
-        <span class="count" id="count">No samples received</span>
+        <label>Audio stream 1 topic <select id="audio-topic-1"><option value="audio">audio</option></select></label>
+        <span class="count" id="count-1">0 chunks received</span>
       </header>
-      <canvas id="waveform" aria-label="Audio waveform"></canvas>
+      <canvas id="waveform-1" aria-label="Audio stream 1 waveform"></canvas>
+    </section>
+    <section class="viewer audio">
+      <header>
+        <label>Audio stream 2 topic <select id="audio-topic-2"><option value="audio">audio</option></select></label>
+        <span class="count" id="count-2">0 chunks received</span>
+      </header>
+      <canvas id="waveform-2" aria-label="Audio stream 2 waveform"></canvas>
     </section>
   </main>
 
   <script>
     let client;
-    const MAX_SAMPLES = 4096;
+    const AUDIO_WINDOW_MS = 1000;
     const topics = new Set(['rgb-image', 'thermal-image', 'audio']);
-    const samples = [];
     const status = document.querySelector('#status');
     const videoTopics = [document.querySelector('#video-topic-1'), document.querySelector('#video-topic-2')];
-    const audioTopic = document.querySelector('#audio-topic');
-    const selects = [...videoTopics, audioTopic];
-    const count = document.querySelector('#count');
-    const canvas = document.querySelector('#waveform');
-    const context = canvas.getContext('2d');
+    const audioViewers = [1, 2].map(number => {
+      const canvas = document.querySelector(`#waveform-${number}`);
+      return {
+        topic: document.querySelector(`#audio-topic-${number}`),
+        count: document.querySelector(`#count-${number}`),
+        canvas,
+        context: canvas.getContext('2d'),
+        chunks: [],
+        received: 0,
+      };
+    });
+    const selects = [...videoTopics, ...audioViewers.map(viewer => viewer.topic)];
 
-    function drawWaveform() {
+    function drawWaveform(viewer) {
+      const { canvas, context, chunks } = viewer;
       const scale = window.devicePixelRatio || 1;
       const width = Math.round(canvas.clientWidth * scale);
       const height = Math.round(canvas.clientHeight * scale);
@@ -88,17 +101,22 @@
       context.moveTo(0, height / 2);
       context.lineTo(width, height / 2);
       context.stroke();
-      if (!samples.length) return;
+      if (!chunks.length) return;
 
       context.strokeStyle = '#56d4ff';
       context.lineWidth = 2 * scale;
-      context.beginPath();
-      samples.forEach((sample, index) => {
-        const x = index * width / Math.max(samples.length - 1, 1);
-        const y = height * (1 - Math.max(-1, Math.min(1, sample))) / 2;
-        index ? context.lineTo(x, y) : context.moveTo(x, y);
-      });
-      context.stroke();
+      const end = Math.max(...chunks.map(chunk => chunk.timestamp_end));
+      const start = end - AUDIO_WINDOW_MS;
+      for (const chunk of chunks) {
+        context.beginPath();
+        chunk.samples.forEach((sample, index) => {
+          const time = chunk.timestamp_start + index * (chunk.timestamp_end - chunk.timestamp_start) / Math.max(chunk.samples.length - 1, 1);
+          const x = (time - start) * width / AUDIO_WINDOW_MS;
+          const y = height * (1 - Math.max(-1, Math.min(1, sample))) / 2;
+          index ? context.lineTo(x, y) : context.moveTo(x, y);
+        });
+        context.stroke();
+      }
     }
 
     function addTopic(name) {
@@ -119,13 +137,28 @@
       time.title = `${frame.timestamp} ms`;
     }
 
-    function appendSamples(payload) {
-      const values = payload.split(/[\s,]+/).map(Number).filter(Number.isFinite);
-      if (!values.length) return;
-      samples.push(...values);
-      samples.splice(0, Math.max(0, samples.length - MAX_SAMPLES));
-      count.textContent = `${samples.length.toLocaleString()} samples shown`;
-      drawWaveform();
+    function decodeAudioChunk(payload) {
+      let chunk;
+      try { chunk = JSON.parse(payload); } catch { return; }
+      if (!chunk || typeof chunk !== 'object' || !Number.isFinite(chunk.timestamp_start) || !Number.isFinite(chunk.timestamp_end)
+          || chunk.timestamp_end < chunk.timestamp_start || typeof chunk.chunk !== 'string') return;
+      let binary;
+      try { binary = atob(chunk.chunk); } catch { return; }
+      if (!binary.length || binary.length % Float64Array.BYTES_PER_ELEMENT) return;
+      const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+      return { ...chunk, samples: new Float64Array(bytes.buffer) };
+    }
+
+    function appendAudioChunk(viewer, payload) {
+      const chunk = decodeAudioChunk(payload);
+      if (!chunk) return;
+      viewer.received += 1;
+      viewer.chunks.push(chunk);
+      viewer.chunks.sort((left, right) => left.timestamp_end - right.timestamp_end);
+      const firstVisible = viewer.chunks.findIndex(current => current.timestamp_end >= viewer.chunks.at(-1).timestamp_end - AUDIO_WINDOW_MS);
+      viewer.chunks.splice(0, firstVisible);
+      viewer.count.textContent = `${viewer.received.toLocaleString()} chunks received`;
+      drawWaveform(viewer);
     }
 
     function connect() {
@@ -140,7 +173,8 @@
       client.onConnectionLost = response => { status.textContent = `Disconnected${response.errorMessage ? `: ${response.errorMessage}` : ''}`; };
       client.onMessageArrived = message => {
         addTopic(message.destinationName);
-        if (audioTopic.value === message.destinationName) appendSamples(message.payloadString);
+        audioViewers.filter(viewer => viewer.topic.value === message.destinationName)
+          .forEach(viewer => appendAudioChunk(viewer, message.payloadString));
         if (videoTopics.some(select => select.value === message.destinationName)) {
           try {
             const frame = JSON.parse(message.payloadString);
@@ -160,14 +194,17 @@
       });
     }
 
-    audioTopic.addEventListener('change', () => {
-      samples.length = 0;
-      count.textContent = 'No samples received';
-      drawWaveform();
-    });
-    window.addEventListener('resize', drawWaveform);
+    audioViewers.forEach(viewer => viewer.topic.addEventListener('change', () => {
+      viewer.chunks.length = 0;
+      viewer.received = 0;
+      viewer.count.textContent = '0 chunks received';
+      drawWaveform(viewer);
+    }));
+    window.addEventListener('resize', () => audioViewers.forEach(drawWaveform));
     document.querySelector('#connect').addEventListener('click', connect);
-    drawWaveform();
+    console.assert(decodeAudioChunk('{"timestamp_start":0,"timestamp_end":1,"chunk":"AAAAAAAA8D8AAAAAAAAAAA=="}')?.samples.length === 2,
+      'Audio chunk decoding failed');
+    audioViewers.forEach(drawWaveform);
   </script>
 </body>
 </html>

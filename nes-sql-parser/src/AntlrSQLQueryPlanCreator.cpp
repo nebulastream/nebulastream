@@ -56,6 +56,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/ArrayAggAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/ArrayAggUnsortedAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
@@ -1198,6 +1199,13 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             ensureFieldAccessArgument();
             helpers.top().windowAggs.emplace_back(
                 ArrayAggAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
+                std::nullopt);
+            isAggregation = true;
+            break;
+        case AntlrSQLLexer::ARRAY_AGG_UNSORTED:
+            ensureFieldAccessArgument();
+            helpers.top().windowAggs.emplace_back(
+                ArrayAggUnsortedAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
                 std::nullopt);
             isAggregation = true;
             break;

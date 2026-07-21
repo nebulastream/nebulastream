@@ -71,6 +71,7 @@ private:
     /// Tracks whether the last delivered buffer completed a sequence (lastChunk=true).
     /// Used to ensure stop only occurs at sequence boundaries — no partial sequences.
     bool lastDeliveredWasLastChunk = true;
+    std::optional<SequenceNumber::Underlying> sequenceNumberOffset;
 };
 
 struct ConfigParametersPipeSource
