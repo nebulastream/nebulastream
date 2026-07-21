@@ -2,7 +2,6 @@
 # description: ASOF stream-table join selects the latest eligible matching table row
 # groups: [Join, StreamTableJoin]
 
-GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
 
 CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR events TYPE File;
@@ -41,3 +40,26 @@ INTO result;
 1 7 15 7 100 10
 2 7 25 7 200 20
 3 8 25 8 50 5
+
+
+CREATE SINK unkeyed_result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    event_ts UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL,
+    lookup_ts UINT64 NOT NULL
+) TYPE File;
+
+# Without TABLE or ON, the right input is another stream and every right tuple
+# is a candidate on the shared event-time axis.
+SELECT *
+FROM (SELECT * FROM events)
+ASOF JOIN (SELECT * FROM lookup)
+TIME(event_ts, lookup_ts)
+INTO unkeyed_result;
+----
+1 7 15 7 100 10
+2 7 25 7 200 20
+3 8 25 7 200 20
+4 9 25 7 200 20

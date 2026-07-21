@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -52,6 +53,7 @@ public:
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "PipeSink(pipe_name=" << pipeName << ")"; }
+
     BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 
 private:
@@ -61,7 +63,7 @@ private:
     /// Highest sequence number seen in any delivered buffer.
     /// New sources are only activated when a truly new sequence arrives (seqNum > maxSeqStarted),
     /// preventing mid-sequence promotion that would cause partial data.
-    SequenceNumber maxSeqStarted = INVALID_SEQ_NUMBER;
+    std::atomic<SequenceNumber::Underlying> maxSeqStarted{INVALID_SEQ_NUMBER.getRawValue()};
 };
 
 struct ConfigParametersPipeSink

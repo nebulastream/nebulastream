@@ -15,28 +15,18 @@
 #pragma once
 
 #include <utility>
-#include <vector>
-
-#include <DataTypes/VarVal.hpp>
-#include <Functions/PhysicalFunction.hpp>
-#include <Interface/Record.hpp>
-#include <Arena.hpp>
+#include <LoweringRules/AbstractLoweringRule.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
-
-class ConditionalPhysicalFunction final
+struct LowerToPhysicalAsOfJoin final : AbstractLoweringRule
 {
-public:
-    explicit ConditionalPhysicalFunction(std::vector<PhysicalFunction> inputFns);
+    explicit LowerToPhysicalAsOfJoin(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
 
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+    LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
-    std::vector<std::pair<PhysicalFunction, PhysicalFunction>> whenThenFns;
-    PhysicalFunction elseFn;
+    QueryExecutionConfiguration conf;
 };
-
-static_assert(PhysicalFunctionConcept<ConditionalPhysicalFunction>);
-
 }

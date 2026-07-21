@@ -148,6 +148,7 @@ relation
 joinRelation
     : (joinType) JOIN right=relationPrimary joinCriteria? windowClause
     | (streamTableJoinType) JOIN TABLE right=relationPrimary joinCriteria streamTableTimeClause?
+    | ASOF JOIN TABLE? right=relationPrimary joinCriteria? streamTableTimeClause
     | NATURAL joinType JOIN right=relationPrimary windowClause
     ;
 
@@ -165,7 +166,6 @@ joinType
 streamTableJoinType
     : INNER?
     | LEFT? SEMI
-    | ASOF
     ;
 
 joinCriteria

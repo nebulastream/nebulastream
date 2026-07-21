@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-#include <ConditionalPhysicalFunction.hpp>
+#include "ConditionalPhysicalFunction.hpp"
 
 #include <cstddef>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -45,7 +45,7 @@ VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& aren
 {
     auto result = elseFn.execute(record, arena);
 
-    for (std::size_t i = whenThenFns.size(); i-- > 0;)
+    for (nautilus::static_val i = whenThenFns.size(); i-- > 0;)
     {
         const auto& [conditionFn, thenFn] = whenThenFns.at(i);
         const auto conditionValue = conditionFn.execute(record, arena);

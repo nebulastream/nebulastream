@@ -20,8 +20,8 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Util/Variant.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Variant.hpp>
 #include <cpptrace/from_current.hpp>
 #include <ErrorHandling.hpp>
 #include <PipeService.hpp>
@@ -109,12 +109,13 @@ Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, 
     }
 
     const auto seqNum = inputTupleBuffer.getSequenceNumber();
+    const auto seqNumValue = seqNum.getRawValue();
 
     /// Only promote pending consumers when we see a truly new sequence —
     /// one we haven't delivered any chunks of yet. This prevents mid-sequence
     /// promotion which would cause the consumer to miss earlier chunks.
     bool needsPromotion = false;
-    if (seqNum > maxSeqStarted)
+    if (seqNumValue > maxSeqStarted.load(std::memory_order_relaxed))
     {
         sinkHandle->queues.withRLock([&](const auto& queueState) { needsPromotion = !queueState.pending.empty(); });
     }
@@ -165,9 +166,13 @@ Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, 
             });
     }
 
-    if (seqNum > maxSeqStarted)
+    auto maxSeq = maxSeqStarted.load(std::memory_order_relaxed);
+    while (seqNumValue > maxSeq)
     {
-        maxSeqStarted = seqNum;
+        if (maxSeqStarted.compare_exchange_weak(maxSeq, seqNumValue, std::memory_order_relaxed, std::memory_order_relaxed))
+        {
+            break;
+        }
     }
     return BufferResult::COMPLETED;
 }

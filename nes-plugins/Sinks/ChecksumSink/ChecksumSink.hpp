@@ -50,6 +50,7 @@ public:
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
+
     BufferResult executeBuffer(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
 
 private:
