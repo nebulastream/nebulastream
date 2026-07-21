@@ -30,6 +30,8 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/select.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
 
@@ -62,6 +64,7 @@ TupleBuffer* beginPendingCompaction(OperatorHandler* handler, AbstractBufferProv
 {
     return dynamic_cast<StreamTableJoinOperatorHandler&>(*handler).beginPendingCompaction(bufferProvider, tupleSize);
 }
+
 }
 
 StreamTableJoinInputPhysicalOperator::StreamTableJoinInputPhysicalOperator(
@@ -154,6 +157,9 @@ StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(
     , tableTimeFunction(std::move(tableTimeFunction))
 {
     PRECONDITION(this->markField.has_value() == (joinType == JoinType::MARK_APPLY), "Only mark apply requires a mark field");
+    PRECONDITION(
+        joinType != JoinType::ASOF_JOIN || (this->streamTimeFunction && this->tableTimeFunction),
+        "ASOF join requires stream and table time functions");
 }
 
 StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(const StreamTableJoinPhysicalOperator& other)
@@ -199,6 +205,8 @@ void StreamTableJoinPhysicalOperator::open(ExecutionContext& executionCtx, Recor
         {
             tableTimeFunction->open(executionCtx, recordBuffer);
         }
+        executionCtx.watermarkTs = invoke(
+            +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getOutputWatermark(); }, handler);
         executionCtx.originId = outputOriginId;
         executionCtx.sequenceNumber = invoke(
             +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNextOutputSequence(); }, handler);
@@ -218,6 +226,25 @@ void StreamTableJoinPhysicalOperator::open(ExecutionContext& executionCtx, Recor
         {
             streamTimeFunction->open(executionCtx, recordBuffer);
         }
+        invoke(lockHandler, handler);
+        executionCtx.watermarkTs = invoke(
+            +[](OperatorHandler* ptr,
+                const Timestamp watermark,
+                const SequenceNumber sequenceNumber,
+                const ChunkNumber chunkNumber,
+                const bool lastChunk,
+                const OriginId originId)
+            {
+                return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).updateOutputWatermark(
+                    watermark, SequenceData{sequenceNumber, chunkNumber, lastChunk}, originId);
+            },
+            handler,
+            recordBuffer.getWatermarkTs(),
+            recordBuffer.getSequenceNumber(),
+            recordBuffer.getChunkNumber(),
+            recordBuffer.isLastChunk(),
+            recordBuffer.getOriginId());
+        invoke(unlockHandler, handler);
         executionCtx.originId = outputOriginId;
         executionCtx.sequenceNumber = invoke(
             +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNextOutputSequence(); }, handler);
@@ -258,7 +285,6 @@ void StreamTableJoinPhysicalOperator::processStreamRecord(ExecutionContext& exec
         = invoke(+[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableComplete(); }, handler);
     const auto tableWatermark
         = invoke(+[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableWatermark(); }, handler);
-
     if (tableComplete || (streamTimeFunction && tableWatermark > streamTimestamp))
     {
         probeStreamRecord(executionCtx, record, streamTimestamp);
@@ -295,6 +321,65 @@ void StreamTableJoinPhysicalOperator::probeStreamRecord(
     const auto numberOfTableRows = tableState.getNumberOfRecords();
     nautilus::val<bool> matched = false;
     nautilus::val<bool> sawNull = false;
+    if (joinType == JoinType::ASOF_JOIN)
+    {
+        if (numberOfTableRows == 0_u64)
+        {
+            return;
+        }
+
+        nautilus::val<uint64_t*> selectionState = static_cast<nautilus::val<uint64_t*>>(
+            executionCtx.pipelineMemoryProvider.arena.allocateMemory(nautilus::val<size_t>{2 * sizeof(uint64_t)}));
+        nautilus::val<uint64_t*> bestTableTimestamp = selectionState;
+        nautilus::val<uint64_t*> bestTableIndex = selectionState + 1_u64;
+        *bestTableTimestamp = 0_u64;
+        *bestTableIndex = nautilus::val<uint64_t>{UINT64_MAX};
+        const auto streamTimestampValue = streamTimestamp.convertToValue();
+        for (nautilus::val<uint64_t> tableIndex = 0; tableIndex < numberOfTableRows; tableIndex = tableIndex + 1_u64)
+        {
+            auto tableRecord = tableState.at(tableIndex);
+            const auto tableTimestamp = tableTimeFunction->getTs(executionCtx, tableRecord);
+            const auto tableTimestampValue = tableTimestamp.convertToValue();
+            Record joinedRecord;
+            for (const auto& field : nautilus::static_iterable(streamFields))
+            {
+                joinedRecord.write(field, streamRecord.read(field));
+            }
+            for (const auto& field : nautilus::static_iterable(tableFields))
+            {
+                joinedRecord.write(field, tableRecord.read(field));
+            }
+            const auto joinResult = joinFunction.execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena);
+            const auto qualifies
+                = tableTimestampValue <= streamTimestampValue && !joinResult.isNull() && joinResult.getRawValueAs<nautilus::val<bool>>();
+            const nautilus::val<uint64_t> currentBestTimestamp = *bestTableTimestamp;
+            const nautilus::val<uint64_t> currentBestIndex = *bestTableIndex;
+            const auto betterMatch
+                = qualifies && (currentBestIndex == nautilus::val<uint64_t>{UINT64_MAX} || tableTimestampValue > currentBestTimestamp);
+            *bestTableTimestamp = nautilus::select(betterMatch, tableTimestampValue, currentBestTimestamp);
+            *bestTableIndex = nautilus::select(betterMatch, tableIndex, currentBestIndex);
+        }
+
+        const nautilus::val<uint64_t> selectedTableIndex = *bestTableIndex;
+        matched = selectedTableIndex != nautilus::val<uint64_t>{UINT64_MAX};
+        if (!matched)
+        {
+            return;
+        }
+        const auto bestTableRecord = tableState.at(selectedTableIndex);
+        Record joinedRecord;
+        for (const auto& field : nautilus::static_iterable(streamFields))
+        {
+            joinedRecord.write(field, streamRecord.read(field));
+        }
+        for (const auto& field : nautilus::static_iterable(tableFields))
+        {
+            joinedRecord.write(field, bestTableRecord.read(field));
+        }
+        executeChild(executionCtx, joinedRecord);
+        return;
+    }
+
     for (nautilus::val<uint64_t> tableIndex = 0; tableIndex < numberOfTableRows; tableIndex = tableIndex + 1_u64)
     {
         auto tableRecord = tableState.at(tableIndex);
@@ -370,7 +455,9 @@ void StreamTableJoinPhysicalOperator::emitJoinedRecord(
 }
 
 void StreamTableJoinPhysicalOperator::releasePending(
-    ExecutionContext& executionCtx, const nautilus::val<Timestamp>& tableWatermark, const bool releaseAll) const
+    ExecutionContext& executionCtx,
+    const nautilus::val<Timestamp>& tableWatermark,
+    const nautilus::val<bool>& releaseAll) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     const auto buffer = invoke(
@@ -445,6 +532,23 @@ void StreamTableJoinPhysicalOperator::close(ExecutionContext& executionCtx, Reco
             recordBuffer.getOriginId());
         const auto tableComplete
             = invoke(+[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableComplete(); }, handler);
+        executionCtx.watermarkTs = invoke(
+            +[](OperatorHandler* ptr,
+                const Timestamp watermark,
+                const SequenceNumber sequenceNumber,
+                const ChunkNumber chunkNumber,
+                const bool lastChunk,
+                const OriginId originId)
+            {
+                return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).updateOutputWatermark(
+                    watermark, SequenceData{sequenceNumber, chunkNumber, lastChunk}, originId);
+            },
+            handler,
+            recordBuffer.getWatermarkTs(),
+            recordBuffer.getSequenceNumber(),
+            recordBuffer.getChunkNumber(),
+            recordBuffer.isLastChunk(),
+            recordBuffer.getOriginId());
         if (tableComplete || tableTimeFunction)
         {
             releasePending(executionCtx, tableWatermark, tableComplete);
@@ -454,23 +558,6 @@ void StreamTableJoinPhysicalOperator::close(ExecutionContext& executionCtx, Reco
     {
         invoke(lockHandler, handler);
     }
-    executionCtx.watermarkTs = invoke(
-        +[](OperatorHandler* ptr,
-            const Timestamp watermark,
-            const SequenceNumber sequenceNumber,
-            const ChunkNumber chunkNumber,
-            const bool lastChunk,
-            const OriginId originId)
-        {
-            return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).updateOutputWatermark(
-                watermark, SequenceData{sequenceNumber, chunkNumber, lastChunk}, originId);
-        },
-        handler,
-        recordBuffer.getWatermarkTs(),
-        recordBuffer.getSequenceNumber(),
-        recordBuffer.getChunkNumber(),
-        recordBuffer.isLastChunk(),
-        recordBuffer.getOriginId());
     invoke(unlockHandler, handler);
     closeChild(executionCtx, recordBuffer);
 }

@@ -1,0 +1,64 @@
+# name: join/StreamTableAsOfNestedJoinLarge.test
+# description: two nested ASOF joins over 10k-row inputs with filters and a checksum oracle
+# groups: [Join, StreamTableJoin, LongRunning]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE nested_events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR nested_events TYPE File;
+ATTACH FILE small/asof_events_10k.csv
+
+CREATE LOGICAL SOURCE nested_prices(
+    price_id UINT64 NOT NULL,
+    price_key UINT64 NOT NULL,
+    price_value UINT64 NOT NULL,
+    price_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR nested_prices TYPE File;
+ATTACH FILE small/asof_lookup_10k.csv
+
+CREATE LOGICAL SOURCE nested_taxes(
+    tax_id UINT64 NOT NULL,
+    tax_key UINT64 NOT NULL,
+    tax_value UINT64 NOT NULL,
+    tax_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR nested_taxes TYPE File;
+ATTACH FILE small/asof_lookup_10k.csv
+
+CREATE SINK result(signature UINT64 NOT NULL) TYPE Checksum SET ('ENFORCE_ORDER' AS "SINK".OUTPUT_ORDER);
+
+# Verified with DuckDB 1.5.4. Each CSV input has exactly 10,000 rows.
+# SELECT event_id * 1000003::UBIGINT + price_value * 1009::UBIGINT + tax_value AS signature
+# FROM (
+#     SELECT e.*, p.price_key, p.price_value, p.price_ts
+#     FROM (SELECT * FROM events WHERE event_id >= 200 AND event_id < 9900 AND event_key < 80) e
+#     ASOF JOIN (SELECT * FROM prices WHERE price_id < 8000) p
+#     ON e.event_key = p.price_key AND e.event_ts >= p.price_ts
+# ) ep
+# ASOF JOIN (SELECT * FROM taxes WHERE tax_id >= 500 AND tax_id < 9500) t
+# ON ep.price_key = t.tax_key AND ep.event_ts >= t.tax_ts
+# WHERE tax_value > price_value;
+# DuckDB CSV output: 1,474 rows; sum of all output bytes (the Checksum sink algorithm): 792,900.
+SELECT event_id * UINT64(1000003) + price_value * UINT64(1009) + tax_value AS signature
+FROM (
+    SELECT *
+    FROM (
+        SELECT *
+        FROM (
+            SELECT *
+            FROM nested_events
+            WHERE event_id >= UINT64(200) AND event_id < UINT64(9900) AND event_key < UINT64(80)
+        )
+        ASOF JOIN TABLE (SELECT * FROM nested_prices WHERE price_id < UINT64(8000)) ON event_key = price_key
+        TIME(event_ts, price_ts)
+    )
+    ASOF JOIN TABLE (
+        SELECT * FROM nested_taxes WHERE tax_id >= UINT64(500) AND tax_id < UINT64(9500)
+    ) ON price_key = tax_key
+    TIME(event_ts, tax_ts)
+)
+WHERE tax_value > price_value
+INTO result;
+----
+1474 792900

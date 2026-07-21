@@ -34,6 +34,7 @@
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Overloaded.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ErrorHandling.hpp>
@@ -76,8 +77,21 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
         PRECONDITION(
             std::holds_alternative<BoundCharacteristics>(characteristics.value()), "Expected bound stream-table join time characteristics");
         const auto& bound = std::get<BoundCharacteristics>(characteristics.value());
-        streamTimeFunction = TimeFunction::create(bound[0]);
-        tableTimeFunction = TimeFunction::create(bound[1]);
+        const auto lowerTimeFunction = [](const Windowing::BoundTimeCharacteristic& characteristic, const FieldMappingTrait& mapping)
+        {
+            return std::visit(
+                Overloaded{
+                    [](const Windowing::IngestionTimeCharacteristic&) -> std::unique_ptr<TimeFunction>
+                    { return std::make_unique<IngestionTimeFunction>(); },
+                    [&](const Windowing::BoundEventTimeCharacteristic& eventTime) -> std::unique_ptr<TimeFunction>
+                    {
+                        return std::make_unique<EventTimeFunction>(
+                            QueryCompilation::FunctionProvider::lowerFunction(eventTime.field, mapping), eventTime.unit);
+                    }},
+                characteristic);
+        };
+        streamTimeFunction = lowerTimeFunction(bound[0], *children[0].getTraitSet().get<FieldMappingTrait>());
+        tableTimeFunction = lowerTimeFunction(bound[1], *children[1].getTraitSet().get<FieldMappingTrait>());
     }
 
     auto streamTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(streamSchema);
@@ -88,6 +102,19 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
     auto inputOrigins = streamOrigins;
     inputOrigins.insert(inputOrigins.end(), tableOrigins.begin(), tableOrigins.end());
     auto handler = std::make_shared<StreamTableJoinOperatorHandler>(tableOrigins, std::move(inputOrigins));
+    const auto physicalJoinType = [&]
+    {
+        switch (join->getJoinType())
+        {
+            case StreamTableJoinLogicalOperator::JoinType::INNER_JOIN:
+                return StreamTableJoinPhysicalOperator::JoinType::INNER_JOIN;
+            case StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN:
+                return StreamTableJoinPhysicalOperator::JoinType::LEFT_SEMI_JOIN;
+            case StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN:
+                return StreamTableJoinPhysicalOperator::JoinType::ASOF_JOIN;
+        }
+        std::unreachable();
+    }();
 
     auto streamWrapper = std::make_shared<PhysicalOperatorWrapper>(
         StreamTableJoinInputPhysicalOperator{handlerId, streamOrigins},
@@ -112,9 +139,7 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
     auto joinWrapper = std::make_shared<PhysicalOperatorWrapper>(
         StreamTableJoinPhysicalOperator{
             handlerId,
-            join->getJoinType() == StreamTableJoinLogicalOperator::JoinType::INNER_JOIN
-                ? StreamTableJoinPhysicalOperator::JoinType::INNER_JOIN
-                : StreamTableJoinPhysicalOperator::JoinType::LEFT_SEMI_JOIN,
+            physicalJoinType,
             std::move(physicalJoinFunction),
             std::move(streamInputBufferRef),
             std::move(tableInputBufferRef),

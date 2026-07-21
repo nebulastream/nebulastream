@@ -65,6 +65,7 @@ public:
     [[nodiscard]] Timestamp updateTableWatermark(Timestamp watermark, SequenceData sequenceData, OriginId originId);
     [[nodiscard]] Timestamp updateOutputWatermark(Timestamp watermark, SequenceData sequenceData, OriginId originId);
     [[nodiscard]] Timestamp getTableWatermark() const;
+    [[nodiscard]] Timestamp getOutputWatermark() const;
     [[nodiscard]] bool isTableComplete() const;
     [[nodiscard]] bool isTableOrigin(OriginId originId) const;
     void observeInputSequence(OriginId originId, SequenceNumber sequenceNumber);
