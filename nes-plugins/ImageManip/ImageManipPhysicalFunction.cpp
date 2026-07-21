@@ -33,12 +33,14 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include <openssl/evp.h>
+#include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 struct OpenCVConfig
 {
     OpenCVConfig() { cv::setNumThreads(0); }
 };
+
 static OpenCVConfig opencvConfig;
 
 namespace NES
@@ -201,12 +203,20 @@ VariableSizedData toBase64(const VariableSizedData& input, ArenaRef& arena)
     const auto pl = 4 * ((length + 2) / 3);
     auto output = arena.allocateVariableSizedData(pl + 1); ///+1 for the terminating null that EVP_EncodeBlock adds on
     nautilus::invoke(
-        +[](int8_t* input, uint32_t size, int8_t* output, USED_IN_DEBUG uint32_t outputSize)
+        +[](int8_t* input, uint32_t size, int8_t* output, uint32_t outputSize)
         {
-            USED_IN_DEBUG auto bytesEncoded
+            const auto bytesEncoded
                 = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(output), reinterpret_cast<const unsigned char*>(input), size);
-            INVARIANT(bytesEncoded > 0, "bytesEncoded > 0");
-            INVARIANT(static_cast<uint32_t>(bytesEncoded) == outputSize - 1, "bytesEncoded == outputSize");
+            if (bytesEncoded <= 0)
+            {
+                throw InferenceRuntimeFailure(
+                    "Base64 encoding failed for an input of {} bytes: EVP_EncodeBlock returned {}", size, bytesEncoded);
+            }
+            if (static_cast<uint32_t>(bytesEncoded) != outputSize - 1)
+            {
+                throw InferenceRuntimeFailure(
+                    "Base64 encoding produced {} bytes for an input of {} bytes; expected {} bytes", bytesEncoded, size, outputSize - 1);
+            }
         },
         input.getContent(),
         input.getSize(),
@@ -220,12 +230,23 @@ VariableSizedData fromBase64(const VariableSizedData& input, ArenaRef& arena)
     const auto pl = 3 * input.getSize() / 4;
     auto output = arena.allocateVariableSizedData(pl);
     auto length = nautilus::invoke(
-        +[](int8_t* input, uint32_t size, int8_t* output, USED_IN_DEBUG uint32_t outputSize)
+        +[](int8_t* input, uint32_t size, int8_t* output, uint32_t outputSize)
         {
             const auto lengthOfDecoded
                 = EVP_DecodeBlock(reinterpret_cast<unsigned char*>(output), reinterpret_cast<const unsigned char*>(input), size);
-            INVARIANT(lengthOfDecoded > 0, "bytesEncoded == size");
-            INVARIANT(static_cast<uint32_t>(lengthOfDecoded) <= outputSize, "bytesDecoded < outputSize");
+            if (lengthOfDecoded <= 0)
+            {
+                throw InferenceRuntimeFailure(
+                    "Base64 decoding failed for an input of {} bytes: EVP_DecodeBlock returned {}", size, lengthOfDecoded);
+            }
+            if (static_cast<uint32_t>(lengthOfDecoded) > outputSize)
+            {
+                throw InferenceRuntimeFailure(
+                    "Base64 decoding produced {} bytes for an input of {} bytes, exceeding the {}-byte output buffer",
+                    lengthOfDecoded,
+                    size,
+                    outputSize);
+            }
             return lengthOfDecoded;
         },
         input.getContent(),
@@ -409,8 +430,17 @@ yuyvToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, co
             cv::cvtColor(input, bgr, cv::COLOR_YUV2BGR_YUYV);
 
             cv::imencode(".jpg", bgr, jpegBuffer, JPEG_COMPRESSION_PARAMETER);
-            INVARIANT(
-                *std::bit_cast<uint16_t*>(jpegBuffer.data()) == 0xD8FF, "Invalid JPG. {:x}", *std::bit_cast<uint16_t*>(jpegBuffer.data()));
+            if (jpegBuffer.size() < sizeof(uint16_t))
+            {
+                throw InferenceRuntimeFailure(
+                    "YUYV-to-JPEG encoding produced only {} bytes for a {}x{} image", jpegBuffer.size(), width, height);
+            }
+            const auto signature = *std::bit_cast<uint16_t*>(jpegBuffer.data());
+            if (signature != 0xD8FF)
+            {
+                throw InferenceRuntimeFailure(
+                    "YUYV-to-JPEG encoding produced an invalid JPEG signature 0x{:x} for a {}x{} image", signature, width, height);
+            }
             return jpegBuffer.size();
         },
         input.getContent(),
@@ -472,13 +502,24 @@ png16ToMono16(const VariableSizedData& input, const nautilus::val<uint64>& width
 thread_local std::vector<uint8_t> pngBuffer;
 thread_local std::vector<uint8_t> mono16ToJpegBuffer;
 
+void applyMono16ColorMap(const cv::Mat& input, cv::Mat& color)
+{
+    cv::Mat mono8;
+    cv::normalize(input, mono8, 0, 255, cv::NORM_MINMAX, CV_8U);
+    cv::applyColorMap(mono8, color, cv::COLORMAP_INFERNO);
+}
+
 VariableSizedData
 mono16ToPNG16(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto imageSize = nautilus::invoke(
-        +[](int8_t* data, USED_IN_DEBUG size_t inputSize, uint64_t width, uint64_t height)
+        +[](int8_t* data, size_t inputSize, uint64_t width, uint64_t height)
         {
-            INVARIANT(inputSize == width * height * 2, "Image size is not correct");
+            if (const auto expectedSize = width * height * 2; inputSize != expectedSize)
+            {
+                throw InferenceRuntimeFailure(
+                    "Mono16-to-PNG16 expected a {}x{} image with {} bytes, but received {} bytes", width, height, expectedSize, inputSize);
+            }
             const cv::Mat input(height, width, CV_16UC1, data);
             pngBuffer.clear();
             cv::imencode(".png", input, pngBuffer);
@@ -502,14 +543,16 @@ VariableSizedData
 mono16ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto imageSize = nautilus::invoke(
-        +[](int8_t* data, USED_IN_DEBUG size_t inputSize, uint64_t width, uint64_t height)
+        +[](int8_t* data, size_t inputSize, uint64_t width, uint64_t height)
         {
-            INVARIANT(inputSize == width * height * 2, "Image size is not correct");
+            if (const auto expectedSize = width * height * 2; inputSize != expectedSize)
+            {
+                throw InferenceRuntimeFailure(
+                    "Mono16-to-JPEG expected a {}x{} image with {} bytes, but received {} bytes", width, height, expectedSize, inputSize);
+            }
             const cv::Mat input(height, width, CV_16UC1, data);
-            cv::Mat mono8;
-            cv::normalize(input, mono8, 0, 255, cv::NORM_MINMAX, CV_8U);
             cv::Mat color;
-            cv::applyColorMap(mono8, color, cv::COLORMAP_INFERNO);
+            applyMono16ColorMap(input, color);
             mono16ToJpegBuffer.clear();
             cv::imencode(".jpg", color, mono16ToJpegBuffer, JPEG_COMPRESSION_PARAMETER);
             return mono16ToJpegBuffer.size();
@@ -527,6 +570,39 @@ mono16ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, 
     return jpgVarsizedBuffer;
 }
 
+VariableSizedData
+mono16ToYUYV(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
+{
+    auto yuyvBuffer = arena.allocateVariableSizedData(width * height * 2);
+    nautilus::invoke(
+        +[](int8_t* inputData, size_t inputSize, uint64_t width, uint64_t height, int8_t* outputData, size_t outputSize)
+        {
+            const auto expectedSize = width * height * 2;
+            if (inputSize != expectedSize || outputSize != expectedSize)
+            {
+                throw InferenceRuntimeFailure(
+                    "Mono16-to-YUYV expected a {}x{} input and output with {} bytes, but received {} and {} bytes",
+                    width,
+                    height,
+                    expectedSize,
+                    inputSize,
+                    outputSize);
+            }
+            const cv::Mat mono16(height, width, CV_16UC1, inputData);
+            cv::Mat color;
+            applyMono16ColorMap(mono16, color);
+            cv::Mat yuyv(height, width, CV_8UC2, outputData);
+            cv::cvtColor(color, yuyv, cv::COLOR_BGR2YUV_YUYV);
+        },
+        input.getContent(),
+        input.getSize(),
+        width,
+        height,
+        yuyvBuffer.getContent(),
+        yuyvBuffer.getSize());
+    return yuyvBuffer;
+}
+
 VariableSizedData mono16ToMono8(
     const VariableSizedData& input,
     const nautilus::val<uint64>& width,
@@ -539,15 +615,30 @@ VariableSizedData mono16ToMono8(
     nautilus::invoke(
         +[](uint32_t inputLength,
             int8_t* inputData,
-            USED_IN_DEBUG uint64_t width,
-            USED_IN_DEBUG uint64_t height,
-            USED_IN_DEBUG uint32_t outputLength,
+            uint64_t width,
+            uint64_t height,
+            uint32_t outputLength,
             int8_t* outputData,
             uint16_t mmin,
             uint16_t mmax)
         {
-            INVARIANT(inputLength == width * height * 2, "Image size is not correct");
-            INVARIANT(outputLength == inputLength / 2, "Image size is not correct");
+            if (const auto expectedInputLength = width * height * 2; inputLength != expectedInputLength)
+            {
+                throw InferenceRuntimeFailure(
+                    "Mono16-to-Mono8 expected a {}x{} input with {} bytes, but received {} bytes",
+                    width,
+                    height,
+                    expectedInputLength,
+                    inputLength);
+            }
+            if (const auto expectedOutputLength = inputLength / 2; outputLength != expectedOutputLength)
+            {
+                throw InferenceRuntimeFailure(
+                    "Mono16-to-Mono8 expected a {}-byte output buffer for a {}-byte input, but received {} bytes",
+                    expectedOutputLength,
+                    inputLength,
+                    outputLength);
+            }
             auto max = std::max(mmin, mmax);
             auto min = std::min(mmin, mmax);
             std::span mono16Bytes(std::bit_cast<uint16_t*>(inputData), inputLength / 2);
@@ -582,9 +673,13 @@ VariableSizedData
 mono8ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto imageSize = nautilus::invoke(
-        +[](USED_IN_DEBUG uint32_t input_length, int8_t* data, uint64_t width, uint64_t height)
+        +[](uint32_t input_length, int8_t* data, uint64_t width, uint64_t height)
         {
-            INVARIANT(input_length == width * height, "Image size is not correct");
+            if (const auto expectedSize = width * height; input_length != expectedSize)
+            {
+                throw InferenceRuntimeFailure(
+                    "Mono8-to-JPEG expected a {}x{} image with {} bytes, but received {} bytes", width, height, expectedSize, input_length);
+            }
             cv::Mat gray_input(height, width, CV_8UC1, data);
 
             cv::Mat img_color;
@@ -609,10 +704,14 @@ mono8ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, c
 VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_t>& width, const nautilus::val<uint64_t>& height, ArenaRef&)
 {
     auto result = nautilus::invoke(
-        +[](uint8_t* data, USED_IN_DEBUG uint32_t size, uint64_t width, uint64_t height)
+        +[](uint8_t* data, uint32_t size, uint64_t width, uint64_t height)
         {
             Rectangle r(0);
-            INVARIANT(size == width * height * 2, "Image size {}, is not correct", size);
+            if (const auto expectedSize = width * height * 2; size != expectedSize)
+            {
+                throw InferenceRuntimeFailure(
+                    "Face detection expected a {}x{} YUYV image with {} bytes, but received {} bytes", width, height, expectedSize, size);
+            }
             const cv::Mat input(height, width, CV_8UC2, data);
             cv::Mat gray;
             cv::cvtColor(input, gray, cv::COLOR_YUV2GRAY_YUYV);
@@ -656,15 +755,26 @@ mono8ToYUYV(const VariableSizedData& input, const nautilus::val<uint64>& width, 
 {
     auto yuyvBuffer = arena.allocateVariableSizedData(width * height * 2);
     nautilus::invoke(
-        +[](USED_IN_DEBUG uint32_t input_length,
-            int8_t* data,
-            uint64_t width,
-            uint64_t height,
-            USED_IN_DEBUG uint32_t output_length,
-            int8_t* output)
+        +[](uint32_t input_length, int8_t* data, uint64_t width, uint64_t height, uint32_t output_length, int8_t* output)
         {
-            INVARIANT(input_length == width * height, "Image size is not correct");
-            INVARIANT(output_length == width * height * 2, "Image size is not correct");
+            if (const auto expectedInputLength = width * height; input_length != expectedInputLength)
+            {
+                throw InferenceRuntimeFailure(
+                    "Mono8-to-YUYV expected a {}x{} input with {} bytes, but received {} bytes",
+                    width,
+                    height,
+                    expectedInputLength,
+                    input_length);
+            }
+            if (const auto expectedOutputLength = width * height * 2; output_length != expectedOutputLength)
+            {
+                throw InferenceRuntimeFailure(
+                    "Mono8-to-YUYV expected a {}-byte output buffer for a {}x{} image, but received {} bytes",
+                    expectedOutputLength,
+                    width,
+                    height,
+                    output_length);
+            }
             cv::Mat gray_input(height, width, CV_8UC1, data);
             monoToBGR.resize(height * width * 3);
             cv::Mat img_color(height, width, CV_8UC3, monoToBGR.data());
@@ -729,6 +839,14 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(2),
             arena);
     }
+    else if (functionName == "Mono16ToYUYV")
+    {
+        return mono16ToYUYV(
+            child.template operator()<VariableSizedData>(0),
+            child.template operator()<nautilus::val<uint64_t>>(1),
+            child.template operator()<nautilus::val<uint64_t>>(2),
+            arena);
+    }
     else if (functionName == "Serialize")
     {
         auto image = child.template operator()<VariableSizedData>(0);
@@ -739,38 +857,42 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
         if (pixelFormat == nautilus::val<uint64_t>(ARV_PIXEL_FORMAT_MONO_16))
         {
             auto encoded = toBase64(mono16ToPNG16(image, width, height, arena), arena);
-#ifndef NDEBUG
             nautilus::invoke(
                 +[](int8_t* data, uint32_t size)
                 {
-                    INVARIANT(size > 14, "The encoded image is invalid");
-                    INVARIANT(
-                        std::string_view(std::bit_cast<char*>(data), 11) == "iVBORw0KGgo",
-                        "The encoded image is invalid png: {}",
-                        std::string_view(std::bit_cast<char*>(data), 11));
+                    if (size <= 14)
+                    {
+                        throw InferenceRuntimeFailure("PNG serialization produced only {} Base64 bytes; expected more than 14", size);
+                    }
+                    const std::string_view prefix(std::bit_cast<char*>(data), 11);
+                    if (prefix != "iVBORw0KGgo")
+                    {
+                        throw InferenceRuntimeFailure("PNG serialization produced an invalid Base64 prefix '{}'", prefix);
+                    }
                 },
                 encoded.getContent(),
                 encoded.getSize());
-#endif
             return encoded;
         }
 
         if (pixelFormat == nautilus::val<uint64_t>(ARV_PIXEL_FORMAT_YUV_422_YUYV_PACKED))
         {
             auto encoded = toBase64(yuyvToJPG(image, width, height, arena), arena);
-#ifndef NDEBUG
             nautilus::invoke(
                 +[](int8_t* data, uint32_t size)
                 {
-                    INVARIANT(size > 14, "The encoded image is invalid");
-                    INVARIANT(
-                        std::string_view(std::bit_cast<char*>(data), 14) == "/9j/4AAQSkZJRg",
-                        "The encoded image is invalid jpeg: {}",
-                        std::string_view(std::bit_cast<char*>(data), 14));
+                    if (size <= 14)
+                    {
+                        throw InferenceRuntimeFailure("JPEG serialization produced only {} Base64 bytes; expected more than 14", size);
+                    }
+                    const std::string_view prefix(std::bit_cast<char*>(data), 14);
+                    if (prefix != "/9j/4AAQSkZJRg")
+                    {
+                        throw InferenceRuntimeFailure("JPEG serialization produced an invalid Base64 prefix '{}'", prefix);
+                    }
                 },
                 encoded.getContent(),
                 encoded.getSize());
-#endif
             return encoded;
         }
 
@@ -864,6 +986,7 @@ ImageManipFunction(IMAGE_MANIP_FACE_DETECTION, "FaceDetection");
 ImageManipFunction(IMAGE_MANIP_MONO8_TO_JPG, "Mono8ToJPG");
 ImageManipFunction(IMAGE_MANIP_MONO16_TO_PNG16, "Mono16ToPNG16");
 ImageManipFunction(IMAGE_MANIP_MONO16_TO_JPG, "Mono16ToJPG");
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_YUYV, "Mono16ToYUYV");
 ImageManipFunction(IMAGE_MANIP_SERIALIZE, "Serialize");
 ImageManipFunction(IMAGE_MANIP_DESERIALIZE, "Deserialize");
 ImageManipFunction(IMAGE_MANIP_MONO16_TO_MONO8, "Mono16ToMono8");

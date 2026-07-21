@@ -1224,7 +1224,31 @@ void sortByRandomKeysProperty(EngineMode mode)
     }
 }
 
+void oversizedVarSizedValueRoundTrip(EngineMode mode)
+{
+    constexpr size_t POOLED_BUFFER_SIZE = 4096;
+    constexpr size_t PAYLOAD_SIZE = 2ULL * 1024 * 1024;
+    auto bufferManager = DirtyBufferProvider::create(POOLED_BUFFER_SIZE, MIN_POOLED_BUFFER_COUNT);
+    TestablePagedVector pagedVector(
+        {DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}}, *bufferManager, mode);
+
+    const std::string payload(PAYLOAD_SIZE, 'x');
+    pagedVector.pushBack(AnyVec{payload});
+
+    ASSERT_EQ(std::any_cast<const std::string&>(pagedVector.readAt(0).at(0)), payload);
+}
+
 } /// anonymous namespace
+
+TEST(PagedVectorTest, OversizedVarSizedValueCompiler)
+{
+    oversizedVarSizedValueRoundTrip(EngineMode::Compiler);
+}
+
+TEST(PagedVectorTest, OversizedVarSizedValueInterpreter)
+{
+    oversizedVarSizedValueRoundTrip(EngineMode::Interpreter);
+}
 
 RC_GTEST_PROP(PagedVectorPropertyTest, sortByRandomKeysCompiler, ())
 {
