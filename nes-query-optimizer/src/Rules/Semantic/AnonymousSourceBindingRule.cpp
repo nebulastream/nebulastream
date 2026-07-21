@@ -29,6 +29,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -86,6 +87,12 @@ LogicalPlan AnonymousSourceBindingRule::apply(const LogicalPlan& queryPlan) cons
 std::set<std::type_index> AnonymousSourceBindingRule::neededBy() const
 {
     return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterAnonymousSourceBindingPlanRule(PlanRuleRegistryArguments arguments)
+{
+    return AnonymousSourceBindingRule{arguments.sourceCatalog};
 }
 
 }

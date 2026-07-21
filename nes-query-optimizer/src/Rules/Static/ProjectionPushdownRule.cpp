@@ -52,6 +52,8 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
+#include <PlanRuleRegistry.hpp>
+
 namespace NES
 {
 namespace
@@ -499,5 +501,10 @@ std::set<std::type_index> ProjectionPushdownRule::neededBy() const
     return {typeid(FixedPlanStructureBarrier)};
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterProjectionPushdownPlanRule(PlanRuleRegistryArguments)
+{
+    return ProjectionPushdownRule{};
+}
 
 }

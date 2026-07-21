@@ -12,24 +12,26 @@
     limitations under the License.
 */
 
-#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#pragma once
 
+#ifndef INCLUDED_FROM_REGISTRY_PLAN_RULE
+#    error "This file should not be included directly! " \
+"Include instead include <PlanRuleRegistry.hpp>"
+#endif
 
-#include <Plans/LogicalPlan.hpp>
-#include <PlanRuleRegistry.hpp>
+namespace NES::PlanRuleGeneratedRegistrar
+{
+
+/// declaration of register functions for 'PlanRule'
+@REGISTER_FUNCTION_DECLARATIONS@
+}
 
 namespace NES
 {
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-LogicalPlan SemanticAnalysisBarrier::apply(LogicalPlan queryPlan) const
+template <>
+inline void Registrar<PlanRuleRegistry, std::string, PlanRuleRegistryReturnType, PlanRuleRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
-    return queryPlan;
-}
-
-/// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterSemanticAnalysisBarrierPlanRule(PlanRuleRegistryArguments)
-{
-    return SemanticAnalysisBarrier{};
+    using namespace PlanRuleGeneratedRegistrar;
+    @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

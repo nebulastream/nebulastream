@@ -23,11 +23,10 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
-#include <Rules/Static/DecideJoinTypesRule.hpp>
-#include <Rules/Static/RedundantUnionRemovalRule.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -54,4 +53,11 @@ LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOper
     tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
 }
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideMemoryLayoutPlanRule(PlanRuleRegistryArguments)
+{
+    return DecideMemoryLayoutRule{};
+}
+
 }
