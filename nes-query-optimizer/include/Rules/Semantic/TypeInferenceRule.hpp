@@ -40,6 +40,8 @@ public:
     /// 3. If a operator contains expression, we infer the result dataType of this operators.
     /// @throws TypeInferenceException if inferring the data types into the query failed
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+
+    [[nodiscard]] std::set<std::type_index> neededBy() const;
 };
 
 static_assert(RuleConcept<TypeInferenceRule, LogicalPlan>);

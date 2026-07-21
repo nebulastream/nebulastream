@@ -35,8 +35,8 @@ public:
     static constexpr std::string_view NAME = "CalcTargetOrderRule";
 
     [[nodiscard]] LogicalPlan apply(LogicalPlan plan) const;
-
     [[nodiscard]] std::set<std::type_index> needs() const;
+    [[nodiscard]] std::set<std::type_index> neededBy() const;
 };
 
 static_assert(RuleConcept<CalcTargetOrderRule, LogicalPlan>);

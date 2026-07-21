@@ -35,6 +35,7 @@
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Schema/Field.hpp>
 #include <ErrorHandling.hpp>
@@ -259,6 +260,12 @@ LogicalPlan WatermarkAssignerPushdownRule::apply(LogicalPlan queryPlan) const
     auto newRoot = watermarkAssignerPushdown(originalRoots.at(0), false, {});
     queryPlan = queryPlan.withRootOperators({newRoot});
     return queryPlan;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> WatermarkAssignerPushdownRule::needs() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

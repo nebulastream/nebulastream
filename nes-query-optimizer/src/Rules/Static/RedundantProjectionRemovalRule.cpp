@@ -29,8 +29,7 @@
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
-#include <Rules/Static/DecideFieldMappings.hpp>
-#include <Rules/Static/DecideFieldOrder.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Static/ProjectionPushdownRule.hpp>
 #include <Schema/Binder.hpp>
 #include <ErrorHandling.hpp>
@@ -48,6 +47,12 @@ std::set<std::type_index> RedundantProjectionRemovalRule::wants() const
 std::set<std::type_index> RedundantProjectionRemovalRule::neededBy() const
 {
     return {typeid(FixedPlanStructureBarrier)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> RedundantProjectionRemovalRule::needs() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
 }
 
 namespace

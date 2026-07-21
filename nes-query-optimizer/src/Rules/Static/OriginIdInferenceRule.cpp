@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Rules/Semantic/OriginIdInferenceRule.hpp>
+#include <Rules/Static/OriginIdInferenceRule.hpp>
 
 #include <algorithm>
 #include <iterator>
