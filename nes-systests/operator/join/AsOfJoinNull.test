@@ -1,0 +1,38 @@
+# name: join/AsOfJoinNull.test
+# description: ASOF joins preserve nullable fields for expressions after the join
+# groups: [Join, StreamTableJoin, NullHandling, FunctionCaseWhen]
+
+CREATE LOGICAL SOURCE rgb_frames(frame_id UINT64 NOT NULL, face UINT64, rgb_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rgb_frames TYPE File;
+ATTACH INLINE
+1,,15
+2,42,25
+
+CREATE LOGICAL SOURCE thermal_frames(thermal_id UINT64 NOT NULL, thermal_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR thermal_frames TYPE File;
+ATTACH INLINE
+10,10
+20,20
+
+CREATE SINK result(
+    frame_id UINT64 NOT NULL,
+    face UINT64,
+    selected_image VARSIZED NOT NULL,
+    thermal_id UINT64 NOT NULL
+) TYPE File;
+
+SELECT
+    frame_id,
+    face,
+    CASE
+        WHEN face IS NOT NULL THEN VARSIZED('thermal')
+        ELSE VARSIZED('rgb')
+    END AS selected_image,
+    thermal_id
+FROM (SELECT * FROM rgb_frames)
+ASOF JOIN (SELECT * FROM thermal_frames)
+TIME(rgb_ts, thermal_ts)
+INTO result;
+----
+1,NULL,rgb,10
+2,42,thermal,20

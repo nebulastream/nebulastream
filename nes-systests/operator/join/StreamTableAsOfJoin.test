@@ -63,3 +63,117 @@ INTO unkeyed_result;
 2 7 25 7 200 20
 3 8 25 7 200 20
 4 9 25 7 200 20
+
+
+CREATE LOGICAL SOURCE string_events(
+    event_id UINT64 NOT NULL,
+    event_key VARSIZED NOT NULL,
+    event_payload VARSIZED NOT NULL,
+    event_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR string_events TYPE File;
+ATTACH INLINE
+1,alpha,event-early,15
+2,alpha,event-late,25
+3,beta,event-beta,25
+4,gamma,event-unmatched,25
+
+CREATE LOGICAL SOURCE string_lookup(
+    lookup_key VARSIZED NOT NULL,
+    lookup_payload VARSIZED NOT NULL,
+    lookup_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR string_lookup TYPE File;
+ATTACH INLINE
+alpha,alpha-new,20
+beta,beta-future,30
+alpha,alpha-old,10
+beta,beta-old,5
+unused,unused-value,40
+
+CREATE SINK string_result(
+    event_id UINT64 NOT NULL,
+    event_key VARSIZED NOT NULL,
+    event_payload VARSIZED NOT NULL,
+    event_ts UINT64 NOT NULL,
+    lookup_key VARSIZED NOT NULL,
+    lookup_payload VARSIZED NOT NULL,
+    lookup_ts UINT64 NOT NULL
+) TYPE File;
+
+# VARSIZED keys participate in the predicate and both string payloads survive state storage.
+SELECT *
+FROM (SELECT * FROM string_events)
+ASOF JOIN TABLE (SELECT * FROM string_lookup) ON event_key = lookup_key
+TIME(event_ts, lookup_ts)
+INTO string_result;
+----
+1 alpha event-early 15 alpha alpha-old 10
+2 alpha event-late 25 alpha alpha-new 20
+3 beta event-beta 25 beta beta-old 5
+
+
+CREATE SINK unkeyed_string_result(
+    event_id UINT64 NOT NULL,
+    event_key VARSIZED NOT NULL,
+    event_payload VARSIZED NOT NULL,
+    event_ts UINT64 NOT NULL,
+    lookup_key VARSIZED NOT NULL,
+    lookup_payload VARSIZED NOT NULL,
+    lookup_ts UINT64 NOT NULL
+) TYPE File;
+
+# The stream-stream variant carries VARSIZED fields while selecting solely by time.
+SELECT *
+FROM (SELECT * FROM string_events)
+ASOF JOIN (SELECT * FROM string_lookup)
+TIME(event_ts, lookup_ts)
+INTO unkeyed_string_result;
+----
+1 alpha event-early 15 alpha alpha-old 10
+2 alpha event-late 25 alpha alpha-new 20
+3 beta event-beta 25 alpha alpha-new 20
+4 gamma event-unmatched 25 alpha alpha-new 20
+
+
+CREATE LOGICAL SOURCE rgb_frames(
+    rgb_id UINT64 NOT NULL,
+    rgb_image VARSIZED NOT NULL,
+    rgb_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR rgb_frames TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    1 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 0 1 1, RANDOMSTR 2097152 2097152, SEQUENCE UINT64 20 21 1' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE thermal_frames(
+    thermal_id UINT64 NOT NULL,
+    thermal_image VARSIZED NOT NULL,
+    thermal_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR thermal_frames TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    2 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 0 1 1, RANDOMSTR 2097152 2097152, SEQUENCE UINT64 10 11 1' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE SINK oversized_image_result(
+    rgb_id UINT64 NOT NULL,
+    rgb_size UINT64 NOT NULL,
+    thermal_id UINT64 NOT NULL,
+    thermal_size UINT64 NOT NULL
+) TYPE File;
+
+# Exercise the ASOF state with image-sized VARSIZED fields without embedding megabytes in this test file.
+SELECT
+    rgb_id,
+    OCTET_LENGTH(rgb_image) AS rgb_size,
+    thermal_id,
+    OCTET_LENGTH(thermal_image) AS thermal_size
+FROM (SELECT * FROM rgb_frames)
+ASOF JOIN (SELECT * FROM thermal_frames)
+TIME(rgb_ts, thermal_ts)
+INTO oversized_image_result;
+----
+0 2097152 0 2097152

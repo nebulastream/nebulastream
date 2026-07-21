@@ -77,6 +77,7 @@ const std::unordered_map<std::string_view, ImageManipFunction> functions = {
     {"IMAGE_MANIP_MONO8_TO_YUYV", {varSized, {varSized, uint64, uint64}}},
     {"IMAGE_MANIP_MONO16_TO_PNG16", {varSized, {varSized, uint64, uint64}}},
     {"IMAGE_MANIP_MONO16_TO_JPG", {varSized, {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_TO_YUYV", {varSized, {varSized, uint64, uint64}}},
     {"IMAGE_MANIP_YUYV_TO_JPG", {varSized, {varSized, uint64, uint64}}},
     {"IMAGE_MANIP_FACE_DETECTION", {nullableUint64, {varSized, uint64, uint64}}},
     {"IMAGE_MANIP_MONO16_MIN", {uint16, {varSized}}},
@@ -215,6 +216,7 @@ ImageManipFunction(IMAGE_MANIP_MONO16_TO_MONO8);
 ImageManipFunction(IMAGE_MANIP_YUYV_TO_JPG);
 ImageManipFunction(IMAGE_MANIP_MONO16_TO_PNG16);
 ImageManipFunction(IMAGE_MANIP_MONO16_TO_JPG);
+ImageManipFunction(IMAGE_MANIP_MONO16_TO_YUYV);
 ImageManipFunction(IMAGE_MANIP_MONO8_TO_YUYV);
 ImageManipFunction(IMAGE_MANIP_FACE_DETECTION);
 ImageManipFunction(IMAGE_MANIP_SERIALIZE);

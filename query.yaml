@@ -2,56 +2,98 @@ query:
   - name: video_stream
     query: |
       SELECT
-        TIMESTAMP / UINT64(1000000) as TIMESTAMP,
+        TIMESTAMP / UINT64(1000000) AS TIMESTAMP,
         WIDTH,
         HEIGHT,
         PIXEL_FORMAT,
         IMAGE
       FROM video
       INTO video_pipe_sink;
-  - name: rgb_jpg_stream
-    query: |
-      SELECT timestamp, width, height, pixel_format, to_base64(image_manip_yuyv_to_jpg(IMAGE, WIDTH, HEIGHT)) as image
-      FROM video_pipe
-      WHERE PIXEL_FORMAT = 34603058
-      INTO rgb_video_pipe_sink;
+  #  - name: rgb_jpg_stream
+  #    query: |
+  #      SELECT timestamp, width, height, pixel_format, to_base64(image_manip_yuyv_to_jpg(IMAGE, WIDTH, HEIGHT)) as image
+  #      FROM video_pipe
+  #      WHERE PIXEL_FORMAT = 34603058
+  #      INTO rgb_video_pipe_sink;
   - name: thermal_jpg_stream
     query: |
-      SELECT timestamp, width, height, pixel_format, to_base64(image_manip_mono16_to_jpg(IMAGE, WIDTH, HEIGHT)) as image
+      SELECT
+        timestamp AS "timestamp",
+        to_base64(
+          image_manip_mono16_to_jpg(IMAGE, WIDTH, HEIGHT)
+        ) AS "image"
       FROM video_pipe
       WHERE PIXEL_FORMAT = 17825799
-      INTO thermal_video_pipe_sink;
-  - name: rgb_jpg_stream_mqtt
-    query: |
-      SELECT timestamp as "timestamp", image as "image"
-      FROM rgb_video_pipe
-      INTO rgb_mqtt
-  - name: thermal_jpg_stream_mqtt
-    query: |
-      SELECT timestamp as "timestamp", image as "image"
-      FROM thermal_video_pipe
       INTO thermal_mqtt
-  - name: rgb_face_jpg_stream_mqtt
-    query: |
-      SELECT to_base64(image_manip_yuyv_to_jpg(image_manip_draw_rectangle(image, face), width, height)) as "image", timestamp as "timestamp"
-      FROM (
-        SELECT image, timestamp, height, width, image_manip_face_detection(image, width, height) as face
-        FROM video_pipe
-        WHERE PIXEL_FORMAT = 34603058
-      )
-      WHERE face IS NOT NULL
-      INTO rgb_face_mqtt
+  #  - name: rgb_jpg_stream_mqtt
+  #    query: |
+  #      SELECT timestamp as "timestamp", image as "image"
+  #      FROM rgb_video_pipe
+  #      INTO rgb_mqtt
+  #  - name: rgb_face_jpg_stream_mqtt
+  #    query: |
+  #      SELECT to_base64(image_manip_yuyv_to_jpg(image_manip_draw_rectangle(image, face), width, height)) as "image", timestamp as "timestamp"
+  #      FROM (
+  #        SELECT image, timestamp, height, width, image_manip_face_detection(image, width, height) as face
+  #        FROM video_pipe
+  #        WHERE PIXEL_FORMAT = 34603058
+  #      )
+  #      WHERE face IS NOT NULL
+  #      INTO rgb_face_mqtt
   - name: rgb_thermal_joined_jpg_stream_mqtt
+    # language=SQL
     query: |
-      SELECT to_base64(image_manip_yuyv_to_jpg(rgb_image, rgb_width, rgb_height)) as "rgb", to_base64(image_manip_mono16_to_jpg(thermal_image, thermal_width, thermal_height)) as "thermal", rgb_timestamp as "timestamp"
+      SELECT
+        CASE
+          WHEN face IS NOT NULL AND face > 0 THEN
+            to_base64(
+              image_manip_yuyv_to_jpg(
+                image_manip_draw_rectangle(
+                  image_manip_mono16_to_yuyv(
+                    thermal_image,
+                    thermal_width,
+                    thermal_height
+                  ),
+                  face
+                ),
+                thermal_width,
+                thermal_height
+              )
+            )
+          ELSE
+            to_base64(
+              image_manip_yuyv_to_jpg(
+                rgb_image,
+                rgb_width,
+                rgb_height
+              )
+            )
+        END AS "image",
+        rgb_timestamp AS "timestamp"
       FROM (
-        SELECT image as rgb_image, timestamp as rgb_timestamp, width as rgb_width, height as rgb_height
-        FROM rgb_video_pipe
+        SELECT
+          image AS rgb_image,
+          timestamp AS rgb_timestamp,
+          width AS rgb_width,
+          height AS rgb_height,
+          face
+        FROM (
+          SELECT
+            *,
+            image_manip_face_detection(image, width, height) AS face
+          FROM video_pipe
+          WHERE PIXEL_FORMAT = 34603058
+        )
       ) ASOF JOIN (
-        SELECT image as thermal_image, timestamp as thermal_timestamp, width as thermal_width, height as thermal_height
-        FROM rgb_video_pipe
+        SELECT
+          image AS thermal_image,
+          timestamp AS thermal_timestamp,
+          width AS thermal_width,
+          height AS thermal_height
+        FROM video_pipe
+        WHERE PIXEL_FORMAT = 17825799
       ) TIME(rgb_timestamp, thermal_timestamp)
-      INTO rgb_thermal_mqtt
+      INTO rgb_mqtt
 #  - name: audio_pipe
 #    query: |
 #      SELECT timestamp / 1000000 as timestamp, sample
