@@ -37,6 +37,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
@@ -134,5 +135,11 @@ LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperato
         tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
     }
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideJoinTypesPlanRule(PlanRuleRegistryArguments arguments)
+{
+    return DecideJoinTypesRule{arguments.defaultQueryOptimization.joinStrategy};
 }
 }

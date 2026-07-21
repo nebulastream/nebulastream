@@ -34,6 +34,7 @@
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -78,6 +79,12 @@ std::set<std::type_index> InferModelResolutionRule::needs() const
 std::set<std::type_index> InferModelResolutionRule::neededBy() const
 {
     return {typeid(TypeInferenceRule), typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterInferModelResolutionPlanRule(PlanRuleRegistryArguments arguments)
+{
+    return InferModelResolutionRule{arguments.modelCatalog};
 }
 
 }

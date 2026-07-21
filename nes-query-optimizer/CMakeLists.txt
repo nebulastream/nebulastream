@@ -47,4 +47,5 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-query-optimizer PUBLIC "-fPIC")
 endif ()
 
+create_registries_for_component(PlanRule)
 add_tests_if_enabled(tests)

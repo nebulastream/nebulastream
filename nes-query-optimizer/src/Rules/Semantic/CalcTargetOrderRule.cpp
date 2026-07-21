@@ -43,6 +43,7 @@
 #include <Util/Overloaded.hpp>
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -147,5 +148,11 @@ std::set<std::type_index> CalcTargetOrderRule::needs() const
 std::set<std::type_index> CalcTargetOrderRule::neededBy() const
 {
     return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterCalcTargetOrderPlanRule(PlanRuleRegistryArguments)
+{
+    return CalcTargetOrderRule{};
 }
 };
