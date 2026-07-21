@@ -46,6 +46,7 @@
 #include <Schema/Field.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRewriteUtils.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -410,6 +411,12 @@ std::set<std::type_index> PredicatePushdownRule::needs() const
 std::set<std::type_index> PredicatePushdownRule::neededBy() const
 {
     return {typeid(FixedPlanStructureBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterPredicatePushdownPlanRule(PlanRuleRegistryArguments)
+{
+    return PredicatePushdownRule{};
 }
 
 }

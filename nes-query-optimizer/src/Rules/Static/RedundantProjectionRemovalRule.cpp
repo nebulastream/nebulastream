@@ -33,6 +33,7 @@
 #include <Rules/Static/ProjectionPushdownRule.hpp>
 #include <Schema/Binder.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -95,6 +96,12 @@ LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
     queryPlan = queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front().withInferredSchema())});
     return queryPlan;
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterRedundantProjectionRemovalPlanRule(PlanRuleRegistryArguments)
+{
+    return RedundantProjectionRemovalRule{};
 }
 
 }

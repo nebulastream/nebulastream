@@ -40,6 +40,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -174,5 +175,11 @@ LogicalPlan DecideFieldOrder::apply(const LogicalPlan& queryPlan) const
 
     auto newRoot = rootSink.withChildren({rootChildWithTargetOrder}).withTraitSet(rootTraitSet);
     return queryPlan.withRootOperators({std::move(newRoot)});
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideFieldOrderPlanRule(PlanRuleRegistryArguments)
+{
+    return DecideFieldOrder{};
 }
 }

@@ -14,12 +14,9 @@
 
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 
-#include <set>
-#include <string_view>
-#include <typeindex>
-#include <typeinfo>
 
 #include <Plans/LogicalPlan.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -28,5 +25,11 @@ namespace NES
 LogicalPlan FixedPlanStructureBarrier::apply(LogicalPlan queryPlan) const
 {
     return queryPlan;
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterFixedPlanStructureBarrierPlanRule(PlanRuleRegistryArguments)
+{
+    return FixedPlanStructureBarrier{};
 }
 }

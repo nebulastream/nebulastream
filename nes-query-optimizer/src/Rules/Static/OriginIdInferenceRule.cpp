@@ -36,6 +36,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -95,5 +96,11 @@ LogicalPlan OriginIdInferenceRule::apply(const LogicalPlan& queryPlan) const
         newSinks.push_back(propagateOriginIds(sinkOperator, originIdCounter));
     }
     return queryPlan.withRootOperators(newSinks);
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterOriginIdInferencePlanRule(PlanRuleRegistryArguments)
+{
+    return OriginIdInferenceRule{};
 }
 }

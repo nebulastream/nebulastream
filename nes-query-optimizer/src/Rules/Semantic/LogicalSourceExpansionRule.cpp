@@ -32,6 +32,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -89,5 +90,11 @@ LogicalPlan LogicalSourceExpansionRule::apply(const LogicalPlan& queryPlan) cons
 std::set<std::type_index> LogicalSourceExpansionRule::neededBy() const
 {
     return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterLogicalSourceExpansionPlanRule(PlanRuleRegistryArguments arguments)
+{
+    return LogicalSourceExpansionRule{arguments.sourceCatalog};
 }
 }
