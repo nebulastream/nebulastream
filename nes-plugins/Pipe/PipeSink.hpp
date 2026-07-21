@@ -47,12 +47,12 @@ public:
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "PipeSink(pipe_name=" << pipeName << ")"; }
+    BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 
 private:
     std::string pipeName;
@@ -72,7 +72,7 @@ struct ConfigParametersPipeSink
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PIPE_NAME, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(PIPE_NAME);
+        = DescriptorConfig::createConfigParameterContainerMap(PIPE_NAME, SinkDescriptor::OUTPUT_ORDER);
 };
 
 }

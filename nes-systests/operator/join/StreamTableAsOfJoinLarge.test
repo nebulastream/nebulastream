@@ -1,0 +1,36 @@
+# name: join/StreamTableAsOfJoinLarge.test
+# description: 10k-row-per-side ASOF join checked through the checksum sink
+# groups: [Join, StreamTableJoin, LongRunning]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR events TYPE File;
+ATTACH FILE small/asof_events_10k.csv
+
+CREATE LOGICAL SOURCE lookup(
+    lookup_id UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL,
+    lookup_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR lookup TYPE File;
+ATTACH FILE small/asof_lookup_10k.csv
+
+CREATE SINK result(signature UINT64 NOT NULL) TYPE Checksum SET ('ENFORCE_ORDER' AS "SINK".OUTPUT_ORDER);
+
+# Verified with DuckDB 1.5.4:
+# SELECT e.event_id * 1000003::UBIGINT + l.lookup_value AS signature
+# FROM events e
+# ASOF JOIN lookup l
+# ON e.event_key = l.lookup_key AND e.event_ts >= l.lookup_ts
+SELECT event_id * UINT64(1000003) + lookup_value AS signature
+FROM (
+    SELECT *
+    FROM (SELECT * FROM events)
+    ASOF JOIN TABLE (SELECT * FROM lookup) ON event_key = lookup_key
+    TIME(event_ts, lookup_ts)
+)
+INTO result;
+----
+9952 5216834

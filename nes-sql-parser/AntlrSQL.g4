@@ -165,6 +165,7 @@ joinType
 streamTableJoinType
     : INNER?
     | LEFT? SEMI
+    | ASOF
     ;
 
 joinCriteria
@@ -472,6 +473,7 @@ AND: 'AND' | 'and';
 ANY: 'ANY';
 AS: 'AS' | 'as';
 ASC: 'ASC' | 'asc';
+ASOF: 'ASOF' | 'asof';
 AT: 'AT';
 BETWEEN: 'BETWEEN' | 'between';
 BY: 'BY' | 'by';

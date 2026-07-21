@@ -46,11 +46,11 @@ public:
     /// Opens file and writes schema to file, if the file is empty.
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
+    BufferResult executeBuffer(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
 
 private:
     bool isOpen;
@@ -72,7 +72,7 @@ struct ConfigParametersChecksum
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT, SinkDescriptor::OUTPUT_ORDER);
 };
 
 }

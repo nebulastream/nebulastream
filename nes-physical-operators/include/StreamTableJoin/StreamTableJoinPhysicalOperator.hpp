@@ -63,6 +63,7 @@ public:
     {
         INNER_JOIN,
         LEFT_SEMI_JOIN,
+        ASOF_JOIN,
         MARK_APPLY
     };
 
@@ -99,7 +100,8 @@ private:
         const nautilus::val<Timestamp>& streamTimestamp,
         nautilus::val<bool>& matched,
         nautilus::val<bool>& sawNull) const;
-    void releasePending(ExecutionContext& executionCtx, const nautilus::val<Timestamp>& tableWatermark, bool releaseAll) const;
+    void releasePending(
+        ExecutionContext& executionCtx, const nautilus::val<Timestamp>& tableWatermark, const nautilus::val<bool>& releaseAll) const;
 
     OperatorHandlerId operatorHandlerId;
     JoinType joinType;

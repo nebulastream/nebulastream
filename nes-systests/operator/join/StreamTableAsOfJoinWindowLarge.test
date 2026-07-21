@@ -1,0 +1,63 @@
+# name: join/StreamTableAsOfJoinWindowLarge.test
+# description: Filtered 10k-row ASOF join followed by a keyed tumbling aggregation
+# groups: [Join, StreamTableJoin, WindowOperators, Concurrency, LongRunning]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1024]
+
+CREATE LOGICAL SOURCE window_events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR window_events TYPE File;
+ATTACH FILE small/asof_events_10k.csv
+
+CREATE LOGICAL SOURCE window_lookup(
+    lookup_id UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL,
+    lookup_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR window_lookup TYPE File;
+ATTACH FILE small/asof_lookup_10k.csv
+
+CREATE SINK window_result(
+    window_start UINT64 NOT NULL,
+    window_end UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    match_count UINT64 NOT NULL,
+    lookup_value_sum UINT64 NOT NULL,
+    latest_lookup_ts UINT64 NOT NULL
+) TYPE Checksum SET ('ENFORCE_ORDER' AS "SINK".OUTPUT_ORDER);
+
+# DuckDB 1.5.4 oracle (the window expressions model NES's 10-second tumbling window):
+# WITH joined AS (
+#   SELECT e.*, l.*
+#   FROM (SELECT * FROM events WHERE event_id >= 250) e
+#   ASOF JOIN (SELECT * FROM lookup WHERE lookup_value < 129000) l
+#     ON e.event_key = l.lookup_key AND e.event_ts >= l.lookup_ts
+# ), filtered AS (
+#   SELECT * FROM joined WHERE event_key < 73 AND lookup_value >= 100900
+# )
+# SELECT event_ts // 10000 * 10000 AS start,
+#        event_ts // 10000 * 10000 + 10000 AS end,
+#        event_key, COUNT(*), SUM(lookup_value), MAX(lookup_ts)
+# FROM filtered GROUP BY 1, 2, 3;
+# DuckDB COPY produced 730 newline-terminated CSV rows; the repository checksum tool returned 1095949.
+SELECT start AS window_start,
+       "END" AS window_end,
+       event_key,
+       COUNT(*) AS match_count,
+       SUM(lookup_value) AS lookup_value_sum,
+       MAX(lookup_ts) AS latest_lookup_ts
+FROM (
+    SELECT *
+    FROM (SELECT * FROM window_events WHERE event_id >= UINT64(250))
+    ASOF JOIN TABLE (
+        SELECT * FROM window_lookup WHERE lookup_value < UINT64(129000)
+    ) ON event_key = lookup_key
+    TIME(event_ts, lookup_ts)
+)
+WHERE event_key < UINT64(73) AND lookup_value >= UINT64(100900)
+GROUP BY event_key
+WINDOW TUMBLING(event_ts, SIZE 10000 MS)
+INTO window_result;
+----
+730 1095949

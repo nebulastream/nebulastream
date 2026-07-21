@@ -1,0 +1,43 @@
+# name: join/StreamTableAsOfJoin.test
+# description: ASOF stream-table join selects the latest eligible matching table row
+# groups: [Join, StreamTableJoin]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR events TYPE File;
+ATTACH INLINE
+1,7,15
+2,7,25
+3,8,25
+4,9,25
+
+CREATE LOGICAL SOURCE lookup(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL, lookup_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lookup TYPE File;
+ATTACH INLINE
+7,200,20
+8,300,30
+7,100,10
+8,50,5
+99,999,40
+
+CREATE SINK result(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    event_ts UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL,
+    lookup_ts UINT64 NOT NULL
+) TYPE File;
+
+# The closest matching table row at or before each stream timestamp wins,
+# regardless of table insertion order. Future and non-matching rows are ignored.
+SELECT *
+FROM (SELECT * FROM events)
+ASOF JOIN TABLE (SELECT * FROM lookup) ON event_key = lookup_key
+TIME(event_ts, lookup_ts)
+INTO result;
+----
+1 7 15 7 100 10
+2 7 25 7 200 20
+3 8 25 8 50 5
