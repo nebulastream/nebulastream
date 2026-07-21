@@ -104,6 +104,13 @@ TEST_F(StatementBinderTest, BindQuery)
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
 }
 
+TEST_F(StatementBinderTest, EndRemainsAValidUnquotedIdentifier)
+{
+    EXPECT_NO_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("SELECT end AS \"timestamp_end\" FROM s1 INTO sink"));
+    EXPECT_NO_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(
+        "SELECT CASE WHEN s1key = UINT64(1) THEN s1key ELSE UINT64(0) END AS value FROM s1 INTO sink"));
+}
+
 TEST_F(StatementBinderTest, BindQueryWithNegativeTypedFloatLiteralInWherePredicate)
 {
     const std::string queryString = "SELECT a FROM inputStream WHERE b > FLOAT64(-0.5) AND b < FLOAT64(0.5) INTO outputStream";
