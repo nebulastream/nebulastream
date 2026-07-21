@@ -60,10 +60,12 @@ bool InvalidConfigSpecification::empty() const
 InvalidConfigSpecification InvalidConfigSpecification::combine(InvalidConfigSpecification lhs, InvalidConfigSpecification rhs)
 {
     return InvalidConfigSpecification{
-        .unresolvableFields = std::array{std::move(lhs.unresolvableFields), std::move(rhs.unresolvableFields)} | std::views::join | std::ranges::to<std::vector>(),
-        .failedInstantiations = std::array{std::move(lhs.failedInstantiations), std::move(rhs.failedInstantiations)} | std::views::join | std::ranges::to<std::vector>(),
-        .missingFields = std::array{std::move(lhs.missingFields), std::move(rhs.missingFields)} | std::views::join | std::ranges::to<std::vector>()
-    };
+        .unresolvableFields = std::array{std::move(lhs.unresolvableFields), std::move(rhs.unresolvableFields)} | std::views::join
+            | std::ranges::to<std::vector>(),
+        .failedInstantiations = std::array{std::move(lhs.failedInstantiations), std::move(rhs.failedInstantiations)} | std::views::join
+            | std::ranges::to<std::vector>(),
+        .missingFields
+        = std::array{std::move(lhs.missingFields), std::move(rhs.missingFields)} | std::views::join | std::ranges::to<std::vector>()};
 }
 
 Schema<LiteralConfigValue, Ordered>
@@ -80,8 +82,10 @@ addDefaultConfigValues(const Schema<LiteralConfigValue, Ordered>& config, const 
     return toAdd | std::ranges::to<Schema<LiteralConfigValue, Ordered>>();
 }
 
-std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification>
-resolveConfig(const Schema<LiteralConfigValue, Ordered>& passedConfig, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig)
+std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> resolveConfig(
+    const Schema<LiteralConfigValue, Ordered>& passedConfig,
+    const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig,
+    const Schema<ConfigFieldDefault, Ordered>& configDefaults)
 {
     InvalidConfigSpecification errors;
     std::vector<ConfigValue> resolvedConfig;
@@ -117,9 +121,21 @@ resolveConfig(const Schema<LiteralConfigValue, Ordered>& passedConfig, const Sch
         {
             continue;
         }
-        if (declaredField.hasDefault())
+        else if (declaredField.hasDefault())
         {
             resolvedConfig.emplace_back(declaredField.getFullyQualifiedName(), declaredField.getDefault());
+        }
+        else if (const auto defaultConfigValue = configDefaults.getFieldByName(declaredField.getFullyQualifiedName());
+                 defaultConfigValue.has_value())
+        {
+            auto defaultLiteral = defaultConfigValue->get();
+            auto defaultValue = declaredField.apply(std::move(defaultLiteral));
+            PRECONDITION(
+                defaultValue.has_value(),
+                "Additional default value {} for field {} could not be validated",
+                std::visit([](const auto& literal) { return fmt::format("{}", literal); }, defaultLiteral),
+                declaredField.getFullyQualifiedName());
+            resolvedConfig.emplace_back(declaredField.getFullyQualifiedName(), std::move(defaultValue).value().getValue());
         }
         else
         {
@@ -168,7 +184,8 @@ applyConfigTransformations(Schema<ConfigValue, Ordered> config, const Schema<Con
 std::expected<Schema<ConfigValue, Ordered>, InvalidConfigSpecification>
 toExpected(std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> result)
 {
-    if (std::get<InvalidConfigSpecification>(result).empty()) {
+    if (std::get<InvalidConfigSpecification>(result).empty())
+    {
         return std::get<Schema<ConfigValue, Ordered>>(std::move(result));
     }
     return std::unexpected(std::get<InvalidConfigSpecification>(std::move(result)));

@@ -50,8 +50,8 @@ InputFormatterFactoryFn makeInputFormatterFactory()
 {
     return [](const InputFormatterDescriptor& descriptor, std::shared_ptr<TupleBufferRef> memoryProvider)
     {
-        const auto& config = std::any_cast<const ConfigStruct&>(descriptor.getConfig());
-        auto indexer = IndexerImpl::create(config, *memoryProvider);
+        auto config = descriptor.getConfig().getAs<ConfigStruct>();
+        auto indexer = IndexerImpl::create(std::move(config), *memoryProvider);
         return std::make_unique<InputFormatter>(std::move(indexer), std::move(memoryProvider));
     };
 }

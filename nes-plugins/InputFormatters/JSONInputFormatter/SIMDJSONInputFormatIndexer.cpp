@@ -98,7 +98,7 @@ Schema<QualifiedErasedConfigField, Ordered> SIMDJSONInputFormatIndexer::getConfi
     return createConfigSchema(Identifier::parse("JSON_INPUT_FORMATTER"), TUPLE_DELIMITER_FIELD);
 }
 
-SIMDJSONInputFormatterConfig SIMDJSONInputFormatterConfig::fromConfig(const InstantiatedConfig& config)
+std::expected<SIMDJSONInputFormatterConfig, Exception> SIMDJSONInputFormatterConfig::fromConfig(const InstantiatedConfig& config)
 {
     return SIMDJSONInputFormatterConfig{.tupleDelimiter = config.get(TUPLE_DELIMITER_FIELD)};
 }

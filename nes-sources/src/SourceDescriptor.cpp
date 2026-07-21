@@ -85,7 +85,7 @@ std::optional<size_t> SourceDescriptor::getMaxInflightBuffers() const
     return maxInflightBuffers;
 }
 
-const std::any& SourceDescriptor::getPluginData() const
+const ExplicitAny& SourceDescriptor::getPluginData() const
 {
     return pluginSourceConfig.getPluginData();
 }
@@ -152,7 +152,7 @@ PluginSourceConfiguration Unreflector<PluginSourceConfiguration>::operator()(con
         throw CannotDeserialize("Unknown source type {}", type);
     }
 
-    return PluginSourceConfiguration{std::move(type), entry->unreflect(configData, context)};
+    return PluginSourceConfiguration{std::move(type), ExplicitAny{entry->unreflect(configData, context)}};
 }
 
 Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const

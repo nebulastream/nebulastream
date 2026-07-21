@@ -50,7 +50,7 @@ struct InvalidConfigSpecification
     friend std::ostream& operator<<(std::ostream& os, const InvalidConfigSpecification&);
 };
 
-[[nodiscard]] Schema<LiteralConfigValue, Ordered> addDefaultConfigValues(const Schema<LiteralConfigValue, Ordered>& config, const Schema<ConfigFieldDefault, Ordered>& configDefaults);
+// [[nodiscard]] Schema<LiteralConfigValue, Ordered> addDefaultConfigValues(const Schema<LiteralConfigValue, Ordered>& config, const Schema<ConfigFieldDefault, Ordered>& configDefaults);
 
 [[nodiscard]] std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> applyConfigTransformations(Schema<ConfigValue, Ordered> config, const Schema<ConfigFieldTransformation, Unordered>& configTransformations);
 /// Resolve the passed literal config values against a declared config schema:
@@ -59,7 +59,7 @@ struct InvalidConfigSpecification
 /// Each field sees exactly the literal the frontend produced — lowering it into the field's type
 /// (e.g. int64_t -> uint32_t) is the factory's job, see downcastConfigValue.
 [[nodiscard]] std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification>
-resolveConfig(const Schema<LiteralConfigValue, Ordered>& passedConfig, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig);
+resolveConfig(const Schema<LiteralConfigValue, Ordered>& passedConfig, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig, const Schema<ConfigFieldDefault, Ordered>& configDefaults = {});
 
 std::expected<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> toExpected(std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> result);
 }

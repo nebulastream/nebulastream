@@ -38,7 +38,7 @@ class InputFormatterDescriptor final
     static constexpr std::string_view TYPE_STRING{"TYPE"};
 
 public:
-    explicit InputFormatterDescriptor(Identifier inputFormatterType, std::any config);
+    explicit InputFormatterDescriptor(Identifier inputFormatterType, ExplicitAny config);
     ~InputFormatterDescriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatterDescriptor& inputFormatterDescriptor);
@@ -54,7 +54,7 @@ public:
 
     [[nodiscard]] const Identifier& getInputFormatterType() const;
 
-    [[nodiscard]] const std::any& getConfig() const;
+    [[nodiscard]] const ExplicitAny& getConfig() const;
 
     static inline auto TYPE_FIELD = ConfigField<Identifier>{
         std::string{TYPE_STRING},
@@ -70,7 +70,7 @@ private:
     friend struct Reflector<InputFormatterDescriptor>;
 
     Identifier inputFormatterType;
-    std::any config;
+    ExplicitAny config;
 };
 
 template <>

@@ -260,14 +260,14 @@ public:
             getOperatorByType<SourceDescriptorLogicalOperator>(this->optimizedPlan->getGlobalPlan()),
             [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
-                if (logicalSourceOperator->getSourceDescriptor().getPluginData().has_value()
-                    && logicalSourceOperator->getSourceDescriptor().getPluginData().type() == typeid(FileSourceConfig))
+                if (logicalSourceOperator->getSourceDescriptor().getPluginData().getValue().has_value()
+                    && logicalSourceOperator->getSourceDescriptor().getPluginData().getValue().type() == typeid(FileSourceConfig))
                 {
                     if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());
                         entry.empty())
                     {
                         const auto& path
-                            = std::any_cast<const FileSourceConfig&>(logicalSourceOperator->getSourceDescriptor().getPluginData()).filePath;
+                            = std::any_cast<const FileSourceConfig&>(logicalSourceOperator->getSourceDescriptor().getPluginData().getValue()).filePath;
                         sourceNamesToFilepathAndCountForQuery.emplace(
                             logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{path}, 1));
                     }

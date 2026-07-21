@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <boost/core/demangle.hpp>
 
 namespace NES
 {
@@ -34,5 +35,15 @@ public:
     }
 
     [[nodiscard]] const std::any& getValue() const { return value; }
+
+    template <typename T>
+    [[nodiscard]] T getAs() const {
+            PRECONDITION(
+                typeid(T) == value.type(),
+                "Stored config type {} does not match requested type {}",
+                boost::core::demangle(value.type().name()),
+                boost::core::demangle(typeid(T).name()));
+        return std::any_cast<T>(value);
+    }
 };
 }

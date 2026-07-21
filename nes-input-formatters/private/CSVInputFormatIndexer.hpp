@@ -41,7 +41,7 @@ struct CSVInputFormatterConfig
     char tupleDelimiter;
     char fieldDelimiter;
 
-    static CSVInputFormatterConfig fromConfig(const InstantiatedConfig& config);
+    static std::expected<CSVInputFormatterConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 class CSVInputFormatIndexer : public InputFormatIndexer

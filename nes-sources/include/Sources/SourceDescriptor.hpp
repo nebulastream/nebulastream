@@ -47,12 +47,12 @@ class OperatorSerializationUtil;
 class PluginSourceConfiguration
 {
 public:
-    PluginSourceConfiguration(Identifier type, std::any pluginData) : type(type), pluginData(std::move(pluginData)) {}
+    PluginSourceConfiguration(Identifier type, ExplicitAny pluginData) : type(type), pluginData(std::move(pluginData)) {}
     [[nodiscard]] const Identifier& getType() const { return type; }
-    [[nodiscard]] const std::any& getPluginData() const { return pluginData; }
+    [[nodiscard]] const ExplicitAny& getPluginData() const { return pluginData; }
 private:
     Identifier type;
-    std::any pluginData;
+    ExplicitAny pluginData;
 };
 
 class SourceDescriptor final
@@ -88,7 +88,7 @@ public:
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
     /// The source-defined config struct (e.g. GeneratorSourceConfig), type-erased. Produced by the
     /// source's SourceConfigRegistry entry, so the source factory can safely any_cast it back.
-    [[nodiscard]] const std::any& getPluginData() const;
+    [[nodiscard]] const ExplicitAny& getPluginData() const;
 
     [[nodiscard]] const std::optional<Identifier>& getLogicalSourceName() const;
 
@@ -144,15 +144,14 @@ public:
         std::nullopt};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const ConfigField<std::optional<Host>> HOST{
+    static inline const ConfigField<Host> HOST{
         "HOST",
         [](const ConfigLiteral& literal) -> std::expected<Host, Exception>
         {
             return tryGetOr<std::string>(literal, expectedType<std::string>())
                 .transform([](std::string&& value) { return Host{std::move(value)}; });
-        },
+        }};
         /// Optional: attached workers pass the host out of band (e.g. as a catalog argument).
-        std::nullopt};
 
     static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST, SCHEMA);
 };

@@ -14,10 +14,13 @@
 
 #pragma once
 #include <any>
+#include <ostream>
 #include <utility>
 #include <vector>
 #include <Schema/Schema.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <boost/core/demangle.hpp>
+#include <ErrorHandling.hpp>
 #include "Identifiers/QualifiedIdentifier.hpp"
 
 #include "ConfigField.hpp"
@@ -44,18 +47,15 @@ public:
     template <typename T>
     [[nodiscard]] T getValue() const
     {
-        PRECONDITION(
-            typeid(T) == value.type(),
-            "Stored config type {} does not match requested type {}",
-            boost::core::demangle(value.type().name()),
-            boost::core::demangle(typeid(T).name()));
+        const auto expectedTypeName = boost::core::demangle(typeid(T).name());
+        const auto actualTypeName = boost::core::demangle(value.type().name());
+        PRECONDITION(typeid(T) == value.type(), "Stored config type {} does not match requested type {}", actualTypeName, expectedTypeName);
         return std::any_cast<T>(value);
     }
 
     [[nodiscard]] const std::any& getRawValue() const { return value; }
 
     friend std::ostream& operator<<(std::ostream& os, const ConfigValue& value) { return os << value.getFullyQualifiedName(); }
-
 };
 
 class InstantiatedConfig

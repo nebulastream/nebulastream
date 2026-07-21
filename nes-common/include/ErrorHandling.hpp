@@ -198,10 +198,7 @@ template <typename T>
 T unwrapOrAbort(std::expected<T, Exception> expected)
 {
     PRECONDITION(expected.has_value(), "{}", expected.error().what());
-    if (expected.has_value())
-    {
-        return std::move(expected).value();
-    }
+    return std::move(expected).value();
 }
 
 template <typename T, typename E>

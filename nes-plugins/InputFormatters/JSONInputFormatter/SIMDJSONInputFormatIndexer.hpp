@@ -48,7 +48,7 @@ struct SIMDJSONInputFormatterConfig
 {
     char tupleDelimiter;
 
-    static SIMDJSONInputFormatterConfig fromConfig(const InstantiatedConfig& config);
+    static std::expected<SIMDJSONInputFormatterConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 class SIMDJSONInputFormatIndexer final : public InputFormatIndexer

@@ -107,8 +107,7 @@ std::expected<
     Exception>
 SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& values) const
 {
-    auto withDefaults = addDefaultConfigValues(values, configDefaults);
-    auto [resolvedConfig, resolvationErrors] = resolveConfig(std::move(withDefaults), configSchema);
+    auto [resolvedConfig, resolvationErrors] = resolveConfig(values, configSchema, configDefaults);
     auto [transformedConfig, transformationErrors] = applyConfigTransformations(resolvedConfig, configTransformations);
     auto combinedErrors = InvalidConfigSpecification::combine(std::move(resolvationErrors), std::move(transformationErrors));
     if (not combinedErrors.empty())
@@ -129,9 +128,18 @@ SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& va
         return std::unexpected{UnknownInputFormatterType(
             "The input formatter type '{}' is not registered. If it is a plugin, make sure you activated it.", inputFormatterType)};
     }
+    auto instantiatedPluginConfig = sourceRegistryEntry->instantiate(config);
+    if (!instantiatedPluginConfig.has_value())
+    {
+        return std::unexpected{instantiatedPluginConfig.error()};
+    }
+    auto pluginSourceConfig = PluginSourceConfiguration{this->sourceType, std::move(instantiatedPluginConfig).value()};
 
-    auto pluginSourceConfig = PluginSourceConfiguration{this->sourceType, sourceRegistryEntry->instantiate(config)};
-    auto formatDescriptor = InputFormatterDescriptor{this->inputFormatterType, inputFormatterRegistryEntry->instantiate(config)};
+    auto instantiatedInputFormatterConfig = inputFormatterRegistryEntry->instantiate(config);
+    if (!instantiatedInputFormatterConfig.has_value()) {
+        return std::unexpected{instantiatedInputFormatterConfig.error()};
+    }
+    auto formatDescriptor = InputFormatterDescriptor{this->inputFormatterType, std::move(instantiatedInputFormatterConfig).value()};
 
     auto schema = config.get(SourceDescriptor::SCHEMA);
     auto hostOpt = config.get(SourceDescriptor::HOST);
@@ -139,7 +147,7 @@ SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& va
     auto maxFlightInBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
 
     return std::make_tuple(
-        GeneralSourceConfig{*hostOpt, maxFlightInBuffers}, std::move(pluginSourceConfig), std::move(formatDescriptor), std::move(schema));
+        GeneralSourceConfig{hostOpt, maxFlightInBuffers}, std::move(pluginSourceConfig), std::move(formatDescriptor), std::move(schema));
 }
 
 SourceCatalog::SourceCatalog(Private)

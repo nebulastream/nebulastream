@@ -34,11 +34,11 @@ namespace NES
 struct InputFormatterConfigEntry
 {
     /// Build the formatter-defined config struct from a resolved generic config.
-    std::function<std::any(const InstantiatedConfig&)> instantiate;
+    std::function<std::expected<ExplicitAny, Exception>(const InstantiatedConfig&)> instantiate;
     /// Serialize the type-erased config struct (safe to any_cast: only instantiate/unreflect produce it).
-    std::function<Reflected(const std::any&)> reflect;
+    std::function<Reflected(const ExplicitAny&)> reflect;
     /// Deserialize back into the type-erased config struct.
-    std::function<std::any(const Reflected&, const ReflectionContext&)> unreflect;
+    std::function<ExplicitAny(const Reflected&, const ReflectionContext&)> unreflect;
 };
 
 class InputFormatterConfigRegistry
@@ -53,9 +53,10 @@ template <typename ConfigStruct>
 InputFormatterConfigEntry makeInputFormatterConfigEntry()
 {
     return InputFormatterConfigEntry{
-        .instantiate = [](const InstantiatedConfig& config) { return std::any{ConfigStruct::fromConfig(config)}; },
-        .reflect = [](const std::any& config) { return reflect(std::any_cast<const ConfigStruct&>(config)); },
-        .unreflect = [](const Reflected& data, const ReflectionContext& context) { return std::any{context.unreflect<ConfigStruct>(data)}; },
+        .instantiate = [](const InstantiatedConfig& config)
+        { return ConfigStruct::fromConfig(config).transform([](const ConfigStruct& instance) { return ExplicitAny{std::any{instance}}; }); },
+        .reflect = [](const ExplicitAny& config) { return reflect(config.getAs<const ConfigStruct&>()); },
+        .unreflect = [](const Reflected& data, const ReflectionContext& context) { return ExplicitAny{std::any{context.unreflect<ConfigStruct>(data)}}; },
     };
 }
 

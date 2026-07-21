@@ -187,7 +187,7 @@ Schema<QualifiedErasedConfigField, Ordered> CSVInputFormatIndexer::getConfigSche
     return createConfigSchema(Identifier::parse("CSV_INPUT_FORMATTER"), ALLOW_COMMAS_IN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
 }
 
-CSVInputFormatterConfig CSVInputFormatterConfig::fromConfig(const InstantiatedConfig& config)
+std::expected<CSVInputFormatterConfig, Exception> CSVInputFormatterConfig::fromConfig(const InstantiatedConfig& config)
 {
     return CSVInputFormatterConfig{
         .allowCommasInStrings = config.get(ALLOW_COMMAS_IN_STRINGS),

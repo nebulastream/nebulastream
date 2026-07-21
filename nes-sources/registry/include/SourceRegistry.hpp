@@ -44,14 +44,14 @@ SourceFactoryFn makeSourceFactory()
 {
     return [](const SourceDescriptor& descriptor) -> std::unique_ptr<Source>
     {
-        const auto& config = std::any_cast<const ConfigStruct&>(descriptor.getPluginData());
+        auto config = descriptor.getPluginData().getAs<ConfigStruct>();
         if constexpr (std::constructible_from<SourceImpl, const ConfigStruct&, const SourceDescriptor&>)
         {
-            return std::make_unique<SourceImpl>(config, descriptor);
+            return std::make_unique<SourceImpl>(std::move(config), descriptor);
         }
         else
         {
-            return std::make_unique<SourceImpl>(config);
+            return std::make_unique<SourceImpl>(std::move(config));
         }
     };
 }

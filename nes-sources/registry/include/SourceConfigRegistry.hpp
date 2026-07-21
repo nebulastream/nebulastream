@@ -36,9 +36,9 @@ struct SourceConfigEntry
     /// Build the source-defined config struct from a resolved generic config.
     std::function<std::expected<ExplicitAny, Exception>(const InstantiatedConfig&)> instantiate;
     /// Serialize the type-erased config struct (safe to any_cast: only instantiate/unreflect produce it).
-    std::function<Reflected(const std::any&)> reflect;
+    std::function<Reflected(const ExplicitAny&)> reflect;
     /// Deserialize back into the type-erased config struct.
-    std::function<std::any(const Reflected&, const ReflectionContext&)> unreflect;
+    std::function<ExplicitAny(const Reflected&, const ReflectionContext&)> unreflect;
 };
 
 class SourceConfigRegistry : public RuntimeRegistry<SourceConfigRegistry, std::string, SourceConfigEntry, /*CaseSensitive*/ false>
@@ -52,11 +52,18 @@ template <typename ConfigStruct>
 SourceConfigEntry makeSourceConfigEntry()
 {
     return SourceConfigEntry{
-        .instantiate = [](const InstantiatedConfig& config)
-        { return ConfigStruct::fromConfig(config).transform([](const ConfigStruct& instance) { return ExplicitAny{std::any{instance}}; }); },
-        .reflect = [](const std::any& config) { return reflect(std::any_cast<const ConfigStruct&>(config)); },
+        .instantiate =
+            [](const InstantiatedConfig& config)
+        {
+            return ConfigStruct::fromConfig(config).transform([](const ConfigStruct& instance) { return ExplicitAny{std::any{instance}}; });
+        },
+        .reflect =
+            [](const ExplicitAny& config)
+        {
+            return reflect(config.getAs<ConfigStruct>());
+        },
         .unreflect
-        = [](const Reflected& data, const ReflectionContext& context) { return std::any{context.unreflect<ConfigStruct>(data)}; },
+        = [](const Reflected& data, const ReflectionContext& context) { return ExplicitAny{std::any{context.unreflect<ConfigStruct>(data)}}; },
     };
 }
 

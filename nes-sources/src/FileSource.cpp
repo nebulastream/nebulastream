@@ -109,7 +109,7 @@ std::ostream& FileSource::toString(std::ostream& str) const
 
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    auto config = std::any_cast<FileSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData());
+    auto config = std::any_cast<FileSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData().getValue());
     if (!config.filePath.string().ends_with(".systest.csv"))
     {
         throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
@@ -125,7 +125,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
         testFile.flush();
 
         auto copy = systestAdaptorArguments.physicalSourceConfig;
-        copy.pluginSourceConfig = PluginSourceConfiguration{copy.pluginSourceConfig.getType(), config};
+        copy.pluginSourceConfig = PluginSourceConfiguration{copy.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
         return copy;
     }
     throw TestException("Could not open source file \"{}\"", config.filePath);
@@ -133,7 +133,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
 
 FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    auto config = std::any_cast<FileSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData());
+    auto config = std::any_cast<FileSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData().getValue());
     if (!config.filePath.string().ends_with(".systest.csv"))
     {
         throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
@@ -141,7 +141,7 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(File
     config.filePath = systestAdaptorArguments.testFilePath;
 
     auto argCopy = systestAdaptorArguments.physicalSourceConfig;
-    argCopy.pluginSourceConfig = PluginSourceConfiguration{argCopy.pluginSourceConfig.getType(), config};
+    argCopy.pluginSourceConfig = PluginSourceConfiguration{argCopy.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
 
     return argCopy;
 }

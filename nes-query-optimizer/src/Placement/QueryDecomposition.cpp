@@ -108,9 +108,9 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
             static_cast<int64_t>(context.config.receiverQueueSize.getValue()));
     }
     const auto sourceConfig = Schema<LiteralConfigValue, Ordered>{std::move(sourceConfigValues)};
-    auto networkSourceConfig = NetworkSourceConfig::fromConfig(
-        InstantiatedConfig{unwrapOrAbort(toExpected(resolveConfig(sourceConfig, NetworkSource::getConfigSchema())))});
-    auto inputFormatterConfig = InputFormatterDescriptor{Identifier::parse("NATIVE"), std::monostate{}};
+    auto networkSourceConfig = unwrapOrAbort(NetworkSourceConfig::fromConfig(
+        InstantiatedConfig{unwrapOrAbort(toExpected(resolveConfig(sourceConfig, NetworkSource::getConfigSchema())))}));
+    auto inputFormatterConfig = InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}};
 
     auto sinkConfig = std::unordered_map<Identifier, std::string>{
         {Identifier::parse("channel"), channel.id.getRawValue()},
@@ -141,7 +141,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
     const auto networkSourceDescriptorExp = PhysicalSourceBuilder{
         GeneralSourceConfig{.host = Host(channel.downstreamNode.getRawValue()), .maxInflightBuffers = std::nullopt},
-        PluginSourceConfiguration{Identifier::parse("Network"), std::move(networkSourceConfig)},
+        PluginSourceConfiguration{Identifier::parse("Network"), ExplicitAny{std::any{std::move(networkSourceConfig)}}},
         std::move(inputFormatterConfig),
         context.sourceCatalog}.build(orderedUpstreamSchema);
 

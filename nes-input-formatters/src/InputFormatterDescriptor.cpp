@@ -44,12 +44,12 @@ const Identifier& InputFormatterDescriptor::getInputFormatterType() const
     return inputFormatterType;
 }
 
-const std::any& InputFormatterDescriptor::getConfig() const
+const ExplicitAny& InputFormatterDescriptor::getConfig() const
 {
     return config;
 }
 
-InputFormatterDescriptor::InputFormatterDescriptor(Identifier inputFormatterType, std::any config)
+InputFormatterDescriptor::InputFormatterDescriptor(Identifier inputFormatterType, ExplicitAny config)
     : inputFormatterType(std::move(inputFormatterType)), config(std::move(config))
 {
 }
@@ -61,12 +61,8 @@ std::ostream& operator<<(std::ostream& out, const InputFormatterDescriptor& inpu
 
 Reflected Reflector<InputFormatterDescriptor>::operator()(const InputFormatterDescriptor& inputFormatterDescriptor) const
 {
-    /// Formats without a config (NATIVE) have no registry entry and serialize an empty config.
-    if (not inputFormatterDescriptor.config.has_value())
-    {
-        return reflect(
-            detail::ReflectedInputFormatterDescriptor{
-                .inputFormatterType = inputFormatterDescriptor.inputFormatterType, .config = Reflected{}});
+    if (inputFormatterDescriptor.getInputFormatterType() == Identifier::parse("NATIVE")) {
+        return reflect(detail::ReflectedInputFormatterDescriptor{.inputFormatterType = inputFormatterDescriptor.inputFormatterType, .config = Reflected{}});
     }
 
     const auto* configEntry = InputFormatterConfigRegistry::instance().find(inputFormatterDescriptor.inputFormatterType.asCanonicalString());
@@ -87,7 +83,7 @@ InputFormatterDescriptor Unreflector<InputFormatterDescriptor>::operator()(const
 
     if (reflectedInputFormatterDescriptor.config.isEmpty())
     {
-        return InputFormatterDescriptor{std::move(reflectedInputFormatterDescriptor.inputFormatterType), std::any{}};
+        return InputFormatterDescriptor{std::move(reflectedInputFormatterDescriptor.inputFormatterType), ExplicitAny{std::any{}}};
     }
 
     const auto* configEntry = InputFormatterConfigRegistry::instance().find(reflectedInputFormatterDescriptor.inputFormatterType.asCanonicalString());
@@ -100,7 +96,7 @@ InputFormatterDescriptor Unreflector<InputFormatterDescriptor>::operator()(const
 
     return InputFormatterDescriptor{
         std::move(reflectedInputFormatterDescriptor.inputFormatterType),
-        configEntry->unreflect(reflectedInputFormatterDescriptor.config, context)};
+        ExplicitAny{configEntry->unreflect(reflectedInputFormatterDescriptor.config, context)}};
 }
 
 }

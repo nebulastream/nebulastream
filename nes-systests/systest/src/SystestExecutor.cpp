@@ -183,7 +183,7 @@ Schema<ConfigFieldDefault, Ordered> makeDefaultConfigFields(const SystestConfigu
             }
 
             return ConfigFieldDefault{
-                "FILE_SOURCE.PATH", [=] { return createUniqueFile(fmt::format("{}/input", sourceDir), ".systest.csv").second; }};
+                "FILE_SOURCE.FILE_PATH", [=] { return createUniqueFile(fmt::format("{}/input", sourceDir), ".systest.csv").second; }};
         }(),
         ConfigFieldDefault{"TCP_SOURCE.SOCKET_HOST", [] { return std::monostate{}; }},
         ConfigFieldDefault{"TCP_SOURCE.SOCKET_PORT", [] { return std::monostate{}; }},
@@ -193,13 +193,13 @@ Schema<ConfigFieldDefault, Ordered> makeDefaultConfigFields(const SystestConfigu
 
 Schema<ConfigFieldTransformation, Unordered> makeConfigTransformations(const SystestConfiguration& config)
 {
-    return Schema<ConfigFieldTransformation, Unordered>{ConfigFieldTransformation::create<std::string>(
+    return Schema<ConfigFieldTransformation, Unordered>{ConfigFieldTransformation::create<std::filesystem::path>(
         QualifiedIdentifier::parse("FILE_SOURCE.PATH"),
-        [testDataDir = config.testDataDir](const std::string& filePath)
+        [testDataDir = config.testDataDir](const std::filesystem::path& filePath)
         {
-            if (!filePath.starts_with("/"))
+            if (!filePath.string().starts_with("/"))
             {
-                return (std::filesystem::path{testDataDir.getValue()} / filePath).string();
+                return std::filesystem::path{testDataDir.getValue()} / filePath;
             }
             return filePath;
         })};

@@ -506,7 +506,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
 
     systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig
-        = PluginSourceConfiguration{systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getType(), std::any{config}};
+        = PluginSourceConfiguration{systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
 
     return systestAdaptorArguments.physicalSourceConfig;
 }
@@ -528,7 +528,7 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
     systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig
-        = PluginSourceConfiguration{systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getType(), std::any{config}};
+        = PluginSourceConfiguration{systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
 
     return systestAdaptorArguments.physicalSourceConfig;
 }
