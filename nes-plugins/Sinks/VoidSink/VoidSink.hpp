@@ -44,6 +44,7 @@ public:
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "VoidSink"; }
+
     BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 };
 

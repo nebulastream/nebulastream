@@ -65,15 +65,13 @@ void Sink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext
             processOrdered(
                 sequencer,
                 inputTupleBuffer,
-                [this, &pipelineExecutionContext](const TupleBuffer& buffer)
-                { return executeBuffer(buffer, pipelineExecutionContext); });
+                [this, &pipelineExecutionContext](const TupleBuffer& buffer) { return executeBuffer(buffer, pipelineExecutionContext); });
             return;
         case OutputOrderPolicy::DROP_OUT_OF_ORDER:
             processOrdered(
                 dropOutOfOrderSequencer,
                 inputTupleBuffer,
-                [this, &pipelineExecutionContext](const TupleBuffer& buffer)
-                { return executeBuffer(buffer, pipelineExecutionContext); });
+                [this, &pipelineExecutionContext](const TupleBuffer& buffer) { return executeBuffer(buffer, pipelineExecutionContext); });
             return;
     }
 }

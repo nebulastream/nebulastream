@@ -624,9 +624,12 @@ void AntlrSQLQueryPlanCreator::exitBooleanLiteral(AntlrSQLParser::BooleanLiteral
         throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
     }
 
-    const auto value = bindBooleanLiteral(context) ? "true" : "false";
-    helpers.top().functionBuilder.emplace_back(
-        ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), value));
+    if (!isInsideDataTypeConstructorArgument(context))
+    {
+        const auto value = bindBooleanLiteral(context) ? "true" : "false";
+        helpers.top().functionBuilder.emplace_back(
+            ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), value));
+    }
     AntlrSQLBaseListener::exitBooleanLiteral(context);
 }
 
@@ -1007,6 +1010,12 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 
 void AntlrSQLQueryPlanCreator::exitRowConstructor(AntlrSQLParser::RowConstructorContext* context)
 {
+    if (helpers.top().isGroupBy)
+    {
+        AntlrSQLBaseListener::exitRowConstructor(context);
+        return;
+    }
+
     auto* parent = dynamic_cast<antlr4::ParserRuleContext*>(context->parent);
     while (parent != nullptr && dynamic_cast<AntlrSQLParser::BoolComparisonContext*>(parent) == nullptr)
     {
@@ -1148,11 +1157,7 @@ void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* con
 
 void AntlrSQLQueryPlanCreator::exitStreamTableJoinType(AntlrSQLParser::StreamTableJoinTypeContext* context)
 {
-    if (context->ASOF() != nullptr)
-    {
-        helpers.top().streamTableJoinType = StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN;
-    }
-    else if (context->SEMI() != nullptr)
+    if (context->SEMI() != nullptr)
     {
         helpers.top().streamTableJoinType = StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN;
     }
@@ -1177,12 +1182,35 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     const auto rightQueryPlan = helpers.top().queryPlans[1];
     helpers.top().queryPlans.clear();
 
+    auto windowTypeOpt = helpers.top().windowType;
+    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+    if (context->ASOF() != nullptr)
+    {
+        if (helpers.top().joinKeyRelationHelper.size() > 1)
+        {
+            throw InvalidQuerySyntax("ASOF join requires at most one join function at {}", context->getText());
+        }
+        if (!currentWindowTimestampOpt.has_value()
+            || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+        {
+            throw InvalidQuerySyntax("ASOF JOIN requires TIME(left_timestamp, right_timestamp)");
+        }
+
+        const auto joinFunction = helpers.top().joinKeyRelationHelper.empty()
+            ? LogicalFunction{ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), "true")}
+            : helpers.top().joinKeyRelationHelper.at(0);
+        AsOfJoinTimeCharacteristics timeCharacteristics{
+            std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value())};
+        helpers.top().queryPlans.push_back(LogicalPlanBuilder::addAsOfJoin(
+            leftQueryPlan, rightQueryPlan, joinFunction, std::move(timeCharacteristics), context->TABLE() != nullptr));
+        AntlrSQLBaseListener::exitJoinRelation(context);
+        return;
+    }
+
     if (helpers.top().joinKeyRelationHelper.size() != 1)
     {
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
-    auto windowTypeOpt = helpers.top().windowType;
-    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
     if (context->TABLE() != nullptr)
     {
         std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics;
@@ -1195,11 +1223,6 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
             const auto characteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
             timeCharacteristics.emplace(characteristics);
         }
-        if (helpers.top().streamTableJoinType == StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN && !timeCharacteristics.has_value())
-        {
-            throw InvalidQuerySyntax("ASOF JOIN TABLE requires TIME(stream_timestamp, table_timestamp)");
-        }
-
         const auto queryPlan = LogicalPlanBuilder::addStreamTableJoin(
             leftQueryPlan,
             rightQueryPlan,

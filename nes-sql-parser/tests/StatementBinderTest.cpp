@@ -29,6 +29,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/AsOfJoinLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
@@ -1016,9 +1017,15 @@ TEST_F(StatementBinderTest, StreamTableAsOfJoinRequiresTimeCharacteristics)
     const auto timedQuery
         = "SELECT * FROM (SELECT * FROM s1) ASOF JOIN TABLE (SELECT * FROM s2) ON s1key = s2key TIME(s1key, s2key) INTO sink";
     const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(timedQuery);
-    const auto joins = getOperatorByType<StreamTableJoinLogicalOperator>(plan);
+    const auto joins = getOperatorByType<AsOfJoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
-    EXPECT_EQ(StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN, joins.front()->getJoinType());
+    EXPECT_TRUE(joins.front()->isRightTable());
+
+    const auto streamQuery = "SELECT * FROM (SELECT * FROM s1) ASOF JOIN (SELECT * FROM s2) TIME(s1key, s2key) INTO sink";
+    const auto streamPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(streamQuery);
+    const auto streamJoins = getOperatorByType<AsOfJoinLogicalOperator>(streamPlan);
+    ASSERT_EQ(1, streamJoins.size());
+    EXPECT_FALSE(streamJoins.front()->isRightTable());
 
     const auto untimedQuery = "SELECT * FROM (SELECT * FROM s1) ASOF JOIN TABLE (SELECT * FROM s2) ON s1key = s2key INTO sink";
     EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(untimedQuery), Exception);

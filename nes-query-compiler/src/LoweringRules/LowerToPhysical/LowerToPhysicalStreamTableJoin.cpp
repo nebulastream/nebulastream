@@ -110,8 +110,6 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
                 return StreamTableJoinPhysicalOperator::JoinType::INNER_JOIN;
             case StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN:
                 return StreamTableJoinPhysicalOperator::JoinType::LEFT_SEMI_JOIN;
-            case StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN:
-                return StreamTableJoinPhysicalOperator::JoinType::ASOF_JOIN;
         }
         std::unreachable();
     }();

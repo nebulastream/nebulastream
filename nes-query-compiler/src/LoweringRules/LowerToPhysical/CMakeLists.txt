@@ -12,6 +12,7 @@
 
 add_plugin(NLJoin LoweringRule LowerToPhysicalNLJoin.cpp)
 add_plugin(HashJoin LoweringRule LowerToPhysicalHashJoin.cpp)
+add_plugin(AsOfJoin LoweringRule LowerToPhysicalAsOfJoin.cpp)
 add_plugin(StreamTableJoin LoweringRule LowerToPhysicalStreamTableJoin.cpp)
 add_plugin(MarkApply LoweringRule LowerToPhysicalMarkApply.cpp)
 add_plugin(InternalFieldCleanup LoweringRule LowerToPhysicalInternalFieldCleanup.cpp)

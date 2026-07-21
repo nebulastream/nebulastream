@@ -83,6 +83,9 @@ std::ostream& MQTTSink::toString(std::ostream& os) const
     return os;
 }
 
+/// apparently, MQTT connect requires synchronization, with concurrent connects (multiple mqtt sinks).
+static std::mutex MQTTConnectLock;
+
 void MQTTSink::start(PipelineExecutionContext&)
 {
     NES_INFO("Opening MQTTSink at {} using clientId: {}.", serverURI, clientId);
@@ -91,7 +94,11 @@ void MQTTSink::start(PipelineExecutionContext&)
     {
         mqtt::connect_options connectOptions;
         connectOptions.set_max_inflight(maxOutstandingMessages);
-        auto connectToken = client->connect(std::move(connectOptions));
+        auto connectToken = [&]()
+        {
+            std::scoped_lock lock(MQTTConnectLock);
+            return client->connect(std::move(connectOptions));
+        }();
         connectToken->wait();
         const auto connectResponse = connectToken->get_connect_response();
         NES_INFO("Connected to MQTT broker: {}. Version: {}", connectResponse.get_server_uri(), connectResponse.get_mqtt_version());

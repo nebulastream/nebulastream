@@ -38,10 +38,7 @@ void VoidSink::start(PipelineExecutionContext&)
     NES_DEBUG("Setting up void sink: {}", *this);
 }
 
-void VoidSink::stop(PipelineExecutionContext&)
-{
-    NES_INFO("Void Sink completed.")
-}
+void VoidSink::stop(PipelineExecutionContext&){NES_INFO("Void Sink completed.")}
 
 Sink::BufferResult VoidSink::executeBuffer([[maybe_unused]] const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {

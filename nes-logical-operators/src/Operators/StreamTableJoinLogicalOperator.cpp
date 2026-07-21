@@ -47,8 +47,6 @@ std::string_view joinTypeName(const StreamTableJoinLogicalOperator::JoinType joi
             return "INNER";
         case StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN:
             return "LEFT_SEMI";
-        case StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN:
-            return "ASOF";
     }
     std::unreachable();
 }

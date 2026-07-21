@@ -15,11 +15,11 @@
 #pragma once
 
 #include <ostream>
+#include <Sequencing/Sequencer.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <fmt/ostream.h>
 #include <BackpressureChannel.hpp>
 #include <ExecutablePipelineStage.hpp>
-#include <Sequencing/Sequencer.hpp>
-#include <Sinks/SinkDescriptor.hpp>
 
 namespace NES
 {

@@ -12,14 +12,12 @@
     limitations under the License.
 */
 
-#include <StreamTableJoin/StreamTableJoinPhysicalOperator.hpp>
+#include <AsOfJoin/AsOfJoinPhysicalOperator.hpp>
 
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <utility>
 
-#include <DataTypes/VarVal.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -30,6 +28,8 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/select.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
 
@@ -48,7 +48,7 @@ void unlockHandler(OperatorHandler* handler)
     dynamic_cast<StreamTableJoinOperatorHandler&>(*handler).unlock();
 }
 
-TupleBuffer* getTableBuffer(OperatorHandler* handler, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
+TupleBuffer* getRightBuffer(OperatorHandler* handler, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
 {
     return dynamic_cast<StreamTableJoinOperatorHandler&>(*handler).getOrCreateTableBuffer(bufferProvider, tupleSize);
 }
@@ -62,21 +62,20 @@ TupleBuffer* beginPendingCompaction(OperatorHandler* handler, AbstractBufferProv
 {
     return dynamic_cast<StreamTableJoinOperatorHandler&>(*handler).beginPendingCompaction(bufferProvider, tupleSize);
 }
-
 }
 
-StreamTableJoinInputPhysicalOperator::StreamTableJoinInputPhysicalOperator(
+AsOfJoinInputPhysicalOperator::AsOfJoinInputPhysicalOperator(
     const OperatorHandlerId operatorHandlerId, std::vector<OriginId> inputOriginIds)
     : operatorHandlerId(operatorHandlerId), inputOriginIds(std::move(inputOriginIds))
 {
 }
 
-void StreamTableJoinInputPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
+void AsOfJoinInputPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
     executeChild(executionCtx, record);
 }
 
-void StreamTableJoinInputPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void AsOfJoinInputPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(lockHandler, handler);
@@ -90,7 +89,7 @@ void StreamTableJoinInputPhysicalOperator::close(ExecutionContext& executionCtx,
     closeChild(executionCtx, recordBuffer);
 }
 
-void StreamTableJoinInputPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+void AsOfJoinInputPhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     for (const auto originId : inputOriginIds)
@@ -116,69 +115,63 @@ void StreamTableJoinInputPhysicalOperator::terminate(ExecutionContext& execution
     terminateChild(executionCtx);
 }
 
-std::optional<PhysicalOperator> StreamTableJoinInputPhysicalOperator::getChild() const
+std::optional<PhysicalOperator> AsOfJoinInputPhysicalOperator::getChild() const
 {
     return child;
 }
 
-void StreamTableJoinInputPhysicalOperator::setChild(PhysicalOperator newChild)
+void AsOfJoinInputPhysicalOperator::setChild(PhysicalOperator newChild)
 {
     child = std::move(newChild);
 }
 
-StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(
+AsOfJoinPhysicalOperator::AsOfJoinPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
-    const JoinType joinType,
     PhysicalFunction joinFunction,
-    std::shared_ptr<TupleBufferRef> streamInputBufferRef,
-    std::shared_ptr<TupleBufferRef> tableInputBufferRef,
-    std::shared_ptr<PagedVectorTupleLayout> streamTupleLayout,
-    std::shared_ptr<PagedVectorTupleLayout> tableTupleLayout,
+    std::shared_ptr<TupleBufferRef> leftInputBufferRef,
+    std::shared_ptr<TupleBufferRef> rightInputBufferRef,
+    std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
+    std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
     const OriginId outputOriginId,
-    std::optional<Record::RecordFieldIdentifier> markField,
-    std::unique_ptr<TimeFunction> streamTimeFunction,
-    std::unique_ptr<TimeFunction> tableTimeFunction)
+    std::unique_ptr<TimeFunction> leftTimeFunction,
+    std::unique_ptr<TimeFunction> rightTimeFunction)
     : operatorHandlerId(operatorHandlerId)
-    , joinType(joinType)
     , joinFunction(std::move(joinFunction))
-    , streamInputBufferRef(std::move(streamInputBufferRef))
-    , tableInputBufferRef(std::move(tableInputBufferRef))
-    , streamTupleLayout(std::move(streamTupleLayout))
-    , tableTupleLayout(std::move(tableTupleLayout))
-    , streamInputFields(this->streamInputBufferRef->getAllFieldNames())
-    , tableInputFields(this->tableInputBufferRef->getAllFieldNames())
-    , streamFields(getOrderedFieldNames(this->streamTupleLayout->getSchema()))
-    , tableFields(getOrderedFieldNames(this->tableTupleLayout->getSchema()))
+    , leftInputBufferRef(std::move(leftInputBufferRef))
+    , rightInputBufferRef(std::move(rightInputBufferRef))
+    , leftTupleLayout(std::move(leftTupleLayout))
+    , rightTupleLayout(std::move(rightTupleLayout))
+    , leftInputFields(this->leftInputBufferRef->getAllFieldNames())
+    , rightInputFields(this->rightInputBufferRef->getAllFieldNames())
+    , leftFields(getOrderedFieldNames(this->leftTupleLayout->getSchema()))
+    , rightFields(getOrderedFieldNames(this->rightTupleLayout->getSchema()))
     , outputOriginId(outputOriginId)
-    , markField(std::move(markField))
-    , streamTimeFunction(std::move(streamTimeFunction))
-    , tableTimeFunction(std::move(tableTimeFunction))
+    , leftTimeFunction(std::move(leftTimeFunction))
+    , rightTimeFunction(std::move(rightTimeFunction))
 {
-    PRECONDITION(this->markField.has_value() == (joinType == JoinType::MARK_APPLY), "Only mark apply requires a mark field");
+    PRECONDITION(this->leftTimeFunction && this->rightTimeFunction, "ASOF join requires left and right time functions");
 }
 
-StreamTableJoinPhysicalOperator::StreamTableJoinPhysicalOperator(const StreamTableJoinPhysicalOperator& other)
+AsOfJoinPhysicalOperator::AsOfJoinPhysicalOperator(const AsOfJoinPhysicalOperator& other)
     : PhysicalOperatorConcept(other.id)
     , operatorHandlerId(other.operatorHandlerId)
-    , joinType(other.joinType)
     , joinFunction(other.joinFunction)
-    , streamInputBufferRef(other.streamInputBufferRef)
-    , tableInputBufferRef(other.tableInputBufferRef)
-    , streamTupleLayout(other.streamTupleLayout)
-    , tableTupleLayout(other.tableTupleLayout)
-    , streamInputFields(other.streamInputFields)
-    , tableInputFields(other.tableInputFields)
-    , streamFields(other.streamFields)
-    , tableFields(other.tableFields)
+    , leftInputBufferRef(other.leftInputBufferRef)
+    , rightInputBufferRef(other.rightInputBufferRef)
+    , leftTupleLayout(other.leftTupleLayout)
+    , rightTupleLayout(other.rightTupleLayout)
+    , leftInputFields(other.leftInputFields)
+    , rightInputFields(other.rightInputFields)
+    , leftFields(other.leftFields)
+    , rightFields(other.rightFields)
     , outputOriginId(other.outputOriginId)
-    , markField(other.markField)
-    , streamTimeFunction(other.streamTimeFunction ? other.streamTimeFunction->clone() : nullptr)
-    , tableTimeFunction(other.tableTimeFunction ? other.tableTimeFunction->clone() : nullptr)
+    , leftTimeFunction(other.leftTimeFunction->clone())
+    , rightTimeFunction(other.rightTimeFunction->clone())
     , child(other.child)
 {
 }
 
-void StreamTableJoinPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void AsOfJoinPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.originId = recordBuffer.getOriginId();
@@ -188,18 +181,15 @@ void StreamTableJoinPhysicalOperator::open(ExecutionContext& executionCtx, Recor
     executionCtx.lastChunk = recordBuffer.isLastChunk();
 
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    const auto isTable = invoke(
+    const auto isRight = invoke(
         +[](OperatorHandler* ptr, const OriginId originId)
         { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableOrigin(originId); },
         handler,
         executionCtx.originId);
 
-    if (isTable)
+    if (isRight)
     {
-        if (tableTimeFunction)
-        {
-            tableTimeFunction->open(executionCtx, recordBuffer);
-        }
+        rightTimeFunction->open(executionCtx, recordBuffer);
         executionCtx.watermarkTs = invoke(
             +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getOutputWatermark(); }, handler);
         executionCtx.originId = outputOriginId;
@@ -211,16 +201,13 @@ void StreamTableJoinPhysicalOperator::open(ExecutionContext& executionCtx, Recor
         const auto numberOfRecords = recordBuffer.getNumRecords();
         for (nautilus::val<uint64_t> index = 0_u64; index < numberOfRecords; index = index + 1_u64)
         {
-            auto record = tableInputBufferRef->readRecord(tableInputFields, recordBuffer, index);
-            processTableRecord(executionCtx, record);
+            auto record = rightInputBufferRef->readRecord(rightInputFields, recordBuffer, index);
+            processRightRecord(executionCtx, record);
         }
     }
     else
     {
-        if (streamTimeFunction)
-        {
-            streamTimeFunction->open(executionCtx, recordBuffer);
-        }
+        leftTimeFunction->open(executionCtx, recordBuffer);
         invoke(lockHandler, handler);
         executionCtx.watermarkTs = invoke(
             +[](OperatorHandler* ptr,
@@ -249,40 +236,39 @@ void StreamTableJoinPhysicalOperator::open(ExecutionContext& executionCtx, Recor
         const auto numberOfRecords = recordBuffer.getNumRecords();
         for (nautilus::val<uint64_t> index = 0_u64; index < numberOfRecords; index = index + 1_u64)
         {
-            auto record = streamInputBufferRef->readRecord(streamInputFields, recordBuffer, index);
-            processStreamRecord(executionCtx, record);
+            auto record = leftInputBufferRef->readRecord(leftInputFields, recordBuffer, index);
+            processLeftRecord(executionCtx, record);
         }
     }
 }
 
-void StreamTableJoinPhysicalOperator::processTableRecord(ExecutionContext& executionCtx, Record& record) const
+void AsOfJoinPhysicalOperator::processRightRecord(ExecutionContext& executionCtx, Record& record) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(lockHandler, handler);
     const auto buffer = invoke(
-        getTableBuffer,
+        getRightBuffer,
         handler,
         executionCtx.pipelineMemoryProvider.bufferProvider,
-        nautilus::val<uint64_t>{tableTupleLayout->getSchema().getSizeInBytes()});
-    PagedVectorRef tableState{BorrowedNautilusBuffer::from(buffer), tableTupleLayout};
-    tableState.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+        nautilus::val<uint64_t>{rightTupleLayout->getSchema().getSizeInBytes()});
+    PagedVectorRef rightState{BorrowedNautilusBuffer::from(buffer), rightTupleLayout};
+    rightState.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
     invoke(unlockHandler, handler);
 }
 
-void StreamTableJoinPhysicalOperator::processStreamRecord(ExecutionContext& executionCtx, Record& record) const
+void AsOfJoinPhysicalOperator::processLeftRecord(ExecutionContext& executionCtx, Record& record) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(lockHandler, handler);
 
-    const nautilus::val<Timestamp> streamTimestamp = streamTimeFunction ? streamTimeFunction->getTs(executionCtx, record)
-                                                                        : nautilus::val<Timestamp>{Timestamp{Timestamp::INVALID_VALUE}};
-    const auto tableComplete
+    const auto leftTimestamp = leftTimeFunction->getTs(executionCtx, record);
+    const auto rightComplete
         = invoke(+[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableComplete(); }, handler);
-    const auto tableWatermark
+    const auto rightWatermark
         = invoke(+[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableWatermark(); }, handler);
-    if (tableComplete || (streamTimeFunction && tableWatermark > streamTimestamp))
+    if (rightComplete || rightWatermark > leftTimestamp)
     {
-        probeStreamRecord(executionCtx, record, streamTimestamp);
+        probeLeftRecord(executionCtx, record, leftTimestamp);
     }
     else
     {
@@ -290,124 +276,103 @@ void StreamTableJoinPhysicalOperator::processStreamRecord(ExecutionContext& exec
             getPendingBuffer,
             handler,
             executionCtx.pipelineMemoryProvider.bufferProvider,
-            nautilus::val<uint64_t>{streamTupleLayout->getSchema().getSizeInBytes()});
-        PagedVectorRef pendingState{BorrowedNautilusBuffer::from(buffer), streamTupleLayout};
+            nautilus::val<uint64_t>{leftTupleLayout->getSchema().getSizeInBytes()});
+        PagedVectorRef pendingState{BorrowedNautilusBuffer::from(buffer), leftTupleLayout};
         pendingState.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
         invoke(
             +[](OperatorHandler* ptr, const uint64_t timestamp)
             { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).appendPendingTimestamp(timestamp); },
             handler,
-            streamTimestamp.convertToValue());
+            leftTimestamp.convertToValue());
     }
     invoke(unlockHandler, handler);
 }
 
-void StreamTableJoinPhysicalOperator::probeStreamRecord(
-    ExecutionContext& executionCtx, const Record& streamRecord, const nautilus::val<Timestamp>& streamTimestamp) const
+void AsOfJoinPhysicalOperator::probeLeftRecord(
+    ExecutionContext& executionCtx, const Record& leftRecord, const nautilus::val<Timestamp>& leftTimestamp) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     const auto buffer = invoke(
-        getTableBuffer,
+        getRightBuffer,
         handler,
         executionCtx.pipelineMemoryProvider.bufferProvider,
-        nautilus::val<uint64_t>{tableTupleLayout->getSchema().getSizeInBytes()});
-    const PagedVectorRef tableState{BorrowedNautilusBuffer::from(buffer), tableTupleLayout};
-
-    const auto numberOfTableRows = tableState.getNumberOfRecords();
-    nautilus::val<bool> matched = false;
-    nautilus::val<bool> sawNull = false;
-    for (nautilus::val<uint64_t> tableIndex = 0; tableIndex < numberOfTableRows; tableIndex = tableIndex + 1_u64)
-    {
-        auto tableRecord = tableState.at(tableIndex);
-        if (joinType == JoinType::INNER_JOIN)
-        {
-            emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, matched, sawNull);
-        }
-        else if (!matched)
-        {
-            emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, matched, sawNull);
-        }
-    }
-
-    if (joinType == JoinType::MARK_APPLY)
-    {
-        PRECONDITION(markField.has_value(), "Mark join is missing its output field");
-        Record outputRecord;
-        for (const auto& field : nautilus::static_iterable(streamFields))
-        {
-            outputRecord.write(field, streamRecord.read(field));
-        }
-        outputRecord.write(markField.value(), VarVal{matched, true, !matched && sawNull});
-        executeChild(executionCtx, outputRecord);
-    }
-}
-
-void StreamTableJoinPhysicalOperator::emitJoinedRecord(
-    ExecutionContext& executionCtx,
-    const Record& streamRecord,
-    Record& tableRecord,
-    const nautilus::val<Timestamp>& streamTimestamp,
-    nautilus::val<bool>& matched,
-    nautilus::val<bool>& sawNull) const
-{
-    if (tableTimeFunction && tableTimeFunction->getTs(executionCtx, tableRecord) > streamTimestamp)
+        nautilus::val<uint64_t>{rightTupleLayout->getSchema().getSizeInBytes()});
+    const PagedVectorRef rightState{BorrowedNautilusBuffer::from(buffer), rightTupleLayout};
+    const auto numberOfRightRows = rightState.getNumberOfRecords();
+    if (numberOfRightRows == 0_u64)
     {
         return;
     }
 
-    Record joinedRecord;
-    for (const auto& field : nautilus::static_iterable(streamFields))
+    nautilus::val<uint64_t*> selectionState = static_cast<nautilus::val<uint64_t*>>(
+        executionCtx.pipelineMemoryProvider.arena.allocateMemory(nautilus::val<size_t>{2 * sizeof(uint64_t)}));
+    nautilus::val<uint64_t*> bestRightTimestamp = selectionState;
+    nautilus::val<uint64_t*> bestRightIndex = selectionState + 1_u64;
+    *bestRightTimestamp = 0_u64;
+    *bestRightIndex = nautilus::val<uint64_t>{UINT64_MAX};
+    const auto leftTimestampValue = leftTimestamp.convertToValue();
+
+    // ponytail: linear predecessor scan; replace with a timestamp index when long-running ASOF state becomes a measured bottleneck.
+    for (nautilus::val<uint64_t> rightIndex = 0; rightIndex < numberOfRightRows; rightIndex = rightIndex + 1_u64)
     {
-        joinedRecord.write(field, streamRecord.read(field));
-    }
-    for (const auto& field : nautilus::static_iterable(tableFields))
-    {
-        joinedRecord.write(field, tableRecord.read(field));
+        auto rightRecord = rightState.at(rightIndex);
+        const auto rightTimestampValue = rightTimeFunction->getTs(executionCtx, rightRecord).convertToValue();
+        Record joinedRecord;
+        for (const auto& field : nautilus::static_iterable(leftFields))
+        {
+            joinedRecord.write(field, leftRecord.read(field));
+        }
+        for (const auto& field : nautilus::static_iterable(rightFields))
+        {
+            joinedRecord.write(field, rightRecord.read(field));
+        }
+        const auto joinResult = joinFunction.execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena);
+        const auto qualifies
+            = rightTimestampValue <= leftTimestampValue && !joinResult.isNull() && joinResult.getRawValueAs<nautilus::val<bool>>();
+        const nautilus::val<uint64_t> currentBestTimestamp = *bestRightTimestamp;
+        const nautilus::val<uint64_t> currentBestIndex = *bestRightIndex;
+        const auto betterMatch
+            = qualifies && (currentBestIndex == nautilus::val<uint64_t>{UINT64_MAX} || rightTimestampValue > currentBestTimestamp);
+        *bestRightTimestamp = nautilus::select(betterMatch, rightTimestampValue, currentBestTimestamp);
+        *bestRightIndex = nautilus::select(betterMatch, rightIndex, currentBestIndex);
     }
 
-    const auto joinResult = joinFunction.execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena);
-    if (joinType == JoinType::MARK_APPLY)
+    const nautilus::val<uint64_t> selectedRightIndex = *bestRightIndex;
+    if (selectedRightIndex == nautilus::val<uint64_t>{UINT64_MAX})
     {
-        sawNull = sawNull || joinResult.isNull();
-        matched = matched || (!joinResult.isNull() && joinResult.getRawValueAs<nautilus::val<bool>>());
+        return;
     }
-    else if (joinResult)
+    const auto bestRightRecord = rightState.at(selectedRightIndex);
+    Record joinedRecord;
+    for (const auto& field : nautilus::static_iterable(leftFields))
     {
-        if (joinType == JoinType::LEFT_SEMI_JOIN)
-        {
-            Record streamOutputRecord;
-            for (const auto& field : nautilus::static_iterable(streamFields))
-            {
-                streamOutputRecord.write(field, streamRecord.read(field));
-            }
-            executeChild(executionCtx, streamOutputRecord);
-            matched = true;
-        }
-        else
-        {
-            executeChild(executionCtx, joinedRecord);
-        }
+        joinedRecord.write(field, leftRecord.read(field));
     }
+    for (const auto& field : nautilus::static_iterable(rightFields))
+    {
+        joinedRecord.write(field, bestRightRecord.read(field));
+    }
+    executeChild(executionCtx, joinedRecord);
 }
 
-void StreamTableJoinPhysicalOperator::releasePending(
-    ExecutionContext& executionCtx, const nautilus::val<Timestamp>& tableWatermark, const nautilus::val<bool>& releaseAll) const
+void AsOfJoinPhysicalOperator::releasePending(
+    ExecutionContext& executionCtx, const nautilus::val<Timestamp>& rightWatermark, const nautilus::val<bool>& releaseAll) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     const auto buffer = invoke(
         getPendingBuffer,
         handler,
         executionCtx.pipelineMemoryProvider.bufferProvider,
-        nautilus::val<uint64_t>{streamTupleLayout->getSchema().getSizeInBytes()});
-    const PagedVectorRef pendingState{BorrowedNautilusBuffer::from(buffer), streamTupleLayout};
+        nautilus::val<uint64_t>{leftTupleLayout->getSchema().getSizeInBytes()});
+    const PagedVectorRef pendingState{BorrowedNautilusBuffer::from(buffer), leftTupleLayout};
     const auto numberOfPending = invoke(
         +[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getNumberOfPendingRows(); }, handler);
     const auto compactedBuffer = invoke(
         beginPendingCompaction,
         handler,
         executionCtx.pipelineMemoryProvider.bufferProvider,
-        nautilus::val<uint64_t>{streamTupleLayout->getSchema().getSizeInBytes()});
-    PagedVectorRef compactedPendingState{BorrowedNautilusBuffer::from(compactedBuffer), streamTupleLayout};
+        nautilus::val<uint64_t>{leftTupleLayout->getSchema().getSizeInBytes()});
+    PagedVectorRef compactedPendingState{BorrowedNautilusBuffer::from(compactedBuffer), leftTupleLayout};
 
     for (nautilus::val<uint64_t> index = 0; index < numberOfPending; ++index)
     {
@@ -417,14 +382,14 @@ void StreamTableJoinPhysicalOperator::releasePending(
             handler,
             index);
         const nautilus::val<Timestamp> timestamp{timestampRaw};
-        const auto streamRecord = pendingState.at(index);
-        if (releaseAll || tableWatermark > timestamp)
+        const auto leftRecord = pendingState.at(index);
+        if (releaseAll || rightWatermark > timestamp)
         {
-            probeStreamRecord(executionCtx, streamRecord, timestamp);
+            probeLeftRecord(executionCtx, leftRecord, timestamp);
         }
         else
         {
-            compactedPendingState.pushBack(streamRecord, executionCtx.pipelineMemoryProvider.bufferProvider);
+            compactedPendingState.pushBack(leftRecord, executionCtx.pipelineMemoryProvider.bufferProvider);
             invoke(
                 +[](OperatorHandler* ptr, const uint64_t pendingTimestamp)
                 { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).appendCompactedPendingTimestamp(pendingTimestamp); },
@@ -435,19 +400,19 @@ void StreamTableJoinPhysicalOperator::releasePending(
     invoke(+[](OperatorHandler* ptr) { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).finishPendingCompaction(); }, handler);
 }
 
-void StreamTableJoinPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void AsOfJoinPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    const auto isTable = invoke(
+    const auto isRight = invoke(
         +[](OperatorHandler* ptr, const OriginId originId)
         { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableOrigin(originId); },
         handler,
         recordBuffer.getOriginId());
 
-    if (isTable)
+    if (isRight)
     {
         invoke(lockHandler, handler);
-        const auto tableWatermark = invoke(
+        const auto rightWatermark = invoke(
             +[](OperatorHandler* ptr,
                 const Timestamp watermark,
                 const SequenceNumber sequenceNumber,
@@ -464,7 +429,7 @@ void StreamTableJoinPhysicalOperator::close(ExecutionContext& executionCtx, Reco
             recordBuffer.getChunkNumber(),
             recordBuffer.isLastChunk(),
             recordBuffer.getOriginId());
-        const auto tableComplete
+        const auto rightComplete
             = invoke(+[](OperatorHandler* ptr) { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).isTableComplete(); }, handler);
         executionCtx.watermarkTs = invoke(
             +[](OperatorHandler* ptr,
@@ -483,10 +448,7 @@ void StreamTableJoinPhysicalOperator::close(ExecutionContext& executionCtx, Reco
             recordBuffer.getChunkNumber(),
             recordBuffer.isLastChunk(),
             recordBuffer.getOriginId());
-        if (tableComplete || tableTimeFunction)
-        {
-            releasePending(executionCtx, tableWatermark, tableComplete);
-        }
+        releasePending(executionCtx, rightWatermark, rightComplete);
     }
     else
     {
@@ -496,12 +458,12 @@ void StreamTableJoinPhysicalOperator::close(ExecutionContext& executionCtx, Reco
     closeChild(executionCtx, recordBuffer);
 }
 
-std::optional<PhysicalOperator> StreamTableJoinPhysicalOperator::getChild() const
+std::optional<PhysicalOperator> AsOfJoinPhysicalOperator::getChild() const
 {
     return child;
 }
 
-void StreamTableJoinPhysicalOperator::setChild(PhysicalOperator newChild)
+void AsOfJoinPhysicalOperator::setChild(PhysicalOperator newChild)
 {
     child = std::move(newChild);
 }

@@ -16,12 +16,12 @@ query:
   - name: asof_file
     query: |
       SELECT * FROM (SELECT * FROM events)
-      ASOF JOIN TABLE (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
+      ASOF JOIN (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
       ON event_key = lookup_key TIME(event_ts, lookup_ts) INTO ASOF_FILE
   - name: asof_checksum
     query: |
       SELECT * FROM (SELECT * FROM events)
-      ASOF JOIN TABLE (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
+      ASOF JOIN (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
       ON event_key = lookup_key TIME(event_ts, lookup_ts) INTO ASOF_CHECKSUM
   - name: inner_file
     query: |

@@ -28,6 +28,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Operators/AsOfJoinLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/StreamTableJoinLogicalOperator.hpp>
@@ -106,6 +107,15 @@ public:
         const LogicalFunction& joinFunction,
         std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt,
         StreamTableJoinLogicalOperator::JoinType joinType = StreamTableJoinLogicalOperator::JoinType::INNER_JOIN);
+
+    /// Adds a directional ASOF join. The left input produces output by selecting
+    /// the latest qualifying right tuple at or before its timestamp.
+    static LogicalPlan addAsOfJoin(
+        LogicalPlan leftPlan,
+        LogicalPlan rightPlan,
+        const LogicalFunction& joinFunction,
+        AsOfJoinTimeCharacteristics timeCharacteristics,
+        bool rightIsTable);
 
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 

@@ -52,16 +52,14 @@ using StreamTableJoinTimeCharacteristics = NES::VariantContainerFrom<NES::detail
 /// evaluated once the table watermark has passed their timestamp. If no time
 /// characteristics are configured, stream tuples are retained until table EOS.
 /// An inner join emits every matching pair; a left semi join emits the stream
-/// tuple once when at least one eligible table tuple matches; an ASOF join emits
-/// the matching table tuple with the greatest timestamp not after the stream tuple.
+/// tuple once when at least one eligible table tuple matches.
 class StreamTableJoinLogicalOperator final : public OriginIdAssigner, public ManagedByOperator
 {
 public:
     enum class JoinType : uint8_t
     {
         INNER_JOIN,
-        LEFT_SEMI_JOIN,
-        ASOF_JOIN
+        LEFT_SEMI_JOIN
     };
 
     explicit StreamTableJoinLogicalOperator(

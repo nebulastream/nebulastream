@@ -21,14 +21,14 @@ CREATE SINK traffic_light(intersection_id INT32, signal_command VARSIZED NOT NUL
 SELECT intersection_id,
        CASE
            WHEN emergency_vehicle_detected = TRUE
-               THEN VARSIZED("ALL_RED_EMERGENCY")
+               THEN VARSIZED('ALL_RED_EMERGENCY')
            WHEN pedestrian_waiting = TRUE AND traffic_density < FLOAT32(0.2)
-               THEN VARSIZED("PEDESTRIAN_WALK")
+               THEN VARSIZED('PEDESTRIAN_WALK')
            WHEN traffic_density > FLOAT32(0.8)
-               THEN VARSIZED("GREEN_EXTENDED")
+               THEN VARSIZED('GREEN_EXTENDED')
            WHEN traffic_density > FLOAT32(0.5)
-               THEN VARSIZED("GREEN_STANDARD")
-           ELSE VARSIZED("FLASHING_YELLOW")
+               THEN VARSIZED('GREEN_STANDARD')
+           ELSE VARSIZED('FLASHING_YELLOW')
        END AS signal_command
 FROM intersection
 INTO traffic_light;

@@ -2,7 +2,6 @@
 # description: Lower non-correlated SQL IN subqueries through relational mark apply
 # groups: [Join, StreamTableJoin, Subquery]
 
-GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
 
 CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_value UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR events TYPE File;

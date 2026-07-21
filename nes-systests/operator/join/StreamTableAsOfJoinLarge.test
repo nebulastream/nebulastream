@@ -2,8 +2,6 @@
 # description: 10k-row-per-side ASOF join checked through the checksum sink
 # groups: [Join, StreamTableJoin, LongRunning]
 
-GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
-
 CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_key UINT64 NOT NULL, event_ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR events TYPE File;
 ATTACH FILE small/asof_events_10k.csv
