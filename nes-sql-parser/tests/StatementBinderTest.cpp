@@ -29,12 +29,14 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/FileSink.hpp>
@@ -107,8 +109,17 @@ TEST_F(StatementBinderTest, BindQuery)
 TEST_F(StatementBinderTest, EndRemainsAValidUnquotedIdentifier)
 {
     EXPECT_NO_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("SELECT end AS \"timestamp_end\" FROM s1 INTO sink"));
-    EXPECT_NO_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(
-        "SELECT CASE WHEN s1key = UINT64(1) THEN s1key ELSE UINT64(0) END AS value FROM s1 INTO sink"));
+    const auto conditionalPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(
+        "SELECT CASE WHEN UINT64(1) = UINT64(1) THEN UINT64(2) ELSE UINT64(0) END AS value FROM s1 INTO sink");
+    const auto projections = getOperatorByType<ProjectionLogicalOperator>(conditionalPlan);
+    ASSERT_EQ(1, projections.size());
+    const auto& conditional = projections.front()->getUnboundProjections().front().second;
+    const ReflectionContext context;
+    const auto reflected = context.reflect(conditional);
+    std::optional<LogicalFunction> restored;
+    EXPECT_NO_THROW(restored.emplace(context.unreflect<LogicalFunction>(reflected)));
+    ASSERT_TRUE(restored.has_value());
+    EXPECT_EQ(*restored, conditional);
 }
 
 TEST_F(StatementBinderTest, BindQueryWithNegativeTypedFloatLiteralInWherePredicate)
