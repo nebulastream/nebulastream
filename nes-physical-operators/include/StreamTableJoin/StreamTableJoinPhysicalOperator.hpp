@@ -63,7 +63,6 @@ public:
     {
         INNER_JOIN,
         LEFT_SEMI_JOIN,
-        ASOF_JOIN,
         MARK_APPLY
     };
 

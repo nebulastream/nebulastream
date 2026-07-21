@@ -14,14 +14,15 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -42,7 +43,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] ConditionalLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] ConditionalLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -60,13 +61,13 @@ private:
 template <>
 struct Reflector<ConditionalLogicalFunction>
 {
-    Reflected operator()(const ConditionalLogicalFunction& function) const;
+    Reflected operator()(const ConditionalLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
 struct Unreflector<ConditionalLogicalFunction>
 {
-    ConditionalLogicalFunction operator()(const Reflected& reflected) const;
+    ConditionalLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<ConditionalLogicalFunction>);
@@ -77,7 +78,7 @@ namespace NES::detail
 {
 struct ReflectedConditionalLogicalFunction
 {
-    std::vector<std::optional<LogicalFunction>> children;
+    std::vector<LogicalFunction> children;
 };
 }
 

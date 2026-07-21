@@ -28,8 +28,8 @@ TEST(SequencerTest, ChecksOutOnlyOneBufferAndHandlesChunks)
     const SequenceData second{INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true};
     const SequenceData next{SequenceNumber(SequenceNumber::INITIAL + 1), INITIAL<ChunkNumber>, true};
 
-    EXPECT_FALSE(sequencer.take(second, 2));
     EXPECT_EQ(sequencer.take(first, 1), 1);
+    EXPECT_FALSE(sequencer.take(second, 2));
     EXPECT_FALSE(sequencer.take(first, 99));
     EXPECT_FALSE(sequencer.take(next, 3));
     EXPECT_EQ(sequencer.acknowledge(first), 2);

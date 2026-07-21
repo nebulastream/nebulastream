@@ -36,6 +36,7 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/AsOfJoinLogicalOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
@@ -217,6 +218,25 @@ LogicalPlan LogicalPlanBuilder::addStreamTableJoin(
 
     return addBinaryOperatorAndUpdateSource(
         StreamTableJoinLogicalOperator::create(joinFunction, std::move(timeCharacteristics), joinType), streamPlan, tablePlan);
+}
+
+LogicalPlan LogicalPlanBuilder::addAsOfJoin(
+    LogicalPlan leftPlan,
+    LogicalPlan rightPlan,
+    const LogicalFunction& joinFunction,
+    AsOfJoinTimeCharacteristics timeCharacteristics,
+    const bool rightIsTable)
+{
+    std::visit(
+        [&](const auto& characteristics)
+        {
+            leftPlan = checkAndAddWatermarkAssigner(leftPlan, characteristics[0]);
+            rightPlan = checkAndAddWatermarkAssigner(rightPlan, characteristics[1]);
+        },
+        timeCharacteristics);
+
+    return addBinaryOperatorAndUpdateSource(
+        AsOfJoinLogicalOperator::create(joinFunction, std::move(timeCharacteristics), rightIsTable), leftPlan, rightPlan);
 }
 
 LogicalPlan LogicalPlanBuilder::addInferModel(Identifier modelName, const LogicalPlan& childPlan)

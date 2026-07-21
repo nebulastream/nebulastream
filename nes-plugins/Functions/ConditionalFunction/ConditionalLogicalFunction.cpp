@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
-#include <ConditionalLogicalFunction.hpp>
+#include "ConditionalLogicalFunction.hpp"
 
 #include <cstddef>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -61,7 +60,7 @@ ConditionalLogicalFunction ConditionalLogicalFunction::withDataType(const DataTy
     return copy;
 }
 
-LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     std::vector<LogicalFunction> inferredChildren;
     inferredChildren.reserve(children.size());
@@ -124,30 +123,16 @@ std::string ConditionalLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return result;
 }
 
-Reflected Reflector<ConditionalLogicalFunction>::operator()(const ConditionalLogicalFunction& function) const
+Reflected Reflector<ConditionalLogicalFunction>::operator()(
+    const ConditionalLogicalFunction& function, const ReflectionContext& context) const
 {
-    detail::ReflectedConditionalLogicalFunction reflected;
-    reflected.children.reserve(function.children.size());
-    for (const auto& child : function.children)
-    {
-        reflected.children.push_back(std::make_optional(child));
-    }
-    return reflect(reflected);
+    return context.reflect(detail::ReflectedConditionalLogicalFunction{.children = function.children});
 }
 
-ConditionalLogicalFunction Unreflector<ConditionalLogicalFunction>::operator()(const Reflected& reflected) const
+ConditionalLogicalFunction Unreflector<ConditionalLogicalFunction>::operator()(
+    const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [childrenOpts] = unreflect<detail::ReflectedConditionalLogicalFunction>(reflected);
-    std::vector<LogicalFunction> children;
-    children.reserve(childrenOpts.size());
-    for (const auto& childOpt : childrenOpts)
-    {
-        if (!childOpt.has_value())
-        {
-            throw CannotDeserialize("ConditionalLogicalFunction child is missing");
-        }
-        children.push_back(*childOpt);
-    }
+    auto [children] = context.unreflect<detail::ReflectedConditionalLogicalFunction>(reflected);
 
     if (children.size() < 3 || children.size() % 2 == 0)
     {
@@ -160,10 +145,6 @@ ConditionalLogicalFunction Unreflector<ConditionalLogicalFunction>::operator()(c
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConditionalLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<ConditionalLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() < 3 || arguments.children.size() % 2 == 0)
     {
         throw CannotDeserialize(
