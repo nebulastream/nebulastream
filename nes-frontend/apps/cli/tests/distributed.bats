@@ -30,7 +30,6 @@ teardown()      { nes_distributed_teardown; }
   run docker_nes_cli -t tests/good/quoted-lowercase-sink-field.yaml start
   [ "$status" -eq 0 ]
 }
-#bats test_tags=bats:focus
 @test "multi named query" {
   setup_distributed tests/good/multi-named-query.yaml
   run docker_nes_cli -t tests/good/multi-named-query.yaml start
@@ -126,6 +125,60 @@ teardown()      { nes_distributed_teardown; }
   done
   echo "${output}" | jq -e '(. | length) == 3' # 1 global + 2 local
   [ "$QUERY_STATUS" = "Running" ]
+}
+
+checksum_matches_file() {
+  local result_file=$1
+  local checksum_file=$2
+  local expected_count expected_checksum actual_count actual_checksum
+
+  expected_count=$(tail -n +2 "$result_file" | wc -l)
+  expected_checksum=$(tail -n +2 "$result_file" | od -An -tu1 | awk '{ for (i = 1; i <= NF; ++i) sum += $i } END { print sum + 0 }')
+  IFS=, read -r actual_count actual_checksum < <(tail -n 1 "$checksum_file")
+
+  [ "$actual_count" -eq "$expected_count" ]
+  [ "$actual_checksum" -eq "$expected_checksum" ]
+}
+
+@test "stream-table joins emit before both generator sources finish" {
+  setup_distributed tests/good/stream-table-joins-streaming.yaml
+
+  run docker_nes_cli start
+  assert_success
+  [ "${#lines[@]}" -eq 6 ]
+  query_ids=("${lines[@]}")
+
+  for i in $(seq 1 20); do
+    sleep 1
+    sync_workdir
+    asof_rows=$(tail -n +2 worker-3/result.csv 2>/dev/null | wc -l)
+    inner_rows=$(tail -n +2 worker-3/inner-result.csv 2>/dev/null | wc -l)
+    semi_rows=$(tail -n +2 worker-3/semi-result.csv 2>/dev/null | wc -l)
+
+    run docker_nes_cli status "${query_ids[0]}" "${query_ids[2]}" "${query_ids[4]}"
+    assert_success
+    running_queries=$(echo "$output" | jq '[.[] | select(.query_status == "Running" and (has("local_query_id") | not))] | length')
+    if [ "$asof_rows" -gt 0 ] && [ "$inner_rows" -gt 0 ] && [ "$semi_rows" -gt 0 ] && [ "$running_queries" -eq 3 ]; then
+      break
+    fi
+  done
+
+  [ "$asof_rows" -gt 0 ] && [ "$asof_rows" -lt 10000 ]
+  [ "$inner_rows" -gt 0 ] && [ "$inner_rows" -lt 10000 ]
+  [ "$semi_rows" -gt 0 ] && [ "$semi_rows" -lt 10000 ]
+  [ "$running_queries" -eq 3 ]
+
+  for query_id in "${query_ids[@]}"; do
+    wait_until_status tests/good/stream-table-joins-streaming.yaml Stopped "$query_id"
+  done
+  sync_workdir
+
+  checksum_matches_file worker-3/result.csv worker-3/result-checksum.csv
+  checksum_matches_file worker-3/inner-result.csv worker-3/inner-checksum.csv
+  checksum_matches_file worker-3/semi-result.csv worker-3/semi-checksum.csv
+  [ "$(tail -n +2 worker-3/result.csv | wc -l)" -eq 10000 ]
+  [ "$(tail -n +2 worker-3/inner-result.csv | wc -l)" -eq 10000 ]
+  [ "$(tail -n +2 worker-3/semi-result.csv | wc -l)" -eq 10000 ]
 }
 
 @test "launch and monitor distributed queries crazy join" {

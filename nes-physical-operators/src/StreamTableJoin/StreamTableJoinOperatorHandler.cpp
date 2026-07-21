@@ -29,7 +29,9 @@ namespace NES
 {
 
 StreamTableJoinOperatorHandler::StreamTableJoinOperatorHandler(std::vector<OriginId> tableOrigins, std::vector<OriginId> inputOrigins)
-    : tableOrigins(tableOrigins), tableWatermarks(std::move(tableOrigins)), outputWatermarks(std::move(inputOrigins))
+    : tableOrigins(tableOrigins)
+    , tableWatermarks(std::move(tableOrigins))
+    , outputWatermarks(std::move(inputOrigins))
 {
     PRECONDITION(!this->tableOrigins.empty(), "Stream-table join requires at least one table origin");
 }
@@ -137,6 +139,11 @@ StreamTableJoinOperatorHandler::updateTableWatermark(const Timestamp watermark, 
 Timestamp StreamTableJoinOperatorHandler::getTableWatermark() const
 {
     return currentTableWatermark;
+}
+
+Timestamp StreamTableJoinOperatorHandler::getOutputWatermark() const
+{
+    return outputWatermarks.getCurrentWatermark();
 }
 
 Timestamp

@@ -984,13 +984,26 @@ TEST_F(StatementBinderTest, StreamTableSemiJoinSyntaxSelectsLeftSemiJoinType)
     for (const std::string_view joinType : {"SEMI", "LEFT SEMI"})
     {
         SCOPED_TRACE(joinType);
-        const auto query = fmt::format(
-            "SELECT * FROM (SELECT * FROM s1) {} JOIN TABLE (SELECT * FROM s2) ON s1key = s2key INTO sink", joinType);
+        const auto query
+            = fmt::format("SELECT * FROM (SELECT * FROM s1) {} JOIN TABLE (SELECT * FROM s2) ON s1key = s2key INTO sink", joinType);
         const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
         const auto joins = getOperatorByType<StreamTableJoinLogicalOperator>(plan);
         ASSERT_EQ(1, joins.size());
         EXPECT_EQ(StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN, joins.front()->getJoinType());
     }
+}
+
+TEST_F(StatementBinderTest, StreamTableAsOfJoinRequiresTimeCharacteristics)
+{
+    const auto timedQuery
+        = "SELECT * FROM (SELECT * FROM s1) ASOF JOIN TABLE (SELECT * FROM s2) ON s1key = s2key TIME(s1key, s2key) INTO sink";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(timedQuery);
+    const auto joins = getOperatorByType<StreamTableJoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN, joins.front()->getJoinType());
+
+    const auto untimedQuery = "SELECT * FROM (SELECT * FROM s1) ASOF JOIN TABLE (SELECT * FROM s2) ON s1key = s2key INTO sink";
+    EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(untimedQuery), Exception);
 }
 
 TEST_F(StatementBinderTest, LowercaseOuterJoinParsesToOuterLeftJoinType)

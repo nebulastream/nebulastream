@@ -37,6 +37,22 @@
 
 namespace NES
 {
+namespace
+{
+std::string_view joinTypeName(const StreamTableJoinLogicalOperator::JoinType joinType)
+{
+    switch (joinType)
+    {
+        case StreamTableJoinLogicalOperator::JoinType::INNER_JOIN:
+            return "INNER";
+        case StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN:
+            return "LEFT_SEMI";
+        case StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN:
+            return "ASOF";
+    }
+    std::unreachable();
+}
+}
 
 StreamTableJoinLogicalOperator::StreamTableJoinLogicalOperator(
     WeakLogicalOperator self,
@@ -65,11 +81,8 @@ StreamTableJoinLogicalOperator::StreamTableJoinLogicalOperator(
     inferLocalSchema();
 }
 
-TypedLogicalOperator<StreamTableJoinLogicalOperator>
-StreamTableJoinLogicalOperator::create(
-    LogicalFunction joinFunction,
-    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
-    const JoinType joinType)
+TypedLogicalOperator<StreamTableJoinLogicalOperator> StreamTableJoinLogicalOperator::create(
+    LogicalFunction joinFunction, std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics, const JoinType joinType)
 {
     return TypedLogicalOperator<StreamTableJoinLogicalOperator>{std::move(joinFunction), std::move(timeCharacteristics), joinType};
 }
@@ -111,9 +124,8 @@ void StreamTableJoinLogicalOperator::inferLocalSchema()
             timeCharacteristics.value());
     }
 
-    const auto semiJoinOutputFields
-        = children.value()[0].getOutputSchema() | std::views::transform([](const Field& field) { return field.unbound(); })
-        | std::ranges::to<std::vector>();
+    const auto semiJoinOutputFields = children.value()[0].getOutputSchema()
+        | std::views::transform([](const Field& field) { return field.unbound(); }) | std::ranges::to<std::vector>();
     const auto innerJoinOutputFields
         = inputFields | std::views::transform([](const Field& field) { return field.unbound(); }) | std::ranges::to<std::vector>();
     const auto& outputFields = joinType == JoinType::LEFT_SEMI_JOIN ? semiJoinOutputFields : innerJoinOutputFields;
@@ -198,13 +210,12 @@ std::string StreamTableJoinLogicalOperator::explain(const ExplainVerbosity verbo
         return fmt::format(
             "StreamTableJoin(opId: {}, type: {}, joinFunction: {}, timed: {}, traitSet: {})",
             id,
-            joinType == JoinType::LEFT_SEMI_JOIN ? "LEFT_SEMI" : "INNER",
+            joinTypeName(joinType),
             joinFunction.explain(verbosity),
             timeCharacteristics.has_value(),
             traitSet.explain(verbosity));
     }
-    return fmt::format(
-        "StreamTableJoin({}, {})", joinType == JoinType::LEFT_SEMI_JOIN ? "LEFT_SEMI" : "INNER", joinFunction.explain(verbosity));
+    return fmt::format("StreamTableJoin({}, {})", joinTypeName(joinType), joinFunction.explain(verbosity));
 }
 
 std::string_view StreamTableJoinLogicalOperator::getName() const noexcept

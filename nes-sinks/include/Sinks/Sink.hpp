@@ -18,6 +18,8 @@
 #include <fmt/ostream.h>
 #include <BackpressureChannel.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include <Sequencing/Sequencer.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 
 namespace NES
 {
@@ -25,12 +27,28 @@ namespace NES
 class Sink : public ExecutablePipelineStage
 {
 public:
-    explicit Sink(BackpressureController backpressureController) : backpressureController(std::move(backpressureController)) { }
+    enum class BufferResult : uint8_t
+    {
+        COMPLETED,
+        RETRY,
+    };
+
+    explicit Sink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
 
     ~Sink() override = default;
     friend std::ostream& operator<<(std::ostream& out, const Sink& sink);
 
+    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) final;
+
     BackpressureController backpressureController;
+
+protected:
+    virtual BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
+
+private:
+    OutputOrderPolicy outputOrderPolicy;
+    Sequencer<TupleBuffer> sequencer;
+    DropOutOfOrderSequencer<TupleBuffer> dropOutOfOrderSequencer;
 };
 
 }

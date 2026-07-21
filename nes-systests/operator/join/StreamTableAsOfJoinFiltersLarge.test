@@ -1,0 +1,61 @@
+# name: join/StreamTableAsOfJoinFiltersLarge.test
+# description: 10k-row ASOF join with input and post-join filters checked through the checksum sink
+# groups: [Join, StreamTableJoin, LongRunning]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE filtered_events(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    event_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR filtered_events TYPE File;
+ATTACH FILE small/asof_events_10k.csv
+
+CREATE LOGICAL SOURCE filtered_lookup(
+    lookup_id UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_value UINT64 NOT NULL,
+    lookup_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR filtered_lookup TYPE File;
+ATTACH FILE small/asof_lookup_10k.csv
+
+CREATE SINK result(signature UINT64 NOT NULL) TYPE Checksum SET ('ENFORCE_ORDER' AS "SINK".OUTPUT_ORDER);
+
+# Verified with DuckDB 1.5.4. Both CSV inputs contain 10,000 rows:
+# SELECT e.event_id * 1000003::UBIGINT + e.event_ts * 101::UBIGINT
+#        + l.lookup_id * 1009::UBIGINT + l.lookup_value * 17::UBIGINT
+#        + l.lookup_ts AS signature
+# FROM (SELECT * FROM events
+#       WHERE event_id >= 100 AND event_id < 9900 AND event_key < 90) e
+# ASOF JOIN (SELECT * FROM lookup
+#            WHERE lookup_id >= 500 AND lookup_id < 9500 AND lookup_key < 80) l
+# ON e.event_key = l.lookup_key AND e.event_ts >= l.lookup_ts
+# WHERE l.lookup_value >= 102000 AND l.lookup_value < 128000
+#   AND e.event_ts > l.lookup_ts + 250;
+# The table-side lower bound leaves early events with only future rows, while
+# lookup_key < 80 leaves other stream keys unmatched.
+SELECT event_id * UINT64(1000003) + event_ts * UINT64(101)
+       + lookup_id * UINT64(1009) + lookup_value * UINT64(17)
+       + lookup_ts AS signature
+FROM (
+    SELECT *
+    FROM (
+        SELECT * FROM filtered_events
+        WHERE event_id >= UINT64(100) AND event_id < UINT64(9900)
+              AND event_key < UINT64(90)
+    )
+    ASOF JOIN TABLE (
+        SELECT * FROM filtered_lookup
+        WHERE lookup_id >= UINT64(500) AND lookup_id < UINT64(9500)
+              AND lookup_key < UINT64(80)
+    )
+    ON event_key = lookup_key
+    TIME(event_ts, lookup_ts)
+)
+WHERE lookup_value >= UINT64(102000) AND lookup_value < UINT64(128000)
+      AND event_ts > lookup_ts + UINT64(250)
+INTO result;
+----
+4941 2636573

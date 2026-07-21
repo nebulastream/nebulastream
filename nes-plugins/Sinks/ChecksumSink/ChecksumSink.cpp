@@ -42,7 +42,7 @@ namespace NES
 {
 
 ChecksumSink::ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
+    : Sink(std::move(backpressureController), sinkDescriptor)
     , isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILE_PATH))
 {
@@ -87,7 +87,7 @@ void ChecksumSink::stop(PipelineExecutionContext&)
     isOpen = false;
 }
 
-void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
+Sink::BufferResult ChecksumSink::executeBuffer(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     /// Create a buffer iterator to help iterate through the tuplebuffer and its children
@@ -102,6 +102,7 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
         /// Get the next buffer
         element = iterator.getNextElement();
     }
+    return BufferResult::COMPLETED;
 }
 
 DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)

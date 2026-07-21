@@ -33,7 +33,7 @@ namespace NES
 {
 
 PipeSink::PipeSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
+    : Sink(std::move(backpressureController), sinkDescriptor)
     , pipeName(sinkDescriptor.getFromConfig(ConfigParametersPipeSink::PIPE_NAME))
     , schema(NES::get<std::shared_ptr<const PipeSchema>>(sinkDescriptor.getSchema()))
 {
@@ -100,12 +100,12 @@ void PipeSink::stop(PipelineExecutionContext&)
     NES_INFO("PipeSink: stopped for pipe '{}'", pipeName);
 }
 
-void PipeSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
+Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in PipeSink.");
     if (!sinkHandle)
     {
-        return;
+        return BufferResult::COMPLETED;
     }
 
     const auto seqNum = inputTupleBuffer.getSequenceNumber();
@@ -169,6 +169,7 @@ void PipeSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     {
         maxSeqStarted = seqNum;
     }
+    return BufferResult::COMPLETED;
 }
 
 DescriptorConfig::Config PipeSink::validateAndFormat(std::unordered_map<std::string, std::string> config)

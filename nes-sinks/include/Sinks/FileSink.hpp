@@ -47,13 +47,13 @@ public:
     FileSink& operator=(FileSink&&) = delete;
 
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
+    BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 
 
 private:

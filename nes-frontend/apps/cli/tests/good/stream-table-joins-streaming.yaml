@@ -1,0 +1,138 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Both inputs generate 10,000 rows at 1,000 rows/s. The table filter keeps the
+# probe state small while its watermark still advances for the full run.
+query:
+  - name: asof_file
+    query: |
+      SELECT * FROM (SELECT * FROM events)
+      ASOF JOIN TABLE (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
+      ON event_key = lookup_key TIME(event_ts, lookup_ts) INTO ASOF_FILE
+  - name: asof_checksum
+    query: |
+      SELECT * FROM (SELECT * FROM events)
+      ASOF JOIN TABLE (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
+      ON event_key = lookup_key TIME(event_ts, lookup_ts) INTO ASOF_CHECKSUM
+  - name: inner_file
+    query: |
+      SELECT * FROM (SELECT * FROM events)
+      INNER JOIN TABLE (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
+      ON event_key = lookup_key TIME(event_ts, lookup_ts) INTO INNER_FILE
+  - name: inner_checksum
+    query: |
+      SELECT * FROM (SELECT * FROM events)
+      INNER JOIN TABLE (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
+      ON event_key = lookup_key TIME(event_ts, lookup_ts) INTO INNER_CHECKSUM
+  - name: semi_file
+    query: |
+      SELECT * FROM (SELECT * FROM events)
+      LEFT SEMI JOIN TABLE (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
+      ON event_key = lookup_key TIME(event_ts, lookup_ts) INTO SEMI_FILE
+  - name: semi_checksum
+    query: |
+      SELECT * FROM (SELECT * FROM events)
+      LEFT SEMI JOIN TABLE (SELECT * FROM lookup WHERE lookup_key < UINT64(100))
+      ON event_key = lookup_key TIME(event_ts, lookup_ts) INTO SEMI_CHECKSUM
+
+sinks:
+  - name: ASOF_FILE
+    host: worker-3:8080
+    schema: &joined_schema
+      - { name: event_id, type: UINT64 }
+      - { name: event_key, type: UINT64 }
+      - { name: event_ts, type: UINT64 }
+      - { name: lookup_key, type: UINT64 }
+      - { name: lookup_value, type: UINT64 }
+      - { name: lookup_ts, type: UINT64 }
+    type: File
+    config: { file_path: result.csv, output_format: CSV }
+  - name: ASOF_CHECKSUM
+    host: worker-3:8080
+    schema: *joined_schema
+    type: Checksum
+    config: { file_path: result-checksum.csv, output_order: ENFORCE_ORDER }
+  - name: INNER_FILE
+    host: worker-3:8080
+    schema: *joined_schema
+    type: File
+    config: { file_path: inner-result.csv, output_format: CSV }
+  - name: INNER_CHECKSUM
+    host: worker-3:8080
+    schema: *joined_schema
+    type: Checksum
+    config: { file_path: inner-checksum.csv, output_order: ENFORCE_ORDER }
+  - name: SEMI_FILE
+    host: worker-3:8080
+    schema: &stream_schema
+      - { name: event_id, type: UINT64 }
+      - { name: event_key, type: UINT64 }
+      - { name: event_ts, type: UINT64 }
+    type: File
+    config: { file_path: semi-result.csv, output_format: CSV }
+  - name: SEMI_CHECKSUM
+    host: worker-3:8080
+    schema: *stream_schema
+    type: Checksum
+    config: { file_path: semi-checksum.csv, output_order: ENFORCE_ORDER }
+
+logical:
+  - name: events
+    schema: *stream_schema
+  - name: lookup
+    schema:
+      - { name: lookup_key, type: UINT64 }
+      - { name: lookup_value, type: UINT64 }
+      - { name: lookup_ts, type: UINT64 }
+
+physical:
+  - logical: events
+    host: worker-1:8080
+    parser_config: { type: CSV, field_delimiter: "," }
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 1000
+      # event_key reaches 99 early and then stays there; the other sequences
+      # keep this source alive for exactly 10,000 rows.
+      stop_generator_when_sequence_finishes: ALL
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 10000 1
+        SEQUENCE UINT64 0 99 1
+        SEQUENCE UINT64 5 100005 10
+  - logical: lookup
+    host: worker-2:8080
+    parser_config: { type: CSV, field_delimiter: "," }
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 1000
+      stop_generator_when_sequence_finishes: ALL
+      seed: 2
+      generator_schema: |
+        SEQUENCE UINT64 0 10000 1
+        SEQUENCE UINT64 100000 110000 1
+        SEQUENCE UINT64 0 100000 10
+
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000
+    downstream: [worker-3:8080]
+  - host: worker-2:8080
+    data_address: worker-2:9090
+    max_operators: 10000
+    downstream: [worker-3:8080]
+  - host: worker-3:8080
+    data_address: worker-3:9090
+    max_operators: 10000

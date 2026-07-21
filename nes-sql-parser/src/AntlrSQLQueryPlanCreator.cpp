@@ -1148,8 +1148,18 @@ void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* con
 
 void AntlrSQLQueryPlanCreator::exitStreamTableJoinType(AntlrSQLParser::StreamTableJoinTypeContext* context)
 {
-    helpers.top().streamTableJoinType = context->SEMI() == nullptr ? StreamTableJoinLogicalOperator::JoinType::INNER_JOIN
-                                                                   : StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN;
+    if (context->ASOF() != nullptr)
+    {
+        helpers.top().streamTableJoinType = StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN;
+    }
+    else if (context->SEMI() != nullptr)
+    {
+        helpers.top().streamTableJoinType = StreamTableJoinLogicalOperator::JoinType::LEFT_SEMI_JOIN;
+    }
+    else
+    {
+        helpers.top().streamTableJoinType = StreamTableJoinLogicalOperator::JoinType::INNER_JOIN;
+    }
     AntlrSQLBaseListener::exitStreamTableJoinType(context);
 }
 
@@ -1184,6 +1194,10 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
             }
             const auto characteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
             timeCharacteristics.emplace(characteristics);
+        }
+        if (helpers.top().streamTableJoinType == StreamTableJoinLogicalOperator::JoinType::ASOF_JOIN && !timeCharacteristics.has_value())
+        {
+            throw InvalidQuerySyntax("ASOF JOIN TABLE requires TIME(stream_timestamp, table_timestamp)");
         }
 
         const auto queryPlan = LogicalPlanBuilder::addStreamTableJoin(

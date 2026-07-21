@@ -55,13 +55,13 @@ public:
     NetworkSink& operator=(NetworkSink&&) = delete;
 
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
-    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec) override;
     void stop(PipelineExecutionContext& pec) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
+    BufferResult executeBuffer(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec) override;
 
 private:
     size_t tupleSize;

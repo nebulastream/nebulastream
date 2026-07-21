@@ -40,17 +40,17 @@ public:
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "VoidSink"; }
+    BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 };
 
 struct ConfigParametersVoid
 {
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap();
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::OUTPUT_ORDER);
 };
 }
 
