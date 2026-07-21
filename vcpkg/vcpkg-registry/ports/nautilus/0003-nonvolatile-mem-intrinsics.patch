@@ -1,0 +1,32 @@
+--- a/nautilus/src/nautilus/compiler/backends/mlir/intrinsics/MLIRMemoryIntrinsics.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/intrinsics/MLIRMemoryIntrinsics.cpp
+@@ -26,8 +26,7 @@
+ 	auto count = frame.getValue(call->getInputArguments().at(2)->getIdentifier());
+ 
+ 	// Create memcpy intrinsic: llvm.memcpy(dest, src, len, isVolatile)
+-	auto isVolatile = builder->create<::mlir::LLVM::ConstantOp>(builder->getUnknownLoc(), builder->getI1Type(),
+-	                                                            builder->getBoolAttr(false));
++	constexpr bool isVolatile = false;
+ 
+ 	builder->create<::mlir::LLVM::MemcpyOp>(builder->getUnknownLoc(), dest, src, count, isVolatile);
+ 
+@@ -45,8 +44,7 @@
+ 	auto count = frame.getValue(call->getInputArguments().at(2)->getIdentifier());
+ 
+ 	// Create memmove intrinsic: llvm.memmove(dest, src, len, isVolatile)
+-	auto isVolatile = builder->create<::mlir::LLVM::ConstantOp>(builder->getUnknownLoc(), builder->getI1Type(),
+-	                                                            builder->getBoolAttr(false));
++	constexpr bool isVolatile = false;
+ 
+ 	builder->create<::mlir::LLVM::MemmoveOp>(builder->getUnknownLoc(), dest, src, count, isVolatile);
+ 
+@@ -67,8 +65,7 @@
+ 	auto truncatedValue = builder->create<::mlir::LLVM::TruncOp>(builder->getUnknownLoc(), i8Type, value);
+ 
+ 	// Create memset intrinsic: llvm.memset(dest, val, len, isVolatile)
+-	auto isVolatile = builder->create<::mlir::LLVM::ConstantOp>(builder->getUnknownLoc(), builder->getI1Type(),
+-	                                                            builder->getBoolAttr(false));
++	constexpr bool isVolatile = false;
+ 
+ 	builder->create<::mlir::LLVM::MemsetOp>(builder->getUnknownLoc(), dest, truncatedValue, count, isVolatile);
+ 
