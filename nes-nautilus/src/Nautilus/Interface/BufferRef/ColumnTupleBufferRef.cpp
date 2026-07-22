@@ -96,7 +96,9 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
             }
             auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, dataTypeSize, columnOffset);
             const auto& value = rec.read(name);
-            const VarVal parsedVal = value.getAsParsedUnderlyingValue();
+            /// storeValue handles lazy values itself (a rope is written span-by-span, other lazy values are
+            /// parsed on demand), so there is no need to eagerly materialise here -- doing so would force a
+            /// rope's arena round-trip that storeValue's span walk exists to avoid.
             storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
         }
         writtenRecords = 1;

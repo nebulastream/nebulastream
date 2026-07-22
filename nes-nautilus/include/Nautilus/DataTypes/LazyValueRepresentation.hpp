@@ -19,6 +19,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <Util/Strings.hpp>
@@ -85,6 +86,17 @@ public:
     LazyValueRepresentation(const LazyValueRepresentation& other) = default;
     virtual ~LazyValueRepresentation() = default;
 
+    /// A byte span: a (pointer, length) view into some live buffer. A VARSIZED value is modelled as an
+    /// ordered list of spans (a "rope", LLVM-Twine style); a plain parse-backed lazy value is the 1-span
+    /// degenerate case. See RopeLazyValueRepresentation. The span list is built and iterated in host C++
+    /// at trace time -- its size is compile-time, each element carries nautilus SSA handles -- so consumers
+    /// host-unroll the walk and never emit a runtime loop over spans.
+    struct Span
+    {
+        nautilus::val<int8_t*> ptr;
+        nautilus::val<uint64_t> len;
+    };
+
     LazyValueRepresentation(LazyValueRepresentation&& other) noexcept
         : size(other.size), ptrToLazyValue(other.ptrToLazyValue), type(other.type), isNull(other.isNull), parserType(other.parserType)
     {
@@ -104,9 +116,21 @@ public:
         return *this;
     }
 
-    [[nodiscard]] nautilus::val<int8_t*> getContent() const { return ptrToLazyValue; }
+    /// Virtual so a rope can override it to materialise its segments into one contiguous buffer on demand
+    /// (every non-rope value just returns its single backing pointer). See getSpans() for the copy-free walk.
+    [[nodiscard]] virtual nautilus::val<int8_t*> getContent() const { return ptrToLazyValue; }
 
     [[nodiscard]] nautilus::val<uint64_t> getSize() const { return size; }
+
+    /// Returns the ordered byte spans that make up this value. The base (and every parse-backed lazy value)
+    /// is a single contiguous span; a rope overrides this to expose its segment list so a span-aware consumer
+    /// (the output formatter) can write each segment straight to the output with no intermediate copy.
+    [[nodiscard]] virtual std::vector<Span> getSpans() const { return {Span{ptrToLazyValue, size}}; }
+
+    /// HOST-ONLY predicate (no nautilus::val access, hence no trace op): is this a multi-span rope? Used to
+    /// classify fields without calling getSpans() (which touches SSA handles and, in a plain host loop over
+    /// fields, would emit a per-field trace op the tracer mistakes for a loop). Base = not a rope.
+    [[nodiscard]] virtual bool isRope() const { return false; }
 
     [[nodiscard]] nautilus::val<bool> getIsNull() const { return isNull; }
 
@@ -142,7 +166,10 @@ public:
     }
 
     /// Converts the lazy value into a VarVal of the underlying value, as dictated by the type member.
-    [[nodiscard]] VarVal parseValue() const;
+    /// Virtual so a rope overrides it to materialise its segments (the universal fallback: every non-span-aware
+    /// consumer -- getRawValueAs, arithmetic, store-to-state -- routes through parseValue, so overriding it here
+    /// makes a rope correct everywhere for free, at the cost of one memoised materialisation).
+    [[nodiscard]] virtual VarVal parseValue() const;
 
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const LazyValueRepresentation& lazyValue);
 

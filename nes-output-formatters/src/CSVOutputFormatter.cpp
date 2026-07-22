@@ -103,6 +103,69 @@ NAUTILUS_INLINE uint64_t writeVarsized(
     return writeValueToBuffer(stringFormattedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+/// Write one rope segment as CSV, optionally emitting a leading and/or trailing quote. Unquoted: the value is
+/// just its segments concatenated, so write this one raw. Quoted: `"` (first segment) + doubled-quote bytes +
+/// `"` (last segment); each segment doubles its own embedded quotes (a doubled quote never straddles a segment
+/// seam). Lets a multi-span rope be emitted with one invoke per segment, straight to the output -- no arena
+/// round-trip. writeVarsized stays the single-span path.
+NAUTILUS_INLINE uint64_t writeVarsizedSpan(
+    int8_t* bufferStartingAddress,
+    const uint64_t remainingSpace,
+    const bool quoteStrings,
+    const int8_t* varSizedContent,
+    const uint64_t contentSize,
+    const bool openQuote,
+    const bool closeQuote,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider)
+{
+    const char* const data = reinterpret_cast<const char*>(varSizedContent);
+    if (!quoteStrings)
+    {
+        return writeBytesToBuffer(data, contentSize, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    }
+    const uint64_t quoteBytes = (openQuote ? 1U : 0U) + (closeQuote ? 1U : 0U);
+    if (std::memchr(varSizedContent, '"', contentSize) == nullptr && tupleBuffer->getNumberOfChildBuffers() == 0
+        && contentSize + quoteBytes <= remainingSpace)
+    {
+        int8_t* out = bufferStartingAddress;
+        if (openQuote)
+        {
+            *out++ = static_cast<int8_t>('"');
+        }
+        std::memcpy(out, data, contentSize);
+        out += contentSize;
+        if (closeQuote)
+        {
+            *out++ = static_cast<int8_t>('"');
+        }
+        return static_cast<uint64_t>(out - bufferStartingAddress);
+    }
+    /// Slow path: embedded quotes need doubling, or the value spans into a child buffer.
+    std::string chunk;
+    chunk.reserve(contentSize + 2);
+    if (openQuote)
+    {
+        chunk.push_back('"');
+    }
+    for (uint64_t i = 0; i < contentSize; ++i)
+    {
+        if (data[i] == '"')
+        {
+            chunk.append("\"\"");
+        }
+        else
+        {
+            chunk.push_back(data[i]);
+        }
+    }
+    if (closeQuote)
+    {
+        chunk.push_back('"');
+    }
+    return writeBytesToBuffer(chunk.data(), chunk.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
+
 void writeValue(
     const VarVal& value,
     const DataType& fieldType,
@@ -117,19 +180,70 @@ void writeValue(
     switch (fieldType.type)
     {
         case DataType::Type::VARSIZED: {
-            /// For varsized values, we cast to VariableSizedData and access the formatted string that way
-            const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeVarsized,
-                fieldPointer,
-                currentRemainingSize,
-                nautilus::val<bool>{quoteStrings},
-                varSizedValue.getContent(),
-                varSizedValue.getSize(),
-                recordBuffer.getReference(),
-                bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
+            if (value.isLazyValue())
+            {
+                /// Lazy VARSIZED: walk the value's byte spans and write them straight to the output. A rope
+                /// (e.g. a CONCAT result) is a multi-span list -- writing the spans directly avoids the arena
+                /// round-trip; a passthrough field is the single-span degenerate case (unchanged behaviour).
+                const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+                if (not lazyValue->isRope())
+                {
+                    /// Single-span passthrough: write its contiguous bytes directly. isRope() is host-only, so
+                    /// this avoids getSpans() on the hot passthrough path; getContent()/getSize() give the view.
+                    const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                        writeVarsized,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        nautilus::val<bool>{quoteStrings},
+                        lazyValue->getContent(),
+                        lazyValue->getSize(),
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    written += amountWritten;
+                    currentRemainingSize -= amountWritten;
+                }
+                else
+                {
+                    const auto spans = lazyValue->getSpans();
+                    /// Multi-span rope: one invoke per segment, host-unrolled. The static_val induction variable
+                    /// gives each unrolled iteration a distinct trace tag (a plain counter would emit the invoke
+                    /// from one source line every iteration -> the tracer would read it as a loop back-edge).
+                    const std::size_t spanCount = spans.size();
+                    for (nautilus::static_val<std::size_t> spanIndex = 0; spanIndex < spanCount; ++spanIndex)
+                    {
+                        const std::size_t index = spanIndex;
+                        const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                            writeVarsizedSpan,
+                            fieldPointer + written,
+                            currentRemainingSize,
+                            nautilus::val<bool>{quoteStrings},
+                            spans[index].ptr,
+                            spans[index].len,
+                            nautilus::val<bool>{index == 0},
+                            nautilus::val<bool>{index + 1 == spanCount},
+                            recordBuffer.getReference(),
+                            bufferProvider);
+                        written += amountWritten;
+                        currentRemainingSize -= amountWritten;
+                    }
+                }
+            }
+            else
+            {
+                /// For varsized values, we cast to VariableSizedData and access the formatted string that way
+                const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
+                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                    writeVarsized,
+                    fieldPointer + written,
+                    currentRemainingSize,
+                    nautilus::val<bool>{quoteStrings},
+                    varSizedValue.getContent(),
+                    varSizedValue.getSize(),
+                    recordBuffer.getReference(),
+                    bufferProvider);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
             break;
         }
         case DataType::Type::INT8:

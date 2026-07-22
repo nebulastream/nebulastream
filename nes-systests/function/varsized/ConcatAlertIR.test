@@ -1,0 +1,22 @@
+# name: ConcatAlertIR
+# description: Minimal CONCAT(constant, varsized-column) on nexmark-flavoured bid data — for IR dump only.
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE bid(auctionId INT32 NOT NULL, channel VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH INLINE
+1001,apple
+1002,google
+1003,facebook
+1004,amazon
+1005,baidu
+
+CREATE SINK alertSink(msg VARSIZED NOT NULL) TYPE File;
+
+SELECT CONCAT(VARSIZED("alert-"), channel) AS msg FROM bid INTO alertSink;
+----
+alert-apple
+alert-google
+alert-facebook
+alert-amazon
+alert-baidu

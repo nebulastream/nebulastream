@@ -28,6 +28,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -37,8 +38,10 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/std/cstring.h>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
+#include <static.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -119,6 +122,48 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
     return VariableSizedAccess{childIndex, childOffset, VariableSizedAccess::Size{totalVarSizedLength}};
 }
 
+namespace
+{
+/// Reserve `totalSize` contiguous bytes for a var-sized value in a child buffer of `tupleBuffer`, record the
+/// resulting access in `*refToIndex`, and return a pointer to the (still uninitialised) reserved region for the
+/// caller to fill. This is writeVarSized's child-buffer bookkeeping WITHOUT the payload copy: a rope store uses
+/// it to write its segments straight into the child buffer, skipping the intermediate arena materialisation.
+/// storeChildBuffer stores a refcounted handle to the same underlying memory the returned pointer addresses, so
+/// filling the region after this call is safe.
+int8_t* reserveVarSizedRegion(
+    TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, const uint64_t totalSize, VariableSizedAccess* refToIndex)
+{
+    INVARIANT(tupleBuffer != nullptr, "TupleBuffer MUST NOT be null at this point");
+    INVARIANT(bufferProvider != nullptr, "BufferProvider MUST NOT be null at this point");
+
+    /// Append to the last child buffer if it has room (mirrors writeVarSized's `>=`-full check).
+    const auto numberOfChildBuffers = tupleBuffer->getNumberOfChildBuffers();
+    if (numberOfChildBuffers != 0)
+    {
+        const VariableSizedAccess::Index childIndex{numberOfChildBuffers - 1};
+        auto lastChildBuffer = tupleBuffer->loadChildBuffer(childIndex);
+        const auto usedMemorySize = lastChildBuffer.getNumberOfTuples();
+        if (usedMemorySize + totalSize < lastChildBuffer.getBufferSize())
+        {
+            const VariableSizedAccess::Offset childOffset{usedMemorySize};
+            auto* const destination
+                = reinterpret_cast<int8_t*>(lastChildBuffer.getAvailableMemoryArea().subspan(childOffset.getRawOffset()).data());
+            lastChildBuffer.setNumberOfTuples(usedMemorySize + totalSize);
+            *refToIndex = VariableSizedAccess{childIndex, childOffset, VariableSizedAccess::Size{totalSize}};
+            return destination;
+        }
+    }
+
+    /// No children yet, or the last one is full: acquire a fresh child buffer.
+    auto newChildBuffer = getNewBufferForVarSized(*bufferProvider, totalSize);
+    auto* const destination = reinterpret_cast<int8_t*>(newChildBuffer.getAvailableMemoryArea().data());
+    newChildBuffer.setNumberOfTuples(totalSize);
+    const VariableSizedAccess::Index childBufferIndex{tupleBuffer->storeChildBuffer(newChildBuffer)};
+    *refToIndex = VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalSize}};
+    return destination;
+}
+}
+
 std::span<std::byte>
 TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
 {
@@ -192,9 +237,33 @@ VarVal TupleBufferRef::storeValue(
         throw UnknownDataType("Physical Type: {} is currently not supported", physicalType);
     }
 
-    const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
     auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
 
+    /// A rope (a multi-span lazy VARSIZED, e.g. a CONCAT result) is written straight into the child buffer,
+    /// segment by segment, instead of first being materialised into an arena buffer and then copied in. This
+    /// removes the redundant arena round-trip at this pipeline boundary: the payload is copied once (into the
+    /// child buffer here), then once more by the downstream formatter -- not three times. The segment count is
+    /// compile-time, so the walk is host-unrolled with a static_val counter (a plain counter would emit the
+    /// copy from one source line every iteration, which the tracer reads as a loop back-edge).
+    if (value.isLazyValue())
+    {
+        const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+        if (const auto spans = lazyValue->getSpans(); spans.size() > 1)
+        {
+            const auto destination
+                = invoke(reserveVarSizedRegion, recordBuffer.getReference(), bufferProvider, lazyValue->getSize(), refToIndex);
+            nautilus::val<uint64_t> offset{0};
+            for (nautilus::static_val<std::size_t> spanIndex = 0; spanIndex < spans.size(); ++spanIndex)
+            {
+                const std::size_t index = spanIndex;
+                nautilus::memcpy(destination + offset, spans[index].ptr, spans[index].len);
+                offset += spans[index].len;
+            }
+            return value;
+        }
+    }
+
+    const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
     invoke(
         +[](TupleBuffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider,

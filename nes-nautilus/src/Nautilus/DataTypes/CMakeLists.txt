@@ -15,6 +15,7 @@ add_source_files(nes-nautilus
         VarVal.cpp
         LazyValueRepresentation.cpp
         LazyValueProvider.cpp
+        RopeLazyValueRepresentation.cpp
 )
 
 add_subdirectory(LazyValueRepresentations)

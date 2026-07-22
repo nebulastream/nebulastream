@@ -198,6 +198,70 @@ uint64_t writeJsonStringValue(
     return writeBytesToBuffer(escaped.data(), escaped.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+/// Escape-write one rope segment into the output buffer, optionally emitting a leading and/or trailing
+/// double-quote. A rope's JSON string is `"` + escaped(seg0) + escaped(seg1) + ... + `"`; each segment is
+/// escaped independently (a multi-byte JSON escape never straddles a segment seam, so per-segment escaping is
+/// correct) and the first/last segment carries the delimiters, so the whole value is emitted with exactly one
+/// invoke per segment and NO intermediate arena buffer. This is writeJsonStringValue generalised to a segment
+/// that may be interior to a larger string; the single-span case still uses writeJsonStringValue verbatim.
+uint64_t writeJsonStringSpan(
+    int8_t* bufferStartingAddress,
+    const uint64_t remainingSpace,
+    const int8_t* content,
+    const uint64_t contentSize,
+    const bool openQuote,
+    const bool closeQuote,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider)
+{
+    const char* const data = reinterpret_cast<const char*>(content);
+    const uint64_t quoteBytes = (openQuote ? 1U : 0U) + (closeQuote ? 1U : 0U);
+    if (tupleBuffer->getNumberOfChildBuffers() == 0 && contentSize * 6 + quoteBytes <= remainingSpace)
+    {
+        int8_t* out = bufferStartingAddress;
+        if (openQuote)
+        {
+            *out++ = static_cast<int8_t>('"');
+        }
+        uint64_t runStart = 0;
+        for (uint64_t i = 0; i < contentSize; ++i)
+        {
+            const unsigned char character = static_cast<unsigned char>(data[i]);
+            if (character == '"' || character == '\\' || character < 0x20)
+            {
+                std::memcpy(out, data + runStart, i - runStart);
+                out += i - runStart;
+                out += writeEscapeSequence(out, data[i]);
+                runStart = i + 1;
+            }
+        }
+        std::memcpy(out, data + runStart, contentSize - runStart);
+        out += contentSize - runStart;
+        if (closeQuote)
+        {
+            *out++ = static_cast<int8_t>('"');
+        }
+        return static_cast<uint64_t>(out - bufferStartingAddress);
+    }
+    /// Slow path: near the main-buffer boundary (or children already exist). Build the escaped chunk with the
+    /// requested quotes and let writeBytesToBuffer spill it into child buffers correctly.
+    std::string escaped;
+    escaped.reserve(contentSize + 2);
+    if (openQuote)
+    {
+        escaped.push_back('"');
+    }
+    for (uint64_t i = 0; i < contentSize; ++i)
+    {
+        appendJsonEscaped(escaped, data[i]);
+    }
+    if (closeQuote)
+    {
+        escaped.push_back('"');
+    }
+    return writeBytesToBuffer(escaped.data(), escaped.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
+
 /// Write a single CHAR as a JSON string ("x", escaped if needed).
 uint64_t writeJsonChar(
     int8_t* bufferStartingAddress,
@@ -389,17 +453,68 @@ void writeValue(
             break;
         }
         case DataType::Type::VARSIZED: {
-            const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeJsonStringValue,
-                fieldPointer + written,
-                currentRemainingSize,
-                varSizedValue.getContent(),
-                varSizedValue.getSize(),
-                recordBuffer.getReference(),
-                bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
+            if (value.isLazyValue())
+            {
+                /// Lazy VARSIZED: walk the value's byte spans and write them straight to the output. A rope
+                /// (e.g. a CONCAT result) is a multi-span list -- writing the spans directly avoids the arena
+                /// round-trip (materialise-then-recopy); a passthrough field is the single-span degenerate case.
+                const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+                if (not lazyValue->isRope())
+                {
+                    /// Single-span passthrough (a column view): write its contiguous bytes directly. isRope() is
+                    /// host-only, so this avoids calling getSpans() on the hot passthrough path (which touches SSA
+                    /// handles); getContent()/getSize() give the same view without materialising.
+                    const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                        writeJsonStringValue,
+                        fieldPointer + written,
+                        currentRemainingSize,
+                        lazyValue->getContent(),
+                        lazyValue->getSize(),
+                        recordBuffer.getReference(),
+                        bufferProvider);
+                    written += amountWritten;
+                    currentRemainingSize -= amountWritten;
+                }
+                else
+                {
+                    const auto spans = lazyValue->getSpans();
+                    /// Multi-span rope: `"` + escaped(seg0) + ... + escaped(segN-1) + `"`, one invoke per span,
+                    /// host-unrolled (the span count is compile-time). When the formatter is FUSED into the source
+                    /// pipeline (single-node worker), the rope reaches here and its segments are written straight
+                    /// into the JSON output buffer -- input->output, one copy, no arena or child buffer.
+                    const std::size_t spanCount = spans.size();
+                    for (nautilus::static_val<std::size_t> spanIndex = 0; spanIndex < spanCount; ++spanIndex)
+                    {
+                        const std::size_t index = spanIndex;
+                        const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                            writeJsonStringSpan,
+                            fieldPointer + written,
+                            currentRemainingSize,
+                            spans[index].ptr,
+                            spans[index].len,
+                            nautilus::val<bool>{index == 0},
+                            nautilus::val<bool>{index + 1 == spanCount},
+                            recordBuffer.getReference(),
+                            bufferProvider);
+                        written += amountWritten;
+                        currentRemainingSize -= amountWritten;
+                    }
+                }
+            }
+            else
+            {
+                const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
+                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                    writeJsonStringValue,
+                    fieldPointer + written,
+                    currentRemainingSize,
+                    varSizedValue.getContent(),
+                    varSizedValue.getSize(),
+                    recordBuffer.getReference(),
+                    bufferProvider);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
             break;
         }
         case DataType::Type::INT8:

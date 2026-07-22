@@ -1,0 +1,14 @@
+# name: ConcatAlert4Field
+# description: 4-field projection with CONCAT rope, BlockingFile+SequentialCSV source (matches concat_alert benchmark) — repro for the constant-loop.
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE bid4(auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid4 TYPE BlockingFile SET("SequentialCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+1001,5,1.5,apple
+1002,6,2.5,google
+
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bid4 INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"BID4$AUCTIONID":1001,"BID4$BIDDER":5,"BID4$PRICE":1.5,"ALERT":"alert: bid on channel apple"}
+{"BID4$AUCTIONID":1002,"BID4$BIDDER":6,"BID4$PRICE":2.5,"ALERT":"alert: bid on channel google"}

@@ -1,0 +1,20 @@
+# name: ConcatAlertJson
+# description: CONCAT(constant, varsized-column) emitted as JSON — exercises the JIT JSONOutputFormatter rope span-walk (no arena round-trip). IR-dump + correctness vehicle for the lazy-rope prototype.
+# groups: [Function, Text, Projection, JSON]
+
+CREATE LOGICAL SOURCE bidj(auctionId INT32 NOT NULL, channel VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidj TYPE File;
+ATTACH INLINE
+1001,apple
+1002,google
+1003,facebook
+1004,amazon
+1005,baidu
+
+SELECT CONCAT(VARSIZED("alert-"), channel) AS msg FROM bidj INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"MSG":"alert-apple"}
+{"MSG":"alert-google"}
+{"MSG":"alert-facebook"}
+{"MSG":"alert-amazon"}
+{"MSG":"alert-baidu"}

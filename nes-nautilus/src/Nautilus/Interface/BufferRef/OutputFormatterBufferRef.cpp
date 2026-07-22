@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -85,7 +86,16 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
         for (std::size_t i = 0; i < numberOfFields; ++i)
         {
             const auto& value = rec.read(fields.at(i).name);
-            isLazyPassthrough[i] = value.isLazyValue() and not value.isNullable();
+            /// A lazy value is a passthrough (a single contiguous view into the input) unless it is a multi-span
+            /// rope (a CONCAT result). isRope() is a HOST-ONLY predicate (no nautilus::val access, so no trace
+            /// op) -- calling getSpans() here instead emits a per-field trace op in this plain loop, which the
+            /// tracer reads as a constant loop when the formatter is fused into the source pipeline.
+            bool singleSpanLazy = false;
+            if (value.isLazyValue() and not value.isNullable())
+            {
+                singleSpanLazy = not value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>()->isRope();
+            }
+            isLazyPassthrough[i] = singleSpanLazy;
             allNonNullable = allNonNullable and not value.isNullable();
         }
 
