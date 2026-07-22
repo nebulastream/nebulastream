@@ -271,6 +271,45 @@ TEST_F(PhysicalPlanBuilderFlipTest, MultiOperatorChainFlip)
     EXPECT_TRUE(current->getChildren().empty());
 }
 
+/// {SinkA, SinkB} -> shared intermediate -> Source (fan-out). After flip, the shared operator
+/// must have both sinks as children, without duplicating the shared subgraph.
+TEST_F(PhysicalPlanBuilderFlipTest, FanOutTwoSinksSharedOperatorFlip)
+{
+    auto source = makeSourceWrapper();
+    auto shared = makeUnionWrapper();
+    auto sinkA = makeSinkWrapper();
+    auto sinkB = makeSinkWrapper();
+
+    /// Build the two-root DAG: sinkA -> shared -> source and sinkB -> shared (same instance).
+    shared->addChild(source);
+    sinkA->addChild(shared);
+    sinkB->addChild(shared);
+
+    auto builder = PhysicalPlanBuilder(randomQueryId());
+    builder.addSinkRoot(sinkA);
+    builder.addSinkRoot(sinkB);
+    auto plan = std::move(builder).finalize();
+
+    /// After flip: single source root, shared operator fans out to both sinks.
+    ASSERT_EQ(plan.getRootOperators().size(), 1U);
+    const auto root = plan.getRootOperators()[0];
+    EXPECT_TRUE(root->getPhysicalOperator().tryGet<SourceDescriptorPhysicalOperator>());
+
+    ASSERT_EQ(root->getChildren().size(), 1U);
+    const auto fanOutNode = root->getChildren()[0];
+    EXPECT_TRUE(fanOutNode->getPhysicalOperator().tryGet<UnionPhysicalOperator>());
+
+    ASSERT_EQ(fanOutNode->getChildren().size(), 2U);
+    for (const auto& leaf : fanOutNode->getChildren())
+    {
+        EXPECT_TRUE(leaf->getPhysicalOperator().tryGet<SinkPhysicalOperator>());
+        EXPECT_TRUE(leaf->getChildren().empty());
+    }
+
+    EXPECT_EQ(countNodes(plan), 4U);
+    EXPECT_EQ(countEdges(plan), 3U);
+}
+
 /// Build a graph, count edges before finalize, verify same count in the resulting PhysicalPlan.
 TEST_F(PhysicalPlanBuilderFlipTest, EdgeCountPreserved)
 {
