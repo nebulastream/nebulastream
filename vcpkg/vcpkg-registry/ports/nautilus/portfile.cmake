@@ -17,6 +17,7 @@ vcpkg_from_github(
         SHA512 6c36e2aefeb2780672da4c7f7c12ac15ae41c7e5803d7fcddc43905ac1b482cd760dbf9a82b1ede6594ed79ff63a7440488351b0ad48a45259a004ac4bbf1d61
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
+		0002-guarded-invoke.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

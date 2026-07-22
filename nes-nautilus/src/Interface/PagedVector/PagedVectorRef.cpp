@@ -23,15 +23,13 @@
 
 #include <cstdint>
 #include <ranges>
-#include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Interface/RecordLayoutUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
@@ -173,92 +171,30 @@ PagedVectorRef::PagedVectorRef(NautilusBuffer pagedVectorBuffer, std::shared_ptr
 
 Record DefaultPagedVectorTupleLayout::readRecord(const nautilus::val<int8_t*> recordMemAddress, LoadVarSizedFunction loadFunction) const
 {
-    const auto numFields = std::ranges::size(schema);
-    Record record;
     uint64_t fieldOffset = 0;
-    for (nautilus::static_val<uint64_t> i = 0; i < numFields; ++i)
-    {
-        auto fieldOpt = schema[i];
-        INVARIANT(
-            fieldOpt.has_value(),
-            "Failed trying to access field at pos {} but schema has only {} fields.",
-            static_cast<size_t>(i),
-            std::ranges::size(schema));
-        const auto name = fieldOpt->getFullyQualifiedName();
-        const auto dataType = fieldOpt->getDataType();
-        auto fieldAddress = recordMemAddress + nautilus::val<uint64_t>(fieldOffset);
-
-        nautilus::val<bool> null = false;
-        nautilus::val<int8_t*> varValRef = fieldAddress;
-        if (dataType.nullable)
+    const auto access = FieldAccess::createFieldAccesses(
+        schema,
+        [&fieldOffset, &recordMemAddress](const auto& field)
         {
-            null = readValueFromMemRef<bool>(fieldAddress);
-            varValRef += 1;
-        }
-        if (dataType.type != DataType::Type::VARSIZED)
-        {
-            record.write(name, VarVal::readVarValFromMemory(varValRef, dataType, null));
-        }
-        else
-        {
-            auto [ptr, len] = loadFunction(varValRef);
-            record.write(name, VarVal{VariableSizedData(ptr, len), dataType.nullable, null});
-        }
-        fieldOffset += dataType.getSizeInBytesWithNull();
-    }
-    return record;
+            const auto dataType = field.getDataType();
+            FieldAccess fieldAccess{
+                .name = field.getFullyQualifiedName(),
+                .dataType = dataType,
+                .address = recordMemAddress + nautilus::val<uint64_t>(fieldOffset)};
+            fieldOffset += dataType.getSizeInBytesWithNull();
+            return fieldAccess;
+        });
+    return readRecordFields(access, loadFunction);
 }
 
 void DefaultPagedVectorTupleLayout::writeRecord(
     const Record& record, nautilus::val<std::int8_t*> memoryForRecord, AllocateVarSizedFunction allocateVarSized)
 {
-    const auto numFields = std::ranges::size(schema);
-    uint64_t fieldOffset = 0;
-    for (nautilus::static_val<uint64_t> i = 0; i < numFields; ++i)
+    /// Varsized data is appended to the paged vector's page via the allocate callback, then copied in.
+    const VarSizedStoreFn storeVarSized = [&allocateVarSized](const nautilus::val<int8_t*>& slot, const VarVal& value)
     {
-        const auto fieldOpt = schema[i];
-        INVARIANT(
-            fieldOpt.has_value(),
-            "Failed trying to access field at pos {} but schema has only {} fields.",
-            static_cast<size_t>(i),
-            std::ranges::size(schema));
-        const auto name = fieldOpt->getFullyQualifiedName();
-        const auto dataType = fieldOpt->getDataType();
-        if (not record.hasField(name))
-        {
-            /// Skipping any fields that are not part of the record
-            fieldOffset += dataType.getSizeInBytesWithNull();
-            continue;
-        }
-        auto fieldAddress = memoryForRecord + nautilus::val<uint64_t>(fieldOffset);
-        const auto& value = record.read(name);
-
-        /// For now, we store the null byte before the actual VarVal
-        nautilus::val<int8_t*> addressToWriteValue = fieldAddress;
-        if (dataType.nullable)
-        {
-            /// Writing the null value to the first byte and then incrementing the memref by 1 byte to store the actual value
-            VarVal{value.isNull()}.writeToMemory(addressToWriteValue);
-            addressToWriteValue += 1;
-        }
-        if (dataType.type != DataType::Type::VARSIZED)
-        {
-            auto sizeInBytes = nautilus::val<uint64_t>(DataTypeProvider::provideDataType(dataType.type).getSizeInBytesWithNull());
-
-            if (const auto storeFunction = storeValueFunctionMap.find(dataType.type); storeFunction != storeValueFunctionMap.end())
-            {
-                auto dummy = storeFunction->second(value, addressToWriteValue);
-                fieldOffset += dataType.getSizeInBytesWithNull();
-                continue;
-            }
-            throw UnknownDataType("Physical Type: {} is currently not supported", dataType);
-        }
-
-        /// field is varsized data, get the appropriate memory address to write it to
         const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-        const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(addressToWriteValue, varSizedValue.getSize());
-
-        /// write the varsized data to the memory address
+        const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(slot, varSizedValue.getSize());
         invoke(
             +[](int8_t* varSizedMemAddress, const int8_t* varSizedDataPtr, const uint64_t varSizedDataLength)
             {
@@ -268,9 +204,21 @@ void DefaultPagedVectorTupleLayout::writeRecord(
             varSizedMemAddress,
             varSizedValue.getContent(),
             varSizedValue.getSize());
-
-        fieldOffset += dataType.getSizeInBytesWithNull();
-    }
+    };
+    uint64_t fieldOffset = 0;
+    const auto access = FieldAccess::createFieldAccesses(
+        schema,
+        [&fieldOffset, &memoryForRecord](const auto& field)
+        {
+            const auto dataType = field.getDataType();
+            FieldAccess fieldAccess{
+                .name = field.getFullyQualifiedName(),
+                .dataType = dataType,
+                .address = memoryForRecord + nautilus::val<uint64_t>(fieldOffset)};
+            fieldOffset += dataType.getSizeInBytesWithNull();
+            return fieldAccess;
+        });
+    writeRecordFields(access, record, storeVarSized);
 }
 
 void PagedVectorRef::pushBack(const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider)

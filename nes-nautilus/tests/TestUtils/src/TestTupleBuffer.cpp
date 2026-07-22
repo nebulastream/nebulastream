@@ -34,6 +34,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -124,7 +125,7 @@ VarVal nonNullVarVal(const FieldValue& value, const DataType::Type type)
 }
 
 /// Builds a placeholder `VarVal` carrying the null bit. The payload is irrelevant — the
-/// nullable write path stores the null byte first and `loadValue` skips the payload on read.
+/// nullable write path stores the null byte first and the read path skips the payload on read.
 VarVal nullVarVal(const DataType::Type type)
 {
     const auto isNull = nautilus::val<bool>(true);
@@ -265,7 +266,7 @@ void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> 
 
     auto tupleIndex = nautilus::val<uint64_t>(impl->buffer.getNumberOfTuples());
     auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(impl->buffer));
-    const RecordBuffer recordBuffer(bufPtr);
+    const RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(bufPtr)};
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(impl->bufferProvider);
 
     Record record;
@@ -312,7 +313,7 @@ FieldView& FieldView::operator=(const FieldValue& value)
 
     auto recordIdx = nautilus::val<uint64_t>(recordIndex);
     auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(locked->buffer));
-    const RecordBuffer recordBuffer(bufPtr);
+    const RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(bufPtr)};
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(locked->bufferProvider);
 
     Record record;
@@ -336,7 +337,7 @@ FieldView& FieldView::operator=(std::nullopt_t)
 
     auto recordIdx = nautilus::val<uint64_t>(recordIndex);
     auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(locked->buffer));
-    const RecordBuffer recordBuffer(bufPtr);
+    const RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(bufPtr)};
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(locked->bufferProvider);
 
     Record record;
@@ -356,7 +357,7 @@ std::optional<FieldValue> FieldView::readFieldValue() const
 
     auto recordIdx = nautilus::val<uint64_t>(recordIndex);
     auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(locked->buffer));
-    const RecordBuffer recordBuffer(bufPtr);
+    const RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(bufPtr)};
 
     const auto fieldId = QualifiedIdentifierBase<1>{Identifier::parse(fieldName)};
     auto record = locked->bufRef->readRecord({fieldId}, recordBuffer, recordIdx);

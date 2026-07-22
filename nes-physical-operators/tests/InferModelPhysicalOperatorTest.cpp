@@ -101,17 +101,10 @@ protected:
 
         void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
 
-        TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
-        {
-            pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(std::move(tupleBuffer)));
-            return *pinnedBuffers.back();
-        }
-
         ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the fixture
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
-        std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
         WorkerThreadId threadId = INITIAL<WorkerThreadId>;
         uint64_t numWorkerThreads = 1;
 

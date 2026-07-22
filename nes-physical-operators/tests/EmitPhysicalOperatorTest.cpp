@@ -36,6 +36,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/RowTupleBufferRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -74,12 +75,6 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
 
         TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
 
-        TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
-        {
-            pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
-            return *pinnedBuffers.back();
-        }
-
         [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return INITIAL<WorkerThreadId>; }
 
         [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1; }
@@ -109,9 +104,6 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
-        /// We want to ensure that the address of the TupleBuffer is always the same. If we would simply store the object directly in the vector,
-        /// the address might change as the vector might be resized and thus, the object have a different address.
-        std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
     };
 
 public:
@@ -147,7 +139,7 @@ public:
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();
 
-        RecordBuffer recordBuffer(std::addressof(buffer));
+        RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(std::addressof(buffer))};
         test(executionContext, recordBuffer);
     }
 
