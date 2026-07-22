@@ -65,6 +65,7 @@ public:
 
 private:
     std::string pipeName;
+    size_t queueCapacity;
     std::shared_ptr<const PipeSchema> schema;
     std::shared_ptr<PipeQueue> queue;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
@@ -81,8 +82,17 @@ struct ConfigParametersPipeSource
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PIPE_NAME, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<size_t> QUEUE_CAPACITY{
+        "QUEUE_CAPACITY",
+        PipeService::DEFAULT_QUEUE_CAPACITY,
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
+        {
+            const auto capacity = DescriptorConfig::tryGet(QUEUE_CAPACITY, config);
+            return capacity && *capacity > 0 ? capacity : std::nullopt;
+        }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, PIPE_NAME);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, PIPE_NAME, QUEUE_CAPACITY);
 };
 
 }

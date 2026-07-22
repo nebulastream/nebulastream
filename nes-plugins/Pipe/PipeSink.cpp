@@ -13,7 +13,9 @@
 */
 #include <PipeSink.hpp>
 
+#include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -100,7 +102,7 @@ void PipeSink::stop(PipelineExecutionContext&)
     NES_INFO("PipeSink: stopped for pipe '{}'", pipeName);
 }
 
-Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
+Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in PipeSink.");
     if (!sinkHandle)
@@ -108,8 +110,46 @@ Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, 
         return BufferResult::COMPLETED;
     }
 
+    const std::lock_guard lock(deliveryMutex);
+    if (pendingDelivery
+        && (pendingDelivery->sequenceNumber != inputTupleBuffer.getSequenceNumber()
+            || pendingDelivery->chunkNumber != inputTupleBuffer.getChunkNumber()))
+    {
+        buffered.push_back(inputTupleBuffer);
+        return BufferResult::COMPLETED;
+    }
+
+    auto currentBuffer = std::optional(inputTupleBuffer);
+    while (currentBuffer)
+    {
+        if (!tryDeliver(*currentBuffer))
+        {
+            sinkHandle->setConsumerQueueFull(true);
+            pec.repeatTask(*currentBuffer, BACKPRESSURE_RETRY_INTERVAL);
+            return BufferResult::RETRY;
+        }
+
+        if (buffered.empty())
+        {
+            sinkHandle->setConsumerQueueFull(false);
+            return BufferResult::COMPLETED;
+        }
+        currentBuffer = std::move(buffered.front());
+        buffered.pop_front();
+    }
+    std::unreachable();
+}
+
+bool PipeSink::tryDeliver(const TupleBuffer& inputTupleBuffer)
+{
     const auto seqNum = inputTupleBuffer.getSequenceNumber();
     const auto seqNumValue = seqNum.getRawValue();
+
+    const bool firstAttempt = !pendingDelivery;
+    if (firstAttempt)
+    {
+        pendingDelivery.emplace(seqNum, inputTupleBuffer.getChunkNumber(), std::vector<std::shared_ptr<PipeQueue>>{});
+    }
 
     /// Only promote pending consumers when we see a truly new sequence —
     /// one we haven't delivered any chunks of yet. This prevents mid-sequence
@@ -120,52 +160,63 @@ Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, 
         sinkHandle->queues.withRLock([&](const auto& queueState) { needsPromotion = !queueState.pending.empty(); });
     }
 
-    if (needsPromotion)
-    {
-        /// WLock: promote pending → active, then fan out in the same lock
-        sinkHandle->queues.withWLock(
-            [&](auto& queueState)
+    bool delivered = true;
+    sinkHandle->queues.withWLock(
+        [&](auto& queueState)
+        {
+            if (needsPromotion && !queueState.pending.empty())
             {
-                if (!queueState.pending.empty())
+                NES_INFO(
+                    "PipeSink: activating {} pending sources at sequence boundary (seq={}) on pipe '{}'",
+                    queueState.pending.size(),
+                    seqNum,
+                    pipeName);
+                for (auto& pendingQueue : queueState.pending)
                 {
-                    NES_INFO(
-                        "PipeSink: activating {} pending sources at sequence boundary (seq={}) on pipe '{}'",
-                        queueState.pending.size(),
-                        seqNum,
-                        pipeName);
-                    for (auto& pendingQueue : queueState.pending)
-                    {
-                        queueState.active.push_back({.queue = std::move(pendingQueue), .activatedAtSeq = seqNum});
-                    }
-                    queueState.pending.clear();
+                    queueState.active.push_back({.queue = std::move(pendingQueue), .activatedAtSeq = seqNum});
                 }
-                for (const auto& consumer : queueState.active)
-                {
-                    /// Only deliver buffers from sequences >= activation point.
-                    /// OOO buffers from older sequences are dropped for this consumer.
-                    if (seqNum >= consumer.activatedAtSeq)
-                    {
-                        consumer.queue->blockingWrite(PipeChannelMessage{inputTupleBuffer});
-                    }
-                }
-            });
-    }
-    else
-    {
-        /// RLock: queues are thread-safe, we only need the lock to guard the vector
-        sinkHandle->queues.withRLock(
-            [&](const auto& queueState)
+                queueState.pending.clear();
+            }
+
+            for (const auto& consumer : queueState.active)
             {
-                for (const auto& consumer : queueState.active)
+                if (seqNum < consumer.activatedAtSeq
+                    || std::ranges::find(pendingDelivery->deliveredConsumers, consumer.queue)
+                        != pendingDelivery->deliveredConsumers.end())
                 {
-                    if (seqNum >= consumer.activatedAtSeq)
-                    {
-                        consumer.queue->blockingWrite(PipeChannelMessage{inputTupleBuffer});
-                    }
+                    continue;
                 }
-            });
+                if (!consumer.queue->write(PipeChannelMessage{inputTupleBuffer}))
+                {
+                    if (firstAttempt)
+                    {
+                        NES_WARNING(
+                            "PipeSink: consumer queue full on pipe '{}' (capacity={}); applying backpressure and retrying buffer {}-{}",
+                            pipeName,
+                            consumer.queue->capacity(),
+                            seqNum,
+                            inputTupleBuffer.getChunkNumber());
+                    }
+                    delivered = false;
+                    return;
+                }
+                pendingDelivery->deliveredConsumers.push_back(consumer.queue);
+            }
+        });
+
+    if (!delivered)
+    {
+        return false;
     }
 
+    pendingDelivery.reset();
+    updateMaxSequence(seqNum);
+    return true;
+}
+
+void PipeSink::updateMaxSequence(SequenceNumber sequenceNumber)
+{
+    const auto seqNumValue = sequenceNumber.getRawValue();
     auto maxSeq = maxSeqStarted.load(std::memory_order_relaxed);
     while (seqNumValue > maxSeq)
     {
@@ -174,7 +225,6 @@ Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, 
             break;
         }
     }
-    return BufferResult::COMPLETED;
 }
 
 DescriptorConfig::Config PipeSink::validateAndFormat(std::unordered_map<std::string, std::string> config)

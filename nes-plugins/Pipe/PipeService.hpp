@@ -53,6 +53,8 @@ using PipeQueue = folly::MPMCQueue<PipeChannelMessage>;
 class PipeService
 {
 public:
+    static constexpr size_t DEFAULT_QUEUE_CAPACITY = 1024;
+
     static PipeService& instance();
 
     /// Handle held by the PipeSink to fan-out buffers to all connected sources.
@@ -73,6 +75,7 @@ public:
         {
             std::vector<ActiveConsumer> active; /// receiving data
             std::vector<std::shared_ptr<PipeQueue>> pending; /// waiting for next sequence boundary
+            bool consumerQueueFull = false;
         };
 
         folly::Synchronized<Queues> queues;
@@ -83,7 +86,12 @@ public:
         /// Remove a consumer queue from active or pending. Applies backpressure if last consumer removed.
         void removeConsumer(const std::shared_ptr<PipeQueue>& queue);
 
+        /// Apply pressure while a consumer queue is full without losing the no-consumer pressure state.
+        void setConsumerQueueFull(bool full);
+
     private:
+        void updateBackpressure(const Queues& queues) const;
+
         BackpressureController* bpController;
     };
 
@@ -101,15 +109,16 @@ public:
     /// The queue goes into pending and is activated at the next sequence boundary by the sink.
     /// Throws CannotOpenSource if no sink is registered for this name.
     /// Throws CannotOpenSource if the schema does not match the existing pipe schema.
-    std::shared_ptr<PipeQueue> registerSource(const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema);
+    std::shared_ptr<PipeQueue> registerSource(
+        const std::string& pipeName,
+        const std::shared_ptr<const PipeSchema>& schema,
+        size_t queueCapacity = DEFAULT_QUEUE_CAPACITY);
 
     /// Unregister a source. Removes the queue from the SinkHandle (active or pending).
     void unregisterSource(const std::string& pipeName, const std::shared_ptr<PipeQueue>& queue);
 
 private:
     PipeService() = default;
-
-    static constexpr size_t DEFAULT_QUEUE_CAPACITY = 1024;
 
     struct PipeEntry
     {

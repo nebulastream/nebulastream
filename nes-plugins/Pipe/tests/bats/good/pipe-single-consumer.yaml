@@ -8,17 +8,19 @@ query:
 
 sinks:
   - name: PIPE_SINK
+    host: worker-node:8080
     schema:
-      - { name: "GEN_SOURCE$id", type: UINT64 }
-      - { name: "GEN_SOURCE$value", type: UINT64 }
+      - { name: id, type: UINT64 }
+      - { name: value, type: UINT64 }
     type: Pipe
     config:
       pipe_name: "test_pipe"
     parser_config: { }
   - name: VOID_SINK
+    host: worker-node:8080
     schema:
-      - { name: "PIPE_READER$id", type: UINT64 }
-      - { name: "PIPE_READER$value", type: UINT64 }
+      - { name: id, type: UINT64 }
+      - { name: value, type: UINT64 }
     type: Void
     config: { }
     parser_config: { }
@@ -35,9 +37,10 @@ logical:
 
 physical:
   - logical: GEN_SOURCE
+    host: worker-node:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       stop_generator_when_sequence_finishes: NONE
@@ -47,8 +50,14 @@ physical:
       generator_schema: |
         SEQUENCE UINT64 0 1000 1, SEQUENCE UINT64 0 500 1
   - logical: PIPE_READER
+    host: worker-node:8080
     parser_config:
       type: NATIVE
     type: Pipe
     source_config:
       pipe_name: "test_pipe"
+
+workers:
+  - host: worker-node:8080
+    data_address: worker-node:9090
+    max_operators: 10000

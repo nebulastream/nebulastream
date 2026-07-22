@@ -36,12 +36,8 @@ void PipeService::SinkHandle::addConsumer(std::shared_ptr<PipeQueue> queue)
     queues.withWLock(
         [&](auto& queues)
         {
-            const bool wasEmpty = queues.active.empty() && queues.pending.empty();
             queues.pending.push_back(std::move(queue));
-            if (wasEmpty && bpController)
-            {
-                bpController->releasePressure();
-            }
+            updateBackpressure(queues);
         });
 }
 
@@ -52,11 +48,34 @@ void PipeService::SinkHandle::removeConsumer(const std::shared_ptr<PipeQueue>& q
         {
             std::erase_if(queues.active, [&](const auto& consumer) { return consumer.queue == queue; });
             std::erase(queues.pending, queue);
-            if (queues.active.empty() && queues.pending.empty() && bpController)
-            {
-                bpController->applyPressure();
-            }
+            updateBackpressure(queues);
         });
+}
+
+void PipeService::SinkHandle::setConsumerQueueFull(bool full)
+{
+    queues.withWLock(
+        [&](auto& queues)
+        {
+            queues.consumerQueueFull = full;
+            updateBackpressure(queues);
+        });
+}
+
+void PipeService::SinkHandle::updateBackpressure(const Queues& queues) const
+{
+    if (!bpController)
+    {
+        return;
+    }
+    if (queues.consumerQueueFull || (queues.active.empty() && queues.pending.empty()))
+    {
+        bpController->applyPressure();
+    }
+    else
+    {
+        bpController->releasePressure();
+    }
 }
 
 /// --- PipeService ---
@@ -99,12 +118,13 @@ void PipeService::unregisterSink(const std::string& pipeName)
         });
 }
 
-std::shared_ptr<PipeQueue> PipeService::registerSource(const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema)
+std::shared_ptr<PipeQueue> PipeService::registerSource(
+    const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, const size_t queueCapacity)
 {
     return pipes.withWLock(
         [&](auto& map) -> std::shared_ptr<PipeQueue>
         {
-            auto queue = std::make_shared<PipeQueue>(DEFAULT_QUEUE_CAPACITY);
+            auto queue = std::make_shared<PipeQueue>(queueCapacity);
             auto it = map.find(pipeName);
             if (it != map.end())
             {

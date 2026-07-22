@@ -36,6 +36,7 @@ namespace NES
 
 PipeSource::PipeSource(const SourceDescriptor& sourceDescriptor)
     : pipeName(sourceDescriptor.getFromConfig(ConfigParametersPipeSource::PIPE_NAME))
+    , queueCapacity(sourceDescriptor.getFromConfig(ConfigParametersPipeSource::QUEUE_CAPACITY))
     , schema(sourceDescriptor.getLogicalSource().getSchema())
 {
 }
@@ -44,7 +45,7 @@ void PipeSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 {
     NES_INFO("PipeSource: opening for pipe '{}'", pipeName);
     bufferProvider = std::move(provider);
-    queue = PipeService::instance().registerSource(pipeName, schema);
+    queue = PipeService::instance().registerSource(pipeName, schema, queueCapacity);
     sequenceNumberOffset.reset();
 }
 
