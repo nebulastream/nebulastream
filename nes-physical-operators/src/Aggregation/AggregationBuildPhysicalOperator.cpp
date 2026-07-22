@@ -117,7 +117,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
             auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
             {
-                aggFunction->reset(state, ctx.pipelineMemoryProvider);
+                aggFunction->reset(state, ctx.pipelineMemoryProvider, ctx.getCompilationContext());
                 state = state + aggFunction->getSizeOfStateInBytes();
             }
         },
@@ -129,7 +129,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
-        aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
+        aggFunction->lift(state, ctx.pipelineMemoryProvider, ctx.getCompilationContext(), record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }

@@ -38,13 +38,21 @@ public:
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
+        CompilationContext& compilationContext,
         const Record& record) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
-        PipelineMemoryProvider& pipelineMemoryProvider) override;
-    Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
-    void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+        PipelineMemoryProvider& pipelineMemoryProvider,
+        CompilationContext& compilationContext) override;
+    Record lower(
+        nautilus::val<AggregationState*> aggregationState,
+        PipelineMemoryProvider& pipelineMemoryProvider,
+        CompilationContext& compilationContext) override;
+    void reset(
+        nautilus::val<AggregationState*> aggregationState,
+        PipelineMemoryProvider& pipelineMemoryProvider,
+        CompilationContext& compilationContext) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~AvgAggregationPhysicalFunction() override = default;

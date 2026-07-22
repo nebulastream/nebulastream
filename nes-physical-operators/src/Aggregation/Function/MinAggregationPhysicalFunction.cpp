@@ -40,7 +40,10 @@ MinAggregationPhysicalFunction::MinAggregationPhysicalFunction(
 }
 
 void MinAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    CompilationContext&,
+    const Record& record)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 
@@ -76,7 +79,8 @@ void MinAggregationPhysicalFunction::lift(
 void MinAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
-    PipelineMemoryProvider&)
+    PipelineMemoryProvider&,
+    CompilationContext&)
 {
     if (not inputType.nullable)
     {
@@ -111,7 +115,8 @@ void MinAggregationPhysicalFunction::combine(
     }
 }
 
-Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record
+MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&, CompilationContext&)
 {
     if (not inputType.nullable)
     {
@@ -136,7 +141,8 @@ Record MinAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
     return record;
 }
 
-void MinAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void MinAggregationPhysicalFunction::reset(
+    const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&, CompilationContext&)
 {
     /// Initialize the null flag to "no value seen yet" so the first non-null input becomes the running min
     if (inputType.nullable)

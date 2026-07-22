@@ -23,6 +23,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <nautilus/Module.hpp>
+#include <CompilationContext.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
@@ -53,10 +54,14 @@ private:
     static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
 
     /// Registers the pipeline's main traced function in the pipeline's module.
-    void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
+    void registerPipelineFunction(nautilus::engine::NautilusModule& module, CompilationContext& compilationContext) const;
 
     nautilus::engine::NautilusEngine engine;
-    /// Both are created lazily in start(); neither type is default-constructible.
+    /// All created lazily in start(); none of the types is default-constructible. The module and its compilation
+    /// context outlive start() because in interpreted mode the pipeline function is not compiled but invoked
+    /// through the traced lambdas themselves, which still resolve shared nautilus functions out of the context.
+    std::optional<nautilus::engine::NautilusModule> module;
+    std::optional<CompilationContext> compilationContext;
     std::optional<nautilus::engine::CompiledModule> compiledModule;
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;

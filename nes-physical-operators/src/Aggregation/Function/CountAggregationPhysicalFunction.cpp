@@ -46,7 +46,10 @@ CountAggregationPhysicalFunction::CountAggregationPhysicalFunction(
 }
 
 void CountAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    CompilationContext&,
+    const Record& record)
 {
     /// Reading the old count from the aggregation state.
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
@@ -64,7 +67,8 @@ void CountAggregationPhysicalFunction::lift(
 void CountAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
-    PipelineMemoryProvider&)
+    PipelineMemoryProvider&,
+    CompilationContext&)
 {
     /// Reading the count from the first aggregation state
     const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
@@ -81,7 +85,8 @@ void CountAggregationPhysicalFunction::combine(
     newCount.writeToMemory(memAreaCount1);
 }
 
-Record CountAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record CountAggregationPhysicalFunction::lower(
+    const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&, CompilationContext&)
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -94,7 +99,8 @@ Record CountAggregationPhysicalFunction::lower(const nautilus::val<AggregationSt
     return record;
 }
 
-void CountAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void CountAggregationPhysicalFunction::reset(
+    const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&, CompilationContext&)
 {
     /// Resetting the count and count to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);

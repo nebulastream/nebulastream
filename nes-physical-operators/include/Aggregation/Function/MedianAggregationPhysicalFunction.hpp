@@ -27,6 +27,9 @@
 namespace NES
 {
 
+/// Median aggregation. The values seen so far are stored in a paged vector, one value per row, and the median is
+/// computed over them when the window closes. lift stays in the pipeline because it is short; the expensive
+/// lower, along with combine and reset, is called as a shared nautilus function (see MedianNautilusFunctions).
 class MedianAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
@@ -39,19 +42,31 @@ public:
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
+        CompilationContext& compilationContext,
         const Record& record) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
-        PipelineMemoryProvider& pipelineMemoryProvider) override;
-    Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
-    void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+        PipelineMemoryProvider& pipelineMemoryProvider,
+        CompilationContext& compilationContext) override;
+    Record lower(
+        nautilus::val<AggregationState*> aggregationState,
+        PipelineMemoryProvider& pipelineMemoryProvider,
+        CompilationContext& compilationContext) override;
+    void reset(
+        nautilus::val<AggregationState*> aggregationState,
+        PipelineMemoryProvider& pipelineMemoryProvider,
+        CompilationContext& compilationContext) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~MedianAggregationPhysicalFunction() override = default;
 
 private:
+    /// A single column holding the aggregated field, laid out by the lowering rule. Storing only that value is
+    /// what lets the median body be shared: it reads the value by name instead of applying this median's
+    /// column-specific input function.
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
+    Record::RecordFieldIdentifier valueFieldName;
 };
 
 }
