@@ -1,0 +1,14 @@
+# name: ConcatQuote
+# description: channel value containing a JSON-special char must still be escaped (guards the inline-fold detection)
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE bq(auctionId INT32 NOT NULL, channel VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bq TYPE File;
+ATTACH INLINE
+1,ab"cd
+2,plain
+
+SELECT auctionId, CONCAT(VARSIZED("p:"), channel) AS alert FROM bq INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"BQ$AUCTIONID":1,"ALERT":"p:ab\"cd"}
+{"BQ$AUCTIONID":2,"ALERT":"p:plain"}

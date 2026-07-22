@@ -150,6 +150,27 @@ uint64_t writeEscapeSequence(int8_t* out, const char character)
     return 2;
 }
 
+/// PURE (reads its span, writes nothing): does this span contain any byte JSON string-escaping must handle
+/// (`"`, `\`, or a control byte < 0x20)? NAUTILUS_INLINE so its bitcode is spliced into the JIT pipeline
+/// (not left as an opaque per-row proxy): once inlined, for a loop-invariant span whose pointer is a folded
+/// constant global (a CONCAT's constant prefix, via embedConstantBytes) LLVM unrolls this fixed-length scan
+/// over the known bytes and constant-folds it away -- the constant's per-row scan disappears and the branch
+/// below collapses to the scan-free literal writer. A runtime span (a column value) can't fold, so it stays
+/// scanned per row. No constant-string knowledge is threaded through the operators; the compiler derives it.
+NAUTILUS_INLINE bool jsonSpanNeedsEscape(const int8_t* content, const uint64_t contentSize)
+{
+    const char* const data = reinterpret_cast<const char*>(content);
+    for (uint64_t i = 0; i < contentSize; ++i)
+    {
+        const unsigned char character = static_cast<unsigned char>(data[i]);
+        if (character == '"' || character == '\\' || character < 0x20)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 /// Write a JSON string value: `"` + content + `"`, escaping where required. Fast path: even the
 /// worst-case escape expansion (6x, \u00XX) fits the remaining main-buffer space -- virtually
 /// always mid-buffer -- so escape straight into the output buffer in clean-run chunks (no
@@ -260,6 +281,52 @@ uint64_t writeJsonStringSpan(
         escaped.push_back('"');
     }
     return writeBytesToBuffer(escaped.data(), escaped.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
+
+/// Write a rope segment whose bytes are KNOWN (host-side, at query-compile time) to need no JSON escaping --
+/// a constant literal with no `"` / `\` / control byte. Same shape as writeJsonStringSpan but WITHOUT the
+/// per-byte escape scan: just the optional quotes + one memcpy. The rope walk picks this for spans flagged
+/// noEscape (e.g. the constant prefix of CONCAT(VARSIZED("..."), col)), which otherwise get re-scanned every row.
+uint64_t writeJsonStringLiteralSpan(
+    int8_t* bufferStartingAddress,
+    const uint64_t remainingSpace,
+    const int8_t* content,
+    const uint64_t contentSize,
+    const bool openQuote,
+    const bool closeQuote,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider)
+{
+    const char* const data = reinterpret_cast<const char*>(content);
+    const uint64_t quoteBytes = (openQuote ? 1U : 0U) + (closeQuote ? 1U : 0U);
+    if (tupleBuffer->getNumberOfChildBuffers() == 0 && contentSize + quoteBytes <= remainingSpace)
+    {
+        int8_t* out = bufferStartingAddress;
+        if (openQuote)
+        {
+            *out++ = static_cast<int8_t>('"');
+        }
+        std::memcpy(out, data, contentSize);
+        out += contentSize;
+        if (closeQuote)
+        {
+            *out++ = static_cast<int8_t>('"');
+        }
+        return static_cast<uint64_t>(out - bufferStartingAddress);
+    }
+    /// Slow path (near the main-buffer boundary): no escaping needed, so just quote + copy + spill.
+    std::string chunk;
+    chunk.reserve(contentSize + 2);
+    if (openQuote)
+    {
+        chunk.push_back('"');
+    }
+    chunk.append(data, contentSize);
+    if (closeQuote)
+    {
+        chunk.push_back('"');
+    }
+    return writeBytesToBuffer(chunk.data(), chunk.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
 /// Write a single CHAR as a JSON string ("x", escaped if needed).
@@ -486,16 +553,39 @@ void writeValue(
                     for (nautilus::static_val<std::size_t> spanIndex = 0; spanIndex < spanCount; ++spanIndex)
                     {
                         const std::size_t index = spanIndex;
-                        const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                            writeJsonStringSpan,
-                            fieldPointer + written,
-                            currentRemainingSize,
-                            spans[index].ptr,
-                            spans[index].len,
-                            nautilus::val<bool>{index == 0},
-                            nautilus::val<bool>{index + 1 == spanCount},
-                            recordBuffer.getReference(),
-                            bufferProvider);
+                        const auto openQuote = nautilus::val<bool>{index == 0};
+                        const auto closeQuote = nautilus::val<bool>{index + 1 == spanCount};
+                        /// Escape-detection, spliced inline (NAUTILUS_INLINE): for a constant-literal span the
+                        /// scan folds away at compile time (constant global + fixed length), so the branch below
+                        /// collapses to the scan-free literal writer; a runtime column span scans per row.
+                        const auto needsEscape = nautilus::invoke(jsonSpanNeedsEscape, spans[index].ptr, spans[index].len);
+                        nautilus::val<uint64_t> amountWritten{0};
+                        if (needsEscape)
+                        {
+                            amountWritten = nautilus::invoke(
+                                writeJsonStringSpan,
+                                fieldPointer + written,
+                                currentRemainingSize,
+                                spans[index].ptr,
+                                spans[index].len,
+                                openQuote,
+                                closeQuote,
+                                recordBuffer.getReference(),
+                                bufferProvider);
+                        }
+                        else
+                        {
+                            amountWritten = nautilus::invoke(
+                                writeJsonStringLiteralSpan,
+                                fieldPointer + written,
+                                currentRemainingSize,
+                                spans[index].ptr,
+                                spans[index].len,
+                                openQuote,
+                                closeQuote,
+                                recordBuffer.getReference(),
+                                bufferProvider);
+                        }
                         written += amountWritten;
                         currentRemainingSize -= amountWritten;
                     }
