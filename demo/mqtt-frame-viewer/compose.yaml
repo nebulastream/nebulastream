@@ -1,4 +1,16 @@
 services:
+  worker:
+    image: nebulastream/worker:demo-rebase
+    network_mode: host
+    working_dir: ${PWD}
+    volumes:
+      - ${PWD}:${PWD}
+    devices:
+      - /dev/snd:/dev/snd
+    command:
+      - --grpc=localhost:8080
+      - --data_address=localhost:9090
+
   mqtt:
     image: eclipse-mosquitto:2
     ports:
