@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <LazyValueRepresentations/INTLazyValueRepresentation.hpp>
+
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
-#include <LazyValueRepresentations/INTLazyValueRepresentation.hpp>
 
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -157,7 +158,7 @@ nautilus::val<bool> INTLazyValueRepresentation::eqImpl(const std::shared_ptr<Laz
 #define CONSTANT_EQ_OVERRIDE(ctype) \
     nautilus::val<bool> INTLazyValueRepresentation::eqImpl(const nautilus::val<ctype>& rhs) const \
     { \
-        return nautilus::invoke(constantEq<ctype>, ptrToLazyValue, size, rhs); \
+        return nautilus::invoke(constantEq<ctype>, getContent(), size, rhs); \
     }
 CONSTANT_EQ_OVERRIDE(int8_t)
 CONSTANT_EQ_OVERRIDE(int16_t);
@@ -199,7 +200,7 @@ nautilus::val<bool> INTLazyValueRepresentation::ltImpl(const std::shared_ptr<Laz
 #define CONSTANT_LT_OVERRIDE(ctype) \
     nautilus::val<bool> INTLazyValueRepresentation::ltImpl(const nautilus::val<ctype>& rhs) const \
     { \
-        return nautilus::invoke(constantLt<ctype>, ptrToLazyValue, size, rhs); \
+        return nautilus::invoke(constantLt<ctype>, getContent(), size, rhs); \
     }
 CONSTANT_LT_OVERRIDE(int8_t);
 CONSTANT_LT_OVERRIDE(int16_t);

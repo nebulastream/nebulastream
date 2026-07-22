@@ -15,6 +15,7 @@
 
 #include <concepts>
 #include <cstdint>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <type_traits>
@@ -22,6 +23,7 @@
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/select.hpp>
@@ -158,7 +160,24 @@ VarVal VarVal::castToType(const DataType::Type type) const
             return {getRawValueAs<nautilus::val<double>>(), nullable, null};
         }
         case DataType::Type::VARSIZED: {
-            return {getRawValueAs<VariableSizedData>(), nullable, null};
+            if (isLazyValue())
+            {
+                const auto lazy = std::get<std::shared_ptr<LazyValueRepresentation>>(value);
+                /// Already a string (a passthrough VARSIZED field or a concat rope) -- forward it unchanged.
+                if (lazy->getType().isType(DataType::Type::VARSIZED))
+                {
+                    return *this;
+                }
+                /// A non-VARSIZED lazy value (an int/float field): let it reinterpret its raw text as a VARSIZED
+                /// view -- NO parse, NO copy. The rope logic lives in the value type; VarVal only dispatches.
+                return {lazy->asVarSized(), nullable, null};
+            }
+            /// A materialised VARSIZED (or a VARSIZED literal): wrap its contiguous bytes as a single-span lazy
+            /// VARSIZED view. Keeping it lazy lets `+` (concat) dispatch to the varsized value type even when
+            /// BOTH operands are materialised (the interpreted path, or CONCAT of two literals).
+            const auto varSizedValue = getRawValueAs<VariableSizedData>();
+            return {
+                LazyValueRepresentation::varSizedView(varSizedValue.getContent(), varSizedValue.getSize(), nullable, null), nullable, null};
         }
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));

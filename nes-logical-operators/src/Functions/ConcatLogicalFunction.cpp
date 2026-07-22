@@ -70,14 +70,11 @@ LogicalFunction ConcatLogicalFunction::withInferredDataType(const Schema& schema
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 2, "ConcatLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType().join(newChildren[1].getDataType());
-    if (not newDataType.has_value() or not newDataType.value().isType(DataType::Type::VARSIZED))
-    {
-        throw DifferentFieldTypeExpected(
-            "Expected VARSIZED as outcome of {} and {}", newChildren[0].getDataType(), newChildren[1].getDataType());
-    }
-    newDataType.value().nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType.value()).withChildren(newChildren);
+    /// CONCAT stringifies its operands, so the result is ALWAYS VARSIZED regardless of the operand types --
+    /// withChildren() sets that. A non-VARSIZED operand (e.g. an INT/FLOAT column read from CSV) is forwarded as
+    /// its raw text at runtime (the physical CONCAT casts each operand to VARSIZED, then `+`), never parsed and
+    /// never re-serialised. No operand-type validation and no inserted cast are needed here.
+    return withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> ConcatLogicalFunction::getChildren() const
@@ -90,8 +87,11 @@ ConcatLogicalFunction ConcatLogicalFunction::withChildren(const std::vector<Logi
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType
-        = children[0].getDataType().join(children[1].getDataType()).value_or(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED));
+    /// CONCAT's result is always VARSIZED (it joins the text of its operands); a non-VARSIZED operand is
+    /// forwarded as its raw text by the rope at runtime. Nullable if any operand is nullable.
+    const bool anyNullable = std::ranges::any_of(children, [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = DataTypeProvider::provideDataType(
+        DataType::Type::VARSIZED, anyNullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     return copy;
 };
 

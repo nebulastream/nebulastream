@@ -239,28 +239,24 @@ VarVal TupleBufferRef::storeValue(
 
     auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
 
-    /// A rope (a multi-span lazy VARSIZED, e.g. a CONCAT result) is written straight into the child buffer,
-    /// segment by segment, instead of first being materialised into an arena buffer and then copied in. This
-    /// removes the redundant arena round-trip at this pipeline boundary: the payload is copied once (into the
-    /// child buffer here), then once more by the downstream formatter -- not three times. The segment count is
-    /// compile-time, so the walk is host-unrolled with a static_val counter (a plain counter would emit the
-    /// copy from one source line every iteration, which the tracer reads as a loop back-edge).
+    /// A lazy VARSIZED value writes itself straight into the child buffer, run by run, instead of first being
+    /// materialised into an arena buffer and then copied in. This removes the redundant arena round-trip at this
+    /// pipeline boundary: the payload is copied once (into the child buffer here), then once more by the
+    /// downstream formatter -- not three times. writeEachChunk drives the walk and hides whether the value is a
+    /// single passthrough span or a many-segment concat rope; a passthrough is simply the one-run case.
     if (value.isLazyValue())
     {
         const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
-        if (const auto spans = lazyValue->getSpans(); spans.size() > 1)
-        {
-            const auto destination
-                = invoke(reserveVarSizedRegion, recordBuffer.getReference(), bufferProvider, lazyValue->getSize(), refToIndex);
-            nautilus::val<uint64_t> offset{0};
-            for (nautilus::static_val<std::size_t> spanIndex = 0; spanIndex < spans.size(); ++spanIndex)
+        const auto destination
+            = invoke(reserveVarSizedRegion, recordBuffer.getReference(), bufferProvider, lazyValue->getSize(), refToIndex);
+        nautilus::val<uint64_t> offset{0};
+        lazyValue->writeEachChunk(
+            [&](const nautilus::val<int8_t*>& chunkPtr, const nautilus::val<uint64_t>& chunkLen, const bool, const bool)
             {
-                const std::size_t index = spanIndex;
-                nautilus::memcpy(destination + offset, spans[index].ptr, spans[index].len);
-                offset += spans[index].len;
-            }
-            return value;
-        }
+                nautilus::memcpy(destination + offset, chunkPtr, chunkLen);
+                offset += chunkLen;
+            });
+        return value;
     }
 
     const auto varSizedValue = value.getRawValueAs<VariableSizedData>();

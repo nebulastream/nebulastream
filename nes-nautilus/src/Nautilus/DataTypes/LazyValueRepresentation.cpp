@@ -15,15 +15,16 @@
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 
 #include <cstdint>
+#include <memory>
 #include <ostream>
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
+#include <LazyValueRepresentations/VARSIZEDLazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include <nautilus/std/ostream.h>
 #include <ErrorHandling.hpp>
 #include <RawValueParser.hpp>
 #include <val_arith.hpp>
@@ -35,10 +36,11 @@ namespace NES
 {
 [[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const LazyValueRepresentation& lazyValue)
 {
+    const auto content = lazyValue.getContent();
     oss << "Size(" << lazyValue.size << "): ";
     for (nautilus::val<uint32_t> i = 0; i < lazyValue.size; ++i)
     {
-        const nautilus::val<int> byte = readValueFromMemRef<int8_t>((lazyValue.ptrToLazyValue + i)) & nautilus::val<int>(0xff);
+        const nautilus::val<int> byte = readValueFromMemRef<int8_t>((content + i)) & nautilus::val<int>(0xff);
         oss << nautilus::hex;
         oss.operator<<(byte);
         oss << " ";
@@ -46,19 +48,52 @@ namespace NES
     return oss;
 }
 
+nautilus::val<int8_t*> LazyValueRepresentation::getContent() const
+{
+    /// Single span (every scalar / passthrough): hand back the view pointer, no copy. `spans.size() == 1` is a
+    /// host-time test, so this compiles to just the pointer with no runtime branch.
+    if (spans.size() == 1)
+    {
+        return spans.front().ptr;
+    }
+    /// A multi-span rope (a concat result) owns no contiguous buffer. It can be written out span-by-span (the
+    /// output formatter walks getSpans()), but reading it back as one pointer is not supported.
+    throw NotImplemented("Cannot read a multi-span (concatenated) string as one contiguous buffer.");
+}
+
+std::shared_ptr<LazyValueRepresentation> LazyValueRepresentation::varSizedView(
+    const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size, const bool nullable, const nautilus::val<bool>& isNull)
+{
+    const DataType varSizedType{DataType::Type::VARSIZED, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE};
+    return std::make_shared<VARSIZEDLazyValueRepresentation>(reference, size, varSizedType, isNull, "");
+}
+
+std::shared_ptr<LazyValueRepresentation> LazyValueRepresentation::asVarSized() const
+{
+    /// The base (a scalar / numeric field) is a single span over its raw text; a VARSIZED view over the same
+    /// bytes is that text read as a string -- no parse, no copy. Numeric lazy values are always single-span.
+    return varSizedView(spans.front().ptr, size, type.nullable, isNull);
+}
+
 VarVal LazyValueRepresentation::parseValue() const
 {
-    /// Switch between possible datatype cases
+    /// A multi-span rope (a concat result) owns no contiguous buffer, so it cannot be parsed back. It is meant
+    /// to be written out (the formatter walks getSpans()); reading it back contiguously is not supported.
+    if (spans.size() > 1)
+    {
+        throw NotImplemented("Cannot read a multi-span (concatenated) string back as a value.");
+    }
+    /// Single span: parse its raw text into the underlying value dictated by the type.
     switch (type.type)
     {
         case DataType::Type::VARSIZED: {
-            return {VariableSizedData(ptrToLazyValue, size), type.nullable, isNull};
+            return {VariableSizedData(spans.front().ptr, size), type.nullable, isNull};
         }
         case DataType::Type::UNDEFINED: {
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type.type));
         }
         default: {
-            return parseLazyIntoVarVal(type.nullable, isNull, ptrToLazyValue, size, parserType);
+            return parseLazyIntoVarVal(type.nullable, isNull, spans.front().ptr, size, parserType);
         }
     }
 }

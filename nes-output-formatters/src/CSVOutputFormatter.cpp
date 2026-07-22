@@ -182,51 +182,31 @@ void writeValue(
         case DataType::Type::VARSIZED: {
             if (value.isLazyValue())
             {
-                /// Lazy VARSIZED: walk the value's byte spans and write them straight to the output. A rope
-                /// (e.g. a CONCAT result) is a multi-span list -- writing the spans directly avoids the arena
-                /// round-trip; a passthrough field is the single-span degenerate case (unchanged behaviour).
+                /// Ask the value to write itself one contiguous run at a time. writeEachChunk drives the walk and
+                /// hides whether it is a single passthrough span or a many-segment concat rope; each run is
+                /// written straight to the output (input->output, one copy, no arena round-trip). The static_val
+                /// walk inside writeEachChunk keeps the tracer from reading the repeated write as a runtime loop.
                 const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
-                if (not lazyValue->isRope())
-                {
-                    /// Single-span passthrough: write its contiguous bytes directly. isRope() is host-only, so
-                    /// this avoids getSpans() on the hot passthrough path; getContent()/getSize() give the view.
-                    const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                        writeVarsized,
-                        fieldPointer + written,
-                        currentRemainingSize,
-                        nautilus::val<bool>{quoteStrings},
-                        lazyValue->getContent(),
-                        lazyValue->getSize(),
-                        recordBuffer.getReference(),
-                        bufferProvider);
-                    written += amountWritten;
-                    currentRemainingSize -= amountWritten;
-                }
-                else
-                {
-                    const auto spans = lazyValue->getSpans();
-                    /// Multi-span rope: one invoke per segment, host-unrolled. The static_val induction variable
-                    /// gives each unrolled iteration a distinct trace tag (a plain counter would emit the invoke
-                    /// from one source line every iteration -> the tracer would read it as a loop back-edge).
-                    const std::size_t spanCount = spans.size();
-                    for (nautilus::static_val<std::size_t> spanIndex = 0; spanIndex < spanCount; ++spanIndex)
+                lazyValue->writeEachChunk(
+                    [&](const nautilus::val<int8_t*>& chunkPtr,
+                        const nautilus::val<uint64_t>& chunkLen,
+                        const bool isFirst,
+                        const bool isLast)
                     {
-                        const std::size_t index = spanIndex;
                         const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
                             writeVarsizedSpan,
                             fieldPointer + written,
                             currentRemainingSize,
                             nautilus::val<bool>{quoteStrings},
-                            spans[index].ptr,
-                            spans[index].len,
-                            nautilus::val<bool>{index == 0},
-                            nautilus::val<bool>{index + 1 == spanCount},
+                            chunkPtr,
+                            chunkLen,
+                            nautilus::val<bool>{isFirst},
+                            nautilus::val<bool>{isLast},
                             recordBuffer.getReference(),
                             bufferProvider);
                         written += amountWritten;
                         currentRemainingSize -= amountWritten;
-                    }
-                }
+                    });
             }
             else
             {

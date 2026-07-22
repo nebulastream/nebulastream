@@ -17,6 +17,8 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 
 #include <DataTypes/DataType.hpp>
@@ -44,6 +46,22 @@ public:
     {
     }
 
+    /// Rope constructor: a VARSIZED value made of N borrowed spans (the result of concatenation). Kept as a
+    /// VARSIZED value type (not the plain base) so a nested concat -- (a || b) || c -- dispatches back here and
+    /// flattens, instead of falling into the base "parse then add" path.
+    VARSIZEDLazyValueRepresentation(
+        std::vector<Span> spans, const nautilus::val<uint64_t>& totalSize, const DataType type, const nautilus::val<bool>& isNull)
+        : LazyValueRepresentation(std::move(spans), totalSize, type, isNull)
+    {
+    }
+
+    /// Concatenation. `+` on two VARSIZED values means string concat (as `+` on two numbers means add): build a
+    /// rope of this value's spans followed by the other operand's, forwarding both operands' bytes with no copy.
+    /// reverseAdd handles `literal || varsized` (the literal is the lhs). This is where CONCAT is implemented --
+    /// the physical operator only calls `left.castToType(VARSIZED) + right.castToType(VARSIZED)`.
+    [[nodiscard]] VarVal operator+(const VarVal& other) const override;
+    [[nodiscard]] VarVal reverseAdd(const VarVal& other) const override;
+
     /// == Implementations
     [[nodiscard]] nautilus::val<bool> eqImpl(const nautilus::val<bool>& rhs) const;
     [[nodiscard]] nautilus::val<bool> eqImpl(const VariableSizedData& rhs) const;
@@ -61,5 +79,11 @@ public:
     [[nodiscard]] VarVal reverseEQ(const VarVal& other) const override;
     [[nodiscard]] VarVal operator!=(const VarVal& other) const override;
     [[nodiscard]] VarVal reverseNEQ(const VarVal& other) const override;
+
+private:
+    /// Compare this value's bytes to a contiguous buffer without materialising. A single-span value compares
+    /// directly (the fast path); a concat rope walks its segments against the buffer -- so `CONCAT(a,b) == x`
+    /// works in place, no arena allocation. Precondition: the caller has already checked equal total lengths.
+    [[nodiscard]] nautilus::val<bool> bytesEqualTo(const nautilus::val<int8_t*>& rhsContent) const;
 };
 }

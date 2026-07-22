@@ -522,43 +522,22 @@ void writeValue(
         case DataType::Type::VARSIZED: {
             if (value.isLazyValue())
             {
-                /// Lazy VARSIZED: walk the value's byte spans and write them straight to the output. A rope
-                /// (e.g. a CONCAT result) is a multi-span list -- writing the spans directly avoids the arena
-                /// round-trip (materialise-then-recopy); a passthrough field is the single-span degenerate case.
+                /// Ask the value to write itself, one contiguous run at a time. We never learn whether it is a
+                /// single passthrough span or a many-segment concat rope -- writeEachChunk drives the walk and
+                /// hides it. Each run goes straight into the JSON output buffer (input->output, one copy, no
+                /// arena round-trip): `"` + escaped(run0) + ... + escaped(runN-1) + `"`. jsonSpanNeedsEscape is
+                /// spliced inline (NAUTILUS_INLINE), so a constant-literal run (constant global + fixed length)
+                /// folds its scan away at compile time to the scan-free literal writer; a runtime column run scans.
                 const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
-                if (not lazyValue->isRope())
-                {
-                    /// Single-span passthrough (a column view): write its contiguous bytes directly. isRope() is
-                    /// host-only, so this avoids calling getSpans() on the hot passthrough path (which touches SSA
-                    /// handles); getContent()/getSize() give the same view without materialising.
-                    const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                        writeJsonStringValue,
-                        fieldPointer + written,
-                        currentRemainingSize,
-                        lazyValue->getContent(),
-                        lazyValue->getSize(),
-                        recordBuffer.getReference(),
-                        bufferProvider);
-                    written += amountWritten;
-                    currentRemainingSize -= amountWritten;
-                }
-                else
-                {
-                    const auto spans = lazyValue->getSpans();
-                    /// Multi-span rope: `"` + escaped(seg0) + ... + escaped(segN-1) + `"`, one invoke per span,
-                    /// host-unrolled (the span count is compile-time). When the formatter is FUSED into the source
-                    /// pipeline (single-node worker), the rope reaches here and its segments are written straight
-                    /// into the JSON output buffer -- input->output, one copy, no arena or child buffer.
-                    const std::size_t spanCount = spans.size();
-                    for (nautilus::static_val<std::size_t> spanIndex = 0; spanIndex < spanCount; ++spanIndex)
+                lazyValue->writeEachChunk(
+                    [&](const nautilus::val<int8_t*>& chunkPtr,
+                        const nautilus::val<uint64_t>& chunkLen,
+                        const bool isFirst,
+                        const bool isLast)
                     {
-                        const std::size_t index = spanIndex;
-                        const auto openQuote = nautilus::val<bool>{index == 0};
-                        const auto closeQuote = nautilus::val<bool>{index + 1 == spanCount};
-                        /// Escape-detection, spliced inline (NAUTILUS_INLINE): for a constant-literal span the
-                        /// scan folds away at compile time (constant global + fixed length), so the branch below
-                        /// collapses to the scan-free literal writer; a runtime column span scans per row.
-                        const auto needsEscape = nautilus::invoke(jsonSpanNeedsEscape, spans[index].ptr, spans[index].len);
+                        const auto openQuote = nautilus::val<bool>{isFirst};
+                        const auto closeQuote = nautilus::val<bool>{isLast};
+                        const auto needsEscape = nautilus::invoke(jsonSpanNeedsEscape, chunkPtr, chunkLen);
                         nautilus::val<uint64_t> amountWritten{0};
                         if (needsEscape)
                         {
@@ -566,8 +545,8 @@ void writeValue(
                                 writeJsonStringSpan,
                                 fieldPointer + written,
                                 currentRemainingSize,
-                                spans[index].ptr,
-                                spans[index].len,
+                                chunkPtr,
+                                chunkLen,
                                 openQuote,
                                 closeQuote,
                                 recordBuffer.getReference(),
@@ -579,8 +558,8 @@ void writeValue(
                                 writeJsonStringLiteralSpan,
                                 fieldPointer + written,
                                 currentRemainingSize,
-                                spans[index].ptr,
-                                spans[index].len,
+                                chunkPtr,
+                                chunkLen,
                                 openQuote,
                                 closeQuote,
                                 recordBuffer.getReference(),
@@ -588,8 +567,7 @@ void writeValue(
                         }
                         written += amountWritten;
                         currentRemainingSize -= amountWritten;
-                    }
-                }
+                    });
             }
             else
             {

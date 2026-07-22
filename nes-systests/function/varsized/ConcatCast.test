@@ -1,0 +1,50 @@
+# name: ConcatCast
+# description: CONCAT with non-VARSIZED operands (INT/FLOAT columns) -- the "concat with a cast" generality case.
+#   A numeric column is read lazily from CSV and its RAW TEXT is forwarded into the rope with NO parse and NO
+#   re-serialise (via spansOf/makeRope). CONCAT and the rope carry no type-specific code; the emitted string is
+#   the input text verbatim (forwarded, not reformatted -- note 12.50 / 7.00 keep their exact digits).
+# groups: [Function, Text, Projection, Cast]
+
+CREATE LOGICAL SOURCE bidc(auctionId INT32 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidc TYPE File;
+ATTACH INLINE
+1001,12.50,apple
+1002,7.00,google
+1003,999.99,facebook
+
+CREATE SINK msgSink(msg VARSIZED NOT NULL) TYPE File;
+
+# INT column forwarded as text into a concat -- no int parse
+SELECT CONCAT(VARSIZED("id-"), auctionId) AS msg FROM bidc INTO msgSink;
+----
+id-1001
+id-1002
+id-1003
+
+# FLOAT column forwarded verbatim (raw input text, not reformatted)
+SELECT CONCAT(VARSIZED("$"), price) AS msg FROM bidc INTO msgSink;
+----
+$12.50
+$7.00
+$999.99
+
+# VARSIZED column concatenated with an INT column (both forwarded: one string, one raw-text int)
+SELECT CONCAT(channel, auctionId) AS msg FROM bidc INTO msgSink;
+----
+apple1001
+google1002
+facebook1003
+
+# Nested: string + int + string + float, all forwarded, flattened into one rope
+SELECT CONCAT(CONCAT(VARSIZED("id-"), auctionId), CONCAT(VARSIZED(" $"), price)) AS msg FROM bidc INTO msgSink;
+----
+id-1001 $12.50
+id-1002 $7.00
+id-1003 $999.99
+
+# JSON output path (rope span-walk with escaping) over a forwarded INT
+SELECT CONCAT(VARSIZED("alert-"), auctionId) AS msg FROM bidc INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"MSG":"alert-1001"}
+{"MSG":"alert-1002"}
+{"MSG":"alert-1003"}

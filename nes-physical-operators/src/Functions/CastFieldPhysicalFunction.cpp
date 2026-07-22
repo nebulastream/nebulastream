@@ -34,6 +34,9 @@ CastFieldPhysicalFunction::CastFieldPhysicalFunction(PhysicalFunction childFunct
 VarVal CastFieldPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
+    /// CAST defers entirely to VarVal::castToType -- including the cast to VARSIZED, which VarVal implements by
+    /// forwarding the value's raw bytes as a string (no parse, no re-serialise). CAST knows nothing about the
+    /// rope; the mechanism lives below the VarVal surface, the same as every other cast target.
     return value.castToType(castToType.type);
 }
 

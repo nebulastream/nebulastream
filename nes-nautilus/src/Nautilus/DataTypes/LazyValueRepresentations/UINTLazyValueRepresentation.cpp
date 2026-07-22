@@ -122,7 +122,7 @@ nautilus::val<bool> UINTLazyValueRepresentation::eqImpl(const std::shared_ptr<La
 #define CONSTANT_EQ_OVERRIDE(ctype) \
     nautilus::val<bool> UINTLazyValueRepresentation::eqImpl(const nautilus::val<ctype>& rhs) const \
     { \
-        return nautilus::invoke(constantEq<ctype>, ptrToLazyValue, size, rhs); \
+        return nautilus::invoke(constantEq<ctype>, getContent(), size, rhs); \
     }
 CONSTANT_EQ_OVERRIDE(uint8_t);
 CONSTANT_EQ_OVERRIDE(uint16_t);
@@ -141,7 +141,7 @@ nautilus::val<bool> UINTLazyValueRepresentation::ltImpl(const std::shared_ptr<La
 #define CONSTANT_LT_OVERRIDE(ctype) \
     nautilus::val<bool> UINTLazyValueRepresentation::ltImpl(const nautilus::val<ctype>& rhs) const \
     { \
-        return nautilus::invoke(constantLt<ctype>, ptrToLazyValue, size, rhs); \
+        return nautilus::invoke(constantLt<ctype>, getContent(), size, rhs); \
     }
 
 CONSTANT_LT_OVERRIDE(uint8_t);

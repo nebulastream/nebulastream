@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <LazyValueRepresentations/FLOATLazyValueRepresentation.hpp>
+
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
 #include <string_view>
-#include <LazyValueRepresentations/FLOATLazyValueRepresentation.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
@@ -143,7 +144,7 @@ nautilus::val<bool> FLOATLazyValueRepresentation::eqImpl(const std::shared_ptr<L
 #define CONSTANT_EQ_OVERRIDE(ctype) \
     nautilus::val<bool> FLOATLazyValueRepresentation::eqImpl(const nautilus::val<ctype>& rhs) const \
     { \
-        return nautilus::invoke(constantEq<ctype>, ptrToLazyValue, size, rhs); \
+        return nautilus::invoke(constantEq<ctype>, getContent(), size, rhs); \
     }
 CONSTANT_EQ_OVERRIDE(int8_t);
 CONSTANT_EQ_OVERRIDE(int16_t);
