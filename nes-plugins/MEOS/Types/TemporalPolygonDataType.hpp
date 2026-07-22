@@ -18,5 +18,5 @@
 
 namespace NES
 {
-DataTypeRegistryReturnType provideMovingPolygonDataType(DataTypeRegistryArguments args);
+DataTypeRegistryReturnType provideTemporalPolygonDataType(DataTypeRegistryArguments args);
 }

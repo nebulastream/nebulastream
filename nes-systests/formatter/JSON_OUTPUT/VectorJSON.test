@@ -14,25 +14,16 @@ SELECT * FROM polygons INTO File('JSON' as "SINK".OUTPUT_FORMAT);
 {"TIMESTAMP":1714060800040,"LON":[1,2,3],"LAT":[30,40,90]}
 
 # Tests for fixedsized / structs with varsized fields
-CREATE LOGICAL SOURCE movingPolygons(timedPolygon MovingPolygon NOT NULL);
-CREATE PHYSICAL SOURCE FOR movingPolygons TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+CREATE LOGICAL SOURCE temporalPolygons(timedPolygon TemporalPolygon NOT NULL);
+CREATE PHYSICAL SOURCE FOR temporalPolygons TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
 ATTACH INLINE
 {"TIMEDPOLYGON": {"ts": 100, "polygon": {"vertices": [{"x": 1, "y": 50}, {"x": 2, "y": 60}, {"x": 4, "y": 80}, {"x": 3, "y": 60}, {"x": 2, "y": 30}, {"x": 1, "y": 50}]}}}
 {"TIMEDPOLYGON": {"ts": 110, "polygon": {"vertices": [{"x": 1, "y": 30}, {"x": 2, "y": 40}, {"x": 3, "y": 90}, {"x": 1, "y": 30}]}}}
 
-SELECT * FROM movingPolygons INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+SELECT * FROM temporalPolygons INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
 ----
 {"TIMEDPOLYGON":{"ts":100,"polygon":{"vertices":[{"x":1.0,"y":50.0},{"x":2.0,"y":60.0},{"x":4.0,"y":80.0},{"x":3.0,"y":60.0},{"x":2.0,"y":30.0}, {"x":1.0, "y":50.0}]}}}
 {"TIMEDPOLYGON":{"ts":110,"polygon":{"vertices":[{"x":1.0,"y":30.0},{"x":2.0,"y":40.0},{"x":3.0,"y":90.0}, {"x":1.0, "y":30.0}]}}}
-
-CREATE LOGICAL SOURCE polygonTrajectory(trajectory MovingPolygonTrajectory NOT NULL);
-CREATE PHYSICAL SOURCE FOR polygonTrajectory TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
-ATTACH INLINE
-{"TRAJECTORY": {"polygons":[{"ts": 100, "polygon": {"vertices": [{"x": 1, "y": 50}, {"x": 2, "y": 60}, {"x": 4, "y": 80}, {"x": 3, "y": 60}, {"x": 2, "y": 30}, {"x": 1, "y": 50}]}}, {"ts":110,"polygon":{"vertices":[{"x":1.0,"y":30.0},{"x":2.0,"y":40.0},{"x":3.0,"y":90.0}, {"x":1.0,"y":30.0}]}}, {"ts":120,"polygon":{"vertices":[{"x":2.0,"y":30.0},{"x":3.0,"y":40.0},{"x":4.0,"y":90.0}, {"x":2.0,"y":30.0}]}}]}}
-
-SELECT * FROM polygonTrajectory INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
-----
-{"TRAJECTORY":{"polygons":[{"ts":100,"polygon":{"vertices":[{"x":1.0,"y":50.0},{"x":2.0,"y":60.0},{"x":4.0,"y":80.0},{"x":3.0,"y":60.0},{"x":2.0,"y":30.0}, {"x":1.0, "y":50.0}]}},{"ts":110,"polygon":{"vertices":[{"x":1.0,"y":30.0},{"x":2.0,"y":40.0},{"x":3.0,"y":90.0},{"x":1.0,"y":30.0}]}},{"ts":120,"polygon":{"vertices":[{"x":2.0,"y":30.0},{"x":3.0,"y":40.0},{"x":4.0,"y":90.0},{"x":2.0,"y":30.0}]}}]}}
 
 # Test nested fixedsized
 CREATE LOGICAL SOURCE MatrixSource(matrixStruct Matrix NOT NULL);
