@@ -131,3 +131,62 @@ TIME(event_ts, lookup_ts)
 INTO timed_lt_result;
 ----
 11 7 25 8 200 20
+
+
+CREATE LOGICAL SOURCE oversized_events(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    event_payload VARSIZED NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR oversized_events TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    1 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 1 3 1, SEQUENCE UINT64 10 12 1, RANDOMSTR 2097152 2097152' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE oversized_lookup(
+    lookup_id UINT64 NOT NULL,
+    lookup_key UINT64 NOT NULL,
+    lookup_payload VARSIZED NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR oversized_lookup TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    2 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 101 104 1, SEQUENCE UINT64 10 13 1, RANDOMSTR 2097152 2097152' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE SINK oversized_result(
+    event_id UINT64 NOT NULL,
+    event_size UINT64 NOT NULL,
+    lookup_id UINT64 NOT NULL,
+    lookup_size UINT64 NOT NULL
+) TYPE File;
+
+# Large VARSIZED fields survive theta-join state and output without participating in the predicate.
+SELECT
+    event_id,
+    OCTET_LENGTH(event_payload) AS event_size,
+    lookup_id,
+    OCTET_LENGTH(lookup_payload) AS lookup_size
+FROM (SELECT * FROM oversized_events)
+INNER JOIN TABLE (SELECT * FROM oversized_lookup) ON event_key < lookup_key
+INTO oversized_result;
+----
+1 2097152 102 2097152
+1 2097152 103 2097152
+2 2097152 103 2097152
+
+
+SELECT
+    event_id,
+    OCTET_LENGTH(event_payload) AS event_size,
+    lookup_id,
+    OCTET_LENGTH(lookup_payload) AS lookup_size
+FROM (SELECT * FROM oversized_events)
+INNER JOIN TABLE (SELECT * FROM oversized_lookup) ON event_key <> lookup_key
+INTO oversized_result;
+----
+1 2097152 102 2097152
+1 2097152 103 2097152
+2 2097152 101 2097152
+2 2097152 103 2097152

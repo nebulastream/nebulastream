@@ -178,24 +178,27 @@ public:
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
     [[nodiscard]] VariableSizedAccess::Index storeChildBuffer(TupleBuffer& buffer) noexcept;
 
+    /// @brief Attach an existing reference-counted buffer without consuming its TupleBuffer wrapper.
+    [[nodiscard]] VariableSizedAccess::Index storeChildBuffer(detail::BufferControlBlock* childControlBlock) noexcept;
+
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
     [[nodiscard]] TupleBuffer loadChildBuffer(VariableSizedAccess::Index bufferIndex) const noexcept;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
-private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
      */
     [[nodiscard]] detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
 
+private:
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
 };
 
 /**
- * @brief This method determines the control block based on the ptr to the data region and decrements the reference counter.
+ * @brief Determines a pooled buffer's control block from its data pointer and decrements the reference counter.
  * @param bufferPointer pointer to the data region of an buffer.
  */
 [[maybe_unused]] bool recycleTupleBuffer(void* bufferPointer);

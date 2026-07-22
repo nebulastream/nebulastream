@@ -28,7 +28,16 @@ namespace NES
 {
 
 VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size)
-    : size(size), ptrToVarSized(reference)
+    : VariableSizedData(reference, size, nullptr, 0)
+{
+}
+
+VariableSizedData::VariableSizedData(
+    const nautilus::val<int8_t*>& reference,
+    const nautilus::val<uint64_t>& size,
+    const nautilus::val<detail::BufferControlBlock*>& bufferControlBlock,
+    const nautilus::val<uint64_t>& bufferOffset)
+    : size(size), ptrToVarSized(reference), bufferControlBlock(bufferControlBlock), bufferOffset(bufferOffset)
 {
 }
 
@@ -41,11 +50,16 @@ VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) 
 
     size = other.size;
     ptrToVarSized = other.ptrToVarSized;
+    bufferControlBlock = other.bufferControlBlock;
+    bufferOffset = other.bufferOffset;
     return *this;
 }
 
 VariableSizedData::VariableSizedData(VariableSizedData&& other) noexcept
-    : size(std::move(other.size)), ptrToVarSized(std::move(other.ptrToVarSized))
+    : size(std::move(other.size))
+    , ptrToVarSized(std::move(other.ptrToVarSized))
+    , bufferControlBlock(std::move(other.bufferControlBlock))
+    , bufferOffset(std::move(other.bufferOffset))
 {
 }
 
@@ -58,6 +72,8 @@ VariableSizedData& VariableSizedData::operator=(VariableSizedData&& other) noexc
 
     size = std::move(other.size);
     ptrToVarSized = std::move(other.ptrToVarSized);
+    bufferControlBlock = std::move(other.bufferControlBlock);
+    bufferOffset = std::move(other.bufferOffset);
     return *this;
 }
 
@@ -106,6 +122,21 @@ nautilus::val<bool> VariableSizedData::operator!() const
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getContent() const
 {
     return ptrToVarSized;
+}
+
+[[nodiscard]] nautilus::val<detail::BufferControlBlock*> VariableSizedData::getBufferControlBlock() const
+{
+    return bufferControlBlock;
+}
+
+[[nodiscard]] nautilus::val<uint64_t> VariableSizedData::getBufferOffset() const
+{
+    return bufferOffset;
+}
+
+VariableSizedData VariableSizedData::withSize(const nautilus::val<uint64_t>& newSize) const
+{
+    return VariableSizedData{ptrToVarSized, newSize, bufferControlBlock, bufferOffset};
 }
 
 [[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData)

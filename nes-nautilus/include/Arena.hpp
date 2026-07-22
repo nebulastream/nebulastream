@@ -42,6 +42,9 @@ struct Arena
     /// 3. The required size is smaller than the last buffer size. In this case, we return the pointer to the address in the last buffer.
     std::span<std::byte> allocateMemory(size_t sizeInBytes);
 
+    /// Returns the control block when `allocation` is the start of a dedicated unpooled allocation.
+    [[nodiscard]] detail::BufferControlBlock* getUnpooledBufferControlBlock(const void* allocation) const;
+
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::vector<TupleBuffer> fixedSizeBuffers;
     std::vector<TupleBuffer> unpooledBuffers;

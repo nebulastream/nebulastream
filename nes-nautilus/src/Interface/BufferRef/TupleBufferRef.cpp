@@ -163,7 +163,25 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
         variableSizedAccess);
 
     const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(variableSizedAccess, offsetof(VariableSizedAccess, size));
-    return VarVal{VariableSizedData(varSizedPtr, size), physicalType.nullable, null};
+    const auto bufferControlBlock = invoke(
+        {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
+        {
+            INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
+            INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
+            return tupleBuffer->loadChildBuffer(variableSizedAccessPtr->getIndex()).getControlBlock();
+        },
+        recordBuffer.getReference(),
+        variableSizedAccess);
+    const auto bufferOffset = invoke(
+        {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+        +[](const VariableSizedAccess* variableSizedAccessPtr)
+        {
+            INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
+            return static_cast<uint64_t>(variableSizedAccessPtr->getOffset().getRawOffset());
+        },
+        variableSizedAccess);
+    return VarVal{VariableSizedData(varSizedPtr, size, bufferControlBlock, bufferOffset), physicalType.nullable, null};
 }
 
 VarVal TupleBufferRef::storeValue(

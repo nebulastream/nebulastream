@@ -90,6 +90,16 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
     return result;
 }
 
+detail::BufferControlBlock* Arena::getUnpooledBufferControlBlock(const void* allocation) const
+{
+    if (unpooledBuffers.empty())
+    {
+        return nullptr;
+    }
+    const auto& buffer = unpooledBuffers.back();
+    return buffer.getAvailableMemoryArea().data() == allocation ? buffer.getControlBlock() : nullptr;
+}
+
 nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& sizeInBytes) const
 {
     /// If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
@@ -109,7 +119,9 @@ nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& siz
 VariableSizedData ArenaRef::allocateVariableSizedData(const nautilus::val<uint64_t>& sizeInBytes) const
 {
     const auto basePtr = allocateMemory(sizeInBytes);
-    return VariableSizedData(basePtr, sizeInBytes);
+    const auto bufferControlBlock = nautilus::invoke(
+        +[](const Arena* arena, const int8_t* allocation) { return arena->getUnpooledBufferControlBlock(allocation); }, arenaRef, basePtr);
+    return VariableSizedData(basePtr, sizeInBytes, bufferControlBlock, 0);
 }
 
 nautilus::val<Arena*> ArenaRef::getArena() const

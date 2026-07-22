@@ -47,10 +47,13 @@ class PagedVectorRefIter;
 class PagedVectorRefIterSentinel;
 
 /// @brief Load function that reads a varsized field from a specific address in memory
-using LoadVarSizedFunction = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> fieldSlot)>;
+using LoadVarSizedFunction = std::function<VariableSizedData(nautilus::val<int8_t*> fieldSlot)>;
 /// @brief Allocation function that takes care of allocating the necessary space for the varsized data of a field
-using AllocateVarSizedFunction
-    = std::function<nautilus::val<int8_t*>(nautilus::val<int8_t*> fieldSlot, nautilus::val<uint64_t> allocationSize)>;
+using AllocateVarSizedFunction = std::function<nautilus::val<int8_t*>(
+    nautilus::val<int8_t*> fieldSlot,
+    nautilus::val<uint64_t> allocationSize,
+    nautilus::val<detail::BufferControlBlock*> sourceBufferControlBlock,
+    nautilus::val<uint64_t> sourceBufferOffset)>;
 
 /// @brief This class is the interface for creating different tuple layouts
 class PagedVectorTupleLayout

@@ -222,7 +222,7 @@ VariableSizedData toBase64(const VariableSizedData& input, ArenaRef& arena)
         input.getSize(),
         output.getContent(),
         output.getSize());
-    return VariableSizedData(output.getContent(), pl);
+    return output.withSize(pl);
 }
 
 VariableSizedData fromBase64(const VariableSizedData& input, ArenaRef& arena)
@@ -254,7 +254,7 @@ VariableSizedData fromBase64(const VariableSizedData& input, ArenaRef& arena)
         output.getContent(),
         output.getSize());
 
-    return VariableSizedData(output.getContent(), pl - length);
+    return output.withSize(pl - length);
 }
 
 struct YUYV

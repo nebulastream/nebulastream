@@ -22,6 +22,11 @@
 namespace NES
 {
 
+namespace detail
+{
+class BufferControlBlock;
+}
+
 /// Forward declaring the class here, so that we can declare the operator==(const VariableSizedData, const nautilus::val<bool>) for it
 class VariableSizedData;
 nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const nautilus::val<bool>& other);
@@ -32,6 +37,12 @@ class VariableSizedData
 {
 public:
     explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size);
+    /// `bufferControlBlock` is a non-owning handle with the same lifetime as `reference`; persistent stores may retain it.
+    VariableSizedData(
+        const nautilus::val<int8_t*>& reference,
+        const nautilus::val<uint64_t>& size,
+        const nautilus::val<detail::BufferControlBlock*>& bufferControlBlock,
+        const nautilus::val<uint64_t>& bufferOffset);
     VariableSizedData(const VariableSizedData& other) = default;
     VariableSizedData& operator=(const VariableSizedData& other) noexcept;
     VariableSizedData(VariableSizedData&& other) noexcept;
@@ -40,6 +51,9 @@ public:
     [[nodiscard]] nautilus::val<uint64_t> getSize() const;
     /// Returns the content of the variable sized data, this means the pointer to the actual variable sized data.
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
+    [[nodiscard]] nautilus::val<detail::BufferControlBlock*> getBufferControlBlock() const;
+    [[nodiscard]] nautilus::val<uint64_t> getBufferOffset() const;
+    [[nodiscard]] VariableSizedData withSize(const nautilus::val<uint64_t>& newSize) const;
 
     /// Declaring friend for it, so that we can access the members in it and do not have to declare getters for it
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData);
@@ -56,6 +70,8 @@ public:
 private:
     nautilus::val<uint64_t> size;
     nautilus::val<int8_t*> ptrToVarSized;
+    nautilus::val<detail::BufferControlBlock*> bufferControlBlock;
+    nautilus::val<uint64_t> bufferOffset;
 };
 
 
