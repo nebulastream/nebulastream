@@ -53,7 +53,16 @@ pkg_check_modules(aravis REQUIRED IMPORTED_TARGET GLOBAL aravis-0.8)
 find_package(OpenSSL CONFIG REQUIRED)
 find_package(OpenCV CONFIG REQUIRED)
 
-configure_file(Cascade.xml Cascade.xml COPYONLY)
+include(FetchContent)
+set(B_PRODUCTION_MODE ON CACHE BOOL "Disable battery::embed development features" FORCE)
+FetchContent_Declare(
+        battery-embed
+        GIT_REPOSITORY https://github.com/batterycenter/embed.git
+        GIT_TAG v1.2.19
+        GIT_SHALLOW TRUE)
+FetchContent_MakeAvailable(battery-embed)
+b_embed(image-manip-functions Cascade.xml)
+
 configure_file(calibration.bin calibration.bin COPYONLY)
 target_compile_definitions(image-manip-functions PRIVATE IMAGE_MANIP_RESOURCE_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(image-manip-functions

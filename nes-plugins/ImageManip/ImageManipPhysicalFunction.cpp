@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include <vector>
 #include <arv.h>
+#include <battery/embed.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
@@ -174,10 +175,13 @@ cv::CascadeClassifier& get()
 {
     thread_local cv::CascadeClassifier cache = [] -> cv::CascadeClassifier
     {
+        const auto cascade = b::embed<"Cascade.xml">();
+        const cv::FileStorage storage(
+            std::string(cascade.data(), cascade.size()), cv::FileStorage::READ | cv::FileStorage::MEMORY | cv::FileStorage::FORMAT_XML);
         cv::CascadeClassifier classifier;
-        if (not classifier.load((std::filesystem::path(IMAGE_MANIP_RESOURCE_DIR) / "Cascade.xml").string()))
+        if (not storage.isOpened() or not classifier.read(storage.getFirstTopLevelNode()))
         {
-            throw std::runtime_error("Could not read image-manip Cascade.xml");
+            throw std::runtime_error("Could not read embedded image-manip Cascade.xml");
         }
         return classifier;
     }();
