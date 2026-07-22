@@ -14,6 +14,7 @@
 
 #pragma once
 #include <atomic>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -140,6 +141,10 @@ struct RunningQueryPlan final
     /// 2. Pipelines are not terminated, just destroyed.
     /// 3. Block until all sources are terminated.
     ~RunningQueryPlan();
+
+    /// Sum of pending tasks across this query's pipelines. Used as a cheap proxy for the number of in-flight (pooled)
+    /// buffers the query currently holds, for buffer-exhaustion victim selection. Thread-safe (locks the internal state).
+    [[nodiscard]] uint64_t sumPendingTasks();
 
 private:
     struct Internal
