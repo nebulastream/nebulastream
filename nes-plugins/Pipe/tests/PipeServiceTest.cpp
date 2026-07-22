@@ -19,7 +19,6 @@
 #include <stop_token>
 #include <thread>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
@@ -35,8 +34,11 @@ class PipeServiceTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        schemaA = std::make_shared<const Schema>(Schema{}.addField("id", DataType::Type::UINT64).addField("value", DataType::Type::UINT64));
-        schemaB = std::make_shared<const Schema>(Schema{}.addField("x", DataType::Type::FLOAT64));
+        schemaA = std::make_shared<const PipeSchema>(PipeSchema{
+            UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::UINT64},
+            UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::UINT64}});
+        schemaB = std::make_shared<const PipeSchema>(
+            PipeSchema{UnqualifiedUnboundField{Identifier::parse("x"), DataType::Type::FLOAT64}});
         bufferManager = BufferManager::create(1024, 256);
     }
 
@@ -47,8 +49,8 @@ protected:
         PipeService::instance().unregisterSink("pipe_b");
     }
 
-    std::shared_ptr<const Schema> schemaA;
-    std::shared_ptr<const Schema> schemaB;
+    std::shared_ptr<const PipeSchema> schemaA;
+    std::shared_ptr<const PipeSchema> schemaB;
     std::shared_ptr<BufferManager> bufferManager;
 };
 
@@ -58,8 +60,9 @@ TEST_F(PipeServiceTest, RegisterSinkThenSource)
     auto sinkHandle = PipeService::instance().registerSink("test_pipe", schemaA, &bpController);
     ASSERT_NE(sinkHandle, nullptr);
 
-    auto queue = PipeService::instance().registerSource("test_pipe", schemaA);
+    auto queue = PipeService::instance().registerSource("test_pipe", schemaA, 7);
     ASSERT_NE(queue, nullptr);
+    EXPECT_EQ(queue->capacity(), 7);
 
     /// Source registered after sink goes to pending (awaiting sequence boundary activation)
     sinkHandle->queues.withRLock(

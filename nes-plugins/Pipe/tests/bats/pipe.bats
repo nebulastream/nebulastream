@@ -131,6 +131,8 @@ teardown() {
 
 # Generate a docker-compose.yaml from a topology file and start the services.
 function setup_distributed() {
+  local worker_threads="${1:-1}"
+  local admission_queue_size="${2:-1000}"
   cat > docker-compose.yaml <<COMPOSE
 services:
   nes-cli:
@@ -157,6 +159,8 @@ services:
     command: [
       "--grpc=worker-node:8080",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
+      "--worker.query_engine.number_of_worker_threads=$worker_threads",
+      "--worker.query_engine.admission_queue_size=$admission_queue_size",
     ]
     volumes:
       - $TEST_VOLUME:/workdir
@@ -231,6 +235,58 @@ wait_for_status() {
 
   run DOCKER_NES_CLI -t "$TOPO" stop "$PRODUCER_ID" "$CONSUMER_ID"
   [ "$status" -eq 0 ]
+}
+
+@test "pipe: slow consumer applies backpressure without deadlock" {
+  setup_distributed 2 1
+  TOPO="tests/good/pipe-backpressure.yaml"
+
+  run DOCKER_NES_CLI -t "$TOPO" start
+  [ "$status" -eq 0 ]
+  [ ${#lines[@]} -eq 2 ]
+  query_ids=("${lines[@]}")
+
+  warning_count=0
+  for _ in $(seq 1 30); do
+    sleep 1
+    sync_workdir
+    warning_count=$(grep -c "PipeSink: consumer queue full" worker-node/singleNodeWorker.log 2>/dev/null || true)
+    if [ "$warning_count" -ge 2 ]; then
+      break
+    fi
+  done
+
+  [ "$warning_count" -ge 2 ]
+  grep -m 2 "PipeSink: consumer queue full" worker-node/singleNodeWorker.log
+
+  run DOCKER_NES_CLI -t "$TOPO" stop "${query_ids[@]}"
+  [ "$status" -eq 0 ]
+}
+
+@test "pipe: slow consumers receive identical content under backpressure" {
+  setup_distributed 4 1
+  TOPO="tests/good/pipe-multi-consumer-backpressure.yaml"
+
+  run DOCKER_NES_CLI -t "$TOPO" start
+  [ "$status" -eq 0 ]
+  [ ${#lines[@]} -eq 4 ]
+
+  for qid in "${lines[@]}"; do
+    wait_for_status "$TOPO" "$qid" 30 "Stopped" "Finished"
+  done
+
+  docker compose logs --no-color --no-log-prefix worker-node > worker-output.log
+  for consumer in 1 2 3; do
+    awk -F',' -v consumer="$consumer" '$1 ~ /^[0-9]+$/ && $2 == consumer {print $1}' worker-output.log | sort -n > "consumer_${consumer}.txt"
+  done
+  seq 1000 1999 > expected.txt
+
+  cmp expected.txt consumer_1.txt
+  cmp expected.txt consumer_2.txt
+  cmp expected.txt consumer_3.txt
+
+  sync_workdir
+  grep -q "PipeSink: consumer queue full" worker-node/singleNodeWorker.log
 }
 
 @test "pipe: generator feeds 3 pipe sources" {

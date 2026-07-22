@@ -16,6 +16,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <numeric>
 #include <random>
@@ -43,13 +44,24 @@
 
 using namespace NES;
 
-/// Minimal stub — PipeSink ignores PipelineExecutionContext entirely.
+/// Minimal stub that captures tasks repeated by PipeSink.
 class StubPipelineExecutionContext final : public PipelineExecutionContext
 {
 public:
     bool emitBuffer(const TupleBuffer&, ContinuationPolicy) override { return true; }
 
-    void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { }
+    void repeatTask(const TupleBuffer& buffer, std::chrono::milliseconds) override { repeatedBuffers.push_back(buffer); }
+
+    std::optional<TupleBuffer> takeRepeatedBuffer()
+    {
+        if (repeatedBuffers.empty())
+        {
+            return std::nullopt;
+        }
+        auto buffer = std::move(repeatedBuffers.front());
+        repeatedBuffers.pop_front();
+        return buffer;
+    }
 
     TupleBuffer allocateTupleBuffer() override { return {}; }
 
@@ -59,7 +71,7 @@ public:
         return pinnedBuffers.back();
     }
 
-    [[nodiscard]] WorkerThreadId getId() const override { return WorkerThreadId(0); }
+    [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return WorkerThreadId(0); }
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1; }
 
@@ -73,6 +85,7 @@ public:
 
 private:
     std::unordered_map<NES::OperatorHandlerId, std::shared_ptr<NES::OperatorHandler>> handlers;
+    std::deque<TupleBuffer> repeatedBuffers;
     std::vector<TupleBuffer> pinnedBuffers;
 };
 
@@ -81,7 +94,9 @@ class PipeIntegrationTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        schema = Schema{}.addField("id", DataType::Type::UINT64).addField("value", DataType::Type::UINT64);
+        schema = PipeSchema{
+            UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::UINT64},
+            UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::UINT64}};
         bufferManager = BufferManager::create(1024, 4096);
     }
 
@@ -89,19 +104,25 @@ protected:
 
     std::unique_ptr<PipeSink> makePipeSink(BackpressureController bpController, const std::string& pipeName = "test_pipe")
     {
-        auto desc = sinkCatalog.getInlineSink(schema, "Pipe", Host{"localhost"}, {{"pipe_name", pipeName}}, {});
+        auto desc = sinkCatalog.getInlineSink(
+            schema, Identifier::parse("Pipe"), Host{"localhost"}, {{Identifier::parse("pipe_name"), pipeName}}, {});
         EXPECT_TRUE(desc.has_value());
         return std::make_unique<PipeSink>(std::move(bpController), desc.value());
     }
 
     std::unique_ptr<PipeSource> makePipeSource(const std::string& pipeName = "test_pipe")
     {
-        auto desc = sourceCatalog.getInlineSource("Pipe", schema, Host{"localhost"}, {{"type", "NATIVE"}}, {{"pipe_name", pipeName}});
+        auto desc = sourceCatalog.getInlineSource(
+            Identifier::parse("Pipe"),
+            schema,
+            Host{"localhost"},
+            {{Identifier::parse("type"), "NATIVE"}},
+            {{Identifier::parse("pipe_name"), pipeName}});
         EXPECT_TRUE(desc.has_value());
         return std::make_unique<PipeSource>(desc.value());
     }
 
-    Schema schema;
+    PipeSchema schema;
     std::shared_ptr<BufferManager> bufferManager;
     SinkCatalog sinkCatalog;
     SourceCatalog sourceCatalog;
@@ -195,6 +216,101 @@ TEST_F(PipeIntegrationTest, ChildBuffersCopiedForVariableSizedData)
     }
 
     source->close();
+    sink->stop(pipeCtx);
+}
+
+TEST_F(PipeIntegrationTest, FullConsumerRetriesWithoutDuplicatingFanout)
+{
+    static constexpr uint64_t queueCapacity = 1024;
+
+    auto [bpController, bpListener] = createBackpressureChannel();
+    auto sink = makePipeSink(std::move(bpController));
+    sink->start(pipeCtx);
+
+    /// The fast source comes first so it accepts the overflow buffer before the slow source rejects it.
+    auto fastSource = makePipeSource();
+    fastSource->open(bufferManager);
+    auto slowSource = makePipeSource();
+    slowSource->open(bufferManager);
+
+    const std::stop_source stopSource;
+    for (uint64_t value = 0; value < queueCapacity; ++value)
+    {
+        auto buffer = bufferManager->getBufferBlocking();
+        buffer.getAvailableMemoryArea<uint64_t>()[0] = value;
+        buffer.setNumberOfTuples(1);
+        buffer.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + value));
+        buffer.setLastChunk(true);
+        sink->execute(buffer, pipeCtx);
+
+        auto fastOutput = bufferManager->getBufferBlocking();
+        ASSERT_FALSE(fastSource->fillTupleBuffer(fastOutput, stopSource.get_token()).isEoS());
+        EXPECT_EQ(fastOutput.getAvailableMemoryArea<uint64_t>()[0], value);
+    }
+
+    auto overflow = bufferManager->getBufferBlocking();
+    overflow.getAvailableMemoryArea<uint64_t>()[0] = queueCapacity;
+    overflow.setNumberOfTuples(1);
+    overflow.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + queueCapacity));
+    overflow.setLastChunk(true);
+    sink->execute(overflow, pipeCtx);
+
+    auto repeatedOverflow = pipeCtx.takeRepeatedBuffer();
+    ASSERT_TRUE(repeatedOverflow);
+    auto fastOverflow = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(fastSource->fillTupleBuffer(fastOverflow, stopSource.get_token()).isEoS());
+    EXPECT_EQ(fastOverflow.getAvailableMemoryArea<uint64_t>()[0], queueCapacity);
+
+    std::atomic<bool> pressureReleased{false};
+    auto pressureWaiter = std::jthread(
+        [&](std::stop_token token)
+        {
+            bpListener.wait(token);
+            pressureReleased = !token.stop_requested();
+        });
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    EXPECT_FALSE(pressureReleased.load());
+
+    /// A subscriber joining during overflow must wait behind the failed source.
+    auto lateSource = makePipeSource();
+    lateSource->open(bufferManager);
+
+    auto buffered = bufferManager->getBufferBlocking();
+    buffered.getAvailableMemoryArea<uint64_t>()[0] = queueCapacity + 1;
+    buffered.setNumberOfTuples(1);
+    buffered.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + queueCapacity + 1));
+    buffered.setLastChunk(true);
+    sink->execute(buffered, pipeCtx);
+    EXPECT_FALSE(pipeCtx.takeRepeatedBuffer());
+
+    auto slowOutput = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(slowSource->fillTupleBuffer(slowOutput, stopSource.get_token()).isEoS());
+    sink->execute(*repeatedOverflow, pipeCtx);
+
+    auto repeatedBuffered = pipeCtx.takeRepeatedBuffer();
+    ASSERT_TRUE(repeatedBuffered);
+    auto lateOverflow = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(lateSource->fillTupleBuffer(lateOverflow, stopSource.get_token()).isEoS());
+    EXPECT_EQ(lateOverflow.getAvailableMemoryArea<uint64_t>()[0], queueCapacity);
+
+    auto fastBuffered = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(fastSource->fillTupleBuffer(fastBuffered, stopSource.get_token()).isEoS());
+    EXPECT_EQ(fastBuffered.getAvailableMemoryArea<uint64_t>()[0], queueCapacity + 1);
+
+    ASSERT_FALSE(slowSource->fillTupleBuffer(slowOutput, stopSource.get_token()).isEoS());
+    sink->execute(*repeatedBuffered, pipeCtx);
+
+    auto lateBuffered = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(lateSource->fillTupleBuffer(lateBuffered, stopSource.get_token()).isEoS());
+    EXPECT_EQ(lateBuffered.getAvailableMemoryArea<uint64_t>()[0], queueCapacity + 1);
+    EXPECT_FALSE(pipeCtx.takeRepeatedBuffer());
+
+    pressureWaiter.join();
+    EXPECT_TRUE(pressureReleased.load());
+
+    lateSource->close();
+    slowSource->close();
+    fastSource->close();
     sink->stop(pipeCtx);
 }
 
