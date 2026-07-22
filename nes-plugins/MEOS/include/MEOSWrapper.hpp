@@ -87,6 +87,9 @@ class Meos {
     class StaticGeometry {
     public:
         explicit StaticGeometry(const std::string& wkt_string);
+        /// Construct a GSERIALIZED based on wkb data. wkbType holds the number of the desired type based on wkb standard and wkbContent holds all type-specific contents byte-aligned.
+        /// For now, we assume that the byte order is little endian (POC).
+        explicit StaticGeometry(const uint32_t& wkbType, const int8_t* wkbContent, const uint64_t& wkbContentSize);
         ~StaticGeometry();
 
         StaticGeometry(const StaticGeometry&) = delete;

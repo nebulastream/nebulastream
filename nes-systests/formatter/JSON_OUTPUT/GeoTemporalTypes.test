@@ -60,3 +60,19 @@ SELECT * FROM sncb_stream WHERE tgeo_at_stbox(MovingPoint(gps_lon, gps_lat, ts),
 1722520459,3,29.3,4.983,0.0,0.0,0.003,47.37,4.3,0.0,1280.0,48.8641,50.6471,4.3678
 1722520469,3,29.3,4.98,0.0,0.003,0.003,46.87,4.275,0.0,1280.0,48.8641,50.6471,4.3678
 1722520479,3,29.2,4.983,0.0,0.0,0.0,46.56,4.412,0.0,1280.0,48.8641,50.6471,4.3678
+
+# As the definition of arrays / vectors in the query itself is currently not possible, we write the polygon in the input data for now
+CREATE LOGICAL SOURCE tInstantPoints(lon FLOAT64 NOT NULL, lat FLOAT64 NOT NULL, ts UINT64 NOT NULL, polygon Polygon NOT NULL);
+CREATE PHYSICAL SOURCE FOR tInstantPoints TYPE File SET('NestedJSON' AS `PARSER`.`TYPE`);
+ATTACH INLINE
+{"LON": 2.5, "LAT": 2.5, "TS": 100, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"LON": 3.0, "LAT": 5.1, "TS": 110, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"LON": 6.0, "LAT": 2.5, "TS": 120, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"LON": 0.0, "LAT": 0.0, "TS": 130, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+
+SELECT lon, lat, ts FROM tInstantPoints WHERE temporal_eintersects_geometry(MovingPoint(lon, lat, ts), polygon) INTO FILE('CSV' as `SINK`.OUTPUT_FORMAT);
+----
+2.5,2.5,100
+0.0,0.0,130
+
+

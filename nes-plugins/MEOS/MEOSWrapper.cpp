@@ -14,8 +14,10 @@
 
 // Include standard library headers first, before MEOS
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
@@ -24,11 +26,12 @@
 #include <string>
 
 // Include MEOS wrapper after standard headers
+#include <ErrorHandling.hpp>
 #include <MEOSWrapper.hpp>
 
 extern "C" {
-    #include <meos.h>
-    #include <meos_geo.h>
+#include <meos.h>
+#include <meos_geo.h>
 }
 
 namespace MEOS
@@ -317,6 +320,41 @@ Meos::StaticGeometry::StaticGeometry(const std::string& wkt_string)
     }
 }
 
+Meos::StaticGeometry::StaticGeometry(const uint32_t& wkbType, const int8_t* wkbContent, const uint64_t& wkbContentSize)
+{
+    ensureMeosInitialized();
+    /// Switch case dispatches wkbType
+    switch (wkbType)
+    {
+        /// Polygon
+        case 3: {
+            /// Allocate space: We currently assume that the polygon consists of a single linear ring (so it contains no holes) -> this leads to 13 + wkbContentSize bytes being allocated
+            const size_t contentSize = 13 + wkbContentSize;
+            std::vector<std::byte> wkbBuffer(contentSize);
+            /// Write the byte order (little endian)
+            *reinterpret_cast<uint8_t*>(wkbBuffer.data()) = 1;
+            /// wkbType
+            *reinterpret_cast<uint32_t*>(wkbBuffer.data() + 1) = 3;
+            /// Number of linear rings
+            *reinterpret_cast<uint32_t*>(wkbBuffer.data() + 5) = 1;
+            /// Number of points (divide wkbContent size by size of a point (16 bytes, 8 for x and 8 for y)
+            *reinterpret_cast<uint32_t*>(wkbBuffer.data() + 9) = wkbContentSize / 16;
+            /// Bytealign the point data
+            std::memcpy(wkbBuffer.data() + 13, wkbContent, wkbContentSize);
+
+            /// Use the ewkb constructor for geospatial types in meos
+            {
+                std::lock_guard<std::mutex> lk(meos_parse_mutex);
+                geometry = geo_from_ewkb(reinterpret_cast<uint8_t*>(wkbBuffer.data()), contentSize, 4326);
+                return;
+            }
+        }
+        default: {
+            INVARIANT(false, "WKB-Type {} not implemented yet", wkbType);
+        }
+    }
+}
+
 GSERIALIZED* Meos::StaticGeometry::getGeometry() const
 {
     return geometry;
@@ -563,7 +601,7 @@ Meos::SpatioTemporalBox::SpatioTemporalBox(double minX, double maxX, double minY
         const Span* timespan = tstzspan_make(convertedMinTs, convertedMaxTs, true, true);
         /// Create STBox out of the given boundaries and the span
         /// For now, we default geodetic to false
-        stbox_ptr= stbox_make(true, false, false, srid, minX, maxX, minY, maxY, 0, 0, timespan);
+        stbox_ptr = stbox_make(true, false, false, srid, minX, maxX, minY, maxY, 0, 0, timespan);
     }
 }
 

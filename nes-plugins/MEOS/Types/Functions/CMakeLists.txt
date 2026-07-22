@@ -18,6 +18,11 @@ add_plugin_as_library(NEAREST_APPROACH_DISTANCE_MovingPoint_MovingPoint Physical
 add_plugin_as_library(TGEO_AT_STBOX LogicalFunction nes-logical-operators-registry tgeo_at_stbox_logical_function TgeoAtStboxLogicalFunction.cpp)
 add_plugin_as_library(TGEO_AT_STBOX_MovingPoint_SpatioTemporalBox PhysicalFunction nes-physical-operators-registry tgeo_at_stbox_movingpoint_physical_function TpointAtStboxPhysicalFunction.cpp)
 
+add_plugin_as_library(TEMPORAL_EINTERSECTS_GEOMETRY LogicalFunction nes-logical-operators-registry temporal_eintersects_geometry_logical_function TemporalEIntersectsGeometryLogicalFunction.cpp)
+add_plugin_as_library(TEMPORAL_EINTERSECTS_GEOMETRY_MovingPoint_Polygon PhysicalFunction nes-physical-operators-registry temporal_eintersects_geometry_movingpoint_polygon_physical_function TPointEIntersectsPolygonPhysicalFunction.cpp)
+
+
+
 target_include_directories(nearest_approach_distance_logical_function
         PUBLIC include
         PRIVATE .
@@ -37,6 +42,16 @@ target_include_directories(tgeo_at_stbox_movingpoint_physical_function
         PRIVATE .
 )
 target_link_libraries(tgeo_at_stbox_movingpoint_physical_function PUBLIC nes-meos)
+
+target_include_directories(temporal_eintersects_geometry_logical_function
+        PUBLIC include
+        PRIVATE .
+)
+target_include_directories(temporal_eintersects_geometry_movingpoint_polygon_physical_function
+        PUBLIC include
+        PRIVATE .
+)
+target_link_libraries(temporal_eintersects_geometry_movingpoint_polygon_physical_function PUBLIC nes-meos)
 
 
 

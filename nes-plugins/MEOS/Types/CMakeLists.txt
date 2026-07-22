@@ -14,12 +14,24 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_subdirectory(Functions)
 add_plugin_as_library(MovingPoint DataType nes-data-types-registry moving_point_data_type_plugin MovingPointDataType.cpp)
 add_plugin_as_library(SpatioTemporalBox DataType nes-data-types-registry spatio_temporal_box_data_type_plugin SpatioTemporalBox.cpp)
+add_plugin_as_library(Polygon DataType nes-data-types-registry polygon_data_type_plugin PolygonDataType.cpp)
+add_plugin_as_library(MovingPolygon DataType nes-data-types-registry moving-polygon_data_type_plugin MovingPolygonDataType.cpp)
 
 target_include_directories(moving_point_data_type_plugin
         PUBLIC include
         PRIVATE .
 )
 target_include_directories(spatio_temporal_box_data_type_plugin
+        PUBLIC include
+        PRIVATE .
+)
+
+target_include_directories(polygon_data_type_plugin
+        PUBLIC include
+        PRIVATE .
+)
+
+target_include_directories(moving-polygon_data_type_plugin
         PUBLIC include
         PRIVATE .
 )
