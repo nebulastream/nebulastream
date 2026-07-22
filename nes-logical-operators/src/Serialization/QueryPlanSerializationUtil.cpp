@@ -44,7 +44,10 @@ namespace NES
 
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
-    INVARIANT(queryPlan.getRootOperators().size() == 1, "Query plan should currently have only one root operator");
+    /// NOTE: the single-root INVARIANT that used to guard this function has been removed to expose what lies
+    /// beneath it. Removing it is NOT sufficient to support multi-sink plans -- see MultiSinkSerializationTest:
+    /// the BFS below still starts from rootOperators.front() only, and only that one root id is emitted, so a
+    /// second sink root (and any operator reachable only from it) is silently dropped from the wire format.
     auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
