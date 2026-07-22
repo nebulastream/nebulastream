@@ -896,6 +896,50 @@ void oversizedVarSizedValueRoundTrip(TestUtils::EngineMode mode)
 
     ASSERT_EQ(std::any_cast<const std::string&>(pagedVector.readAt(0).at(0)), payload);
 }
+void oversizedArenaValueIsAttachedWithoutCopy(TestUtils::EngineMode mode)
+{
+    constexpr size_t POOLED_BUFFER_SIZE = 4096;
+    constexpr size_t PAYLOAD_SIZE = 2ULL * 1024 * 1024;
+    auto bufferManager = DirtyBufferProvider::create(POOLED_BUFFER_SIZE, TestUtils::MIN_POOLED_BUFFER_COUNT);
+    const auto schema
+        = TestUtils::createSchemaFromDataTypes({DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}});
+    auto layout = std::make_shared<DefaultPagedVectorTupleLayout>(schema);
+    const auto fieldName = schema[0]->getFullyQualifiedName();
+
+    TupleBuffer pagedVectorBuffer = bufferManager->getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
+    PagedVector::init(pagedVectorBuffer, bufferManager->getBufferSize(), layout->getSchema().getSizeInBytes());
+
+    nautilus::engine::NautilusEngine engine{TestUtils::makeEngine(mode)};
+    auto pushArenaValue = engine.registerFunction(std::function(
+        [layout,
+         fieldName](nautilus::val<TupleBuffer*> pagedVector, nautilus::val<AbstractBufferProvider*> provider, nautilus::val<Arena*> arena)
+        {
+            auto value = ArenaRef{arena}.allocateVariableSizedData(PAYLOAD_SIZE);
+            nautilus::invoke(+[](int8_t* data) { std::memset(data, 'x', PAYLOAD_SIZE); }, value.getContent());
+            Record record;
+            record.write(fieldName, VarVal{value});
+            PagedVectorRef{BorrowedNautilusBuffer::from(pagedVector), layout}.pushBack(record, provider);
+        }));
+
+    const std::byte* sourceAddress = nullptr;
+    {
+        Arena arena{bufferManager};
+        pushArenaValue(&pagedVectorBuffer, bufferManager.get(), &arena);
+        ASSERT_EQ(arena.unpooledBuffers.size(), 1);
+        sourceAddress = arena.unpooledBuffers.front().getAvailableMemoryArea().data();
+
+        auto page = pagedVectorBuffer.loadChildBuffer(ChildBufferIndex{0});
+        auto valueBuffer = page.loadChildBuffer(ChildBufferIndex{0});
+        EXPECT_EQ(valueBuffer.getControlBlock(), arena.unpooledBuffers.front().getControlBlock());
+        EXPECT_EQ(valueBuffer.getAvailableMemoryArea().data(), sourceAddress);
+    }
+
+    auto page = pagedVectorBuffer.loadChildBuffer(ChildBufferIndex{0});
+    auto valueBuffer = page.loadChildBuffer(ChildBufferIndex{0});
+    EXPECT_EQ(valueBuffer.getAvailableMemoryArea().data(), sourceAddress);
+    EXPECT_EQ(valueBuffer.getAvailableMemoryArea().front(), std::byte{'x'});
+    EXPECT_EQ(valueBuffer.getAvailableMemoryArea()[PAYLOAD_SIZE - 1], std::byte{'x'});
+}
 } /// anonymous namespace
 
 TEST(PagedVectorTest, OversizedVarSizedValueCompiler)
@@ -906,6 +950,16 @@ TEST(PagedVectorTest, OversizedVarSizedValueCompiler)
 TEST(PagedVectorTest, OversizedVarSizedValueInterpreter)
 {
     oversizedVarSizedValueRoundTrip(TestUtils::EngineMode::Interpreter);
+}
+
+TEST(PagedVectorTest, OversizedArenaValueIsAttachedWithoutCopyCompiler)
+{
+    oversizedArenaValueIsAttachedWithoutCopy(TestUtils::EngineMode::Compiler);
+}
+
+TEST(PagedVectorTest, OversizedArenaValueIsAttachedWithoutCopyInterpreter)
+{
+    oversizedArenaValueIsAttachedWithoutCopy(TestUtils::EngineMode::Interpreter);
 }
 
 RC_GTEST_PROP(PagedVectorPropertyTest, sortByRandomKeysCompiler, ())

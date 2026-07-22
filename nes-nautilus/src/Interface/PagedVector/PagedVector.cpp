@@ -179,7 +179,7 @@ void PagedVector::stableSortRecords(const PagedVectorComparator& comparator, Are
         allocateAligned(sizeof(TupleBuffer) * numberOfPages, alignof(TupleBuffer)));
     for (size_t pageIndex = 0; pageIndex < numberOfPages; ++pageIndex)
     {
-        std::construct_at(pages + pageIndex, buffer.loadChildBuffer(VariableSizedAccess::Index{pageIndex}));
+        std::construct_at(pages + pageIndex, buffer.loadChildBuffer(ChildBufferIndex{pageIndex}));
     }
     const auto pageDeleter = [numberOfPages](TupleBuffer* pageArray) { std::destroy_n(pageArray, numberOfPages); };
     const auto destroyPages = std::unique_ptr<TupleBuffer, decltype(pageDeleter)>{pages, pageDeleter};
