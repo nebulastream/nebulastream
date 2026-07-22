@@ -88,6 +88,10 @@ const std::unordered_map<std::string_view, ImageManipFunction> functions = {
     {"IMAGE_MANIP_DESERIALIZE", {varSized, {varSized, uint64, uint64, uint64}}},
     {"IMAGE_MANIP_SERIALIZE", {varSized, {varSized, uint64, uint64, uint64}}},
     {"IMAGE_MANIP_DRAW_RECTANGLE", {varSized, {varSized, uint64}}},
+    {"IMAGE_MANIP_AUDIO_TO_MFCC", {varSized, {varSized}}},
+    {"IMAGE_MANIP_ARGMAX_F32", {uint64, {varSized}}},
+    {"IMAGE_MANIP_MAX_F32", {float32, {varSized}}},
+    {"IMAGE_MANIP_MAX_ABS_F32", {float32, {varSized}}},
 };
 }
 
@@ -228,5 +232,9 @@ ImageManipFunction(IMAGE_MANIP_MONO16_TO_CELSIUS);
 ImageManipFunction(IMAGE_MANIP_MONO16_MAX);
 ImageManipFunction(IMAGE_MANIP_MONO16_MIN);
 ImageManipFunction(IMAGE_MANIP_RECTANGLE);
+ImageManipFunction(IMAGE_MANIP_AUDIO_TO_MFCC);
+ImageManipFunction(IMAGE_MANIP_ARGMAX_F32);
+ImageManipFunction(IMAGE_MANIP_MAX_F32);
+ImageManipFunction(IMAGE_MANIP_MAX_ABS_F32);
 }
 }

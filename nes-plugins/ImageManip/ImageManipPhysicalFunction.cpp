@@ -18,9 +18,11 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <numbers>
 #include <numeric>
 #include <ranges>
 #include <span>
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 #include <arv.h>
@@ -28,7 +30,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <netinet/in.h>
-#include <opencv2/core/mat.hpp>
+#include <opencv2/core.hpp>
 #include <opencv2/imgcodecs/imgcodecs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
@@ -196,6 +198,182 @@ private:
 
 static constexpr size_t DEFAULT_IMAGE_WIDTH = 640;
 static constexpr size_t DEFAULT_IMAGE_HEIGHT = 480;
+static constexpr int AUDIO_SAMPLES = 16000;
+static constexpr int AUDIO_FRAME_SAMPLES = 400;
+static constexpr int AUDIO_FRAME_STRIDE = 160;
+static constexpr int AUDIO_FFT_SIZE = 512;
+static constexpr int AUDIO_FRAMES = AUDIO_SAMPLES / AUDIO_FRAME_STRIDE + 1;
+static constexpr int MFCC_COEFFICIENTS = 64;
+static constexpr uint32_t AUDIO_BYTES = AUDIO_SAMPLES * sizeof(float);
+static constexpr uint32_t MFCC_BYTES = AUDIO_FRAMES * MFCC_COEFFICIENTS * sizeof(float);
+
+constexpr uint64_t argmaxF32(std::span<const float> values)
+{
+    uint64_t maximumIndex = 0;
+    for (uint64_t index = 1; index < values.size(); ++index)
+    {
+        if (values[index] > values[maximumIndex])
+        {
+            maximumIndex = index;
+        }
+    }
+    return maximumIndex;
+}
+
+constexpr float maxF32(std::span<const float> values)
+{
+    return values[argmaxF32(values)];
+}
+
+constexpr float maxAbsF32(std::span<const float> values)
+{
+    float maximum = 0;
+    for (const float value : values)
+    {
+        const float absolute = value < 0 ? -value : value;
+        maximum = absolute > maximum ? absolute : maximum;
+    }
+    return maximum;
+}
+
+static_assert(
+    []
+    {
+        constexpr std::array values{1.0F, 3.0F, 3.0F, 2.0F};
+        constexpr std::array signedValues{-1.0F, 0.5F, -4.0F, 3.0F};
+        return argmaxF32(values) == 1 && maxF32(values) == 3.0F && maxAbsF32(signedValues) == 4.0F;
+    }());
+
+template <float (*Function)(std::span<const float>)>
+nautilus::val<float> reduceF32(const VariableSizedData& input)
+{
+    return nautilus::invoke(
+        +[](const int8_t* data, const uint32_t size) -> float
+        {
+            if (size == 0 || size % sizeof(float) != 0)
+            {
+                throw InferenceRuntimeFailure("Expected a non-empty FLOAT32 payload, but received {} bytes", size);
+            }
+            return Function(std::span{reinterpret_cast<const float*>(data), size / sizeof(float)});
+        },
+        input.getContent(),
+        input.getSize());
+}
+
+nautilus::val<uint64_t> argmaxF32(const VariableSizedData& input)
+{
+    return nautilus::invoke(
+        +[](const int8_t* data, const uint32_t size) -> uint64_t
+        {
+            if (size == 0 || size % sizeof(float) != 0)
+            {
+                throw InferenceRuntimeFailure("Argmax expected a non-empty FLOAT32 payload, but received {} bytes", size);
+            }
+            return argmaxF32(std::span{reinterpret_cast<const float*>(data), size / sizeof(float)});
+        },
+        input.getContent(),
+        input.getSize());
+}
+
+/// Transforms one second of 16 kHz audio into a frame-major [101, 64] MFCC tensor.
+void audioToMFCC(const float* input, float* output)
+{
+    constexpr int frequencyBins = AUDIO_FFT_SIZE / 2 + 1;
+    constexpr int fftPadding = (AUDIO_FFT_SIZE - AUDIO_FRAME_SAMPLES) / 2;
+
+    if (input == nullptr || output == nullptr)
+    {
+        throw std::invalid_argument("audioToMFCC requires non-null input and output pointers");
+    }
+
+    static const cv::Mat hannWindow = []
+    {
+        cv::Mat window = cv::Mat::zeros(1, AUDIO_FFT_SIZE, CV_32F);
+        for (int sample = 0; sample < AUDIO_FRAME_SAMPLES; ++sample)
+        {
+            window.at<float>(fftPadding + sample) = 0.5F
+                - 0.5F * std::cos(2.0F * std::numbers::pi_v<float> * static_cast<float>(sample) / static_cast<float>(AUDIO_FRAME_SAMPLES));
+        }
+        return window;
+    }();
+
+    static const cv::Mat melFilterbank = []
+    {
+        constexpr int melPoints = MFCC_COEFFICIENTS + 2;
+        std::array<float, melPoints> frequencies{};
+        const auto maxMel = 2595.0F * std::log10(1.0F + 8000.0F / 700.0F);
+        for (int point = 0; point < melPoints; ++point)
+        {
+            const auto mel = maxMel * static_cast<float>(point) / static_cast<float>(melPoints - 1);
+            frequencies[point] = 700.0F * (std::pow(10.0F, mel / 2595.0F) - 1.0F);
+        }
+
+        cv::Mat filterbank(frequencyBins, MFCC_COEFFICIENTS, CV_32F);
+        for (int bin = 0; bin < frequencyBins; ++bin)
+        {
+            const auto frequency = 8000.0F * static_cast<float>(bin) / static_cast<float>(frequencyBins - 1);
+            for (int band = 0; band < MFCC_COEFFICIENTS; ++band)
+            {
+                const auto rising = (frequency - frequencies[band]) / (frequencies[band + 1] - frequencies[band]);
+                const auto falling = (frequencies[band + 2] - frequency) / (frequencies[band + 2] - frequencies[band + 1]);
+                filterbank.at<float>(bin, band) = std::max(0.0F, std::min(rising, falling));
+            }
+        }
+        return filterbank;
+    }();
+
+    const cv::Mat samples(1, AUDIO_SAMPLES, CV_32F, const_cast<float*>(input));
+    cv::Mat padded;
+    cv::copyMakeBorder(samples, padded, 0, 0, AUDIO_FFT_SIZE / 2, AUDIO_FFT_SIZE / 2, cv::BORDER_REFLECT_101);
+
+    cv::Mat outputView(AUDIO_FRAMES, MFCC_COEFFICIENTS, CV_32F, output);
+    for (int frame = 0; frame < AUDIO_FRAMES; ++frame)
+    {
+        cv::Mat windowed;
+        cv::multiply(padded.colRange(frame * AUDIO_FRAME_STRIDE, frame * AUDIO_FRAME_STRIDE + AUDIO_FFT_SIZE), hannWindow, windowed);
+
+        cv::Mat spectrum;
+        cv::dft(windowed, spectrum, cv::DFT_COMPLEX_OUTPUT);
+        cv::Mat powerSpectrum;
+        cv::mulSpectrums(spectrum, spectrum, powerSpectrum, 0, true);
+        cv::Mat power;
+        cv::extractChannel(powerSpectrum.colRange(0, frequencyBins), power, 0);
+
+        cv::Mat logMel;
+        cv::gemm(power, melFilterbank, 1.0, cv::noArray(), 0.0, logMel);
+        logMel += 1e-6F;
+        cv::log(logMel, logMel);
+
+        cv::Mat mfcc;
+        cv::dct(logMel, mfcc);
+        mfcc.copyTo(outputView.row(frame));
+    }
+}
+
+VariableSizedData audioToMFCC(const VariableSizedData& input, ArenaRef& arena)
+{
+    auto output = arena.allocateVariableSizedData(MFCC_BYTES);
+    nautilus::invoke(
+        +[](int8_t* inputData, uint32_t inputSize, int8_t* outputData, uint32_t outputSize)
+        {
+            if (inputSize != AUDIO_BYTES)
+            {
+                throw InferenceRuntimeFailure(
+                    "Audio-to-MFCC expected {} float32 samples ({} bytes), but received {} bytes", AUDIO_SAMPLES, AUDIO_BYTES, inputSize);
+            }
+            if (outputSize != MFCC_BYTES)
+            {
+                throw InferenceRuntimeFailure(
+                    "Audio-to-MFCC expected a {}-byte output buffer, but received {} bytes", MFCC_BYTES, outputSize);
+            }
+            audioToMFCC(reinterpret_cast<const float*>(inputData), reinterpret_cast<float*>(outputData));
+        },
+        input.getContent(),
+        input.getSize(),
+        output.getContent(),
+        output.getSize());
+    return output;
+}
 
 VariableSizedData toBase64(const VariableSizedData& input, ArenaRef& arena)
 {
@@ -807,6 +985,22 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint16_t>>(4),
             arena);
     }
+    else if (functionName == "AudioToMFCC")
+    {
+        return audioToMFCC(child.template operator()<VariableSizedData>(0), arena);
+    }
+    else if (functionName == "ArgmaxF32")
+    {
+        return argmaxF32(child.template operator()<VariableSizedData>(0));
+    }
+    else if (functionName == "MaxF32")
+    {
+        return reduceF32<maxF32>(child.template operator()<VariableSizedData>(0));
+    }
+    else if (functionName == "MaxAbsF32")
+    {
+        return reduceF32<maxAbsF32>(child.template operator()<VariableSizedData>(0));
+    }
     else if (functionName == "Mono8ToJPG")
     {
         return mono8ToJPG(
@@ -999,4 +1193,8 @@ ImageManipFunction(IMAGE_MANIP_MONO8_TO_YUYV, "Mono8ToYUYV");
 ImageManipFunction(IMAGE_MANIP_MONO16_MIN, "Mono16MIN");
 ImageManipFunction(IMAGE_MANIP_MONO16_TO_CELSIUS, "Mono16ToCelsius");
 ImageManipFunction(IMAGE_MANIP_RECTANGLE, "Rectangle");
+ImageManipFunction(IMAGE_MANIP_AUDIO_TO_MFCC, "AudioToMFCC");
+ImageManipFunction(IMAGE_MANIP_ARGMAX_F32, "ArgmaxF32");
+ImageManipFunction(IMAGE_MANIP_MAX_F32, "MaxF32");
+ImageManipFunction(IMAGE_MANIP_MAX_ABS_F32, "MaxAbsF32");
 }
