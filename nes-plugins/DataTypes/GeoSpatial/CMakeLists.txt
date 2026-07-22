@@ -13,7 +13,7 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_subdirectory(Functions)
 
-add_library(geospatial_datatype_plugins STATIC CircleDataType.cpp LineDataType.cpp MovingPolygonDataType.cpp MovingPolygonTrajectoryDataType.cpp PointDataType.cpp PolygonDataType.cpp)
+add_library(geospatial_datatype_plugins STATIC CircleDataType.cpp LineDataType.cpp PointDataType.cpp)
 target_link_libraries(geospatial_datatype_plugins PRIVATE nes-data-types)
 target_include_directories(geospatial_datatype_plugins PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -21,6 +21,3 @@ link_plugin_library(nes-data-types geospatial_datatype_plugins)
 add_registry_entry(DataType Point)
 add_registry_entry(DataType Line)
 add_registry_entry(DataType Circle)
-add_registry_entry(DataType Polygon)
-add_registry_entry(DataType MovingPolygon)
-add_registry_entry(DataType MovingPolygonTrajectory)
