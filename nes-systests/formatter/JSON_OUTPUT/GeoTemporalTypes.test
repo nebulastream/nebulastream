@@ -99,3 +99,17 @@ SELECT tgeo_at_stbox(seq, SpatioTemporalBox(FLOAT64(-119.0), FLOAT64(0.0), FLOAT
 {"RESULTSEQ":{"sequence":[{"lon":-80.9857,"lat":40.7484,"ts":1609459260}]}}
 {"RESULTSEQ":{"sequence":[{"lon":-90.9857,"lat":40.7484,"ts":1609459320},{"lon":-100.9857,"lat":40.7484,"ts":1609459380}]}}
 {"RESULTSEQ":{"sequence":[{"lon":-110.9857,"lat":40.7484,"ts":1609459440},{"lon":-109.9857,"lat":40.7484,"ts":1609459560}]}}
+
+# As the definition of arrays / vectors in the query itself is currently not possible, we write the polygon in the input data for now
+CREATE LOGICAL SOURCE tInstantPoints(lon FLOAT64 NOT NULL, lat FLOAT64 NOT NULL, ts UINT64 NOT NULL, polygon Polygon NOT NULL);
+CREATE PHYSICAL SOURCE FOR tInstantPoints TYPE File SET('NestedJSON' as INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"LON": 2.5, "LAT": 2.5, "TS": 100, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"LON": 3.0, "LAT": 5.1, "TS": 110, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"LON": 6.0, "LAT": 2.5, "TS": 120, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"LON": 0.0, "LAT": 0.0, "TS": 130, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+
+SELECT lon, lat, ts FROM tInstantPoints WHERE temporal_eintersects_geometry(TemporalPoint(lon, lat, ts), polygon) INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+2.5,2.5,100
+0.0,0.0,130

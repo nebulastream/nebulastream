@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -19,15 +19,15 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypeRegistry.hpp>
 
-/// DataType for moving polygons trajectory consisting of 3 moving polygons. The purpose of this type is to check if fixedsized can hold structs
+/// DataType for temporal polygons consisting of a timestamp and a polygon struct
 namespace NES::DataTypeGeneratedRegistrar
 {
 
-DataTypeRegistryReturnType RegisterMovingPolygonTrajectoryDataType(DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterTemporalPolygonDataType(DataTypeRegistryArguments args)
 {
-    const DataType trajectory{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataTypeProvider::provideDataType("MovingPolygon"), 3};
     std::vector<std::pair<std::string, DataType>> fields;
-    fields.emplace_back("polygons", trajectory);
-    return DataType{DataType::Type::STRUCT, args.nullable, std::string{"MovingPolygonTrajectory"}, std::move(fields)};
+    fields.emplace_back("ts", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE));
+    fields.emplace_back("polygon", DataTypeProvider::provideDataType("Polygon", DataType::NULLABLE::NOT_NULLABLE));
+    return DataType{DataType::Type::STRUCT, args.nullable, std::string{"TemporalPolygon"}, std::move(fields)};
 }
 }
