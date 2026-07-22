@@ -329,6 +329,42 @@ uint64_t writeJsonStringLiteralSpan(
     return writeBytesToBuffer(chunk.data(), chunk.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+/// Inline fast path for a constant-literal span (a CONCAT constant prefix/suffix). NAUTILUS_INLINE so the body
+/// is spliced into the JIT pipeline: on the common fits-in-main-buffer path the quote writes + `std::memcpy`
+/// are VISIBLE to LLVM, so a constant source (an embedConstantBytes global with a fixed length) constant-forwards
+/// to immediate stores -- no opaque writer call, no runtime load-from-global. Only the near-boundary / child-
+/// buffer case falls back to the opaque writeJsonStringLiteralSpan, which keeps the std::string spill path (not
+/// spliceable) out of the inlined bitcode. A runtime span never reaches here (it takes the escaping writer).
+NAUTILUS_INLINE uint64_t writeJsonStringLiteralSpanInline(
+    int8_t* bufferStartingAddress,
+    const uint64_t remainingSpace,
+    const int8_t* content,
+    const uint64_t contentSize,
+    const bool openQuote,
+    const bool closeQuote,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider)
+{
+    const uint64_t quoteBytes = (openQuote ? 1U : 0U) + (closeQuote ? 1U : 0U);
+    if (tupleBuffer->getNumberOfChildBuffers() == 0 && contentSize + quoteBytes <= remainingSpace)
+    {
+        int8_t* out = bufferStartingAddress;
+        if (openQuote)
+        {
+            *out++ = static_cast<int8_t>('"');
+        }
+        std::memcpy(out, content, contentSize);
+        out += contentSize;
+        if (closeQuote)
+        {
+            *out++ = static_cast<int8_t>('"');
+        }
+        return static_cast<uint64_t>(out - bufferStartingAddress);
+    }
+    return writeJsonStringLiteralSpan(
+        bufferStartingAddress, remainingSpace, content, contentSize, openQuote, closeQuote, tupleBuffer, bufferProvider);
+}
+
 /// Write a single CHAR as a JSON string ("x", escaped if needed).
 uint64_t writeJsonChar(
     int8_t* bufferStartingAddress,
@@ -555,7 +591,7 @@ void writeValue(
                         else
                         {
                             amountWritten = nautilus::invoke(
-                                writeJsonStringLiteralSpan,
+                                writeJsonStringLiteralSpanInline,
                                 fieldPointer + written,
                                 currentRemainingSize,
                                 chunkPtr,
