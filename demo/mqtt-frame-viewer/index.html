@@ -7,20 +7,20 @@
   <script src="https://unpkg.com/paho-mqtt@1.1.0/paho-mqtt-min.js"></script>
   <style>
     * { box-sizing: border-box; }
-    body { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; font: 16px system-ui, sans-serif; color: #1d2433; }
+    body { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; font: 16px system-ui, sans-serif; color: #1d2433; }
     .controls { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; padding: 1rem; background: #f4f6f8; border-radius: .5rem; }
     label { display: grid; gap: .3rem; font-weight: 600; }
-    input, select, button { min-height: 2.3rem; padding: .35rem .5rem; font: inherit; }
+    input, button { min-height: 2.3rem; padding: .35rem .5rem; font: inherit; }
     input { min-width: 17rem; }
     button { cursor: pointer; }
     #status { font-weight: 600; }
-    .viewers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .viewers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
     .viewer { overflow: hidden; border: 1px solid #d5d9df; border-radius: .5rem; }
     .viewer header { padding: .75rem; background: #f4f6f8; }
     .time, .count { display: block; margin-top: .25rem; color: #536071; font-size: .9rem; }
     img { display: block; width: 100%; min-height: 200px; object-fit: contain; background: #171a20; }
     canvas { display: block; width: 100%; height: 320px; background: #171a20; }
-    @media (max-width: 700px) { .viewers { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .viewers { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -29,9 +29,6 @@
     <label>Broker WebSocket URL
       <input id="broker" value="ws://localhost:9001/mqtt" placeholder="wss://broker.example/mqtt">
     </label>
-    <label>Discovery filter
-      <input id="filter" value="#" title="Topics appear in the lists when matching messages arrive.">
-    </label>
     <button id="connect">Connect</button>
     <span id="status" aria-live="polite">Disconnected</span>
   </div>
@@ -39,55 +36,69 @@
   <main class="viewers">
     <section class="viewer">
       <header>
-        <label>Video stream 1 topic <select id="video-topic-1"><option value="rgb-image">rgb-image</option></select></label>
+        <strong>RGB video</strong>
         <span class="time" id="time-1">No frame received</span>
       </header>
       <img id="image-1" alt="Latest image from video stream 1">
     </section>
     <section class="viewer">
       <header>
-        <label>Video stream 2 topic <select id="video-topic-2"><option value="thermal-image">thermal-image</option></select></label>
+        <strong>Thermal video</strong>
         <span class="time" id="time-2">No frame received</span>
       </header>
       <img id="image-2" alt="Latest image from video stream 2">
     </section>
     <section class="viewer audio">
       <header>
-        <label>Audio stream 1 topic <select id="audio-topic-1"><option value="audio">audio</option></select></label>
+        <strong>Audio waveform</strong>
         <span class="count" id="count-1">0 chunks received</span>
       </header>
-      <canvas id="waveform-1" aria-label="Audio stream 1 waveform"></canvas>
+      <canvas id="waveform-1" aria-label="Audio waveform"></canvas>
     </section>
-    <section class="viewer audio">
+    <section class="viewer">
       <header>
-        <label>Audio stream 2 topic <select id="audio-topic-2"><option value="audio">audio</option></select></label>
-        <span class="count" id="count-2">0 chunks received</span>
+        <strong>Noise level · last 5 seconds</strong>
+        <span class="count" id="noise-current">Waiting for audio-noise-level</span>
       </header>
-      <canvas id="waveform-2" aria-label="Audio stream 2 waveform"></canvas>
+      <canvas id="noise-chart" aria-label="Noise level over the last 5 seconds"></canvas>
+    </section>
+    <section class="viewer">
+      <header>
+        <strong>Keywords · last 5 seconds</strong>
+        <span class="count" id="keyword-current">Waiting for audio-kws</span>
+      </header>
+      <canvas id="keyword-chart" aria-label="Keyword frequency over the last 5 seconds"></canvas>
     </section>
   </main>
 
   <script>
     let client;
     const AUDIO_WINDOW_MS = 1000;
-    const topics = new Set(['rgb-image', 'thermal-image', 'audio']);
+    const HISTORY_MS = 5000;
+    const TOPICS = ['rgb-image', 'thermal-image', 'audio', 'audio-noise-level', 'audio-kws'];
     const status = document.querySelector('#status');
-    const videoTopics = [document.querySelector('#video-topic-1'), document.querySelector('#video-topic-2')];
-    const audioViewers = [1, 2].map(number => {
-      const canvas = document.querySelector(`#waveform-${number}`);
-      return {
-        topic: document.querySelector(`#audio-topic-${number}`),
-        count: document.querySelector(`#count-${number}`),
-        canvas,
-        context: canvas.getContext('2d'),
-        chunks: [],
-        received: 0,
-      };
-    });
-    const selects = [...videoTopics, ...audioViewers.map(viewer => viewer.topic)];
+    const audioCanvas = document.querySelector('#waveform-1');
+    const audioViewer = {
+      count: document.querySelector('#count-1'),
+      canvas: audioCanvas,
+      context: audioCanvas.getContext('2d'),
+      chunks: [],
+      received: 0,
+    };
+    const noise = {
+      canvas: document.querySelector('#noise-chart'),
+      current: document.querySelector('#noise-current'),
+      samples: [],
+    };
+    noise.context = noise.canvas.getContext('2d');
+    const keywords = {
+      canvas: document.querySelector('#keyword-chart'),
+      current: document.querySelector('#keyword-current'),
+      events: [],
+    };
+    keywords.context = keywords.canvas.getContext('2d');
 
-    function drawWaveform(viewer) {
-      const { canvas, context, chunks } = viewer;
+    function sizeCanvas(canvas) {
       const scale = window.devicePixelRatio || 1;
       const width = Math.round(canvas.clientWidth * scale);
       const height = Math.round(canvas.clientHeight * scale);
@@ -95,6 +106,16 @@
         canvas.width = width;
         canvas.height = height;
       }
+      return { scale, width, height };
+    }
+
+    function recent(items, now) {
+      return items.filter(item => item.time >= now - HISTORY_MS);
+    }
+
+    function drawWaveform(viewer) {
+      const { canvas, context, chunks } = viewer;
+      const { scale, width, height } = sizeCanvas(canvas);
       context.clearRect(0, 0, width, height);
       context.strokeStyle = '#49566a';
       context.beginPath();
@@ -119,13 +140,102 @@
       }
     }
 
-    function addTopic(name) {
-      if (topics.has(name)) return;
-      topics.add(name);
-      for (const select of selects) {
-        if (select.options.length === 1 && !select.value) select.options[0].text = 'Choose a topic';
-        select.add(new Option(name, name));
+    function drawNoise(now = Date.now()) {
+      noise.samples = recent(noise.samples, now);
+      const { scale, width, height } = sizeCanvas(noise.canvas);
+      const context = noise.context;
+      const padding = 28 * scale;
+      context.clearRect(0, 0, width, height);
+      context.strokeStyle = '#49566a';
+      context.lineWidth = scale;
+      for (let line = 0; line <= 4; line += 1) {
+        const y = padding + line * (height - 2 * padding) / 4;
+        context.beginPath();
+        context.moveTo(padding, y);
+        context.lineTo(width - padding, y);
+        context.stroke();
       }
+      if (!noise.samples.length) {
+        noise.current.textContent = 'No samples in the last 5 seconds';
+        return;
+      }
+
+      const maximum = Math.max(0.05, ...noise.samples.map(sample => sample.value)) * 1.1;
+      context.strokeStyle = '#56d4ff';
+      context.lineWidth = 2 * scale;
+      context.beginPath();
+      noise.samples.forEach((sample, index) => {
+        const x = padding + (sample.time - (now - HISTORY_MS)) * (width - 2 * padding) / HISTORY_MS;
+        const y = height - padding - sample.value * (height - 2 * padding) / maximum;
+        index ? context.lineTo(x, y) : context.moveTo(x, y);
+      });
+      context.stroke();
+      context.fillStyle = '#aeb8c8';
+      context.font = `${12 * scale}px system-ui`;
+      context.fillText(maximum.toFixed(3), 4 * scale, padding);
+      context.fillText('5s ago', padding, height - 7 * scale);
+      context.textAlign = 'right';
+      context.fillText('now', width - padding, height - 7 * scale);
+      context.textAlign = 'left';
+    }
+
+    function drawKeywords(now = Date.now()) {
+      keywords.events = recent(keywords.events, now);
+      const counts = new Map();
+      keywords.events.forEach(event => counts.set(event.label, (counts.get(event.label) || 0) + 1));
+      const bars = [...counts].sort((left, right) => right[1] - left[1]);
+      const { scale, width, height } = sizeCanvas(keywords.canvas);
+      const context = keywords.context;
+      context.clearRect(0, 0, width, height);
+      if (!bars.length) {
+        keywords.current.textContent = 'No keywords in the last 5 seconds';
+        return;
+      }
+
+      const left = 85 * scale;
+      const right = 28 * scale;
+      const rowHeight = Math.min(34 * scale, height / bars.length);
+      const maximum = Math.max(...bars.map(([, count]) => count));
+      context.font = `${13 * scale}px system-ui`;
+      context.textBaseline = 'middle';
+      bars.forEach(([label, count], index) => {
+        const y = index * rowHeight + rowHeight * 0.15;
+        const barHeight = rowHeight * 0.7;
+        const barWidth = count * (width - left - right) / maximum;
+        context.fillStyle = '#56d4ff';
+        context.fillRect(left, y, barWidth, barHeight);
+        context.fillStyle = '#d9e1ec';
+        context.textAlign = 'right';
+        context.fillText(label, left - 8 * scale, y + barHeight / 2);
+        context.textAlign = 'left';
+        context.fillText(String(count), left + barWidth + 6 * scale, y + barHeight / 2);
+      });
+      context.textAlign = 'left';
+      context.textBaseline = 'alphabetic';
+    }
+
+    function parseTelemetry(payload) {
+      try {
+        const value = JSON.parse(payload);
+        return value && typeof value === 'object' ? value : undefined;
+      } catch { return; }
+    }
+
+    function appendNoise(payload) {
+      const message = parseTelemetry(payload);
+      if (!Number.isFinite(message?.timestamp) || !Number.isFinite(message.noise_level) || message.noise_level < 0) return;
+      noise.samples.push({ time: message.timestamp, value: message.noise_level });
+      noise.current.textContent = `Current: ${message.noise_level.toFixed(4)}`;
+      drawNoise();
+    }
+
+    function appendKeyword(payload) {
+      const message = parseTelemetry(payload);
+      if (!Number.isFinite(message?.timestamp) || typeof message.label !== 'string' || !message.label
+          || !Number.isFinite(message.confidence)) return;
+      keywords.events.push({ time: message.timestamp, label: message.label });
+      keywords.current.textContent = `Latest: ${message.label} · confidence ${message.confidence.toFixed(3)}`;
+      drawKeywords();
     }
 
     function showFrame(number, frame) {
@@ -172,21 +282,21 @@
       client = new Paho.Client(url.hostname, port, url.pathname + url.search, `media-viewer-${crypto.randomUUID()}`);
       client.onConnectionLost = response => { status.textContent = `Disconnected${response.errorMessage ? `: ${response.errorMessage}` : ''}`; };
       client.onMessageArrived = message => {
-        addTopic(message.destinationName);
-        audioViewers.filter(viewer => viewer.topic.value === message.destinationName)
-          .forEach(viewer => appendAudioChunk(viewer, message.payloadString));
-        if (videoTopics.some(select => select.value === message.destinationName)) {
+        if (message.destinationName === 'audio-noise-level') appendNoise(message.payloadString);
+        if (message.destinationName === 'audio-kws') appendKeyword(message.payloadString);
+        if (message.destinationName === 'audio') appendAudioChunk(audioViewer, message.payloadString);
+        const videoNumber = { 'rgb-image': 1, 'thermal-image': 2 }[message.destinationName];
+        if (videoNumber) {
           try {
-            const frame = JSON.parse(message.payloadString);
-            videoTopics.forEach((select, index) => { if (select.value === message.destinationName) showFrame(index + 1, frame); });
-          } catch { /* Ignore non-image messages selected as video topics. */ }
+            showFrame(videoNumber, JSON.parse(message.payloadString));
+          } catch { /* Ignore invalid video messages. */ }
         }
       };
       status.textContent = 'Connecting…';
       client.connect({
         useSSL: url.protocol === 'wss:',
         onSuccess: () => {
-          client.subscribe(document.querySelector('#filter').value || '#');
+          TOPICS.forEach(topic => client.subscribe(topic));
           status.textContent = 'Connected — waiting for media';
           document.querySelector('#connect').textContent = 'Reconnect';
         },
@@ -194,17 +304,23 @@
       });
     }
 
-    audioViewers.forEach(viewer => viewer.topic.addEventListener('change', () => {
-      viewer.chunks.length = 0;
-      viewer.received = 0;
-      viewer.count.textContent = '0 chunks received';
-      drawWaveform(viewer);
-    }));
-    window.addEventListener('resize', () => audioViewers.forEach(drawWaveform));
+    window.addEventListener('resize', () => {
+      drawWaveform(audioViewer);
+      drawNoise();
+      drawKeywords();
+    });
     document.querySelector('#connect').addEventListener('click', connect);
     console.assert(decodeAudioChunk('{"timestamp_start":0,"timestamp_end":1,"chunk":"AAAAAAAA8D8AAAAAAAAAAA=="}')?.samples.length === 2,
       'Audio chunk decoding failed');
-    audioViewers.forEach(drawWaveform);
+    console.assert(parseTelemetry('{"timestamp":1,"noise_level":0.25}')?.noise_level === 0.25, 'Telemetry decoding failed');
+    console.assert(recent([{ time: 0 }, { time: 5001 }], 5001).length === 1, 'Five-second history trimming failed');
+    drawWaveform(audioViewer);
+    drawNoise();
+    drawKeywords();
+    setInterval(() => {
+      drawNoise();
+      drawKeywords();
+    }, 250);
   </script>
 </body>
 </html>
