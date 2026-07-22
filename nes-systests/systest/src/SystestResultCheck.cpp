@@ -770,10 +770,10 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
     return QueryCheckResult{querySchemasAndResults.getSchemaErrorStream(), resultComparisonErrorStream};
 }
 
-static constexpr std::string_view RegexOpen = "<REGEX>";
-static constexpr std::string_view RegexClose = "</REGEX>";
-static constexpr std::string_view NegativeRegexOpen = "<!REGEX>";
-static constexpr std::string_view NegativeRegexClose = "</!REGEX>";
+constexpr std::string_view RegexOpen = "<REGEX>";
+constexpr std::string_view RegexClose = "</REGEX>";
+constexpr std::string_view NegativeRegexOpen = "<!REGEX>";
+constexpr std::string_view NegativeRegexClose = "</!REGEX>";
 
 struct ExplainRegexTags
 {
@@ -784,7 +784,7 @@ struct ExplainRegexTags
 
 struct ExplainRegexAssertion
 {
-    std::string pattern{};
+    std::string pattern;
     bool shouldMatch = false;
     size_t line = 0;
 };

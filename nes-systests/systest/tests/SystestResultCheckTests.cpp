@@ -23,9 +23,11 @@
 
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
