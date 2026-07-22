@@ -112,6 +112,9 @@ LoweringRuleResultSubgraph::SubGraphRoot lowerOperatorRecursively(
             memo.emplace(logicalOperator.getId(), loweredChild);
             return loweredChild;
         }
+        /// Memoize the empty result too, so that a shared operator lowering to nothing does not re-run its
+        /// lowering rule once per parent.
+        memo.emplace(logicalOperator.getId(), nullptr);
         return {};
     }
     memo.emplace(logicalOperator.getId(), root);

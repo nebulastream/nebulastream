@@ -151,23 +151,23 @@ PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
 
     auto collectNodes = [&visitStateMap, &allNodes](const PhysicalOpPtr& node, auto&& self) -> void
     {
-        auto [it, inserted] = visitStateMap.try_emplace(node, VisitState::Unvisited);
+        /// Bind a reference, not an iterator: the recursive calls below insert into visitStateMap, and an
+        /// insertion that rehashes invalidates every iterator into it. References to elements stay valid.
+        VisitState& visitState = visitStateMap.try_emplace(node, VisitState::Unvisited).first->second;
         PRECONDITION(
-            it->second != VisitState::InProgress,
+            visitState != VisitState::InProgress,
             "Cycle detected in physical plan DAG during flip — node visited twice on the same DFS path");
-        if (it->second == VisitState::Completed)
+        if (visitState == VisitState::Completed)
         {
             return; /// already fully processed
         }
-        it->second = VisitState::InProgress;
+        visitState = VisitState::InProgress;
         allNodes.push_back(node);
         for (const auto& child : node->getChildren())
         {
             self(child, self);
         }
-        /// Re-look up instead of reusing `it`: the recursive calls above insert into visitStateMap, and an
-        /// insertion that rehashes invalidates every iterator into it.
-        visitStateMap[node] = VisitState::Completed;
+        visitState = VisitState::Completed;
     };
     for (const auto& rootOperator : rootOperators)
     {

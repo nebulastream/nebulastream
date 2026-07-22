@@ -23,7 +23,12 @@
 /// The internal pipeline structure of the shared part (one emit, distinct successor pipelines) is NOT
 /// asserted here — that is the separate pipelining fan-out issue.
 /// The graft happens post-optimizer because the per-rule optimizer does not yet preserve multi-root
-/// sharing (separate issue: shared operators are rewritten once per root with fresh ids).
+/// sharing (#1753: shared operators are rewritten once per root with fresh ids).
+/// That graft has a cost worth knowing about when reading the assertions: the second sink's TraitSet is
+/// copied wholesale from the optimizer-bound first sink, so it carries traits that were computed for a
+/// *different* sink operator (OutputOriginIdsTrait, PlacementTrait, ...). These tests therefore pin a
+/// trait configuration that no real plan would ever have. Once #1753 lands, build the two-sink plan
+/// before the optimizer and drop the TraitSet copy, so the tests cover a plan the system can produce.
 
 #include <memory>
 #include <string>
@@ -149,7 +154,8 @@ TEST_F(MultiRootLoweringTest, SecondSinkRootIsNotDropped)
     ASSERT_EQ(firstSink.getChildren().size(), 1U);
 
     /// Graft a second sink sharing the first sink's child; the sink-level traits are copied from the
-    /// optimizer-bound first sink, everything below is shared as-is.
+    /// optimizer-bound first sink, everything below is shared as-is. See the #1753 note in the file
+    /// header: this copy is scaffolding and should go once the optimizer preserves multi-root sharing.
     const auto secondSink
         = LogicalOperator{SinkLogicalOperator::create(firstSink.getChildren()[0], createSinkDescriptor("multiroot_sink2"))}.withTraitSet(
             firstSink.getTraitSet());
@@ -172,6 +178,7 @@ TEST_F(MultiRootLoweringTest, SharedSourceIsLoweredOnce)
     const auto source = leafOf(firstSink);
     ASSERT_TRUE(source.tryGetAs<SourceDescriptorLogicalOperator>().has_value());
 
+    /// Same TraitSet-copy scaffolding as above; see the #1753 note in the file header.
     const auto secondSink = LogicalOperator{SinkLogicalOperator::create(source, createSinkDescriptor("sharedsource_sink2"))}.withTraitSet(
         firstSink.getTraitSet());
     auto plan = LogicalPlan{optimized.getQueryId(), {firstSink, secondSink}};
