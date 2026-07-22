@@ -80,7 +80,7 @@ VarVal FromBase64PhysicalFunction::execute(const Record& record, ArenaRef& arena
     auto output = arena.allocateVariableSizedData(maxOutputSize);
 
     auto actualSize = nautilus::invoke(decodeBase64, inputValue.getContent(), inputSize, output.getContent());
-    return VariableSizedData(output.getContent(), actualSize);
+    return output.withSize(actualSize);
 }
 
 PhysicalFunctionRegistryReturnType

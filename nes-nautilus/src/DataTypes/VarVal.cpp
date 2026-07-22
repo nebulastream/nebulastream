@@ -238,7 +238,9 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
                 return VarVal{
                     VariableSizedData{
                         nautilus::select(condition, trueUnderlying.getContent(), falseUnderlying.getContent()),
-                        nautilus::select(condition, trueUnderlying.getSize(), falseUnderlying.getSize())},
+                        nautilus::select(condition, trueUnderlying.getSize(), falseUnderlying.getSize()),
+                        nautilus::select(condition, trueUnderlying.getBufferControlBlock(), falseUnderlying.getBufferControlBlock()),
+                        nautilus::select(condition, trueUnderlying.getBufferOffset(), falseUnderlying.getBufferOffset())},
                     trueValue.nullable or falseValue.nullable,
                     nautilus::select(condition, trueValue.null, falseValue.null)};
             }

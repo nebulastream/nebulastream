@@ -178,10 +178,16 @@ VariableSizedAccess::Index TupleBuffer::storeChildBuffer(TupleBuffer& buffer) no
 {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
-    INVARIANT(controlBlock != control, "Cannot attach buffer to self");
-    const auto index = controlBlock->storeChildBuffer(control);
+    const auto index = storeChildBuffer(control);
     std::swap(empty, buffer);
     return index;
+}
+
+VariableSizedAccess::Index TupleBuffer::storeChildBuffer(detail::BufferControlBlock* childControlBlock) noexcept
+{
+    INVARIANT(childControlBlock != nullptr, "Cannot attach an invalid buffer");
+    INVARIANT(controlBlock != childControlBlock, "Cannot attach buffer to self");
+    return controlBlock->storeChildBuffer(childControlBlock);
 }
 
 TupleBuffer TupleBuffer::loadChildBuffer(VariableSizedAccess::Index bufferIndex) const noexcept

@@ -68,7 +68,7 @@ VarVal ToBase64PhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     auto actualSize = nautilus::invoke(encodeBase64, inputValue.getContent(), inputSize, output.getContent());
 
     /// The VariableSizedData length excludes the NUL terminator written by EVP_EncodeBlock.
-    return VariableSizedData(output.getContent(), actualSize);
+    return output.withSize(actualSize);
 }
 
 PhysicalFunctionRegistryReturnType

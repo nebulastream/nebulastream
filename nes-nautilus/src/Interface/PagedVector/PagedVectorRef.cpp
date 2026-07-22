@@ -77,7 +77,7 @@ uint64_t loadPageForEntryProxy(const TupleBuffer* pagedVectorBuffer, const uint6
 auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
 {
     /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,bugprone-exception-escape)
-    return [pageBuffer](const nautilus::val<int8_t*>& fieldSlot) -> std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>
+    return [pageBuffer](const nautilus::val<int8_t*>& fieldSlot) -> VariableSizedData
     {
         auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(fieldSlot);
         auto varSizedPtr = invoke(
@@ -103,7 +103,25 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
                 return access->getSize().getRawSize();
             },
             variableSizedAccess);
-        return {varSizedPtr, varSizedDataLength}; /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+        auto sourceBufferControlBlock = invoke(
+            {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+            +[](TupleBuffer* pageBuffer, const VariableSizedAccess* access) -> detail::BufferControlBlock*
+            {
+                INVARIANT(pageBuffer != nullptr, "Page buffer MUST NOT be null");
+                INVARIANT(access != nullptr, "VariableSizedAccess MUST NOT be null");
+                return pageBuffer->loadChildBuffer(access->getIndex()).getControlBlock();
+            },
+            pageBuffer.asArg(),
+            variableSizedAccess);
+        auto sourceBufferOffset = invoke(
+            {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+            +[](const VariableSizedAccess* access) -> uint64_t
+            {
+                INVARIANT(access != nullptr, "VariableSizedAccess MUST NOT be null");
+                return access->getOffset().getRawOffset();
+            },
+            variableSizedAccess);
+        return VariableSizedData{varSizedPtr, varSizedDataLength, sourceBufferControlBlock, sourceBufferOffset};
     };
 }
 
@@ -125,14 +143,31 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
 {
     return /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         /// NOLINTNEXTLINE(bugprone-exception-escape): nautilus::invoke ignores the lambda's exception spec; INVARIANT may throw on bad input.
-        [lastPageBuffer,
-         bufferProvider](const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) -> nautilus::val<int8_t*>
+        [lastPageBuffer, bufferProvider](
+            const nautilus::val<int8_t*>& fieldSlot,
+            const nautilus::val<uint64_t>& allocationSize,
+            const nautilus::val<detail::BufferControlBlock*>& sourceBufferControlBlock,
+            const nautilus::val<uint64_t>& sourceBufferOffset) -> nautilus::val<int8_t*>
     {
         return invoke( /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-            +[](TupleBuffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize) -> int8_t*
+            +[](TupleBuffer* pageBuffer,
+                AbstractBufferProvider* bufferProvider,
+                int8_t* fieldSlot,
+                uint64_t allocationSize,
+                detail::BufferControlBlock* sourceBufferControlBlock,
+                uint64_t sourceBufferOffset) -> int8_t*
             {
                 INVARIANT(pageBuffer != nullptr, "Page buffer must not be null");
                 INVARIANT(bufferProvider != nullptr, "BufferProvider must not be null");
+
+                if (sourceBufferControlBlock != nullptr && allocationSize > bufferProvider->getBufferSize())
+                {
+                    const auto childIndex = pageBuffer->storeChildBuffer(sourceBufferControlBlock);
+                    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
+                    *reinterpret_cast<VariableSizedAccess*>(fieldSlot) = VariableSizedAccess{
+                        childIndex, VariableSizedAccess::Offset{sourceBufferOffset}, VariableSizedAccess::Size{allocationSize}};
+                    return nullptr;
+                }
 
                 auto numChildren = pageBuffer->getNumberOfChildBuffers();
                 if (numChildren > 0)
@@ -181,7 +216,9 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
             lastPageBuffer.asArg(),
             bufferProvider,
             fieldSlot,
-            allocationSize);
+            allocationSize,
+            sourceBufferControlBlock,
+            sourceBufferOffset);
     };
 }
 }
@@ -226,8 +263,7 @@ Record DefaultPagedVectorTupleLayout::readRecord(const nautilus::val<int8_t*> re
         }
         else
         {
-            auto [ptr, len] = loadFunction(varValRef);
-            record.write(name, VarVal{VariableSizedData(ptr, len), dataType.nullable, null});
+            record.write(name, VarVal{loadFunction(varValRef), dataType.nullable, null});
         }
         fieldOffset += dataType.getSizeInBytesWithNull();
     }
@@ -281,14 +317,17 @@ void DefaultPagedVectorTupleLayout::writeRecord(
 
         /// field is varsized data, get the appropriate memory address to write it to
         const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-        const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(addressToWriteValue, varSizedValue.getSize());
+        const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(
+            addressToWriteValue, varSizedValue.getSize(), varSizedValue.getBufferControlBlock(), varSizedValue.getBufferOffset());
 
         /// write the varsized data to the memory address
         invoke(
             +[](int8_t* varSizedMemAddress, const int8_t* varSizedDataPtr, const uint64_t varSizedDataLength)
             {
-                INVARIANT(varSizedMemAddress != nullptr, "Memory address MUST NOT be null at this point");
-                std::memcpy(varSizedMemAddress, varSizedDataPtr, varSizedDataLength);
+                if (varSizedMemAddress != nullptr)
+                {
+                    std::memcpy(varSizedMemAddress, varSizedDataPtr, varSizedDataLength);
+                }
             },
             varSizedMemAddress,
             varSizedValue.getContent(),
