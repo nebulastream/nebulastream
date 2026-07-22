@@ -12,32 +12,38 @@ query:
 
 sinks:
   - name: PIPE_SINK_A
-    schema: [ { name: "GEN_A$id", type: UINT64 } ]
+    host: worker-node:8080
+    schema: [ { name: id, type: UINT64 } ]
     type: Pipe
     config: { pipe_name: "pipe_a" }
     parser_config: { }
   - name: VOID_SINK_A
-    schema: [ { name: "READER_A$id", type: UINT64 } ]
+    host: worker-node:8080
+    schema: [ { name: id, type: UINT64 } ]
     type: Void
     config: { }
     parser_config: { }
   - name: PIPE_SINK_B
-    schema: [ { name: "GEN_B$id", type: UINT64 } ]
+    host: worker-node:8080
+    schema: [ { name: id, type: UINT64 } ]
     type: Pipe
     config: { pipe_name: "pipe_b" }
     parser_config: { }
   - name: VOID_SINK_B
-    schema: [ { name: "READER_B$id", type: UINT64 } ]
+    host: worker-node:8080
+    schema: [ { name: id, type: UINT64 } ]
     type: Void
     config: { }
     parser_config: { }
   - name: PIPE_SINK_C
-    schema: [ { name: "GEN_C$id", type: UINT64 } ]
+    host: worker-node:8080
+    schema: [ { name: id, type: UINT64 } ]
     type: Pipe
     config: { pipe_name: "pipe_c" }
     parser_config: { }
   - name: VOID_SINK_C
-    schema: [ { name: "READER_C$id", type: UINT64 } ]
+    host: worker-node:8080
+    schema: [ { name: id, type: UINT64 } ]
     type: Void
     config: { }
     parser_config: { }
@@ -52,7 +58,8 @@ logical:
 
 physical:
   - logical: GEN_A
-    parser_config: { type: CSV, fieldDelimiter: "," }
+    host: worker-node:8080
+    parser_config: { type: CSV, field_delimiter: "," }
     type: Generator
     source_config:
       stop_generator_when_sequence_finishes: NONE
@@ -61,11 +68,13 @@ physical:
       generator_rate_config: "emit_rate 100"
       generator_schema: "SEQUENCE UINT64 0 1000 1"
   - logical: READER_A
+    host: worker-node:8080
     parser_config: { type: NATIVE }
     type: Pipe
     source_config: { pipe_name: "pipe_a" }
   - logical: GEN_B
-    parser_config: { type: CSV, fieldDelimiter: "," }
+    host: worker-node:8080
+    parser_config: { type: CSV, field_delimiter: "," }
     type: Generator
     source_config:
       stop_generator_when_sequence_finishes: NONE
@@ -74,11 +83,13 @@ physical:
       generator_rate_config: "emit_rate 100"
       generator_schema: "SEQUENCE UINT64 0 1000 1"
   - logical: READER_B
+    host: worker-node:8080
     parser_config: { type: NATIVE }
     type: Pipe
     source_config: { pipe_name: "pipe_b" }
   - logical: GEN_C
-    parser_config: { type: CSV, fieldDelimiter: "," }
+    host: worker-node:8080
+    parser_config: { type: CSV, field_delimiter: "," }
     type: Generator
     source_config:
       stop_generator_when_sequence_finishes: NONE
@@ -87,6 +98,12 @@ physical:
       generator_rate_config: "emit_rate 100"
       generator_schema: "SEQUENCE UINT64 0 1000 1"
   - logical: READER_C
+    host: worker-node:8080
     parser_config: { type: NATIVE }
     type: Pipe
     source_config: { pipe_name: "pipe_c" }
+
+workers:
+  - host: worker-node:8080
+    data_address: worker-node:9090
+    max_operators: 10000

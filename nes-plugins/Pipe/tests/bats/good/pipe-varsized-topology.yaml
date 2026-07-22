@@ -5,17 +5,19 @@
 
 sinks:
   - name: PIPE_SINK
+    host: worker-node:8080
     schema:
-      - { name: "GEN$id", type: UINT64 }
-      - { name: "GEN$payload", type: VARSIZED }
+      - { name: id, type: UINT64 }
+      - { name: payload, type: VARSIZED }
     type: Pipe
     config:
       pipe_name: "varsized_test"
     parser_config: { }
   - name: FILE_SINK
+    host: worker-node:8080
     schema:
-      - { name: "READER$id", type: UINT64 }
-      - { name: "READER$payload", type: VARSIZED }
+      - { name: id, type: UINT64 }
+      - { name: payload, type: VARSIZED }
     type: File
     config:
       output_format: CSV
@@ -34,9 +36,10 @@ logical:
 
 physical:
   - logical: GEN
+    host: worker-node:8080
     parser_config:
       type: CSV
-      fieldDelimiter: ","
+      field_delimiter: ","
     type: Generator
     source_config:
       stop_generator_when_sequence_finishes: ALL
@@ -46,8 +49,14 @@ physical:
       generator_schema: |
         SEQUENCE UINT64 0 1000 1, RANDOMSTR 10 50
   - logical: READER
+    host: worker-node:8080
     parser_config:
       type: NATIVE
     type: Pipe
     source_config:
       pipe_name: "varsized_test"
+
+workers:
+  - host: worker-node:8080
+    data_address: worker-node:9090
+    max_operators: 10000

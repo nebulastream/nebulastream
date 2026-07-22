@@ -15,12 +15,16 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
+#include <deque>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -42,6 +46,7 @@ class PipeSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Pipe";
+    static constexpr auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
 
     explicit PipeSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
     ~PipeSink() override;
@@ -57,9 +62,22 @@ protected:
     BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 
 private:
+    struct PendingDelivery
+    {
+        SequenceNumber sequenceNumber;
+        ChunkNumber chunkNumber;
+        std::vector<std::shared_ptr<PipeQueue>> deliveredConsumers;
+    };
+
+    bool tryDeliver(const TupleBuffer& inputTupleBuffer);
+    void updateMaxSequence(SequenceNumber sequenceNumber);
+
     std::string pipeName;
     std::shared_ptr<const PipeSchema> schema;
     std::shared_ptr<PipeService::SinkHandle> sinkHandle;
+    std::mutex deliveryMutex;
+    std::optional<PendingDelivery> pendingDelivery;
+    std::deque<TupleBuffer> buffered;
     /// Highest sequence number seen in any delivered buffer.
     /// New sources are only activated when a truly new sequence arrives (seqNum > maxSeqStarted),
     /// preventing mid-sequence promotion that would cause partial data.

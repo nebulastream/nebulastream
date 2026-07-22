@@ -1,11 +1,10 @@
-# Single-file pipe test: producer + 3 consumers.
-# The producer query is listed first so the pipe sink exists before consumers connect.
+# A fast producer and slow pipe consumer on one constrained worker.
+# The tiny admission queue and slow PrintSink reproduce the saturation cycle
+# where PipeSource cannot submit while PipeSink finds its consumer queue full.
 
 query:
   - SELECT * FROM GEN_SOURCE INTO PIPE_SINK
-  - SELECT * FROM PIPE_READER INTO VOID_SINK
-  - SELECT * FROM PIPE_READER INTO VOID_SINK
-  - SELECT * FROM PIPE_READER INTO VOID_SINK
+  - SELECT * FROM PIPE_READER INTO PRINT_SINK
 
 sinks:
   - name: PIPE_SINK
@@ -15,15 +14,17 @@ sinks:
       - { name: value, type: UINT64 }
     type: Pipe
     config:
-      pipe_name: "test_pipe"
+      pipe_name: "backpressure_pipe"
     parser_config: { }
-  - name: VOID_SINK
+  - name: PRINT_SINK
     host: worker-node:8080
     schema:
       - { name: id, type: UINT64 }
       - { name: value, type: UINT64 }
-    type: Void
-    config: { }
+    type: Print
+    config:
+      ingestion: 50
+      output_format: CSV
     parser_config: { }
 
 logical:
@@ -47,16 +48,17 @@ physical:
       stop_generator_when_sequence_finishes: NONE
       seed: 1
       generator_rate_type: FIXED
-      generator_rate_config: "emit_rate 100"
+      generator_rate_config: "emit_rate 1000000"
       generator_schema: |
-        SEQUENCE UINT64 0 1000 1, SEQUENCE UINT64 0 500 1
+        SEQUENCE UINT64 0 1000000 1, SEQUENCE UINT64 0 1000000 1
   - logical: PIPE_READER
     host: worker-node:8080
     parser_config:
       type: NATIVE
     type: Pipe
     source_config:
-      pipe_name: "test_pipe"
+      pipe_name: "backpressure_pipe"
+      queue_capacity: 4
 
 workers:
   - host: worker-node:8080
