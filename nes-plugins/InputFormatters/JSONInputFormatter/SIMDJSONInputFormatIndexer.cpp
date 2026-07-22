@@ -23,7 +23,6 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <fmt/format.h>
-#include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatterValidationRegistry.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
@@ -66,12 +65,6 @@ std::ostream& SIMDJSONInputFormatIndexer::toString(std::ostream& str) const
 DescriptorConfig::Config SIMDJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersSIMDJSON>(std::move(config), NAME);
-}
-
-InputFormatIndexerRegistryReturnType RegisterJSONInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
-{
-    return arguments.createInputFormatterWithIndexer(
-        SIMDJSONInputFormatIndexer::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
 }
 
 InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterJSONInputFormatterValidation(

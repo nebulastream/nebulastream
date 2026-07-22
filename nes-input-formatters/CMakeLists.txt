@@ -12,12 +12,12 @@
 
 # include registrar generation functions
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
-# Set Sources and Headers
-
-add_subdirectory(src)
-get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
-add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
+# Declare the library up front so create_runtime_registry can attach the WHOLE_ARCHIVE
+# glue sub-library; sources are added below once src/ has registered them.
+add_library(nes-input-formatters STATIC)
+set_target_properties(nes-input-formatters PROPERTIES LINKER_LANGUAGE CXX)
 
 # Exposing TupleBuffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
 target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-physical-operators)
@@ -28,6 +28,18 @@ target_include_directories(nes-input-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatters>
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
+# Runtime registry: an input-format-indexer plugin registers itself with
+# add_registry_entry(InputFormatIndexer <name>). The entry is expressed through the plugin's
+# indexer TYPE (included via HEADER_TEMPLATE) and the factory template from the registry header.
+create_runtime_registry(InputFormatIndexer nes-input-formatters
+        ENTRY_TEMPLATE "makeInputFormatterFactory<\${PLUGIN_NAME}InputFormatIndexer>()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}InputFormatIndexer.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+
+add_subdirectory(src)
+get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
+target_sources(nes-input-formatters PRIVATE ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
 # 'Public' provider library, only exposing the provider and the TupleBufferRef
 add_library(nes-input-formatter-provider src/InputFormatterProvider.cpp)
@@ -42,6 +54,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-input-formatters REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(InputFormatIndexer InputFormatterValidation)
+create_registries_for_component(InputFormatterValidation)
 
 add_tests_if_enabled(tests)

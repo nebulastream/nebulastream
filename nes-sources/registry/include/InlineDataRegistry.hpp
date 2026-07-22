@@ -15,13 +15,13 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <string>
 #include <thread>
 #include <vector>
-
 #include <Sources/SourceDataProvider.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -36,12 +36,18 @@ struct InlineDataRegistryArguments
     std::filesystem::path testFilePath;
 };
 
-class InlineDataRegistry : public BaseRegistry<InlineDataRegistry, std::string, PhysicalSourceConfig, InlineDataRegistryArguments>
+using InlineDataFn = std::function<InlineDataRegistryReturnType(InlineDataRegistryArguments)>;
+
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Case-insensitive to mirror the retired BaseRegistry: lookups use canonical upper-case type
+/// names while plugins register under their spelled name.
+class InlineDataRegistry : public RuntimeRegistry<InlineDataRegistry, std::string, InlineDataFn, /*CaseSensitive*/ false>
 {
+public:
+    /// Defined out-of-line (InlineDataRegistry.cpp) instead of inheriting the base's inline
+    /// definition, so exactly one instance exists process-wide even with plugins loaded as
+    /// shared objects.
+    static InlineDataRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_SOURCES_INLINE_DATA_REGISTRY
-#include <InlineDataGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCES_INLINE_DATA_REGISTRY

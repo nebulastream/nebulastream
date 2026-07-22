@@ -40,6 +40,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Plugins/BuiltinPlugins.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -816,6 +817,7 @@ int main(int argc, char** argv)
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();
+        NES::loadBuiltinPlugins();
         using argparse::ArgumentParser;
         ArgumentParser program("nebucli");
         program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");

@@ -21,9 +21,9 @@ Currently, they are organized into two tiers:
 2. Internal plugins, located in the core nes-* directories, and enabled in every build.
 
 ### Optional Plugins
-To enable an optional plugin, open nes-plugins/CMakeLists.txt and set the desired plugin’s property like this:
+To enable an optional plugin, open nes-plugins/CMakeLists.txt and add the plugin's directory like this:
 ```cmake
-activate_optional_plugin("Sources/TCPSource" ON)
+add_plugin("Sources/TCPSource")
 ```
 This includes the plugin in the NebulaStream build.
 Optional plugins can be added as libraries using the following structure:
@@ -54,17 +54,17 @@ For instance:
 ```
 nes-physical-operators/src/Functions/ArithmeticalFunctions/AddPhysicalFunction.cpp
 ```
-In the source directory’s `CMakeLists.txt`, internal plugins are added like this:
+In the source directory’s `CMakeLists.txt`, internal plugins register their entries like this:
 ```cmake
-add_plugin(Add PhysicalFunction AddPhysicalFunction.cpp)
-add_plugin(Div PhysicalFunction DivPhysicalFunction.cpp)
-add_plugin(Mod PhysicalFunction ModPhysicalFunction.cpp)
-add_plugin(Mul PhysicalFunction MulPhysicalFunction.cpp)
-add_plugin(Sub PhysicalFunction SubPhysicalFunction.cpp)
+register_entry(Add PhysicalFunction AddPhysicalFunction.cpp)
+register_entry(Div PhysicalFunction DivPhysicalFunction.cpp)
+register_entry(Mod PhysicalFunction ModPhysicalFunction.cpp)
+register_entry(Mul PhysicalFunction MulPhysicalFunction.cpp)
+register_entry(Sub PhysicalFunction SubPhysicalFunction.cpp)
 ```
 Notice the slight difference in the CMake function used here compared to optional plugins.
 While `add_plugin_as_library` creates a standalone library that is then linked into the component’s library (e.g., `nes-physical-operators`),
-`add_plugin` integrates the plugin directly into the component’s library, making it active in every build.
+`register_entry` integrates the plugin sources directly into the component’s library, making it active in every build.
 
 # Registries
 Registries are libraries that act as factories for creating registered plugins.

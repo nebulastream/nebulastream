@@ -10,12 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Greater LogicalFunction GreaterLogicalFunction.cpp)
-add_plugin(GreaterEquals LogicalFunction GreaterEqualsLogicalFunction.cpp)
-add_plugin(Less LogicalFunction LessLogicalFunction.cpp)
-add_plugin(LessEquals LogicalFunction LessEqualsLogicalFunction.cpp)
+register_entry(Greater LogicalFunction GreaterLogicalFunction.cpp)
+register_entry(GreaterEquals LogicalFunction GreaterEqualsLogicalFunction.cpp)
+register_entry(Less LogicalFunction LessLogicalFunction.cpp)
+register_entry(LessEquals LogicalFunction LessEqualsLogicalFunction.cpp)
 
-add_unreflection_plugin(LogicalFunction Greater)
-add_unreflection_plugin(LogicalFunction GreaterEquals)
-add_unreflection_plugin(LogicalFunction Less)
-add_unreflection_plugin(LogicalFunction LessEquals)
+add_unreflection_entry(LogicalFunction Greater)
+add_unreflection_entry(LogicalFunction GreaterEquals)
+add_unreflection_entry(LogicalFunction Less)
+add_unreflection_entry(LogicalFunction LessEquals)

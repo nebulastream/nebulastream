@@ -15,13 +15,13 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <string>
 #include <thread>
 #include <vector>
-
 #include <Sources/SourceDataProvider.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -35,12 +35,18 @@ struct FileDataRegistryArguments
     std::filesystem::path testFilePath;
 };
 
-class FileDataRegistry : public BaseRegistry<FileDataRegistry, std::string, FileDataRegistryReturnType, FileDataRegistryArguments>
+using FileDataFn = std::function<FileDataRegistryReturnType(FileDataRegistryArguments)>;
+
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Case-insensitive to mirror the retired BaseRegistry: lookups use canonical upper-case type
+/// names while plugins register under their spelled name.
+class FileDataRegistry : public RuntimeRegistry<FileDataRegistry, std::string, FileDataFn, /*CaseSensitive*/ false>
 {
+public:
+    /// Defined out-of-line (FileDataRegistry.cpp) instead of inheriting the base's inline
+    /// definition, so exactly one instance exists process-wide even with plugins loaded as
+    /// shared objects.
+    static FileDataRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_SOURCES_FILE_DATA_REGISTRY
-#include <FileDataGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCES_FILE_DATA_REGISTRY

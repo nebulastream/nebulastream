@@ -25,14 +25,14 @@ function(create_plugin_registry_library plugin_registry_library plugin_registry_
     )
 endfunction()
 
-# enables/disables an optional plugin; if enabled, the path to the plugin becomes part of the build
-function(activate_optional_plugin plugin_path plugin_option)
-    if (${plugin_option})
-        message(STATUS "Activating optional plugin: ${plugin_path} (and all of its dependencies).")
-        add_subdirectory(${plugin_path})
-    else ()
-        message(STATUS "Skipping optional plugin: ${plugin_path}.")
-    endif ()
+# add_plugin(<plugin_path>)
+# Adds a plugin directory to the build. Currently a thin wrapper around add_subdirectory; it is
+# the per-plugin hook where future cross-cutting plugin logic belongs (e.g. per-plugin build
+# options, dynamic-vs-static plugin switches, or verification that all of a plugin's registry
+# entries were registered consistently).
+function(add_plugin plugin_path)
+    message(STATUS "Adding plugin: ${plugin_path} (and all of its dependencies).")
+    add_subdirectory(${plugin_path})
 endfunction()
 
 # create a new library for the plugin and link it against the plugin registry
@@ -47,10 +47,18 @@ function(add_plugin_as_library plugin_name plugin_registry plugin_library)
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
 endfunction()
 
-# adds the source files of the plugin to the source files of the component that the plugin registry belongs to
-# adds the name of plugin to the list of plugin names for the plugin registry
-# the component is inferred from the registry name later in generate_plugin_registrar
-macro(add_plugin plugin_name plugin_registry)
+# registers an already-existing library with a plugin registry (like add_plugin_as_library, minus
+# the add_library). Lets a single implementation library serve several registries.
+function(register_plugin_library plugin_name plugin_registry plugin_library)
+    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
+    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
+endfunction()
+
+# register_entry(<plugin_name> <plugin_registry> <sources>...)
+# Registers an entry with a compile-time plugin registry: adds the source files to the component
+# that owns the registry and records the entry name for the generated registrar.
+# The component is inferred from the registry name later in generate_plugin_registrar.
+macro(register_entry plugin_name plugin_registry)
     set(sources ${ARGN})
     foreach (source ${sources})
         set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_sources" "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
@@ -68,7 +76,7 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
     get_property(plugin_registry_plugin_sources_final GLOBAL PROPERTY ${plugin_registry}_plugin_sources)
     get_property(plugin_registry_plugin_libraries_final GLOBAL PROPERTY ${plugin_registry}_plugin_libraries)
 
-    # add the deferred source files from add_plugin() to the component target.
+    # add the deferred source files from register_entry() to the component target.
     # The target must exist at this point because generate_plugin_registrar runs via
     # cmake_language(DEFER) at the end of configuration, after all add_library() calls.
     if (NOT TARGET ${plugin_registry_component})

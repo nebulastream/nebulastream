@@ -16,6 +16,7 @@
 #include <semaphore>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Plugins/PluginManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -70,6 +71,11 @@ int main(const int argc, const char* argv[])
         {
             NES_ERROR("Failed to set SIGTERM signal handler")
         }
+        /// Register built-in plugins (via the manager's constructor) and load dynamic plugins
+        /// (shared objects listed in NES_PLUGINS) before any registry lookup.
+        NES::PluginManager pluginManager;
+        pluginManager.loadFromEnvironment();
+
         auto configuration = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)
         {

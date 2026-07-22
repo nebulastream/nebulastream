@@ -10,9 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(TCP Source tcp_source_plugin_library TCPSource.cpp TCPDataServer.cpp)
-add_plugin_as_library(TCP SourceValidation tcp_source_validation_plugin_library TCPSource.cpp)
-add_plugin_as_library(TCP InlineData tcp_inline_data_plugin_library TCPSource.cpp)
-add_plugin_as_library(TCP FileData tcp_file_data_plugin_library TCPSource.cpp)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
+# One implementation library serving all registries this plugin participates in.
+add_library(tcp_source_plugin_library STATIC TCPSource.cpp TCPDataServer.cpp)
+target_link_libraries(tcp_source_plugin_library PRIVATE nes-sources)
 target_include_directories(tcp_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+
+link_plugin_library(nes-sources tcp_source_plugin_library)
+add_registry_entry(Source TCP)
+add_registry_entry(SourceValidation TCP)
+add_registry_entry(InlineData TCP)
+add_registry_entry(FileData TCP)

@@ -10,8 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(And PhysicalFunction AndPhysicalFunction.cpp)
-add_plugin(Equals PhysicalFunction EqualsPhysicalFunction.cpp)
-add_plugin(Negate PhysicalFunction NegatePhysicalFunction.cpp)
-add_plugin(Or PhysicalFunction OrPhysicalFunction.cpp)
-add_plugin(IsNull PhysicalFunction IsNullCheckPhysicalFunction.cpp)
+register_entry(And PhysicalFunction AndPhysicalFunction.cpp)
+register_entry(Equals PhysicalFunction EqualsPhysicalFunction.cpp)
+register_entry(Negate PhysicalFunction NegatePhysicalFunction.cpp)
+register_entry(Or PhysicalFunction OrPhysicalFunction.cpp)
+register_entry(IsNull PhysicalFunction IsNullCheckPhysicalFunction.cpp)

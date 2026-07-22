@@ -10,14 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(And LogicalFunction AndLogicalFunction.cpp)
-add_plugin(Equals LogicalFunction EqualsLogicalFunction.cpp)
-add_plugin(Negate LogicalFunction NegateLogicalFunction.cpp)
-add_plugin(Or LogicalFunction OrLogicalFunction.cpp)
-add_plugin(IsNull LogicalFunction IsNullCheckLogicalFunction.cpp)
+register_entry(And LogicalFunction AndLogicalFunction.cpp)
+register_entry(Equals LogicalFunction EqualsLogicalFunction.cpp)
+register_entry(Negate LogicalFunction NegateLogicalFunction.cpp)
+register_entry(Or LogicalFunction OrLogicalFunction.cpp)
+register_entry(IsNull LogicalFunction IsNullCheckLogicalFunction.cpp)
 
-add_unreflection_plugin(LogicalFunction And)
-add_unreflection_plugin(LogicalFunction Equals)
-add_unreflection_plugin(LogicalFunction Negate)
-add_unreflection_plugin(LogicalFunction Or)
-add_unreflection_plugin(LogicalFunction IsNullCheck KEY IsNull)
+add_unreflection_entry(LogicalFunction And)
+add_unreflection_entry(LogicalFunction Equals)
+add_unreflection_entry(LogicalFunction Negate)
+add_unreflection_entry(LogicalFunction Or)
+add_unreflection_entry(LogicalFunction IsNullCheck KEY IsNull)

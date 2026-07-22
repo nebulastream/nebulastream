@@ -35,6 +35,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <sys/types.h>
+#include <FileDataRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 
 namespace NES
 {
@@ -187,6 +189,10 @@ public:
     void close() override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    /// Systest adaptors: materialize inline/file test data by spinning up a TCPDataServer.
+    static InlineDataRegistryReturnType provideInlineData(InlineDataRegistryArguments systestAdaptorArguments);
+    static FileDataRegistryReturnType provideFileData(FileDataRegistryArguments systestAdaptorArguments);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
