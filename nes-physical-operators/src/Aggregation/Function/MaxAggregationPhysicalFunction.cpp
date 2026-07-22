@@ -40,7 +40,10 @@ MaxAggregationPhysicalFunction::MaxAggregationPhysicalFunction(
 }
 
 void MaxAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    CompilationContext&,
+    const Record& record)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 
@@ -76,7 +79,8 @@ void MaxAggregationPhysicalFunction::lift(
 void MaxAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
-    PipelineMemoryProvider&)
+    PipelineMemoryProvider&,
+    CompilationContext&)
 {
     if (not inputType.nullable)
     {
@@ -111,7 +115,8 @@ void MaxAggregationPhysicalFunction::combine(
     }
 }
 
-Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record
+MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&, CompilationContext&)
 {
     if (not inputType.nullable)
     {
@@ -136,7 +141,8 @@ Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
     return record;
 }
 
-void MaxAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void MaxAggregationPhysicalFunction::reset(
+    const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&, CompilationContext&)
 {
     /// Initialize the null flag to "no value seen yet" so the first non-null input becomes the running max
     if (inputType.nullable)

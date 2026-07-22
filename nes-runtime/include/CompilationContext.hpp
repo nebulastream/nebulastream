@@ -16,12 +16,15 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <fmt/format.h>
+#include <nautilus/nautilus_function.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <Module.hpp>
@@ -74,6 +77,11 @@ class CompilationContext
     /// We assume that a compilation context never outlives the module; both live in CompiledExecutablePipelineStage::start()
     nautilus::engine::NautilusModule& module; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     std::vector<std::function<void(nautilus::engine::CompiledModule&)>> pendingResolvers;
+    /// Type-erased owners of the functions handed out by getOrRegisterNautilusFunction(), keyed by their name.
+    /// In interpreted mode this map is looked up at runtime by every worker thread executing the pipeline, so it
+    /// is guarded. The map is node-based, hence the references handed out stay valid past the lock.
+    std::unordered_map<std::string, std::shared_ptr<void>> nautilusFunctions;
+    std::mutex nautilusFunctionsMutex;
     uint64_t functionNameCounter = 0;
     /// Set once resolveAfterCompilation() has run; registering further functions afterwards would append a resolver
     /// that never runs, leaving its handle permanently unresolved, so it is a precondition violation.
@@ -115,6 +123,32 @@ public:
     auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...))
     {
         return registerFunction(std::function<R(nautilus::val<FunctionArguments>...)>(fnptr), "operatorFunction");
+    }
+
+    /// Returns the pipeline's nautilus function of the given name, creating it from body on first use.
+    /// In contrast to registerFunction(), the returned function is called from *inside* traced code: its body is
+    /// traced once into the pipeline's module and called instead of being inlined at every call site. Operators
+    /// that would otherwise inline the same body N times per pipeline (N aggregations, N joins, ...) derive a
+    /// name from the shape of the body and share the single instantiation this hands out.
+    ///
+    /// The functions live as long as this context, i.e. as long as the pipeline stage: in interpreted mode the
+    /// bodies are not compiled but invoked directly, every time the pipeline runs. That is also why, unlike
+    /// registerFunction(), this may be called after the module has been compiled -- it hands out nothing that
+    /// would still need resolving, and why it must be safe to call from several worker threads at once.
+    template <typename Signature>
+    nautilus::NautilusFunction<std::function<Signature>>&
+    getOrRegisterNautilusFunction(const std::string& name, std::function<Signature> body)
+    {
+        using Function = nautilus::NautilusFunction<std::function<Signature>>;
+        const std::lock_guard lock{nautilusFunctionsMutex};
+        auto& stored = nautilusFunctions[name];
+        if (stored == nullptr)
+        {
+            /// NautilusFunction is neither copyable nor movable, so it is constructed in place and kept behind a
+            /// type-erased shared_ptr, which retains the deleter of the concrete type.
+            stored = std::make_shared<Function>(name, std::move(body));
+        }
+        return *std::static_pointer_cast<Function>(stored);
     }
 
     /// Called by CompiledExecutablePipelineStage once, directly after compiling the pipeline's module.

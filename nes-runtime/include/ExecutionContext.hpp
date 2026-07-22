@@ -44,6 +44,8 @@
 namespace NES
 {
 
+class CompilationContext;
+
 /// Struct that combines the arena and the buffer provider. This struct combines the functionality of the arena and the buffer provider,
 /// allowing the operator to allocate two different types of memory, in regard to their lifetime.
 /// 1. Memory for a pipeline invocation: Arena
@@ -103,6 +105,11 @@ struct ExecutionContext final
 
     void setOpenReturnState(OpenReturnState openReturnState);
     [[nodiscard]] OpenReturnState getOpenReturnState() const;
+
+    /// The context compiling this pipeline, so that operators can register shared nautilus functions from their
+    /// traced code. Only set while the pipeline is being set up and traced, which is the only time it is needed.
+    [[nodiscard]] CompilationContext& getCompilationContext() const;
+    CompilationContext* compilationContext = nullptr;
 
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<WorkerThreadId> workerThreadId;

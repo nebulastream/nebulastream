@@ -86,7 +86,6 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild()->getTraitSet());
-    auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(physicalInputSchema);
     auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), physicalInputSchema, memoryLayoutType);
 
     for (const auto& descriptor : aggregationDescriptors)
@@ -98,17 +97,29 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 
         auto physicalInputType = fieldAccessFunction->getDataType();
         auto physicalFinalType = descriptor.function->getAggregateType();
-        auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(
-            fieldAccessFunction, *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>());
+        const auto& fieldMapping = *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>();
+        auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(fieldAccessFunction, fieldMapping);
         const auto resultFieldIdentifier = descriptor.name;
         auto name = descriptor.function->getName();
+
+        /// Layout under which an aggregation that keeps the individual values around (median) stores them: the
+        /// single column it aggregates, rather than the whole input record. writeRecord skips schema fields the
+        /// record does not carry, so lift can still push the whole record. Narrowing it is what lets the median
+        /// body be shared across aggregations: it reads the stored value by name instead of applying this
+        /// aggregation's column-specific input function.
+        const auto mappedName = fieldMapping.getMapping(fieldAccessFunction->getField().unbound());
+        PRECONDITION(mappedName.has_value(), "Can not find mapping for {}", fieldAccessFunction->getField());
+        const auto aggregatedField = physicalInputSchema.getFieldByName(mappedName.value());
+        PRECONDITION(aggregatedField.has_value(), "Physical input schema has no field {}", mappedName.value());
+        auto aggregatedValueLayout
+            = std::make_shared<DefaultPagedVectorTupleLayout>(Schema<QualifiedUnboundField, Ordered>{aggregatedField.value()});
 
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
             std::move(physicalInputType),
             std::move(physicalFinalType),
             std::move(aggregationInputFunction),
             resultFieldIdentifier,
-            tupleLayout,
+            aggregatedValueLayout,
             descriptor.function.shallIncludeNullValues());
         if (auto aggregationPhysicalFunction
             = AggregationPhysicalFunctionRegistry::instance().create(std::string{name}, std::move(aggregationArguments)))
