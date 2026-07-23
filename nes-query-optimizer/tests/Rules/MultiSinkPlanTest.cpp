@@ -25,13 +25,10 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
-#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -87,35 +84,6 @@ namespace NES
 namespace
 {
 
-LogicalFunction equalsZero(const LogicalOperator& producer, const std::string& fieldName)
-{
-    return EqualsLogicalFunction{
-        FieldAccessLogicalFunction{producer.getOutputSchema()[Identifier::parse(fieldName)].value()},
-        ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}};
-}
-
-std::vector<LogicalOperator> collectUniqueOperators(const LogicalPlan& plan)
-{
-    std::vector<LogicalOperator> operators;
-    std::unordered_set<OperatorId> seen;
-    std::vector<LogicalOperator> pending{plan.getRootOperators()};
-    while (!pending.empty())
-    {
-        const auto current = pending.back();
-        pending.pop_back();
-        if (!seen.insert(current.getId()).second)
-        {
-            continue;
-        }
-        operators.push_back(current);
-        for (const auto& child : current.getChildren())
-        {
-            pending.push_back(child);
-        }
-    }
-    return operators;
-}
-
 void expectSharedRootChild(const LogicalPlan& plan)
 {
     const auto roots = plan.getRootOperators();
@@ -135,7 +103,7 @@ public:
     LogicalPlan createSharedChainPlan(const std::string& prefix)
     {
         auto source = utils.createSource(prefix + "_src", {"a", "b"});
-        auto selection = SelectionLogicalOperator::create(source, equalsZero(source, "a"));
+        auto selection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
         auto sink1 = utils.createSink(selection, prefix + "_sink1", {"a", "b"});
         auto sink2 = utils.createSink(selection, prefix + "_sink2", {"a", "b"});
         return utils.createPlan({sink1, sink2});
@@ -147,7 +115,7 @@ TEST_F(MultiSinkPlanTest, DecideMemoryLayoutPreservesSharing)
     const auto result = DecideMemoryLayoutRule{}.apply(createSharedChainPlan("memory_layout"));
 
     expectSharedRootChild(result);
-    const auto operators = collectUniqueOperators(result);
+    const auto operators = OptimizerTestUtils::collectOperators(result);
     EXPECT_EQ(operators.size(), 4);
     for (const auto& op : operators)
     {
@@ -160,7 +128,7 @@ TEST_F(MultiSinkPlanTest, DecideJoinTypesPreservesSharing)
     const auto result = DecideJoinTypesRule{StreamJoinStrategy::OPTIMIZER_CHOOSES}.apply(createSharedChainPlan("join_types"));
 
     expectSharedRootChild(result);
-    const auto operators = collectUniqueOperators(result);
+    const auto operators = OptimizerTestUtils::collectOperators(result);
     EXPECT_EQ(operators.size(), 4);
     for (const auto& op : operators)
     {
@@ -173,7 +141,7 @@ TEST_F(MultiSinkPlanTest, DecideFieldMappingsPreservesSharing)
     const auto result = DecideFieldMappings{}.apply(createSharedChainPlan("field_mappings"));
 
     expectSharedRootChild(result);
-    const auto operators = collectUniqueOperators(result);
+    const auto operators = OptimizerTestUtils::collectOperators(result);
     EXPECT_EQ(operators.size(), 4);
     for (const auto& op : operators)
     {
@@ -191,7 +159,7 @@ TEST_F(MultiSinkPlanTest, OriginIdInferenceAssignsSharedOperatorsOneOriginId)
     /// The shared source is the only origin id assigner; it must have been assigned exactly one origin id
     /// that both sinks observe.
     std::unordered_set<OriginId> allOriginIds;
-    for (const auto& op : collectUniqueOperators(result))
+    for (const auto& op : OptimizerTestUtils::collectOperators(result))
     {
         const auto traitOpt = getTrait<OutputOriginIdsTrait>(op.getTraitSet());
         ASSERT_TRUE(traitOpt.has_value()) << "missing origin ids trait on " << op;
@@ -216,7 +184,7 @@ TEST_F(MultiSinkPlanTest, RedundantUnionRemovalRemovesSharedUnionOnce)
     expectSharedRootChild(result);
     const auto roots = result.getRootOperators();
     EXPECT_TRUE(roots.at(0).getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>().has_value());
-    EXPECT_EQ(collectUniqueOperators(result).size(), 3);
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 3);
 }
 
 TEST_F(MultiSinkPlanTest, RedundantProjectionRemovalRemovesSharedProjectionOnce)
@@ -236,7 +204,7 @@ TEST_F(MultiSinkPlanTest, RedundantProjectionRemovalRemovesSharedProjectionOnce)
     expectSharedRootChild(result);
     const auto roots = result.getRootOperators();
     EXPECT_TRUE(roots.at(0).getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>().has_value());
-    EXPECT_EQ(collectUniqueOperators(result).size(), 3);
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 3);
 }
 
 TEST_F(MultiSinkPlanTest, DecideFieldOrderStampsAgreedTargetOrderOnSharedChild)
@@ -244,7 +212,7 @@ TEST_F(MultiSinkPlanTest, DecideFieldOrderStampsAgreedTargetOrderOnSharedChild)
     const auto result = DecideFieldOrder{}.apply(createSharedChainPlan("field_order"));
 
     expectSharedRootChild(result);
-    const auto operators = collectUniqueOperators(result);
+    const auto operators = OptimizerTestUtils::collectOperators(result);
     EXPECT_EQ(operators.size(), 4);
     for (const auto& op : operators)
     {
@@ -260,7 +228,7 @@ TEST_F(MultiSinkPlanTest, DecideFieldOrderStampsAgreedTargetOrderOnSharedChild)
 TEST_F(MultiSinkPlanTest, DecideFieldOrderThrowsOnConflictingTargetOrders)
 {
     auto source = utils.createSource("field_order_conflict_src", {"a", "b"});
-    auto selection = SelectionLogicalOperator::create(source, equalsZero(source, "a"));
+    auto selection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
     auto sink1 = utils.createSink(selection, "field_order_conflict_sink1", {"a", "b"});
     auto sink2 = utils.createSink(selection, "field_order_conflict_sink2", {"b", "a"});
     const auto plan = utils.createPlan({sink1, sink2});
@@ -268,13 +236,48 @@ TEST_F(MultiSinkPlanTest, DecideFieldOrderThrowsOnConflictingTargetOrders)
     ASSERT_EXCEPTION_ERRORCODE(std::ignore = DecideFieldOrder{}.apply(plan), ErrorCode::UnsupportedQuery);
 }
 
+TEST_F(MultiSinkPlanTest, DecideFieldOrderPropagatesSharedTargetOrderIntoOtherSinkBranch)
+{
+    /// A shared operator has a single physical output order, so an order one sink imposes on it legitimately propagates
+    /// into the heuristic order of operators in another sink's branch that also read it.
+    /// Topology: source(a,b) <- shared <- {sink1(order b,a); middle <- top <- sink2(order a,b)}.
+    /// `shared` is the direct child of sink1 (so sink1 pins it to [b,a]) and, via middle/top, also feeds sink2.
+    /// `middle` is not a direct sink child, so it receives a heuristic order derived from `shared`.
+    auto source = utils.createSource("shared_target_order_src", {"a", "b"});
+    auto shared = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
+    auto sink1 = utils.createSink(shared, "shared_target_order_sink1", {"b", "a"});
+    auto middle = SelectionLogicalOperator::create(shared, OptimizerTestUtils::equalsZero(shared, "b"));
+    auto top = SelectionLogicalOperator::create(middle, OptimizerTestUtils::equalsZero(middle, "a"));
+    auto sink2 = utils.createSink(top, "shared_target_order_sink2", {"a", "b"});
+
+    const auto result = DecideFieldOrder{}.apply(utils.createPlan({sink1, sink2}));
+
+    const auto roots = result.getRootOperators();
+    ASSERT_EQ(roots.size(), 2);
+
+    /// The shared operator stays a single instance reachable directly from sink1 and via top -> middle from sink2.
+    const auto sharedFromSink1 = roots.at(0).getChildren().at(0);
+    const auto middleRewritten = roots.at(1).getChildren().at(0).getChildren().at(0);
+    const auto sharedFromSink2 = middleRewritten.getChildren().at(0);
+    EXPECT_EQ(sharedFromSink1.getId(), sharedFromSink2.getId());
+
+    /// sink1 pins the shared operator to [b, a]; `middle` in sink2's branch inherits exactly that order rather than the
+    /// [a, b] it would carry in isolation.
+    const auto reversed = utils.createSchema({"b", "a"});
+    EXPECT_EQ(sharedFromSink1.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields(), reversed);
+    EXPECT_EQ(middleRewritten.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields(), reversed);
+
+    /// source, shared, sink1, middle, top, sink2 — no rule duplicated the shared subtree.
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 6);
+}
+
 TEST_F(MultiSinkPlanTest, PredicatePushdownKeepsBranchPredicateAboveSharedOperator)
 {
     /// BEFORE: source <- sharedSelection(b == 0) <- {branchSelection(a == 0) <- sink1, sink2}
     /// AFTER:  the branch predicate must stay above the shared boundary; the shared subtree is rewritten once.
     auto source = utils.createSource("pred_pushdown_src", {"a", "b"});
-    auto sharedSelection = SelectionLogicalOperator::create(source, equalsZero(source, "b"));
-    auto branchSelection = SelectionLogicalOperator::create(sharedSelection, equalsZero(sharedSelection, "a"));
+    auto sharedSelection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "b"));
+    auto branchSelection = SelectionLogicalOperator::create(sharedSelection, OptimizerTestUtils::equalsZero(sharedSelection, "a"));
     auto sink1 = utils.createSink(branchSelection, "pred_pushdown_sink1", {"a", "b"});
     auto sink2 = utils.createSink(sharedSelection, "pred_pushdown_sink2", {"a", "b"});
 
@@ -296,7 +299,7 @@ TEST_F(MultiSinkPlanTest, PredicatePushdownKeepsBranchPredicateAboveSharedOperat
     EXPECT_TRUE(branch2Shared.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>().has_value());
 
     /// sink1, sink2, branch selection, shared selection, source
-    EXPECT_EQ(collectUniqueOperators(result).size(), 5);
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 5);
 }
 
 TEST_F(MultiSinkPlanTest, WatermarkAssignerPushdownStopsAtSharedOperator)
@@ -304,7 +307,7 @@ TEST_F(MultiSinkPlanTest, WatermarkAssignerPushdownStopsAtSharedOperator)
     /// BEFORE: source <- sharedSelection <- {eventTimeAssigner <- sink1, sink2}
     /// AFTER:  the assigner must not descend into the shared subtree, where sink2 would observe it.
     auto source = utils.createSource("watermark_src", {"a", "b"});
-    auto sharedSelection = SelectionLogicalOperator::create(source, equalsZero(source, "a"));
+    auto sharedSelection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
     auto eventTime = EventTimeWatermarkAssignerLogicalOperator::create(
         sharedSelection,
         FieldAccessLogicalFunction{sharedSelection.getOutputSchema()[Identifier::parse("a")].value()},
@@ -328,7 +331,7 @@ TEST_F(MultiSinkPlanTest, WatermarkAssignerPushdownStopsAtSharedOperator)
     EXPECT_EQ(branch1Shared.getId(), branch2Shared.getId());
     ASSERT_TRUE(branch2Shared.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>().has_value());
 
-    EXPECT_EQ(collectUniqueOperators(result).size(), 5);
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 5);
 }
 
 TEST_F(MultiSinkPlanTest, ProjectionPushdownDoesNotNarrowSharedSubtree)
@@ -336,7 +339,7 @@ TEST_F(MultiSinkPlanTest, ProjectionPushdownDoesNotNarrowSharedSubtree)
     /// BEFORE: source(a, b) <- sharedSelection <- {projection(a) <- sink1(a), sink2(a, b)}
     /// AFTER:  sink1 only requires "a", but the shared subtree must keep the full schema for sink2.
     auto source = utils.createSource("proj_pushdown_src", {"a", "b"});
-    auto sharedSelection = SelectionLogicalOperator::create(source, equalsZero(source, "a"));
+    auto sharedSelection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
     auto projection = ProjectionLogicalOperator::create(
         sharedSelection,
         std::vector<std::pair<Identifier, LogicalFunction>>{
@@ -359,7 +362,7 @@ TEST_F(MultiSinkPlanTest, ProjectionPushdownDoesNotNarrowSharedSubtree)
     /// The shared subtree still produces both fields and contains no narrowing projection.
     EXPECT_TRUE(branch2Shared.getOutputSchema()[Identifier::parse("a")].has_value());
     EXPECT_TRUE(branch2Shared.getOutputSchema()[Identifier::parse("b")].has_value());
-    for (const auto& op : collectUniqueOperators(utils.createPlan({roots.at(1)})))
+    for (const auto& op : OptimizerTestUtils::collectOperators(utils.createPlan({roots.at(1)})))
     {
         EXPECT_FALSE(op.tryGetAs<ProjectionLogicalOperator>().has_value()) << "unexpected projection below shared boundary: " << op;
     }
@@ -370,7 +373,7 @@ TEST_F(MultiSinkPlanTest, TypeInferencePreservesSharing)
     const auto result = TypeInferenceRule{}.apply(createSharedChainPlan("type_inference"));
 
     expectSharedRootChild(result);
-    EXPECT_EQ(collectUniqueOperators(result).size(), 4);
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 4);
 }
 
 TEST_F(MultiSinkPlanTest, SinkBindingHandlesMultipleRoots)
@@ -392,7 +395,7 @@ TEST_F(MultiSinkPlanTest, AnonymousSourceBindingPreservesSharing)
     const auto result = AnonymousSourceBindingRule{std::make_shared<SourceCatalog>()}.apply(createSharedChainPlan("anonymous_source"));
 
     expectSharedRootChild(result);
-    EXPECT_EQ(collectUniqueOperators(result).size(), 4);
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 4);
 }
 
 TEST_F(MultiSinkPlanTest, InferModelResolutionPreservesSharing)
@@ -400,7 +403,7 @@ TEST_F(MultiSinkPlanTest, InferModelResolutionPreservesSharing)
     const auto result = InferModelResolutionRule{std::make_shared<ModelCatalog>()}.apply(createSharedChainPlan("infer_model"));
 
     expectSharedRootChild(result);
-    EXPECT_EQ(collectUniqueOperators(result).size(), 4);
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 4);
 }
 
 TEST_F(MultiSinkPlanTest, LogicalSourceExpansionExpandsSharedSourceNameOnce)
@@ -429,7 +432,7 @@ TEST_F(MultiSinkPlanTest, LogicalSourceExpansionExpandsSharedSourceNameOnce)
     ASSERT_EQ(expandedUnion.getChildren().size(), 1);
     EXPECT_TRUE(expandedUnion.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>().has_value());
     /// sink1, sink2, union, physical source
-    EXPECT_EQ(collectUniqueOperators(result).size(), 4);
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 4);
 }
 
 TEST_F(MultiSinkPlanTest, CalcTargetOrderInfersOrderForAllSinks)
@@ -443,7 +446,7 @@ TEST_F(MultiSinkPlanTest, CalcTargetOrderInfersOrderForAllSinks)
     ASSERT_TRUE(descriptor2.has_value());
 
     auto source = utils.createSource("calc_target_order_src", {"a", "b"});
-    auto selection = SelectionLogicalOperator::create(source, equalsZero(source, "a"));
+    auto selection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
     const auto sink1 = SinkLogicalOperator::create(selection, descriptor1.value());
     const auto sink2 = SinkLogicalOperator::create(selection, descriptor2.value());
 
@@ -468,7 +471,7 @@ TEST_F(MultiSinkPlanTest, RuleBasedOptimizerSequencePreservesSharing)
 
     expectSharedRootChild(result);
     /// sink1, sink2, the shared selection, and the source — no rule in the sequence may duplicate the shared subtree
-    EXPECT_EQ(collectUniqueOperators(result).size(), 4);
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 4);
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access)

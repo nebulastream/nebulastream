@@ -18,7 +18,6 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -46,18 +45,8 @@ namespace NES
 {
 namespace
 {
-/// Tracks operators reachable through more than one parent during pushdown. Watermark assigners from one parent must
-/// not be pushed into a subtree another parent also reads, so shared operators act as pushdown barriers: pending
-/// assigners are materialized above them, while the shared subtree itself is rewritten exactly once (with no pending
-/// assigners) and the rewritten instance is reused by every parent, preserving sharing.
-struct PushdownContext
-{
-    std::unordered_set<OperatorId> sharedOperatorIds;
-    std::unordered_map<OperatorId, LogicalOperator> rewrittenSharedOperators;
-};
-
 LogicalOperator watermarkAssignerPushdown(
-    PushdownContext& ctx, const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime);
+    PushdownBarrier& ctx, const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime);
 
 LogicalOperator
 addWatermarkAssigners(LogicalOperator op, const bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
@@ -92,7 +81,7 @@ fieldsWithNewBase(const LogicalOperator& base, std::vector<std::pair<Field, Wind
 }
 
 LogicalOperator applyToAllChildren(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const LogicalOperator& op,
     const bool ingestionTime,
     const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
@@ -112,7 +101,7 @@ LogicalOperator applyToAllChildren(
     return op.withChildren(children);
 }
 
-LogicalOperator pushBeyondSink(PushdownContext& ctx, const TypedLogicalOperator<SinkLogicalOperator>& op)
+LogicalOperator pushBeyondSink(PushdownBarrier& ctx, const TypedLogicalOperator<SinkLogicalOperator>& op)
 {
     /// Sinks are the starting point of the recursion.
     /// Because they don't have parents, no watermark assigner
@@ -132,7 +121,7 @@ LogicalOperator pushBeyondSource(
 }
 
 LogicalOperator pushBeyondTransparentOperator(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const LogicalOperator& op,
     bool ingestionTime,
     const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
@@ -143,7 +132,7 @@ LogicalOperator pushBeyondTransparentOperator(
 }
 
 LogicalOperator pushBeyondProjection(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<ProjectionLogicalOperator>& op,
     bool ingestionTime,
     const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
@@ -205,7 +194,7 @@ LogicalOperator pushBeyondProjection(
 }
 
 LogicalOperator pushBeyondEventTimeWatermarkAssigner(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op,
     const bool ingestionTime,
     std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
@@ -224,7 +213,7 @@ LogicalOperator pushBeyondEventTimeWatermarkAssigner(
 }
 
 LogicalOperator pushBeyondIngestionTimeWatermarkAssigner(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op,
     bool /* ingestionTime */,
     std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
@@ -236,7 +225,7 @@ LogicalOperator pushBeyondIngestionTimeWatermarkAssigner(
 }
 
 LogicalOperator pushBeyondDefault(
-    PushdownContext& ctx, const LogicalOperator& op, const bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+    PushdownBarrier& ctx, const LogicalOperator& op, const bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
 {
     /// Implements default behavior if operator is not explicitly handled.
     /// Applies all watermark assigners and restarts recursion for all children.
@@ -245,7 +234,7 @@ LogicalOperator pushBeyondDefault(
 }
 
 LogicalOperator watermarkAssignerPushdownDispatch(
-    PushdownContext& ctx, const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+    PushdownBarrier& ctx, const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
 {
     if (const auto sink = op.tryGetAs<SinkLogicalOperator>())
     {
@@ -277,17 +266,17 @@ LogicalOperator watermarkAssignerPushdownDispatch(
 }
 
 LogicalOperator watermarkAssignerPushdown(
-    PushdownContext& ctx, const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+    PushdownBarrier& ctx, const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
 {
-    if (ctx.sharedOperatorIds.contains(op.getId()))
+    /// A shared operator is a pushdown barrier: pending assigners must not enter a subtree another parent also reads, so
+    /// they are materialized above it while the shared subtree itself is rewritten once with no pending assigners.
+    if (ctx.isShared(op))
     {
-        auto rewritten = ctx.rewrittenSharedOperators.find(op.getId());
-        if (rewritten == ctx.rewrittenSharedOperators.end())
-        {
-            rewritten = ctx.rewrittenSharedOperators.emplace(op.getId(), watermarkAssignerPushdownDispatch(ctx, op, false, {})).first;
-        }
-        /// addWatermarkAssigners rebinds the event time fields to the rewritten operator by name
-        return addWatermarkAssigners(rewritten->second, ingestionTime, std::move(eventTime));
+        return ctx.rewriteShared(
+            op,
+            [&] { return watermarkAssignerPushdownDispatch(ctx, op, false, {}); },
+            /// addWatermarkAssigners rebinds the event time fields to the rewritten operator by name
+            [&](const LogicalOperator& rewritten) { return addWatermarkAssigners(rewritten, ingestionTime, std::move(eventTime)); });
     }
     return watermarkAssignerPushdownDispatch(ctx, op, std::move(ingestionTime), std::move(eventTime));
 }
@@ -299,7 +288,7 @@ LogicalPlan WatermarkAssignerPushdownRule::apply(LogicalPlan queryPlan) const
 {
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
 
-    PushdownContext ctx{.sharedOperatorIds = getSharedOperatorIds(queryPlan), .rewrittenSharedOperators = {}};
+    PushdownBarrier ctx{queryPlan};
     std::vector<LogicalOperator> newRoots;
     newRoots.reserve(queryPlan.getRootOperators().size());
     for (const auto& root : queryPlan.getRootOperators())

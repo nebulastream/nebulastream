@@ -57,17 +57,7 @@ namespace NES
 namespace
 {
 
-/// Tracks operators reachable through more than one parent during pushdown. The required-field set of one parent must
-/// not narrow a subtree another parent also reads, so shared operators act as pushdown barriers: they are rewritten
-/// exactly once requiring their full output schema, and the rewritten instance is reused by every parent, preserving
-/// sharing.
-struct PushdownContext
-{
-    std::unordered_set<OperatorId> sharedOperatorIds;
-    std::unordered_map<OperatorId, LogicalOperator> rewrittenSharedOperators;
-};
-
-LogicalOperator projectionPushdown(PushdownContext& ctx, const LogicalOperator& op, const std::unordered_set<Field>& required);
+LogicalOperator projectionPushdown(PushdownBarrier& ctx, const LogicalOperator& op, const std::unordered_set<Field>& required);
 
 std::unordered_set<Field> getAccessedFields(const LogicalFunction& logicalFunction)
 {
@@ -93,7 +83,7 @@ std::vector<Field> sortFields(const std::unordered_set<Field>& fields)
     return sortedFields;
 }
 
-LogicalOperator pushBeyondSink(PushdownContext& ctx, const TypedLogicalOperator<SinkLogicalOperator>& op)
+LogicalOperator pushBeyondSink(PushdownBarrier& ctx, const TypedLogicalOperator<SinkLogicalOperator>& op)
 {
     /// Use identifiers from output schema as starting point for required fields.
     std::unordered_set<Field> required{};
@@ -142,7 +132,7 @@ LogicalOperator pushBeyondSource(TypedLogicalOperator<SourceDescriptorLogicalOpe
 }
 
 LogicalOperator pushBeyondSelection(
-    PushdownContext& ctx, const TypedLogicalOperator<SelectionLogicalOperator>& op, const std::unordered_set<Field>& required)
+    PushdownBarrier& ctx, const TypedLogicalOperator<SelectionLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// Add accessed identifiers in predicate if necessary
 
@@ -159,7 +149,7 @@ LogicalOperator pushBeyondSelection(
 }
 
 LogicalOperator pushBeyondProjection(
-    PushdownContext& ctx, const TypedLogicalOperator<ProjectionLogicalOperator>& op, const std::unordered_set<Field>& required)
+    PushdownBarrier& ctx, const TypedLogicalOperator<ProjectionLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// remove unnecessary projections, replace required identifiers via accessed fields from remaining projections
 
@@ -201,7 +191,7 @@ LogicalOperator pushBeyondProjection(
 }
 
 LogicalOperator
-pushBeyondJoin(PushdownContext& ctx, const TypedLogicalOperator<JoinLogicalOperator>& op, const std::unordered_set<Field>& required)
+pushBeyondJoin(PushdownBarrier& ctx, const TypedLogicalOperator<JoinLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// Add accessed identifiers in join predicate if necessary
     /// Apply recursion to both children, each with the relevant subset of required fields that come from the individual child
@@ -284,7 +274,7 @@ pushBeyondJoin(PushdownContext& ctx, const TypedLogicalOperator<JoinLogicalOpera
 }
 
 LogicalOperator
-pushBeyondUnion(PushdownContext& ctx, const TypedLogicalOperator<UnionLogicalOperator>& op, const std::unordered_set<Field>& required)
+pushBeyondUnion(PushdownBarrier& ctx, const TypedLogicalOperator<UnionLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// no new required fields are added in union operator
 
@@ -305,7 +295,7 @@ pushBeyondUnion(PushdownContext& ctx, const TypedLogicalOperator<UnionLogicalOpe
 }
 
 LogicalOperator pushBeyondEventTimeWatermarkAssigner(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op,
     const std::unordered_set<Field>& required)
 {
@@ -324,7 +314,7 @@ LogicalOperator pushBeyondEventTimeWatermarkAssigner(
 }
 
 LogicalOperator pushBeyondIngestionTimeWatermarkAssigner(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op,
     const std::unordered_set<Field>& required)
 {
@@ -343,7 +333,7 @@ LogicalOperator pushBeyondIngestionTimeWatermarkAssigner(
 }
 
 LogicalOperator pushBeyondWindowedAggregation(
-    PushdownContext& ctx, const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op, const std::unordered_set<Field>& required)
+    PushdownBarrier& ctx, const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// Add grouping keys if necessary and remove aggregations that are not accessed later
 
@@ -421,7 +411,7 @@ LogicalOperator pushBeyondWindowedAggregation(
         newChild, op->getGroupingKeysWithName(), newAggregations, op->getWindowType(), op->getCharacteristic()};
 }
 
-LogicalOperator pushBeyondDefault(PushdownContext& ctx, const LogicalOperator& op, const std::unordered_set<Field>& required)
+LogicalOperator pushBeyondDefault(PushdownBarrier& ctx, const LogicalOperator& op, const std::unordered_set<Field>& required)
 {
     /// Default behavior if concrete operator is not explicitly handled above.
     /// New projection with all required fields is added.
@@ -451,7 +441,7 @@ LogicalOperator pushBeyondDefault(PushdownContext& ctx, const LogicalOperator& o
     return TypedLogicalOperator<ProjectionLogicalOperator>{newOp, newProjections, ProjectionLogicalOperator::Asterisk{false}};
 }
 
-LogicalOperator projectionPushdownDispatch(PushdownContext& ctx, const LogicalOperator& op, const std::unordered_set<Field>& required)
+LogicalOperator projectionPushdownDispatch(PushdownBarrier& ctx, const LogicalOperator& op, const std::unordered_set<Field>& required)
 {
     if (auto sinkOp = op.tryGetAs<SinkLogicalOperator>())
     {
@@ -492,18 +482,20 @@ LogicalOperator projectionPushdownDispatch(PushdownContext& ctx, const LogicalOp
     return pushBeyondDefault(ctx, op, required);
 }
 
-LogicalOperator projectionPushdown(PushdownContext& ctx, const LogicalOperator& op, const std::unordered_set<Field>& required)
+LogicalOperator projectionPushdown(PushdownBarrier& ctx, const LogicalOperator& op, const std::unordered_set<Field>& required)
 {
-    if (ctx.sharedOperatorIds.contains(op.getId()))
+    /// A shared operator is a pushdown barrier: it is rewritten once requiring its full output schema so that no
+    /// parent-specific field narrowing leaks into a subtree another parent also reads.
+    if (ctx.isShared(op))
     {
-        auto rewritten = ctx.rewrittenSharedOperators.find(op.getId());
-        if (rewritten == ctx.rewrittenSharedOperators.end())
-        {
-            /// Require the full output schema so no parent-specific narrowing leaks into the shared subtree.
-            const auto allFields = op.getOutputSchema() | std::ranges::to<std::unordered_set<Field>>();
-            rewritten = ctx.rewrittenSharedOperators.emplace(op.getId(), projectionPushdownDispatch(ctx, op, allFields)).first;
-        }
-        return rewritten->second;
+        return ctx.rewriteShared(
+            op,
+            [&]
+            {
+                const auto allFields = op.getOutputSchema() | std::ranges::to<std::unordered_set<Field>>();
+                return projectionPushdownDispatch(ctx, op, allFields);
+            },
+            [](const LogicalOperator& rewritten) { return rewritten; });
     }
     return projectionPushdownDispatch(ctx, op, required);
 }
@@ -514,7 +506,7 @@ LogicalPlan ProjectionPushdownRule::apply(LogicalPlan queryPlan) const
 {
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
 
-    PushdownContext ctx{.sharedOperatorIds = getSharedOperatorIds(queryPlan), .rewrittenSharedOperators = {}};
+    PushdownBarrier ctx{queryPlan};
     std::vector<LogicalOperator> newRoots;
     newRoots.reserve(queryPlan.getRootOperators().size());
     for (const auto& root : queryPlan.getRootOperators())

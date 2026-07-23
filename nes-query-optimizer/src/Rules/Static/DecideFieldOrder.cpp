@@ -62,16 +62,10 @@ namespace
 Schema<Field, Ordered> heuristicOutputOrder(const LogicalOperator& visiting, const std::vector<LogicalOperator>& newChildren)
 {
     /// For now we reuse the semantic field order of the operators as a heuristic for deciding the FieldOrdering trait
-    /// Other strategies may be explored for better physical optimization
-    const auto oldChildren = visiting.getChildren();
-    std::vector<std::pair<LogicalOperator, LogicalOperator>> oldWithNewChildren;
-    oldWithNewChildren.reserve(oldChildren.size());
-    for (std::size_t i = 0; i < oldChildren.size(); ++i)
-    {
-        oldWithNewChildren.emplace_back(oldChildren[i], newChildren[i]);
-    }
-
-    const auto childrenMap = oldWithNewChildren | std::ranges::to<std::unordered_map>();
+    /// Other strategies may be explored for better physical optimization.
+    /// A child's ordering trait is read below. In a DAG a shared child may carry a target order imposed by another sink
+    /// (see apply): a shared operator has a single physical output order that all of its parents -- across sink branches --
+    /// must consume, so deriving this operator's order from that child is intentional, not an accidental cross-sink leak.
     const std::unordered_map<TypedLogicalOperator<>, Schema<Field, Ordered>> childrenWithOutputOrder
         = newChildren
         | std::views::transform(
@@ -86,6 +80,15 @@ Schema<Field, Ordered> heuristicOutputOrder(const LogicalOperator& visiting, con
 
     if (const auto reorderer = visiting.tryGetAs<Reorderer>())
     {
+        /// The Reorderer callback is keyed by the original child, so map each original child to its rewritten counterpart.
+        const auto oldChildren = visiting.getChildren();
+        std::vector<std::pair<LogicalOperator, LogicalOperator>> oldWithNewChildren;
+        oldWithNewChildren.reserve(oldChildren.size());
+        for (std::size_t i = 0; i < oldChildren.size(); ++i)
+        {
+            oldWithNewChildren.emplace_back(oldChildren[i], newChildren[i]);
+        }
+        const auto childrenMap = oldWithNewChildren | std::ranges::to<std::unordered_map>();
         return reorderer.value()->get().getOrderedOutputSchema([&childrenWithOutputOrder, &childrenMap](const LogicalOperator& child)
                                                                { return childrenWithOutputOrder.at(childrenMap.at(child)); });
     }

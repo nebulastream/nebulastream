@@ -25,6 +25,10 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -123,23 +127,43 @@ LogicalPlan OptimizerTestUtils::createPlan(std::vector<LogicalOperator> sinks)
         QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), std::move(sinks)};
 }
 
-std::unordered_set<OperatorId> OptimizerTestUtils::collectOperatorIds(const LogicalPlan& plan)
+std::vector<LogicalOperator> OptimizerTestUtils::collectOperators(const LogicalPlan& plan)
 {
-    std::unordered_set<OperatorId> operatorIds;
+    std::vector<LogicalOperator> operators;
+    std::unordered_set<OperatorId> seen;
     std::vector<LogicalOperator> pending{plan.getRootOperators()};
     while (!pending.empty())
     {
         const auto current = pending.back();
         pending.pop_back();
-        if (!operatorIds.insert(current.getId()).second)
+        if (!seen.insert(current.getId()).second)
         {
             continue;
         }
+        operators.push_back(current);
         for (const auto& child : current.getChildren())
         {
             pending.push_back(child);
         }
     }
+    return operators;
+}
+
+std::unordered_set<OperatorId> OptimizerTestUtils::collectOperatorIds(const LogicalPlan& plan)
+{
+    std::unordered_set<OperatorId> operatorIds;
+    for (const auto& op : collectOperators(plan))
+    {
+        operatorIds.insert(op.getId());
+    }
     return operatorIds;
+}
+
+/// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+LogicalFunction OptimizerTestUtils::equalsZero(const LogicalOperator& producer, const std::string& fieldName)
+{
+    return EqualsLogicalFunction{
+        FieldAccessLogicalFunction{producer.getOutputSchema()[Identifier::parse(fieldName)].value()},
+        ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}};
 }
 }

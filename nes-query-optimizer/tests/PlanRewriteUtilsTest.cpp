@@ -94,20 +94,10 @@ TEST_F(PlanRewriteUtilsTest, testReplaceFieldAccesses)
     ASSERT_EQ(fieldAccess3->getField().getProducedBy(), op3);
 }
 
-namespace
-{
-LogicalFunction equalsZero(const LogicalOperator& producer, const std::string& fieldName)
-{
-    return EqualsLogicalFunction{
-        FieldAccessLogicalFunction{producer.getOutputSchema()[Identifier::parse(fieldName)].value()},
-        ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}};
-}
-}
-
 TEST_F(PlanRewriteUtilsTest, getSharedOperatorIdsOnSingleSinkPlan)
 {
     const auto source = utils.createSource("shared_ids_single", {"a", "b"});
-    const auto selection = SelectionLogicalOperator::create(source, equalsZero(source, "a"));
+    const auto selection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
     const auto plan = utils.createPlan(utils.createSink(selection, "shared_ids_single_sink", {"a", "b"}));
 
     EXPECT_TRUE(getSharedOperatorIds(plan).empty());
@@ -116,7 +106,7 @@ TEST_F(PlanRewriteUtilsTest, getSharedOperatorIdsOnSingleSinkPlan)
 TEST_F(PlanRewriteUtilsTest, getSharedOperatorIdsOnMultiSinkPlan)
 {
     const auto source = utils.createSource("shared_ids_multi", {"a", "b"});
-    const auto selection = SelectionLogicalOperator::create(source, equalsZero(source, "a"));
+    const auto selection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
     const auto sink1 = utils.createSink(selection, "shared_ids_multi_sink1", {"a", "b"});
     const auto sink2 = utils.createSink(selection, "shared_ids_multi_sink2", {"a", "b"});
     const auto plan = utils.createPlan({sink1, sink2});
@@ -137,7 +127,7 @@ TEST_F(PlanRewriteUtilsTest, getSharedOperatorIdsCountsDuplicateEdgesFromSamePar
 TEST_F(PlanRewriteUtilsTest, rewritePlanBottomUpVisitsSharedOperatorsOnce)
 {
     const auto source = utils.createSource("rewrite_once", {"a", "b"});
-    const auto selection = SelectionLogicalOperator::create(source, equalsZero(source, "a"));
+    const auto selection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
     const auto sink1 = utils.createSink(selection, "rewrite_once_sink1", {"a", "b"});
     const auto sink2 = utils.createSink(selection, "rewrite_once_sink2", {"a", "b"});
     const auto plan = utils.createPlan({sink1, sink2});
@@ -159,7 +149,7 @@ TEST_F(PlanRewriteUtilsTest, rewritePlanBottomUpVisitsSharedOperatorsOnce)
 TEST_F(PlanRewriteUtilsTest, rewritePlanBottomUpPreservesSharing)
 {
     const auto source = utils.createSource("rewrite_sharing", {"a", "b"});
-    const auto selection = SelectionLogicalOperator::create(source, equalsZero(source, "a"));
+    const auto selection = SelectionLogicalOperator::create(source, OptimizerTestUtils::equalsZero(source, "a"));
     const auto sink1 = utils.createSink(selection, "rewrite_sharing_sink1", {"a", "b"});
     const auto sink2 = utils.createSink(selection, "rewrite_sharing_sink2", {"a", "b"});
     const auto plan = utils.createPlan({sink1, sink2});

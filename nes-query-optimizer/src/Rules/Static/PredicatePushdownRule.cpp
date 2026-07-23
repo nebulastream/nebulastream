@@ -52,18 +52,8 @@ namespace NES
 
 namespace
 {
-/// Tracks operators reachable through more than one parent during pushdown. Predicates from one parent must not be
-/// pushed into a subtree another parent also reads, so shared operators act as pushdown barriers: pending predicates
-/// are materialized above them, while the shared subtree itself is rewritten exactly once (with an empty predicate
-/// set) and the rewritten instance is reused by every parent, preserving sharing.
-struct PushdownContext
-{
-    std::unordered_set<OperatorId> sharedOperatorIds;
-    std::unordered_map<OperatorId, LogicalOperator> rewrittenSharedOperators;
-};
-
 [[nodiscard]] LogicalOperator predicatePushdown(
-    PushdownContext& ctx, LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields);
+    PushdownBarrier& ctx, LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields);
 
 std::vector<LogicalFunction> splitPredicate(LogicalFunction function)
 {
@@ -132,7 +122,7 @@ std::unordered_map<Field, Field> fieldsWithNewOperator(const LogicalOperator& ba
 }
 
 LogicalOperator applyToAllChildren(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const LogicalOperator& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -152,7 +142,7 @@ LogicalOperator applyToAllChildren(
 }
 
 LogicalOperator pushBeyondSelection(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<SelectionLogicalOperator>& op,
     std::vector<LogicalFunction> predicateSet,
     std::unordered_map<Field, Field> fields)
@@ -178,7 +168,7 @@ LogicalOperator pushBeyondSelection(
 }
 
 LogicalOperator pushBeyondUnion(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<UnionLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -196,7 +186,7 @@ LogicalOperator pushBeyondUnion(
 }
 
 LogicalOperator pushBeyondProjection(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<ProjectionLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -260,7 +250,7 @@ LogicalOperator pushBeyondProjection(
 }
 
 LogicalOperator pushBeyondJoin(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<JoinLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -311,7 +301,7 @@ LogicalOperator pushBeyondJoin(
 }
 
 LogicalOperator pushBeyondWatermarkAssigner(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const LogicalOperator& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -324,7 +314,7 @@ LogicalOperator pushBeyondWatermarkAssigner(
 }
 
 LogicalOperator pushBeyondWindowedAggregation(
-    PushdownContext& ctx,
+    PushdownBarrier& ctx,
     const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     std::unordered_map<Field, Field> fields)
@@ -375,7 +365,7 @@ LogicalOperator pushBeyondWindowedAggregation(
 }
 
 LogicalOperator predicatePushdownDispatch(
-    PushdownContext& ctx, LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields)
+    PushdownBarrier& ctx, LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields)
 {
     if (op.tryGetAs<SourceDescriptorLogicalOperator>())
     {
@@ -415,16 +405,17 @@ LogicalOperator predicatePushdownDispatch(
 }
 
 LogicalOperator predicatePushdown(
-    PushdownContext& ctx, LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields)
+    PushdownBarrier& ctx, LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields)
 {
-    if (ctx.sharedOperatorIds.contains(op.getId()))
+    /// A shared operator is a pushdown barrier: pending predicates must not enter a subtree another parent also reads, so
+    /// they are materialized above it while the shared subtree itself is rewritten once with an empty predicate set.
+    if (ctx.isShared(op))
     {
-        auto rewritten = ctx.rewrittenSharedOperators.find(op.getId());
-        if (rewritten == ctx.rewrittenSharedOperators.end())
-        {
-            rewritten = ctx.rewrittenSharedOperators.emplace(op.getId(), predicatePushdownDispatch(ctx, op, {}, {})).first;
-        }
-        return addSelectionIfRequired(rewritten->second, std::move(predicateSet), fieldsWithNewOperator(rewritten->second, fields));
+        return ctx.rewriteShared(
+            op,
+            [&] { return predicatePushdownDispatch(ctx, op, {}, {}); },
+            [&](const LogicalOperator& rewritten)
+            { return addSelectionIfRequired(rewritten, std::move(predicateSet), fieldsWithNewOperator(rewritten, fields)); });
     }
     return predicatePushdownDispatch(ctx, std::move(op), std::move(predicateSet), std::move(fields));
 }
@@ -436,7 +427,7 @@ LogicalPlan PredicatePushdownRule::apply(const LogicalPlan& queryPlan) const
 {
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
 
-    PushdownContext ctx{.sharedOperatorIds = getSharedOperatorIds(queryPlan), .rewrittenSharedOperators = {}};
+    PushdownBarrier ctx{queryPlan};
     std::vector<LogicalOperator> newRoots;
     newRoots.reserve(queryPlan.getRootOperators().size());
     for (const auto& root : queryPlan.getRootOperators())
