@@ -153,8 +153,8 @@ function(add_e2e_test)
     endif()
 
     set(_bats_test_filter "")
-    if(NOT ENABLE_IREE_TESTS)
-        list(APPEND _bats_test_filter "!IREE")
+    if(NOT ENABLE_INFERENCE_TESTS)
+        list(APPEND _bats_test_filter "!INFERENCE")
     endif()
 
     if(_bats_test_filter)

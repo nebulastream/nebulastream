@@ -103,17 +103,6 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     PATH=/usr/local/cargo/bin:$PATH \
     RUST_VERSION=1.90.0
 
-# Install IREE compiler tools for ML inference (ONNX → IREE compilation)
-ARG IREE_COMPILER_VERSION=3.11.0
-RUN python3 -m venv /opt/iree && \
-    /opt/iree/bin/pip install --no-cache-dir \
-        iree-base-compiler==${IREE_COMPILER_VERSION} \
-        iree-turbine \
-        onnx && \
-    ln -s /opt/iree/bin/iree-compile /usr/local/bin/iree-compile && \
-    ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
-    iree-compile --version
-
 # Pre-clone Corrosion at the exact ref CMake will request, so offline configures inside the
 # container can fall back to it when GitHub is unreachable. EnableRust.cmake probes GitHub
 # first and only uses CORROSION_SRC when the probe fails. Tracks the nebulastream fork that
@@ -152,6 +141,13 @@ RUN set -eux; \
     rm -rf /tmp/cxxbridge-stage; \
     cd / && rm -rf /tmp/nes-network; \
     chmod -R a+rwX ${CARGO_HOME}
+
+# Install OpenVINO converter tools for ML inference model import.
+ARG OPENVINO_VERSION=2025.3.0
+RUN python3 -m venv /opt/openvino && \
+    /opt/openvino/bin/pip install --no-cache-dir openvino==${OPENVINO_VERSION} && \
+    ln -s /opt/openvino/bin/ovc /usr/local/bin/ovc && \
+    ovc --version
 
 # Install Docker CLI and Docker Compose for Docker-in-Docker testing
 RUN apt-get update && \

@@ -17,9 +17,9 @@
 #include <expected>
 #include <filesystem>
 
-#include <IreeCompiler.hpp>
-#include <IreeImporter.hpp>
+#include <OpenVINO/OpenVinoImporter.hpp>
 #include <Model.hpp>
+#include <ModelAccess.hpp>
 
 namespace NES
 {
@@ -27,17 +27,11 @@ namespace NES
 namespace
 {
 
-/// Each class's ctor forks a `--version` subprocess for tool discovery, so
+/// The importer's ctor forks a `--version` subprocess for tool discovery, so
 /// amortize across calls by keeping one instance per process.
-const IreeImporter& sharedImporter()
+const OpenVinoImporter& sharedImporter()
 {
-    static const IreeImporter Instance;
-    return Instance;
-}
-
-const IreeCompiler& sharedCompiler()
-{
-    static const IreeCompiler Instance;
+    static const OpenVinoImporter Instance;
     return Instance;
 }
 
@@ -45,12 +39,14 @@ const IreeCompiler& sharedCompiler()
 
 std::expected<ImportedModel, ImportError> importModel(const std::filesystem::path& modelPath)
 {
-    return sharedImporter().importOnnx(modelPath);
+    return sharedImporter().importModel(modelPath);
 }
 
 std::expected<CompiledModel, CompileError> compileModel(const ImportedModel& imported)
 {
-    return sharedCompiler().compile(imported);
+    /// OpenVINO consumes the IR produced at import time as-is; there is no separate
+    /// ahead-of-time compilation step, so the payload just moves to the compiled stage.
+    return detail::ModelAccess::compileFrom(imported, detail::RefCountedByteBuffer::fromBytes(imported.getData()));
 }
 
 }

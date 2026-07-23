@@ -28,10 +28,14 @@ namespace NES::detail
 /// internal `src/` classes that actually construct models.
 struct ModelAccess
 {
-    static ImportedModel
-    makeImported(RefCountedByteBuffer buf, std::string fnName, std::vector<size_t> inShape, std::vector<size_t> outShape)
+    static ImportedModel makeImported(
+        RefCountedByteBuffer buf,
+        RefCountedByteBuffer auxBuf,
+        std::string fnName,
+        std::vector<size_t> inShape,
+        std::vector<size_t> outShape)
     {
-        return ImportedModel{std::move(buf), std::move(fnName), std::move(inShape), std::move(outShape)};
+        return ImportedModel{std::move(buf), std::move(auxBuf), std::move(fnName), std::move(inShape), std::move(outShape)};
     }
 
     static CompiledModel compileFrom(ImportedModel imported, RefCountedByteBuffer buf)
