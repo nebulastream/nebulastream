@@ -21,9 +21,9 @@ add_source_files(nes-sinks
 )
 
 # Register plugins
-add_plugin(File Sink FileSink.cpp)
-add_plugin(File SinkValidation FileSink.cpp)
-add_plugin(Print Sink PrintSink.cpp)
-add_plugin(Print SinkValidation PrintSink.cpp)
-add_plugin(Network Sink NetworkSink.cpp)
-add_plugin(Network SinkValidation NetworkSink.cpp)
+add_registry_entry(File Sink FileSink.cpp)
+add_registry_entry(File SinkValidation FileSink.cpp)
+add_registry_entry(Print Sink PrintSink.cpp)
+add_registry_entry(Print SinkValidation PrintSink.cpp)
+add_registry_entry(Network Sink NetworkSink.cpp)
+add_registry_entry(Network SinkValidation NetworkSink.cpp)

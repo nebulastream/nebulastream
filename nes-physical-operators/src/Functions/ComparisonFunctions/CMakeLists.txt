@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Greater PhysicalFunction GreaterPhysicalFunction.cpp)
-add_plugin(GreaterEquals PhysicalFunction GreaterEqualsPhysicalFunction.cpp)
-add_plugin(Less PhysicalFunction LessPhysicalFunction.cpp)
-add_plugin(LessEquals PhysicalFunction LessEqualsPhysicalFunction.cpp)
+add_registry_entry(Greater PhysicalFunction GreaterPhysicalFunction.cpp)
+add_registry_entry(GreaterEquals PhysicalFunction GreaterEqualsPhysicalFunction.cpp)
+add_registry_entry(Less PhysicalFunction LessPhysicalFunction.cpp)
+add_registry_entry(LessEquals PhysicalFunction LessEqualsPhysicalFunction.cpp)

@@ -16,10 +16,10 @@ add_source_files(nes-logical-operators
         AnonymousSourceLogicalOperator.cpp
 )
 
-add_plugin(SourceDescriptor LogicalOperator SourceDescriptorLogicalOperator.cpp)
-add_plugin(AnonymousSource LogicalOperator AnonymousSourceLogicalOperator.cpp)
-add_plugin(SourceName LogicalOperator SourceNameLogicalOperator.cpp)
+add_registry_entry(SourceDescriptor LogicalOperator SourceDescriptorLogicalOperator.cpp)
+add_registry_entry(AnonymousSource LogicalOperator AnonymousSourceLogicalOperator.cpp)
+add_registry_entry(SourceName LogicalOperator SourceNameLogicalOperator.cpp)
 
-add_unreflection_plugin(LogicalOperator SourceDescriptor)
-add_unreflection_plugin(LogicalOperator AnonymousSource)
-add_unreflection_plugin(LogicalOperator SourceName)
+add_unreflection_entry(LogicalOperator SourceDescriptor)
+add_unreflection_entry(LogicalOperator AnonymousSource)
+add_unreflection_entry(LogicalOperator SourceName)

@@ -22,7 +22,7 @@ target_include_directories(nes-logical-operators PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 # Unreflection registries — must be declared after the parent target exists and
-# before add_subdirectory(src) so subdir add_unreflection_plugin calls find them.
+# before add_subdirectory(src) so subdir add_unreflection_entry calls find them.
 create_unreflection_registry(LogicalFunction nes-logical-operators
         "\${PLUGIN_NAME}LogicalFunction"
         "\${PLUGIN_NAME}LogicalFunction.hpp")
