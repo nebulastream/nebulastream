@@ -1,0 +1,37 @@
+# description: Benchmarking mode (-b) must apply a test's GlobalConfiguration to the worker. It used to pass the
+# base worker configuration straight to runQueriesAndBenchmark while still printing the override in the query
+# label, so the override silently had no effect and only surfaced as an unrelated crash deep inside a query.
+#
+# This query keeps one paged vector per median in the aggregation state, so its hash map entry does not fit a
+# page at the default size of 1024 bytes: without the page size below, lowering aborts on the entriesPerPage
+# invariant instead of running. Run it with -b, where the regression lived.
+# groups: [regression]
+
+GlobalConfiguration worker.default_query_execution.page_size: [16384]
+
+CREATE LOGICAL SOURCE stream(value INT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,100
+3,150
+5,200
+
+SELECT start, end, MEDIAN(value) as out0, MEDIAN(value) as out1, MEDIAN(value) as out2, MEDIAN(value) as out3,
+       MEDIAN(value) as out4, MEDIAN(value) as out5, MEDIAN(value) as out6, MEDIAN(value) as out7,
+       MEDIAN(value) as out8, MEDIAN(value) as out9, MEDIAN(value) as out10, MEDIAN(value) as out11,
+       MEDIAN(value) as out12, MEDIAN(value) as out13, MEDIAN(value) as out14, MEDIAN(value) as out15,
+       MEDIAN(value) as out16, MEDIAN(value) as out17, MEDIAN(value) as out18, MEDIAN(value) as out19,
+       MEDIAN(value) as out20, MEDIAN(value) as out21, MEDIAN(value) as out22, MEDIAN(value) as out23,
+       MEDIAN(value) as out24, MEDIAN(value) as out25, MEDIAN(value) as out26, MEDIAN(value) as out27,
+       MEDIAN(value) as out28, MEDIAN(value) as out29, MEDIAN(value) as out30, MEDIAN(value) as out31,
+       MEDIAN(value) as out32, MEDIAN(value) as out33, MEDIAN(value) as out34, MEDIAN(value) as out35,
+       MEDIAN(value) as out36, MEDIAN(value) as out37, MEDIAN(value) as out38, MEDIAN(value) as out39,
+       MEDIAN(value) as out40, MEDIAN(value) as out41, MEDIAN(value) as out42, MEDIAN(value) as out43,
+       MEDIAN(value) as out44, MEDIAN(value) as out45, MEDIAN(value) as out46, MEDIAN(value) as out47,
+       MEDIAN(value) as out48, MEDIAN(value) as out49, MEDIAN(value) as out50, MEDIAN(value) as out51,
+       MEDIAN(value) as out52, MEDIAN(value) as out53, MEDIAN(value) as out54, MEDIAN(value) as out55,
+       MEDIAN(value) as out56, MEDIAN(value) as out57, MEDIAN(value) as out58, MEDIAN(value) as out59,
+       MEDIAN(value) as out60, MEDIAN(value) as out61, MEDIAN(value) as out62, MEDIAN(value) as out63
+FROM stream WINDOW TUMBLING(ts, size 1000 ms) INTO File();
+----
+0,1000,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
