@@ -106,6 +106,13 @@ if (NOT CODE_COVERAGE)
                 COMMAND systest -n 20 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_sliceCache_${enableSliceCache} --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
         set_tests_properties(systest_compiler_sliceCache_${enableSliceCache} PROPERTIES LABELS "Systest" PROCESSORS 4)
     endforeach ()
+
+    # Benchmarking mode (-b) drives the runner sequentially and writes BenchmarkResults.json. Without this target the only -b
+    # coverage is systest_large_benchmark_*, which is gated behind ENABLE_LARGE_TESTS.
+    ExternalData_Add_Test(test-data
+            NAME systest_benchmark_small
+            COMMAND systest -b --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/benchmark_small --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+    set_tests_properties(systest_benchmark_small PROPERTIES LABELS "Systest" PROCESSORS 4)
 endif (NOT CODE_COVERAGE)
 
 
