@@ -34,6 +34,7 @@ teardown()      { nes_distributed_teardown; }
   setup_distributed tests/good/multi-named-query.yaml
   run docker_nes_cli -t tests/good/multi-named-query.yaml start
   assert_success
+  [ "${#lines[@]}" -eq 2 ]
   sleep 3
   run docker_nes_cli -t tests/good/multi-named-query.yaml status
   assert_success

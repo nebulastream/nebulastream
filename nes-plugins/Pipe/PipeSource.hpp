@@ -33,7 +33,8 @@
 namespace NES
 {
 
-/// A source that reads TupleBuffers from a named pipe. Data is copied from the shared pipe buffer into the provided TupleBuffer.
+/// A source that reads TupleBuffers from a named pipe. Main-buffer data is copied into the provided TupleBuffer, while child buffers
+/// are shared because downstream pipelines do not modify input buffers.
 /// The source manages its own metadata: it assigns a unique origin ID, offsets sequence numbers from the first received buffer,
 /// and preserves chunk boundaries from the original producer.
 class PipeSource final : public Source
@@ -59,6 +60,8 @@ public:
     /// The SourceThread still sets the correct originId (always set regardless of addsMetadata).
     [[nodiscard]] bool addsMetadata() const override { return true; }
 
+    [[nodiscard]] std::string_view getType() const override { return NAME; }
+
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
@@ -68,7 +71,6 @@ private:
     size_t queueCapacity;
     std::shared_ptr<const PipeSchema> schema;
     std::shared_ptr<PipeQueue> queue;
-    std::shared_ptr<AbstractBufferProvider> bufferProvider;
     /// Tracks whether the last delivered buffer completed a sequence (lastChunk=true).
     /// Used to ensure stop only occurs at sequence boundaries — no partial sequences.
     bool lastDeliveredWasLastChunk = true;

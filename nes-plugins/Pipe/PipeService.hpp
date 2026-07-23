@@ -87,10 +87,10 @@ public:
         void removeConsumer(const std::shared_ptr<PipeQueue>& queue);
 
         /// Apply pressure while a consumer queue is full without losing the no-consumer pressure state.
-        void setConsumerQueueFull(bool full);
+        bool setConsumerQueueFull(bool full);
 
     private:
-        void updateBackpressure(const Queues& queues) const;
+        bool updateBackpressure(const Queues& queues) const;
 
         BackpressureController* bpController;
     };
@@ -110,9 +110,7 @@ public:
     /// Throws CannotOpenSource if no sink is registered for this name.
     /// Throws CannotOpenSource if the schema does not match the existing pipe schema.
     std::shared_ptr<PipeQueue> registerSource(
-        const std::string& pipeName,
-        const std::shared_ptr<const PipeSchema>& schema,
-        size_t queueCapacity = DEFAULT_QUEUE_CAPACITY);
+        const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, size_t queueCapacity = DEFAULT_QUEUE_CAPACITY);
 
     /// Unregister a source. Removes the queue from the SinkHandle (active or pending).
     void unregisterSource(const std::string& pipeName, const std::shared_ptr<PipeQueue>& queue);
@@ -127,6 +125,7 @@ private:
     };
 
     folly::Synchronized<std::unordered_map<std::string, PipeEntry>> pipes;
+    std::atomic<size_t> nextPipeId{0};
 };
 
 }

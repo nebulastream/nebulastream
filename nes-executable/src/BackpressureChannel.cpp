@@ -27,6 +27,14 @@
 
 #include <ErrorHandling.hpp>
 
+namespace
+{
+__itt_domain* backpressureDomain = __itt_domain_create("engine.backpressure");
+__itt_string_handle* backpressureWait = __itt_string_handle_create("Backpressure wait");
+__itt_string_handle* backpressureApplied = __itt_string_handle_create("Sink backpressure applied");
+__itt_string_handle* backpressureReleased = __itt_string_handle_create("Sink backpressure released");
+}
+
 /// Represents the state of the backpressure channel guarded by a mutex and communicated to the listener via the condition variable.
 /// The channel is initially open.
 struct Channel
@@ -59,7 +67,12 @@ bool BackpressureController::applyPressure()
 {
     const auto old = std::exchange(*channel->stateMtx.lock(), Channel::CLOSED);
     INVARIANT(old != Channel::DESTROYED, "The backpressureController is still alive thus the channel should not have been destroyed");
-    return old == Channel::OPEN;
+    if (old == Channel::OPEN)
+    {
+        __itt_marker(backpressureDomain, __itt_null, backpressureApplied, __itt_marker_scope_thread);
+        return true;
+    }
+    return false;
 }
 
 bool BackpressureController::releasePressure()
@@ -69,16 +82,11 @@ bool BackpressureController::releasePressure()
     if (old == Channel::CLOSED)
     {
         /// The Backpressure Controller was opened, wake up all waiting BackpressureListeners
+        __itt_marker(backpressureDomain, __itt_null, backpressureReleased, __itt_marker_scope_thread);
         channel->change.notify_all();
         return true;
     }
     return false;
-}
-
-namespace
-{
-__itt_domain* backpressureDomain = __itt_domain_create("engine.backpressure");
-__itt_string_handle* backpressureWait = __itt_string_handle_create("Backpressure wait");
 }
 
 void BackpressureListener::wait(const std::stop_token& stopToken) const

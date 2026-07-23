@@ -191,6 +191,7 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
     {
         SourceThread sourceThread(
             std::move(backpressureListener),
+            INVALID_QUERY_ID,
             INITIAL<OriginId>,
             bm,
 
@@ -223,7 +224,7 @@ TEST_F(SourceThreadTest, NoOpDestruction)
     auto control = std::make_shared<TestSourceControl>();
     {
         const SourceThread sourceThread(
-            backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+            backpressureListener, INVALID_QUERY_ID, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
     }
 
     verify_no_events(recorder);
@@ -247,7 +248,8 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectError("I should fail");
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener, INVALID_QUERY_ID, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -279,7 +281,8 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
     auto control = std::make_shared<TestSourceControl>();
     control->failDuringOpen(std::chrono::milliseconds(0));
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener, INVALID_QUERY_ID, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -313,7 +316,8 @@ TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener, INVALID_QUERY_ID, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -347,7 +351,8 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener, INVALID_QUERY_ID, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -385,7 +390,8 @@ TEST_F(SourceThreadTest, ApplyBackbressure)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectEoS();
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener, INVALID_QUERY_ID, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const auto&)
@@ -426,7 +432,8 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectEoS();
     {
-        SourceThread sourceThread(ingestion, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            ingestion, INVALID_QUERY_ID, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const auto&)
