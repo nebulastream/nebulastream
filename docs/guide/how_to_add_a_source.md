@@ -53,7 +53,7 @@ In the `CMakeLists.txt` file of our directory, we tell CMake how we want our plu
 find_package(PahoMqttCpp CONFIG REQUIRED) # <-- We depend on the paho-mqtt lib
 
 # 1) Source Plugin
-add_plugin_as_library(
+add_registry_entry_as_library(
         MQTT                       # Plugin name
         Source                     # Registry name
         mqtt-source-plugin-library # Plugin library name
@@ -66,7 +66,7 @@ target_include_directories(mqtt-source-plugin-library
 target_link_libraries(mqtt-source-plugin-library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
 
 # 2) Source Validation Plugin
-add_plugin_as_library(MQTT SourceValidation mqtt-source-validation-plugin-library MQTTSource.cpp)
+add_registry_entry_as_library(MQTT SourceValidation mqtt-source-validation-plugin-library MQTTSource.cpp)
 target_include_directories(mqtt-source-validation-plugin-library
         PUBLIC include
         PRIVATE .

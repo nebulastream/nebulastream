@@ -39,7 +39,7 @@ endfunction()
 # adds the name of plugin to the list of plugin names for the plugin registry
 # adds the name of the library of the plugin to the list of libraries for the plugin registry
 # the registry component is inferred later when generate_plugin_registrar links the plugin library
-function(add_plugin_as_library plugin_name plugin_registry plugin_library)
+function(add_registry_entry_as_library plugin_name plugin_registry plugin_library)
     set(sources ${ARGN})
     add_library(${plugin_library} STATIC ${sources})
 
@@ -50,7 +50,7 @@ endfunction()
 # adds the source files of the plugin to the source files of the component that the plugin registry belongs to
 # adds the name of plugin to the list of plugin names for the plugin registry
 # the component is inferred from the registry name later in generate_plugin_registrar
-macro(add_plugin plugin_name plugin_registry)
+macro(add_registry_entry plugin_name plugin_registry)
     set(sources ${ARGN})
     foreach (source ${sources})
         set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_sources" "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
@@ -68,7 +68,7 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
     get_property(plugin_registry_plugin_sources_final GLOBAL PROPERTY ${plugin_registry}_plugin_sources)
     get_property(plugin_registry_plugin_libraries_final GLOBAL PROPERTY ${plugin_registry}_plugin_libraries)
 
-    # add the deferred source files from add_plugin() to the component target.
+    # add the deferred source files from add_registry_entry() to the component target.
     # The target must exist at this point because generate_plugin_registrar runs via
     # cmake_language(DEFER) at the end of configuration, after all add_library() calls.
     if (NOT TARGET ${plugin_registry_component})
