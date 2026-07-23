@@ -151,7 +151,8 @@ public:
     /// Then iterates over all supported config parameters, validates and formats the strings provided by the user.
     /// Uses default parameters if the user did not specify a parameter.
     /// Returns an error if a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter
-    /// was encountered.
+    /// was encountered. Guaranteed not to throw for these cases: per-parameter validators of plugins that still throw
+    /// (instead of returning nullopt) are caught here and reported as the error of the returned expected.
     template <typename SpecificConfiguration>
     requires DescriptorConfigurationConstraints::HasParameterMap<SpecificConfiguration>
     static std::expected<Config, Exception>
@@ -181,12 +182,21 @@ public:
                 return std::unexpected(
                     InvalidConfigParameter("Non-default parameter {} not specified in config of {}", key, implementationName));
             }
-            if (const auto validatedParameter = configParameter.validate(config); validatedParameter.has_value())
+            try
             {
-                validatedConfig.emplace(key, validatedParameter.value());
-                continue;
+                if (const auto validatedParameter = configParameter.validate(config); validatedParameter.has_value())
+                {
+                    validatedConfig.emplace(key, validatedParameter.value());
+                    continue;
+                }
+                return std::unexpected(
+                    InvalidConfigParameter("Failed validation of config parameter: {}, in: {}", key, implementationName));
             }
-            return std::unexpected(InvalidConfigParameter("Failed validation of config parameter: {}, in: {}", key, implementationName));
+            catch (const Exception& e)
+            {
+                /// Uphold the non-throwing contract even for validators that throw instead of returning nullopt.
+                return std::unexpected(e);
+            }
         }
         return validatedConfig;
     }
