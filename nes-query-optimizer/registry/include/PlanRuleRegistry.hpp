@@ -15,34 +15,33 @@
 #pragma once
 
 #include <memory>
-#include <vector>
-
+#include <string>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Util/Registry.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
-class RuleBasedOptimizer
+
+using PlanRuleRegistryReturnType = Rule<LogicalPlan>;
+
+struct PlanRuleRegistryArguments
 {
-public:
-    explicit RuleBasedOptimizer(
-        QueryOptimizerConfiguration defaultQueryOptimization,
-        std::shared_ptr<const SourceCatalog> sourceCatalog,
-        std::shared_ptr<const SinkCatalog> sinkCatalog,
-        std::shared_ptr<const ModelCatalog> modelCatalog);
-
-    [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
-
-private:
     QueryOptimizerConfiguration defaultQueryOptimization;
-    std::vector<Rule<LogicalPlan>> ruleSequence;
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
     std::shared_ptr<const ModelCatalog> modelCatalog;
 };
 
+class PlanRuleRegistry : public BaseRegistry<PlanRuleRegistry, std::string, PlanRuleRegistryReturnType, PlanRuleRegistryArguments>
+{
+};
 }
+
+#define INCLUDED_FROM_REGISTRY_PLAN_RULE
+#include <PlanRuleGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_REGISTRY_PLAN_RULE

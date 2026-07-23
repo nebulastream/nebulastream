@@ -32,6 +32,7 @@
 #include <Operators/Reorderer.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
@@ -42,6 +43,7 @@
 #include <Util/Overloaded.hpp>
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -99,12 +101,6 @@ Schema<Field, Ordered> applyRecursive(const LogicalOperator& visiting)
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> CalcTargetOrderRule::needs() const
-{
-    return {typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule), typeid(LogicalSourceExpansionRule), typeid(TypeInferenceRule)};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan CalcTargetOrderRule::apply(NES::LogicalPlan plan) const
 {
     auto hasOrder = [](const LogicalOperator& rootNode)
@@ -140,5 +136,23 @@ LogicalPlan CalcTargetOrderRule::apply(NES::LogicalPlan plan) const
     auto newAnonymousSinkDescriptor = SinkDescriptor{oldDescriptor.withSchemaOrder(newTargetSchema)};
     auto newSinkRoot = root->withSinkDescriptor(newAnonymousSinkDescriptor);
     return plan.withRootOperators({newSinkRoot});
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> CalcTargetOrderRule::needs() const
+{
+    return {typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule), typeid(LogicalSourceExpansionRule), typeid(TypeInferenceRule)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> CalcTargetOrderRule::neededBy() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterCalcTargetOrderPlanRule(PlanRuleRegistryArguments)
+{
+    return CalcTargetOrderRule{};
 }
 };

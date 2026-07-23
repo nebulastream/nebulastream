@@ -13,22 +13,21 @@
 */
 
 #pragma once
-#include <set>
+
 #include <string_view>
-#include <typeindex>
-#include <typeinfo>
+
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 
 namespace NES
 {
-
-/// @brief Calculates the physical order of fields to be used by the operators and memory layouts.
-class DecideFieldOrder
+class SemanticAnalysisBarrier
 {
 public:
-    static constexpr std::string_view NAME = "DecideFieldOrder";
+    static constexpr std::string_view NAME = "SemanticAnalysisBarrier";
 
-    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    [[nodiscard]] std::set<std::type_index> needs() const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
 };
+
+static_assert(RuleConcept<SemanticAnalysisBarrier, LogicalPlan>);
 }

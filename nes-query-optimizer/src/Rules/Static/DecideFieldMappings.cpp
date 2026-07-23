@@ -40,6 +40,7 @@
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -220,6 +221,12 @@ LogicalPlan DecideFieldMappings::apply(const LogicalPlan& queryPlan) const
 std::set<std::type_index> DecideFieldMappings::needs() const
 {
     return {typeid(FixedPlanStructureBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideFieldMappingsPlanRule(PlanRuleRegistryArguments)
+{
+    return DecideFieldMappings{};
 }
 
 }

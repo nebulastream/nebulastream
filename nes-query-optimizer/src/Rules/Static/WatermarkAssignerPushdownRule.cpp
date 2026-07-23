@@ -35,9 +35,11 @@
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Schema/Field.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -262,6 +264,12 @@ LogicalPlan WatermarkAssignerPushdownRule::apply(LogicalPlan queryPlan) const
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> WatermarkAssignerPushdownRule::needs() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> WatermarkAssignerPushdownRule::wants() const
 {
     return {typeid(PredicatePushdownRule)};
@@ -273,5 +281,10 @@ std::set<std::type_index> WatermarkAssignerPushdownRule::neededBy() const
     return {typeid(FixedPlanStructureBarrier)};
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterWatermarkAssignerPushdownPlanRule(PlanRuleRegistryArguments)
+{
+    return WatermarkAssignerPushdownRule{};
+}
 
 }

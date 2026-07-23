@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Rules/Static/RedundantUnionRemovalRule.hpp>
+#include <RedundantUnionRemovalRule.hpp>
 
 #include <ranges>
 #include <set>
@@ -27,10 +27,10 @@
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
-#include <Rules/Static/DecideFieldMappings.hpp>
-#include <Rules/Static/DecideFieldOrder.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -62,6 +62,18 @@ LogicalPlan RedundantUnionRemovalRule::apply(LogicalPlan queryPlan) const
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
     queryPlan = queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front().withInferredSchema())});
     return queryPlan;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> RedundantUnionRemovalRule::needs() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterRedundantUnionRemovalPlanRule(PlanRuleRegistryArguments)
+{
+    return RedundantUnionRemovalRule{};
 }
 
 }

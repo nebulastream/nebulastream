@@ -28,9 +28,11 @@
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -82,5 +84,17 @@ LogicalPlan LogicalSourceExpansionRule::apply(const LogicalPlan& queryPlan) cons
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
     return queryPlan.withRootOperators({applyRecursive(queryPlan.getRootOperators().at(0), *sourceCatalog)});
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> LogicalSourceExpansionRule::neededBy() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterLogicalSourceExpansionPlanRule(PlanRuleRegistryArguments arguments)
+{
+    return LogicalSourceExpansionRule{arguments.sourceCatalog};
 }
 }

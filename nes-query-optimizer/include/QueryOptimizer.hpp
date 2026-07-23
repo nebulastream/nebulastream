@@ -18,7 +18,6 @@
 
 #include <Phases/OperatorPlacer.hpp>
 #include <Phases/RuleBasedOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
@@ -42,14 +41,12 @@ public:
         const std::shared_ptr<const SinkCatalog>& sinkCatalog,
         const std::shared_ptr<const WorkerCatalog>& workerCatalog,
         const std::shared_ptr<const ModelCatalog>& modelCatalog)
-        : semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog)
-        , ruleBasedOptimization(defaultQueryOptimization)
+        : ruleBasedOptimization(defaultQueryOptimization, sourceCatalog, sinkCatalog, modelCatalog)
         , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
 
     [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;
 
 private:
-    SemanticAnalyzer semanticAnalyzer;
     RuleBasedOptimizer ruleBasedOptimization;
     OperatorPlacer operatorPlacement;
 };

@@ -27,7 +27,9 @@
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -79,6 +81,18 @@ LogicalPlan AnonymousSourceBindingRule::apply(const LogicalPlan& queryPlan) cons
         newRoots.emplace_back(bindAnonymousSourceLogicalOperators(root));
     }
     return queryPlan.withRootOperators(newRoots);
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> AnonymousSourceBindingRule::neededBy() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterAnonymousSourceBindingPlanRule(PlanRuleRegistryArguments arguments)
+{
+    return AnonymousSourceBindingRule{arguments.sourceCatalog};
 }
 
 }

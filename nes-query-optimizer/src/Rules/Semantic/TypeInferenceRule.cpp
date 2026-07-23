@@ -22,9 +22,12 @@
 
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
+
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -48,5 +51,16 @@ std::set<std::type_index> TypeInferenceRule::needs() const
     return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule)};
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> TypeInferenceRule::neededBy() const
+{
+    return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterTypeInferencePlanRule(PlanRuleRegistryArguments)
+{
+    return TypeInferenceRule{};
+}
 
 }

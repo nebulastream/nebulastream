@@ -38,6 +38,7 @@ public:
     static constexpr std::string_view NAME = "AnonymousSourceBindingRule";
 
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    [[nodiscard]] std::set<std::type_index> neededBy() const;
 
 private:
     [[nodiscard]] LogicalOperator bindAnonymousSourceLogicalOperators(const LogicalOperator& current) const;

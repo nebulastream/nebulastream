@@ -30,8 +30,8 @@ class DecideMemoryLayoutRule
 public:
     static constexpr std::string_view NAME = "DecideMemoryLayoutRule";
 
-    [[nodiscard]] std::set<std::type_index> needs() const;
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    [[nodiscard]] std::set<std::type_index> needs() const;
 
 private:
     [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;

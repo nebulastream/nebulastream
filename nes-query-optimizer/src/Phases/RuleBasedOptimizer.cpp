@@ -15,43 +15,52 @@
 
 #include <Phases/RuleBasedOptimizer.hpp>
 
+#include <memory>
 #include <utility>
 
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/RuleManager.hpp>
-#include <Rules/Semantic/OriginIdInferenceRule.hpp>
-#include <Rules/Static/DecideFieldMappings.hpp>
-#include <Rules/Static/DecideFieldOrder.hpp>
-#include <Rules/Static/DecideJoinTypesRule.hpp>
-#include <Rules/Static/DecideMemoryLayoutRule.hpp>
-#include <Rules/Static/PredicatePushdownRule.hpp>
-#include <Rules/Static/ProjectionPushdownRule.hpp>
-#include <Rules/Static/RedundantProjectionRemovalRule.hpp>
-#include <Rules/Static/RedundantUnionRemovalRule.hpp>
-#include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <ModelCatalog.hpp>
+#include <PlanRuleRegistry.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include "ErrorHandling.hpp"
 
 namespace NES
 {
 
-RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryOptimization)
+RuleBasedOptimizer::RuleBasedOptimizer(
+    QueryOptimizerConfiguration defaultQueryOptimization,
+    std::shared_ptr<const SourceCatalog> sourceCatalog,
+    std::shared_ptr<const SinkCatalog> sinkCatalog,
+    std::shared_ptr<const ModelCatalog> modelCatalog)
     : defaultQueryOptimization(std::move(defaultQueryOptimization))
+    , sourceCatalog(std::move(sourceCatalog))
+    , sinkCatalog(std::move(sinkCatalog))
+    , modelCatalog(std::move(modelCatalog))
 {
     RuleManager<LogicalPlan> ruleManager;
-    ruleManager.addRule(DecideJoinTypesRule{this->defaultQueryOptimization.joinStrategy});
-    ruleManager.addRule(DecideMemoryLayoutRule{});
-    ruleManager.addRule(RedundantUnionRemovalRule{});
-    ruleManager.addRule(RedundantProjectionRemovalRule{});
-    ruleManager.addRule(DecideFieldMappings{});
-    ruleManager.addRule(DecideFieldOrder{});
-    ruleManager.addRule(OriginIdInferenceRule{});
-    ruleManager.addRule(FixedPlanStructureBarrier{});
-    ruleManager.addRule(PredicatePushdownRule{});
-    ruleManager.addRule(WatermarkAssignerPushdownRule{});
-    ruleManager.addRule(ProjectionPushdownRule{});
+
+
+    const PlanRuleRegistryArguments arguments{
+        .defaultQueryOptimization = this->defaultQueryOptimization,
+        .sourceCatalog = this->sourceCatalog,
+        .sinkCatalog = this->sinkCatalog,
+        .modelCatalog = this->modelCatalog,
+    };
+
+    for (auto ruleName : PlanRuleRegistry::instance().getRegisteredNames())
+    {
+        auto rule = PlanRuleRegistry::instance().create(ruleName, arguments);
+        if (!rule.has_value())
+        {
+            throw UnknownOptimizerRule("Did not find the rule {} in PlanRuleRegistry", ruleName);
+        }
+        ruleManager.addRule(rule.value());
+    }
 
     NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
     ruleSequence = ruleManager.getSequence();

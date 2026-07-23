@@ -12,29 +12,24 @@
     limitations under the License.
 */
 
-#pragma once
+#include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 
-#include <set>
-#include <string_view>
-#include <typeindex>
-#include <typeinfo>
+
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
 
-/**
- * @brief This pass removes redundant unions with only a single child.
- */
-class RedundantUnionRemovalRule
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+LogicalPlan SemanticAnalysisBarrier::apply(LogicalPlan queryPlan) const
 {
-public:
-    static constexpr std::string_view NAME = "RedundantUnionRemovalRule";
+    return queryPlan;
+}
 
-    [[nodiscard]] std::set<std::type_index> neededBy() const;
-    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
-};
-
-static_assert(RuleConcept<RedundantUnionRemovalRule, LogicalPlan>);
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterSemanticAnalysisBarrierPlanRule(PlanRuleRegistryArguments)
+{
+    return SemanticAnalysisBarrier{};
+}
 }
