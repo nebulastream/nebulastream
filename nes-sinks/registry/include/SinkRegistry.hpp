@@ -14,10 +14,13 @@
 
 #pragma once
 
+#include <functional>
+#include <memory>
 #include <string>
+#include <utility>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 #include <BackpressureChannel.hpp>
 
 namespace NES
@@ -31,12 +34,26 @@ struct SinkRegistryArguments
     SinkDescriptor sinkDescriptor;
 };
 
-class SinkRegistry : public BaseRegistry<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>
+using SinkFactoryFn = std::function<SinkRegistryReturnType(SinkRegistryArguments)>;
+
+/// Creates the registry entry for a sink implementation. Sinks are constructed from the
+/// backpressure controller and their descriptor; the entry expression in
+/// cmake/RuntimeRegistrationUtil.cmake instantiates this per plugin type.
+template <typename SinkImpl>
+SinkFactoryFn makeSinkFactory()
 {
+    return [](SinkRegistryArguments arguments) -> SinkRegistryReturnType
+    { return std::make_unique<SinkImpl>(std::move(arguments.backpressureController), arguments.sinkDescriptor); };
+}
+
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Case-insensitive to mirror the retired BaseRegistry.
+class SinkRegistry : public RuntimeRegistry<SinkRegistry, std::string, SinkFactoryFn, /*CaseSensitive*/ false>
+{
+public:
+    /// Defined out-of-line (SinkRegistry.cpp) so exactly one instance exists process-wide even
+    /// with plugins loaded as shared objects.
+    static SinkRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_SINK_REGISTRY
-#include <SinkGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SINK_REGISTRY

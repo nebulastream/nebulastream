@@ -110,10 +110,9 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
             resultFieldIdentifier,
             tupleLayout,
             descriptor.function.shallIncludeNullValues());
-        if (auto aggregationPhysicalFunction
-            = AggregationPhysicalFunctionRegistry::instance().create(std::string{name}, std::move(aggregationArguments)))
+        if (const auto aggregationFactory = AggregationPhysicalFunctionRegistry::instance().find(std::string{name}))
         {
-            aggregationPhysicalFunctions.push_back(aggregationPhysicalFunction.value());
+            aggregationPhysicalFunctions.push_back((*aggregationFactory)(std::move(aggregationArguments)));
         }
         else
         {
@@ -250,11 +249,5 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leaves(logicalOperator.getChildren().size(), buildWrapper);
     return {.root = probeWrapper, .leaves = {leaves}};
-}
-
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterWindowedAggregationLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
-{
-    return std::make_unique<LowerToPhysicalWindowedAggregation>(argument.conf);
 }
 }

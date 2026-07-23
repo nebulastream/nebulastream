@@ -107,8 +107,7 @@ Reflected Reflector<UnboundFieldAccessLogicalFunction>::operator()(const Unbound
 }
 
 /// NOLINTBEGIN(performance-unnecessary-value-param)
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterUnboundFieldAccessLogicalFunction(LogicalFunctionRegistryArguments)
+LogicalFunctionRegistryReturnType UnboundFieldAccessLogicalFunction::createUnboundFieldAccess(LogicalFunctionRegistryArguments)
 {
     PRECONDITION(false, "UnboundFieldAccessLogicalFunction cannot be created via registry, instantiate it directly");
     std::unreachable();

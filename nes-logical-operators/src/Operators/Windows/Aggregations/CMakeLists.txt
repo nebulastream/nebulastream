@@ -11,15 +11,16 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
+        AggregationLogicalFunctionRegistry.cpp
         WindowAggregationLogicalFunction.cpp
+        AvgAggregationLogicalFunction.cpp
+        CountAggregationLogicalFunction.cpp
+        MaxAggregationLogicalFunction.cpp
+        MedianAggregationLogicalFunction.cpp
+        MinAggregationLogicalFunction.cpp
+        SumAggregationLogicalFunction.cpp
 )
 
-register_entry(Avg AggregationLogicalFunction AvgAggregationLogicalFunction.cpp)
-register_entry(Count AggregationLogicalFunction CountAggregationLogicalFunction.cpp)
-register_entry(Max AggregationLogicalFunction MaxAggregationLogicalFunction.cpp)
-register_entry(Median AggregationLogicalFunction MedianAggregationLogicalFunction.cpp)
-register_entry(Min AggregationLogicalFunction MinAggregationLogicalFunction.cpp)
-register_entry(Sum AggregationLogicalFunction SumAggregationLogicalFunction.cpp)
 
 add_unreflection_entry(AggregationLogicalFunction Avg)
 add_unreflection_entry(AggregationLogicalFunction Count)
@@ -27,3 +28,11 @@ add_unreflection_entry(AggregationLogicalFunction Max)
 add_unreflection_entry(AggregationLogicalFunction Median)
 add_unreflection_entry(AggregationLogicalFunction Min)
 add_unreflection_entry(AggregationLogicalFunction Sum)
+
+# Runtime registry entries
+add_registry_entry(AggregationLogicalFunction Avg)
+add_registry_entry(AggregationLogicalFunction Count)
+add_registry_entry(AggregationLogicalFunction Max)
+add_registry_entry(AggregationLogicalFunction Median)
+add_registry_entry(AggregationLogicalFunction Min)
+add_registry_entry(AggregationLogicalFunction Sum)

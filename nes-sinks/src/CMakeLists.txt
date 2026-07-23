@@ -17,13 +17,18 @@ add_source_files(nes-sinks
         Sink.cpp
         SinkProvider.cpp
         SinkCatalog.cpp
+        SinkRegistry.cpp
+        SinkValidationRegistry.cpp
         BackpressureHandler.cpp
+        FileSink.cpp
+        PrintSink.cpp
+        NetworkSink.cpp
 )
 
-# Register plugins
-register_entry(File Sink FileSink.cpp)
-register_entry(File SinkValidation FileSink.cpp)
-register_entry(Print Sink PrintSink.cpp)
-register_entry(Print SinkValidation PrintSink.cpp)
-register_entry(Network Sink NetworkSink.cpp)
-register_entry(Network SinkValidation NetworkSink.cpp)
+# Runtime registry entries for the built-in sinks
+add_registry_entry(Sink File HEADER Sinks/FileSink.hpp)
+add_registry_entry(SinkValidation File HEADER Sinks/FileSink.hpp)
+add_registry_entry(Sink Print HEADER Sinks/PrintSink.hpp)
+add_registry_entry(SinkValidation Print HEADER Sinks/PrintSink.hpp)
+add_registry_entry(Sink Network HEADER Sinks/NetworkSink.hpp)
+add_registry_entry(SinkValidation Network HEADER Sinks/NetworkSink.hpp)

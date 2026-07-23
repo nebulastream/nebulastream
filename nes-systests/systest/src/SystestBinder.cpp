@@ -184,12 +184,16 @@ public:
         return sinkProviderIter->second(std::move(assignedSinkName), filePath);
     }
 
-    static inline const Schema<UnqualifiedUnboundField, Ordered> checksumSchema = []
+    /// Function-local static instead of a class-level static: the schema resolves data types
+    /// through the DataTypeRegistry, which is populated by loadBuiltinPlugins() at startup —
+    /// after static initialization.
+    static const Schema<UnqualifiedUnboundField, Ordered>& checksumSchema()
     {
-        return Schema<UnqualifiedUnboundField, Ordered>{std::vector{
+        static const Schema<UnqualifiedUnboundField, Ordered> schema{std::vector{
             UnqualifiedUnboundField{Identifier::parse("COUNT"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
             UnqualifiedUnboundField{Identifier::parse("CHECKSUM"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}}};
-    }();
+        return schema;
+    }
 
 private:
     SharedPtr<SinkCatalog> sinkCatalog;
@@ -284,7 +288,7 @@ public:
         if (toUpperCase(sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
             == "CHECKSUM")
         {
-            sinkOutputSchema = SLTSinkFactory::checksumSchema;
+            sinkOutputSchema = SLTSinkFactory::checksumSchema();
         }
         else
         {

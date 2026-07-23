@@ -96,8 +96,7 @@ std::string CastToTypeLogicalFunction::explain(ExplainVerbosity) const
     return fmt::format("Cast to {})", castToType);
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType CastToTypeLogicalFunction::createCastToType(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

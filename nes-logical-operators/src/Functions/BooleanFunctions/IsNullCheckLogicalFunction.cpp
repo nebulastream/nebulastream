@@ -104,8 +104,7 @@ Unreflector<IsNullCheckLogicalFunction>::operator()(const Reflected& reflected, 
     return IsNullCheckLogicalFunction(std::move(function.value()));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterIsNullLogicalFunction(const LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType IsNullCheckLogicalFunction::createIsNull(const LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

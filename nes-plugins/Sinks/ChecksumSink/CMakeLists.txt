@@ -10,18 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(Checksum Sink checksum_sink_plugin ChecksumSink.cpp)
-add_plugin_as_library(Checksum SinkValidation checksum_sink_validation_plugin ChecksumSink.cpp)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
-target_include_directories(checksum_sink_plugin
-        PUBLIC include
-        PRIVATE .
-)
-target_include_directories(checksum_sink_validation_plugin
-        PUBLIC include
-        PRIVATE .
-)
+# One implementation library serving all registries this plugin participates in.
+add_library(checksum_sink_plugin STATIC ChecksumSink.cpp)
+target_link_libraries(checksum_sink_plugin PRIVATE nes-sinks)
+# PUBLIC: ChecksumSink.hpp includes Checksum.hpp, so the registration glue (which includes the
+# plugin header) needs systest-checksum's include directories propagated.
+target_link_libraries(checksum_sink_plugin PUBLIC systest-checksum)
+target_include_directories(checksum_sink_plugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)
-target_link_libraries(checksum_sink_validation_plugin PRIVATE systest-checksum)
+link_plugin_library(nes-sinks checksum_sink_plugin)
+add_registry_entry(Sink Checksum)
+add_registry_entry(SinkValidation Checksum)

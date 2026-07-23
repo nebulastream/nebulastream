@@ -10,8 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-register_entry(And PhysicalFunction AndPhysicalFunction.cpp)
-register_entry(Equals PhysicalFunction EqualsPhysicalFunction.cpp)
-register_entry(Negate PhysicalFunction NegatePhysicalFunction.cpp)
-register_entry(Or PhysicalFunction OrPhysicalFunction.cpp)
-register_entry(IsNull PhysicalFunction IsNullCheckPhysicalFunction.cpp)
+add_source_files(nes-physical-operators
+        AndPhysicalFunction.cpp
+        EqualsPhysicalFunction.cpp
+        NegatePhysicalFunction.cpp
+        OrPhysicalFunction.cpp
+        IsNullCheckPhysicalFunction.cpp
+)
+
+# Runtime registry entries
+add_registry_entry(PhysicalFunction And)
+add_registry_entry(PhysicalFunction Equals)
+add_registry_entry(PhysicalFunction IsNullCheck KEY IsNull)
+add_registry_entry(PhysicalFunction Negate)
+add_registry_entry(PhysicalFunction Or)

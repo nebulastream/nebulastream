@@ -63,6 +63,10 @@ function(create_runtime_registry name target)
     if(NOT ARG_ENTRY_TEMPLATE)
         message(FATAL_ERROR "create_runtime_registry(${name}): ENTRY_TEMPLATE must be provided.")
     endif()
+    get_property(existing_glue_lib GLOBAL PROPERTY "${name}_RUNTIME_REGISTRY_GLUE_LIB")
+    if(existing_glue_lib)
+        message(FATAL_ERROR "create_runtime_registry(${name}): a registry named '${name}' already exists (glue library '${existing_glue_lib}'). Registry names must be unique across the build.")
+    endif()
 
     if(NOT ARG_REGISTRY_CLASS)
         set(ARG_REGISTRY_CLASS "${name}Registry")
@@ -83,9 +87,8 @@ function(create_runtime_registry name target)
     )
 
     # Expose the whole <component>/registry/include directory on the parent's PUBLIC include
-    # path so consumers can #include the registry header. For components that also call
-    # create_registries_for_component, the factory registry library already exposes the same
-    # directory and this is idempotent.
+    # path so consumers can #include the registry header (idempotent across a component's
+    # registries).
     target_include_directories(${target} PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/registry/include>
     )

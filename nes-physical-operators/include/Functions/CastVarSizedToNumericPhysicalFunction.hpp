@@ -19,6 +19,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -29,6 +30,8 @@ public:
     CastVarSizedToNumericPhysicalFunction(PhysicalFunction child, DataType outputType);
 
     VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createVarSizedToNumeric(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction child;

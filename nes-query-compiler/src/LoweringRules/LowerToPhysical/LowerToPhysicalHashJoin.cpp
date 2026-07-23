@@ -485,10 +485,4 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     return {.root = {probeWrapper}, .leaves = {leftLeaf, rightLeaf}};
 };
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterHashJoinLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
-{
-    return std::make_unique<LowerToPhysicalHashJoin>(argument.conf);
-}
-
 }

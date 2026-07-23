@@ -26,20 +26,27 @@ To enable an optional plugin, open nes-plugins/CMakeLists.txt and add the plugin
 add_plugin("Sources/TCPSource")
 ```
 This includes the plugin in the NebulaStream build.
-Optional plugins can be added as libraries using the following structure:
+Optional plugins build one implementation library and register entries with the runtime
+registries (see cmake/RuntimeRegistrationUtil.cmake):
 ```cmake
-add_plugin_as_library(<PLUGIN_NAME> <REGISTRY_NAME> <LIBRARY_NAME> <SOURCE_FILES>)
-target_link_libraries(<LIBRARY_NAME> PRIVATE <DEPENDS_ON_LIBRARY>) # <-- optional, set if plugin lib depends on additional libraries
+add_library(<LIBRARY_NAME> STATIC <SOURCE_FILES>)
+target_link_libraries(<LIBRARY_NAME> PRIVATE <OWNING_COMPONENT>)
+link_plugin_library(<OWNING_COMPONENT> <LIBRARY_NAME>)
+add_registry_entry(<REGISTRY_NAME> <PLUGIN_NAME> [KEY <key>] [OPTIONAL])
 ```
-For instance, a `TCPSource` plugin might look like this:
+For instance, the `TCPSource` plugin looks like this:
 ```cmake
-add_plugin_as_library(TCP Source tcp_source_plugin_library TCPSource.cpp)
+add_library(tcp_source_plugin_library STATIC TCPSource.cpp TCPDataServer.cpp)
+target_link_libraries(tcp_source_plugin_library PRIVATE nes-sources)
+link_plugin_library(nes-sources tcp_source_plugin_library)
+add_registry_entry(Source TCP)
+add_registry_entry(SourceValidation TCP)
 ```
 Where:
-- `TCP` is the unique identifier used to instantiate the plugin from the registry.
-- `Source` is the name of the registry the plugin belongs to.
-- `tcp_source_plugin_library` is the resulting library from the `add_plugin_as_library` command.
-- TCPSource.cpp lists the source files that make up the plugin library.
+- `TCP` is the unique identifier used to instantiate the plugin from the registry (the entry
+  expression is defined by the registry's `create_runtime_registry` declaration and references
+  the plugin's type, e.g. `TCPSource`).
+- `Source`/`SourceValidation` are the registries the plugin contributes to.
 
 Plugins may declare additional dependencies, which will be exclusive to the plugin library.
 These can be added, for example, using `FetchContent` in the plugin's root `CMakeLists.txt`.
@@ -56,117 +63,67 @@ nes-physical-operators/src/Functions/ArithmeticalFunctions/AddPhysicalFunction.c
 ```
 In the source directory’s `CMakeLists.txt`, internal plugins register their entries like this:
 ```cmake
-register_entry(Add PhysicalFunction AddPhysicalFunction.cpp)
-register_entry(Div PhysicalFunction DivPhysicalFunction.cpp)
-register_entry(Mod PhysicalFunction ModPhysicalFunction.cpp)
-register_entry(Mul PhysicalFunction MulPhysicalFunction.cpp)
-register_entry(Sub PhysicalFunction SubPhysicalFunction.cpp)
+add_registry_entry(PhysicalFunction Add)
+add_registry_entry(PhysicalFunction Div)
+add_registry_entry(PhysicalFunction Mod)
+add_registry_entry(PhysicalFunction Mul)
+add_registry_entry(PhysicalFunction Sub)
 ```
-Notice the slight difference in the CMake function used here compared to optional plugins.
-While `add_plugin_as_library` creates a standalone library that is then linked into the component’s library (e.g., `nes-physical-operators`),
-`register_entry` integrates the plugin sources directly into the component’s library, making it active in every build.
+Internal plugins compile their sources directly into the component's library (via
+`add_source_files`) and only differ from optional plugins in where the sources live.
 
 # Registries
-Registries are libraries that act as factories for creating registered plugins.
-They are linked with the component libraries (e.g., `nes-sources`, `nes-input-formatters`, etc.) and vice versa, so that they:
-- Have access to the appropriate header files defined in the component
-- Can be used by the corresponding component to access the registered plugins
-
-During the build process, it’s necessary to specify which plugins should be part of a registry.
-This includes both internal plugins and the optional ones that have been activated in their respective `CMakeLists.txt` files.
-Within each extensible component, you’ll find a registry directory.
-Inside it, the include directory contains the registries — e.g., `SourceRegistry.hpp`:
+Registries are runtime factories for registered plugins (see `nes-common/include/Util/RuntimeRegistry.hpp`
+and `cmake/RuntimeRegistrationUtil.cmake`). Each extensible component has a `registry/include`
+directory with the registry headers — e.g., `SourceRegistry.hpp`:
 ```c++
-namespace NES::Sources
+namespace NES
 {
 
-using SourceRegistryReturnType = std::unique_ptr<Source>; /// <-- this type will be returned by the registry
-struct SourceRegistryArguments /// <-- this will be passed to the creation function to construct the appropriate type
+using SourceRegistryReturnType = std::unique_ptr<Source>; /// <-- this type is produced by the registry entries
+struct SourceRegistryArguments /// <-- passed to an entry to construct the appropriate type
 {
     SourceDescriptor sourceDescriptor;
 };
 
-class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryArguments>
+using SourceFactoryFn = std::function<SourceRegistryReturnType(SourceRegistryArguments)>;
+
+/// Creates the registry entry for a source implementation.
+template <typename SourceImpl>
+SourceFactoryFn makeSourceFactory()
 {
+    return [](SourceRegistryArguments arguments) -> SourceRegistryReturnType
+    { return std::make_unique<SourceImpl>(arguments.sourceDescriptor); };
+}
+
+class SourceRegistry : public RuntimeRegistry<SourceRegistry, std::string, SourceFactoryFn, /*CaseSensitive*/ false>
+{
+public:
+    static SourceRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_SOURCE_REGISTRY
-#include <SourceGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCE_REGISTRY
 ```
+This specifies the entry type (a factory `std::function`), the arguments an entry receives, and
+how an entry is expressed for a plugin type — either a factory template like `makeSourceFactory`
+(when construction is uniform over the plugin type) or a static member on the plugin class (when
+per-plugin logic is needed, e.g. `&AddLogicalFunction::createAdd`).
 
-This defines the registry for the source component, which inherits from `BaseRegistry`.
-It specifies:
-- The return type, a `unique_ptr` to a `Source` implementation.
-- A struct for all required arguments, in this case a `SourceDescriptor`.
-
-These declarations help reason about the output type your plugin should produce and the input required to construct it.
-At the end of the file, the `Registrar` is included.
-Registrars are auto-generated by CMake during the build.
-They register all enabled plugins into the registry, making them accessible at runtime.
-Registrars implement the `registerAll(Registry<Registrar>& registry)` interface and are based on templates found under `registry/templates`.
-
-For example, the registrar template for sources, `SourceGeneratedRegistrar.inc.in`, looks like:
-```c++
-namespace NES::Sources::SourceGeneratedRegistrar
-{
-
-/// declaration of register functions for 'Sources'
-@REGISTER_FUNCTION_DECLARATIONS@
-}
-
-namespace NES
-{
-template <>
-inline void
-Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
-{
-
-    using namespace NES::Sources::SourceGeneratedRegistrar;
-    /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
-    @REGISTER_ALL_FUNCTION_CALLS@
-}
-}
+The component declares the registry once in its `CMakeLists.txt`:
+```cmake
+create_runtime_registry(Source nes-sources
+        ENTRY_TEMPLATE "makeSourceFactory<${PLUGIN_NAME}Source>()"
+        HEADER_TEMPLATE "${PLUGIN_NAME}Source.hpp")
 ```
-CMake uses this template to generate the actual declarations and calls for the registration functions.
-The resulting generated code might look like:
-```c++
-namespace NES::Sources::SourceGeneratedRegistrar
-{
+and every `add_registry_entry(Source <name>)` generates a small glue translation unit that
+describes the entry (an `EntryProvision`, see `nes-common/include/Plugins/PluginDescriptor.hpp`).
+Plugins only DESCRIBE what they provide; the actual registration — including duplicate and
+missing-registry policies and the `OPTIONAL` entry rule — is performed centrally by the
+`PluginLoader` when the host calls `loadBuiltinPlugins()` at startup, or when the `PluginCatalog`
+loads a dynamically built plugin (`.so`) at runtime. Built-in and dynamically loaded plugins
+share this protocol; only the transport differs (collected function pointers vs. the plugin's
+generated `nes_plugin_describe` entry point).
 
-/// declaration of register functions for 'Sources'
-SourceRegistryReturnType RegisterTCPSource(SourceRegistryArguments);
-SourceRegistryReturnType RegisterFileSource(SourceRegistryArguments);
-
-}
-
-namespace NES
-{
-template <>
-inline void
-Registrar<Sources::SourceRegistry, std::string, Sources::SourceRegistryReturnType, Sources::SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
-{
-
-    using namespace NES::Sources::SourceGeneratedRegistrar;
-    /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
-    registry.addEntry("TCP", RegisterTCPSource);
-    registry.addEntry("File", RegisterFileSource);
-}
-}
-```
-This header is directly generated into CMake’s build folder.
-Its content depends on which plugins are active in the current build.
-The final piece of the puzzle is the definition of the register functions.
-These are implemented in the plugin’s source file, such as `TCPSource.cpp`, since only the plugin has the logic to construct an instance of its type.
-Typically, the register function simply constructs the object, forwarding the necessary arguments, and wraps it in a smart pointer:
-```c++
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegistryArguments sourceRegistryArguments)
-{
-    return std::make_unique<TCPSource>(sourceRegistryArguments.sourceDescriptor);
-}
-```
-
-To develop a new plugin, only this function interacting with the registry needs to be implemented. 
-The rest is handled automatically during the build process.
+To develop a new plugin, implement the plugin type (and, where the registry uses static members,
+the corresponding `create*` member) and add the `add_registry_entry` line — the rest is generated
+during the build.

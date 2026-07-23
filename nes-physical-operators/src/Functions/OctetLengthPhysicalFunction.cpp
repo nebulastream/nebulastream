@@ -38,8 +38,8 @@ VarVal OctetLengthPhysicalFunction::execute(const Record& record, ArenaRef& aren
     return VarVal{variableSizedData.getSize(), inputValue.isNullable(), inputValue.isNull()};
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterOCTET_LENGTHPhysicalFunction(
-    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+OctetLengthPhysicalFunction::createOCTET_LENGTH(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1, "OCTET_LENGTH function must have exactly one child function");

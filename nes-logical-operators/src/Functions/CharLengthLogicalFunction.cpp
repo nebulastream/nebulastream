@@ -97,8 +97,7 @@ Unreflector<CharLengthLogicalFunction>::operator()(const Reflected& reflected, c
     return CharLengthLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterCHAR_LENGTHLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType CharLengthLogicalFunction::createCHAR_LENGTH(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

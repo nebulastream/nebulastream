@@ -14,10 +14,12 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 #include <LoweringRules/AbstractLoweringRule.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
@@ -30,12 +32,25 @@ struct LoweringRuleRegistryArguments
     QueryExecutionConfiguration conf;
 };
 
-class LoweringRuleRegistry
-    : public BaseRegistry<LoweringRuleRegistry, std::string, LoweringRuleRegistryReturnType, LoweringRuleRegistryArguments>
+using LoweringRuleFn = std::function<LoweringRuleRegistryReturnType(LoweringRuleRegistryArguments)>;
+
+/// Creates the registry entry for a lowering rule: rules are constructed from the query
+/// execution configuration.
+template <typename LoweringRuleImpl>
+LoweringRuleFn makeLoweringRule()
 {
-};
+    return [](LoweringRuleRegistryArguments arguments) -> LoweringRuleRegistryReturnType
+    { return std::make_unique<LoweringRuleImpl>(arguments.conf); };
 }
 
-#define INCLUDED_FROM_REGISTRY_LOWERING_RULE
-#include <LoweringRuleGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_LOWERING_RULE
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Case-insensitive to mirror the retired BaseRegistry.
+class LoweringRuleRegistry : public RuntimeRegistry<LoweringRuleRegistry, std::string, LoweringRuleFn, /*CaseSensitive*/ false>
+{
+public:
+    /// Defined out-of-line (LoweringRuleRegistry.cpp) so exactly one instance exists
+    /// process-wide even with plugins loaded as shared objects.
+    static LoweringRuleRegistry& instance();
+};
+
+}

@@ -20,6 +20,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -31,6 +32,10 @@ class ExtractFromTimestampPhysicalFunction
 public:
     ExtractFromTimestampPhysicalFunction(TimestampUnit unit, PhysicalFunction childFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createDay_Of(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createMonth_Of(PhysicalFunctionRegistryArguments arguments);
+    static PhysicalFunctionRegistryReturnType createYear_Of(PhysicalFunctionRegistryArguments arguments);
 
 private:
     TimestampUnit unit;

@@ -13,10 +13,13 @@
 */
 
 #pragma once
+
+#include <functional>
 #include <string>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -30,12 +33,18 @@ struct PhysicalFunctionRegistryArguments
     DataType outputType;
 };
 
-class PhysicalFunctionRegistry
-    : public BaseRegistry<PhysicalFunctionRegistry, std::string, PhysicalFunctionRegistryReturnType, PhysicalFunctionRegistryArguments>
-{
-};
-}
+using PhysicalFunctionFn = std::function<PhysicalFunctionRegistryReturnType(PhysicalFunctionRegistryArguments)>;
 
-#define INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION
-#include <PhysicalFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Entries are static create<Key> members on the function classes (construction differs per
+/// function, and a single class can register under several keys).
+/// Case-insensitive to mirror the retired BaseRegistry.
+class PhysicalFunctionRegistry : public RuntimeRegistry<PhysicalFunctionRegistry, std::string, PhysicalFunctionFn, /*CaseSensitive*/ false>
+{
+public:
+    /// Defined out-of-line (PhysicalFunctionRegistry.cpp) so exactly one instance exists
+    /// process-wide even with plugins loaded as shared objects.
+    static PhysicalFunctionRegistry& instance();
+};
+
+}

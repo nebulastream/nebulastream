@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
 # One implementation library serving all registries this plugin participates in.
@@ -25,5 +24,4 @@ link_plugin_library(nes-input-formatters json_input_format_indexer_plugin_librar
 # plugin_name SIMDJSON: the indexer class/header are SIMDJSONInputFormatIndexer; the registry key stays JSON.
 add_registry_entry(InputFormatIndexer SIMDJSON KEY JSON)
 
-# Old-mechanism registries still served by the same library
-register_plugin_library(JSON InputFormatterValidation json_input_format_indexer_plugin_library)
+add_registry_entry(InputFormatterValidation SIMDJSON KEY JSON)

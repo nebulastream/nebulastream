@@ -18,6 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -29,6 +30,8 @@ class CharLengthPhysicalFunction final
 public:
     explicit CharLengthPhysicalFunction(PhysicalFunction childPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createCHAR_LENGTH(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction childPhysicalFunction;

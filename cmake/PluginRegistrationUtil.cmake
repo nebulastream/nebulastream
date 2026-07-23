@@ -10,20 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Includes all CMake utility functions to generate plugin registrars, which register plugins at plugin registries.
-
-# creates a library that exposes only the registries and not the registrars
-# assumes that registries are located in '${CMAKE_CURRENT_SOURCE_DIR}/registry/include' (see nes-sources for an example)
-function(create_plugin_registry_library plugin_registry_library plugin_registry_component)
-    add_library(${plugin_registry_library} registry)
-    target_link_libraries(${plugin_registry_library} PUBLIC ${plugin_registry_component})
-    target_include_directories(${plugin_registry_library}
-            PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/registry/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/registry/templates> # link against generated registrar headers
-            $<INSTALL_INTERFACE:include/nebulastream/>
-    )
-endfunction()
+# Plugin build utilities. Registration itself lives in cmake/RuntimeRegistrationUtil.cmake;
+# this file only wires plugin directories into the build.
 
 # add_plugin(<plugin_path>)
 # Adds a plugin directory to the build. Currently a thin wrapper around add_subdirectory; it is
@@ -33,114 +21,4 @@ endfunction()
 function(add_plugin plugin_path)
     message(STATUS "Adding plugin: ${plugin_path} (and all of its dependencies).")
     add_subdirectory(${plugin_path})
-endfunction()
-
-# create a new library for the plugin and link it against the plugin registry
-# adds the name of plugin to the list of plugin names for the plugin registry
-# adds the name of the library of the plugin to the list of libraries for the plugin registry
-# the registry component is inferred later when generate_plugin_registrar links the plugin library
-function(add_plugin_as_library plugin_name plugin_registry plugin_library)
-    set(sources ${ARGN})
-    add_library(${plugin_library} STATIC ${sources})
-
-    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
-    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
-endfunction()
-
-# registers an already-existing library with a plugin registry (like add_plugin_as_library, minus
-# the add_library). Lets a single implementation library serve several registries.
-function(register_plugin_library plugin_name plugin_registry plugin_library)
-    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
-    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
-endfunction()
-
-# register_entry(<plugin_name> <plugin_registry> <sources>...)
-# Registers an entry with a compile-time plugin registry: adds the source files to the component
-# that owns the registry and records the entry name for the generated registrar.
-# The component is inferred from the registry name later in generate_plugin_registrar.
-macro(register_entry plugin_name plugin_registry)
-    set(sources ${ARGN})
-    foreach (source ${sources})
-        set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_sources" "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
-    endforeach ()
-    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
-endmacro()
-
-# iterates over all plugins, collect all plugins with given name, inject plugins into registrar
-function(generate_plugin_registrar current_dir current_binary_dir plugin_registry plugin_registry_component)
-    set(registrar_header_template_path ${current_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc.in)
-    set(registrar_header_generated_path ${current_binary_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc)
-
-    # get the names of plugins, source files, and all plugin libraries for the plugin registry
-    get_property(plugin_registry_plugin_names_final GLOBAL PROPERTY ${plugin_registry}_plugin_names)
-    get_property(plugin_registry_plugin_sources_final GLOBAL PROPERTY ${plugin_registry}_plugin_sources)
-    get_property(plugin_registry_plugin_libraries_final GLOBAL PROPERTY ${plugin_registry}_plugin_libraries)
-
-    # add the deferred source files from register_entry() to the component target.
-    # The target must exist at this point because generate_plugin_registrar runs via
-    # cmake_language(DEFER) at the end of configuration, after all add_library() calls.
-    if (NOT TARGET ${plugin_registry_component})
-        message(FATAL_ERROR "Target '${plugin_registry_component}' does not exist. "
-            "Ensure add_library(${plugin_registry_component} ...) is called before create_registries_for_component().")
-    endif ()
-    foreach (source ${plugin_registry_plugin_sources_final})
-        set_property(TARGET ${plugin_registry_component} APPEND PROPERTY SOURCES ${source})
-    endforeach ()
-
-    # first, read the Configuration(RETURN_TYPE, ARGUMENTS) from the '.in' file
-    file(READ ${registrar_header_template_path} registrar_header_file_data)
-
-    # second, remove the configuration and write the modified version of the registrar header template to a temporary file
-    # we generate the final '.inc' file from that temporary file
-    set(temp_registrar_header_template_file "${current_binary_dir}/temp_registrar_header_template.inc.in")
-    file(WRITE ${temp_registrar_header_template_file} "${registrar_header_file_data}")
-
-    # generate the list of declarations of the register functions that the plugins implement to register themselves
-    # generate the list of concrete register calls that are called in the 'registerAll' function call of the Registrar to populate the registry
-    set(REGISTER_FUNCTION_DECLARATIONS "")
-    set(REGISTER_ALL_FUNCTION_CALLS "")
-
-    foreach (reg_func IN LISTS plugin_registry_plugin_names_final)
-        list(APPEND REGISTER_FUNCTION_DECLARATIONS "${plugin_registry}RegistryReturnType Register${reg_func}${plugin_registry}(${plugin_registry}RegistryArguments)")
-        list(APPEND REGISTER_ALL_FUNCTION_CALLS "registry.addEntry(\"${reg_func}\", Register${reg_func}${plugin_registry})")
-    endforeach ()
-
-    # link all plugin libraries against the component that the plugin registry belongs to, this makes the implementation
-    # details accessible to the library of the component that the plugin registry belongs to
-    set(plugin_registry_library ${plugin_registry_component}-registry)
-    foreach (plugin_library IN LISTS plugin_registry_plugin_libraries_final)
-        target_link_libraries(${plugin_library} PRIVATE ${plugin_registry_library})
-        target_link_libraries(${plugin_registry_component} PUBLIC ${plugin_library})
-    endforeach ()
-
-    # add ';'s to the end of the generated function [declarations|calls], and add further formatting (new line and tab)
-    string(REPLACE ";" ";\n" REGISTER_FUNCTION_DECLARATIONS "${REGISTER_FUNCTION_DECLARATIONS};")
-    string(REPLACE ";" ";\n\t" REGISTER_ALL_FUNCTION_CALLS "${REGISTER_ALL_FUNCTION_CALLS};")
-
-    # remove the '.in' from the end of the file and write the result to the parent directory of the the template
-
-    configure_file(
-            ${temp_registrar_header_template_file}
-            ${registrar_header_generated_path}
-            @ONLY
-    )
-    file(REMOVE ${temp_registrar_header_template_file})
-endfunction()
-
-function(generate_plugin_registrars plugin_registry_component)
-    foreach (plugin_registry ${ARGN})
-        cmake_language(EVAL CODE "
-                cmake_language(DEFER DIRECTORY [[${PROJECT_SOURCE_DIR}]] CALL generate_plugin_registrar [[${CMAKE_CURRENT_SOURCE_DIR}]] [[${CMAKE_CURRENT_BINARY_DIR}]] [[${plugin_registry}]] [[${plugin_registry_component}]])
-        ")
-    endforeach ()
-endfunction()
-
-# Provide the names of all registries that the component creates as ARGS
-# Registries are typically located in the 'registry' directory of the component, e.g., 'nes-sources/registry'
-function(create_registries_for_component)
-    get_filename_component(COMPONENT_NAME "${CMAKE_CURRENT_LIST_DIR}" NAME)
-    set(registries_library ${COMPONENT_NAME}-registry)
-    create_plugin_registry_library(${registries_library} ${COMPONENT_NAME})
-    target_link_libraries(${COMPONENT_NAME} PRIVATE ${registries_library})
-    generate_plugin_registrars(${COMPONENT_NAME} ${ARGN})
 endfunction()

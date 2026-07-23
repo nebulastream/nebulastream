@@ -30,7 +30,9 @@ include(${CMAKE_CURRENT_LIST_DIR}/RuntimeRegistrationUtil.cmake)
 #                     header file basename to #include for each plugin.
 #                     Example: "${PLUGIN_NAME}LogicalFunction.hpp"
 function(create_unreflection_registry name target type_template header_template)
-    create_runtime_registry(${name} ${target}
+    # Registry NAME is suffixed with "Unreflection" so a component can own both a factory
+    # registry and an unreflection registry for the same concept (e.g. LogicalFunction).
+    create_runtime_registry(${name}Unreflection ${target}
             REGISTRY_CLASS "${name}UnreflectionRegistry"
             REGISTRY_HEADER "${name}UnreflectionRegistry.hpp"
             HEADER_TEMPLATE "${header_template}"
@@ -48,5 +50,5 @@ endfunction()
 #                 plugin_name. Use when the registered name differs from the C++ type
 #                 basename, e.g. plugin_name "Absolute" / KEY "Abs".
 function(add_unreflection_entry registry plugin_name)
-    add_registry_entry(${registry} ${plugin_name} ${ARGN})
+    add_registry_entry(${registry}Unreflection ${plugin_name} ${ARGN})
 endfunction()

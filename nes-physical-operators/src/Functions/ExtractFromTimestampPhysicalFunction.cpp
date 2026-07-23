@@ -92,22 +92,19 @@ VarVal ExtractFromTimestampPhysicalFunction::execute(const Record& record, Arena
     return VarVal{extracted, value.isNullable(), false};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterDay_OfPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType ExtractFromTimestampPhysicalFunction::createDay_Of(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(args.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Day_Of) must have exactly one child function");
     return ExtractFromTimestampPhysicalFunction{TimestampUnit::Day, args.childFunctions[0], args.outputType};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterMonth_OfPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType ExtractFromTimestampPhysicalFunction::createMonth_Of(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(args.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Month_Of) must have exactly one child function");
     return ExtractFromTimestampPhysicalFunction{TimestampUnit::Month, args.childFunctions[0], args.outputType};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterYear_OfPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType ExtractFromTimestampPhysicalFunction::createYear_Of(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(args.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Year_Of) must have exactly one child function");
     return ExtractFromTimestampPhysicalFunction{TimestampUnit::Year, args.childFunctions[0], args.outputType};

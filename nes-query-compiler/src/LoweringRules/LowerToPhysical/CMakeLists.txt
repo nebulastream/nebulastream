@@ -10,14 +10,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-register_entry(NLJoin LoweringRule LowerToPhysicalNLJoin.cpp)
-register_entry(HashJoin LoweringRule LowerToPhysicalHashJoin.cpp)
-register_entry(Selection LoweringRule LowerToPhysicalSelection.cpp)
-register_entry(Projection LoweringRule LowerToPhysicalProjection.cpp)
-register_entry(WindowedAggregation LoweringRule LowerToPhysicalWindowedAggregation.cpp)
-register_entry(Union LoweringRule LowerToPhysicalUnion.cpp)
-register_entry(Sink LoweringRule LowerToPhysicalSink.cpp)
-register_entry(SourceDescriptor LoweringRule LowerToPhysicalSource.cpp)
-register_entry(IngestionTimeWatermarkAssigner LoweringRule LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
-register_entry(EventTimeWatermarkAssigner LoweringRule LowerToPhysicalEventTimeWatermarkAssigner.cpp)
-register_entry(InferModel LoweringRule LowerToPhysicalInferModel.cpp)
+add_source_files(nes-query-compiler
+        LowerToPhysicalNLJoin.cpp
+        LowerToPhysicalHashJoin.cpp
+        LowerToPhysicalSelection.cpp
+        LowerToPhysicalProjection.cpp
+        LowerToPhysicalWindowedAggregation.cpp
+        LowerToPhysicalUnion.cpp
+        LowerToPhysicalSink.cpp
+        LowerToPhysicalSource.cpp
+        LowerToPhysicalIngestionTimeWatermarkAssigner.cpp
+        LowerToPhysicalEventTimeWatermarkAssigner.cpp
+        LowerToPhysicalInferModel.cpp
+)
+
+# Runtime registry entries for the built-in lowering rules
+add_registry_entry(LoweringRule NLJoin)
+add_registry_entry(LoweringRule HashJoin)
+add_registry_entry(LoweringRule Selection)
+add_registry_entry(LoweringRule Projection)
+add_registry_entry(LoweringRule WindowedAggregation)
+add_registry_entry(LoweringRule Union)
+add_registry_entry(LoweringRule Sink)
+add_registry_entry(LoweringRule Source KEY SourceDescriptor)
+add_registry_entry(LoweringRule IngestionTimeWatermarkAssigner)
+add_registry_entry(LoweringRule EventTimeWatermarkAssigner)
+add_registry_entry(LoweringRule InferModel)

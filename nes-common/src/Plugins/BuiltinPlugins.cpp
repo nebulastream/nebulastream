@@ -41,12 +41,7 @@ void loadBuiltinPlugins()
 {
     static std::once_flag loaded;
     /// call_once: on exception the flag stays unset, so a failed startup can be retried.
-    std::call_once(
-        loaded,
-        []
-        {
-            PluginLoader::registerPlugins({BuiltinPlugins::instance().describe()});
-        });
+    std::call_once(loaded, [] { PluginLoader::registerPlugins({BuiltinPlugins::instance().describe()}); });
 }
 
 }

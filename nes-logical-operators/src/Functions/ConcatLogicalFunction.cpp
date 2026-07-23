@@ -107,8 +107,7 @@ ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Refle
     return ConcatLogicalFunction{left, right};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType ConcatLogicalFunction::createConcat(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() < 2)
     {

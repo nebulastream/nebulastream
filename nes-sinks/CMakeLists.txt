@@ -10,12 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Set Sinks and Headers
-add_subdirectory(src)
-get_source(nes-sinks NES_SINKS_SOURCE_FILES)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
-# Add Library
-add_library(nes-sinks ${NES_SINKS_SOURCE_FILES})
+# Declare the library up front so create_runtime_registry can attach the glue sub-libraries;
+# sources are added below once src/ has registered them.
+add_library(nes-sinks STATIC)
+set_target_properties(nes-sinks PROPERTIES LINKER_LANGUAGE CXX)
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
 target_link_libraries(nes-sinks PUBLIC nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings)
@@ -24,9 +24,21 @@ target_include_directories(nes-sinks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+# Runtime registries: a sink plugin registers itself with add_registry_entry(<Registry> <name>).
+# Entries are expressed through the plugin's TYPE (included via HEADER_TEMPLATE) and the factory
+# templates from the registry headers.
+create_runtime_registry(Sink nes-sinks
+        ENTRY_TEMPLATE "makeSinkFactory<\${PLUGIN_NAME}Sink>()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}Sink.hpp")
+
+create_runtime_registry(SinkValidation nes-sinks
+        ENTRY_TEMPLATE "makeSinkValidator<\${PLUGIN_NAME}Sink>()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}Sink.hpp")
+
+add_subdirectory(src)
+get_source(nes-sinks NES_SINKS_SOURCE_FILES)
+target_sources(nes-sinks PRIVATE ${NES_SINKS_SOURCE_FILES})
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sinks REUSE_FROM nes-common)
 endif ()
-
-create_registries_for_component(Sink SinkValidation)

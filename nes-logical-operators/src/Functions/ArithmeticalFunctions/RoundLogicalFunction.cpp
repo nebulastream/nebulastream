@@ -101,8 +101,7 @@ RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflect
     return RoundLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RoundLogicalFunction::createRound(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

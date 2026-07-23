@@ -15,8 +15,8 @@
 #include <gtest/gtest.h>
 
 #include <any>
-#include <Plugins/PluginDescriptor.hpp>
 #include <Plugins/PluginCatalog.hpp>
+#include <Plugins/PluginDescriptor.hpp>
 #include <Plugins/PluginLoader.hpp>
 #include <Plugins/RegistryCatalog.hpp>
 #include <ErrorHandling.hpp>
@@ -61,8 +61,7 @@ TEST(PluginCatalogTest, OptionalEntriesAreSkippedForUnknownRegistries)
     PluginDescriptor descriptor{
         .name = "test-descriptor",
         .registries = {},
-        .entries
-        = {EntryProvision{.registryClassName = "NoSuchRegistry", .key = "SomeKey", .entry = std::any{}, .optional = true}}};
+        .entries = {EntryProvision{.registryClassName = "NoSuchRegistry", .key = "SomeKey", .entry = std::any{}, .optional = true}}};
     EXPECT_NO_THROW(PluginLoader::registerPlugins({descriptor}));
 
     descriptor.entries.front().optional = false;

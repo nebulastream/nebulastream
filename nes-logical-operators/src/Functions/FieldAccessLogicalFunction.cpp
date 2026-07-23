@@ -117,7 +117,7 @@ Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& reflected, 
 }
 
 /// NOLINTBEGIN(performance-unnecessary-value-param)
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments)
+LogicalFunctionRegistryReturnType FieldAccessLogicalFunction::createFieldAccess(LogicalFunctionRegistryArguments)
 {
     PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");
     std::unreachable();

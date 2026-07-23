@@ -14,16 +14,16 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
-
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -40,15 +40,23 @@ struct AggregationPhysicalFunctionRegistryArguments
     bool includeNullValues;
 };
 
-class AggregationPhysicalFunctionRegistry : public BaseRegistry<
+using AggregationPhysicalFunctionFn
+    = std::function<AggregationPhysicalFunctionRegistryReturnType(AggregationPhysicalFunctionRegistryArguments)>;
+
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Entries are static create members on the aggregation function classes (constructor
+/// signatures differ between aggregations).
+/// Case-insensitive to mirror the retired BaseRegistry.
+class AggregationPhysicalFunctionRegistry : public RuntimeRegistry<
                                                 AggregationPhysicalFunctionRegistry,
                                                 std::string,
-                                                AggregationPhysicalFunctionRegistryReturnType,
-                                                AggregationPhysicalFunctionRegistryArguments>
+                                                AggregationPhysicalFunctionFn,
+                                                /*CaseSensitive*/ false>
 {
+public:
+    /// Defined out-of-line (AggregationPhysicalFunctionRegistry.cpp) so exactly one instance
+    /// exists process-wide even with plugins loaded as shared objects.
+    static AggregationPhysicalFunctionRegistry& instance();
 };
-}
 
-#define INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION
-#include <AggregationPhysicalFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION
+}

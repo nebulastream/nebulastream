@@ -14,10 +14,10 @@
 
 #pragma once
 
-#include <memory>
+#include <functional>
 #include <string>
 #include <DataTypes/DataType.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -29,12 +29,18 @@ struct DataTypeRegistryArguments
     DataType::NULLABLE nullable{DataType::NULLABLE::IS_NULLABLE};
 };
 
-class DataTypeRegistry : public BaseRegistry<DataTypeRegistry, std::string, DataTypeRegistryReturnType, DataTypeRegistryArguments>
+using DataTypeFn = std::function<DataTypeRegistryReturnType(DataTypeRegistryArguments)>;
+
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Entries are keyed by the DataType::Type enumerator name; the entry expression constructs the
+/// DataType directly from the enumerator matching the key.
+/// Case-insensitive to mirror the retired BaseRegistry.
+class DataTypeRegistry : public RuntimeRegistry<DataTypeRegistry, std::string, DataTypeFn, /*CaseSensitive*/ false>
 {
+public:
+    /// Defined out-of-line (DataTypeRegistry.cpp) so exactly one instance exists process-wide
+    /// even with plugins loaded as shared objects.
+    static DataTypeRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_DATA_TYPE_REGISTRY
-#include <DataTypeGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_DATA_TYPE_REGISTRY

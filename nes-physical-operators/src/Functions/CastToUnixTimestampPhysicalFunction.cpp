@@ -151,8 +151,8 @@ VarVal CastToUnixTimestampPhysicalFunction::execute(const Record& record, ArenaR
     return VarVal{parsedMilliSeconds, value.isNullable(), false}.castToType(outputType.type);
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterCastToUnixTsPhysicalFunction(
-    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+CastToUnixTimestampPhysicalFunction::createCastToUnixTs(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1,

@@ -11,7 +11,6 @@
 # limitations under the License.
 
 # include registrar generation functions
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
 # Declare the library up front so create_runtime_registry can attach the WHOLE_ARCHIVE
@@ -32,6 +31,11 @@ target_include_directories(nes-input-formatters PUBLIC
 # Runtime registry: an input-format-indexer plugin registers itself with
 # add_registry_entry(InputFormatIndexer <name>). The entry is expressed through the plugin's
 # indexer TYPE (included via HEADER_TEMPLATE) and the factory template from the registry header.
+create_runtime_registry(InputFormatterValidation nes-input-formatters
+        ENTRY_TEMPLATE "makeInputFormatterValidator<\${PLUGIN_NAME}InputFormatIndexer>()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}InputFormatIndexer.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+
 create_runtime_registry(InputFormatIndexer nes-input-formatters
         ENTRY_TEMPLATE "makeInputFormatterFactory<\${PLUGIN_NAME}InputFormatIndexer>()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}InputFormatIndexer.hpp"
@@ -43,7 +47,7 @@ target_sources(nes-input-formatters PRIVATE ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
 # 'Public' provider library, only exposing the provider and the TupleBufferRef
 add_library(nes-input-formatter-provider src/InputFormatterProvider.cpp)
-target_link_libraries(nes-input-formatter-provider PUBLIC nes-memory nes-executable PRIVATE nes-input-formatters-registry nes-input-formatters)
+target_link_libraries(nes-input-formatter-provider PUBLIC nes-memory nes-executable PRIVATE nes-input-formatters)
 target_include_directories(nes-input-formatter-provider PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatterProvider>
         $<INSTALL_INTERFACE:include/nebulastream/>
@@ -54,6 +58,5 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-input-formatters REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(InputFormatterValidation)
 
 add_tests_if_enabled(tests)

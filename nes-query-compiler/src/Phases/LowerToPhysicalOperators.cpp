@@ -48,16 +48,16 @@ resolveLoweringRule(const LogicalOperator& logicalOperator, const LoweringRuleRe
         switch (const auto& implementationTrait = implementationTraitOpt.value(); implementationTrait->implementationType)
         {
             case JoinImplementation::HASH_JOIN: {
-                if (auto ruleOptional = LoweringRuleRegistry::instance().create(std::string("HashJoin"), registryArgument))
+                if (const auto rule = LoweringRuleRegistry::instance().find(std::string("HashJoin")))
                 {
-                    return std::move(ruleOptional.value());
+                    return (*rule)(registryArgument);
                 }
                 throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
             }
             case JoinImplementation::NESTED_LOOP_JOIN: {
-                if (auto ruleOptional = LoweringRuleRegistry::instance().create(std::string("NLJoin"), registryArgument))
+                if (const auto rule = LoweringRuleRegistry::instance().find(std::string("NLJoin")))
                 {
-                    return std::move(ruleOptional.value());
+                    return (*rule)(registryArgument);
                 }
                 throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
             }
@@ -66,9 +66,9 @@ resolveLoweringRule(const LogicalOperator& logicalOperator, const LoweringRuleRe
             }
         }
     }
-    if (auto ruleOptional = LoweringRuleRegistry::instance().create(std::string(logicalOperatorName), registryArgument))
+    if (const auto rule = LoweringRuleRegistry::instance().find(std::string(logicalOperatorName)))
     {
-        return std::move(ruleOptional.value());
+        return (*rule)(registryArgument);
     }
     throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
 }

@@ -26,6 +26,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -52,6 +53,8 @@ public:
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+
+    static LogicalFunctionRegistryReturnType createFROM_BASE64(LogicalFunctionRegistryArguments arguments);
 
 private:
     DataType dataType;

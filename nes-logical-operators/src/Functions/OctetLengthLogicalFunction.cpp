@@ -97,8 +97,7 @@ Unreflector<OctetLengthLogicalFunction>::operator()(const Reflected& reflected, 
     return OctetLengthLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterOCTET_LENGTHLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType OctetLengthLogicalFunction::createOCTET_LENGTH(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

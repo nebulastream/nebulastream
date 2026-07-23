@@ -15,8 +15,6 @@ add_source_files(nes-logical-operators
         SinkLogicalOperator.cpp
 )
 
-register_entry(AnonymousSink LogicalOperator AnonymousSinkLogicalOperator.cpp)
-register_entry(Sink LogicalOperator SinkLogicalOperator.cpp)
 
 add_unreflection_entry(LogicalOperator AnonymousSink)
 add_unreflection_entry(LogicalOperator Sink)

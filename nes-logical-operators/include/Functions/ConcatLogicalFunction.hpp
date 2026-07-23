@@ -26,6 +26,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/ReflectionFwd.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -47,6 +48,8 @@ public:
 
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+
+    static LogicalFunctionRegistryReturnType createConcat(LogicalFunctionRegistryArguments arguments);
 
 private:
     DataType dataType;

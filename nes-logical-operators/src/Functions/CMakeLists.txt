@@ -15,24 +15,23 @@ add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)
 
 add_source_files(nes-logical-operators
+        LogicalFunctionRegistry.cpp
         LogicalFunctionProvider.cpp
+        ConstantValueLogicalFunction.cpp
+        FieldAccessLogicalFunction.cpp
+        ConcatLogicalFunction.cpp
+        OctetLengthLogicalFunction.cpp
+        CharLengthLogicalFunction.cpp
+        FromBase64LogicalFunction.cpp
+        ToBase64LogicalFunction.cpp
+        CastToTypeLogicalFunction.cpp
+        UnboundFieldAccessLogicalFunction.cpp
+        CastToUnixTimestampLogicalFunction.cpp
+        CastFromUnixTimestampLogicalFunction.cpp
+        VarSizedToNumericLogicalFunction.cpp
+        ExtractFromTimestampLogicalFunction.cpp
 )
 
-register_entry(ConstantValue LogicalFunction ConstantValueLogicalFunction.cpp)
-register_entry(FieldAccess LogicalFunction FieldAccessLogicalFunction.cpp)
-register_entry(Concat LogicalFunction ConcatLogicalFunction.cpp)
-register_entry(OCTET_LENGTH LogicalFunction OctetLengthLogicalFunction.cpp)
-register_entry(CHAR_LENGTH LogicalFunction CharLengthLogicalFunction.cpp)
-register_entry(FROM_BASE64 LogicalFunction FromBase64LogicalFunction.cpp)
-register_entry(TO_BASE64 LogicalFunction ToBase64LogicalFunction.cpp)
-register_entry(CastToType LogicalFunction CastToTypeLogicalFunction.cpp)
-register_entry(UnboundFieldAccess LogicalFunction UnboundFieldAccessLogicalFunction.cpp)
-register_entry(CastToUnixTs LogicalFunction CastToUnixTimestampLogicalFunction.cpp)
-register_entry(CastFromUnixTs LogicalFunction CastFromUnixTimestampLogicalFunction.cpp)
-register_entry(VarSizedToNumeric LogicalFunction VarSizedToNumericLogicalFunction.cpp)
-register_entry(Day_Of LogicalFunction ExtractFromTimestampLogicalFunction.cpp)
-register_entry(Month_Of LogicalFunction ExtractFromTimestampLogicalFunction.cpp)
-register_entry(Year_Of LogicalFunction ExtractFromTimestampLogicalFunction.cpp)
 
 add_unreflection_entry(LogicalFunction ConstantValue)
 add_unreflection_entry(LogicalFunction FieldAccess)
@@ -48,3 +47,20 @@ add_unreflection_entry(LogicalFunction VarSizedToNumeric)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Month_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Year_Of)
+
+# Runtime registry entries
+add_registry_entry(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
+add_registry_entry(LogicalFunction CastToType)
+add_registry_entry(LogicalFunction CastToUnixTimestamp KEY CastToUnixTs)
+add_registry_entry(LogicalFunction CharLength KEY CHAR_LENGTH)
+add_registry_entry(LogicalFunction Concat)
+add_registry_entry(LogicalFunction ConstantValue)
+add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
+add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Month_Of)
+add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Year_Of)
+add_registry_entry(LogicalFunction FieldAccess)
+add_registry_entry(LogicalFunction FromBase64 KEY FROM_BASE64)
+add_registry_entry(LogicalFunction OctetLength KEY OCTET_LENGTH)
+add_registry_entry(LogicalFunction ToBase64 KEY TO_BASE64)
+add_registry_entry(LogicalFunction UnboundFieldAccess)
+add_registry_entry(LogicalFunction VarSizedToNumeric)
