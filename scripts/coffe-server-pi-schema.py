@@ -54,7 +54,7 @@ The 43-field mapping was confirmed arithmetically against that row, not guessed:
 BEHAVIOUR MODEL — calibrated against 24 DAYS OF REAL DATA
 ---------------------------------------------------------
 Every constant below was measured from
-scripts/coffe_queries/tcp/testv2/dashboard/machine_counters_whole.csv
+scripts/coffe_queries/dashboard/machine_counters_whole.csv
 (4839 rows, 2026-06-26 -> 2026-07-20, 723 real products). Earlier versions of
 this file invented the numbers, and the invented ones were wrong by 3-6x —
 notably water-per-product (real median 40 ticks, the old mock used 120-240).
@@ -72,7 +72,10 @@ does not move, so measuring only the increment steps undercounts badly: the
 per-step median says 136 ticks per deep clean, the totals say 2770. Trusting
 the median would have shrunk the doughnut's largest slice to nothing.
 
-  sample interval      8 s
+  emit interval        fixed 15 s heartbeat — the updated Pi republishes the
+                       current counters (fresh timestamp) even when unchanged, so
+                       ~75% of rows repeat the previous row's counters. Per-event
+                       sizes below are cadence-independent (per-day aggregates).
   products             ~30/weekday; only 73% of them run a brew cycle
   brewing product      +1 absolute_counter, +1 brewcycles_left, ~12 g beans,
                        ~42 water product ticks
@@ -106,11 +109,16 @@ pinned at 0 here so the mock cannot make a dead field look alive.
 
 FAULT INJECTION — on by default, because it found real bugs
 -----------------------------------------------------------
-The real capture contains 35 all-zero rows and 14 counter resets-to-zero
-(reconnects/reboots). A naive windowed MAX-MIN spanning one reads a garbage
-spike — this is exactly what once made an analysis report "2671 products in one
-day" when the true figure was 9. The simulator reproduces both, rarely, so
-queries and dashboard callbacks get tested against them. Disable with
+The real capture contains 49 all-zero rows (in 14 short runs) where the machine
+briefly reads every counter as 0 on standby/wake or a reconnect. These are
+TRANSIENT DROPOUTS, not resets: the very next row is back to the exact prior
+values (verified across all 4839 rows — no counter ever restarts from 0 and
+climbs). An all-zero row still trips a naive consumer — a windowed MAX-MIN
+spanning one reads a garbage spike, and an all-time leaderboard that plots it
+collapses to 0 — so the simulator reproduces the dropouts, rarely, to keep
+consumers honest. There is NO automatic reset fault, because the real machine
+never truly resets; a permanent reset can still be triggered by hand via
+POST /simulate/reset (a deliberate stress test). Disable dropouts with
 --no-faults when you need a clean stream.
 
 DELIBERATE DIFFERENCES FROM THE REAL PI — this server is better on purpose
@@ -132,24 +140,29 @@ need NO changes. To switch: stop this server, then start the tunnel:
   ssh -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \\
     -L 2222:raspi-coffee.bifold.tu-berlin.de:2222 tim@needmi-jh.dima.tu-berlin.de
 
-Full runbook: scripts/coffe_queries/tcp/testv2/PI-SETUP-GUIDE.md
+Full runbook: scripts/coffe_queries/dashboard/Full-demo-nes-coffe.md
 
 Usage:
-  python3 scripts/coffe-server-pi-schema.py [--interval 8.0] [--speedup 1.0]
+  python3 scripts/coffe-server-pi-schema.py [--interval 15.0] [--speedup 1.0]
                                             [--port 2222] [--admin-port 8000]
                                             [--no-faults]
 
 Admin REST API (port 8000) — drive a live demo by hand:
-  POST /simulate/brew/101              — one single-shot coffee
-  POST /simulate/brew/101?n=5          — N of them
-  POST /simulate/brew/101?kind=double  — double shot (14-16 g)
-  POST /simulate/brew/101?milk=1       — with milk (any kind=)
-  POST /simulate/rinse/101             — one rinse cycle
-  POST /simulate/clean/101             — one deep-clean cycle
-  POST /simulate/reset/101             — zero every counter (reset fault)
-  POST /simulate/dropout/101           — emit N all-zero rows (?n=3)
-  GET  /status/101                     — current counter snapshot
-  GET  /status                         — all machines
+  POST /simulate/brew/101                 — one single-shot coffee
+  POST /simulate/brew/101?n=5             — N of them
+  POST /simulate/brew/101?kind=double     — double shot (14-16 g)
+  POST /simulate/brew/101?milk=1          — with milk (any kind=)
+  POST /simulate/brew/101/espresso        — a NAMED drink (path form), or ...
+  POST /simulate/brew/101?drink=cappuccino  — ... the ?drink= form
+       named drinks: espresso, double_espresso, cappuccino,
+                     milk_coffee (= latte), hot_water   (?n= repeats)
+  POST /simulate/rinse/101                — one rinse cycle
+  POST /simulate/clean/101                — one deep-clean cycle
+  POST /simulate/reset/101                — zero every counter (MANUAL stress test
+                                            only; NOT a real machine behaviour)
+  POST /simulate/dropout/101              — emit N all-zero rows (?n=3)
+  GET  /status/101                        — current counter snapshot
+  GET  /status                            — all machines
 """
 
 import argparse
@@ -343,19 +356,47 @@ def _add_beans(m: MachineState, grams: int) -> None:
     m.total_coffee_bean_quantity_g += grams
 
 
-def _add_milk(m: MachineState) -> None:
-    """One milk cycle. Single milk system: only the _left counters exist."""
+def _add_milk(m: MachineState, portions: float = 1.0, foam: float = 1.0) -> None:
+    """One milk cycle. Single milk system: only the _left counters exist.
+
+    Base values are CALIBRATED to the real per-milk-drink medians measured from
+    the 24-day capture (116 single-step milk_cycles increments in
+    machine_counters_whole.csv):
+        time_milk_cs         median 190  (range 55-220)
+        time_milk_steam_cs   median 142  (range 83-202)
+        time_air_pump_cs     median 151  (range  8-166)
+    The earlier constants (steam 280-400, air 45-80) were guesses, wrong by ~2x
+    (steam too high, air too low), so the milk/steam/air fields on the wire did
+    not match the machine. These match the measured medians.
+
+    `portions` scales the steamed-milk volume (and its dispensing time), `foam`
+    scales the air pump. NOTE: the real machine reports only AGGREGATE milk
+    counters, so a cappuccino-vs-latte split is NOT observable in the capture —
+    the portions/foam differentiation is a plausible model, not calibrated. At the
+    defaults (1.0/1.0) this reproduces the real medians (an "average" milk drink).
+    milk_cycles_left counts drinks, so it always steps by exactly 1 regardless of
+    the scales.
+    """
     m.milk_cycles_left += 1
-    m.time_milk_cs += random.randint(90, 140)
-    m.time_milk_steam_left_cs += random.randint(280, 400)
-    m.time_air_pump_cs += random.randint(45, 80)
+    m.time_milk_cs += round(random.randint(150, 220) * portions)
+    m.time_milk_steam_left_cs += round(random.randint(95, 190) * portions)
+    m.time_air_pump_cs += round(random.randint(115, 166) * foam)
 
 
-def simulate_brew(m: MachineState, kind: str = "single", milk: bool | None = None) -> None:
+def simulate_brew(
+    m: MachineState,
+    kind: str = "single",
+    milk: bool | None = None,
+    milk_portions: float = 1.0,
+    milk_foam: float = 1.0,
+) -> None:
     """One product. Increments match the real machine's measured per-event values.
 
     `kind`: "single" (7-10 g, 84% of real products), "double" (14-16 g, 9%), or
     "nobeans" (hot water / milk-only, 4%). `milk` defaults to the measured rate.
+    `milk_portions`/`milk_foam` scale the milk work when milk is added — see
+    _add_milk and the DRINKS table. This is the low-level primitive; prefer
+    simulate_drink() to brew a named drink (espresso / cappuccino / milk_coffee).
     """
     if milk is None:
         milk = random.random() < MILK_SHARE
@@ -374,7 +415,7 @@ def simulate_brew(m: MachineState, kind: str = "single", milk: bool | None = Non
         m.total_water_quantity_ticks += hot_water_ticks
         m.absolute_counter += 1
         if milk:
-            _add_milk(m)
+            _add_milk(m, portions=milk_portions, foam=milk_foam)
         return
 
     if kind == "double":
@@ -393,11 +434,49 @@ def simulate_brew(m: MachineState, kind: str = "single", milk: bool | None = Non
     m.absolute_counter += 1
 
     if milk:
-        _add_milk(m)
+        _add_milk(m, portions=milk_portions, foam=milk_foam)
 
     # Rinse is driven BY brewing, not scheduled: ~1 rinse per 3.7 brews.
     if random.random() < RINSE_PER_BREW:
         simulate_rinse(m)
+
+
+# Named drinks the admin API (and a caller) can request by name. Each maps to the
+# low-level simulate_brew primitives: a shot size (kind) and, for milk drinks, how
+# much steamed milk (milk_portions) and foam/air (milk_foam) to add. The machine
+# records no drink NAME — only aggregate counters — so what actually distinguishes
+# these on the wire is the bean grams and the milk/steam/air-pump signature:
+#   espresso        — 1 shot, no milk                  (beans move, milk fields flat)
+#   double_espresso — 2 shots, no milk
+#   cappuccino      — 1 shot + a little milk, lots of foam
+#   milk_coffee     — 1 shot + lots of steamed milk, little foam  (a.k.a. latte)
+#   hot_water       — no beans, just product water (the "nobrew" thirsty product)
+DRINKS: Dict[str, dict] = {
+    "espresso":        dict(kind="single", milk=False),
+    "double_espresso": dict(kind="double", milk=False),
+    "cappuccino":      dict(kind="single", milk=True, milk_portions=0.9, milk_foam=1.15),
+    "milk_coffee":     dict(kind="single", milk=True, milk_portions=1.2, milk_foam=0.6),
+    "latte":           dict(kind="single", milk=True, milk_portions=1.2, milk_foam=0.6),
+    "hot_water":       dict(kind="nobrew", milk=False),
+}
+
+
+def simulate_drink(m: MachineState, drink: str) -> None:
+    """Brew one NAMED drink (see DRINKS). Thin wrapper over simulate_brew that
+    fills in the shot size and milk profile. Raises ValueError on an unknown name.
+    """
+    spec = DRINKS.get(drink)
+    if spec is None:
+        raise ValueError(
+            f"unknown drink {drink!r}; known: {', '.join(sorted(DRINKS))}"
+        )
+    simulate_brew(
+        m,
+        kind=spec["kind"],
+        milk=spec["milk"],
+        milk_portions=spec.get("milk_portions", 1.0),
+        milk_foam=spec.get("milk_foam", 1.0),
+    )
 
 
 def simulate_rinse(m: MachineState) -> None:
@@ -434,10 +513,14 @@ def simulate_cleaning(m: MachineState) -> None:
 
 
 def simulate_reset(m: MachineState) -> None:
-    """Reproduce a real counter reset: every counter drops to zero at once.
+    """PERMANENTLY zero every counter — a manual test hook only.
 
-    Happened 14 times in the 24-day capture. Any windowed MAX-MIN spanning this
-    goes negative or spikes, so queries must guard against it.
+    NOTE: this does NOT correspond to any real machine behaviour. The 24-day
+    capture contains no genuine reset (no counter ever restarts from 0 and climbs
+    again); the 14 all-zero events in it are transient dropouts that recover to
+    the same values — see advance_machine(). This is therefore NOT part of the
+    automatic fault injection; it is exposed only via POST /simulate/reset/<id>
+    so you can deliberately stress a consumer's reset handling by hand.
     """
     for f in FIELDS:
         if f != "ts_ms":
@@ -448,7 +531,7 @@ def simulate_reset(m: MachineState) -> None:
 # CSV serialisation.
 # THIS ORDER IS THE WIRE CONTRACT WITH THE REAL PI — 43 fields, no machine_id.
 # It must stay byte-for-byte identical to the `logical:` schema block in every
-# query YAML under scripts/coffe_queries/tcp/testv2/. Do not reorder or insert.
+# query YAML under scripts/coffe_queries/dashboard/. Do not reorder or insert.
 # ---------------------------------------------------------------------------
 
 FIELDS = [
@@ -532,12 +615,15 @@ def advance_machine(
         simulate_cleaning(m)
 
     if faults:
-        # Rates from the capture: 35 dropouts and 14 resets across 4839 rows.
-        if random.random() < 35 / 4839:
+        # The real capture's 14 apparent "resets" are NOT resets: every one is a
+        # transient all-zero DROPOUT that recovers to the exact same counter
+        # values on the next row (verified across all 4839 rows — zero genuine
+        # counter decreases once the all-zero rows are excluded). The machine
+        # never actually zeroes its counters; it just briefly reads 0 on
+        # standby/wake. So there is no permanent reset fault here — only
+        # recoverable dropouts, fired at the combined real rate (49/4839).
+        if random.random() < (35 + 14) / 4839:
             m.dropout_until = time.time() + interval_sec * random.randint(1, 3)
-        elif random.random() < 14 / 4839:
-            log.warning("fault injection: counter RESET (all counters -> 0)")
-            simulate_reset(m)
 
 
 def machine_snapshot_dict(m: MachineState) -> dict:
@@ -657,23 +743,39 @@ async def admin_handler(
             json_response(writer, 200, machine_snapshot_dict(m))
 
         elif method == "POST" and path.startswith("/simulate/brew/"):
+            # Path may be /simulate/brew/<id> or /simulate/brew/<id>/<drink>.
+            segs = path.split("/")
             try:
-                mid = int(path.split("/")[3])
+                mid = int(segs[3])
             except (IndexError, ValueError):
                 json_response(writer, 400, {"error": "invalid machineId"}); return
             m = machines.get(mid)
             if m is None:
                 json_response(writer, 404, {"error": f"machine {mid} not found"}); return
             n = max(1, int(params.get("n", 1)))
-            kind = params.get("kind", "single")
-            milk = params.get("milk") in ("1", "true", "yes") if "milk" in params else None
-            for _ in range(n):
-                simulate_brew(m, kind=kind, milk=milk)
-            log.info("admin: %d %s brew(s), milk=%s -> absolute_counter=%d",
-                     n, kind, milk, m.absolute_counter)
+            # A named drink can come from the trailing path segment
+            # (/simulate/brew/101/cappuccino) or ?drink=cappuccino. If neither is
+            # given, fall back to the raw kind/milk primitives (back-compat).
+            drink = segs[4] if len(segs) > 4 and segs[4] else params.get("drink")
+            try:
+                if drink:
+                    for _ in range(n):
+                        simulate_drink(m, drink)
+                    kind, milk = DRINKS[drink]["kind"], DRINKS[drink].get("milk")
+                else:
+                    kind = params.get("kind", "single")
+                    milk = params.get("milk") in ("1", "true", "yes") if "milk" in params else None
+                    for _ in range(n):
+                        simulate_brew(m, kind=kind, milk=milk)
+            except ValueError as e:
+                json_response(writer, 400, {"error": str(e),
+                                            "knownDrinks": sorted(DRINKS)}); return
+            log.info("admin: %d x %s brew(s), milk=%s -> absolute_counter=%d",
+                     n, drink or kind, milk, m.absolute_counter)
             json_response(writer, 200, {"ok": True, "machineId": mid, "brews": n,
-                                        "kind": kind, "milk": milk,
+                                        "drink": drink, "kind": kind, "milk": milk,
                                         "absolute_counter": m.absolute_counter,
+                                        "milk_cycles_left": m.milk_cycles_left,
                                         "total_coffee_bean_quantity_g": m.total_coffee_bean_quantity_g})
 
         elif method == "POST" and path.startswith("/simulate/rinse/"):
@@ -750,6 +852,7 @@ async def run_admin_server(machines: Dict[int, MachineState], port: int,
     server = await asyncio.start_server(_handle, host="0.0.0.0", port=port)
     log.info("admin HTTP listening on 0.0.0.0:%d", port)
     log.info("  curl -X POST http://localhost:%d/simulate/brew/101", port)
+    log.info("  curl -X POST http://localhost:%d/simulate/brew/101/cappuccino", port)
     log.info("  curl -X POST http://localhost:%d/simulate/clean/101", port)
     async with server:
         await server.serve_forever()
@@ -784,9 +887,11 @@ async def main(port: int, interval_sec: float, admin_port: int,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Eversys TCP telemetry server — real-Pi schema")
-    parser.add_argument("--interval", type=float, default=8.0,
-                        help="seconds between snapshots; 8.0 is the real Pi's "
-                             "measured median (default: 8.0)")
+    parser.add_argument("--interval", type=float, default=15.0,
+                        help="seconds between snapshots. The updated real Pi now "
+                             "emits on a FIXED 15 s heartbeat, republishing the "
+                             "current counters (with a fresh timestamp) even when "
+                             "nothing changed (default: 15.0)")
     parser.add_argument("--speedup", type=float, default=1.0,
                         help="compress simulated time so a working day plays out "
                              "in minutes. Event sizes stay real; only the rate and "

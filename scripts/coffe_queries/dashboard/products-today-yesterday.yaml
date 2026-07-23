@@ -1,19 +1,40 @@
-# Top drinks — REAL-PI schema, NEW dashboard
+# Products today vs yesterday — REAL Pi TCP source, NEW dashboard
 #
-# Feeds TopDrinks.jsx (topic: top-drinks).
+# Feeds TodayVsYesterday.jsx (topic: products-today-yesterday). That component
+# reads a flat message {productsToday, productsYesterday} and DROPS the message
+# unless BOTH fields are present (TodayVsYesterday.jsx:54-60), so both must come
+# from one row / one query.
 #
-# RELABEL: the real machine reports NO drink names/recipes. The closest real
-# breakdown is per-brew-group and milk usage, so the three "drinks" are:
-#   brewsLeft  <- brewcycles_left
-#   brewsRight <- brewcycles_right
-#   milkDrinks <- milk_cycles_left
-# Real counters, relabeled categories (see README.md).
+# PASSTHROUGH — no WINDOW, no aggregation. And that is the CORRECT design here,
+# not a shortcut. Why NES cannot compute "today vs yesterday" itself:
+#   * There is NO per-day counter on the machine — only the cumulative lifetime
+#     absolute_counter. A calendar-day figure requires the counter's value at each
+#     local-midnight boundary.
+#   * A NES daily tumbling window (TUMBLING(ts, SIZE 1 DAY), MAX-MIN) could emit
+#     YESTERDAY's total, but only when the day CLOSES — a tumbling window never
+#     emits the current, still-open day, so a live "today so far" is impossible
+#     from it. And NES has no cross-window/historical lookup to hold onto the
+#     previous day.
+# So the split is: NES pipes the real cumulative counter (+ the machine clock)
+# through, and the UI keeps the day-boundary snapshots (persisted in
+# localStorage) to derive today = now - startOfToday and
+# yesterday = startOfToday - startOfYesterday. The counter DIFFS live in the UI
+# because only the UI can persist across day boundaries. See TodayVsYesterday.jsx.
+#
+# Published fields (both come from ONE row, so the UI never has a half-message):
+#   ts       <- ts_ms            (epoch SECONDS — multiply by 1000 for JS Date;
+#                                  it is real wall-clock even under --speedup, so
+#                                  "yesterday" only fills in after a real day)
+#   products <- absolute_counter (lifetime product count; the UI diffs it by day)
+#
+# NOTE: SELECT aliases MUST be backtick-quoted to preserve camelCase — unquoted
+# identifiers are uppercased by the parser (nes-sql-parser/src/
+# CommonParserFunctions.cpp:45-51), and the dashboard reads exact camelCase.
 
 query: |
   SELECT
-    brewcycles_left  AS `brewsLeft`,
-    brewcycles_right AS `brewsRight`,
-    milk_cycles_left AS `milkDrinks`
+    ts_ms            AS `ts`,
+    absolute_counter AS `products`
   FROM COFFEE_MACHINE
   INTO MQTT_SINK
 
@@ -22,20 +43,27 @@ sinks:
     host: 127.0.0.1:9090
     type: MQTT
     config:
+      # Worker runs in the devcontainer; mosquitto runs native on the Mac host.
+      # host.docker.internal = the Mac host, as seen from inside the container.
       serverURI: mqtt://host.docker.internal:1883
-      clientId: mqtt_sink_top_drinks
-      topic: top-drinks
+      clientId: mqtt_sink_products_today_yesterday
+      topic: products-today-yesterday
       qos: 1
       output_format: JSON
     parser_config: {}
     schema:
-      # Backticks REQUIRED (CLIStarter.cpp:76-96 uppercases unquoted names);
-      # YAML quotes REQUIRED (` is a reserved YAML indicator).
-      - name: "`brewsLeft`"
-        type: INT32
-      - name: "`brewsRight`"
-        type: INT32
-      - name: "`milkDrinks`"
+      # Backticks are REQUIRED here too, not just on the SQL aliases:
+      # bindIdentifierName (nes-frontend/apps/cli/CLIStarter.cpp:76-96) strips
+      # backticks and keeps case, but UPPERCASES anything unquoted. Without them
+      # the sink declares PRODUCTSTODAY while the backticked query alias produces
+      # productsToday -> "cannot infer schema" (error 2003).
+      # The YAML quotes are also required: ` is a reserved YAML indicator and
+      # cannot start a plain scalar.
+      # ts is the machine clock (epoch seconds) -> UINT64, same as the logical
+      # ts_ms field. products is the cumulative counter -> INT32.
+      - name: "`ts`"
+        type: UINT64
+      - name: "`products`"
         type: INT32
 
 # 43 fields — matches the REAL Pi exactly (verified against raw rows read through

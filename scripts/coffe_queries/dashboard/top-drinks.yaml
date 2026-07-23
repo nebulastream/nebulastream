@@ -1,32 +1,65 @@
-# Cleaning water query — TCP source, MachineCounters schema
+# Top drinks — REAL-PI schema, NEW dashboard
 #
-# Simple passthrough (no window, no aggregation): forwards the raw
-# total_water_cleaning_ticks counter from every incoming record. This is the
-# minimal query pattern — one field, straight through, no MAX/MIN or WINDOW
-# clause needed for a live pass-through stream.
+# Feeds TopDrinks.jsx (topic: top-drinks).
 #
-# Schema: all INT32 (or UINT64 for ts_ms). No VARSIZED, no mixed types.
+# The machine reports NO drink names, but three MEANINGFUL, mutually-exclusive
+# drink categories can be DERIVED from the counters with plain arithmetic, and
+# they sum exactly to the total product count (absolute_counter):
+#
+#   blackCoffee   = brewcycles_left - milk_cycles_left   (a brew with no milk)
+#   milkCoffee    = milk_cycles_left                      (a milk drink; in the
+#                     data every milk drink is also a brew, i.e. milk ⊆ brews)
+#   hotWaterOther = absolute_counter - brewcycles_left    (product that ran no
+#                     brew cycle: hot water / milk-only)
+#
+# Verified on the 24-day capture (723 products): 399 black + 131 milk + 193 other
+# = 723 = absolute_counter delta. So the three bars are a real, all-time drink mix
+# — a genuine upgrade over the old passthrough, whose brewsRight was a DEAD field
+# (single-brewer machine, always 0).
+#
+# ENGINE-SIDE: the subtractions are a plain NES map/projection (no window) —
+# `field - field AS alias` is supported (nes-systests/operator/map/Map_Sub.test).
+# Values are CUMULATIVE lifetime-since-reset counts; the "since page opened" delta,
+# if wanted, is left to the UI (same pattern as the bean tiles). All-time counts
+# are exactly what a "what does the office drink" mix wants, so no baseline here.
+#
+# NOTE: only field-field arithmetic is used — NES cannot reference a freshly
+# created alias within the same SELECT (Map_Add.test:62), so each output is
+# computed straight from wire fields.
 
 query: |
-  SELECT total_water_cleaning_ticks AS `CLEANING_WATER_TICKS` FROM COFFEE_MACHINE INTO MQTT_SINK
+  SELECT
+    brewcycles_left - milk_cycles_left  AS `blackCoffee`,
+    milk_cycles_left                    AS `milkCoffee`,
+    absolute_counter - brewcycles_left  AS `hotWaterOther`
+  FROM COFFEE_MACHINE
+  INTO MQTT_SINK
 
 sinks:
   - name: MQTT_SINK
     host: 127.0.0.1:9090
     type: MQTT
     config:
-      # Worker runs in the devcontainer; mosquitto runs native on the Mac host.
-      # host.docker.internal = the Mac host, as seen from inside the container.
       serverURI: mqtt://host.docker.internal:1883
-      clientId: mqtt_sink_cleaning_water
-      topic: cleaning-water
+      clientId: mqtt_sink_top_drinks
+      topic: top-drinks
       qos: 1
       output_format: JSON
     parser_config: {}
     schema:
-      - name: CLEANING_WATER_TICKS
+      # Backticks REQUIRED (CLIStarter.cpp:76-96 uppercases unquoted names);
+      # YAML quotes REQUIRED (` is a reserved YAML indicator).
+      # INT32 - INT32 is INT32, so all three stay INT32.
+      - name: "`blackCoffee`"
+        type: INT32
+      - name: "`milkCoffee`"
+        type: INT32
+      - name: "`hotWaterOther`"
         type: INT32
 
+# 43 fields — matches the REAL Pi exactly (verified against raw rows read through
+# the tunnel). Do NOT add machine_id: the real Pi does not send it, and any extra
+# field shifts every subsequent column by one.
 logical:
   - name: COFFEE_MACHINE
     schema:
@@ -117,14 +150,17 @@ logical:
       - name: total_coffee_beans_4_g
         type: INT32
 
-# NES TCP source = TCP CLIENT. The worker DIALS OUT to socket_host:socket_port,
-# so socket_host must be the address of the Raspberry Pi (the listening server).
-#
+# NES TCP source = TCP CLIENT. The worker DIALS OUT to socket_host:socket_port.
 # All config keys are snake_case (verified in nes-plugins/Sources/TCPSource/
-# TCPSource.hpp). camelCase keys are silently ignored. socket_domain (AF_INET)
-# and socket_type (SOCK_STREAM) are the defaults, so they can be omitted.
+# TCPSource.hpp). socket_domain (AF_INET) and socket_type (SOCK_STREAM) are the
+# defaults, so they can be omitted.
+#
+# tuple_delimiter is typed `char` (TCPSource.hpp:121-123), so "\r\n" is NOT
+# expressible even though the Pi terminates rows with CRLF. With "\n" the
+# trailing \r lands on the LAST field only (total_coffee_beans_4_g), which this
+# query does not select — harmless here, but a trap for any query that does.
 physical:
-  # Machine 101 — Pi listening on port 2222
+  # Real Pi, reached via the SSH tunnel on the Mac (see ../PI-TUNNEL-SETUP.md)
   - logical: COFFEE_MACHINE
     host: 127.0.0.1:9090
     type: TCP
@@ -133,19 +169,11 @@ physical:
       tuple_delimiter: "\n"
       field_delimiter: ","
     source_config:
-      # Currently pointed at the local mock server (scripts/coffe-server.py) for
-      # end-to-end testing without the real Pi. Tomorrow: an SSH tunnel from the
-      # jump host will listen on this same Mac-local port, so this value likely
-      # stays host.docker.internal — only re-check the port if the tunnel uses
-      # a different one than the mock.
       socket_host: host.docker.internal
       socket_port: 2222
       socket_buffer_size: 65536   # read buffer in BYTES
       flush_interval_ms: 100
-      connect_timeout_seconds: 86400 # one day seconds to wait for connect before failing one day 
-
-# To add more machines, copy the physical entry above and change socket_port
-# (and socket_host if each is a separate Pi).
+      connect_timeout_seconds: 86400 # the Pi can be slow/closed; wait rather than fail fast
 
 workers:
   - host: 127.0.0.1:9090

@@ -1,0 +1,216 @@
+# Live machine activity — REAL-PI schema, NEW dashboard (the reactive "main" tile)
+#
+# Feeds MachineActivity.jsx (topic: machine-activity), which draws THREE small
+# side-by-side time plots. One windowed query computes all three per-window deltas
+# in a single message {beansRate, waterRate, milkRate}, so the tile needs only ONE
+# subscription:
+#
+#   beansRate <- MAX-MIN of total_coffee_bean_quantity_g  (grams ground; moves only
+#                                                           on a BREW)
+#   waterRate <- MAX-MIN of total_water_quantity_ticks     (flow ticks; moves on
+#                                                           brew, rinse AND clean)
+#   milkRate  <- MAX-MIN of time_milk_cs                    (centiseconds of milk;
+#                                                           moves only on a MILK drink)
+#
+# This isolation is exactly the live demo: press "espresso" -> beans + water spike,
+# milk flat; "cappuccino" -> all three; "clean" -> only water. Each plot is honestly
+# 0 while the machine is idle, which is fine — the point is the reaction.
+#
+# ---------------------------------------------------------------------------
+# TIMESTAMP FIX (do not remove): the Pi's ts_ms is epoch *SECONDS*, but NES reads
+# window timestamps as *milliseconds*. The inner subquery multiplies
+# ts_ms * UINT64(1000) so the window size means real wall-clock time. Constants
+# MUST be cast (UINT64(1000)) or the parser errors (untyped literal -> ERROR 2000).
+#
+# WINDOW — SLIDING, because the real Pi publishes only ~every 15 s and can't easily
+# go faster. A TUMBLING window fails here: any window shorter than the publish
+# interval holds at most ONE reading and MAX-MIN of one reading is always 0 (this
+# was the "all zeros" bug); even a 2x tumbling window loses ~1/3 of events at its
+# fixed boundaries and updates only once per window. SLIDING fixes both:
+#   SIZE 45 SEC       -> each window spans ~3 readings, so MAX-MIN always has a
+#                        before/after to subtract (robust to publish jitter).
+#   ADVANCE BY 15 SEC -> emits once per new Pi reading (as fast as the data allows),
+#                        and the 30 s overlap means no event can fall in a gap.
+# So a brew/clean is caught reliably and appears within ~15 s. Costs, both fine at
+# this pace: a single event can show in ~2 consecutive emissions (a short plateau),
+# and two events inside one 45 s window merge. The floor is the Pi's rate — you
+# cannot react faster than it publishes. IF the Pi ever gets a 1 s heartbeat, switch
+# back to a small tumbling window (e.g. TUMBLING SIZE 5 SEC) for sharp, snappy spikes.
+# Units: MS / SEC / MINUTES / HOURS / DAY (NOT "MIN" — that is the MIN agg func).
+#
+# KNOWN EDGE — counter resets: MAX - MIN over a window spanning a machine counter
+# reset is wrong. The real machine has no genuine resets (only transient dropouts
+# that recover — see coffe-server-pi-schema.py), so this is not a concern here.
+#
+# PAYLOAD: only the three per-window deltas are published (no start/end); the
+# browser timestamps each message on arrival.
+
+query: |
+  SELECT
+    MAX(beans) - MIN(beans) AS `beansRate`,
+    MAX(water) - MIN(water) AS `waterRate`,
+    MAX(milk)  - MIN(milk)  AS `milkRate`
+  FROM (
+    SELECT
+      ts_ms * UINT64(1000)          AS ts_millis,
+      total_coffee_bean_quantity_g  AS beans,
+      total_water_quantity_ticks    AS water,
+      time_milk_cs                  AS milk
+    FROM COFFEE_MACHINE
+    -- Drop the machine's all-zero DROPOUT rows BEFORE windowing. On standby/wake
+    -- (and on reconnect) the Pi briefly emits a row with every counter = 0. If one
+    -- lands in a window, MAX-MIN becomes MAX(cumulative) - 0 = the whole lifetime
+    -- total -> a giant bogus spike (27 kg beans, 599 L water, ...). total_water_
+    -- quantity_ticks is always > 0 on a machine that has ever run, and 0 ONLY in a
+    -- dropout, so this filter removes exactly those rows. The real Pi emits the same
+    -- dropouts, so this guard is needed there too, not just against the simulator.
+    WHERE total_water_quantity_ticks > INT32(0)
+  )
+  WINDOW SLIDING(ts_millis, SIZE 30 SEC, ADVANCE BY 1 SEC)
+  INTO MQTT_SINK
+
+sinks:
+  - name: MQTT_SINK
+    host: 127.0.0.1:9090
+    type: MQTT
+    config:
+      serverURI: mqtt://host.docker.internal:1883
+      clientId: mqtt_sink_machine_activity
+      topic: machine-activity
+      qos: 1
+      output_format: JSON
+    parser_config: {}
+    schema:
+      # Backticks REQUIRED (CLIStarter.cpp:76-96 uppercases unquoted names);
+      # YAML quotes REQUIRED (` is a reserved YAML indicator).
+      # MAX(INT32) - MIN(INT32) is INT32, so all three stay INT32.
+      - name: "`beansRate`"
+        type: INT32
+      - name: "`waterRate`"
+        type: INT32
+      - name: "`milkRate`"
+        type: INT32
+
+# 43 fields — matches the REAL Pi exactly (verified against raw rows read through
+# the tunnel). Do NOT add machine_id: the real Pi does not send it, and any extra
+# field shifts every subsequent column by one.
+logical:
+  - name: COFFEE_MACHINE
+    schema:
+      - name: ts_ms
+        type: UINT64
+      - name: total_water_quantity_ticks
+        type: INT32
+      - name: total_water_products_ticks
+        type: INT32
+      - name: total_water_rinse_ticks
+        type: INT32
+      - name: total_water_cleaning_ticks
+        type: INT32
+      - name: rfu
+        type: INT32
+      - name: total_coffee_bean_quantity_g
+        type: INT32
+      - name: total_coffee_beans_left_rear_g
+        type: INT32
+      - name: total_coffee_beans_right_front_g
+        type: INT32
+      - name: total_coffee_powder_chute_g
+        type: INT32
+      - name: cleaning_counter
+        type: INT32
+      - name: brewcycles_left
+        type: INT32
+      - name: brewcycles_right
+        type: INT32
+      - name: cycles_rinse_clean_left
+        type: INT32
+      - name: cycles_rinse_clean_right
+        type: INT32
+      - name: time_milk_cs
+        type: INT32
+      - name: heating_time_boiler_left_cs
+        type: INT32
+      - name: heating_time_boiler_right_cs
+        type: INT32
+      - name: time_hot_water_cs
+        type: INT32
+      - name: time_steam_left_cs
+        type: INT32
+      - name: time_steam_right_cs
+        type: INT32
+      - name: heat_time_steam_boiler_1_cs
+        type: INT32
+      - name: heat_time_steam_boiler_2_cs
+        type: INT32
+      - name: time_air_pump_cs
+        type: INT32
+      - name: milk_cycles_left
+        type: INT32
+      - name: milk_cycles_right
+        type: INT32
+      - name: reset_date_day
+        type: INT32
+      - name: reset_date_month
+        type: INT32
+      - name: reset_date_year
+        type: INT32
+      - name: rfu2
+        type: INT32
+      - name: reset_time_second
+        type: INT32
+      - name: reset_time_minute
+        type: INT32
+      - name: reset_time_hour
+        type: INT32
+      - name: rfu3
+        type: INT32
+      - name: time_milk_steam_left_cs
+        type: INT32
+      - name: time_milk_steam_right_cs
+        type: INT32
+      - name: total_coffee_beans_grinder_adjustment_g
+        type: INT32
+      - name: absolute_counter
+        type: INT32
+      - name: time_powder_cs
+        type: INT32
+      - name: total_powder_quantity_left_g
+        type: INT32
+      - name: total_powder_quantity_right_g
+        type: INT32
+      - name: total_coffee_beans_3_g
+        type: INT32
+      - name: total_coffee_beans_4_g
+        type: INT32
+
+# NES TCP source = TCP CLIENT. The worker DIALS OUT to socket_host:socket_port.
+# All config keys are snake_case (verified in nes-plugins/Sources/TCPSource/
+# TCPSource.hpp). socket_domain (AF_INET) and socket_type (SOCK_STREAM) are the
+# defaults, so they can be omitted.
+#
+# tuple_delimiter is typed `char` (TCPSource.hpp:121-123), so "\r\n" is NOT
+# expressible even though the Pi terminates rows with CRLF. With "\n" the trailing
+# \r lands on the LAST field only (total_coffee_beans_4_g / hopper_4). It is used
+# in MAX/MIN here and is fine: the \r is ignored for integer columns (from_chars
+# parses the leading digits — see bean-consumption.yaml header).
+physical:
+  # Real Pi, reached via the SSH tunnel on the Mac (see ../PI-TUNNEL-SETUP.md)
+  - logical: COFFEE_MACHINE
+    host: 127.0.0.1:9090
+    type: TCP
+    parser_config:
+      type: CSV
+      tuple_delimiter: "\n"
+      field_delimiter: ","
+    source_config:
+      socket_host: host.docker.internal
+      socket_port: 2222
+      socket_buffer_size: 65536   # read buffer in BYTES
+      flush_interval_ms: 100
+      connect_timeout_seconds: 86400 # the Pi can be slow/closed; wait rather than fail fast
+
+workers:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 10000

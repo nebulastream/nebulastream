@@ -1,23 +1,29 @@
-# Cleaning vs Use — TCP source, MachineCounters schema
+# All-time bean usage per hopper — REAL-PI schema, NEW dashboard
 #
-# Emits both absolute_counter (shots) and cleaning_counter per 10s tumbling
-# window. MAX is used because these are monotonically increasing totals —
-# the frontend plots the raw cumulative values as a time series.
+# Feeds BeanUsageTotal.jsx (topic: bean-usage-total).
 #
-# Replaces three old queries (cleaning-use-bar, cleaning-use-line, cleaning)
-# with one unified query on a single topic consumed by CleaningVsUse.jsx.
+# SPLIT FROM bean-consumption.yaml: the raw wire value is the CUMULATIVE grams
+# dispensed per hopper (lifetime-since-reset), which IS the all-time total. So
+# this is a passthrough — no WINDOW, no baseline. The UI plots the raw totals
+# ranked (a leaderboard of "what the office actually drinks"), whereas the older
+# bean-consumption tile subtracts a per-hopper baseline to show "since page
+# opened". The live per-window RATE lives in hopper-rate.yaml instead.
+#
+# This runs ALONGSIDE bean-consumption.yaml (distinct topic + clientId), so the
+# existing tile is untouched. Everything below the sink block is identical to
+# bean-consumption.yaml — same 43-field schema, same real-Pi TCP source.
+#
+# ALL FOUR hoppers are published unconditionally (including any reading 0); which
+# bars to DRAW is a UI decision (hide a hopper only while its lifetime total is
+# still 0). See bean-consumption.yaml's header for the full ground-truth notes.
 
 query: |
   SELECT
-    SHOTS AS SHOTS,
-    CLEANINGS AS CLEANINGS
-  FROM (
-    SELECT
-      MAX(absolute_counter) AS SHOTS,
-      MAX(cleaning_counter) AS CLEANINGS
-    FROM COFFEE_MACHINE
-    WINDOW TUMBLING(ts_ms, SIZE 10 SEC)
-  )
+    total_coffee_beans_left_rear_g   AS `leftRear`,
+    total_coffee_beans_right_front_g AS `rightFront`,
+    total_coffee_beans_3_g           AS `hopper3`,
+    total_coffee_beans_4_g           AS `hopper4`
+  FROM COFFEE_MACHINE
   INTO MQTT_SINK
 
 sinks:
@@ -25,23 +31,30 @@ sinks:
     host: 127.0.0.1:9090
     type: MQTT
     config:
-      serverURI: mqtt://127.0.0.1:1883
-      clientId: mqtt_sink_cleaning_vs_use
-      topic: cleaning-vs-use
+      serverURI: mqtt://host.docker.internal:1883
+      clientId: mqtt_sink_bean_usage_total
+      topic: bean-usage-total
       qos: 1
       output_format: JSON
     parser_config: {}
     schema:
-      - name: SHOTS
+      # Backticks REQUIRED (CLIStarter.cpp:76-96 uppercases unquoted names);
+      # YAML quotes REQUIRED (` is a reserved YAML indicator).
+      - name: "`leftRear`"
         type: INT32
-      - name: CLEANINGS
+      - name: "`rightFront`"
+        type: INT32
+      - name: "`hopper3`"
+        type: INT32
+      - name: "`hopper4`"
         type: INT32
 
+# 43 fields — matches the REAL Pi exactly (verified against raw rows read through
+# the tunnel). Do NOT add machine_id: the real Pi does not send it, and any extra
+# field shifts every subsequent column by one.
 logical:
   - name: COFFEE_MACHINE
     schema:
-      - name: machine_id
-        type: INT32
       - name: ts_ms
         type: UINT64
       - name: total_water_quantity_ticks
@@ -129,7 +142,18 @@ logical:
       - name: total_coffee_beans_4_g
         type: INT32
 
+# NES TCP source = TCP CLIENT. The worker DIALS OUT to socket_host:socket_port.
+# All config keys are snake_case (verified in nes-plugins/Sources/TCPSource/
+# TCPSource.hpp). socket_domain (AF_INET) and socket_type (SOCK_STREAM) are the
+# defaults, so they can be omitted.
+#
+# tuple_delimiter is typed `char` (TCPSource.hpp:121-123), so "\r\n" is NOT
+# expressible even though the Pi terminates rows with CRLF. With "\n" the
+# trailing \r lands on the LAST field only (total_coffee_beans_4_g). This query
+# DOES select it, and that is fine: the \r is safely ignored for integer columns
+# (std::from_chars parses the leading digits — see bean-consumption.yaml header).
 physical:
+  # Real Pi, reached via the SSH tunnel on the Mac (see ../PI-TUNNEL-SETUP.md)
   - logical: COFFEE_MACHINE
     host: 127.0.0.1:9090
     type: TCP
@@ -138,39 +162,11 @@ physical:
       tuple_delimiter: "\n"
       field_delimiter: ","
     source_config:
-      socket_host: 127.0.0.1
-      socket_port: 9101
-      socket_buffer_size: 65536
+      socket_host: host.docker.internal
+      socket_port: 2222
+      socket_buffer_size: 65536   # read buffer in BYTES
       flush_interval_ms: 100
-      connect_timeout_seconds: 60
-
-  - logical: COFFEE_MACHINE
-    host: 127.0.0.1:9090
-    type: TCP
-    parser_config:
-      type: CSV
-      tuple_delimiter: "\n"
-      field_delimiter: ","
-    source_config:
-      socket_host: 127.0.0.1
-      socket_port: 9102
-      socket_buffer_size: 65536
-      flush_interval_ms: 100
-      connect_timeout_seconds: 60
-
-  - logical: COFFEE_MACHINE
-    host: 127.0.0.1:9090
-    type: TCP
-    parser_config:
-      type: CSV
-      tuple_delimiter: "\n"
-      field_delimiter: ","
-    source_config:
-      socket_host: 127.0.0.1
-      socket_port: 9103
-      socket_buffer_size: 65536
-      flush_interval_ms: 100
-      connect_timeout_seconds: 60
+      connect_timeout_seconds: 86400 # the Pi can be slow/closed; wait rather than fail fast
 
 workers:
   - host: 127.0.0.1:9090

@@ -122,7 +122,7 @@ Register the queries (new terminal, also inside the container):
 
 ```bash
 docker exec -it nes-dev bash
-D=scripts/coffe_queries/tcp/testv2/dashboard
+D=scripts/coffe_queries/dashboard
 for q in water-usage bean-consumption; do
   ./cmake-build-debug-docker/nes-frontend/apps/nes-cli -t $D/$q.yaml start
 done
@@ -183,6 +183,36 @@ docker exec nes-dev bash -lc 'timeout 3 bash -c "echo > /dev/tcp/host.docker.int
 | Today vs Yesterday | `products-today-yesterday.yaml` | receives data, discards it; renders hardcoded values |
 | Cleaning vs Use | `cleaning-vs-use.yaml` | UI subscribes to the wrong topic; renders mock |
 | Top Drinks | `top-drinks.yaml` | shape mismatch; renders mock |
+
+## Which queries feed which dashboard version
+
+All queries now live flat in `scripts/coffe_queries/dashboard/` (the old
+`tcp/testv2/` nesting was removed; superseded/experimental queries were moved out
+to `work/coffe-queries-backup/`). The two dashboard branches use different subsets
+of the queries kept here — every query below stays in this folder so either branch
+can be brought up without hunting for files.
+
+**`live-dev` branch — the trimmed demo shown next week (3 tiles):**
+
+| Tile | Query | Topic |
+|---|---|---|
+| Brew Analysis (3 live plots: beans/water/milk) | `machine-activity.yaml` | `machine-activity` |
+| Water Usage (doughnut) | `water-usage.yaml` | `water-usage` |
+| Bean Consumption (grams leaderboard) | `bean-consumption.yaml` | `bean-consumption` |
+
+**The other (full-UI) branch — everything else, to be added after the demo:**
+
+| Tile | Query | Topic |
+|---|---|---|
+| Bean Usage — All Time | `bean-usage-total.yaml` | `bean-usage-total` |
+| Hopper Consumption Rate | `hopper-rate.yaml` | `hopper-rate` |
+| Top Drinks (doughnut) | `top-drinks.yaml` | `top-drinks` |
+| Top Drinks (radar) | `top-drinks-radar.yaml` | `top-drinks-radar` |
+| Today vs Yesterday | `products-today-yesterday.yaml` | `products-today-yesterday` |
+| Shots vs Cleaning | `cleaning-vs-use.yaml` | `cleaning-vs-use` |
+
+`hopper-quantity.yaml` is the earlier passthrough that `hopper-rate.yaml`
+superseded — kept for reference, not wired to a live tile.
 
 ## What the real data says
 

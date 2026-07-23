@@ -1,39 +1,58 @@
-# Products today vs yesterday — REAL Pi TCP source, NEW dashboard
+# Hopper consumption RATE per hopper — REAL-PI schema, NEW dashboard
 #
-# Feeds TodayVsYesterday.jsx (topic: products-today-yesterday). That component
-# reads a flat message {productsToday, productsYesterday} and DROPS the message
-# unless BOTH fields are present (TodayVsYesterday.jsx:54-60), so both must come
-# from one row / one query.
+# Feeds HopperQuantity.jsx (topic: hopper-rate).
 #
-# PASSTHROUGH — no WINDOW, no aggregation. Publishes raw cumulative counters
-# straight from each incoming row (same proven shape as beans-ricardo-water.yaml).
-# Two consequences, both deliberate:
-#   * The tile always shows real non-zero values, even while the machine is idle
-#     (windowed MAX-MIN deltas would read 0 on an idle machine).
-#   * Nothing reads ts_ms, which sidesteps a real trap: the Pi's first field is
-#     epoch SECONDS, but NES always interprets a window timestamp as MILLISECONDS
-#     (TimeCharacteristic.cpp:41 defaults to TimeUnit(1); the SQL grammar's
-#     `timestampParameter` accepts no unit). A windowed query here would need
-#     ~2.8h of data per "10 SEC" window.
+# ENGINE-SIDE RATE (this is the point of the demo): grams consumed per hopper
+# within each tumbling time window = MAX(cumulative) - MIN(cumulative) over the
+# window. The old hopper-quantity.yaml was a byte-identical passthrough of
+# bean-consumption; this replaces that idea with a genuine NES-computed rate.
+# The UI plots each window's emission as a rolling line, so the tile shows
+# "grams per window since the page was reloaded".
 #
-# RELABEL — read this before trusting the numbers:
-#   productsToday     <- absolute_counter (lifetime product count, e.g. 2622)
-#   productsYesterday <- brewcycles_left  (lifetime left-group brews, e.g. 1957)
-# There is NO real "yesterday" figure available: this is a live-only stream and
-# NES has no cross-window/historical lookup, so a true prior-period delta cannot
-# be computed. Rather than fabricate a constant, the tile shows two DIFFERENT
-# REAL counters so both bars are live and visibly distinct. The "Yesterday" label
-# is therefore cosmetic, not literal — see README.md.
+# Runs ALONGSIDE the older passthrough queries (distinct topic + clientId).
 #
-# NOTE: SELECT aliases MUST be backtick-quoted to preserve camelCase — unquoted
-# identifiers are uppercased by the parser (nes-sql-parser/src/
-# CommonParserFunctions.cpp:45-51), and the dashboard reads exact camelCase.
+# ---------------------------------------------------------------------------
+# TIMESTAMP FIX (do not remove): the Pi's ts_ms is epoch *SECONDS*, but NES reads
+# window timestamps as *milliseconds*. Feeding ts_ms straight into WINDOW makes
+# "SIZE 30 SEC" actually span 30000 s (~8.3 h). The inner subquery multiplies
+# ts_ms * UINT64(1000) so the window size means real wall-clock time. Constants
+# MUST be cast (UINT64(1000)) or the parser errors (untyped literal -> ERROR 2000).
+# NOTE: the older scripts/coffe_queries/tcp/beans.yaml omits this fix and is wrong.
+#
+# WINDOW SIZE is a demo knob. SIZE 30 SEC gives lively movement against the
+# calibrated simulator (coffe-server-pi-schema.py). The REAL machine is slow
+# (5-80 drinks/day, 89% of rows have no product), so on the real Pi most 30 s
+# windows read 0 g — bump to SIZE 5 MINUTES (or more) there. Units are the tokens
+# MS / SEC / MINUTES / HOURS / DAY (NOT "MIN" — that token is the MIN aggregation
+# function). Keywords are case-insensitive.
+#
+# KNOWN EDGE — counter resets: MAX - MIN over a window that spans a machine
+# counter reset is wrong (it reports the pre-reset lifetime, or goes negative).
+# Resets are rare (14 in a 24-day capture) and CANNOT be filtered out, because the
+# post-reset values are genuine (a WHERE guard only removes all-zero dropout rows,
+# e.g. `WHERE total_coffee_beans_left_rear_g > INT32(0)`). Acceptable for the demo.
+#
+# PAYLOAD: only the four per-window rate values are published (no start/end); the
+# browser timestamps each message on arrival. To carry real window boundaries
+# instead, add `start, end` to the SELECT and two leading UINT64 entries to the
+# sink schema below (verify the emitted JSON key names first).
 
 query: |
   SELECT
-    absolute_counter AS `productsToday`,
-    brewcycles_left  AS `productsYesterday`
-  FROM COFFEE_MACHINE
+    MAX(hopper_lr) - MIN(hopper_lr) AS `leftRear`,
+    MAX(hopper_rf) - MIN(hopper_rf) AS `rightFront`,
+    MAX(hopper_3)  - MIN(hopper_3)  AS `hopper3`,
+    MAX(hopper_4)  - MIN(hopper_4)  AS `hopper4`
+  FROM (
+    SELECT
+      ts_ms * UINT64(1000)             AS ts_millis,
+      total_coffee_beans_left_rear_g   AS hopper_lr,
+      total_coffee_beans_right_front_g AS hopper_rf,
+      total_coffee_beans_3_g           AS hopper_3,
+      total_coffee_beans_4_g           AS hopper_4
+    FROM COFFEE_MACHINE
+  )
+  WINDOW TUMBLING(ts_millis, SIZE 30 SEC)
   INTO MQTT_SINK
 
 sinks:
@@ -41,25 +60,23 @@ sinks:
     host: 127.0.0.1:9090
     type: MQTT
     config:
-      # Worker runs in the devcontainer; mosquitto runs native on the Mac host.
-      # host.docker.internal = the Mac host, as seen from inside the container.
       serverURI: mqtt://host.docker.internal:1883
-      clientId: mqtt_sink_products_today_yesterday
-      topic: products-today-yesterday
+      clientId: mqtt_sink_hopper_rate
+      topic: hopper-rate
       qos: 1
       output_format: JSON
     parser_config: {}
     schema:
-      # Backticks are REQUIRED here too, not just on the SQL aliases:
-      # bindIdentifierName (nes-frontend/apps/cli/CLIStarter.cpp:76-96) strips
-      # backticks and keeps case, but UPPERCASES anything unquoted. Without them
-      # the sink declares PRODUCTSTODAY while the backticked query alias produces
-      # productsToday -> "cannot infer schema" (error 2003).
-      # The YAML quotes are also required: ` is a reserved YAML indicator and
-      # cannot start a plain scalar.
-      - name: "`productsToday`"
+      # Backticks REQUIRED (CLIStarter.cpp:76-96 uppercases unquoted names);
+      # YAML quotes REQUIRED (` is a reserved YAML indicator).
+      # MAX(INT32) - MIN(INT32) is INT32, so INT32 is correct here.
+      - name: "`leftRear`"
         type: INT32
-      - name: "`productsYesterday`"
+      - name: "`rightFront`"
+        type: INT32
+      - name: "`hopper3`"
+        type: INT32
+      - name: "`hopper4`"
         type: INT32
 
 # 43 fields — matches the REAL Pi exactly (verified against raw rows read through
@@ -161,9 +178,10 @@ logical:
 # defaults, so they can be omitted.
 #
 # tuple_delimiter is typed `char` (TCPSource.hpp:121-123), so "\r\n" is NOT
-# expressible even though the Pi terminates rows with CRLF. With "\n" the
-# trailing \r lands on the LAST field only (total_coffee_beans_4_g), which this
-# query does not select — harmless here, but a trap for any query that does.
+# expressible even though the Pi terminates rows with CRLF. With "\n" the trailing
+# \r lands on the LAST field only (total_coffee_beans_4_g / hopper_4). It is used
+# in MAX/MIN here and is fine: the \r is ignored for integer columns (from_chars
+# parses the leading digits — see bean-consumption.yaml header).
 physical:
   # Real Pi, reached via the SSH tunnel on the Mac (see ../PI-TUNNEL-SETUP.md)
   - logical: COFFEE_MACHINE
