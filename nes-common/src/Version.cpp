@@ -65,7 +65,8 @@ void printVersion(const std::string_view binaryName)
 bool hasVersionFlag(const int argc, const char* const* argv)
 {
     PRECONDITION(argc >= 0, "argc must be non-negative");
-    PRECONDITION(argv != nullptr || argc == 0, "argc must be zero when argv is null");
+    const bool argvPresentOrEmpty = argv != nullptr || argc == 0;
+    PRECONDITION(argvPresentOrEmpty, "argc must be zero when argv is null");
 
     auto args = std::span{argv, static_cast<size_t>(argc)} | std::views::filter([](const auto* arg) { return arg != nullptr; })
         | std::views::transform([](const auto* arg) { return std::string_view{arg}; });
