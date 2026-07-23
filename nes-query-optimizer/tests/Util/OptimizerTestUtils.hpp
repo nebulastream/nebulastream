@@ -20,6 +20,7 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -58,12 +59,19 @@ public:
     LogicalPlan createPlan(std::vector<LogicalOperator> sinks);
     SinkDescriptor createSinkDescriptor(const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema);
 
-    /// Collects the ids of all unique operators reachable from the plan roots. Operators shared between multiple
-    /// parents are counted once, so the size of the result detects accidental duplication of shared subtrees.
+    /// Collects all unique operators reachable from the plan roots. Operators shared between multiple parents (in a
+    /// DAG-shaped plan) are visited once, so the size of the result detects accidental duplication of shared subtrees.
+    static std::vector<LogicalOperator> collectOperators(const LogicalPlan& plan);
+
+    /// Collects the ids of the operators returned by collectOperators.
     static std::unordered_set<OperatorId> collectOperatorIds(const LogicalPlan& plan);
+
+    /// Builds a `producer.<fieldName> == 0` predicate over a UINT64 field; a common building block for rule tests.
+    static LogicalFunction equalsZero(const LogicalOperator& producer, const std::string& fieldName);
 
     /// The catalogs the created sources and sinks live in, for tests that run rules which resolve names against them.
     [[nodiscard]] std::shared_ptr<const SourceCatalog> getSourceCatalog() const { return sourceCatalog; }
+
     [[nodiscard]] std::shared_ptr<const SinkCatalog> getSinkCatalog() const { return sinkCatalog; }
 
 private:

@@ -17,10 +17,12 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Field.hpp>
@@ -35,11 +37,37 @@ LogicalFunction replaceFieldAccesses(const LogicalFunction& function, const std:
 /// Duplicate edges from the same parent (e.g. a union reading the same input twice) count as sharing as well.
 [[nodiscard]] std::unordered_set<OperatorId> getSharedOperatorIds(const LogicalPlan& plan);
 
-/// Rewrites all operators of a (possibly DAG-shaped) plan bottom-up.
-/// The rewrite function is invoked exactly once per unique operator (identified by the input plan's OperatorId) with the original
-/// operator and its already-rewritten children. The result is memoized and reused for every additional parent, so operators shared
-/// between multiple parents stay shared in the rewritten plan. Children are rewritten left-to-right and roots in order, making the
-/// invocation order deterministic for stateful rewrite functions.
+/// Shared state for one pushdown-rule invocation over a (possibly DAG-shaped) plan. A shared operator (reachable through
+/// more than one parent, see getSharedOperatorIds) is a pushdown barrier: it is rewritten once with empty pending state
+/// and reused by every parent, which re-introduces its own pending state above the barrier — so one parent's pushdown
+/// cannot corrupt what a sibling parent reads through the same shared subtree.
+struct PushdownBarrier
+{
+    std::unordered_set<OperatorId> sharedOperatorIds;
+    std::unordered_map<OperatorId, LogicalOperator> rewrittenSharedOperators;
+
+    explicit PushdownBarrier(const LogicalPlan& plan) : sharedOperatorIds(getSharedOperatorIds(plan)) { }
+
+    [[nodiscard]] bool isShared(const LogicalOperator& op) const { return sharedOperatorIds.contains(op.getId()); }
+
+    /// Rewrites a shared operator at most once (memoized) and reuses it for every parent. `rewriteWithoutPending()`
+    /// produces the canonical rewrite; `materializeAbove(rewritten)` re-introduces the calling parent's pending state.
+    template <typename RewriteWithoutPending, typename MaterializeAbove>
+    LogicalOperator
+    rewriteShared(const LogicalOperator& op, RewriteWithoutPending&& rewriteWithoutPending, MaterializeAbove&& materializeAbove)
+    {
+        auto rewritten = rewrittenSharedOperators.find(op.getId());
+        if (rewritten == rewrittenSharedOperators.end())
+        {
+            rewritten = rewrittenSharedOperators.emplace(op.getId(), std::forward<RewriteWithoutPending>(rewriteWithoutPending)()).first;
+        }
+        return std::forward<MaterializeAbove>(materializeAbove)(rewritten->second);
+    }
+};
+
+/// Rewrites all operators of a (possibly DAG-shaped) plan bottom-up. `rewrite` is invoked once per unique operator (keyed
+/// on the input OperatorId) with the original operator and its already-rewritten children; the result is memoized and reused
+/// for every parent, so shared operators stay shared. Deterministic order: children left-to-right, roots in order.
 [[nodiscard]] LogicalPlan rewritePlanBottomUp(
     const LogicalPlan& plan,
     const std::function<LogicalOperator(const LogicalOperator& original, std::vector<LogicalOperator> rewrittenChildren)>& rewrite);
