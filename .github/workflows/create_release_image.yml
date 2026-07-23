@@ -1,7 +1,8 @@
 name: Create Container for Head_SHA
-description: |  
-  Builds images for nebuli, worker for the given head_sha (brach, tag, or commit sha)
-  and publishes the images to nebulastream/nebuli and nebulastream/worker, tagged as specified via the parameter.
+description: |
+  Builds the executable images (nes-cli, nes-repl, nes-repl-embedded, worker) for the given
+  head_sha (branch, tag, or commit sha) via the `package-docker-images` CMake target and
+  publishes them to Docker Hub, tagged as specified via the parameter.
 on:
   workflow_call:
     inputs:
@@ -61,46 +62,29 @@ jobs:
           tags: nebulastream/nes-runtime-base:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           context: .
           file: ${{ github.workspace }}/docker/runtime/RuntimeBase.dockerfile
-      - name: Build CLI Image
-        uses: docker/build-push-action@v6
+      - name: Pull development image
+        run: docker pull nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+      # Configure only (tests off), then let the `package-docker-images` target run
+      # `docker build --target build-in-docker` per binary: the compilation happens
+      # inside the docker build with its persistent ccache cache mount. `-j 1`
+      # serializes the four image builds so each benefits from the ccache the
+      # previous one populated (matching the previously sequential build steps).
+      - name: Build executable images via package-docker-images CMake target
+        uses: ./.github/steps/run-in-container
         with:
-          push: true
-          tags: nebulastream/nes-cli:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}
-          build-args: |
-            TAG=${{ needs.get-dev-images.outputs.image-tag }}
-            RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
-          context: .
-          file: ${{ github.workspace }}/docker/frontend/cli.dockerfile
-      - name: Build REPL Image
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}
-          build-args: |
-            TAG=${{ needs.get-dev-images.outputs.image-tag }}
-            RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
-          context: .
-          file: ${{ github.workspace }}/docker/frontend/repl.dockerfile
-      - name: Build Embedded REPL Image
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: nebulastream/nes-repl-embedded:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}
-          build-args: |
-            TAG=${{ needs.get-dev-images.outputs.image-tag }}
-            RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
-          context: .
-          file: ${{ github.workspace }}/docker/frontend/repl-embedded.dockerfile
-      - name: Build single-node worker
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: nebulastream/worker:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}
-          build-args: |
-            TAG=${{ needs.get-dev-images.outputs.image-tag }}
-            RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
-          context: .
-          file: ${{ github.workspace }}/docker/single-node-worker/SingleNodeWorker.dockerfile
+          image_name: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+          run: |
+            export NES_DOCKER_BUILD_IN_DOCKER=1
+            export NES_DOCKER_TAG=${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}
+            export NES_RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+            export NES_DEV_TAG=${{ needs.get-dev-images.outputs.image-tag }}
+            cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DNES_ENABLES_TESTS=0
+            cmake --build build -j 1 --target package-docker-images
+      - name: Push executable images
+        run: |
+          for image in nes-cli nes-repl nes-repl-embedded worker; do
+            docker push "nebulastream/${image}:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}"
+          done
 
   merge-images:
     name: "Merge images for different platforms into a single Multi-Platform image"
@@ -124,11 +108,11 @@ jobs:
           docker buildx imagetools create -t nebulastream/nes-repl-embedded:${{ needs.sanitize-tag.outputs.tag }} \
             nebulastream/nes-repl-embedded:${{ needs.sanitize-tag.outputs.tag }}-x64 \
             nebulastream/nes-repl-embedded:${{ needs.sanitize-tag.outputs.tag }}-arm64
-          
+
           docker buildx imagetools create -t nebulastream/nes-cli:${{ needs.sanitize-tag.outputs.tag }} \
             nebulastream/nes-cli:${{ needs.sanitize-tag.outputs.tag }}-x64 \
             nebulastream/nes-cli:${{ needs.sanitize-tag.outputs.tag }}-arm64
-          
+
           docker buildx imagetools create -t nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }} \
             nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }}-x64 \
             nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }}-arm64
