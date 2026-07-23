@@ -144,6 +144,14 @@ jobs:
       number_of_commits: ${{ github.event.pull_request.commits || -1 }}
     secrets: inherit
 
+  docs-website:
+    if: github.event.action != 'edited' || github.event.changes.base != null
+    name: "Build Docs Website"
+    uses: ./.github/workflows/docs_website_build.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      should_publish: false
+
   nix-build:
     needs: [ detect-changes, smoke-tests ]
     if: ${{ needs.detect-changes.outputs.docs_only != 'true' }}

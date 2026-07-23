@@ -1,0 +1,14 @@
+<nav class="sidebar" aria-label="Documentation sections">
+  <ul>
+    {{ range .Site.Sections.ByWeight }}
+      <li>
+        <span class="sidebar-section">{{ .Title }}</span>
+        <ul>
+          {{ range .Pages.ByWeight }}
+            <li><a href="{{ .RelPermalink }}"{{ if eq . $.Page }} class="active"{{ end }}>{{ .Title }}</a></li>
+          {{ end }}
+        </ul>
+      </li>
+    {{ end }}
+  </ul>
+</nav>

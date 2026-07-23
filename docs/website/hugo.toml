@@ -1,0 +1,22 @@
+baseURL = "https://docs.nebula.stream/"
+languageCode = "en-US"
+title = "NebulaStream Documentation"
+enableRobotsTXT = true
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.parser]
+      autoHeadingID = true
+      autoHeadingIDType = "github"
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.highlight]
+    codeFences = true
+    guessSyntax = true
+    lineNos = false
+    noClasses = true
+    style = "dracula"
+
+[params]
+  description = "NebulaStream is a general purpose, end-to-end data management system for the IoT."
+  repo = "https://github.com/nebulastream/nebulastream"
