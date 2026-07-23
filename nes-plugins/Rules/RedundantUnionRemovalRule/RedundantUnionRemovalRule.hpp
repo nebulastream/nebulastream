@@ -24,9 +24,7 @@
 namespace NES
 {
 
-/**
- * @brief This pass removes redundant unions with only a single child.
- */
+/// This pass removes redundant unions with only a single child.
 class RedundantUnionRemovalRule
 {
 public:

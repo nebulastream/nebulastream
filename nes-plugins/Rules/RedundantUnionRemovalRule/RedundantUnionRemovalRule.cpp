@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Rules/Static/RedundantUnionRemovalRule.hpp>
+#include <RedundantUnionRemovalRule.hpp>
 
 #include <ranges>
 #include <set>
@@ -35,12 +35,6 @@
 namespace NES
 {
 
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> RedundantUnionRemovalRule::neededBy() const
-{
-    return {typeid(FixedPlanStructureBarrier)};
-}
 
 namespace
 {
@@ -68,6 +62,12 @@ LogicalPlan RedundantUnionRemovalRule::apply(LogicalPlan queryPlan) const
 std::set<std::type_index> RedundantUnionRemovalRule::needs() const
 {
     return {typeid(SemanticAnalysisBarrier)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> RedundantUnionRemovalRule::neededBy() const
+{
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)

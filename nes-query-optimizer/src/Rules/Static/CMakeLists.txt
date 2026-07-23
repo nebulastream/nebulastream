@@ -14,7 +14,6 @@ add_source_files(nes-query-optimizer
         DecideJoinTypesRule.cpp
         DecideMemoryLayoutRule.cpp
         PredicatePushdownRule.cpp
-        RedundantUnionRemovalRule.cpp
         RedundantProjectionRemovalRule.cpp
         ProjectionPushdownRule.cpp
         WatermarkAssignerPushdownRule.cpp
@@ -25,7 +24,6 @@ add_source_files(nes-query-optimizer
 add_plugin(DecideJoinTypes PlanRule DecideJoinTypesRule.cpp)
 add_plugin(DecideMemoryLayout PlanRule DecideMemoryLayoutRule.cpp)
 add_plugin(PredicatePushdown PlanRule PredicatePushdownRule.cpp)
-add_plugin(RedundantUnionRemoval PlanRule RedundantUnionRemovalRule.cpp)
 add_plugin(RedundantProjectionRemoval PlanRule RedundantProjectionRemovalRule.cpp)
 add_plugin(ProjectionPushdown PlanRule ProjectionPushdownRule.cpp)
 add_plugin(WatermarkAssignerPushdown PlanRule WatermarkAssignerPushdownRule.cpp)
