@@ -30,6 +30,7 @@
 #include <DataTypes/SchemaFwd.hpp>
 #include <Schema/Field.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -57,6 +58,7 @@ public:
     [[nodiscard]] static std::string_view getType();
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
+    static LogicalFunctionRegistryReturnType createUnboundFieldAccess(LogicalFunctionRegistryArguments arguments);
 
 private:
     /// For now its unqualified, but when we have aliased relations, this would become an identifier list

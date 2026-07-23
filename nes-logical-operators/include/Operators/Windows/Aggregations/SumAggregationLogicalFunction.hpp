@@ -28,6 +28,7 @@
 #include <Schema/Field.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -46,6 +47,8 @@ public:
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] bool operator==(const SumAggregationLogicalFunction& other) const;
+
+    static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
 private:
     [[nodiscard]] static DataType inferFromInput(DataType inputType);

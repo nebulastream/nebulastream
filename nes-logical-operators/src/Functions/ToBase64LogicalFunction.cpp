@@ -115,8 +115,7 @@ ToBase64LogicalFunction Unreflector<ToBase64LogicalFunction>::operator()(const R
     return ToBase64LogicalFunction{child.value()};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterTO_BASE64LogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType ToBase64LogicalFunction::createTO_BASE64(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.empty())
     {

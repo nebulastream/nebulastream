@@ -101,7 +101,7 @@ AbsoluteLogicalFunction Unreflector<AbsoluteLogicalFunction>::operator()(const R
     return AbsoluteLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAbsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType AbsoluteLogicalFunction::createAbs(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

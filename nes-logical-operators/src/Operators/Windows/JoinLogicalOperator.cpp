@@ -60,7 +60,6 @@
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {

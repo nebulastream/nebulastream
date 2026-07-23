@@ -22,6 +22,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -49,6 +50,8 @@ public:
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~MedianAggregationPhysicalFunction() override = default;
+
+    static AggregationPhysicalFunctionRegistryReturnType create(AggregationPhysicalFunctionRegistryArguments arguments);
 
 private:
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout;

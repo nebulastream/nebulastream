@@ -10,13 +10,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_registry_entry(Avg AggregationPhysicalFunction AvgAggregationPhysicalFunction.cpp)
-add_registry_entry(Count AggregationPhysicalFunction CountAggregationPhysicalFunction.cpp)
-add_registry_entry(Max AggregationPhysicalFunction MaxAggregationPhysicalFunction.cpp)
-add_registry_entry(Min AggregationPhysicalFunction MinAggregationPhysicalFunction.cpp)
-add_registry_entry(Median AggregationPhysicalFunction MedianAggregationPhysicalFunction.cpp)
-add_registry_entry(Sum AggregationPhysicalFunction SumAggregationPhysicalFunction.cpp)
 
 add_source_files(nes-physical-operators
+        AggregationPhysicalFunctionRegistry.cpp
         AggregationPhysicalFunction.cpp
+        AvgAggregationPhysicalFunction.cpp
+        CountAggregationPhysicalFunction.cpp
+        MaxAggregationPhysicalFunction.cpp
+        MinAggregationPhysicalFunction.cpp
+        MedianAggregationPhysicalFunction.cpp
+        SumAggregationPhysicalFunction.cpp
 )
+
+add_registry_entry(AggregationPhysicalFunction Avg)
+add_registry_entry(AggregationPhysicalFunction Count)
+add_registry_entry(AggregationPhysicalFunction Max)
+add_registry_entry(AggregationPhysicalFunction Median)
+add_registry_entry(AggregationPhysicalFunction Min)
+add_registry_entry(AggregationPhysicalFunction Sum)

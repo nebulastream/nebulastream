@@ -39,3 +39,15 @@ elseif (SANITIZER_OPTION STREQUAL "address")
 else ()
     MESSAGE(STATUS "Enabling No Sanitizer")
 endif ()
+
+# Sanitized SHARED/MODULE targets (libnes, dynamic plugin modules) deliberately leave the
+# sanitizer runtime symbols (__asan_* etc.) undefined: clang links the runtime statically into
+# executables only, and a sanitized shared object binds those symbols to its host executable at
+# load time. This cancels the global -Wl,--no-undefined (see cmake/UseMold.cmake) for such a
+# target; without an active sanitizer it is a no-op, keeping the undefined-symbol check in
+# regular builds.
+function(nes_allow_undefined_sanitizer_symbols target)
+    if (SANITIZER_OPTION AND NOT SANITIZER_OPTION STREQUAL "none")
+        target_link_options(${target} PRIVATE "-Wl,-z,undefs")
+    endif ()
+endfunction()

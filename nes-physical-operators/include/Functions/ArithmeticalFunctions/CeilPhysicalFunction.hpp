@@ -18,6 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -27,6 +28,8 @@ class CeilPhysicalFunction final
 public:
     explicit CeilPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createCeil(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction childFunction;

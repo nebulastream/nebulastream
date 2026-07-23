@@ -92,20 +92,30 @@ nes_cleanup_leaked_resources() {
   docker images "${filter_args[@]}" -q | xargs -r docker image rm -f 2>/dev/null || true
 }
 
-# Build a worker-style image (FROM $NES_RUNTIME_BASE_IMAGE, COPY <bin>, ENTRYPOINT <bin>).
-# Exports the resulting image tag under the env var named in arg1.
+# Build a worker-style image (FROM $NES_RUNTIME_BASE_IMAGE, COPY libnes.so + <bin>,
+# ENTRYPOINT <bin>). Exports the resulting image tag under the env var named in arg1.
+#
+# libnes.so is bundled because the NES executables resolve the shared core from it at load
+# time (a missing libnes.so makes the container exit 127 before any test output). It is
+# copied in an identical leading layer in both image helpers, so docker shares the layer
+# across all images of a test run.
 nes_build_runtime_image() {
   local image_var="$1"
   local prefix="$2"
   local bin_path="$3"
   local container_bin="$4"
 
+  nes_require_env NES_LIBNES
+
   local suffix=$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')
   local image_tag="${prefix}-${suffix}"
   local ctx=$(mktemp -d)
+  cp "$(realpath "$NES_LIBNES")" "$ctx/libnes.so"
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
   docker build --load -t "$image_tag" -f - "$ctx" <<EOF
     FROM $NES_RUNTIME_BASE_IMAGE
+    COPY libnes.so /usr/lib/
+    RUN ldconfig
     COPY $container_bin /usr/bin
     ENTRYPOINT ["$container_bin"]
 EOF
@@ -113,20 +123,25 @@ EOF
   export "$image_var=$image_tag"
 }
 
-# Build an app-style image (FROM $NES_RUNTIME_BASE_IMAGE, COPY <bin>, no entrypoint —
-# invoked via `docker compose exec`). Exports the tag under arg1.
+# Build an app-style image (FROM $NES_RUNTIME_BASE_IMAGE, COPY libnes.so + <bin>, no
+# entrypoint — invoked via `docker compose exec`). Exports the tag under arg1.
 nes_build_app_image() {
   local image_var="$1"
   local prefix="$2"
   local bin_path="$3"
   local container_bin="$4"
 
+  nes_require_env NES_LIBNES
+
   local suffix=$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')
   local image_tag="${prefix}-${suffix}"
   local ctx=$(mktemp -d)
+  cp "$(realpath "$NES_LIBNES")" "$ctx/libnes.so"
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
   docker build --load -t "$image_tag" -f - "$ctx" <<EOF
     FROM $NES_RUNTIME_BASE_IMAGE
+    COPY libnes.so /usr/lib/
+    RUN ldconfig
     COPY $container_bin /usr/bin
 EOF
   rm -rf "$ctx"

@@ -27,6 +27,7 @@ option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
 set(LARGE_TEST_DOWNLOAD_TIMEOUT 1200 CACHE STRING "Absolute timeout in seconds for downloading large test data files")
 option(ENABLE_DOCKER_TESTS "Runs testcases that require docker" ON)
 
+option(NES_BUILD_STATIC_WORKER "Additionally build nes-single-node-worker-static, a self-contained worker without runtime plugin support" OFF)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
@@ -267,6 +268,10 @@ foreach (NES_DIR ${NES_DIRECTORIES_ALL})
         add_subdirectory(${NES_DIR})
     endif ()
 endforeach ()
+
+# Umbrella shared library (libnes.so) for executables and runtime-loaded plugins; defined after
+# the loop so all component targets exist.
+include(cmake/LibNes.cmake)
 
 # Other configurations
 project_enable_format()

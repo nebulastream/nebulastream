@@ -116,6 +116,7 @@ endmacro()
 #
 # Auto-injected env (the .bats picks whichever it needs):
 #   NES_DIR, NES_TEST_TMP_DIR, NES_BATS_LIB
+#   NES_LIBNES         = $<TARGET_FILE:libnes>
 #   NES_WORKER         = $<TARGET_FILE:nes-single-node-worker>
 #   NES_CLI            = $<TARGET_FILE:nes-cli>
 #   NES_REPL           = $<TARGET_FILE:nes-repl>
@@ -166,6 +167,7 @@ function(add_e2e_test)
         NES_DIR=${CMAKE_SOURCE_DIR}
         NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
         NES_BATS_LIB=${CMAKE_SOURCE_DIR}/scripts/testing/distributed_bats_lib.bash
+        NES_LIBNES=$<TARGET_FILE:libnes>
         NES_WORKER=$<TARGET_FILE:nes-single-node-worker>
         NES_CLI=$<TARGET_FILE:nes-cli>
         NES_REPL=$<TARGET_FILE:nes-repl>

@@ -101,7 +101,7 @@ LessLogicalFunction Unreflector<LessLogicalFunction>::operator()(const Reflected
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLessLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType LessLogicalFunction::createLess(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

@@ -133,8 +133,7 @@ Unreflector<ExtractFromTimestampLogicalFunction>::operator()(const Reflected& re
     return ExtractFromTimestampLogicalFunction{unit, std::move(child)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterDay_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType ExtractFromTimestampLogicalFunction::createDay_Of(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
@@ -144,8 +143,7 @@ LogicalFunctionGeneratedRegistrar::RegisterDay_OfLogicalFunction(LogicalFunction
     return ExtractFromTimestampLogicalFunction{TimestampUnit::Day, arguments.children[0]};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterMonth_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType ExtractFromTimestampLogicalFunction::createMonth_Of(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
@@ -155,8 +153,7 @@ LogicalFunctionGeneratedRegistrar::RegisterMonth_OfLogicalFunction(LogicalFuncti
     return ExtractFromTimestampLogicalFunction{TimestampUnit::Month, arguments.children[0]};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterYear_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType ExtractFromTimestampLogicalFunction::createYear_Of(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

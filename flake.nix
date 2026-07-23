@@ -708,8 +708,17 @@
           done
 
           mkdir -p $out/lib
-          find nes-* -maxdepth 1 -type f \( -name 'lib*.a' -o -name 'lib*.so' -o -name 'lib*.so.*' \) \
+          # '.' picks up the umbrella libnes.so at the build root (see cmake/LibNes.cmake),
+          # which the executables resolve the shared core from at load time.
+          find . nes-* -maxdepth 1 -type f \( -name 'lib*.a' -o -name 'lib*.so' -o -name 'lib*.so.*' \) \
             -exec sh -c 'for lib; do install -Dm644 "$lib" "$out/lib/$(basename "$lib")"; done' sh {} +
+
+          # The binaries' RUNPATH references in-tree shared libraries by their build-tree paths,
+          # which die with the sandbox; point them at $out/lib so libnes.so resolves at runtime.
+          # (fixupPhase's shrink pass later drops the entry from binaries that don't need it.)
+          for bin in $out/bin/*; do
+            patchelf --add-rpath $out/lib "$bin"
+          done
 
           runHook postInstall
         '';
@@ -751,7 +760,8 @@
             version = "unstable";
             src = ./.;
 
-            nativeBuildInputs = buildTools;
+            # patchelf: installPhase rewrites the installed binaries' RUNPATH to $out/lib.
+            nativeBuildInputs = buildTools ++ [ pkgs.patchelf ];
             buildInputs =
               llvmToolsVariant
               ++ cmakeCtx.thirdPartyDeps

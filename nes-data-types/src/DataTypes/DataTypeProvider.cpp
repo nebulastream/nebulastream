@@ -31,10 +31,9 @@ std::optional<DataType> tryProvideDataType(const std::string& type)
 
 std::optional<DataType> tryProvideDataType(const std::string& type, const DataType::NULLABLE isNullable)
 {
-    const DataTypeRegistryArguments args{isNullable};
-    if (const auto dataType = DataTypeRegistry::instance().create(type, args))
+    if (const auto dataTypeFactory = DataTypeRegistry::instance().find(type))
     {
-        return dataType;
+        return (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
     }
     return std::nullopt;
 }
@@ -46,11 +45,9 @@ DataType provideDataType(const std::string& type)
 
 DataType provideDataType(const std::string& type, const DataType::NULLABLE isNullable)
 {
-    /// However, we provide the empty struct to be consistent with the design of our registries.
-    const DataTypeRegistryArguments args{isNullable};
-    if (const auto dataType = DataTypeRegistry::instance().create(type, args))
+    if (const auto dataTypeFactory = DataTypeRegistry::instance().find(type))
     {
-        return dataType.value();
+        return (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
     }
     throw UnknownPluginType("Unknown data type: {}", type);
 }

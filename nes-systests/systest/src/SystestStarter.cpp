@@ -28,6 +28,7 @@
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
+#include <Plugins/BuiltinPlugins.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Signal.hpp>
@@ -505,6 +506,7 @@ int main(int argc, const char** argv)
 
     CPPTRACE_TRY
     {
+        NES::loadBuiltinPlugins();
         auto config = parseConfiguration(argc, argv);
         NES::SystestExecutor executor(std::move(config));
         const auto result = executor.executeSystests();

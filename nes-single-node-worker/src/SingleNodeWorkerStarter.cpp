@@ -13,9 +13,11 @@
 */
 
 #include <csignal>
+#include <cstdlib>
 #include <semaphore>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Plugins/PluginCatalog.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -70,6 +72,23 @@ int main(const int argc, const char* argv[])
         {
             NES_ERROR("Failed to set SIGTERM signal handler")
         }
+        /// Register built-in plugins (via the catalog's constructor) and load dynamic plugins
+        /// (shared objects listed in NES_PLUGINS) before any registry lookup.
+        NES::PluginCatalog pluginCatalog;
+#ifdef NES_STATIC_WORKER
+        /// Statically linked variant: a plugin .so NEEDs libnes.so, so loading one would drag in
+        /// a second copy of every registry and global next to the static components. Reject
+        /// instead of silently registering into the wrong copy.
+        if (std::getenv("NES_PLUGINS") != nullptr)
+        {
+            NES_ERROR("NES_PLUGINS is set, but this worker is statically linked and cannot load plugins. "
+                      "Unset NES_PLUGINS or use the dynamically linked nes-single-node-worker.");
+            return 1;
+        }
+#else
+        pluginCatalog.loadFromEnvironment();
+#endif
+
         auto configuration = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)
         {

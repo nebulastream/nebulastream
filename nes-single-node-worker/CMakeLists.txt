@@ -33,7 +33,22 @@ target_link_libraries(nes-single-node-worker-lib
 )
 
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
-target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib)
+# Link the umbrella shared library ONLY (not the static component libs): the worker hosts
+# runtime-loaded plugin .so's, which resolve their NES symbols and registry singletons from
+# libnes.so. Linking a component statically here as well would create a second copy of the
+# registries (see cmake/LibNes.cmake).
+target_link_libraries(nes-single-node-worker PRIVATE libnes)
+
+if (NES_BUILD_STATIC_WORKER)
+    # Self-contained deployment variant: components linked statically, no libnes.so needed at
+    # runtime. It must never load plugin .so's — a plugin NEEDs libnes.so, so dlopen would drag
+    # in a second copy of every registry and global next to the static one (see
+    # cmake/LibNes.cmake); the starter therefore hard-rejects NES_PLUGINS.
+    add_executable(nes-single-node-worker-static src/SingleNodeWorkerStarter.cpp)
+    target_link_libraries(nes-single-node-worker-static PRIVATE nes-single-node-worker-lib)
+    target_compile_definitions(nes-single-node-worker-static PRIVATE NES_STATIC_WORKER)
+endif ()
+
 if (ENABLE_BATS_TESTS)
     add_test(
             NAME worker-offline-test

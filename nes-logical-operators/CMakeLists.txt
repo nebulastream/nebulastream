@@ -43,6 +43,21 @@ find_package(reflectcpp REQUIRED)
 target_link_libraries(nes-logical-operators PUBLIC nes-sources nes-sinks nes-query-optimizer nes-data-types nes-inference PRIVATE reflectcpp::reflectcpp)
 
 # Factory registries
-create_registries_for_component(LogicalOperator LogicalFunction AggregationLogicalFunction)
+# Runtime registries: entries are static create members on the plugin classes.
+create_runtime_registry(AggregationLogicalFunction nes-logical-operators
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}AggregationLogicalFunction::create"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}AggregationLogicalFunction.hpp")
+
+# Name-based construction surface for logical operators; no entries yet (operators gain one by
+# implementing a static create member and registering it).
+create_runtime_registry(LogicalOperator nes-logical-operators
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}LogicalOperator::create"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}LogicalOperator.hpp")
+
+# Name + Key based registry for logical functions, one logical function might want to register itself for multiple keys
+# For example, ExtractFromTimestampLogicalFunction as Day_Of, Month_Of and Year_Of
+create_runtime_registry(LogicalFunction nes-logical-operators
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}LogicalFunction::create\${KEY}"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}LogicalFunction.hpp")
 
 add_tests_if_enabled(tests)

@@ -45,8 +45,7 @@ VarVal FloorPhysicalFunction::execute(const Record& record, ArenaRef& arena) con
     return value.castToType(outputType.type);
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterFloorPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType FloorPhysicalFunction::createFloor(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Floor function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Floor function must have exactly one input type");

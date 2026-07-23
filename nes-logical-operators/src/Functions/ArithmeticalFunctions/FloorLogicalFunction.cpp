@@ -100,8 +100,7 @@ FloorLogicalFunction Unreflector<FloorLogicalFunction>::operator()(const Reflect
     return FloorLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterFloorLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType FloorLogicalFunction::createFloor(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
