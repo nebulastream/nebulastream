@@ -33,10 +33,19 @@ namespace NES
 
 namespace NES
 {
+/// registerAll is only defined in the CMake-generated registrar translation unit of this registry's component
+/// (see generate_plugin_registrar in cmake/PluginRegistrationUtil.cmake). All other translation units see just this
+/// declaration, so including the registry header does not require the plugin registration symbols at link time;
+/// only calling instance() does.
 template <>
-inline void Registrar<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+void Registrar<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>::registerAll(Registry<Registrar>& registry);
+
+#ifdef NES_DEFINE_SINK_REGISTER_ALL
+template <>
+void Registrar<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     /// using namespace NES;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
+#endif
 }

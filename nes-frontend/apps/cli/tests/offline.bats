@@ -38,6 +38,12 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "nebucli shows version" {
+  run $NES_CLI -v
+  [ "$status" -eq 0 ]
+  assert_output --partial "nes-cli"
+}
+
 @test "nebucli dump" {
   run $NES_CLI -t tests/good/chained-joins.yaml dump
   [ "$status" -eq 0 ]
@@ -461,4 +467,3 @@ bad_topology() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"Invalid value for 'nullable'"* ]]
 }
-

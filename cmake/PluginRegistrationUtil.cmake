@@ -58,6 +58,28 @@ macro(add_plugin plugin_name plugin_registry)
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
 endmacro()
 
+# maps a registry to the kind label under which its plugins appear in the `--version` output (see Util/VersionPluginList.hpp)
+# registries without a kind (e.g. DataType) are not listed and keep their registerAll definition inline in the registrar header
+function(get_version_plugin_kind plugin_registry out_var)
+    set(kind "")
+    if (plugin_registry MATCHES "^(Source|SourceValidation)$")
+        set(kind "Sources")
+    elseif (plugin_registry MATCHES "^(Sink|SinkValidation)$")
+        set(kind "Sinks")
+    elseif (plugin_registry MATCHES "^(InputFormatIndexer|InputFormatterValidation)$")
+        set(kind "InputFormatters")
+    elseif (plugin_registry MATCHES "^(OutputFormatter|OutputFormatterValidation)$")
+        set(kind "OutputFormatters")
+    elseif (plugin_registry MATCHES "^(LogicalFunction|AggregationLogicalFunction|PhysicalFunction|AggregationPhysicalFunction)$")
+        set(kind "Functions")
+    elseif (plugin_registry STREQUAL "LogicalOperator")
+        set(kind "Operators")
+    elseif (plugin_registry STREQUAL "LoweringRule")
+        set(kind "RewriteRules")
+    endif ()
+    set(${out_var} "${kind}" PARENT_SCOPE)
+endfunction()
+
 # iterates over all plugins, collect all plugins with given name, inject plugins into registrar
 function(generate_plugin_registrar current_dir current_binary_dir plugin_registry plugin_registry_component)
     set(registrar_header_template_path ${current_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc.in)
@@ -117,6 +139,23 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
             @ONLY
     )
     file(REMOVE ${temp_registrar_header_template_file})
+
+    # generate the dedicated registrar translation unit: it provides the only definition of registerAll (see the
+    # declaration in the registrar header templates) and announces the registry's plugins for the `--version` listing.
+    # Keeping the definition out of the header means that binaries which include the registry header without using the
+    # registry do not need the plugin registration symbols at link time.
+    get_version_plugin_kind(${plugin_registry} VERSION_PLUGIN_KIND)
+    if (VERSION_PLUGIN_KIND)
+        set(PLUGIN_REGISTRY ${plugin_registry})
+        string(TOUPPER ${plugin_registry} PLUGIN_REGISTRY_UPPER)
+        set(registrar_source_generated_path ${current_binary_dir}/registry/generated/${plugin_registry}GeneratedRegistrar.cpp)
+        configure_file(
+                ${PROJECT_SOURCE_DIR}/cmake/templates/GeneratedRegistrar.cpp.in
+                ${registrar_source_generated_path}
+                @ONLY
+        )
+        set_property(TARGET ${plugin_registry_component} APPEND PROPERTY SOURCES ${registrar_source_generated_path})
+    endif ()
 endfunction()
 
 function(generate_plugin_registrars plugin_registry_component)

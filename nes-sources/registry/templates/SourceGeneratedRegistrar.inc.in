@@ -34,8 +34,17 @@ namespace NES::SourceGeneratedRegistrar
 
 namespace NES
 {
+/// registerAll is only defined in the CMake-generated registrar translation unit of this registry's component
+/// (see generate_plugin_registrar in cmake/PluginRegistrationUtil.cmake). All other translation units see just this
+/// declaration, so including the registry header does not require the plugin registration symbols at link time;
+/// only calling instance() does.
 template <>
-inline void
+void
+Registrar<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryArguments>::registerAll(Registry<Registrar>& registry);
+
+#ifdef NES_DEFINE_SOURCE_REGISTER_ALL
+template <>
+void
 Registrar<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
 
@@ -43,4 +52,5 @@ Registrar<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryA
     /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
     @REGISTER_ALL_FUNCTION_CALLS@
 }
+#endif
 }

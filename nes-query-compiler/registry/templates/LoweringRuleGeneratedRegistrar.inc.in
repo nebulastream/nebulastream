@@ -28,10 +28,19 @@ namespace NES::LoweringRuleGeneratedRegistrar
 
 namespace NES
 {
+/// registerAll is only defined in the CMake-generated registrar translation unit of this registry's component
+/// (see generate_plugin_registrar in cmake/PluginRegistrationUtil.cmake). All other translation units see just this
+/// declaration, so including the registry header does not require the plugin registration symbols at link time;
+/// only calling instance() does.
 template <>
-inline void Registrar<LoweringRuleRegistry, std::string, LoweringRuleRegistryReturnType, LoweringRuleRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+void Registrar<LoweringRuleRegistry, std::string, LoweringRuleRegistryReturnType, LoweringRuleRegistryArguments>::registerAll(Registry<Registrar>& registry);
+
+#ifdef NES_DEFINE_LOWERINGRULE_REGISTER_ALL
+template <>
+void Registrar<LoweringRuleRegistry, std::string, LoweringRuleRegistryReturnType, LoweringRuleRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace LoweringRuleGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
+#endif
 }

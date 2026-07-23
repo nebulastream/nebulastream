@@ -19,4 +19,5 @@ add_nes_test(checksum-test ChecksumTest.cpp)
 target_link_libraries(checksum-test systest-checksum)
 
 find_package(argparse CONFIG REQUIRED)
-target_link_libraries(checksum PRIVATE argparse::argparse systest-checksum)
+# nes-common provides the --version / -v build-info helper (NES::printVersion).
+target_link_libraries(checksum PRIVATE argparse::argparse systest-checksum nes-common)
