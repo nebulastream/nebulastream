@@ -21,7 +21,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -36,7 +36,8 @@ namespace NES
 {
 class ChainedHashMapTest
     : public Testing::BaseUnitTest,
-      public testing::WithParamInterface<std::tuple<int, std::vector<DataType::Type>, std::vector<DataType::Type>, ExecutionMode>>,
+      public testing::WithParamInterface<
+          std::tuple<int, std::vector<DataType::Type>, std::vector<DataType::Type>, ExecutionConfiguration::ExecutionMode>>,
       public TestUtils::ChainedHashMapTestUtils
 {
 public:
@@ -165,7 +166,10 @@ INSTANTIATE_TEST_CASE_P(
     ChainedHashMapTest,
     ChainedHashMapTest,
     ::testing::Combine(
-        ::testing::Range(0, noIterations), keyTypes, valTypes, ::testing::Values(ExecutionMode::COMPILER, ExecutionMode::INTERPRETER)),
+        ::testing::Range(0, noIterations),
+        keyTypes,
+        valTypes,
+        ::testing::Values(ExecutionConfiguration::ExecutionMode::COMPILER, ExecutionConfiguration::ExecutionMode::INTERPRETER)),
     [](const testing::TestParamInfo<ChainedHashMapTest::ParamType>& info)
     {
         const auto iteration = std::get<0>(info.param);

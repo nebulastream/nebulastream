@@ -31,7 +31,7 @@
 
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -48,7 +48,8 @@ namespace NES
 {
 class ChainedHashMapCustomValueTest
     : public Testing::BaseUnitTest,
-      public testing::WithParamInterface<std::tuple<int, std::vector<DataType::Type>, std::vector<DataType::Type>, ExecutionMode>>,
+      public testing::WithParamInterface<
+          std::tuple<int, std::vector<DataType::Type>, std::vector<DataType::Type>, ExecutionConfiguration::ExecutionMode>>,
       public TestUtils::ChainedHashMapCustomValueTestUtils
 {
 public:
@@ -56,7 +57,7 @@ public:
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {.min = 100, .max = 200};
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {.min = 1, .max = 1024};
     static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {.min = 512, .max = 10240};
-    ExecutionMode backend;
+    ExecutionConfiguration::ExecutionMode backend;
 
     static void SetUpTestSuite()
     {
@@ -249,7 +250,7 @@ INSTANTIATE_TEST_CASE_P(
               DataType::Type::UINT16,
               DataType::Type::UINT8,
               DataType::Type::FLOAT64}}),
-        ::testing::Values(ExecutionMode::COMPILER, ExecutionMode::INTERPRETER)),
+        ::testing::Values(ExecutionConfiguration::ExecutionMode::COMPILER, ExecutionConfiguration::ExecutionMode::INTERPRETER)),
     [](const testing::TestParamInfo<ChainedHashMapCustomValueTest::ParamType>& info)
     {
         const auto iteration = std::get<0>(info.param);

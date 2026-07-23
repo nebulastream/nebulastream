@@ -35,7 +35,7 @@
 #include <Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <nautilus/Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <options.hpp>
@@ -97,7 +97,7 @@ struct RecordWithFieldsHash
 /// We use this information for being able to access a (pre-)compiled/traced function and not having to recompile it all the time
 struct NameAndNautilusBackend
 {
-    NameAndNautilusBackend(std::string_view functionName, const ExecutionMode backend)
+    NameAndNautilusBackend(std::string_view functionName, const ExecutionConfiguration::ExecutionMode backend)
         : functionName(std::move(functionName)), backend(backend)
     {
     }
@@ -121,7 +121,7 @@ struct NameAndNautilusBackend
     }
 
     std::string functionName;
-    ExecutionMode backend;
+    ExecutionConfiguration::ExecutionMode backend;
 };
 
 /// Struct that stores a min and max value.
@@ -194,7 +194,7 @@ public:
 
     void compileFillBufferFunction(
         std::string_view functionName,
-        ExecutionMode backend,
+        ExecutionConfiguration::ExecutionMode backend,
         nautilus::engine::Options& options,
         const Schema<QualifiedUnboundField, Ordered>& schema,
         const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer);

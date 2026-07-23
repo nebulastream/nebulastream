@@ -454,7 +454,7 @@ void buildPipelineRecursively(
 std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
 {
     const uint64_t configuredBufferSize = physicalPlan.getOperatorBufferSize();
-    auto pipelinedPlan = std::make_shared<PipelinedQueryPlan>(physicalPlan.getQueryId(), physicalPlan.getExecutionMode());
+    auto pipelinedPlan = std::make_shared<PipelinedQueryPlan>(physicalPlan.getQueryId(), physicalPlan.getExecutionConfiguration());
 
     OperatorPipelineMap pipelineMap;
     const auto mergePoints = findMergePoints(physicalPlan.getRootOperators());
