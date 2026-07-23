@@ -1,6 +1,6 @@
 # name: window/WindowAggregationDifferentDataTypes.test
 # description: Test window aggregations over different data types
-# groups: [Aggregation, WindowOperators, CompilationIntensive] TODO #1272
+# groups: [Aggregation, WindowOperators]
 
 # The last query aggregates 100 medians, each keeping a TupleBuffer of its own in the aggregation state, which
 # does not fit a hash map entry at the default page size of 1024 bytes.

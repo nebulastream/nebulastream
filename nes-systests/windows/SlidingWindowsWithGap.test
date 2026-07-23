@@ -1,6 +1,6 @@
 # name: windows/SlidingWindowsWithGap.test
 # description: Tests windowed operators with sliding windows that have a gap, i.e., size >= slide
-# groups: [WindowOperators, Join, Aggregation, CompilationIntensive] TODO #1272
+# groups: [WindowOperators, Join, Aggregation]
 
 # Source definitions
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp1 UINT64 NOT NULL);
