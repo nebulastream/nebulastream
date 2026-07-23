@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-configurations
+        ByteAmountValidation.cpp
         IpValidation.cpp
         NumberValidation.cpp
         NonZeroValidation.cpp

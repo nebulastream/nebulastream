@@ -14,6 +14,7 @@
 #pragma once
 
 #include <ostream>
+#include <Configurations/ByteAmount.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -78,6 +79,15 @@ private:
         else if constexpr (std::same_as<Type, NES::URI>)
         {
             return URI(strValue);
+        }
+        else if constexpr (std::is_same_v<Type, Byte>)
+        {
+            auto parsed = parseByteAmount(strValue);
+            if (!parsed.has_value())
+            {
+                throw Exception(parsed.error());
+            }
+            return Byte(parsed.value());
         }
         else if constexpr (std::is_same_v<Type, bool>)
         {
@@ -184,6 +194,8 @@ using StringOption = ScalarOption<std::string>;
 using FloatOption = ScalarOption<float>;
 using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
+/// Option holding a number of bytes, parsed with parseByteAmount ("4096", "4KiB", "1.5Gi", ...).
+using ByteOption = ScalarOption<Byte>;
 
 }
 
