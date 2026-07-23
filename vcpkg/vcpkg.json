@@ -40,12 +40,20 @@
     "grpc",
     "gtest",
     "highs",
-    "ireeruntime",
     "libcuckoo",
     "libuuid",
     "magic-enum",
     "nameof",
     "nautilus",
+    "nlohmann-json",
+    {
+      "name": "openvino",
+      "default-features": false,
+      "features": [
+        "cpu",
+        "ir"
+      ]
+    },
     "reflectcpp",
     "replxx",
     "scope-guard",
