@@ -1,0 +1,105 @@
+# name: datatype/QuotedIdentifiers.test
+# description: Case-sensitive quoted identifiers survive schema definitions and query operators
+# groups: [DataTypes, Identifiers]
+
+CREATE LOGICAL SOURCE "inputStream" ("id" UINT64 NOT NULL, "value" UINT64 NOT NULL, "timestamp" UINT64 NOT NULL, "A" UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR "inputStream" TYPE File;
+ATTACH INLINE
+1,10,1000,100
+1,20,1001,200
+2,30,2000,300
+
+CREATE LOGICAL SOURCE "secondInput" ("id" UINT64 NOT NULL, "value" UINT64 NOT NULL, "timestamp" UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR "secondInput" TYPE File;
+ATTACH INLINE
+3,40,3000
+
+CREATE LOGICAL SOURCE "leftStream" ("leftId" UINT64 NOT NULL, "joinKey" UINT64 NOT NULL, "leftTimestamp" UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR "leftStream" TYPE File;
+ATTACH INLINE
+1,7,1000
+2,8,2000
+
+CREATE LOGICAL SOURCE "rightStream" ("rightId" UINT64 NOT NULL, "rightKey" UINT64 NOT NULL, "rightTimestamp" UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR "rightStream" TYPE File;
+ATTACH INLINE
+10,7,1001
+20,9,2001
+
+CREATE SINK "projectionSink" ("renamedId" UINT64 NOT NULL, "doubledValue" UINT64 NOT NULL) TYPE File;
+CREATE SINK "nestedProjectionSink" ("renamedId" UINT64 NOT NULL) TYPE File;
+CREATE SINK "aggregationSink" ("groupKey" UINT64 NOT NULL, "sumValue" UINT64 NOT NULL) TYPE File;
+CREATE SINK "unionSink" ("unionId" UINT64 NOT NULL) TYPE File;
+CREATE SINK "joinSink" ("leftResult" UINT64 NOT NULL, "rightResult" UINT64 NOT NULL) TYPE File;
+CREATE SINK "UPPERCASE_SINK" (A UINT64 NOT NULL) TYPE File;
+
+SELECT
+    "id" AS "renamedId",
+    "value" * UINT64(2) AS "doubledValue"
+FROM "inputStream"
+WHERE "id" = UINT64(2)
+INTO "projectionSink";
+----
+2,60
+
+SELECT "renamedId"
+FROM (
+    SELECT "id" AS "renamedId"
+    FROM "inputStream"
+)
+WHERE "renamedId" = UINT64(2)
+INTO "nestedProjectionSink";
+----
+2
+
+SELECT "id" AS "groupKey", SUM("value") AS "sumValue"
+FROM "inputStream"
+GROUP BY "id"
+WINDOW TUMBLING("timestamp", SIZE 1 SEC)
+INTO "aggregationSink";
+----
+1,30
+2,30
+
+SELECT "id" AS "unionId" FROM "inputStream"
+UNION
+SELECT "id" AS "unionId" FROM "secondInput"
+INTO "unionSink";
+----
+1
+1
+2
+3
+
+SELECT
+    "leftId" AS "leftResult",
+    "rightId" AS "rightResult"
+FROM (
+    SELECT * FROM (SELECT * FROM "leftStream")
+    INNER JOIN (SELECT * FROM "rightStream")
+    ON "joinKey" = "rightKey"
+    WINDOW TUMBLING("leftTimestamp", "rightTimestamp", SIZE 1 SEC)
+)
+INTO "joinSink";
+----
+1,10
+
+SELECT "id", "value", "timestamp"
+FROM File(
+    'small/stream8.csv' AS "SOURCE"."FILE_PATH",
+    'CSV' AS "INPUT_FORMATTER"."TYPE",
+    SCHEMA("id" UINT64 NOT NULL, "value" UINT64 NOT NULL, "timestamp" UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+INTO File(
+    SCHEMA("id" UINT64 NOT NULL, "value" UINT64 NOT NULL, "timestamp" UINT64 NOT NULL) AS "SINK"."SCHEMA");
+----
+1,1,12
+1,2,23
+1,3,34
+1,4,45
+1,5,56
+
+SELECT A FROM "inputStream" INTO UPPERCASE_SINK;
+----
+100
+200
+300

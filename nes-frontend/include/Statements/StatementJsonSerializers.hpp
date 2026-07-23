@@ -55,8 +55,8 @@ inline rfl::Generic toFrontendGeneric(const DataType& dataType, const Reflection
     return context.reflect(std::string(magic_enum::enum_name(dataType.type)));
 }
 
-/// reflectcpp's native handler for Identifier (via Reflector<Identifier>) emits `[original-string, case-sensitive-bool]`.
-/// The historical frontend JSON shape is the canonical (case-folded) string — override here.
+/// Reflector<Identifier> retains SQL quotes for case-sensitive identifiers.
+/// The historical frontend JSON shape is the canonical string without quote metadata — override here.
 inline rfl::Generic toFrontendGeneric(const Identifier& identifier, const ReflectionContext& context)
 {
     return context.reflect(identifier.asCanonicalString());

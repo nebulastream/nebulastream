@@ -54,6 +54,23 @@ docker_nes_repl() {
   [ "$status" -eq 0 ]
 }
 
+@test "quoted identifiers and uppercase compatibility survive distributed repl" {
+  setup_distributed tests/topologies/1-node.yaml
+  run docker_nes_repl tests/sql-file-tests/good/quoted_identifiers_distributed.sql
+  [ "$status" -eq 0 ]
+
+  assert_json_contains \
+    '[{"source_name":"quotedSource","schema":[{"name":"mixedValue","type":"UINT64"},{"name":"A","type":"UINT64"}]}]' \
+    "${lines[1]}"
+  assert_json_contains \
+    '[{"source_name":"quotedSource","schema":[{"name":"mixedValue","type":"UINT64"},{"name":"A","type":"UINT64"}]}]' \
+    "${lines[2]}"
+  assert_json_contains \
+    '[{"sink_name":"quotedSink","schema":[{"name":"projectedValue","type":"UINT64"},{"name":"A","type":"UINT64"}]}]' \
+    "${lines[3]}"
+  echo "${lines[4]}" | jq -e '.[0].query_id | length > 0'
+}
+
 #bats test_tags=IREE
 @test "create model show and drop lifecycle" {
   setup_distributed tests/topologies/1-node.yaml
