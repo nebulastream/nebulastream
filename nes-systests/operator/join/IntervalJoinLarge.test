@@ -1,0 +1,33 @@
+# name: join/IntervalJoinLarge.test
+# description: Large-input interval join validated with the ChecksumSink. Two queries run two different interval window sizes over two input scales (~10 kB and ~100 kB). The inputs are generated deterministically and the expected count,checksum pairs are produced by the independent Python oracle in nes-systests/utils/interval_join_checksum.py, fed through the ChecksumStarter tool. To regenerate: `interval_join_checksum.py gen ...` then `... join ...` then run the `checksum` binary over the join output (see that script's header).
+# groups: [WindowOperators, Join, IntervalJoin]
+
+CREATE LOGICAL SOURCE l10(id UINT64 NOT NULL, value UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR l10 TYPE File;
+ATTACH FILE large/intervaljoin_large_10kb_left.csv
+
+CREATE LOGICAL SOURCE r10(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR r10 TYPE File;
+ATTACH FILE large/intervaljoin_large_10kb_right.csv
+
+CREATE SINK checksum10(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestampLeft UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL) TYPE Checksum;
+
+# ~10 kB input, narrow window [-5 ms, 5 ms] (W = 10). Expected count,checksum from the Python oracle.
+SELECT * FROM (SELECT * FROM l10) INNER JOIN (SELECT * FROM r10) ON id = id2 INTERVAL (timestampLeft, timestampRight, lower -5 ms, upper 5 ms) INTO checksum10;
+----
+380,634210
+
+CREATE LOGICAL SOURCE l100(id UINT64 NOT NULL, value UINT64 NOT NULL, timestampLeft UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR l100 TYPE File;
+ATTACH FILE large/intervaljoin_large_100kb_left.csv
+
+CREATE LOGICAL SOURCE r100(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR r100 TYPE File;
+ATTACH FILE large/intervaljoin_large_100kb_right.csv
+
+CREATE SINK checksum100(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestampLeft UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestampRight UINT64 NOT NULL) TYPE Checksum;
+
+# ~100 kB input, wide window [-105 ms, 105 ms] (W = 210, spanning multiple slices). Expected count,checksum from the Python oracle.
+SELECT * FROM (SELECT * FROM l100) INNER JOIN (SELECT * FROM r100) ON id = id2 INTERVAL (timestampLeft, timestampRight, lower -105 ms, upper 105 ms) INTO checksum100;
+----
+10780,20810309

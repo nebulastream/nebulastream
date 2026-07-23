@@ -24,7 +24,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -60,14 +60,14 @@ public:
     WindowBasedOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore);
 
     ~WindowBasedOperatorHandler() override = default;
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
-    WindowSlicesStoreInterface& getSliceAndWindowStore() const;
+    [[nodiscard]] SlicedWindowStoreInterface& getSliceAndWindowStore() const;
 
     /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore.
     void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
@@ -92,7 +92,7 @@ protected:
         PipelineExecutionContext* pipelineCtx)
         = 0;
 
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
+    std::unique_ptr<SlicedWindowStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads;
