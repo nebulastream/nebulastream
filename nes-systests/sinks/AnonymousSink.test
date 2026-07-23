@@ -71,3 +71,15 @@ FROM File(
 	'CSV' AS INPUT_FORMATTER."TYPE",
 	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
 INTO Checksum();
+
+
+# The sink type is looked up as written, so "FileSink" does not resolve to the registered "File" sink and the
+# query must be rejected with an error instead of being silently accepted.
+SELECT ID, VALUE, TIMESTAMP
+FROM File(
+	'small/stream8.csv' AS "SOURCE".FILE_PATH,
+	'CSV' AS INPUT_FORMATTER."TYPE",
+	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+INTO FileSink();
+----
+ERROR 1000
