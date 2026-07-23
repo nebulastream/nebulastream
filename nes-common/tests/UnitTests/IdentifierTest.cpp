@@ -231,6 +231,18 @@ TEST_F(IdentifierTest, ParseEnforcesPreconditions)
     EXPECT_EQ(fmt::format("{}", parsed), "SOURCE.TeSt");
 }
 
+TEST_F(IdentifierTest, ReflectionCanonicalizesUnquotedAndPreservesQuotedIdentifiers)
+{
+    const ReflectionContext context{};
+    const auto reflected = context.reflect(QualifiedIdentifier::parse("source.\"field\""));
+    const auto deserialized = context.unreflect<QualifiedIdentifier>(reflected);
+
+    EXPECT_EQ(deserialized.begin()->getOriginalString(), "SOURCE");
+    EXPECT_FALSE(deserialized.begin()->isCaseSensitive());
+    EXPECT_EQ((deserialized.begin() + 1)->getOriginalString(), "\"field\"");
+    EXPECT_TRUE((deserialized.begin() + 1)->isCaseSensitive());
+}
+
 TEST_F(IdentifierTest, RangeConstructorFixedExtent)
 {
     const auto idA = Identifier::parse("alpha");

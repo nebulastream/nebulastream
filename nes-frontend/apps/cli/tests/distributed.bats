@@ -50,6 +50,13 @@ teardown()      { nes_distributed_teardown; }
   [ "$status" -eq 0 ]
 }
 
+@test "launch query with quoted identifiers and uppercase compatibility" {
+  setup_distributed tests/good/quoted-identifiers.yaml
+  run docker_nes_cli -t tests/good/quoted-identifiers.yaml start \
+    'SELECT "mixedValue" AS "projectedValue", A FROM "quotedSource" INTO "quotedSink"'
+  [ "$status" -eq 0 ]
+}
+
 @test "launch bad query from commandline" {
   setup_distributed tests/good/select-gen-into-void.yaml
   run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'selectaaa DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'

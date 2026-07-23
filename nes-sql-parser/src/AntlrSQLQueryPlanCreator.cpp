@@ -625,7 +625,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             helpers.top().windowAggs.pop_back();
             aggFunc.second = bindIdentifier(context);
             helpers.top().windowAggs.push_back(aggFunc);
-            helpers.top().addProjection(std::nullopt, UnboundFieldAccessLogicalFunction{aggFunc.second.value()});
+            helpers.top().addProjection(aggFunc.second, UnboundFieldAccessLogicalFunction{aggFunc.second.value()});
         }
         else
         {
@@ -825,20 +825,18 @@ void AntlrSQLQueryPlanCreator::exitAdvancebyParameter(AntlrSQLParser::AdvancebyP
 void AntlrSQLQueryPlanCreator::exitTimestampParameter(AntlrSQLParser::TimestampParameterContext* context)
 {
     PRECONDITION(
-        context->IDENTIFIER().size() == 1 || context->IDENTIFIER().size() == 2,
+        context->name.size() == 1 || context->name.size() == 2,
         "TimestampParameter must have either one or two identifiers, is the binder in sync with the grammar?");
-    if (context->IDENTIFIER().size() == 1)
+    if (context->name.size() == 1)
     {
-        helpers.top().windowTimestamp = Windowing::UnboundEventTimeCharacteristic{
-            .field = UnboundFieldAccessLogicalFunction{bindIdentifier(context->IDENTIFIER().at(0)->getText())}};
+        helpers.top().windowTimestamp
+            = Windowing::UnboundEventTimeCharacteristic{.field = UnboundFieldAccessLogicalFunction{bindIdentifier(context->name.at(0))}};
     }
-    else if (context->IDENTIFIER().size() == 2)
+    else if (context->name.size() == 2)
     {
         helpers.top().windowTimestamp = std::array<Windowing::UnboundTimeCharacteristic, 2>{
-            Windowing::UnboundEventTimeCharacteristic{
-                .field = UnboundFieldAccessLogicalFunction{bindIdentifier(context->IDENTIFIER().at(0)->getText())}},
-            Windowing::UnboundEventTimeCharacteristic{
-                .field = UnboundFieldAccessLogicalFunction{bindIdentifier(context->IDENTIFIER().at(1)->getText())}}};
+            Windowing::UnboundEventTimeCharacteristic{.field = UnboundFieldAccessLogicalFunction{bindIdentifier(context->name.at(0))}},
+            Windowing::UnboundEventTimeCharacteristic{.field = UnboundFieldAccessLogicalFunction{bindIdentifier(context->name.at(1))}}};
     }
     AntlrSQLBaseListener::exitTimestampParameter(context);
 }
