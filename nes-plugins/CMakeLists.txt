@@ -23,6 +23,7 @@ activate_optional_plugin("Sinks/VoidSink" ON)
 activate_optional_plugin("Sinks/MQTTSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
+activate_optional_plugin("Rules/RedundantUnionRemovalRule" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
