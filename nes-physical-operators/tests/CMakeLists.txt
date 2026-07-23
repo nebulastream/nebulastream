@@ -21,7 +21,7 @@ add_nes_physical_operator_test(AndOrPhysicalFunctionTest AndOrPhysicalFunctionTe
 add_nes_physical_operator_test(SliceAssignerTest SliceAssignerTest.cpp)
 add_nes_physical_operator_test(SliceCacheTest SliceCacheTest.cpp)
 
-if (ENABLE_IREE_TESTS)
+if (ENABLE_INFERENCE_TESTS)
     add_definitions(-DINFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata")
 
     function(add_nes_inference_physical_operator_test)

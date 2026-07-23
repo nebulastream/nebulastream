@@ -45,6 +45,7 @@
 #include <fmt/ranges.h>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <Model.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -256,13 +257,9 @@ ModelInfo toModelInfo(const RegisteredModel& model)
 ///
 /// The order matters:
 ///   1. Reject duplicate names before doing any work — the catalog does not
-///      replace an existing entry, and registration is not cheap (it reads
-///      the ONNX file, shells out to `iree-import-onnx`, and validates the
-///      declared schema against the model's tensor shape).
+///      replace an existing entry, and registration is not cheap
 ///   2. Hand the request to the catalog, which performs the remaining
-///      validation (file existence, ONNX-only, single tensor input/output,
-///      schema-vs-signature compatibility) and stores the resulting
-///      `RegisteredModel`.
+///      validation and stores the resulting `RegisteredModel`.
 std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::operator()(const CreateModelStatement& statement)
 {
     if (modelCatalog->hasModel(statement.name))

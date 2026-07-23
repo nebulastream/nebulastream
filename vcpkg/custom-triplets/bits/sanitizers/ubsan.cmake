@@ -21,3 +21,11 @@ if (PORT STREQUAL llvm)
     set(VCPKG_C_FLAGS "")
     set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Undefined" -DLLVM_REQUIRES_RTTI=ON)
 endif()
+
+# OpenVINO uses oneDNN's runtime-jitted CPU kernels that cannot be sanitized. It's memory management however can,
+# and because it allocates blocks lazily, during model compilation kernels attempt to write model weights into a
+# garbage address and that leads to a segfault.
+if (PORT STREQUAL openvino)
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+endif()
