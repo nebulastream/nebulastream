@@ -3,6 +3,9 @@ query:
     name: query1
   - query: SELECT DOUBLE AS "value" FROM GENERATOR_SOURCE INTO LOWERCASE_SINK
     name: query2
+  - query: SELECT DOUBLE AS "value" FROM GENERATOR_SOURCE INTO LOWERCASE_SINK
+    name: disabled_query
+    disabled: true
 
 sinks:
   - name: LOWERCASE_SINK

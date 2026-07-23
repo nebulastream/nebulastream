@@ -12,12 +12,12 @@
 #include <string_view>
 #include <unordered_map>
 
+#include <arv.h>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <arv.h>
 
 namespace NES
 {
@@ -48,6 +48,8 @@ public:
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
     void close() override;
+
+    [[nodiscard]] std::string_view getType() const override { return NAME; }
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 

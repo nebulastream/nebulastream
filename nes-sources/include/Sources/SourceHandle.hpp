@@ -24,6 +24,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <BackpressureChannel.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -46,6 +47,7 @@ class SourceHandle
 public:
     explicit SourceHandle(
         BackpressureListener backpressureListener,
+        QueryId queryId,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,

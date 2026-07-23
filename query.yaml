@@ -11,39 +11,42 @@ query:
       INTO video_pipe_sink;
   - name: rgb_jpg_stream
     # language=SQL
+    disabled: true
     query: |
       SELECT timestamp, width, height, pixel_format, to_base64(image_manip_yuyv_to_jpg(IMAGE, WIDTH, HEIGHT)) as image
       FROM video_pipe
       WHERE PIXEL_FORMAT = 34603058
       INTO rgb_video_pipe_sink;
-  #  - name: rgb_jpg_stream_mqtt
-  #    # language=SQL
-  #    query: |
-  #      SELECT timestamp as "timestamp", image as "image"
-  #      FROM rgb_video_pipe
-  #      INTO MQTT('rgb-image' AS "SINK"."TOPIC",
-  #                'localhost:8080' AS "SINK"."HOST",
-  #                'localhost:1883' AS "SINK"."SERVER_URI",
-  #                2 AS "SINK"."QOS",
-  #                'JSON' AS "SINK"."OUTPUT_FORMAT")
-  #  - name: rgb_face_jpg_stream_mqtt
-  #    # language=SQL
-  #    query: |
-  #      SELECT to_base64(image_manip_yuyv_to_jpg(image_manip_draw_rectangle(image, face), width, height)) as "image", timestamp as "timestamp"
-  #      FROM (
-  #        SELECT image, timestamp, height, width, image_manip_face_detection(image, width, height) as face
-  #        FROM video_pipe
-  #        WHERE PIXEL_FORMAT = 34603058
-  #      )
-  #      WHERE face IS NOT NULL
-  #      INTO MQTT(
-  #        'rgb-face-image' AS "SINK"."TOPIC",
-  #        'localhost:8080' AS "SINK"."HOST",
-  #        'localhost:1883' AS "SINK"."SERVER_URI",
-  #        2 AS "SINK"."QOS",
-  #        'JSON' AS "SINK"."OUTPUT_FORMAT",
-  #        'DROP_OUT_OF_ORDER' AS "SINK"."OUTPUT_ORDER"
-  #      )
+  - name: rgb_jpg_stream_mqtt
+    disabled: true
+    # language=SQL
+    query: |
+      SELECT timestamp as "timestamp", image as "image"
+      FROM rgb_video_pipe
+      INTO MQTT('rgb-image' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                2 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT")
+  - name: rgb_face_jpg_stream_mqtt
+    disabled: true
+    # language=SQL
+    query: |
+      SELECT to_base64(image_manip_yuyv_to_jpg(image_manip_draw_rectangle(image, face), width, height)) as "image", timestamp as "timestamp"
+      FROM (
+        SELECT image, timestamp, height, width, image_manip_face_detection(image, width, height) as face
+        FROM video_pipe
+        WHERE PIXEL_FORMAT = 34603058
+      )
+      WHERE face IS NOT NULL
+      INTO MQTT(
+        'rgb-face-image' AS "SINK"."TOPIC",
+        'localhost:8080' AS "SINK"."HOST",
+        'localhost:1883' AS "SINK"."SERVER_URI",
+        2 AS "SINK"."QOS",
+        'JSON' AS "SINK"."OUTPUT_FORMAT",
+        'DROP_OUT_OF_ORDER' AS "SINK"."OUTPUT_ORDER"
+      )
   - name: thermal_jpg_stream
     # language=SQL
     query: |
@@ -122,7 +125,7 @@ query:
           start AS timestamp, COUNT (*) AS number_of_samples, ARRAY_AGG(CASTTOTYPE(sample AS FLOAT32)) AS audio
           FROM audio_pipe
           WINDOW SLIDING(
-          timestamp, SIZE 1000000 MS, ADVANCE BY 100000 MS
+          timestamp, SIZE 1000000 MS, ADVANCE BY 250000 MS
           )
           )
       WHERE number_of_samples = 16000
@@ -151,37 +154,38 @@ query:
                 'localhost:1883' AS "SINK"."SERVER_URI",
                 0 AS "SINK"."QOS",
                 'JSON' AS "SINK"."OUTPUT_FORMAT");
-  #  - name: audio_label_detection_mqtt
-  #    # language=SQL
-  #    query: |
-  #      SELECT
-  #        timestamp AS "timestamp",
-  #        class_index AS "class_index",
-  #        label AS "label",
-  #        confidence AS "confidence",
-  #        noise_level AS "noise_level"
-  #      FROM (
-  #        SELECT
-  #          timestamp,
-  #          class_index,
-  #          confidence,
-  #          noise_level
-  #        FROM audio_label_detection_pipe
-  #      )
-  #      INNER JOIN TABLE (
-  #        SELECT
-  #          label_index,
-  #          label
-  #        FROM kws_labels
-  #      )
-  #      ON class_index = label_index
-  #      INTO MQTT(
-  #        'audio-label-detection' AS "SINK"."TOPIC",
-  #        'localhost:8080' AS "SINK"."HOST",
-  #        'localhost:1883' AS "SINK"."SERVER_URI",
-  #        0 AS "SINK"."QOS",
-  #        'JSON' AS "SINK"."OUTPUT_FORMAT"
-  #      );
+  - name: audio_label_detection_mqtt
+    disabled: true
+    # language=SQL
+    query: |
+      SELECT
+        timestamp AS "timestamp",
+        class_index AS "class_index",
+        label AS "label",
+        confidence AS "confidence",
+        noise_level AS "noise_level"
+      FROM (
+        SELECT
+          timestamp,
+          class_index,
+          confidence,
+          noise_level
+        FROM audio_label_detection_pipe
+      )
+      INNER JOIN TABLE (
+        SELECT
+          label_index,
+          label
+        FROM kws_labels
+      )
+      ON class_index = label_index
+      INTO MQTT(
+        'audio-label-detection' AS "SINK"."TOPIC",
+        'localhost:8080' AS "SINK"."HOST",
+        'localhost:1883' AS "SINK"."SERVER_URI",
+        0 AS "SINK"."QOS",
+        'JSON' AS "SINK"."OUTPUT_FORMAT"
+      );
   - name: audio_to_mfcc
     # language=SQL
     query: |
@@ -196,7 +200,7 @@ query:
           WINDOW SLIDING(
           timestamp, SIZE 1000 MS, ADVANCE BY 100 MS
           )
-          HAVING votes >= 5
+          HAVING votes >= 2
           )
           INNER JOIN TABLE (
           SELECT
@@ -209,23 +213,24 @@ query:
                 'localhost:1883' AS "SINK"."SERVER_URI",
                 0 AS "SINK"."QOS",
                 'JSON' AS "SINK"."OUTPUT_FORMAT")
-  #  - name: audio_mqtt_unsorted
-  #    # language=SQL
-  #    query: |
-  #      SELECT start as "timestamp_start", end as "timestamp_end", TO_BASE64(ARRAY_AGG_UNSORTED(sample)) AS "chunk"
-  #      FROM audio_pipe WINDOW SLIDING (timestamp, size 200ms, advance by 200ms)
-  #      INTO MQTT(
-  #        'audio_unsorted' AS "SINK"."TOPIC",
-  #        'localhost:8080' AS "SINK"."HOST",
-  #        'localhost:1883' AS "SINK"."SERVER_URI",
-  #        0 AS "SINK"."QOS",
-  #        'JSON' AS "SINK"."OUTPUT_FORMAT"
-  #      );
+  - name: audio_mqtt_unsorted
+    disabled: true
+    # language=SQL
+    query: |
+      SELECT start as "timestamp_start", end as "timestamp_end", TO_BASE64(ARRAY_AGG_UNSORTED(sample)) AS "chunk"
+      FROM audio_pipe WINDOW SLIDING (timestamp, size 200ms, advance by 200ms)
+      INTO MQTT(
+        'audio_unsorted' AS "SINK"."TOPIC",
+        'localhost:8080' AS "SINK"."HOST",
+        'localhost:1883' AS "SINK"."SERVER_URI",
+        0 AS "SINK"."QOS",
+        'JSON' AS "SINK"."OUTPUT_FORMAT"
+      );
   - name: audio_mqtt
     # language=SQL
     query: |
       SELECT start / 1000 as "timestamp_start", end / 1000 as "timestamp_end", TO_BASE64(ARRAY_AGG(sample)) AS "chunk"
-      FROM audio_pipe WINDOW SLIDING (timestamp, size 200000ms, advance by 200000ms)
+      FROM audio_pipe WINDOW TUMBLING (timestamp, size 200000ms)
       INTO MQTT('audio' AS "SINK"."TOPIC",
                 'localhost:8080' AS "SINK"."HOST",
                 'localhost:1883' AS "SINK"."SERVER_URI",

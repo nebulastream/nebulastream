@@ -30,6 +30,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
+#include <QueryId.hpp>
 #include <Thread.hpp>
 
 namespace NES
@@ -60,6 +61,7 @@ class SourceThread
 public:
     explicit SourceThread(
         BackpressureListener backpressureListener,
+        QueryId queryId,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<Source> sourceImplementation);
@@ -89,6 +91,7 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 
 protected:
+    QueryId queryId;
     OriginId originId;
     std::shared_ptr<AbstractBufferProvider> localBufferManager;
     std::unique_ptr<Source> sourceImplementation;

@@ -13,7 +13,9 @@
 */
 #include <PipeSource.hpp>
 
+#include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <ostream>
 #include <stop_token>
@@ -23,10 +25,11 @@
 #include <utility>
 #include <variant>
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <PipeService.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
@@ -41,10 +44,9 @@ PipeSource::PipeSource(const SourceDescriptor& sourceDescriptor)
 {
 }
 
-void PipeSource::open(std::shared_ptr<AbstractBufferProvider> provider)
+void PipeSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     NES_INFO("PipeSource: opening for pipe '{}'", pipeName);
-    bufferProvider = std::move(provider);
     queue = PipeService::instance().registerSource(pipeName, schema, queueCapacity);
     sequenceNumberOffset.reset();
 }
@@ -83,15 +85,34 @@ Source::FillTupleBufferResult PipeSource::fillTupleBuffer(TupleBuffer& tupleBuff
                     else
                     {
                         const TupleBuffer& srcBuffer = msg;
-                        /// Deep-copy the buffer including child buffers (for variable-sized data).
-                        tupleBuffer = deepCopyBuffer(srcBuffer, *bufferProvider);
+                        PRECONDITION(
+                            tupleBuffer.getBufferSize() >= srcBuffer.getBufferSize(),
+                            "Attempt to copy pipe buffer of size: {} into smaller buffer of size: {}",
+                            srcBuffer.getBufferSize(),
+                            tupleBuffer.getBufferSize());
+                        std::ranges::copy(
+                            srcBuffer.getAvailableMemoryArea<std::byte>(), tupleBuffer.getAvailableMemoryArea<std::byte>().begin());
+                        tupleBuffer.setWatermark(srcBuffer.getWatermark());
+                        tupleBuffer.setChunkNumber(srcBuffer.getChunkNumber());
+                        tupleBuffer.setCreationTimestampInMS(srcBuffer.getCreationTimestampInMS());
+                        tupleBuffer.setLastChunk(srcBuffer.isLastChunk());
+
+                        for (size_t childIdx = 0; childIdx < srcBuffer.getNumberOfChildBuffers(); ++childIdx)
+                        {
+                            const VariableSizedAccess::Index childIndex{childIdx};
+                            auto childBuffer = srcBuffer.loadChildBuffer(childIndex);
+                            const auto storedIndex = tupleBuffer.storeChildBuffer(childBuffer);
+                            INVARIANT(storedIndex == childIndex, "Child buffer index: {}, does not match index: {}", childIdx, storedIndex);
+                        }
+
                         if (!sequenceNumberOffset)
                         {
                             sequenceNumberOffset = srcBuffer.getSequenceNumber().getRawValue() - SequenceNumber::INITIAL;
                         }
 
                         lastDeliveredWasLastChunk = srcBuffer.isLastChunk();
-                        tupleBuffer.setSequenceNumber(SequenceNumber(srcBuffer.getSequenceNumber().getRawValue() - sequenceNumberOffset.value()));
+                        tupleBuffer.setSequenceNumber(
+                            SequenceNumber(srcBuffer.getSequenceNumber().getRawValue() - sequenceNumberOffset.value()));
 
                         /// Return numberOfTuples as the "byte count". The SourceThread always calls
                         /// setNumberOfTuples(getNumberOfBytes()), overwriting whatever we set.

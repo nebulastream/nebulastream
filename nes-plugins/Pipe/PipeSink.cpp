@@ -23,6 +23,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <Util/Variant.hpp>
 #include <cpptrace/from_current.hpp>
 #include <ErrorHandling.hpp>
@@ -131,7 +132,10 @@ Sink::BufferResult PipeSink::executeBuffer(const TupleBuffer& inputTupleBuffer, 
 
         if (buffered.empty())
         {
-            sinkHandle->setConsumerQueueFull(false);
+            if (sinkHandle->setConsumerQueueFull(false))
+            {
+                NES_WARNING("PipeSink: consumer queues available again on pipe '{}'; backpressure released", pipeName);
+            }
             return BufferResult::COMPLETED;
         }
         currentBuffer = std::move(buffered.front());
@@ -178,24 +182,25 @@ bool PipeSink::tryDeliver(const TupleBuffer& inputTupleBuffer)
                 queueState.pending.clear();
             }
 
-            for (const auto& consumer : queueState.active)
+            for (const auto& [index, consumer] : NES::views::enumerate(queueState.active))
             {
                 if (seqNum < consumer.activatedAtSeq
-                    || std::ranges::find(pendingDelivery->deliveredConsumers, consumer.queue)
-                        != pendingDelivery->deliveredConsumers.end())
+                    || std::ranges::find(pendingDelivery->deliveredConsumers, consumer.queue) != pendingDelivery->deliveredConsumers.end())
                 {
                     continue;
                 }
-                if (!consumer.queue->write(PipeChannelMessage{inputTupleBuffer}))
+                if (!consumer.queue->writeIfNotFull(PipeChannelMessage{inputTupleBuffer}))
                 {
                     if (firstAttempt)
                     {
-                        NES_WARNING(
-                            "PipeSink: consumer queue full on pipe '{}' (capacity={}); applying backpressure and retrying buffer {}-{}",
-                            pipeName,
-                            consumer.queue->capacity(),
-                            seqNum,
-                            inputTupleBuffer.getChunkNumber());
+                    NES_WARNING(
+                        "PipeSink: consumer ({}){} queue full on pipe '{}' (capacity={}); applying backpressure and retrying buffer {}-{}",
+                        fmt::ptr(consumer.queue),
+                        index,
+                        pipeName,
+                        consumer.queue->capacity(),
+                        seqNum,
+                        inputTupleBuffer.getChunkNumber());
                     }
                     delivered = false;
                     return;

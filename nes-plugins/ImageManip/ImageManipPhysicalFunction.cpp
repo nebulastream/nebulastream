@@ -902,7 +902,6 @@ VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_
 
             if (!faces.empty())
             {
-                NES_INFO("Face at ({},{}) Width: {} Height: {}", faces[0].x, faces[0].y, faces[0].width, faces[0].height);
                 r.unpacked.x = faces[0].x;
                 r.unpacked.y = faces[0].y;
                 r.unpacked.width = faces[0].width;

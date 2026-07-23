@@ -105,6 +105,7 @@ EOF
   sync_workdir
   assert_file_line_count results.csv 400000 --ignore-empty-lines
   grep -q "Backpressure acquired:" worker-1/singleNodeWorker.log
+  grep -q "Backpressure released:" worker-1/singleNodeWorker.log
 }
 
 @test "fails query when broker stops during processing" {

@@ -156,6 +156,7 @@ struct NamedQuery
 {
     std::optional<std::string> name;
     std::string query;
+    bool disabled = false;
 };
 
 struct QueryConfig
@@ -425,9 +426,10 @@ struct convert<NES::CLI::NamedQuery>
         }
         else if (node.IsMap())
         {
-            acceptKeys({"query", "name"}, node);
+            acceptKeys({"query", "name", "disabled"}, node);
             rhs.name = getOptional<std::string>(node, "name");
             rhs.query = node["query"].as<std::string>();
+            rhs.disabled = getOrDefault<bool>(node, "disabled", false);
             return true;
         }
         return false;
@@ -569,7 +571,10 @@ std::vector<NES::CLI::NamedQuery> loadQueries(
     {
         for (const auto& query : topologyConfig.query)
         {
-            queries.emplace_back(query);
+            if (!query.disabled)
+            {
+                queries.emplace_back(query);
+            }
         }
         NES_DEBUG("loaded {} queries from topology file", queries.size());
     }
@@ -750,7 +755,8 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     }
     else
     {
-        state = topologyConfig.query | std::views::filter([](const auto& namedQuery) { return namedQuery.name.has_value(); })
+        state = topologyConfig.query
+            | std::views::filter([](const auto& namedQuery) { return namedQuery.name.has_value() && !namedQuery.disabled; })
             | std::views::transform([](const auto& namedQuery) { return namedQuery.name.value(); })
             | std::views::transform(
                     [&stateBackend](const std::string& queryId) -> std::pair<NES::DistributedQueryId, NES::DistributedQuery>
@@ -829,10 +835,10 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     {
         NES::CLI::QueryStateBackend stateBackend;
         NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
-        for (const auto& [name, query] : queries)
+        for (const auto& namedQuery : queries)
         {
-            auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-            auto id = name.transform([](const auto& name) { return NES::DistributedQueryId(name); });
+            auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(namedQuery.query);
+            auto id = namedQuery.name.transform([](const auto& name) { return NES::DistributedQueryId(name); });
             auto result = queryStatementHandler(NES::QueryStatement{.plan = plan, .id = id});
             if (result)
             {
@@ -850,15 +856,15 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     else
     {
         NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
-        for (const auto& [name, query] : queries)
+        for (const auto& namedQuery : queries)
         {
-            auto result
-                = queryStatementHandler(NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            auto result = queryStatementHandler(
+                NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(namedQuery.query)));
             if (result)
             {
-                if (name.has_value())
+                if (namedQuery.name.has_value())
                 {
-                    std::cout << name.value() << ": ";
+                    std::cout << namedQuery.name.value() << ": ";
                 }
                 std::cout << result->explainString << "\n";
             }

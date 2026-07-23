@@ -186,6 +186,8 @@ public:
     /// Close TCP connection.
     void close() override;
 
+    [[nodiscard]] std::string_view getType() const override { return name(); }
+
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;

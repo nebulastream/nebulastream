@@ -131,8 +131,11 @@ struct ConfigParametersMQTTSink
     static inline const DescriptorConfig::ConfigParameter<int32_t> MAX_OUTSTANDING_MESSAGES{
         "MAX_OUTSTANDING_MESSAGES",
         128,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(MAX_OUTSTANDING_MESSAGES, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int32_t>
+        {
+            const auto value = DescriptorConfig::tryGet(MAX_OUTSTANDING_MESSAGES, config);
+            return value && *value > 0 ? value : std::nullopt;
+        }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(

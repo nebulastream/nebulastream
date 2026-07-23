@@ -287,6 +287,7 @@ wait_for_status() {
 
   sync_workdir
   grep -q "PipeSink: consumer queue full" worker-node/singleNodeWorker.log
+  grep -q "PipeSink: consumer queues available again" worker-node/singleNodeWorker.log
 }
 
 @test "pipe: generator feeds 3 pipe sources" {

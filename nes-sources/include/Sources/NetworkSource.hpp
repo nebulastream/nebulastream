@@ -20,6 +20,7 @@
 #include <ostream>
 #include <stop_token>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Validation/EndpointValidation.hpp>
@@ -57,6 +58,8 @@ public:
     void close() override;
 
     [[nodiscard]] bool addsMetadata() const override { return true; }
+
+    [[nodiscard]] std::string_view getType() const override { return name(); }
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 

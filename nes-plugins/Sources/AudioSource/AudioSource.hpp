@@ -57,6 +57,8 @@ public:
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
     void close() override;
 
+    [[nodiscard]] std::string_view getType() const override { return NAME; }
+
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:

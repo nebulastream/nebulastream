@@ -52,30 +52,27 @@ void PipeService::SinkHandle::removeConsumer(const std::shared_ptr<PipeQueue>& q
         });
 }
 
-void PipeService::SinkHandle::setConsumerQueueFull(bool full)
+bool PipeService::SinkHandle::setConsumerQueueFull(bool full)
 {
-    queues.withWLock(
+    return queues.withWLock(
         [&](auto& queues)
         {
             queues.consumerQueueFull = full;
-            updateBackpressure(queues);
+            return updateBackpressure(queues);
         });
 }
 
-void PipeService::SinkHandle::updateBackpressure(const Queues& queues) const
+bool PipeService::SinkHandle::updateBackpressure(const Queues& queues) const
 {
     if (!bpController)
     {
-        return;
+        return false;
     }
     if (queues.consumerQueueFull || (queues.active.empty() && queues.pending.empty()))
     {
-        bpController->applyPressure();
+        return bpController->applyPressure();
     }
-    else
-    {
-        bpController->releasePressure();
-    }
+    return bpController->releasePressure();
 }
 
 /// --- PipeService ---
