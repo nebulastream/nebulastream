@@ -329,7 +329,7 @@ NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> parseFieldNames(const st
                   {
                       throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
                   }
-                  return NES::UnqualifiedUnboundField{NES::Identifier::parse(std::string(nameTrimmed)), dataType};
+                  return NES::UnqualifiedUnboundField{NES::Identifier::parse(fmt::format("\"{}\"", nameTrimmed)), dataType};
               });
     return fields | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 }
@@ -433,9 +433,28 @@ private:
 
 ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResultSchema, const ActualResultSchema& actualResultSchema)
 {
+    const auto fieldsMatch = [](const auto& expectedField, const auto& actualField)
+    {
+        if (expectedField.getDataType() != actualField.getDataType())
+        {
+            return false;
+        }
+
+        const auto& expectedIdentifier = *expectedField.getFullyQualifiedName().begin();
+        const auto& actualIdentifier = *actualField.getFullyQualifiedName().begin();
+        if (expectedIdentifier.isCaseSensitive())
+        {
+            return expectedIdentifier == actualIdentifier;
+        }
+
+        /// CSV headers do not retain whether an identifier was quoted. Some sinks also change the
+        /// display case of unquoted names, so compare those names using SQL's canonical form.
+        return expectedIdentifier.asCanonicalString() == NES::toUpperCase(actualIdentifier.asCanonicalString());
+    };
+
     ExpectedToActualFieldMap expectedToActualFieldMap{};
     /// Check if schemas are equal. If not populate the error stream
-    if (/* hasMatchingSchema */ expectedResultSchema.getRawValue() != actualResultSchema.getRawValue())
+    if (not std::ranges::equal(expectedResultSchema.getRawValue(), actualResultSchema.getRawValue(), fieldsMatch))
     {
         expectedToActualFieldMap.schemaErrorStream << fmt::format(
             "\n{} != {}", fmt::join(expectedResultSchema.getRawValue(), ", "), fmt::join(actualResultSchema.getRawValue(), ", "));
@@ -452,7 +471,7 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
         for (auto it = begin; it != end; ++it)
         {
             const auto idx = static_cast<size_t>(std::distance(begin, it));
-            if (*it == expectedField and not matchedActualResultFields.contains(idx))
+            if (fieldsMatch(expectedField, *it) and not matchedActualResultFields.contains(idx))
             {
                 matchingFieldIt = it;
                 break;
