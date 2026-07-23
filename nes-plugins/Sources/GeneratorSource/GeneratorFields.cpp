@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -25,6 +26,7 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -43,20 +45,12 @@ SequenceField::SequenceField(const FieldType start, const FieldType end, const F
 {
 }
 
-void SequenceField::validate(std::string_view rawSchemaLine)
+std::expected<void, Exception> SequenceField::validate(std::string_view rawSchemaLine)
 {
-    auto validateParameter = []<typename T>(std::string_view parameter, std::string_view name)
-    {
-        const auto opt = from_chars<T>(parameter);
-        if (!opt)
-        {
-            throw InvalidConfigParameter("Could not parse {} as SequenceField {}!", parameter, name);
-        }
-    };
     const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() != NUM_PARAMETERS_SEQUENCE_FIELD)
     {
-        throw InvalidConfigParameter("Number of SequenceField parameters does not match! {}", rawSchemaLine);
+        return std::unexpected(InvalidConfigParameter("Number of SequenceField parameters does not match! {}", rawSchemaLine));
     }
     const auto type = parameters[1];
     const auto start = parameters[2];
@@ -66,87 +60,55 @@ void SequenceField::validate(std::string_view rawSchemaLine)
     const auto dataType = DataTypeProvider::tryProvideDataType(std::string{type});
     if (not dataType.has_value())
     {
-        throw InvalidConfigParameter("Invalid SequenceField type of {}!", type);
+        return std::unexpected(InvalidConfigParameter("Invalid SequenceField type of {}!", type));
     }
+
+    const auto validateParameters = [&]<typename T>() -> std::expected<void, Exception>
+    {
+        const auto validateParameter = [](const std::string_view parameter, const std::string_view name) -> std::expected<void, Exception>
+        {
+            if (not from_chars<T>(parameter).has_value())
+            {
+                return std::unexpected(InvalidConfigParameter("Could not parse {} as SequenceField {}!", parameter, name));
+            }
+            return {};
+        };
+        return validateParameter(start, "start")
+            .and_then([&] { return validateParameter(end, "end"); })
+            .and_then([&] { return validateParameter(step, "step"); });
+    };
+
     switch (dataType.value().type)
     {
-        case DataType::Type::UINT8: {
-            validateParameter.operator()<uint8_t>(start, "start");
-            validateParameter.operator()<uint8_t>(end, "end");
-            validateParameter.operator()<uint8_t>(step, "step");
-            break;
-        }
-        case DataType::Type::UINT16: {
-            validateParameter.operator()<uint16_t>(start, "start");
-            validateParameter.operator()<uint16_t>(end, "end");
-            validateParameter.operator()<uint16_t>(step, "step");
-            break;
-        }
-        case DataType::Type::UINT32: {
-            validateParameter.operator()<uint32_t>(start, "start");
-            validateParameter.operator()<uint32_t>(end, "end");
-            validateParameter.operator()<uint32_t>(step, "step");
-            break;
-        }
-        case DataType::Type::UINT64: {
-            validateParameter.operator()<uint64_t>(start, "start");
-            validateParameter.operator()<uint64_t>(end, "end");
-            validateParameter.operator()<uint64_t>(step, "step");
-            break;
-        }
-        case DataType::Type::INT8: {
-            validateParameter.operator()<int8_t>(start, "start");
-            validateParameter.operator()<int8_t>(end, "end");
-            validateParameter.operator()<int8_t>(step, "step");
-            break;
-        }
-        case DataType::Type::INT16: {
-            validateParameter.operator()<int16_t>(start, "start");
-            validateParameter.operator()<int16_t>(end, "end");
-            validateParameter.operator()<int16_t>(step, "step");
-            break;
-        }
-        case DataType::Type::INT32: {
-            validateParameter.operator()<int32_t>(start, "start");
-            validateParameter.operator()<int32_t>(end, "end");
-            validateParameter.operator()<int32_t>(step, "step");
-            break;
-        }
-        case DataType::Type::INT64: {
-            validateParameter.operator()<int64_t>(start, "start");
-            validateParameter.operator()<int64_t>(end, "end");
-            validateParameter.operator()<int64_t>(step, "step");
-            break;
-        }
-        case DataType::Type::FLOAT32: {
-            validateParameter.operator()<float>(start, "start");
-            validateParameter.operator()<float>(end, "end");
-            validateParameter.operator()<float>(step, "step");
-            break;
-        }
-        case DataType::Type::FLOAT64: {
-            validateParameter.operator()<double>(start, "start");
-            validateParameter.operator()<double>(end, "end");
-            validateParameter.operator()<double>(step, "step");
-            break;
-        }
-        case DataType::Type::BOOLEAN: {
-            validateParameter.operator()<bool>(start, "start");
-            validateParameter.operator()<bool>(end, "end");
-            validateParameter.operator()<bool>(step, "step");
-            break;
-        }
-        case DataType::Type::CHAR: {
-            validateParameter.operator()<char>(start, "start");
-            validateParameter.operator()<char>(end, "end");
-            validateParameter.operator()<char>(step, "step");
-            break;
-        }
+        case DataType::Type::UINT8:
+            return validateParameters.operator()<uint8_t>();
+        case DataType::Type::UINT16:
+            return validateParameters.operator()<uint16_t>();
+        case DataType::Type::UINT32:
+            return validateParameters.operator()<uint32_t>();
+        case DataType::Type::UINT64:
+            return validateParameters.operator()<uint64_t>();
+        case DataType::Type::INT8:
+            return validateParameters.operator()<int8_t>();
+        case DataType::Type::INT16:
+            return validateParameters.operator()<int16_t>();
+        case DataType::Type::INT32:
+            return validateParameters.operator()<int32_t>();
+        case DataType::Type::INT64:
+            return validateParameters.operator()<int64_t>();
+        case DataType::Type::FLOAT32:
+            return validateParameters.operator()<float>();
+        case DataType::Type::FLOAT64:
+            return validateParameters.operator()<double>();
+        case DataType::Type::BOOLEAN:
+            return validateParameters.operator()<bool>();
+        case DataType::Type::CHAR:
+            return validateParameters.operator()<char>();
         case DataType::Type::UNDEFINED:
-        case DataType::Type::VARSIZED: {
-            throw InvalidConfigParameter("Could not parse {} as SequenceField!", type);
-        }
+        case DataType::Type::VARSIZED:
+            return std::unexpected(InvalidConfigParameter("Could not parse {} as SequenceField!", type));
     }
+    std::unreachable();
 }
 
 template <typename T>
@@ -357,12 +319,12 @@ std::ostream& NormalDistributionField::generate(std::ostream& os, std::mt19937& 
     return os;
 }
 
-void NormalDistributionField::validate(std::string_view rawSchemaLine)
+std::expected<void, Exception> NormalDistributionField::validate(std::string_view rawSchemaLine)
 {
     const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() < NUM_PARAMETERS_NORMAL_DISTRIBUTION_FIELD)
     {
-        throw InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);
+        return std::unexpected(InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine));
     }
 
     const auto typeParam = parameters[1];
@@ -372,20 +334,20 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     if (const auto type = magic_enum::enum_cast<NES::DataType::Type>(typeParam); not type.has_value())
     {
         constexpr auto allDataTypes = magic_enum::enum_names<DataType::Type>();
-        NES_ERROR("Invalid Type in NORMAL_DISTRIBUTION, supported are only {} {}", fmt::join(allDataTypes, ","), rawSchemaLine);
-        throw InvalidConfigParameter(
-            "Invalid Type in NORMAL_DISTRIBUTION, supported are only {}: {}", fmt::join(allDataTypes, ","), rawSchemaLine);
+        return std::unexpected(InvalidConfigParameter(
+            "Invalid Type in NORMAL_DISTRIBUTION, supported are only {}: {}", fmt::join(allDataTypes, ","), rawSchemaLine));
     }
     const auto parsedMean = from_chars<double>(mean);
     const auto parsedStdDev = from_chars<double>(stddev);
     if (!parsedMean || !parsedStdDev)
     {
-        throw InvalidConfigParameter("Can not parse mean or stddev in {}", rawSchemaLine);
+        return std::unexpected(InvalidConfigParameter("Can not parse mean or stddev in {}", rawSchemaLine));
     }
     if (parsedStdDev < 0.0)
     {
-        throw InvalidConfigParameter("Stddev must be non-negative");
+        return std::unexpected(InvalidConfigParameter("Stddev must be non-negative, but got {} in {}", *parsedStdDev, rawSchemaLine));
     }
+    return {};
 }
 
 WordListField::WordListField(std::string_view rawSchemaLine)
@@ -421,24 +383,25 @@ std::ostream& WordListField::generate(std::ostream& os, std::mt19937& randEng)
     return os;
 }
 
-void WordListField::validate(std::string_view rawSchemaLine)
+std::expected<void, Exception> WordListField::validate(std::string_view rawSchemaLine)
 {
     const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() != NUM_PARAMETERS_WORDLIST_FIELD)
     {
-        throw InvalidConfigParameter("Invalid WORDLIST schema line: {}", rawSchemaLine);
+        return std::unexpected(InvalidConfigParameter("Invalid WORDLIST schema line: {}", rawSchemaLine));
     }
 
     const auto path = std::filesystem::path(SYSTEST_DATA_DIR) / std::string(parameters[1]);
     if (not std::filesystem::exists(path))
     {
-        throw InvalidConfigParameter("Invalid WORDLIST schema! Path {} does not exist! Schema line: {}", path, rawSchemaLine);
+        return std::unexpected(
+            InvalidConfigParameter("Invalid WORDLIST schema! Path {} does not exist! Schema line: {}", path, rawSchemaLine));
     }
 
     std::ifstream wordListFile(std::string(path), std::ios::in);
     if (not wordListFile.is_open() or wordListFile.fail())
     {
-        throw InvalidConfigParameter("Failed to open file containing the word list at {}", path);
+        return std::unexpected(InvalidConfigParameter("Failed to open file containing the word list at {}", path));
     }
 
     size_t wordCount = 0;
@@ -453,9 +416,9 @@ void WordListField::validate(std::string_view rawSchemaLine)
 
     if (wordCount == 0)
     {
-        throw InvalidConfigParameter("Invalid WORDLIST schema! File at {} contains no words!", path);
+        return std::unexpected(InvalidConfigParameter("Invalid WORDLIST schema! File at {} contains no words!", path));
     }
-    wordListFile.close();
+    return {};
 }
 
 RandomStrField::RandomStrField(std::string_view rawSchemaLine)
@@ -501,12 +464,12 @@ RandomStrField::RandomStrField(std::string_view rawSchemaLine)
     this->maxLength = parsedMaxLength.value();
 }
 
-void RandomStrField::validate(std::string_view rawSchemaLine)
+std::expected<void, Exception> RandomStrField::validate(std::string_view rawSchemaLine)
 {
     const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() != NUM_PARAMETERS_RANDOMSTR_FIELD)
     {
-        throw InvalidConfigParameter("Invalid RANDOMSTR schema line: {}", rawSchemaLine);
+        return std::unexpected(InvalidConfigParameter("Invalid RANDOMSTR schema line: {}", rawSchemaLine));
     }
     const auto minLength = parameters[1];
     const auto maxLength = parameters[2];
@@ -516,38 +479,41 @@ void RandomStrField::validate(std::string_view rawSchemaLine)
 
     if (not parsedMinLength)
     {
-        throw InvalidConfigParameter("Invalid RANDOMSTR parameter MINLENGTH! Cannot parse MINLENGTH! Schema line: {}", rawSchemaLine);
+        return std::unexpected(
+            InvalidConfigParameter("Invalid RANDOMSTR parameter MINLENGTH! Cannot parse MINLENGTH! Schema line: {}", rawSchemaLine));
     }
     if (not parsedMaxLength)
     {
-        throw InvalidConfigParameter("Invalid RANDOMSTR parameter MAXLENGTH! Cannot parse MAXLENGTH! Schema line: {}", rawSchemaLine);
+        return std::unexpected(
+            InvalidConfigParameter("Invalid RANDOMSTR parameter MAXLENGTH! Cannot parse MAXLENGTH! Schema line: {}", rawSchemaLine));
     }
 
     if (parsedMinLength <= 0)
     {
-        throw InvalidConfigParameter(
+        return std::unexpected(InvalidConfigParameter(
             "Invaild RANDOMSTR parameter MINLENGTH: {} <= 0! The MINLENGTH must be larger than 0! Schema line: {}",
             parsedMinLength,
-            rawSchemaLine);
+            rawSchemaLine));
     }
     if (parsedMaxLength <= 0)
     {
-        throw InvalidConfigParameter(
+        return std::unexpected(InvalidConfigParameter(
             "Invaild RANDOMSTR parameter MAXLENGTH: {} <= 0! The MAXLENGTH must be larger than 0! Schema line: {}",
             parsedMaxLength,
-            rawSchemaLine);
+            rawSchemaLine));
     }
 
     if (parsedMinLength > parsedMaxLength)
     {
-        throw InvalidConfigParameter(
+        return std::unexpected(InvalidConfigParameter(
             "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema "
             "line: "
             "{}",
             parsedMinLength,
             parsedMaxLength,
-            rawSchemaLine);
+            rawSchemaLine));
     }
+    return {};
 }
 
 std::ostream& RandomStrField::generate(std::ostream& os, std::mt19937& randEng)
@@ -571,5 +537,34 @@ std::ostream& RandomStrField::generate(std::ostream& os, std::mt19937& randEng)
     return os;
 }
 
+std::expected<void, Exception> validateSchemaLine(const std::string_view line)
+{
+    const auto foundIdentifier = magic_enum::enum_cast<FieldIdentifier>(NES::toUpperCase(line.substr(0, line.find_first_of(' '))));
+    for (const auto& [identifier, validator] : Validators)
+    {
+        if (identifier == foundIdentifier)
+        {
+            return validator(line);
+        }
+    }
+    return std::unexpected(
+        InvalidConfigParameter("Cannot identify the type of field in \"{}\", does the field have a registered validator?", line));
+}
+
+std::expected<void, Exception> validateSchema(const std::string_view rawSchema)
+{
+    if (rawSchema.empty())
+    {
+        return std::unexpected(InvalidConfigParameter("Generator schema cannot be empty!"));
+    }
+    for (const auto lines = splitOnMultipleDelimiters(rawSchema, {',', '\n'}); const auto& line : lines)
+    {
+        if (auto validLine = validateSchemaLine(trimWhiteSpaces(line)); not validLine.has_value())
+        {
+            return validLine;
+        }
+    }
+    return {};
+}
 
 }

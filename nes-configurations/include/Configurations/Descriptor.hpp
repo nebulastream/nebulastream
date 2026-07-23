@@ -16,6 +16,7 @@
 
 #include <concepts>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -149,10 +150,13 @@ public:
     /// Iterates over all parameters in a user provided config and checks if they are supported by a specific config.
     /// Then iterates over all supported config parameters, validates and formats the strings provided by the user.
     /// Uses default parameters if the user did not specify a parameter.
-    /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
+    /// Returns an error if a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter
+    /// was encountered. Guaranteed not to throw for these cases: per-parameter validators of plugins that still throw
+    /// (instead of returning nullopt) are caught here and reported as the error of the returned expected.
     template <typename SpecificConfiguration>
     requires DescriptorConfigurationConstraints::HasParameterMap<SpecificConfiguration>
-    static Config validateAndFormat(std::unordered_map<std::string, std::string> config, const std::string_view implementationName)
+    static std::expected<Config, Exception>
+    tryValidateAndFormat(std::unordered_map<std::string, std::string> config, const std::string_view implementationName)
     {
         auto validatedConfig = Config{};
 
@@ -161,7 +165,7 @@ public:
         {
             if (not SpecificConfiguration::parameterMap.contains(key))
             {
-                throw InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key));
+                return std::unexpected(InvalidConfigParameter("Unknown configuration parameter: {}.", key));
             }
         }
         /// Next, try to validate all config parameters.
@@ -175,17 +179,40 @@ public:
                     validatedConfig.emplace(key, defaultValue.value());
                     continue;
                 }
-                throw InvalidConfigParameter(
-                    fmt::format("Non-default parameter {} not specified in config of {}", key, implementationName));
+                return std::unexpected(
+                    InvalidConfigParameter("Non-default parameter {} not specified in config of {}", key, implementationName));
             }
-            if (const auto validatedParameter = configParameter.validate(config); validatedParameter.has_value())
+            try
             {
-                validatedConfig.emplace(key, validatedParameter.value());
-                continue;
+                if (const auto validatedParameter = configParameter.validate(config); validatedParameter.has_value())
+                {
+                    validatedConfig.emplace(key, validatedParameter.value());
+                    continue;
+                }
+                return std::unexpected(
+                    InvalidConfigParameter("Failed validation of config parameter: {}, in: {}", key, implementationName));
             }
-            throw InvalidConfigParameter(fmt::format("Failed validation of config parameter: {}, in: {}", key, implementationName));
+            catch (const Exception& e)
+            {
+                /// Uphold the non-throwing contract even for validators that throw instead of returning nullopt.
+                return std::unexpected(e);
+            }
         }
         return validatedConfig;
+    }
+
+    /// Throwing variant of tryValidateAndFormat.
+    /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
+    template <typename SpecificConfiguration>
+    requires DescriptorConfigurationConstraints::HasParameterMap<SpecificConfiguration>
+    static Config validateAndFormat(std::unordered_map<std::string, std::string> config, const std::string_view implementationName)
+    {
+        auto validatedConfig = tryValidateAndFormat<SpecificConfiguration>(std::move(config), implementationName);
+        if (not validatedConfig.has_value())
+        {
+            throw std::move(validatedConfig).error();
+        }
+        return std::move(validatedConfig).value();
     }
 
 private:
