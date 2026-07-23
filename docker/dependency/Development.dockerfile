@@ -114,16 +114,8 @@ RUN python3 -m venv /opt/iree && \
     ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
     iree-compile --version
 
-# Pre-clone Corrosion at the exact ref CMake will request, so offline configures inside the
-# container can fall back to it when GitHub is unreachable. EnableRust.cmake probes GitHub
-# first and only uses CORROSION_SRC when the probe fails. Tracks the nebulastream fork that
-# avoids always-dirty Rust target rebuilds.
-ENV CORROSION_GIT_REPO=https://github.com/nebulastream/corrosion.git \
-    CORROSION_VERSION=v0.6.1-always-dirty-fix \
-    CORROSION_SRC=/opt/corrosion
-RUN git clone --depth 1 --branch ${CORROSION_VERSION} \
-        ${CORROSION_GIT_REPO} ${CORROSION_SRC} && \
-    chmod -R a+rX ${CORROSION_SRC}
+# Corrosion is vendored in-tree at cmake/corrosion (see cmake/corrosion/VENDORING.md), so there is
+# no Corrosion pre-clone / CORROSION_SRC fallback to bake into the image anymore.
 
 # Pre-fetch every crate pinned in nes-network/Cargo.lock into $CARGO_HOME so cargo can build
 # offline. Only manifests + lockfile are copied (filtered by .dockerignore); stub lib sources
@@ -137,19 +129,18 @@ RUN set -eux; \
         echo 'fn _stub() {}' > "$d/lib.rs"; \
     done; \
     cd /tmp/nes-network && cargo fetch --locked; \
-    # Corrosion runs `cargo install cxxbridge-cmd --version <cxx-version> --locked` at build \
-    # time to generate the cxx C++/Rust bindings. Pre-install it here with the same `--locked` \
-    # so its .crate sources and the transitive deps pinned by cxxbridge-cmd's bundled \
-    # Cargo.lock end up in $CARGO_HOME for offline builds. Without `--locked` here, cargo \
-    # resolves transitive deps freely and may cache different patch versions than the \
-    # `--locked` install at runtime asks for, leading to offline download failures. \
-    # The version is read from Cargo.lock so the cxxbridge-cmd version always matches the \
-    # workspace-pinned cxx crate. \
+    # Corrosion (corrosion_add_cxxbridge) needs the `cxxbridge` binary at build time. At runtime it \
+    # runs `find_program(cxxbridge ...)` and only falls back to `cargo install cxxbridge-cmd --version \
+    # <cxx-version> --locked` -- which contacts crates.io and therefore breaks the offline build -- if \
+    # the binary is not already on PATH. So install it here into $CARGO_HOME/bin (which is on PATH) at \
+    # the exact cxx version pinned in Cargo.lock, so corrosion finds it and skips the network install. \
+    # `--locked` also lands its .crate sources in $CARGO_HOME. \
     CXX_VERSION=$(awk '/^name = "cxx"$/{f=1; next} f && /^version = /{gsub(/"/,"",$3); print $3; exit}' Cargo.lock); \
     test -n "$CXX_VERSION"; \
     echo "Pre-installing cxxbridge-cmd ${CXX_VERSION}"; \
-    cargo install cxxbridge-cmd --version "${CXX_VERSION}" --locked --root /tmp/cxxbridge-stage; \
-    rm -rf /tmp/cxxbridge-stage; \
+    cargo install cxxbridge-cmd --version "${CXX_VERSION}" --locked; \
+    command -v cxxbridge; \
+    cxxbridge --version; \
     cd / && rm -rf /tmp/nes-network; \
     chmod -R a+rwX ${CARGO_HOME}
 
