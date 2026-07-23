@@ -17,6 +17,7 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <vector>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
@@ -34,7 +35,7 @@ public:
     [[nodiscard]] std::set<std::type_index> needs() const;
 
 private:
-    [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;
+    [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children) const;
 };
 
 static_assert(RuleConcept<DecideMemoryLayoutRule, LogicalPlan>);

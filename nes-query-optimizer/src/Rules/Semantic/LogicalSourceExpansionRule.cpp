@@ -32,6 +32,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRewriteUtils.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -39,11 +40,9 @@ namespace NES
 
 namespace
 {
-LogicalOperator applyRecursive(const LogicalOperator& visiting, const SourceCatalog& sourceCatalog)
+LogicalOperator
+expandLogicalSource(const LogicalOperator& visiting, std::vector<LogicalOperator> children, const SourceCatalog& sourceCatalog)
 {
-    auto children = visiting.getChildren()
-        | std::views::transform([&sourceCatalog](const auto& child) { return applyRecursive(child, sourceCatalog); })
-        | std::ranges::to<std::vector>();
     if (const auto sourceNameOperator = visiting.tryGetAs<SourceNameLogicalOperator>())
     {
         const auto logicalSourceOpt = sourceCatalog.getLogicalSource(sourceNameOperator.value()->getLogicalSourceName());
@@ -82,8 +81,11 @@ LogicalOperator applyRecursive(const LogicalOperator& visiting, const SourceCata
 
 LogicalPlan LogicalSourceExpansionRule::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    return queryPlan.withRootOperators({applyRecursive(queryPlan.getRootOperators().at(0), *sourceCatalog)});
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
+    return rewritePlanBottomUp(
+        queryPlan,
+        [this](const LogicalOperator& visiting, std::vector<LogicalOperator> children)
+        { return expandLogicalSource(visiting, std::move(children), *sourceCatalog); });
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

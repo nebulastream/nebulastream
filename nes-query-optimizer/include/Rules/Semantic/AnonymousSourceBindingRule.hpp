@@ -19,6 +19,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <utility>
+#include <vector>
 
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -41,7 +42,8 @@ public:
     [[nodiscard]] std::set<std::type_index> neededBy() const;
 
 private:
-    [[nodiscard]] LogicalOperator bindAnonymousSourceLogicalOperators(const LogicalOperator& current) const;
+    [[nodiscard]] LogicalOperator
+    bindAnonymousSourceLogicalOperators(const LogicalOperator& current, std::vector<LogicalOperator> children) const;
     std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
 

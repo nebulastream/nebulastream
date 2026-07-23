@@ -18,6 +18,7 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
 #include <Identifiers/Identifier.hpp>
@@ -29,19 +30,15 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRewriteUtils.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
 
-LogicalOperator AnonymousSourceBindingRule::bindAnonymousSourceLogicalOperators(const LogicalOperator& current) const
+LogicalOperator AnonymousSourceBindingRule::bindAnonymousSourceLogicalOperators(
+    const LogicalOperator& current, std::vector<LogicalOperator> newChildren) const
 {
-    std::vector<LogicalOperator> newChildren;
-    for (const auto& child : current.getChildren())
-    {
-        newChildren.emplace_back(bindAnonymousSourceLogicalOperators(child));
-    }
-
     if (const auto anonymousSource = current.tryGetAs<AnonymousSourceLogicalOperator>())
     {
         PRECONDITION(std::ranges::empty(anonymousSource->getChildren()), "Anonymous source operator must have no children");
@@ -70,17 +67,15 @@ LogicalOperator AnonymousSourceBindingRule::bindAnonymousSourceLogicalOperators(
         return SourceDescriptorLogicalOperator::create(descriptor);
     }
 
-    return current.withChildrenUnsafe(newChildren);
+    return current.withChildrenUnsafe(std::move(newChildren));
 }
 
 LogicalPlan AnonymousSourceBindingRule::apply(const LogicalPlan& queryPlan) const
 {
-    std::vector<LogicalOperator> newRoots;
-    for (const auto& root : queryPlan.getRootOperators())
-    {
-        newRoots.emplace_back(bindAnonymousSourceLogicalOperators(root));
-    }
-    return queryPlan.withRootOperators(newRoots);
+    return rewritePlanBottomUp(
+        queryPlan,
+        [this](const LogicalOperator& current, std::vector<LogicalOperator> children)
+        { return bindAnonymousSourceLogicalOperators(current, std::move(children)); });
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

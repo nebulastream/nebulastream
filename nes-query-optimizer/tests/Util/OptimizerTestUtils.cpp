@@ -16,6 +16,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -66,7 +67,7 @@ OptimizerTestUtils::createSource(std::string name, const std::vector<std::string
 SourceDescriptor
 OptimizerTestUtils::createSourceDescriptor(const Identifier& identifier, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
-    auto source = sourceCatalog.addLogicalSource(identifier, schema);
+    auto source = sourceCatalog->addLogicalSource(identifier, schema);
 
     if (!source.has_value())
     {
@@ -74,7 +75,8 @@ OptimizerTestUtils::createSourceDescriptor(const Identifier& identifier, const S
     }
     const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
     const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("TYPE"), "CSV"}};
-    auto result = sourceCatalog.addPhysicalSource(source.value(), Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig);
+    auto result
+        = sourceCatalog->addPhysicalSource(source.value(), Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig);
 
     if (!result.has_value())
     {
@@ -88,7 +90,7 @@ SinkDescriptor OptimizerTestUtils::createSinkDescriptor(const Identifier& sinkNa
     const std::unordered_map<Identifier, std::string> sinkConfig{
         {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
 
-    auto sinkDescriptor = sinkCatalog.addSinkDescriptor(sinkName, schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {});
+    auto sinkDescriptor = sinkCatalog->addSinkDescriptor(sinkName, schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {});
     if (!sinkDescriptor.has_value())
     {
         throw TestException();
@@ -113,5 +115,32 @@ LogicalPlan OptimizerTestUtils::createPlan(LogicalOperator sink)
 {
     return LogicalPlan{
         QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), {std::move(sink)}};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+LogicalPlan OptimizerTestUtils::createPlan(std::vector<LogicalOperator> sinks)
+{
+    return LogicalPlan{
+        QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), std::move(sinks)};
+}
+
+std::unordered_set<OperatorId> OptimizerTestUtils::collectOperatorIds(const LogicalPlan& plan)
+{
+    std::unordered_set<OperatorId> operatorIds;
+    std::vector<LogicalOperator> pending{plan.getRootOperators()};
+    while (!pending.empty())
+    {
+        const auto current = pending.back();
+        pending.pop_back();
+        if (!operatorIds.insert(current.getId()).second)
+        {
+            continue;
+        }
+        for (const auto& child : current.getChildren())
+        {
+            pending.push_back(child);
+        }
+    }
+    return operatorIds;
 }
 }

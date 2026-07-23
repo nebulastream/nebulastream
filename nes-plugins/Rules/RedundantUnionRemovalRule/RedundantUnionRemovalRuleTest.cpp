@@ -131,5 +131,22 @@ TEST_F(RedundantUnionRemovalRuleTest, LeaveUnionWithMultipleChildren)
     ASSERT_TRUE(op21.tryGetAs<SourceDescriptorLogicalOperator>());
 }
 
+/// A union shared by two sinks must be removed once, leaving both sinks reading one instance of the sub-plan below it.
+TEST_F(RedundantUnionRemovalRuleTest, RemovesSharedUnionOnce)
+{
+    auto source = utils.createSource("redundant_union_src", {"a", "b"});
+    auto unionOp = UnionLogicalOperator::create(std::vector<LogicalOperator>{source});
+    auto sink1 = utils.createSink(unionOp, "redundant_union_sink1", {"a", "b"});
+    auto sink2 = utils.createSink(unionOp, "redundant_union_sink2", {"a", "b"});
+
+    const auto result = RedundantUnionRemovalRule{}.apply(utils.createPlan({sink1, sink2}));
+
+    const auto roots = result.getRootOperators();
+    ASSERT_EQ(roots.size(), 2);
+    EXPECT_EQ(roots.at(0).getChildren().at(0).getId(), roots.at(1).getChildren().at(0).getId());
+    EXPECT_TRUE(roots.at(0).getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>().has_value());
+    EXPECT_EQ(OptimizerTestUtils::collectOperators(result).size(), 3);
+}
+
 /// NOLINTEND(bugprone-unchecked-optional-access)
 }

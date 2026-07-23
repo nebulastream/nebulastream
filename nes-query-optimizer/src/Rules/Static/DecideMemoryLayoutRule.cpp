@@ -13,11 +13,12 @@
 */
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
 
-#include <ranges>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <utility>
+#include <vector>
 
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -26,6 +27,7 @@
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRewriteUtils.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -39,19 +41,19 @@ std::set<std::type_index> DecideMemoryLayoutRule::needs() const
 
 LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
-    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
+    return rewritePlanBottomUp(
+        queryPlan,
+        [this](const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children)
+        { return apply(logicalOperator, std::move(children)); });
 }
 
-LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOperator) const
+LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children) const
 {
     /// Iterating over all operators and setting the memory layout trait to row
-    const auto children = logicalOperator.getChildren()
-        | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
     auto traitSet = logicalOperator.getTraitSet();
     tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
-    return logicalOperator.withChildren(children).withTraitSet(traitSet);
+    return logicalOperator.withChildren(std::move(children)).withTraitSet(traitSet);
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)

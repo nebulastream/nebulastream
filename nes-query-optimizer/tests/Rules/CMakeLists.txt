@@ -13,3 +13,4 @@
 add_subdirectory(Static)
 
 add_nes_optimizer_test(RuleManagerTest RuleManagerTest.cpp)
+add_nes_optimizer_test(MultiSinkPlanTest MultiSinkPlanTest.cpp)

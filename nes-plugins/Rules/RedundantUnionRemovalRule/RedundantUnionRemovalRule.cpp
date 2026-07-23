@@ -14,7 +14,6 @@
 
 #include <RedundantUnionRemovalRule.hpp>
 
-#include <ranges>
 #include <set>
 #include <string_view>
 #include <typeindex>
@@ -30,32 +29,29 @@
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 
 #include <ErrorHandling.hpp>
+#include <PlanRewriteUtils.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
 
 
-namespace
-{
-LogicalOperator recur(const LogicalOperator& op)
-{
-    auto newChildren = op.getChildren() | std::views::transform(recur) | std::ranges::to<std::vector>();
-
-    if (op.tryGetAs<UnionLogicalOperator>().has_value() && newChildren.size() == 1)
-    {
-        return newChildren.front();
-    }
-    return op.withChildren(std::move(newChildren));
-}
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan RedundantUnionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    queryPlan = queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front().withInferredSchema())});
-    return queryPlan;
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
+    /// No upfront deep schema inference: withChildren re-infers each operator's local schema bottom-up,
+    /// while a recursive withInferredSchema would copy shared subtrees per parent.
+    return rewritePlanBottomUp(
+        queryPlan,
+        [](const LogicalOperator& op, std::vector<LogicalOperator> newChildren) -> LogicalOperator
+        {
+            if (op.tryGetAs<UnionLogicalOperator>().has_value() && newChildren.size() == 1)
+            {
+                return newChildren.front();
+            }
+            return op.withChildren(std::move(newChildren));
+        });
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
