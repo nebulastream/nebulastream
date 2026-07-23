@@ -28,7 +28,7 @@ LogicalPlan FixedPlanStructureBarrier::apply(LogicalPlan queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterFixedPlanStructureBarrierPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType FixedPlanStructureBarrier::create(PlanRuleRegistryArguments)
 {
     return FixedPlanStructureBarrier{};
 }

@@ -68,12 +68,11 @@ VarVal CastFromUnixTimestampPhysicalFunction::execute(const Record& record, Aren
     return VarVal{timestampAsIso8601, value.isNullable(), false};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterCastFromUnixTsPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType CastFromUnixTimestampPhysicalFunction::createCastFromUnixTs(PhysicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(args.childFunctions.size() == 1, "CastFromUnixTimestampPhysicalFunction must have exactly one child function");
+    PRECONDITION(arguments.childFunctions.size() == 1, "CastFromUnixTimestampPhysicalFunction must have exactly one child function");
 
-    return CastFromUnixTimestampPhysicalFunction(args.childFunctions[0], args.outputType);
+    return CastFromUnixTimestampPhysicalFunction(arguments.childFunctions[0], arguments.outputType);
 }
 
 }

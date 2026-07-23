@@ -63,8 +63,7 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     return VarVal{newVarSizeData, leftValue.isNullable() or rightValue.isNullable(), newNull};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType ConcatPhysicalFunction::createConcat(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Concat function must have exactly two child functions");
     return ConcatPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);

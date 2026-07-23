@@ -42,8 +42,6 @@
 #include <mqtt/message.h>
 #include <mqtt/reason_code.h>
 #include <ErrorHandling.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
@@ -224,18 +222,6 @@ void MQTTSource::close()
 DescriptorConfig::Config MQTTSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersMQTTSource>(std::move(config), NAME);
-}
-
-/// NOLINTNEXTLINE(performance-unnecessary-value-param): registry signature fixed by framework.
-SourceValidationRegistryReturnType RegisterMQTTSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return MQTTSource::validateAndFormat(std::move(sourceConfig.config));
-}
-
-/// NOLINTNEXTLINE(performance-unnecessary-value-param): registry signature fixed by framework.
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterMQTTSource(SourceRegistryArguments sourceRegistryArguments)
-{
-    return std::make_unique<MQTTSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
 }

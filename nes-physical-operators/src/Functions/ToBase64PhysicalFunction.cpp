@@ -67,7 +67,7 @@ VarVal ToBase64PhysicalFunction::execute(const Record& record, ArenaRef& arena) 
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterTO_BASE64PhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+ToBase64PhysicalFunction::createTO_BASE64(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "TO_BASE64 function must have exactly one child function");
     return ToBase64PhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);

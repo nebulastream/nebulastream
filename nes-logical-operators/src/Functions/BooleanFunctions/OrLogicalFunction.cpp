@@ -101,7 +101,7 @@ OrLogicalFunction Unreflector<OrLogicalFunction>::operator()(const Reflected& re
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType OrLogicalFunction::createOr(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

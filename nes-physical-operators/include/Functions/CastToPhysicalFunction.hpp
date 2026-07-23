@@ -19,6 +19,7 @@
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -28,6 +29,8 @@ class CastToPhysicalFunction
 public:
     explicit CastToPhysicalFunction(PhysicalFunction childFunction, DataType castToType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createCastToType(PhysicalFunctionRegistryArguments arguments);
 
 private:
     DataType castToType;

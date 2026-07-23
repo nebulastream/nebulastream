@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -28,6 +29,7 @@ namespace NES
 class DecideMemoryLayoutRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "DecideMemoryLayoutRule";
 
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;

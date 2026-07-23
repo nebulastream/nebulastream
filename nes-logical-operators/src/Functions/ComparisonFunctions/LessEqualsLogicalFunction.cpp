@@ -106,8 +106,7 @@ Unreflector<LessEqualsLogicalFunction>::operator()(const Reflected& reflected, c
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterLessEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType LessEqualsLogicalFunction::createLessEquals(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

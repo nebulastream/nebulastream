@@ -212,7 +212,9 @@ if (NES_ENABLES_TESTS)
     if (NOT ${GTest_FOUND})
         message(FATAL_ERROR "Unable to find GTest")
     endif ()
-    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+    # Deliberately no gtest_main/gmock_main: nes-test-util provides the shared main
+    # (which loads the built-in plugins), so linking gtest's main would be ambiguous.
+    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} GTest::gtest GTest::gmock)
 endif ()
 
 message(STATUS " Libraries: ${LIBRARIES}")

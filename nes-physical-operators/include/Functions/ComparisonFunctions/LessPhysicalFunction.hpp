@@ -19,6 +19,7 @@
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -28,6 +29,8 @@ class LessPhysicalFunction final
 public:
     LessPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createLess(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

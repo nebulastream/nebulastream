@@ -122,8 +122,8 @@ CastVarSizedToNumericPhysicalFunction::CastVarSizedToNumericPhysicalFunction(Phy
 {
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterVarSizedToNumericPhysicalFunction(
-    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+CastVarSizedToNumericPhysicalFunction::createVarSizedToNumeric(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1, "VarSizedToNumeric function must have exactly one child function");

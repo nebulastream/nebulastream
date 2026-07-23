@@ -79,7 +79,7 @@ std::set<std::type_index> InferModelResolutionRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterInferModelResolutionPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType InferModelResolutionRule::create(PlanRuleRegistryArguments arguments)
 {
     return InferModelResolutionRule{arguments.modelCatalog};
 }

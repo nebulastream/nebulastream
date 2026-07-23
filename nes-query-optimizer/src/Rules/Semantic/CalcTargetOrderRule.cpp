@@ -172,7 +172,7 @@ std::set<std::type_index> CalcTargetOrderRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterCalcTargetOrderPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType CalcTargetOrderRule::create(PlanRuleRegistryArguments)
 {
     return CalcTargetOrderRule{};
 }

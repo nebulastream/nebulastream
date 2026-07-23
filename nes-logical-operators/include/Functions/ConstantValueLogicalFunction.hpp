@@ -28,6 +28,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -66,6 +67,8 @@ public:
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(CONSTANT_VALUE_AS_STRING);
     };
+
+    static LogicalFunctionRegistryReturnType createConstantValue(LogicalFunctionRegistryArguments arguments);
 
 private:
     const std::string constantValue;

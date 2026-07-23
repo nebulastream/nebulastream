@@ -27,9 +27,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsetRawBufferIndex.hpp>
-#include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatter.hpp>
-#include <InputFormatterValidationRegistry.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 
@@ -152,19 +150,6 @@ std::unique_ptr<RawBufferIndex> CSVInputFormatIndexer::indexRawBuffer(const std:
 DescriptorConfig::Config CSVInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersCSVInputFormatIndexer>(std::move(config), NAME);
-}
-
-InputFormatterValidationRegistryReturnType
-InputFormatterValidationGeneratedRegistrar::RegisterCSVInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
-{
-    return CSVInputFormatIndexer::validateAndFormat(arguments.config);
-}
-
-InputFormatIndexerRegistryReturnType
-RegisterCSVInputFormatIndexer(InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
-{
-    return arguments.createInputFormatterWithIndexer(
-        CSVInputFormatIndexer::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
 }
 
 std::ostream& CSVInputFormatIndexer::toString(std::ostream& str) const

@@ -38,8 +38,7 @@ VarVal SqrtPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
     return VarVal{nautilus::sqrt(value.getRawValueAs<nautilus::val<double>>())}.castToType(outputType.type);
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterSqrtPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType SqrtPhysicalFunction::createSqrt(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Sqrt function must have exactly one child function");
     return SqrtPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);

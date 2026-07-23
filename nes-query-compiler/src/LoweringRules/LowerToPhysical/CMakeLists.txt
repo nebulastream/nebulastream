@@ -10,14 +10,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_registry_entry(NLJoin LoweringRule LowerToPhysicalNLJoin.cpp)
-add_registry_entry(HashJoin LoweringRule LowerToPhysicalHashJoin.cpp)
-add_registry_entry(Selection LoweringRule LowerToPhysicalSelection.cpp)
-add_registry_entry(Projection LoweringRule LowerToPhysicalProjection.cpp)
-add_registry_entry(WindowedAggregation LoweringRule LowerToPhysicalWindowedAggregation.cpp)
-add_registry_entry(Union LoweringRule LowerToPhysicalUnion.cpp)
-add_registry_entry(Sink LoweringRule LowerToPhysicalSink.cpp)
-add_registry_entry(SourceDescriptor LoweringRule LowerToPhysicalSource.cpp)
-add_registry_entry(IngestionTimeWatermarkAssigner LoweringRule LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
-add_registry_entry(EventTimeWatermarkAssigner LoweringRule LowerToPhysicalEventTimeWatermarkAssigner.cpp)
-add_registry_entry(InferModel LoweringRule LowerToPhysicalInferModel.cpp)
+add_source_files(nes-query-compiler
+        LowerToPhysicalNLJoin.cpp
+        LowerToPhysicalHashJoin.cpp
+        LowerToPhysicalSelection.cpp
+        LowerToPhysicalProjection.cpp
+        LowerToPhysicalWindowedAggregation.cpp
+        LowerToPhysicalUnion.cpp
+        LowerToPhysicalSink.cpp
+        LowerToPhysicalSource.cpp
+        LowerToPhysicalIngestionTimeWatermarkAssigner.cpp
+        LowerToPhysicalEventTimeWatermarkAssigner.cpp
+        LowerToPhysicalInferModel.cpp
+)
+
+add_registry_entry(LoweringRule NLJoin)
+add_registry_entry(LoweringRule HashJoin)
+add_registry_entry(LoweringRule Selection)
+add_registry_entry(LoweringRule Projection)
+add_registry_entry(LoweringRule WindowedAggregation)
+add_registry_entry(LoweringRule Union)
+add_registry_entry(LoweringRule Sink)
+add_registry_entry(LoweringRule Source KEY SourceDescriptor)
+add_registry_entry(LoweringRule IngestionTimeWatermarkAssigner)
+add_registry_entry(LoweringRule EventTimeWatermarkAssigner)
+add_registry_entry(LoweringRule InferModel)

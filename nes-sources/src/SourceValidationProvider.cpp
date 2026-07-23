@@ -34,6 +34,10 @@ std::optional<DescriptorConfig::Config> provide(const std::string_view sourceTyp
         | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
         | std::ranges::to<std::unordered_map>();
     auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(stringConfigMap);
-    return SourceValidationRegistry::instance().create(std::string{sourceType}, std::move(sourceValidationRegistryArguments));
+    if (const auto validator = SourceValidationRegistry::instance().find(std::string{sourceType}))
+    {
+        return (*validator)(std::move(sourceValidationRegistryArguments));
+    }
+    return std::nullopt;
 }
 }

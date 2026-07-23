@@ -82,7 +82,7 @@ std::set<std::type_index> AnonymousSinkBindingRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterAnonymousSinkBindingPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType AnonymousSinkBindingRule::create(PlanRuleRegistryArguments arguments)
 {
     return AnonymousSinkBindingRule{arguments.sinkCatalog};
 }

@@ -42,8 +42,7 @@ VarVal PowPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
         .castToType(outputType.type);
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterPowPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType PowPhysicalFunction::createPow(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Pow function must have exactly two child functions");
     return PowPhysicalFunction(

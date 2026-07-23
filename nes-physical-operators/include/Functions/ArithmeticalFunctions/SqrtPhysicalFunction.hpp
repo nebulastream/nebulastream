@@ -19,6 +19,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -28,6 +29,8 @@ class SqrtPhysicalFunction final
 public:
     explicit SqrtPhysicalFunction(PhysicalFunction childFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createSqrt(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction childFunction;

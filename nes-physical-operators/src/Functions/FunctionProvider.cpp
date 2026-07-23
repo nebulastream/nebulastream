@@ -61,12 +61,10 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     }
 
     /// 3. Calling the registry to create an executable function.
-    PhysicalFunctionRegistryArguments executableFunctionArguments{
-        .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()};
-    if (const auto function
-        = PhysicalFunctionRegistry::instance().create(std::string(logicalFunction.getType()), std::move(executableFunctionArguments)))
+    if (const auto factory = PhysicalFunctionRegistry::instance().find(std::string(logicalFunction.getType())))
     {
-        return function.value();
+        return (*factory)(PhysicalFunctionRegistryArguments{
+            .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()});
     }
     throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
 }

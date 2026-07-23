@@ -118,8 +118,7 @@ Unreflector<CountAggregationLogicalFunction>::operator()(const Reflected& reflec
     return CountAggregationLogicalFunction{std::move(inputFunction), includeNullValues};
 }
 
-AggregationLogicalFunctionRegistryReturnType
-AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+AggregationLogicalFunctionRegistryReturnType CountAggregationLogicalFunction::create(AggregationLogicalFunctionRegistryArguments arguments)
 {
     if (arguments.on.size() != 1)
     {

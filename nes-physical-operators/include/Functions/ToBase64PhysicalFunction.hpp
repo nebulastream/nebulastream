@@ -18,6 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -28,6 +29,9 @@ class ToBase64PhysicalFunction final
 public:
     explicit ToBase64PhysicalFunction(PhysicalFunction childPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static PhysicalFunctionRegistryReturnType createTO_BASE64(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction childPhysicalFunction;

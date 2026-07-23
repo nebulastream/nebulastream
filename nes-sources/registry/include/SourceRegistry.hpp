@@ -14,12 +14,13 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -31,12 +32,22 @@ struct SourceRegistryArguments
     SourceDescriptor sourceDescriptor;
 };
 
-class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryArguments>
+using SourceFactoryFn = std::function<SourceRegistryReturnType(SourceRegistryArguments)>;
+
+/// Creates the registry entry for a source implementation. Sources are constructed from their
+/// descriptor; the entry expression in cmake/RuntimeRegistrationUtil.cmake instantiates this per
+/// plugin type.
+template <typename SourceImpl>
+SourceFactoryFn makeSourceFactory()
 {
+    return [](SourceRegistryArguments arguments) -> SourceRegistryReturnType
+    { return std::make_unique<SourceImpl>(arguments.sourceDescriptor); };
+}
+
+class SourceRegistry : public RuntimeRegistry<SourceRegistry, std::string, SourceFactoryFn, /*CaseSensitive*/ false>
+{
+public:
+    static SourceRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_SOURCE_REGISTRY
-#include <SourceGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCE_REGISTRY

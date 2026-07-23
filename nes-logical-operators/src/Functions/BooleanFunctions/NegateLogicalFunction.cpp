@@ -96,8 +96,7 @@ NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Refle
     return NegateLogicalFunction(std::move(function));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType NegateLogicalFunction::createNegate(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

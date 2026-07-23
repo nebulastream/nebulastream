@@ -59,7 +59,7 @@ LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideMemoryLayoutPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType DecideMemoryLayoutRule::create(PlanRuleRegistryArguments)
 {
     return DecideMemoryLayoutRule{};
 }

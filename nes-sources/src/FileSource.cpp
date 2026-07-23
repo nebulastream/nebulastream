@@ -36,8 +36,6 @@
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
@@ -85,17 +83,7 @@ std::ostream& FileSource::toString(std::ostream& str) const
     return str;
 }
 
-SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return FileSource::validateAndFormat(std::move(sourceConfig.config));
-}
-
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
-{
-    return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
-}
-
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+InlineDataRegistryReturnType FileSource::provideInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
     if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
     {
@@ -119,7 +107,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
     throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
 }
 
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
+FileDataRegistryReturnType FileSource::provideFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
     if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
     {
@@ -131,6 +119,5 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(File
 
     return systestAdaptorArguments.physicalSourceConfig;
 }
-
 
 }

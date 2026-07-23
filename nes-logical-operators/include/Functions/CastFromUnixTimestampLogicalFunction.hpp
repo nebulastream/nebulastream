@@ -27,6 +27,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -51,6 +52,8 @@ public:
 
     [[nodiscard]] static std::string_view getType();
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+
+    static LogicalFunctionRegistryReturnType createCastFromUnixTs(LogicalFunctionRegistryArguments arguments);
 
 private:
     DataType outputType;

@@ -20,6 +20,7 @@
 #include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -28,6 +29,7 @@ namespace NES
 class RedundantUnionRemovalRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "RedundantUnionRemovalRule";
 
     [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;

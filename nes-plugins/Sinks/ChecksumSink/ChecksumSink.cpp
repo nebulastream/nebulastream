@@ -35,8 +35,6 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <SinkRegistry.hpp>
-#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
@@ -107,16 +105,6 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
 DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType RegisterChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return ChecksumSink::validateAndFormat(std::move(sinkConfig.config));
-}
-
-SinkRegistryReturnType RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
-{
-    return std::make_unique<ChecksumSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 
 }

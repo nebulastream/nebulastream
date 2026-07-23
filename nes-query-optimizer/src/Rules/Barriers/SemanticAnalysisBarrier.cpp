@@ -28,7 +28,7 @@ LogicalPlan SemanticAnalysisBarrier::apply(LogicalPlan queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterSemanticAnalysisBarrierPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType SemanticAnalysisBarrier::create(PlanRuleRegistryArguments)
 {
     return SemanticAnalysisBarrier{};
 }

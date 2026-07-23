@@ -101,7 +101,7 @@ SqrtLogicalFunction Unreflector<SqrtLogicalFunction>::operator()(const Reflected
     return SqrtLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType SqrtLogicalFunction::createSqrt(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

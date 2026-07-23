@@ -13,23 +13,24 @@
 add_source_files(nes-data-types
         DataType.cpp
         DataTypeProvider.cpp
+        DataTypeRegistry.cpp
         TimeUnit.cpp
         )
 
 # Register plugins
-add_registry_entry(BOOLEAN DataType DataType.cpp)
-add_registry_entry(CHAR DataType DataType.cpp)
-add_registry_entry(FLOAT32 DataType DataType.cpp)
-add_registry_entry(FLOAT64 DataType DataType.cpp)
-add_registry_entry(INT8 DataType DataType.cpp)
-add_registry_entry(INT16 DataType DataType.cpp)
-add_registry_entry(INT32 DataType DataType.cpp)
-add_registry_entry(INT64 DataType DataType.cpp)
-add_registry_entry(UINT8 DataType DataType.cpp)
-add_registry_entry(UINT16 DataType DataType.cpp)
-add_registry_entry(UINT32 DataType DataType.cpp)
-add_registry_entry(UINT64 DataType DataType.cpp)
-add_registry_entry(UNDEFINED DataType DataType.cpp)
-add_registry_entry(VARSIZED DataType DataType.cpp)
+add_registry_entry(DataType BOOLEAN)
+add_registry_entry(DataType CHAR)
+add_registry_entry(DataType FLOAT32)
+add_registry_entry(DataType FLOAT64)
+add_registry_entry(DataType INT8)
+add_registry_entry(DataType INT16)
+add_registry_entry(DataType INT32)
+add_registry_entry(DataType INT64)
+add_registry_entry(DataType UINT8)
+add_registry_entry(DataType UINT16)
+add_registry_entry(DataType UINT32)
+add_registry_entry(DataType UINT64)
+add_registry_entry(DataType UNDEFINED)
+add_registry_entry(DataType VARSIZED)
 
 

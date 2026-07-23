@@ -22,12 +22,15 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
 class SinkBindingRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
+
     explicit SinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
     static constexpr std::string_view NAME = "SinkBindingRule";

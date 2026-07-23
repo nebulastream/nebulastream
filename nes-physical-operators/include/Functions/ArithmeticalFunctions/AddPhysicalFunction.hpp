@@ -19,6 +19,7 @@
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -29,6 +30,8 @@ class AddPhysicalFunction final
 public:
     AddPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createAdd(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

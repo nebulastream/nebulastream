@@ -21,6 +21,7 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -43,6 +44,7 @@ namespace NES
 class ProjectionPushdownRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     ProjectionPushdownRule() = default;
 
     static constexpr std::string_view NAME = "ProjectionPushdownRule";

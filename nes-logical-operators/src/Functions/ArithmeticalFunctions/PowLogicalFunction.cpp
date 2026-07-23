@@ -100,7 +100,7 @@ PowLogicalFunction Unreflector<PowLogicalFunction>::operator()(const Reflected& 
     return PowLogicalFunction{left, right};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterPowLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType PowLogicalFunction::createPow(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

@@ -14,13 +14,14 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
@@ -37,11 +38,12 @@ struct PlanRuleRegistryArguments
     std::shared_ptr<const ModelCatalog> modelCatalog;
 };
 
-class PlanRuleRegistry : public BaseRegistry<PlanRuleRegistry, std::string, PlanRuleRegistryReturnType, PlanRuleRegistryArguments>
-{
-};
-}
+using PlanRuleFn = std::function<PlanRuleRegistryReturnType(PlanRuleRegistryArguments)>;
 
-#define INCLUDED_FROM_REGISTRY_PLAN_RULE
-#include <PlanRuleGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_PLAN_RULE
+class PlanRuleRegistry : public RuntimeRegistry<PlanRuleRegistry, std::string, PlanRuleFn, /*CaseSensitive*/ false>
+{
+public:
+    static PlanRuleRegistry& instance();
+};
+
+}

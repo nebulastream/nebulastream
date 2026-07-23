@@ -106,8 +106,7 @@ EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Refle
     return EqualsLogicalFunction{std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType EqualsLogicalFunction::createEquals(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

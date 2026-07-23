@@ -19,6 +19,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -27,6 +28,8 @@ class RoundPhysicalFunction final
 public:
     explicit RoundPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createRound(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction childFunction;

@@ -22,6 +22,7 @@
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
@@ -32,11 +33,7 @@ class AvgAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
     AvgAggregationPhysicalFunction(
-        DataType inputType,
-        DataType resultType,
-        PhysicalFunction inputFunction,
-        Record::RecordFieldIdentifier resultFieldIdentifier,
-        bool includeNullValues);
+        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         nautilus::val<TupleBuffer*>,
@@ -60,9 +57,10 @@ public:
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~AvgAggregationPhysicalFunction() override = default;
 
+    static AggregationPhysicalFunctionRegistryReturnType create(AggregationPhysicalFunctionRegistryArguments arguments);
+
 private:
     DataType countType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    bool includeNullValues;
 };
 
 }

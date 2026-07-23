@@ -92,7 +92,7 @@ std::set<std::type_index> LogicalSourceExpansionRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterLogicalSourceExpansionPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType LogicalSourceExpansionRule::create(PlanRuleRegistryArguments arguments)
 {
     return LogicalSourceExpansionRule{arguments.sourceCatalog};
 }

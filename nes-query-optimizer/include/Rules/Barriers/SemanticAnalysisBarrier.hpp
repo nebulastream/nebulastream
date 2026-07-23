@@ -18,12 +18,14 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
 class SemanticAnalysisBarrier
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "SemanticAnalysisBarrier";
 
     [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;

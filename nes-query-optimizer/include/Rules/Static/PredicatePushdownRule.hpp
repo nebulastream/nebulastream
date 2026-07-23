@@ -21,6 +21,7 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -47,6 +48,7 @@ namespace NES
 class PredicatePushdownRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     explicit PredicatePushdownRule() = default;
 
     static constexpr std::string_view NAME = "PredicatePushdownRule";

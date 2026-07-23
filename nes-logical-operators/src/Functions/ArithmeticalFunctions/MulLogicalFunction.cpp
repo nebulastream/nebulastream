@@ -109,7 +109,7 @@ MulLogicalFunction Unreflector<MulLogicalFunction>::operator()(const Reflected& 
     return MulLogicalFunction{left, right};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMulLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType MulLogicalFunction::createMul(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

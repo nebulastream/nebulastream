@@ -95,7 +95,7 @@ LogicalPlan OriginIdInferenceRule::apply(const LogicalPlan& queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterOriginIdInferencePlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType OriginIdInferenceRule::create(PlanRuleRegistryArguments)
 {
     return OriginIdInferenceRule{};
 }

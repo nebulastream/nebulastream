@@ -31,8 +31,6 @@
 #include <network/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
@@ -91,17 +89,6 @@ void NetworkSource::close()
 DescriptorConfig::Config NetworkSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersNetworkSource>(std::move(config), name());
-}
-
-SourceValidationRegistryReturnType RegisterNetworkSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return NetworkSource::validateAndFormat(std::move(sourceConfig.config));
-}
-
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterNetworkSource(
-    SourceRegistryArguments sourceRegistryArguments) /// NOLINT(performance-unnecessary-value-param)
-{
-    return std::make_unique<NetworkSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
 }

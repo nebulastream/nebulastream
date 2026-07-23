@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -28,6 +29,8 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <OutputFormatterRegistry.hpp>
+#include <static.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -49,6 +52,9 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    /// Registry entry (see OutputFormatterRegistry.hpp).
+    static std::unique_ptr<OutputFormatter> provideFormatter(OutputFormatterRegistryArguments arguments);
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 

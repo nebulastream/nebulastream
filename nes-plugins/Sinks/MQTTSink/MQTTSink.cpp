@@ -38,8 +38,6 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <SinkRegistry.hpp>
-#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
@@ -206,18 +204,6 @@ void MQTTSink::stop(PipelineExecutionContext& pec)
 DescriptorConfig::Config MQTTSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersMQTTSink>(std::move(config), NAME);
-}
-
-/// NOLINTNEXTLINE(performance-unnecessary-value-param): registry signature fixed by framework.
-SinkValidationRegistryReturnType RegisterMQTTSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return MQTTSink::validateAndFormat(std::move(sinkConfig.config));
-}
-
-/// NOLINTNEXTLINE(performance-unnecessary-value-param): registry signature fixed by framework.
-SinkRegistryReturnType RegisterMQTTSink(SinkRegistryArguments sinkRegistryArguments)
-{
-    return std::make_unique<MQTTSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 
 }

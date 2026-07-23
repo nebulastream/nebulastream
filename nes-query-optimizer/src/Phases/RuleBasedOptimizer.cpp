@@ -54,12 +54,12 @@ RuleBasedOptimizer::RuleBasedOptimizer(
 
     for (auto ruleName : PlanRuleRegistry::instance().getRegisteredNames())
     {
-        auto rule = PlanRuleRegistry::instance().create(ruleName, arguments);
+        auto rule = PlanRuleRegistry::instance().find(ruleName);
         if (!rule.has_value())
         {
             throw UnknownOptimizerRule("Did not find the rule {} in PlanRuleRegistry", ruleName);
         }
-        ruleManager.addRule(rule.value());
+        ruleManager.addRule((*rule)(arguments));
     }
 
     NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));

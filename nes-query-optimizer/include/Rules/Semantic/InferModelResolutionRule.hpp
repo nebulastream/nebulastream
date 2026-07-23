@@ -23,6 +23,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
 #include <ModelCatalog.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -32,6 +33,8 @@ namespace NES
 class InferModelResolutionRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
+
     explicit InferModelResolutionRule(std::shared_ptr<const ModelCatalog> modelCatalog) : modelCatalog(std::move(modelCatalog)) { }
 
     static constexpr std::string_view NAME = "InferModelResolutionRule";

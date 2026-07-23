@@ -106,7 +106,7 @@ SubLogicalFunction Unreflector<SubLogicalFunction>::operator()(const Reflected& 
     return SubLogicalFunction{std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSubLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType SubLogicalFunction::createSub(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

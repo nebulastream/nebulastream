@@ -133,10 +133,4 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
 
     return {.root = child, .leaves = {scanWrapper}};
 }
-
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterProjectionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
-{
-    return std::make_unique<LowerToPhysicalProjection>(argument.conf);
-}
 }

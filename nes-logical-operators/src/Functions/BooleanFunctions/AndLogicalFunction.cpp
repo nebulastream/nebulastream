@@ -104,7 +104,7 @@ AndLogicalFunction Unreflector<AndLogicalFunction>::operator()(const Reflected& 
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType AndLogicalFunction::createAnd(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

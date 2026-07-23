@@ -101,8 +101,7 @@ GreaterLogicalFunction Unreflector<GreaterLogicalFunction>::operator()(const Ref
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType GreaterLogicalFunction::createGreater(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

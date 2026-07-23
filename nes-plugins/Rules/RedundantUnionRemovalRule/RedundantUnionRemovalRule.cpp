@@ -71,7 +71,7 @@ std::set<std::type_index> RedundantUnionRemovalRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterRedundantUnionRemovalPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RedundantUnionRemovalRule::create(PlanRuleRegistryArguments)
 {
     return RedundantUnionRemovalRule{};
 }

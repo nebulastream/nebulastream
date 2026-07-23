@@ -556,7 +556,7 @@ std::set<std::type_index> ProjectionPushdownRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterProjectionPushdownPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType ProjectionPushdownRule::create(PlanRuleRegistryArguments)
 {
     return ProjectionPushdownRule{};
 }

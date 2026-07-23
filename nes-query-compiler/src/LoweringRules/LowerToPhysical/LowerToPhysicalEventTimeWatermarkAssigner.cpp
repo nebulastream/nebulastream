@@ -54,10 +54,4 @@ LoweringRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logi
     std::vector leaves(logicalOperator.getChildren().size(), wrapper);
     return {.root = wrapper, .leaves = {leaves}};
 }
-
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
-{
-    return std::make_unique<LowerToPhysicalEventTimeWatermarkAssigner>(argument.conf);
-}
 }

@@ -84,9 +84,4 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
 
     return {.root = wrapper, .leaves = renames};
 }
-
-LoweringRuleRegistryReturnType LoweringRuleGeneratedRegistrar::RegisterUnionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
-{
-    return std::make_unique<LowerToPhysicalUnion>(argument.conf);
-}
 }
