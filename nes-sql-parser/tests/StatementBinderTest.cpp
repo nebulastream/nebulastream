@@ -922,6 +922,11 @@ TEST_F(StatementBinderTest, CreateWorkerStatementTest)
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).dataAddress, "localhost:9090");
 }
 
+TEST_F(StatementBinderTest, CreateLogicalQueryPlanRejectsNonQueryStatements)
+{
+    EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("CREATE WORKER 'localhost:8080';"), Exception);
+}
+
 TEST_F(StatementBinderTest, LeftOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT OUTER JOIN (SELECT * FROM s2) "

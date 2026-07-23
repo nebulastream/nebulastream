@@ -44,6 +44,7 @@ public:
     void exitSelectClause(AntlrSQLParser::SelectClauseContext* context) override;
     void enterFromClause(AntlrSQLParser::FromClauseContext* context) override;
     void exitFromClause(AntlrSQLParser::FromClauseContext* context) override;
+    void exitNamedSource(AntlrSQLParser::NamedSourceContext* context) override;
     void enterWhereClause(AntlrSQLParser::WhereClauseContext* context) override;
     void exitWhereClause(AntlrSQLParser::WhereClauseContext* context) override;
     void enterComparisonOperator(AntlrSQLParser::ComparisonOperatorContext* context) override;
@@ -70,10 +71,11 @@ public:
 
     /// enter or exit functions (no pairs)
     void enterSinkClause(AntlrSQLParser::SinkClauseContext* context) override;
-    void exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context) override;
+    void exitOrPredicate(AntlrSQLParser::OrPredicateContext* context) override;
+    void exitAndPredicate(AntlrSQLParser::AndPredicateContext* context) override;
     void exitLogicalNotPredicate(AntlrSQLParser::LogicalNotPredicateContext* context) override;
     void exitBoolComparison(AntlrSQLParser::BoolComparisonContext* context) override;
-    void enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context) override;
+    void exitStar(AntlrSQLParser::StarContext* context) override;
     void enterIdentifier(AntlrSQLParser::IdentifierContext* context) override;
     void enterTimeUnit(AntlrSQLParser::TimeUnitContext* context) override;
     void exitSizeParameter(AntlrSQLParser::SizeParameterContext* context) override;

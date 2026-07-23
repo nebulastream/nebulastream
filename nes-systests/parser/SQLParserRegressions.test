@@ -1,0 +1,113 @@
+# name: parser/SQLParserRegressions.test
+# description: SQL parser regressions for predicates, source qualifiers, and complete statements
+# groups: [Parser, Selection]
+
+CREATE LOGICAL SOURCE predicate_input(
+    pk UINT64 NOT NULL,
+    col0 INT64 NOT NULL,
+    col1 FLOAT64,
+    col2 INT64,
+    col3 INT64 NOT NULL,
+    col4 FLOAT64 NOT NULL,
+    flag BOOLEAN NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR predicate_input TYPE File;
+ATTACH INLINE
+1,1,10.5,,761,500.0,true
+2,2,20.0,7,100,563.88,true
+3,3,,8,922,600.0,false
+4,1,40.0,,600,100.0,false
+5,5,27.89,9,34,700.0,true
+
+CREATE LOGICAL SOURCE alias_input(pk UINT64 NOT NULL, value INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR alias_input TYPE File;
+ATTACH INLINE
+1,10
+2,20
+
+# Parses a parenthesized BETWEEN predicate.
+SELECT pk FROM predicate_input WHERE (col1 BETWEEN FLOAT64(10.0) AND FLOAT64(30.0)) INTO File();
+----
+1
+2
+5
+
+# Parses a parenthesized IN predicate.
+SELECT pk FROM predicate_input WHERE (col0 IN (INT64(1), INT64(2))) INTO File();
+----
+1
+2
+4
+
+# Parses a parenthesized IS NULL predicate.
+SELECT pk FROM predicate_input WHERE (col1 IS NULL) INTO File();
+----
+3
+
+# Preserves precedence in nested AND and OR predicates.
+SELECT pk
+FROM predicate_input
+WHERE col4 <= FLOAT64(563.88) AND (col3 >= INT64(922) OR (col0 BETWEEN INT64(1) AND INT64(2)))
+INTO File();
+----
+1
+2
+4
+
+# Parses deeply nested predicate parentheses.
+SELECT pk
+FROM predicate_input
+WHERE ((col3 > INT64(700))) AND (((col3 BETWEEN INT64(700) AND INT64(950))))
+INTO File();
+----
+1
+3
+
+# Combines IN and null predicates.
+SELECT pk
+FROM predicate_input
+WHERE col0 IN (INT64(1), INT64(2)) AND (col1 IS NULL OR col2 IS NOT NULL)
+INTO File();
+----
+2
+
+# Uses a parenthesized predicate as a comparison operand.
+SELECT pk
+FROM predicate_input
+WHERE flag = (col0 = INT64(1) OR col1 = FLOAT64(20.0))
+INTO File();
+----
+1
+2
+
+# Accepts a named source alias with unqualified fields.
+SELECT pk FROM alias_input AS source_alias WHERE value = INT64(10) INTO File();
+----
+1
+
+# Resolves alias-qualified fields.
+SELECT source_alias.pk FROM alias_input AS source_alias WHERE source_alias.value = INT64(10) INTO File();
+----
+1
+
+# Resolves an alias-qualified asterisk.
+SELECT source_alias.* FROM alias_input AS source_alias INTO File();
+----
+1,10
+2,20
+
+# Resolves fields qualified by the source name.
+SELECT alias_input.pk FROM alias_input INTO File();
+----
+1
+2
+
+# Rejects an unknown source qualifier.
+SELECT wrong_alias.pk FROM alias_input AS source_alias INTO File();
+----
+ERROR 2000
+
+# Rejects trailing tokens after a complete query.
+SELECT pk FROM alias_input INTO File(); trailing_tokens;
+----
+ERROR 2000

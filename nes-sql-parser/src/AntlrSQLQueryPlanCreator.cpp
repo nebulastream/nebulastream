@@ -228,6 +228,68 @@ LogicalFunction createInFunction(const LogicalFunction& valueFunction, std::vect
     return function;
 }
 
+bool isSourceQualifier(AntlrSQLParser::IdentifierContext* context)
+{
+    const auto* column = dynamic_cast<AntlrSQLParser::ColumnReferenceContext*>(context->parent);
+    const auto* dereference = column == nullptr ? nullptr : dynamic_cast<AntlrSQLParser::DereferenceContext*>(column->parent);
+    return dereference != nullptr && dereference->base == column;
+}
+
+void validateSourceQualifiers(const AntlrSQLHelper& helper)
+{
+    const auto& qualifiers = helper.getSourceQualifiers();
+    if (qualifiers.empty())
+    {
+        return;
+    }
+
+    auto expectedQualifier = helper.getSourceAlias();
+    if (!expectedQualifier.has_value())
+    {
+        expectedQualifier = helper.getSource();
+    }
+    if (!expectedQualifier.has_value())
+    {
+        throw InvalidQuerySyntax("Qualified field references require a named source");
+    }
+
+    for (const auto& qualifier : qualifiers)
+    {
+        if (qualifier != expectedQualifier.value())
+        {
+            throw InvalidQuerySyntax("Unknown source qualifier {}, expected {}", qualifier, expectedQualifier.value());
+        }
+    }
+}
+
+/// Child predicates are visited first and append one function each. This folds
+/// the last numberOfFunctionsToCombine entries into one logical function.
+void combineLogicalFunctions(
+    std::vector<LogicalFunction>& functions,
+    const size_t numberOfFunctionsToCombine,
+    const uint64_t logicalOperatorTokenType,
+    const std::string& expressionText)
+{
+    if (numberOfFunctionsToCombine < 2)
+    {
+        return;
+    }
+    if (functions.size() < numberOfFunctionsToCombine)
+    {
+        throw InvalidQuerySyntax(
+            "Expected {} operands for logical expression, got {}: {}", numberOfFunctionsToCombine, functions.size(), expressionText);
+    }
+
+    const auto firstFunctionToCombine = functions.size() - numberOfFunctionsToCombine;
+    auto function = std::move(functions[firstFunctionToCombine]);
+    for (auto functionIndex = firstFunctionToCombine + 1; functionIndex < functions.size(); ++functionIndex)
+    {
+        function = createLogicalBinaryFunction(std::move(function), std::move(functions[functionIndex]), logicalOperatorTokenType);
+    }
+    functions.resize(firstFunctionToCombine);
+    functions.emplace_back(std::move(function));
+}
+
 void negateTopFunction(std::stack<AntlrSQLHelper>& helpers, const std::string& expressionText)
 {
     if (helpers.empty())
@@ -296,42 +358,18 @@ void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext
     }
 }
 
-void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context)
+void AntlrSQLQueryPlanCreator::exitOrPredicate(AntlrSQLParser::OrPredicateContext* context)
 {
-    /// If we are exiting a logical binary operator in a join relation, we need to build the binary function for the joinKey and
-    /// not for the general function
-    if (helpers.top().isJoinRelation)
-    {
-        if (helpers.top().joinKeyRelationHelper.size() < 2)
-        {
-            throw InvalidQuerySyntax(
-                "Expected two operands for binary op, got {}: {}", helpers.top().joinKeyRelationHelper.size(), context->getText());
-        }
-        const auto rightFunction = helpers.top().joinKeyRelationHelper.back();
-        helpers.top().joinKeyRelationHelper.pop_back();
-        const auto leftFunction = helpers.top().joinKeyRelationHelper.back();
-        helpers.top().joinKeyRelationHelper.pop_back();
+    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+    combineLogicalFunctions(functions, context->andPredicate().size(), AntlrSQLLexer::OR, context->getText());
+    AntlrSQLBaseListener::exitOrPredicate(context);
+}
 
-        const auto opTokenType = context->op->getType();
-        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
-        helpers.top().joinKeyRelationHelper.push_back(function);
-    }
-    else
-    {
-        if (helpers.top().functionBuilder.size() < 2)
-        {
-            throw InvalidQuerySyntax(
-                "Expected two operands for binary op, got {}: {}", helpers.top().joinKeyRelationHelper.size(), context->getText());
-        }
-        const auto rightFunction = helpers.top().functionBuilder.back();
-        helpers.top().functionBuilder.pop_back();
-        const auto leftFunction = helpers.top().functionBuilder.back();
-        helpers.top().functionBuilder.pop_back();
-
-        const auto opTokenType = context->op->getType();
-        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
-        helpers.top().functionBuilder.push_back(function);
-    }
+void AntlrSQLQueryPlanCreator::exitAndPredicate(AntlrSQLParser::AndPredicateContext* context)
+{
+    auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
+    combineLogicalFunctions(functions, context->notPredicate().size(), AntlrSQLLexer::AND, context->getText());
+    AntlrSQLBaseListener::exitAndPredicate(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitBoolComparison(AntlrSQLParser::BoolComparisonContext* context)
@@ -424,6 +462,15 @@ void AntlrSQLQueryPlanCreator::exitFromClause(AntlrSQLParser::FromClauseContext*
 {
     helpers.top().isFrom = false;
     AntlrSQLBaseListener::exitFromClause(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitNamedSource(AntlrSQLParser::NamedSourceContext* context)
+{
+    if (context->alias != nullptr && !helpers.top().isJoinRelation)
+    {
+        helpers.top().setSourceAlias(bindIdentifier(context->alias));
+    }
+    AntlrSQLBaseListener::exitNamedSource(context);
 }
 
 void AntlrSQLQueryPlanCreator::enterWhereClause(AntlrSQLParser::WhereClauseContext* context)
@@ -562,14 +609,25 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     functions.push_back(function);
 }
 
-void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context)
+void AntlrSQLQueryPlanCreator::exitStar(AntlrSQLParser::StarContext* context)
 {
-    /// Get Index of Parent Rule to check type of parent rule in conditions
-    if (helpers.top().isFrom && !helpers.top().isJoinRelation)
+    if (!helpers.top().isSelect)
     {
-        helpers.top().newSourceName = bindIdentifier(context);
+        AntlrSQLBaseListener::exitStar(context);
+        return;
     }
-    AntlrSQLBaseListener::enterUnquotedIdentifier(context);
+
+    if (auto* const qualifiedName = context->qualifiedName(); qualifiedName != nullptr)
+    {
+        const auto identifiers = qualifiedName->identifier();
+        if (identifiers.size() != 1)
+        {
+            throw InvalidQuerySyntax("Source-qualified asterisk requires exactly one qualifier at {}", context->getText());
+        }
+        helpers.top().addSourceQualifier(bindIdentifier(identifiers.front()));
+    }
+    helpers.top().asterisk = true;
+    AntlrSQLBaseListener::exitStar(context);
 }
 
 void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext* context)
@@ -580,6 +638,15 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     {
         parentRuleIndex = parentContext->getRuleIndex();
     }
+    auto& helper = helpers.top();
+    if (!helper.isJoinRelation && (helper.isSelect || helper.isWhereOrHaving || helper.isWindow || helper.isGroupBy)
+        && isSourceQualifier(context))
+    {
+        helper.addSourceQualifier(bindIdentifier(context));
+        AntlrSQLBaseListener::enterIdentifier(context);
+        return;
+    }
+
     if (helpers.top().isGroupBy)
     {
         helpers.top().groupByFields.emplace_back(bindIdentifier(context));
@@ -657,6 +724,7 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
 
 void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
+    validateSourceQualifiers(helpers.top());
     LogicalPlan queryPlan = [&]
     {
         if (not helpers.top().queryPlans.empty())
@@ -885,10 +953,6 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         /// Project onto the specified field and remove the field access from the active functions.
         helpers.top().addProjection(std::make_optional(fieldName), std::move(helpers.top().functionBuilder.back()));
         helpers.top().functionBuilder.pop_back();
-    }
-    else if (helper.isSelect && context->getText() == "*" && helper.functionBuilder.empty())
-    {
-        helper.asterisk = true;
     }
     /// The user did not specify a new name (... AS THE_NAME) for the aggregation function.
     /// The aggregation's asField is already set in exitFunctionCall. Project the expression directly,
