@@ -38,6 +38,10 @@ public:
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
     [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
 
+    /// Runtime byte size of the underlying buffer. Read at execution time (not baked at compile time) so a single
+    /// compiled pipeline can process variable-sized (size-class) buffers; see #1703.
+    [[nodiscard]] nautilus::val<uint64_t> getBufferSize() const;
+
     /// Retrieve the reference to the underling memory area from the record buffer.
     [[nodiscard]] nautilus::val<int8_t*> getMemArea() const;
 
