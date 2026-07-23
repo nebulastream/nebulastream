@@ -75,7 +75,6 @@ public:
     void exitAndPredicate(AntlrSQLParser::AndPredicateContext* context) override;
     void exitLogicalNotPredicate(AntlrSQLParser::LogicalNotPredicateContext* context) override;
     void exitBoolComparison(AntlrSQLParser::BoolComparisonContext* context) override;
-    void exitDereference(AntlrSQLParser::DereferenceContext* context) override;
     void exitStar(AntlrSQLParser::StarContext* context) override;
     void enterIdentifier(AntlrSQLParser::IdentifierContext* context) override;
     void enterTimeUnit(AntlrSQLParser::TimeUnitContext* context) override;

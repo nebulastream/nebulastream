@@ -228,23 +228,11 @@ LogicalFunction createInFunction(const LogicalFunction& valueFunction, std::vect
     return function;
 }
 
-Identifier collapseQualifiedField(std::vector<LogicalFunction>& functions, const std::string& expressionText)
+bool isSourceQualifier(AntlrSQLParser::IdentifierContext* context)
 {
-    if (functions.size() < 2)
-    {
-        throw InvalidQuerySyntax("Qualified field reference is missing an identifier at {}", expressionText);
-    }
-
-    const auto qualifierFunction = functions.at(functions.size() - 2).tryGetAs<UnboundFieldAccessLogicalFunction>();
-    const auto fieldFunction = functions.back().tryGetAs<UnboundFieldAccessLogicalFunction>();
-    if (!qualifierFunction.has_value() || !fieldFunction.has_value())
-    {
-        throw InvalidQuerySyntax("Only source-qualified field references are supported at {}", expressionText);
-    }
-
-    auto qualifier = qualifierFunction->get().getFieldName();
-    functions.erase(functions.end() - 2);
-    return qualifier;
+    const auto* column = dynamic_cast<AntlrSQLParser::ColumnReferenceContext*>(context->parent);
+    const auto* dereference = column == nullptr ? nullptr : dynamic_cast<AntlrSQLParser::DereferenceContext*>(column->parent);
+    return dereference != nullptr && dereference->base == column;
 }
 
 void validateSourceQualifiers(const AntlrSQLHelper& helper)
@@ -274,25 +262,31 @@ void validateSourceQualifiers(const AntlrSQLHelper& helper)
     }
 }
 
+/// Child predicates are visited first and append one function each. This folds
+/// the last numberOfFunctionsToCombine entries into one logical function.
 void combineLogicalFunctions(
-    std::vector<LogicalFunction>& functions, const size_t operandCount, const uint64_t tokenType, const std::string& expressionText)
+    std::vector<LogicalFunction>& functions,
+    const size_t numberOfFunctionsToCombine,
+    const uint64_t logicalOperatorTokenType,
+    const std::string& expressionText)
 {
-    if (operandCount < 2)
+    if (numberOfFunctionsToCombine < 2)
     {
         return;
     }
-    if (functions.size() < operandCount)
+    if (functions.size() < numberOfFunctionsToCombine)
     {
-        throw InvalidQuerySyntax("Expected {} operands for logical expression, got {}: {}", operandCount, functions.size(), expressionText);
+        throw InvalidQuerySyntax(
+            "Expected {} operands for logical expression, got {}: {}", numberOfFunctionsToCombine, functions.size(), expressionText);
     }
 
-    const auto firstOperandIndex = functions.size() - operandCount;
-    auto function = std::move(functions[firstOperandIndex]);
-    for (auto operandIndex = firstOperandIndex + 1; operandIndex < functions.size(); ++operandIndex)
+    const auto firstFunctionToCombine = functions.size() - numberOfFunctionsToCombine;
+    auto function = std::move(functions[firstFunctionToCombine]);
+    for (auto functionIndex = firstFunctionToCombine + 1; functionIndex < functions.size(); ++functionIndex)
     {
-        function = createLogicalBinaryFunction(std::move(function), std::move(functions[operandIndex]), tokenType);
+        function = createLogicalBinaryFunction(std::move(function), std::move(functions[functionIndex]), logicalOperatorTokenType);
     }
-    functions.resize(firstOperandIndex);
+    functions.resize(firstFunctionToCombine);
     functions.emplace_back(std::move(function));
 }
 
@@ -615,38 +609,6 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     functions.push_back(function);
 }
 
-void AntlrSQLQueryPlanCreator::exitDereference(AntlrSQLParser::DereferenceContext* context)
-{
-    if (helpers.empty())
-    {
-        throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
-    }
-
-    auto& helper = helpers.top();
-    if (helper.isJoinRelation || (!helper.isSelect && !helper.isWhereOrHaving && !helper.isWindow && !helper.isGroupBy))
-    {
-        AntlrSQLBaseListener::exitDereference(context);
-        return;
-    }
-
-    auto qualifier = [&]() -> Identifier
-    {
-        if (!helper.isGroupBy)
-        {
-            return collapseQualifiedField(helper.functionBuilder, context->getText());
-        }
-        if (helper.groupByFields.size() < 2)
-        {
-            throw InvalidQuerySyntax("Qualified field reference is missing an identifier at {}", context->getText());
-        }
-        auto groupByQualifier = helper.groupByFields.at(helper.groupByFields.size() - 2).getFieldName();
-        helper.groupByFields.erase(helper.groupByFields.end() - 2);
-        return groupByQualifier;
-    }();
-    helper.addSourceQualifier(std::move(qualifier));
-    AntlrSQLBaseListener::exitDereference(context);
-}
-
 void AntlrSQLQueryPlanCreator::exitStar(AntlrSQLParser::StarContext* context)
 {
     if (!helpers.top().isSelect)
@@ -676,6 +638,15 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     {
         parentRuleIndex = parentContext->getRuleIndex();
     }
+    auto& helper = helpers.top();
+    if (!helper.isJoinRelation && (helper.isSelect || helper.isWhereOrHaving || helper.isWindow || helper.isGroupBy)
+        && isSourceQualifier(context))
+    {
+        helper.addSourceQualifier(bindIdentifier(context));
+        AntlrSQLBaseListener::enterIdentifier(context);
+        return;
+    }
+
     if (helpers.top().isGroupBy)
     {
         helpers.top().groupByFields.emplace_back(bindIdentifier(context));
