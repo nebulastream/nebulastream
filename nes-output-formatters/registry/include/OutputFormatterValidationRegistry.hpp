@@ -14,11 +14,12 @@
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <Configurations/Descriptor.hpp>
-
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -30,15 +31,25 @@ struct OutputFormatterValidationRegistryArguments
     std::unordered_map<std::string, std::string> config;
 };
 
-class OutputFormatterValidationRegistry final : public BaseRegistry<
-                                                    OutputFormatterValidationRegistry,
-                                                    std::string,
-                                                    OutputFormatterValidationRegistryReturnType,
-                                                    OutputFormatterValidationRegistryArguments>
+using OutputFormatterValidationFn = std::function<OutputFormatterValidationRegistryReturnType(OutputFormatterValidationRegistryArguments)>;
+
+/// Creates the registry entry for a formatter implementation: validation delegates to the
+/// formatter class's static validateAndFormat.
+template <typename FormatterImpl>
+OutputFormatterValidationFn makeOutputFormatterValidator()
 {
-};
+    return [](OutputFormatterValidationRegistryArguments arguments) -> OutputFormatterValidationRegistryReturnType
+    { return FormatterImpl::validateAndFormat(std::move(arguments.config)); };
 }
 
-#define INCLUDED_FROM_OUTPUT_FORMATTER_VALIDATION_REGISTRY
-#include <OutputFormatterValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_OUTPUT_FORMATTER_VALIDATION_REGISTRY
+class OutputFormatterValidationRegistry final : public RuntimeRegistry<
+                                                    OutputFormatterValidationRegistry,
+                                                    std::string,
+                                                    OutputFormatterValidationFn,
+                                                    /*CaseSensitive*/ false>
+{
+public:
+    static OutputFormatterValidationRegistry& instance();
+};
+
+}

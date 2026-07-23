@@ -111,7 +111,7 @@ DivLogicalFunction Unreflector<DivLogicalFunction>::operator()(const Reflected& 
     return DivLogicalFunction{std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterDivLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType DivLogicalFunction::createDiv(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

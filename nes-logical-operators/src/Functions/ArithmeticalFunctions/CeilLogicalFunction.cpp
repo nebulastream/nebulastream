@@ -100,7 +100,7 @@ CeilLogicalFunction Unreflector<CeilLogicalFunction>::operator()(const Reflected
     return CeilLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterCeilLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType CeilLogicalFunction::createCeil(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

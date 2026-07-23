@@ -14,15 +14,13 @@
 
 #pragma once
 
-#include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 #include <InputFormatIndexer.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterDescriptor.hpp>
@@ -61,16 +59,25 @@ private:
     std::shared_ptr<TupleBufferRef> memoryProvider;
 };
 
-class InputFormatIndexerRegistry : public BaseRegistry<
-                                       InputFormatIndexerRegistry,
-                                       std::string,
-                                       InputFormatIndexerRegistryReturnType,
-                                       InputFormatIndexerRegistryArguments>
+using InputFormatIndexerFactoryFn = std::function<InputFormatIndexerRegistryReturnType(InputFormatIndexerRegistryArguments)>;
+
+/// Creates the registry entry for an indexer implementation: the indexer is created via its
+/// static create function and wrapped into an InputFormatter.
+template <typename IndexerImpl>
+InputFormatIndexerFactoryFn makeInputFormatterFactory()
 {
+    return [](InputFormatIndexerRegistryArguments arguments) -> InputFormatIndexerRegistryReturnType
+    {
+        return arguments.createInputFormatterWithIndexer(
+            IndexerImpl::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
+    };
+}
+
+class InputFormatIndexerRegistry
+    : public RuntimeRegistry<InputFormatIndexerRegistry, std::string, InputFormatIndexerFactoryFn, /*CaseSensitive*/ false>
+{
+public:
+    static InputFormatIndexerRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY
-#include <InputFormatIndexerGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY

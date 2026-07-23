@@ -14,10 +14,12 @@
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <Configurations/Descriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -29,13 +31,23 @@ struct SourceValidationRegistryArguments
     std::unordered_map<std::string, std::string> config;
 };
 
-class SourceValidationRegistry final
-    : public BaseRegistry<SourceValidationRegistry, std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>
+using SourceValidationFn = std::function<SourceValidationRegistryReturnType(SourceValidationRegistryArguments)>;
+
+/// Creates the registry entry for a source implementation: validation delegates to the source
+/// class's static validateAndFormat. The entry expression in cmake/RuntimeRegistrationUtil.cmake
+/// instantiates this per plugin type.
+template <typename SourceImpl>
+SourceValidationFn makeSourceValidator()
 {
+    return [](SourceValidationRegistryArguments arguments) -> SourceValidationRegistryReturnType
+    { return SourceImpl::validateAndFormat(std::move(arguments.config)); };
+}
+
+class SourceValidationRegistry final
+    : public RuntimeRegistry<SourceValidationRegistry, std::string, SourceValidationFn, /*CaseSensitive*/ false>
+{
+public:
+    static SourceValidationRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY
-#include <SourceValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY

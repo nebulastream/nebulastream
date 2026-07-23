@@ -268,6 +268,10 @@ foreach (NES_DIR ${NES_DIRECTORIES_ALL})
     endif ()
 endforeach ()
 
+# Umbrella shared library (libnes.so) for executables and runtime-loaded plugins; defined after
+# the loop so all component targets exist.
+include(cmake/LibNes.cmake)
+
 # Other configurations
 project_enable_format()
 project_enable_tidy_diff()

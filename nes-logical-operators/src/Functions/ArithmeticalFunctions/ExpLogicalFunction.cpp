@@ -99,7 +99,7 @@ ExpLogicalFunction Unreflector<ExpLogicalFunction>::operator()(const Reflected& 
     return ExpLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExpLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType ExpLogicalFunction::createExp(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

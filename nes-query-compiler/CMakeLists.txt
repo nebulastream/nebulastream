@@ -10,21 +10,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Set Sources and Headers
-add_subdirectory(src)
-get_source(nes-query-compiler NES_QUERY_COMPILER_SOURCE_FILES)
 
 # Add interface library
 add_library(nes-query-compiler-interface INTERFACE)
 target_include_directories(nes-query-compiler-interface INTERFACE interface)
 target_link_libraries(nes-query-compiler-interface INTERFACE nes-configurations)
 
-# Add Library
-add_library(nes-query-compiler ${NES_QUERY_COMPILER_SOURCE_FILES})
-target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-physical-operators-registry nes-runtime nes-input-formatter-provider)
+# Declare the library up front so create_runtime_registry can attach the glue sub-library;
+# sources are added below once src/ has registered them.
+add_library(nes-query-compiler STATIC)
+set_target_properties(nes-query-compiler PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-runtime nes-input-formatter-provider)
 target_include_directories(nes-query-compiler PUBLIC
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
+# Runtime registry: lowering rules are constructed uniformly from the query execution
+# configuration; the class is LowerToPhysical<name> (the Source rule registers under the key
+# SourceDescriptor).
+create_runtime_registry(LoweringRule nes-query-compiler
+        ENTRY_TEMPLATE "makeLoweringRule<LowerToPhysical\${PLUGIN_NAME}>()"
+        HEADER_TEMPLATE "LowerToPhysical\${PLUGIN_NAME}.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+
+add_subdirectory(src)
+get_source(nes-query-compiler NES_QUERY_COMPILER_SOURCE_FILES)
+target_sources(nes-query-compiler PRIVATE ${NES_QUERY_COMPILER_SOURCE_FILES})
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-query-compiler REUSE_FROM nes-common)
@@ -32,6 +43,5 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-query-compiler PUBLIC "-fPIC")
 endif ()
 
-create_registries_for_component(LoweringRule)
 
 add_tests_if_enabled(tests)

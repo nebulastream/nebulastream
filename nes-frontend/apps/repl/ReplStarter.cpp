@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Plugins/BuiltinPlugins.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -126,6 +127,7 @@ int main(int argc, char** argv)
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();
+        NES::loadBuiltinPlugins();
         bool interactiveMode
             = static_cast<int>(cpptrace::isatty(STDIN_FILENO)) != 0 and static_cast<int>(cpptrace::isatty(STDOUT_FILENO)) != 0;
 

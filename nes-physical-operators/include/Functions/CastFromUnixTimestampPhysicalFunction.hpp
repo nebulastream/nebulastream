@@ -19,6 +19,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -30,6 +31,8 @@ class CastFromUnixTimestampPhysicalFunction
 public:
     explicit CastFromUnixTimestampPhysicalFunction(PhysicalFunction childFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createCastFromUnixTs(PhysicalFunctionRegistryArguments arguments);
 
 private:
     DataType outputType;

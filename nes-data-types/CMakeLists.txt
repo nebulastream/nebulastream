@@ -10,18 +10,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# include registrar generation functions
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-
-# Set Sources and Headers
-add_subdirectory(src)
-
-get_source(nes-data-types NES_COMPILER_SOURCE_FILES)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
 find_package(reflectcpp REQUIRED)
 
-# Add Library
-add_library(nes-data-types ${NES_COMPILER_SOURCE_FILES})
+# Declare the library up front so create_runtime_registry can attach the glue sub-library;
+# sources are added below once src/ has registered them.
+add_library(nes-data-types STATIC)
+set_target_properties(nes-data-types PROPERTIES LINKER_LANGUAGE CXX)
+
+# Runtime registry: entries are keyed by the DataType::Type enumerator and construct the type
+# directly — no per-plugin classes exist.
+create_runtime_registry(DataType nes-data-types
+        ENTRY_TEMPLATE "[](DataTypeRegistryArguments arguments) { return DataType{DataType::Type::\${KEY}, arguments.nullable}; }")
+
+add_subdirectory(src)
+get_source(nes-data-types NES_COMPILER_SOURCE_FILES)
+target_sources(nes-data-types PRIVATE ${NES_COMPILER_SOURCE_FILES})
 target_link_libraries(nes-data-types PUBLIC nes-configurations PRIVATE reflectcpp::reflectcpp)
 target_include_directories(nes-data-types PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -32,4 +37,3 @@ endif ()
 
 add_tests_if_enabled(tests)
 
-create_registries_for_component(DataType)

@@ -11,20 +11,31 @@
 # limitations under the License.
 
 # include registrar generation functions
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
-# Set Sources and Headers
+
+# Declare the library up front so create_runtime_registry can attach the glue sub-libraries;
+# sources are added below once src/ has registered them.
+add_library(nes-physical-operators STATIC)
+set_target_properties(nes-physical-operators PROPERTIES LINKER_LANGUAGE CXX)
+
+# Runtime registries: entries are static create<Key> / create members on the function classes.
+create_runtime_registry(PhysicalFunction nes-physical-operators
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}PhysicalFunction::create\${KEY}"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}PhysicalFunction.hpp")
+
+create_runtime_registry(AggregationPhysicalFunction nes-physical-operators
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}AggregationPhysicalFunction::create"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}AggregationPhysicalFunction.hpp")
+
 add_subdirectory(src)
 get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
-
-# Add Library
-add_library(nes-physical-operators ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
+target_sources(nes-physical-operators PRIVATE ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
 find_package(OpenSSL REQUIRED)
 target_link_libraries(nes-physical-operators PUBLIC nes-sources nes-sinks nes-nautilus nes-logical-operators nes-input-formatter-provider PRIVATE nes-input-formatters nes-inference-runtime OpenSSL::Crypto)
 target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-create_registries_for_component(PhysicalFunction AggregationPhysicalFunction)
 
 add_tests_if_enabled(tests)

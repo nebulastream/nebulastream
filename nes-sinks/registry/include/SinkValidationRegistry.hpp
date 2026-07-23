@@ -14,10 +14,12 @@
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <Configurations/Descriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -29,13 +31,21 @@ struct SinkValidationRegistryArguments
     std::unordered_map<std::string, std::string> config;
 };
 
-class SinkValidationRegistry final
-    : public BaseRegistry<SinkValidationRegistry, std::string, SinkValidationRegistryReturnType, SinkValidationRegistryArguments>
+using SinkValidationFn = std::function<SinkValidationRegistryReturnType(SinkValidationRegistryArguments)>;
+
+/// Creates the registry entry for a sink implementation: validation delegates to the sink
+/// class's static validateAndFormat.
+template <typename SinkImpl>
+SinkValidationFn makeSinkValidator()
 {
+    return [](SinkValidationRegistryArguments arguments) -> SinkValidationRegistryReturnType
+    { return SinkImpl::validateAndFormat(std::move(arguments.config)); };
+}
+
+class SinkValidationRegistry final : public RuntimeRegistry<SinkValidationRegistry, std::string, SinkValidationFn, /*CaseSensitive*/ false>
+{
+public:
+    static SinkValidationRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_SINK_VALIDATION_REGISTRY
-#include <SinkValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SINK_VALIDATION_REGISTRY

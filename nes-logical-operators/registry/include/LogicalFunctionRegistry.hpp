@@ -14,13 +14,11 @@
 
 #pragma once
 
-#include <memory>
+#include <functional>
 #include <string>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
-#include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -32,12 +30,19 @@ struct LogicalFunctionRegistryArguments
     std::vector<LogicalFunction> children;
 };
 
-class LogicalFunctionRegistry
-    : public BaseRegistry<LogicalFunctionRegistry, std::string, LogicalFunctionRegistryReturnType, LogicalFunctionRegistryArguments>
-{
-};
-}
+using LogicalFunctionFn = std::function<LogicalFunctionRegistryReturnType(LogicalFunctionRegistryArguments)>;
 
-#define INCLUDED_FROM_REGISTRY_LOGICAL_FUNCTION
-#include <LogicalFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_LOGICAL_FUNCTION
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Entries are static create<Key> members on the function classes (construction differs per
+/// function, and a single class can register under several keys, e.g. ExtractFromTimestamp as
+/// Day_Of/Month_Of/Year_Of).
+/// Case-insensitive to mirror the retired BaseRegistry.
+class LogicalFunctionRegistry : public RuntimeRegistry<LogicalFunctionRegistry, std::string, LogicalFunctionFn, /*CaseSensitive*/ false>
+{
+public:
+    /// Defined out-of-line (LogicalFunctionRegistry.cpp) so exactly one instance exists
+    /// process-wide even with plugins loaded as shared objects.
+    static LogicalFunctionRegistry& instance();
+};
+
+}

@@ -18,6 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -28,6 +29,8 @@ class IsNullCheckPhysicalFunction final
 public:
     explicit IsNullCheckPhysicalFunction(PhysicalFunction childFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createIsNull(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction childFunction;

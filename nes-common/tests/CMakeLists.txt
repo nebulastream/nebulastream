@@ -16,9 +16,13 @@ include(GoogleTest)
 #-------------------------------##############----------------------------------
 #------------------------------- # Nes Utils for Test Suite --------------------------------
 
+# TestMain.cpp provides the shared main for all test binaries: it loads the built-in plugins
+# before running the tests. It shadows gtest_main/gmock_main (nes-test-util precedes them on
+# every test's link line, so main resolves from here first).
 add_library(nes-test-util
         "Util/src/BaseIntegrationTest.cpp"
-        "Util/src/BaseUnitTest.cpp")
+        "Util/src/BaseUnitTest.cpp"
+        "Util/src/TestMain.cpp")
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Util/include")
@@ -28,3 +32,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 add_subdirectory(UnitTests)
+add_subdirectory(Plugins)

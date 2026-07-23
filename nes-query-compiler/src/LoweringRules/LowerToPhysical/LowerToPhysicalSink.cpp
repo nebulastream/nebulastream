@@ -140,10 +140,4 @@ LoweringRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOpe
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     return {.root = wrapper, .leaves = {leaves}};
 }
-
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterSinkLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
-{
-    return std::make_unique<LowerToPhysicalSink>(argument.conf);
-}
 }

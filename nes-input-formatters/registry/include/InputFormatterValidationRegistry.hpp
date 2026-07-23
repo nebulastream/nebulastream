@@ -14,11 +14,12 @@
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <Configurations/Descriptor.hpp>
-
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -30,15 +31,29 @@ struct InputFormatterValidationRegistryArguments
     std::unordered_map<std::string, std::string> config;
 };
 
-class InputFormatterValidationRegistry final : public BaseRegistry<
-                                                   InputFormatterValidationRegistry,
-                                                   std::string,
-                                                   InputFormatterValidationRegistryReturnType,
-                                                   InputFormatterValidationRegistryArguments>
+using InputFormatterValidationFn = std::function<InputFormatterValidationRegistryReturnType(InputFormatterValidationRegistryArguments)>;
+
+/// Creates the registry entry for an indexer implementation: validation delegates to the indexer
+/// class's static validateAndFormat.
+template <typename IndexerImpl>
+InputFormatterValidationFn makeInputFormatterValidator()
 {
-};
+    return [](InputFormatterValidationRegistryArguments arguments) -> InputFormatterValidationRegistryReturnType
+    { return IndexerImpl::validateAndFormat(std::move(arguments.config)); };
 }
 
-#define INCLUDED_FROM_INPUT_FORMATTER_VALIDATION_REGISTRY
-#include <InputFormatterValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_INPUT_FORMATTER_VALIDATION_REGISTRY
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Case-insensitive to mirror the retired BaseRegistry.
+class InputFormatterValidationRegistry final : public RuntimeRegistry<
+                                                   InputFormatterValidationRegistry,
+                                                   std::string,
+                                                   InputFormatterValidationFn,
+                                                   /*CaseSensitive*/ false>
+{
+public:
+    /// Defined out-of-line (InputFormatterValidationRegistry.cpp) so exactly one instance
+    /// exists process-wide even with plugins loaded as shared objects.
+    static InputFormatterValidationRegistry& instance();
+};
+
+}

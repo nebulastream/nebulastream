@@ -59,10 +59,4 @@ LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logic
     std::vector leaves(logicalOperator.getChildren().size(), wrapper);
     return {.root = wrapper, .leaves = {leaves}};
 };
-
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterSelectionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
-{
-    return std::make_unique<LowerToPhysicalSelection>(argument.conf);
-}
 }

@@ -32,10 +32,9 @@ std::shared_ptr<OutputFormatter> provideOutputFormatter(
     const std::vector<Record::RecordFieldIdentifier>& fieldNames,
     const OutputFormatterDescriptor& descriptor)
 {
-    auto args = OutputFormatterRegistryArguments{.fieldNames = fieldNames, .descriptor = descriptor};
-    if (auto outputFormatter = OutputFormatterRegistry::instance().create(outputFormatterType, args))
+    if (const auto formatterFactory = OutputFormatterRegistry::instance().find(outputFormatterType))
     {
-        return std::move(outputFormatter.value());
+        return (*formatterFactory)(OutputFormatterRegistryArguments{.fieldNames = fieldNames, .descriptor = descriptor});
     }
     throw UnknownOutputFormatterType("Unknown output-formatter type: {}", outputFormatterType);
 }

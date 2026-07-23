@@ -14,13 +14,14 @@
 
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Reflection.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -33,12 +34,15 @@ struct LogicalOperatorRegistryArguments
     Reflected reflected;
 };
 
-class LogicalOperatorRegistry
-    : public BaseRegistry<LogicalOperatorRegistry, std::string, LogicalOperatorRegistryReturnType, LogicalOperatorRegistryArguments>
-{
-};
-}
+using LogicalOperatorFn = std::function<LogicalOperatorRegistryReturnType(LogicalOperatorRegistryArguments)>;
 
-#define INCLUDED_FROM_REGISTRY_LOGICAL_OPERATOR
-#include <LogicalOperatorGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_LOGICAL_OPERATOR
+/// Name-based construction surface for logical operators. Currently has no entries: operators
+/// gain one by implementing a static create member and adding an
+/// add_registry_entry(LogicalOperator <name>) line.
+class LogicalOperatorRegistry : public RuntimeRegistry<LogicalOperatorRegistry, std::string, LogicalOperatorFn, /*CaseSensitive*/ false>
+{
+public:
+    static LogicalOperatorRegistry& instance();
+};
+
+}

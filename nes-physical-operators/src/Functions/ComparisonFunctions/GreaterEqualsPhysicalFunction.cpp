@@ -38,8 +38,8 @@ GreaterEqualsPhysicalFunction::GreaterEqualsPhysicalFunction(PhysicalFunction le
 {
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterGreaterEqualsPhysicalFunction(
-    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+GreaterEqualsPhysicalFunction::createGreaterEquals(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two child functions");

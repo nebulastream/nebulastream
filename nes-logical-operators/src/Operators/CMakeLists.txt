@@ -11,20 +11,21 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
+        LogicalOperatorRegistry.cpp
         LogicalOperator.cpp
+        SelectionLogicalOperator.cpp
+        ProjectionLogicalOperator.cpp
+        UnionLogicalOperator.cpp
+        IngestionTimeWatermarkAssignerLogicalOperator.cpp
+        EventTimeWatermarkAssignerLogicalOperator.cpp
+        InferModelLogicalOperator.cpp
+        InferModelNameLogicalOperator.cpp
 )
 
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Windows)
 
-add_registry_entry(Selection LogicalOperator SelectionLogicalOperator.cpp)
-add_registry_entry(Projection LogicalOperator ProjectionLogicalOperator.cpp)
-add_registry_entry(Union LogicalOperator UnionLogicalOperator.cpp)
-add_registry_entry(IngestionTimeWatermarkAssigner LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator.cpp)
-add_registry_entry(EventTimeWatermarkAssigner LogicalOperator EventTimeWatermarkAssignerLogicalOperator.cpp)
-add_registry_entry(InferModel LogicalOperator InferModelLogicalOperator.cpp)
-add_registry_entry(InferModelName LogicalOperator InferModelNameLogicalOperator.cpp)
 
 add_unreflection_entry(LogicalOperator Selection)
 add_unreflection_entry(LogicalOperator Projection)

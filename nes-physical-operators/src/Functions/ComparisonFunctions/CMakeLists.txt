@@ -10,7 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_registry_entry(Greater PhysicalFunction GreaterPhysicalFunction.cpp)
-add_registry_entry(GreaterEquals PhysicalFunction GreaterEqualsPhysicalFunction.cpp)
-add_registry_entry(Less PhysicalFunction LessPhysicalFunction.cpp)
-add_registry_entry(LessEquals PhysicalFunction LessEqualsPhysicalFunction.cpp)
+add_source_files(nes-physical-operators
+        GreaterPhysicalFunction.cpp
+        GreaterEqualsPhysicalFunction.cpp
+        LessPhysicalFunction.cpp
+        LessEqualsPhysicalFunction.cpp
+)
+
+add_registry_entry(PhysicalFunction Greater)
+add_registry_entry(PhysicalFunction GreaterEquals)
+add_registry_entry(PhysicalFunction Less)
+add_registry_entry(PhysicalFunction LessEquals)

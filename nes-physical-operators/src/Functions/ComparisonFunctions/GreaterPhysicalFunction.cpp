@@ -39,7 +39,7 @@ GreaterPhysicalFunction::GreaterPhysicalFunction(PhysicalFunction leftPhysicalFu
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterGreaterPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+GreaterPhysicalFunction::createGreater(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Greater function must have exactly two child functions");
     return GreaterPhysicalFunction(

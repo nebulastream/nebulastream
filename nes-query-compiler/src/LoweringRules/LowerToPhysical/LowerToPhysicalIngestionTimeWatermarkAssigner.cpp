@@ -50,10 +50,4 @@ LoweringRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(
     std::vector leaves(logicalOperator.getChildren().size(), wrapper);
     return {.root = wrapper, .leaves = {leaves}};
 }
-
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
-{
-    return std::make_unique<LowerToPhysicalIngestionTimeWatermarkAssigner>(argument.conf);
-}
 }

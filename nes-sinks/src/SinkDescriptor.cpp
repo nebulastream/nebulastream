@@ -283,7 +283,11 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
         | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
         | std::ranges::to<std::unordered_map>();
     auto sinkValidationRegistryArguments = SinkValidationRegistryArguments{stringConfigMap};
-    return SinkValidationRegistry::instance().create(std::string{sinkType}, std::move(sinkValidationRegistryArguments));
+    if (const auto validator = SinkValidationRegistry::instance().find(std::string{sinkType}))
+    {
+        return (*validator)(std::move(sinkValidationRegistryArguments));
+    }
+    return std::nullopt;
 }
 
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
