@@ -53,10 +53,10 @@ SELECT
 FROM streamWithNegatives INTO sinkStream;
 ====
 SELECT
-    SQRT(INT32(0) - INT32(1)) AS i8,
-    SQRT(INT32(0) - INT32(1)) AS i16,
-    SQRT(INT32(0) - INT32(1)) AS i32,
-    SQRT(INT32(0) - INT32(1)) AS i64,
+    SQRT(0 - 1) AS i8,
+    SQRT(0 - 1) AS i16,
+    SQRT(0 - 1) AS i32,
+    SQRT(0 - 1) AS i64,
 
     SQRT(u8) AS u8,
     SQRT(u16) AS u16,

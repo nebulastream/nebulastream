@@ -30,7 +30,7 @@ ATTACH INLINE
 
 
 
-EXPLAIN (LOGICAL) FORMAT TEXT SELECT id, value FROM stream WHERE value > UINT64(2) INTO sinkFilter;
+EXPLAIN (LOGICAL) FORMAT TEXT SELECT id, value FROM stream WHERE value > 2 INTO sinkFilter;
 ----
 == Initial Logical Plan ==
 SINK(SINKFILTER)
@@ -40,7 +40,7 @@ SINK(SINKFILTER)
 ==END==
 
 
-EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id, value FROM stream WHERE value > UINT64(2) INTO sinkFilter;
+EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id, value FROM stream WHERE value > 2 INTO sinkFilter;
 ----
 == Optimized Global Plan ==
 SINK(SINKFILTER)
@@ -72,9 +72,9 @@ SINK(SINKJOIN)
 EXPLAIN (LOGICAL) FORMAT TEXT
 SELECT *
 FROM (
-    SELECT id * UINT64(2) as id FROM stream WHERE id > UINT64(0)
+    SELECT id * 2 as id FROM stream WHERE id > 0
     UNION
-    SELECT id2 * UINT64(2) as id FROM stream2 WHERE id2 > UINT64(0))
+    SELECT id2 * 2 as id FROM stream2 WHERE id2 > 0)
 INTO File();
 ----
 == Initial Logical Plan ==

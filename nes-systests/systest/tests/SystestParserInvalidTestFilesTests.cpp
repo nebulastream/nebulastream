@@ -53,7 +53,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
 {
     const auto* const filename = SYSTEST_DATA_DIR "invalid_error.dummy";
 
-    const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
+    const auto* const expectQuery = R"(SELECT * FROM window WHERE value == 1 INTO sinkWindow;)";
 
     SystestParser parser{};
     parser.registerOnQueryCallback([&](const std::string& query, const SystestQueryId, bool) { ASSERT_EQ(query, expectQuery); });
@@ -72,7 +72,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
 {
     const auto* const filename = SYSTEST_DATA_DIR "invalid_error_message.dummy";
 
-    const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
+    const auto* const expectQuery = R"(SELECT * FROM window WHERE value == 1 INTO sinkWindow;)";
 
     SystestParser parser{};
     parser.registerOnQueryCallback([&](const std::string& query, SystestQueryId, bool) { ASSERT_EQ(query, expectQuery); });

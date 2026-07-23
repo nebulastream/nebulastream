@@ -33,22 +33,22 @@ SELECT * FROM solarPanels INTO solarPanelsChecksum;
 42700000, 74759775379
 
 # Query 1 - Filter tuples
-SELECT * FROM consumers WHERE consumedPower >= FLOAT64(400) INTO consumersChecksum;
+SELECT * FROM consumers WHERE consumedPower >= 400 INTO consumersChecksum;
 ----
 14236360, 36138915427
 
 # Query 2 - Filter with multiple attributes
-SELECT * FROM consumers WHERE consumedPower >= FLOAT64(400) AND sectorId = INT32(1) INTO consumersChecksum;
+SELECT * FROM consumers WHERE consumedPower >= 400 AND sectorId = 1 INTO consumersChecksum;
 ----
 3556803, 9027432231
 
 # Query 3 - Filter with complex expression
-SELECT * FROM consumers WHERE consumedPower >= FLOAT64(1) AND consumedPower < FLOAT64(61) INTO consumersChecksum;
+SELECT * FROM consumers WHERE consumedPower >= 1 AND consumedPower < 61 INTO consumersChecksum;
 ----
 4271223, 10579920660
 
 # Query 4 - Filter with complex expression
-SELECT consumedPower / FLOAT64(1000) AS consumedPower FROM consumers INTO q4Checksum;
+SELECT consumedPower / 1000 AS consumedPower FROM consumers INTO q4Checksum;
 ----
 42700000, 15336467257
 

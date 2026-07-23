@@ -136,7 +136,7 @@ CREATE SINK generator_sink_timeout(id FLOAT64 NOT NULL) TYPE File;
 # Predicate eliminates all tuples on purpose, as this test does not care about the result.
 # The test only validates that the query terminates based on the "MAX_RUNTIME_MS"
 SELECT * FROM generator_with_timeout
-WHERE BOOLEAN(FALSE)
+WHERE FALSE
 INTO generator_sink_timeout;
 ----
 

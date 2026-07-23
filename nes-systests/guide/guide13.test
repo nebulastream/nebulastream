@@ -17,7 +17,7 @@ CREATE SINK sink(
 ) TYPE File;
 
 SELECT
-    x + INT32(10) AS x_plus_10
+    x + 10 AS x_plus_10
 FROM s
 INTO sink;
 ----

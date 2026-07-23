@@ -1,5 +1,5 @@
 # name: guide/guide3.test
-# description: Test CEIL(speed) != UINT64(0) OR altitude == 0
+# description: Test CEIL(speed) != 0 OR altitude == 0
 # groups: [Function, Filter, Ceil]
 
 # Define source
@@ -22,8 +22,8 @@ CREATE SINK sink(speed FLOAT64 NOT NULL, altitude FLOAT64 NOT NULL) TYPE File;
 
 SELECT *
 FROM s
-WHERE CEIL(speed) != UINT64(0)
-   OR altitude == UINT64(0)
+WHERE CEIL(speed) != 0
+   OR altitude == 0
 INTO sink;
 ----
 0.2, 100

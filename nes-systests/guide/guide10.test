@@ -42,8 +42,8 @@ FROM stock_quotes
 GROUP BY ticker
 WINDOW TUMBLING(ts, SIZE 1 MINUTES)
 HAVING
-    max_price > FLOAT64(100.0)
-    AND cnt >= UINT64(10)
+    max_price > 100.0
+    AND cnt >= 10
 INTO sink;
 ----
 AAPL,110.0,95.0,10
