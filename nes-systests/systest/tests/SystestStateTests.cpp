@@ -136,4 +136,76 @@ TEST_F(SystestStateTest, DirectlySpecifiedTestFileOverridesDisabledTestFiles)
     ASSERT_EQ(testMap.size(), 1);
     EXPECT_TRUE(testMap.contains(std::filesystem::weakly_canonical(joinFile)));
 }
+
+TEST_F(SystestStateTest, OnlyDuplicateDiscoveredTestNamesIncludeRelativeDirectory)
+{
+    const TemporaryDirectory tempDir;
+    const auto leftFile = tempDir.get() / "left" / "same.test";
+    const auto rightFile = tempDir.get() / "right" / "same.test";
+    const auto uniqueFile = tempDir.get() / "right" / "unique.test";
+    writeTextFile(leftFile, "# groups:[Join]\n");
+    writeTextFile(rightFile, "# groups:[Join]\n");
+    writeTextFile(uniqueFile, "# groups:[Join]\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.testFileExtension = ".test";
+
+    const auto testMap = loadTestFileMap(config);
+
+    ASSERT_EQ(testMap.size(), 3);
+    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(leftFile)).name(), "left/same");
+    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(rightFile)).name(), "right/same");
+    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(uniqueFile)).name(), "unique");
+}
+
+TEST_F(SystestStateTest, FilteredDuplicateTestNameUsesStem)
+{
+    const TemporaryDirectory tempDir;
+    const auto includedFile = tempDir.get() / "included" / "same.test";
+    const auto filteredFile = tempDir.get() / "filtered" / "same.test";
+    writeTextFile(includedFile, "# groups:[Included]\n");
+    writeTextFile(filteredFile, "# groups:[Filtered]\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.testFileExtension = ".test";
+    config.testGroups.add("Included");
+
+    const auto testMap = loadTestFileMap(config);
+
+    ASSERT_EQ(testMap.size(), 1);
+    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(includedFile)).name(), "same");
+}
+
+TEST_F(SystestStateTest, DirectlySpecifiedTestNamesUseStem)
+{
+    const TemporaryDirectory tempDir;
+    const auto testFile = tempDir.get() / "left" / "same.test";
+    writeTextFile(testFile, "# groups:[Join]\n");
+
+    SystestConfiguration config;
+    config.testsDiscoverDir = tempDir.get().string();
+    config.directlySpecifiedTestFiles = testFile.string();
+
+    const auto directlySpecifiedTestMap = loadTestFileMap(config);
+    config.testQueryNumbers.add(1);
+    const auto queryFilteredTestMap = loadTestFileMap(config);
+
+    const auto canonicalTestFile = std::filesystem::weakly_canonical(testFile);
+    ASSERT_EQ(directlySpecifiedTestMap.size(), 1);
+    ASSERT_EQ(queryFilteredTestMap.size(), 1);
+    EXPECT_EQ(directlySpecifiedTestMap.at(canonicalTestFile).name(), "same");
+    EXPECT_EQ(queryFilteredTestMap.at(canonicalTestFile).name(), "same");
+}
+
+TEST_F(SystestStateTest, ResultFilesCreateDirectoriesForNestedTestNames)
+{
+    const TemporaryDirectory tempDir;
+
+    const auto resultFile = SystestQuery::resultFile(tempDir.get(), "left/same", SystestQueryId(1));
+
+    EXPECT_EQ(resultFile, tempDir.get() / "results" / "left" / "same_1.csv");
+    EXPECT_TRUE(std::filesystem::is_directory(resultFile.parent_path()));
+}
 }
