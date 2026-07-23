@@ -372,11 +372,27 @@ SystestExecutorResult SystestExecutor::executeSystests()
                     benchmarkQueries.push_back(query);
                 }
 
+                /// Benchmarked queries honour their configuration override just like the regular path does: queries
+                /// are grouped by override and each group runs against a worker configured with it.
+                std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>> benchmarkQueriesByOverride;
+                for (const auto& query : benchmarkQueries)
+                {
+                    benchmarkQueriesByOverride[query.configurationOverride].push_back(query);
+                }
+
                 progressTracker.reset();
                 progressTracker.setTotalQueries(benchmarkQueries.size());
-                auto failed = runQueriesAndBenchmark(
-                    benchmarkQueries, singleNodeWorkerConfiguration, benchmarkResults, config.clusterConfig, progressTracker);
-                failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+                for (const auto& [overrideConfig, queriesForConfig] : benchmarkQueriesByOverride)
+                {
+                    auto configCopy = singleNodeWorkerConfiguration;
+                    for (const auto& [key, value] : overrideConfig.overrideParameters)
+                    {
+                        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
+                    }
+                    auto failed
+                        = runQueriesAndBenchmark(queriesForConfig, configCopy, benchmarkResults, config.clusterConfig, progressTracker);
+                    failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+                }
                 const auto serializedResults = rfl::json::write(benchmarkResults, rfl::json::pretty);
                 std::cout << serializedResults;
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
