@@ -306,7 +306,7 @@ timeWindow
     | SLIDING '(' (timestampParameter ',')? sizeParameter ',' advancebyParameter ')' #slidingWindow
     ;
 
-timestampParameter: name=IDENTIFIER (',' name=IDENTIFIER)?;
+timestampParameter: name+=identifier (',' name+=identifier)?;
 
 countWindow:
     TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling

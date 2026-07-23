@@ -139,14 +139,12 @@ std::expected<Identifier, Exception> Identifier::tryParse(std::string value)
 
 Reflected Reflector<Identifier>::operator()(const Identifier& identifier, const ReflectionContext& context) const
 {
-    return context.reflect(std::pair{std::pair{identifier.originalValue, identifier.canonicalValue}, identifier.caseSensitive});
+    return context.reflect(identifier.caseSensitive ? identifier.originalValue : identifier.canonicalValue);
 }
 
 Identifier Unreflector<Identifier>::operator()(const Reflected& reflectable, const ReflectionContext& context) const
 {
-    const auto [strings, caseSensitive] = context.unreflect<std::pair<std::pair<std::string, std::string>, bool>>(reflectable);
-    const auto [original, canonicalized] = strings;
-    return Identifier{original, canonicalized, caseSensitive};
+    return Identifier::parse(context.unreflect<std::string>(reflectable));
 }
 
 std::string Identifier::asCanonicalString() const
