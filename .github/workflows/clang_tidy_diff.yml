@@ -73,27 +73,37 @@ jobs:
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG -DNES_SPLIT_TEST_BINARIES=OFF
             # We need to build the project, as some headers are only created during the build.
             cmake --build build -j  -- -k 0
-      - name: Create results directory
-        run: mkdir clang-tidy-result
       - uses: ./.github/steps/run-in-container
         name: Run Clang Tidy Pre-check
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
-            git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' ':!*nes-rust-bindings' ':!vcpkg/**' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml  -checks='-*,readability-duplicate-include' -j $(nproc)
+            # Fast-fail pass: only duplicate includes, so trivial mistakes surface
+            # before the full all-checks pass below.
+            printf "Checks: \"-*,readability-duplicate-include\"\nWarningsAsErrors: \"*\"\n" > build/clang-tidy-precheck.yaml
+            export NES_TIDY_DIFF_BASE=${{ inputs.base_sha }}
+            export NES_TIDY_DIFF_CONFIG_FILE=$(pwd)/build/clang-tidy-precheck.yaml
+            # Export fixes here too: if this pass fails the job stops, and the
+            # PR-comment bot still needs a fixes.yml to annotate from.
+            export NES_TIDY_DIFF_EXPORT_FIXES=$(pwd)/clang-tidy-result/fixes.yml
+            cmake --build build --target tidy-diff
       - uses: ./.github/steps/run-in-container
         name: Run Clang Tidy with all Checks
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
-            git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' ':!*nes-rust-bindings' ':!vcpkg/**' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -j $(nproc)
+            export NES_TIDY_DIFF_BASE=${{ inputs.base_sha }}
+            export NES_TIDY_DIFF_EXPORT_FIXES=$(pwd)/clang-tidy-result/fixes.yml
+            cmake --build build --target tidy-diff
       - name: Upload Clang-Tidy Results
         if: ${{ !cancelled() && !github.event.act }}
         uses: actions/upload-artifact@v5
         with:
           if-no-files-found: warn
           name: clang-tidy-result
-          path: clang-tidy-result
+          path: |
+            clang-tidy-result
+            build/clang-tidy-diff-report.txt
       - name: Run clang-tidy-pr-comments action
         if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         # requires python3-venv
