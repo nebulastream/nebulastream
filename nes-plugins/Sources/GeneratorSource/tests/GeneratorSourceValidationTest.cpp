@@ -12,10 +12,13 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
+#include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -227,6 +230,32 @@ TEST_F(GeneratorSourceValidationTest, UnknownParameterIsRejected)
     auto config = validConfig();
     config["FOO"] = "BAR";
     expectInvalidConfig(config, "Unknown configuration parameter: FOO");
+}
+
+namespace
+{
+/// A config whose validator throws (the legacy style) instead of returning nullopt.
+struct ThrowingValidatorConfig
+{
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> ALWAYS_THROWS{
+        "ALWAYS_THROWS",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>&) -> std::optional<uint32_t>
+        { throw InvalidConfigParameter("thrown from a legacy validator"); }};
+
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(ALWAYS_THROWS);
+};
+}
+
+/// The non-throwing entry point must uphold its contract even when a plugin validator throws.
+TEST_F(GeneratorSourceValidationTest, ThrowingValidatorIsReportedAsError)
+{
+    const auto result
+        = DescriptorConfig::tryValidateAndFormat<ThrowingValidatorConfig>({{"ALWAYS_THROWS", "42"}}, "ThrowingValidatorConfig");
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code(), ErrorCode::InvalidConfigParameter);
+    EXPECT_THAT(result.error().what(), ::testing::HasSubstr("thrown from a legacy validator"));
 }
 
 }
