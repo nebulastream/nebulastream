@@ -359,7 +359,7 @@ bad_topology() {
   local f=$(bad_topology 's/type: Void/type: NonExistentSink/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Invalid configuration for sink"* ]]
+  [[ "$output" == *"unknown sink type"* ]]
   [[ "$output" == *"NONEXISTENTSINK"* ]]
 }
 
