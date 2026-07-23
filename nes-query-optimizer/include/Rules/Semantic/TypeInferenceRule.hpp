@@ -31,10 +31,7 @@ class TypeInferenceRule
 public:
     static constexpr std::string_view NAME = "TypeInferenceRule";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    [[nodiscard]] std::set<std::type_index> needs() const;
 
     /// Performs type inference on the given query plan.
     /// This involves the following steps.
@@ -43,7 +40,6 @@ public:
     /// 3. If a operator contains expression, we infer the result dataType of this operators.
     /// @throws TypeInferenceException if inferring the data types into the query failed
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    bool operator==(const TypeInferenceRule& other) const;
 };
 
 static_assert(RuleConcept<TypeInferenceRule, LogicalPlan>);

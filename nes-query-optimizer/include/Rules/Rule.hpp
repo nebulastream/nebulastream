@@ -36,7 +36,7 @@
  *
  * A Rule<U> is a value-semantic, type-erased wrapper around any type satisfying
  * RuleConcept<T, U>: a rewrite rule that transforms a unit of type U into another
- * unit of type U. Rules declare their dependencies via dependsOn(), enabling
+ * unit of type U. Rules declare their dependencies via needs(), enabling
  * the RuleManager to enforce application order.
  *
  * ## Key types
@@ -49,21 +49,31 @@
  *
  *
  * ## RuleConcept
- * Each new rule must implement the following functions to match the RuleConcept:
- * - `static const std::type_info& getType()` returns the unique type identifier of the rule
- * - `static std::string_view getName()` returns a human-readable name of the rule
- * - `std::set<std::type_index> dependsOn() const` returns a set of rules that must be applied before the given rule
- * - `std::set<std::type_index> requiredBy() const` returns a set of rules that must be applied after the given rule
- * - `U apply(U unit) const` Function that applied the implemented rule.
- * - `bool operator==(const T& other) const` equality operator. Stateless rules may return always true.
+ * Each new rule must implement the following functions/constants to match the RuleConcept:
+ * - `U apply(U unit) const` function that applied the implemented rule
+ * - `static constexpr std::string_view NAME` Human-readable name of rule
+ *
+ * Optional functions that can be implemented if required:
+ * - `std::set<std::type_index> needs() const` returns a set of rules that must be applied before the given rule
+ * - `std::set<std::type_index> neededBy() const` returns a set of rules that must be applied after the given rule
+ * - `std::set<std::type_index> wants() const` soft version of needs(): returned rules must be applied before the given rule if the rules are registered
+ * - `std::set<std::type_index> wantedBy() const` soft version of neededBy(): returned rules must be applied after given rule if the rules are registered
+ * - `bool operator==(const T& other) const` equality operator
+ *
+ * Provided by rule wrapper (and thus not implemented by rule author):
+ * - `const std::type_info& getType() const` returns the unique type identifier of the rule
+ * - `std::string_view getName() const` returns a human-readable name of the rule
  *
  * ## Dependencies between rules
- * Dependencies between rules are explicitly defined using the dependsOn() and requiredBy() functions.
- * A dependency between two rules must be defined by one of the rules, not both. By default, dependsOn should be used.
- * E.g. assume rule B depends on rule A. This should be defined in B.dependsOn().
+ * Dependencies between rules are explicitly defined using the needs()/neededBy() and wants()/wantedBy() functions.
+ * A dependency between two rules must be defined by one of the rules, not both. By default, needs should be used.
+ * E.g. assume rule B depends on rule A. This should be defined in B.needs().
  * There are cases where you need to define both upstream and downstream dependencies.
- * E.g. if you add a new rule C as a plugin and want to run it between rule B and rule A, the `requiredBy` allows you
- * to define these dependencies purely in your plugin of rule C by returning `C.dependsOn() -> {A}` and `C.requiredBy() -> {B}`
+ * E.g. if you add a new rule C as a plugin and want to run it between rule B and rule A, the `neededBy` allows you
+ * to define these dependencies purely in your plugin of rule C by returning `C.needs() -> {A}` and `C.neededBy() -> {B}`
+ *
+ * needs()/neededBy() define strong dependencies, that means a rule can only be applied if another was executed before.
+ * wants()/wantedBy() define weak dependencies, that means a rule is applied after another, if the other is registered as well
  *
  */
 
@@ -83,15 +93,8 @@ using Rule = TypedRule<U>;
 
 template <typename T, typename U>
 concept RuleConcept = requires(const T& thisRule, U unit, const T& rhs) {
-    { T::getType() } -> std::convertible_to<const std::type_info&>;
-    { T::getName() } -> std::convertible_to<std::string_view>;
-
-    { thisRule.dependsOn() } -> std::convertible_to<std::set<std::type_index>>;
-    { thisRule.requiredBy() } -> std::convertible_to<std::set<std::type_index>>;
-
+    { T::NAME } -> std::convertible_to<std::string_view>;
     { thisRule.apply(unit) } -> std::same_as<U>;
-
-    { thisRule == rhs } -> std::convertible_to<bool>;
 };
 
 namespace detail
@@ -104,8 +107,11 @@ struct ErasedRule
     [[nodiscard]] virtual const std::type_info& getType() const = 0;
     [[nodiscard]] virtual std::string_view getName() const = 0;
 
-    [[nodiscard]] virtual std::set<std::type_index> dependsOn() const = 0;
-    [[nodiscard]] virtual std::set<std::type_index> requiredBy() const = 0;
+    [[nodiscard]] virtual std::set<std::type_index> needs() const = 0;
+    [[nodiscard]] virtual std::set<std::type_index> neededBy() const = 0;
+
+    [[nodiscard]] virtual std::set<std::type_index> wants() const = 0;
+    [[nodiscard]] virtual std::set<std::type_index> wantedBy() const = 0;
 
     [[nodiscard]] virtual U apply(U unit) const = 0;
 
@@ -228,9 +234,13 @@ struct TypedRule
 
     [[nodiscard]] std::string_view getName() const { return self->getName(); }
 
-    [[nodiscard]] std::set<std::type_index> dependsOn() const { return self->dependsOn(); }
+    [[nodiscard]] std::set<std::type_index> needs() const { return self->needs(); }
 
-    [[nodiscard]] std::set<std::type_index> requiredBy() const { return self->requiredBy(); }
+    [[nodiscard]] std::set<std::type_index> neededBy() const { return self->neededBy(); }
+
+    [[nodiscard]] std::set<std::type_index> wants() const { return self->wants(); }
+
+    [[nodiscard]] std::set<std::type_index> wantedBy() const { return self->wantedBy(); }
 
     [[nodiscard]] U apply(U unit) const { return self->apply(std::move(unit)); }
 
@@ -252,23 +262,69 @@ struct RuleModel : ErasedRule<U>
 
     explicit RuleModel(RuleType impl) : impl(std::move(impl)) { }
 
-    [[nodiscard]] const std::type_info& getType() const override { return RuleType::getType(); }
+    [[nodiscard]] const std::type_info& getType() const override { return typeid(RuleType); }
 
-    [[nodiscard]] std::string_view getName() const override { return RuleType::getName(); }
+    [[nodiscard]] std::string_view getName() const override { return RuleType::NAME; }
 
-    [[nodiscard]] std::set<std::type_index> dependsOn() const override { return impl.dependsOn(); };
+    [[nodiscard]] std::set<std::type_index> needs() const override
+    {
+        if constexpr (requires(RuleType rule) {
+                          { rule.needs() } -> std::convertible_to<std::set<std::type_index>>;
+                      })
+        {
+            return impl.needs();
+        }
+        return {};
+    };
 
-    [[nodiscard]] std::set<std::type_index> requiredBy() const override { return impl.requiredBy(); };
+    [[nodiscard]] std::set<std::type_index> neededBy() const override
+    {
+        if constexpr (requires(RuleType rule) {
+                          { rule.neededBy() } -> std::convertible_to<std::set<std::type_index>>;
+                      })
+        {
+            return impl.neededBy();
+        }
+        return {};
+    };
+
+    [[nodiscard]] std::set<std::type_index> wants() const override
+    {
+        if constexpr (requires(RuleType rule) {
+                          { rule.wants() } -> std::convertible_to<std::set<std::type_index>>;
+                      })
+        {
+            return impl.wants();
+        }
+        return {};
+    };
+
+    [[nodiscard]] std::set<std::type_index> wantedBy() const override
+    {
+        if constexpr (requires(RuleType rule) {
+                          { rule.wantedBy() } -> std::convertible_to<std::set<std::type_index>>;
+                      })
+        {
+            return impl.wantedBy();
+        }
+        return {};
+    };
 
     [[nodiscard]] U apply(U unit) const override { return impl.apply(std::move(unit)); };
 
     [[nodiscard]] bool equals(const ErasedRule<U>& other) const override
     {
-        if (auto ptr = dynamic_cast<const RuleModel*>(&other))
+        if constexpr (requires(RuleType rule1, RuleType rule2) {
+                          { rule1 == rule2 } -> std::convertible_to<bool>;
+                      })
         {
-            return impl.operator==(ptr->impl);
+            if (auto ptr = dynamic_cast<const RuleModel*>(&other))
+            {
+                return impl.operator==(ptr->impl);
+            }
+            return false;
         }
-        return false;
+        return typeid(RuleType) == other.getType();
     }
 
 private:

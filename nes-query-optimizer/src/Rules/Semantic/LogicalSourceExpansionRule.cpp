@@ -35,33 +35,6 @@
 namespace NES
 {
 
-const std::type_info& LogicalSourceExpansionRule::getType()
-{
-    return typeid(LogicalSourceExpansionRule);
-}
-
-std::string_view LogicalSourceExpansionRule::getName()
-{
-    return NAME;
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> LogicalSourceExpansionRule::dependsOn() const
-{
-    return {};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> LogicalSourceExpansionRule::requiredBy() const
-{
-    return {};
-};
-
-bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& other) const
-{
-    return sourceCatalog == other.sourceCatalog;
-}
-
 namespace
 {
 LogicalOperator applyRecursive(const LogicalOperator& visiting, const SourceCatalog& sourceCatalog)

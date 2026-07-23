@@ -30,33 +30,6 @@
 namespace NES
 {
 
-const std::type_info& AnonymousSinkBindingRule::getType()
-{
-    return typeid(AnonymousSinkBindingRule);
-}
-
-std::string_view AnonymousSinkBindingRule::getName()
-{
-    return NAME;
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> AnonymousSinkBindingRule::dependsOn() const
-{
-    return {};
-}
-
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> AnonymousSinkBindingRule::requiredBy() const
-{
-    return {};
-}
-
-bool AnonymousSinkBindingRule::operator==(const AnonymousSinkBindingRule& other) const
-{
-    return sinkCatalog == other.sinkCatalog;
-}
-
 LogicalPlan AnonymousSinkBindingRule::apply(const LogicalPlan& queryPlan) const
 {
     std::vector<LogicalOperator> newRootOperators;
@@ -98,6 +71,4 @@ LogicalPlan AnonymousSinkBindingRule::apply(const LogicalPlan& queryPlan) const
 
     return queryPlan.withRootOperators(newRootOperators);
 }
-
-
 }
