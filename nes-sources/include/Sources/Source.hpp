@@ -18,6 +18,7 @@
 #include <memory>
 #include <ostream>
 #include <stop_token>
+#include <string_view>
 #include <variant>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -73,6 +74,9 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const Source& source);
 
     [[nodiscard]] virtual bool addsMetadata() const { return false; }
+
+    /// Returns the type of the source implementation.
+    [[nodiscard]] virtual std::string_view getType() const = 0;
 
 protected:
     /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.

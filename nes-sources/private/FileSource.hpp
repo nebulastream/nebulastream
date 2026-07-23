@@ -54,6 +54,8 @@ public:
     /// Close file socket.
     void close() override;
 
+    [[nodiscard]] std::string_view getType() const override { return NAME; }
+
     /// validates and formats a string to string configuration
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 

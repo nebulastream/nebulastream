@@ -229,14 +229,19 @@ NES::TestSource::~TestSource()
     control->destroyed.set_value();
 }
 
-std::pair<std::unique_ptr<NES::SourceHandle>, std::shared_ptr<NES::TestSourceControl>>
-NES::getTestSource(BackpressureListener backpressureListener, OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool)
+std::pair<std::unique_ptr<NES::SourceHandle>, std::shared_ptr<NES::TestSourceControl>> NES::getTestSource(
+    BackpressureListener backpressureListener, QueryId queryId, OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool)
 {
     auto ctrl = std::make_shared<TestSourceControl>();
     auto testSource = std::make_unique<TestSource>(originId, ctrl);
     SourceRuntimeConfiguration runtimeConfig{DEFAULT_NUMBER_OF_LOCAL_BUFFERS};
 
     auto sourceHandle = std::make_unique<SourceHandle>(
-        std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource));
+        std::move(backpressureListener),
+        std::move(queryId),
+        std::move(originId),
+        std::move(runtimeConfig),
+        std::move(bufferPool),
+        std::move(testSource));
     return {std::move(sourceHandle), ctrl};
 }

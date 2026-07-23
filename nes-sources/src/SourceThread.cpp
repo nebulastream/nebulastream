@@ -42,10 +42,12 @@ namespace NES
 
 SourceThread::SourceThread(
     BackpressureListener backpressureListener,
+    QueryId queryId,
     OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
     std::unique_ptr<Source> sourceImplementation)
-    : originId(originId)
+    : queryId(std::move(queryId))
+    , originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , backpressureListener(std::move(backpressureListener))
@@ -206,7 +208,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     this->terminationFuture = terminationPromise.get_future();
 
     Thread sourceThread(
-        fmt::format("DataSrc-{}", originId),
+        fmt::format("{}-Src: {} ({})", sourceImplementation->getType(), originId, queryId),
         dataSourceThread,
         backpressureListener,
         std::move(terminationPromise),

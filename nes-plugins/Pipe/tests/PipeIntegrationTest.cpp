@@ -164,7 +164,7 @@ TEST_F(PipeIntegrationTest, DataFlowThroughRealSinkAndSource)
     sink->stop(pipeCtx);
 }
 
-TEST_F(PipeIntegrationTest, ChildBuffersCopiedForVariableSizedData)
+TEST_F(PipeIntegrationTest, ChildBuffersSharedForVariableSizedData)
 {
     static constexpr size_t numChildren = 5;
 
@@ -195,19 +195,22 @@ TEST_F(PipeIntegrationTest, ChildBuffersCopiedForVariableSizedData)
     buffer.setLastChunk(true);
     sink->execute(buffer, pipeCtx);
 
-    /// Read from source — copyBuffer should deep-copy all child buffers
+    /// Read from source — the main buffer is copied while its immutable children are shared.
     auto outBuffer = bufferManager->getBufferBlocking();
     const std::stop_source stopSource;
     auto result = source->fillTupleBuffer(outBuffer, stopSource.get_token());
 
     ASSERT_FALSE(result.isEoS());
+    EXPECT_NE(outBuffer.getAvailableMemoryArea().data(), buffer.getAvailableMemoryArea().data());
     ASSERT_EQ(outBuffer.getNumberOfChildBuffers(), numChildren);
 
     auto outMem = outBuffer.getAvailableMemoryArea<VariableSizedAccess>();
     for (size_t idx = 0; idx < numChildren; ++idx)
     {
+        auto originalChildBuffer = buffer.loadChildBuffer(outMem[idx].getIndex());
         auto childBuffer = outBuffer.loadChildBuffer(outMem[idx].getIndex());
         auto childMem = childBuffer.getAvailableMemoryArea<uint8_t>();
+        EXPECT_EQ(childMem.data(), originalChildBuffer.getAvailableMemoryArea<uint8_t>().data());
         const auto expectedPattern = static_cast<uint8_t>(0xA0 + idx);
         for (size_t byte = 0; byte < 64; ++byte)
         {
