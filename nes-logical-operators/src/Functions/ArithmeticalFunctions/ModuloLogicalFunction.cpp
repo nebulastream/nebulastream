@@ -107,7 +107,7 @@ ModuloLogicalFunction Unreflector<ModuloLogicalFunction>::operator()(const Refle
     return ModuloLogicalFunction{left, right};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterModLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType ModuloLogicalFunction::createMod(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

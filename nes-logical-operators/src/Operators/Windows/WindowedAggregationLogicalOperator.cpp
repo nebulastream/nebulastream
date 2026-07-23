@@ -58,9 +58,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <folly/hash/Hash.h>
-#include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {

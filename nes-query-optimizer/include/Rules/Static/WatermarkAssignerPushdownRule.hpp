@@ -21,6 +21,7 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -44,6 +45,7 @@ namespace NES
 class WatermarkAssignerPushdownRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "WatermarkAssignerPushdownRule";
 
     [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;

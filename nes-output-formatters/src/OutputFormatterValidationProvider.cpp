@@ -33,6 +33,10 @@ std::optional<DescriptorConfig::Config> provide(const std::string_view outputFor
         | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
         | std::ranges::to<std::unordered_map<std::string, std::string>>();
     auto outputFormatValidationArgs = OutputFormatterValidationRegistryArguments(std::move(stringConfig));
-    return OutputFormatterValidationRegistry::instance().create(std::string{outputFormat}, std::move(outputFormatValidationArgs));
+    if (const auto validator = OutputFormatterValidationRegistry::instance().find(std::string{outputFormat}))
+    {
+        return (*validator)(std::move(outputFormatValidationArgs));
+    }
+    return std::nullopt;
 }
 }

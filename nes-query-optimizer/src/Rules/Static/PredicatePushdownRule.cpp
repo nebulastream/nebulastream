@@ -499,7 +499,7 @@ std::set<std::type_index> PredicatePushdownRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterPredicatePushdownPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType PredicatePushdownRule::create(PlanRuleRegistryArguments)
 {
     return PredicatePushdownRule{};
 }

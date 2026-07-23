@@ -341,7 +341,7 @@ std::set<std::type_index> WatermarkAssignerPushdownRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterWatermarkAssignerPushdownPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType WatermarkAssignerPushdownRule::create(PlanRuleRegistryArguments)
 {
     return WatermarkAssignerPushdownRule{};
 }

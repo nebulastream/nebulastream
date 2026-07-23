@@ -14,13 +14,14 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Reflection.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -33,15 +34,24 @@ struct AggregationLogicalFunctionRegistryArguments
     bool includeNullValues;
 };
 
-class AggregationLogicalFunctionRegistry : public BaseRegistry<
+using AggregationLogicalFunctionFn
+    = std::function<AggregationLogicalFunctionRegistryReturnType(AggregationLogicalFunctionRegistryArguments)>;
+
+/// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
+/// Entries are static create members on the aggregation function classes (constructor
+/// signatures differ between aggregations). Enables name-based construction of aggregation
+/// functions, e.g. for parser-side extensibility.
+/// Case-insensitive to mirror the retired BaseRegistry.
+class AggregationLogicalFunctionRegistry : public RuntimeRegistry<
                                                AggregationLogicalFunctionRegistry,
                                                std::string,
-                                               AggregationLogicalFunctionRegistryReturnType,
-                                               AggregationLogicalFunctionRegistryArguments>
+                                               AggregationLogicalFunctionFn,
+                                               /*CaseSensitive*/ false>
 {
+public:
+    /// Defined out-of-line (AggregationLogicalFunctionRegistry.cpp) so exactly one instance
+    /// exists process-wide even with plugins loaded as shared objects.
+    static AggregationLogicalFunctionRegistry& instance();
 };
-}
 
-#define INCLUDED_FROM_REGISTRY_WINDOW_AGGREGATION_FUNCTION
-#include <AggregationLogicalFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_WINDOW_AGGREGATION_FUNCTION
+}

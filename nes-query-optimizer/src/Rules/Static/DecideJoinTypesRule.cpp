@@ -141,7 +141,7 @@ bool DecideJoinTypesRule::operator==(const DecideJoinTypesRule& other) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideJoinTypesPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType DecideJoinTypesRule::create(PlanRuleRegistryArguments arguments)
 {
     return DecideJoinTypesRule{arguments.defaultQueryOptimization.joinStrategy};
 }

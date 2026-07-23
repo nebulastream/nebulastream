@@ -112,8 +112,7 @@ Unreflector<CastFromUnixTimestampLogicalFunction>::operator()(const Reflected& r
     return CastFromUnixTimestampLogicalFunction{std::move(function)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterCastFromUnixTsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType CastFromUnixTimestampLogicalFunction::createCastFromUnixTs(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

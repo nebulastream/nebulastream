@@ -41,7 +41,6 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
 #include <ModelCatalog.hpp>
 
 namespace NES

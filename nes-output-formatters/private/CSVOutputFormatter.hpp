@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -31,6 +32,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/core.h>
+#include <OutputFormatterRegistry.hpp>
+#include <static.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -55,6 +58,9 @@ public:
 
     /// validates and formats a string to string configuration
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    /// Registry entry (see OutputFormatterRegistry.hpp).
+    static std::unique_ptr<OutputFormatter> provideFormatter(OutputFormatterRegistryArguments arguments);
 
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 

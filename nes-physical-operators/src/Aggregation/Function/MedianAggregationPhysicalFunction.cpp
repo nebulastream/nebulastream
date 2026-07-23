@@ -305,8 +305,8 @@ size_t MedianAggregationPhysicalFunction::getSizeOfStateInBytes() const
     return static_cast<uint64_t>(inputType.nullable) + sizeof(uint32_t);
 }
 
-AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMedianAggregationPhysicalFunction(
-    AggregationPhysicalFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType
+MedianAggregationPhysicalFunction::create(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     INVARIANT(arguments.tupleLayout.has_value(), "Tuple layout paged vector not set");
     return std::make_shared<MedianAggregationPhysicalFunction>(

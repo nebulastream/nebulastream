@@ -92,7 +92,7 @@ std::set<std::type_index> AnonymousSourceBindingRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterAnonymousSourceBindingPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType AnonymousSourceBindingRule::create(PlanRuleRegistryArguments arguments)
 {
     return AnonymousSourceBindingRule{arguments.sourceCatalog};
 }

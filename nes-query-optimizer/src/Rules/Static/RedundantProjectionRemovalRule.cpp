@@ -97,7 +97,7 @@ LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterRedundantProjectionRemovalPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RedundantProjectionRemovalRule::create(PlanRuleRegistryArguments)
 {
     return RedundantProjectionRemovalRule{};
 }

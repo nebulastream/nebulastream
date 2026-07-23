@@ -71,10 +71,4 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leaves = {}};
 }
-
-LoweringRuleRegistryReturnType
-LoweringRuleGeneratedRegistrar::RegisterSourceDescriptorLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
-{
-    return std::make_unique<LowerToPhysicalSource>(argument.conf);
-}
 }

@@ -32,6 +32,10 @@ create_unreflection_registry(Trait nes-query-optimizer
         "\${PLUGIN_NAME}Trait"
         "\${PLUGIN_NAME}Trait.hpp")
 
+create_runtime_registry(PlanRule nes-query-optimizer
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}::create"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}.hpp")
+
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
@@ -47,5 +51,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-query-optimizer PUBLIC "-fPIC")
 endif ()
 
-create_registries_for_component(PlanRule)
 add_tests_if_enabled(tests)

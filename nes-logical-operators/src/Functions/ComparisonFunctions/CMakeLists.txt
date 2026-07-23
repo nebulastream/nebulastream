@@ -10,12 +10,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_registry_entry(Greater LogicalFunction GreaterLogicalFunction.cpp)
-add_registry_entry(GreaterEquals LogicalFunction GreaterEqualsLogicalFunction.cpp)
-add_registry_entry(Less LogicalFunction LessLogicalFunction.cpp)
-add_registry_entry(LessEquals LogicalFunction LessEqualsLogicalFunction.cpp)
 
 add_unreflection_entry(LogicalFunction Greater)
 add_unreflection_entry(LogicalFunction GreaterEquals)
 add_unreflection_entry(LogicalFunction Less)
 add_unreflection_entry(LogicalFunction LessEquals)
+
+add_source_files(nes-logical-operators
+        GreaterLogicalFunction.cpp
+        GreaterEqualsLogicalFunction.cpp
+        LessLogicalFunction.cpp
+        LessEqualsLogicalFunction.cpp
+)
+
+add_registry_entry(LogicalFunction Greater)
+add_registry_entry(LogicalFunction GreaterEquals)
+add_registry_entry(LogicalFunction Less)
+add_registry_entry(LogicalFunction LessEquals)

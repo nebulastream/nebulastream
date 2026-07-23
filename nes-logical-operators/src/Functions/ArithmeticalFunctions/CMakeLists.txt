@@ -10,18 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_registry_entry(Abs LogicalFunction AbsoluteLogicalFunction.cpp)
-add_registry_entry(Add LogicalFunction AddLogicalFunction.cpp)
-add_registry_entry(Ceil LogicalFunction CeilLogicalFunction.cpp)
-add_registry_entry(Div LogicalFunction DivLogicalFunction.cpp)
-add_registry_entry(Exp LogicalFunction ExpLogicalFunction.cpp)
-add_registry_entry(Floor LogicalFunction FloorLogicalFunction.cpp)
-add_registry_entry(Mod LogicalFunction ModuloLogicalFunction.cpp)
-add_registry_entry(Mul LogicalFunction MulLogicalFunction.cpp)
-add_registry_entry(Pow LogicalFunction PowLogicalFunction.cpp)
-add_registry_entry(Round LogicalFunction RoundLogicalFunction.cpp)
-add_registry_entry(Sqrt LogicalFunction SqrtLogicalFunction.cpp)
-add_registry_entry(Sub LogicalFunction SubLogicalFunction.cpp)
 
 add_unreflection_entry(LogicalFunction Absolute KEY Abs)
 add_unreflection_entry(LogicalFunction Add)
@@ -35,3 +23,31 @@ add_unreflection_entry(LogicalFunction Pow)
 add_unreflection_entry(LogicalFunction Round)
 add_unreflection_entry(LogicalFunction Sqrt)
 add_unreflection_entry(LogicalFunction Sub)
+
+add_source_files(nes-logical-operators
+        AbsoluteLogicalFunction.cpp
+        AddLogicalFunction.cpp
+        CeilLogicalFunction.cpp
+        DivLogicalFunction.cpp
+        ExpLogicalFunction.cpp
+        FloorLogicalFunction.cpp
+        ModuloLogicalFunction.cpp
+        MulLogicalFunction.cpp
+        PowLogicalFunction.cpp
+        RoundLogicalFunction.cpp
+        SqrtLogicalFunction.cpp
+        SubLogicalFunction.cpp
+)
+
+add_registry_entry(LogicalFunction Absolute KEY Abs)
+add_registry_entry(LogicalFunction Add)
+add_registry_entry(LogicalFunction Ceil)
+add_registry_entry(LogicalFunction Div)
+add_registry_entry(LogicalFunction Exp)
+add_registry_entry(LogicalFunction Floor)
+add_registry_entry(LogicalFunction Modulo KEY Mod)
+add_registry_entry(LogicalFunction Mul)
+add_registry_entry(LogicalFunction Pow)
+add_registry_entry(LogicalFunction Round)
+add_registry_entry(LogicalFunction Sqrt)
+add_registry_entry(LogicalFunction Sub)

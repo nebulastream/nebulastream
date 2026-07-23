@@ -140,8 +140,7 @@ Unreflector<VarSizedToNumericLogicalFunction>::operator()(const Reflected& refle
 }
 
 /// NOLINTBEGIN(performance-unnecessary-value-param)
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterVarSizedToNumericLogicalFunction(LogicalFunctionRegistryArguments)
+LogicalFunctionRegistryReturnType VarSizedToNumericLogicalFunction::createVarSizedToNumeric(LogicalFunctionRegistryArguments)
 {
     PRECONDITION(false, "Function is only built directly via parser or via reflection, not using the registry");
     std::unreachable();

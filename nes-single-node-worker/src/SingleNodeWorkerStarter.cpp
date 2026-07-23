@@ -14,9 +14,11 @@
 
 /// The POSIX signal APIs used below are not provided by the C++ <csignal> header.
 /// NOLINTNEXTLINE(modernize-deprecated-headers)
+#include <cstdlib>
 #include <signal.h>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Plugins/BuiltinPlugins.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -82,6 +84,13 @@ int main(const int argc, const char* argv[])
             return 1;
         }
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
+        /// Register built-in plugins before any registry lookup.
+        NES::loadBuiltinPlugins();
+        if (std::getenv("NES_PLUGINS") != nullptr)
+        {
+            NES_ERROR("NES_PLUGINS is set, but this worker is statically linked and cannot load plugins. Unset NES_PLUGINS.");
+            return 1;
+        }
         auto configuration = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)
         {

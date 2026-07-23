@@ -16,67 +16,36 @@
 
 #include <functional>
 #include <optional>
-#include <unordered_map>
-#include <utility>
 #include <Util/ReflectionFwd.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
 
-/// The unreflection registry is a standalone counterpart to BaseRegistry that dispatches
-/// deserialization by name without compile-time knowledge of the concrete plugin types.
-/// Entries are populated by per-plugin glue translation units at static initialization
-/// time; the linker keeps those TUs alive via --whole-archive applied to a dedicated glue
-/// sub-library (see cmake/UnreflectionRegistrationUtil.cmake).
+/// A RuntimeRegistry that dispatches deserialization by name without compile-time knowledge
+/// of the concrete plugin types: each entry unreflects serialized data into ReturnTypeT.
+/// Entries are populated by per-plugin glue translation units at static initialization time
+/// (see cmake/UnreflectionRegistrationUtil.cmake, a thin wrapper around the generic
+/// cmake/RuntimeRegistrationUtil.cmake).
 template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT>
 class UnreflectionRegistry
+    : public RuntimeRegistry<ConcreteRegistry, KeyTypeT, std::function<ReturnTypeT(const Reflected&, const ReflectionContext&)>>
 {
 protected:
     UnreflectionRegistry() = default;
 
 public:
-    using KeyType = KeyTypeT;
     using ReturnType = ReturnTypeT;
     using UnreflectorFn = std::function<ReturnTypeT(const Reflected&, const ReflectionContext&)>;
 
-    UnreflectionRegistry(const UnreflectionRegistry&) = delete;
-    UnreflectionRegistry(UnreflectionRegistry&&) noexcept = delete;
-    UnreflectionRegistry& operator=(const UnreflectionRegistry&) = delete;
-    UnreflectionRegistry& operator=(UnreflectionRegistry&&) noexcept = delete;
-    ~UnreflectionRegistry() = default;
-
-    static ConcreteRegistry& instance()
-    {
-        static ConcreteRegistry inst;
-        return inst;
-    }
-
-    /// Register an unreflector. Returns false if an entry with this key already exists; the
-    /// caller decides how to react. The generated glue throws at static initialization time so
-    /// duplicates are loud and unrecoverable, while a runtime plugin-loading path can roll back
-    /// or report the conflict instead of leaving the registry in a half-initialized state.
-    /// `name` is taken by reference so the caller can still inspect it on the failure path
-    /// regardless of how the underlying map handles its arguments.
-    [[nodiscard]] bool addUnreflectorEntry(const KeyTypeT& name, UnreflectorFn unreflectorFunction)
-    {
-        return unreflectorTable.try_emplace(name, std::move(unreflectorFunction)).second;
-    }
-
-    [[nodiscard]] bool contains(const KeyTypeT& name) const { return unreflectorTable.contains(name); }
-
     [[nodiscard]] std::optional<ReturnTypeT> unreflect(const KeyTypeT& name, const Reflected& data, const ReflectionContext& context) const
     {
-        if (const auto it = unreflectorTable.find(name); it != unreflectorTable.end())
+        if (const auto unreflector = this->find(name))
         {
-            return it->second(data, context);
+            return (*unreflector)(data, context);
         }
         return std::nullopt;
     }
-
-private:
-    std::unordered_map<KeyTypeT, UnreflectorFn> unreflectorTable;
-
-    friend ConcreteRegistry;
 };
 
 }

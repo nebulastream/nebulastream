@@ -40,7 +40,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
-#include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
 #include <select.hpp>
 #include <val_arith.hpp>
@@ -246,14 +245,9 @@ std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter&)
     return out << fmt::format("JSONOutputFormatter()");
 }
 
-OutputFormatterValidationRegistryReturnType
-OutputFormatterValidationGeneratedRegistrar::RegisterJSONOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+std::unique_ptr<OutputFormatter> JSONOutputFormatter::provideFormatter(OutputFormatterRegistryArguments arguments)
 {
-    return JSONOutputFormatter::validateAndFormat(std::move(args.config));
-}
-
-OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)
-{
-    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames));
+    return std::make_unique<JSONOutputFormatter>(std::move(arguments.fieldNames));
 }
 }

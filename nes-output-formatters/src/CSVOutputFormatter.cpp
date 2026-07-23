@@ -39,7 +39,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
-#include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
 #include <select.hpp>
 #include <val_arith.hpp>
@@ -208,15 +207,10 @@ DescriptorConfig::Config CSVOutputFormatter::validateAndFormat(std::unordered_ma
     return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersCSV>(std::move(config), "CSV");
 }
 
-OutputFormatterValidationRegistryReturnType
-OutputFormatterValidationGeneratedRegistrar::RegisterCSVOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+std::unique_ptr<OutputFormatter> CSVOutputFormatter::provideFormatter(OutputFormatterRegistryArguments arguments)
 {
-    return CSVOutputFormatter::validateAndFormat(args.config);
-}
-
-OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterCSVOutputFormatter(OutputFormatterRegistryArguments args)
-{
-    return std::make_unique<CSVOutputFormatter>(std::move(args.fieldNames), std::move(args.descriptor));
+    return std::make_unique<CSVOutputFormatter>(std::move(arguments.fieldNames), std::move(arguments.descriptor));
 }
 
 }
