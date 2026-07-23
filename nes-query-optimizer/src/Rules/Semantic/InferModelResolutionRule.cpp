@@ -34,17 +34,15 @@
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
+#include <PlanRewriteUtils.hpp>
 
 namespace NES
 {
 
 namespace
 {
-LogicalOperator recur(const LogicalOperator& op, const ModelCatalog& modelCatalog)
+LogicalOperator resolveInferModel(const LogicalOperator& op, std::vector<LogicalOperator> newChildren, const ModelCatalog& modelCatalog)
 {
-    auto newChildren = op.getChildren() | std::views::transform([&](const auto& child) { return recur(child, modelCatalog); })
-        | std::ranges::to<std::vector>();
-
     if (const auto inferModelName = op.tryGetAs<InferModelNameLogicalOperator>())
     {
         const auto& modelName = inferModelName->get().getModelName();
@@ -64,8 +62,11 @@ LogicalOperator recur(const LogicalOperator& op, const ModelCatalog& modelCatalo
 
 LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    return queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front(), *modelCatalog)});
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
+    return rewritePlanBottomUp(
+        queryPlan,
+        [this](const LogicalOperator& op, std::vector<LogicalOperator> children)
+        { return resolveInferModel(op, std::move(children), *modelCatalog); });
 }
 
 const std::type_info& InferModelResolutionRule::getType()

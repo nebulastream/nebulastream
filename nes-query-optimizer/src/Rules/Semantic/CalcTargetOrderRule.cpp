@@ -150,16 +150,27 @@ LogicalPlan CalcTargetOrderRule::apply(NES::LogicalPlan plan) const
         return plan;
     }
 
-    PRECONDITION(std::ranges::size(plan.getRootOperators()) == 1, "Can only infer target schema order for plans with exactly one root");
-    const auto root = plan.getRootOperators()[0].getAs<SinkLogicalOperator>();
-    auto outputOrder = applyRecursive(root->getChild());
-    const auto newTargetSchema
-        = outputOrder | std::views::transform(Unbinder<Field>{}) | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>();
-    auto sinkDescriptorOpt = root->getSinkDescriptor();
-    PRECONDITION(sinkDescriptorOpt.has_value(), "Sink operator must have a descriptor to infer target schema order");
-    const auto oldDescriptor = NES::get<AnonymousSinkDescriptor>(sinkDescriptorOpt->getUnderlying());
-    auto newAnonymousSinkDescriptor = SinkDescriptor{oldDescriptor.withSchemaOrder(newTargetSchema)};
-    auto newSinkRoot = root->withSinkDescriptor(newAnonymousSinkDescriptor);
-    return plan.withRootOperators({newSinkRoot});
+    /// Infer the target schema order for every sink that does not have one yet. The traversal below is read-only,
+    /// so operators shared between multiple sinks stay shared.
+    std::vector<LogicalOperator> newRoots;
+    newRoots.reserve(plan.getRootOperators().size());
+    for (const auto& rootOperator : plan.getRootOperators())
+    {
+        if (hasOrder(rootOperator))
+        {
+            newRoots.push_back(rootOperator);
+            continue;
+        }
+        const auto root = rootOperator.getAs<SinkLogicalOperator>();
+        auto outputOrder = applyRecursive(root->getChild());
+        const auto newTargetSchema
+            = outputOrder | std::views::transform(Unbinder<Field>{}) | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>();
+        auto sinkDescriptorOpt = root->getSinkDescriptor();
+        PRECONDITION(sinkDescriptorOpt.has_value(), "Sink operator must have a descriptor to infer target schema order");
+        const auto oldDescriptor = NES::get<AnonymousSinkDescriptor>(sinkDescriptorOpt->getUnderlying());
+        auto newAnonymousSinkDescriptor = SinkDescriptor{oldDescriptor.withSchemaOrder(newTargetSchema)};
+        newRoots.push_back(root->withSinkDescriptor(newAnonymousSinkDescriptor));
+    }
+    return plan.withRootOperators(newRoots);
 }
 };

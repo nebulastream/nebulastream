@@ -28,6 +28,7 @@
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
@@ -51,8 +52,18 @@ namespace NES
 
 namespace
 {
-[[nodiscard]] LogicalOperator
-predicatePushdown(LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields);
+/// Tracks operators reachable through more than one parent during pushdown. Predicates from one parent must not be
+/// pushed into a subtree another parent also reads, so shared operators act as pushdown barriers: pending predicates
+/// are materialized above them, while the shared subtree itself is rewritten exactly once (with an empty predicate
+/// set) and the rewritten instance is reused by every parent, preserving sharing.
+struct PushdownContext
+{
+    std::unordered_set<OperatorId> sharedOperatorIds;
+    std::unordered_map<OperatorId, LogicalOperator> rewrittenSharedOperators;
+};
+
+[[nodiscard]] LogicalOperator predicatePushdown(
+    PushdownContext& ctx, LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields);
 
 std::vector<LogicalFunction> splitPredicate(LogicalFunction function)
 {
@@ -121,18 +132,27 @@ std::unordered_map<Field, Field> fieldsWithNewOperator(const LogicalOperator& ba
 }
 
 LogicalOperator applyToAllChildren(
-    const LogicalOperator& op, const std::vector<LogicalFunction>& predicateSet, const std::unordered_map<Field, Field>& fields)
+    PushdownContext& ctx,
+    const LogicalOperator& op,
+    const std::vector<LogicalFunction>& predicateSet,
+    const std::unordered_map<Field, Field>& fields)
 {
     std::vector<LogicalOperator> children;
     for (const auto& child : op.getChildren())
     {
-        auto newChild = predicatePushdown(child, predicateSet, fieldsWithNewOperator(child, fields));
+        auto newChild = predicatePushdown(ctx, child, predicateSet, fieldsWithNewOperator(child, fields));
         children.push_back(newChild);
     }
-    return op.withChildren(children).withInferredSchema();
+    /// withChildren re-infers only the local schema and does not recurse into the children. This relies on the
+    /// children's schemas already being inferred, which holds here: the input plan is type-inferred before this
+    /// rule runs, and every child was rebuilt through withChildren or a constructor that infers locally.
+    /// A recursive withInferredSchema would copy the already-rewritten (potentially shared) subtrees and break
+    /// operator sharing in multi-sink plans.
+    return op.withChildren(children);
 }
 
 LogicalOperator pushBeyondSelection(
+    PushdownContext& ctx,
     const TypedLogicalOperator<SelectionLogicalOperator>& op,
     std::vector<LogicalFunction> predicateSet,
     std::unordered_map<Field, Field> fields)
@@ -154,10 +174,11 @@ LogicalOperator pushBeyondSelection(
         predicateSet.emplace_back(newPredicate);
     }
 
-    return predicatePushdown(op->getChild(), std::move(predicateSet), std::move(fields));
+    return predicatePushdown(ctx, op->getChild(), std::move(predicateSet), std::move(fields));
 }
 
 LogicalOperator pushBeyondUnion(
+    PushdownContext& ctx,
     const TypedLogicalOperator<UnionLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -168,13 +189,14 @@ LogicalOperator pushBeyondUnion(
     for (const auto& child : op.getChildren())
     {
         const auto childFields = fieldsWithNewOperator(child, fields);
-        newChildren.emplace_back(predicatePushdown(child, predicateSet, childFields));
+        newChildren.emplace_back(predicatePushdown(ctx, child, predicateSet, childFields));
     }
 
-    return op.withChildren(newChildren).withInferredSchema();
+    return op.withChildren(newChildren);
 }
 
 LogicalOperator pushBeyondProjection(
+    PushdownContext& ctx,
     const TypedLogicalOperator<ProjectionLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -232,12 +254,13 @@ LogicalOperator pushBeyondProjection(
         }
     }
 
-    const auto newOp = applyToAllChildren(op, pushable, fields);
+    const auto newOp = applyToAllChildren(ctx, op, pushable, fields);
 
     return addSelectionIfRequired(newOp, std::move(nonPushable), fields);
 }
 
 LogicalOperator pushBeyondJoin(
+    PushdownContext& ctx,
     const TypedLogicalOperator<JoinLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -279,25 +302,29 @@ LogicalOperator pushBeyondJoin(
         }
     }
 
-    const auto newLeft = predicatePushdown(left, std::move(leftPushable), leftFields);
-    const auto newRight = predicatePushdown(right, std::move(rightPushable), rightFields);
+    const auto newLeft = predicatePushdown(ctx, left, std::move(leftPushable), leftFields);
+    const auto newRight = predicatePushdown(ctx, right, std::move(rightPushable), rightFields);
 
-    const auto newOp = op->withChildren({newLeft, newRight}).withInferredSchema();
+    const auto newOp = op->withChildren({newLeft, newRight});
 
     return addSelectionIfRequired(newOp, std::move(nonPushable), fields);
 }
 
 LogicalOperator pushBeyondWatermarkAssigner(
-    const LogicalOperator& op, const std::vector<LogicalFunction>& predicateSet, const std::unordered_map<Field, Field>& fields)
+    PushdownContext& ctx,
+    const LogicalOperator& op,
+    const std::vector<LogicalFunction>& predicateSet,
+    const std::unordered_map<Field, Field>& fields)
 {
     /// pushes all predicates further because
     /// operator does not add/modify any fields
 
     const auto newFields = fieldsWithNewOperator(op->getChildren().at(0), fields);
-    return applyToAllChildren(op, predicateSet, newFields);
+    return applyToAllChildren(ctx, op, predicateSet, newFields);
 }
 
 LogicalOperator pushBeyondWindowedAggregation(
+    PushdownContext& ctx,
     const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     std::unordered_map<Field, Field> fields)
@@ -342,12 +369,13 @@ LogicalOperator pushBeyondWindowedAggregation(
         }
     }
 
-    const auto newOp = applyToAllChildren(op, pushable, fields);
+    const auto newOp = applyToAllChildren(ctx, op, pushable, fields);
 
     return addSelectionIfRequired(newOp, std::move(nonPushable), fields);
 }
 
-LogicalOperator predicatePushdown(LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields)
+LogicalOperator predicatePushdownDispatch(
+    PushdownContext& ctx, LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields)
 {
     if (op.tryGetAs<SourceDescriptorLogicalOperator>())
     {
@@ -355,35 +383,50 @@ LogicalOperator predicatePushdown(LogicalOperator op, std::vector<LogicalFunctio
     }
     if (auto selectionOp = op.tryGetAs<SelectionLogicalOperator>())
     {
-        return pushBeyondSelection(selectionOp.value(), std::move(predicateSet), std::move(fields));
+        return pushBeyondSelection(ctx, selectionOp.value(), std::move(predicateSet), std::move(fields));
     }
     if (auto projectionOp = op.tryGetAs<ProjectionLogicalOperator>())
     {
-        return pushBeyondProjection(projectionOp.value(), predicateSet, fields);
+        return pushBeyondProjection(ctx, projectionOp.value(), predicateSet, fields);
     }
     if (auto joinOp = op.tryGetAs<JoinLogicalOperator>())
     {
-        return pushBeyondJoin(joinOp.value(), predicateSet, fields);
+        return pushBeyondJoin(ctx, joinOp.value(), predicateSet, fields);
     }
     if (auto unionOp = op.tryGetAs<UnionLogicalOperator>())
     {
-        return pushBeyondUnion(unionOp.value(), predicateSet, fields);
+        return pushBeyondUnion(ctx, unionOp.value(), predicateSet, fields);
     }
     if (auto eventTimeOp = op.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>())
     {
-        return pushBeyondWatermarkAssigner(std::move(eventTimeOp.value()), predicateSet, fields);
+        return pushBeyondWatermarkAssigner(ctx, std::move(eventTimeOp.value()), predicateSet, fields);
     }
     if (auto ingestionTimeOp = op.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>())
     {
-        return pushBeyondWatermarkAssigner(std::move(ingestionTimeOp.value()), predicateSet, fields);
+        return pushBeyondWatermarkAssigner(ctx, std::move(ingestionTimeOp.value()), predicateSet, fields);
     }
     if (auto windowedAggOp = op.tryGetAs<WindowedAggregationLogicalOperator>())
     {
-        return pushBeyondWindowedAggregation(windowedAggOp.value(), predicateSet, std::move(fields));
+        return pushBeyondWindowedAggregation(ctx, windowedAggOp.value(), predicateSet, std::move(fields));
     }
 
-    op = applyToAllChildren(op, {}, {});
+    op = applyToAllChildren(ctx, op, {}, {});
     return addSelectionIfRequired(std::move(op), std::move(predicateSet), fields);
+}
+
+LogicalOperator predicatePushdown(
+    PushdownContext& ctx, LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields)
+{
+    if (ctx.sharedOperatorIds.contains(op.getId()))
+    {
+        auto rewritten = ctx.rewrittenSharedOperators.find(op.getId());
+        if (rewritten == ctx.rewrittenSharedOperators.end())
+        {
+            rewritten = ctx.rewrittenSharedOperators.emplace(op.getId(), predicatePushdownDispatch(ctx, op, {}, {})).first;
+        }
+        return addSelectionIfRequired(rewritten->second, std::move(predicateSet), fieldsWithNewOperator(rewritten->second, fields));
+    }
+    return predicatePushdownDispatch(ctx, std::move(op), std::move(predicateSet), std::move(fields));
 }
 
 }
@@ -391,12 +434,16 @@ LogicalOperator predicatePushdown(LogicalOperator op, std::vector<LogicalFunctio
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan PredicatePushdownRule::apply(const LogicalPlan& queryPlan) const
 {
-    const auto originalRoots = queryPlan.getRootOperators();
-    PRECONDITION(originalRoots.size() == 1, "predicate pushdown not yet implemented for more than one root");
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
 
-    auto newRoot = predicatePushdown(originalRoots.at(0), {}, {});
-
-    return queryPlan.withRootOperators({newRoot});
+    PushdownContext ctx{.sharedOperatorIds = getSharedOperatorIds(queryPlan), .rewrittenSharedOperators = {}};
+    std::vector<LogicalOperator> newRoots;
+    newRoots.reserve(queryPlan.getRootOperators().size());
+    for (const auto& root : queryPlan.getRootOperators())
+    {
+        newRoots.push_back(predicatePushdown(ctx, root, {}, {}));
+    }
+    return queryPlan.withRootOperators(newRoots);
 }
 
 const std::type_info& PredicatePushdownRule::getType()

@@ -40,6 +40,7 @@
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRewriteUtils.hpp>
 
 namespace NES
 {
@@ -177,11 +178,8 @@ defaultMapping(const LogicalOperator& logicalOperator, const std::vector<Logical
 }
 }
 
-LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperator) const
+LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children) const
 {
-    const auto children = logicalOperator->getChildren() | std::views::transform([this](const auto& child) { return apply(child); })
-        | std::ranges::to<std::vector>();
-
     const auto mapping = [&]
     {
         if (const auto& reprojecter = logicalOperator.tryGetAs<Reprojecter>())
@@ -206,14 +204,16 @@ LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperato
     const auto success = tryInsert(traitSet, std::move(fieldMappingTrait));
     /// If there is a good reason why we would want to run this multiple times we can also disable this check and replace the trait instance.
     PRECONDITION(success, "Field mapping trait already set");
-    return logicalOperator.withTraitSet(std::move(traitSet)).withChildren(children);
+    return logicalOperator.withTraitSet(std::move(traitSet)).withChildren(std::move(children));
 }
 
 LogicalPlan DecideFieldMappings::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(std::ranges::size(queryPlan.getRootOperators()) == 1, "Currently only one root operator is supported");
-    auto newRootOperator = apply(queryPlan.getRootOperators().at(0));
-    return queryPlan.withRootOperators({newRootOperator});
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
+    return rewritePlanBottomUp(
+        queryPlan,
+        [this](const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children)
+        { return apply(logicalOperator, std::move(children)); });
 }
 
 const std::type_info& DecideFieldMappings::getType()

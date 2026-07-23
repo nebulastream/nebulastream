@@ -14,7 +14,6 @@
 
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 
-#include <ranges>
 #include <set>
 #include <string_view>
 #include <typeindex>
@@ -33,6 +32,7 @@
 #include <Rules/Static/DecideFieldOrder.hpp>
 #include <Schema/Binder.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRewriteUtils.hpp>
 
 namespace NES
 {
@@ -64,46 +64,42 @@ bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemoval
     return true;
 }
 
-namespace
-{
-LogicalOperator recur(const LogicalOperator& op)
-{
-    auto newChildren = op.getChildren() | std::views::transform(recur) | std::ranges::to<std::vector>();
-
-    if (const auto projection = op.tryGetAs<ProjectionLogicalOperator>())
-    {
-        const auto trivial = [&]
-        {
-            INVARIANT(op.getChildren().size() == 1, "Projection operator must have exactly one child");
-            for (const auto& [as, function] : projection.value()->getProjections())
-            {
-                const auto fieldAccessFunction = function.tryGetAs<FieldAccessLogicalFunction>();
-                if (!fieldAccessFunction.has_value())
-                {
-                    return false;
-                }
-                if (fieldAccessFunction.value()->getField().getLastName() != as.getLastName())
-                {
-                    return false;
-                }
-            }
-            return unbind(op.getChildren().front().getOutputSchema()) == unbind(op.getOutputSchema());
-        }();
-        if (trivial)
-        {
-            return newChildren.front();
-        }
-    }
-    return op.withChildren(std::move(newChildren));
-}
-}
-
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    queryPlan = queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front().withInferredSchema())});
-    return queryPlan;
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
+    /// No upfront deep schema inference: withChildren re-infers each operator's local schema bottom-up,
+    /// while a recursive withInferredSchema would copy shared subtrees per parent.
+    return rewritePlanBottomUp(
+        queryPlan,
+        [](const LogicalOperator& op, std::vector<LogicalOperator> newChildren) -> LogicalOperator
+        {
+            if (const auto projection = op.tryGetAs<ProjectionLogicalOperator>())
+            {
+                const auto trivial = [&]
+                {
+                    INVARIANT(op.getChildren().size() == 1, "Projection operator must have exactly one child");
+                    for (const auto& [as, function] : projection.value()->getProjections())
+                    {
+                        const auto fieldAccessFunction = function.tryGetAs<FieldAccessLogicalFunction>();
+                        if (!fieldAccessFunction.has_value())
+                        {
+                            return false;
+                        }
+                        if (fieldAccessFunction.value()->getField().getLastName() != as.getLastName())
+                        {
+                            return false;
+                        }
+                    }
+                    return unbind(op.getChildren().front().getOutputSchema()) == unbind(op.getOutputSchema());
+                }();
+                if (trivial)
+                {
+                    return newChildren.front();
+                }
+            }
+            return op.withChildren(std::move(newChildren));
+        });
 }
 
 }

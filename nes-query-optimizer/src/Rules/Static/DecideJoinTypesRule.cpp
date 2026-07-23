@@ -14,12 +14,12 @@
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 
 #include <algorithm>
-#include <ranges>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
@@ -37,6 +37,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRewriteUtils.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
@@ -108,9 +109,11 @@ std::set<std::type_index> DecideJoinTypesRule::requiredBy() const
 
 LogicalPlan DecideJoinTypesRule::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
-    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
+    return rewritePlanBottomUp(
+        queryPlan,
+        [this](const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children)
+        { return apply(logicalOperator, std::move(children)); });
 }
 
 bool DecideJoinTypesRule::operator==(const DecideJoinTypesRule& other) const
@@ -118,10 +121,8 @@ bool DecideJoinTypesRule::operator==(const DecideJoinTypesRule& other) const
     return this->joinStrategy == other.joinStrategy;
 }
 
-LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperator) const
+LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children) const
 {
-    const auto children = logicalOperator.getChildren()
-        | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
     auto traitSet = logicalOperator.getTraitSet();
     if (const auto joinOperator = logicalOperator.tryGetAs<JoinLogicalOperator>())
     {
@@ -149,6 +150,6 @@ LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperato
     {
         tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
     }
-    return logicalOperator.withChildren(children).withTraitSet(traitSet);
+    return logicalOperator.withChildren(std::move(children)).withTraitSet(traitSet);
 }
 }

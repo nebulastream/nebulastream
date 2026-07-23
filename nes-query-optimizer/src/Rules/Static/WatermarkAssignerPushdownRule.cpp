@@ -18,12 +18,14 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -38,13 +40,24 @@
 #include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Schema/Field.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRewriteUtils.hpp>
 
 namespace NES
 {
 namespace
 {
-LogicalOperator
-watermarkAssignerPushdown(const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime);
+/// Tracks operators reachable through more than one parent during pushdown. Watermark assigners from one parent must
+/// not be pushed into a subtree another parent also reads, so shared operators act as pushdown barriers: pending
+/// assigners are materialized above them, while the shared subtree itself is rewritten exactly once (with no pending
+/// assigners) and the rewritten instance is reused by every parent, preserving sharing.
+struct PushdownContext
+{
+    std::unordered_set<OperatorId> sharedOperatorIds;
+    std::unordered_map<OperatorId, LogicalOperator> rewrittenSharedOperators;
+};
+
+LogicalOperator watermarkAssignerPushdown(
+    PushdownContext& ctx, const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime);
 
 LogicalOperator
 addWatermarkAssigners(LogicalOperator op, const bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
@@ -78,28 +91,36 @@ fieldsWithNewBase(const LogicalOperator& base, std::vector<std::pair<Field, Wind
     return eventTime;
 }
 
-LogicalOperator
-applyToAllChildren(const LogicalOperator& op, const bool ingestionTime, const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
+LogicalOperator applyToAllChildren(
+    PushdownContext& ctx,
+    const LogicalOperator& op,
+    const bool ingestionTime,
+    const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
 {
     std::vector<LogicalOperator> children;
     for (const auto& child : op.getChildren())
     {
         const auto childEventTime = fieldsWithNewBase(child, eventTime);
-        auto newChild = watermarkAssignerPushdown(child, ingestionTime, childEventTime);
+        auto newChild = watermarkAssignerPushdown(ctx, child, ingestionTime, childEventTime);
         children.push_back(newChild);
     }
-    return op.withChildren(children).withInferredSchema();
+    /// withChildren re-infers only the local schema and does not recurse into the children. This relies on the
+    /// children's schemas already being inferred, which holds here: the input plan is type-inferred before this
+    /// rule runs, and every child was rebuilt through withChildren or a constructor that infers locally.
+    /// A recursive withInferredSchema would copy the already-rewritten (potentially shared) subtrees and break
+    /// operator sharing in multi-sink plans.
+    return op.withChildren(children);
 }
 
-LogicalOperator pushBeyondSink(const TypedLogicalOperator<SinkLogicalOperator>& op)
+LogicalOperator pushBeyondSink(PushdownContext& ctx, const TypedLogicalOperator<SinkLogicalOperator>& op)
 {
     /// Sinks are the starting point of the recursion.
     /// Because they don't have parents, no watermark assigner
     /// has to be pushed here.
     /// The recursion starts thus with an empty event time watermark assigner set,
     /// and no ingestion time watermark assigner.
-    auto newChild = watermarkAssignerPushdown(op->getChild(), {}, {});
-    return op->withChildren({newChild}).withInferredSchema();
+    auto newChild = watermarkAssignerPushdown(ctx, op->getChild(), {}, {});
+    return op->withChildren({newChild});
 }
 
 LogicalOperator pushBeyondSource(
@@ -111,14 +132,18 @@ LogicalOperator pushBeyondSource(
 }
 
 LogicalOperator pushBeyondTransparentOperator(
-    const LogicalOperator& op, bool ingestionTime, const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
+    PushdownContext& ctx,
+    const LogicalOperator& op,
+    bool ingestionTime,
+    const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
 {
     /// Pushes watermark assigners beyond operators that do not affect the
     /// watermark assigners.
-    return applyToAllChildren(op, std::move(ingestionTime), eventTime);
+    return applyToAllChildren(ctx, op, std::move(ingestionTime), eventTime);
 }
 
 LogicalOperator pushBeyondProjection(
+    PushdownContext& ctx,
     const TypedLogicalOperator<ProjectionLogicalOperator>& op,
     bool ingestionTime,
     const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
@@ -168,7 +193,7 @@ LogicalOperator pushBeyondProjection(
         }
     }
 
-    auto newOp = applyToAllChildren(op, ingestionTime, pushFurther);
+    auto newOp = applyToAllChildren(ctx, op, ingestionTime, pushFurther);
 
     for (const auto& [onField, unit] : std::ranges::reverse_view(applyNow))
     {
@@ -180,6 +205,7 @@ LogicalOperator pushBeyondProjection(
 }
 
 LogicalOperator pushBeyondEventTimeWatermarkAssigner(
+    PushdownContext& ctx,
     const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op,
     const bool ingestionTime,
     std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
@@ -194,10 +220,11 @@ LogicalOperator pushBeyondEventTimeWatermarkAssigner(
     const auto fieldAccess = op->getOnField().tryGetAs<FieldAccessLogicalFunction>();
     eventTime = fieldsWithNewBase(op->getChild(), eventTime);
     eventTime.emplace_back(fieldAccess.value()->getField(), op->getUnit());
-    return watermarkAssignerPushdown(op->getChild(), ingestionTime, eventTime);
+    return watermarkAssignerPushdown(ctx, op->getChild(), ingestionTime, eventTime);
 }
 
 LogicalOperator pushBeyondIngestionTimeWatermarkAssigner(
+    PushdownContext& ctx,
     const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op,
     bool /* ingestionTime */,
     std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
@@ -205,24 +232,24 @@ LogicalOperator pushBeyondIngestionTimeWatermarkAssigner(
     /// Adds flag that a ingestion time watermark assigner is required
 
     eventTime = fieldsWithNewBase(op->getChild(), eventTime);
-    return watermarkAssignerPushdown(op->getChild(), true, eventTime);
+    return watermarkAssignerPushdown(ctx, op->getChild(), true, eventTime);
 }
 
-LogicalOperator
-pushBeyondDefault(const LogicalOperator& op, const bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+LogicalOperator pushBeyondDefault(
+    PushdownContext& ctx, const LogicalOperator& op, const bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
 {
     /// Implements default behavior if operator is not explicitly handled.
     /// Applies all watermark assigners and restarts recursion for all children.
-    auto newOp = applyToAllChildren(op, false, {});
+    auto newOp = applyToAllChildren(ctx, op, false, {});
     return addWatermarkAssigners(std::move(newOp), ingestionTime, std::move(eventTime));
 }
 
-LogicalOperator
-watermarkAssignerPushdown(const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+LogicalOperator watermarkAssignerPushdownDispatch(
+    PushdownContext& ctx, const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
 {
     if (const auto sink = op.tryGetAs<SinkLogicalOperator>())
     {
-        return pushBeyondSink(sink.value());
+        return pushBeyondSink(ctx, sink.value());
     }
     if (const auto source = op.tryGetAs<SourceDescriptorLogicalOperator>())
     {
@@ -230,23 +257,39 @@ watermarkAssignerPushdown(const LogicalOperator& op, bool ingestionTime, std::ve
     }
     if (const auto eventTimeWA = op.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>())
     {
-        return pushBeyondEventTimeWatermarkAssigner(eventTimeWA.value(), std::move(ingestionTime), std::move(eventTime));
+        return pushBeyondEventTimeWatermarkAssigner(ctx, eventTimeWA.value(), std::move(ingestionTime), std::move(eventTime));
     }
     if (const auto ingestionTimeWatermarkAssigner = op.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>())
     {
         return pushBeyondIngestionTimeWatermarkAssigner(
-            ingestionTimeWatermarkAssigner.value(), std::move(ingestionTime), std::move(eventTime));
+            ctx, ingestionTimeWatermarkAssigner.value(), std::move(ingestionTime), std::move(eventTime));
     }
     if (op.tryGetAs<SelectionLogicalOperator>().has_value() || op.tryGetAs<UnionLogicalOperator>().has_value())
     {
-        return pushBeyondTransparentOperator(op, std::move(ingestionTime), eventTime);
+        return pushBeyondTransparentOperator(ctx, op, std::move(ingestionTime), eventTime);
     }
     if (const auto projOp = op.tryGetAs<ProjectionLogicalOperator>())
     {
-        return pushBeyondProjection(projOp.value(), std::move(ingestionTime), eventTime);
+        return pushBeyondProjection(ctx, projOp.value(), std::move(ingestionTime), eventTime);
     }
 
-    return pushBeyondDefault(op, std::move(ingestionTime), std::move(eventTime));
+    return pushBeyondDefault(ctx, op, std::move(ingestionTime), std::move(eventTime));
+}
+
+LogicalOperator watermarkAssignerPushdown(
+    PushdownContext& ctx, const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+{
+    if (ctx.sharedOperatorIds.contains(op.getId()))
+    {
+        auto rewritten = ctx.rewrittenSharedOperators.find(op.getId());
+        if (rewritten == ctx.rewrittenSharedOperators.end())
+        {
+            rewritten = ctx.rewrittenSharedOperators.emplace(op.getId(), watermarkAssignerPushdownDispatch(ctx, op, false, {})).first;
+        }
+        /// addWatermarkAssigners rebinds the event time fields to the rewritten operator by name
+        return addWatermarkAssigners(rewritten->second, ingestionTime, std::move(eventTime));
+    }
+    return watermarkAssignerPushdownDispatch(ctx, op, std::move(ingestionTime), std::move(eventTime));
 }
 
 }
@@ -254,11 +297,16 @@ watermarkAssignerPushdown(const LogicalOperator& op, bool ingestionTime, std::ve
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan WatermarkAssignerPushdownRule::apply(LogicalPlan queryPlan) const
 {
-    auto originalRoots = queryPlan.getRootOperators();
-    PRECONDITION(originalRoots.size() == 1, "watermark pushdown not yet implemented for more than one root");
-    auto newRoot = watermarkAssignerPushdown(originalRoots.at(0), false, {});
-    queryPlan = queryPlan.withRootOperators({newRoot});
-    return queryPlan;
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
+
+    PushdownContext ctx{.sharedOperatorIds = getSharedOperatorIds(queryPlan), .rewrittenSharedOperators = {}};
+    std::vector<LogicalOperator> newRoots;
+    newRoots.reserve(queryPlan.getRootOperators().size());
+    for (const auto& root : queryPlan.getRootOperators())
+    {
+        newRoots.push_back(watermarkAssignerPushdown(ctx, root, false, {}));
+    }
+    return queryPlan.withRootOperators(newRoots);
 }
 
 const std::type_info& WatermarkAssignerPushdownRule::getType()

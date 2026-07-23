@@ -36,20 +36,19 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
+#include <PlanRewriteUtils.hpp>
 
 namespace NES
 {
 
 namespace
 {
-LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, OriginId& lastOriginId)
+LogicalOperator
+propagateOriginIds(const LogicalOperator& visitingOperator, std::vector<LogicalOperator> newChildren, OriginId& lastOriginId)
 {
-    std::vector<LogicalOperator> newChildren;
     std::vector<OutputOriginIdsTrait> childOriginIds;
-    for (const auto& child : visitingOperator.getChildren())
+    for (const auto& newChild : newChildren)
     {
-        auto newChild = propagateOriginIds(child, lastOriginId);
-        newChildren.push_back(newChild);
         const auto childOriginIdsOpt = getTrait<OutputOriginIdsTrait>(newChild.getTraitSet());
         INVARIANT(childOriginIdsOpt.has_value(), "Child operator must have origin ids trait");
         childOriginIds.push_back(childOriginIdsOpt.value().get());
@@ -72,7 +71,7 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
         INVARIANT(success, "Failed to insert origin id trait, did another phase already assign them?");
     }
 
-    return visitingOperator.withTraitSet(traitSet).withChildren(newChildren);
+    return visitingOperator.withTraitSet(traitSet).withChildren(std::move(newChildren));
 }
 }
 
@@ -108,13 +107,10 @@ LogicalPlan OriginIdInferenceRule::apply(const LogicalPlan& queryPlan) const
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = OriginId{INITIAL_ORIGIN_ID.getRawValue()};
-    /// propagate origin ids through the complete query plan
-    std::vector<LogicalOperator> newSinks;
-    newSinks.reserve(queryPlan.getRootOperators().size());
-    for (auto& sinkOperator : queryPlan.getRootOperators())
-    {
-        newSinks.push_back(propagateOriginIds(sinkOperator, originIdCounter));
-    }
-    return queryPlan.withRootOperators(newSinks);
+    /// propagate origin ids through the complete query plan; shared operators are visited once, so they assign one origin id
+    return rewritePlanBottomUp(
+        queryPlan,
+        [&originIdCounter](const LogicalOperator& visitingOperator, std::vector<LogicalOperator> children)
+        { return propagateOriginIds(visitingOperator, std::move(children), originIdCounter); });
 }
 }

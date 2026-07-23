@@ -18,6 +18,7 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
 #include <Operators/LogicalOperator.hpp>
@@ -25,6 +26,7 @@
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
+#include <PlanRewriteUtils.hpp>
 
 namespace NES
 {
@@ -33,13 +35,19 @@ namespace NES
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan TypeInferenceRule::apply(const LogicalPlan& queryPlan) const
 {
-    std::vector<LogicalOperator> newRoots;
-    for (const auto& sink : queryPlan.getRootOperators())
-    {
-        const LogicalOperator inferredRoot = sink->withInferredSchema();
-        newRoots.push_back(inferredRoot);
-    }
-    return queryPlan.withRootOperators(newRoots);
+    /// Infer bottom-up instead of calling withInferredSchema on each root: the recursive withInferredSchema
+    /// would copy operators shared between multiple parents once per parent. withChildren re-infers the local
+    /// schema, which is equivalent once all children are already inferred.
+    return rewritePlanBottomUp(
+        queryPlan,
+        [](const LogicalOperator& op, std::vector<LogicalOperator> children) -> LogicalOperator
+        {
+            if (children.empty())
+            {
+                return op.withInferredSchema();
+            }
+            return op.withChildren(std::move(children));
+        });
 }
 
 const std::type_info& TypeInferenceRule::getType()

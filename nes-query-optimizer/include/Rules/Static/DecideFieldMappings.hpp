@@ -17,6 +17,7 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <vector>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 
@@ -49,6 +50,6 @@ public:
     bool operator==(const DecideFieldMappings& other) const;
 
 private:
-    [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;
+    [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator, std::vector<LogicalOperator> children) const;
 };
 }

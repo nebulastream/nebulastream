@@ -14,11 +14,13 @@
 #pragma once
 
 #include <string>
+#include <unordered_set>
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -51,7 +53,13 @@ public:
     TypedLogicalOperator<SinkLogicalOperator>
     createSink(LogicalOperator child, std::string name, const std::vector<std::string>& fieldNames);
     LogicalPlan createPlan(LogicalOperator sink);
+    /// Creates a plan with multiple sink roots. Sinks sharing (parts of) their subtrees form a DAG-shaped plan.
+    LogicalPlan createPlan(std::vector<LogicalOperator> sinks);
     SinkDescriptor createSinkDescriptor(const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema);
+
+    /// Collects the ids of all unique operators reachable from the plan roots. Operators shared between multiple
+    /// parents are counted once, so the size of the result detects accidental duplication of shared subtrees.
+    static std::unordered_set<OperatorId> collectOperatorIds(const LogicalPlan& plan);
 
 private:
     SourceCatalog sourceCatalog;
