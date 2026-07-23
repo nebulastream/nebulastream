@@ -6,6 +6,7 @@ tests.
 ## Table of Contents
 
 - [Overview](#overview)
+- [Identifier Case Sensitivity](#identifier-case-sensitivity)
 - [NES-REPL (Interactive REPL)](#nes-repl-interactive-repl)
     - [Starting the REPL](#starting-the-repl)
     - [Embedded Mode](#embedded-mode)
@@ -26,6 +27,48 @@ NebulaStream provides three primary frontend interfaces:
 3. **`nes-cli`** - Stateless one-shot CLI for deploying and controlling queries from topology files
 
 All interfaces support JSON output for programmatic access.
+
+---
+
+## Identifier Case Sensitivity
+
+Unquoted SQL identifiers are case-insensitive and normalized to uppercase. For example, `stream`, `STREAM`, and
+`StReAm` all refer to the same identifier.
+
+Double-quoted identifiers are case-sensitive and preserve their exact spelling. Consequently, `"stream"` is distinct
+from the unquoted identifier `stream` and from `"Stream"`. This applies to source, sink, field, alias, and configuration
+key names in both REPL variants and the CLI. An unquoted identifier matches a quoted identifier only when the quoted
+spelling matches its uppercase-normalized form; for example, `stream` matches `"STREAM"` but not `"stream"`.
+
+```sql
+CREATE LOGICAL SOURCE "quotedSource" ("mixedValue" UINT64);
+CREATE SINK "quotedSink" ("projectedValue" UINT64) TYPE Void;
+
+SELECT "mixedValue" AS "projectedValue"
+FROM "quotedSource"
+INTO "quotedSink";
+```
+
+Double quotes delimit identifiers; single quotes delimit string values. For example, `"status"` refers to a field,
+whereas `'status'` is a string literal.
+
+CLI topology files must include the SQL double quotes as part of the YAML string when defining a case-sensitive
+identifier:
+
+```yaml
+logical:
+  - name: '"quotedSource"'
+    schema:
+      - name: '"mixedValue"'
+        type: UINT64
+
+physical:
+  - logical: '"quotedSource"'
+    # ...
+```
+
+For quoted identifiers, JSON responses and CSV schema headers contain the preserved spelling without the surrounding
+SQL double quotes. For example, `"mixedValue"` is reported as `mixedValue`.
 
 ---
 
