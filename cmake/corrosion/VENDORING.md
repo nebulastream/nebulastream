@@ -21,6 +21,19 @@ The fork carries a small patch on top of upstream Corrosion that avoids Rust tar
 treated as *always dirty*, which otherwise forced a full Rust rebuild on every CMake build
 even when no Rust sources changed. Everything else matches upstream Corrosion `v0.6.1`.
 
+## What is vendored (and what is not)
+
+Only the files NebulaStream's `add_subdirectory()` use actually needs:
+
+- `cmake/Corrosion.cmake` — the Corrosion module itself
+- `cmake/CorrosionGenerator.cmake` — unconditionally included by `Corrosion.cmake`
+- `cmake/FindRust.cmake` — toolchain discovery, `find_package(Rust)` from `Corrosion.cmake`
+- `CMakeLists.txt` — trimmed entry point (module path + `include(Corrosion)` only)
+- `LICENSE`, this file
+
+Upstream's tests, docs, CI workflows, presets, and install/package rules are deliberately
+NOT vendored; the trimmed `CMakeLists.txt` replaces the upstream one accordingly.
+
 ## How to bump the vendored copy
 
 To update to a newer fork ref:
@@ -32,18 +45,17 @@ git clone --depth 1 --branch <new-ref> https://github.com/nebulastream/corrosion
 # 2. Record the commit you snapshotted (paste it into the "Vendored commit" field above).
 git -C /tmp/corrosion-snapshot rev-parse HEAD
 
-# 3. Strip the git metadata so it becomes a plain vendored snapshot.
-rm -rf /tmp/corrosion-snapshot/.git
+# 3. Copy over ONLY the vendored module files (see the list above).
+cp /tmp/corrosion-snapshot/cmake/Corrosion.cmake \
+   /tmp/corrosion-snapshot/cmake/CorrosionGenerator.cmake \
+   /tmp/corrosion-snapshot/cmake/FindRust.cmake cmake/corrosion/cmake/
+cp /tmp/corrosion-snapshot/LICENSE cmake/corrosion/
 
-# 4. Replace the vendored tree (keep this VENDORING.md).
-cp cmake/corrosion/VENDORING.md /tmp/VENDORING.md.bak
-rm -rf cmake/corrosion
-mkdir -p cmake/corrosion
-cp -R /tmp/corrosion-snapshot/. cmake/corrosion/
-mv /tmp/VENDORING.md.bak cmake/corrosion/VENDORING.md
+# 4. Diff upstream's CMakeLists.txt against our trimmed one and port anything the
+#    non-top-level include path newly requires (usually nothing).
 
 # 5. Update the Ref / Vendored commit fields above, then commit.
-git add -A cmake/corrosion
+git add cmake/corrosion
 ```
 
 Because the snapshot now lives in-tree, the hash of the Rust dependency Docker image is
