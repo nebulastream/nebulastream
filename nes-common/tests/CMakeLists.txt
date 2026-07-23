@@ -32,3 +32,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 add_subdirectory(UnitTests)
+add_subdirectory(Plugins)

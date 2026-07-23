@@ -130,6 +130,7 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupl
             const size_t bytesRead = tuplesStream.readsome(currentBuffer.data(), static_cast<std::streamsize>(currentBuffer.size()));
             writtenBytes += bytesRead;
             currentBuffer = currentBuffer.subspan(bytesRead);
+            this->generatedTuplesCounter++;
             if (currentBuffer.empty())
             {
                 break;
@@ -177,6 +178,7 @@ std::ostream& GeneratorSource::toString(std::ostream& str) const
 {
     str << "\nGeneratorSource(";
     str << "\n\tgenerated buffers: " << this->generatedBuffers;
+    str << "\n\tgenerated tuples: " << this->generatedTuplesCounter;
     str << "\n\tschema: " << this->generatorSchemaRaw;
     str << "\n\tseed: " << this->seed;
     str << ")\n";

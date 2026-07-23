@@ -503,10 +503,10 @@ int main(int argc, const char** argv)
     NES::setupSignalHandlers();
     const auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::Host("systest"), "main");
-    NES::loadBuiltinPlugins();
 
     CPPTRACE_TRY
     {
+        NES::loadBuiltinPlugins();
         auto config = parseConfiguration(argc, argv);
         NES::SystestExecutor executor(std::move(config));
         const auto result = executor.executeSystests();
