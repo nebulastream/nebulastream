@@ -117,10 +117,4 @@ function(project_enable_tidy_diff)
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             USES_TERMINAL
             COMMENT "Running clang-tidy on the diff vs origin/main (fix)")
-
-    # TODO #1609: migrate the handwritten bash in
-    # .github/workflows/clang_tidy_diff.yml to invoke `cmake --build --target
-    # tidy-diff` so the CI check and the local command stay in sync. Deferred to
-    # keep this PR focused and avoid risking the CI pipeline; the CI workflow also
-    # relies on -export-fixes for PR annotations, which needs separate wiring.
 endfunction(project_enable_tidy_diff)
