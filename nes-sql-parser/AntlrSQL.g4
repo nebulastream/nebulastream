@@ -161,7 +161,7 @@ joinCriteria
     ;
 
 relationPrimary
-    : multipartIdentifier                     #tableName
+    : multipartIdentifier (AS alias=identifier)? #tableName
     | '(' query ')'                           #aliasedQuery
     | '(' relation ')'                        #aliasedRelation
     | inlineTable                             #inlineTableDefault2
@@ -263,10 +263,25 @@ booleanExpression
     ;
 
 predicate
-    : NOT predicate                                          #logicalNotPredicate
+    : orPredicate
+    ;
+
+orPredicate
+    : andPredicate (OR andPredicate)*
+    ;
+
+andPredicate
+    : notPredicate (AND notPredicate)*
+    ;
+
+notPredicate
+    : NOT notPredicate                                       #logicalNotPredicate
+    | predicatePrimary                                      #predicatePrimaryExpression
+    ;
+
+predicatePrimary
+    : '(' predicate ')'                                      #parenthesizedPredicate
     | valueExpression booleanComparison?                     #boolComparison
-    | left=predicate op=AND right=predicate                  #logicalBinary
-    | left=predicate op=OR right=predicate                   #logicalBinary
     ;
 
 /// Problem fixed that the querySpecification rule could match an empty string
@@ -398,7 +413,7 @@ primaryExpression
     | base=primaryExpression '.' fieldName=identifier                                          #dereference
     | '(' query ')'                                                                            #subqueryExpression
     | '(' namedExpression (',' namedExpression)+ ')'                                           #rowConstructor
-    | '(' expression ')'                                                                       #parenthesizedExpression
+    | '(' valueExpression ')'                                                                  #parenthesizedExpression
     | constant                                                                                 #constantDefault
     | identifier                                                                               #columnReference
     ;

@@ -159,6 +159,12 @@ std::optional<std::string> getSkipReason(const NES::Systest::TestFile& testFile,
     }
     return std::nullopt;
 }
+
+NES::Systest::TestName testNameFromRelativePath(std::filesystem::path relativePath)
+{
+    relativePath.replace_extension();
+    return relativePath.generic_string();
+}
 }
 
 namespace NES::Systest
@@ -167,26 +173,28 @@ namespace NES::Systest
 std::filesystem::path
 SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const SystestQueryId queryIdInTestFile)
 {
-    auto resultDir = workingDir / "results";
+    auto resultPath = workingDir / "results" / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
+    const auto resultDir = resultPath.parent_path();
     if (not is_directory(resultDir))
     {
         create_directories(resultDir);
         std::cout << "Created working directory: file://" << resultDir.string() << "\n";
     }
 
-    return resultDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
+    return resultPath;
 }
 
 std::filesystem::path SystestQuery::sourceFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t sourceId)
 {
-    auto sourceDir = workingDir / "sources";
+    auto sourcePath = workingDir / "sources" / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
+    const auto sourceDir = sourcePath.parent_path();
     if (not is_directory(sourceDir))
     {
         create_directories(sourceDir);
         std::cout << "Created working directory: file://" << sourceDir.string() << "\n";
     }
 
-    return sourceDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
+    return sourcePath;
 }
 
 std::filesystem::path SystestQuery::resultFile() const
@@ -218,7 +226,11 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
         const std::string entryExt = toLowerCopy(entry.path().extension().string());
         if (!fileExtension || entryExt == desiredExtension)
         {
-            const TestFile testfile(entry.path(), std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+            const TestFile testfile(
+                entry.path(),
+                testNameFromRelativePath(entry.path().lexically_relative(path)),
+                std::make_shared<SourceCatalog>(),
+                std::make_shared<SinkCatalog>());
             testFiles.insert({testfile.file, testfile});
         }
     }
@@ -254,7 +266,17 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
 
 TestFile::TestFile(
     const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
+    : TestFile(file, file.stem().string(), std::move(sourceCatalog), std::move(sinkCatalog))
+{
+}
+
+TestFile::TestFile(
+    const std::filesystem::path& file,
+    TestName testName,
+    std::shared_ptr<SourceCatalog> sourceCatalog,
+    std::shared_ptr<SinkCatalog> sinkCatalog)
     : file(weakly_canonical(file))
+    , testName(std::move(testName))
     , groups(readGroups(*this))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog)) { };
@@ -264,7 +286,19 @@ TestFile::TestFile(
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
     std::shared_ptr<SourceCatalog> sourceCatalog,
     std::shared_ptr<SinkCatalog> sinkCatalog)
+    : TestFile(
+          file, std::move(onlyEnableQueriesWithTestQueryNumber), file.stem().string(), std::move(sourceCatalog), std::move(sinkCatalog))
+{
+}
+
+TestFile::TestFile(
+    const std::filesystem::path& file,
+    std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
+    TestName testName,
+    std::shared_ptr<SourceCatalog> sourceCatalog,
+    std::shared_ptr<SinkCatalog> sinkCatalog)
     : file(weakly_canonical(file))
+    , testName(std::move(testName))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this))
     , sourceCatalog(std::move(sourceCatalog))
