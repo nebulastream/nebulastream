@@ -2,6 +2,10 @@
 # description: Test window aggregations over different data types
 # groups: [Aggregation, WindowOperators, CompilationIntensive] TODO #1272
 
+# The last query aggregates 100 medians, each keeping a TupleBuffer of its own in the aggregation state, which
+# does not fit a hash map entry at the default page size of 1024 bytes.
+GlobalConfiguration worker.default_query_execution.page_size: [16384]
+
 
 CREATE LOGICAL SOURCE stream(i8 INT8 NOT NULL, i16 INT16 NOT NULL, i32 INT32 NOT NULL, i64 INT64 NOT NULL, u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, u32 UINT32 NOT NULL, u64 UINT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL, c CHAR NOT NULL, ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
@@ -201,3 +205,42 @@ FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStreamAll
 250,350,-42,-126,-10921.6666666667,4,3,263,3,8,23,10
 300,400,-42,-124,-10920.6666666667,5,3,269,3,9,23,11
 350,450,2,3,4,5,1,7,1,9,10,11
+
+
+# Checking that many medians in one query still produce the correct result for each of them, as all medians
+# of the same data type share a single compiled function. The first three rounds cover every type, the rest
+# pick their input field at random so the types are unevenly distributed.
+SELECT start, end, MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
+       MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
+       MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out, MEDIAN(i8) as i8_out1, MEDIAN(i16) as i16_out1,
+       MEDIAN(i32) as i32_out1, MEDIAN(i64) as i64_out1, MEDIAN(u8) as u8_out1, MEDIAN(u16) as u16_out1,
+       MEDIAN(u32) as u32_out1, MEDIAN(u64) as u64_out1, MEDIAN(f32) as f32_out1, MEDIAN(f64) as f64_out1,
+       MEDIAN(i8) as i8_out2, MEDIAN(i16) as i16_out2, MEDIAN(i32) as i32_out2, MEDIAN(i64) as i64_out2,
+       MEDIAN(u8) as u8_out2, MEDIAN(u16) as u16_out2, MEDIAN(u32) as u32_out2, MEDIAN(u64) as u64_out2,
+       MEDIAN(f32) as f32_out2, MEDIAN(f64) as f64_out2, MEDIAN(f64) as f64_out3, MEDIAN(u8) as u8_out4,
+       MEDIAN(u16) as u16_out5, MEDIAN(i16) as i16_out6, MEDIAN(f32) as f32_out7, MEDIAN(i8) as i8_out8,
+       MEDIAN(u32) as u32_out9, MEDIAN(i16) as i16_out10, MEDIAN(i32) as i32_out11, MEDIAN(u32) as u32_out12,
+       MEDIAN(f64) as f64_out13, MEDIAN(f32) as f32_out14, MEDIAN(i8) as i8_out15, MEDIAN(i8) as i8_out16,
+       MEDIAN(u32) as u32_out17, MEDIAN(u8) as u8_out18, MEDIAN(u64) as u64_out19, MEDIAN(f64) as f64_out20,
+       MEDIAN(u16) as u16_out21, MEDIAN(u16) as u16_out22, MEDIAN(i32) as i32_out23, MEDIAN(u8) as u8_out24,
+       MEDIAN(u8) as u8_out25, MEDIAN(i64) as i64_out26, MEDIAN(f32) as f32_out27, MEDIAN(f64) as f64_out28,
+       MEDIAN(i32) as i32_out29, MEDIAN(f32) as f32_out30, MEDIAN(u16) as u16_out31, MEDIAN(i16) as i16_out32,
+       MEDIAN(u16) as u16_out33, MEDIAN(i32) as i32_out34, MEDIAN(u16) as u16_out35, MEDIAN(u8) as u8_out36,
+       MEDIAN(i8) as i8_out37, MEDIAN(u16) as u16_out38, MEDIAN(i32) as i32_out39, MEDIAN(u8) as u8_out40,
+       MEDIAN(i64) as i64_out41, MEDIAN(f64) as f64_out42, MEDIAN(i64) as i64_out43, MEDIAN(i16) as i16_out44,
+       MEDIAN(i32) as i32_out45, MEDIAN(u64) as u64_out46, MEDIAN(u8) as u8_out47, MEDIAN(f32) as f32_out48,
+       MEDIAN(u64) as u64_out49, MEDIAN(i16) as i16_out50, MEDIAN(i16) as i16_out51, MEDIAN(u64) as u64_out52,
+       MEDIAN(u64) as u64_out53, MEDIAN(f64) as f64_out54, MEDIAN(u8) as u8_out55, MEDIAN(i8) as i8_out56,
+       MEDIAN(u32) as u32_out57, MEDIAN(u16) as u16_out58, MEDIAN(i64) as i64_out59, MEDIAN(i16) as i16_out60,
+       MEDIAN(i16) as i16_out61, MEDIAN(i16) as i16_out62, MEDIAN(u16) as u16_out63, MEDIAN(i32) as i32_out64,
+       MEDIAN(f64) as f64_out65, MEDIAN(u16) as u16_out66, MEDIAN(u32) as u32_out67, MEDIAN(u32) as u32_out68,
+       MEDIAN(u64) as u64_out69, MEDIAN(u64) as u64_out70, MEDIAN(u8) as u8_out71, MEDIAN(u8) as u8_out72
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO File();
+----
+50,150,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5,10.5,5.5,6.5,2.5,9.5,1.5,7.5,2.5,3.5,7.5,10.5,9.5,1.5,1.5,7.5,5.5,8.5,10.5,6.5,6.5,3.5,5.5,5.5,4.5,9.5,10.5,3.5,9.5,6.5,2.5,6.5,3.5,6.5,5.5,1.5,6.5,3.5,5.5,4.5,10.5,4.5,2.5,3.5,8.5,5.5,9.5,8.5,2.5,2.5,8.5,8.5,10.5,5.5,1.5,7.5,6.5,4.5,2.5,2.5,2.5,6.5,3.5,10.5,6.5,7.5,7.5,8.5,8.5,5.5,5.5
+100,200,1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10,10,5,6,2,9,1,7,2,3,7,10,9,1,1,7,5,8,10,6,6,3,5,5,4,9,10,3,9,6,2,6,3,6,5,1,6,3,5,4,10,4,2,3,8,5,9,8,2,2,8,8,10,5,1,7,6,4,2,2,2,6,3,10,6,7,7,8,8,5,5
+150,250,-21,-64.5,-16384.5,-1073741824.5,21,128,32768,2147483648,11.5,11.5,-21,-64.5,-16384.5,-1073741824.5,21,128,32768,2147483648,11.5,11.5,-21,-64.5,-16384.5,-1073741824.5,21,128,32768,2147483648,11.5,11.5,11.5,21,128,-64.5,11.5,-21,32768,-64.5,-16384.5,32768,11.5,11.5,-21,-21,32768,21,2147483648,11.5,128,128,-16384.5,21,21,-1073741824.5,11.5,11.5,-16384.5,11.5,128,-64.5,128,-16384.5,128,21,-21,128,-16384.5,21,-1073741824.5,11.5,-1073741824.5,-64.5,-16384.5,2147483648,21,11.5,2147483648,-64.5,-64.5,2147483648,2147483648,11.5,21,-21,32768,128,-1073741824.5,-64.5,-64.5,-64.5,128,-16384.5,11.5,128,32768,32768,2147483648,2147483648,21,21
+200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12,12,21.5,128.5,-64,12,-20.5,32768.5,-64,-16384,32768.5,12,12,-20.5,-20.5,32768.5,21.5,2147483648.5,12,128.5,128.5,-16384,21.5,21.5,-1073741824,12,12,-16384,12,128.5,-64,128.5,-16384,128.5,21.5,-20.5,128.5,-16384,21.5,-1073741824,12,-1073741824,-64,-16384,2147483648.5,21.5,12,2147483648.5,-64,-64,2147483648.5,2147483648.5,12,21.5,-20.5,32768.5,128.5,-1073741824,-64,-64,-64,128.5,-16384,12,128.5,32768.5,32768.5,2147483648.5,2147483648.5,21.5,21.5
+250,350,1,1,1,1,5,6,7,8,9,10,1,1,1,1,5,6,7,8,9,10,1,1,1,1,5,6,7,8,9,10,10,5,6,1,9,1,7,1,1,7,10,9,1,1,7,5,8,10,6,6,1,5,5,1,9,10,1,9,6,1,6,1,6,5,1,6,1,5,1,10,1,1,1,8,5,9,8,1,1,8,8,10,5,1,7,6,1,1,1,1,6,1,10,6,7,7,8,8,5,5
+300,400,1,2,3,4,6,7,8,9,10,11,1,2,3,4,6,7,8,9,10,11,1,2,3,4,6,7,8,9,10,11,11,6,7,2,10,1,8,2,3,8,11,10,1,1,8,6,9,11,7,7,3,6,6,4,10,11,3,10,7,2,7,3,7,6,1,7,3,6,4,11,4,2,3,9,6,10,9,2,2,9,9,11,6,1,8,7,4,2,2,2,7,3,11,7,8,8,9,9,6,6
+350,450,2,3,4,5,6,7,8,9,10,11,2,3,4,5,6,7,8,9,10,11,2,3,4,5,6,7,8,9,10,11,11,6,7,3,10,2,8,3,4,8,11,10,2,2,8,6,9,11,7,7,4,6,6,5,10,11,4,10,7,3,7,4,7,6,2,7,4,6,5,11,5,3,4,9,6,10,9,3,3,9,9,11,6,2,8,7,5,3,3,3,7,4,11,7,8,8,9,9,6,6
