@@ -26,6 +26,8 @@
 #include <vector>
 
 #include <fmt/format.h>
+#include <rfl/json/read.hpp>
+#include <rfl/json/write.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>

@@ -45,10 +45,9 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
     PRECONDITION(logicalOperator.tryGetAs<InferModelLogicalOperator>(), "Expected an InferModelLogicalOperator");
     const auto inferModelOp = logicalOperator.getAs<InferModelLogicalOperator>();
 
-    /// Compile the imported MLIR to IREE bytecode. This is where the
-    /// `iree-compile` subprocess runs — deliberately deferred to lowering so
-    /// the coordinator only ships the textual MLIR across the wire. The schema
-    /// and signature travel with the `ImportedModel` and are propagated by
+    /// Move the imported model to its executable form. Deliberately deferred to
+    /// lowering so the coordinator only ships the imported IR across the wire. The
+    /// schema and signature travel with the `ImportedModel` and are propagated by
     /// `compileModel`, so no extra wiring is needed here.
     auto compiled = compileModel(inferModelOp.get().getModel().getImported());
     if (!compiled)
@@ -57,12 +56,10 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
     }
     auto model = std::move(*compiled);
 
-    NES_DEBUG("Lowering InferModel operator to physical IREE operator (function: {})", model.getFunctionName());
-
     /// Create the physical operator. Both input and output field names come from the model's
     /// declared schema. The runtime `record.read` lookup matches by canonical identifier text,
     /// and `withInferredSchema` already verified the child carries fields with these names.
-    /// The operator owns its own thread-local IREE session pool; no OperatorHandler needed.
+    /// The operator owns its own thread-local runtime pool; no OperatorHandler needed.
     const auto toIdList = [](const auto& fields)
     {
         return fields
@@ -78,6 +75,8 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
     const bool varsizedOutput = modelOutputs.size() > 0 && modelOutputs.begin()->getDataType().isType(DataType::Type::VARSIZED);
     auto physicalOperator
         = InferModelPhysicalOperator(std::move(model), toIdList(modelInputs), toIdList(modelOutputs), varsizedInput, varsizedOutput);
+
+    NES_DEBUG("Lowering InferModel operator for model '{}' to InferModelPhysicalOperator", inferModelOp.get().getModel().getName())
 
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");

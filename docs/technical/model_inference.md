@@ -6,68 +6,63 @@ current implementation.
 
 ## Overview
 
-NebulaStream currently relies on [IREE] (the IREE Runtime Engine) for model
-inference. IREE compiles a tensor program down to its own bytecode and
-executes it on a small runtime that abstracts the compute device behind a
-*Hardware Abstraction Layer* (HAL). For every query that contains a
-`MODEL_INFERENCE(...)` table-valued function, NES turns the registered model
-into IREE bytecode, instantiates a per-worker-thread IREE runtime, and
-invokes the model once per record.
+NebulaStream relies on [OpenVINO](https://docs.openvino.ai/2025/index.html) for model inference.
+Models are converted into the OpenVINO Intermediate Representation (IR) — an XML topology plus a
+binary weights blob — and executed by the OpenVINO runtime on the CPU device.
+For every query that contains a `MODEL_INFERENCE(...)` table-valued function,
+NES converts the registered model to IR, instantiates a per-worker-thread
+runtime, and invokes the model once per record.
 
-Everything that touches IREE lives in the `nes-inference` module. The logical
+Everything backend-specific lives in the `nes-inference` module. The logical
 and physical operators (`InferModelLogicalOperator`,
-`InferModelPhysicalOperator`) and the per-runtime wrapper
-(`InferenceRuntime`) carry only generic concepts (MLIR text, compiled
-bytecode, input/output shapes). The intent is that swapping the backend
-later does not propagate through the query optimizer or the operator code.
+`InferModelPhysicalOperator`) and the per-runtime wrapper (`InferenceRuntime`)
+carry only generic concepts (imported payload, compiled payload, input/output
+shapes). OpenVINO is the only backend today, but the abstractions allow for extensibility:
 
-[IREE]: https://iree.dev
+- `RuntimeBackend` (`nes-inference/runtime/include/RuntimeBackend.hpp`) is the
+  abstract execution interface; `OpenVinoRuntimeBackend` is its only
+  implementation, selected by `createRuntimeBackend()` in `InferenceRuntime.cpp`.
+- `BackendTool.hpp` holds the backend-agnostic external-tool discovery
+  (`$PATH` lookup, `--version` parsing, subprocess execution) used by importers.
+- `Inference.hpp` exposes only `importModel` / `compileModel`; the module
+  internals behind them are free to change.
 
 ## Tooling and integration boundary
 
-Two IREE binaries are used:
+One external binary is used:
 
-- `iree-import-onnx` — ONNX → MLIR (the `torch` dialect, as `!torch.vtensor<[...],f32>`).
-- `iree-compile` — MLIR → IREE bytecode for a specific target.
+- `ovc` — the OpenVINO model converter: ONNX (and other supported formats) → OpenVINO IR.
 
-NES does not link against the IREE compiler library. Both binaries are
-installed with `pip install iree-base-compiler iree-turbine onnx` into a
-dedicated venv inside the development and runtime Docker images
-(`docker/dependency/Development.dockerfile`,
-`docker/runtime/RuntimeBase.dockerfile`); `nes-inference` discovers them on
-`$PATH` and shells out to them.
+NES does not link against the converter. It is installed with
+`pip install openvino` into a dedicated venv inside the development and
+runtime Docker images (`docker/dependency/Development.dockerfile`,
+`docker/runtime/RuntimeBase.dockerfile`); `nes-inference` discovers it on
+`$PATH` and shells out to it.
 
-The reason for shelling out is that NES already builds against LLVM/MLIR 19
-via its own MLIR package (used by `nes-nautilus`). IREE 3.11 ships its own,
-ABI-incompatible LLVM/MLIR snapshot. Linking the IREE compiler embedded API
-into NES would pull in two LLVM toolchains in the same address space; the
-Python distributions side-step that by being self-contained processes.
+The OpenVINO *runtime* library is linked into `nes-inference` (for reading the
+converted IR back at import time, to scrape shapes) and into
+`nes-inference-runtime` (for execution). No other target includes an OpenVINO
+header.
 
 ### Installing the tools on bare metal
 
 If you are running NES outside the provided Docker images you have to install
-`iree-compile` and `iree-import-onnx` yourself, with the same version as the
-runtime checks against (currently `IREE 3.11.0`). The recommended path
-mirrors what the Docker images do:
+`ovc` yourself, with the same version the runtime checks against — see
+`expectedOpenVinoVersion` in `nes-inference/src/BackendTool.hpp` (currently
+`2025.3`), which must match the OpenVINO version of the vcpkg port NES links
+against:
 
 ```sh
-pip install \
-    iree-base-compiler==3.11.0 \
-    iree-turbine \
-    onnx
-iree-compile     --version  # sanity check
-iree-import-onnx --version  # sanity check
+pip install openvino==2025.3.0
+ovc --version  # sanity check
 ```
 
-Both binaries must be reachable on `$PATH` of every process that handles `CREATE MODEL` (the coordinator and the offline
-`nebucli`) **and** on `$PATH` of every worker process (which compiles MLIR to bytecode at lowering time).
-A version mismatch, for example, an older `iree-compile` paired with a runtime built against IREE 3.11, produces the
-same effect: `iree-compile --version` is parsed at runtime startup, the mismatch disables inference, and queries that
-try to use a model are rejected.
-
-Only the IREE *runtime* library (the C API behind `<iree/runtime/api.h>`)
-is linked into NES, and only into `nes-inference-runtime`. Every other
-target depends on `nes-inference`, which never includes an IREE header.
+`ovc` must be reachable on the `$PATH` of every process that handles
+`CREATE MODEL` — the coordinator for a deployed cluster, or the offline
+`nebucli`. Workers do not need it: they receive the already-converted IR.
+A version mismatch is treated as "tool unavailable": the version string is
+parsed at startup, and on mismatch model import is disabled and queries that
+try to register a model are rejected.
 
 ## Lifecycle
 
@@ -76,8 +71,8 @@ A model goes through four stages from registration to execution:
 ```
 CREATE MODEL          parse              optimizer            lowering
 ─────────────►  catalog  ────►  name op  ────►  model op  ────►  physical op
-   import        (MLIR)        (resolved        (compiled        (per-thread
-                                schema)         bytecode)        runtime)
+   import       (OpenVINO IR)   (resolved       (executable      (per-thread
+                                 schema)         payload)         runtime)
 ```
 
 ### 1. Registration
@@ -95,9 +90,10 @@ into the same `ModelStatementHandler`:
    is processed — that is the coordinator for a deployed cluster, or the
    `nebucli` process for the offline CLI. The model file does **not** need
    to exist on the workers; only the importer's host needs it.
-2. The ONNX is converted to MLIR via `iree-import-onnx`.
-3. `MlirAnalyzer` scrapes the function name and the input/output tensor
-   shapes from the MLIR text and returns a `ModelSignature`.
+2. The model is converted to OpenVINO IR via `ovc`, producing an XML
+   topology and a `.bin` weights blob.
+3. The IR is read back through the OpenVINO runtime to scrape the
+   input/output element types and tensor shapes.
 4. The user-declared input/output schemas are validated against the
    tensor shape: every non-VARSIZED field must be `FLOAT32`, the field
    count must equal the tensor element count, and `VARSIZED` is only
@@ -105,8 +101,9 @@ into the same `ModelStatementHandler`:
    verbatim. This makes the `(model, schema)` pair an invariant carried
    downstream.
 
-Once accepted, the catalog stores the imported MLIR (a refcounted byte
-buffer plus the signature) keyed by name.
+Once accepted, the catalog stores the IR — the XML as the primary payload and
+the weights as the auxiliary payload, both refcounted byte buffers — keyed by
+name.
 
 ### 2. Query parsing
 
@@ -134,32 +131,24 @@ The contract for input/output handling at this stage is:
 `nes-query-optimizer/src/Rules/Semantic/`) walks the plan, looks each
 `InferModelNameLogicalOperator` up in the catalog, and replaces it with
 an `InferModelLogicalOperator` that owns the resolved `RegisteredModel`
-(imported MLIR + validated schema).
+(imported IR + validated schema).
 
 The rule must run *before* `TypeInferenceRule`, because schema inference for the operator
 depends on knowing the model's output fields, which only exist after
 resolution. This ordering is enforced by `requiredBy()` in the rule.
 
-### 4. Lowering and compilation
+### 4. Lowering
 
-IREE bytecode is architecture-dependent: the compile flags
-(`--iree-llvmcpu-target-cpu=host`) tell `iree-compile` to use the host
-CPU's feature set. Cross-compiling for a heterogeneous worker pool
-would require a target-CPU mapping per worker; that infrastructure does
-not exist yet, so compilation is deferred to the workers, where it can
-use native compilation.
+`LowerToPhysicalInferModel` in `nes-query-compiler` moves the model from its
+imported stage to its executable stage via `compileModel(imported)` and
+constructs an `InferModelPhysicalOperator` with it, the input field names, and
+the output field names.
 
-This happens during logical-to-physical lowering
-(`LowerToPhysicalInferModel` in `nes-query-compiler`):
-
-1. `compileModel(imported)` shells out to `iree-compile` with the MLIR on
-   stdin and reads bytecode from stdout. This is unrelated to NES's own
-   query compilation pipeline (Nautilus); it is a separate subprocess
-   invocation per logical operator.
-2. The signature flows through unchanged — the compiled model carries the
-   same function name and shapes.
-3. An `InferModelPhysicalOperator` is constructed with the compiled model,
-   the input field names, and the output field names.
+For OpenVINO there is no separate ahead-of-time compilation step: the IR is
+what the runtime consumes, so `compileModel` only hands the payload to the next
+lifecycle stage. Device-specific compilation happens inside OpenVINO when the
+worker calls `ov::Core::compile_model` at pipeline setup, which is also why the
+IR stays portable across heterogeneous workers.
 
 ### 5. Per-record execution
 
@@ -167,8 +156,12 @@ This happens during logical-to-physical lowering
 `shared_ptr` for pointer stability). At pipeline setup, the wrapper
 allocates one `InferenceRuntime` per worker thread, each of which:
 
-- Creates an IREE instance and a `local-sync` HAL device.
-- Loads the bytecode into a session.
+- Obtains an `ov::CompiledModel` for the model. The first thread to ask reads the
+  IR through the process-wide `ov::Core`, reshapes it to the model's input shape
+  and compiles it for the `CPU` device with `ACCURACY` execution mode and
+  `LATENCY` performance hint; the result is cached process-wide, keyed by the IR
+  payload and shape, so the remaining threads reuse it instead of recompiling.
+- Creates its own `ov::InferRequest` from that compiled model.
 - Allocates I/O byte buffers sized from the model's signature.
 
 Per record, the operator:
@@ -176,80 +169,67 @@ Per record, the operator:
 1. Writes the input fields into the runtime's input buffer (one f32 slot
    per FLOAT32 field, or a `memcpy` of the whole VARSIZED blob for the
    single-field bulk-byte case).
-2. Invokes the runtime, which pushes the buffer as a HAL buffer view and
-   dispatches the call.
+2. Invokes the runtime, which wraps the I/O buffers as `ov::Tensor`s over the
+   existing memory (no copy) and calls `infer()`.
 3. Reads the output buffer back into the record.
 
 There are no batch optimizations. Each tuple is fed in and read out
-individually, even though IREE supports batched inputs in principle —
+individually, even though OpenVINO supports batched inputs in principle —
 this is the most obvious place to optimize next.
 
 ## Constraints and known limitations
 
-The constraints come from three places: the analyzer (in NES), the
-compiler flags we pass to `iree-compile`, and the runtime build flags
-we pass to the IREE runtime CMake.
+### From the importer
 
-### From `MlirAnalyzer`
-
-- Only f32 tensor element types. Mixed precision, int8 quantized models,
-  fp16, etc. are rejected at registration time.
+- Only f32 tensor element types on both sides. Mixed precision, int8
+  quantized models, fp16, etc. are rejected at registration time.
+  Conversion runs with `--compress_to_fp16=False` so weights are kept at
+  full precision.
 - A single tensor input and a single tensor output. Multi-input or
-  multi-output graphs are not supported (the regex matches one `func.func`
-  signature with one argument and one return).
-- ONNX is the only accepted format (`.onnx` extension check). Importing
-  a TFLite or PyTorch model would require a separate importer path.
-- `iree-import-onnx` is invoked without an `--opset-version`; whatever
-  default the installed importer picks is what's used.
+  multi-output graphs are rejected.
+- A dynamic dimension is resolved to an extent of 1 and logged as a warning.
+  Inference evaluates the model once per tuple, so a dynamic batch dimension is
+  exactly the shape that works, and a stock model does not have to be re-exported
+  to be usable. For a FLOAT32 schema the resolved shape is still checked against
+  the declared field count at registration, so a wrong resolution surfaces as an
+  error there; a VARSIZED schema skips that check and trusts the resolution.
+- An input tensor of rank >= 2 whose leading (batch) dimension is fixed above 1 is
+  rejected: such a model wants several samples per invocation, which single-tuple
+  inference cannot supply. The check is not applied to the output tensor, where a
+  leading dimension above 1 is a per-sample result rather than a batch.
+- Accepted inputs are the formats `ovc` handles: `.onnx`, `.pb`, `.pbtxt`,
+  `.meta`, `.tflite`, `.pdmodel`, `.pt2`, or a SavedModel directory.
 
-### From the `iree-compile` flags
+### From the runtime configuration
 
-| Flag                                               | Implication                                                                                                                                                                                                    |
-|----------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--iree-hal-target-device=local`                   | CPU only — no GPU or accelerator targets.                                                                                                                                                                      |
-| `--iree-hal-local-target-device-backends=llvm-cpu` | The LLVM-CPU backend; no `vmvx` (interpreted) fallback, so any model with ops the LLVM-CPU backend cannot lower will fail to compile.                                                                          |
-| `--iree-llvmcpu-target-cpu=host`                   | Bytecode is tuned to the worker's microarchitecture. A cluster with heterogeneous CPUs would need per-worker compilation (which we already do, by accident). The bytecode is **not** portable across machines. |
-| `--iree-llvmcpu-debug-symbols=false`               | No debug symbols in the JITed code. Crashes inside the model show up as opaque addresses.                                                                                                                      |
-| `--iree-stream-partitioning-favor=min-peak-memory` | The stream partitioner optimizes for memory footprint over throughput. For long-running streaming workloads we may want to revisit this.                                                                       |
-
-### From the IREE runtime build flags
-
-The runtime is built with `IREE_BUILD_COMPILER=OFF` and a deliberately
-minimal driver/backend set (see `.nix/ireeruntime/package.nix` and
-`vcpkg/vcpkg-registry/ports/ireeruntime/portfile.cmake`):
-
-| Flag                                                             | Implication                                                                                                                                                                             |
-|------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `IREE_ENABLE_THREADING=OFF`                                      | The runtime is single-threaded inside one session. We compensate at the operator level by holding one session per worker thread; you cannot rely on IREE's own task-system parallelism. |
-| `IREE_HAL_DRIVER_DEFAULTS=OFF` + `IREE_HAL_DRIVER_LOCAL_SYNC=ON` | Only the synchronous local CPU driver is registered — no CUDA, Vulkan, Metal, etc. The `local-sync` driver runs the dispatch in the calling thread without an executor pool.            |
-| `IREE_TARGET_BACKEND_DEFAULTS=OFF`                               | The runtime image carries no compile backends; it only loads pre-compiled bytecode.                                                                                                     |
-| `IREE_INPUT_TORCH=OFF`                                           | Runtime-side input dialect handling for torch is off; input dialect lowering happens entirely in the Python compiler.                                                                   |
+| Setting                                | Implication                                                                                                                          |
+|----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| device `CPU`                           | No GPU/NPU targets. The vcpkg OpenVINO port is built with the `cpu` and `ir` features only.                                           |
+| `ExecutionMode::ACCURACY`              | OpenVINO will not trade numerical accuracy for speed (no implicit bf16/fp16 downcasting on capable CPUs).                             |
+| `PerformanceMode::LATENCY`             | Optimizes single-request latency rather than throughput; combined with one `InferRequest` per worker thread, NES owns the parallelism. |
+| shared `ov::Core` behind a mutex       | Model loading is serialized across worker threads, and compiled models are cached so each distinct model is compiled once per process. Only setup is affected — `infer()` runs unsynchronized. |
 
 ### Other operational caveats
 
-- Compilation is not cached. Every query that uses a model recompiles it
-  on the worker, even if an identical model has been compiled before.
-- `iree-compile` and `iree-import-onnx` are version-pinned (currently
-  `IREE 3.11.0`) and the runtime checks the `iree-compile --version`
-  string at startup; a mismatch disables inference and is reported by
-  `inferenceEnabled()`.
+- Conversion is not cached. Registering the same model file twice under
+  different names runs `ovc` twice. Compilation *is* cached, but only within a
+  process and for the process lifetime — the cache has no eviction, so a worker
+  that loads many distinct models keeps every compiled model alive.
+- `ovc` is version-pinned (see `expectedOpenVinoVersion`) and its
+  `--version` output is checked at startup; a mismatch disables model
+  import.
 - Model files must be reachable by the process that handles `CREATE MODEL`,
-  not by the workers. The catalog ships imported MLIR, not the original
+  not by the workers. The catalog ships the converted IR, not the original
   ONNX, across the wire.
 
 ## Glossary
 
-- **HAL** — Hardware Abstraction Layer. IREE's runtime layer between the
-  bytecode interpreter and the actual compute device. It defines devices,
-  allocators, buffers, command buffers, and synchronization primitives.
-  *Drivers* implement HAL for specific backends (CPU, CUDA, Vulkan,
-  WebGPU, …). We compile in only one driver, `local-sync`, which is the
-  simplest of them: a synchronous, in-process CPU executor that runs
-  dispatches on the calling thread.
-- **MLIR** — Multi-Level Intermediate Representation. The compiler IR
-  family that both `iree-import-onnx` (output) and `iree-compile` (input)
-  speak. The catalog stores models as MLIR text in the `torch` dialect.
-- **Bytecode** — IREE's own VM bytecode, the output of `iree-compile`.
-  This is what `InferenceRuntime` loads into a session.
-- **Session** — An IREE runtime concept: an instance + device + loaded
-  bytecode module, ready to invoke. We hold one per worker thread.
+- **IR** — OpenVINO's Intermediate Representation: an XML file describing the
+  network topology plus a `.bin` file holding the weights. This is what `ovc`
+  emits and what the catalog stores and ships to workers.
+- **`ovc`** — the OpenVINO model converter CLI, shipped in the `openvino`
+  Python package.
+- **`ov::Core`** — the OpenVINO runtime entry point: reads IR, compiles a
+  model for a device, and owns the plugin registry. NES keeps one per process.
+- **`ov::InferRequest`** — a single executable instance of a compiled model
+  with its own state. NES holds one per worker thread.
