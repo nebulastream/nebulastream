@@ -1,8 +1,9 @@
 name: Clang-Tidy-Diff
 description: |
   This workflow computes the clang-tidy check for the git diff between base and head.
-  we generate GitHub PR annotations based on the output of clang-tidy if this workflow was called within the context
-  of a pr.
+  Any finding flagged in .clang-tidy's WarningsAsErrors list fails the job. Findings are reported in
+  the job log and the uploaded fixes.yml artifact — not as PR comments, so this needs no write
+  permissions and therefore runs on the normal pull_request path for forks too.
 on:
   workflow_call:
     inputs:
@@ -23,10 +24,9 @@ on:
         required: false
         default: -1
 
+# Read-only: findings are hard errors, not PR comments.
 permissions:
-  contents: write
-  pull-requests: write
-  checks: write
+  contents: read
 
 jobs:
   check-clang-tidy:
@@ -87,6 +87,8 @@ jobs:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' ':!*nes-rust-bindings' ':!vcpkg/**' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -j $(nproc)
+      # Findings are printed by clang-tidy-diff in the steps above and exported here for download.
+      # A failing step means clang-tidy flagged something in .clang-tidy's WarningsAsErrors list.
       - name: Upload Clang-Tidy Results
         if: ${{ !cancelled() && !github.event.act }}
         uses: actions/upload-artifact@v5
@@ -94,15 +96,3 @@ jobs:
           if-no-files-found: warn
           name: clang-tidy-result
           path: clang-tidy-result
-      - name: Run clang-tidy-pr-comments action
-        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
-        # requires python3-venv
-        uses: platisd/clang-tidy-pr-comments@v1
-        with:
-          github_token: ${{ github.token }}
-          clang_tidy_fixes: clang-tidy-result/fixes.yml
-          request_changes: false
-          # Optionally set the number of comments per review to avoid GitHub API timeouts for heavily loaded pull requests
-          suggestions_per_comment: 100
-          auto_resolve_conversations: true
-          python_path: /usr/bin/python3
