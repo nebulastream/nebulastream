@@ -178,7 +178,7 @@ LogicalPlan DecideFieldOrder::apply(const LogicalPlan& queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideFieldOrderPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType DecideFieldOrder::create(PlanRuleRegistryArguments)
 {
     return DecideFieldOrder{};
 }

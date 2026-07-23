@@ -13,8 +13,11 @@
 add_subdirectory(Aggregations)
 add_source_files(nes-logical-operators WindowMetaData.cpp)
 
-add_registry_entry(WindowedAggregation LogicalOperator WindowedAggregationLogicalOperator.cpp)
-add_registry_entry(Join LogicalOperator JoinLogicalOperator.cpp)
 
 add_unreflection_entry(LogicalOperator WindowedAggregation)
 add_unreflection_entry(LogicalOperator Join)
+
+add_source_files(nes-logical-operators
+        WindowedAggregationLogicalOperator.cpp
+        JoinLogicalOperator.cpp
+)

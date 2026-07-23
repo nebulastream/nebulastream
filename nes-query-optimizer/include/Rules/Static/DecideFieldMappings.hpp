@@ -19,6 +19,7 @@
 #include <typeinfo>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -37,6 +38,7 @@ namespace NES
 class DecideFieldMappings
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     explicit DecideFieldMappings() = default;
 
     static constexpr std::string_view NAME = "DecideFieldMappings";

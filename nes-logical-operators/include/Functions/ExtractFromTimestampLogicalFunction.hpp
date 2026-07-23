@@ -26,6 +26,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -59,6 +60,13 @@ public:
 
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static LogicalFunctionRegistryReturnType createDay_Of(LogicalFunctionRegistryArguments arguments);
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static LogicalFunctionRegistryReturnType createMonth_Of(LogicalFunctionRegistryArguments arguments);
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static LogicalFunctionRegistryReturnType createYear_Of(LogicalFunctionRegistryArguments arguments);
 
 private:
     TimestampUnit unit;

@@ -11,9 +11,14 @@ RUN --mount=type=cache,id=ccache,target=/ccache \
     cd /home/ubuntu/src && \
     cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 && \
     cmake --build build --target nes-single-node-worker -j && \
-    mkdir /tmp/bin && \
+    mkdir /tmp/bin /tmp/lib && \
+    cp build/libnes.so /tmp/lib && \
     find build -name 'nes-single-node-worker' -type f -exec mv --target-directory=/tmp/bin {} +
 
 FROM nebulastream/nes-runtime-base:${RUNTIME_TAG} AS app
+# The worker links the umbrella shared library (see cmake/LibNes.cmake); without libnes.so the
+# binary fails at load time.
+COPY --from=build /tmp/lib /usr/lib
+RUN ldconfig
 COPY --from=build /tmp/bin /usr/bin
 ENTRYPOINT ["nes-single-node-worker"]

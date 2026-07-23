@@ -58,7 +58,7 @@ std::set<std::type_index> TypeInferenceRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterTypeInferencePlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType TypeInferenceRule::create(PlanRuleRegistryArguments)
 {
     return TypeInferenceRule{};
 }

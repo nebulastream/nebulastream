@@ -111,7 +111,7 @@ AddLogicalFunction Unreflector<AddLogicalFunction>::operator()(const Reflected& 
     return AddLogicalFunction{std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAddLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType AddLogicalFunction::createAdd(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

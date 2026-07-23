@@ -110,8 +110,8 @@ size_t CountAggregationPhysicalFunction::getSizeOfStateInBytes() const
     return resultType.getSizeInBytesWithoutNull();
 }
 
-AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterCountAggregationPhysicalFunction(
-    AggregationPhysicalFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType
+CountAggregationPhysicalFunction::create(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<CountAggregationPhysicalFunction>(
         std::move(arguments.inputType),

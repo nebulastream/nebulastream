@@ -20,6 +20,7 @@
 #include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -38,6 +39,7 @@ namespace NES
 class OriginIdInferenceRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "OriginIdInferenceRule";
 
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;

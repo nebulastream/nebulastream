@@ -12,26 +12,15 @@
     limitations under the License.
 */
 
-#pragma once
-
-#ifndef INCLUDED_FROM_REGISTRY_PLAN_RULE
-#    error "This file should not be included directly! " \
-"Include instead include <PlanRuleRegistry.hpp>"
-#endif
-
-namespace NES::PlanRuleGeneratedRegistrar
-{
-
-/// declaration of register functions for 'PlanRule'
-@REGISTER_FUNCTION_DECLARATIONS@
-}
+#include <SourceRegistry.hpp>
 
 namespace NES
 {
-template <>
-inline void Registrar<PlanRuleRegistry, std::string, PlanRuleRegistryReturnType, PlanRuleRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+
+SourceRegistry& SourceRegistry::instance()
 {
-    using namespace PlanRuleGeneratedRegistrar;
-    @REGISTER_ALL_FUNCTION_CALLS@
+    static SourceRegistry inst;
+    return inst;
 }
+
 }

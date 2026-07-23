@@ -14,15 +14,14 @@
 
 #pragma once
 
-#include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
-
 #include <Interface/Record.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -35,13 +34,15 @@ struct OutputFormatterRegistryArguments
     OutputFormatterDescriptor descriptor;
 };
 
+using OutputFormatterFactoryFn = std::function<OutputFormatterRegistryReturnType(OutputFormatterRegistryArguments)>;
+
+/// Entries are static provideFormatter members on the formatter classes (constructor signatures
+/// differ between formatters, so a uniform factory template does not fit).
 class OutputFormatterRegistry
-    : public BaseRegistry<OutputFormatterRegistry, std::string, OutputFormatterRegistryReturnType, OutputFormatterRegistryArguments>
+    : public RuntimeRegistry<OutputFormatterRegistry, std::string, OutputFormatterFactoryFn, /*CaseSensitive*/ false>
 {
+public:
+    static OutputFormatterRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY
-#include <OutputFormatterGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY

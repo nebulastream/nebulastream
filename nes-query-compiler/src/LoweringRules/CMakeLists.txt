@@ -11,3 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(LowerToPhysical)
+
+add_source_files(nes-query-compiler
+        LoweringRuleRegistry.cpp
+)

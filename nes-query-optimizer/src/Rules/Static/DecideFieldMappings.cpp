@@ -224,7 +224,7 @@ std::set<std::type_index> DecideFieldMappings::needs() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideFieldMappingsPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType DecideFieldMappings::create(PlanRuleRegistryArguments)
 {
     return DecideFieldMappings{};
 }
