@@ -20,7 +20,7 @@
 #
 # create_unreflection_registry must run AFTER add_library(<target>) so that the
 # parent target exists and AFTER which add_subdirectory'd CMakeLists can call
-# add_unreflection_plugin. There is no deferred phase.
+# add_unreflection_entry. There is no deferred phase.
 
 # create_unreflection_registry(<name> <target> <type_template> <header_template>)
 #   name            : registry name (e.g. LogicalFunction); drives generated symbol names.
@@ -70,18 +70,18 @@ function(create_unreflection_registry name target type_template header_template)
     set_property(GLOBAL PROPERTY "${name}_UNREFLECTION_HEADER_TEMPLATE" "${header_template}")
 endfunction()
 
-# add_unreflection_plugin(<registry> <plugin_name> [KEY <serialized_name>])
+# add_unreflection_entry(<registry> <plugin_name> [KEY <serialized_name>])
 #   plugin_name : substituted into ${PLUGIN_NAME} in the registry's type/header templates.
 #                 By convention also the registry key.
 #   KEY         : registry lookup key (the string the wire format carries). Defaults to
 #                 plugin_name. Use when the registered name differs from the C++ type
 #                 basename, e.g. plugin_name "Absolute" / KEY "Abs".
-function(add_unreflection_plugin registry plugin_name)
+function(add_unreflection_entry registry plugin_name)
     cmake_parse_arguments(ARG "" "KEY" "" ${ARGN})
 
     get_property(glue_lib GLOBAL PROPERTY "${registry}_UNREFLECTION_GLUE_LIB")
     if(NOT glue_lib)
-        message(FATAL_ERROR "add_unreflection_plugin(${registry} ${plugin_name}): registry '${registry}' has not been declared with create_unreflection_registry()")
+        message(FATAL_ERROR "add_unreflection_entry(${registry} ${plugin_name}): registry '${registry}' has not been declared with create_unreflection_registry()")
     endif()
     get_property(type_template GLOBAL PROPERTY "${registry}_UNREFLECTION_TYPE_TEMPLATE")
     get_property(header_template GLOBAL PROPERTY "${registry}_UNREFLECTION_HEADER_TEMPLATE")

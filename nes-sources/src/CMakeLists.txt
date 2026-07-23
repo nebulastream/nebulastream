@@ -23,12 +23,12 @@ add_source_files(nes-sources
 )
 
 # Register plugins
-add_plugin(File Source FileSource.cpp)
-add_plugin(File SourceValidation FileSource.cpp)
+add_registry_entry(File Source FileSource.cpp)
+add_registry_entry(File SourceValidation FileSource.cpp)
 
 # Systest adaptors
-add_plugin(File InlineData FileSource.cpp)
-add_plugin(File FileData FileSource.cpp)
+add_registry_entry(File InlineData FileSource.cpp)
+add_registry_entry(File FileData FileSource.cpp)
 
-add_plugin(Network Source NetworkSource.cpp)
-add_plugin(Network SourceValidation NetworkSource.cpp)
+add_registry_entry(Network Source NetworkSource.cpp)
+add_registry_entry(Network SourceValidation NetworkSource.cpp)
