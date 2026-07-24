@@ -116,7 +116,7 @@ jobs:
         MOLD_JOBS: 1
       options: --user root
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}", large-memory ]
     strategy:
       fail-fast: false
       matrix:
