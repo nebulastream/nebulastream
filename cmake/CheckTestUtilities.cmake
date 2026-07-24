@@ -69,33 +69,30 @@ else ()
     endif ()
 endif ()
 
-# Check if IREE tools are available for inference-backed physical operator tests.
-# Auto-detect by default, but honor a user-provided -DENABLE_IREE_TESTS=ON/OFF.
-find_program(IREE_IMPORT_ONNX iree-import-onnx)
-find_program(IREE_COMPILE iree-compile)
-if (IREE_IMPORT_ONNX STREQUAL "IREE_IMPORT_ONNX-NOTFOUND" OR IREE_COMPILE STREQUAL "IREE_COMPILE-NOTFOUND")
-    if (DEFINED ENABLE_IREE_TESTS AND ENABLE_IREE_TESTS)
+# Check if the OpenVINO model converter is available for inference-backed tests.
+# Auto-detect by default, but honor a user-provided -DENABLE_INFERENCE_TESTS=ON/OFF.
+find_program(OPENVINO_CONVERTER ovc)
+if (OPENVINO_CONVERTER STREQUAL "OPENVINO_CONVERTER-NOTFOUND")
+    if (DEFINED ENABLE_INFERENCE_TESTS AND ENABLE_INFERENCE_TESTS)
         message(FATAL_ERROR
-            "ENABLE_IREE_TESTS=ON but IREE tools were not found.\n"
-            "  iree-import-onnx: ${IREE_IMPORT_ONNX}\n"
-            "  iree-compile: ${IREE_COMPILE}\n"
-            "  Install the IREE toolchain and ensure iree-import-onnx and iree-compile are in PATH, or pass -DENABLE_IREE_TESTS=OFF."
+            "ENABLE_INFERENCE_TESTS=ON but the OpenVINO converter was not found.\n"
+            "  ovc: ${OPENVINO_CONVERTER}\n"
+            "  Install the OpenVINO python package and ensure ovc is in PATH, or pass -DENABLE_INFERENCE_TESTS=OFF."
         )
     endif ()
-    set(ENABLE_IREE_TESTS OFF CACHE BOOL "Build tests that require iree-import-onnx and iree-compile" FORCE)
+    set(ENABLE_INFERENCE_TESTS OFF CACHE BOOL "Build tests that require the ovc model converter" FORCE)
     message(WARNING
-        "IREE tools not found. Disabling IREE inference tests.\n"
-        "  iree-import-onnx: ${IREE_IMPORT_ONNX}\n"
-        "  iree-compile: ${IREE_COMPILE}\n"
-        "  To enable, install the IREE toolchain and ensure iree-import-onnx and iree-compile are in PATH."
+        "OpenVINO converter not found. Disabling inference tests.\n"
+        "  ovc: ${OPENVINO_CONVERTER}\n"
+        "  To enable, install the OpenVINO python package and ensure ovc is in PATH."
     )
 else ()
-    if (NOT DEFINED ENABLE_IREE_TESTS)
-        set(ENABLE_IREE_TESTS ON CACHE BOOL "Build tests that require iree-import-onnx and iree-compile")
+    if (NOT DEFINED ENABLE_INFERENCE_TESTS)
+        set(ENABLE_INFERENCE_TESTS ON CACHE BOOL "Build tests that require the ovc model converter")
     endif ()
-    if (ENABLE_IREE_TESTS)
-        message(STATUS "IREE inference tests enabled")
+    if (ENABLE_INFERENCE_TESTS)
+        message(STATUS "Inference tests enabled")
     else ()
-        message(STATUS "IREE inference tests disabled (user override)")
+        message(STATUS "Inference tests disabled (user override)")
     endif ()
 endif ()

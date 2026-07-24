@@ -150,10 +150,10 @@ docker_systest() {
   docker compose exec systest systest --log-path $CONTAINER_WORKDIR/systest.log --data /data  --workingDir $CONTAINER_WORKDIR/systest-workdir "$@" >&3
 }
 
-# Inference systests load ONNX models via the IREE toolchain. When the IREE tools are not
-# available in the worker image (ENABLE_IREE_TESTS=OFF), exclude the Inference group too.
+# Inference systests convert ONNX models with the OpenVINO converter. When `ovc` is not
+# available in the worker image (ENABLE_INFERENCE_TESTS=OFF), exclude the Inference group too.
 EXTRA_EXCLUDE_GROUPS=()
-if [ "$ENABLE_IREE_TESTS" != "ON" ]; then
+if [ "$ENABLE_INFERENCE_TESTS" != "ON" ]; then
   EXTRA_EXCLUDE_GROUPS+=(Inference)
 fi
 

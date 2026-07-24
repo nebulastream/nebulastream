@@ -27,6 +27,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <ErrorHandling.hpp>
 #include <Inference.hpp>
+#include <Model.hpp>
 
 namespace NES
 {

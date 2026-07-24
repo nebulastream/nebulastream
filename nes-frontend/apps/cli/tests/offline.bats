@@ -48,7 +48,7 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
-#bats test_tags=IREE
+#bats test_tags=INFERENCE
 @test "nebucli dump with model inference topology" {
   run $NES_CLI -t tests/good/infer-model.yaml dump
   [ "$status" -eq 0 ]

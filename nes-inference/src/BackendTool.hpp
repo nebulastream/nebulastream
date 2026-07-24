@@ -26,20 +26,19 @@
 namespace NES
 {
 
-struct IreeVersion
+struct ToolVersion
 {
     size_t major = 0;
     size_t minor = 0;
 
-    bool operator==(const IreeVersion&) const = default;
-    auto operator<=>(const IreeVersion&) const = default;
+    bool operator==(const ToolVersion&) const = default;
+    auto operator<=>(const ToolVersion&) const = default;
 };
 
-std::string format_as(const IreeVersion& version);
+std::string format_as(const ToolVersion& version);
 
-/// IREE major.minor must match the ireeruntime port we link against. A mismatch
-/// produces VM bytecode with feature bits the runtime cannot decode.
-constexpr IreeVersion expectedIreeVersion{.major = 3, .minor = 11};
+/// OpenVINO converter/runtime versions must match the vcpkg OpenVINO port.
+constexpr ToolVersion expectedOpenVinoVersion{.major = 2025, .minor = 3};
 
 namespace detail
 {
@@ -48,7 +47,7 @@ struct ToolDiscovery
 {
     std::string name;
     std::filesystem::path path;
-    std::optional<IreeVersion> version;
+    std::optional<ToolVersion> version;
 };
 
 std::string format_as(const ToolDiscovery& tool);
@@ -57,10 +56,10 @@ std::string format_as(const ToolDiscovery& tool);
 std::optional<std::filesystem::path> findExecutable(std::string_view name);
 
 /// Locate `name` on $PATH. When `checkVersion` is true, also invoke `--version`
-/// and parse the IREE `MAJOR.MINOR`; an unparseable or missing version is an
+/// and parse the first `MAJOR.MINOR`; an unparseable or missing version is an
 /// error. When `checkVersion` is false, the returned `ToolDiscovery.version`
 /// is `nullopt` and success depends only on the PATH lookup.
-/// Never compares against `expectedIreeVersion` — the caller owns that check.
+/// Never compares against an expected version — the caller owns that check.
 std::expected<ToolDiscovery, std::string> discoverTool(std::string_view name, bool checkVersion);
 
 struct RunResult
