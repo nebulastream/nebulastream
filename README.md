@@ -21,6 +21,8 @@
 
 ----
 
+TEST
+
 NebulaStream is an end-to-end data-management system for cloud-edge-sensor deployments.
 The platform combines ease of use, extensibility, and efficiency to let teams focus on business logic while the engine optimizes the data path.
 
