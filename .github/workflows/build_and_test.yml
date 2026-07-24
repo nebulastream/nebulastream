@@ -162,13 +162,18 @@ jobs:
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libcxx-none
           run: |
+            sccache --start-server
+            sccache --show-stats
             for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
               echo "=== ${{ matrix.build_type }} / ${LOG_LEVEL} ==="
               cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=$LOG_LEVEL
+              sccache --show-stats
               cmake --build build --target nes-common-tests -j -- -k 0
               ctest --test-dir build -j --output-on-failure --output-junit build/junit-log-${{ matrix.build_type }}-${LOG_LEVEL}.xml --timeout 600 -R "testLogLevel"
               cmake --build build --target clean
             done
+            sccache --show-stats
+            sccache --stop-server
 
   clean-build-and-test-linux:
     # Ensures the build works from a clean build directory and that the dev image
