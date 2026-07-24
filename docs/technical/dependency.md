@@ -130,6 +130,13 @@ Based on the current vcpkg version. The LLVM patch simply disables all default f
 `vcpkg.json` because llvm is included via
 nautilus.
 
+### Paho MQTT
+
+The Paho MQTT C and C++ ports apply a libc++ compatibility patch. Paho's C++ client stores ALPN protocol data in
+`std::basic_string<unsigned char>`, which requires `std::char_traits<unsigned char>`. libc++ no longer provides this
+non-standard specialization; the standard only mandates it for `char`, `wchar_t`, `char8_t`, `char16_t`, and
+`char32_t`. The patch stores the data as `char` instead, allowing the MQTT dependencies to build with libc++.
+
 ### Nautilus
 
 Nautilus is not currently on vcpkg.

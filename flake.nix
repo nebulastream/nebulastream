@@ -190,6 +190,12 @@
               compilerFlags = sanitizer.compilerFlags;
               linkerFlags = sanitizer.linkerFlags;
             };
+            pahoMqttPkg = pahoMqttPackages.withSanitizer {
+              extraPackages = extraInputs;
+              inherit useLibcxx;
+              compilerFlags = sanitizer.compilerFlags;
+              linkerFlags = sanitizer.linkerFlags;
+            };
             baseThirdPartyDeps =
               [
                 fmtPkg
@@ -225,6 +231,8 @@
                 pkgs.openjdk21
                 pkgs.howard-hinnant-date
                 pkgs.libuuid
+                pahoMqttPkg.c
+                pahoMqttPkg.cpp
                 ireeruntimePkg
               ];
           in {
@@ -262,6 +270,7 @@
         scopeGuardPackages = pkgs.callPackage ./.nix/scope_guard/package.nix { };
         spdlogPackages = pkgs.callPackage ./.nix/spdlog/package.nix { };
         follyPackages = pkgs.callPackage ./.nix/folly/package.nix { };
+        pahoMqttPackages = pkgs.callPackage ./.nix/paho_mqtt/package.nix { };
 
         mlirPackages = import ./.nix/mlir/package.nix { inherit pkgs; };
         mlirBinaryFor = cfg: mlirPackages.forOptions cfg;

@@ -62,6 +62,7 @@ jobs:
           images: |
             nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
             nebulastream/nes-runtime-base:${{ inputs.dev_image_tag }}
+            ${{ matrix.run_docker && 'eclipse-mosquitto:2' || '' }}
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
           docker_password: ${{ secrets.DOCKER_SECRET }}
 
@@ -199,6 +200,7 @@ jobs:
           images: |
             nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
             nebulastream/nes-runtime-base:${{ inputs.dev_image_tag }}
+            eclipse-mosquitto:2
           docker_username: ${{ secrets.DOCKER_USER_NAME }}
           docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
