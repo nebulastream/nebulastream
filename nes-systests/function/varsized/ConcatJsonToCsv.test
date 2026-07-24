@@ -1,0 +1,45 @@
+# name: ConcatJsonToCsv
+# description: CONCAT over a JSON *input* source emitted as CSV (json->csv pipeline). Mirrors ConcatCast (which is
+#   csv->csv) to check the generalized lazy-VARSIZED rope forwards raw field text regardless of the *input* format:
+#   a numeric column read lazily from JSON has its raw token text spliced into the rope with no parse and no
+#   re-serialise, and the concat result is serialised straight into the default (CSV) File sink. FLOAT keeps its
+#   exact input digits (12.50 / 7.00) as the behavioral proof of forwarding (parse+reserialise would drop the
+#   trailing zero). The default File sink emits CSV, so this exercises json-in -> CONCAT -> csv-out.
+# groups: [Function, Text, Projection, Cast, Formatter]
+
+CREATE LOGICAL SOURCE bidj(auctionId INT32 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidj TYPE File SET("JSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"AUCTIONID":1001, "PRICE":12.50, "CHANNEL":"apple"}
+{"AUCTIONID":1002, "PRICE":7.00, "CHANNEL":"google"}
+{"AUCTIONID":1003, "PRICE":999.99, "CHANNEL":"facebook"}
+
+CREATE SINK msgSink(msg VARSIZED NOT NULL) TYPE File;
+
+# INT column read from JSON, forwarded as text into a concat -> CSV out (no int parse)
+SELECT CONCAT(VARSIZED("id-"), auctionId) AS msg FROM bidj INTO msgSink;
+----
+id-1001
+id-1002
+id-1003
+
+# FLOAT column from JSON forwarded verbatim (raw input token, not reformatted) -> CSV out
+SELECT CONCAT(VARSIZED("$"), price) AS msg FROM bidj INTO msgSink;
+----
+$12.50
+$7.00
+$999.99
+
+# VARSIZED column from JSON concatenated with an INT column (both forwarded) -> CSV out
+SELECT CONCAT(channel, auctionId) AS msg FROM bidj INTO msgSink;
+----
+apple1001
+google1002
+facebook1003
+
+# Nested: string + int + string + float, all forwarded, flattened into one rope -> CSV out
+SELECT CONCAT(CONCAT(VARSIZED("id-"), auctionId), CONCAT(VARSIZED(" $"), price)) AS msg FROM bidj INTO msgSink;
+----
+id-1001 $12.50
+id-1002 $7.00
+id-1003 $999.99
