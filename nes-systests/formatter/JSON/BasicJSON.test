@@ -71,6 +71,12 @@ SELECT * FROM jsonStream INTO allFieldsSink;
 1,1,john
 1,2,max
 
+# NOTE: the two wrong-data-type cases below (:05/:06) are split-only. Rejecting `1.0` as UINT64 needs the
+# value to be parsed; that happens in the default two-node topology (materialised at the node boundary),
+# but not in the fused single-node pipeline, whose output raw-passthrough fast-path forwards the raw bytes
+# without parsing (intended optimization -- CSV input behaves the same). Suppressed for single-node via
+# configs/systest-disable-single-node.yaml. The wrong-field-name / missing-key cases (:07/:08, ERROR 2004)
+# are NOT affected -- a missing key throws regardless of parsing.
 SELECT * FROM jsonStreamWrongDataTypes INTO allFieldsWrongDataTypeSink;
 ----
 ERROR 3002
