@@ -19,7 +19,8 @@
 #   Layer 1 — primitives (use anywhere):
 #     nes_require_env, nes_require_executable
 #     nes_cleanup_leaked_resources, nes_build_runtime_image, nes_build_app_image
-#     assert_json_equal, assert_json_contains
+#     assert_json_equal, assert_json_contains, wait_until
+#     assert_success_within_deadline
 #
 #   Layer 2 — preset for the cli/repl/MQTT-style suites:
 #     nes_distributed_setup_file, nes_distributed_teardown_file
@@ -82,6 +83,35 @@ assert_file_line_count() {
   fi
   if [ "$actual" -ne "$expected" ]; then
     fail "expected file $file to have $expected lines but has $actual"
+  fi
+}
+
+wait_until() {
+  local deadline=$((SECONDS + 10))
+
+  until "$@" >/dev/null 2>&1; do
+    if ((SECONDS >= deadline)); then
+      fail "timed out waiting for: $*"
+      return 1
+    fi
+    sleep 0.1
+  done
+}
+
+assert_success_within_deadline() {
+  local deadline_seconds="$1"
+  shift
+  local started_at_ns finished_at_ns elapsed_ms
+
+  started_at_ns=$(date +%s%N)
+  run "$@"
+  finished_at_ns=$(date +%s%N)
+  elapsed_ms=$(((finished_at_ns - started_at_ns) / 1000000))
+
+  assert_success || return 1
+  if ((elapsed_ms >= deadline_seconds * 1000)); then
+    fail "command exceeded ${deadline_seconds}s deadline: $* (${elapsed_ms}ms)"
+    return 1
   fi
 }
 
