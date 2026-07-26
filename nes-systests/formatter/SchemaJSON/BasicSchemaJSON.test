@@ -1,0 +1,37 @@
+# name: formatter/SchemaJSON/BasicSchemaJSON.test
+# description: SchemaJSON input formatter -- simdjson stage-1 structural indexer + fixed-schema strided gather.
+#   SchemaJSON assumes every record is a flat object with exactly the schema's keys, in the same order, with no
+#   missing/extra/nested/null values. This test exercises the happy path: projections (which the strided read
+#   path push-down/DCEs) and a full SELECT * over integer and varsized fields, across both topologies.
+# groups: [Formatter, SchemaJSON]
+
+CREATE LOGICAL SOURCE jsonStream(KEY UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR jsonStream TYPE File SET("SchemaJSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"KEY":1, "VALUE":1, "NAME":"john"}
+{"KEY":1, "VALUE":2, "NAME":"max"}
+
+CREATE SINK keySink(jsonStream.key UINT64 NOT NULL) TYPE File;
+CREATE SINK valueSink(jsonStream.value UINT64 NOT NULL) TYPE File;
+CREATE SINK nameSink(jsonStream.name VARSIZED NOT NULL) TYPE File;
+CREATE SINK allFieldsSink(jsonStream.key UINT64 NOT NULL, jsonStream.value UINT64 NOT NULL, jsonStream.name VARSIZED NOT NULL) TYPE File;
+
+SELECT KEY FROM jsonStream INTO keySink;
+----
+1
+1
+
+SELECT value FROM jsonStream INTO valueSink;
+----
+1
+2
+
+SELECT name FROM jsonStream INTO nameSink;
+----
+john
+max
+
+SELECT * FROM jsonStream INTO allFieldsSink;
+----
+1,1,john
+1,2,max

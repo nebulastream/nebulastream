@@ -1,0 +1,41 @@
+# name: formatter/SchemaJSON/SchemaJSONValues.test
+# description: SchemaJSON value-slice correctness -- exercises the parts of the strided gather that are easy to
+#   get wrong: right-trimming whitespace between a value and its terminator, negative integers, floats, booleans,
+#   strings that contain structural bytes (',' ':') which simdjson stage 1 masks out, and multi-byte UTF-8.
+#   NOTE: string values pass through as RAW bytes (no JSON unescaping); the fixture avoids backslash escapes.
+# groups: [Formatter, SchemaJSON]
+
+CREATE LOGICAL SOURCE vals(i INT32 NOT NULL, f FLOAT64 NOT NULL, b BOOLEAN NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR vals TYPE File SET("SchemaJSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"I":-5 , "F":1.5 , "B":true , "S":"a,b:c" }
+{"I":42, "F":2.25, "B":false, "S":"héllo"}
+
+CREATE SINK iSink(vals.i INT32 NOT NULL) TYPE File;
+CREATE SINK fSink(vals.f FLOAT64 NOT NULL) TYPE File;
+CREATE SINK bSink(vals.b BOOLEAN NOT NULL) TYPE File;
+CREATE SINK sSink(vals.s VARSIZED NOT NULL) TYPE File;
+
+# whitespace before the ',' / '}' terminator is right-trimmed; negative ints preserved
+SELECT i FROM vals INTO iSink;
+----
+-5
+42
+
+# floats keep their fractional part
+SELECT f FROM vals INTO fSink;
+----
+1.5
+2.25
+
+# boolean true/false render as 1/0
+SELECT b FROM vals INTO bSink;
+----
+1
+0
+
+# ',' and ':' inside a string are masked by stage 1, so the whole quoted value is one slice; UTF-8 preserved
+SELECT s FROM vals INTO sSink;
+----
+a,b:c
+héllo

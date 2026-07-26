@@ -1,0 +1,517 @@
+# name: formatter/SchemaJSON/SchemaJSONSpanning.test
+# description: SchemaJSON across raw-buffer boundaries (M5). With 4096-byte raw buffers, 250 variable-length
+#   NDJSON records total ~9622 bytes -> multiple raw buffers, with records straddling the boundaries. The
+#   SequenceShredder stitches each split record and re-indexes it through the same SchemaJSON indexer. The
+#   result checker sorts rows, so ordering across buffers is irrelevant; the SET of 250 rows must match.
+# groups: [Formatter, SchemaJSON]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [4096]
+
+CREATE LOGICAL SOURCE spanStream(id UINT64 NOT NULL, val UINT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR spanStream TYPE File SET("SchemaJSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"ID":0, "VAL":3, "NAME":"row0"}
+{"ID":1, "VAL":10, "NAME":"row1"}
+{"ID":2, "VAL":17, "NAME":"row2"}
+{"ID":3, "VAL":24, "NAME":"row3"}
+{"ID":4, "VAL":31, "NAME":"row4"}
+{"ID":5, "VAL":38, "NAME":"row5"}
+{"ID":6, "VAL":45, "NAME":"row6"}
+{"ID":7, "VAL":52, "NAME":"row7"}
+{"ID":8, "VAL":59, "NAME":"row8"}
+{"ID":9, "VAL":66, "NAME":"row9"}
+{"ID":10, "VAL":73, "NAME":"row10"}
+{"ID":11, "VAL":80, "NAME":"row11"}
+{"ID":12, "VAL":87, "NAME":"row12"}
+{"ID":13, "VAL":94, "NAME":"row13"}
+{"ID":14, "VAL":101, "NAME":"row14"}
+{"ID":15, "VAL":108, "NAME":"row15"}
+{"ID":16, "VAL":115, "NAME":"row16"}
+{"ID":17, "VAL":122, "NAME":"row17"}
+{"ID":18, "VAL":129, "NAME":"row18"}
+{"ID":19, "VAL":136, "NAME":"row19"}
+{"ID":20, "VAL":143, "NAME":"row20"}
+{"ID":21, "VAL":150, "NAME":"row21"}
+{"ID":22, "VAL":157, "NAME":"row22"}
+{"ID":23, "VAL":164, "NAME":"row23"}
+{"ID":24, "VAL":171, "NAME":"row24"}
+{"ID":25, "VAL":178, "NAME":"row25"}
+{"ID":26, "VAL":185, "NAME":"row26"}
+{"ID":27, "VAL":192, "NAME":"row27"}
+{"ID":28, "VAL":199, "NAME":"row28"}
+{"ID":29, "VAL":206, "NAME":"row29"}
+{"ID":30, "VAL":213, "NAME":"row30"}
+{"ID":31, "VAL":220, "NAME":"row31"}
+{"ID":32, "VAL":227, "NAME":"row32"}
+{"ID":33, "VAL":234, "NAME":"row33"}
+{"ID":34, "VAL":241, "NAME":"row34"}
+{"ID":35, "VAL":248, "NAME":"row35"}
+{"ID":36, "VAL":255, "NAME":"row36"}
+{"ID":37, "VAL":262, "NAME":"row37"}
+{"ID":38, "VAL":269, "NAME":"row38"}
+{"ID":39, "VAL":276, "NAME":"row39"}
+{"ID":40, "VAL":283, "NAME":"row40"}
+{"ID":41, "VAL":290, "NAME":"row41"}
+{"ID":42, "VAL":297, "NAME":"row42"}
+{"ID":43, "VAL":304, "NAME":"row43"}
+{"ID":44, "VAL":311, "NAME":"row44"}
+{"ID":45, "VAL":318, "NAME":"row45"}
+{"ID":46, "VAL":325, "NAME":"row46"}
+{"ID":47, "VAL":332, "NAME":"row47"}
+{"ID":48, "VAL":339, "NAME":"row48"}
+{"ID":49, "VAL":346, "NAME":"row49"}
+{"ID":50, "VAL":353, "NAME":"row50"}
+{"ID":51, "VAL":360, "NAME":"row51"}
+{"ID":52, "VAL":367, "NAME":"row52"}
+{"ID":53, "VAL":374, "NAME":"row53"}
+{"ID":54, "VAL":381, "NAME":"row54"}
+{"ID":55, "VAL":388, "NAME":"row55"}
+{"ID":56, "VAL":395, "NAME":"row56"}
+{"ID":57, "VAL":402, "NAME":"row57"}
+{"ID":58, "VAL":409, "NAME":"row58"}
+{"ID":59, "VAL":416, "NAME":"row59"}
+{"ID":60, "VAL":423, "NAME":"row60"}
+{"ID":61, "VAL":430, "NAME":"row61"}
+{"ID":62, "VAL":437, "NAME":"row62"}
+{"ID":63, "VAL":444, "NAME":"row63"}
+{"ID":64, "VAL":451, "NAME":"row64"}
+{"ID":65, "VAL":458, "NAME":"row65"}
+{"ID":66, "VAL":465, "NAME":"row66"}
+{"ID":67, "VAL":472, "NAME":"row67"}
+{"ID":68, "VAL":479, "NAME":"row68"}
+{"ID":69, "VAL":486, "NAME":"row69"}
+{"ID":70, "VAL":493, "NAME":"row70"}
+{"ID":71, "VAL":500, "NAME":"row71"}
+{"ID":72, "VAL":507, "NAME":"row72"}
+{"ID":73, "VAL":514, "NAME":"row73"}
+{"ID":74, "VAL":521, "NAME":"row74"}
+{"ID":75, "VAL":528, "NAME":"row75"}
+{"ID":76, "VAL":535, "NAME":"row76"}
+{"ID":77, "VAL":542, "NAME":"row77"}
+{"ID":78, "VAL":549, "NAME":"row78"}
+{"ID":79, "VAL":556, "NAME":"row79"}
+{"ID":80, "VAL":563, "NAME":"row80"}
+{"ID":81, "VAL":570, "NAME":"row81"}
+{"ID":82, "VAL":577, "NAME":"row82"}
+{"ID":83, "VAL":584, "NAME":"row83"}
+{"ID":84, "VAL":591, "NAME":"row84"}
+{"ID":85, "VAL":598, "NAME":"row85"}
+{"ID":86, "VAL":605, "NAME":"row86"}
+{"ID":87, "VAL":612, "NAME":"row87"}
+{"ID":88, "VAL":619, "NAME":"row88"}
+{"ID":89, "VAL":626, "NAME":"row89"}
+{"ID":90, "VAL":633, "NAME":"row90"}
+{"ID":91, "VAL":640, "NAME":"row91"}
+{"ID":92, "VAL":647, "NAME":"row92"}
+{"ID":93, "VAL":654, "NAME":"row93"}
+{"ID":94, "VAL":661, "NAME":"row94"}
+{"ID":95, "VAL":668, "NAME":"row95"}
+{"ID":96, "VAL":675, "NAME":"row96"}
+{"ID":97, "VAL":682, "NAME":"row97"}
+{"ID":98, "VAL":689, "NAME":"row98"}
+{"ID":99, "VAL":696, "NAME":"row99"}
+{"ID":100, "VAL":703, "NAME":"row100"}
+{"ID":101, "VAL":710, "NAME":"row101"}
+{"ID":102, "VAL":717, "NAME":"row102"}
+{"ID":103, "VAL":724, "NAME":"row103"}
+{"ID":104, "VAL":731, "NAME":"row104"}
+{"ID":105, "VAL":738, "NAME":"row105"}
+{"ID":106, "VAL":745, "NAME":"row106"}
+{"ID":107, "VAL":752, "NAME":"row107"}
+{"ID":108, "VAL":759, "NAME":"row108"}
+{"ID":109, "VAL":766, "NAME":"row109"}
+{"ID":110, "VAL":773, "NAME":"row110"}
+{"ID":111, "VAL":780, "NAME":"row111"}
+{"ID":112, "VAL":787, "NAME":"row112"}
+{"ID":113, "VAL":794, "NAME":"row113"}
+{"ID":114, "VAL":801, "NAME":"row114"}
+{"ID":115, "VAL":808, "NAME":"row115"}
+{"ID":116, "VAL":815, "NAME":"row116"}
+{"ID":117, "VAL":822, "NAME":"row117"}
+{"ID":118, "VAL":829, "NAME":"row118"}
+{"ID":119, "VAL":836, "NAME":"row119"}
+{"ID":120, "VAL":843, "NAME":"row120"}
+{"ID":121, "VAL":850, "NAME":"row121"}
+{"ID":122, "VAL":857, "NAME":"row122"}
+{"ID":123, "VAL":864, "NAME":"row123"}
+{"ID":124, "VAL":871, "NAME":"row124"}
+{"ID":125, "VAL":878, "NAME":"row125"}
+{"ID":126, "VAL":885, "NAME":"row126"}
+{"ID":127, "VAL":892, "NAME":"row127"}
+{"ID":128, "VAL":899, "NAME":"row128"}
+{"ID":129, "VAL":906, "NAME":"row129"}
+{"ID":130, "VAL":913, "NAME":"row130"}
+{"ID":131, "VAL":920, "NAME":"row131"}
+{"ID":132, "VAL":927, "NAME":"row132"}
+{"ID":133, "VAL":934, "NAME":"row133"}
+{"ID":134, "VAL":941, "NAME":"row134"}
+{"ID":135, "VAL":948, "NAME":"row135"}
+{"ID":136, "VAL":955, "NAME":"row136"}
+{"ID":137, "VAL":962, "NAME":"row137"}
+{"ID":138, "VAL":969, "NAME":"row138"}
+{"ID":139, "VAL":976, "NAME":"row139"}
+{"ID":140, "VAL":983, "NAME":"row140"}
+{"ID":141, "VAL":990, "NAME":"row141"}
+{"ID":142, "VAL":997, "NAME":"row142"}
+{"ID":143, "VAL":1004, "NAME":"row143"}
+{"ID":144, "VAL":1011, "NAME":"row144"}
+{"ID":145, "VAL":1018, "NAME":"row145"}
+{"ID":146, "VAL":1025, "NAME":"row146"}
+{"ID":147, "VAL":1032, "NAME":"row147"}
+{"ID":148, "VAL":1039, "NAME":"row148"}
+{"ID":149, "VAL":1046, "NAME":"row149"}
+{"ID":150, "VAL":1053, "NAME":"row150"}
+{"ID":151, "VAL":1060, "NAME":"row151"}
+{"ID":152, "VAL":1067, "NAME":"row152"}
+{"ID":153, "VAL":1074, "NAME":"row153"}
+{"ID":154, "VAL":1081, "NAME":"row154"}
+{"ID":155, "VAL":1088, "NAME":"row155"}
+{"ID":156, "VAL":1095, "NAME":"row156"}
+{"ID":157, "VAL":1102, "NAME":"row157"}
+{"ID":158, "VAL":1109, "NAME":"row158"}
+{"ID":159, "VAL":1116, "NAME":"row159"}
+{"ID":160, "VAL":1123, "NAME":"row160"}
+{"ID":161, "VAL":1130, "NAME":"row161"}
+{"ID":162, "VAL":1137, "NAME":"row162"}
+{"ID":163, "VAL":1144, "NAME":"row163"}
+{"ID":164, "VAL":1151, "NAME":"row164"}
+{"ID":165, "VAL":1158, "NAME":"row165"}
+{"ID":166, "VAL":1165, "NAME":"row166"}
+{"ID":167, "VAL":1172, "NAME":"row167"}
+{"ID":168, "VAL":1179, "NAME":"row168"}
+{"ID":169, "VAL":1186, "NAME":"row169"}
+{"ID":170, "VAL":1193, "NAME":"row170"}
+{"ID":171, "VAL":1200, "NAME":"row171"}
+{"ID":172, "VAL":1207, "NAME":"row172"}
+{"ID":173, "VAL":1214, "NAME":"row173"}
+{"ID":174, "VAL":1221, "NAME":"row174"}
+{"ID":175, "VAL":1228, "NAME":"row175"}
+{"ID":176, "VAL":1235, "NAME":"row176"}
+{"ID":177, "VAL":1242, "NAME":"row177"}
+{"ID":178, "VAL":1249, "NAME":"row178"}
+{"ID":179, "VAL":1256, "NAME":"row179"}
+{"ID":180, "VAL":1263, "NAME":"row180"}
+{"ID":181, "VAL":1270, "NAME":"row181"}
+{"ID":182, "VAL":1277, "NAME":"row182"}
+{"ID":183, "VAL":1284, "NAME":"row183"}
+{"ID":184, "VAL":1291, "NAME":"row184"}
+{"ID":185, "VAL":1298, "NAME":"row185"}
+{"ID":186, "VAL":1305, "NAME":"row186"}
+{"ID":187, "VAL":1312, "NAME":"row187"}
+{"ID":188, "VAL":1319, "NAME":"row188"}
+{"ID":189, "VAL":1326, "NAME":"row189"}
+{"ID":190, "VAL":1333, "NAME":"row190"}
+{"ID":191, "VAL":1340, "NAME":"row191"}
+{"ID":192, "VAL":1347, "NAME":"row192"}
+{"ID":193, "VAL":1354, "NAME":"row193"}
+{"ID":194, "VAL":1361, "NAME":"row194"}
+{"ID":195, "VAL":1368, "NAME":"row195"}
+{"ID":196, "VAL":1375, "NAME":"row196"}
+{"ID":197, "VAL":1382, "NAME":"row197"}
+{"ID":198, "VAL":1389, "NAME":"row198"}
+{"ID":199, "VAL":1396, "NAME":"row199"}
+{"ID":200, "VAL":1403, "NAME":"row200"}
+{"ID":201, "VAL":1410, "NAME":"row201"}
+{"ID":202, "VAL":1417, "NAME":"row202"}
+{"ID":203, "VAL":1424, "NAME":"row203"}
+{"ID":204, "VAL":1431, "NAME":"row204"}
+{"ID":205, "VAL":1438, "NAME":"row205"}
+{"ID":206, "VAL":1445, "NAME":"row206"}
+{"ID":207, "VAL":1452, "NAME":"row207"}
+{"ID":208, "VAL":1459, "NAME":"row208"}
+{"ID":209, "VAL":1466, "NAME":"row209"}
+{"ID":210, "VAL":1473, "NAME":"row210"}
+{"ID":211, "VAL":1480, "NAME":"row211"}
+{"ID":212, "VAL":1487, "NAME":"row212"}
+{"ID":213, "VAL":1494, "NAME":"row213"}
+{"ID":214, "VAL":1501, "NAME":"row214"}
+{"ID":215, "VAL":1508, "NAME":"row215"}
+{"ID":216, "VAL":1515, "NAME":"row216"}
+{"ID":217, "VAL":1522, "NAME":"row217"}
+{"ID":218, "VAL":1529, "NAME":"row218"}
+{"ID":219, "VAL":1536, "NAME":"row219"}
+{"ID":220, "VAL":1543, "NAME":"row220"}
+{"ID":221, "VAL":1550, "NAME":"row221"}
+{"ID":222, "VAL":1557, "NAME":"row222"}
+{"ID":223, "VAL":1564, "NAME":"row223"}
+{"ID":224, "VAL":1571, "NAME":"row224"}
+{"ID":225, "VAL":1578, "NAME":"row225"}
+{"ID":226, "VAL":1585, "NAME":"row226"}
+{"ID":227, "VAL":1592, "NAME":"row227"}
+{"ID":228, "VAL":1599, "NAME":"row228"}
+{"ID":229, "VAL":1606, "NAME":"row229"}
+{"ID":230, "VAL":1613, "NAME":"row230"}
+{"ID":231, "VAL":1620, "NAME":"row231"}
+{"ID":232, "VAL":1627, "NAME":"row232"}
+{"ID":233, "VAL":1634, "NAME":"row233"}
+{"ID":234, "VAL":1641, "NAME":"row234"}
+{"ID":235, "VAL":1648, "NAME":"row235"}
+{"ID":236, "VAL":1655, "NAME":"row236"}
+{"ID":237, "VAL":1662, "NAME":"row237"}
+{"ID":238, "VAL":1669, "NAME":"row238"}
+{"ID":239, "VAL":1676, "NAME":"row239"}
+{"ID":240, "VAL":1683, "NAME":"row240"}
+{"ID":241, "VAL":1690, "NAME":"row241"}
+{"ID":242, "VAL":1697, "NAME":"row242"}
+{"ID":243, "VAL":1704, "NAME":"row243"}
+{"ID":244, "VAL":1711, "NAME":"row244"}
+{"ID":245, "VAL":1718, "NAME":"row245"}
+{"ID":246, "VAL":1725, "NAME":"row246"}
+{"ID":247, "VAL":1732, "NAME":"row247"}
+{"ID":248, "VAL":1739, "NAME":"row248"}
+{"ID":249, "VAL":1746, "NAME":"row249"}
+
+CREATE SINK spanSink(spanStream.id UINT64 NOT NULL, spanStream.val UINT64 NOT NULL, spanStream.name VARSIZED NOT NULL) TYPE File;
+
+SELECT * FROM spanStream INTO spanSink;
+----
+0,3,row0
+1,10,row1
+2,17,row2
+3,24,row3
+4,31,row4
+5,38,row5
+6,45,row6
+7,52,row7
+8,59,row8
+9,66,row9
+10,73,row10
+11,80,row11
+12,87,row12
+13,94,row13
+14,101,row14
+15,108,row15
+16,115,row16
+17,122,row17
+18,129,row18
+19,136,row19
+20,143,row20
+21,150,row21
+22,157,row22
+23,164,row23
+24,171,row24
+25,178,row25
+26,185,row26
+27,192,row27
+28,199,row28
+29,206,row29
+30,213,row30
+31,220,row31
+32,227,row32
+33,234,row33
+34,241,row34
+35,248,row35
+36,255,row36
+37,262,row37
+38,269,row38
+39,276,row39
+40,283,row40
+41,290,row41
+42,297,row42
+43,304,row43
+44,311,row44
+45,318,row45
+46,325,row46
+47,332,row47
+48,339,row48
+49,346,row49
+50,353,row50
+51,360,row51
+52,367,row52
+53,374,row53
+54,381,row54
+55,388,row55
+56,395,row56
+57,402,row57
+58,409,row58
+59,416,row59
+60,423,row60
+61,430,row61
+62,437,row62
+63,444,row63
+64,451,row64
+65,458,row65
+66,465,row66
+67,472,row67
+68,479,row68
+69,486,row69
+70,493,row70
+71,500,row71
+72,507,row72
+73,514,row73
+74,521,row74
+75,528,row75
+76,535,row76
+77,542,row77
+78,549,row78
+79,556,row79
+80,563,row80
+81,570,row81
+82,577,row82
+83,584,row83
+84,591,row84
+85,598,row85
+86,605,row86
+87,612,row87
+88,619,row88
+89,626,row89
+90,633,row90
+91,640,row91
+92,647,row92
+93,654,row93
+94,661,row94
+95,668,row95
+96,675,row96
+97,682,row97
+98,689,row98
+99,696,row99
+100,703,row100
+101,710,row101
+102,717,row102
+103,724,row103
+104,731,row104
+105,738,row105
+106,745,row106
+107,752,row107
+108,759,row108
+109,766,row109
+110,773,row110
+111,780,row111
+112,787,row112
+113,794,row113
+114,801,row114
+115,808,row115
+116,815,row116
+117,822,row117
+118,829,row118
+119,836,row119
+120,843,row120
+121,850,row121
+122,857,row122
+123,864,row123
+124,871,row124
+125,878,row125
+126,885,row126
+127,892,row127
+128,899,row128
+129,906,row129
+130,913,row130
+131,920,row131
+132,927,row132
+133,934,row133
+134,941,row134
+135,948,row135
+136,955,row136
+137,962,row137
+138,969,row138
+139,976,row139
+140,983,row140
+141,990,row141
+142,997,row142
+143,1004,row143
+144,1011,row144
+145,1018,row145
+146,1025,row146
+147,1032,row147
+148,1039,row148
+149,1046,row149
+150,1053,row150
+151,1060,row151
+152,1067,row152
+153,1074,row153
+154,1081,row154
+155,1088,row155
+156,1095,row156
+157,1102,row157
+158,1109,row158
+159,1116,row159
+160,1123,row160
+161,1130,row161
+162,1137,row162
+163,1144,row163
+164,1151,row164
+165,1158,row165
+166,1165,row166
+167,1172,row167
+168,1179,row168
+169,1186,row169
+170,1193,row170
+171,1200,row171
+172,1207,row172
+173,1214,row173
+174,1221,row174
+175,1228,row175
+176,1235,row176
+177,1242,row177
+178,1249,row178
+179,1256,row179
+180,1263,row180
+181,1270,row181
+182,1277,row182
+183,1284,row183
+184,1291,row184
+185,1298,row185
+186,1305,row186
+187,1312,row187
+188,1319,row188
+189,1326,row189
+190,1333,row190
+191,1340,row191
+192,1347,row192
+193,1354,row193
+194,1361,row194
+195,1368,row195
+196,1375,row196
+197,1382,row197
+198,1389,row198
+199,1396,row199
+200,1403,row200
+201,1410,row201
+202,1417,row202
+203,1424,row203
+204,1431,row204
+205,1438,row205
+206,1445,row206
+207,1452,row207
+208,1459,row208
+209,1466,row209
+210,1473,row210
+211,1480,row211
+212,1487,row212
+213,1494,row213
+214,1501,row214
+215,1508,row215
+216,1515,row216
+217,1522,row217
+218,1529,row218
+219,1536,row219
+220,1543,row220
+221,1550,row221
+222,1557,row222
+223,1564,row223
+224,1571,row224
+225,1578,row225
+226,1585,row226
+227,1592,row227
+228,1599,row228
+229,1606,row229
+230,1613,row230
+231,1620,row231
+232,1627,row232
+233,1634,row233
+234,1641,row234
+235,1648,row235
+236,1655,row236
+237,1662,row237
+238,1669,row238
+239,1676,row239
+240,1683,row240
+241,1690,row241
+242,1697,row242
+243,1704,row243
+244,1711,row244
+245,1718,row245
+246,1725,row246
+247,1732,row247
+248,1739,row248
+249,1746,row249

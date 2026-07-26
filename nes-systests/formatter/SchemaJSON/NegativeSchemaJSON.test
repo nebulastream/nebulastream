@@ -1,0 +1,27 @@
+# name: formatter/SchemaJSON/NegativeSchemaJSON.test
+# description: SchemaJSON rejects shape deviations at index time (M4 shape check). A flat object whose
+#   structural-index count is not a multiple of 4*F+1 (extra key, missing key, nested value) is caught as a
+#   CannotFormatSourceData (ERROR 4000). Unlike the on-demand 'JSON' formatter -- which tolerates extra keys
+#   and reports a missing key as ERROR 2004 via field lookup -- SchemaJSON assumes a rigid shape and detects
+#   the deviation as a structural-count mismatch, in BOTH topologies (the check runs in the index phase).
+# groups: [Formatter, SchemaJSON]
+
+CREATE LOGICAL SOURCE extraKey(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR extraKey TYPE File SET("SchemaJSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"KEY":1, "VALUE":1, "NAME":"john", "EXTRA":9}
+{"KEY":1, "VALUE":2, "NAME":"max", "EXTRA":9}
+
+SELECT * FROM extraKey INTO Checksum();
+----
+ERROR 4000
+
+CREATE LOGICAL SOURCE missingKey(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR missingKey TYPE File SET("SchemaJSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"KEY":1, "VALUE":1}
+{"KEY":1, "VALUE":2}
+
+SELECT * FROM missingKey INTO Checksum();
+----
+ERROR 4000

@@ -187,6 +187,11 @@ public:
         this->totalNumberOfTuples = 0;
     }
 
+    /// Reserve capacity for `numberOfOffsets` index entries up front. An indexer that knows the tuple count
+    /// before it starts emitting (e.g. after a structural pre-scan) can call this to avoid the incremental
+    /// reallocations of emplaceFieldOffset/emplaceTupleOffsets. Purely a capacity hint; safe to over/under-shoot.
+    void reserveOffsets(const size_t numberOfOffsets) { indexValues.reserve(numberOfOffsets); }
+
     /// Assures that there is space to write one more tuple and returns a pointer to write the field offsets (of one tuple) to.
     /// @Note expects that users of function write 'number of fields in schema + 1' offsets to pointer, manually incrementing the pointer by one for each offset.
     void emplaceFieldOffset(FieldIndex offset)
@@ -210,6 +215,16 @@ public:
         indexValues.resize(startIdx + numberOfRequiredOffsets);
         auto fieldIndexPairSpan = std::span(indexValues).subspan(startIdx, numberOfRequiredOffsets);
         return std::span(std::bit_cast<IndexPairs*>(fieldIndexPairSpan.data()), fieldIndexPairSpan.size());
+    }
+
+    /// Append one (start, end) offset pair. Unlike emplaceTupleOffsets (resize -> value-init the new slots ->
+    /// caller overwrites them), this constructs both entries in place, so paired with reserveOffsets() it does
+    /// neither a reallocation nor a redundant zero-fill. Intended for indexers that emit field-by-field.
+    void emplaceFieldOffsetPair(const FieldIndex fieldValueStart, const FieldIndex fieldValueEnd)
+    requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
+    {
+        indexValues.emplace_back(fieldValueStart);
+        indexValues.emplace_back(fieldValueEnd);
     }
 
     /// Resets the indexes and pointers, calculates and sets the number of tuples in the current buffer, returns the total number of tuples.
