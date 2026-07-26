@@ -143,7 +143,21 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                                                              .data());
                     }
                 }
-                TupleBuffer newVarSizedBuffer = bufferProvider->getBufferBlocking();
+                TupleBuffer newVarSizedBuffer;
+                if (allocationSize <= bufferProvider->getBufferSize())
+                {
+                    newVarSizedBuffer = bufferProvider->getBufferBlocking();
+                }
+                else
+                {
+                    /// The pooled buffer size can't hold this value; fall back to an unpooled buffer sized to fit it exactly.
+                    auto unpooledBuffer = bufferProvider->getUnpooledBuffer(allocationSize);
+                    if (not unpooledBuffer.has_value())
+                    {
+                        throw BufferAllocationFailure("No unpooled TupleBuffer available for oversized varsized value.");
+                    }
+                    newVarSizedBuffer = std::move(unpooledBuffer.value());
+                }
                 auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
                 newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
                 /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.

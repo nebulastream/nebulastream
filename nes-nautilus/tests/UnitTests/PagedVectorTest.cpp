@@ -43,6 +43,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h> /// NOLINT(misc-include-cleaner): consumed via macros expanded from rapidcheck/gtest.h
 #include <nautilus/Engine.hpp>
+#include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <options.hpp>
@@ -167,6 +168,44 @@ struct DirtyBufferProvider : AbstractBufferProvider
     std::shared_ptr<BufferManager> bm;
 };
 
+/// Wraps a real BufferManager but refuses (returns nullopt from) getUnpooledBuffer for any request larger than a
+/// pooled buffer -- i.e. exactly the oversized-varsized allocation path in makeVarSizedAllocFunction -- while
+/// leaving small unpooled requests (like PagedVector's own header buffer) and all pooled-buffer paths untouched.
+/// This lets a plain unit test deterministically hit the "no unpooled buffer available for oversized varsized
+/// value" throw without needing to actually exhaust memory.
+struct NoOversizedUnpooledBufferProvider : AbstractBufferProvider
+{
+    explicit NoOversizedUnpooledBufferProvider(std::shared_ptr<BufferManager> bm) : bm(std::move(bm)) { }
+
+    [[nodiscard]] BufferManagerType getBufferManagerType() const override { return bm->getBufferManagerType(); }
+
+    [[nodiscard]] size_t getBufferSize() const override { return bm->getBufferSize(); }
+
+    [[nodiscard]] size_t getNumOfPooledBuffers() const override { return bm->getNumOfPooledBuffers(); }
+
+    [[nodiscard]] size_t getNumOfUnpooledBuffers() const override { return bm->getNumOfUnpooledBuffers(); }
+
+    TupleBuffer getBufferBlocking() override { return bm->getBufferBlocking(); }
+
+    std::optional<TupleBuffer> getBufferNoBlocking() override { return bm->getBufferNoBlocking(); }
+
+    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override
+    {
+        return bm->getBufferWithTimeout(timeoutMs);
+    }
+
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override
+    {
+        if (bufferSize > bm->getBufferSize())
+        {
+            return std::nullopt;
+        }
+        return bm->getUnpooledBuffer(bufferSize);
+    }
+
+    std::shared_ptr<BufferManager> bm;
+};
+
 /// Buffer-size pool drawn from per property to exercise both extremes:
 /// - tiny buffers (64-512 B) force long page chains, which surfaces correctness issues in the
 ///   getPageIndex binary search and the last-page cumulative-sum special case;
@@ -200,6 +239,110 @@ constexpr char PRINTABLE_ASCII_MIN = 32;
 constexpr char PRINTABLE_ASCII_MAX = 127;
 constexpr size_t MAX_VARSIZED_LEN = 64;
 
+/// Varsized payload lengths are occasionally drawn relative to the property's chosen bufferSize (not just
+/// [0, MAX_VARSIZED_LEN]) so that some generated values don't fit in a single pooled buffer. MAX_VARSIZED_LEN
+/// historically equalled the smallest BUFFER_SIZE_POOL entry (64), which meant a generated payload could never
+/// exceed a pooled buffer's capacity -- silently preventing the AbstractBufferProvider::getUnpooledBuffer fallback
+/// path in makeVarSizedAllocFunction from ever being exercised with an oversized value.
+///
+/// This must be gated by an absolute per-run budget rather than a flat per-field probability: MAX_SCHEMA_FIELDS
+/// (128) x MAX_ITEMS_PER_PROPERTY (~500) means a single property run can generate thousands of varsized fields,
+/// so even a low per-field percentage of "needs a dedicated pooled buffer" draws can exhaust
+/// DirtyBufferProvider's pooled buffer pool -- which is clamped as low as 16-32 buffers for the largest
+/// BUFFER_SIZE_POOL entry (2 MiB) under pooledBufferCountFor's memory cap. Capping the *count* of special draws
+/// per run (see OversizedVarSizedBudget below), independent of schema width or item count, avoids that blow-up.
+constexpr uint64_t MODERATE_OVERSIZED_MULTIPLIER = 3;
+constexpr uint64_t GROSS_OVERSIZED_MIN_MULTIPLIER = 8;
+constexpr uint64_t GROSS_OVERSIZED_MAX_MULTIPLIER = 32;
+/// Absolute ceiling on the gross-oversized regime so the largest BUFFER_SIZE_POOL entry (2 MiB) doesn't blow up
+/// property runtime/memory (2 MiB * 32 would be 64 MiB per single value). When bufferSize itself is already
+/// >= this cap, the gross-oversized regime folds into the moderate-oversized one instead.
+constexpr uint64_t GROSS_OVERSIZED_ABS_CAP = 256ULL * 1024;
+/// Upper bound (inclusive) on how many varsized fields in a single property run may roll a boundary/oversized
+/// length; the exact per-run budget is itself randomised in [0, this]. Small enough that even the worst case
+/// (all budget spent as pooled-buffer-consuming boundary draws) stays far under the smallest pooled buffer count.
+constexpr int MAX_OVERSIZED_DRAWS_PER_PROPERTY = 3;
+
+/// Shared, mutable per-property-run counter of remaining "special" (boundary/oversized) varsized draws. Threaded
+/// by shared_ptr through genVarSizedLen/genVarSizedString/genAnyVec so every varsized field across an entire
+/// property run decrements the same budget, instead of each field rolling independently.
+using OversizedVarSizedBudget = std::shared_ptr<int>;
+
+/// Draws a varsized payload length correlated with `bufferSize`, spending from `budget` when landing outside the
+/// small [0, MAX_VARSIZED_LEN] case: sometimes right at the pooled-buffer boundary (off-by-one coverage),
+/// sometimes moderately over one buffer's capacity, and occasionally far over it -- exercising both the
+/// "doesn't fit" branch and the unpooled fallback for a range of overshoot magnitudes. Once the budget is spent,
+/// always returns a small length.
+rc::Gen<size_t> genVarSizedLen(uint64_t bufferSize, const OversizedVarSizedBudget& budget)
+{
+    return rc::gen::exec(
+        [bufferSize, budget]() -> size_t
+        {
+            if (*budget <= 0)
+            {
+                return *rc::gen::inRange<size_t>(0, MAX_VARSIZED_LEN + 1);
+            }
+            /// Equal three-way split of the budget between the boundary/moderate/gross regimes.
+            const auto regime = *rc::gen::inRange(0, 3);
+            --*budget;
+            if (regime == 0)
+            {
+                const auto delta = *rc::gen::inRange<int64_t>(-3, 4);
+                return static_cast<size_t>(std::max<int64_t>(0, static_cast<int64_t>(bufferSize) + delta));
+            }
+            if (regime == 1 or bufferSize >= GROSS_OVERSIZED_ABS_CAP)
+            {
+                return *rc::gen::inRange<size_t>(bufferSize + 1, (bufferSize * MODERATE_OVERSIZED_MULTIPLIER) + 1);
+            }
+            const auto grossUpper = std::min(bufferSize * GROSS_OVERSIZED_MAX_MULTIPLIER, GROSS_OVERSIZED_ABS_CAP);
+            const auto grossLower = std::min(bufferSize * GROSS_OVERSIZED_MIN_MULTIPLIER, grossUpper);
+            return *rc::gen::inRange<size_t>(grossLower, grossUpper + 1);
+        });
+}
+
+/// Builds a printable-ASCII string of a bufferSize-correlated length (see genVarSizedLen). Short payloads (within
+/// MAX_VARSIZED_LEN) get varied random characters like before; longer ones are filled with a single random
+/// printable character since their purpose is to stress allocation/copy sizing, not character-level randomness.
+rc::Gen<std::string> genVarSizedString(uint64_t bufferSize, const OversizedVarSizedBudget& budget)
+{
+    return rc::gen::exec(
+        [bufferSize, budget]() -> std::string
+        {
+            const auto len = *genVarSizedLen(bufferSize, budget);
+            if (len <= MAX_VARSIZED_LEN)
+            {
+                auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX));
+                if (str.size() > len)
+                {
+                    str.resize(len);
+                }
+                return str;
+            }
+            const auto fillChar = *rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX);
+            /// NOLINTNEXTLINE(modernize-return-braced-init-list)
+            return std::string(len, fillChar);
+        });
+}
+
+/// Like genVarSizedLen, but always lands in the moderate- or gross-oversized regime (never small/boundary).
+/// Used by the dedicated oversized-varsized property, which needs every generated value to definitely exceed
+/// bufferSize rather than relying on genVarSizedLen's weighted mix to occasionally roll one.
+rc::Gen<size_t> genOversizedVarSizedLen(uint64_t bufferSize)
+{
+    return rc::gen::exec(
+        [bufferSize]() -> size_t
+        {
+            const auto useGross = bufferSize < GROSS_OVERSIZED_ABS_CAP and * rc::gen::arbitrary<bool>();
+            if (useGross)
+            {
+                const auto grossUpper = std::min(bufferSize * GROSS_OVERSIZED_MAX_MULTIPLIER, GROSS_OVERSIZED_ABS_CAP);
+                const auto grossLower = std::min(bufferSize * GROSS_OVERSIZED_MIN_MULTIPLIER, grossUpper);
+                return *rc::gen::inRange<size_t>(grossLower, grossUpper + 1);
+            }
+            return *rc::gen::inRange<size_t>(bufferSize + 1, (bufferSize * MODERATE_OVERSIZED_MULTIPLIER) + 1);
+        });
+}
+
 /// Upper bound (exclusive) on the per-property generated record count.
 constexpr uint64_t MAX_ITEMS_PER_PROPERTY = 501;
 
@@ -222,6 +365,21 @@ constexpr std::array ALL_VALUE_TYPES = {
     DataType::Type::FLOAT32,
     DataType::Type::FLOAT64,
     DataType::Type::VARSIZED,
+};
+
+/// Scalar-only subset of ALL_VALUE_TYPES (no VARSIZED), used by the dedicated oversized-varsized property to
+/// build small schemas with a guaranteed, separately-controlled VARSIZED field appended.
+constexpr std::array SCALAR_VALUE_TYPES = {
+    DataType::Type::UINT8,
+    DataType::Type::UINT16,
+    DataType::Type::UINT32,
+    DataType::Type::UINT64,
+    DataType::Type::INT8,
+    DataType::Type::INT16,
+    DataType::Type::INT32,
+    DataType::Type::INT64,
+    DataType::Type::FLOAT32,
+    DataType::Type::FLOAT64,
 };
 
 /// Builds a Schema with sequentially named fields ("field0", "field1", ...) from the given DataType vector.
@@ -273,11 +431,13 @@ std::any genScalarAny(bool nullable)
     return std::any{*rc::gen::arbitrary<T>()};
 }
 
-/// Generator for a record of arbitrary values matching the given field types.
-rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
+/// Generator for a record of arbitrary values matching the given field types. `bufferSize` is the pool buffer
+/// size chosen for the current property run; VARSIZED fields draw payload lengths relative to it (see
+/// genVarSizedLen), spending from the shared `budget` so oversized draws stay capped across the whole run.
+rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types, uint64_t bufferSize, const OversizedVarSizedBudget& budget)
 {
     return rc::gen::exec(
-        [types = std::move(types)]()
+        [types = std::move(types), bufferSize, budget]()
         {
             AnyVec result;
             result.reserve(types.size());
@@ -324,20 +484,10 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
                                 result.emplace_back(std::optional<std::string>{});
                                 break;
                             }
-                            auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX));
-                            if (str.size() > MAX_VARSIZED_LEN)
-                            {
-                                str.resize(MAX_VARSIZED_LEN);
-                            }
-                            result.emplace_back(std::optional<std::string>{std::move(str)});
+                            result.emplace_back(std::optional<std::string>{*genVarSizedString(bufferSize, budget)});
                             break;
                         }
-                        auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX));
-                        if (str.size() > MAX_VARSIZED_LEN)
-                        {
-                            str.resize(MAX_VARSIZED_LEN);
-                        }
-                        result.emplace_back(std::move(str));
+                        result.emplace_back(*genVarSizedString(bufferSize, budget));
                         break;
                     }
                     case DataType::Type::BOOLEAN:
@@ -829,12 +979,14 @@ void insertAndIterateProperty(EngineMode mode)
     RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
 
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_PROPERTY);
+    const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
 
     NES_INFO(
-        "Property insertAndIterate: fields={}, N={}, bufferSize={}, field_types={}",
+        "Property insertAndIterate: fields={}, N={}, bufferSize={}, oversizedBudget={}, field_types={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
+        *oversizedBudget,
         fmt::join(fieldTypes, ", "));
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, pooledBufferCountFor(bufferSize));
@@ -844,7 +996,7 @@ void insertAndIterateProperty(EngineMode mode)
     reference.reserve(numberOfItems);
     for (uint64_t i = 0; i < numberOfItems; ++i)
     {
-        auto record = *genAnyVec(fieldTypes);
+        auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
         reference.push_back(record);
         pagedVector.pushBack(record);
     }
@@ -870,8 +1022,14 @@ void insertAndReadByIndexProperty(EngineMode mode)
     RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
 
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_PROPERTY);
+    const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
 
-    NES_INFO("Property insertAndReadByIndex: fields={}, N={}, bufferSize={}", fieldTypes.size(), numberOfItems, bufferSize);
+    NES_INFO(
+        "Property insertAndReadByIndex: fields={}, N={}, bufferSize={}, oversizedBudget={}",
+        fieldTypes.size(),
+        numberOfItems,
+        bufferSize,
+        *oversizedBudget);
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, pooledBufferCountFor(bufferSize));
     TestablePagedVector pagedVector(fieldTypes, *bufferManager, mode);
@@ -880,7 +1038,7 @@ void insertAndReadByIndexProperty(EngineMode mode)
     reference.reserve(numberOfItems);
     for (uint64_t i = 0; i < numberOfItems; ++i)
     {
-        auto record = *genAnyVec(fieldTypes);
+        auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
         reference.push_back(record);
         pagedVector.pushBack(record);
     }
@@ -904,8 +1062,14 @@ void concatMoveProperty(EngineMode mode)
     RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
 
     const auto numVectors = *rc::gen::inRange<uint64_t>(1, MAX_CONCAT_VECTORS);
+    const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
 
-    NES_INFO("Property concatMove: fields={}, numVectors={}, bufferSize={}", fieldTypes.size(), numVectors, bufferSize);
+    NES_INFO(
+        "Property concatMove: fields={}, numVectors={}, bufferSize={}, oversizedBudget={}",
+        fieldTypes.size(),
+        numVectors,
+        bufferSize,
+        *oversizedBudget);
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, pooledBufferCountFor(bufferSize));
 
@@ -918,7 +1082,7 @@ void concatMoveProperty(EngineMode mode)
         pagedVectors.emplace_back(fieldTypes, *bufferManager, mode);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
-            auto record = *genAnyVec(fieldTypes);
+            auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
             fullReference.push_back(record);
             pagedVectors.back().pushBack(record);
         }
@@ -950,7 +1114,13 @@ void concatCopyProperty(EngineMode mode)
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
     RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
     const auto numVectors = *rc::gen::inRange<uint64_t>(1, MAX_CONCAT_VECTORS);
-    NES_INFO("Property concatCopy: fields={}, numVectors={}, bufferSize={}", fieldTypes.size(), numVectors, bufferSize);
+    const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
+    NES_INFO(
+        "Property concatCopy: fields={}, numVectors={}, bufferSize={}, oversizedBudget={}",
+        fieldTypes.size(),
+        numVectors,
+        bufferSize,
+        *oversizedBudget);
     auto bufferManager = DirtyBufferProvider::create(bufferSize, pooledBufferCountFor(bufferSize));
     std::vector<TestablePagedVector> pagedVectors;
     pagedVectors.reserve(numVectors);
@@ -962,7 +1132,7 @@ void concatCopyProperty(EngineMode mode)
         pagedVectors.emplace_back(fieldTypes, *bufferManager, mode);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
-            auto record = *genAnyVec(fieldTypes);
+            auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
             fullReference.push_back(record);
             pagedVectors.back().pushBack(record);
         }
@@ -1009,6 +1179,82 @@ void concatCopyProperty(EngineMode mode)
     for (size_t i = 0; i < actual.size(); ++i)
     {
         RC_ASSERT(anyVecsEqual(actual[i], fullReference[i], fieldTypes));
+    }
+}
+
+/// Small extra-field cap and item count kept deliberately tight: every item's VARSIZED field is forced above
+/// bufferSize here (see genOversizedVarSizedLen), so a wide schema or large item count would balloon memory/time
+/// the way the weighted mix in genAnyVec avoids for the general properties above.
+constexpr size_t MAX_OVERSIZED_EXTRA_SCALAR_FIELDS = 3;
+constexpr uint64_t MAX_ITEMS_PER_OVERSIZED_PROPERTY = 20;
+
+/// Dedicated property targeting AbstractBufferProvider::getUnpooledBuffer fallback in makeVarSizedAllocFunction:
+/// every record's VARSIZED field is forced to a length that exceeds the chosen bufferSize, so it can never fit
+/// in a single pooled buffer. Unlike the general properties (whose varsized lengths only sometimes land here via
+/// a weighted mix), this guarantees the fallback path runs on every push_back.
+void insertOversizedVarSizedProperty(EngineMode mode)
+{
+    const auto numExtraFields = *rc::gen::inRange<size_t>(0, MAX_OVERSIZED_EXTRA_SCALAR_FIELDS + 1);
+    auto fieldTypes = *genDataTypeSchema(SCALAR_VALUE_TYPES, numExtraFields, numExtraFields);
+    const auto varSizedNullable = *rc::gen::arbitrary<bool>() ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    fieldTypes.emplace_back(DataType::Type::VARSIZED, varSizedNullable);
+    const auto varSizedFieldIdx = fieldTypes.size() - 1;
+
+    const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
+    RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
+
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(1, MAX_ITEMS_PER_OVERSIZED_PROPERTY + 1);
+
+    NES_INFO(
+        "Property insertOversizedVarSized: fields={}, N={}, bufferSize={}, field_types={}",
+        fieldTypes.size(),
+        numberOfItems,
+        bufferSize,
+        fmt::join(fieldTypes, ", "));
+
+    auto bufferManager = DirtyBufferProvider::create(bufferSize, pooledBufferCountFor(bufferSize));
+    TestablePagedVector pagedVector(fieldTypes, *bufferManager, mode);
+
+    /// genAnyVec's own draw for the VARSIZED field is immediately overwritten below with a guaranteed-oversized
+    /// value, so it's kept on the small path (zero budget) to avoid wasting pooled-buffer draws before that.
+    const auto noOversizedBudget = std::make_shared<int>(0);
+    std::vector<AnyVec> reference;
+    reference.reserve(numberOfItems);
+    for (uint64_t i = 0; i < numberOfItems; ++i)
+    {
+        auto record = *genAnyVec(fieldTypes, bufferSize, noOversizedBudget);
+        const bool forceNull = fieldTypes[varSizedFieldIdx].nullable and * rc::gen::arbitrary<bool>();
+        if (forceNull)
+        {
+            record[varSizedFieldIdx] = std::optional<std::string>{};
+        }
+        else
+        {
+            const auto len = *genOversizedVarSizedLen(bufferSize);
+            const auto fillChar = *rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX);
+            auto str = std::string(len, fillChar);
+            if (fieldTypes[varSizedFieldIdx].nullable)
+            {
+                record[varSizedFieldIdx] = std::optional<std::string>{std::move(str)};
+            }
+            else
+            {
+                record[varSizedFieldIdx] = std::move(str);
+            }
+        }
+        reference.push_back(record);
+        pagedVector.pushBack(record);
+    }
+
+    RC_ASSERT(pagedVector.size() == reference.size());
+
+    verifyRandomAccess(pagedVector, reference, fieldTypes);
+
+    auto actual = pagedVector.toVector();
+    RC_ASSERT(actual.size() == reference.size());
+    for (size_t i = 0; i < actual.size(); ++i)
+    {
+        RC_ASSERT(anyVecsEqual(actual[i], reference[i], fieldTypes));
     }
 }
 
@@ -1063,6 +1309,39 @@ RC_GTEST_PROP(PagedVectorPropertyTest, concatCopyPagedVectorInterpreter, ())
 {
     Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
     concatCopyProperty(EngineMode::Interpreter);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, insertOversizedVarSizedCompiler, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertOversizedVarSizedProperty(EngineMode::Compiler);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, insertOversizedVarSizedInterpreter, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertOversizedVarSizedProperty(EngineMode::Interpreter);
+}
+
+TEST(PagedVectorTest, oversizedVarSizedThrowsWhenUnpooledUnavailable)
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    constexpr uint64_t bufferSize = 4096;
+    constexpr size_t numberOfBuffers = 16;
+    NoOversizedUnpooledBufferProvider bufferManager{BufferManager::create(
+        10 * numberOfBuffers * bufferSize,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        static_cast<uint32_t>(bufferSize),
+        std::make_shared<NesDefaultMemoryAllocator>())};
+
+    const std::vector<DataType> fieldTypes{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}};
+    TestablePagedVector pagedVector(fieldTypes, bufferManager, EngineMode::Interpreter);
+
+    AnyVec record;
+    /// oversized -> unpooled fallback -> nullopt -> throw
+    record.emplace_back(std::string(bufferSize * 2, 'x'));
+    ASSERT_EXCEPTION_ERRORCODE(pagedVector.pushBack(record), ErrorCode::BufferAllocationFailure);
 }
 
 }
