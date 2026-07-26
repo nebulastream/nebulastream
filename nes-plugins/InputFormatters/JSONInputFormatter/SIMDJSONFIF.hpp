@@ -66,6 +66,17 @@ struct ParsedResultVariableSized
     bool isNull;
 };
 
+/// Attributes for the JSON per-field extraction invokes. Marking them willReturn+noUnwind lets LLVM/MLIR
+/// eliminate the extraction of any field whose result is unused downstream -- i.e. LLVM performs projection
+/// pushdown for free (mirroring how it DCEs CSV's inline field parsing). This is SAFE because the extraction
+/// proxies (getRawJsonWithNullCheck, parseJsonVarSizedProxy) are soft-fail: a missing field yields a
+/// {nullptr,0} sentinel instead of throwing, and a USED missing field is caught at materialisation
+/// (parseLazyIntoVarVal / VariableSizedData::getContent -> FieldNotFound).
+inline nautilus::FunctionAttributes jsonExtractAttrs()
+{
+    return nautilus::FunctionAttributes{.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true};
+}
+
 template <typename T, bool Nullable>
 RawResultFixed<T>* getRawJsonWithNullCheck(FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData);
 
@@ -179,7 +190,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             /// We need to do a nullcheck
             /// We use the SIMDJSON interface for this and return early, if the value is null
             const auto parseResult
-                = nautilus::invoke({nautilus::ModRefInfo::Ref}, getRawJsonWithNullCheck<T, true>, fieldIndex, fieldIndexFunction, metaData);
+                = nautilus::invoke(jsonExtractAttrs(), getRawJsonWithNullCheck<T, true>, fieldIndex, fieldIndexFunction, metaData);
             const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(RawResultFixed<T>, nullValue));
             const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(RawResultFixed<T>, isNull));
             if (isNull)
@@ -206,7 +217,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             return;
         }
         const auto parseResult
-            = nautilus::invoke({nautilus::ModRefInfo::Ref}, getRawJsonWithNullCheck<T, false>, fieldIndex, fieldIndexFunction, metaData);
+            = nautilus::invoke(jsonExtractAttrs(), getRawJsonWithNullCheck<T, false>, fieldIndex, fieldIndexFunction, metaData);
         const nautilus::val<int8_t*> rawPtr = *getMemberWithOffset<int8_t*>(parseResult, offsetof(RawResultFixed<T>, ptrToRawJson));
         const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(parseResult, offsetof(RawResultFixed<T>, sizeOfRawJson));
         parseRawValueIntoRecord(
@@ -372,11 +383,21 @@ RawResultFixed<T>* getRawJsonWithNullCheck(const FieldIndex fieldIndex, SIMDJSON
 
     const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
     auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
-    auto simdJsonResult = SIMDJSONFIF::accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
-    /// Get the raw string view over the SIMD json value and return a ptr to it
-    const auto rawSimdJsonResult = simdJsonResult.raw_json().value();
-    result.ptrToRawJson = reinterpret_cast<const int8_t*>(rawSimdJsonResult.data());
-    result.sizeOfRawJson = rawSimdJsonResult.size();
+    /// Soft-fail (NON-throwing): a missing/unreadable field yields a {nullptr,0} sentinel instead of throwing.
+    /// This lets the extraction invoke be marked noUnwind (jsonExtractAttrs), so LLVM can DCE the extraction
+    /// of UNUSED fields (the projection-pushdown win, for free). A USED field that is missing still errors:
+    /// the sentinel span fails the fast codec at materialisation (parseWithFastInt throws), which is only
+    /// emitted for used fields.
+    const auto rawSimdJsonResult = currentDoc[fieldName].raw_json();
+    if (rawSimdJsonResult.error() != simdjson::SUCCESS)
+    {
+        result.ptrToRawJson = nullptr;
+        result.sizeOfRawJson = 0;
+        return &result;
+    }
+    const auto raw = rawSimdJsonResult.value_unsafe();
+    result.ptrToRawJson = reinterpret_cast<const int8_t*>(raw.data());
+    result.sizeOfRawJson = raw.size();
     return &result;
 }
 
@@ -407,9 +428,16 @@ ParsedResultVariableSized* parseJsonVarSizedProxy(FieldIndex fieldIndex, SIMDJSO
     auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
     const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
 
-    /// Get the value from the document and convert it to a span of bytes
-    const std::string_view value = SIMDJSONFIF::accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
-
+    /// Soft-fail (NON-throwing): a missing/unreadable field yields a {nullptr,0} sentinel so this extraction
+    /// invoke can be marked noUnwind (jsonExtractAttrs) and LLVM can DCE the get_string of UNUSED varsized
+    /// fields. A USED missing varsized field errors at its read via VariableSizedData::getContent (null ptr
+    /// -> FieldNotFound / ERROR 2004); a legit empty string keeps a valid ptr with size 0, so it is distinct.
+    std::string_view value;
+    if (currentDoc[fieldName].get_string().get(value) != simdjson::SUCCESS)
+    {
+        result = ParsedResultVariableSized{.varSizedPointer = nullptr, .size = 0, .isNull = false};
+        return &result;
+    }
     result = ParsedResultVariableSized{.varSizedPointer = value.data(), .size = value.size(), .isNull = false};
     return &result;
 }

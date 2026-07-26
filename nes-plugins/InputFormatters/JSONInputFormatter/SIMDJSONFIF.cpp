@@ -60,8 +60,8 @@ VarVal SIMDJSONFIF::parseJsonVarSized(
 {
     if (nullable)
     {
-        const auto varSizedResult = nautilus::invoke(
-            {.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<true>, fieldIndex, fieldIndexFunction, metaData);
+        const auto varSizedResult
+            = nautilus::invoke(jsonExtractAttrs(), parseJsonVarSizedProxy<true>, fieldIndex, fieldIndexFunction, metaData);
         const VariableSizedData varSizedString{
             *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
             *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};
@@ -69,8 +69,8 @@ VarVal SIMDJSONFIF::parseJsonVarSized(
         return VarVal{VariableSizedData{varSizedString}, nullable, isNull};
     }
 
-    const auto varSizedResult = nautilus::invoke(
-        {.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<false>, fieldIndex, fieldIndexFunction, metaData);
+    const auto varSizedResult
+        = nautilus::invoke(jsonExtractAttrs(), parseJsonVarSizedProxy<false>, fieldIndex, fieldIndexFunction, metaData);
     const VariableSizedData varSizedString{
         *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
         *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};

@@ -23,6 +23,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <function.hpp>
 
 namespace NES
 {
@@ -105,6 +106,16 @@ nautilus::val<bool> VariableSizedData::operator!() const
 
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getContent() const
 {
+    /// A null content pointer means a projected VARSIZED field was MISSING at extraction: the JSON varsized
+    /// extractor (parseJsonVarSizedProxy) soft-fails to a {nullptr,0} sentinel so its invoke can be noUnwind
+    /// and LLVM can DCE the get_string of UNUSED varsized fields. getContent() is reached ONLY when a used
+    /// varsized value is actually read/emitted, so a used missing field errors here with FieldNotFound
+    /// (ERROR 2004); a legit empty string keeps a valid ptr with size 0. Formatters that always materialise a
+    /// valid span (CSV/native) never hit this branch.
+    if (ptrToVarSized == nullptr)
+    {
+        nautilus::invoke(+[]() { throw FieldNotFound("A projected VARSIZED field is missing from the input."); });
+    }
     return ptrToVarSized;
 }
 

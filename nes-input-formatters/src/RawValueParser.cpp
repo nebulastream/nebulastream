@@ -147,6 +147,16 @@ VarVal parseLazyIntoVarVal(
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& parserType)
 {
+    /// A null field address means a projected field was MISSING at extraction: the JSON numeric extractor
+    /// (getRawJsonWithNullCheck) soft-fails to a {nullptr,0} sentinel instead of throwing, so that its invoke
+    /// can be marked noUnwind and LLVM can DCE the extraction of UNUSED fields (effective projection pushdown).
+    /// Materialisation is reached ONLY for USED fields, so a used missing field errors here with FieldNotFound
+    /// (ERROR 2004) -- unused missing fields are eliminated and never reach this point. CSV/native formatters
+    /// always pass a valid span, so this is an inert, well-predicted branch for them.
+    if (fieldAddress == nullptr)
+    {
+        nautilus::invoke(+[]() { throw FieldNotFound("A projected field is missing from the input (null span at materialisation)."); });
+    }
     constexpr InputParserRegistryArguments args{};
     if (const auto parser = InputParserRegistry::instance().create(parserType, args))
     {
