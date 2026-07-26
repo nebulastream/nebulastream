@@ -70,7 +70,7 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
 {
     Record record;
     const auto indexBufferPtr = nautilus::invoke(getIndexValuesProxy, rawBufferIndex);
-    const auto numberOfFields = nautilus::static_val{bufferRef.getAllDataTypes().size()};
+    const auto numberOfFields = bufferRef.getAllDataTypes().size();
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
         const auto fieldName = bufferRef.getAllFieldNames().at(i);
@@ -80,9 +80,9 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
             continue;
         }
 
-        const auto numPriorFields = recordIndex * nautilus::static_val(numberOfFields + 1);
+        const auto numPriorFields = recordIndex * (numberOfFields + 1);
         const auto fieldOffsetAddress = indexBufferPtr + (numPriorFields + i);
-        const auto fieldOffsetEndAddress = indexBufferPtr + (numPriorFields + i + nautilus::static_val<uint64_t>(1));
+        const auto fieldOffsetEndAddress = indexBufferPtr + (numPriorFields + i + 1);
         const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(fieldOffsetAddress);
         const auto fieldOffsetEnd = readValueFromMemRef<FieldIndex>(fieldOffsetEndAddress);
 
