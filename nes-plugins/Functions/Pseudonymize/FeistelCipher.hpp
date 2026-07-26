@@ -7,13 +7,14 @@
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 
+// Thread-local storage for safe concurrent access to the runtime secret key
 inline thread_local const std::string* tl_secretKey = nullptr;
 
 // ============================================================================
 // 1. FEISTEL NETWORK CORE (Format-Preserving Integer Encryption)
 // ============================================================================
 
-// Internal helper function (HMAC-based round function)
+// Computes the HMAC-SHA256 round function, appending the round index to vary state
 inline uint64_t feistelRoundFn(uint64_t r, uint8_t round, int halfBytes)
 {
     const std::string* keyPtr = tl_secretKey;
@@ -44,6 +45,7 @@ inline uint64_t feistelRoundFn(uint64_t r, uint8_t round, int halfBytes)
 // ---------------------------------------------------------
 namespace
 {
+// Implements a 4-round Feistel cipher for signed integers, preserving bit-width
 template <typename T>
 T feistelPseudonymization(T inputId)
 {
@@ -86,6 +88,7 @@ T feistelPseudonymization(T inputId)
 // ---------------------------------------------------------
 namespace
 {
+// Reverses the 4-round Feistel network in descending order
 template <typename T>
 T feistelDepseudonymization(T inputId)
 {
@@ -129,7 +132,6 @@ T feistelDepseudonymization(T inputId)
 // 2. STRING (VARSIZED) ENCRYPTION (AES-256-CTR)
 // ============================================================================
 
-// Internal helper functions
 inline void deriveAESKey(unsigned char* outKey32)
 {
     const std::string* keyPtr = tl_secretKey;
@@ -168,6 +170,8 @@ inline void hexDecode(const int8_t* src, int srcLen, unsigned char* dst)
 // ---------------------------------------------------------
 // Pseudonymize (String)
 // ---------------------------------------------------------
+
+// Encrypts variable-sized strings using AES-256-CTR with a deterministic SIV derived via HMAC-SHA256
 inline uint64_t pseudonymizeString(int8_t* inputPtr, uint64_t inputSize, int8_t* outputPtr)
 {
     const std::string* keyPtr = tl_secretKey;
@@ -204,6 +208,8 @@ inline uint64_t pseudonymizeString(int8_t* inputPtr, uint64_t inputSize, int8_t*
 // ---------------------------------------------------------
 // De-Pseudonymize (String)
 // ---------------------------------------------------------
+
+// Decrypts variable-sized strings by extracting the prepended hex-encoded IV and applying AES-256-CTR
 inline uint64_t depseudonymizeString(int8_t* inputPtr, uint64_t inputSize, int8_t* outputPtr)
 {
     unsigned char aesKey[32];
@@ -227,6 +233,3 @@ inline uint64_t depseudonymizeString(int8_t* inputPtr, uint64_t inputSize, int8_
 
     return ctByteLen;
 }
-
-
-

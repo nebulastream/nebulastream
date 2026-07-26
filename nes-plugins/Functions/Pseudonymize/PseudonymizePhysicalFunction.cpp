@@ -35,6 +35,7 @@
 namespace NES
 {
 
+// Validates the presence of the runtime environment variable and initializes the secret key
 PseudonymizePhysicalFunction::PseudonymizePhysicalFunction(PhysicalFunction childPhysicalFunction)
     : childPhysicalFunction(std::move(childPhysicalFunction))
 {
@@ -49,7 +50,7 @@ PseudonymizePhysicalFunction::PseudonymizePhysicalFunction(PhysicalFunction chil
     secretKey = std::string(key);
 }
 
-
+// Executes the pseudonymization on an incoming record attribute using JIT-safe type dispatching
 VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     tl_secretKey = &secretKey;
@@ -60,6 +61,7 @@ VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& are
     {
         using ArgType = std::decay_t<decltype(arg)>;
 
+        // Compile-time branching ensures type safety and prevents JIT generation errors
         if constexpr (std::is_same_v<ArgType, nautilus::val<int8_t>>)
         {
             auto pseudoId = nautilus::invoke(feistelPseudonymization<int8_t>, arg);
@@ -103,6 +105,7 @@ VarVal PseudonymizePhysicalFunction::execute(const Record& record, ArenaRef& are
     });
 }
 
+// Registers the physical operator within NebulaStream's runtime registry
 PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterPseudonymizePhysicalFunction(
     PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
