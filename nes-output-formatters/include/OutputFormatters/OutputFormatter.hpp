@@ -27,7 +27,6 @@
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
-#include <static.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -55,7 +54,7 @@ public:
     [[nodiscard]] virtual nautilus::val<uint64_t> writeFormattedValue(
         const VarVal& value,
         const DataType& fieldType,
-        const nautilus::static_val<uint64_t>& fieldIndex,
+        uint64_t fieldIndex,
         const nautilus::val<int8_t*>& fieldPointer,
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
