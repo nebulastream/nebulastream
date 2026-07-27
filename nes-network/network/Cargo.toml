@@ -18,6 +18,8 @@ edition.workspace = true
 [lib]
 name = "nes_network"
 
+[lints]
+
 [dependencies]
 tokio = { workspace = true }
 tokio-util = { workspace = true }

@@ -18,6 +18,8 @@ edition.workspace = true
 [lib]
 crate-type = ["rlib", "staticlib"]
 
+[lints]
+
 [dependencies]
 cxx = { workspace = true }
 tokio = { workspace = true }
