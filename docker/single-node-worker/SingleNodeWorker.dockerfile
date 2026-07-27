@@ -12,7 +12,10 @@ RUN --mount=type=cache,id=ccache,target=/ccache \
     cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 && \
     cmake --build build --target nes-single-node-worker -j && \
     mkdir /tmp/bin && \
-    find build -name 'nes-single-node-worker' -type f -exec mv --target-directory=/tmp/bin {} +
+    find build -name 'nes-single-node-worker' -type f -exec mv --target-directory=/tmp/bin {} + && \
+    cmake --build build --target nes-python-udf-bridge -j || true && \
+    mkdir -p /tmp/bin/nes-udf-bridges && \
+    find build -name 'libnes-python-udf-bridge.so' -exec mv --target-directory=/tmp/bin/nes-udf-bridges {} + || true
 
 FROM nebulastream/nes-runtime-base:${RUNTIME_TAG} AS app
 COPY --from=build /tmp/bin /usr/bin
