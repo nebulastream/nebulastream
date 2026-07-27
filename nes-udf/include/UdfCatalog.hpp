@@ -16,10 +16,10 @@
 
 #include <filesystem>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <Util/NamedCatalog.hpp>
 #include <UdfDescriptor.hpp>
 
 namespace NES
@@ -31,9 +31,12 @@ namespace NES
 ///
 /// Not thread-safe — registration is serialized through DDL statement handling,
 /// mirroring ModelCatalog. Concurrent access requires external synchronization.
+///
+/// Storage/lookup is delegated to the generic NamedCatalog; this class owns only
+/// the UDF-specific registration validation (see UdfCatalog.cpp).
 class UdfCatalog
 {
-    std::unordered_map<std::string, UdfDescriptor> entries;
+    NamedCatalog<UdfDescriptor> catalog;
 
 public:
     void

@@ -24,6 +24,7 @@ add_nes_common_test(nes-common-tests
         "FilesTest.cpp"
         "ReflectionTest.cpp"
         "VersionTest.cpp"
+        "NamedCatalogTest.cpp"
 )
 target_link_libraries(nes-common-tests nes_rust_bindings)
 

@@ -56,48 +56,32 @@ void UdfCatalog::registerUdf(
     validateType(returnType, "return");
 
     auto descriptor = UdfDescriptor{name, std::move(path), std::move(entrypoint), std::move(argTypes), returnType};
-    entries.insert_or_assign(std::move(name), std::move(descriptor));
+    catalog.registerEntry(std::move(name), std::move(descriptor));
 }
 
 void UdfCatalog::removeUdf(const std::string& udfName)
 {
-    entries.erase(udfName);
+    catalog.removeEntry(udfName);
 }
 
 bool UdfCatalog::hasUdf(const std::string& udfName) const
 {
-    return entries.contains(udfName);
+    return catalog.hasEntry(udfName);
 }
 
 std::vector<std::string> UdfCatalog::getUdfNames() const
 {
-    std::vector<std::string> names;
-    names.reserve(entries.size());
-    for (const auto& [name, _] : entries)
-    {
-        names.push_back(name);
-    }
-    return names;
+    return catalog.getNames();
 }
 
 std::vector<UdfDescriptor> UdfCatalog::getRegisteredUdfs() const
 {
-    std::vector<UdfDescriptor> udfs;
-    udfs.reserve(entries.size());
-    for (const auto& [_, descriptor] : entries)
-    {
-        udfs.push_back(descriptor);
-    }
-    return udfs;
+    return catalog.getEntries();
 }
 
 UdfDescriptor UdfCatalog::load(const std::string& udfName) const
 {
-    if (auto it = entries.find(udfName); it != entries.end())
-    {
-        return it->second;
-    }
-    throw NES::UnknownUdf("UDF '{}' was never registered", udfName);
+    return catalog.load(udfName, [&] { return NES::UnknownUdf("UDF '{}' was never registered", udfName); });
 }
 
 }
