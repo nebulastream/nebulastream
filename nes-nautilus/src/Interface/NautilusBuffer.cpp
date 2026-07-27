@@ -93,6 +93,11 @@ nautilus::val<NES::TupleBuffer*> OwnedNautilusBuffer::asArg() &
     return &buffer;
 }
 
+OwnedNautilusBuffer::operator BorrowedNautilusBuffer() const&
+{
+    return BorrowedNautilusBuffer::from(asArg());
+}
+
 BorrowedNautilusBuffer::BorrowedNautilusBuffer(const nautilus::val<NES::TupleBuffer*>& buffer) : buffer(buffer)
 {
 }
@@ -125,6 +130,23 @@ OwnedNautilusBuffer BorrowedNautilusBuffer::getChild(const nautilus::val<ChildBu
         buffer,
         child.asArg(),
         index);
+    return child;
+}
+
+OwnedNautilusBuffer BorrowedNautilusBuffer::getChild(const nautilus::val<uint64_t>& index) const
+{
+    return getChild(nautilus::val<ChildBufferIndex>{static_cast<nautilus::val<uint32_t>>(index)});
+}
+
+OwnedNautilusBuffer BorrowedNautilusBuffer::getChildFromIndexAddress(const nautilus::val<uint32_t*>& indexAddress) const
+{
+    OwnedNautilusBuffer child;
+    nautilus::invoke(
+        +[](const TupleBuffer* self, TupleBuffer* child, const uint32_t* indexPtr)
+        { *child = self->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
+        buffer,
+        child.asArg(),
+        indexAddress);
     return child;
 }
 
