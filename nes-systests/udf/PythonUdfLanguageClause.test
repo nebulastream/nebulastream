@@ -1,0 +1,33 @@
+# name: udf/PythonUdfLanguageClause.test
+# description: scalar UDFs registered via LANGUAGE 'python' (auto-resolved bridge path, no FROM clause)
+# groups: [PythonUdf]
+
+# --- Python UDF via LANGUAGE, no FROM: the bridge path is auto-resolved ---
+CREATE LOGICAL SOURCE nums(a INT64 NOT NULL, b INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR nums TYPE File;
+ATTACH INLINE
+1,2
+10,20
+100,200
+
+CREATE FUNCTION add_py_lang (a INT64, b INT64) RETURNS INT64 LANGUAGE 'python' ENTRYPOINT 'currency.add';
+
+SELECT a, b, add_py_lang(a, b) AS c FROM nums INTO FILE();
+----
+1,2,3
+10,20,30
+100,200,300
+
+# --- A LANGUAGE-resolved UDF that raises still fails the query with the UDF error code; the worker
+# survives -- proving execution is unaffected by how the bridge path was resolved (LANGUAGE vs FROM) ---
+CREATE LOGICAL SOURCE ints(x INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR ints TYPE File;
+ATTACH INLINE
+1
+2
+
+CREATE FUNCTION boom_py_lang (x INT64) RETURNS INT64 LANGUAGE 'python' ENTRYPOINT 'currency.boom';
+
+SELECT boom_py_lang(x) AS y FROM ints INTO FILE();
+----
+ERROR 3007
