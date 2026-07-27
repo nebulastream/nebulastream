@@ -18,6 +18,8 @@ edition.workspace = true
 [lib]
 crate-type = ["rlib", "staticlib"]
 
+[lints]
+
 [dependencies]
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
