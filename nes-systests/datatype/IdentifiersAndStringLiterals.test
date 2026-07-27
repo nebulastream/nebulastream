@@ -1,0 +1,18 @@
+# name: datatype/IdentifiersAndStringLiterals.test
+# description: Double-quoted identifiers are distinct from single-quoted string literals
+# groups: [DataTypes, Identifiers]
+
+CREATE LOGICAL SOURCE "INPUT STREAM" ("EVENT TYPE" VARSIZED NOT NULL, "STATUS" VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR "INPUT STREAM" TYPE File;
+ATTACH INLINE
+click,active
+
+CREATE SINK "OUTPUT SINK" ("EVENT TYPE" VARSIZED NOT NULL, field_value VARSIZED NOT NULL, literal_value VARSIZED NOT NULL) TYPE File;
+
+SELECT
+    "EVENT TYPE" AS "EVENT TYPE",
+    "STATUS" AS field_value,
+    'status' AS literal_value
+FROM "INPUT STREAM" INTO "OUTPUT SINK";
+----
+click,active,status

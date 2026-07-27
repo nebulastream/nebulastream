@@ -72,7 +72,7 @@ workers:
     max_operators: 10000
     config:
       worker:
-        number_of_buffers_in_global_buffer_manager: 128
+        total_memory_in_bytes: 1048576
         network:
           receiver_queue_size: 2
   - host: worker-2:8080

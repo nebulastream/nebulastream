@@ -531,27 +531,60 @@ TEST_F(QueryEngineTest, failureDuringPipelineStopMultipleSourcesRaceBetweenFailA
 
 TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultiplePipelines)
 {
-    TestingHarness test;
+    TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE);
     auto builder = test.buildNewQuery();
     auto source1 = builder.addSource();
     auto failingPipeline = builder.addPipeline({source1});
     builder.addSink({failingPipeline});
-    for (size_t i = 0; i < 100; i++)
-    {
-        auto okayPipeline = builder.addPipeline({source1});
-        builder.addSink({okayPipeline});
-    }
+    auto holdingPipeline = builder.addPipeline({source1});
+    auto latePipeline = builder.addPipeline({holdingPipeline});
+    builder.addSink({latePipeline});
 
     auto query = test.addNewQuery(std::move(builder));
     auto id = query->queryId;
-    test.pipelineControls[failingPipeline]->failOnStart = true;
+    auto failingPipelineControl = test.pipelineControls[failingPipeline];
+    auto holdingPipelineControl = test.pipelineControls[holdingPipeline];
+    auto latePipelineControl = test.pipelineControls[latePipeline];
+    failingPipelineControl->failOnStart = true;
+    failingPipelineControl->blockOnStart = true;
+    holdingPipelineControl->blockOnStart = true;
+    latePipelineControl->blockOnStart = true;
 
     test.expectQueryStatusEvents(id, {QueryStatus::Failed});
 
     test.start();
     {
         test.startQuery(std::move(query));
-        ASSERT_TRUE(test.waitForQepTermination(id, DEFAULT_LONG_AWAIT_TIMEOUT));
+
+        const auto allPipelineStartsEntered = failingPipelineControl->waitUntilStartEntered()
+            && holdingPipelineControl->waitUntilStartEntered() && latePipelineControl->waitUntilStartEntered();
+        if (!allPipelineStartsEntered)
+        {
+            failingPipelineControl->unblockStart();
+            holdingPipelineControl->unblockStart();
+            latePipelineControl->unblockStart();
+            FAIL() << "Not all pipeline starts were entered";
+        }
+
+        failingPipelineControl->unblockStart();
+        const auto queryTerminated = test.waitForQepTermination(id, DEFAULT_LONG_AWAIT_TIMEOUT);
+        if (!queryTerminated)
+        {
+            latePipelineControl->unblockStart();
+            holdingPipelineControl->unblockStart();
+            ADD_FAILURE() << "Query did not terminate after its pipeline failed during startup";
+        }
+        else
+        {
+            latePipelineControl->unblockStart();
+            const auto latePipelineStarted = latePipelineControl->waitForStart();
+            holdingPipelineControl->unblockStart();
+
+            EXPECT_TRUE(latePipelineStarted);
+            EXPECT_TRUE(holdingPipelineControl->waitForStart());
+            EXPECT_TRUE(latePipelineControl->waitForDestruction());
+            EXPECT_FALSE(latePipelineControl->wasStopped()) << "A pipeline completing startup after query failure must not be stopped";
+        }
     }
     test.stop();
 }

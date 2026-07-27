@@ -1,0 +1,24 @@
+name: Sprint Board Reminder
+description: |
+  This workflow sends a reminder to the team to keep the sprint board up-to-date.
+  It is triggered every tuesday at 10:00 UTC.
+on:
+  schedule:
+    - cron: '0 10 * * 2'
+jobs:
+  send-zulip:
+    runs-on: [ self-hosted ]
+    steps:
+      - name: Notify Zulip
+        uses: zulip/github-actions-zulip/send-message@v1
+        with:
+          api-key: ${{ secrets.PRBOT_API_KEY }}
+          email: "pr-reminder-bot@nebulastream.zulipchat.com"
+          organization-url: "https://nebulastream.zulipchat.com"
+          to: "nes-maintainers"
+          topic: "general"
+          type: "stream"
+          content: |
+            :clipboard: Please update your issues in the [NES Sprint Board](https://github.com/orgs/nebulastream/projects/28/views/1?filterQuery=). This includes creating new issues, moving issues to the right column, ensuring you are assigned, and the titles are up to date and self-explanatory.
+
+            Add a :check: to this message when you updated it. Deadline is today 14:00.

@@ -23,7 +23,7 @@ worker:
     operator_buffer_size: 4096
   default_query_optimization:
     join_strategy: HASH_JOIN
-  number_of_buffers_in_global_buffer_manager: 1024
+  total_memory_in_bytes: 8388608
   default_max_inflight_buffers: 64
   dump_compilation_result: FILE
   dump_graph: true

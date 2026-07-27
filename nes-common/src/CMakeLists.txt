@@ -17,4 +17,5 @@ add_subdirectory(Identifiers)
 add_source_files(nes-common
         Thread.cpp
         ErrorHandling.cpp
-        QueryId.cpp)
+        QueryId.cpp
+        Version.cpp)

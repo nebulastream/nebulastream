@@ -11,7 +11,8 @@ workers:
     max_operators: 10000
     config:
       worker:
-        number_of_buffers_in_global_buffer_manager: 2000000
+        total_memory_in_bytes: 76911476736 # 8 GiB pooled (2,000,000 * 4096) + 64 GiB unpooled
+        unpooled_memory_fraction: 0.8935
         query_engine:
           number_of_worker_threads: 8
 
@@ -22,7 +23,8 @@ workers:
       - "sink-node:8080"
     config:
       worker:
-        number_of_buffers_in_global_buffer_manager: 2000000
+        total_memory_in_bytes: 76911476736 # 8 GiB pooled (2,000,000 * 4096) + 64 GiB unpooled
+        unpooled_memory_fraction: 0.8935
         query_engine:
           number_of_worker_threads: 4
 

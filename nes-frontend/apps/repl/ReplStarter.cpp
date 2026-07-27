@@ -60,6 +60,7 @@
 #include <QueryOptimizerConfiguration.hpp>
 #include <Repl.hpp>
 #include <Thread.hpp>
+#include <Version.hpp>
 #include <WorkerCatalog.hpp>
 
 #ifdef EMBED_ENGINE
@@ -123,6 +124,15 @@ std::ostream& printStatementResult(std::ostream& os, NES::StatementOutputFormat 
 
 int main(int argc, char** argv)
 {
+    if (NES::hasVersionFlag(argc, argv))
+    {
+#ifdef EMBED_ENGINE
+        NES::printVersion("nes-repl-embedded");
+#else
+        NES::printVersion("nes-repl");
+#endif
+        return 0;
+    }
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();

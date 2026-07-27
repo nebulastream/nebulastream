@@ -11,8 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-query-optimizer
-        InlineSinkBindingRule.cpp
-        InlineSourceBindingRule.cpp
+        AnonymousSinkBindingRule.cpp
+        AnonymousSourceBindingRule.cpp
         LogicalSourceExpansionRule.cpp
         TypeInferenceRule.cpp
         SinkBindingRule.cpp

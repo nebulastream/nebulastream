@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/Sources/InlineSourceLogicalOperator.hpp>
+#include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -44,65 +44,65 @@ namespace NES
 {
 
 
-InlineSourceLogicalOperator InlineSourceLogicalOperator::withInferredSchema()
+AnonymousSourceLogicalOperator AnonymousSourceLogicalOperator::withInferredSchema()
 {
     PRECONDITION(false, "Schema<Field, Unordered> inference should happen on SourceDescriptorLogicalOperator");
     std::unreachable();
 }
 
-Identifier InlineSourceLogicalOperator::getSourceType() const
+Identifier AnonymousSourceLogicalOperator::getSourceType() const
 {
     return sourceType;
 }
 
-std::unordered_map<Identifier, std::string> InlineSourceLogicalOperator::getSourceConfig() const
+std::unordered_map<Identifier, std::string> AnonymousSourceLogicalOperator::getSourceConfig() const
 {
     return sourceConfig;
 }
 
-std::unordered_map<Identifier, std::string> InlineSourceLogicalOperator::getParserConfig() const
+std::unordered_map<Identifier, std::string> AnonymousSourceLogicalOperator::getParserConfig() const
 {
     return parserConfig;
 }
 
-Schema<UnqualifiedUnboundField, Ordered> InlineSourceLogicalOperator::getSourceSchema() const
+Schema<UnqualifiedUnboundField, Ordered> AnonymousSourceLogicalOperator::getSourceSchema() const
 {
     return sourceSchema;
 }
 
-bool InlineSourceLogicalOperator::operator==(const InlineSourceLogicalOperator& rhs) const
+bool AnonymousSourceLogicalOperator::operator==(const AnonymousSourceLogicalOperator& rhs) const
 {
     return this->sourceType == rhs.sourceType && this->sourceSchema == rhs.sourceSchema && this->parserConfig == rhs.parserConfig
         && this->sourceConfig == rhs.sourceConfig;
 }
 
-std::string InlineSourceLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
+std::string AnonymousSourceLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("INLINE_SOURCE(opId: {}, type: {} traitSet: {})", id, getSourceType(), traitSet.explain(verbosity));
+        return fmt::format("ANONYMOUS_SOURCE(opId: {}, type: {} traitSet: {})", id, getSourceType(), traitSet.explain(verbosity));
     }
-    return fmt::format("INLINE_SOURCE({})", getSourceType());
+    return fmt::format("ANONYMOUS_SOURCE({})", getSourceType());
 }
 
-std::string_view InlineSourceLogicalOperator::getName() noexcept
+std::string_view AnonymousSourceLogicalOperator::getName() noexcept
 {
     return NAME;
 }
 
-InlineSourceLogicalOperator InlineSourceLogicalOperator::withTraitSet(TraitSet traitSet) const
+AnonymousSourceLogicalOperator AnonymousSourceLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
     copy.traitSet = std::move(traitSet);
     return copy;
 }
 
-TraitSet InlineSourceLogicalOperator::getTraitSet() const
+TraitSet AnonymousSourceLogicalOperator::getTraitSet() const
 {
     return traitSet;
 }
 
-InlineSourceLogicalOperator InlineSourceLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
+AnonymousSourceLogicalOperator AnonymousSourceLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
     copy.children = std::move(children);
@@ -110,7 +110,7 @@ InlineSourceLogicalOperator InlineSourceLogicalOperator::withChildrenUnsafe(std:
 }
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static, performance-unnecessary-value-param)
-InlineSourceLogicalOperator InlineSourceLogicalOperator::withChildren(std::vector<LogicalOperator>) const
+AnonymousSourceLogicalOperator AnonymousSourceLogicalOperator::withChildren(std::vector<LogicalOperator>) const
 {
     PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
     std::unreachable();
@@ -118,18 +118,18 @@ InlineSourceLogicalOperator InlineSourceLogicalOperator::withChildren(std::vecto
 
 /// NOLINTEND(readability-convert-member-functions-to-static, performance-unnecessary-value-param)
 
-Schema<Field, Unordered> InlineSourceLogicalOperator::getOutputSchema()
+Schema<Field, Unordered> AnonymousSourceLogicalOperator::getOutputSchema()
 {
-    INVARIANT(false, "Convert InlineSourceLogical Operator to SourceDescriptorLogicalOperator before retrieving output schema");
+    INVARIANT(false, "Convert AnonymousSourceLogical Operator to SourceDescriptorLogicalOperator before retrieving output schema");
     std::unreachable();
 }
 
-std::vector<LogicalOperator> InlineSourceLogicalOperator::getChildren() const
+std::vector<LogicalOperator> AnonymousSourceLogicalOperator::getChildren() const
 {
     return children;
 }
 
-InlineSourceLogicalOperator::InlineSourceLogicalOperator(
+AnonymousSourceLogicalOperator::AnonymousSourceLogicalOperator(
     WeakLogicalOperator self,
     Identifier type,
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
@@ -143,33 +143,35 @@ InlineSourceLogicalOperator::InlineSourceLogicalOperator(
 {
 }
 
-TypedLogicalOperator<InlineSourceLogicalOperator> InlineSourceLogicalOperator::create(
+TypedLogicalOperator<AnonymousSourceLogicalOperator> AnonymousSourceLogicalOperator::create(
     Identifier type,
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
     std::unordered_map<Identifier, std::string> sourceConfig,
     std::unordered_map<Identifier, std::string> parserConfig)
 {
-    return TypedLogicalOperator<InlineSourceLogicalOperator>{
+    return TypedLogicalOperator<AnonymousSourceLogicalOperator>{
         std::move(type), std::move(sourceSchema), std::move(sourceConfig), std::move(parserConfig)};
 }
 
-Reflected Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(
-    const TypedLogicalOperator<InlineSourceLogicalOperator>&, const ReflectionContext&) const
+Reflected Reflector<TypedLogicalOperator<AnonymousSourceLogicalOperator>>::operator()(
+    const TypedLogicalOperator<AnonymousSourceLogicalOperator>&, const ReflectionContext&) const
 {
-    PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
+    PRECONDITION(
+        false, "no serialize for AnonymousSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();
 }
 
-TypedLogicalOperator<InlineSourceLogicalOperator>
-Unreflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
+TypedLogicalOperator<AnonymousSourceLogicalOperator>
+Unreflector<TypedLogicalOperator<AnonymousSourceLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
-    PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
+    PRECONDITION(
+        false, "no serialize for AnonymousSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();
 }
 
 }
 
-uint64_t std::hash<NES::InlineSourceLogicalOperator>::operator()(const NES::InlineSourceLogicalOperator& op) const noexcept
+uint64_t std::hash<NES::AnonymousSourceLogicalOperator>::operator()(const NES::AnonymousSourceLogicalOperator& op) const noexcept
 {
     return folly::hash::hash_combine_generic(
         NES::Hash{}, op.getSourceType(), op.getSourceSchema(), op.getSourceConfig(), op.getParserConfig());

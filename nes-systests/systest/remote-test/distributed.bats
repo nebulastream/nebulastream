@@ -100,14 +100,32 @@ function setup_distributed() {
   local topology="$1"
   local worker_count=$(yq '.workers | length' "$topology")
   local config_dir=$(mktemp -d)
+  local required_bytes=0
 
   for i in $(seq 0 $((worker_count - 1))); do
     local has_config=$(yq ".workers[$i] | has(\"config\")" "$topology")
     if [ "$has_config" = "true" ]; then
       local host=$(yq -r ".workers[$i].host" "$topology" | cut -d':' -f1)
       yq ".workers[$i].config" "$topology" > "$config_dir/$host.yaml"
+      # Each worker container reserves its declared total_memory_in_bytes on this single host, so accumulate the
+      # per-worker budgets (topologies that declare none contribute nothing) to check their sum against host RAM below.
+      if grep -q 'total_memory_in_bytes' "$config_dir/$host.yaml"; then
+        local budget=$(yq -r '.worker.total_memory_in_bytes' "$config_dir/$host.yaml")
+        required_bytes=$((required_bytes + budget))
+      fi
     fi
   done
+
+  # Every worker runs as a container on this single host, so the host must back the sum of all per-worker budgets
+  # declared in the topology YAML. Fail before starting the compose stack rather than letting a worker OOM mid-run.
+  if [ "$required_bytes" -gt 0 ]; then
+    local host_mem_bytes=$(awk '/^MemTotal:/ {printf "%d", $2 * 1024}' /proc/meminfo)
+    if [ "$host_mem_bytes" -lt "$required_bytes" ]; then
+      echo "# systest-remote-test needs ${required_bytes} bytes total across workers but host has only ${host_mem_bytes} bytes" >&3
+      rm -rf "$config_dir"
+      return 1
+    fi
+  fi
 
   # Copy config files into the test volume
   if [ -n "$(ls -A "$config_dir")" ]; then

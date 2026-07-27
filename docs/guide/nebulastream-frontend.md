@@ -27,6 +27,12 @@ NebulaStream provides three primary frontend interfaces:
 
 All interfaces support JSON output for programmatic access.
 
+### Version information
+
+Every non-test binary accepts `--version` / `-v` and prints build metadata (git commit incl. `+dirty`, build
+timestamp/type, sanitizer, compiler and effective flags, stdlib, log level, vcpkg baseline) — useful when reporting
+issues or debugging remote deployments.
+
 ---
 
 ## NES-REPL (Interactive REPL)

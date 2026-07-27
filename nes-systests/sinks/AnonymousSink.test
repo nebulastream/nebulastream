@@ -1,5 +1,5 @@
-# name: sinks/InlineSink.test
-# description: Creating sink inline
+# name: sinks/AnonymousSink.test
+# description: Creating anonymous sinks within queries
 # groups: [Sources]
 
 SELECT ID, VALUE, TIMESTAMP

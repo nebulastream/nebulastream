@@ -163,6 +163,15 @@ docker run \
     cmake -B build-docker
 ```
 
+### Unit-test binaries
+
+`NES_SPLIT_TEST_BINARIES` defaults to `ON` and builds one executable per unit-test suite. Set it to `OFF` to link all
+unit tests into `nes-unit-tests`, as CI does:
+
+```shell
+cmake -B build-docker -DNES_SPLIT_TEST_BINARIES=OFF
+```
+
 ### CLion Integration
 
 To integrate the container-based development environment you need to create a new docker-based toolchain. With the

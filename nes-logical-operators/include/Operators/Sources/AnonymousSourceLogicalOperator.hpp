@@ -35,33 +35,33 @@
 namespace NES
 {
 
-/// InlineSourceLogicalOperator objects represent physical sources in the logical query plan that are defined within a query as opposed to
-/// sources defined in separate create statements. The InlineSourceLogicalOperator objects contain all necessary configurations to
-/// build a SourceDescriptorLogicalOperator within the InlineSourceBindingPhase of the optimizer.
+/// AnonymousSourceLogicalOperator objects represent physical sources in the logical query plan that are defined within a query as opposed to
+/// sources defined in separate create statements. The AnonymousSourceLogicalOperator objects contain all necessary configurations to
+/// build a SourceDescriptorLogicalOperator within the AnonymousSourceBindingPhase of the optimizer.
 
-class InlineSourceLogicalOperator : public ManagedByOperator
+class AnonymousSourceLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit InlineSourceLogicalOperator(
+    explicit AnonymousSourceLogicalOperator(
         WeakLogicalOperator self,
         Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
         std::unordered_map<Identifier, std::string> sourceConfig,
         std::unordered_map<Identifier, std::string> parserConfig);
 
-    static TypedLogicalOperator<InlineSourceLogicalOperator> create(
+    static TypedLogicalOperator<AnonymousSourceLogicalOperator> create(
         Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
         std::unordered_map<Identifier, std::string> sourceConfig,
         std::unordered_map<Identifier, std::string> parserConfig);
 
-    [[nodiscard]] bool operator==(const InlineSourceLogicalOperator& rhs) const;
+    [[nodiscard]] bool operator==(const AnonymousSourceLogicalOperator& rhs) const;
 
-    [[nodiscard]] InlineSourceLogicalOperator withTraitSet(TraitSet traitSet) const;
+    [[nodiscard]] AnonymousSourceLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
 
-    [[nodiscard]] InlineSourceLogicalOperator withChildrenUnsafe(std::vector<LogicalOperator> children) const;
-    [[nodiscard]] InlineSourceLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
+    [[nodiscard]] AnonymousSourceLogicalOperator withChildrenUnsafe(std::vector<LogicalOperator> children) const;
+    [[nodiscard]] AnonymousSourceLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
     [[nodiscard]] static Schema<Field, Unordered> getOutputSchema();
@@ -69,7 +69,7 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] static std::string_view getName() noexcept;
 
-    [[nodiscard]] static InlineSourceLogicalOperator withInferredSchema();
+    [[nodiscard]] static AnonymousSourceLogicalOperator withInferredSchema();
 
     [[nodiscard]] Identifier getSourceType() const;
     [[nodiscard]] std::unordered_map<Identifier, std::string> getSourceConfig() const;
@@ -77,7 +77,7 @@ public:
     [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getSourceSchema() const;
 
 private:
-    static constexpr std::string_view NAME = "InlineSource";
+    static constexpr std::string_view NAME = "AnonymousSource";
 
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema;
     Identifier sourceType;
@@ -91,27 +91,27 @@ private:
     /// Set during schema inference
     std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
 
-    friend Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>;
+    friend Reflector<TypedLogicalOperator<AnonymousSourceLogicalOperator>>;
 };
 
 template <>
-struct Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>
+struct Reflector<TypedLogicalOperator<AnonymousSourceLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<InlineSourceLogicalOperator>&, const ReflectionContext& context) const;
+    Reflected operator()(const TypedLogicalOperator<AnonymousSourceLogicalOperator>&, const ReflectionContext& context) const;
 };
 
 template <>
-struct Unreflector<TypedLogicalOperator<InlineSourceLogicalOperator>>
+struct Unreflector<TypedLogicalOperator<AnonymousSourceLogicalOperator>>
 {
-    TypedLogicalOperator<InlineSourceLogicalOperator> operator()(const Reflected&, const ReflectionContext&) const;
+    TypedLogicalOperator<AnonymousSourceLogicalOperator> operator()(const Reflected&, const ReflectionContext&) const;
 };
 
-static_assert(LogicalOperatorConcept<InlineSourceLogicalOperator>);
+static_assert(LogicalOperatorConcept<AnonymousSourceLogicalOperator>);
 
 }
 
 template <>
-struct std::hash<NES::InlineSourceLogicalOperator>
+struct std::hash<NES::AnonymousSourceLogicalOperator>
 {
-    uint64_t operator()(const NES::InlineSourceLogicalOperator& op) const noexcept;
+    uint64_t operator()(const NES::AnonymousSourceLogicalOperator& op) const noexcept;
 };

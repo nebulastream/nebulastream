@@ -20,10 +20,10 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/RuleManager.hpp>
+#include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
+#include <Rules/Semantic/AnonymousSourceBindingRule.hpp>
 #include <Rules/Semantic/CalcTargetOrderRule.hpp>
 #include <Rules/Semantic/InferModelResolutionRule.hpp>
-#include <Rules/Semantic/InlineSinkBindingRule.hpp>
-#include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
@@ -40,9 +40,9 @@ SemanticAnalyzer::SemanticAnalyzer(
     : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), modelCatalog(std::move(modelCatalog))
 {
     RuleManager<LogicalPlan> ruleManager;
-    ruleManager.addRule(InlineSinkBindingRule{this->sinkCatalog});
+    ruleManager.addRule(AnonymousSinkBindingRule{this->sinkCatalog});
     ruleManager.addRule(SinkBindingRule{this->sinkCatalog});
-    ruleManager.addRule(InlineSourceBindingRule{this->sourceCatalog});
+    ruleManager.addRule(AnonymousSourceBindingRule{this->sourceCatalog});
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
     ruleManager.addRule(InferModelResolutionRule{this->modelCatalog});
     ruleManager.addRule(TypeInferenceRule{});

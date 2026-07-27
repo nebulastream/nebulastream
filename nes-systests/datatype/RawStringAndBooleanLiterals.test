@@ -1,0 +1,24 @@
+# name: datatype/RawStringAndBooleanLiterals.test
+# description: Raw string and boolean literals infer their data types
+# groups: [DataTypes, RawStringAndBooleanLiterals]
+
+CREATE LOGICAL SOURCE stream(text VARSIZED NOT NULL, flag BOOLEAN NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+hello,true
+other,false
+
+CREATE SINK sink(raw_string VARSIZED NOT NULL, numeric_string VARSIZED NOT NULL, raw_boolean BOOLEAN NOT NULL, lowercase_boolean BOOLEAN NOT NULL, string_comparison BOOLEAN NOT NULL, boolean_comparison BOOLEAN NOT NULL, explicit_string VARSIZED NOT NULL, explicit_boolean BOOLEAN NOT NULL) TYPE File;
+
+SELECT
+    'hello' AS raw_string,
+    '123' AS numeric_string,
+    TRUE AS raw_boolean,
+    false AS lowercase_boolean,
+    text == 'hello' AS string_comparison,
+    flag == TRUE AS boolean_comparison,
+    VARSIZED('explicit') AS explicit_string,
+    BOOLEAN(FALSE) AS explicit_boolean
+FROM stream WHERE text == 'hello' AND flag == TRUE AND FALSE == FALSE INTO sink;
+----
+hello,123,true,false,true,true,explicit,false

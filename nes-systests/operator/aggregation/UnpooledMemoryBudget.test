@@ -1,0 +1,26 @@
+# name: aggregation/UnpooledMemoryBudget.test
+# description: A tiny unpooled-memory budget makes a stateful (keyed aggregation) query fail cleanly with a buffer
+#              allocation error instead of letting unbounded operator state OOM-kill the worker.
+# groups: [Aggregation, WindowOperators]
+
+# Reserve only a tiny fraction (~1 KiB) of the total memory budget for unpooled buffers. Keyed-aggregation state
+# (slice cache / hash-map pages) is allocated from unpooled buffers, so it cannot be allocated within this budget and
+# the query fails cleanly with BufferAllocationFailure (3000) rather than exhausting physical memory and OOM-killing
+# the worker. total * fraction = 102400000 * 0.00001 = ~1024 bytes of unpooled memory.
+GlobalConfiguration worker.total_memory_in_bytes: [102400000]
+GlobalConfiguration worker.unpooled_memory_fraction: [0.00001]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1,1000
+12,1,1001
+4,1,1002
+1,2,2000
+11,2,2001
+16,2,2002
+
+CREATE SINK sinkStream(value_Sum UINT64 NOT NULL)  TYPE File;
+SELECT SUM(value) FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec) INTO sinkStream;
+----
+ERROR 3000

@@ -81,7 +81,7 @@ SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
 {
     const std::unordered_map<Identifier, std::string> sinkConfig{
         {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
-    return sinkCatalog.getInlineSink(std::nullopt, Identifier::parse("file"), Host("localhost"), sinkConfig, {}).value();
+    return sinkCatalog.getAnonymousSink(std::nullopt, Identifier::parse("file"), Host("localhost"), sinkConfig, {}).value();
 }
 }
 

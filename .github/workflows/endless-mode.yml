@@ -46,7 +46,8 @@ jobs:
           secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       - uses: ./.github/steps/prepare-github
         with:
-          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          images: |
+            nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
       - uses: ./.github/steps/run-in-container
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}

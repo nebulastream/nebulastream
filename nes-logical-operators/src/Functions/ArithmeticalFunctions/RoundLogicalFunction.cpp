@@ -67,6 +67,9 @@ LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema<Field, U
     {
         throw CannotInferStamp("Cannot apply round function on non-numeric input function {}", copy.child);
     }
+    /// Single-argument ROUND is not part of ISO/IEC 9075, but PostgreSQL, DuckDB, MySQL, and SQLite agree on preserving the input
+    /// type: floats stay floats and integers pass through unchanged (ROUND of an integer is the identity), so we do the same and
+    /// never cast to INT64. Ties round half away from zero (see RoundPhysicalFunction).
     copy.dataType = copy.child.getDataType();
     copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;

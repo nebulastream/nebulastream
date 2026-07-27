@@ -31,7 +31,8 @@ jobs:
     # updated dependencies.
     runs-on: [ self-hosted, linux, Build ]
     needs: [ get-dev-images ]
-    if: ${{ github.event.pull_request.merged == true && needs.get-dev-images.outputs.build-dependency == true }}
+    # `build-dependency` is a job output, i.e. a string.
+    if: ${{ github.event.pull_request.merged == true && needs.get-dev-images.outputs.build-dependency == 'true' }}
     steps:
       - uses: actions/checkout@v5
       - name: Get changed files
@@ -67,13 +68,13 @@ jobs:
               for sanitizer in none address thread undefined; do
                 docker buildx imagetools create -t nebulastream/nes-$image_tag:latest-$stdlib-$sanitizer \
                   nebulastream/nes-$image_tag:${{ needs.get-dev-images.outputs.image-tag }}-$stdlib-$sanitizer
-          
-                docker buildx imagetools create -t nebulastream/nes-$image_tag:latest-$sanitizer \
-                  nebulastream/nes-$image_tag:${{ needs.get-dev-images.outputs.image-tag }}-$sanitizer
-          
-                docker buildx imagetools create -t nebulastream/nes-$image_tag:latest-$stdlib-$sanitizer \
-                  nebulastream/nes-$image_tag:${{ needs.get-dev-images.outputs.image-tag }}-$stdlib-$sanitizer
               done
+            done
+
+            # the stdlib-less shortcut resolves to libcxx, matching the shortcut tags in get_dev_images.yml
+            for sanitizer in none address thread undefined; do
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:latest-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.get-dev-images.outputs.image-tag }}-libcxx-$sanitizer
             done
           done
           

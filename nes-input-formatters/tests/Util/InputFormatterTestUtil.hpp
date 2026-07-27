@@ -41,6 +41,7 @@
 #include <Interface/VariableSizedAccessRef.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -56,6 +57,12 @@
 
 namespace NES::InputFormatterTestUtil
 {
+static constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
+/// Spanning tuples are stored in unpooled buffers (allocated in page-sized chunks), so the unpooled budget must
+/// comfortably exceed a page even though these tests use tiny pooled buffers. We reserve a fixed, generous unpooled
+/// budget (only a cap, not eagerly allocated) and size the total so the pooled pool still keeps the requested buffers.
+static constexpr size_t UNPOOLED_MEMORY_BUDGET_IN_BYTES = 64 * 1024 * 1024;
+
 enum class TestDataTypes : uint8_t
 {
     INT8,
@@ -466,10 +473,24 @@ std::vector<std::vector<TupleBuffer>> createExpectedResults(const TestHandle<Tup
 template <typename TupleSchemaTemplate>
 TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>& testConfig)
 {
-    std::shared_ptr<BufferManager> testBufferManager
-        = BufferManager::create(testConfig.sizeOfRawBuffers, 2 * testConfig.numRequiredBuffers);
-    std::shared_ptr<BufferManager> formattedBufferManager
-        = BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
+    /// One extra buffer of headroom absorbs the floor rounding of pooled bytes -> buffer count.
+    const size_t poolBufferCount = static_cast<size_t>(2 * testConfig.numRequiredBuffers) + 1;
+
+    const size_t rawTotalMemory = (poolBufferCount * testConfig.sizeOfRawBuffers) + UNPOOLED_MEMORY_BUDGET_IN_BYTES;
+    std::shared_ptr<BufferManager> testBufferManager = BufferManager::create(
+        rawTotalMemory,
+        static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES) / static_cast<double>(rawTotalMemory),
+        BUFFER_ALIGNMENT,
+        testConfig.sizeOfRawBuffers,
+        std::make_shared<NesDefaultMemoryAllocator>());
+
+    const size_t formattedTotalMemory = (poolBufferCount * testConfig.sizeOfFormattedBuffers) + UNPOOLED_MEMORY_BUDGET_IN_BYTES;
+    std::shared_ptr<BufferManager> formattedBufferManager = BufferManager::create(
+        formattedTotalMemory,
+        static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES) / static_cast<double>(formattedTotalMemory),
+        BUFFER_ALIGNMENT,
+        testConfig.sizeOfFormattedBuffers,
+        std::make_shared<NesDefaultMemoryAllocator>());
 
     auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(1);
     auto schema = createSchema(testConfig.testSchema);

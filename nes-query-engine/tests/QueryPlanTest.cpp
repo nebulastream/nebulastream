@@ -53,7 +53,7 @@ namespace NES::Testing
 {
 using namespace NES;
 
-QueryId randomQueryId()
+static QueryId randomQueryId()
 {
     return QueryId::createLocal(LocalQueryId(generateUUID()));
 }

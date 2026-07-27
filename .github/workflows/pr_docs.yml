@@ -1,0 +1,15 @@
+name: NES PR Docs CI
+description: |
+  Reusable documentation pipeline for pull requests. Called by pr.yml (via `uses:`) only when the
+  classify gate detects documentation changes. Companion to pr_code.yml.
+  The "Docs CI Done" required-status gate lives in pr.yml, not here.
+on:
+  workflow_call:
+
+jobs:
+  # Placeholder so this reusable workflow is valid until a real docs check exists. PR #1745 replaces with something useful
+  no-op:
+    name: "Docs checks (none yet)"
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "No docs checks configured yet."

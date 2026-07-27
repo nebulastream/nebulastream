@@ -130,7 +130,7 @@ public:
     }
 };
 
-/// A simple Selection → InlineSource plan. Verify all operators get CHOICELESS.
+/// A simple Selection → AnonymousSource plan. Verify all operators get CHOICELESS.
 TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
 {
     SourceCatalog sourceCatalog;

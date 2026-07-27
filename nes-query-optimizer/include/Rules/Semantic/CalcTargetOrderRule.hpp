@@ -22,7 +22,7 @@
 
 namespace NES
 {
-/// Calculates the schema of inline sinks if no schema was specified deterministically.
+/// Calculates the schema of anonymous sinks if no schema was specified deterministically.
 /// The default behavior for every operator is the following:
 /// 1. For any child (in the order of the children): For any of its output fields (In the output order determined for the child):
 ///     If the current operator outputs a fields that has the same name, append it to the list of fields

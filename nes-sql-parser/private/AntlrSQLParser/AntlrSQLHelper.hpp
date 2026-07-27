@@ -43,7 +43,7 @@ class AntlrSQLHelper
     std::vector<LogicalFunction> whereClauses; ///where and having clauses need to be accessed in reverse
     std::vector<LogicalFunction> havingClauses;
     std::optional<Identifier> source;
-    std::optional<std::pair<Identifier, ConfigMap>> inlineSourceConfig;
+    std::optional<std::pair<Identifier, ConfigMap>> anonymousSourceConfig;
     std::vector<Projection> projectionBuilder;
 
 public:
@@ -112,8 +112,8 @@ public:
     void addHavingClause(LogicalFunction expressionNode);
     void setSource(Identifier sourceName);
     [[nodiscard]] std::optional<Identifier> getSource() const;
-    void setInlineSource(const Identifier& type, const ConfigMap& parameters);
-    [[nodiscard]] std::optional<std::pair<Identifier, ConfigMap>> getInlineSourceConfig();
+    void setAnonymousSource(const Identifier& type, const ConfigMap& parameters);
+    [[nodiscard]] std::optional<std::pair<Identifier, ConfigMap>> getAnonymousSourceConfig();
     void addProjection(std::optional<Identifier>, LogicalFunction);
 };
 }

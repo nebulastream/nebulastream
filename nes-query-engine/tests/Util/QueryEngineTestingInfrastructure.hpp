@@ -27,6 +27,7 @@
 #include <optional>
 #include <ostream>
 #include <random>
+#include <semaphore>
 #include <stop_token>
 #include <thread>
 #include <tuple>
@@ -40,6 +41,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/MemoryUtils.hpp>
@@ -68,6 +70,11 @@
 namespace NES
 {
 static constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
+static constexpr uint32_t POOLED_BUFFER_SIZE = 8192;
+static constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
+static constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
+static constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+static constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
 static constexpr size_t NUMBER_OF_TUPLES_PER_BUFFER = 23;
 static constexpr size_t NUMBER_OF_BUFFERS_PER_SOURCE = 300;
 static constexpr size_t NUMBER_OF_THREADS = 2;
@@ -207,21 +214,32 @@ public:
     std::atomic<std::chrono::milliseconds> stopDuration = std::chrono::milliseconds(0);
     std::atomic_bool failOnStart = false;
     std::atomic_bool failOnStop = false;
+    std::atomic_bool blockOnStart = false;
     std::atomic<size_t> throwOnNthInvocation = -1;
     std::atomic<size_t> repeatCount = 0;
     std::atomic<size_t> repeatCountDuringStop = 0;
 
     std::promise<void> start;
+    std::promise<void> startEntered;
     std::promise<void> stop;
     std::promise<void> destruction;
     std::shared_future<void> startFuture = start.get_future().share();
+    std::shared_future<void> startEnteredFuture = startEntered.get_future().share();
     std::shared_future<void> stopFuture = stop.get_future().share();
     std::shared_future<void> destructionFuture = destruction.get_future().share();
+    std::binary_semaphore startGate{0};
 
     /// Back reference this is set during construction of a TestPipeline
     ExecutablePipelineStage* stage = nullptr;
 
     [[nodiscard]] testing::AssertionResult waitForStart() const { return waitForFuture(startFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
+
+    [[nodiscard]] testing::AssertionResult waitUntilStartEntered() const
+    {
+        return waitForFuture(startEnteredFuture, DEFAULT_LONG_AWAIT_TIMEOUT);
+    }
+
+    void unblockStart() { startGate.release(); }
 
     [[nodiscard]] testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
 
@@ -257,6 +275,11 @@ struct TestPipeline final : ExecutablePipelineStage
 
     void start(PipelineExecutionContext&) override
     {
+        if (controller->blockOnStart)
+        {
+            controller->startEntered.set_value();
+            controller->startGate.acquire();
+        }
         std::this_thread::sleep_for(controller->startDuration.load());
         controller->start.set_value();
         if (controller->failOnStart)
@@ -498,7 +521,12 @@ struct TestingHarness
     explicit TestingHarness(size_t numberOfThreads, size_t numberOfBuffers);
     explicit TestingHarness();
 
-    std::shared_ptr<BufferManager> bm = BufferManager::create();
+    std::shared_ptr<BufferManager> bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     std::shared_ptr<TestQueryStatisticListener> statListener = std::make_shared<TestQueryStatisticListener>();
     ExpectStats stats{statListener};
     std::shared_ptr<QueryStatusListener> status = std::make_shared<QueryStatusListener>();

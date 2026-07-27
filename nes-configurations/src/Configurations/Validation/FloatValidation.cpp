@@ -15,17 +15,22 @@
 #include <Configurations/Validation/FloatValidation.hpp>
 
 #include <regex>
+#include <string>
 
 namespace NES
 {
 
 bool FloatValidation::isValid(const std::string& parameter) const
 {
-    std::regex numberRegex(R"(^\d*\.?\d+$)");
+    /// Checking if the parameter can be parsed to a floating point
+    const std::regex numberRegex(R"(^\d*\.?\d+$)");
     if (!std::regex_match(parameter, numberRegex))
     {
         return false;
     }
-    return true;
+
+    /// Checking if the values lies between min and max
+    const double parsedNumber = std::stod(parameter);
+    return parsedNumber >= min && parsedNumber <= max;
 }
 }

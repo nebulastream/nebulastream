@@ -1,9 +1,8 @@
 name: NES PR CI
 description: |
-  The following pipeline is meant to run for every PR.
-  It will also apply the format check. If these steps are successful, it will try to build the PR and run the tests.
-  If this pr is called with act, it has to be used with a custom event.json and called via `act -e event.json`.
-  Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
+  Orchestrator for every pull request. Runs the classify gate once, then dispatches the reusable
+  code pipeline (pr_code.yml) and/or docs pipeline (pr_docs.yml) depending on what changed, and owns
+  the two required-status gates ("Code CI Done" / "Docs CI Done").
 on:
   pull_request:
     types: [ synchronize, opened, reopened, edited ]
@@ -13,99 +12,108 @@ on:
 # cancel previous runs of same PR / branch.
 # In merge_group runs github.head_ref is empty, so fall back to github.ref (the unique
 # gh-readonly-queue ref) to avoid queued runs cancelling each other.
-# A title/body edit ('edited' without a base change) is skipped by the get-dev-images gate, but
-# concurrency is evaluated before that gate — so isolate those runs in a unique group, otherwise
-# cancel-in-progress would kill a legit in-progress build before the skip even happens.
+# A title/body edit ('edited' without a base change) dispatches nothing (see the code/docs job
+# gates), but concurrency is evaluated before those gates — so isolate those runs in a unique group,
+# otherwise cancel-in-progress would kill a legit in-progress build before the skip even happens.
 concurrency:
   # run_id suffix gives no-op edits a private group; drop it if 'edited' is ever removed from triggers.
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-pr${{ (github.event.action == 'edited' && github.event.changes.base == null) && format('-noop-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 jobs:
-  get-dev-images:
-    # 'edited' fires on title/body/base changes; only rerun the pipeline when the base branch changed.
-    if: github.event.action != 'edited' || github.event.changes.base != null
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      branch-name: ${{ github.head_ref || github.sha }}
-      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+  # Classify the PR diff once (see .github/ci/full-ci-skip-paths.txt) and hand the result to the two
+  # pipelines below. A docs-only PR skips pr_code.yml; a code-only PR skips pr_docs.yml.
+  classify:
+    runs-on: ubuntu-24.04
+    outputs:
+      hasCodeChanges: ${{ steps.classify.outputs.hasCodeChanges }}
+      hasDocChanges: ${{ steps.classify.outputs.hasDocChanges }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history so tj-actions can diff base_sha..sha; a shallow clone yields an empty diff.
+          fetch-depth: 0
+      - id: classify
+        uses: ./.github/actions/classify-pr-changes
+        with:
+          base-sha: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          head-sha: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
 
-  smoke-tests:
-    needs: [ get-dev-images ]
-    uses: ./.github/workflows/smoke-tests.yml
-    with:
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      number_of_commits: ${{ github.event.pull_request.commits || -1 }}
-    secrets: inherit
-
-  build-and-test:
-    needs: [ get-dev-images, smoke-tests ]
-    name: "Run build and test"
-    uses: ./.github/workflows/build_and_test.yml
-    secrets: inherit
-    with:
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      matrix_config: pr_matrix.yaml
-
-  large-tests:
-    needs: [ get-dev-images, smoke-tests ]
-    name: "Run large scale tests"
-    uses: ./.github/workflows/large_test.yml
-    secrets: inherit
-    with:
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-
-  run_code_coverage:
-    needs: [ get-dev-images, smoke-tests ]
-    name: "Run Code Coverage"
-    uses: ./.github/workflows/code_coverage.yml
-    with:
-      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+  # 'edited' fires on title/body/base changes; only (re)dispatch a pipeline when the base branch
+  # changed. Also skipped when the classify gate found no changes of that kind.
+  code:
+    needs: [ classify ]
+    if: ${{ (github.event.action != 'edited' || github.event.changes.base != null) && needs.classify.outputs.hasCodeChanges == 'true' }}
+    uses: ./.github/workflows/pr_code.yml
     secrets: inherit
 
-  run_endless_mode:
-    needs: [ get-dev-images, smoke-tests ]
-    name: "Run Endless Mode"
-    uses: ./.github/workflows/endless-mode.yml
-    secrets: inherit
-    with:
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-
-  test-nebuli-and-single-node-worker:
-    needs: [ get-dev-images, smoke-tests ]
-    name: "E2E Test using Nebuli and SingleNodeWorker"
-    strategy:
-      matrix:
-        arch: [ x64 ]
-    uses: ./.github/workflows/execute_query.yml
-    secrets: inherit
-    with:
-      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      runtime_seconds: '$((1*60))'
-      arch: ${{ matrix.arch }}
-
-  clang-tidy-diff:
-    if: github.event_name == 'merge_group' || github.event.pull_request.head.repo.fork == false
-    needs: [ get-dev-images, smoke-tests ]
-    uses: ./.github/workflows/clang_tidy_diff.yml
-    with:
-      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      base_sha: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
-      number_of_commits: ${{ github.event.pull_request.commits || -1 }}
+  docs:
+    needs: [ classify ]
+    if: ${{ (github.event.action != 'edited' || github.event.changes.base != null) && needs.classify.outputs.hasDocChanges == 'true' }}
+    uses: ./.github/workflows/pr_docs.yml
     secrets: inherit
 
-  nix-build:
-    needs: [ smoke-tests ]
-    name: "Run Nix Build"
-    uses: ./.github/workflows/nix-build.yml
-    secrets: inherit
-    with:
-      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+  # --- Required-check gates ---------------------------------------------------------------------
+  # One required status check per pipeline. Each always runs (if: always()) so the context is always
+  # created under a stable, top-level name — set "Code CI Done" / "Docs CI Done" as the required
+  # status checks. Because they are top-level jobs here (not inside the reusable workflows) the
+  # context names stay unprefixed; the reusable workflows' own jobs show up as "code / ..." etc.
+  #
+  # Each name is dynamic: a no-op title/body edit publishes under "... (skipped)", which is NOT the
+  # required context — so editing the PR title (which dispatches nothing) can't turn a gate green
+  # over failing code. The real run's green status on the same head SHA stays valid.
+  code-ci-done:
+    name: ${{ (github.event.action == 'edited' && github.event.changes.base == null) && 'Code CI Done (skipped)' || 'Code CI Done' }}
+    needs: [ classify, code ]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Gate
+        env:
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          HAS_CODE: ${{ needs.classify.outputs.hasCodeChanges }}
+          # A title/body 'edited' event legitimately dispatches nothing; see the code job gate.
+          NOOP_EDIT: ${{ github.event.action == 'edited' && github.event.changes.base == null }}
+          CODE_RESULT: ${{ needs.code.result }}
+        run: |
+          # Fail-safe order: a broken classify must FAIL the gate, not silently pass it.
+          if [ "$CLASSIFY_RESULT" != "success" ]; then
+            echo "::error::classify did not succeed: $CLASSIFY_RESULT"; exit 1
+          fi
+          if [ "$HAS_CODE" != "true" ]; then
+            echo "No code changes — code CI legitimately skipped; passing."; exit 0
+          fi
+          if [ "$NOOP_EDIT" = "true" ]; then
+            echo "No-op PR edit — nothing dispatched; passing."; exit 0
+          fi
+          if [ "$CODE_RESULT" = "success" ]; then
+            echo "Code CI succeeded."; exit 0
+          fi
+          echo "::error::Code CI did not succeed: $CODE_RESULT"; exit 1
+
+  docs-ci-done:
+    name: ${{ (github.event.action == 'edited' && github.event.changes.base == null) && 'Docs CI Done (skipped)' || 'Docs CI Done' }}
+    needs: [ classify, docs ]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Gate
+        env:
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          HAS_DOCS: ${{ needs.classify.outputs.hasDocChanges }}
+          NOOP_EDIT: ${{ github.event.action == 'edited' && github.event.changes.base == null }}
+          DOCS_RESULT: ${{ needs.docs.result }}
+        run: |
+          if [ "$CLASSIFY_RESULT" != "success" ]; then
+            echo "::error::classify did not succeed: $CLASSIFY_RESULT"; exit 1
+          fi
+          if [ "$HAS_DOCS" != "true" ]; then
+            echo "No doc changes — docs CI legitimately skipped; passing."; exit 0
+          fi
+          if [ "$NOOP_EDIT" = "true" ]; then
+            echo "No-op PR edit — nothing dispatched; passing."; exit 0
+          fi
+          if [ "$DOCS_RESULT" = "success" ]; then
+            echo "Docs CI succeeded."; exit 0
+          fi
+          echo "::error::Docs CI did not succeed: $DOCS_RESULT"; exit 1

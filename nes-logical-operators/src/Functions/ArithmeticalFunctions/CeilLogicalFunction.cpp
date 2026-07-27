@@ -53,6 +53,9 @@ LogicalFunction CeilLogicalFunction::withInferredDataType(const Schema<Field, Un
     {
         throw CannotInferStamp("Cannot apply ceil function on non-numeric input function {}", copy.child);
     }
+    /// ISO/IEC 9075-2 (<numeric value function>): CEILING of an exact numeric type is exact numeric, CEILING of an approximate numeric
+    /// type is approximate numeric. PostgreSQL, MySQL, and SQLite implement this by preserving the input type: floats stay floats and
+    /// integers pass through unchanged (CEIL of an integer is the identity), so we do the same and never cast to INT64.
     copy.dataType = copy.child.getDataType();
     return copy;
 };

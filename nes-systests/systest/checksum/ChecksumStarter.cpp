@@ -19,9 +19,15 @@
 #include <string>
 #include <argparse/argparse.hpp>
 #include <Checksum.hpp>
+#include <Version.hpp>
 
 int main(int argc, char* argv[])
 {
+    if (NES::hasVersionFlag(argc, argv))
+    {
+        NES::printVersion("checksum");
+        return 0;
+    }
     argparse::ArgumentParser program(
         R"(Checksum Tool.
 This Tool calculates a checksum from a CSV file.

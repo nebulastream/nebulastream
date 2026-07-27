@@ -31,6 +31,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 
@@ -46,6 +47,41 @@ DataType AbsoluteLogicalFunction::getDataType() const
     return dataType;
 };
 
+namespace
+{
+/// SQL semantics for ABS() result types (nullability is propagated by the caller):
+/// - Floating-point input keeps its type (magnitude is always representable).
+/// - Unsigned integer input keeps its type (the operation is a no-op).
+/// - Signed integer input is widened by one rank so the absolute value of the type's minimum value is representable
+///   (e.g. ABS(INT8 -128) = INT16 128). INT64 has no wider type, so it stays INT64 and ABS(INT64_MIN) overflows at runtime.
+DataType::Type inferAbsoluteResultType(const DataType::Type inputType)
+{
+    switch (inputType)
+    {
+        case DataType::Type::INT8:
+            return DataType::Type::INT16;
+        case DataType::Type::INT16:
+            return DataType::Type::INT32;
+        case DataType::Type::INT32:
+            return DataType::Type::INT64;
+        case DataType::Type::INT64:
+            /// INT64 cannot be widened further; unsigned integers and floats keep their type.
+        case DataType::Type::UINT8:
+        case DataType::Type::UINT16:
+        case DataType::Type::UINT32:
+        case DataType::Type::UINT64:
+        case DataType::Type::FLOAT32:
+        case DataType::Type::FLOAT64:
+            return inputType;
+        case DataType::Type::BOOLEAN:
+        case DataType::Type::CHAR:
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+            throw InferenceRuntimeFailure("Should not infer absolute type for {}", magic_enum::enum_name(inputType));
+    }
+}
+}
+
 LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     AbsoluteLogicalFunction copy = *this;
@@ -55,6 +91,8 @@ LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema<Field
         throw CannotInferStamp("Cannot apply absolute function on non-numeric input function {}", copy.child);
     }
     copy.dataType = copy.child.getDataType();
+    /// Widen signed-integer result types by one rank so ABS() of the minimum value is representable.
+    copy.dataType.type = inferAbsoluteResultType(copy.dataType.type);
     return copy;
 };
 

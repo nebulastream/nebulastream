@@ -115,7 +115,7 @@ std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
         }
         return fmt::format("SINK(opId: {}, sinkName: {})", id, sinkName);
     }
-    if (sinkDescriptor.has_value() && sinkDescriptor->isInline())
+    if (sinkDescriptor.has_value() && sinkDescriptor->isAnonymous())
     {
         return fmt::format("SINK({})", sinkDescriptor->getSinkType());
     }
@@ -136,12 +136,12 @@ void SinkLogicalOperator::inferLocalSchema()
     auto unboundInputSchema = unbind(inputSchema);
     /// Set unordered schema for sinks not declared with a target schema.
     /// Schema<Field, Unordered> order is determined in a stage
-    if (std::holds_alternative<InlineSinkDescriptor>(sinkDescriptor->underlying))
+    if (std::holds_alternative<AnonymousSinkDescriptor>(sinkDescriptor->underlying))
     {
-        auto& inlineSinkDescriptor = std::get<InlineSinkDescriptor>(sinkDescriptor->underlying);
-        if (std::holds_alternative<std::monostate>(inlineSinkDescriptor.getSchema()))
+        auto& anonymousSinkDescriptor = std::get<AnonymousSinkDescriptor>(sinkDescriptor->underlying);
+        if (std::holds_alternative<std::monostate>(anonymousSinkDescriptor.getSchema()))
         {
-            inlineSinkDescriptor.schema = std::make_shared<const Schema<UnqualifiedUnboundField, Unordered>>(
+            anonymousSinkDescriptor.schema = std::make_shared<const Schema<UnqualifiedUnboundField, Unordered>>(
                 unboundInputSchema | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>());
         }
     }

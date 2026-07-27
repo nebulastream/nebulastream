@@ -79,7 +79,7 @@ public:
 
     [[nodiscard]] std::optional<SourceDescriptor> getPhysicalSource(PhysicalSourceId physicalSourceId) const;
 
-    [[nodiscard]] std::optional<SourceDescriptor> getInlineSource(
+    [[nodiscard]] std::optional<SourceDescriptor> getAnonymousSource(
         const Identifier& sourceType,
         const Schema<UnqualifiedUnboundField, Ordered>& schema,
         Host host,

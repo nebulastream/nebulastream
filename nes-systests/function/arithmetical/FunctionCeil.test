@@ -7,9 +7,26 @@ CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23.2,42.45
 
+CREATE LOGICAL SOURCE streamNegative(f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR streamNegative TYPE File;
+ATTACH INLINE
+-2.5,-2.5
+-1.5,-9.98
+
+CREATE LOGICAL SOURCE streamNull(i64 INT64, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR streamNull TYPE File;
+ATTACH INLINE
+-5,-2.5
+,
+
 CREATE SINK sinkStream(i8 INT8 NOT NULL, i16 INT16 NOT NULL, i32 INT32 NOT NULL, i64 INT64 NOT NULL, u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, u32 UINT32 NOT NULL, u64 UINT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL)  TYPE File;
+CREATE SINK sinkNegative(f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkNull(i64 INT64, f64 FLOAT64) TYPE File;
 
 
+# Use CEIL across different data types.
+# CEIL preserves the input type (SQL standard: exact numeric stays exact numeric, approximate stays approximate):
+# integers pass through unchanged, floats stay FLOAT32/FLOAT64, as the sink schema asserts.
 SELECT
     CEIL(i8) AS i8,
     CEIL(i16) AS i16,
@@ -26,3 +43,21 @@ SELECT
 FROM stream INTO sinkStream;
 ----
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,24,43
+
+# CEIL rounds negative floats toward zero
+SELECT
+    CEIL(f32) AS f32,
+    CEIL(f64) AS f64
+FROM streamNegative INTO sinkNegative;
+----
+-2,-2
+-1,-9
+
+# CEIL propagates NULL and is the identity on integers
+SELECT
+    CEIL(i64) AS i64,
+    CEIL(f64) AS f64
+FROM streamNull INTO sinkNull;
+----
+-5,-2
+NULL,NULL

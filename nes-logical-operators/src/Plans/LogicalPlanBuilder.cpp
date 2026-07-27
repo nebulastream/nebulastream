@@ -43,9 +43,9 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
-#include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
+#include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/InlineSourceLogicalOperator.hpp>
+#include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -79,15 +79,15 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 }
 
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
-    Identifier inlineSourceType,
+    Identifier anonymousSourceType,
     Schema<UnqualifiedUnboundField, Ordered> schema,
     std::unordered_map<Identifier, std::string> sourceConfig,
     std::unordered_map<Identifier, std::string> parserConfig)
 {
     return LogicalPlan(
         INVALID_QUERY_ID,
-        {InlineSourceLogicalOperator::create(
-            std::move(inlineSourceType), std::move(schema), std::move(sourceConfig), std::move(parserConfig))});
+        {AnonymousSourceLogicalOperator::create(
+            std::move(anonymousSourceType), std::move(schema), std::move(sourceConfig), std::move(parserConfig))});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
@@ -207,7 +207,7 @@ LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& 
     return promoteOperatorToRoot(queryPlan, SinkLogicalOperator::create(std::move(sinkName)));
 }
 
-LogicalPlan LogicalPlanBuilder::addInlineSink(
+LogicalPlan LogicalPlanBuilder::addAnonymousSink(
     Identifier type,
     std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
     std::unordered_map<Identifier, std::string> sinkConfig,
@@ -215,7 +215,8 @@ LogicalPlan LogicalPlanBuilder::addInlineSink(
     const LogicalPlan& queryPlan)
 {
     return promoteOperatorToRoot(
-        queryPlan, InlineSinkLogicalOperator::create(std::move(type), std::move(schema), std::move(sinkConfig), std::move(formatConfig)));
+        queryPlan,
+        AnonymousSinkLogicalOperator::create(std::move(type), std::move(schema), std::move(sinkConfig), std::move(formatConfig)));
 }
 
 LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic)

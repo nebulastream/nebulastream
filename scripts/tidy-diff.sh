@@ -34,6 +34,17 @@
 #   Note: when building via the Docker toolchain this variable is not forwarded
 #   into the container automatically, so pass it in yourself (e.g. add
 #   `-e NES_TIDY_DIFF_BASE=...` to the docker run invocation).
+#
+# Exported fixes (optional, used by CI):
+#   If NES_TIDY_DIFF_EXPORT_FIXES is set to a file path, it is passed through to
+#   clang-tidy-diff's -export-fixes so the recorded fixes YAML can feed the PR
+#   review-comment bot. When unset (the local developer flow) no fixes file is
+#   written and the behavior is unchanged.
+#
+# Check configuration (optional, used by CI):
+#   If NES_TIDY_DIFF_CONFIG_FILE is set, it is forwarded as -config-file so a
+#   focused configuration can replace the default .clang-tidy (e.g. the CI
+#   fast-fail pre-check that only looks for duplicate includes).
 
 set -eo pipefail
 
@@ -82,6 +93,16 @@ echo
 TIDY_ARGS=(-clang-tidy-binary "$CLANG_TIDY_BINARY" -p1 -path "$COMPILE_DB_DIR" -use-color -j "$(nproc 2>/dev/null || echo 1)")
 if [ "$MODE" = "fix" ]; then
     TIDY_ARGS+=(-fix)
+fi
+# Optionally record the fixes YAML (see header comment); CI feeds this to the
+# PR review-comment bot.
+if [ -n "${NES_TIDY_DIFF_EXPORT_FIXES:-}" ]; then
+    mkdir -p "$(dirname "$NES_TIDY_DIFF_EXPORT_FIXES")"
+    TIDY_ARGS+=(-export-fixes "$NES_TIDY_DIFF_EXPORT_FIXES")
+fi
+# Optionally replace the default .clang-tidy with a focused configuration (see header comment).
+if [ -n "${NES_TIDY_DIFF_CONFIG_FILE:-}" ]; then
+    TIDY_ARGS+=(-config-file "$NES_TIDY_DIFF_CONFIG_FILE")
 fi
 
 # Report file: we want color on stdout but a clean (ANSI-free) report on disk.

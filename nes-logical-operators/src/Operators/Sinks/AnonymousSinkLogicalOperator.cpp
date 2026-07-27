@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
+#include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -44,7 +44,7 @@
 namespace NES
 {
 
-InlineSinkLogicalOperator::InlineSinkLogicalOperator(
+AnonymousSinkLogicalOperator::AnonymousSinkLogicalOperator(
     WeakLogicalOperator self,
     Identifier sinkType,
     std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
@@ -58,75 +58,75 @@ InlineSinkLogicalOperator::InlineSinkLogicalOperator(
 {
 }
 
-TypedLogicalOperator<InlineSinkLogicalOperator> InlineSinkLogicalOperator::create(
+TypedLogicalOperator<AnonymousSinkLogicalOperator> AnonymousSinkLogicalOperator::create(
     Identifier sinkType,
     std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
     std::unordered_map<Identifier, std::string> config,
     std::unordered_map<Identifier, std::string> formatConfig)
 {
-    return TypedLogicalOperator<InlineSinkLogicalOperator>{
+    return TypedLogicalOperator<AnonymousSinkLogicalOperator>{
         std::move(sinkType), std::move(schema), std::move(config), std::move(formatConfig)};
 }
 
-InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema()
+AnonymousSinkLogicalOperator AnonymousSinkLogicalOperator::withInferredSchema()
 {
     PRECONDITION(false, "Schema inference should happen on SinkLogicalOperator");
     std::unreachable();
 }
 
-Identifier InlineSinkLogicalOperator::getSinkType() const
+Identifier AnonymousSinkLogicalOperator::getSinkType() const
 {
     return sinkType;
 }
 
-std::unordered_map<Identifier, std::string> InlineSinkLogicalOperator::getSinkConfig() const
+std::unordered_map<Identifier, std::string> AnonymousSinkLogicalOperator::getSinkConfig() const
 {
     return sinkConfig;
 }
 
-std::optional<Schema<UnqualifiedUnboundField, Ordered>> InlineSinkLogicalOperator::getTargetSchema() const
+std::optional<Schema<UnqualifiedUnboundField, Ordered>> AnonymousSinkLogicalOperator::getTargetSchema() const
 {
     return targetSchema;
 }
 
-std::unordered_map<Identifier, std::string> InlineSinkLogicalOperator::getFormatConfig() const
+std::unordered_map<Identifier, std::string> AnonymousSinkLogicalOperator::getFormatConfig() const
 {
     return formatConfig;
 }
 
-bool InlineSinkLogicalOperator::operator==(const InlineSinkLogicalOperator& rhs) const
+bool AnonymousSinkLogicalOperator::operator==(const AnonymousSinkLogicalOperator& rhs) const
 {
     return this->sinkType == rhs.sinkType && this->targetSchema == rhs.targetSchema && this->sinkConfig == rhs.sinkConfig
         && this->formatConfig == rhs.formatConfig;
 }
 
-std::string InlineSinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
+std::string AnonymousSinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("INLINE_SINK(opId: {}, name: {}, traitSet: {})", id, NAME, traitSet.explain(verbosity));
+        return fmt::format("ANONYMOUS_SINK(opId: {}, name: {}, traitSet: {})", id, NAME, traitSet.explain(verbosity));
     }
-    return fmt::format("INLINE_SINK({})", NAME);
+    return fmt::format("ANONYMOUS_SINK({})", NAME);
 }
 
-std::string_view InlineSinkLogicalOperator::getName() noexcept
+std::string_view AnonymousSinkLogicalOperator::getName() noexcept
 {
     return NAME;
 }
 
-InlineSinkLogicalOperator InlineSinkLogicalOperator::withTraitSet(TraitSet traitSet) const
+AnonymousSinkLogicalOperator AnonymousSinkLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
     copy.traitSet = std::move(traitSet);
     return copy;
 }
 
-TraitSet InlineSinkLogicalOperator::getTraitSet() const
+TraitSet AnonymousSinkLogicalOperator::getTraitSet() const
 {
     return traitSet;
 }
 
-InlineSinkLogicalOperator InlineSinkLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
+AnonymousSinkLogicalOperator AnonymousSinkLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
     copy.children = std::move(children);
@@ -134,7 +134,7 @@ InlineSinkLogicalOperator InlineSinkLogicalOperator::withChildrenUnsafe(std::vec
 }
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static, performance-unnecessary-value-param)
-InlineSinkLogicalOperator InlineSinkLogicalOperator::withChildren(std::vector<LogicalOperator>) const
+AnonymousSinkLogicalOperator AnonymousSinkLogicalOperator::withChildren(std::vector<LogicalOperator>) const
 {
     PRECONDITION(false, "Schema inference should happen on SinkLogicalOperator");
     std::unreachable();
@@ -142,34 +142,34 @@ InlineSinkLogicalOperator InlineSinkLogicalOperator::withChildren(std::vector<Lo
 
 /// NOLINTEND(readability-convert-member-functions-to-static, performance-unnecessary-value-param)
 
-Schema<Field, Unordered> InlineSinkLogicalOperator::getOutputSchema()
+Schema<Field, Unordered> AnonymousSinkLogicalOperator::getOutputSchema()
 {
     INVARIANT(false, "SinkLogicalOperator does not define an output schema");
     std::unreachable();
 }
 
-std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
+std::vector<LogicalOperator> AnonymousSinkLogicalOperator::getChildren() const
 {
     return children;
 }
 
-Reflected Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(
-    const TypedLogicalOperator<InlineSinkLogicalOperator>&, const ReflectionContext&) const
+Reflected Reflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>::operator()(
+    const TypedLogicalOperator<AnonymousSinkLogicalOperator>&, const ReflectionContext&) const
 {
-    PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
+    PRECONDITION(false, "no serialize for AnonymousSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();
 }
 
-TypedLogicalOperator<InlineSinkLogicalOperator>
-Unreflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
+TypedLogicalOperator<AnonymousSinkLogicalOperator>
+Unreflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
-    PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
+    PRECONDITION(false, "no serialize for AnonymousSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();
 }
 
 }
 
-uint64_t std::hash<NES::InlineSinkLogicalOperator>::operator()(const NES::InlineSinkLogicalOperator& op) const noexcept
+uint64_t std::hash<NES::AnonymousSinkLogicalOperator>::operator()(const NES::AnonymousSinkLogicalOperator& op) const noexcept
 {
     return folly::hash::hash_combine_generic(NES::Hash{}, op.getTargetSchema(), op.getSinkType(), op.getSinkConfig());
 }

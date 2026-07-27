@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <limits>
 #include <string>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 
@@ -23,7 +24,14 @@ namespace NES
 /// @brief This class implements validation for parameters that should represent non-negative floats
 class FloatValidation : public ConfigurationValidation
 {
+    double min;
+    double max;
+
 public:
+    FloatValidation(const double min, const double max) : min(min), max(max) { }
+
+    FloatValidation() : min(std::numeric_limits<double>::lowest()), max(std::numeric_limits<double>::max()) { };
+
     /// @brief Method to check the validity of a parameter as a non-negative float
     bool isValid(const std::string& number) const override;
 };

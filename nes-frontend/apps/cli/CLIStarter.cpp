@@ -69,6 +69,7 @@
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
+#include <Version.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace
@@ -813,6 +814,11 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
 
 int main(int argc, char** argv)
 {
+    if (NES::hasVersionFlag(argc, argv))
+    {
+        NES::printVersion("nes-cli");
+        return 0;
+    }
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();

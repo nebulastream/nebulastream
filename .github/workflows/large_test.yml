@@ -42,12 +42,6 @@ jobs:
         - /var/run/docker.sock:/var/run/docker.sock
       env:
         MOLD_JOBS: 1
-        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
-        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
-        SCCACHE_REGION: auto
-        SCCACHE_S3_USE_SSL: "true"
-        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
     timeout-minutes: 40
@@ -63,10 +57,23 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       - name: Configure NebulaStream
-        run: cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
+        run: |
+          sccache --start-server
+          sccache --show-stats
+          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
-        run: cmake --build build --target systest -j
+        run: |
+          sccache --show-stats
+          cmake --build build --target systest -j
+          sccache --show-stats
+          sccache --stop-server
       - name: Run large System Level Tests
         run: |
           echo "Running all large tests with: "
@@ -85,7 +92,8 @@ jobs:
               --worker.default_query_execution.operator_buffer_size=${{ inputs.buffer_size }} \
               --worker.default_query_execution.page_size=${{ inputs.page_size }} \
               --worker.default_query_execution.number_of_partitions=${{ inputs.number_of_partitions }} \
-              --worker.number_of_buffers_in_global_buffer_manager=200000 \
+              --worker.total_memory_in_bytes=76911476736 \
+              --worker.unpooled_memory_fraction=0.8935 \
               --worker.default_query_execution.slice_cache.enable_slice_cache=${{ inputs.enable_slice_cache }}
 
       - name: Upload Test Logs on Failure
@@ -98,7 +106,7 @@ jobs:
   systest-remote-test:
     name: "Run systest remote test on ${{matrix.arch}} with ${{matrix.stdlib}}"
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
         - ccache:/ccache
         - test-file-cache:/test-file-cache
@@ -119,10 +127,23 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       - name: Configure NebulaStream
-        run: cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache
+        run: |
+          sccache --start-server
+          sccache --show-stats
+          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DLARGE_TEST_TOTAL_MEMORY_BYTES=76911476736
       - name: Build NebulaStream
-        run: cmake --build build --target systest nes-single-node-worker -j
+        run: |
+          sccache --show-stats
+          cmake --build build --target systest nes-single-node-worker -j
+          sccache --show-stats
+          sccache --stop-server
       - name: Run systest remote test
         run: ctest --test-dir build --output-on-failure --timeout 2400 -R systest-remote-test
       - name: Upload Test Logs on Failure

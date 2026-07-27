@@ -158,7 +158,7 @@ std::optional<SourceDescriptor> SourceCatalog::getPhysicalSource(const PhysicalS
     return std::nullopt;
 }
 
-std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
+std::optional<SourceDescriptor> SourceCatalog::getAnonymousSource(
     const Identifier& sourceType,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     Host host,

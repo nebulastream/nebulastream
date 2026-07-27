@@ -125,7 +125,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     }
 
     auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
-    const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
+    const auto networkSourceDescriptorOpt = context.sourceCatalog->getAnonymousSource(
         Identifier::parse("Network"),
         orderedUpstreamSchema,
         Host(channel.downstreamNode.getRawValue()),
@@ -134,7 +134,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 
-    auto networkSinkDescriptor = context.sinkCatalog->getInlineSink(
+    auto networkSinkDescriptor = context.sinkCatalog->getAnonymousSink(
         orderedUpstreamSchema, Identifier::parse("Network"), Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 

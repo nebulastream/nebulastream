@@ -90,10 +90,10 @@ CREATE PHYSICAL SOURCE FOR input TYPE Generator SET(
 );
 ```
 
-#### Inline Sources
+#### Anonymous Sources
 
 Additionally, a source can be defined inline within a SQL query.
-Instead of naming a source, you can create an inline source by writing `[TYPE]([OPTIONS])` (cmp. the example below).
+Instead of naming a source, you can create an anonymous source by writing `[TYPE]([OPTIONS])` (cmp. the example below).
 The accepted options are mostly the same as when creating a source via a `CREATE SOURCE` statement. 
 The only difference is that a schema must be given via the options `SOURCE.SCHEMA` using the `SCHEMA` function.
 
@@ -124,13 +124,13 @@ CREATE SINK output2(id UINT64) TYPE File;
 CREATE SINK output3(new_column UINT64) TYPE Checksum;
 ```
 
-#### Inline Sinks
+#### Anonymous Sinks
 Additionally, sinks can be defined inline within a SQL query. 
-Instead of naming the sink, you can create the inline sink by writing `[TYPE]([options])` (cmp. example below).
+Instead of naming the sink, you can create the anonymous sink by writing `[TYPE]([options])` (cmp. example below).
 The accepted options are mostly the same as when creating a sink via a `CREATE SINK` statement.
 The only difference is that a schema CAN OPTIONALLY be given via the options `SINK.SCHEMA` using the `SCHEMA` function.
 If no schema is given, the schema is inferred automatically.
-Inline sinks are also able to configure the output formatter via `OUTPUT_FORMATTER.*` parameters.
+Anonymous sinks are also able to configure the output formatter via `OUTPUT_FORMATTER.*` parameters.
 
 Because the systest framework automatically sets the sink file paths, `File` and `Generator` sinks can be created
 without any options. 
@@ -182,6 +182,46 @@ FROM input
 INTO output1; 
 ```
 
+#### EXPLAIN Result Matching
+
+An `EXPLAIN` test can compare the complete normalized plan verbatim:
+
+```sql
+EXPLAIN (LOGICAL) FORMAT TEXT
+SELECT id FROM input INTO File();
+----
+== Initial Logical Plan ==
+SINK(FILE)
+  PROJECTION(fields: [ID])
+    SOURCE(INPUT)
+==END==
+```
+
+Without regex tags, expected and actual output must have the same lines in the same order. Trailing whitespace and empty lines are ignored.
+
+Alternatively, the expected block can contain positive and negative regex assertions. Each assertion uses `std::regex_search` against the complete normalized EXPLAIN output:
+
+```sql
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id FROM input INTO File();
+----
+<REGEX>PROJECTION\(fields: \[ID\]\)</REGEX>
+<!REGEX>TIMESTAMP</!REGEX>
+```
+
+`<REGEX>...</REGEX>` requires a match, while `<!REGEX>...</!REGEX>` requires that no match exists. Multiple assertions are evaluated independently.
+
+Assertions can also span multiple lines. The opening and closing tags must then be on separate lines, and the complete body is interpreted as one newline-preserving regex:
+
+```text
+<REGEX>
+SINK\(FILE\)
+[\s\S]*SOURCE\(INPUT\)
+</REGEX>
+```
+
+Inline assertions must occupy one complete line. A single expected-result block must use either verbatim matching or tagged regex assertions; the two modes cannot be mixed. Empty, nested, mismatched, or unclosed regex tags are rejected.
+
 ## Run tests
 
 ### Via Plugin
@@ -198,7 +238,7 @@ You can also run the systest via the CMake `systest` executable either in the te
 The executable can run individual tests, all tests in a given file, or all test files that belong to a defined group.
 You can select the test cases and define the behaviour via command line arguments. 
 The executable can run individual tests (`-t /path/to/test.test:1`), all tests in a given file (`-t /path/to/test.test`), or all test files that belong to a defined group (`-g group1 group2`, `-e excludedGroup`).
-Tests can be run with specific configuration settings (`-- --worker.number_of_buffers_in_global_buffer_manager=10000`).
+Tests can be run with specific configuration settings (`-- --worker.total_memory_in_bytes=81920000`).
 Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/systest-disable.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. The disable config file understands `exclude_groups` and `disabled_test_files`.
 To measure the execution time of tests use the benchmark mode (`-b`).
 To send queries to remote workers, use remote mode (`-r` or `--remote`).
@@ -267,7 +307,7 @@ This allows tests to be topology-agnostic and run on both single-node and distri
 
 #### Explicit Worker Assignment
 
-Named physical sources and sinks support explicit placement via `SOURCE.HOST` and `SINK.HOST`. Inline sources support `SOURCE.HOST`; inline sinks use topology-based sink placement, so use a named sink when a sink must be pinned to a specific worker.
+Named physical sources and sinks support explicit placement via `SOURCE.HOST` and `SINK.HOST`. Anonymous sources support `SOURCE.HOST`; anonymous sinks use topology-based sink placement, so use a named sink when a sink must be pinned to a specific worker.
 
 **Named Sources and Sinks:**
 
@@ -293,7 +333,7 @@ AliceSmith
 BobJones
 ```
 
-**Inline Sources with Automatically Placed Inline Sinks:**
+**Anonymous Sources with Automatically Placed Anonymous Sinks:**
 
 ```sql
 SELECT id, value, timestamp

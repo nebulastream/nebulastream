@@ -38,6 +38,7 @@
 #include <Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -61,6 +62,15 @@
 
 namespace NES
 {
+
+namespace
+{
+constexpr uint32_t POOLED_BUFFER_SIZE = 512;
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 100000;
+constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+}
 
 class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
 {
@@ -241,7 +251,12 @@ public:
     void reset() { buffers.wlock()->clear(); }
 
     folly::Synchronized<std::vector<TupleBuffer>> buffers;
-    std::shared_ptr<BufferManager> bm = BufferManager::create(512, 100000);
+    std::shared_ptr<BufferManager> bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> handlers;
 
     std::random_device rd;
