@@ -37,8 +37,8 @@ namespace NES
 /// Carries the config the lowering rule built. Nothing between here and ChainedHashMap::init() may change it.
 struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 {
-    CreateNewHashMapSliceArgs(ChainedHashMapConfig config, AbstractBufferProvider* bufferProvider)
-        : config(std::move(config)), bufferProvider(bufferProvider)
+    CreateNewHashMapSliceArgs(ChainedHashMapConfig config, AbstractBufferProvider& bufferProvider)
+        : config(std::move(config)), bufferProvider(&bufferProvider)
     {
     }
 

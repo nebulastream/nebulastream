@@ -26,6 +26,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/HashMap/HashMapRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -57,13 +58,13 @@ public:
         [[nodiscard]] nautilus::val<ChainedHashMapEntry*> getNext() const;
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
-            const nautilus::val<TupleBuffer*>& hashMapBuffer,
+            BorrowedNautilusBuffer hashMapBuffer,
             std::vector<FieldOffsets> fieldsKey,
             std::vector<FieldOffsets> fieldsValue);
 
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
-            const nautilus::val<TupleBuffer*>& hashMapBuffer,
+            BorrowedNautilusBuffer hashMapBuffer,
             ChainedEntryMemoryProvider memoryProviderKeys,
             ChainedEntryMemoryProvider memoryProviderValues);
 
@@ -73,7 +74,7 @@ public:
         ~ChainedEntryRef() = default;
 
         nautilus::val<ChainedHashMapEntry*> entryRef;
-        nautilus::val<TupleBuffer*> hashMapBuffer;
+        BorrowedNautilusBuffer hashMapBuffer;
         ChainedEntryMemoryProvider memoryProviderKeys;
         ChainedEntryMemoryProvider memoryProviderValues;
     };
@@ -85,7 +86,7 @@ public:
     {
     public:
         EntryIterator(
-            const nautilus::val<TupleBuffer*>& buffer,
+            BorrowedNautilusBuffer buffer,
             const nautilus::val<ChainedHashMapEntry*>& currentEntry,
             const nautilus::val<uint64_t>& entrySize,
             const nautilus::val<uint64_t>& tupleIndex,
@@ -94,7 +95,9 @@ public:
             const nautilus::val<uint64_t>& pageIndex,
             const nautilus::val<uint64_t>& numberOfPages);
 
-        struct DynamicArgsWrapper
+        /// Out-parameter carrier for the page/tuple counts read inside the nautilus::invoke below, which can only
+        /// return the entry pointer itself.
+        struct PageCounts
         {
             uint64_t numPages;
             uint64_t numTuplesInPage;
@@ -106,7 +109,7 @@ public:
         nautilus::val<ChainedHashMapEntry*> operator*() const;
 
     private:
-        nautilus::val<TupleBuffer*> buffer;
+        BorrowedNautilusBuffer buffer;
         nautilus::val<ChainedHashMapEntry*> currentEntry;
         nautilus::val<uint64_t> entrySize;
         nautilus::val<uint64_t> tupleIndex;
@@ -118,7 +121,7 @@ public:
 
     /// The config must be the one the underlying map was init()ed with — nothing can verify that any more,
     /// since the map no longer carries its sizing.
-    ChainedHashMapRef(const nautilus::val<TupleBuffer*>& buffer, ChainedHashMapConfig config);
+    ChainedHashMapRef(BorrowedNautilusBuffer buffer, ChainedHashMapConfig config);
     ChainedHashMapRef(const ChainedHashMapRef& other);
     ChainedHashMapRef& operator=(const ChainedHashMapRef& other);
     ~ChainedHashMapRef() override = default;

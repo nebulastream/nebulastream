@@ -330,7 +330,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto [rightHashMapConfig, rightKeyFunctions] = createChainedHashMapConfig(rightJoinFields, newRightInputSchema, conf);
 
     /// The build stores every distinct key's tuples in its own PagedVector sized by the same page-size knob, so the knob must also hold a
-    /// tuple - the same "does one element fit on a page" contract HashMapOptions enforces for entriesPerPage.
+    /// tuple - the same "does one element fit on a page" contract ChainedHashMapConfig enforces for entriesPerPage.
     const auto requireTupleFitsOnPage = [](const uint64_t pageSize, const auto& tupleLayout, const std::string_view side)
     {
         if (const auto minimumPageSize = tupleLayout->getMinimumPageSize(); pageSize < minimumPageSize)
@@ -357,7 +357,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         },
         [hashMapConfig = leftHashMapConfig](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
-            const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, &bufferProvider};
+            const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
@@ -368,7 +368,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         },
         [hashMapConfig = rightHashMapConfig](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
-            const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, &bufferProvider};
+            const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     /// Create the trigger strategy based on join type — determines what probe tasks are emitted at runtime

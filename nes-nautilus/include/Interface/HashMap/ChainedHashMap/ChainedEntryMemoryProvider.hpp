@@ -23,6 +23,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/FieldOffsets.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -53,12 +54,12 @@ public:
     [[nodiscard]] Record readRecord(const nautilus::val<ChainedHashMapEntry*>& entryRef) const;
     void writeRecord(
         const nautilus::val<ChainedHashMapEntry*>& entryRef,
-        const nautilus::val<TupleBuffer*>& hashMapBuffer,
+        const BorrowedNautilusBuffer& hashMapBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const Record& record) const;
     void writeEntryRef(
         const nautilus::val<ChainedHashMapEntry*>& entryRef,
-        const nautilus::val<TupleBuffer*>& hashMapBuffer,
+        const BorrowedNautilusBuffer& hashMapBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const;
 
