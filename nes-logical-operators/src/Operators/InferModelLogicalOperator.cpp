@@ -42,7 +42,7 @@
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <ModelCatalog.hpp>
+#include <Model.hpp>
 
 namespace NES
 {

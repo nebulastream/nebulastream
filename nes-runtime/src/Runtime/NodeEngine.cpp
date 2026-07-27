@@ -22,7 +22,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
-
+#include <Runtime/QueryTerminationType.hpp>
 #include <Util/AtomicState.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
@@ -124,7 +124,7 @@ void NodeEngine::startQuery(QueryId queryId)
     }
 }
 
-void NodeEngine::stopQuery(QueryId queryId)
+void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     NES_INFO("Stop {}", queryId);

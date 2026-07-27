@@ -13,22 +13,11 @@
 */
 
 #pragma once
-#include <memory>
 #include <vector>
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-
-namespace NES
-{
-class SinkCatalog;
-class SourceCatalog;
-}
-
-namespace NES
-{
-class ModelCatalog;
-}
+#include <Catalog.hpp>
 
 namespace NES
 {
@@ -37,15 +26,9 @@ class SemanticAnalyzer
 public:
     [[nodiscard]] LogicalPlan analyse(LogicalPlan plan) const;
 
-    explicit SemanticAnalyzer(
-        std::shared_ptr<const SourceCatalog> sourceCatalog,
-        std::shared_ptr<const SinkCatalog> sinkCatalog,
-        std::shared_ptr<const ModelCatalog> modelCatalog);
+    explicit SemanticAnalyzer(const std::shared_ptr<Catalog>& catalog);
 
 private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
-    std::shared_ptr<const ModelCatalog> modelCatalog;
     std::vector<Rule<LogicalPlan>> ruleSequence;
 };
 }

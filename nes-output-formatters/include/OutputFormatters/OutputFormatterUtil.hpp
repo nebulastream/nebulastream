@@ -110,7 +110,7 @@ static uint64_t writeValAsString(
     }
     else if constexpr (std::is_same_v<removedCVRefT, bool>)
     {
-        stringFormattedValue = val ? "true" : "false";
+        stringFormattedValue = std::to_string(static_cast<int>(val));
     }
     else if constexpr (std::is_same_v<removedCVRefT, char>)
     {

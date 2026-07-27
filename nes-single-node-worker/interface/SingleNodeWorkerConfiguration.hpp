@@ -29,11 +29,11 @@ namespace NES
 class SingleNodeWorkerConfiguration final : public BaseConfiguration
 {
 public:
-    ScalarOption<std::string> dataAddress = {"data_address", "Data-plane address. This is the {Hostname}:{PORT}"};
+    ScalarOption<std::string> dataAddr = {"data_addr", "Data-plane address. This is the {Hostname}:{PORT}"};
 
     /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
-    ScalarOption<std::string> grpcAddressUri
-        = {"grpc",
+    ScalarOption<std::string> hostAddr
+        = {"host_addr",
            "[::]:8080",
            R"(The address to try to bind to the server in URI form. If
 the scheme name is omitted, "dns:///" is assumed. To bind to any address,

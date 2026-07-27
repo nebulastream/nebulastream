@@ -25,6 +25,7 @@
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Catalog.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -54,7 +55,7 @@ std::set<std::type_index> InlineSinkBindingRule::requiredBy() const
 
 bool InlineSinkBindingRule::operator==(const InlineSinkBindingRule& other) const
 {
-    return sinkCatalog == other.sinkCatalog;
+    return this->catalog == other.catalog;
 }
 
 LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
@@ -69,24 +70,8 @@ LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
             auto config = sink.value()->getSinkConfig();
             const auto formatConfig = sink.value()->getFormatConfig();
 
-            /// "host" is not part of the sink config — it determines placement, not sink behavior.
-            /// It is stored in the config map only because InlineSinkLogicalOperator lacks a dedicated host field.
-            auto hostIt = config.find(Identifier::parse("host"));
-            if (hostIt == config.end())
-            {
-                throw InvalidConfigParameter("'host'");
-            }
-            auto host = Host(hostIt->second);
-            config.erase(hostIt);
-
-            const auto sinkDescriptor = sinkCatalog->getInlineSink(schema, type, host, config, formatConfig);
-
-            if (!sinkDescriptor.has_value())
-            {
-                throw InvalidConfigParameter("Failed to create inline sink descriptor");
-            }
-
-            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor.value());
+            const auto sinkDescriptor = catalog->createInlineSink(ConnectorKind::Inline, type, schema, config, formatConfig);
+            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor);
             sinkOperator = sinkOperator->withChildrenUnsafe(sink.value().getChildren());
             newRootOperators.emplace_back(sinkOperator);
         }

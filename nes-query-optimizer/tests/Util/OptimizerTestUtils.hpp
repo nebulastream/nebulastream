@@ -24,9 +24,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES
@@ -52,9 +50,5 @@ public:
     createSink(LogicalOperator child, std::string name, const std::vector<std::string>& fieldNames);
     LogicalPlan createPlan(LogicalOperator sink);
     SinkDescriptor createSinkDescriptor(const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema);
-
-private:
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
 };
 }

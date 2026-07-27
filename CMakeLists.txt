@@ -255,14 +255,18 @@ if (NES_ENABLES_TESTS)
     if (Rust_CARGO)
         set(NES_CARGO_EXECUTABLE "${Rust_CARGO}")
     else ()
-        find_program(NES_CARGO_EXECUTABLE NAMES cargo REQUIRED)
+        find_program(NES_CARGO_EXECUTABLE NAMES cargo)
     endif ()
-    add_test(
-            NAME coordinator-tests
-            COMMAND ${NES_CARGO_EXECUTABLE} test --workspace --manifest-path ${CMAKE_SOURCE_DIR}/Cargo.toml
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-    set_tests_properties(coordinator-tests PROPERTIES LABELS "coordinator-tests")
+    if (NES_CARGO_EXECUTABLE)
+        add_test(
+                NAME coordinator-tests
+                COMMAND ${NES_CARGO_EXECUTABLE} test --workspace --manifest-path ${CMAKE_SOURCE_DIR}/Cargo.toml
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        )
+        set_tests_properties(coordinator-tests PROPERTIES LABELS "coordinator-tests")
+    else ()
+        message(STATUS "cargo not found; skipping coordinator-tests registration")
+    endif ()
 
     if (CODE_COVERAGE)
         include(cmake/CodeCoverage.cmake)

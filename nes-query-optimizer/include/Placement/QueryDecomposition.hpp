@@ -14,33 +14,31 @@
 
 #pragma once
 
+#include <unordered_map>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
-#include <WorkerCatalog.hpp>
+#include <Catalog.hpp>
+#include <NetworkTopology.hpp>
 
 namespace NES
 {
 
+struct TransactionalCatalog;
 class QueryOptimizerNetworkConfiguration;
 using ChannelId = NESStrongUUIDType<struct ChannelId_>;
 
 class QueryDecomposer
 {
-    SharedPtr<const WorkerCatalog> workerCatalog;
-    SharedPtr<const SourceCatalog> sourceCatalog;
-    SharedPtr<const SinkCatalog> sinkCatalog;
+    const std::shared_ptr<Catalog> catalog;
+    const NetworkTopology topology;
 
 public:
-    QueryDecomposer(
-        SharedPtr<const WorkerCatalog> workerCatalog,
-        SharedPtr<const SourceCatalog> sourceCatalog,
-        SharedPtr<const SinkCatalog> sinkCatalog);
+    QueryDecomposer(const std::shared_ptr<Catalog>& catalog, const NetworkTopology& topology);
 
-    DistributedLogicalPlan decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& networkConfiguration);
+    std::unordered_map<Host, std::vector<LogicalPlan>>
+    decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& networkConfiguration);
 };
 
 }

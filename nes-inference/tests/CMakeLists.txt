@@ -21,5 +21,5 @@ if (ENABLE_IREE_TESTS)
     endfunction()
 
     add_nes_test_inference(ModelLoaderTest ModelLoaderTest.cpp)
-    add_nes_test_inference(ModelCatalogTest ModelCatalogTest.cpp)
+    add_nes_test_inference(ModelCatalogTest ModelValidationTest.cpp)
 endif ()
