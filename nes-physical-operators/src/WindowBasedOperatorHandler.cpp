@@ -24,6 +24,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <nautilus/inline.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -51,7 +52,7 @@ void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionCon
 {
 }
 
-WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
+NAUTILUS_INLINE WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
 {
     return *sliceAndWindowStore;
 }

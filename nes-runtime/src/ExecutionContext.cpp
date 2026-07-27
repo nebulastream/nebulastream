@@ -34,6 +34,7 @@
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <inline.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 
@@ -71,16 +72,16 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 {
 }
 
+NAUTILUS_INLINE TupleBuffer* allocateBufferProxy(PipelineExecutionContext* pec)
+{
+    PRECONDITION(pec, "pipeline execution context should not be null");
+    auto newTupleBuffer = pec->allocateTupleBuffer();
+    return std::addressof(pec->pinBuffer(std::move(newTupleBuffer)));
+}
+
 nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer() const
 {
-    auto bufferPtr = nautilus::invoke(
-        +[](PipelineExecutionContext* pec)
-        {
-            PRECONDITION(pec, "pipeline execution context should not be null");
-            auto newTupleBuffer = pec->allocateTupleBuffer();
-            return std::addressof(pec->pinBuffer(std::move(newTupleBuffer)));
-        },
-        pipelineContext);
+    auto bufferPtr = nautilus::invoke(allocateBufferProxy, pipelineContext);
     return bufferPtr;
 }
 
@@ -89,7 +90,7 @@ nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size
     return pipelineMemoryProvider.arena.allocateMemory(sizeInBytes);
 }
 
-void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
+NAUTILUS_INLINE void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
 {
     NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
 

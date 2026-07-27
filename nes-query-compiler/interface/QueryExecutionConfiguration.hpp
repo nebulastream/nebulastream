@@ -24,7 +24,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <SliceCacheConfiguration.hpp>
 
 namespace NES
@@ -42,11 +42,13 @@ public:
     QueryExecutionConfiguration() = default;
     QueryExecutionConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
-    EnumOption<ExecutionMode> executionMode
+    EnumOption<ExecutionConfiguration::ExecutionMode> executionMode
         = {"execution_mode",
-           ExecutionMode::COMPILER,
+           ExecutionConfiguration::ExecutionMode::COMPILER,
            "Execution mode for the query compiler"
            "[COMPILER|INTERPRETER]."};
+    BoolOption nautilusInlining
+        = {"nautilus_inlining", "true", "Enables proxy function inlining in nautilus. (only relevant with COMPILER execution mode)"};
     UIntOption numberOfPartitions
         = {"number_of_partitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
@@ -80,6 +82,7 @@ private:
     {
         return {
             &executionMode,
+            &nautilusInlining,
             &pageSize,
             &numberOfPartitions,
             &numberOfRecordsPerKey,

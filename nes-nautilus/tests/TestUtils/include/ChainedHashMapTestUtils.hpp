@@ -33,7 +33,7 @@
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Util/ExecutionMode.hpp>
+#include <Util/ExecutionConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <nautilus/Engine.hpp>
@@ -84,7 +84,9 @@ public:
     };
 
     void setUpChainedHashMapTest(
-        const std::vector<DataType::Type>& keyTypes, const std::vector<DataType::Type>& valueTypes, ExecutionMode backend);
+        const std::vector<DataType::Type>& keyTypes,
+        const std::vector<DataType::Type>& valueTypes,
+        ExecutionConfiguration::ExecutionMode backend);
 
     std::string compareExpectedWithActual(
         const TupleBuffer& inputBufferKeys,

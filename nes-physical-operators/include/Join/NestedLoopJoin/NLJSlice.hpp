@@ -72,4 +72,8 @@ private:
     std::vector<TupleBuffer> rightPagedVectorBuffers;
     std::mutex combinePagedVectorsMutex;
 };
+
+[[nodiscard]] const TupleBuffer*
+getPagedVectorTupleBufferRefProxy(const NLJSlice* nljSlice, WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide);
+
 }

@@ -34,6 +34,7 @@
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
+#include <nautilus/inline.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -46,7 +47,7 @@ namespace NES
 
 namespace
 {
-NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceEnd sliceEnd)
+NAUTILUS_INLINE NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceEnd sliceEnd)
 {
     PRECONDITION(ptrOpHandler != nullptr, "op handler context should not be null");
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
@@ -108,15 +109,7 @@ nautilus::val<const TupleBuffer*> NLJProbePhysicalOperatorBase::getPagedVectorBu
     /// During triggering, all pages of all local copies are appended to a single PagedVector at worker-thread 0.
     const nautilus::val<WorkerThreadId> workerThreadIdForPages{WorkerThreadId(0)};
     const auto sliceRef = invoke(getNLJSliceRefFromEndProxy, operatorHandlerRef, sliceEnd);
-    return invoke(
-        +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
-        {
-            PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-            return nljSlice->getPagedVectorTupleBufferRef(workerThreadId, joinBuildSide);
-        },
-        sliceRef,
-        workerThreadIdForPages,
-        nautilus::val<JoinBuildSideType>(side));
+    return invoke(getPagedVectorTupleBufferRefProxy, sliceRef, workerThreadIdForPages, nautilus::val<JoinBuildSideType>(side));
 }
 
 }
