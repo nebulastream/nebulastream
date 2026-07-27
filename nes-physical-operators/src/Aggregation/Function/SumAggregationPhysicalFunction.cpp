@@ -22,6 +22,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
@@ -42,7 +43,7 @@ SumAggregationPhysicalFunction::SumAggregationPhysicalFunction(
 
 void SumAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    nautilus::val<TupleBuffer*>,
+    BorrowedNautilusBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record)
 {
@@ -52,7 +53,7 @@ void SumAggregationPhysicalFunction::lift(
         /// SQL-standard: skip NULL inputs
         const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
         const auto isNull = readNull(aggregationState);
-        const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, nautilus::val<bool>(false));
+        const auto sum = VarVal::readVarValFromMemory(memAreaSum, inputType, nautilus::val<bool>{false});
         const auto sumPlusValue = (sum + value).castToType(inputType.type);
         const auto newSum = VarVal::select(value.isNull(), sum, sumPlusValue);
         newSum.writeToMemory(memAreaSum);
@@ -74,9 +75,9 @@ void SumAggregationPhysicalFunction::lift(
 
 void SumAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
-    nautilus::val<TupleBuffer*>,
+    BorrowedNautilusBuffer,
     const nautilus::val<AggregationState*> aggregationState2,
-    nautilus::val<TupleBuffer*>,
+    BorrowedNautilusBuffer,
     PipelineMemoryProvider&)
 {
     if (inputType.nullable)
@@ -84,12 +85,12 @@ void SumAggregationPhysicalFunction::combine(
         /// Reading the sum from the first aggregation state
         const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1 + nautilus::val<uint64_t>{1});
         const auto isNull1 = readNull(aggregationState1);
-        const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, inputType, nautilus::val<bool>(false));
+        const auto sum1 = VarVal::readVarValFromMemory(memAreaSum1, inputType, nautilus::val<bool>{false});
 
         /// Reading the sum from the second aggregation state
         const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2 + nautilus::val<uint64_t>{1});
         const auto isNull2 = readNull(aggregationState2);
-        const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType, nautilus::val<bool>(false));
+        const auto sum2 = VarVal::readVarValFromMemory(memAreaSum2, inputType, nautilus::val<bool>{false});
 
         /// Combining the sum and writing it back to the first aggregation state
         const auto newSum = (sum1 + sum2).castToType(inputType.type);
@@ -115,7 +116,7 @@ void SumAggregationPhysicalFunction::combine(
 }
 
 Record SumAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider&)
 {
     if (inputType.nullable)
     {
@@ -132,7 +133,7 @@ Record SumAggregationPhysicalFunction::lower(
 
     /// Reading the sum from the aggregation state
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto memAreaCount = memAreaSum + nautilus::val<uint64_t>(inputType.getSizeInBytesWithoutNull());
+    const auto memAreaCount = memAreaSum + nautilus::val<uint64_t>{inputType.getSizeInBytesWithoutNull()};
     const auto sum = VarVal::readNonNullableVarValFromMemory(memAreaSum, inputType);
 
     /// Creating a record with the sum
@@ -143,7 +144,7 @@ Record SumAggregationPhysicalFunction::lower(
 }
 
 void SumAggregationPhysicalFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider&)
 {
     /// Resetting the sum to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);

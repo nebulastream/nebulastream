@@ -39,8 +39,8 @@ struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
         const uint64_t valueSize,
         const uint64_t pageSize,
         const uint64_t numberOfBuckets,
-        AbstractBufferProvider* bufferProvider)
-        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets), bufferProvider(bufferProvider)
+        AbstractBufferProvider& bufferProvider)
+        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets), bufferProvider(&bufferProvider)
     {
     }
 

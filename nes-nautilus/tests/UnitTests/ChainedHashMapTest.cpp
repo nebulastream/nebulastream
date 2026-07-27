@@ -32,6 +32,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp> /// NOLINT(misc-include-cleaner)
@@ -107,8 +108,11 @@ public:
         const auto schema = createSchemaFromDataTypes(dataTypes);
         projections = getOrderedFieldNames(schema);
         auto offsets = computeFieldOffsets(fieldTypes, numKeyFields);
+        /// Assigned in the body, not the initializer list: these derive from the local schema and from projections/offsets
+        /// computed by the statements above, which a member initializer cannot express (hence the NOLINTs below).
         fieldKeys = std::move(offsets.keys); /// NOLINT(cppcoreguidelines-prefer-member-initializer): projections must be set first
         fieldValues = std::move(offsets.values); /// NOLINT(cppcoreguidelines-prefer-member-initializer): projections must be set first
+        /// std::tie unpacks the (names, types) pair returned by splitFieldOffsets into the parallel member vectors.
         std::tie(fieldKeyNames, fieldKeyTypes) = splitFieldOffsets(fieldKeys);
         std::tie(fieldValueNames, fieldValueTypes) = splitFieldOffsets(fieldValues);
 
@@ -153,19 +157,20 @@ public:
                 nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
             {
                 const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
-                ChainedHashMapRef chmRef(
-                    chainedHashMapBuffer,
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                ChainedHashMapRef chmRef{
+                    borrowedBuffer,
                     fieldKeys,
                     fieldValues,
-                    nautilus::val<uint64_t>(capturedEntriesPerPage),
-                    nautilus::val<uint64_t>(capturedEntrySize));
+                    nautilus::val<uint64_t>{capturedEntriesPerPage},
+                    nautilus::val<uint64_t>{capturedEntrySize}};
                 std::ignore = chmRef.findOrCreateEntry(
                     record,
                     hashFn,
                     [&](const nautilus::val<AbstractHashMapEntry*>& newEntry)
                     {
                         const auto chainedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(newEntry);
-                        const ChainedHashMapRef::ChainedEntryRef newEntryRef(chainedEntry, chainedHashMapBuffer, fieldKeys, fieldValues);
+                        const ChainedHashMapRef::ChainedEntryRef newEntryRef{chainedEntry, borrowedBuffer, fieldKeys, fieldValues};
                         newEntryRef.copyValuesToEntry(record, bm);
                     },
                     bm);
@@ -194,24 +199,26 @@ public:
                 nautilus::val<AnyVec*> out) -> nautilus::val<bool>
             {
                 const Record keyRecord = buildRecordFromAnyVec(keyIn, keyProjections, keyDataTypes);
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                const BorrowedNautilusBuffer borrowedProbeBuffer = BorrowedNautilusBuffer::from(probeBuffer);
 
-                ChainedHashMapRef probeMapRef(
-                    probeBuffer, fieldKeys, {}, nautilus::val<uint64_t>(1), nautilus::val<uint64_t>(capturedProbeEntrySize));
+                ChainedHashMapRef probeMapRef{
+                    borrowedProbeBuffer, fieldKeys, {}, nautilus::val<uint64_t>{1}, nautilus::val<uint64_t>{capturedProbeEntrySize}};
                 const auto probeEntry
                     = probeMapRef.findOrCreateEntry(keyRecord, hashFn, [](const nautilus::val<AbstractHashMapEntry*>&) { }, bm);
 
-                ChainedHashMapRef chmRef(
-                    chainedHashMapBuffer,
+                ChainedHashMapRef chmRef{
+                    borrowedBuffer,
                     fieldKeys,
                     fieldValues,
-                    nautilus::val<uint64_t>(capturedEntriesPerPage),
-                    nautilus::val<uint64_t>(capturedEntrySize));
+                    nautilus::val<uint64_t>{capturedEntriesPerPage},
+                    nautilus::val<uint64_t>{capturedEntrySize}};
                 const auto foundEntry = chmRef.findEntry(probeEntry);
                 const nautilus::val<bool> found = (foundEntry != nullptr);
                 if (found)
                 {
                     const auto chainedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry);
-                    const ChainedHashMapRef::ChainedEntryRef entryRef(chainedEntry, chainedHashMapBuffer, fieldKeys, fieldValues);
+                    const ChainedHashMapRef::ChainedEntryRef entryRef{chainedEntry, borrowedBuffer, fieldKeys, fieldValues};
                     const auto valueRecord = entryRef.getValue();
                     storeRecordToAnyVec(out, valueRecord, fieldValueNames, fieldValueTypes);
                 }
@@ -231,23 +238,24 @@ public:
                 /// begin() calls getPage(0) via invoke which fails on an empty CHM, so guard first.
                 const auto numTuples = nautilus::invoke(
                     +[](TupleBuffer* buf) { return ChainedHashMap::load(*buf).getTotalNumberOfRecords(); }, chainedHashMapBuffer);
-                if (numTuples == nautilus::val<uint64_t>(0))
+                if (numTuples == nautilus::val<uint64_t>{0})
                 {
                     return;
                 }
 
-                const ChainedHashMapRef chmRef(
-                    chainedHashMapBuffer,
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                const ChainedHashMapRef chmRef{
+                    borrowedBuffer,
                     fieldKeys,
                     fieldValues,
-                    nautilus::val<uint64_t>(capturedEntriesPerPage),
-                    nautilus::val<uint64_t>(capturedEntrySize));
+                    nautilus::val<uint64_t>{capturedEntriesPerPage},
+                    nautilus::val<uint64_t>{capturedEntrySize}};
 
                 for (const auto entry : chmRef)
                 {
-                    const ChainedHashMapRef::ChainedEntryRef entryRef(entry, chainedHashMapBuffer, fieldKeys, fieldValues);
+                    const ChainedHashMapRef::ChainedEntryRef entryRef{entry, borrowedBuffer, fieldKeys, fieldValues};
 
-                    auto out = anyVecPushBack(outVector, nautilus::val<size_t>(fieldKeys.size() + fieldValues.size()));
+                    auto out = anyVecPushBack(outVector, nautilus::val<size_t>{fieldKeys.size() + fieldValues.size()});
 
                     const auto keyRecord = entryRef.getKey();
                     const auto valueRecord = entryRef.getValue();
@@ -350,6 +358,8 @@ private:
     AbstractBufferProvider& bufferManager;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::unique_ptr<nautilus::engine::NautilusEngine> engine;
+    /// Optional because these CompiledFunctions are compiled (emplaced) in the constructor body once the engine and the
+    /// map's field offsets exist, and CompiledFunction is not default-constructible, so they cannot be built any earlier.
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, AbstractBufferProvider*, AnyVec*)>> insertFn;
     std::optional<nautilus::engine::CompiledFunction<bool(TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, AnyVec*, AnyVec*)>> lookupFn;
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, std::vector<AnyVec>*)>> readAllFn;
@@ -667,7 +677,8 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
         /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
         [](nautilus::val<TupleBuffer*> buffer)
         {
-            const ChainedHashMapRef ref(buffer, {}, {}, nautilus::val<uint64_t>{entriesPerPage}, nautilus::val<uint64_t>{entrySize});
+            const ChainedHashMapRef ref{
+                BorrowedNautilusBuffer::from(buffer), {}, {}, nautilus::val<uint64_t>{entriesPerPage}, nautilus::val<uint64_t>{entrySize}};
             for (const auto entry : ref)
             {
                 std::ignore = entry;

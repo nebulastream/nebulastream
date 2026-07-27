@@ -70,7 +70,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     nautilus::invoke(
         +[](const TupleBuffer* parent, AbstractBufferProvider* bufferProvider, TupleBuffer* finalHashMapBuffer)
         {
-            INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
+            INVARIANT(parent != nullptr, "Parent TupleBuffer MUST NOT be null at this point");
             /// load the first hash map
             const VariableSizedAccess::Index bufferIndex{0};
             auto buffer = parent->loadChildBuffer(bufferIndex);
@@ -89,16 +89,16 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         recordBuffer.getReference(),
         executionCtx.pipelineMemoryProvider.bufferProvider,
         finalHashMapNautilusBuffer.asArg());
-    /// get the reference to the final hash map buffer
-    auto finalHashMapBufferRef = finalHashMapNautilusBuffer.asArg();
+    /// Borrow the pinned final hash map buffer for the ChainedHashMapRef/entry views below (implicit Owned->Borrowed conversion).
+    const BorrowedNautilusBuffer finalHashMapBufferRef = finalHashMapNautilusBuffer;
 
     /// Combining all keys from all hash maps in the final hash map, and then iterating over the final hash map once to lower the aggregation states
-    ChainedHashMapRef finalHashMap(
+    ChainedHashMapRef finalHashMap{
         finalHashMapBufferRef,
         hashMapOptions.fieldKeys,
         hashMapOptions.fieldValues,
         hashMapOptions.entriesPerPage,
-        hashMapOptions.entrySize);
+        hashMapOptions.entrySize};
 
     for (nautilus::val<uint64_t> curHashMapIdx = 0; curHashMapIdx < numberOfHashMaps; ++curHashMapIdx)
     {
@@ -114,17 +114,17 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             recordBuffer.getReference(),
             curHashMapIdx,
             hashMapNautilusBuffer.asArg());
-        auto hashMapBufferRef = hashMapNautilusBuffer.asArg();
-        const ChainedHashMapRef currentMap(
+        const BorrowedNautilusBuffer hashMapBufferRef = hashMapNautilusBuffer;
+        const ChainedHashMapRef currentMap{
             hashMapBufferRef,
             hashMapOptions.fieldKeys,
             hashMapOptions.fieldValues,
             hashMapOptions.entriesPerPage,
-            hashMapOptions.entrySize);
+            hashMapOptions.entrySize};
         for (const auto entry : currentMap)
         {
-            const ChainedHashMapRef::ChainedEntryRef entryRef(
-                entry, hashMapBufferRef, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
+            const ChainedHashMapRef::ChainedEntryRef entryRef{
+                entry, hashMapBufferRef, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
             const auto tmpRecordKey = entryRef.getKey();
 
             /// Inserting the record key into the final/global hash map. If an entry for the key already exists, we have to combine the aggregation states
@@ -137,10 +137,10 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
                  pinnedFinalBuffer = finalHashMapBufferRef,
-                 hashMapBufferRef = hashMapBufferRef](const nautilus::val<AbstractHashMapEntry*>& entryOnUpdate)
+                 hashMapBufferRef](const nautilus::val<AbstractHashMapEntry*>& entryOnUpdate)
                 {
                     /// Combining the aggregation states of the current entry with the aggregation states of the final hash map
-                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnUpdate, pinnedFinalBuffer, fieldKeys, fieldValues);
+                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert{entryOnUpdate, pinnedFinalBuffer, fieldKeys, fieldValues};
                     auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefState = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
@@ -157,11 +157,11 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
                  pinnedFinalBuffer = finalHashMapBufferRef,
-                 hashMapBufferRef = hashMapBufferRef](const nautilus::val<AbstractHashMapEntry*>& entryOnInsert)
+                 hashMapBufferRef](const nautilus::val<AbstractHashMapEntry*>& entryOnInsert)
                 {
                     /// If the entry for the provided key has not been seen by this hash map / worker thread, we need
                     /// to create a new one and initialize the aggregation states. After that, we can combine the aggregation states.
-                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnInsert, pinnedFinalBuffer, fieldKeys, fieldValues);
+                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert{entryOnInsert, pinnedFinalBuffer, fieldKeys, fieldValues};
                     auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
@@ -181,8 +181,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     /// Lowering, each aggregation state in the final hash map and passing the record to the child
     for (const auto entry : finalHashMap)
     {
-        const ChainedHashMapRef::ChainedEntryRef entryRef(
-            entry, finalHashMapBufferRef, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
+        const ChainedHashMapRef::ChainedEntryRef entryRef{
+            entry, finalHashMapBufferRef, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
         const auto recordKey = entryRef.getKey();
         Record outputRecord;
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
@@ -205,7 +205,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         }
     }
 
-    /// As we are creating a new hash map for the probe operator, we have to reset/destroy the final hash map of the emitted aggregation window
+    /// The probe has consumed the emitted aggregation window (its per-thread hash maps were combined into the final hash map
+    /// above), so destroy it here to release the child buffers it holds.
     nautilus::invoke(
         +[](EmittedAggregationWindow* emittedAggregationWindow)
         {
