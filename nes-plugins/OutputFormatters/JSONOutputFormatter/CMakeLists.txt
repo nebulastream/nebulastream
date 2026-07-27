@@ -15,12 +15,10 @@ add_plugin_as_library(JSON OutputFormatter json_output_formatter_plugin JSONOutp
 add_plugin_as_library(JSON OutputFormatterValidation json_output_formatter_validation_plugin JSONOutputFormatter.cpp)
 
 target_include_directories(json_output_formatter_plugin
-        PUBLIC include
         PRIVATE .
 )
 
 target_include_directories(json_output_formatter_validation_plugin
-        PUBLIC include
         PRIVATE .
 )
 

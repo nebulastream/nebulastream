@@ -63,6 +63,11 @@ public:
 
     static std::expected<Identifier, Exception> tryParse(std::string value);
 
+    /// Reconstructs an identifier from its canonical spelling, e.g. a name read back out of the catalog.
+    /// Folding has already been applied to such a string, so `parse()` must not be used: it would fold `foo` to `FOO`
+    /// a second time and no longer compare equal to the quoted identifier it came from.
+    static Identifier fromCanonical(std::string canonicalValue);
+
 private:
     explicit Identifier(std::string value, bool caseSensitive);
 

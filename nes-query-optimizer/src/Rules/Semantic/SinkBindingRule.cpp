@@ -25,7 +25,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
-
+#include <Catalog.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -55,7 +55,7 @@ std::set<std::type_index> SinkBindingRule::requiredBy() const
 
 bool SinkBindingRule::operator==(const SinkBindingRule& other) const
 {
-    return sinkCatalog == other.sinkCatalog;
+    return catalog == other.catalog;
 }
 
 LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
@@ -70,20 +70,14 @@ LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
 
                 /// Check to centralize the sink binding logic
                 /// TODO #897 move sink binding to new query binder
-
-
                 if (sinkOperator.value()->getSinkDescriptor().has_value())
                 {
                     /// SinkOperator already described inline.
                     return sinkOperator.value();
                 }
 
-                const auto sinkDescriptor = sinkCatalog->getSinkDescriptor(sinkOperator->get().getSinkName());
-                if (not sinkDescriptor.has_value())
-                {
-                    throw UnknownSinkName("{}", sinkOperator->get().getSinkName());
-                }
-                return sinkOperator.value()->withSinkDescriptor(sinkDescriptor.value());
+                const auto sinkDescriptor = catalog->getSinkDescriptor(sinkOperator->get().getSinkName().asCanonicalString());
+                return sinkOperator.value()->withSinkDescriptor(sinkDescriptor);
             })
         | std::ranges::to<std::vector<LogicalOperator>>());
 }

@@ -14,13 +14,16 @@
 
 #include <QueryOptimizer.hpp>
 
+#include <unordered_map>
+#include <vector>
+
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <DistributedLogicalPlan.hpp>
 
 namespace NES
 {
 
-DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
+std::unordered_map<Host, std::vector<LogicalPlan>> QueryOptimizer::optimize(LogicalPlan plan) const
 {
     plan = semanticAnalyzer.analyse(plan);
     plan = ruleBasedOptimization.optimize(plan);

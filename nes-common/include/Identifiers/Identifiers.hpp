@@ -25,12 +25,12 @@ namespace NES
 
 /// Global Identifiers: These Identifiers are unique to the SingleNodeWorkers entire lifetime.
 /// There can never exist two objects with the same Identifier, regardless if the previous object has been destroyed
+using QueryId = NESStrongType<int64_t, struct QueryId_, -1, 1>;
 using OperatorId = NESStrongType<uint64_t, struct OperatorId_, 0, 1>;
 using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
-using LocalQueryId = NESStrongUUIDType<struct LocalQueryId_>;
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
-using PhysicalSourceId = NESStrongType<uint64_t, struct PhysicalSourceId_, 0, 1>;
-using InlineSinkId = NESStrongType<uint64_t, struct InlineSinkId_, 0, 1>;
+using PhysicalSourceId = NESStrongType<int64_t, struct PhysicalSourceId_, 0, 1>;
+using SinkId = NESStrongType<int64_t, struct SinkId_, 0, 1>;
 
 /// Local Identifiers: These Identifiers are unique in a local scope. E.g. the PipelineId is unique in regard to a single query plan.
 using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
@@ -38,7 +38,7 @@ using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
 using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, SequenceNumber::INVALID, SequenceNumber::INITIAL>;
 
 
-static constexpr LocalQueryId INVALID_LOCAL_QUERY_ID = LocalQueryId(LocalQueryId::INVALID);
+static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
 
 static constexpr OperatorId INVALID_OPERATOR_ID = INVALID<OperatorId>;
 static constexpr OperatorId INITIAL_OPERATOR_ID = INITIAL<OperatorId>;
@@ -49,8 +49,8 @@ static constexpr OriginId INITIAL_ORIGIN_ID = INITIAL<OriginId>;
 static constexpr PhysicalSourceId INVALID_PHYSICAL_SOURCE_ID = INVALID<PhysicalSourceId>;
 static constexpr PhysicalSourceId INITIAL_PHYSICAL_SOURCE_ID = INITIAL<PhysicalSourceId>;
 
-static constexpr InlineSinkId INVALID_INLINE_SINK_ID = INVALID<InlineSinkId>;
-static constexpr InlineSinkId INITIAL_INLINE_SINK_ID = INITIAL<InlineSinkId>;
+static constexpr SinkId INVALID_SINK_ID = INVALID<SinkId>;
+static constexpr SinkId INITIAL_SINK_ID = INITIAL<SinkId>;
 
 static constexpr PipelineId INVALID_PIPELINE_ID = INVALID<PipelineId>;
 static constexpr PipelineId INITIAL_PIPELINE_ID = INITIAL<PipelineId>;

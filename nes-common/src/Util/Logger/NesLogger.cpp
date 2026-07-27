@@ -107,7 +107,7 @@ auto createEmptyLogger() -> std::shared_ptr<spdlog::logger>
     return std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL));
 }
 
-Logger::Logger(const std::string& logFileName, const LogLevel level, const bool useStdout) : consoleLoggingEnabled(useStdout)
+Logger::Logger(const std::string& logFileName, const LogLevel level, const bool useStdout)
 {
     auto spdlogLevel = toSpdlogLevel(level);
 

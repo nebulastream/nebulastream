@@ -18,11 +18,10 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <utility>
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sinks/SinkCatalog.hpp>
+#include <Catalog.hpp>
 
 namespace NES
 {
@@ -33,7 +32,7 @@ namespace NES
 class InlineSinkBindingRule
 {
 public:
-    explicit InlineSinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit InlineSinkBindingRule(const std::shared_ptr<Catalog>& catalog) : catalog{catalog} { }
 
     static constexpr std::string_view NAME = "InlineSinkBindingRule";
 
@@ -45,7 +44,7 @@ public:
     bool operator==(const InlineSinkBindingRule& other) const;
 
 private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    const std::shared_ptr<Catalog> catalog;
 };
 
 static_assert(RuleConcept<InlineSinkBindingRule, LogicalPlan>);
