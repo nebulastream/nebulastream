@@ -72,6 +72,7 @@ EXCEPTION(CannotLoadPlugin, 2043, "cannot load plugin")
 EXCEPTION(UnknownUdf, 2046, "unknown udf name")
 EXCEPTION(CannotLoadUdf, 2047, "cannot load udf")
 EXCEPTION(UdfAlreadyExists, 2048, "udf already exists")
+EXCEPTION(UnsupportedUdfLanguage, 2049, "unsupported udf language")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")

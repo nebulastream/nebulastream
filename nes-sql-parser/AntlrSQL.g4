@@ -85,7 +85,10 @@ modelInputField: identifier typeDefinition;
 modelOutputField: identifier typeDefinition;
 
 createFunctionDefinition: FUNCTION udfName=identifier '(' (functionArgField (',' functionArgField)*)? ')'
-                          RETURNS returnType=typeDefinition FROM functionPath=STRING ENTRYPOINT entrypoint=STRING;
+                          RETURNS returnType=typeDefinition
+                          (FROM functionPath=STRING)?
+                          (LANGUAGE language=STRING)?
+                          ENTRYPOINT entrypoint=STRING;
 functionArgField: identifier typeDefinition;
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
@@ -567,6 +570,7 @@ FUNCTION: 'FUNCTION';
 FUNCTIONS: 'FUNCTIONS';
 RETURNS: 'RETURNS';
 ENTRYPOINT: 'ENTRYPOINT';
+LANGUAGE: 'LANGUAGE';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

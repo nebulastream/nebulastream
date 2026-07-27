@@ -62,6 +62,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <CommonParserFunctions.hpp>
+#include <UdfBridgeRegistry.hpp>
 
 namespace NES
 {
@@ -296,7 +297,18 @@ public:
     CreateFunctionStatement bindCreateFunctionStatement(AntlrSQLParser::CreateFunctionDefinitionContext* functionDefAST) const
     {
         const auto functionName = bindIdentifier(functionDefAST->udfName->strictIdentifier());
-        const auto path = bindStringLiteral(functionDefAST->functionPath);
+
+        /// FROM (the bridge .so path) and LANGUAGE (a name NES resolves to a shipped bridge) are both
+        /// optional in the grammar; at least one must be given, and FROM wins if both are. Resolving
+        /// LANGUAGE here keeps CreateFunctionStatement.path a plain, already-resolved string, so
+        /// nothing downstream (UdfStatementHandler, UdfCatalog) needs to know LANGUAGE ever existed.
+        if (functionDefAST->functionPath == nullptr && functionDefAST->language == nullptr)
+        {
+            throw InvalidStatement("CREATE FUNCTION requires FROM, LANGUAGE, or both");
+        }
+        const auto path = functionDefAST->functionPath != nullptr
+            ? bindStringLiteral(functionDefAST->functionPath)
+            : resolveBuiltinUdfBridgePath(bindStringLiteral(functionDefAST->language)).string();
         const auto entrypoint = bindStringLiteral(functionDefAST->entrypoint);
 
         /// Argument names in the DDL are documentation only — a scalar UDF matches
