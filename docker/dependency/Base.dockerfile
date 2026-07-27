@@ -27,6 +27,7 @@ RUN apt update -y && apt install \
     ccache \
     ninja-build \
     pkg-config \
+    python3-dev \
     -y
 
 # install llvm based toolchain
