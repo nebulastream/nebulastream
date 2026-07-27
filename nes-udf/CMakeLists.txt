@@ -12,7 +12,8 @@
 
 add_library(nes-udf
         src/UdfCatalog.cpp
-        src/UdfDescriptor.cpp)
+        src/UdfDescriptor.cpp
+        src/UdfBridgeRegistry.cpp)
 target_include_directories(nes-udf PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

@@ -71,6 +71,7 @@ EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 EXCEPTION(UnknownUdf, 2043, "unknown udf name")
 EXCEPTION(CannotLoadUdf, 2044, "cannot load udf")
 EXCEPTION(UdfAlreadyExists, 2045, "udf already exists")
+EXCEPTION(UnsupportedUdfLanguage, 2046, "unsupported udf language")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
