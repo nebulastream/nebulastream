@@ -1,0 +1,73 @@
+# Coffee-demo bring-up, fully containerized (Raspberry Pi 5 / arm64).
+# Companion to Full-demo-nes-coffe.md. Run from anywhere:
+#   docker compose -f scripts/coffe_queries/dashboard/docker-compose.yml up
+#
+# Everything runs in Docker. The ONLY outside connection is the worker's telemetry
+# TCP source, which dials the host (pi-relay / dummy server on :2222) via
+# host.docker.internal. The MQTT broker is now the `mosquitto` service, so the
+# worker's MQTT sinks publish to it directly over the docker network (mosquitto:1883)
+# -- the query YAMLs were repointed from host.docker.internal:1883 to mosquitto:1883.
+#
+# HOST prereq (unchanged): telemetry on :2222 (pi-relay.py or coffe-server-pi-schema.py).
+#
+# Build/tag the two NES images first (from repo root):
+#   docker build -f docker/single-node-worker/SingleNodeWorker.dockerfile -t nes-worker .
+#   docker build -f docker/frontend/cli.dockerfile                        -t nes-cli    .
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    networks: [nes]
+    ports:
+      - "1883:1883"   # native MQTT on the host too (mosquitto_sub debugging)
+      - "9001:9001"   # websockets -> Firefox / dashboard connect to ws://<pi-ip>:9001/mqtt
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    # Ready = the broker actually accepts a publish on 1883 (mosquitto_pub ships in the image).
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "127.0.0.1", "-p", "1883", "-t", "healthcheck", "-m", "ok"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  nes-worker:
+    image: nes-worker
+    pull_policy: never
+    container_name: nes-worker
+    networks: [nes]
+    depends_on: [mosquitto]
+    # data_address must match the `workers:` entry in the query YAMLs. --grpc is left at its
+    # default ([::]:8080); passing it explicitly fails, yaml-cpp reads [::] as a flow sequence.
+    command: ["--data_address=nes-worker:9090"]
+    # The one outside connection: the TCP telemetry source dials host.docker.internal:2222.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Worker binds [::]:8080; the image ships grpc_health_probe. Gate the cli on this.
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=localhost:8080"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  nes-cli:
+    image: nes-cli
+    pull_policy: never
+    container_name: nes-cli
+    depends_on:
+      nes-worker:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    networks: [nes]
+    volumes:
+      - .:/queries:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        for q in water-usage bean-consumption machine-activity; do
+          nes-cli -t /queries/$$q.yaml start
+        done
+
+networks:
+  nes:
