@@ -10,8 +10,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+[package]
+name = "controller"
+version = "0.1.0"
+edition = "2024"
 
-# These crates link no C++ sources, so their tests run through cargo directly.
-add_rust_cargo_test(model)
-add_rust_cargo_test(migration)
-add_rust_cargo_test(controller)
+[dependencies]
+model.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+tonic.workspace = true
+prost.workspace = true
+tokio-retry.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+futures.workspace = true
+sea-orm.workspace = true
+serde_json.workspace = true
+
+[build-dependencies]
+tonic-build.workspace = true
