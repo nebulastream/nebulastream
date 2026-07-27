@@ -88,8 +88,7 @@ NautilusBuffer SliceCacheSecondChance::getDataStructureRef(
     if (auto [sliceCacheEntryToReplace, foundInCache] = searchInCache(threadLocalStart, timestamp); foundInCache)
     {
         sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
-        BorrowedNautilusBuffer dataStructureBuffer
-            = BorrowedNautilusBuffer::from(sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::dataStructure));
+        auto dataStructureBuffer = BorrowedNautilusBuffer::from(sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::dataStructure));
         return dataStructureBuffer;
     }
 
@@ -115,8 +114,7 @@ NautilusBuffer SliceCacheSecondChance::getDataStructureRef(
     nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = threadLocalStart + replacementIndex;
     sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
     replaceEntry(nautilus::val<SliceCacheEntry*>{threadLocalStart + replacementIndex});
-    BorrowedNautilusBuffer dataStructureBuffer
-        = BorrowedNautilusBuffer::from(sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::dataStructure));
+    auto dataStructureBuffer = BorrowedNautilusBuffer::from(sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::dataStructure));
     return dataStructureBuffer;
 }
 

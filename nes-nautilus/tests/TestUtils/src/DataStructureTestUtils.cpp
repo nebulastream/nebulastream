@@ -153,19 +153,14 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
                                 result.emplace_back(std::optional<std::string>{});
                                 break;
                             }
-                            auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX));
-                            if (str.size() > MAX_VARSIZED_LEN)
-                            {
-                                str.resize(MAX_VARSIZED_LEN);
-                            }
+                            auto str
+                                = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX + 1));
+                            str.resize(std::min(str.size(), MAX_VARSIZED_LEN));
                             result.emplace_back(std::optional<std::string>{std::move(str)});
                             break;
                         }
-                        auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX));
-                        if (str.size() > MAX_VARSIZED_LEN)
-                        {
-                            str.resize(MAX_VARSIZED_LEN);
-                        }
+                        auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX + 1));
+                        str.resize(std::min(str.size(), MAX_VARSIZED_LEN));
                         result.emplace_back(std::move(str));
                         break;
                     }

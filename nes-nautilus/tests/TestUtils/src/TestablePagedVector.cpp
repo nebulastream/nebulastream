@@ -80,7 +80,7 @@ TestablePagedVector::TestablePagedVector(const std::vector<DataType>& fieldTypes
             const PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
             for (const auto& record : pvRef)
             {
-                auto out = anyVecPushBack(outVector, nautilus::val<size_t>(std::ranges::size(layout->getSchema())));
+                auto out = anyVecPushBack(outVector, nautilus::val<size_t>{std::ranges::size(layout->getSchema())});
                 storeRecordToAnyVec(out, record, projections, dataTypes);
             }
         })));

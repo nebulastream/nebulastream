@@ -26,6 +26,7 @@
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
+#include <nautilus/exception.hpp>
 #include <nautilus/function.hpp>
 
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -41,6 +42,22 @@
 
 namespace NES
 {
+namespace
+{
+/// Throws when no buffer is available for the median's paged vector, so it is called through invokeGuarded.
+uint32_t initMedianPagedVectorProxy(TupleBuffer* parentBuffer, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
+{
+    if (auto pagedVectorBufferOpt = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
+    {
+        /// initialize paged vector buffer
+        auto pagedVectorBuffer = pagedVectorBufferOpt.value();
+        PagedVector::init(pagedVectorBuffer, bufferProvider->getBufferSize(), tupleSize);
+        auto childBufferIndex = parentBuffer->storeChildBuffer(pagedVectorBuffer);
+        return childBufferIndex.getRawValue();
+    }
+    throw BufferAllocationFailure("No unpooled TupleBuffer available for median aggregation paged vector!");
+}
+}
 
 MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
     DataType inputType,
@@ -55,7 +72,7 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
 
 void MedianAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    nautilus::val<TupleBuffer*> parentBuffer,
+    BorrowedNautilusBuffer parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record)
 {
@@ -74,7 +91,7 @@ void MedianAggregationPhysicalFunction::lift(
             nautilus::invoke(
                 +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
                 { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
-                parentBuffer,
+                parentBuffer.asArg(),
                 pagedVecBuffer.asArg(),
                 static_cast<nautilus::val<uint32_t*>>(memArea));
 
@@ -90,7 +107,7 @@ void MedianAggregationPhysicalFunction::lift(
         nautilus::invoke(
             +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
             { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
-            parentBuffer,
+            parentBuffer.asArg(),
             pagedVecBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(memArea));
 
@@ -101,9 +118,9 @@ void MedianAggregationPhysicalFunction::lift(
 
 void MedianAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
-    nautilus::val<TupleBuffer*> parentBuffer1,
+    BorrowedNautilusBuffer parentBuffer1,
     const nautilus::val<AggregationState*> aggregationState2,
-    nautilus::val<TupleBuffer*> parentBuffer2,
+    BorrowedNautilusBuffer parentBuffer2,
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
     auto memArea1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
@@ -136,15 +153,15 @@ void MedianAggregationPhysicalFunction::combine(
             vector1.copyPagesFrom(*bufferProvider, vector2);
         },
         pipelineMemoryProvider.bufferProvider,
-        parentBuffer1,
+        parentBuffer1.asArg(),
         static_cast<nautilus::val<uint32_t*>>(memArea1),
-        parentBuffer2,
+        parentBuffer2.asArg(),
         static_cast<nautilus::val<uint32_t*>>(memArea2));
 }
 
 Record MedianAggregationPhysicalFunction::lower(
     const nautilus::val<AggregationState*> aggregationState,
-    nautilus::val<TupleBuffer*> parentBuffer,
+    BorrowedNautilusBuffer parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
     /// If it contains null values, we simply return a null value
@@ -154,7 +171,7 @@ Record MedianAggregationPhysicalFunction::lower(
         containsNull = readNull(aggregationState);
     }
 
-    const VarVal zero{nautilus::val<uint64_t>(0), true, true};
+    const VarVal zero{nautilus::val<uint64_t>{0}, true, true};
     VarVal medianValue = zero.castToType(resultType.type);
 
     if (!containsNull)
@@ -166,7 +183,7 @@ Record MedianAggregationPhysicalFunction::lower(
         nautilus::invoke(
             +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
             { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
-            parentBuffer,
+            parentBuffer.asArg(),
             pagedVecBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(memArea));
 
@@ -186,8 +203,8 @@ Record MedianAggregationPhysicalFunction::lower(
         const nautilus::val<int64_t> medianPos2 = numberOfEntries / 2;
         nautilus::val<uint64_t> medianItemPos1 = 0;
         nautilus::val<uint64_t> medianItemPos2 = 0;
-        nautilus::val<bool> medianFound1(false);
-        nautilus::val<bool> medianFound2(false);
+        nautilus::val<bool> medianFound1{false};
+        nautilus::val<bool> medianFound2{false};
 
 
         /// Picking a candidate and counting how many items are smaller or equal to the candidate.
@@ -242,7 +259,7 @@ Record MedianAggregationPhysicalFunction::lower(
 
             const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
             const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
-            const VarVal two = nautilus::val<uint64_t>(2);
+            const VarVal two = nautilus::val<uint64_t>{2};
             medianValue
                 = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
         }
@@ -258,31 +275,16 @@ Record MedianAggregationPhysicalFunction::lower(
 
 void MedianAggregationPhysicalFunction::reset(
     const nautilus::val<AggregationState*> aggregationState,
-    nautilus::val<TupleBuffer*> parentBuffer,
+    BorrowedNautilusBuffer parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
     const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
-    /// The allocation-failure throw unwinds through the compiled frame and leaks this pipeline's traced buffers.
-    /// Guarding it is not enough: the returned child index is stored and dereferenced later, so a parked failure
-    /// would hand out a sentinel index. A proper conversion needs a traced failure branch at the call sites.
-    /// NOLINTNEXTLINE(no-throw-in-plain-invoke)
-    const nautilus::val<uint32_t> childBufferIndexVal = nautilus::invoke(
-        +[](TupleBuffer* parentBuffer, AbstractBufferProvider* bufferProvider, uint64_t tupleSize)
-        {
-            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): aggregation state stores a TupleBuffer at this slot.
-            if (auto pagedVectorBufferOpt = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
-            {
-                /// initialize paged vector buffer
-                auto pagedVectorBuffer = pagedVectorBufferOpt.value();
-                PagedVector::init(pagedVectorBuffer, bufferProvider->getBufferSize(), tupleSize);
-                auto childBufferIndex = parentBuffer->storeChildBuffer(pagedVectorBuffer);
-                return childBufferIndex.getRawValue();
-            }
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for median aggregation paged vector!");
-        },
-        parentBuffer,
-        pipelineMemoryProvider.bufferProvider,
-        tupleSize);
+    /// The proxy throws when it cannot get a buffer for the paged vector. The guard parks that throw so the compiled
+    /// frame still runs its traced destructors; the sentinel index stored below is never followed, because
+    /// AggregationBuildPhysicalOperator::execute returns before lift() reads it once something is parked.
+    const nautilus::val<uint32_t> childBufferIndexVal
+        = nautilus::invokeGuarded<&initMedianPagedVectorProxy, TupleBuffer*, AbstractBufferProvider*, uint64_t>(
+            parentBuffer.asArg(), pipelineMemoryProvider.bufferProvider, tupleSize);
 
     auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     if (inputType.nullable)

@@ -22,6 +22,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <ranges>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -148,33 +149,21 @@ void HJOperatorHandler::emitSlicesToProbe(
     const auto leftHashMapBuffers = getHashMapsFromSlices(leftSlices, JoinBuildSideType::Left);
     const auto rightHashMapBuffers = getHashMapsFromSlices(rightSlices, JoinBuildSideType::Right);
 
-    /// Update rolling average (accumulate locally, single lock acquisition)
+    /// Update the per-side rolling averages of the number of keys (accumulate locally, single lock acquisition per side).
+    const auto updateRollingAverage = [](const std::vector<TupleBuffer>& buffers, auto& rollingAverage)
     {
-        uint64_t totalTuples = 0;
-        uint64_t mapCount = 0;
-        for (const auto& buffer : leftHashMapBuffers)
+        if (buffers.empty())
         {
-            totalTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
-            ++mapCount;
+            return;
         }
-        if (mapCount > 0)
-        {
-            leftRollingAverageNumberOfKeys.wlock()->add(totalTuples / mapCount);
-        }
-
-        /// Resetting before updating the right side
-        totalTuples = 0;
-        mapCount = 0;
-        for (const auto& buffer : rightHashMapBuffers)
-        {
-            totalTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
-            ++mapCount;
-        }
-        if (mapCount > 0)
-        {
-            rightRollingAverageNumberOfKeys.wlock()->add(totalTuples / mapCount);
-        }
-    }
+        const auto totalTuples = std::ranges::fold_left(
+            buffers | std::views::transform([](const auto& buffer) { return ChainedHashMap::load(buffer).getTotalNumberOfRecords(); }),
+            uint64_t{0},
+            std::plus{});
+        rollingAverage.wlock()->add(totalTuples / buffers.size());
+    };
+    updateRollingAverage(leftHashMapBuffers, leftRollingAverageNumberOfKeys);
+    updateRollingAverage(rightHashMapBuffers, rightRollingAverageNumberOfKeys);
 
     /// Creating a tuple buffer containing all necessary information for the probe
     uint64_t totalNumberOfTuples = 0;
