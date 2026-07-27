@@ -35,16 +35,29 @@ function(nes_add_docker_image IMAGE TARGET)
         set(STATE "")
     endif ()
 
+    # UdfBridgeRegistry resolves LANGUAGE clauses to <executable dir>/nes-udf-bridges/<file> at
+    # runtime (see nes-udf/bridge/CMakeLists.txt, which stages the built bridge there in the build
+    # tree). Best-effort: the bridge is only built when Python's embed dev files are present.
+    set(BRIDGE_COPY "")
+    set(BRIDGE_DOCKERIGNORE "")
+    if (TARGET nes-python-udf-bridge)
+        if (${TARGET} STREQUAL "nes-single-node-worker")
+            set(BRIDGE_COPY "COPY nes-udf-bridges/ /usr/bin/nes-udf-bridges/\n")
+            set(BRIDGE_DOCKERIGNORE "!nes-udf-bridges/**\n")
+        endif ()
+    endif ()
+
     set(DOCKERFILE "$<TARGET_FILE_DIR:${TARGET}>/${TARGET}.dockerfile")
     string(CONCAT DOCKERFILE_CONTENT
         "FROM ${NES_RUNTIME_BASE_IMAGE}\n"
         "${STATE}"
         "COPY $<TARGET_FILE_NAME:${TARGET}> /usr/bin/$<TARGET_FILE_NAME:${TARGET}>\n"
+        "${BRIDGE_COPY}"
         "ENTRYPOINT [\"/usr/bin/$<TARGET_FILE_NAME:${TARGET}>\"]\n"
     )
     file(GENERATE OUTPUT "${DOCKERFILE}" CONTENT "${DOCKERFILE_CONTENT}")
     file(GENERATE OUTPUT "${DOCKERFILE}.dockerignore"
-        CONTENT "*\n!$<TARGET_FILE_NAME:${TARGET}>\n")
+        CONTENT "*\n!$<TARGET_FILE_NAME:${TARGET}>\n${BRIDGE_DOCKERIGNORE}")
 
     add_custom_target(package-docker-${IMAGE}
         COMMAND /bin/sh -c
