@@ -72,6 +72,13 @@ public:
     /// Do not call asArg() on a temporary OwnedNautilusBuffer: the returned pointer would dangle.
     [[nodiscard]] nautilus::val<const TupleBuffer*> asArg() const&& = delete;
     nautilus::val<TupleBuffer*> asArg() && = delete;
+
+    /// Implicitly borrows this owned buffer, so an OwnedNautilusBuffer can be passed wherever a BorrowedNautilusBuffer is
+    /// expected without an explicit wrap. The borrowed handle is valid only while this OwnedNautilusBuffer is alive; the
+    /// lvalue-only qualification (with the deleted rvalue overload) prevents borrowing from a temporary, which would dangle.
+    /// NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
+    operator BorrowedNautilusBuffer() const&;
+    operator BorrowedNautilusBuffer() const&& = delete;
 };
 
 class BorrowedNautilusBuffer
@@ -89,6 +96,16 @@ public:
     [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
 
     [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<ChildBufferIndex>& index) const;
+
+    /// Loads the child buffer at a plain integer index. Separate from the ChildBufferIndex overload because a bare
+    /// integer index (e.g. a val<uint64_t> loop counter) would otherwise bind to the index-address overload below
+    /// via an integer-to-pointer conversion, silently dereferencing the index value as a memory address.
+    [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<uint64_t>& index) const;
+
+    /// Loads the child buffer whose uint32_t index is stored at `indexAddress` in memory. Used when the child-buffer
+    /// index is not a known value but lives in a record's value area (e.g. a chained hash map entry's paged vector).
+    /// Named distinctly from getChild so an integer index can never accidentally select it (see the overload above).
+    [[nodiscard]] OwnedNautilusBuffer getChildFromIndexAddress(const nautilus::val<uint32_t*>& indexAddress) const;
 
     nautilus::val<ChildBufferIndex> storeChild(OwnedNautilusBuffer&& child);
 
