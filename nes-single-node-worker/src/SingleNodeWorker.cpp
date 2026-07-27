@@ -176,50 +176,27 @@ std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQuerySta
 
 WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
 {
-    const std::chrono::system_clock::time_point until = std::chrono::system_clock::now();
-    const auto summaries = nodeEngine->getQueryLog()->getStatus();
-    WorkerStatus status;
-    status.after = after;
-    status.until = until;
-    for (const auto& [queryId, state, metrics] : summaries)
+    /// Take `until` before the snapshots, so that the next status lists a query that terminates in between.
+    const auto until = std::chrono::system_clock::now();
+    WorkerStatus status{.after = after, .until = until, .activeQueries = {}, .terminatedQueries = {}};
+    for (const auto& [queryId, state, metrics] : nodeEngine->getQueryLog()->getStatus())
     {
         switch (state)
         {
+            /// A query that is still compiling is listed, so a caller does not start it a second time.
             case QueryStatus::Registered:
-                /// Ignore these for the worker status
-                break;
             case QueryStatus::Started:
-                INVARIANT(metrics.start.has_value(), "If query is started, it should have a start timestamp");
-                if (metrics.start.value() >= after)
+            case QueryStatus::Running:
+                status.activeQueries.emplace_back(queryId, metrics.running);
+                break;
+            case QueryStatus::Stopped:
+            case QueryStatus::Failed:
+                INVARIANT(metrics.stop.has_value(), "If query has terminated, it should have a stop timestamp");
+                if (const auto stop = metrics.stop.value(); stop >= after)
                 {
-                    status.activeQueries.emplace_back(queryId, std::nullopt);
+                    status.terminatedQueries.emplace_back(queryId, metrics.running, stop, metrics.error);
                 }
                 break;
-            case QueryStatus::Running: {
-                INVARIANT(metrics.running.has_value(), "If query is running, it should have a running timestamp");
-                if (metrics.running.value() >= after)
-                {
-                    status.activeQueries.emplace_back(queryId, metrics.running.value());
-                }
-                break;
-            }
-            case QueryStatus::Stopped: {
-                /// A query stopped during setup may never have reported Running.
-                INVARIANT(metrics.stop.has_value(), "If query is stopped, it should have a stopped timestamp");
-                if (metrics.stop.value() >= after)
-                {
-                    status.terminatedQueries.emplace_back(queryId, metrics.running, metrics.stop.value(), metrics.error);
-                }
-                break;
-            }
-            case QueryStatus::Failed: {
-                INVARIANT(metrics.stop.has_value(), "If query has failed, it should have a stopped timestamp");
-                if (metrics.stop.value() >= after)
-                {
-                    status.terminatedQueries.emplace_back(queryId, metrics.running, metrics.stop.value(), metrics.error);
-                }
-                break;
-            }
         }
     }
     return status;
