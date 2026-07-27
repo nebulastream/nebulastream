@@ -28,6 +28,7 @@
 #include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Runtime/BufferManager.hpp> /// NOLINT(misc-include-cleaner)
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -470,7 +471,12 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
         [](nautilus::val<TupleBuffer*> buffer)
         {
             const ChainedHashMapRef ref{
-                buffer, {}, {}, nautilus::val<uint64_t>{entriesPerPage}, nautilus::val<uint64_t>{entrySize}, std::nullopt};
+                BorrowedNautilusBuffer::from(buffer),
+                {},
+                {},
+                nautilus::val<uint64_t>{entriesPerPage},
+                nautilus::val<uint64_t>{entrySize},
+                std::nullopt};
             for (const auto entry : ref)
             {
                 std::ignore = entry;

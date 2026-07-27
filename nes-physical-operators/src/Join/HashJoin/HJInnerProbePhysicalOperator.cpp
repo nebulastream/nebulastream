@@ -19,6 +19,7 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
@@ -75,6 +76,12 @@ void HJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
 
     /// The hash map buffers themselves are stored as child buffers of the record buffer, not as raw pointers in the trigger struct
-    performMatchPairsProbe(recordBuffer.getReference(), leftNumberOfHashMaps, rightNumberOfHashMaps, executionCtx, windowStart, windowEnd);
+    performMatchPairsProbe(
+        BorrowedNautilusBuffer::from(recordBuffer.getReference()),
+        leftNumberOfHashMaps,
+        rightNumberOfHashMaps,
+        executionCtx,
+        windowStart,
+        windowEnd);
 }
 }

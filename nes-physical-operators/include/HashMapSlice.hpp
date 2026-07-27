@@ -40,7 +40,7 @@ struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
         const uint64_t valueSize,
         const uint64_t pageSize,
         const uint64_t numberOfBuckets,
-        AbstractBufferProvider* bufferProvider,
+        AbstractBufferProvider& bufferProvider,
         /// Defaults to no BloomFilter, so callers that do not use one (e.g. aggregation) allocate no
         /// bloom-bit memory.
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations): matches the pre-existing default here.
@@ -49,7 +49,7 @@ struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
         , valueSize(valueSize)
         , pageSize(pageSize)
         , numberOfBuckets(numberOfBuckets)
-        , bufferProvider(bufferProvider)
+        , bufferProvider(&bufferProvider)
         , bloomFilterParams(bloomFilterParams)
     {
     }

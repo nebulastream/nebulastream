@@ -18,6 +18,7 @@
 #include <memory>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -49,7 +50,7 @@ public:
     /// Adds the incoming record to the existing aggregation state
     virtual void lift(
         const nautilus::val<AggregationState*>& aggregationState,
-        nautilus::val<TupleBuffer*> parentBuffer,
+        BorrowedNautilusBuffer parentBuffer,
         PipelineMemoryProvider& bufferProvider,
         const Record& record)
         = 0;
@@ -57,9 +58,9 @@ public:
     /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state
     virtual void combine(
         nautilus::val<AggregationState*> aggregationState1,
-        nautilus::val<TupleBuffer*> parentBuffer1,
+        BorrowedNautilusBuffer parentBuffer1,
         nautilus::val<AggregationState*> aggregationState2,
-        nautilus::val<TupleBuffer*> parentBuffer2,
+        BorrowedNautilusBuffer parentBuffer2,
         PipelineMemoryProvider& pipelineMemoryProvider)
         = 0;
 
@@ -67,14 +68,14 @@ public:
     /// It will NOT contain any other metadata fields, e.g., window start and end fields
     virtual Record lower(
         nautilus::val<AggregationState*> aggregationState,
-        nautilus::val<TupleBuffer*> parentBuffer,
+        BorrowedNautilusBuffer parentBuffer,
         PipelineMemoryProvider& pipelineMemoryProvider)
         = 0;
 
     /// Resets the aggregation state to its initial state. For a sum, this would be 0, for a min aggregation, this would be the maximum possible value, etc.
     virtual void reset(
         nautilus::val<AggregationState*> aggregationState,
-        nautilus::val<TupleBuffer*> parentBuffer,
+        BorrowedNautilusBuffer parentBuffer,
         PipelineMemoryProvider& pipelineMemoryProvider)
         = 0;
 

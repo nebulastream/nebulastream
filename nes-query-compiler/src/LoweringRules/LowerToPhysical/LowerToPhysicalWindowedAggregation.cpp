@@ -216,7 +216,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         {
             auto& aggHandler = dynamic_cast<AggregationOperatorHandler&>(handler);
             const CreateNewHashMapSliceArgs hashMapSliceArgs{
-                hashMapOptions.keySize, hashMapOptions.valueSize, hashMapOptions.pageSize, hashMapOptions.numberOfBuckets, &bufferProvider};
+                hashMapOptions.keySize, hashMapOptions.valueSize, hashMapOptions.pageSize, hashMapOptions.numberOfBuckets, bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     const AggregationBuildPhysicalOperator build{

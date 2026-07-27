@@ -22,6 +22,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/std/cstring.h>
@@ -48,7 +49,7 @@ CountAggregationPhysicalFunction::CountAggregationPhysicalFunction(
 
 void CountAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    nautilus::val<TupleBuffer*>,
+    BorrowedNautilusBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record)
 {
@@ -67,9 +68,9 @@ void CountAggregationPhysicalFunction::lift(
 
 void CountAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
-    nautilus::val<TupleBuffer*>,
+    BorrowedNautilusBuffer,
     const nautilus::val<AggregationState*> aggregationState2,
-    nautilus::val<TupleBuffer*>,
+    BorrowedNautilusBuffer,
     PipelineMemoryProvider&)
 {
     /// Reading the count from the first aggregation state
@@ -88,7 +89,7 @@ void CountAggregationPhysicalFunction::combine(
 }
 
 Record CountAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider&)
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -102,7 +103,7 @@ Record CountAggregationPhysicalFunction::lower(
 }
 
 void CountAggregationPhysicalFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider&)
 {
     /// Resetting the count and count to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
