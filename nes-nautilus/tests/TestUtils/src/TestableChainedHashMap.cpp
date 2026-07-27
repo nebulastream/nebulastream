@@ -31,6 +31,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -140,13 +141,14 @@ TestableChainedHashMap::TestableChainedHashMap(
             nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
         {
             const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
-            ChainedHashMapRef chmRef{chainedHashMapBuffer, hashMapConfig};
+            const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+            ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
             std::ignore = chmRef.findOrCreateEntry(
                 record,
                 [&](const nautilus::val<AbstractHashMapEntry*>& newEntry)
                 {
                     const auto chainedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(newEntry);
-                    const ChainedHashMapRef::ChainedEntryRef newEntryRef{chainedEntry, chainedHashMapBuffer, fieldKeys, fieldValues};
+                    const ChainedHashMapRef::ChainedEntryRef newEntryRef{chainedEntry, borrowedBuffer, fieldKeys, fieldValues};
                     newEntryRef.copyValuesToEntry(record, bm);
                 },
                 bm);
@@ -173,17 +175,19 @@ TestableChainedHashMap::TestableChainedHashMap(
             nautilus::val<AnyVec*> out) -> nautilus::val<bool>
         {
             const Record keyRecord = buildRecordFromAnyVec(keyIn, keyProjections, keyDataTypes);
+            const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+            const BorrowedNautilusBuffer borrowedProbeBuffer = BorrowedNautilusBuffer::from(probeBuffer);
 
-            ChainedHashMapRef probeMapRef{probeBuffer, probeConfig};
+            ChainedHashMapRef probeMapRef{borrowedProbeBuffer, probeConfig};
             const auto probeEntry = probeMapRef.findOrCreateEntry(keyRecord, [](const nautilus::val<AbstractHashMapEntry*>&) { }, bm);
 
-            ChainedHashMapRef chmRef{chainedHashMapBuffer, hashMapConfig};
+            ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
             const auto foundEntry = chmRef.findEntry(probeEntry);
             const nautilus::val<bool> found = (foundEntry != nullptr);
             if (found)
             {
                 const auto chainedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry);
-                const ChainedHashMapRef::ChainedEntryRef entryRef{chainedEntry, chainedHashMapBuffer, fieldKeys, fieldValues};
+                const ChainedHashMapRef::ChainedEntryRef entryRef{chainedEntry, borrowedBuffer, fieldKeys, fieldValues};
                 const auto valueRecord = entryRef.getValue();
                 storeRecordToAnyVec(out, valueRecord, fieldValueNames, fieldValueTypes);
             }
@@ -202,18 +206,19 @@ TestableChainedHashMap::TestableChainedHashMap(
             /// begin() calls getPage(0) via invoke which fails on an empty CHM, so guard first.
             const auto numTuples = nautilus::invoke(
                 +[](TupleBuffer* buf) { return ChainedHashMap::load(*buf).getTotalNumberOfRecords(); }, chainedHashMapBuffer);
-            if (numTuples == nautilus::val<uint64_t>(0))
+            if (numTuples == nautilus::val<uint64_t>{0})
             {
                 return;
             }
 
-            const ChainedHashMapRef chmRef{chainedHashMapBuffer, hashMapConfig};
+            const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+            const ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
 
             for (const auto entry : chmRef)
             {
-                const ChainedHashMapRef::ChainedEntryRef entryRef{entry, chainedHashMapBuffer, fieldKeys, fieldValues};
+                const ChainedHashMapRef::ChainedEntryRef entryRef{entry, borrowedBuffer, fieldKeys, fieldValues};
 
-                auto out = anyVecPushBack(outVector, nautilus::val<size_t>(fieldKeys.size() + fieldValues.size()));
+                auto out = anyVecPushBack(outVector, nautilus::val<size_t>{fieldKeys.size() + fieldValues.size()});
 
                 const auto keyRecord = entryRef.getKey();
                 const auto valueRecord = entryRef.getValue();

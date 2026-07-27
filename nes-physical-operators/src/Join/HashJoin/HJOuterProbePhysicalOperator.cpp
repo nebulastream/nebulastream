@@ -56,14 +56,9 @@ namespace
 PagedVectorRef
 loadEntryPagedVector(const ChainedHashMapRef::ChainedEntryRef& entryRef, const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout)
 {
-    auto valueMemArea = entryRef.getValueMemArea();
-    OwnedNautilusBuffer pagedVectorBuffer;
-    nautilus::invoke(
-        +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
-        { *out = hashMapBuf->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
-        entryRef.hashMapBuffer,
-        pagedVectorBuffer.asArg(),
-        static_cast<nautilus::val<uint32_t*>>(valueMemArea));
+    /// The entry's value area stores the child-buffer index of its paged vector; getChild loads that child as an owned buffer.
+    auto pagedVectorBuffer
+        = entryRef.hashMapBuffer.getChildFromIndexAddress(static_cast<nautilus::val<uint32_t*>>(entryRef.getValueMemArea()));
     /// Must move the owned buffer into the PagedVectorRef rather than wrap a BorrowedNautilusBuffer around it: a
     /// borrowed view only stores a pointer back to `pagedVectorBuffer`, which would dangle once this function returns.
     return PagedVectorRef{std::move(pagedVectorBuffer), tupleLayout};
@@ -92,7 +87,7 @@ HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
 }
 
 void HJOuterProbePhysicalOperator::performNullFillProbe(
-    const nautilus::val<TupleBuffer*>& recordBufferRef,
+    const BorrowedNautilusBuffer& recordBufferRef,
     nautilus::val<uint64_t> outerOffset,
     nautilus::val<uint64_t> outerNumberOfHashMaps,
     nautilus::val<uint64_t> innerOffset,
@@ -110,26 +105,23 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
     /// Iterate all outer (preserved-side) hash maps
     for (nautilus::val<uint64_t> outerIdx = 0; outerIdx < outerNumberOfHashMaps; ++outerIdx)
     {
-        auto outerHashMapBuffer = pinHashMapBuffer(recordBufferRef, outerOffset + outerIdx);
-        const ChainedHashMapRef outerHashMap = makeChainedHashMapRef(outerHashMapBuffer.asArg(), outerHashMapConfig);
+        auto outerHashMapBuffer = recordBufferRef.getChild(outerOffset + outerIdx);
+        const ChainedHashMapRef outerHashMap{outerHashMapBuffer, outerHashMapConfig};
 
         for (const auto outerEntry : outerHashMap)
         {
             const ChainedHashMapRef::ChainedEntryRef outerEntryRef{
-                outerEntry, outerHashMapBuffer.asArg(), outerHashMapConfig.fieldKeys, outerHashMapConfig.fieldValues};
+                outerEntry, outerHashMapBuffer, outerHashMapConfig.fieldKeys, outerHashMapConfig.fieldValues};
             const PagedVectorRef outerPagedVector = loadEntryPagedVector(outerEntryRef, outerTupleLayout);
 
             /// Check all inner hash maps for a matching key
-            nautilus::val<bool> matched(false);
+            nautilus::val<bool> matched{false};
             for (nautilus::val<uint64_t> innerIdx = 0; innerIdx < innerNumberOfHashMaps; ++innerIdx)
             {
-                auto innerHashMapBuffer = pinHashMapBuffer(recordBufferRef, innerOffset + innerIdx);
-                ChainedHashMapRef innerHashMap = makeChainedHashMapRef(innerHashMapBuffer.asArg(), innerHashMapConfig);
+                auto innerHashMapBuffer = recordBufferRef.getChild(innerOffset + innerIdx);
+                ChainedHashMapRef innerHashMap{innerHashMapBuffer, innerHashMapConfig};
 
-                if (innerHashMap.findEntry(outerEntryRef.entryRef) != nullptr)
-                {
-                    matched = nautilus::val<bool>(true);
-                }
+                matched = matched or (innerHashMap.findEntry(outerEntryRef.entryRef) != nullptr);
             }
             if (!matched)
             {
@@ -162,7 +154,7 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
 
     /// The hash map buffers themselves are stored as child buffers of the record buffer: left ones first, right ones after
-    const auto& recordBufferRef = recordBuffer.getReference();
+    const auto recordBufferRef = BorrowedNautilusBuffer::from(recordBuffer.getReference());
     const nautilus::val<uint64_t> leftOffset{0ULL};
     /// Right-side hash maps are stored immediately after the left ones
     const nautilus::val<uint64_t>& rightOffset = leftNumberOfHashMaps;

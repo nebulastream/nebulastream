@@ -48,7 +48,7 @@ NautilusBuffer SliceCacheNone::getDataStructureRef(
     /// As this slice cache does nothing, we simply replace the single entry and return the data structure
     replaceEntry(threadEntry);
 
-    BorrowedNautilusBuffer dataStructureBuffer = BorrowedNautilusBuffer::from(threadEntry.get(&SliceCacheEntry::dataStructure));
+    auto dataStructureBuffer = BorrowedNautilusBuffer::from(threadEntry.get(&SliceCacheEntry::dataStructure));
     return dataStructureBuffer;
 }
 }

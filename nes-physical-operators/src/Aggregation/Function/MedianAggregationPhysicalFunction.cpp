@@ -56,7 +56,7 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
 
 void MedianAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    nautilus::val<TupleBuffer*> parentBuffer,
+    BorrowedNautilusBuffer parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record)
 {
@@ -75,7 +75,7 @@ void MedianAggregationPhysicalFunction::lift(
             nautilus::invoke(
                 +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
                 { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
-                parentBuffer,
+                parentBuffer.asArg(),
                 pagedVecBuffer.asArg(),
                 static_cast<nautilus::val<uint32_t*>>(memArea));
 
@@ -91,7 +91,7 @@ void MedianAggregationPhysicalFunction::lift(
         nautilus::invoke(
             +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
             { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
-            parentBuffer,
+            parentBuffer.asArg(),
             pagedVecBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(memArea));
 
@@ -102,9 +102,9 @@ void MedianAggregationPhysicalFunction::lift(
 
 void MedianAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
-    nautilus::val<TupleBuffer*> parentBuffer1,
+    BorrowedNautilusBuffer parentBuffer1,
     const nautilus::val<AggregationState*> aggregationState2,
-    nautilus::val<TupleBuffer*> parentBuffer2,
+    BorrowedNautilusBuffer parentBuffer2,
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
     auto memArea1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
@@ -137,15 +137,15 @@ void MedianAggregationPhysicalFunction::combine(
             vector1.copyPagesFrom(*bufferProvider, vector2);
         },
         pipelineMemoryProvider.bufferProvider,
-        parentBuffer1,
+        parentBuffer1.asArg(),
         static_cast<nautilus::val<uint32_t*>>(memArea1),
-        parentBuffer2,
+        parentBuffer2.asArg(),
         static_cast<nautilus::val<uint32_t*>>(memArea2));
 }
 
 Record MedianAggregationPhysicalFunction::lower(
     const nautilus::val<AggregationState*> aggregationState,
-    nautilus::val<TupleBuffer*> parentBuffer,
+    BorrowedNautilusBuffer parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
     /// If it contains null values, we simply return a null value
@@ -155,7 +155,7 @@ Record MedianAggregationPhysicalFunction::lower(
         containsNull = readNull(aggregationState);
     }
 
-    const VarVal zero{nautilus::val<uint64_t>(0), true, true};
+    const VarVal zero{nautilus::val<uint64_t>{0}, true, true};
     VarVal medianValue = zero.castToType(resultType.type);
 
     if (!containsNull)
@@ -167,7 +167,7 @@ Record MedianAggregationPhysicalFunction::lower(
         nautilus::invoke(
             +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
             { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
-            parentBuffer,
+            parentBuffer.asArg(),
             pagedVecBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(memArea));
 
@@ -187,8 +187,8 @@ Record MedianAggregationPhysicalFunction::lower(
         const nautilus::val<int64_t> medianPos2 = numberOfEntries / 2;
         nautilus::val<uint64_t> medianItemPos1 = 0;
         nautilus::val<uint64_t> medianItemPos2 = 0;
-        nautilus::val<bool> medianFound1(false);
-        nautilus::val<bool> medianFound2(false);
+        nautilus::val<bool> medianFound1{false};
+        nautilus::val<bool> medianFound2{false};
 
 
         /// Picking a candidate and counting how many items are smaller or equal to the candidate.
@@ -243,7 +243,7 @@ Record MedianAggregationPhysicalFunction::lower(
 
             const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
             const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
-            const VarVal two = nautilus::val<uint64_t>(2);
+            const VarVal two = nautilus::val<uint64_t>{2};
             medianValue
                 = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
         }
@@ -259,7 +259,7 @@ Record MedianAggregationPhysicalFunction::lower(
 
 void MedianAggregationPhysicalFunction::reset(
     const nautilus::val<AggregationState*> aggregationState,
-    nautilus::val<TupleBuffer*> parentBuffer,
+    BorrowedNautilusBuffer parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
     const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
@@ -277,7 +277,7 @@ void MedianAggregationPhysicalFunction::reset(
             }
             throw BufferAllocationFailure("No unpooled TupleBuffer available for median aggregation paged vector!");
         },
-        parentBuffer,
+        parentBuffer.asArg(),
         pipelineMemoryProvider.bufferProvider,
         tupleSize);
 

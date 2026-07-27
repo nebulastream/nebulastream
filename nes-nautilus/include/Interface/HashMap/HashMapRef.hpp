@@ -16,11 +16,12 @@
 
 
 #include <functional>
+#include <utility>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -29,7 +30,7 @@ namespace NES
 class HashMapRef
 {
 public:
-    explicit HashMapRef(const nautilus::val<TupleBuffer*>& tupleBuffer) : buffer(tupleBuffer) { }
+    explicit HashMapRef(BorrowedNautilusBuffer buffer) : buffer(std::move(buffer)) { }
 
     virtual ~HashMapRef() = default;
 
@@ -61,7 +62,9 @@ public:
     virtual nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) = 0;
 
 protected:
-    nautilus::val<TupleBuffer*> buffer;
+    /// Non-owning handle to the TupleBuffer backing this hash map. The caller (e.g. the pinned OwnedNautilusBuffer in the
+    /// probe operator) keeps it alive; a BorrowedNautilusBuffer carries no lifetime management and is single-thread only.
+    BorrowedNautilusBuffer buffer;
 };
 
 }

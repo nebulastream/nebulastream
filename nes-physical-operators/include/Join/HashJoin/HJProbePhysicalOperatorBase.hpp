@@ -36,9 +36,6 @@
 namespace NES
 {
 
-/// Forward declaration suffices: only named as makeChainedHashMapRef's return type here; the .cpp includes the full header.
-class ChainedHashMapRef;
-
 /// Shared base for all hash join probe operators (inner, outer).
 /// Holds the HJ-specific state (buffer refs, hash map options) and the match-pairs probe logic.
 /// This avoids duplicating the match-pairs iteration across probe variants while keeping inner and outer
@@ -57,23 +54,16 @@ public:
         ChainedHashMapConfig rightHashMapConfig);
 
 protected:
-    /// Pins the hash map TupleBuffer stored as the `index`-th child buffer of the record buffer that `recordBufferRef` points to.
-    static OwnedNautilusBuffer pinHashMapBuffer(const nautilus::val<TupleBuffer*>& recordBufferRef, const nautilus::val<uint64_t>& index);
-
     /// Match-pairs probe: iterates all left hash maps against all right hash maps and emits joined records.
     /// Left hash map buffers are stored as child buffers [0, leftNumberOfHashMaps) of the record buffer, right ones follow at
     /// [leftNumberOfHashMaps, leftNumberOfHashMaps + rightNumberOfHashMaps).
     void performMatchPairsProbe(
-        const nautilus::val<TupleBuffer*>& recordBufferRef,
+        const BorrowedNautilusBuffer& recordBuffer,
         nautilus::val<uint64_t> leftNumberOfHashMaps,
         nautilus::val<uint64_t> rightNumberOfHashMaps,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
-
-    /// Builds a ChainedHashMapRef view over the hash map stored in `hashMapBufferRef` using the key/value layout described by `options`.
-    static ChainedHashMapRef
-    makeChainedHashMapRef(const nautilus::val<TupleBuffer*>& hashMapBufferRef, const ChainedHashMapConfig& options);
 
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout, rightTupleLayout;
     ChainedHashMapConfig leftHashMapConfig, rightHashMapConfig;

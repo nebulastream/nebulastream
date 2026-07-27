@@ -29,6 +29,7 @@
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Runtime/BufferManager.hpp> /// NOLINT(misc-include-cleaner)
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -476,7 +477,7 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
         /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
         [hashMapConfig](nautilus::val<TupleBuffer*> buffer)
         {
-            const ChainedHashMapRef ref{buffer, hashMapConfig};
+            const ChainedHashMapRef ref{BorrowedNautilusBuffer::from(buffer), hashMapConfig};
             for (const auto entry : ref)
             {
                 std::ignore = entry;
