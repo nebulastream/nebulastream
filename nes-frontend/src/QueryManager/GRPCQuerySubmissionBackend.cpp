@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -149,6 +150,24 @@ std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(
         return std::unexpected(UnknownException("GRPC Status: {}", responseCode.error_message()));
     }
     return deserializeWorkerStatus(&response);
+}
+
+std::expected<std::string, Exception> GRPCQuerySubmissionBackend::version() const
+{
+    grpc::ClientContext context;
+    const google::protobuf::Empty request;
+    VersionResponse response;
+    const auto responseCode = stub->RequestVersion(&context, request, &response);
+    if (responseCode.error_code() == grpc::StatusCode::UNIMPLEMENTED)
+    {
+        return std::unexpected(
+            NotImplemented("worker {} does not support the RequestVersion RPC; it was built before this client", workerConfig.host));
+    }
+    if (!responseCode.ok())
+    {
+        return std::unexpected(UnknownException("GRPC Status: {}", responseCode.error_message()));
+    }
+    return response.version();
 }
 
 std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)

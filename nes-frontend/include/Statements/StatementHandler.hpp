@@ -16,6 +16,7 @@
 
 #include <concepts>
 #include <expected>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -109,6 +110,11 @@ struct WorkerStatusStatementResult
     DistributedWorkerStatus status;
 };
 
+struct ShowVersionStatementResult
+{
+    std::map<Host, std::expected<std::string, Exception>> versions;
+};
+
 struct CreateWorkerStatementResult
 {
     Host host;
@@ -151,6 +157,7 @@ using StatementResult = std::variant<
     DropWorkerStatementResult,
     CreateWorkerStatementResult,
     WorkerStatusStatementResult,
+    ShowVersionStatementResult,
     CreateModelStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
@@ -265,6 +272,7 @@ public:
     TopologyStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<WorkerCatalog> workerCatalog);
 
     std::expected<WorkerStatusStatementResult, Exception> operator()(const WorkerStatusStatement& statement);
+    std::expected<ShowVersionStatementResult, Exception> operator()(const ShowVersionStatement& statement);
     std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
     std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
 };

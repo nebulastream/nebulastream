@@ -18,6 +18,7 @@
 #include <memory>
 #include <mutex>
 #include <stop_token>
+#include <string>
 #include <utility>
 #include <variant>
 #include <Listeners/QueryLog.hpp>
@@ -31,6 +32,7 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Thread.hpp>
+#include <Version.hpp>
 #include <WorkerConfig.hpp>
 #include <WorkerStatus.hpp>
 
@@ -218,6 +220,11 @@ std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmission
 std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
 {
     return channel->workerStatus(after);
+}
+
+std::expected<std::string, Exception> EmbeddedWorkerQuerySubmissionBackend::version() const
+{
+    return formatVersion(SingleNodeWorkerBinaryName);
 }
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)

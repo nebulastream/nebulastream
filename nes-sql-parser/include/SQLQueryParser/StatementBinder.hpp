@@ -172,6 +172,11 @@ struct ShowModelsStatement
     std::optional<StatementOutputFormat> format;
 };
 
+struct ShowVersionStatement
+{
+    std::optional<StatementOutputFormat> format;
+};
+
 struct DropModelStatement
 {
     std::string name;
@@ -215,6 +220,7 @@ using Statement = std::variant<
     ShowQueriesStatement,
     ShowSinksStatement,
     ShowModelsStatement,
+    ShowVersionStatement,
     DropQueryStatement>;
 
 inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)

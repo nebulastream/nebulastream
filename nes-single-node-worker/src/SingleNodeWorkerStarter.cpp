@@ -61,7 +61,7 @@ int main(const int argc, const char* argv[])
 {
     if (NES::hasVersionFlag(argc, argv))
     {
-        NES::printVersion("nes-single-node-worker");
+        NES::printVersion(NES::SingleNodeWorkerBinaryName);
         return 0;
     }
     CPPTRACE_TRY

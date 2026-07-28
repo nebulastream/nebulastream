@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstddef>
 #include <exception>
+#include <map>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -259,6 +260,16 @@ std::expected<DistributedWorkerStatus, Exception> QueryManager::workerStatus(std
         distributedStatus.workerStatus.try_emplace(wId, backend->workerStatus(after));
     }
     return distributedStatus;
+}
+
+std::map<Host, std::expected<std::string, Exception>> QueryManager::workerVersions() const
+{
+    std::map<Host, std::expected<std::string, Exception>> versions;
+    for (const auto& [wId, backend] : backends)
+    {
+        versions.try_emplace(wId, backend->version());
+    }
+    return versions;
 }
 
 std::vector<DistributedQueryId> QueryManager::getRunningQueries() const

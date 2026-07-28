@@ -17,6 +17,8 @@
 #include <chrono>
 #include <cstdint>
 #include <expected>
+#include <map>
+#include <string>
 #include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -44,6 +46,7 @@ public:
     virtual std::expected<void, Exception> stop(QueryId) = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
+    [[nodiscard]] virtual std::expected<std::string, Exception> version() const = 0;
 };
 
 /// std::move_only_function is the C++23 equivalent but is not yet available in libc++19.
@@ -114,6 +117,7 @@ public:
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
+    [[nodiscard]] std::map<Host, std::expected<std::string, Exception>> workerVersions() const;
     [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
 };
 

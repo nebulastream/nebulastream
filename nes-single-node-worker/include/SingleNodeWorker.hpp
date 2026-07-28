@@ -18,6 +18,7 @@
 #include <expected>
 #include <memory>
 #include <optional>
+#include <string_view>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -34,6 +35,10 @@
 
 namespace NES
 {
+
+/// Binary name reported by `nes-single-node-worker --version` and by the RequestVersion RPC.
+/// Both have to agree, so the literal lives in exactly one place.
+inline constexpr std::string_view SingleNodeWorkerBinaryName{"nes-single-node-worker"};
 
 /// @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
 /// coordination. The SingleNodeWorker compiles and immediately starts LogicalQueryPlans via the QueryCompiler and NodeEngine.
