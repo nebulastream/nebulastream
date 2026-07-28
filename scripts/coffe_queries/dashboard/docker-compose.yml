@@ -10,7 +10,9 @@
 #
 # HOST prereq (unchanged): telemetry on :2222 (pi-relay.py or coffe-server-pi-schema.py).
 #
-# Build/tag the two NES images first (from repo root):
+# The two NES images are local tags (pull_policy: never). Get them either from the
+# nightly builds -- ./update-demo-images.sh, which also runs from cron -- or build
+# them yourself from the repo root:
 #   docker build -f docker/single-node-worker/SingleNodeWorker.dockerfile -t nes-worker .
 #   docker build -f docker/frontend/cli.dockerfile                        -t nes-cli    .
 
@@ -36,7 +38,11 @@ services:
     pull_policy: never
     container_name: nes-worker
     networks: [nes]
-    depends_on: [mosquitto]
+    # healthy, not just started: an MQTT sink that misses the broker throws
+    # CannotOpenSink and the query dies for good (no reconnect).
+    depends_on:
+      mosquitto:
+        condition: service_healthy
     # data_address must match the `workers:` entry in the query YAMLs. --grpc is left at its
     # default ([::]:8080); passing it explicitly fails, yaml-cpp reads [::] as a flow sequence.
     command: ["--data_address=nes-worker:9090"]

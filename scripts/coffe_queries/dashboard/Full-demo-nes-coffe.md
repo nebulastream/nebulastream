@@ -104,7 +104,13 @@ on a private `nes` network — `mosquitto` (broker), `nes-worker` (engine), and
 `nes-cli` (one-shot query registration) — and publishes the broker's 1883/9001
 to the host.
 
-Build the two NES images once (from the repo root):
+Get the two NES images. Either take the nightly builds:
+
+```bash
+scripts/coffe_queries/dashboard/update-demo-images.sh --force
+```
+
+or build them yourself from the repo root, which is what you want while developing:
 
 ```bash
 docker build -f docker/single-node-worker/SingleNodeWorker.dockerfile -t nes-worker .
@@ -179,6 +185,43 @@ D=scripts/coffe_queries/dashboard
 docker compose -f $D/docker-compose.yml exec nes-worker bash -lc 'timeout 3 bash -c "echo > /dev/tcp/host.docker.internal/2222" && echo TCP-OK  || echo TCP-FAIL'
 docker compose -f $D/docker-compose.yml exec nes-worker bash -lc 'timeout 3 bash -c "echo > /dev/tcp/mosquitto/1883"            && echo MQTT-OK || echo MQTT-FAIL'
 ```
+
+## Staying on the nightly build
+
+`update-demo-images.sh` pulls the images CI publishes every night
+(`nebulastream/worker:latest`, `nebulastream/nes-cli:latest` — note the worker is
+published as `worker`, not `nes-worker`), retags them to the local names the
+compose file uses, restarts the stack and checks that the demo still works:
+`nes-cli` must exit 0, all three queries must report `Running`, and each topic
+must publish two messages — one is not enough, since the relay replays its last
+row to every new subscriber.
+
+If any of that fails it puts the previous images back and restarts again, so a
+broken nightly never leaves the demo dead. The `:rollback` tags hold the last
+images that *passed* this check, not merely the previously deployed ones.
+
+```bash
+scripts/coffe_queries/dashboard/update-demo-images.sh            # nightly use
+scripts/coffe_queries/dashboard/update-demo-images.sh --dry-run  # show, change nothing
+scripts/coffe_queries/dashboard/update-demo-images.sh --force    # even if unchanged
+```
+
+From cron on the Pi (the script needs no TTY and takes a lock, so overlapping
+runs are impossible):
+
+```cron
+0 5 * * * /home/pi/nebulastream-public/scripts/coffe_queries/dashboard/update-demo-images.sh >> /home/pi/nes-demo-update.log 2>&1
+```
+
+`tail -3` of that log answers "did last night work?" — the final line is
+`updated`, `already up to date`, or `ROLLED BACK: <reason>`. The Pi user must be
+in the `docker` group, since cron cannot answer a `sudo` prompt.
+
+Two caveats worth knowing. The data check needs the telemetry relay to be up; if
+`:2222` is unreachable the script says so and decides on the query states alone,
+rather than rolling back because the coffee machine is unplugged. And a query
+whose source dies stays dead — NES treats a closed source as end-of-stream — so a
+rollback restart is also how you recover from that.
 
 ## Status
 
