@@ -895,17 +895,20 @@ VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_
                     "Face detection expected a {}x{} YUYV image with {} bytes, but received {} bytes", width, height, expectedSize, size);
             }
             const cv::Mat input(height, width, CV_8UC2, data);
-            cv::Mat gray;
+            thread_local cv::Mat gray;
+            thread_local cv::Mat scaledGray;
+            thread_local std::vector<cv::Rect> faces;
             cv::cvtColor(input, gray, cv::COLOR_YUV2GRAY_YUYV);
-            std::vector<cv::Rect> faces;
-            get().detectMultiScale(gray, faces);
+            cv::resize(gray, scaledGray, {}, 0.5, 0.5, cv::INTER_AREA);
+            faces.clear();
+            get().detectMultiScale(scaledGray, faces, 1.2, 3, 0, cv::Size(24, 24), cv::Size(160, 160));
 
             if (!faces.empty())
             {
-                r.unpacked.x = faces[0].x;
-                r.unpacked.y = faces[0].y;
-                r.unpacked.width = faces[0].width;
-                r.unpacked.height = faces[0].height;
+                r.unpacked.x = faces[0].x * 2;
+                r.unpacked.y = faces[0].y * 2;
+                r.unpacked.width = faces[0].width * 2;
+                r.unpacked.height = faces[0].height * 2;
             }
             else
             {
