@@ -448,6 +448,11 @@ std::expected<WorkerStatusStatementResult, Exception> TopologyStatementHandler::
     return WorkerStatusStatementResult{status};
 }
 
+std::expected<ShowVersionStatementResult, Exception> TopologyStatementHandler::operator()(const ShowVersionStatement&)
+{
+    return ShowVersionStatementResult{queryManager->workerVersions()};
+}
+
 std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::operator()(const CreateWorkerStatement& statement)
 {
     SingleNodeWorkerConfiguration config;

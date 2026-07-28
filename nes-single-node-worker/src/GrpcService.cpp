@@ -30,6 +30,7 @@
 #include <grpcpp/support/status.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <Version.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -207,6 +208,17 @@ grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const Worke
 
             serializeWorkerStatus(status, response);
 
+            return grpc::Status::OK;
+        },
+        context);
+}
+
+grpc::Status GRPCServer::RequestVersion(grpc::ServerContext* context, const google::protobuf::Empty*, VersionResponse* response)
+{
+    return tryWithDefaultHandling(
+        [&]
+        {
+            response->set_version(formatVersion(SingleNodeWorkerBinaryName));
             return grpc::Status::OK;
         },
         context);

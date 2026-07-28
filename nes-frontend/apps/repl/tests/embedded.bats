@@ -45,6 +45,16 @@ setup()         { nes_offline_setup; }
   assert_json_contains "[]" "${lines[7]}"
 }
 
+@test "show version reports the embedded worker build info" {
+  run $NES_REPL -f JSON <tests/sql-file-tests/good/show_version.sql
+  [ "$status" -eq 0 ]
+
+  [ "$(echo "${lines[0]}" | jq -r '.[0].worker')" = "localhost:8080" ]
+  version=$(echo "${lines[0]}" | jq -r '.[0].version')
+  [[ "$(echo "$version" | sed -n '1p')" == "nes-single-node-worker "* ]]
+  echo "$version" | grep -q "commit:"
+}
+
 @test "launch multiple queries distributed" {
   run $NES_REPL -f JSON <tests/sql-file-tests/good/multiple_queries_distributed.sql
   [ "$status" -eq 0 ]

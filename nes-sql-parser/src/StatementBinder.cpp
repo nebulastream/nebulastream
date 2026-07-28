@@ -446,6 +446,17 @@ public:
                 = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
             return ShowModelsStatement{.format = format};
         }
+        if (const auto* versionSubject = dynamic_cast<AntlrSQLParser::ShowVersionSubjectContext*>(showAST->showSubject());
+            versionSubject != nullptr)
+        {
+            if (showFilter != nullptr)
+            {
+                throw InvalidQuerySyntax("SHOW VERSION does not support a filter");
+            }
+            const std::optional<StatementOutputFormat> format
+                = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
+            return ShowVersionStatement{.format = format};
+        }
         throw InvalidStatement("Unrecognized SHOW statement");
     }
 

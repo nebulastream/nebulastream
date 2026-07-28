@@ -89,6 +89,29 @@ docker_nes_repl() {
   assert_json_equal '[]' "${lines[3]}"
 }
 
+@test "show version matches the worker's own --version output" {
+  setup_distributed tests/topologies/1-node.yaml
+
+  expected=$(docker compose exec -T worker-node nes-single-node-worker --version)
+
+  run docker_nes_repl tests/sql-file-tests/good/show_version_distributed.sql
+  [ "$status" -eq 0 ]
+
+  [ "$(echo "${lines[1]}" | jq -r '.[0].worker')" = "worker-node:8080" ]
+  [ "$(echo "${lines[1]}" | jq -r '.[0].version')" = "$expected" ]
+}
+
+@test "show version reports an unreachable worker as an error" {
+  setup_distributed tests/topologies/1-node.yaml
+  docker compose stop worker-node
+
+  run docker_nes_repl tests/sql-file-tests/good/show_version_distributed.sql
+  [ "$status" -eq 0 ]
+
+  [ "$(echo "${lines[1]}" | jq -r '.[0].worker')" = "worker-node:8080" ]
+  echo "${lines[1]}" | jq -r '.[0].version' | grep -q "error:"
+}
+
 @test "launch bad query should fail" {
   setup_distributed tests/topologies/1-node.yaml
   run docker_nes_repl tests/sql-file-tests/bad/invalid_projection_distributed.sql

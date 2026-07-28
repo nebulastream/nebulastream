@@ -23,6 +23,11 @@ service WorkerRPCService {
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
   rpc RequestStatus (WorkerStatusRequest) returns (WorkerStatusResponse) {}
+  rpc RequestVersion (google.protobuf.Empty) returns (VersionResponse) {}
+}
+
+message VersionResponse {
+  string version = 1;
 }
 
 message StartQueryRequest {

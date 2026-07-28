@@ -439,6 +439,26 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
     }
 };
 
+using WorkerVersionOutputRowType = std::tuple<Host, std::string>;
+constexpr std::array<std::string_view, 2> workerVersionOutputColumns{"worker", "version"};
+
+template <>
+struct StatementOutputAssembler<ShowVersionStatementResult>
+{
+    using OutputRowType = WorkerVersionOutputRowType;
+
+    auto convert(const ShowVersionStatementResult& result)
+    {
+        std::vector<OutputRowType> output;
+        output.reserve(result.versions.size());
+        for (const auto& [host, version] : result.versions)
+        {
+            output.emplace_back(host, version.has_value() ? *version : fmt::format("error: {}", version.error().what()));
+        }
+        return std::make_pair(workerVersionOutputColumns, output);
+    }
+};
+
 using ModelNameOutputRowType = std::tuple<std::string>;
 constexpr std::array<std::string_view, 1> modelNameOutputColumns{"model_name"};
 
@@ -501,6 +521,7 @@ static_assert(AssemblembleStatementResult<DropSinkStatementResult>);
 static_assert(AssemblembleStatementResult<QueryStatementResult>);
 static_assert(AssemblembleStatementResult<ShowQueriesStatementResult>);
 static_assert(AssemblembleStatementResult<WorkerStatusStatementResult>);
+static_assert(AssemblembleStatementResult<ShowVersionStatementResult>);
 static_assert(AssemblembleStatementResult<DropQueryStatementResult>);
 static_assert(AssemblembleStatementResult<CreateModelStatementResult>);
 static_assert(AssemblembleStatementResult<ShowModelsStatementResult>);

@@ -142,6 +142,7 @@ public:
     MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (override));
     MOCK_METHOD((std::expected<LocalQueryStatusSnapshot, Exception>), status, (QueryId), (const, override));
     MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
+    MOCK_METHOD((std::expected<std::string, Exception>), version, (), (const, override));
 };
 
 namespace

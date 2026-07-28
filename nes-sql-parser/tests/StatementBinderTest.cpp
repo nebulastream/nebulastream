@@ -927,6 +927,20 @@ TEST_F(StatementBinderTest, CreateLogicalQueryPlanRejectsNonQueryStatements)
     EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("CREATE WORKER 'localhost:8080';"), Exception);
 }
 
+TEST_F(StatementBinderTest, ShowVersionStatementTest)
+{
+    const auto statement = binder->parseAndBindSingle("SHOW VERSION");
+    ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
+    ASSERT_TRUE(std::holds_alternative<ShowVersionStatement>(*statement));
+    ASSERT_FALSE(std::get<ShowVersionStatement>(*statement).format.has_value());
+
+    const auto withFormat = binder->parseAndBindSingle("SHOW VERSION FORMAT JSON");
+    ASSERT_TRUE(withFormat.has_value()) << "Statement could not be parsed" << withFormat.error();
+    ASSERT_EQ(std::get<ShowVersionStatement>(*withFormat).format, StatementOutputFormat::JSON);
+
+    ASSERT_FALSE(binder->parseAndBindSingle("SHOW VERSION WHERE NAME = 'worker'").has_value());
+}
+
 TEST_F(StatementBinderTest, LeftOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT OUTER JOIN (SELECT * FROM s2) "
