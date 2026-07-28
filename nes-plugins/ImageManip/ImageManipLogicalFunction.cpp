@@ -143,7 +143,8 @@ public:
             child = child.withInferredDataType(schema);
         }
         functions.at(copy.functionName).check(copy.functionName, copy.children);
-        copy.dataType.nullable = std::ranges::any_of(copy.children, [](const auto& child) { return child.getDataType().nullable; });
+        copy.dataType.nullable = std::ranges::any_of(copy.children, [](const auto& child) { return child.getDataType().nullable; })
+            || functions.at(copy.functionName).returnValue.nullable;
         return copy;
     }
 

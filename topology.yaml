@@ -32,22 +32,22 @@ query:
     disabled: true
     # language=SQL
     query: |
-      SELECT to_base64(image_manip_yuyv_to_jpg(image_manip_draw_rectangle(image, face), width, height)) as "image", timestamp as "timestamp"
+      SELECT to_base64(image_manip_yuyv_to_jpg(image_manip_draw_rectangle(image, face), width,
+                                               height)) as "image", timestamp as "timestamp"
       FROM (
-        SELECT image, timestamp, height, width, image_manip_face_detection(image, width, height) as face
-        FROM video_pipe
-        WHERE PIXEL_FORMAT = 34603058
-      )
+          SELECT image, timestamp, height, width, image_manip_face_detection(image, width, height) as face
+          FROM video_pipe
+          WHERE PIXEL_FORMAT = 34603058
+          )
       WHERE face IS NOT NULL
-      INTO MQTT(
-        'rgb-face-image' AS "SINK"."TOPIC",
-        'localhost:8080' AS "SINK"."HOST",
-        'localhost:1883' AS "SINK"."SERVER_URI",
-        2 AS "SINK"."QOS",
-        'JSON' AS "SINK"."OUTPUT_FORMAT",
-        'DROP_OUT_OF_ORDER' AS "SINK"."OUTPUT_ORDER"
-      )
+      INTO MQTT('rgb-face-image' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                2 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT",
+                'DROP_OUT_OF_ORDER' AS "SINK"."OUTPUT_ORDER")
   - name: thermal_jpg_stream
+    disabled: true
     # language=SQL
     query: |
       SELECT
@@ -61,11 +61,19 @@ query:
                 'localhost:1883' AS "SINK"."SERVER_URI",
                 2 AS "SINK"."QOS",
                 'JSON' AS "SINK"."OUTPUT_FORMAT")
+  - name: rgb_with_faces
+    disabled: true
+    # language=SQL
+    query: |
+      SELECT image, timestamp, height, width, image_manip_face_detection(image, width, height) as face
+      FROM video_pipe
+      WHERE PIXEL_FORMAT = 34603058
+      INTO rgb_with_faces_pipe_sink;
   - name: rgb_thermal_joined_jpg_stream_mqtt
     # language=SQL
     query: |
       SELECT CASE
-                 WHEN face IS NOT NULL AND face > 0 THEN
+                 WHEN face IS NOT NULL THEN
                      to_base64(
                              image_manip_yuyv_to_jpg(
                                      image_manip_draw_rectangle(
@@ -74,7 +82,7 @@ query:
                                                      thermal_width,
                                                      thermal_height
                                              ),
-                                             face
+                                             CASTTOTYPE(face as UINT64)
                                      ),
                                      thermal_width,
                                      thermal_height
@@ -90,32 +98,30 @@ query:
                      )
                  END       AS "image",
              rgb_timestamp AS "timestamp"
-      FROM (SELECT image AS rgb_image, timestamp AS rgb_timestamp, width AS rgb_width, height AS rgb_height, face
-            FROM (
-                SELECT
-                *, image_manip_face_detection(image, width, height) AS face
-                FROM video_pipe
-                WHERE PIXEL_FORMAT = 34603058
-                )) ASOF
-               JOIN (SELECT image AS thermal_image, timestamp AS thermal_timestamp, width AS thermal_width, height AS thermal_height
-                     FROM video_pipe
-                     WHERE PIXEL_FORMAT = 17825799) TIME(rgb_timestamp, thermal_timestamp)
-      INTO MQTT('rgb-image' AS "SINK"."TOPIC",
-                'localhost:8080' AS "SINK"."HOST",
-                'localhost:1883' AS "SINK"."SERVER_URI",
-                2 AS "SINK"."QOS",
-                'JSON' AS "SINK"."OUTPUT_FORMAT")
+      FROM (SELECT *, image_manip_face_detection(rgb_image, rgb_width, rgb_height) as face
+            FROM (SELECT image AS rgb_image, timestamp AS rgb_timestamp, width AS rgb_width, height AS rgb_height
+                  FROM video_pipe
+                  WHERE PIXEL_FORMAT = 34603058) ASOF
+                     JOIN (SELECT image AS thermal_image, timestamp AS thermal_timestamp, width AS thermal_width, height AS thermal_height
+                           FROM video_pipe
+                           WHERE PIXEL_FORMAT = 17825799) TIME (rgb_timestamp, thermal_timestamp)) INTO MQTT('rgb-image' AS "SINK"."TOPIC",
+        'localhost:8080' AS "SINK"."HOST",
+        'localhost:1883' AS "SINK"."SERVER_URI",
+        2 AS "SINK"."QOS",
+        'JSON' AS "SINK"."OUTPUT_FORMAT")
 
   # ==========================================================================
   # Audio processing
   # ==========================================================================
   - name: audio_pipe
+    disabled: true
     # language=SQL
     query: |
       SELECT timestamp / 1000 as timestamp, sample
       FROM microphone
       INTO audio_pipe_sink;
   - name: audio_window_pipe
+    disabled: true
     # language=SQL
     query: |
       SELECT
@@ -131,6 +137,7 @@ query:
       WHERE number_of_samples = 16000
       INTO audio_window_pipe_sink;
   - name: audio_label_detection_pipe
+    disabled: true
     # language=SQL
     query: |
       SELECT
@@ -144,6 +151,7 @@ query:
           )
       INTO audio_label_detection_pipe_sink;
   - name: audio_noise_level
+    disabled: true
     # language=SQL
     query: |
       SELECT
@@ -159,34 +167,25 @@ query:
     # language=SQL
     query: |
       SELECT
-        timestamp AS "timestamp",
-        class_index AS "class_index",
-        label AS "label",
-        confidence AS "confidence",
-        noise_level AS "noise_level"
+          timestamp AS "timestamp", class_index AS "class_index", label AS "label", confidence AS "confidence", noise_level AS "noise_level"
       FROM (
-        SELECT
-          timestamp,
-          class_index,
-          confidence,
-          noise_level
-        FROM audio_label_detection_pipe
-      )
-      INNER JOIN TABLE (
-        SELECT
-          label_index,
-          label
-        FROM kws_labels
-      )
+          SELECT
+          timestamp, class_index, confidence, noise_level
+          FROM audio_label_detection_pipe
+          )
+          INNER JOIN TABLE (
+          SELECT
+          label_index, label
+          FROM kws_labels
+          )
       ON class_index = label_index
-      INTO MQTT(
-        'audio-label-detection' AS "SINK"."TOPIC",
-        'localhost:8080' AS "SINK"."HOST",
-        'localhost:1883' AS "SINK"."SERVER_URI",
-        0 AS "SINK"."QOS",
-        'JSON' AS "SINK"."OUTPUT_FORMAT"
-      );
+      INTO MQTT('audio-label-detection' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                0 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT");
   - name: audio_to_mfcc
+    disabled: true
     # language=SQL
     query: |
       SELECT
@@ -219,14 +218,13 @@ query:
     query: |
       SELECT start as "timestamp_start", end as "timestamp_end", TO_BASE64(ARRAY_AGG_UNSORTED(sample)) AS "chunk"
       FROM audio_pipe WINDOW SLIDING (timestamp, size 200ms, advance by 200ms)
-      INTO MQTT(
-        'audio_unsorted' AS "SINK"."TOPIC",
-        'localhost:8080' AS "SINK"."HOST",
-        'localhost:1883' AS "SINK"."SERVER_URI",
-        0 AS "SINK"."QOS",
-        'JSON' AS "SINK"."OUTPUT_FORMAT"
-      );
+      INTO MQTT('audio_unsorted' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                0 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT");
   - name: audio_mqtt
+    disabled: true
     # language=SQL
     query: |
       SELECT start / 1000 as "timestamp_start", end / 1000 as "timestamp_end", TO_BASE64(ARRAY_AGG(sample)) AS "chunk"
@@ -288,6 +286,27 @@ sinks:
     type: Pipe
     config:
       pipe_name: audio_label_detection_pipe
+  - name: rgb_with_faces_pipe_sink
+    host: localhost:8080
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+        nullable: false
+      - name: WIDTH
+        type: UINT64
+        nullable: false
+      - name: HEIGHT
+        type: UINT64
+        nullable: false
+      - name: IMAGE
+        type: VARSIZED
+        nullable: false
+      - name: FACE
+        type: UINT64
+        nullable: true
+    type: Pipe
+    config:
+      pipe_name: rgb_with_faces
   - name: thermal_video_pipe_sink
     host: localhost:8080
     schema:
@@ -353,6 +372,23 @@ sinks:
       pipe_name: video_frames
 
 logical:
+  - name: rgb_with_faces_pipe_source
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+        nullable: false
+      - name: WIDTH
+        type: UINT64
+        nullable: false
+      - name: HEIGHT
+        type: UINT64
+        nullable: false
+      - name: IMAGE
+        type: VARSIZED
+        nullable: false
+      - name: FACE
+        type: UINT64
+        nullable: true
   - name: video
     schema:
       - name: TIMESTAMP
@@ -469,6 +505,13 @@ logical:
         nullable: false
 
 physical:
+  - logical: rgb_with_faces_pipe_source
+    host: localhost:8080
+    type: Pipe
+    parser_config:
+      type: NATIVE
+    source_config:
+      pipe_name: rgb_with_faces_pipe
   - logical: video
     host: localhost:8080
     type: Video
