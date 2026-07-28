@@ -107,7 +107,7 @@ class QueryManager
 public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
-    /// Compiles and starts the distributed query on all assigned workers. Blocks until the query state has advanced past Registered.
+    /// Compiles and starts the distributed query on all assigned workers. Blocks until every local query is running or terminated.
     [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(const DistributedLogicalPlan& plan);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
     [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> status(const DistributedQueryId& query) const;
