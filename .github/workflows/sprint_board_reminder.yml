@@ -16,9 +16,9 @@ jobs:
           email: "pr-reminder-bot@nebulastream.zulipchat.com"
           organization-url: "https://nebulastream.zulipchat.com"
           to: "nes-maintainers"
-          topic: "general"
+          topic: "general chat"
           type: "stream"
           content: |
             :clipboard: Please update your issues in the [NES Sprint Board](https://github.com/orgs/nebulastream/projects/28/views/1?filterQuery=). This includes creating new issues, moving issues to the right column, ensuring you are assigned, and the titles are up to date and self-explanatory.
 
-            Add a :check: to this message when you updated it. Deadline is today 14:00.
+            Add a :check: to this message when you updated it. Deadline is today 14:00. @**all**
