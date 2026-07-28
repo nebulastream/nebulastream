@@ -1,0 +1,38 @@
+# name: sample/SampleTieBreakOrdering.test
+# description: SAMPLE's "last" tie-break within a slot is processing/scan order, not event-time order.
+# groups: [Sample]
+
+# SAMPLE_PROC_TS_FIELD is the record's TupleBuffer creation timestamp (ctx.currentTs), which is shared
+# by every record in the same buffer - it is NOT the record's own ts field. Two records that land in
+# the same slot from the same buffer therefore tie on SAMPLE_PROC_TS_FIELD, and
+# LastSampleAggregationFunction::lift() has no per-record comparison at all: it unconditionally
+# overwrites the entry for every record it sees on a given worker thread. So within one buffer/thread,
+# "last" means "scanned last" (i.e. last row in the source), independent of what that row's own ts
+# field value is. Pinning to a single worker thread makes this deterministic to assert: with only one
+# thread there is exactly one hashmap, so no cross-thread merge/combine() tie-break is involved at all,
+# isolating lift()'s within-thread overwrite behaviour.
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
+
+# Row 1 (ts=80, LATER event time) is attached first; row 2 (ts=20, EARLIER event time) is attached
+# second. Both fall in slot 0 ([0,100)). If "last" meant "highest ts", row 1 (ts=80) would win. It
+# doesn't: row 2 wins, because it is scanned after row 1.
+CREATE LOGICAL SOURCE tieStream(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR tieStream TYPE File;
+ATTACH INLINE
+1,10,80
+2,20,20
+
+CREATE SINK sink(id UINT64, value UINT64, ts UINT64) TYPE File;
+
+SELECT * FROM tieStream SAMPLE(SIZE 100 MS, MAX_TICKS 10) INTO sink;
+----
+2,20,20
+NULL,NULL,100
+NULL,NULL,200
+NULL,NULL,300
+NULL,NULL,400
+NULL,NULL,500
+NULL,NULL,600
+NULL,NULL,700
+NULL,NULL,800
+NULL,NULL,900

@@ -16,6 +16,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -103,6 +104,14 @@ public:
 
     /// Flag set while parsing a MODEL_INFERENCE TVF source to suppress identifier capture as FROM source
     bool isModelInference = false;
+
+    bool hasSampleClause = false;
+    std::optional<Identifier> sampleTimestamp;
+    int sampleSize{};
+    size_t sampleTimeUnitToken{};
+    std::optional<std::string> sampleStrategy;
+    std::optional<int32_t> sampleMaxRuntimeMs;
+    std::optional<int64_t> sampleMaxTicks;
 
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();

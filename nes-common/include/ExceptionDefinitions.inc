@@ -68,6 +68,8 @@ EXCEPTION(InvalidOptimizerRuleset, 2037, "invalid optimizer ruleset")
 EXCEPTION(UnknownModelName, 2040, "unknown model name")
 EXCEPTION(ModelAlreadyExists, 2041, "model already exists")
 EXCEPTION(CannotLoadModel, 2042, "cannot load model")
+EXCEPTION(UnknownSampleStrategy, 2043, "unknown sample strategy")
+EXCEPTION(SampleEventTimeNotSupported, 2044, "SAMPLE with an explicit event-time field is not yet supported")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")

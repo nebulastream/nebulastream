@@ -25,6 +25,7 @@
 #include <Rules/Semantic/CalcTargetOrderRule.hpp>
 #include <Rules/Semantic/InferModelResolutionRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
+#include <Rules/Semantic/SampleTickSourceBindingRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -44,6 +45,7 @@ SemanticAnalyzer::SemanticAnalyzer(
     ruleManager.addRule(SinkBindingRule{this->sinkCatalog});
     ruleManager.addRule(AnonymousSourceBindingRule{this->sourceCatalog});
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
+    ruleManager.addRule(SampleTickSourceBindingRule{this->sourceCatalog});
     ruleManager.addRule(InferModelResolutionRule{this->modelCatalog});
     ruleManager.addRule(TypeInferenceRule{});
     ruleManager.addRule(CalcTargetOrderRule{});

@@ -10,13 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-query-optimizer
-        AnonymousSinkBindingRule.cpp
-        AnonymousSourceBindingRule.cpp
-        SampleTickSourceBindingRule.cpp
-        LogicalSourceExpansionRule.cpp
-        TypeInferenceRule.cpp
-        SinkBindingRule.cpp
-        InferModelResolutionRule.cpp
-        CalcTargetOrderRule.cpp
-)
+add_plugin_as_library(SampleTick Source sample_tick_source_plugin_library SampleTickSource.cpp)
+add_plugin_as_library(SampleTick SourceValidation sample_tick_validation_plugin_library SampleTickSource.cpp)
+
+target_include_directories(sample_tick_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+target_include_directories(sample_tick_validation_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)

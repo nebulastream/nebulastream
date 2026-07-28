@@ -135,7 +135,14 @@ queryPrimary
     | '(' query ')'                                                         #subquery
     ;
 /// new layout to be closer to traditional SQL
-querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause? sinkClause?;
+querySpecification: selectClause fromClause whereClause? windowedAggregationClause? sampleClause? havingClause? sinkClause?;
+
+sampleClause:
+    SAMPLE '(' (tsField=identifier ',')? SIZE sampleSize=INTEGER_VALUE sampleUnit=timeUnit
+    (',' STRATEGY strategy=identifier)?
+    (',' MAX_RUNTIME_MS maxRuntimeMs=INTEGER_VALUE)?
+    (',' MAX_TICKS maxTicks=INTEGER_VALUE)?
+    ')';
 
 
 fromClause: FROM relation (',' relation)*;
@@ -534,6 +541,11 @@ MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';
 INPUT: 'INPUT';
 OUTPUT: 'OUTPUT';
+
+SAMPLE: 'SAMPLE' | 'sample';
+STRATEGY: 'STRATEGY' | 'strategy';
+MAX_RUNTIME_MS: 'MAX_RUNTIME_MS' | 'max_runtime_ms';
+MAX_TICKS: 'MAX_TICKS' | 'max_ticks';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

@@ -42,6 +42,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/SampleLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -200,6 +201,25 @@ LogicalPlan LogicalPlanBuilder::addInferModel(Identifier modelName, const Logica
 {
     NES_TRACE("LogicalPlanBuilder: add infer model operator to query plan for model {}", modelName);
     return promoteOperatorToRoot(childPlan, TypedLogicalOperator<InferModelNameLogicalOperator>{modelName.asCanonicalString()});
+}
+
+LogicalPlan LogicalPlanBuilder::addSample(
+    LogicalPlan queryPlan,
+    std::optional<Identifier> timestampField,
+    const uint64_t slotDurationMs,
+    std::optional<std::string> strategy,
+    std::optional<int32_t> maxRuntimeMs,
+    std::optional<int64_t> maxTicks)
+{
+    NES_TRACE("LogicalPlanBuilder: add sample operator to query plan");
+    Windowing::UnboundTimeCharacteristic timeCharacteristic = Windowing::IngestionTimeCharacteristic{};
+    if (timestampField.has_value())
+    {
+        timeCharacteristic = Windowing::UnboundEventTimeCharacteristic{.field = UnboundFieldAccessLogicalFunction(timestampField.value())};
+    }
+    return promoteOperatorToRoot(
+        queryPlan,
+        SampleLogicalOperator::create(std::move(timeCharacteristic), slotDurationMs, std::move(strategy), maxRuntimeMs, maxTicks));
 }
 
 LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& queryPlan)

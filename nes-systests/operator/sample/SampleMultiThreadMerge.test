@@ -1,0 +1,121 @@
+# name: sample/SampleMultiThreadMerge.test
+# description: Stresses SampleProbePhysicalOperator::open()'s cross-worker-thread hashmap merge
+# (insertOrUpdateEntry/combine/initialize) with genuinely more than one non-empty per-thread hashmap
+# feeding the same slot - the exact code path the original data-corruption bug (uninitialized
+# final-entry memory read on the first cross-thread insert) lived in.
+# groups: [Sample]
+
+# The systest default is 8 worker threads (configs/topologies/single-node.yaml), but that alone proves
+# nothing: with the default buffer size, this file's ~80 tiny rows comfortably fit in a single buffer,
+# which a single worker thread would scan end-to-end - never touching the cross-thread merge path at
+# all despite "8 threads" being configured. Shrinking operator_buffer_size forces the input to split
+# into many separate buffers/tasks, which the work-stealing worker pool then genuinely distributes
+# across threads (same technique nes-systests/sources/OutofOrder.test uses to force deterministic
+# multi-buffer behaviour, just aimed at encouraging concurrency here instead of pinning it away).
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [32]
+
+# Every row is identical, so the expected result is unambiguous regardless of which worker thread's
+# copy of the entry the merge happens to pick first, or how many threads actually end up touching this
+# slot - only the number of times insertOrUpdateEntry's onUpdate/onInsert path runs varies, not the
+# semantic result. That's what makes this safe to assert on without inspecting internals: correctness
+# here does not depend on knowing the exact thread/buffer split, only on combine() being correct no
+# matter how many times it runs.
+CREATE LOGICAL SOURCE manyRecordsStream(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR manyRecordsStream TYPE File;
+ATTACH INLINE
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+7,70,42
+
+CREATE SINK sink(id UINT64, value UINT64, ts UINT64) TYPE File;
+
+SELECT * FROM manyRecordsStream SAMPLE(SIZE 100 MS, MAX_TICKS 10) INTO sink;
+----
+7,70,42
+NULL,NULL,100
+NULL,NULL,200
+NULL,NULL,300
+NULL,NULL,400
+NULL,NULL,500
+NULL,NULL,600
+NULL,NULL,700
+NULL,NULL,800
+NULL,NULL,900

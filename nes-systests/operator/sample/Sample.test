@@ -1,0 +1,45 @@
+# name: sample/Sample.test
+# description: Tests for SAMPLE operator - slot-based stream resampling
+# groups: [Sample]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10,50
+2,20,75
+3,30,150
+4,40,350
+
+CREATE SINK sink(id UINT64, value UINT64, ts UINT64) TYPE File;
+
+# V3 status: real per-slot fold via SampleProbePhysicalOperator, triggered through the real
+# build/trigger/probe pipeline (DefaultTimeBasedSliceStore as a tumbling window, windowSize ==
+# windowSlide == 100ms) - see docs/design/20260717_sample_operator_state_storage.md. "Last" within a
+# slot picks the record with the latest processing time among the records that landed in it; an empty
+# slot emits NULL for every field except ts, which still shows the slot's own start.
+#
+# Trigger timing: tick k (k=0..9, MAX_TICKS bound) forces slot [100k,100k+100) into existence and
+# advances the watermark to 100k+1 (SampleTickSource offsets its value one past the slot boundary so
+# the tick that seals a slot is the same one that triggers it, not the next one - see
+# SampleTickSource::fillTupleBuffer). getTriggerableWindowSlices fires windows with windowEnd <
+# watermark, i.e. tick k triggers window index j <= k-1. Tick 0 triggers nothing; ticks 1..9 trigger
+# windows j=0..8 one at a time. Window j=9 ([900,1000), forced by tick 9) is still open when the source
+# ends - it's the one window no tick can ever close, since nothing arrives after the last tick;
+# terminate()'s triggerAllWindows() flush emits it. Net: 10 output rows.
+#
+# Slot assignment from the source data (slot = floor(ts/100)):
+#   id=1 ts=50  -> slot 0      id=2 ts=75  -> slot 0 (later processing time than id=1, wins "last")
+#   id=3 ts=150 -> slot 1      id=4 ts=350 -> slot 3
+# Slots 2,4,5,6,7,8,9 are empty.
+SELECT * FROM stream SAMPLE(SIZE 100 MS, MAX_TICKS 10) INTO sink;
+----
+2,20,75
+3,30,150
+NULL,NULL,200
+4,40,350
+NULL,NULL,400
+NULL,NULL,500
+NULL,NULL,600
+NULL,NULL,700
+NULL,NULL,800
+NULL,NULL,900
