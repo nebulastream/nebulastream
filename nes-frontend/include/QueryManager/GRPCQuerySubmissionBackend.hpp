@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <memory>
+#include <string>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -40,6 +41,7 @@ public:
     std::expected<void, Exception> stop(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
+    [[nodiscard]] std::expected<std::string, Exception> version() const override;
 };
 
 BackendProvider createGRPCBackend();

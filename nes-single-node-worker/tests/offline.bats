@@ -75,6 +75,14 @@ teardown() {
   echo "$output" | grep -q "INTERPRETER"
 }
 
+@test "worker shows version" {
+  run $NES_WORKER --version
+  [ "$status" -eq 0 ]
+
+  [[ "${lines[0]}" == "nes-single-node-worker "* ]]
+  echo "$output" | grep -q "commit:"
+}
+
 @test "worker launches and stays alive" {
   run timeout 5 $NES_WORKER
   [ "$status" -eq 124 ] # killed by timeout

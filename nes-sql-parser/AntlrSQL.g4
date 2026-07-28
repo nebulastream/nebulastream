@@ -110,7 +110,8 @@ showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
     | SINKS #showSinksSubject
-    | MODELS #showModelsSubject;
+    | MODELS #showModelsSubject
+    | VERSION #showVersionSubject;
 
 showFilter: attr=strictIdentifier EQ value=constant;
 
@@ -646,6 +647,7 @@ LOGICAL: 'LOGICAL' | 'logical';
 PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
 SINK : 'SINK';
+VERSION : 'VERSION' | 'version';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
