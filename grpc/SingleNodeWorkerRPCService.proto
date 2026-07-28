@@ -40,7 +40,9 @@ message StartQueryRequest {
 }
 
 message StopQueryRequest {
+    enum QueryTerminationType {Graceful = 0; HardStop = 1; Failure = 2; Invalid = 3;};
     NES.SerializableQueryId queryId = 1;
+    QueryTerminationType terminationType = 2;
 }
 
 enum QueryState {
