@@ -157,8 +157,8 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
     this->state.queries.emplace(id, std::move(localQueries));
 
-    /// Poll until all local queries have advanced past Registered, so the caller can immediately
-    /// observe a meaningful status after this function returns.
+    /// Poll until all local queries are running or have terminated, so dependent queries can
+    /// safely use resources created during startup.
     auto query = this->state.queries.at(id);
     auto waitForStatusChange = query.iterate()
         | std::views::transform([](const auto& pair) { return std::pair{std::get<0>(pair), std::get<1>(pair)}; })
@@ -183,7 +183,8 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
                     exceptions.emplace_back(QueryStartFailed("Waiting for query state to change: {}", result.error()));
                     return true;
                 }
-                return result->state != QueryStatus::Registered;
+                return result->state == QueryStatus::Running or result->state == QueryStatus::Stopped
+                    or result->state == QueryStatus::Failed;
             });
 
         if (waitForStatusChange.empty() or std::chrono::steady_clock::now() >= statusPollDeadline)
