@@ -19,23 +19,40 @@ use crate::query::query_state::QueryState;
 use crate::statement::{Statement, StatementResult};
 use anyhow::Result;
 use std::fmt::Debug;
+use std::time::Duration;
 use tokio::sync::oneshot;
 
-/// One unit of work submitted to the coordinator: a `StatementInput`
-/// plus the dispatcher-level wait semantics the caller wants applied
-/// before its reply is sent.
+/// How long the coordinator parks a request's reply before answering, and
+/// the condition that releases it.
 ///
-/// The wait fields are honored only for the matching input variants:
-/// `block_until` for query creation, `block_until_dropped` for query
-/// drops, `block_until_all_terminal` for a query read that should park
-/// until every matched query terminates, `poll_for` for query reads.
-/// They are ignored otherwise.
+/// A request that does not need to wait answers as soon as its statement
+/// has been applied to the catalog. The parking variants hold the reply
+/// until their condition holds or their timeout elapses; a `None` timeout
+/// waits indefinitely. Which variant is valid depends on the statement:
+/// creates wait on a target state, drops and reads wait on termination,
+/// and reads can poll for a settled status.
+pub enum Wait {
+    /// Answer as soon as the statement has been applied to the catalog.
+    None,
+    /// Park a create until its query reaches the target state or
+    /// terminates. An elapsed timeout releases the reply with an error.
+    UntilState {
+        state: QueryState,
+        timeout: Option<Duration>,
+    },
+    /// Park a drop or a read until every affected query has terminated. An
+    /// elapsed timeout releases the reply with an error.
+    UntilTerminated { timeout: Option<Duration> },
+    /// Park a read until its status has settled. An elapsed timeout
+    /// releases the reply with the current status, a successful return.
+    Poll { timeout: Option<Duration> },
+}
+
+/// One unit of work submitted to the coordinator: a statement to run plus
+/// the wait semantics applied before the caller's reply is sent.
 pub struct Payload {
     pub input: StatementInput,
-    pub block_until: QueryState,
-    pub block_until_dropped: bool,
-    pub block_until_all_terminal: bool,
-    pub poll_for: Option<u64>,
+    pub wait: Wait,
 }
 
 impl Payload {
@@ -50,31 +67,39 @@ impl Payload {
     fn from_input(input: StatementInput) -> Self {
         Self {
             input,
-            block_until: QueryState::default(),
-            block_until_dropped: false,
-            block_until_all_terminal: false,
-            poll_for: None,
+            wait: Wait::None,
         }
     }
 
-    pub fn block_until(mut self, state: QueryState) -> Self {
-        self.block_until = state;
+    pub fn wait(mut self, wait: Wait) -> Self {
+        self.wait = wait;
         self
     }
 
-    pub fn block_until_dropped(mut self) -> Self {
-        self.block_until_dropped = true;
-        self
+    /// Block a create until its streaming query is running.
+    pub fn until_running(self, timeout: Option<Duration>) -> Self {
+        self.wait(Wait::UntilState {
+            state: QueryState::Running,
+            timeout,
+        })
     }
 
-    pub fn block_until_all_terminal(mut self) -> Self {
-        self.block_until_all_terminal = true;
-        self
+    /// Block a create until its batch query has completed.
+    pub fn until_completed(self, timeout: Option<Duration>) -> Self {
+        self.wait(Wait::UntilState {
+            state: QueryState::Completed,
+            timeout,
+        })
     }
 
-    pub fn poll_for(mut self, secs: u64) -> Self {
-        self.poll_for = Some(secs);
-        self
+    /// Block a drop or a read until every affected query has terminated.
+    pub fn until_terminated(self, timeout: Option<Duration>) -> Self {
+        self.wait(Wait::UntilTerminated { timeout })
+    }
+
+    /// Poll a read until its status has settled, then answer.
+    pub fn poll_for(self, timeout: Option<Duration>) -> Self {
+        self.wait(Wait::Poll { timeout })
     }
 }
 
