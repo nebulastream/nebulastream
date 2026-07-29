@@ -1,0 +1,70 @@
+name: Build Documentation Website
+description: |
+  Builds the NebulaStream documentation website (docs/website). Called with
+  should_publish: false to validate the build, should_publish: true to also publish it.
+  Callers decide whether the site is worth building: pr.yml's classify gate already runs
+  this only for documentation changes, and pr-merge.yml publishes every merge to main.
+
+on:
+  workflow_call:
+    inputs:
+      head_sha:
+        required: true
+        type: string
+      should_publish:
+        required: true
+        type: boolean
+
+concurrency:
+  group: docs-website-build-${{ inputs.head_sha }}
+  # Superseded validation runs are worth cancelling; a half-finished Pages deployment is not.
+  cancel-in-progress: ${{ !inputs.should_publish }}
+
+permissions:
+  contents: read
+
+jobs:
+  build-website:
+    name: "Build website"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.head_sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        working-directory: docs/website
+        run: npm install
+
+      - name: Build documentation website
+        working-directory: docs/website
+        run: npm run build
+
+      - name: Upload GitHub Pages artifact
+        if: inputs.should_publish
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/website/public
+
+  publish-website:
+    name: "Publish website"
+    needs: build-website
+    if: inputs.should_publish && needs.build-website.result == 'success'
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
